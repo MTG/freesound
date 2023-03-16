@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,15 +18,15 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import url
+from django.urls import path, re_path
 import geotags.views as geotags
 
 urlpatterns = [
-    url(r'^sounds_barray/user/(?P<username>[^//]+)/$', geotags.geotags_for_user_barray, name="geotags-for-user-barray"),
-    url(r'^sounds_barray/user_latest/(?P<username>[^//]+)/$', geotags.geotags_for_user_latest_barray, name="geotags-for-user-latest-barray"),
-    url(r'^sounds_barray/pack/(?P<pack_id>\d+)/$', geotags.geotags_for_pack_barray, name="geotags-for-pack-barray"),
-    url(r'^sounds_barray/sound/(?P<sound_id>\d+)/$', geotags.geotag_for_sound_barray, name="geotags-for-sound-barray"),
-    url(r'^sounds_barray/(?P<tag>[\w-]+)?/?$', geotags.geotags_barray, name="geotags-barray"),
-    url(r'^geotags_box_barray/$', geotags.geotags_box_barray, name="geotags-box-barray"),
-    url(r'^infowindow/(?P<sound_id>\d+)/$', geotags.infowindow, name="geotags-infowindow"),
+    path('sounds_barray/user/<username>/', geotags.geotags_for_user_barray, name="geotags-for-user-barray"),
+    path('sounds_barray/user_latest/<username>/', geotags.geotags_for_user_latest_barray, name="geotags-for-user-latest-barray"),
+    path('sounds_barray/pack/<int:pack_id>/', geotags.geotags_for_pack_barray, name="geotags-for-pack-barray"),
+    path('sounds_barray/sound/<int:sound_id>/', geotags.geotag_for_sound_barray, name="geotags-for-sound-barray"),
+    re_path(r'^sounds_barray/(?P<tag>[\w-]+)?/?$', geotags.geotags_barray, name="geotags-barray"),
+    path('geotags_box_barray/', geotags.geotags_box_barray, name="geotags-box-barray"),
+    path('infowindow/<int:sound_id>/', geotags.infowindow, name="geotags-infowindow"),
 ]

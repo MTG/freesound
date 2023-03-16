@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
 
 from django import template
 from django.conf import settings
@@ -115,10 +114,9 @@ def display_sound(context, sound, player_size='small', show_bookmark=None):
             'request': request,
             'is_explicit': sound_obj.is_explicit and
                            (not request.user.is_authenticated or not request.user.profile.is_adult),
-            'is_authenticated': request.user.is_authenticated(),
-            'show_bookmark_button': show_bookmark if show_bookmark is not None else
-            (player_size == 'small' or player_size == 'small_no_info') and request.user.is_authenticated(),  # Only BW
-            'request_user_is_author': request.user.is_authenticated() and sound_obj.user_id == request.user.id,
+            'is_authenticated': request.user.is_authenticated,
+            'show_bookmark_button': show_bookmark if show_bookmark is not None else (player_size == 'small' or player_size == 'small_no_info'),  # Only BW
+            'request_user_is_author': request.user.is_authenticated and sound_obj.user_id == request.user.id,
             'player_size': player_size,
             'show_milliseconds': 'true' if (player_size == 'big_no_info' or sound_obj.duration < 10) else 'false',  # Only BW
             'min_num_ratings': settings.MIN_NUMBER_RATINGS,
@@ -142,6 +140,10 @@ def display_sound_big_no_info(context, sound):
     return display_sound(context, sound, player_size='big_no_info')
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_big_no_info_no_bookmark(context, sound):
+    return display_sound(context, sound, player_size='big_no_info', show_bookmark=False)
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_info(context, sound):
     return display_sound(context, sound, player_size='small_no_info')
 
@@ -152,3 +154,58 @@ def display_sound_minimal(context, sound):
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_infowindow(context, sound):
     return display_sound(context, sound, player_size='infowindow')
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_big_no_sound_object(context, file_data):
+    '''
+    This player works for sounds which have no Sound object. It requires
+    URLs to the sound files (mp3 and ogg)a and the wave/spectral images, and
+    the duration of the sound the JS player can be created. This data is 
+    passed through the file_data argument. Here is an example of how file_data 
+    should look like if preapring it from a Sound object:
+    
+    file_data = {
+        'duration': sound.duration,
+        'preview_mp3': sound.locations('preview.LQ.mp3.url'),
+        'preview_ogg': sound.locations('preview.LQ.ogg.url'),
+        'wave': sound.locations('display.wave_bw.L.url'),
+        'spectral': sound.locations('display.spectral_bw.L.url')
+    }
+    '''
+    player_size  ='big_no_info'
+    return {
+        'sound': {
+            'id': file_data['preview_mp3'].split('/')[-2],  # Pass a unique fake ID to avoid caching problems
+            'duration': file_data['duration'],
+            'locations': {
+                'preview': {
+                    'LQ': {
+                        'mp3': {'url': file_data['preview_mp3']},
+                        'ogg': {'url': file_data['preview_ogg']}
+                    }
+                },
+                'display': {
+                    'wave_bw': {
+                        'M': {'url': file_data['wave']},
+                        'L': {'url': file_data['wave']}
+                    }, 
+                    'spectral_bw': {
+                        'M': {'url': file_data['spectral']},
+                        'L': {'url': file_data['spectral']}
+                    }
+                }
+            }
+        },
+        'show_milliseconds': 'true' if ('big' in player_size ) else 'false',
+        'show_bookmark_button': False,
+        'player_size': player_size
+    }
+
+@register.inclusion_tag('sounds/display_sound_selectable.html', takes_context=True)
+def display_sound_small_selectable(context, sound, selected=False):
+    context = context.get('original_context', context)  # This is to allow passing context in nested inclusion tags
+    tvars = display_sound_small_no_bookmark(context, sound)
+    tvars.update({
+        'selected': selected,
+    })
+    return tvars

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,11 +18,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
-from __future__ import division
-from builtins import str
 from past.utils import old_div
-from builtins import object
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -57,8 +51,9 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     default_fields = None
 
     def __init__(self, *args, **kwargs):
+        self.score_map = kwargs.pop('score_map', {})
         self.sound_analysis_data = kwargs.pop('sound_analysis_data', {})
-        super(AbstractSoundSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         requested_fields = self.context['request'].GET.get("fields", self.default_fields)
         if not requested_fields:  # If parameter is in url but parameter is empty, set to default
             requested_fields = self.default_fields
@@ -72,7 +67,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
-    class Meta(object):
+    class Meta:
         model = Sound
         fields = ('id',
                   'url',
@@ -108,7 +103,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'analysis_frames',
                   'analysis_stats',
                   'ac_analysis',  # Kept for legacy reasons only as it is also contained in 'analyzers_output'
-                  'analyzers_output'
+                  'analyzers_output',
+                  'score',
                   )
 
     url = serializers.SerializerMethodField()
@@ -123,6 +119,13 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             return obj.username
         except AttributeError:
             return obj.user.username
+
+    score = serializers.SerializerMethodField()
+    def get_score(self, obj):
+        if self.score_map:
+            return self.score_map.get(obj.id)
+        else:
+            return None
 
     name = serializers.SerializerMethodField()
     def get_name(self, obj):
@@ -284,7 +287,7 @@ class SoundListSerializer(AbstractSoundSerializer):
 
     def __init__(self, *args, **kwargs):
         self.default_fields = DEFAULT_FIELDS_IN_SOUND_LIST
-        super(SoundListSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_analysis(self, obj):
         if not self.get_or_compute_analysis_state_essentia_exists(obj):
@@ -318,7 +321,7 @@ class SoundSerializer(AbstractSoundSerializer):
 
     def __init__(self, *args, **kwargs):
         self.default_fields = DEFAULT_FIELDS_IN_SOUND_DETAIL
-        super(SoundSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_analysis(self, obj):
         if not self.get_or_compute_analysis_state_essentia_exists(obj):
@@ -383,7 +386,7 @@ class SoundSerializer(AbstractSoundSerializer):
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta(object):
+    class Meta:
         model = User
         fields = ('url',
                   'username',
@@ -463,7 +466,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 class PackSerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta(object):
+    class Meta:
         model = Pack
         fields = ('id',
                   'url',
@@ -505,7 +508,7 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
 
 class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta(object):
+    class Meta:
         model = BookmarkCategory
         fields = ('id',
                   'url',
@@ -540,16 +543,8 @@ class CreateBookmarkSerializer(serializers.Serializer):
     category = serializers.CharField(max_length=128, required=False,
                                      help_text='Not required. Name you want to give to the category under which the '
                                                'bookmark will be classified (leave empty for no category).')
-    name = serializers.CharField(max_length=128, required=False,
-                                 help_text='Not required. Name you want to give to the bookmark (if empty, sound '
-                                           'name will be used).')
 
     def validate_category(self, value):
-        if value.isspace():
-            value = None
-        return value
-
-    def validate_name(self, value):
         if value.isspace():
             value = None
         return value
@@ -577,7 +572,7 @@ class CreateRatingSerializer(serializers.Serializer):
 
 class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
 
-    class Meta(object):
+    class Meta:
         model = Comment
         fields = ('username',
                   'comment',

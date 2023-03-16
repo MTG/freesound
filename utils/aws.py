@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.conf import settings
 
 from boto3 import client
@@ -48,7 +47,7 @@ def init_client(service):
                   aws_secret_access_key=settings.AWS_SQS_SECRET_ACCESS_KEY)
 
 
-class EmailStats(object):
+class EmailStats:
     total = 0
     bounces = 0
     complaints = 0

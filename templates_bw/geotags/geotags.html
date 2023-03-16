@@ -1,7 +1,7 @@
 {% extends "simple_page.html" %}
 {% load bw_templatetags %}
 {% load absurl %}
-{% load staticfiles %}
+{% load static %}
 
 {% block title %}
     {% if username %}
@@ -29,7 +29,7 @@
         </h1>
     </div>
     <div class="col-12 no-paddings v-spacing-top-negative-4 text-right text-grey d-none d-md-block">
-        <span id="indicator">Loading sounds... <img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"></span>
+        <span id="indicator">Loading sounds... <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"></span>
     </div>
 {% endblock %}
 
@@ -53,8 +53,12 @@
             {% if username or sound %}
                 <a class="no-hover btn-secondary btn-inverse" href="{% url "geotags" %}">View all geotags</a>
             {% else %}
-                <input data-base-url="{% url "geotags" %}" id="tagFilter" type="search" name="t" class="bw-forums__input-search" placeholder="Filter by tag..." value="{% if tag %}{{ tag }}{% endif %}" />
-                <a class="no-hover" href="{% url "geotags" %}"><button class="btn-secondary btn-inverse h-spacing-left-1">Clear filter</button></a>
+                <div class="start">
+                    <div class="input-wrapper">
+                        <input data-base-url="{% url "geotags" %}" id="tagFilter" type="search" name="t" class="bw-forums__input-search" placeholder="Filter by tag..." value="{% if tag %}{{ tag }}{% endif %}" />
+                    </div>
+                    <a class="no-hover" href="{% url "geotags" %}"><button class="btn-secondary btn-inverse h-spacing-left-1">Clear filter</button></a>
+                </div>
             {% endif %}
         </div>
         <div class="col-md-2 v-spacing-top-2 v-spacing-2">
@@ -65,21 +69,24 @@
     {% if not sound %}
     <div class="row">
         <div class="col-md-12 v-spacing-top-4">
-            <div id="embedControls" class="display-none w-100 login-page-form">
-                <form class="w-50">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label for="embedWidthInput">Embed width</label> <input type="number" min="100" step="1" value="900" id="embedWidthInput"/>&nbsp;&nbsp;
-                        </div>
-                        <div class="col-md-6">
-                            <label for="embedHeightInput">Embed height</label> <input type="number" min="100" step="1" value="600" id="embedHeightInput"/>&nbsp
+            <div id="embedControls" class="display-none w-100">
+                <form class="bw-form">
+                    <div class="w-50">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="embedWidthInput">Embed width</label> <input type="number" min="100" step="1" value="900" id="embedWidthInput" style="margin-bottom:0px;"/>&nbsp;&nbsp;
+                            </div>
+                            <div class="col-md-6">
+                                <label for="embedHeightInput">Embed height</label> <input type="number" min="100" step="1" value="600" id="embedHeightInput" style="margin-bottom:0px;"/>&nbsp
+                            </div>
                         </div>
                     </div>
                     <label for="embedClusterCheck">Show clusters in embed</label> <input class="bw-checkbox" type="checkbox" checked id="embedClusterCheck" />
+                    <p>
+                        <textarea id="embedCode" readonly style="width:100%;height:60px;"></textarea>
+                    </p>
                 </form>
-                <p>
-                    <textarea id="embedCode" readonly style="width:100%;height:60px;"></textarea>
-                </p>
+                
             </div>
         </div>
     </div>

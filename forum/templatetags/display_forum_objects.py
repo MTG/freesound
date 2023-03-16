@@ -18,9 +18,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
 
-from builtins import str
 from django import template
 
 register = template.Library()
@@ -102,6 +100,7 @@ def display_post(context, post, forloop_counter=0, post_number_offset=0, show_po
         'post_number': forloop_counter + post_number_offset,
         'show_post_location': show_post_location,
         'show_action_icons': show_action_icons,
+        'show_report_actions': show_report_actions,
         'media_url': context['media_url'],
         'perms': context['perms'],
         'request': context['request']

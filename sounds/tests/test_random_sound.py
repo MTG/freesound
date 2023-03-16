@@ -19,8 +19,8 @@
 #
 
 import datetime
+from unittest import mock
 
-import mock
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
@@ -61,7 +61,7 @@ class RandomSoundViewTestCase(TestCase):
 
         response = self.client.get(reverse('sounds-random'))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/people/testuser/sounds/{}/?random_browsing=true'.format(sound.id))
+        self.assertEqual(response.url, f'/people/testuser/sounds/{sound.id}/?random_browsing=true')
 
     @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
     def test_random_sound_view_bad_solr(self, random_sound):
@@ -83,7 +83,7 @@ class RandomSoundViewTestCase(TestCase):
         # we call Sound.objects.random
         response = self.client.get(reverse('sounds-random'))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/people/testuser/sounds/{}/?random_browsing=true'.format(sound.id))
+        self.assertEqual(response.url, f'/people/testuser/sounds/{sound.id}/?random_browsing=true')
 
     @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
     def test_random_sound_view_no_solr(self, random_sound):
@@ -103,7 +103,7 @@ class RandomSoundViewTestCase(TestCase):
         # we find the sound due to Sound.objects.random
         response = self.client.get(reverse('sounds-random'))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/people/testuser/sounds/{}/?random_browsing=true'.format(sound.id))
+        self.assertEqual(response.url, f'/people/testuser/sounds/{sound.id}/?random_browsing=true')
 
 
 class RandomSoundTestCase(TestCase):

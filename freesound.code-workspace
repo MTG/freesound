@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../freesound-audio-analyzers"
+		},
+		{
+			"path": "freesound-data"
 		}
 	],
 	"launch": {
@@ -71,6 +74,12 @@
 				"label": "Run tests",
 				"type": "shell",
 				"command": "docker-compose run --rm web python manage.py test --settings=freesound.test_settings",
+				"problemMatcher": []
+			},
+			{
+				"label": "Run tests verbose with warnings",
+				"type": "shell",
+				"command": "docker-compose run --rm web python -Wa manage.py test -v3 --settings=freesound.test_settings",
 				"problemMatcher": []
 			},
 			{

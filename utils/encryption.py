@@ -18,10 +18,7 @@
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from django.conf import settings
+import hashlib
 
 from django.core.signing import TimestampSigner
 
@@ -39,11 +36,6 @@ def unsign_with_timestamp(unsigned_value, signed_value, max_age):
     return value
 
 
-def create_hash(data, add_secret=True, limit=8):
-    import hashlib
-    m = hashlib.md5()
-    if add_secret:
-        m.update(str(data) + settings.SECRET_KEY)
-    else:
-        m.update(str(data))
+def create_hash(data, limit=8):
+    m = hashlib.md5(str(data).encode())
     return m.hexdigest()[0:limit]

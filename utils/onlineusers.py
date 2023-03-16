@@ -47,7 +47,7 @@ def cache_online_users(request):
         global _last_purged
         if _last_purged + timedelta(minutes=ONLINE_MINUTES) < now:
             purge_older_than = now - timedelta(minutes=ONLINE_MINUTES)
-            for user_id, last_seen in user_dict.items():
+            for user_id, last_seen in user_dict.copy().items():
                 if last_seen < purge_older_than:
                     del(user_dict[user_id])
             _last_purged = now

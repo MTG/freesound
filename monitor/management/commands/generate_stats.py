@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import datetime
 
 from django.contrib.auth.models import User

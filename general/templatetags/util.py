@@ -1,4 +1,3 @@
-from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -19,7 +18,6 @@ from __future__ import division
 #     See AUTHORS file.
 #
 
-from builtins import range
 from past.utils import old_div
 import datetime
 import time
@@ -39,7 +37,7 @@ def tuple_to_time(t):
 @stringfilter
 def truncate_string(value, length):
     if len(value) > length:
-        return value[:length-3] + u"..."
+        return value[:length-3] + "..."
     else:
         return value
 
@@ -56,7 +54,7 @@ def duration(value):
 def duration_hours(total_seconds):
     hours = int(total_seconds // 3600)
     minutes = int((total_seconds % 3600) // 60)
-    return '{}:{:02d}'.format(hours, minutes)
+    return f'{hours}:{minutes:02d}'
 
 
 @register.filter
@@ -72,7 +70,7 @@ def chunks(l, n):
     :param int n: number of elements per group
     :return: list of n-sized lists
     """
-    if type(l) is not list:
+    if not isinstance(l, list):
         l = list(l)
     return [l[i:i + n] for i in range(0, len(l), n)]
 
@@ -80,7 +78,12 @@ def chunks(l, n):
 @register.filter
 def license_with_version(license_name, license_deed_url):
     if '3.0' in license_deed_url:
-        return '{} 3.0'.format(license_name)
+        return f'{license_name} 3.0'
     elif '4.0' in license_deed_url:
-        return '{} 4.0'.format(license_name)
+        return f'{license_name} 4.0'
     return license_name
+
+
+@register.filter
+def element_at_index(l, index):
+    return l[index]

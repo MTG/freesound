@@ -18,11 +18,12 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import ipaddress
 import logging
 import json
+import urllib
 
+import sentry_sdk
 from django.conf import settings
 
 
@@ -34,7 +35,7 @@ def get_client_ip(request):
     if settings.DEBUG:
         return '1.2.3.4'
 
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    x_forwarded_for = request.headers.get('x-forwarded-for')
     if x_forwarded_for:
         ip = x_forwarded_for.split(',')[0].strip()
         try:
@@ -53,7 +54,7 @@ class GenericDataFilter(logging.Filter):
         XXX(YYY)
     Where XXX can be anything, YYY must be a serialized json object, and the message ends with )
     Assuming this format, the filter tries to separate the json part, unserialize it and add it as
-    properties of the emessage so graylog can process them. If the parsing does not succeed, the 
+    properties of the message so graylog can process them. If the parsing does not succeed, the
     message is sent as is.
     """
     def filter(self, record):
@@ -71,16 +72,21 @@ class GenericDataFilter(logging.Filter):
 class APILogsFilter(logging.Filter):
 
     def filter(self, record):
-        message = record.getMessage().encode('utf8')
-        try:
-            (message, data, info) = message.split(' #!# ')
-            if ':' in message:
-                message = ' '.join([item.split(':')[0] for item in message.split(' ')])
-            record.api_resource = message
-            for key, value in json.loads(info).items():
-                setattr(record, key, value)
-            for key, value in json.loads(data).items():
-                setattr(record, key, value)
-        except:
-            pass
+        message = record.getMessage()
+        if '#!#' in message:
+            try:
+                (message, data, info) = message.split(' #!# ')
+                if ':' in message:
+                    message = ' '.join([item.split(':')[0] for item in message.split(' ')])
+                record.api_resource = message
+                info_dict = json.loads(info)
+                if info_dict is not None:
+                    for key, value in info_dict.items():
+                        setattr(record, key, urllib.parse.unquote(str(value)) if value is not None else value)
+                data_dict = json.loads(data)
+                if data_dict is not None:
+                    for key, value in data_dict.items():
+                        setattr(record, key, urllib.parse.unquote(str(value)) if value is not None else value)
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
         return True

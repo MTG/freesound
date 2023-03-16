@@ -1,10 +1,9 @@
-from builtins import str
 from django.conf import settings
 import os
 import shutil
 import subprocess
 import logging
-from utils.filesystem import remove_directory_if_empty, create_directories
+from utils.filesystem import remove_directory_if_empty
 
 web_logger = logging.getLogger('web')
 
@@ -12,26 +11,26 @@ web_logger = logging.getLogger('web')
 def copy_files(source_destination_tuples):
     for source_path, destination_path in source_destination_tuples:
         if settings.LOG_START_AND_END_COPYING_FILES:
-            web_logger.info('Started copying file %s to %s' % (source_path, destination_path))
+            web_logger.info(f'Started copying file {source_path} to {destination_path}')
 
         if '@' in destination_path:
             # The destination path is in a remote server, use scp
             try:
-                subprocess.check_output('rsync -e "ssh -o StrictHostKeyChecking=no  -i /ssh_fsweb/cdn-ssh-key-fsweb" -aq --rsync-path="mkdir -p {} && rsync" {} {}/'.format(os.path.dirname(destination_path), source_path, os.path.dirname(destination_path)), stderr=subprocess.STDOUT, shell=True)
+                subprocess.check_output(f'rsync -e "ssh -o StrictHostKeyChecking=no  -i /ssh_fsweb/cdn-ssh-key-fsweb" -aq --rsync-path="mkdir -p {os.path.dirname(destination_path)} && rsync" {source_path} {os.path.dirname(destination_path)}/', stderr=subprocess.STDOUT, shell=True)
                 if settings.LOG_START_AND_END_COPYING_FILES:
-                    web_logger.info('Finished copying file %s to %s' % (source_path, destination_path))
+                    web_logger.info(f'Finished copying file {source_path} to {destination_path}')
             except subprocess.CalledProcessError as e:            
-                web_logger.error('Failed copying %s (%s: %s)' % (source_path, str(e), e.output))
+                web_logger.error(f'Failed copying {source_path} ({str(e)}: {e.output})')
         else:
             # The destioantion path is a local volume
-            create_directories(os.path.dirname(destination_path), exist_ok=True)
+            os.makedirs(os.path.dirname(destination_path), exist_ok=True)
             try:
                 shutil.copy2(source_path, destination_path)
                 if settings.LOG_START_AND_END_COPYING_FILES:
-                    web_logger.info('Finished copying file %s to %s' % (source_path, destination_path))
-            except IOError as e:
+                    web_logger.info(f'Finished copying file {source_path} to {destination_path}')
+            except OSError as e:
                 # File does not exist, no permissions, etc.
-                web_logger.error('Failed copying %s (%s)' % (source_path, str(e)))
+                web_logger.error(f'Failed copying {source_path} ({str(e)})')
 
 
 def copy_files_to_mirror_locations(object, source_location_keys, source_base_path, destination_base_paths):
@@ -76,7 +75,7 @@ def remove_uploaded_file_from_mirror_locations(source_file_path):
                 os.remove(destination_path)
             except OSError as e:
                 # File does not exist, no permissions, etc.
-                web_logger.error('Failed deleting %s (%s)' % (destination_path, str(e)))
+                web_logger.error(f'Failed deleting {destination_path} ({str(e)})')
 
 
 def remove_empty_user_directory_from_mirror_locations(user_uploads_path):

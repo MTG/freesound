@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,10 +18,10 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import url
+from django.urls import re_path
 
 import ratings.views
 
 urlpatterns = [
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/rate/(?P<rating>\d)/$', ratings.views.rate_sound, name="sound-rating-add"),
+    re_path(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/rate/(?P<rating>\d)/$', ratings.views.rate_sound, name="sound-rating-add"),
 ]

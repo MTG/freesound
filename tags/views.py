@@ -29,7 +29,7 @@ import sounds.models
 from follow import follow_utils
 from search.views import search_view_helper
 from tags.models import Tag, FS1Tag
-from utils.frontend_handling import using_beastwhoosh
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.search import SearchEngineException
 from utils.search.search_sounds import perform_search_engine_query
 
@@ -44,16 +44,15 @@ def tags(request, multiple_tags=None):
         multiple_tags = []
     multiple_tags = sorted([x for x in multiple_tags if x])
 
-    
-
     if using_beastwhoosh(request):
         if multiple_tags:
             # If using BW and tags in URL, we re-write tags as query filter and redirect
             tags_as_filter = "+".join('tag:"' + tag + '"' for tag in multiple_tags)
-            return HttpResponseRedirect('{}?f={}'.format(reverse('tags'), tags_as_filter))
+            return HttpResponseRedirect(f"{reverse('tags')}?f={tags_as_filter}")
         else:
             # Share same view code as for the search view, but set "tags mode" on
-            return search_view_helper(request, tags_mode=True)
+            tvars = search_view_helper(request, tags_mode=True)
+            return render(request, 'search/search.html', tvars)
 
     # NOTE: all code below will not be used when NG UI is retired as tags page is calcualted using search views
 
@@ -101,10 +100,10 @@ def tags(request, multiple_tags=None):
 
     except SearchEngineException as e:
         error = True
-        search_logger.error('Search error: %s' % e)
+        search_logger.error(f'Search error: {e}')
     except Exception as e:
         error = True
-        search_logger.error('Could probably not connect to Solr - %s' % e)
+        search_logger.error(f'Could probably not connect to Solr - {e}')
 
     # Calculate follow_tags_url, unfollow_tags_url and show_unfollow_button tvars
     slash_tag = "/".join(multiple_tags)

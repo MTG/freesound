@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -22,7 +20,7 @@
 
 import os
 
-from django.conf.urls import url, include
+from django.urls import path, re_path, include
 from django.contrib import admin
 from django.views.generic import TemplateView, RedirectView
 import accounts.views
@@ -43,122 +41,115 @@ from apiv2.apiv2_utils import apiv1_end_of_life_message
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^$', sounds.views.front_page, name='front-page'),
+    path('', sounds.views.front_page, name='front-page'),
 
-    url(r'^people/$', accounts.views.accounts, name="accounts"),
-    url(r'^people/(?P<username>[^//]+)/$', accounts.views.account, name="account"),
-    url(r'^people/(?P<username>[^//]+)/sounds/$', sounds.views.for_user, name="sounds-for-user"),
-    url(r'^people/(?P<username>[^//]+)/flag/$', accounts.views.flag_user, name="flag-user"),
-    url(r'^people/(?P<username>[^//]+)/clear_flags/$', accounts.views.clear_flags_user, name="clear-flags-user"),
-    url(r'^people/(?P<username>[^//]+)/comments/$', comments.views.for_user, name="comments-for-user"),
-    url(r'^people/(?P<username>[^//]+)/comments_by/$', comments.views.by_user, name="comments-by-user"),
-    url(r'^people/(?P<username>[^//]+)/geotags/$', geotags.views.for_user, name="geotags-for-user"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/$', sounds.views.sound, name="sound"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/download/.*$', sounds.views.sound_download, name="sound-download"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/flag/$', sounds.views.flag, name="sound-flag"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/edit/sources/$', sounds.views.sound_edit_sources, name="sound-edit-sources"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/edit/$', sounds.views.sound_edit, name="sound-edit"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/remixes/$', sounds.views.remixes, name="sound-remixes"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/geotag/$', geotags.views.for_sound, name="sound-geotag"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/delete/$', sounds.views.delete, name="sound-delete"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/similar/$', sounds.views.similar, name="sound-similar"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/downloaders/$', sounds.views.downloaders, name="sound-downloaders"),
-    url(r'^people/(?P<username>[^//]+)/packs/$', sounds.views.packs_for_user, name="packs-for-user"),
-    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/$', sounds.views.pack, name="pack"),
-    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/edit/$', sounds.views.pack_edit, name="pack-edit"),
-    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/delete/$', sounds.views.pack_delete, name="pack-delete"),
-    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
-    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/downloaders/$', sounds.views.pack_downloaders, name="pack-downloaders"),
-    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/licenses/$', sounds.views.pack_licenses, name="pack-licenses"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/display/$', sounds.views.display_sound_wrapper, name="sound-display"),
-    url(r'^people/(?P<username>[^//]+)/downloaded_sounds/$', accounts.views.downloaded_sounds, name="user-downloaded-sounds"),
-    url(r'^people/(?P<username>[^//]+)/downloaded_packs/$', accounts.views.downloaded_packs, name="user-downloaded-packs"),
-    url(r'^people/(?P<username>[^//]+)/bookmarks/$', bookmarks.views.bookmarks_for_user, name="bookmarks-for-user"),
-    url(r'^people/(?P<username>[^//]+)/bookmarks/category/(?P<category_id>\d+)/$', bookmarks.views.bookmarks_for_user, name="bookmarks-for-user-for-category"),
-    url(r'^people/(?P<username>[^//]+)/following_users/$', follow.views.following_users, name="user-following-users"),
-    url(r'^people/(?P<username>[^//]+)/followers/$', follow.views.followers, name="user-followers"),
-    url(r'^people/(?P<username>[^//]+)/following_tags/$', follow.views.following_tags, name="user-following-tags"),
+    path('people/', accounts.views.accounts, name="accounts"),
+    path('people/<username>/', accounts.views.account, name="account"),
+    path('people/<username>/sounds/', sounds.views.for_user, name="sounds-for-user"),
+    path('people/<username>/flag/', accounts.views.flag_user, name="flag-user"),
+    path('people/<username>/clear_flags/', accounts.views.clear_flags_user, name="clear-flags-user"),
+    path('people/<username>/comments/', comments.views.for_user, name="comments-for-user"),
+    path('people/<username>/comments_by/', comments.views.by_user, name="comments-by-user"),
+    path('people/<username>/geotags/', geotags.views.for_user, name="geotags-for-user"),
+    path('people/<username>/sounds/<int:sound_id>/', sounds.views.sound, name="sound"),
+    re_path(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/download/.*$', sounds.views.sound_download, name="sound-download"),
+    path('people/<username>/sounds/<int:sound_id>/flag/', sounds.views.flag, name="sound-flag"),
+    path('people/<username>/sounds/<int:sound_id>/edit/sources/', sounds.views.sound_edit_sources, name="sound-edit-sources"),
+    path('people/<username>/sounds/<int:sound_id>/edit/', sounds.views.sound_edit, name="sound-edit"),
+    path('people/<username>/sounds/<int:sound_id>/remixes/', sounds.views.remixes, name="sound-remixes"),
+    path('people/<username>/sounds/<int:sound_id>/geotag/', geotags.views.for_sound, name="sound-geotag"),
+    path('people/<username>/sounds/<int:sound_id>/delete/', sounds.views.delete, name="sound-delete"),
+    path('people/<username>/sounds/<int:sound_id>/similar/', sounds.views.similar, name="sound-similar"),
+    path('people/<username>/sounds/<int:sound_id>/downloaders/', sounds.views.downloaders, name="sound-downloaders"),
+    path('people/<username>/packs/', sounds.views.packs_for_user, name="packs-for-user"),
+    path('people/<username>/packs/<int:pack_id>/', sounds.views.pack, name="pack"),
+    path('people/<username>/packs/<int:pack_id>/edit/', sounds.views.pack_edit, name="pack-edit"),
+    path('people/<username>/packs/<int:pack_id>/delete/', sounds.views.pack_delete, name="pack-delete"),
+    re_path(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
+    path('people/<username>/packs/<int:pack_id>/downloaders/', sounds.views.pack_downloaders, name="pack-downloaders"),
+    path('people/<username>/packs/<int:pack_id>/licenses/', sounds.views.pack_licenses, name="pack-licenses"),
+    path('people/<username>/sounds/<int:sound_id>/display/', sounds.views.display_sound_wrapper, name="sound-display"),
+    path('people/<username>/downloaded_sounds/', accounts.views.downloaded_sounds, name="user-downloaded-sounds"),
+    path('people/<username>/downloaded_packs/', accounts.views.downloaded_packs, name="user-downloaded-packs"),
+    path('people/<username>/bookmarks/', bookmarks.views.bookmarks_for_user, name="bookmarks-for-user"),
+    path('people/<username>/bookmarks/category/<int:category_id>/', bookmarks.views.bookmarks_for_user, name="bookmarks-for-user-for-category"),
+    path('people/<username>/following_users/', follow.views.following_users, name="user-following-users"),
+    path('people/<username>/followers/', follow.views.followers, name="user-followers"),
+    path('people/<username>/following_tags/', follow.views.following_tags, name="user-following-tags"),
 
-    url(r'^charts/$', accounts.views.charts, name="charts"),  # BW only
+    path('charts/', accounts.views.charts, name="charts"),  # BW only
 
-    url(r'^embed/sound/iframe/(?P<sound_id>\d+)/simple/(?P<player_size>\w+)/$', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
-    url(r'^embed/geotags_box/iframe/$', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
-    url(r'^oembed/$', sounds.views.oembed, name="oembed-sound"),
+    path('embed/sound/iframe/<int:sound_id>/simple/<player_size>/', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
+    path('embed/geotags_box/iframe/', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
+    path('oembed/', sounds.views.oembed, name="oembed-sound"),
 
-    url(r'^after-download-modal/$', sounds.views.after_download_modal, name="after-download-modal"),
+    path('after-download-modal/', sounds.views.after_download_modal, name="after-download-modal"),
 
-    url(r'^browse/$', sounds.views.sounds, name="sounds"),
-    url(r'^browse/tags/$', tags.views.tags, name="tags"),
-    url(r'^browse/tags/(?P<multiple_tags>[\w//-]+)/$', tags.views.tags, name="tags"),
-    url(r'^browse/packs/$', sounds.views.packs, name="packs"),
-    url(r'^browse/comments/$', comments.views.all, name="comments"),
-    url(r'^browse/random/$', sounds.views.random, name="sounds-random"),
-    url(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
-    url(r'^browse/geotags_box/$', geotags.views.geotags_box, name="geotags-box"),
+    path('browse/', sounds.views.sounds, name="sounds"),
+    path('browse/tags/', tags.views.tags, name="tags"),
+    re_path(r'^browse/tags/(?P<multiple_tags>[\w//-]+)/$', tags.views.tags, name="tags"),
+    path('browse/packs/', sounds.views.packs, name="packs"),
+    path('browse/comments/', comments.views.all, name="comments"),
+    path('browse/random/', sounds.views.random, name="sounds-random"),
+    re_path(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
+    path('browse/geotags_box/', geotags.views.geotags_box, name="geotags-box"),
 
-    url(r'^browse/remixed/$',
-        sounds.views.remixed,
-        name="remix-groups"),
+    path('browse/remixed/', sounds.views.remixed, name="remix-groups"),
+    path('browse/remixed/<int:group_id>/', sounds.views.remix_group, name="remix-group"),
 
-    url(r'^browse/remixed/(?P<group_id>\d+)/$',
-        sounds.views.remix_group,
-        name="remix-group"),
+    path('contact/', support.views.contact, name="contact"),
 
-    url(r'^contact/', support.views.contact, name="contact"),
+    path('search/', search.views.search, name='sounds-search'),
+    path('clustering_facet/', search.views.clustering_facet, name='clustering-facet'),
+    path('clustered_graph/', search.views.clustered_graph, name='clustered-graph-json'),
+    path('query_suggestions/', search.views.query_suggestions, name='query-suggestions'),
 
-    url(r'^search/$', search.views.search, name='sounds-search'),
-    url(r'^clustering_facet/$', search.views.clustering_facet, name='clustering-facet'),
-    url(r'^clustered_graph/$', search.views.clustered_graph, name='clustered-graph-json'),
-    url(r'^query_suggestions/$', search.views.query_suggestions, name='query-suggestions'),
+    path('add_sounds_modal/sources/', sounds.views.add_sounds_modal_for_edit_sources, name="add-sounds-modal-sources"),
+    path('add_sounds_modal/pack/<int:pack_id>/', sounds.views.add_sounds_modal_for_pack_edit, name="add-sounds-modal-pack"),
+    
+    path('', include('ratings.urls')),
+    path('comments/', include('comments.urls')),
+    path('help/', include('wiki.urls')),
+    path('forum/', include('forum.urls')),
+    path('geotags/', include('geotags.urls')),
+    path('home/', include('accounts.urls')),
+    path('donations/', include('donations.urls')),
+    path('tickets/', include('tickets.urls')),
+    path('monitor/', include('monitor.urls')),
+    path('follow/', include('follow.urls')),
 
-    url(r'', include('ratings.urls')),
-    url(r'^comments/', include('comments.urls')),
-    url(r'^help/', include('wiki.urls')),
-    url(r'^forum/', include('forum.urls')),
-    url(r'^geotags/', include('geotags.urls')),
-    url(r'^home/', include('accounts.urls')),
-    url(r'^donations/', include('donations.urls')),
-    url(r'^tickets/', include('tickets.urls')),
-    url(r'^monitor/', include('monitor.urls')),
-    url(r'^follow/', include('follow.urls')),
-
-    url(r'^blog/$', RedirectView.as_view(url='https://blog.freesound.org/'), name="blog"),
-    url(r'^crossdomain\.xml$', TemplateView.as_view(template_name='crossdomain.xml'), name="crossdomain"),
+    path('blog/', RedirectView.as_view(url='https://blog.freesound.org/'), name="blog"),
+    re_path(r'^crossdomain\.xml$', TemplateView.as_view(template_name='crossdomain.xml'), name="crossdomain"),
 
     # admin views
-    url(r'^admin/orderedmove/(?P<direction>up|down)/(?P<model_type_id>\d+)/(?P<model_id>\d+)/$', general.views.admin_move_ordered_model, name="admin-move"),
-    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-    url(r'^admin/', admin.site.urls),
+    re_path(r'^admin/orderedmove/(?P<direction>up|down)/(?P<model_type_id>\d+)/(?P<model_id>\d+)/$',
+            general.views.admin_move_ordered_model, name="admin-move"),
+    path('admin/doc/', include('django.contrib.admindocs.urls')),
+    path('admin/', admin.site.urls),
 
     # api views
-    url(r'^api/', apiv1_end_of_life_message),
-
-    # apiv2 views
-    url(r'^apiv2/', include('apiv2.urls')),
+    path('api/', apiv1_end_of_life_message),
+    path('apiv2/', include('apiv2.urls')),
 
     # tag recommendation
-    url(r'^tagrecommendation/recommendtags/$', tagrec.get_recommended_tags_view, name="recommend-tags"),
+    path('tagrecommendation/recommendtags/', tagrec.get_recommended_tags_view, name="recommend-tags"),
 
     # 500 view
-    url(r'^crash_me/$',
-        accounts.views.crash_me,
-        name="crash-me"),
+    path('crash_me/', accounts.views.crash_me, name="crash-me"),
 
-    url(r'^donate/', donations.views.donate_redirect, name="donate-redirect"),
-    url(r'^s/(?P<sound_id>\d+)/$', sounds.views.sound_short_link, name="short-sound-link"),
-    url(r'^p/(?P<pack_id>\d+)/$', sounds.views.pack_short_link, name="short-pack-link"),
-
+    path('donate/', donations.views.donate_redirect, name="donate-redirect"),
+    path('s/<int:sound_id>/', sounds.views.sound_short_link, name="short-sound-link"),
+    path('p/<int:pack_id>/', sounds.views.pack_short_link, name="short-pack-link"),
 
     # old url format redirects
-    url(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
-    url(r'^samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),
-    url(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
-    url(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
-    url(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
-
+    path('usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
+    path('samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),
+    path('packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
+    path('tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
+    path('forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
 ]
 
-urlpatterns += [url(r'^silk/', include('silk.urls', namespace='silk'))]
+urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]
 
 # if you need django to host the admin files...
 from django.conf import settings
@@ -172,8 +163,10 @@ if settings.DEBUG:
         return serve(request, path, document_root=document_root, show_indexes=False)
 
     urlpatterns += [
-        url(r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), serve, {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
-        url(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve, {'document_root': settings.DATA_PATH, 'show_indexes': True}),
-        url(r'^__debug__/', include(debug_toolbar.urls)),
-        url(r'^.*\.map$', serve_source_map_files),
+        re_path(r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), serve,
+                {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
+        re_path(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve,
+                {'document_root': settings.DATA_PATH, 'show_indexes': True}),
+        path('__debug__/', include(debug_toolbar.urls)),
+        re_path(r'^.*\.map$', serve_source_map_files),
     ]

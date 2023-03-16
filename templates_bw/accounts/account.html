@@ -2,7 +2,7 @@
 
 {% load display_sound %}
 {% load display_pack %}
-{% load staticfiles %}
+{% load static %}
 {% load filter_img %}
 {% load bw_templatetags %}
 {% load tags %}
@@ -22,7 +22,7 @@
             </div>
             <div class="v-spacing-top-3">
                 {% if home %}
-                    <a class="no-hover btn-inverse btn-profile-adapt" href="#">Manage uploads</a>
+                    <a class="no-hover btn-inverse btn-profile-adapt" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
                     <a class="no-hover btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url 'accounts-edit' %}">Edit profile</a>
                 {% else %}
                     {% if not user.profile.is_deleted_user %}
@@ -104,7 +104,7 @@
                     {% for sounds_chunk in latest_sounds|chunks:3 %}
                         <div class="row no-margins">
                             {% for sound in sounds_chunk %}
-                                <div class="col-4">
+                                <div class="col-6 col-lg-4">
                                     {% display_sound_small sound %}
                                 </div>
                             {% endfor %}
@@ -125,7 +125,7 @@
                     {% for packs_chunk in latest_packs|chunks:3 %}
                         <div class="row no-margins">
                             {% for pack in packs_chunk %}
-                                <div class="col-6 col-sm-4">
+                                <div class="col-6 col-lg-4">
                                     {% display_pack pack %}
                                 </div>
                             {% endfor %}
@@ -152,10 +152,10 @@
                 <section class="bw-profile__section_stats v-spacing-top-4">
                     <ol>
                         <li class="v-spacing-3">
-                            {% bw_icon 'wave' 'text-light-grey' %} <a class="bw-link--black no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1"><span class="text-21">{{ user.profile.num_sounds }}</span> <span class="text-grey text-17">sounds</span></a>
+                            {% bw_icon 'wave' 'text-light-grey' %} <a class="bw-link--black no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1"><span class="text-21">{{ user.profile.num_sounds }}</span> <span class="text-grey text-17">sound{{ user.profile.num_sounds|pluralize }}</span></a>
                         </li>
                         <li class="v-spacing-3">
-                            {% bw_icon 'stack' 'text-light-grey' %} <a class="bw-link--black no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1&only_p=1"><span class="text-21">{{ user.profile.num_packs }}</span> <span class="text-grey text-17">packs</span></a>
+                            {% bw_icon 'stack' 'text-light-grey' %} <a class="bw-link--black no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1&only_p=1"><span class="text-21">{{ user.profile.num_packs }}</span> <span class="text-grey text-17">pack{{ user.profile.num_packs|pluralize }}</span></a>
                         </li>
                         <li class="v-spacing-3">
                             {% bw_icon 'clock' 'text-light-grey' %} <span class="text-21">{{ user.profile.get_total_uploaded_sounds_length|duration_hours }}</span> <span class="text-grey text-17">hours of audio</span>

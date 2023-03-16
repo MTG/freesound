@@ -11,7 +11,7 @@ RUN make clean && make
 
 # --- main Freesound docker file contents
 
-FROM freesound:2020-02
+FROM freesound:2023-01
 
 # Install specific dependencies needed for processing, building static files and for ssh
 RUN wget -q -O - https://deb.nodesource.com/setup_14.x | bash - && apt-get update \
@@ -43,8 +43,9 @@ WORKDIR /code
 COPY --from=stereofy /code/stereofy /usr/local/bin
 
 # Install python dependencies
+# Some of our "old" dependencies require setuptools<=58, once we upgrade dependencies we could try unpinning setuptools
 COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir -r /code/requirements.txt
+RUN pip3 install --no-cache-dir -U pip 'setuptools<=58' && pip3 install --no-cache-dir -r /code/requirements.txt
 
 # Copy source code
 COPY --chown=fsweb:fsweb . /code

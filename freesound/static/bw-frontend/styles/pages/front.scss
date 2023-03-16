@@ -2,8 +2,8 @@
   margin-left: auto;
   margin-right: auto;
   max-width: 780px;
-  padding-top: 200px;
-  padding-bottom: 88px;
+  padding-top: 140px;
+  padding-bottom: 30px;
 
   header {
     text-align: center;
@@ -15,10 +15,14 @@
 }
 
 .bw-front__hero-container--search {
-  margin-top: 100px;
+  margin-top: 50px;
 
   .input-wrapper {
     height: 50px;
+  }
+
+  .input-typeahead-suggestions {
+    margin-top: 5px;
   }
 }
 
@@ -40,6 +44,6 @@
 .bw-front__freesound_labs_logo {
   max-width: 225px;
   height: 41px;
-  background-image: url('assets/logos/logo-labs-text.svg');
+  background-image: url($logo-freesound-labs);
   background-repeat: no-repeat;
 }

@@ -1,3 +1,7 @@
+{% if not request.user.is_authenticated %}
+    <p>Please, login to Freesound before bookmarking any sounds.</p>
+{% else %}
+
 <script type="text/javascript">
     
     function post_bookmark(id)
@@ -12,7 +16,8 @@
             data: {
                 name: $("#id_" + id.toString() + "-name").val(),
                 category: $("#id_" + id.toString() + "-category").val(),
-                new_category_name: $("#id_" + id.toString() + "-new_category_name").val()
+                new_category_name: $("#id_" + id.toString() + "-new_category_name").val(),
+                sound_id: $("#id_" + id.toString() + "-sound_id").val()
             },
                 success: function(data) {
                     display_bookmark_feedback(id,data);
@@ -42,8 +47,24 @@
         }, 2000);
     }
 
-</script>
+    function toggleVisibility(select, element) {
+        if (select.value == '0'){
+            // No category is selected, show the new category name input
+            element.show();
+        } else {
+            element.hide();
+        }
+    }
 
+    $(document).ready( function() {
+        var selectElement = $("#id_{{ sound_id }}-category");
+        var newCategoryElementParent = $("#id_{{ sound_id }}-new_category_name").parent()
+        toggleVisibility(selectElement, newCategoryElementParent)
+        selectElement.change(function (evt) {
+            toggleVisibility(evt.target, newCategoryElementParent)
+        });
+    });
+</script>
 	
 <div class = "bookmark_info_message" id="bookmark_info_message_{{sound_id}}" style="display:none"></div>
 <p>
@@ -61,7 +82,6 @@
 {{form.as_p}}
 
 <p>
-    <span class="info_text">Name and category fields are optional</span>
     <br style="clear"/>
     <a href="javascript:void(0)"  title="Close" onclick="show_hide_bookmark_form({{sound_id}})">Close</a>
     <input type="button" onclick="post_bookmark({{sound_id}})" style="float:right" value="Add bookmark!"/>
@@ -69,3 +89,4 @@
 </p>
 
 
+{% endif %}

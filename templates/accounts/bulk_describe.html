@@ -13,9 +13,8 @@
     </p>
     <script>setTimeout(function(){ window.location.reload(1); }, 3500);</script>
 
-    <form action="{% url "accounts-bulk-describe" bulk.id %}" method="GET" class="disable-on-submit">
-        <input id="hidden_action" type="hidden" name="action" value="" />
-        <input style="float:left;" type="submit" onclick="$('#hidden_action').attr('value', 'delete');" value="Delete this data file and upload a new one" />
+    <form action="{% url "accounts-bulk-describe" bulk.id %}" method="POST" class="disable-on-submit">{% csrf_token %}
+        <button style="float:left;" type="submit" name="delete">Delete this data file and upload a new one</button>
         <br style="clear:both;"/>
     </form>
 
@@ -116,11 +115,9 @@
         </table>
     {% endif %}
 
-    <form action="{% url "accounts-bulk-describe" bulk.id %}" method="GET" class="disable-on-submit">
-        <input id="hidden_action" type="hidden" name="action" value="" />
-        <input style="float:left;" type="submit" onclick="$('#hidden_action').attr('value', 'delete');" value="Delete this data file and upload a new one" />
-        <input style="float:right;" type="submit" onclick="$('#hidden_action').attr('value', 'start');" value="Continue and add the {{ lines_validated_ok|length }} valid sound{{ lines_validated_ok|length|pluralize }} to Freesound"
-            {% if not lines_validated_ok|length %}disabled="disabled"{% endif %}/>
+    <form action="{% url "accounts-bulk-describe" bulk.id %}" method="POST" class="disable-on-submit">{% csrf_token %}
+        <button style="float:left;" type="submit" name="delete">Delete this data file and upload a new one</button>
+        <button style="float:right;" type="submit" name="start" {% if not lines_validated_ok|length %}disabled="disabled"{% endif %}>Continue and add the {{ lines_validated_ok|length }} valid sound{{ lines_validated_ok|length|pluralize }} to Freesound</button>
         <br style="clear:both;"/>
     </form>
 
@@ -193,9 +190,8 @@
         <p>
             Click on the button below to close this bulk description process and stop showing it in your home screen.
         </p>
-        <form action="{% url "accounts-bulk-describe" bulk.id %}" method="GET">
-            <input id="hidden_action" type="hidden" name="action" value="" />
-            <input type="submit" onclick="$('#hidden_action').attr('value', 'close');" value="Close this process" />
+        <form action="{% url "accounts-bulk-describe" bulk.id %}" method="POST">{% csrf_token %}
+            <button type="submit" name="close">Close this process</button>
         </form>
     {% endif %}
 {% endif %}

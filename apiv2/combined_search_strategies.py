@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -19,12 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from __future__ import absolute_import
-from __future__ import division
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
 from past.utils import old_div
 from apiv2.forms import API_SORT_OPTIONS_MAP
 from utils.similarity_utilities import api_search as similarity_api_search
@@ -283,7 +275,7 @@ def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=
         current_page = start_page
         n_page_requests = 1
         # Iterate over gaia result pages
-        while (len(gaia_ids) < gaia_count or gaia_count == None) and n_page_requests <= max_pages:
+        while (gaia_count is None or len(gaia_ids) < gaia_count) and n_page_requests <= max_pages:
             if not offset:
                 offset = (current_page - 1) * page_size
             results, count, note = similarity_api_search(target=search_form.cleaned_data['target'],
@@ -299,19 +291,18 @@ def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=
                 # Save sound distance to target into so it can be later used in the view class and added to results
                 distance_to_target_data.update(dict(results))
 
-            #print 'Gaia page %i (total %i sounds)' % (current_page, gaia_count)
             current_page += 1
             n_page_requests += 1
 
     except SimilarityException as e:
         if e.status_code == 500:
-            raise ServerErrorException(msg=e.message)
+            raise ServerErrorException(msg=str(e))
         elif e.status_code == 400:
-            raise BadRequestException(msg=e.message)
+            raise BadRequestException(msg=str(e))
         elif e.status_code == 404:
-            raise NotFoundException(msg=e.message)
+            raise NotFoundException(msg=str(e))
         else:
-            raise ServerErrorException(msg='Similarity server error: %s' % e.message)
+            raise ServerErrorException(msg=f'Similarity server error: {str(e)}')
     except Exception as e:
         raise ServerErrorException(msg='The similarity server could not be reached or some unexpected error occurred.')
 
@@ -327,7 +318,7 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
         # Update solr filter to only return results in valid ids
         ids_filter = 'id:(' + ' OR '.join([str(item) for item in valid_ids]) + ')'
         if query_filter:
-            query_filter += ' %s' % ids_filter
+            query_filter += f' {ids_filter}'
         else:
             query_filter = ids_filter
 
@@ -338,7 +329,7 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
         current_page = start_page
         n_page_requests = 1
         # Iterate over solr result pages
-        while (len(solr_ids) < solr_count or solr_count == None) and n_page_requests <= max_pages:
+        while (solr_count is None or len(solr_ids) < solr_count) and n_page_requests <= max_pages:
             # We need to convert the sort parameter to standard sorting options from
             # settings.SEARCH_SOUNDS_SORT_OPTION_X. Therefore here we convert to the standard names and later
             # the get_search_engine().search_sounds() function will convert it back to search engine meaningful names
@@ -356,12 +347,11 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
             solr_ids += [element['id'] for element in result.docs]
             solr_count = result.num_found
 
-            #print 'Solr page %i (total %i sounds)' % (current_page, solr_count)
             current_page += 1
             n_page_requests += 1
 
     except SearchEngineException as e:
-        raise ServerErrorException(msg='Search server error: %s' % e.message)
+        raise ServerErrorException(msg=f'Search server error: {str(e)}')
     except Exception as e:
         raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.')
     return solr_ids, solr_count

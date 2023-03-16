@@ -1,4 +1,3 @@
-from __future__ import print_function
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -19,8 +18,6 @@ from __future__ import print_function
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
 import json
 import logging
 import traceback
@@ -40,7 +37,7 @@ web_logger = logging.getLogger('web')
 
 def get_recommended_tags(input_tags, max_number_of_tags=30):
 
-    hashed_tags = md5(",".join(sorted(input_tags)))
+    hashed_tags = md5(",".join(sorted(input_tags)).encode())
     cache_key = "recommended-tags-for-%s" % (hashed_tags.hexdigest())
 
     recommended_tags = False
@@ -61,6 +58,7 @@ def get_recommended_tags(input_tags, max_number_of_tags=30):
 
 def get_recommended_tags_view(request):
     if request.is_ajax() and request.method == 'POST':
+        print(request.POST)
         input_tags = request.POST.get('input_tags', False)
         if input_tags:
             input_tags = list(clean_and_split_tags(input_tags))

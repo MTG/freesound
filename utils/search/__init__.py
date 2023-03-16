@@ -1,4 +1,3 @@
-from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -19,9 +18,7 @@ from __future__ import division
 #     See AUTHORS file.
 #
 
-from builtins import range
 from past.utils import old_div
-from builtins import object
 import importlib
 
 from django.conf import settings
@@ -41,7 +38,7 @@ def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS):
     return getattr(module, class_name)()
 
 
-class SearchResults(object):
+class SearchResults:
 
     def __init__(self, docs=None, num_found=-1, start=-1, num_rows=-1, non_grouped_number_of_results=-1,
                  facets=None, highlighting=None, q_time=-1):
@@ -54,6 +51,7 @@ class SearchResults(object):
                 of a sound), but it can also include other properties. Here is a list of possible properties:
                 - id (int): ID of the matched object (a sound or forum post). If results are grouped, this will be the ID of
                     the first matching result in the group
+                - score (float): score of the matched object as provided by the search engine
                 - group_name (str): the name of the group. This includes the value of the grouping field shared by all
                     grouped results (only if grouping).
                 - group_docs (List[Dict]): information about of results in the group. This is a list of dictionaries
@@ -141,10 +139,10 @@ class SearchResults(object):
         self.q_time = q_time
 
     def __str__(self):
-        return '<SearchResults with {} results found>'.format(self.num_found)
+        return f'<SearchResults with {self.num_found} results found>'
 
 
-class SearchResultsPaginator(object):
+class SearchResultsPaginator:
 
     def __init__(self, search_results, num_per_page):
         """Paginator object for search results which has a similar API to django.core.paginator.Paginator
@@ -179,7 +177,7 @@ class SearchEngineException(Exception):
     pass
 
 
-class SearchEngineBase(object):
+class SearchEngineBase:
 
     # Test subclasses of SearchEngineBase with the test_search_engine_backend management command
 

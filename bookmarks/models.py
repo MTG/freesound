@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -28,22 +25,22 @@ from sounds.models import Sound
 
 
 class BookmarkCategory(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=128, default="")
     
-    def __unicode__(self):
-        return u"%s" % self.name
+    def __str__(self):
+        return f"{self.name}"
 
 
 class Bookmark(models.Model):
-    user = models.ForeignKey(User)
-    name = models.CharField(max_length=128, default="", blank=True)
-    category = models.ForeignKey(BookmarkCategory, blank=True, null=True, default=None, related_name='bookmarks')
-    sound = models.ForeignKey(Sound)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    category = models.ForeignKey(
+        BookmarkCategory, blank=True, null=True, default=None, related_name='bookmarks', on_delete=models.SET_NULL)
+    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
-    def __unicode__(self):
-        return u"Bookmark: %s" % self.name
+    def __str__(self):
+        return f"Bookmark: {self.name}"
 
     @property
     def category_name_or_uncategorized(self):
@@ -53,12 +50,9 @@ class Bookmark(models.Model):
             return self.category.name
 
     @property
-    def name_or_sound_name(self):
-        # NOTE: this is no longer used in BW as we don't use the concept of custom names for boomarks
-        if self.name:
-            return self.name
-        else:
-            return self.sound.original_filename
+    def sound_name(self):
+        return self.sound.original_filename
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created", )
+        unique_together = (('user_id', 'category_id', 'sound_id'),)

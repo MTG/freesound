@@ -17,32 +17,30 @@
 # Authors:
 #     See AUTHORS file.
 #
-
-from backports import csv
-from builtins import next
-from builtins import zip
-from builtins import str
-from builtins import range
-from builtins import open
+import csv
+import hashlib
 import json
 import logging
 import os
 import shutil
 from collections import defaultdict
 
+import openpyxl
 import xlrd
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.utils.text import slugify
 
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
 from utils.cache import invalidate_user_template_caches
-from utils.filesystem import md5file, remove_directory_if_empty, create_directories
+from utils.filesystem import md5file, remove_directory_if_empty, remove_directory
 from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
     remove_uploaded_file_from_mirror_locations
-from utils.text import slugify, remove_control_chars
+from utils.text import remove_control_chars
 
 console_logger = logging.getLogger('console')
 sounds_logger = logging.getLogger('sounds')
@@ -69,6 +67,36 @@ def _remove_user_uploads_folder_if_empty(user):
     user_uploads_dir = user.profile.locations()['uploads_dir']
     remove_directory_if_empty(user_uploads_dir)
     remove_empty_user_directory_from_mirror_locations(user_uploads_dir)
+
+
+def clean_processing_before_describe_files(audio_file_path):
+    directory_path = get_processing_before_describe_sound_folder(audio_file_path)
+    if os.path.exists(directory_path):
+        remove_directory(directory_path)
+
+
+def get_duration_from_processing_before_describe_files(audio_file_path):
+    info_file_path = os.path.join(get_processing_before_describe_sound_folder(audio_file_path), 'info.json')
+    try:
+        with open(info_file_path) as f:
+            return float(json.load(f)['duration'])
+    except Exception as e:
+        return 0.0
+
+
+def get_processing_before_describe_sound_folder(audio_file_path):
+    """
+    Get the path to the folder where the sound files generated during procesing-before-describe
+    should be stored.
+    """    
+    user_id = os.path.basename(os.path.dirname(audio_file_path))
+    hash = str(hashlib.md5(audio_file_path.encode()).hexdigest())
+    return os.path.join(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, user_id, hash)
+
+
+def get_processing_before_describe_sound_base_url(audio_file_path):
+    path = get_processing_before_describe_sound_folder(audio_file_path)
+    return settings.PROCESSING_BEFORE_DESCRIPTION_URL + '/'.join(path.split('/')[-2:]) + '/'
 
 
 def create_sound(user,
@@ -113,7 +141,7 @@ def create_sound(user,
     except OSError:
         raise NoAudioException()
 
-    if type(sound_fields['license']) == License:
+    if isinstance(sound_fields['license'], License):
         license = sound_fields['license']
     else:
         # Get license, sort by -id so that 4.0 licenses appear before 3.0
@@ -149,7 +177,7 @@ def create_sound(user,
     sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
     new_original_path = sound.locations("path")
     if sound.original_path != new_original_path:
-        create_directories(os.path.dirname(new_original_path), exist_ok=True)
+        os.makedirs(os.path.dirname(new_original_path), exist_ok=True)
         try:
             shutil.move(sound.original_path, new_original_path)
 
@@ -159,8 +187,8 @@ def create_sound(user,
             remove_uploaded_file_from_mirror_locations(sound.original_path)
             _remove_user_uploads_folder_if_empty(sound.user)
 
-        except IOError as e:
-            raise CantMoveException("Failed to move file from %s to %s" % (sound.original_path, new_original_path))
+        except OSError as e:
+            raise CantMoveException(f"Failed to move file from {sound.original_path} to {new_original_path}")
         sound.original_path = new_original_path
         sound.save()
 
@@ -235,7 +263,7 @@ def create_sound(user,
             if sound.pack:
                 sound.pack.process()
         except Exception as e:
-            sounds_logger.info('Error sending sound to process and analyze: %s' % str(e))
+            sounds_logger.info(f'Error sending sound to process and analyze: {str(e)}')
 
     # Log
     if sound.uploaded_with_apiv2_client is not None:
@@ -267,24 +295,27 @@ def get_csv_lines(csv_file_path):
     between "header" and "row")
     """
 
-    def xls_val_to_string(val):
-        if type(val) == str:
-            return str(val.encode('utf-8'))
-        else:
-            return str(val)
-
     if csv_file_path.endswith('.csv'):
         # Read CSV formatted file
-        reader = csv.reader(open(csv_file_path, 'r', newline='', encoding="utf-8"))
-        header = next(reader)
-        lines = [dict(zip(header, row)) for row in reader]
-    elif csv_file_path.endswith('.xls') or csv_file_path.endswith('.xlsx'):
+        with open(csv_file_path, newline='', encoding="utf-8") as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            lines = [dict(zip(header, row)) for row in reader]
+    elif csv_file_path.endswith('.xls'):
         # Read from Excel format
         wb = xlrd.open_workbook(csv_file_path)
         s = wb.sheet_by_index(0)  # Get first excel sheet
         header = s.row_values(0)
         lines = [dict(zip(header, row)) for row in
-                 [[xls_val_to_string(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
+                 [[str(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
+    elif csv_file_path.endswith('.xlsx'):
+        # Read from Excel format
+        wb = openpyxl.load_workbook(filename=csv_file_path)
+        s = wb[wb.sheetnames[0]]  # Get first excel sheet
+        rows = list(s.values)
+        header = list(rows[0])
+        lines = [dict(zip(header, row)) for row in
+                 [[str(val) if val is not None else '' for val in rows[i]] for i in range(1, len(rows))]]
     else:
         header = []
         lines = []
@@ -345,7 +376,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
 
             # Check that number of columns is ok
             if len(line) != len(EXPECTED_HEADER) and username is None:
-                line_errors['columns'] = 'Row should have %i columns but it has %i.' % (len(EXPECTED_HEADER), len(line))
+                line_errors['columns'] = f'Row should have {len(EXPECTED_HEADER)} columns but it has {len(line)}.'
                 n_columns_is_ok = False
 
             if len(line) != len(EXPECTED_HEADER_NO_USERNAME) and username is not None:
@@ -376,8 +407,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                         src_path = os.path.join(sounds_base_dir, audio_filename)
                         if not os.path.exists(src_path):
                             line_errors['audio_filename'] = "Audio file does not exist. This should be the name of " \
-                                                            "one of the audio files you <a href='%s'>previously " \
-                                                            "uploaded</a>." % reverse('accounts-describe')
+                                                            "one of the audio files you previously uploaded."
                         else:
                             if src_path in filenames_to_describe:
                                 line_errors['audio_filename'] = "Audio file can only be described once."
@@ -489,7 +519,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
         console_logger.info('Major issues were found while validating the CSV file. '
                             'Fix them and re-run the command.')
         for error in global_errors:
-            console_logger.info('- %s' % error)
+            console_logger.info(f'- {error}')
         return
 
     # Print line error messages if any
@@ -499,10 +529,10 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             console_logger.info('The following %i lines contain invalid data. Fix them or re-run with -f to import '
                                 'skipping these lines:' % len(lines_with_errors))
         else:
-            console_logger.info('Skipping the following %i lines due to invalid data' % len(lines_with_errors))
+            console_logger.info(f'Skipping the following {len(lines_with_errors)} lines due to invalid data')
         for line in lines_with_errors:
             errors = '; '.join(line['line_errors'].values())
-            console_logger.info('l%s: %s' % (line['line_no'], errors))
+            console_logger.info(f"l{line['line_no']}: {errors}")
         if not force_import:
             return
 
@@ -517,7 +547,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
 
     # Start the actual process of uploading files
     lines_ok = [line for line in lines_validated if not line['line_errors']]
-    console_logger.info('Adding %i sounds to Freesound' % len(lines_ok))
+    console_logger.info(f'Adding {len(lines_ok)} sounds to Freesound')
     for line in lines_ok:
         line_cleaned = line['line_cleaned']
 
@@ -526,7 +556,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
 
         # Move sounds to the user upload directory (if sounds are not already there)
         user_uploads_directory = user.profile.locations()['uploads_dir']
-        create_directories(user_uploads_directory, exist_ok=True)
+        os.makedirs(user_uploads_directory, exist_ok=True)
         src_path = os.path.join(sounds_base_dir, line_cleaned['audio_filename'])
         dest_path = os.path.join(user_uploads_directory, os.path.basename(line_cleaned['audio_filename']))
         if src_path != dest_path:
@@ -565,7 +595,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
 
             message = 'l%i: Successfully added sound \'%s\' to Freesound.' % (line['line_no'], sound.original_filename,)
             if error_sending_to_process is not None:
-                message += ' Sound could have not been sent to process (%s).' % error_sending_to_process
+                message += f' Sound could have not been sent to process ({error_sending_to_process}).'
             console_logger.info(message)
 
         except NoAudioException:
@@ -580,14 +610,14 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             if bulk_upload_progress_object:
                 bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)
         except CantMoveException as e:
-            message = 'l%i: %s.' % (line['line_no'], e.message,)
+            message = 'l%i: %s.' % (line['line_no'], str(e),)
             console_logger.info(message)
             if bulk_upload_progress_object:
                 bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)
         except Exception as e:
             # If another unexpected exception happens, show a message and continue with the process so that
             # other sounds can be added
-            message = 'l%i: Unexpected error %s.' % (line['line_no'], e.message,)
-            console_logger.info(message)
+            message = 'l%i: Unexpected error %s.' % (line['line_no'], str(e),)
+            console_logger.info(message, exc_info=True)
             if bulk_upload_progress_object:
                 bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)

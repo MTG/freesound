@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,15 +18,13 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
-from builtins import object
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django.db import models
 from django.db.models.signals import post_save
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 import uuid
 from utils.mail import send_mail_template
 
@@ -38,7 +34,7 @@ class Queue(models.Model):
     groups          = models.ManyToManyField(Group)
     notify_by_email = models.BooleanField()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -53,11 +49,11 @@ class Ticket(models.Model):
     created         = models.DateTimeField(db_index=True, auto_now_add=True)
     modified        = models.DateTimeField(auto_now=True)
     comment_date    = models.DateTimeField(null=True)
-    last_commenter  = models.ForeignKey(User, related_name='commented_tickets', null=True)
-    sender          = models.ForeignKey(User, related_name='sent_tickets', null=True)
+    last_commenter  = models.ForeignKey(User, related_name='commented_tickets', null=True, on_delete=models.SET_NULL)
+    sender          = models.ForeignKey(User, related_name='sent_tickets', null=True, on_delete=models.SET_NULL)
     sender_email    = models.EmailField(null=True)
-    assignee        = models.ForeignKey(User, related_name='assigned_tickets', null=True)
-    queue           = models.ForeignKey(Queue, related_name='tickets')
+    assignee        = models.ForeignKey(User, related_name='assigned_tickets', null=True, on_delete=models.SET_NULL)
+    queue           = models.ForeignKey(Queue, related_name='tickets', on_delete=models.CASCADE)
     sound           = models.OneToOneField('sounds.Sound', null=True, on_delete=models.SET_NULL)
 
     NOTIFICATION_QUESTION     = 'tickets/email_notification_question.txt'
@@ -99,12 +95,12 @@ class Ticket(models.Model):
                                    user_to=self.sender)
 
     def get_absolute_url(self):
-        return reverse('ticket', args=[smart_text(self.key)])
+        return reverse('ticket', args=[smart_str(self.key)])
 
-    def __unicode__(self):
-        return u"pk %s, key %s" % (self.id, self.key)
+    def __str__(self):
+        return f"pk {self.id}, key {self.key}"
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
         permissions = (
             ("can_moderate", "Can moderate stuff."),
@@ -112,17 +108,17 @@ class Ticket(models.Model):
 
 
 class TicketComment(models.Model):
-    sender          = models.ForeignKey(User, null=True)
+    sender          = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     text            = models.TextField()
     created         = models.DateTimeField(auto_now_add=True)
-    ticket          = models.ForeignKey(Ticket, related_name='messages')
+    ticket          = models.ForeignKey(Ticket, related_name='messages', on_delete=models.CASCADE)
     moderator_only  = models.BooleanField(default=False)
 
-    def __unicode__(self):
-        return u"<# Message - ticket_id: %s, ticket_key: %s>" % \
+    def __str__(self):
+        return "<# Message - ticket_id: %s, ticket_key: %s>" % \
                     (self.ticket.id, self.ticket.key)
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
 
 
@@ -137,6 +133,6 @@ post_save.connect(create_ticket_message, sender=TicketComment)
 
 
 class UserAnnotation(models.Model):
-    sender = models.ForeignKey(User, related_name='sent_annotations')
-    user = models.ForeignKey(User, related_name='annotations')
+    sender = models.ForeignKey(User, related_name='sent_annotations', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='annotations', on_delete=models.CASCADE)
     text = models.TextField()

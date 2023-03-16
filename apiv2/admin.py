@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -24,11 +22,16 @@ from django.contrib import admin
 from apiv2.models import ApiV2Client
 
 
+@admin.register(ApiV2Client)
 class ApiV2ClientAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
-    search_fields = ('user__username', 'name', "=oauth_client__client_id", "=oauth_client__client_secret")
-    list_filter = ('status', )
+    search_fields = ('user__username', 'name', "=oauth_client__client_id", "=key", "description")
+    list_filter = ('status', 'throttling_level')
     list_display = ("name", "url", "user", "status", "throttling_level")
 
+    def has_add_permission(self, request):
+        return False
 
-admin.site.register(ApiV2Client, ApiV2ClientAdmin)
+
+
+

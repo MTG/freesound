@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,9 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import division
-from builtins import str
-from builtins import object
 from past.utils import old_div
 import datetime
 import os
@@ -40,7 +35,7 @@ from django.db.models import Q
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.urls import reverse
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from django.utils.timezone import now
 
 import tickets.models
@@ -61,7 +56,7 @@ from utils.search import get_search_engine, SearchEngineException
 
 class ResetEmailRequest(models.Model):
     email = models.EmailField()
-    user = models.OneToOneField(User, db_index=True)
+    user = models.OneToOneField(User, db_index=True, on_delete=models.CASCADE)
 
 
 class DeletedUser(models.Model):
@@ -86,8 +81,8 @@ class DeletedUser(models.Model):
     )
     reason = models.CharField(max_length=2, choices=DELETION_REASON_CHOICES)
 
-    def __unicode__(self):
-        return 'Deleted user object for: {0}'.format(self.username)
+    def __str__(self):
+        return f'Deleted user object for: {self.username}'
 
 
 class ProfileManager(models.Manager):
@@ -103,12 +98,12 @@ class ProfileManager(models.Manager):
 
 
 class Profile(SocialModel):
-    user = models.OneToOneField(User, related_name="profile")
+    user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
     signature = models.TextField(max_length=256, null=True, blank=True)
     sound_signature = models.TextField(max_length=256, null=True, blank=True)
-    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
+    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
     has_avatar = models.BooleanField(default=False)
     is_whitelisted = models.BooleanField(default=False, db_index=True)
     has_old_license = models.BooleanField(null=False, default=False)
@@ -138,7 +133,7 @@ class Profile(SocialModel):
 
     objects = ProfileManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.user.username
 
     def agree_to_gdpr(self):
@@ -202,7 +197,7 @@ class Profile(SocialModel):
         return self.num_sound_downloads + self.num_pack_downloads
 
     def get_absolute_url(self):
-        return reverse('account', args=[smart_text(self.user.username)])
+        return reverse('account', args=[smart_str(self.user.username)])
 
     @staticmethod
     def locations_static(user_id, has_avatar):
@@ -495,8 +490,8 @@ class Profile(SocialModel):
                 # If user object is not to be deleted from DB we need to anonymize it and remove sounds if requested
 
                 # Remove personal data from the user
-                self.user.username = 'deleted_user_%s' % self.user.id
-                self.user.email = 'deleted_user_%s@freesound.org' % self.user.id
+                self.user.username = f'deleted_user_{self.user.id}'
+                self.user.email = f'deleted_user_{self.user.id}@freesound.org'
                 self.has_avatar = False
                 self.is_anonymized_user = True
                 self.user.set_unusable_password()
@@ -585,13 +580,15 @@ class Profile(SocialModel):
 
     def get_total_uploaded_sounds_length(self):
         # TODO: don't compute this realtime, store it in DB
-        durations = list(Sound.objects.filter(user=self.user).values_list('duration', flat=True))
+        # NOTE: this only includes duration of sounds that have been processed and moderated
+        durations = list(Sound.public.filter(user=self.user).values_list('duration', flat=True))
         return sum(durations)
 
     @property
     def num_packs(self):
+        # Return the number of packs for which at least one sound has been published
         # TODO: store this as an account field instead of computing it live
-        return Pack.objects.filter(user_id=self.user_id).count()
+        return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by('pack_id').distinct('pack').count()
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )
@@ -605,17 +602,17 @@ class GdprAcceptance(models.Model):
 
 
 class UserFlag(models.Model):
-    user = models.ForeignKey(User, related_name="flags")
-    reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)
-    content_type = models.ForeignKey(ContentType, null=True)
+    user = models.ForeignKey(User, related_name="flags", on_delete=models.CASCADE)
+    reporting_user = models.ForeignKey(User, null=True, blank=True, default=None, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, null=True, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField(null=True)
     content_object = fields.GenericForeignKey('content_type', 'object_id')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def __unicode__(self):
-        return u"Flag %s: %s" % (self.content_type, self.object_id)
+    def __str__(self):
+        return f"Flag {self.content_type}: {self.object_id}"
 
-    class Meta(object):
+    class Meta:
         ordering = ("-user__username",)
 
 
@@ -624,9 +621,9 @@ class SameUser(models.Model):
 
     # The main user is defined as the one who has logged in most recently
     # when we performed the migration. This is an arbitrary decision
-    main_user = models.ForeignKey(User, related_name="+")
+    main_user = models.ForeignKey(User, related_name="+", on_delete=models.CASCADE)
     main_orig_email = models.CharField(max_length=200)
-    secondary_user = models.ForeignKey(User, related_name="+")
+    secondary_user = models.ForeignKey(User, related_name="+", on_delete=models.CASCADE)
     secondary_orig_email = models.CharField(max_length=200)
 
     @property
@@ -690,26 +687,26 @@ class EmailPreferenceType(models.Model):
         help_text="Indicates if the user should receive an email, if " +
         "UserEmailSetting exists for the user then the behavior is the opposite")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.display_name
 
 
 class UserEmailSetting(models.Model):
-    user = models.ForeignKey(User, related_name="email_settings")
-    email_type = models.ForeignKey(EmailPreferenceType)
+    user = models.ForeignKey(User, related_name="email_settings", on_delete=models.CASCADE)
+    email_type = models.ForeignKey(EmailPreferenceType, on_delete=models.CASCADE)
 
 
 class OldUsername(models.Model):
-    user = models.ForeignKey(User, related_name="old_usernames")
+    user = models.ForeignKey(User, related_name="old_usernames", on_delete=models.CASCADE)
     username = models.CharField(max_length=255, db_index=True, unique=True)
     created = models.DateTimeField(auto_now_add=True)
 
-    def __unicode__(self):
-        return '{0} > {1}'.format(self.username, self.user.username)
+    def __str__(self):
+        return f'{self.username} > {self.user.username}'
 
 
 class EmailBounce(models.Model):
-    user = models.ForeignKey(User, related_name="email_bounces")
+    user = models.ForeignKey(User, related_name="email_bounces", on_delete=models.CASCADE)
 
     # Bounce types
     UNDETERMINED = 'UD'
@@ -726,7 +723,7 @@ class EmailBounce(models.Model):
 
     timestamp = models.DateTimeField(default=now)
 
-    class Meta(object):
+    class Meta:
         ordering = ("-timestamp",)
         unique_together = ('user', 'type', 'timestamp')
 
@@ -808,7 +805,7 @@ def update_status_history(sender, instance, **kwargs):
         should_update_status_history = True
 
     if should_update_status_history:
-        instance.status_history += ['{0}: {1} ({2})'.format(pytz.utc.localize(datetime.datetime.utcnow()),
+        instance.status_history += ['{}: {} ({})'.format(pytz.utc.localize(datetime.datetime.utcnow()),
                                                             instance.get_status_display(),
                                                             instance.status)]
 

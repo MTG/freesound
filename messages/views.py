@@ -213,7 +213,7 @@ def new_message(request, username=None, message_id=None):
 
 
 def quote_message_for_reply(body, username):
-    body = ''.join(BeautifulSoup(body).find_all(text=True))
+    body = ''.join(BeautifulSoup(body, "html.parser").find_all(string=True))
     body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60))
                         for line in body.split("\n")])
     body = "> --- " + username + " wrote:\n>\n" + body
@@ -225,17 +225,19 @@ def get_previously_contacted_usernames(user):
     usernames = list(Message.objects.select_related('user_from', 'user_to')
                      .filter(Q(user_from=user) | Q(user_to=user))
                      .values_list('user_to__username', 'user_from__username'))
-    return list(set([item for sublist in usernames for item in sublist]))
+    return list({item for sublist in usernames for item in sublist})
 
 
 @login_required
 def username_lookup(request):
     results = []
     if request.method == "GET":
-        results = get_previously_contacted_usernames(request.user)
-    if using_beastwhoosh(request):
-        # NOTE: key needs to be "suggestions" below so the autocomplete JS part of the code works properly
-        return JsonResponse({'suggestions': results})
-    else:
-        json_resp = json.dumps(results)
-        return HttpResponse(json_resp, content_type='application/json')
+        if not using_beastwhoosh(request):
+            results = get_previously_contacted_usernames(request.user)
+        else:
+            query = request.GET.get("q")
+            if query.strip():
+                results = get_previously_contacted_usernames(request.user)
+                results = [result for result in results if query in result]
+    json_resp = json.dumps(results)
+    return HttpResponse(json_resp, content_type='application/json')

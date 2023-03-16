@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import range
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -51,7 +49,7 @@ class TagFieldTest(TestCase):
         self.assertEqual({"one", "two", "three"}, f.clean("three, one,two"))
         
         # Funny characters not allowed
-        err_message = "Tags must contain only letters a-z, digits 0-9 and hyphen"
+        err_message = "Tags must contain only letters a-z, digits 0-9 and hyphen."
         with self.assertRaisesMessage(ValidationError, err_message):
             f.clean("One t%wo")
         
@@ -66,14 +64,14 @@ class TagFieldTest(TestCase):
         self.assertEqual({"tag", "tag-name", "another-name"}, f.clean("tag--name tag another----name"))
 
         # minimum number tags
-        err_message = "You should add at least 3 different tags. Tags must be separated by spaces"
+        err_message = "You should add at least 3 different tags. Tags must be separated by spaces."
         with self.assertRaisesMessage(ValidationError, err_message):
             f.clean("One two")
 
         # maximum number tags
         err_message = "There can be maximum 30 tags, please select the most relevant ones!"
         with self.assertRaisesMessage(ValidationError, err_message):
-            tags = " ".join(["tag%s" % i for i in range(35)])
+            tags = " ".join([f"tag{i}" for i in range(35)])
             f.clean(tags)
 
         # remove common words

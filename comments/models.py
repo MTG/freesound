@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 import sounds
 from django.contrib.auth.models import User
 from django.db import models
@@ -28,16 +25,17 @@ from django.db.models.signals import post_delete
 
 
 class Comment(models.Model):
-    user = models.ForeignKey(User)
-    sound = models.ForeignKey('sounds.Sound', null=True, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    sound = models.ForeignKey('sounds.Sound', null=True, related_name='comments', on_delete=models.CASCADE)
     comment = models.TextField()
-    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', default=None)
+    parent = models.ForeignKey(
+        'self', null=True, blank=True, related_name='replies', default=None, on_delete=models.SET_NULL)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def __unicode__(self):
-        return u"%s comment on %s" % (self.user, self.sound)
+    def __str__(self):
+        return f"{self.user} comment on {self.sound}"
 
-    class Meta(object):
+    class Meta:
         ordering = ('-created', )
 
 

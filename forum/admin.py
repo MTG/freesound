@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -23,25 +21,25 @@
 from django.contrib import admin
 from forum.models import Forum, Thread, Post
 
+@admin.register(Forum)
 class ForumAdmin(admin.ModelAdmin):
     raw_id_fields = ('last_post', )
     list_display = ('name', 'num_threads', 'change_order')
 
-admin.site.register(Forum, ForumAdmin)
 
 
+@admin.register(Thread)
 class ThreadAdmin(admin.ModelAdmin):
     raw_id_fields = ('author', 'last_post','first_post' )
     list_display = ('forum', 'author', 'title', 'status', 'num_posts', 'created')
     list_filters = ('status',)
     search_fields = ('=author__username', "title")
 
-admin.site.register(Thread, ThreadAdmin)
 
 
+@admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     raw_id_fields = ('author', 'thread')
     list_display = ('thread', 'author', 'created')
     search_fields = ('=author__username', "body")
 
-admin.site.register(Post, PostAdmin)

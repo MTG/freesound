@@ -1,5 +1,3 @@
-from future import standard_library
-standard_library.install_aliases()
 from django import template
 from django.urls import reverse
 from urllib.parse import quote
@@ -11,4 +9,3 @@ register = template.Library()
 def next_url_for_login(client_id, response_type, state):
     return quote("%s?client_id=%s&response_type=%s&state=%s" % 
         (reverse('oauth2_provider:authorize'), client_id, response_type, state))
-

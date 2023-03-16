@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,9 +18,6 @@
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import object
 import logging
 
 from collections import Counter
@@ -33,14 +28,14 @@ from django.db.models.functions import Greatest
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch import receiver
 from django.urls import reverse
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 
 import accounts
 from general.models import OrderedModel
 from utils.cache import invalidate_template_cache
 from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_forum import delete_posts_from_search_engine
-from utils.text import slugify
+from django.utils.text import slugify
 
 web_logger = logging.getLogger('web')
 
@@ -73,11 +68,11 @@ class Forum(OrderedModel):
         if commit:
             self.save()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("forums-forum", args=[smart_text(self.name_slug)])
+        return reverse("forums-forum", args=[smart_str(self.name_slug)])
 
 
 @receiver(pre_save, sender=Forum)
@@ -97,8 +92,8 @@ def forum_pre_save_set_slug(sender, instance, **kwargs):
 
 
 class Thread(models.Model):
-    forum = models.ForeignKey(Forum)
-    author = models.ForeignKey(User)
+    forum = models.ForeignKey(Forum, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=250)
 
     THREAD_STATUS_CHOICES = (
@@ -140,7 +135,7 @@ class Thread(models.Model):
             self.save(update_fields=['first_post'])
 
     def get_absolute_url(self):
-        return reverse("forums-thread", args=[smart_text(self.forum.name_slug), self.id])
+        return reverse("forums-thread", args=[smart_str(self.forum.name_slug), self.id])
 
     def is_user_subscribed(self, user):
         """A user is subscribed to a thread if a Subscription object exists that related the two of them"""
@@ -157,10 +152,10 @@ class Thread(models.Model):
         }
         return info_to_return
 
-    class Meta(object):
+    class Meta:
         ordering = ('-status', '-last_post__created')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
 
@@ -217,8 +212,8 @@ def update_last_post_on_thread_delete(sender, instance, **kwargs):
 
 
 class Post(models.Model):
-    thread = models.ForeignKey(Thread)
-    author = models.ForeignKey(User, related_name='posts')
+    thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, related_name='posts', on_delete=models.CASCADE)
     body = models.TextField()
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -230,17 +225,17 @@ class Post(models.Model):
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="OK")
 
-    class Meta(object):
+    class Meta:
         ordering = ('created',)
         permissions = (
             ("can_moderate_forum", "Can moderate posts."),
         )
 
-    def __unicode__(self):
-        return u"Post by %s in %s" % (self.author, self.thread)
+    def __str__(self):
+        return f"Post by {self.author} in {self.thread}"
 
     def get_absolute_url(self):
-        return reverse("forums-post", args=[smart_text(self.thread.forum.name_slug), self.thread.id, self.id])
+        return reverse("forums-post", args=[smart_str(self.thread.forum.name_slug), self.thread.id, self.id])
 
 
 @receiver(pre_save, sender=Post)
@@ -352,12 +347,12 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
 
 
 class Subscription(models.Model):
-    subscriber = models.ForeignKey(User)
-    thread = models.ForeignKey(Thread)
+    subscriber = models.ForeignKey(User, on_delete=models.CASCADE)
+    thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     is_active = models.BooleanField(db_index=True, default=True)
 
-    class Meta(object):
+    class Meta:
         unique_together = ("subscriber", "thread")
 
-    def __unicode__(self):
-        return u"%s subscribed to %s" % (self.subscriber, self.thread)
+    def __str__(self):
+        return f"{self.subscriber} subscribed to {self.thread}"

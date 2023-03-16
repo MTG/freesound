@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -46,7 +44,7 @@ class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
         Check that ApiV2Client associatied to the given acess_token has not been disabled.
         """
         try:
-            super_response = super(OAuth2Authentication, self).authenticate(request)
+            super_response = super().authenticate(request)
         except ValueError:
             # If the request contains html entities that don't decode to valid UTF8,
             # an exception is raised during oauth validation, even if it's on a field/parameter unrelated to oauth (#793)
@@ -78,12 +76,11 @@ class TokenAuthentication(BaseAuthentication):
 
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
-
         # If the token is not provided through the header check if it is provided as a query parameter
         if not auth:
             token = request.GET.get('token', None)
             if token:
-                auth = ['Token', token]
+                auth = [b'Token', token.encode()]
 
         if not auth or auth[0].lower() != b'token':
             return None
@@ -99,6 +96,8 @@ class TokenAuthentication(BaseAuthentication):
 
     def authenticate_credentials(self, key):
         try:
+            if isinstance(key, bytes):
+                key = key.decode()
             token = self.model.objects.get(key=key)
         except self.model.DoesNotExist:
             raise exceptions.AuthenticationFailed('Invalid token')

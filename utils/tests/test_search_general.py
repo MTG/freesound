@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,11 +17,12 @@
 # Authors:
 #     See AUTHORS file.
 #
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 from django.conf import settings
-from django.utils.http import urlquote_plus
+from urllib.parse import quote_plus
 from utils.search.search_sounds import search_prepare_parameters, split_filter_query, remove_facet_filters
 from utils.search.lucene_parser import parse_query_filter_string
 
@@ -34,6 +34,9 @@ class SearchUtilsTest(TestCase):
 
     def test_search_prepare_parameters_without_query_params(self):
         request = self.factory.get(reverse('sounds-search'))
+        middleware = SessionMiddleware()
+        middleware.process_request(request)
+        request.session.save()
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
         expected_default_query_params = {
@@ -64,8 +67,11 @@ class SearchUtilsTest(TestCase):
 
     def test_search_prepare_parameters_with_query_params(self):
         # "dog" query, search only in tags and descriptions, duration from 1-10 sec, only geotag, sort by duration, no group by pack
-        url_query_str = '?q=dog&f=duration:[1+TO+10]+is_geotagged:1&s=Duration+(long+first)&advanced=1&a_tag=1&a_description=1&g='
+        url_query_str = '?q=dog&f=duration:[1+TO+10]+is_geotagged:1&s=Duration+(longest+first)&advanced=1&a_tag=1&a_description=1&g='
         request = self.factory.get(reverse('sounds-search')+url_query_str)
+        middleware = SessionMiddleware()
+        middleware.process_request(request)
+        request.session.save()
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
         expected_default_query_params = {
@@ -83,26 +89,26 @@ class SearchUtilsTest(TestCase):
             'num_sounds': settings.SOUNDS_PER_PAGE,
             'current_page': 1,
             'group_by_pack': False,
-            'query_filter': u'duration:[1 TO 10] is_geotagged:1',
-            'textual_query': u'dog',
+            'query_filter': 'duration:[1 TO 10] is_geotagged:1',
+            'textual_query': 'dog',
             'only_sounds_with_pack': False,
         }
 
         expected_extra_vars = {
-            'advanced': u'1',
-            'filter_query_link_more_when_grouping_packs': u'duration:[1+TO+10]+is_geotagged:1',
+            'advanced': '1',
+            'filter_query_link_more_when_grouping_packs': 'duration:[1+TO+10]+is_geotagged:1',
             'cluster_id': '',
-            'filter_query_non_facets': u'duration:[1 TO 10] is_geotagged:1',
+            'filter_query_non_facets': 'duration:[1 TO 10] is_geotagged:1',
             'has_facet_filter': False,
-            'parsed_filters': [[u'duration', ':', '[', u'1', ' TO ', u'10', ']'], [u'is_geotagged', ':', u'1']],
+            'parsed_filters': [['duration', ':', '[', '1', ' TO ', '10', ']'], ['is_geotagged', ':', '1']],
             'parsing_error': False,
             'raw_weights_parameter': ''
         }
 
         expected_advanced_search_params_dict = {
-            'a_tag': u'1', 
+            'a_tag': '1', 
             'a_username': '', 
-            'a_description': u'1', 
+            'a_description': '1', 
             'a_packname': '', 
             'a_filename': '', 
             'a_soundid': '',
@@ -150,24 +156,27 @@ class SearchUtilsTest(TestCase):
 
     def test_search_prepare_parameters_non_ascii_query(self):
         # Simple test to check if some non ascii characters are correctly handled by search_prepare_parameters()
-        request = self.factory.get(reverse('sounds-search')+u'?q=Æ æ ¿ É')
+        request = self.factory.get(reverse('sounds-search')+'?q=Æ æ ¿ É')
+        middleware = SessionMiddleware()
+        middleware.process_request(request)
+        request.session.save()
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
-        self.assertEqual(query_params['textual_query'], u'\xc6 \xe6 \xbf \xc9')
+        self.assertEqual(query_params['textual_query'], '\xc6 \xe6 \xbf \xc9')
 
     def test_split_filter_query_duration_and_facet(self):
         # We check that the combination of a duration filter and a facet filter (CC Attribution) works correctly.
-        filter_query_string = u'duration:[0 TO 10] license:"Attribution" username:"XavierFav" grouping_pack:"1_best-pack-ever"'
+        filter_query_string = 'duration:[0 TO 10] license:"Attribution" username:"XavierFav" grouping_pack:"1_best-pack-ever"'
         parsed_filters = parse_query_filter_string(filter_query_string)
         filter_query_split = split_filter_query(filter_query_string, parsed_filters, '')
 
         # duraton filter is not a facet, but should stay present when removing a facet.
         expected_filter_query_split = [
-            {'remove_url': u'duration:[0 TO 10]', 'name': u'license:Attribution'}, 
+            {'remove_url': 'duration:[0 TO 10]', 'name': 'license:Attribution'}, 
         ]
         expected_filter_query_split = [
-            {'remove_url': urlquote_plus(u'duration:[0 TO 10] username:"XavierFav" grouping_pack:"1_best-pack-ever"'), 'name': u'license:Attribution'}, 
-            {'remove_url': urlquote_plus(u'duration:[0 TO 10] license:"Attribution" grouping_pack:"1_best-pack-ever"'), 'name': u'username:XavierFav'}, 
-            {'remove_url': urlquote_plus(u'duration:[0 TO 10] license:"Attribution" username:"XavierFav"'), 'name': u'pack:best-pack-ever'},
+            {'remove_url': quote_plus('duration:[0 TO 10] username:"XavierFav" grouping_pack:"1_best-pack-ever"'), 'name': 'license:Attribution'}, 
+            {'remove_url': quote_plus('duration:[0 TO 10] license:"Attribution" grouping_pack:"1_best-pack-ever"'), 'name': 'username:XavierFav'}, 
+            {'remove_url': quote_plus('duration:[0 TO 10] license:"Attribution" username:"XavierFav"'), 'name': 'pack:best-pack-ever'},
         ]
 
         # the order does not matter for the list of facet dicts.
@@ -201,14 +210,14 @@ class SearchUtilsTest(TestCase):
                       filter_query_split[grouping_pack_facet_dict_idx]['remove_url'].replace('++', '+'))
 
     def test_split_filter_query_special_chars(self):
-        filter_query_string = u'license:"Sampling+" grouping_pack:"1_example pack + @ #()*"'
+        filter_query_string = 'license:"Sampling+" grouping_pack:"1_example pack + @ #()*"'
         parsed_filters = parse_query_filter_string(filter_query_string)
         filter_query_split = split_filter_query(filter_query_string, parsed_filters, '')
         filter_query_names = [filter_query_dict['name'] for filter_query_dict in filter_query_split]
 
         expected_filter_query_split = [
-            {'remove_url': urlquote_plus(u'grouping_pack:"1_example pack + @ #()*"'), 'name': u'license:Sampling+'},
-            {'remove_url': urlquote_plus(u'license:"Sampling+"'), 'name': u'pack:example pack + @ #()*'},
+            {'remove_url': quote_plus('grouping_pack:"1_example pack + @ #()*"'), 'name': 'license:Sampling+'},
+            {'remove_url': quote_plus('license:"Sampling+"'), 'name': 'pack:example pack + @ #()*'},
         ]
 
         cc_samplingplus_facet_dict_idx = filter_query_names.index('license:Sampling+')
@@ -228,34 +237,26 @@ class SearchUtilsTest(TestCase):
     # that gave problems while developping the filter string parser function 
     # utils.search.lucene_parser.parse_query_filter_string()
     def test_parse_filter_query_special_created(self):
-        raised = False
-        e = None
-        try:
-            filter_query_string = 'created:[NOW-7DAY TO NOW] license:"Creative Commons 0"'       
-            filter_query_split = parse_query_filter_string(filter_query_string)
-        except Exception as e:
-            raised=True
-        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
+        filter_query_string = 'created:[NOW-7DAY TO NOW] license:"Creative Commons 0"'
+        filter_query_split = parse_query_filter_string(filter_query_string)
+        self.assertEqual(filter_query_split, [
+            ['created', ':', '[', 'NOW-7DAY', ' TO ', 'NOW', ']'],
+            ['license', ':', '"Creative Commons 0"'],
+        ])
 
     def test_parse_filter_query_special_char(self):
-        raised = False
-        e = None
-        try:
-            filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'.decode('latin-1')
-            filter_query_split = parse_query_filter_string(filter_query_string)
-        except Exception as e:
-            raised=True
-        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
+        filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'
+        filter_query_split = parse_query_filter_string(filter_query_string)
+        self.assertEqual(filter_query_split, [
+            ['grouping_pack', ':', '"32119_Conch Blowing (शङ्ख)"'],
+        ])
 
     def test_parse_filter_query_special_char2(self):
-        raised = False
-        e = None
-        try:
-            filter_query_string = 'grouping_pack:"2806_Hurt & Pain sounds"'
-            filter_query_split = parse_query_filter_string(filter_query_string)
-        except Exception as e:
-            raised=True
-        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
+        filter_query_string = 'grouping_pack:"2806_Hurt & Pain sounds"'
+        filter_query_split = parse_query_filter_string(filter_query_string)
+        self.assertEqual(filter_query_split, [
+            ['grouping_pack', ':', '"2806_Hurt & Pain sounds"'],
+        ])
 
     def test_parse_filter_query_geofilter(self):
         filter_query_string = 'tag:"cool" \'{!geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50}\''
@@ -274,28 +275,21 @@ class SearchUtilsTest(TestCase):
         ])
 
     def test_parse_filter_nested_composed_with_OR(self):
-        raised = False
-        e = None
-        try:
-            filter_query_string = '("Attribution" OR ("Attribution" OR "Creative Commons 0"))'
-            parsed_filters = parse_query_filter_string(filter_query_string)
-        except Exception as e:
-            raised=True
-        self.assertFalse(raised, 'An exception was raised but it should have not been raised:\n {}'.format(e))
-        
+        filter_query_string = '("Attribution" OR ("Attribution" OR "Creative Commons 0"))'
+        parsed_filters = parse_query_filter_string(filter_query_string)
 
     @override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True)
     def test_split_filter_query_cluster_facet(self):
         # We check that the combination of a duration filter, a facet filter (CC Attribution) and a cluster filter
         # works correctly.
-        filter_query_string = u'duration:[0 TO 10] license:"Attribution"'
+        filter_query_string = 'duration:[0 TO 10] license:"Attribution"'
         # the cluster filter is set in the second argument of split_filter_query()
         parsed_filters = parse_query_filter_string(filter_query_string)
         filter_query_split = split_filter_query(filter_query_string, parsed_filters, '1')
 
         expected_filter_query_split = [
-            {'remove_url': urlquote_plus(u'duration:[0 TO 10]'), 'name': u'license:Attribution'},
-            {'remove_url': urlquote_plus(u'duration:[0 TO 10] license:"Attribution"'), 'name': 'Cluster #1'}
+            {'remove_url': quote_plus('duration:[0 TO 10]'), 'name': 'license:Attribution'},
+            {'remove_url': quote_plus('duration:[0 TO 10] license:"Attribution"'), 'name': 'Cluster #1'}
         ]
 
         # check that the cluster facet exists

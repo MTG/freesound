@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -63,7 +62,7 @@ def following_users(request, username):
         paginator = paginate(request, following, settings.FOLLOW_ITEMS_PER_PAGE)
         tvars.update(paginator)
         tvars.update({
-            'next_path': reverse('account', args=[username]) + '?following={}'.format(paginator['current_page']),
+            'next_path': reverse('account', args=[username]) + f"?following={paginator['current_page']}",
             'follow_page': 'following'
         })
         return render(request, 'accounts/modal_follow.html', tvars)
@@ -100,7 +99,7 @@ def followers(request, username):
         paginator = paginate(request, followers, settings.FOLLOW_ITEMS_PER_PAGE)
         tvars.update(paginator)
         tvars.update({
-            'next_path': reverse('account', args=[username]) + '?followers={}'.format(paginator['current_page']),
+            'next_path': reverse('account', args=[username]) + f"?followers={paginator['current_page']}",
             'follow_page': 'followers'
         })
         return render(request, 'accounts/modal_follow.html', tvars)
@@ -137,7 +136,7 @@ def following_tags(request, username):
         paginator = paginate(request, following_tags, settings.FOLLOW_ITEMS_PER_PAGE)
         tvars.update(paginator)
         tvars.update({
-            'next_path': reverse('account', args=[username]) + '?followingTags={}'.format(paginator['current_page']),
+            'next_path': reverse('account', args=[username]) + f"?followingTags={paginator['current_page']}",
             'follow_page': 'tags' # Used in BW
         })
         return render(request, 'accounts/modal_follow.html', tvars)
@@ -256,7 +255,7 @@ def stream(request):
                         date_from = (datetime.strptime(date_to,"%Y-%m-%d") - timedelta(days=7)).strftime("%Y-%m-%d") # A week before date to
                     if not date_to:
                         date_to = (datetime.strptime(date_from,"%Y-%m-%d") + timedelta(days=7)).strftime("%Y-%m-%d") # A week after date from
-            time_lapse = '["%sT00:00:00Z" TO "%sT23:59:59.999Z"]' % (date_from, date_to)
+            time_lapse = f'["{date_from}T00:00:00Z" TO "{date_to}T23:59:59.999Z"]'
 
     # if first time going into the page, the default is last week
     else:

@@ -1,18 +1,26 @@
-const collapsableText = document.getElementById('collapsable-text');
+const collapsableToggles = document.getElementsByClassName('collapsable-toggle');
 
-const handleCollapsable = () => {
-  const collapsableContainer = document.getElementById(collapsableText.dataset.target);
-
-  console.log(collapsableContainer)
+const toggleCollapse = (toggleElement) => {
+  const collapsableContainer = document.getElementById(toggleElement.dataset.target);
   collapsableContainer.classList.toggle('collapsable-block-close');
-  const showText = collapsableText.dataset.showText;
-  const hideText = collapsableText.dataset.hideText;
-  collapsableText.textContent = collapsableText.textContent.includes(showText)
-    ? hideText
-    : showText;
+  const showText = toggleElement.dataset.showText;
+  const hideText = toggleElement.dataset.hideText;
+  toggleElement.textContent = collapsableContainer.classList.contains('collapsable-block-close')
+    ? showText
+    : hideText;
+}
+
+const handleCollapsable = (e) => {
+  toggleCollapse(e.target);
 };
 
-if (collapsableText !== null){
-  collapsableText.addEventListener('click', handleCollapsable);
-}
+collapsableToggles.forEach(element => {
+  if (element.dataset.hideOnLoad !== undefined){
+    toggleCollapse(element);
+  } else {
+    element.textContent = element.dataset.hideText;
+  }
+  element.addEventListener('click', handleCollapsable);
+});
+
 

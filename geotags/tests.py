@@ -1,4 +1,3 @@
-from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -79,7 +78,7 @@ class GeoTagsTests(TestCase):
         sound.save()
         resp = self.client.get(reverse('geotags-infowindow', kwargs={'sound_id': sound.id}))
         self.check_context(resp.context, {'sound': sound})
-        self.assertIn('href="/people/{0}/sounds/{1}/"'.format(sound.user.username, sound.id), resp.content)
+        self.assertContains(resp, f'href="/people/{sound.user.username}/sounds/{sound.id}/"')
 
     def test_browse_geotags_case_insensitive(self):
         user = User.objects.get(username='Anton')

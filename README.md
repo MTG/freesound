@@ -4,7 +4,7 @@ This repository contains the source code of the [Freesound](https://freesound.or
 
 Freesound is a project by the [Music Technology Group](http://www.mtg.upf.edu) (MTG), [Universitat Pompeu Fabra](http://upf.edu) (UPF).
 
-[![Build Status](https://travis-ci.org/MTG/freesound.svg?branch=master)](https://travis-ci.org/MTG/freesound)
+[![Build Status](https://github.com/MTG/freesound/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/MTG/freesound/actions/workflows/unit-tests.yml)
 
 
 ## License
@@ -69,7 +69,7 @@ Below are instructions for setting up a local Freesound installation for develop
 9. Download the [Freesound development database dump](https://drive.google.com/file/d/1d8_0Sa6J5tDQ3k4kvBp4zLUDuYKPUjnq/view?usp=sharing) (~50MB), run the database container and load the data into it. You should get permission to download this file from Freesound admins.
 
        docker-compose up -d db
-       cat /path/to/freesound/development/db/dump.sql | docker-compose run --rm db psql -h db -U freesound  -d freesound
+       docker-compose run --rm db psql -h db -U freesound  -d freesound -f /freesound-data/db_dev_dump/freesound_dev_db-2018-01-12-anonymised.sql
 
 10. Update database by running Django migrations
 

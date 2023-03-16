@@ -18,10 +18,10 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 import json
 import logging
 
+from admin_reorder.middleware import ModelAdminReorder
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -46,7 +46,7 @@ def dont_redirect(path):
         and not path.startswith(settings.MEDIA_URL)
 
 
-class OnlineUsersHandler(object):
+class OnlineUsersHandler:
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -56,7 +56,7 @@ class OnlineUsersHandler(object):
         return response
 
 
-class BulkChangeLicenseHandler(object):
+class BulkChangeLicenseHandler:
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -77,7 +77,7 @@ class BulkChangeLicenseHandler(object):
         return response
 
 
-class FrontendPreferenceHandler(object):
+class FrontendPreferenceHandler:
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -97,7 +97,7 @@ class FrontendPreferenceHandler(object):
         return response
 
 
-class TosAcceptanceHandler(object):
+class TosAcceptanceHandler:
     """Checks if the user has accepted the updates to the Terms
     of Service in 2022. This replaces the agreement to the original ToS (2013, 2fd543f3a).
     When users agree with the new terms of service, they also agree on updating the
@@ -120,7 +120,7 @@ class TosAcceptanceHandler(object):
         return response
 
 
-class UpdateEmailHandler(object):
+class UpdateEmailHandler:
     message = "We have identified that some emails that we have sent to you didn't go through, thus it appears that " \
               "your email address is not valid. Please update your email address to a working one to continue using " \
               "Freesound"
@@ -148,3 +148,25 @@ class UpdateEmailHandler(object):
 
         response = self.get_response(request)
         return response
+
+
+class ModelAdminReorderWithNav(ModelAdminReorder):
+    # Customize ModelAdminReorder middleware so that it also reorders new django admin sidebar in 3.1+
+    # from https://github.com/mishbahr/django-modeladmin-reorder/issues/47
+
+    def process_template_response(self, request, response):
+
+        if (
+            getattr(response, 'context_data', None)
+            and not response.context_data.get('app_list')
+            and response.context_data.get('available_apps')
+        ):
+            available_apps = response.context_data.get('available_apps')
+            response.context_data['app_list'] = available_apps
+            response = super().process_template_response(request, response)
+            response.context_data['available_apps'] = response.context_data[
+                'app_list'
+            ]
+            return response
+
+        return super().process_template_response(request, response)

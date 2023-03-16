@@ -18,40 +18,45 @@
 #     See AUTHORS file.
 #
 
-from builtins import next
-from builtins import range
 import os
 from functools import partial, wraps
 from itertools import count
 
+import numpy as np
+import pysndfile
+
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.test.utils import override_settings
 
 from sounds.models import Sound, Pack, License
-from utils.filesystem import create_directories, TemporaryDirectory
+from tempfile import TemporaryDirectory
 from utils.tags import clean_and_split_tags
 
 
-def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024):
+def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024, make_valid_wav_files=False, duration=0.0):
     """
-    This function generates test files ith random content and saves them in the specified directory.
+    This function generates test files with random content and saves them in the specified directory.
     :param filenames: list of names for the files to generate
     :param directory: folder where to store the files
     :param paths: if provided, then files are created in the indicated paths regardless of filenames and direcotry args
     :param n_bytes: numnber of bytes of each generated file
+    :param make_valid_wav_files: whether to create a valid wav file with noise
+    :param duration: duration of the wav file in seconds if make_valid_wav_files is True
     """
     if paths is None:
-        create_directories(directory)
-        for filename in filenames:
-            f = open(os.path.join(directory, filename), 'w')
+        paths = [os.path.join(directory, filename) for filename in filenames]
+        
+    for path in paths:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        if not make_valid_wav_files:
+            f = open(path, 'wb')
             f.write(os.urandom(n_bytes))
             f.close()
-    else:
-        for path in paths:
-            create_directories(os.path.dirname(path))
-            f = open(path, 'w')
-            f.write(os.urandom(n_bytes))
-            f.close()
+        else:
+            data = np.random.uniform(-1, 1, int(duration * 44100))
+            scaled = np.int16(data / np.max(np.abs(data)) * 32767)
+            pysndfile.sndio.write(path, scaled, format='wav', rate=44100)
 
 
 sound_counter = count()  # Used in create_user_and_sounds to avoid repeating sound names
@@ -107,6 +112,12 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
     return user, packs, sounds
 
 
+def test_using_bw_ui(test_case_object):
+    session = test_case_object.client.session
+    session[settings.FRONTEND_SESSION_PARAM_NAME] = settings.FRONTEND_BEASTWHOOSH
+    session.save()
+
+
 def override_path_with_temp_directory(fun, settings_path_name):
     """
     Decorator that wraps a function inside two context managers which i) create a temporary directory; and ii) override
@@ -149,3 +160,6 @@ override_displays_path_with_temp_directory = \
 
 override_processing_tmp_path_with_temp_directory = \
     partial(override_path_with_temp_directory, settings_path_name='PROCESSING_TEMP_DIR')
+
+override_processing_before_description_path_with_temp_directory = \
+    partial(override_path_with_temp_directory, settings_path_name='PROCESSING_BEFORE_DESCRIPTION_DIR')

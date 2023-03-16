@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -142,7 +140,7 @@ class PaginatorTestCase(TestCase):
         or values, paginator does not break.
         """
         context = {'media_url': 'fake URL'}
-        text_with_non_ascii = u'�textèé'
+        text_with_non_ascii = '�textèé'
         dummy_request = RequestFactory().get(reverse('sounds'), {
             text_with_non_ascii: '1',
             'param_name': text_with_non_ascii,

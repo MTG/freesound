@@ -1,6 +1,5 @@
 import './player';
 import './afterDownloadModal';
-import './autocomplete';
 import './bookmarkSound';
 import './carousel';
 import './checkbox';
@@ -25,3 +24,6 @@ import './toast';
 import './typeahead';
 import './unsecureImageCheck';
 import './followUnfollowTags';
+import './textareaCharactersCounter';
+import './scrollSpy';
+import './uiThemeDetector';

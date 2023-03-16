@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load static %}
+{% load cache %}
 {% load filter_img %}
 {% load paginator %}
 {% load util %}
@@ -53,6 +54,7 @@
                 <div class="col-md-8">
                     {% display_sound_big_no_info sound %}
                     <div class="bw-sound-page__information v-spacing-top-5">
+                        {% cache 3600 bw_sound_page sound.id %}
                         <div class="row middle">
                             <div class="col-10 overflow-hidden">
                                 <h1><a class="bw-link--black" href="{% url 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a></h1>
@@ -66,7 +68,7 @@
                                     {% endif %}
                                     {% if request.user.is_authenticated %}
                                     <span class="h-spacing-left-2"></span>
-                                    <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal-{{ sound.id }}">
+                                    <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal" data-modal-url="{% url 'bookmarks-add-form-for-sound' sound.id %}" data-add-bookmark-url="{% url 'add-bookmark' sound.id %}">
                                         {% bw_icon 'bookmark' %}
                                     </button>
                                     {% endif %}
@@ -177,7 +179,8 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        {% endcache %}
+                    </div>                    
                 </div>
 
                 <div class="col-md-3 offset-md-1">
@@ -186,6 +189,7 @@
                         {% if display_random_link %}
                             <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-4" href="{% url 'sounds-random' %}">Get another random sound!</a>
                         {% endif %}
+                        {% cache 3600 bw_sound_page_sidebar sound.id %}
                         <div>
                             <ol>
                                 <li class="v-spacing-3"> {% bw_icon 'download' 'text-grey text-opacity-050' %}<a href="{% url 'sound-downloaders' sound.user.username sound.id %}" class="bw-link--black no-hover"><span class="text-21">{{ sound.num_downloads }}</span> <span class="text-grey text-17">downloads</span></a></li>
@@ -198,6 +202,7 @@
                         <div class="text-grey {% if sound.user == request.user %}v-spacing-4{% endif %} v-spacing-top-1">
                             {{ sound.license.get_short_summary|safe }} <a href="{{ sound.license.deed_url }}" target="_blank" class="bw-link--black">More...</a>
                         </div>
+                        {% endcache %}
 
                         {% if sound.user != request.user %}
                             <div class="v-spacing-top-5 v-spacing-5">
@@ -222,9 +227,9 @@
 
                             {% if perms.sound.can_edit or sound.user == request.user %}
                                 {% if sound.processing_state == 'OK' %}
-                                    <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'sound-edit' sound.user.username sound.id %}">Edit sound</a>
+                                    <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'sound-edit' sound.user.username sound.id %}">Edit sound description</a>
                                 {% else %}
-                                    <div class="v-spacing-top-3 text-grey text-center">Sound is processing, cannot edit</div>
+                                    <div class="v-spacing-top-3 text-grey text-center">{% include 'sounds/sound_state_processing_indicator.html' %} (cannot edit)</div>
                                 {% endif %}
                             {% endif %}
 
@@ -264,7 +269,7 @@
                              <span class="text-grey">Share url: </span><br><input class="w-100" type="text" readonly value="{% absurl 'short-sound-link' sound.id %}" />
                         </div>
 
-                        <div id="embed-links" class="v-spacing-top-5">
+                        <div id="embed-links" class="v-spacing-top-5 bw-form">
                             <div class="v-spacing-1">
                                 <div>920 x 245</div>
                                 <img id="large-embed-image" src="{{ media_url }}images/widgets/embed_large_scaled_active_color.png" alt="Embed example, large size"/>
@@ -283,7 +288,7 @@
                                     data-size-medium="{{sizes.medium.0}},{{sizes.medium.1}}"
                                     data-size-small="{{sizes.small.0}},{{sizes.small.1}}"
                                     data-iframe-url-template="{% absurl 'embed-simple-sound-iframe' sound.id 'SIZE' %}"
-                                    rows="4"
+                                    style="min-height: 130px;"
                                     placeholder="The embed code will appear here"
                                     class="w-100 v-spacing-top-2">
                             </textarea>
@@ -299,11 +304,10 @@
                             <h6 class="text-26 no-margins ">Comments</h6>
                             <a name="comments"></a>
                             {% if request.user.is_authenticated %}
-                                <form method="POST" action=".#comments" class="disable-on-submit">{% csrf_token %}
+                                <form method="POST" action=".#comments" class="bw-form disable-on-submit">{% csrf_token %}
                                     <div class="row">
                                         <div class="col-md-9">
-                                            <textarea name="comment" id="id_comment" class="v-spacing-top-4 bw-comments_textarea" placeholder="Write your comment here..."></textarea>
-                                            <div class="text-light-grey v-spacing-top-2">You can refer to a specific second of the sound using the syntax <i>#mm:ss</i> (e.g., use #1:34 to refer to 1 minute and 23 seconds).</div>
+                                            {{form.as_p}}
                                         </div>
                                         <div class="col-md-3">
                                             <button id="sound_comment_submit" class="v-spacing-top-5 btn-inverse text-14">Post comment</button>

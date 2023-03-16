@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,12 +18,12 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import url
+from django.urls import path, re_path
 from follow import views
 
 urlpatterns = [
-    url(r'^follow_user/(?P<username>[^//]+)/$', views.follow_user, name='follow-user'),
-    url(r'^unfollow_user/(?P<username>[^//]+)/$', views.unfollow_user, name='unfollow-user'),
-    url(r'^follow_tags/(?P<slash_tags>[\w//-]+)/$', views.follow_tags, name='follow-tags'),
-    url(r'^unfollow_tags/(?P<slash_tags>[\w//-]+)/$', views.unfollow_tags, name='unfollow-tags'),
+    path('follow_user/<username>/', views.follow_user, name='follow-user'),
+    path('unfollow_user/<username>/', views.unfollow_user, name='unfollow-user'),
+    re_path(r'^follow_tags/(?P<slash_tags>[\w//-]+)/$', views.follow_tags, name='follow-tags'),
+    re_path(r'^unfollow_tags/(?P<slash_tags>[\w//-]+)/$', views.unfollow_tags, name='unfollow-tags'),
 ]

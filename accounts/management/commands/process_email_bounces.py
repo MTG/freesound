@@ -25,7 +25,6 @@ from django.db import IntegrityError
 from accounts.models import EmailBounce
 
 from utils.aws import init_client, AwsCredentialsNotConfigured
-from utils.filesystem import create_directories
 from utils.management_commands import LoggingBaseCommand
 from botocore.exceptions import EndpointConnectionError
 
@@ -50,7 +49,7 @@ def process_message(data):
             EmailBounce.objects.create(user=user, type=bounce_type, timestamp=timestamp)
             n_recipients += 1
         except User.DoesNotExist:  # user probably got deleted
-            console_logger.info('User {} not found in database (probably deleted)'.format(email))
+            console_logger.info(f'User {email} not found in database (probably deleted)')
         except IntegrityError:  # message duplicated
             is_duplicate = True
 
@@ -59,7 +58,7 @@ def process_message(data):
 
 def create_dump_file():
     path = os.path.join(settings.DATA_PATH, 'bounced_emails')
-    create_directories(path)
+    os.makedirs(path, exist_ok=True)
     return os.path.join(path, time.strftime('%Y%m%d_%H%M') + '.json')
 
 
@@ -103,7 +102,7 @@ class Command(LoggingBaseCommand):
         try:
             sqs = init_client('sqs')
         except AwsCredentialsNotConfigured as e:
-            console_logger.error(e.message)
+            console_logger.error(str(e))
             return
 
         queue_url = settings.AWS_SQS_QUEUE_URL
@@ -137,7 +136,7 @@ class Command(LoggingBaseCommand):
                     WaitTimeSeconds=0
                 )
             except EndpointConnectionError as e:
-                console_logger.error(e.message)
+                console_logger.error(str(e))
                 return
                 
             messages = response.get('Messages', [])
@@ -170,4 +169,3 @@ class Command(LoggingBaseCommand):
 
         result = {'n_mails_bounced': total_messages, 'n_bounces': total_bounces}
         self.log_end(result)
-

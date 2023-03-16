@@ -12,12 +12,18 @@ function createSelect() {
     // Check if select element already wrapped, otherwise wrap the element, make it invisible and create new visible version
     const alreadyWrapped = select[select_i].parentElement.classList.contains('select-dropdown');
     if (!alreadyWrapped){
+      if (select[select_i].selectedIndex > -1){
+        var selected_index_text = select[select_i].options[select[select_i].selectedIndex].text
+      } else {
+        var selected_index_text = select[select_i].options[0].text
+      }
+
       select[select_i].style.display = 'none';
       wrapElement(
         document.getElementById(select[select_i].id),
         document.createElement('div'),
         select_i,
-        select[select_i].options[select[select_i].selectedIndex].text
+        selected_index_text
       );
 
       for (var i = 0; i < select[select_i].options.length; i++) {
@@ -25,10 +31,14 @@ function createSelect() {
         optionValue = select[select_i].options[i].value;
         optionText = document.createTextNode(select[select_i].options[i].text);
         liElement.className = 'select-dropdown__list-item';
+        if (select[select_i].dataset.greyItems !== undefined){
+          if (select[select_i].dataset.greyItems.split(',').indexOf(optionValue.toString()) > -1){
+            liElement.className += ' text-grey';
+          }
+        }
         liElement.setAttribute('data-value', optionValue);
         liElement.appendChild(optionText);
         ulElement.appendChild(liElement);
-
         liElement.addEventListener(
           'click',
           function() {
@@ -84,8 +94,8 @@ function createSelect() {
         //parentNode[0].classList.toggle("active");
       }
     } else if (element.tagName == 'LI') {
-      var selectId = element.parentNode.parentNode.getElementsByTagName('select')[0];
-      selectElement(selectId.id, element.getAttribute('data-value'));
+      var select = element.parentNode.parentNode.getElementsByTagName('select')[0];
+      selectElement(select.id, element.getAttribute('data-value'));
       elementParentSpan = element.parentNode.parentNode.getElementsByTagName('span');
       element.parentNode.classList.toggle('active');
       elementParentSpan[0].textContent = element.textContent;

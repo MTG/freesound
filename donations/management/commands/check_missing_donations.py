@@ -18,9 +18,6 @@
 #     See AUTHORS file.
 #
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import range
 import datetime
 import logging
 import requests
@@ -76,7 +73,7 @@ class Command(LoggingBaseCommand):
                 # TODO: explore the other types of entries like "transfer"
                 max_range = len([key for key in raw_rsp.keys() if key.startswith("L_TYPE")])
                 for i in range(max_range):
-                    if raw_rsp['L_TYPE%d' % i][0] in [u'Donation', u'Payment']:
+                    if raw_rsp['L_TYPE%d' % i][0] in ['Donation', 'Payment']:
                         amount = raw_rsp['L_AMT%d' % i][0]
                         if float(amount) < 0:
                             continue  # Don't create objects for donations with negative amounts
@@ -106,7 +103,7 @@ class Command(LoggingBaseCommand):
                             donation_data['created'] = raw_rsp['L_TIMESTAMP%d' % i][0]
                             if 'user' in donation_data:
                                 donation_data['user'] = donation_data['user'].username  # Only log username in graylog
-                            commands_logger.info('Created donation object (%s)' % json.dumps(donation_data))
+                            commands_logger.info(f'Created donation object ({json.dumps(donation_data)})')
 
             start = start + one_day
             params['STARTDATE'] = start

@@ -18,13 +18,10 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
 
-from future import standard_library
-standard_library.install_aliases()
 import hashlib
+from unittest import mock
 
-import mock
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -80,7 +77,7 @@ class TicketTests(TestCase):
             processing_state=processing_state,
             license=sounds.models.License.objects.get(pk=1),
             user=user,
-            md5=hashlib.md5(filename).hexdigest(),
+            md5=hashlib.md5(filename.encode()).hexdigest(),
             original_filename=filename)
         return sound
 
@@ -161,12 +158,12 @@ class TicketTestsFromQueue(TicketTests):
 
     def _perform_action(self, action):
         return self.client.post(reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
-            'action': action, 'message': u'', 'ticket': self.ticket.id,
+            'action': action, 'message': '', 'ticket': self.ticket.id,
             'is_explicit': IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY})
 
     @mock.patch('sounds.models.delete_sounds_from_search_engine')
     def test_delete_ticket_from_queue(self, delete_sound_solr):
-        resp = self._perform_action(u'Delete')
+        resp = self._perform_action('Delete')
 
         self.assertEqual(resp.status_code, 200)
         delete_sound_solr.assert_called_once_with([self.sound.id])
@@ -177,7 +174,7 @@ class TicketTestsFromQueue(TicketTests):
 
     @mock.patch('general.tasks.whitelist_user.delay')
     def test_whitelist_from_queue(self, whitelist_task):
-        self._perform_action(u'Whitelist')
+        self._perform_action('Whitelist')
         whitelist_task.assert_called_once_with(ticket_ids=[self.ticket.id])
 
     def _assert_ticket_and_sound_fields(self, status, assignee, moderation_state):
@@ -191,17 +188,17 @@ class TicketTestsFromQueue(TicketTests):
             self.assertEqual(self.ticket.assignee, assignee)
 
     def test_approve_ticket_from_queue(self):
-        resp = self._perform_action(u'Approve')
+        resp = self._perform_action('Approve')
         self.assertEqual(resp.status_code, 200)
         self._assert_ticket_and_sound_fields(TICKET_STATUS_CLOSED, self.test_moderator, 'OK')
 
     def test_return_ticket_from_queue(self):
-        resp = self._perform_action(u'Return')
+        resp = self._perform_action('Return')
         self.assertEqual(resp.status_code, 200)
         self._assert_ticket_and_sound_fields(TICKET_STATUS_NEW, None, 'PE')
 
     def test_defer_ticket_from_queue(self):
-        resp = self._perform_action(u'Defer')
+        resp = self._perform_action('Defer')
         self.assertEqual(resp.status_code, 200)
         self._assert_ticket_and_sound_fields(TICKET_STATUS_DEFERRED, self.test_moderator, 'PE')
 
@@ -233,7 +230,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
 
     def _perform_action(self, action, is_explicit_flag_key):
         return self.client.post(reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
-            'action': action, 'message': u'', 'ticket': self.ticket.id, 'is_explicit': is_explicit_flag_key})
+            'action': action, 'message': '', 'ticket': self.ticket.id, 'is_explicit': is_explicit_flag_key})
 
     def test_keep_is_explicit_preference_for_explicit_sound(self):
         """Test that when approving a sound marked as 'is_explicit' it continues to be marked as such the moderator
@@ -241,7 +238,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = True
         self.ticket.sound.save()
-        self._perform_action(u'Approve', IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
+        self._perform_action('Approve', IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertEqual(self.ticket.sound.is_explicit, True)
 
@@ -251,7 +248,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = False
         self.ticket.sound.save()
-        self._perform_action(u'Approve', IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
+        self._perform_action('Approve', IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertEqual(self.ticket.sound.is_explicit, False)
 
@@ -261,7 +258,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = True
         self.ticket.sound.save()
-        self._perform_action(u'Approve', IS_EXPLICIT_ADD_FLAG_KEY)
+        self._perform_action('Approve', IS_EXPLICIT_ADD_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertTrue(self.ticket.sound.is_explicit)
 
@@ -271,7 +268,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = False
         self.ticket.sound.save()
-        self._perform_action(u'Approve', IS_EXPLICIT_ADD_FLAG_KEY)
+        self._perform_action('Approve', IS_EXPLICIT_ADD_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertTrue(self.ticket.sound.is_explicit)
 
@@ -281,7 +278,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = False
         self.ticket.sound.save()
-        self._perform_action(u'Approve', IS_EXPLICIT_REMOVE_FLAG_KEY)
+        self._perform_action('Approve', IS_EXPLICIT_REMOVE_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertFalse(self.ticket.sound.is_explicit)
 
@@ -291,6 +288,6 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = True
         self.ticket.sound.save()
-        self._perform_action(u'Approve', IS_EXPLICIT_REMOVE_FLAG_KEY)
+        self._perform_action('Approve', IS_EXPLICIT_REMOVE_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertFalse(self.ticket.sound.is_explicit)

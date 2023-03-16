@@ -26,14 +26,14 @@
   }
 }
 
-@mixin rounded-button($color, $hover-color) {
+@mixin rounded-button($color, $hover-color, $font-color) {
   padding-top: 14px;
   padding-right: 30px;
   padding-bottom: 14px;
   padding-left: 30px;
   border-radius: $button-border-radius;
   background-color: $color;
-  color: $white;
+  color: $font-color;
   font-weight: bold;
   line-height: 1.15;
   transition: background-color 0.2s ease;
@@ -50,7 +50,7 @@
 
   &:disabled {
     cursor: default;
-    opacity: 0.5;
+    opacity: $disabled-button-opacity;
   }
 
 }

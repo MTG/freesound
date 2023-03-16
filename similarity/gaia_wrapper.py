@@ -341,7 +341,7 @@ class GaiaWrapper(object):
         required_descriptor_names = self.__calculate_complete_required_descriptor_names(
             descriptor_names, only_leaf_descriptors=only_leaf_descriptors)
 
-        if type(required_descriptor_names) == dict:
+        if isinstance(required_descriptor_names, dict):
             return required_descriptor_names  # There has been an error
 
         for point_name in point_names:

@@ -12,7 +12,17 @@
     <meta name="keywords" content="free, sound">
     {% block extrahead %}
     {% endblock %}
-    <link rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}">
+    {% if request.session.uiThemePreference == 'l' %}
+    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}" data-forced-theme="yes">
+    {% elif request.session.uiThemePreference == 'd' %}
+    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}" data-forced-theme="yes">
+    {% else %}
+    {% if system_prefers_dark_theme %}
+    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}">
+    {% else %}
+    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}">
+    {% endif %}
+    {% endif %}
   </head>
   <body>
     <noscript>
@@ -46,7 +56,8 @@
     </div>
     {% bw_plausible_scripts %}
     <script>
-        document.cookie = "preferSpectrogram={{spectrogram_preference|yesno}}";
+        document.cookie = "preferSpectrogram={{request.session.preferSpectrogram|yesno}};path=/";
+        document.cookie = "disallowSimultaneousAudioPlayback={{request.session.disallowSimultaneousAudioPlayback|yesno}};path=/"
         const siteWidth = 580;  // Minimum expected width. If screen is smaller, scale website.
         const scale = window.innerWidth / siteWidth;
         if (scale < 1){

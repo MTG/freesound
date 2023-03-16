@@ -1,0 +1,37 @@
+name: Clear gh caches
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        
+      - name: Cleanup
+        run: |
+          gh extension install actions/gh-actions-cache
+          
+          REPO=${{ github.repository }}
+
+          echo "Fetching list of cache key"
+          echo "Note no more than 100 results will be returned, you might want to run this workflow multiple times"
+          allCacheKeys=$(gh actions-cache list -R $REPO -L 100 | cut -f 1 )
+
+          ## Setting this to not fail the workflow while deleting cache keys. 
+          set +e
+          IFS=$'\n'
+          echo "Deleting caches..."
+          for cacheKey in $allCacheKeys
+          do
+              echo $cacheKey
+              gh actions-cache delete "$cacheKey" -R $REPO --confirm
+          done
+          echo "Done"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

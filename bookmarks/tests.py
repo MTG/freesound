@@ -81,12 +81,12 @@ class BookmarksTest(TestCase):
 
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=11)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, name='BookmarkedSound')
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12)
 
         response = self.client.get(reverse('bookmarks'))
 
         self.assertEqual(200, response.status_code)
-        self.assertEquals(3, len(response.context['page'].object_list))
+        self.assertEqual(3, len(response.context['page'].object_list))
 
     @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True)  # Need that to make test pass (and make BW behave same as old UI)
     def test_others_bookmarks(self):
@@ -96,7 +96,7 @@ class BookmarksTest(TestCase):
         user = User.objects.get(username='Anton')
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=11)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, name='BookmarkedSound')
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12)
 
         response = self.client.get(reverse('bookmarks-for-user', kwargs={'username': user.username}))
 
@@ -120,13 +120,13 @@ class BookmarksTest(TestCase):
         category = bookmarks.models.BookmarkCategory.objects.create(name='Category1', user=user)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=11, category=category)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category, name='BookmarkedSound')
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category)
 
         response = self.client.get(reverse('bookmarks-for-user-for-category',
                                            kwargs={'username': user.username, 'category_id': category.id}))
 
         self.assertEqual(200, response.status_code)
-        self.assertEquals(2, len(response.context['page'].object_list))
+        self.assertEqual(2, len(response.context['page'].object_list))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Bookmarks in "Category1"')
         self.assertContains(response, 'Uncategorized</a> (1 bookmark)')
@@ -139,7 +139,7 @@ class BookmarksTest(TestCase):
         category = bookmarks.models.BookmarkCategory.objects.create(name='Category1', user=user)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=11, category=category)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category, name='BookmarkedSound')
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category)
 
         user.username = "new-username"
         user.save()
@@ -155,7 +155,7 @@ class BookmarksTest(TestCase):
         # The response is a 200
         self.assertEqual(200, response.status_code)
 
-        self.assertEquals(2, len(response.context['page'].object_list))
+        self.assertEqual(2, len(response.context['page'].object_list))
         self.assertContains(response, 'Your bookmarks')
         self.assertContains(response, 'Bookmarks in "Category1"')
         self.assertContains(response, 'Uncategorized</a> (1 bookmark)')

@@ -1,10 +1,10 @@
-from __future__ import absolute_import
 from django.contrib import admin
 from .models import DonationCampaign, DonationsModalSettings, DonationsEmailSettings, Donation
 
 admin.site.register(DonationCampaign)
 
 
+@admin.register(DonationsModalSettings)
 class DonationsModalSettingsAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
@@ -15,6 +15,7 @@ class DonationsModalSettingsAdmin(admin.ModelAdmin):
             return True
 
 
+@admin.register(DonationsEmailSettings)
 class DonationsEmailSettingsAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
@@ -25,13 +26,14 @@ class DonationsEmailSettingsAdmin(admin.ModelAdmin):
             return True
 
 
+@admin.register(Donation)
 class DonationAdmin(admin.ModelAdmin):
     raw_id_fields = ("user",)
+    list_display = ('id', 'email', 'user', 'amount', 'currency', 'created', )
+    search_fields = ('=user__username', '=email', )
 
     def has_change_permission(self, request, obj=None):
         return False
 
-
-admin.site.register(DonationsModalSettings, DonationsModalSettingsAdmin)
-admin.site.register(DonationsEmailSettings, DonationsEmailSettingsAdmin)
-admin.site.register(Donation, DonationAdmin)
+    def has_delete_permission(self, request, obj=None):
+        return False

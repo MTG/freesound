@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,46 +18,45 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from django.urls import reverse
 
 class Tag(models.Model):
     name = models.SlugField(unique=True, db_index=True, max_length=100)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def get_browse_tag_url(self):
         return reverse('tags', self.name)
 
-    class Meta(object):
+    class Meta:
         ordering = ("name",)
 
 
 class TaggedItem(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    tag = models.ForeignKey(Tag)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
 
     #content_type = models.ForeignKey(ContentType, related_name='tags')
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField(db_index=True)
     content_object = fields.GenericForeignKey()
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def __unicode__(self):
-        return u"%s tagged %s - %s: %s" % (self.user, self.content_type, self.content_type, self.tag)
+    def __str__(self):
+        return f"{self.user} tagged {self.content_type} - {self.content_type}: {self.tag}"
 
     def get_absolute_url(self):
-        return reverse('tag', args=[smart_text(self.tag.id)])
+        return reverse('tag', args=[smart_str(self.tag.id)])
 
-    class Meta(object):
+    class Meta:
         ordering = ("-created",)
         unique_together = (('tag', 'content_type', 'object_id'),)
 
@@ -69,4 +66,4 @@ class FS1Tag(models.Model):
     # The old id from FS1
     fs1_id = models.IntegerField(unique=True, db_index=True)
 
-    tag = models.ForeignKey(Tag)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)

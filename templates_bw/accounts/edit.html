@@ -1,13 +1,13 @@
 {% extends "accounts/account_settings_base.html" %}
 
-{% load staticfiles %}
+{% load static %}
 {% load bw_templatetags %}
 
 {% block title %}Edit profile{% endblock %}
 
 {% block main_content %}
     <h1>Edit profile</h1>
-    <div class="v-spacing-top-6">
+    <div class="v-spacing-top-4 center">
         {% if profile.has_avatar %}
             <img id="imageProfile" class="avatar" style="width:100px;height:100px;" src="{{ profile.locations.avatar.XL.url }}" />
         {% else %}
@@ -15,31 +15,33 @@
             {% bw_user_avatar profile.locations.avatar.XL.url user.username 100 %}
         {% endif %}
     </div>
-    <div class="bw-edit-profile__username v-spacing-top-2">
+    <div class="bw-edit-profile__username v-spacing-top-2 center">
         <h2>{{ user.username }}</h2>
     </div>
     {% if uploads_enabled %}
-        <div class="v-spacing-top-3">
-            {{ image_form.errors }}
-            {% comment %}The form below is used to set an avatar and submit the form right after setting the image{% endcomment %}
-            <form id="avatarImageForm" class="display-inline-block" method="post" action="." enctype="multipart/form-data">{% csrf_token %}
-                <label for="id_image-file" class="btn-inverse bw-edit-profile__label_file">Change avatar</label>
-                <input type="file" id="id_image-file" name="image-file" class="bw-edit-profile__input_file" accept=".jpg,.png,.jpeg" />
-            </form>
-            {% comment %}The form below is used to delete the avatar with a single button click{% endcomment %}
-            <form  class="display-inline-block" method="post" action="." enctype="multipart/form-data">{% csrf_token %}
-                <input type="hidden" name="image-remove" value="1">
-                <button class="btn-inverse h-spacing-left-2" {% if not profile.has_avatar %}disabled{% endif %}>Delete avatar</button>
-            </form>
+        <div class="center">
+            <div class="v-spacing-top-3">
+                {{ image_form.errors }}
+                {% comment %}The form below is used to set an avatar and submit the form right after setting the image{% endcomment %}
+                <form id="avatarImageForm" class="display-inline-block" method="post" action="." enctype="multipart/form-data">{% csrf_token %}
+                    <label for="id_image-file" class="btn-inverse bw-edit-profile__label_file">Change avatar</label>
+                    <input type="file" id="id_image-file" name="image-file" class="bw-edit-profile__input_file" accept=".jpg,.png,.jpeg" />
+                </form>
+                {% comment %}The form below is used to delete the avatar with a single button click{% endcomment %}
+                <form  class="display-inline-block" method="post" action="." enctype="multipart/form-data">{% csrf_token %}
+                    <input type="hidden" name="image-remove" value="1">
+                    <button class="btn-inverse h-spacing-left-2" {% if not profile.has_avatar %}disabled{% endif %}>Delete avatar</button>
+                </form>
+            </div>
         </div>
         {% if has_old_avatar %}
-            <div class="text-center text-grey v-spacing-top-2"><span class="text-red">Warning:</span> your avatar was uploaded with the previous version of Freesound. <br/>Please, re-upload the avatar to display it with optimal resolution.</span></div>
+            <div class="text-center text-grey v-spacing-top-2 center"><span class="text-red">Warning:</span> your avatar was uploaded with the previous version of Freesound. <br/>Please, re-upload the avatar to display it with optimal resolution.</span></div>
         {% endif %}
     {% else %}
-        <div class="text-center text-grey v-spacing-top-3"><span class="text-red">Warning:</span> avatar uploading is currently disabled. We'll enable it as soon as possible.</span></div>
+        <div class="text-center text-grey v-spacing-top-3 center"><span class="text-red">Warning:</span> avatar uploading is currently disabled. We'll enable it as soon as possible.</span></div>
     {% endif %}
-    <div class="v-spacing-top-7 w-100 v-spacing-5">
-        <form method="post" action="." class="bw-edit-profile__form w-100">{% csrf_token %}
+    <div class="v-spacing-top-3 w-100 v-spacing-5">
+        <form method="post" action="." class="bw-form w-100">{% csrf_token %}
             {{profile_form.as_p}}
             <button class="btn-primary w-100 v-spacing-top-5">Update profile</button>
         </form>

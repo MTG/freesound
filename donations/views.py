@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
 import base64
 import json
 import logging
@@ -76,7 +72,7 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id, source
         del log_data['user']  # Don't want to serialize user
         del log_data['campaign']  # Don't want to serialize campaign
         log_data['amount_float'] = float(log_data['amount'])
-        web_logger.info('Recevied donation (%s)' % json.dumps(log_data))
+        web_logger.info(f'Recevied donation ({json.dumps(log_data)})')
     return True
 
 
@@ -86,9 +82,9 @@ def donation_complete_stripe(request):
     This view is called from Stripe when a new donation is completed, here we create and
     store the donation in the db.
     """
-    if "HTTP_STRIPE_SIGNATURE" in request.META:
+    if "stripe-signature" in request.headers:
         payload = request.body
-        sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+        sig_header = request.headers['stripe-signature']
         endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
         stripe.api_key = settings.STRIPE_PRIVATE_KEY
         event = None
@@ -111,6 +107,8 @@ def donation_complete_stripe(request):
             # Fulfill the purchase...
             amount = int(session['display_items'][0]['amount'])/100.0
             encoded_data = session['success_url'].split('?')[1].replace("token=", "")
+            if encoded_data.startswith("b'"):
+                encoded_data = encoded_data[2:-1]
             customer_email = session['customer_email']
             if customer_email == None:
                 customer = stripe.Customer.retrieve(session['customer'])
@@ -171,11 +169,11 @@ def donation_session_stripe(request):
         FormToUse = BwDonateForm if using_beastwhoosh(request) else DonateForm
         form = FormToUse(request.POST, user=request.user)
         if form.is_valid():
-            email_to = request.user.email if request.user.is_authenticated() else None
+            email_to = request.user.email if request.user.is_authenticated else None
             amount = form.cleaned_data['amount']
-            domain = "https://%s" % Site.objects.get_current().domain
+            domain = f"https://{Site.objects.get_current().domain}"
             return_url_success = urllib.parse.urljoin(domain, reverse('donation-success'))
-            return_url_success += '?token={}'.format(form.encoded_data)
+            return_url_success += f'?token={form.encoded_data}'
             return_url_cancel = urllib.parse.urljoin(domain, reverse('donate'))
             session = stripe.checkout.Session.create(
                 customer_email=email_to,
@@ -209,8 +207,7 @@ def donation_session_paypal(request):
         form = FormToUse(request.POST, user=request.user)
         if form.is_valid():
             amount = form.cleaned_data['amount']
-            returned_data_str = form.encoded_data
-            domain = "https://%s" % Site.objects.get_current().domain
+            domain = f"https://{Site.objects.get_current().domain}"
             return_url = urllib.parse.urljoin(domain, reverse('donation-complete-paypal'))
             data = {"url": settings.PAYPAL_VALIDATION_URL,
                     "params": {
@@ -218,7 +215,7 @@ def donation_session_paypal(request):
                         "currency_code": "EUR",
                         "business": settings.PAYPAL_EMAIL,
                         "item_name": "Freesound donation",
-                        "custom": returned_data_str,
+                        "custom": form.encoded_data,
                         "notify_url": return_url,
                         "no_shipping": 1,
                         "lc": "en_US"

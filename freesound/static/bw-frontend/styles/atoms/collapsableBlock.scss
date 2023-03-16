@@ -1,5 +1,4 @@
 .collapsable-block {
-  transition: max-height 1s;
   overflow: hidden;
 
   &-close {
@@ -7,10 +6,11 @@
   }
 }
 
-.collapsable-text {
+.collapsable-toggle {
   color: $navy-grey;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   cursor: pointer;
+
+  &:hover {
+    color: $black;
+  }
 }

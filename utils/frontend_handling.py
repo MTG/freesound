@@ -26,7 +26,6 @@ from django.shortcuts import render as django_render
 from django.template import TemplateDoesNotExist
 from django.template.response import TemplateResponse
 from django.urls import reverse
-from django.utils.decorators import available_attrs
 
 
 def selected_frontend(request):
@@ -160,7 +159,7 @@ def redirect_if_beastwhoosh(redirect_url_name='front-page', kwarg_keys=None, que
                     new_args = []
                 url = reverse(redirect_url_name, args=new_args)
                 if query_string:
-                    url += '?%s' % query_string
+                    url += f'?{query_string}'
                 return HttpResponseRedirect(url)
         return _wrapped_view
     return decorator
@@ -173,7 +172,7 @@ def redirect_if_beastwhoosh_inline(function=None, redirect_url_name='front-page'
     > redirect_if_beastwhoosh_inline(PasswordResetView.as_view(form_class=FsPasswordResetForm))
     """
     def decorator(view_func):
-        @wraps(view_func, assigned=available_attrs(view_func))
+        @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             if not using_beastwhoosh(request):
                 return view_func(request, *args, **kwargs)
@@ -184,7 +183,7 @@ def redirect_if_beastwhoosh_inline(function=None, redirect_url_name='front-page'
                     new_args = []
                 url = reverse(redirect_url_name, args=new_args)
                 if query_string:
-                    url += '?%s' % query_string
+                    url += f'?{query_string}'
                 return HttpResponseRedirect(url)
         return _wrapped_view
     return decorator(function)

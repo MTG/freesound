@@ -66,7 +66,7 @@ for descriptor_name in descriptor_names:
             continue
 
     print("Histogram for descriptor: %s" % descriptor_name)
-    if type(example_value) == float:
+    if isinstance(example_value, float):
         pool = []
         for point_name in point_names:
             point = ds.point(point_name)
@@ -81,7 +81,7 @@ for descriptor_name in descriptor_names:
 
         plot_histogram(pool, descriptor_name)
 
-    elif type(example_value) == tuple:
+    elif isinstance(example_value, tuple):
         for i in range(0, len(example_value)):
             label = descriptor_name + '.%.3i' % i
             print("\tDimension %i" % i)
@@ -99,7 +99,7 @@ for descriptor_name in descriptor_names:
 
             plot_histogram(pool, label)
 
-    elif type(example_value) == str:
+    elif isinstance(example_value, str):
         pool = []
         for point_name in point_names:
             point = ds.point(point_name)

@@ -2,27 +2,97 @@
     display: flex;
     flex-direction: column;
 
-    &.form-inline {
-        display: inline;
-        input {
-            margin-right: 15px;
-        }
-        button {
-            margin-right: 15px;
-        }
-        div {
-            display:inline;
-            white-space:nowrap;
-        }        
+    p {
+      margin-bottom: 0;
     }
 
+    label {
+      width: 100%;
+      color: $navy-grey;
+    }
+
+    span.bw-checkbox-container + label {
+      color: $black;
+    }
+
+    input,
+    textarea {
+      &:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
+        margin-top: 12px;
+        margin-bottom: 30px;
+        width: 100%;
+        border: 1px solid $border-input;
+        color: $black;
+        background-color: $background-input;
+        padding: 10px 20px;
+        border-radius: 5px;
+
+        &::placeholder {
+          color: $navy-light-grey;
+        }
+
+        &:focus {
+          background-color: $white;
+          border: 1px solid $black;
+        }
+      }
+    }
+    
+    textarea {
+      min-height: 150px;
+      resize: none;
+
+      &:focus {
+        background-color: $white;
+        border: 1px solid $black;
+        outline: none;
+      }
+    }
+
+    button {
+      font-size: 17px;
+    }
+
+    .checkboxNotification {
+      margin-bottom: 28px;
+
+      .bw-search__filter-name {
+        line-height: 20px;
+      }
+    }
+
+    .radioAccount {
+      margin-bottom: 28px;
+      color: $navy-grey;
+    }
+
+    .helptext {
+      color: $navy-light-grey;
+      margin-top: -15px;
+      margin-bottom: 18px;
+      display: block;
+    }
+  }
+
+  .form-activity-stream {
+    display: inline;
+
+    button {
+        margin-right: 15px;
+    }
+    div {
+        display:inline;
+        white-space:nowrap;
+    }        
+    
     input {
         height: 48px;
+        margin-right: 15px;
         border-radius: 5px;
         padding: 14px 21px;
         margin-bottom: 12px;
         margin-top: 12px;
-        background-color: #f4f4f6;
+        background-color: $background-input;
         border: 1px solid transparent;
 
         &:focus {
@@ -33,5 +103,9 @@
         &::placeholder {
         color: $navy-grey;
         }
+    }
+
+    label {
+      color: $navy-grey;
     }
 }

@@ -1,5 +1,14 @@
 .bw-wiki {
 
+  a {
+    &:target {  // This is to make sure wii titles are aligned on top when scrolling
+      display: block;
+      position: relative;
+      top: 20px;
+      visibility: hidden;
+    }
+  }
+
   h1 {
     margin-bottom: 24px;
   }
@@ -37,56 +46,17 @@
   }
 
   tr:nth-child(even) {
-    background: #efefef;
+    background: $almost-white;
   }
 
-  form {
-    display: flex;
-    flex-direction: column;
-
-    input {
-      height: 48px;
-      border-radius: 5px;
-      padding: 14px 21px;
-      margin-bottom: 32px;
-      background-color: #f4f4f6;
-      border: 1px solid transparent;
-
-      &:focus {
-        border: 1px solid $black;
-        background-color: $white;
-      }
-
-      &::placeholder {
-        color: $navy-grey;
-      }
-    }
-
-    input[type=radio] {
-      padding: 0;
-      margin: 0;
-      height: initial;
-      margin-right: 8px;
-    }
-
-    textarea {
-      display: block;
-      width: 100%;
-      padding: 20px 24px 5px;
-      resize: none;
-      border-radius: 5px;
-      background-color: $background-textarea;
-      border: none;
-      font-size: 16px;
-    }
-  }
+  
 
   table.diff {font-family:Courier; border:medium;}
-  .diff_header {background-color:#e0e0e0}
-  td.diff_header {text-align:right}
-  .diff_next {background-color:#c0c0c0}
-  .diff_add {background-color:#aaffaa}
-  .diff_chg {background-color:#ffff77}
-  .diff_sub {background-color:#ffaaaa}
+  .diff_header {background-color:$almost-white;color:$black;}
+  td.diff_header {text-align:right;color:$black;}
+  .diff_next {background-color:$almost-white-border;color:$black;}
+  .diff_add {background-color:$green}
+  .diff_chg {background-color:$yellow}
+  .diff_sub {background-color:$red}
 
 }

@@ -17,7 +17,8 @@
 # Authors:
 #     See AUTHORS file.
 #
-import mock
+from unittest import mock
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
@@ -42,9 +43,9 @@ class MessageReceivedEmailNotification(TestCase):
     def test_message_email_preference_enabled(self, magic_mock):
         self.client.force_login(user=self.sender)
         resp = self.client.post(reverse('messages-new'), data={
-            u'body': [u'test message body'],
-            u'to': [u'receiver'],
-            u'subject': [u'test message'],
+            'body': ['test message body'],
+            'to': ['receiver'],
+            'subject': ['test message'],
         })
         self.assertRedirects(resp, reverse('messages'))
         self.assertEqual(len(mail.outbox), 1)
@@ -60,9 +61,9 @@ class MessageReceivedEmailNotification(TestCase):
 
         self.client.force_login(user=self.sender)
         resp = self.client.post(reverse('messages-new'), data={
-            u'body': [u'test message body'],
-            u'to': [u'receiver'],
-            u'subject': [u'test message'],
+            'body': ['test message body'],
+            'to': ['receiver'],
+            'subject': ['test message'],
         })
         self.assertRedirects(resp, reverse('messages'))
         self.assertEqual(len(mail.outbox), 0)

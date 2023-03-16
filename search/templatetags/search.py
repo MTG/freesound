@@ -1,4 +1,3 @@
-from __future__ import division
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -22,7 +21,7 @@ from __future__ import division
 
 from past.utils import old_div
 from django import template
-from django.utils.http import urlquote_plus
+from urllib.parse import quote_plus
 
 from utils.frontend_handling import using_beastwhoosh
 from utils.tags import annotate_tags
@@ -41,14 +40,14 @@ def display_facet(context, flt, facet, facet_type, title=""):
     # are not unique!. What we do then is filter out the facet elements where, only for the case of grouping_pack,
     # the element name is a single number that does not contain the character "_"
 
-    filter_query = urlquote_plus(context['filter_query'])
+    filter_query = quote_plus(context['filter_query'])
     filtered_facet = []
     for element in facet:
         if flt == "grouping_pack":
             if element['name'].count("_") > 0:
                 # We also modify the display name to remove the id
                 element['display_name'] = element['name'][element['name'].find("_")+1:]
-                element['params'] = u'{0} {1}:"{2}"'.format(filter_query, flt, urlquote_plus(element['name']))
+                element['params'] = f"{filter_query} {flt}:\"{quote_plus(element['name'])}\""
             else:
                 # If facet element belongs to "grouping pack" filter but does not have the "_" character in it, it
                 # means this corresponds to the "no pack" grouping which we don't want to show as a facet element.
@@ -56,9 +55,9 @@ def display_facet(context, flt, facet, facet_type, title=""):
         else:
             element['display_name'] = element['name']
 
-        element['params'] = u'{0} {1}:"{2}"'.format(filter_query, flt, urlquote_plus(element['name']))
-        element['id'] = u'{0}--{1}'.format(flt, urlquote_plus(element['name']))
-        element['add_filter_url'] = u'.?g={0}&only_p={1}&q={2}&f={3}&s={4}&w={5}'.format(
+        element['params'] = f"{filter_query} {flt}:\"{quote_plus(element['name'])}\""
+        element['id'] = f"{flt}--{quote_plus(element['name'])}"
+        element['add_filter_url'] = '.?g={}&only_p={}&q={}&f={}&s={}&w={}'.format(
             context['group_by_pack_in_request'],
             context['only_sounds_with_pack'],
             context['search_query'],

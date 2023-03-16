@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+    db:
+        image: postgres:12.1
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        env_file:
+            - environment
+        volumes:
+            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
+        ports:
+            - "5432:5432"
+        environment:
+            - POSTGRES_USER=freesound
+            - POSTGRES_DB=freesound
+            - FS_USER_ID
+
+    test_runner:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.workers_web
+        init: true
+        volumes:
+            - .:/code
+            - ./freesound-data/:/freesound-data
+        env_file:
+            - environment
+        environment:
+            - FS_USER_ID
+        depends_on:
+            - db

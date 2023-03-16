@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -48,19 +47,22 @@ def bookmarks(request, category_id=None):
 def bookmarks_for_user(request, username, category_id=None):
     user = request.parameter_user
     is_owner = request.user.is_authenticated and user == request.user
-    if not settings.BW_BOOKMARK_PAGES_PUBLIC and not is_owner:
+    if using_beastwhoosh(request) and not settings.BW_BOOKMARK_PAGES_PUBLIC and not is_owner:
         # In BW we only make bookmarks available to bookmark owners (bookmarks are not public)
         # When fully moved to BW, then we can add @login_required and use only the url pattern under /home for bookmarks
         raise Http404
     if using_beastwhoosh(request) and is_owner:
-        # If accesing own bookmarks using the poeple/xx/bookmarks URL, redirect to the /home/bookmarks URL
-        return HttpResponseRedirect(reverse('bookmarks'))
+        # If accessing own bookmarks using the people/xx/bookmarks URL, redirect to the /home/bookmarks URL
+        if category_id:
+            return HttpResponseRedirect(reverse('bookmarks-category', args=[category_id]))
+        else:
+            return HttpResponseRedirect(reverse('bookmarks'))
     return bookmarks_view_helper(request, user, is_owner, category_id)
 
 
 def bookmarks_view_helper(request, user, is_owner, category_id):
-    # NOTE: we use this helper for the bookmarks and bookmarks_for_user views so the code is reused. When fully switching to BW,
-    # the bookmarks_for_user view could be remove as bookmarks won't be public anymore
+    # NOTE: we use this helper for the bookmarks and bookmarks_for_user views so the code is reused. When fully
+    # switching to BW, the bookmarks_for_user view could be remove as bookmarks won't be public anymore
     n_uncat = Bookmark.objects.select_related("sound").filter(user=user, category=None).count()
     if not category_id:
         category = None
@@ -98,16 +100,21 @@ def add_bookmark(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ''
     if request.method == 'POST':
+        user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
         FormToUse = BwBookmarkForm if using_beastwhoosh(request) else BookmarkForm
-        form = FormToUse(request.POST, instance=Bookmark(user=request.user, sound=sound))
-        form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
+        form = FormToUse(request.POST,
+                         user_bookmark_categories=user_bookmark_categories,
+                         sound_id=sound_id,
+                         user_saving_bookmark=request.user)
         if form.is_valid():
             saved_bookmark = form.save()
-            msg_to_return = u'Bookmark created with name "{}"'.format(saved_bookmark.name_or_sound_name)
+            msg_to_return = f'Bookmark created with name "{saved_bookmark.sound_name}"'
             if saved_bookmark.category:
-                msg_to_return += u' under category "{}".'.format(saved_bookmark.category.name)
+                msg_to_return += f' under category "{saved_bookmark.category.name}".'
             else:
                 msg_to_return += '.'
+        else:
+            raise Exception()
 
     if request.is_ajax():
         return JsonResponse({'message': msg_to_return})
@@ -134,8 +141,11 @@ def delete_bookmark(request, bookmark_id):
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]) + "?page=" + str(page))
 
 
-@login_required
 def get_form_for_sound(request, sound_id):
+    if not request.user.is_authenticated:
+        template = 'bookmarks/modal_bookmark_sound.html' if using_beastwhoosh(request) else 'bookmarks/bookmark_form.html'
+        return render(request, template, {})
+
     sound = Sound.objects.get(id=sound_id)
     FormToUse = BwBookmarkForm if using_beastwhoosh(request) else BookmarkForm
     try:
@@ -146,9 +156,10 @@ def get_form_for_sound(request, sound_id):
         last_category = last_user_bookmark.category
     except IndexError:
         last_category = None
-    form = FormToUse(instance=Bookmark(name=sound.original_filename),
-                     initial={'category': last_category}, prefix=sound.id)
-    form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
+    user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
+    form = FormToUse(initial={'category': last_category.id if last_category else FormToUse.NO_CATEGORY_CHOICE_VALUE},
+                     prefix=sound.id,
+                     user_bookmark_categories=user_bookmark_categories)
     categories_already_containing_sound = BookmarkCategory.objects.filter(user=request.user,
                                                                           bookmarks__sound=sound).distinct()
     sound_has_bookmark_without_category = Bookmark.objects.filter(user=request.user, sound=sound, category=None).exists()

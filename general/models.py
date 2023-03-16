@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from comments.models import Comment
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
@@ -35,11 +32,11 @@ class SocialModel(models.Model):
     tags = fields.GenericRelation(TaggedItem)
     fans = fields.GenericRelation(Favorite)
 
-    class Meta(object):
+    class Meta:
         abstract = True
 
 class AkismetSpam(SocialModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     spam = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
 
@@ -52,7 +49,7 @@ class OrderedModel(models.Model):
                 self.order = self.__class__.objects.all().order_by("-order")[0].order + 1
             except IndexError:
                 self.order = 0
-        super(OrderedModel, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def change_order(self):
         model_type_id = ContentType.objects.get_for_model(self.__class__).id
@@ -61,8 +58,7 @@ class OrderedModel(models.Model):
         url_up = reverse("admin-move", kwargs=kwargs)
         kwargs["direction"] = "down"
         url_down = reverse("admin-move", kwargs=kwargs)
-        return '<a href="%s">up</a> | <a href="%s">down</a>' % (url_up, url_down)
-    change_order.allow_tags = True
+        return mark_safe(f'<a href="{url_up}">up</a> | <a href="{url_down}">down</a>')
     change_order.short_description = 'Move'
     change_order.admin_order_field = 'order'
                 
@@ -87,6 +83,6 @@ class OrderedModel(models.Model):
         except ModelClass.DoesNotExist:
             pass
 
-    class Meta(object):
+    class Meta:
         ordering = ["order"]
         abstract = True

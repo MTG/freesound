@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -23,30 +21,29 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.urls import reverse
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from mapbox import Geocoder
 
 web_logger = logging.getLogger("web")
 
 
 class GeoTag(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     lat = models.FloatField(db_index=True)
     lon = models.FloatField(db_index=True)
     zoom = models.IntegerField()
-    information = JSONField(null=True)
+    information = models.JSONField(null=True)
     location_name = models.CharField(max_length=255, default="")
     should_update_information = models.BooleanField(null=False, default=True)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def __unicode__(self):
-        return u"%s (%f,%f)" % (self.user, self.lat, self.lon)
+    def __str__(self):
+        return f"{self.user} ({self.lat:f},{self.lon:f})"
 
     def get_absolute_url(self):
-        return reverse('geotag', args=[smart_text(self.id)])
+        return reverse('geotag', args=[smart_str(self.id)])
 
     def retrieve_location_information(self):
         """Use the mapbox API to retrieve information about the latitude and longitude of this geotag.

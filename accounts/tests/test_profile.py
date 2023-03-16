@@ -17,12 +17,11 @@
 # Authors:
 #     See AUTHORS file.
 #
-from builtins import range
 import datetime
 import os
+from unittest import mock
 
 import freezegun
-import mock
 from dateutil.parser import parse as parse_date
 from django.conf import settings
 from django.contrib.auth.models import User, Permission
@@ -68,8 +67,8 @@ class ProfileGetUserTags(TestCase):
         mock_search_engine.return_value.configure_mock(**conf)
         accounts.models.get_search_engine = mock_search_engine
         tag_names = [item['name'] for item in user.profile.get_user_tags()]
-        used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
-        non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
+        used_tag_names = list({item.tag.name for item in TaggedItem.objects.filter(user=user)})
+        non_used_tag_names = list({item.tag.name for item in TaggedItem.objects.exclude(user=user)})
 
         # Test that tags retrieved with get_user_tags are those found in db
         self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
@@ -87,8 +86,9 @@ class UserEditProfile(TestCase):
     @override_avatars_path_with_temp_directory
     def test_handle_uploaded_image(self):
         user = User.objects.create_user("testuser")
-        f = InMemoryUploadedFile(open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'), None, None, None, None, None)
-        handle_uploaded_image(user.profile, f)
+        with open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb') as f:
+            f = InMemoryUploadedFile(f, None, None, None, None, None)
+            handle_uploaded_image(user.profile, f)
 
         # Test that avatar files were created
         self.assertEqual(os.path.exists(user.profile.locations("avatar.S.path")), True)
@@ -154,10 +154,11 @@ class UserEditProfile(TestCase):
     def test_edit_user_avatar(self):
         user = User.objects.create_user("testuser")
         self.client.force_login(user)
-        self.client.post("/home/edit/", {
-            'image-file': open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'),
-            'image-remove': False,
-        })
+        with open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb') as f:
+            self.client.post("/home/edit/", {
+                'image-file': f,
+                'image-remove': False,
+            })
 
         user = User.objects.select_related('profile').get(username="testuser")
         self.assertEqual(user.profile.has_avatar, True)
@@ -193,9 +194,9 @@ class AboutFieldVisibilityTest(TestCase):
     def _check_visibility(self, username, condition):
         resp = self.client.get(reverse('account', kwargs={'username': username}))
         if condition:
-            self.assertIn(self.about, resp.content)
+            self.assertContains(resp, self.about)
         else:
-            self.assertNotIn(self.about, resp.content)
+            self.assertNotContains(resp, self.about)
 
     def _check_visible(self):
         self._check_visibility('downloader', True)
@@ -306,8 +307,8 @@ class EmailBounceTest(TestCase):
         self.assertFalse(user.profile.email_is_valid())
 
     def test_idna_email(self):
-        encoded_email = u'user@xn--eb-tbv.de'
-        decoded_email = u'user@\u2211eb.de'
+        encoded_email = 'user@xn--eb-tbv.de'
+        decoded_email = 'user@\u2211eb.de'
         self.assertEqual(decoded_email, decode_idna_email(encoded_email))
 
     def test_email_email_bounce_removed_when_resetting_email(self):
@@ -318,7 +319,7 @@ class EmailBounceTest(TestCase):
         # User fills in email reset form
         self.client.force_login(user)
         resp = self.client.post(reverse('accounts-email-reset'), {
-            'email': u'new_email@freesound.org',
+            'email': 'new_email@freesound.org',
             'password': '12345',
         })
         self.assertRedirects(resp, reverse('accounts-email-reset-done'))
@@ -342,12 +343,12 @@ class EmailBounceTest(TestCase):
         self.client.force_login(admin_user)
         resp = self.client.post(reverse('admin:auth_user_change', args=[user.id]), data={
             'username': user.username,
-            'email': u'new_email@freesound.org',
+            'email': 'new_email@freesound.org',
             'date_joined_0': "2015-10-06",
             'date_joined_1': "16:42:00"
         })
         user.refresh_from_db()
-        self.assertEqual(user.email, u'new_email@freesound.org')
+        self.assertEqual(user.email, 'new_email@freesound.org')
 
         # Now asses no EmailBounce still exist
         self.assertEqual(EmailBounce.objects.filter(user=user).count(), 0)
@@ -403,6 +404,7 @@ class ProfilePostInForumTest(TestCase):
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
+        self.user.profile.refresh_from_db()
         with freezegun.freeze_time("2019-02-03 10:52:30"):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertFalse(can_post)
@@ -420,7 +422,7 @@ class ProfilePostInForumTest(TestCase):
         post.save()
         self.user.profile.num_sounds = 3
         self.user.profile.save()
-
+        self.user.profile.refresh_from_db()
         with freezegun.freeze_time("2019-02-03 10:52:30"):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertTrue(can_post)
@@ -442,6 +444,7 @@ class ProfilePostInForumTest(TestCase):
             today = today + datetime.timedelta(minutes=i+10)
             post.created = today
             post.save()
+        self.user.profile.refresh_from_db()
 
         # After making 9 posts, we can't make any more
         with freezegun.freeze_time("2019-02-05 14:52:30"):

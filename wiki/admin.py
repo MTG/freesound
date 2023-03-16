@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -23,12 +21,18 @@
 from django.contrib import admin
 from wiki.models import Page, Content
 
+@admin.register(Page)
 class PageAdmin(admin.ModelAdmin):
     list_display = ('name', )
-admin.site.register(Page, PageAdmin)
+
+    def has_add_permission(self, request):
+        return False
 
 
+@admin.register(Content)
 class ContentAdmin(admin.ModelAdmin):
     raw_id_fields = ('author', )
     list_display = ('page', 'author', 'title', 'created', )
-admin.site.register(Content, ContentAdmin)
+
+    def has_add_permission(self, request):
+        return False

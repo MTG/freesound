@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
 
 from django.conf import settings
 from rest_framework.throttling import SimpleRateThrottle
@@ -67,9 +64,9 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
             rate = limit_rates[0]  # Get burst limit
             self.rate = rate
             self.num_requests, self.duration = self.parse_rate(rate)
-            passes_throttle = super(ClientBasedThrottlingBurst, self).allow_request(request, view)
+            passes_throttle = super().allow_request(request, view)
             if not passes_throttle:
-                msg = "Request was throttled because of exceeding a request limit rate (%s)" % rate
+                msg = f"Request was throttled because of exceeding a request limit rate ({rate})"
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"
@@ -127,9 +124,9 @@ class ClientBasedThrottlingSustained(SimpleRateThrottle):
             rate = limit_rates[1]  # Get sustained limit
             self.rate = rate
             self.num_requests, self.duration = self.parse_rate(rate)
-            passes_throttle = super(ClientBasedThrottlingSustained, self).allow_request(request, view)
+            passes_throttle = super().allow_request(request, view)
             if not passes_throttle:
-                msg = "Request was throttled because of exceeding a request limit rate (%s)" % rate
+                msg = f"Request was throttled because of exceeding a request limit rate ({rate})"
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"
@@ -178,7 +175,7 @@ class IpBasedThrottling(SimpleRateThrottle):
             client_throttle_level = 1
 
         # Get request ip
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        x_forwarded_for = request.headers.get('x-forwarded-for')
         if x_forwarded_for:
             self.ip = x_forwarded_for.split(',')[0].strip()
         else:
@@ -221,7 +218,7 @@ class IpBasedThrottling(SimpleRateThrottle):
                     passes_throttle = self.throttle_success()
 
             if not passes_throttle:
-                msg = "Request was throttled because of exceeding the concurrent ip limit rate (%s)" % rate
+                msg = f"Request was throttled because of exceeding the concurrent ip limit rate ({rate})"
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"

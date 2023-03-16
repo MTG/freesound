@@ -18,22 +18,14 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
 
-from builtins import hex
-from builtins import str as new_str
-from builtins import bytes
-from builtins import object
-import errno
 import hashlib
 import os
-import sys
-import warnings
+import shutil
 import zlib
-from tempfile import mkdtemp
 
 
-class File(object):
+class File:
 
     def __init__(self, id, name, full_path, is_dir):
         self.name = name
@@ -50,9 +42,6 @@ class File(object):
 
 
 def generate_tree(path):
-    # Force path to use the "old" py2 str type. This should not be needed when using py3
-    path = str(path)
-
     counter = 0
     lookups = {path: File(counter, path, path, True)}
     files = {}
@@ -78,7 +67,6 @@ def generate_tree(path):
 
 def md5file(filename):
     """Return the hex digest of a file without loading it all into memory"""
-    fh = open(filename, "rb")
     digest = hashlib.md5()
     with open(filename, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
@@ -89,7 +77,7 @@ def md5file(filename):
 def crc32file(filename):
     fh = open(filename, "rb")
     crc32 = 0
-    while 1:
+    while True:
         buf = fh.read(4096)
         if buf == "":
             break
@@ -98,109 +86,14 @@ def crc32file(filename):
     return hex(crc32)[2:]
 
 
+def remove_directory(path):
+    shutil.rmtree(path)
+
+
 def remove_directory_if_empty(path):
     if not os.listdir(path):
-        os.rmdir(path)
-
-
-def create_directories(path, exist_ok=True):
-    """
-    Creates directory at the specified path, including all intermediate-level directories needed to contain it.
-    NOTE: after migrating to Python3, this util function can be entirely replaced by calling
-    "os.makedirs(path, exist_ok=True)".
-    :param str path: path of the direcotry to create
-    :param bool exist_ok: if set to True, exceptions won't be raised if the target direcotry already exists
-    """
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        # Ignore exception if directory already existing
-        if exist_ok and exc.errno != errno.EEXIST:
-            raise
-
-
-class TemporaryDirectory(object):
-
-    """Create and return a temporary directory.  This has the same
-    behavior as mkdtemp but can be used as a context manager.  For
-    example:
-
-        with TemporaryDirectory() as tmpdir:
-            ...
-
-    Upon exiting the context, the directory and everything contained
-    in it are removed.
-
-    This is a backport of tempfile.TemporaryDirectory() which is only available in Python 3.2+. Code has been coppied
-    from this post: https://stackoverflow.com/questions/19296146/tempfile-temporarydirectory-context-manager-in-python-2-7
-    Once migrating to Python 3, we can remove this code and use the default implementation in tempfile package.
-    """
-
-    def __init__(self, suffix="", prefix="tmp", dir=None):
-        self._closed = False
-        self.name = None  # Handle mkdtemp raising an exception
-        self.name = mkdtemp(suffix, prefix, dir)
-
-    def __repr__(self):
-        return "<{} {!r}>".format(self.__class__.__name__, self.name)
-
-    def __enter__(self):
-        return self.name
-
-    def cleanup(self, _warn=False):
-        if self.name and not self._closed:
-            try:
-                self._rmtree(self.name)
-            except (TypeError, AttributeError) as ex:
-                # Issue #10188: Emit a warning on stderr
-                # if the directory could not be cleaned
-                # up due to missing globals
-                if "None" not in new_str(ex):
-                    raise
-                print("ERROR: {!r} while cleaning up {!r}".format(ex, self, ),
-                      file=sys.stderr)
-                return
-            self._closed = True
-            if _warn:
-                self._warn("Implicitly cleaning up {!r}".format(self),
-                           ResourceWarning)
-
-    def __exit__(self, exc, value, tb):
-        self.cleanup()
-
-    def __del__(self):
-        # Issue a ResourceWarning if implicit cleanup needed
-        self.cleanup(_warn=True)
-
-    # XXX (ncoghlan): The following code attempts to make
-    # this class tolerant of the module nulling out process
-    # that happens during CPython interpreter shutdown
-    # Alas, it doesn't actually manage it. See issue #10188
-    _listdir = staticmethod(os.listdir)
-    _path_join = staticmethod(os.path.join)
-    _isdir = staticmethod(os.path.isdir)
-    _islink = staticmethod(os.path.islink)
-    _remove = staticmethod(os.remove)
-    _rmdir = staticmethod(os.rmdir)
-    _warn = warnings.warn
-
-    def _rmtree(self, path):
-        # Essentially a stripped down version of shutil.rmtree.  We can't
-        # use globals because they may be None'ed out at shutdown.
-        for name in self._listdir(path):
-            fullname = self._path_join(path, name)
-            try:
-                isdir = self._isdir(fullname) and not self._islink(fullname)
-            except OSError:
-                isdir = False
-            if isdir:
-                self._rmtree(fullname)
-            else:
-                try:
-                    self._remove(fullname)
-                except OSError:
-                    pass
         try:
-            self._rmdir(path)
+            os.rmdir(path)
         except OSError:
+            # Directory not really empty (could happen if a file was just created)
             pass

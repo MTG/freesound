@@ -3,7 +3,6 @@
 {% load flag_user %}
 {% load filter_img %}
 
-
 <div class="bw-post">
     <div class="row">
         <div class="col-9 col-lg-3 v-spacing-3">
@@ -71,10 +70,12 @@
             {% if show_report_actions %}
             <div class="between middle v-spacing-top-3">
                 {% if request.user.is_staff %}
-                    <div class="text-light-grey">Admin:
-                        <a class="text-grey" href="{% url "admin:forum_post_change" post.id %}">post</a> |
-                        <a class="text-grey" href="{% url "admin:forum_thread_change" post.thread.id %}">thread</a>
+                    <div class="text-light-grey">Edit in the admin:
+                        <a class="text-grey" href="{% url "admin:forum_post_change" post.id %}">Post</a> |
+                        <a class="text-grey" href="{% url "admin:forum_thread_change" post.thread.id %}">Thread</a>
                     </div>
+                {% else %}
+                    <div></div>
                 {% endif %}
                 <div class="text-right text-13 bw-post__report">
                     {% flag_user "FP" post.author.username post.id "" post.author.profile.num_sounds %}

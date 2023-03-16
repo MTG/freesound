@@ -18,12 +18,11 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import logging
 
 from django.conf import settings
 from django.db.models.query import RawQuerySet
-from django.utils.http import urlquote_plus
+from urllib.parse import quote_plus
 from pyparsing import ParseException
 
 from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
@@ -157,7 +156,7 @@ def search_prepare_parameters(request):
     parsing_error = False
     try:
         parsed_filters = parse_query_filter_string(filter_query)
-    except ParseException as e:
+    except ParseException:
         parsed_filters = []
         parsing_error = True
 
@@ -165,12 +164,13 @@ def search_prepare_parameters(request):
 
     filter_query_non_facets, has_facet_filter = remove_facet_filters(parsed_filters)
 
+    compact_mode = request.session.get('preferCompactMode', False)
     query_params = {
         'textual_query': search_query,
         'query_filter': filter_query,
         'sort': sort,
         'current_page': current_page,
-        'num_sounds': settings.SOUNDS_PER_PAGE,
+        'num_sounds': settings.SOUNDS_PER_PAGE if not compact_mode else settings.SOUNDS_PER_PAGE_COMPACT_MODE,
         'query_fields': field_weights,
         'group_by_pack': group_by_pack,
         'only_sounds_with_pack': only_sounds_with_pack,
@@ -210,7 +210,7 @@ def parse_weights_parameter(weights_param):
                     field_name = part.split(':')[0]
                     weight = int(part.split(':')[1])
                     parsed_field_weights[field_name] = weight
-                except Exception as e:
+                except Exception:
                     # If format is wrong, ignore parameter
                     pass
     if len(parsed_field_weights):
@@ -255,7 +255,7 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
                 if valid_filter:
                     filter = {
                         'name': filter_display,
-                        'remove_url': urlquote_plus(filter_query.replace(filter_str, '')),
+                        'remove_url': quote_plus(filter_query.replace(filter_str, '')),
                         'cluster_id': cluster_id,
                     }
                     filter_query_split.append(filter)
@@ -265,7 +265,7 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
         if cluster_id and cluster_id.isdigit():
             filter_query_split.append({
                 'name': "Cluster #" + cluster_id,
-                'remove_url': urlquote_plus(filter_query),
+                'remove_url': quote_plus(filter_query),
                 'cluster_id': '',
             })
 
@@ -354,8 +354,8 @@ def add_sounds_to_search_engine(sound_objects):
         get_search_engine().add_sounds_to_index(sound_objects)
         return num_sounds
     except SearchEngineException as e:
-        console_logger.error("Failed to add sounds to search engine index: %s" % str(e))
-        search_logger.error("Failed to add sounds to search engine index: %s" % str(e))
+        console_logger.error(f"Failed to add sounds to search engine index: {str(e)}")
+        search_logger.error(f"Failed to add sounds to search engine index: {str(e)}")
         return 0
 
 
@@ -365,13 +365,13 @@ def delete_sounds_from_search_engine(sound_ids):
     Args:
         sound_ids (list[int]): IDs of the sounds to delete
     """
-    console_logger.info("Deleting %d sounds from search engine" % len(sound_ids))
-    search_logger.info("Deleting %d sounds from search engine" % len(sound_ids))
+    console_logger.info(f"Deleting {len(sound_ids)} sounds from search engine")
+    search_logger.info(f"Deleting {len(sound_ids)} sounds from search engine")
     try:
         get_search_engine().remove_sounds_from_index(sound_ids)
     except SearchEngineException as e:
-        console_logger.error("Could not delete sounds: %s" % str(e))
-        search_logger.error("Could not delete sounds: %s" % str(e))
+        console_logger.error(f"Could not delete sounds: {str(e)}")
+        search_logger.error(f"Could not delete sounds: {str(e)}")
 
 
 def delete_all_sounds_from_search_engine():
@@ -381,8 +381,8 @@ def delete_all_sounds_from_search_engine():
     try:
         get_search_engine().remove_all_sounds()
     except SearchEngineException as e:
-        console_logger.error("Could not delete sounds: %s" % str(e))
-        search_logger.error("Could not delete sounds: %s" % str(e))
+        console_logger.error(f"Could not delete sounds: {str(e)}")
+        search_logger.error(f"Could not delete sounds: {str(e)}")
 
 
 def get_all_sound_ids_from_search_engine(page_size=2000):
@@ -400,7 +400,7 @@ def get_all_sound_ids_from_search_engine(page_size=2000):
     solr_count = None
     current_page = 1
     try:
-        while len(solr_ids) < solr_count or solr_count is None:
+        while solr_count is None or len(solr_ids) < solr_count:
             response = search_engine.search_sounds(query_filter="*:*",
                                                    sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
                                                    offset=(current_page - 1) * page_size,
@@ -409,7 +409,7 @@ def get_all_sound_ids_from_search_engine(page_size=2000):
             solr_count = response.num_found
             current_page += 1
     except SearchEngineException as e:
-        search_logger.error("Could not retrieve all sound IDs from search engine: %s" % str(e))
+        search_logger.error(f"Could not retrieve all sound IDs from search engine: {str(e)}")
     return sorted(solr_ids)
 
 
@@ -419,6 +419,5 @@ def get_random_sound_id_from_search_engine():
         search_logger.info("Making random sound query")
         return get_search_engine().get_random_sound_id()
     except SearchEngineException as e:
-        search_logger.error("Could not retrieve a random sound ID from search engine: %s" % str(e))
+        search_logger.error(f"Could not retrieve a random sound ID from search engine: {str(e)}")
     return 0
-

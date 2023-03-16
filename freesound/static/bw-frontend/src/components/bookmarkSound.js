@@ -3,11 +3,8 @@ import {createSelect} from "./select";
 import {showToast} from "./toast";
 import {makePostRequest} from "../utils/postRequest";
 
-// TODO: the 2 URLs below should be loaded somehow from Django, maybe using some generic element data properties (?)
-const addBookmarkUrl = '/home/bookmarks/add/';
-const bookmarkFormModalUrl = '/home/bookmarks/get_form_for_sound/';
+const saveBookmark = (addBookmarkUrl, data) => {
 
-const saveBookmark = (soundId, data) => {
     let formData = {};
     if (data === undefined){
         formData.name = "";
@@ -17,10 +14,15 @@ const saveBookmark = (soundId, data) => {
     } else {
         formData = data;
     }
-    makePostRequest(`${ addBookmarkUrl }${ soundId }/`, formData, (responseText) => {
+    makePostRequest(addBookmarkUrl, formData, (responseText) => {
         // Bookmark saved successfully. Close model and show feedback
         handleDismissModal(`bookmarkSoundModal`);
-        showToast(JSON.parse(responseText).message);
+        try {
+            showToast(JSON.parse(responseText).message);
+        } catch (error) {
+            // If not logged in, the url will respond with a redirect and JSON parsing will fail
+            showToast("You need to be logged in before bookmarking sounds.")
+        }
     }, () => {
         // Unexpected errors happened while processing request: close modal and show error in toast
         handleDismissModal(`bookmarkSoundModal`);
@@ -29,16 +31,17 @@ const saveBookmark = (soundId, data) => {
 }
 
 
-const showHideNewCategoryName = (categoryValue, elementToShowHide) => {
-    if (categoryValue == ''){
+const toggleNewCategoryNameDiv = (select, newCategoryNameDiv) => {
+    if (select.value == '0'){
         // No category is selected, show the new category name input
-        elementToShowHide.style.display = 'block'
+        newCategoryNameDiv.classList.remove('display-none');
     } else {
-        elementToShowHide.style.display = 'none'
+        newCategoryNameDiv.classList.add('display-none');
     }
 }
 
-const initBookmarkFormModal = (soundId) => {
+
+const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     
     // Modify the form structure to add a "Category" label inline with the select dropdown
     const modalElement = document.getElementById(`bookmarkSoundModal`);
@@ -46,46 +49,46 @@ const initBookmarkFormModal = (soundId) => {
     const wrapper = document.createElement('div');
     selectElement.parentNode.insertBefore(wrapper, selectElement.parentNode.firstChild);
     const label = document.createElement('div');
-    label.innerHTML = "Category:"
+    label.innerHTML = "Select a bookmark category:"
     label.style = 'display:inline-block;';
+    label.classList.add('text-grey');
     wrapper.appendChild(label)
     wrapper.appendChild(selectElement)
     createSelect();  // We need to trigger create select elements because bookmark form has one
-    
-    
+
     const formElement = modalElement.getElementsByTagName('form')[0];
     const buttonsInModalForm = formElement.getElementsByTagName('button');
     const saveButtonElement = buttonsInModalForm[buttonsInModalForm.length - 1];
     const categorySelectElement = document.getElementById(`id_${  soundId.toString()  }-category`);
     const newCategoryNameElement = document.getElementById(`id_${  soundId.toString()  }-new_category_name`);
-    showHideNewCategoryName(categorySelectElement.value, newCategoryNameElement);
-    categorySelectElement.addEventListener('change' , (e) => {showHideNewCategoryName(e.target.value, newCategoryNameElement)});
+    toggleNewCategoryNameDiv(categorySelectElement, newCategoryNameElement);
+    categorySelectElement.addEventListener('change', (event) => {
+        toggleNewCategoryNameDiv(categorySelectElement, newCategoryNameElement);
+    });
 
     // Bind action to save bookmark in "add bookmark button" (and prevent default form submit)
     saveButtonElement.addEventListener('click', (e) => {
         e.preventDefault();
         const data = {};
-        data.name = document.getElementById(`id_${  soundId.toString()  }-name`).value;
         data.category = document.getElementById(`id_${  soundId.toString()  }-category`).value;
         data.new_category_name = document.getElementById(`id_${  soundId.toString()  }-new_category_name`).value;
-        saveBookmark(soundId, data);
+        saveBookmark(addBookmarkUrl, data);
     });
 };
 
 const bindBookmarkSoundButtons = () => {
-    const bookmarkSoundButtons = [...document.querySelectorAll('[data-toggle^="bookmark-modal-"]')];
+    const bookmarkSoundButtons = [...document.querySelectorAll('[data-toggle="bookmark-modal"]')];
     bookmarkSoundButtons.forEach(element => {
         element.addEventListener('click', (evt) => {
             evt.preventDefault();
-            const dataToggleAttributeSplit = element.getAttribute('data-toggle').split('-');
-            const soundId = parseInt(dataToggleAttributeSplit[dataToggleAttributeSplit.length - 1], 10);
-            const modalUrl = `${bookmarkFormModalUrl}${soundId}/`;
+            const modalUrlSplitted = element.dataset.modalUrl.split('/');
+            const soundId = parseInt(modalUrlSplitted[modalUrlSplitted.length - 2], 10);
             if (!evt.altKey) {
-                handleGenericModal(modalUrl, () => {
-                    initBookmarkFormModal(soundId);
+                handleGenericModal(element.dataset.modalUrl, () => {
+                    initBookmarkFormModal(soundId, element.dataset.addBookmarkUrl);
                 }, () => {}, true, false);
             } else {
-                saveBookmark(soundId);
+                saveBookmark(element.dataset.addBookmarkUrl);
             }
         });
     });

@@ -20,14 +20,7 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
 
-from builtins import str
-from builtins import range
-from builtins import object
-from builtins import bytes
 from past.utils import old_div
 import math
 import os
@@ -46,7 +39,7 @@ class AudioProcessingException(Exception):
     pass
 
 
-class TestAudioFile(object):
+class TestAudioFile:
     """A class that mimics pysndfile.PySndfile but generates noise instead of reading
     a wave file. Additionally it can be told to have a "broken" header and thus crashing
     in the middle of the file. Also useful for testing ultra-short files of 20 samples."""
@@ -99,15 +92,13 @@ def get_max_level(filename):
     return max_value
 
 
-class AudioProcessor(object):
+class AudioProcessor:
     """
     The audio processor processes chunks of audio an calculates the spectrac centroid and the peak
     samples in that chunk of audio.
     """
 
     def __init__(self, input_filename, fft_size, window_function=numpy.hanning):
-        input_filename = bytes(input_filename.encode('utf-8'))  # This should not be needed when migrating to Py3
-        
         max_level = get_max_level(input_filename)
         self.audio_file = pysndfile.PySndfile(input_filename, 'r')
         self.nframes = self.audio_file.frames()
@@ -283,7 +274,7 @@ def interpolate_colors(colors, flat=False, num_colors=256):
     return palette
 
 
-class WaveformImage(object):
+class WaveformImage:
     """
     Given peaks and spectral centroids from the AudioProcessor, this class will construct
     a wavefile image which can be saved as PNG.
@@ -293,11 +284,17 @@ class WaveformImage(object):
         if image_height % 2 == 0:
             print("WARNING: Height is not uneven, images look much better at uneven height")
 
-        waveform_colors = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])['wave_colors']
-        background_color = waveform_colors[0]
-        colors = waveform_colors[1:]
-
-        self.image = Image.new("RGB", (image_width, image_height), background_color)
+        if isinstance(color_scheme, dict):
+            self.color_scheme_to_use = color_scheme
+        else:
+            self.color_scheme_to_use = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])
+        
+        self.transparent_background = self.color_scheme_to_use.get('wave_transparent_background', False)
+        if self.transparent_background:
+            self.image = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
+        else:
+            background_color = self.color_scheme_to_use['wave_colors'][0]  # Only used if transparent_background is False
+            self.image = Image.new("RGB", (image_width, image_height),  background_color)
 
         self.image_width = image_width
         self.image_height = image_height
@@ -305,6 +302,7 @@ class WaveformImage(object):
         self.draw = ImageDraw.Draw(self.image)
         self.previous_x, self.previous_y = None, None
 
+        colors = self.color_scheme_to_use['wave_colors'][1:]
         self.color_lookup = interpolate_colors(colors)
         self.pix = self.image.load()
 
@@ -327,43 +325,48 @@ class WaveformImage(object):
 
     def draw_anti_aliased_pixels(self, x, y1, y2, color):
         """ vertical anti-aliasing at y1 and y2 """
-
+        
         y_max = max(y1, y2)
         y_max_int = int(y_max)
         alpha = y_max - y_max_int
 
         if alpha > 0.0 and alpha < 1.0 and y_max_int + 1 < self.image_height:
-            current_pix = self.pix[x, y_max_int + 1]
-
-            r = int((1 - alpha) * current_pix[0] + alpha * color[0])
-            g = int((1 - alpha) * current_pix[1] + alpha * color[1])
-            b = int((1 - alpha) * current_pix[2] + alpha * color[2])
-
-            self.pix[x, y_max_int + 1] = (r, g, b)
+            if not self.transparent_background:
+                current_pix = self.pix[x, y_max_int + 1]
+                r = int((1 - alpha) * current_pix[0] + alpha * color[0])
+                g = int((1 - alpha) * current_pix[1] + alpha * color[1])
+                b = int((1 - alpha) * current_pix[2] + alpha * color[2])
+                self.pix[x, y_max_int + 1] = (r, g, b)
+            else:
+                # If using transparent background, don't do anti-aliasing
+                self.pix[x, y_max_int + 1] = (color[0], color[1], color[2], 255)
+                
 
         y_min = min(y1, y2)
         y_min_int = int(y_min)
         alpha = 1.0 - (y_min - y_min_int)
 
         if alpha > 0.0 and alpha < 1.0 and y_min_int - 1 >= 0:
-            current_pix = self.pix[x, y_min_int - 1]
-
-            r = int((1 - alpha) * current_pix[0] + alpha * color[0])
-            g = int((1 - alpha) * current_pix[1] + alpha * color[1])
-            b = int((1 - alpha) * current_pix[2] + alpha * color[2])
-
-            self.pix[x, y_min_int - 1] = (r, g, b)
+            if not self.transparent_background:
+                r = int((1 - alpha) * current_pix[0] + alpha * color[0])
+                g = int((1 - alpha) * current_pix[1] + alpha * color[1])
+                b = int((1 - alpha) * current_pix[2] + alpha * color[2])
+                self.pix[x, y_min_int - 1] = (r, g, b)
+            else:
+                # If using transparent background, don't do anti-aliasing
+                self.pix[x, y_max_int + 1] = (color[0], color[1], color[2], 255)
 
     def save(self, filename):
         # draw a zero "zero" line
-        a = 25
-        for x in range(self.image_width):
-            self.pix[x, old_div(self.image_height, 2)] = tuple([p + a for p in self.pix[x, old_div(self.image_height, 2)]])
+        a = self.color_scheme_to_use.get('wave_zero_line_alpha', 0)
+        if a:
+            for x in range(self.image_width):
+                self.pix[x, old_div(self.image_height, 2)] = tuple([p + a for p in self.pix[x, old_div(self.image_height, 2)]])
 
         self.image.save(filename)
 
 
-class SpectrogramImage(object):
+class SpectrogramImage:
     """
     Given spectra from the AudioProcessor, this class will construct a wavefile image which
     can be saved as PNG.
@@ -375,8 +378,11 @@ class SpectrogramImage(object):
         self.fft_size = fft_size
 
         self.image = Image.new("RGB", (image_height, image_width))
-        self.palette = interpolate_colors(COLOR_SCHEMES.get(color_scheme,
-                                                            COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])['spec_colors'])
+        if isinstance(color_scheme, dict):
+            spectrogram_colors = color_scheme['spec_colors']
+        else:
+            spectrogram_colors = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])['spec_colors']
+        self.palette = interpolate_colors(spectrogram_colors)
 
         # generate the lookup which translates y-coordinate to fft-bin
         self.y_to_bin = []
@@ -413,7 +419,7 @@ class SpectrogramImage(object):
 
 
 def create_wave_images(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size,
-                       progress_callback=None, color_scheme=None):
+                       progress_callback=None, color_scheme=None, use_transparent_background=False):
     """
     Utility function for creating both wavefile and spectrum images from an audio input file.
     :param input_filename: input audio filename (must be PCM)
@@ -461,10 +467,8 @@ def convert_to_pcm(input_filename, output_filename):
     """
     converts any audio file type to pcm audio
     """
-
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
-
+        raise AudioProcessingException(f"file {input_filename} does not exist")
     sound_type = get_sound_type(input_filename)
 
     if sound_type == "mp3":
@@ -486,7 +490,9 @@ def convert_to_pcm(input_filename, output_filename):
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
-
+    stdout = stdout.decode()
+    stderr = stderr.decode()
+    
     # If external process returned an error (return code != 0) or the expected PCM file does not
     # exist, raise exception
     if process.returncode != 0 or not os.path.exists(output_filename):
@@ -494,13 +500,12 @@ def convert_to_pcm(input_filename, output_filename):
             raise NoSpaceLeftException
         raise AudioProcessingException("failed converting to pcm data:\n"
                                        + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
-
+    
     # If external process apparently returned no error (return code = 0) but we see some errors from our list of
     # known errors have been printed in stderr, raise an exception as well
     if any([error_message in stderr for error_message in error_messages]):
         raise AudioProcessingException("failed converting to pcm data:\n"
                                        + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
-
     return True
 
 
@@ -510,12 +515,14 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     cmd = [stereofy_executble_path, "--input", input_filename, "--output", output_filename]
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
+    stdout = stdout.decode()
+    stderr = stderr.decode()
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
@@ -555,12 +562,13 @@ def convert_to_mp3(input_filename, output_filename, quality=70):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     command = ["lame", "--silent", "--abr", str(quality), input_filename, output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (stdout, stderr) = process.communicate()
+    (stdout, _) = process.communicate()
+    stdout = stdout.decode()
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException(stdout)
@@ -572,13 +580,14 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     command = ["oggenc", "-q", str(quality), input_filename, "-o", output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (stdout, stderr) = process.communicate()
-
+    (stdout, _) = process.communicate()
+    stdout = stdout.decode()
+    
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException(stdout)
 
@@ -591,7 +600,7 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException(f"file {input_filename} does not exist")
 
     command = ["ffmpeg", "-y", "-i", input_filename, "-acodec", "pcm_s16le", "-ar", "44100"]
     if mono_out:
@@ -600,5 +609,7 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
+    stdout = stdout.decode()
+    stderr = stderr.decode()
     if process.returncode != 0 or not os.path.exists(output_filename):
-        raise AudioProcessingException("ffmpeg returned an error\nstdout: %s \nstderr: %s" % (stdout, stderr))
+        raise AudioProcessingException(f"ffmpeg returned an error\nstdout: {stdout} \nstderr: {stderr}")

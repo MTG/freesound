@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import json
 import base64
 from django import forms
@@ -22,7 +21,7 @@ class DonateForm(forms.Form):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         default_donation_amount = kwargs.pop('default_donation_amount', None)
-        super(DonateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         choices = [
             ('1', "Anonymous"),
             ('2', "Other... "),
@@ -41,7 +40,7 @@ class DonateForm(forms.Form):
             self.initial['amount'] = float(default_donation_amount)
 
     def clean(self):
-        cleaned_data = super(DonateForm, self).clean()
+        cleaned_data = super().clean()
         amount = cleaned_data.get('amount')
         try:
             if not amount or float(amount) < 1:
@@ -57,7 +56,7 @@ class DonateForm(forms.Form):
 
         annon = cleaned_data.get('donation_type')
 
-        # We store the user even if the donation is annonymous
+        # We store the user even if the donation is annonymous (but don't display the name)
         if self.user_id :
             returned_data['user_id'] = self.user_id
 
@@ -68,9 +67,8 @@ class DonateForm(forms.Form):
             if returned_data['name'] == '':
                 raise forms.ValidationError('You have to enter a name to display')
 
-
         # Paypal gives only one field to add extra data so we send it as b64
-        self.encoded_data = base64.b64encode(json.dumps(returned_data))
+        self.encoded_data = base64.b64encode(json.dumps(returned_data).encode()).decode()
         return cleaned_data
 
 
@@ -78,7 +76,7 @@ class BwDonateForm(DonateForm):
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
-        super(BwDonateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.fields['donation_type'].label = \
             mark_safe('Please choose the <b>name</b> that will appear with the donation:')

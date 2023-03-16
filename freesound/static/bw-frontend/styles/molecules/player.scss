@@ -38,9 +38,9 @@
   top: 0;
   left: 0;
   transform: translateX(-100%);
-  border-right: 4px solid #e7e7e7;
+  border-right: 4px solid $player-playhead;
   transition: opacity 0.2s ease;
-  background: rgba(255, 255, 255, 0.4);
+  background: $player-playhead-elapsed;
   pointer-events: none;
 
   .bw-player--playing & {
@@ -55,7 +55,7 @@
 .bw-player-control-btn {
   color: $black;
   background-color: transparent;
-  opacity: 0.7;
+  opacity: 0.80;
   padding-right: 10px;
   padding-left: 5px;
 
@@ -101,7 +101,8 @@
 
 .bw-player__controls-inverted {
   button {
-    color: $white;
+    color: $player-inverted-color;
+    opacity: 0.95;
   }
 }
 
@@ -168,7 +169,7 @@
 
 .bw-player__progress-container--inverted {
   .bw-player__progress {
-    color: #555555;
+    color: $black-hover;
     span {
       background-color: transparentize($white, 0.4);
     }
@@ -193,7 +194,7 @@
   &:hover {
     .bw-player__controls,
     .bw-player__favorite {
-      opacity: 0.7;
+      opacity: 0.85;
     }
     .bw-player__progress {
       opacity: 0.85;
@@ -202,4 +203,10 @@
       opacity: 1;
     }
   }
+}
+
+.bw-player-small-thumbnail-empty-space {
+  height: 100px;
+  background-color: $background-textarea;
+  border-radius: 4px;
 }

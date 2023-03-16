@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,17 +18,16 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.contrib.auth.models import User
 from django.db import models
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 
 
 class MessageBody(models.Model):
     body = models.TextField()
 
-    def __unicode__(self):
-        return self.body[0:30] + u"[...]"
+    def __str__(self):
+        return self.body[0:30] + "[...]"
 
 
 class Message(models.Model):
@@ -85,12 +82,12 @@ class Message(models.Model):
     etc...
     """
 
-    user_from = models.ForeignKey(User, related_name='messages_sent')
-    user_to = models.ForeignKey(User, related_name='messages_received')
+    user_from = models.ForeignKey(User, related_name='messages_sent', on_delete=models.CASCADE)
+    user_to = models.ForeignKey(User, related_name='messages_received', on_delete=models.CASCADE)
     
     subject = models.CharField(max_length=128)
     
-    body = models.ForeignKey(MessageBody)
+    body = models.ForeignKey(MessageBody, on_delete=models.CASCADE)
 
     is_sent = models.BooleanField(default=True, db_index=True)
     is_read = models.BooleanField(default=False, db_index=True)
@@ -99,10 +96,10 @@ class Message(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def get_absolute_url(self):
-        return "message", (smart_text(self.id),)
+        return "message", (smart_str(self.id),)
 
-    def __unicode__(self):
-        return u"from: [%s] to: [%s]" % (self.user_from, self.user_to)
+    def __str__(self):
+        return f"from: [{self.user_from}] to: [{self.user_to}]"
     
-    class Meta(object):
+    class Meta:
         ordering = ('-created',)

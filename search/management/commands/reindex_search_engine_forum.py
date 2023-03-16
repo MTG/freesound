@@ -18,14 +18,13 @@
 #     See AUTHORS file.
 #
 
-from builtins import range
 import logging
 
 from django.core.management.base import BaseCommand
 
 from forum.models import Post
-from utils.search.search_forum import add_posts_to_search_engine, delete_posts_from_search_engine, get_all_post_ids_from_search_engine, \
-    delete_all_posts_from_search_engine
+from utils.search.search_forum import add_posts_to_search_engine, get_all_post_ids_from_search_engine, \
+    delete_all_posts_from_search_engine, delete_posts_from_search_engine
 
 console_logger = logging.getLogger("console")
 

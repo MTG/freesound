@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,9 +18,9 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import url
+from django.urls import path
 import comments.views as comments
 
 urlpatterns = [
-    url(r'^delete/(?P<comment_id>\d+)/$', comments.delete, name="comment-delete"),
+    path('delete/<int:comment_id>/', comments.delete, name="comment-delete"),
 ]

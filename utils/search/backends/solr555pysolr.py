@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import json
 import random
 import re
@@ -153,13 +150,13 @@ def convert_sound_to_search_engine_document(sound):
             if analysis_data is not None:
                 # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on
                 # the value type (see SOLR_DYNAMIC_FIELDS_SUFFIX_MAP) so solr knows how to treat when filtering, etc.
-                for key, value in analysis_data.items():
-                    if type(value) == list:
+                for key, value in json.loads(analysis_data).items():
+                    if isinstance(value, list):
                         # Make sure that the list is formed by strings
-                        value = ['{}'.format(item) for item in value]
+                        value = [f'{item}' for item in value]
                     suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
                     if suffix:
-                        document['{0}{1}'.format(key, suffix)] = value
+                        document[f'{key}{suffix}'] = value
     return document
 
 
@@ -215,7 +212,7 @@ def add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter):
             descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
             for _, db_descriptor_key, descriptor_type in descriptors_map:
                 query_filter = query_filter.replace(
-                    '{0}:'.format(db_descriptor_key),'{0}{1}:'.format(
+                    f'{db_descriptor_key}:','{}{}:'.format(
                         db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
     return query_filter
 
@@ -253,6 +250,54 @@ def search_filter_make_intersection(query_filter):
     # NOTE: for the filter names we match "a-zA-Z_" instead of using \w as using \w would cause problems for filters
     # which have date ranges inside.
     query_filter = re.sub(r'\b([a-zA-Z_]+:)', r'+\1', query_filter)
+    return query_filter
+
+
+def search_process_filter(query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
+    """Process the filter to make a number of adjustments
+
+        1) Add type suffix to human-readable audio analyzer descriptor names (needed for dynamic solr field names).
+        2) If only sounds with pack should be returned, add such a filter.
+        3) Add filter for sound IDs if only_sounds_within_ids is passed.
+        4) Rewrite geotag bounding box queries to use solr 5+ syntax
+
+    Step 1) is used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo ->
+    ac_tempo_i). The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float),
+    '*_i' (for integer) and '*_s' (for string). At indexing time, we append these suffixes to the analyzer
+    descriptor names that need to be indexed so Solr can treat the types properly. Now we automatically append the
+    suffices to the filter names so users do not need to deal with that and Solr understands recognizes the field name.
+
+    Args:
+        query_filter (str): query filter string.
+        only_sounds_with_pack (bool, optional): whether to only include sounds that belong to a pack
+        only_sounds_within_ids (List[int], optional): restrict search results to sounds with these IDs
+
+    Returns:
+        str: processed filter query string.
+    """
+    # Add type suffix to human-readable audio analyzer descriptor names which is needed for solr dynamic fields
+    query_filter = add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
+
+    # If we only want sounds with packs and there is no pack filter, add one
+    if only_sounds_with_pack and not 'pack:' in query_filter:
+        query_filter += ' pack:*'
+
+    if 'geotag:"Intersects(' in query_filter:
+        # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
+        #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
+        query_filter = re.sub(r'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+
+    query_filter = search_filter_make_intersection(query_filter)
+
+    # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
+    # our query to the sounds in that list of IDs.
+    if only_sounds_within_ids:
+        sounds_within_ids_filter = ' OR '.join([f'id:{sound_id}' for sound_id in only_sounds_within_ids])
+        if query_filter:
+            query_filter += f' AND ({sounds_within_ids_filter})'
+        else:
+            query_filter = f'({sounds_within_ids_filter})'
+
     return query_filter
 
 
@@ -302,12 +347,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     def remove_sounds_from_index(self, sound_objects_or_ids):
         try:
+            sound_ids = []
             for sound_object_or_id in sound_objects_or_ids:
-                if type(sound_object_or_id) != Sound:
-                    sound_id = sound_object_or_id
+                if not isinstance(sound_object_or_id, Sound):
+                    sound_ids.append(str(sound_object_or_id))
                 else:
-                    sound_id = sound_object_or_id.id
-                self.get_sounds_index().delete(id=str(sound_id))
+                    sound_ids.append(str(sound_object_or_id.id))
+            self.get_sounds_index().delete(id=sound_ids)
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
 
@@ -319,11 +365,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             raise SearchEngineException(e)
 
     def sound_exists_in_index(self, sound_object_or_id):
-        if type(sound_object_or_id) != Sound:
+        if not isinstance(sound_object_or_id, Sound):
             sound_id = sound_object_or_id
         else:
             sound_id = sound_object_or_id.id
-        response = self.search_sounds(query_filter='id:{}'.format(sound_id), offset=0, num_sounds=1)
+        response = self.search_sounds(query_filter=f'id:{sound_id}', offset=0, num_sounds=1)
         return response.num_found > 0
 
     def search_process_filter(self, query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
@@ -385,9 +431,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if query_fields is None:
             # If no fields provided, use the default
             query_fields = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
-        if type(query_fields) == list:
+        if isinstance(query_fields, list):
             query_fields = [add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)) for field in query_fields]
-        elif type(query_fields) == dict:
+        elif isinstance(query_fields, dict):
             # Also remove fields with weight <= 0
             query_fields = [(add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)), weight)
                 for field, weight in query_fields.items() if weight > 0]
@@ -405,7 +451,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             offset = (current_page - 1) * num_sounds
         query.set_query_options(start=offset,
                                 rows=num_sounds,
-                                field_list=["id"],  # We only want the sound IDs of the results as we load data from DB
+                                field_list=["id", "score"],  # We only want the sound IDs of the results as we load data from DB
                                 filter_query=query_filter,
                                 sort=search_process_sort(sort))
 
@@ -438,9 +484,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # Do the query!
         # Note: we create a SearchResults with the same members as SolrResponseInterpreter (the response from .search()).
         # We do it in this way to conform to SearchEngine.search_sounds definition which must return SearchResults
-<<<<<<< HEAD
         try:
             results = self.get_sounds_index().search(**query.as_kwargs())
+            # Solr uses a string for the id field, but django uses an int. Convert the id in all results to int
+            # before use to avoid issues
+            docs = results.docs
+            for d in docs:
+                d["id"] = int(d["id"])
             return SearchResults(
                 docs=results.docs,
                 num_found=results.num_found,
@@ -453,24 +503,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             )
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
-=======
-        results = self.get_sounds_index().search(**query.as_dict())
-        # Solr uses a string for the id field, but django uses an int. Convert the id in all results to int
-        # before use to avoid issues
-        docs = results.docs
-        for d in docs:
-            d["id"] = int(d["id"])
-        return SearchResults(
-            docs=results.docs,
-            num_found=results.num_found,
-            start=results.start,
-            num_rows=results.num_rows,
-            non_grouped_number_of_results=results.non_grouped_number_of_results,
-            facets=results.facets,
-            highlighting=results.highlighting,
-            q_time=results.q_time
-        )
->>>>>>> 42bd52c1 (Remove freesound-specific query handler and use /select)
 
     def get_random_sound_id(self):
         query = SolrQuery()
@@ -479,7 +511,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         filter_query = 'is_explicit:0'
         query.set_query("*:*")
         query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query, sort=sort)
-<<<<<<< HEAD
         try:
             response = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
             docs = response.docs
@@ -488,13 +519,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             return 0
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
-=======
-        response = self.get_sounds_index().search(**query.as_dict())
-        docs = response.docs
-        if docs:
-            return int(docs[0]['id'])
-        return 0
->>>>>>> 42bd52c1 (Remove freesound-specific query handler and use /select)
 
     # Forum posts methods
     def add_forum_posts_to_index(self, forum_post_objects):
@@ -508,7 +532,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def remove_forum_posts_from_index(self, forum_post_objects_or_ids):
         try:
             for post_object_or_id in forum_post_objects_or_ids:
-                if type(post_object_or_id) != Post:
+                if not isinstance(post_object_or_id, Post):
                     post_id = post_object_or_id
                 else:
                     post_id = post_object_or_id.id
@@ -525,11 +549,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             raise SearchEngineException(e)
 
     def forum_post_exists_in_index(self, forum_post_object_or_id):
-        if type(forum_post_object_or_id) != Post:
+        if not isinstance(forum_post_object_or_id, Post):
             post_id = forum_post_object_or_id
         else:
             post_id = forum_post_object_or_id.id
-        response = self.search_forum_posts(query_filter='id:{}'.format(post_id), offset=0, num_posts=1)
+        response = self.search_forum_posts(query_filter=f'id:{post_id}', offset=0, num_posts=1)
         return response.num_found > 0
 
     def search_forum_posts(self, textual_query='', query_filter='', offset=0, current_page=None,
@@ -551,6 +575,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query.set_query_options(start=offset,
                                 rows=num_posts,
                                 field_list=["id",
+                                            "score",
                                             "forum_name",
                                             "forum_name_slug",
                                             "thread_id",
@@ -588,20 +613,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     # Tag clouds methods
     def get_user_tags(self, username):
-<<<<<<< HEAD
         query = SolrQuery()
-        query.set_dismax_query('*:*')
-=======
-        query = SolrQueryPySolr()
         query.set_query('*:*')
->>>>>>> 42bd52c1 (Remove freesound-specific query handler and use /select)
-        filter_query = 'username:\"%s\"' % username
+        filter_query = f'username:"{username}"'
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=10, mincount=1)
-<<<<<<< HEAD
         try:
-            results = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
+            results = self.get_sounds_index().search(**query.as_kwargs())
             return results.facets['tag']
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
@@ -609,25 +628,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def get_pack_tags(self, username, pack_name):
         query = SolrQuery()
         query.set_dismax_query('*:*')
-=======
-        results = self.get_sounds_index().search(**query.as_dict())
-        return results.facets['tag']
-
-    def get_pack_tags(self, username, pack_name):
-        query = SolrQueryPySolr()
-        query.set_query('*:*')
->>>>>>> 42bd52c1 (Remove freesound-specific query handler and use /select)
         filter_query = 'username:\"%s\" pack:\"%s\"' % (username, pack_name)
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=20, mincount=1)
-<<<<<<< HEAD
         try:
-            results = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
+            results = self.get_sounds_index().search(**query.as_kwargs())
             return results.facets['tag']
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
-=======
-        results = self.get_sounds_index().search(**query.as_dict())
-        return results.facets['tag']
->>>>>>> 42bd52c1 (Remove freesound-specific query handler and use /select)

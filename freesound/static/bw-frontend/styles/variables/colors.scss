@@ -1,23 +1,38 @@
 $red: #ff3546;
 $red-hover: #fd5b65;
-
 $black: #141424;
 $black-hover: #393947;
-
 $navy-grey: #9696aa;
-
-$navy-light-grey: #cacad4;
-
+$navy-light-grey: #bbbbc4;
 $white: #ffffff;
-
-$search-bg: #f7f7f9;
-
-$border-input-profile: #efeff2;
-$background-input-profile: #f4f4f6;
-
-$background-textarea: #f4f4f6;
-
-$yellow-rating: #fd4;
-
+$almost-white: #f4f4f6;
+$almost-white-border: #efeff2;
+$yellow: #fd4;
 $blue: #0064af;
 $blue-hover: #2f74b1;
+$green: #01ae01;
+
+$primary-button-font-color: $white;
+$secondary-button-font-color: $white;
+$blue-button-font-color: $white;
+$inverse-button-font-color: $navy-grey;
+$inverse-button-hover: $black;
+$inverse-button-hover-font-color: $white;
+
+$player-playhead: $almost-white-border;
+$player-playhead-elapsed: rgba($white, 0.3);
+$player-inverted-color: $white;
+
+$disabled-input-opacity: 0.3;
+$disabled-button-opacity: 0.5;
+
+$modal-outer-bg-color: #{$black}EE;
+$carousel-bg-color: rgba($white, 0.85);
+$dividers-color: $almost-white-border;
+
+$border-input: $almost-white-border;
+$search-bg: $almost-white;
+$background-input: $almost-white;
+$background-textarea: $almost-white;
+
+$color-footer: $black;

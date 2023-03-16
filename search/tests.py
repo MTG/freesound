@@ -18,13 +18,12 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 from django.test import TestCase
 from django.urls import reverse
 from sounds.models import Sound
 from utils.search import SearchResults, SearchResultsPaginator
 from utils.test_helpers import create_user_and_sounds
-import mock
+from unittest import mock
 
 
 def create_fake_search_engine_results():
@@ -196,8 +195,8 @@ class SearchResultClustering(TestCase):
         # 3 most used tags in the cluster 'tag1 tag2 tag3'
         # context variable cluster_id_num_results_tags_sound_examples: [(<cluster_id>, <num_sounds>, <tags>, <ids_preview_urls>), ...]
         self.assertEqual(resp.context['cluster_id_num_results_tags_sound_examples'], [
-            (0, 2, u'tag1 tag2 tag3', self.sound_id_preview_urls[:2]), 
-            (1, 2, u'tag1 tag2 tag3', self.sound_id_preview_urls[2:])
+            (0, 2, 'tag1 tag2 tag3', self.sound_id_preview_urls[:2]), 
+            (1, 2, 'tag1 tag2 tag3', self.sound_id_preview_urls[2:])
         ])
 
     @mock.patch('search.views.cluster_sound_results')

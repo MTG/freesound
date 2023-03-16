@@ -1,5 +1,5 @@
 {% extends "simple_page.html" %}
-{% load staticfiles %}
+{% load static %}
 {% load bw_templatetags %}
 
 {% block title %}Donate{% endblock %}
@@ -41,7 +41,7 @@
         </div>
         <div class="row v-spacing-top-4">
             <div class="col-md-6 offset-md-3">
-                <form id="donation_form" method="post" action="{% url 'donation-session-paypal' %}">{% csrf_token %}
+                <form id="donation_form" class="bw-form" method="post" action="{% url 'donation-session-paypal' %}">{% csrf_token %}
                     <ul class="errorlist v-spacing-3"></ul>
                     {{ form }}
                     <button id="donation_button_credit_card" class="btn-primary v-spacing-1 v-spacing-top-4 donation_button_stripe" data-stripe-key="{{ stripe_key }}" data-stripe-url="{% url 'donation-session-stripe' %}">Donate with credit card</button>

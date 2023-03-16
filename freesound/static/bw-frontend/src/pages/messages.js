@@ -1,5 +1,4 @@
-import { makePostRequest } from "../utils/postRequest";
-import { showToast } from "../components/toast";
+import { wrapInDiv } from "../utils/wrap";
 import debounce from 'lodash.debounce';
 
 
@@ -79,8 +78,6 @@ messageActionButtons.forEach(actionElement =>
   actionElement.addEventListener('click', () => applyActionToMessages(actionElement.dataset.actionValue, [actionElement.parentNode.dataset.messageId]))
 );
 
-// NOTE: Username autocomplete is set using the data-autocomplete-suggestions property, so does not need to be set here
-
 // Username check that username is valid
 const usernameWarningElementId = 'dynamicUsernameInvalidWarning';
 
@@ -135,4 +132,28 @@ if (usernameToFormField !== null){
   usernameToFormField.addEventListener('input', async evt => debouncedCheckUsername())
   usernameToFormField.addEventListener('focusin', async evt => debouncedCheckUsername())
   usernameToFormField.addEventListener('focusout', async evt => debouncedCheckUsername())  
+}
+
+// Username autocomplete functionality
+
+import { addTypeAheadFeatures } from '../components/typeahead'
+
+const fetchSuggestions = async inputElement => {
+  const response = await fetch(inputElement.dataset.typeaheadSuggestionsUrl + '?q=' + inputElement.value);
+  const returnedData = await response.json()
+  const sugggestions = [];
+  returnedData.forEach(username => {
+      sugggestions.push({'label': '<div class="padding-1">' + username + '</div>', 'value': username})
+  });
+  return sugggestions;
+}
+
+const onSuggestionSelectedFromDropdown = (suggestion, suggestionsWrapper, inputElement) => {
+  suggestionsWrapper.classList.add('hidden');
+  inputElement.value = suggestion.value;
+}
+
+if (usernameToFormField !== null){
+  wrapInDiv(usernameToFormField, 'typeahead-wrapper');
+  addTypeAheadFeatures(usernameToFormField, fetchSuggestions, onSuggestionSelectedFromDropdown, usernameToFormField.parentNode);
 }

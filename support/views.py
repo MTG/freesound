@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import logging
 
 from django.conf import settings
@@ -67,12 +66,12 @@ def create_zendesk_ticket(request_email, subject, message, user=None):
             zendesk_api.CustomField(id=30153729, value=num_comments),
         ]
 
-        user_url = "https://%s%s" % (
+        user_url = "https://{}{}".format(
             Site.objects.get_current().domain,
             reverse('account', args=[user.username])
         )
 
-        message += "\n\n-- \n%s" % user_url
+        message += f"\n\n-- \n{user_url}"
 
         requester.name = user.username
 
@@ -94,7 +93,7 @@ def send_to_zendesk(request_email, subject, message, user=None):
     try:
         zenpy.tickets.create(ticket)
     except (ZendeskAPIException, HTTPError, ZenpyException) as e:
-        web_logger.info('Error creating Zendesk ticket: {}'.format(str(e)))
+        web_logger.info(f'Error creating Zendesk ticket: {str(e)}')
 
 
 def send_email_to_support(request_email, subject, message, user=None):

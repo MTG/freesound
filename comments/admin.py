@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -24,10 +22,15 @@ from django.contrib import admin
 from comments.models import Comment
 
 
+@admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
     fieldsets = ((None, {'fields': ('user', 'sound', 'comment')}),)
     raw_id_fields = ('user', 'parent', 'sound')
     list_display = ('user', 'sound', 'created')
     search_fields = ('comment', )
 
-admin.site.register(Comment, CommentAdmin)
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False

@@ -1,0 +1,29 @@
+{% load bw_templatetags %}
+<div class="text-light-grey v-spacing-top-2">You can add geolocation information so your sound can be placed on a map. Note however that <b>geolocation information should only be added</b> to sounds for which it is relevant such as <b>field recordings</b>.</div>
+<div class="geotag-field" {%if form.lat.value %}data-has-geotag="true"{% endif %}>
+    <button class="show-geolocation-button btn-inverse v-spacing-top-2">{% bw_icon 'plus' %}Add geolocation</button>
+    <div class="display-none geotag-field-wrapper row">
+        <div class="col-md-8 v-spacing-top-2">
+            <div id="map-{{ forloop.counter0 }}" class="geotag-picker-map" data-map-idx="{{ forloop.counter0 }}" {% if last_latlong %}data-last-lat={{ last_latlong.0 }} data-last-lon={{ last_latlong.1 }} data-last-zoom={{ last_latlong.2 }}{% endif %}></div>
+        </div>
+        <div class="col-md-4 v-spacing-top-2">
+            <div>
+                {{ form.lat.errors }}
+                {{ form.lat.label_tag }}
+                {{ form.lat }}
+            </div>
+            <div>
+                {{ form.lon.errors }}
+                {{ form.lon.label_tag }}
+                {{ form.lon }}
+            </div>
+            <div>
+                {{ form.zoom.errors }}
+                {{ form.zoom.label_tag }}
+                {{ form.zoom }}
+            </div>
+            {{ form.remove_geotag.as_hidden }}
+            <button class="remove-geolocation-button btn-inverse">{% bw_icon 'trash' %}Remove geolocation</button>
+        </div>
+    </div>
+</div>

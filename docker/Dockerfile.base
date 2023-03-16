@@ -1,11 +1,10 @@
+ARG PYTHON
 FROM debian:10
 
 MAINTAINER Freesound support@freesound.org
 
 ENV PYTHONUNBUFFERED=1
 
-# Debian 10 installs python 2.7 as the 'python' package.
-# Double-check this if upgrading to a new version of debian
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
                        build-essential \
@@ -14,33 +13,15 @@ RUN apt-get update \
                        gosu \
                        pkg-config \
                        procps \
-                       python \
-                       python-dev \
+                       python3-dev \
+                       python3-pip \
+                       python3-setuptools \
+                       python3-wheel \
                        wget \
     && rm -rf /var/lib/apt/lists/*
 
-# pip
-ENV PYTHON_PIP_VERSION 20.0.2
-RUN set -ex; \
-	\
-	wget -O get-pip.py 'https://bootstrap.pypa.io/pip/2.7/get-pip.py'; \
-	\
-	python get-pip.py \
-		--disable-pip-version-check \
-		--no-cache-dir \
-		"pip==$PYTHON_PIP_VERSION" \
-	; \
-	pip --version; \
-	\
-	find /usr/local -depth \
-		\( \
-			\( -type d -a \( -name test -o -name tests \) \) \
-			-o \
-			\( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
-		\) -exec rm -rf '{}' +; \
-	rm -f get-pip.py
-
 RUN adduser -q --gecos "" --disabled-password fsweb
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 COPY entrypoint.sh /usr/local/bin
 

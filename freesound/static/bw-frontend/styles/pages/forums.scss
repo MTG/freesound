@@ -33,8 +33,8 @@
       max-height: 400px;
       overflow: scroll;
       padding: 10px 20px;
-      border: 1px solid $border-input-profile;
-      background-color: $background-input-profile;
+      border: 1px solid $border-input;
+      background-color: $background-input;
     }
 
     input,
@@ -42,8 +42,8 @@
       margin-top: 12px;
       margin-bottom: 30px;
       width: 100%;
-      border: 1px solid $border-input-profile;
-      background-color: $background-input-profile;
+      border: 1px solid $border-input;
+      background-color: $background-input;
       padding: 10px 20px;
       border-radius: 5px;
 
@@ -58,7 +58,7 @@
     }
 
     textarea {
-      min-height: 400px;
+      min-height: 250px;
       resize: none;
 
       &:focus {

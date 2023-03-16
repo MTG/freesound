@@ -53,15 +53,7 @@ function call_on_bounds_chage_callback(map, map_element_id, callback){
     )
 }
 
-function toggleMapStyle(idx){
-
-    if (window.map !== undefined){
-        var map = window.map;
-    } else {
-        // if idx is passed, it means map objects will have been saved in maps variable
-        var map = window.maps[idx];
-    }
-
+function toggleMapStyle(map){
     var mapElementId = map.getCanvas().parentElement.parentElement.id;
     const mapElement = document.getElementById(mapElementId);
 
@@ -233,7 +225,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                 if (show_style_selector === true) {
                     const styleSelectorElement = document.createElement('div');
                     styleSelectorElement.className = "map_terrain_menu";
-                    styleSelectorElement.onclick = () => {toggleMapStyle()};
+                    styleSelectorElement.onclick = () => {toggleMapStyle(map)};
                     styleSelectorElement.innerHTML = "Show streets"
                     mapElement.append(styleSelectorElement);
                 }
@@ -410,7 +402,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
 }
 
 
-function makeGeotagEditMap(map_element_id, on_bounds_changed_callback, center_lat, center_lon, zoom, idx){
+function makeGeotagEditMap(map_element_id, on_bounds_changed_callback, center_lat, center_lon, zoom){
 
     /*
     This function is used to display the map used to add a geotag to a sound maps with sounds. It is used in the sound
@@ -424,7 +416,6 @@ function makeGeotagEditMap(map_element_id, on_bounds_changed_callback, center_la
     - center_lat: latitude where to center the map (if not specified, it uses a default one)
     - center_lon: latitude where to center the map (if not specified, it uses a default one)
     - zoom: initial zoom for the map (if not specified, it uses a default one)
-    - idx: map idx (used when creating multiple maps)
 
     This function returns the object of the map that has been created.
      */
@@ -455,7 +446,7 @@ function makeGeotagEditMap(map_element_id, on_bounds_changed_callback, center_la
 
         const styleSelectorElement = document.createElement('div');
         styleSelectorElement.className = "map_terrain_menu";
-        styleSelectorElement.onclick = () => {toggleMapStyle(idx)};
+        styleSelectorElement.onclick = () => {toggleMapStyle(map)};
         styleSelectorElement.innerHTML = "Show streets"
         mapElement.append(styleSelectorElement);
 
@@ -465,7 +456,7 @@ function makeGeotagEditMap(map_element_id, on_bounds_changed_callback, center_la
             call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
         }
         map.on('move', function(e) {
-            if (on_bounds_changed_callback !== undefined) {
+            if (on_bounds_changed_callback !== undefined && e.triggeredFromForm !== true) {
                 call_on_bounds_chage_callback(map, map_element_id, on_bounds_changed_callback);
             }
             var new_map_lat = map.getCenter().lat;

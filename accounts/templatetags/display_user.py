@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
 
 from django import template
 from django.contrib.auth.models import User
@@ -66,7 +65,7 @@ def display_user(context, user, size='small', comment_created=None, donated_amou
 
         is_followed_by_request_user = None
         if size == 'follow_lists':
-            is_followed_by_request_user = request.user.is_authenticated() \
+            is_followed_by_request_user = request.user.is_authenticated \
                                           and follow_utils.is_user_following_user(request.user, user_obj)
 
         return {

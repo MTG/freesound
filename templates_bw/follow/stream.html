@@ -1,5 +1,5 @@
 {% extends "simple_page.html" %}
-{% load staticfiles %}
+{% load static %}
 {% load bw_templatetags %}
 {% load display_sound %}
 {% load util %}
@@ -13,7 +13,7 @@
     You can configure email notifications for updates in your activity stream through your <a href="{% url "accounts-email-settings" %}">email settings</a> page.</p>
 
     <div class="v-spacing-top-4">
-        <form id="stream_form" class="bw-form form-inline" action="." method="post">
+        <form id="stream_form" class="form-activity-stream" action="." method="post">
             {% csrf_token %}
             <div>
                 <label id="stream_period">Select time period:</label>

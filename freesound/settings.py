@@ -1,10 +1,4 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import datetime
-import logging.config
 import os
 import re
 
@@ -26,6 +20,8 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '___this_is_a_secret_key_that_should
 default_url = 'postgres://postgres@db/postgres'
 DATABASES = {'default': dj_database_url.config('DJANGO_DATABASE_URL', default=default_url)}
 
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -35,7 +31,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
-    'admin_reorder.middleware.ModelAdminReorder',
+    #'freesound.middleware.ModelAdminReorderWithNav',
     'ratelimit.middleware.RatelimitMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
@@ -51,7 +47,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
-    'django.contrib.flatpages',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'messages.apps.MessagesConfig',
@@ -117,13 +112,13 @@ ADMIN_REORDER = (
         'oauth2_provider.RefreshToken',
         'oauth2_provider.Grant',
     )},
-    str('forum'),  # str() should be replaced when moving to Py3
+    'forum',
     {'app': 'donations', 'models': (
         'donations.Donation',
         'donations.DonationsEmailSettings',
         'donations.DonationsModalSettings',
     )},
-    str('sites'),  # str() should be replaced when moving to Py3
+    'sites',
 )
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
@@ -175,21 +170,21 @@ CACHES = {
     },
     'api_monitoring': {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, API_MONITORING_REDIS_STORE_ID),
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{API_MONITORING_REDIS_STORE_ID}",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     'cdn_map': {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, CDN_MAP_STORE_ID),
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{CDN_MAP_STORE_ID}",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     'clustering': {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, CLUSTERING_CACHE_REDIS_STORE_ID),
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{CLUSTERING_CACHE_REDIS_STORE_ID}",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -277,23 +272,23 @@ AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period
 ALLOWED_EMAILS = []
 
 # Email subjects
-EMAIL_SUBJECT_PREFIX = u'[freesound]'
-EMAIL_SUBJECT_ACTIVATION_LINK = u'Your activation link'
-EMAIL_SUBJECT_USERNAME_REMINDER = u'Username reminder'
-EMAIL_SUBJECT_EMAIL_CHANGED = u'Email address changed'
-EMAIL_SUBJECT_USER_SPAM_REPORT = u'Spam/offensive report for user'
-EMAIL_SUBJECT_DONATION_THANK_YOU = u'Thanks for your donation!'
-EMAIL_SUBJECT_DONATION_REMINDER = u'Thanks for contributing to Freesound'
-EMAIL_SUBJECT_DONATION_REQUEST = u'Have you considered making a donation?'
-EMAIL_SUBJECT_STREAM_EMAILS = u'New sounds from users and tags you are following'
-EMAIL_SUBJECT_TOPIC_REPLY = u'Topic reply notification'
-EMAIL_SUBJECT_PRIVATE_MESSAGE = u'You have a private message'
-EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX = u'Sound added as remix source'
-EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN = u'One of your sounds has been chosen as random sound of the day!'
-EMAIL_SUBJECT_NEW_COMMENT = u'You have a new comment'
-EMAIL_SUBJECT_SOUND_FLAG = u'Sound flag'
-EMAIL_SUBJECT_SUPPORT_EMAIL = u'[support]'
-EMAIL_SUBJECT_MODERATION_HANDLED = u'A Freesound moderator handled your upload'
+EMAIL_SUBJECT_PREFIX = '[freesound]'
+EMAIL_SUBJECT_ACTIVATION_LINK = 'Your activation link'
+EMAIL_SUBJECT_USERNAME_REMINDER = 'Username reminder'
+EMAIL_SUBJECT_EMAIL_CHANGED = 'Email address changed'
+EMAIL_SUBJECT_USER_SPAM_REPORT = 'Spam/offensive report for user'
+EMAIL_SUBJECT_DONATION_THANK_YOU = 'Thanks for your donation!'
+EMAIL_SUBJECT_DONATION_REMINDER = 'Thanks for contributing to Freesound'
+EMAIL_SUBJECT_DONATION_REQUEST = 'Have you considered making a donation?'
+EMAIL_SUBJECT_STREAM_EMAILS = 'New sounds from users and tags you are following'
+EMAIL_SUBJECT_TOPIC_REPLY = 'Topic reply notification'
+EMAIL_SUBJECT_PRIVATE_MESSAGE = 'You have a private message'
+EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX = 'Sound added as remix source'
+EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN = 'One of your sounds has been chosen as random sound of the day!'
+EMAIL_SUBJECT_NEW_COMMENT = 'You have a new comment'
+EMAIL_SUBJECT_SOUND_FLAG = 'Sound flag'
+EMAIL_SUBJECT_SUPPORT_EMAIL = '[support]'
+EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 
 # -------------------------------------------------------------------------------
 # Media paths, URLS and static settings
@@ -330,6 +325,7 @@ FORUM_THREADS_PER_PAGE_BW = 15
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 15
+SOUNDS_PER_PAGE_COMPACT_MODE = 30
 REMIXES_PER_PAGE = 10
 MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 100
 MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN = 20
@@ -482,8 +478,6 @@ AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v3'
 FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
 AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
 
-from builtins import str  # This is needed while moving from py2 to py3 for str type compatibility
-
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
         'descriptors_map': [
@@ -549,8 +543,8 @@ SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS = {
 
 
 SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC = "Automatic by relevance"
-SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST = "Duration (long first)"
-SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST = "Duration (short first)"
+SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST = "Duration (longest first)"
+SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST = "Duration (shortest first)"
 SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST = "Date added (newest first)"
 SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST = "Date added (oldest first)"
 SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST = "Downloads (most first)"
@@ -751,7 +745,8 @@ OAUTH2_PROVIDER = {
     'AUTHORIZATION_CODE_EXPIRE_SECONDS': 10*60,
     'OAUTH2_VALIDATOR_CLASS': 'apiv2.oauth2_validators.OAuth2Validator',
     'REQUEST_APPROVAL_PROMPT': 'auto',
-    'CLIENT_ID_GENERATOR_CLASS': 'apiv2.apiv2_utils.FsClientIdGenerator'
+    'CLIENT_ID_GENERATOR_CLASS': 'apiv2.apiv2_utils.FsClientIdGenerator',
+    'PKCE_REQUIRED': False
 }
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 
@@ -858,8 +853,8 @@ from .local_settings import *
 
 # -------------------------------------------------------------------------------
 # Celery
-CELERY_BROKER_URL = 'amqp://{}:{}@{}:{}//'.format(RABBITMQ_USER, RABBITMQ_PASS, RABBITMQ_HOST, RABBITMQ_PORT)
-CELERY_RESULT_BACKEND = 'redis://{}:{}/{}'.format(REDIS_HOST, REDIS_PORT, CELERY_BROKER_REDIS_STORE_ID)
+CELERY_BROKER_URL = f'amqp://{RABBITMQ_USER}:{RABBITMQ_PASS}@{RABBITMQ_HOST}:{RABBITMQ_PORT}//'
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/{CELERY_BROKER_REDIS_STORE_ID}'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -895,12 +890,14 @@ CSV_PATH = os.path.join(DATA_PATH, "csv/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
 PROCESSING_TEMP_DIR = os.path.join(DATA_PATH, "tmp_processing/")
+PROCESSING_BEFORE_DESCRIPTION_DIR = os.path.join(DATA_PATH, "processing_before_description/")
 
 # URLs (depend on DATA_URL potentially re-defined in local_settings.py)
 AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"
 DISPLAYS_URL = DATA_URL + "displays/"
 ANALYSIS_URL = DATA_URL + "analysis/"
+PROCESSING_BEFORE_DESCRIPTION_URL = DATA_URL + "processing_before_description/"
 
 # In a typical development setup original files won't be available in the filesystem, but preview files
 # might be available as these take much less space. The flag below will configure Freesound to use these

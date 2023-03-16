@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -23,10 +21,10 @@
 from django.contrib import admin
 from ratings.models import SoundRating
 
+@admin.register(SoundRating)
 class SoundRatingAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     list_display = ('user', 'rating', 'created')
     search_fields = ('=user__username', )
     list_filter = ('rating',)
 
-admin.site.register(SoundRating, SoundRatingAdmin)

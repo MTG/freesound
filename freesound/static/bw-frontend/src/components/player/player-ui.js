@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import throttle from 'lodash.throttle'
 import playerSettings from './settings'
-import { formatAudioDuration, playAtTime, isTouchEnabledDevice, getAudioElementDurationOrDurationProperty } from './utils'
+import { formatAudioDuration, playAtTime, isTouchEnabledDevice, getAudioElementDurationOrDurationProperty, stopAllPlayers, simultaneousPlaybackDisallowed } from './utils'
 import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator, onPlayerTimeUpdate } from './audio-element'
 
@@ -142,6 +142,7 @@ const createProgressStatus = (parentNode, audioElement, playerSize, startWithSpe
  */
 const createControlButton = action => {
   const controlButton = document.createElement('button')
+  controlButton.type = 'button'
   controlButton.className = 'no-border-bottom-on-hover bw-player-control-btn'
   controlButton.appendChild(createIconElement(`bw-icon-${action}`))
   return controlButton
@@ -162,6 +163,9 @@ const createPlayButton = (audioElement, playerSize) => {
     if (isPlaying) {
       audioElement.pause()
     } else {
+      if (simultaneousPlaybackDisallowed()){
+        stopAllPlayers();
+      }
       audioElement.play()
     }
     e.stopPropagation()
@@ -383,7 +387,9 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
     // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
     //favoriteButtonContainer.classList.add('opacity-050')
   }
-  favoriteButtonContainer.setAttribute('data-toggle', `bookmark-modal-${ parentNode.dataset.soundId }`);
+  favoriteButtonContainer.setAttribute('data-toggle', 'bookmark-modal');
+  favoriteButtonContainer.setAttribute('data-modal-url', parentNode.dataset.bookmarkModalUrl);
+  favoriteButtonContainer.setAttribute('data-add-bookmark-url', parentNode.dataset.addBookmarkUrl);
   favoriteButtonContainer.appendChild(
     getIsFavorite() ? unfavoriteButton : favoriteButton
   )

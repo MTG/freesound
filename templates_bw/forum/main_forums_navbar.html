@@ -13,7 +13,9 @@
     <div class="col-6 v-spacing-1 v-spacing-top-1">
         <form method="get" action="{% url "forums-search" %}">
             <input type="hidden" name="advanced_search"  value="0"/>
-            <input type="search" name="q" class="bw-forums__input-search" placeholder="Search in all forums..." />
+            <div class="input-wrapper w-100">
+                <i class="bw-icon-search input-icon"></i><input name="q" type="search" placeholder="Search in all forums..." autocomplete="off">
+            </div>
         </form>
     </div>
 </div>

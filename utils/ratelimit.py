@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import str
 import ipaddress
 import logging
 import random
@@ -76,7 +75,7 @@ def add_new_ip_to_block(ip):
     try:
         ipaddress.ip_network(str(ip))
     except ValueError as e:
-        console_logger.info('The provided IP {} is not valid: {}'.format(ip, e))
+        console_logger.info(f'The provided IP {ip} is not valid: {e}')
         return
 
     cached_ips_to_block = cache.get(settings.CACHED_BLOCKED_IPS_KEY, None)
@@ -115,7 +114,7 @@ def get_ip_or_random_ip(request):
 
 
 def key_for_ratelimiting(group, request):
-    return '{}-{}'.format(group, get_ip_or_random_ip(request))
+    return f'{group}-{get_ip_or_random_ip(request)}'
 
 
 def rate_per_ip(group, request):

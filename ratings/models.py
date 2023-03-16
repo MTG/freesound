@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from builtins import object
 from django.contrib.auth.models import User
 
 from django.contrib.contenttypes.models import ContentType
@@ -33,16 +30,16 @@ from django.dispatch import receiver
 
 
 class SoundRating(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     rating = models.IntegerField()
-    sound = models.ForeignKey('sounds.Sound', null=True, related_name='ratings')
+    sound = models.ForeignKey('sounds.Sound', null=True, related_name='ratings', on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def __unicode__(self):
-        return u"%s rated %s: %d" % (self.user, self.sound, self.rating)
+    def __str__(self):
+        return "%s rated %s: %d" % (self.user, self.sound, self.rating)
 
-    class Meta(object):
+    class Meta:
         unique_together = (('user', 'sound'),)
         ordering = ('-created',)
 
@@ -53,7 +50,7 @@ def post_delete_rating(sender, instance, **kwargs):
         with transaction.atomic():
             instance.sound.num_ratings = F('num_ratings') - 1
             avg_rating = SoundRating.objects.filter(
-                    sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
+                    sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0.0))
             rating = avg_rating['average_rating']
             instance.sound.avg_rating = rating
             instance.sound.save()
@@ -70,7 +67,7 @@ def update_num_ratings_on_post_save(sender, instance, created, **kwargs):
             instance.sound.num_ratings = F('num_ratings') + 1
 
         avg_rating = SoundRating.objects.filter(
-            sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0))
+            sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0.0))
         rating = avg_rating['average_rating']
         instance.sound.avg_rating = rating
         instance.sound.save()

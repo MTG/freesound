@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -27,7 +26,7 @@ from django.urls import reverse
 
 from accounts.models import OldUsername
 from sounds.models import SoundOfTheDay, Download, PackDownload
-from utils.test_helpers import create_user_and_sounds
+from utils.test_helpers import create_user_and_sounds, test_using_bw_ui
 
 
 class SimpleUserTest(TestCase):
@@ -35,7 +34,7 @@ class SimpleUserTest(TestCase):
     fixtures = ['licenses']
 
     def setUp(self):
-        user, packs, sounds = create_user_and_sounds(num_packs=1)
+        user, packs, sounds = create_user_and_sounds(num_packs=1, num_sounds=5)
         self.user = user
         self.sound = sounds[0]
         self.sound.original_filename = "a sound name with è+é non-ascii characters"
@@ -141,7 +140,7 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-download-attribution') + '?dl=txt')
         self.assertEqual(resp.status_code, 200)
         # response content as expected
-        self.assertEqual(resp.content,
+        self.assertContains(resp,
                          'P: {0} by {1} | License: {0}\nS: {2} by {3} | License: {4}\n'.format(
                              self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
                              self.sound.license))
@@ -360,6 +359,36 @@ class SimpleUserTest(TestCase):
                                {'username': 'username_withunderscore'})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['result'], True)
+
+    def test_accounts_manage_sounds_pages(self):
+        self.client.force_login(self.user)
+
+        # Set BW frontend in session (as these pages are BW only)
+        test_using_bw_ui(self)
+
+        # 200 response on manage sounds page - published
+        resp = self.client.get(reverse('accounts-manage-sounds', args=['published']))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on manage sounds page - processing
+        resp = self.client.get(reverse('accounts-manage-sounds', args=['processing']))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on manage sounds page - pending description
+        resp = self.client.get(reverse('accounts-manage-sounds', args=['pending_description']))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on manage sounds page - pending moderation
+        resp = self.client.get(reverse('accounts-manage-sounds', args=['pending_moderation']))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on manage sounds page - packs
+        resp = self.client.get(reverse('accounts-manage-sounds', args=['packs']))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on manage sounds page - unknown tab
+        resp = self.client.get(reverse('accounts-manage-sounds', args=['unknown']))
+        self.assertEqual(resp.status_code, 404)
 
 
 class OldUserLinksRedirect(TestCase):

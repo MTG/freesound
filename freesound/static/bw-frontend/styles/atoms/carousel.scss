@@ -1,8 +1,11 @@
 .bw-carousel-container {
   position: relative;
-
-  &:hover > .bw-carousel-icon {
-    opacity: 1;
+  @media (hover) {
+    // If hover is not supported (touch devices), don't add this hover as it will require two taps in touch devices for interaction with carousel dots
+    // This means that in touch devices there'll be no arrows (but there'll be the dots)
+    &:hover > .bw-carousel-icon {
+      opacity: 1; 
+    }
   }
 }
 

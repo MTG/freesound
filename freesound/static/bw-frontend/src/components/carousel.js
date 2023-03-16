@@ -29,7 +29,7 @@ carousels.forEach(carousel => {
     totalPages = carouselContainer.childElementCount
   }
   
-  const hasDots = carouselContainer.classList.contains('with-dots')
+  const hasDots = carouselContainer.classList.contains('with-dots') && totalPages > 1;
   let currentPage = 0
   const leftArrow = document.createElement('div')
   const rightArrow = document.createElement('div')
@@ -40,28 +40,30 @@ carousels.forEach(carousel => {
     autoprefixedTransformProperties.forEach(transform => {
       carouselContainer.style[transform] = `translateX(-${desiredTranslation}%)`
     })
-    if (currentPage === 0) {
-      leftArrow.classList.add('carousel-nav-hidden')
-      rightArrow.classList.remove('carousel-nav-hidden')
-    } else if (currentPage === totalPages - 1) {
-      leftArrow.classList.remove('carousel-nav-hidden')
-      rightArrow.classList.add('carousel-nav-hidden')
-    } else {
-      leftArrow.classList.remove('carousel-nav-hidden')
-      rightArrow.classList.remove('carousel-nav-hidden')
-    }
-    if (hasDots) {
-      const dotsParent = carouselContainer.parentNode.parentNode.getElementsByClassName(
-        'carousel__dot-icons'
-      )[0]
-      const dots = [...dotsParent.getElementsByClassName('bw-icon-atom')]
-      dots.forEach((dot, dotIndex) => {
-        if (dotIndex === desiredPage) {
-          dot.classList.add('active-point')
-        } else {
-          dot.classList.remove('active-point')
-        }
-      })
+    if (totalPages > 1){
+      if (currentPage === 0) {
+        leftArrow.classList.add('carousel-nav-hidden')
+        rightArrow.classList.remove('carousel-nav-hidden')
+      } else if (currentPage === totalPages - 1) {
+        leftArrow.classList.remove('carousel-nav-hidden')
+        rightArrow.classList.add('carousel-nav-hidden')
+      } else {
+        leftArrow.classList.remove('carousel-nav-hidden')
+        rightArrow.classList.remove('carousel-nav-hidden')
+      }
+      if (hasDots) {
+        const dotsParent = carouselContainer.parentNode.parentNode.getElementsByClassName(
+          'carousel__dot-icons'
+        )[0]
+        const dots = [...dotsParent.getElementsByClassName('bw-icon-atom')]
+        dots.forEach((dot, dotIndex) => {
+          if (dotIndex === desiredPage) {
+            dot.classList.add('active-point')
+          } else {
+            dot.classList.remove('active-point')
+          }
+        })
+      }
     }
   }
   const width = `${totalPages * 100}%`
@@ -78,7 +80,11 @@ carousels.forEach(carousel => {
     element.append(createIconElement('bw-icon-arrow'))
   })
   leftArrow.classList.add('carousel-left', 'carousel-nav-hidden')
-  rightArrow.classList.add('carousel-right')
+  if (totalPages > 1){
+    rightArrow.classList.add('carousel-right')
+  } else {
+    rightArrow.classList.add('carousel-right', 'carousel-nav-hidden')
+  }
   carousel.append(leftArrow)
   carousel.append(rightArrow)
   rightArrow.addEventListener('click', () => {

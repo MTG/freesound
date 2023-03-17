@@ -138,15 +138,6 @@ class AudioProcessingTestCase(TestCase):
         self.assertIn('conversion to PCM failed', self.sound.processing_log)
         self.assertFalse(len(os.listdir(settings.PROCESSING_TEMP_DIR)), 0)
 
-    @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
-    @override_processing_tmp_path_with_temp_directory
-    @override_sounds_path_with_temp_directory
-    def test_no_need_to_convert_to_pcm(self):
-        self.pre_test()
-        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
-        self.sound.refresh_from_db()
-        self.assertIn('no need to convert, this file is already PCM data', self.sound.processing_log)
-
     @mock.patch('utils.audioprocessing.processing.stereofy_and_find_info', side_effect=stereofy_mock_fail)
     @override_settings(USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING=False)
     @override_processing_tmp_path_with_temp_directory

@@ -463,7 +463,7 @@ class NoSpaceLeftException(Exception):
     pass
 
 
-def convert_to_pcm(input_filename, output_filename):
+def convert_to_pcm(input_filename, output_filename, use_ffmpeg_for_unknown_type=True):
     """
     converts any audio file type to pcm audio
     """
@@ -471,41 +471,45 @@ def convert_to_pcm(input_filename, output_filename):
         raise AudioProcessingException(f"file {input_filename} does not exist")
     sound_type = get_sound_type(input_filename)
 
-    if sound_type == "mp3":
-        cmd = ["lame", "--decode", input_filename, output_filename]
-        error_messages = ["WAVE file contains 0 PCM samples"]
-    elif sound_type == "ogg":
-        cmd = ["oggdec", input_filename, "-o", output_filename]
-        error_messages = []
-    elif sound_type == "flac":
-        cmd = ["flac", "-f", "-d", "-s", "-o", output_filename, input_filename]
-        error_messages = []
-    elif sound_type == "m4a":
-        cmd = ["faad", "-o", output_filename, input_filename]
-        error_messages = ["Unable to find correct AAC sound track in the MP4 file",
-                          "Error: Bitstream value not allowed by specification",
-                          "Error opening file"]
+    if sound_type in ["mp3", "ogg", "flac", "m4a"]:
+        if sound_type == "mp3":
+            cmd = ["lame", "--decode", input_filename, output_filename]
+            error_messages = ["WAVE file contains 0 PCM samples"]
+        elif sound_type == "ogg":
+            cmd = ["oggdec", input_filename, "-o", output_filename]
+            error_messages = []
+        elif sound_type == "flac":
+            cmd = ["flac", "-f", "-d", "-s", "-o", output_filename, input_filename]
+            error_messages = []
+        elif sound_type == "m4a":
+            cmd = ["faad", "-o", output_filename, input_filename]
+            error_messages = ["Unable to find correct AAC sound track in the MP4 file",
+                            "Error: Bitstream value not allowed by specification",
+                            "Error opening file"]
+   
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = process.communicate()
+        stdout = stdout.decode(errors='ignore')
+        stderr = stderr.decode(errors='ignore')
+        
+        # If external process returned an error (return code != 0) or the expected PCM file does not
+        # exist, raise exception
+        if process.returncode != 0 or not os.path.exists(output_filename):
+            if "No space left on device" in stderr + " " + stdout:
+                raise NoSpaceLeftException
+            raise AudioProcessingException("failed converting to pcm data:\n"
+                                        + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+        
+        # If external process apparently returned no error (return code = 0) but we see some errors from our list of
+        # known errors have been printed in stderr, raise an exception as well
+        if any([error_message in stderr for error_message in error_messages]):
+            raise AudioProcessingException("failed converting to pcm data:\n"
+                                        + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
     else:
-        return False
-
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (stdout, stderr) = process.communicate()
-    stdout = stdout.decode()
-    stderr = stderr.decode()
-    
-    # If external process returned an error (return code != 0) or the expected PCM file does not
-    # exist, raise exception
-    if process.returncode != 0 or not os.path.exists(output_filename):
-        if "No space left on device" in stderr + " " + stdout:
-            raise NoSpaceLeftException
-        raise AudioProcessingException("failed converting to pcm data:\n"
-                                       + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
-    
-    # If external process apparently returned no error (return code = 0) but we see some errors from our list of
-    # known errors have been printed in stderr, raise an exception as well
-    if any([error_message in stderr for error_message in error_messages]):
-        raise AudioProcessingException("failed converting to pcm data:\n"
-                                       + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+        if use_ffmpeg_for_unknown_type:
+            convert_using_ffmpeg(input_filename, output_filename)
+        else:
+            return False
     return True
 
 
@@ -521,8 +525,8 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
-    stdout = stdout.decode()
-    stderr = stderr.decode()
+    stdout = stdout.decode(errors='ignore')
+    stderr = stderr.decode(errors='ignore')
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
@@ -568,7 +572,7 @@ def convert_to_mp3(input_filename, output_filename, quality=70):
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, _) = process.communicate()
-    stdout = stdout.decode()
+    stdout = stdout.decode(errors='ignore')
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException(stdout)
@@ -586,7 +590,7 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, _) = process.communicate()
-    stdout = stdout.decode()
+    stdout = stdout.decode(errors='ignore')
     
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException(stdout)
@@ -609,7 +613,7 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
-    stdout = stdout.decode()
-    stderr = stderr.decode()
+    stdout = stdout.decode(errors='ignore')
+    stderr = stderr.decode(errors='ignore')
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException(f"ffmpeg returned an error\nstdout: {stdout} \nstderr: {stderr}")

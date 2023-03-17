@@ -11,18 +11,13 @@
             <div class="bw-carousel-container">
                 <div class="bw-carousel-wrapper">
                     <div class="bw-carousel with-dots dots-distance-02">
-                    {% comment %}get random sounds to show here so if cached we won't run this query{% endcomment %}
-                    {% with pack.get_random_sounds_from_pack as sounds %}
-                        {% if sounds %}
-                        {% for sound in sounds %}
+                        {% for sound_data in pack.selected_sounds_data %}
                             <div>
-                                {% display_sound_small_no_info sound %}
+                                {% display_sound_small_no_sound_object sound_data %}
                             </div>
-                        {% endfor %}
-                        {% else %}
+                        {% empty %}
                             <div class="bw-player-small-thumbnail-empty-space"></div>
-                        {% endif %}
-                    {% endwith %}
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -41,19 +36,17 @@
         </div>
     {% elif size == 'big' %}
         <div>
-            {% with pack.get_random_sounds_from_pack as sounds %}
-                {% if sounds %}
-                <div class="row no-margins" style="margin-left: -15px">
-                    {% for sound in sounds %}
-                        <div class="col-4">
-                            {% display_sound_small_no_info sound.id %}
-                        </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                    <div class="bw-player-small-thumbnail-empty-space"></div>
-                {% endif %}
-            {% endwith %}
+            {% if pack.selected_sounds_data %}
+            <div class="row no-margins" style="margin-left: -15px">
+                {% for sound_data in pack.selected_sounds_data %}
+                    <div class="col-4">
+                        {% display_sound_small_no_sound_object sound_data %}
+                    </div>
+                {% endfor %}
+            </div>
+            {% else %}
+                <div class="bw-player-small-thumbnail-empty-space"></div>
+            {% endif %}
             <h5 class="v-spacing-top-1">
                 <span class="text-light-grey">Pack: </span><a class="bw-link--black ellipsis" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a>
             </h5>
@@ -73,7 +66,7 @@
             <div class="between v-spacing-top-2 v-spacing-3">
                 <div class="middle text-grey h-spacing-1">
                     <div class="h-spacing-1">
-                        {% bw_user_avatar user_profile_locations.avatar.S.url pack.user.username 32 %}
+                        {% bw_user_avatar pack.user_profile_locations.avatar.S.url pack.user.username 32 %}
                     </div>
                     <a href="{% url 'account' pack.user %}">{{ pack.user | truncate_string:15 }}</a>
                     <span class="h-spacing-left-1 text-light-grey">{{ pack.created|date:"F jS, Y" }}</span>

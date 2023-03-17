@@ -1373,11 +1373,12 @@ def charts(request):
 @redirect_if_old_username_or_404
 def account(request, username):
     user = request.parameter_user
-
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
-    latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
-                               .order_by("-last_updated")[0:10 if not using_beastwhoosh(request) else 15]
+    latest_pack_ids = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
+                        .order_by("-last_updated").values_list('id', flat=True)[0:10 if not using_beastwhoosh(request) else 15]
+    latest_packs = Pack.objects.ordered_ids(pack_ids=latest_pack_ids)
+    latest_packs = []
     following = follow_utils.get_users_following_qs(user)
     followers = follow_utils.get_users_followers_qs(user)
     following_tags = follow_utils.get_tags_following_qs(user)

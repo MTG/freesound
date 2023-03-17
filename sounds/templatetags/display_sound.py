@@ -156,7 +156,7 @@ def display_sound_infowindow(context, sound):
     return display_sound(context, sound, player_size='infowindow')
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound_big_no_sound_object(context, file_data):
+def display_sound_no_sound_object(context, file_data, player_size):
     '''
     This player works for sounds which have no Sound object. It requires
     URLs to the sound files (mp3 and ogg)a and the wave/spectral images, and
@@ -172,7 +172,6 @@ def display_sound_big_no_sound_object(context, file_data):
         'spectral': sound.locations('display.spectral_bw.L.url')
     }
     '''
-    player_size  ='big_no_info'
     return {
         'sound': {
             'id': file_data['preview_mp3'].split('/')[-2],  # Pass a unique fake ID to avoid caching problems
@@ -200,6 +199,17 @@ def display_sound_big_no_sound_object(context, file_data):
         'show_bookmark_button': False,
         'player_size': player_size
     }
+
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_big_no_sound_object(context, file_data):
+    return display_sound_no_sound_object(context, file_data, player_size='big_no_info')
+
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small_no_sound_object(context, file_data):
+    return display_sound_no_sound_object(context, file_data, player_size='small_no_info')
+   
 
 @register.inclusion_tag('sounds/display_sound_selectable.html', takes_context=True)
 def display_sound_small_selectable(context, sound, selected=False):

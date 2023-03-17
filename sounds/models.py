@@ -29,13 +29,15 @@ import random
 import yaml
 import zlib
 
+from collections import Counter
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Prefetch
 from django.db.models.functions import Greatest
 from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
@@ -1466,6 +1468,55 @@ post_delete.connect(post_delete_sound, sender=Sound)
 
 class PackManager(models.Manager):
 
+    def bulk_query_id(self, pack_ids, sound_ids_for_pack_id=None, exclude_deleted=True):
+        """
+        Returns a list of Pack with some added data properties that are used in display_pack. In this way,
+        a single call to bulk_query_id can be used to retrieve information from all needed packs at once and
+        with a 5 total queries instead of several queries per pack.
+        Note that this method does not return the results sorted as in pack_ids, to do that you should use
+        the ordered_ids method below.
+        """
+
+        packs = Pack.objects.prefetch_related(
+            Prefetch('sounds__tags__tag'),
+            Prefetch('sounds__license'),
+        ).select_related('user').select_related('user__profile').filter(id__in=pack_ids)
+        if exclude_deleted:
+            packs = packs.exclude(is_deleted=True)
+        
+        num_sounds_selected_per_pack = 3
+        for p in packs:
+            licenses = []
+            selected_sounds_data = []
+            tags = []
+            for s in p.sounds.all():
+                tags += [ti.tag.name for ti in s.tags.all()]
+                licenses.append((s.license.name, s.license.id))
+                if len(selected_sounds_data) < num_sounds_selected_per_pack:
+                    selected_sounds_data.append({
+                        'id': s.id,
+                        'duration': s.duration,
+                        'preview_mp3': s.locations('preview.LQ.mp3.url'),
+                        'preview_ogg': s.locations('preview.LQ.ogg.url'),
+                        'wave': s.locations('display.wave_bw.L.url'),
+                        'spectral': s.locations('display.spectral_bw.L.url')
+                    })
+            p.licenses_data = ([lid for _, lid in licenses], [lname for lname, _ in licenses])
+            p.pack_tags = [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
+                for tag, count in Counter(tags).most_common(10)]  # See pack.get_pack_tags_bw
+            p.selected_sounds_data = selected_sounds_data
+            p.user_profile_locations = p.user.profile.locations()
+
+        return packs
+
+    def dict_ids(self, pack_ids, exclude_deleted=True):
+        return {pack_obj.id: pack_obj for pack_obj in self.bulk_query_id(pack_ids, exclude_deleted=exclude_deleted)}
+
+    def ordered_ids(self, pack_ids, exclude_deleted=True):
+        packs = self.dict_ids(pack_ids, exclude_deleted=exclude_deleted)
+        return [packs[pack_id] for pack_id in pack_ids if pack_id in packs]
+
+    '''
     def ordered_ids(self, pack_ids, exclude_deleted=True):
         """
         Returns a list of Pack objects with ID in pack_ids and in the same order. pack_ids can include ID duplicates
@@ -1483,6 +1534,7 @@ class PackManager(models.Manager):
             base_qs = base_qs.exclude(is_deleted=True)
         packs = {pack_obj.id: pack_obj for pack_obj in base_qs}
         return [packs[pack_id] for pack_id in pack_ids if pack_id in packs]
+    '''
 
 
 class Pack(SocialModel):
@@ -1550,9 +1602,12 @@ class Pack(SocialModel):
 
     def get_pack_tags_bw(self):
         try:
-            pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
-            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
-                    for tag, count in pack_tags_counts]
+            if hasattr(self, 'pack_tags'):
+                return self.pack_tags  # If precomputed from PackManager.bulk_query_id method
+            else:
+                pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
+                return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
+                        for tag, count in pack_tags_counts]
         except SearchEngineException as e:
             return []
         except Exception as e:
@@ -1622,10 +1677,13 @@ class Pack(SocialModel):
 
     @cached_property
     def licenses_data(self):
-        licenses_data = list(Sound.objects.select_related('license').filter(pack=self).values_list('license__name', 'license_id'))
-        license_ids = [lid for _, lid in licenses_data]
-        license_names = [lname for lname, _ in licenses_data]
-        return license_ids, license_names
+        if hasattr(self, 'licenses_data'):
+            return self.licenses_data  # If precomputed from PackManager.bulk_query_id method
+        else:
+            licenses_data = list(Sound.objects.select_related('license').filter(pack=self).values_list('license__name', 'license_id'))
+            license_ids = [lid for _, lid in licenses_data]
+            license_names = [lname for lname, _ in licenses_data]
+            return license_ids, license_names
     
     @property
     def license_summary_name_and_id(self):

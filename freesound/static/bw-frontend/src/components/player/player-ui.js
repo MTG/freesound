@@ -209,6 +209,35 @@ const createLoopButton = audioElement => {
   return loopButton
 }
 
+const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize) => {
+  const controlsElement = playerImgNode.parentElement.querySelector('.bw-player__controls');
+  const bookmarkElement = playerImgNode.parentElement.querySelector('.bw-player__favorite');
+  let spectrogramButton = undefined;
+  try {
+    spectrogramButton = controlsElement.querySelector('i.bw-icon-spectogram').parentElement;
+  } catch (error){}
+  const hasWaveform = playerImgNode.src.indexOf(waveform) > -1
+  if (hasWaveform) {
+    playerImgNode.src = spectrum
+    if (spectrogramButton !== undefined){
+      spectrogramButton.classList.add('text-red-important')
+    }
+    controlsElement.classList.add('bw-player__controls-inverted');
+    if (bookmarkElement !== null){
+      bookmarkElement.classList.add('bw-player__controls-inverted');
+    }
+  } else {
+    playerImgNode.src = waveform
+    if (spectrogramButton !== undefined){
+      spectrogramButton.classList.remove('text-red-important')
+    }
+    controlsElement.classList.remove('bw-player__controls-inverted');
+    if (bookmarkElement !== null){
+      bookmarkElement.classList.remove('bw-player__controls-inverted');
+    }
+  }
+}
+
 /**
  *
  * @param {HTMLImgElement} playerImgNode
@@ -224,26 +253,7 @@ const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWith
     spectogramButton.classList.add('text-red-important');
   }
   spectogramButton.addEventListener('click', () => {
-    const hasWaveform = playerImgNode.src.indexOf(waveform) > -1
-    if (hasWaveform) {
-      playerImgNode.src = spectrum
-      spectogramButton.classList.add('text-red-important')
-      spectogramButton.parentElement.classList.add('bw-player__controls-inverted');
-      if (playerSize !== 'big'){
-        spectogramButton.parentElement.parentElement.querySelector('.bw-player__progress-container').forEach((progressIndicator) => {
-          progressIndicator.classList.add('bw-player__progress-inverted');
-        });
-      }
-    } else {
-      playerImgNode.src = waveform
-      spectogramButton.classList.remove('text-red-important')
-      spectogramButton.parentElement.classList.remove('bw-player__controls-inverted');
-      if (playerSize !== 'big') {
-        spectogramButton.parentElement.parentElement.querySelector('.bw-player__progress-container').forEach((progressIndicator) => {
-          progressIndicator.classList.remove('bw-player__progress-inverted');
-        });
-      }
-    }
+    toggleSpectrogramWaveform(playerImgNode, waveform, spectrum, playerSize)
   })
   return spectogramButton
 }
@@ -285,33 +295,37 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
     const progressStatus = createProgressStatus(parentNode, audioElement, playerSize, startWithSpectrum)
     imageContainer.appendChild(progressStatus)
     imageContainer.addEventListener('click', evt => {
-      const clickPosition = evt.offsetX
-      const width = evt.target.clientWidth
-      let positionRatio = clickPosition / width
-      if (playerSize === "small"){
-        if (isTouchEnabledDevice() && positionRatio < 0.15) {
-          // In small player and touch device, quantize touches near the start of the sound to position-0
-          positionRatio = 0.0
-        } else if (positionRatio < 0.05){
-          // In small player but non-touch device, the quantization is less strict
-          positionRatio = 0.0
-        }
-      }
-      const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
-      const time = duration * positionRatio
-      if (audioElement.paused) {
-        // If paused, use playAtTime util function because it supports setting currentTime event if data is not yet loaded
-        playAtTime(audioElement, time)
+      if (evt.altKey){
+        toggleSpectrogramWaveform(playerImage, waveform, spectrum, playerSize);
       } else {
-        // If already playing, just change current time and continue playing
-        audioElement.currentTime = time
-      }
-      if (isTouchEnabledDevice()){
-        // In touch enabled devices hide the progress indicator here because otherwise it will remain visible as no
-        // mouseleave event is ever fired
-        hideProgressBarIndicator(parentNode)
-      }
-      evt.stopPropagation()
+        const clickPosition = evt.offsetX
+        const width = evt.target.clientWidth
+        let positionRatio = clickPosition / width
+        if (playerSize === "small"){
+          if (isTouchEnabledDevice() && positionRatio < 0.15) {
+            // In small player and touch device, quantize touches near the start of the sound to position-0
+            positionRatio = 0.0
+          } else if (positionRatio < 0.05){
+            // In small player but non-touch device, the quantization is less strict
+            positionRatio = 0.0
+          }
+        }
+        const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
+        const time = duration * positionRatio
+        if (audioElement.paused) {
+          // If paused, use playAtTime util function because it supports setting currentTime event if data is not yet loaded
+          playAtTime(audioElement, time)
+        } else {
+          // If already playing, just change current time and continue playing
+          audioElement.currentTime = time
+        }
+        if (isTouchEnabledDevice()){
+          // In touch enabled devices hide the progress indicator here because otherwise it will remain visible as no
+          // mouseleave event is ever fired
+          hideProgressBarIndicator(parentNode)
+        }
+        evt.stopPropagation()
+      }      
     })
   }
   return imageContainer

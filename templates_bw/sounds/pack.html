@@ -53,24 +53,22 @@
                             </div>
                         </div>
                         <div class="v-spacing-top-5">
-                            <div class="text-center text-18 text-light-grey v-spacing-1">Latest sounds in this pack</div>
-                            {% for sounds_chunk in pack_sounds|chunks:3 %}
+                            <div class="text-center text-18 text-light-grey v-spacing-3">Latest sounds in this pack</div>
+                            {% if pack_sounds %}
                                 <div class="row no-margins">
-                                    {% for sound in sounds_chunk %}
-                                        <div class="col-4">
+                                    {% for sound in pack_sounds %}
+                                        <div class="col-6 col-sm-4">
                                             {% display_sound_small sound %}
                                         </div>
                                     {% endfor %}
                                 </div>
-                            {% empty %}
+                                <div class="v-spacing-top-4 text-center">
+                                    <a class="no-hover" href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1"><button class="btn-primary">See all sounds in this pack</button></a>
+                                </div>
+                            {% else %}
                                 <div class="text-center v-spacing-top-4">
                                     <h5>No sounds... &#128543</h5>
                                     <div class="text-grey v-spacing-top-1">Looks like {{ pack.name }} has no sounds yet</div>
-                                </div>
-                            {% endfor %}
-                            {% if pack_sounds %}
-                                <div class="v-spacing-top-4 text-center">
-                                    <a class="no-hover" href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1"><button class="btn-primary">See all sounds in this pack</button></a>
                                 </div>
                             {% endif %}
                         </div>

@@ -374,8 +374,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
                       num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
-                      group_by_pack=False, facets=None, only_sounds_with_pack=False, only_sounds_within_ids=False,
-                      group_counts_as_one_in_facets=False):
+                      group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
+                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
 
         query = SolrQuery()
 
@@ -424,7 +424,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 group_query=None,
                 group_rows=10,  # TODO: if limit is lower than rows and start=0, this should probably be equal to limit
                 group_start=0,
-                group_limit=1,  # This is the number of documents that will be returned for each group.
+                group_limit=num_sounds_per_pack_group,  # This is the number of documents that will be returned for each group.
                 group_offset=0,
                 group_sort=None,
                 group_sort_ingroup=None,

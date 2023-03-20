@@ -1468,7 +1468,7 @@ post_delete.connect(post_delete_sound, sender=Sound)
 
 class PackManager(models.Manager):
 
-    def bulk_query_id(self, pack_ids, sound_ids_for_pack_id=None, exclude_deleted=True):
+    def bulk_query_id(self, pack_ids, sound_ids_for_pack_id=dict(), exclude_deleted=True):
         """
         Returns a list of Pack with some added data properties that are used in display_pack. In this way,
         a single call to bulk_query_id can be used to retrieve information from all needed packs at once and
@@ -1476,32 +1476,39 @@ class PackManager(models.Manager):
         Note that this method does not return the results sorted as in pack_ids, to do that you should use
         the ordered_ids method below.
         """
-
         packs = Pack.objects.prefetch_related(
+            Prefetch('sounds', queryset=Sound.objects.all().order_by('-created')),
             Prefetch('sounds__tags__tag'),
             Prefetch('sounds__license'),
         ).select_related('user').select_related('user__profile').filter(id__in=pack_ids)
         if exclude_deleted:
             packs = packs.exclude(is_deleted=True)
-        
         num_sounds_selected_per_pack = 3
         for p in packs:
             licenses = []
             selected_sounds_data = []
             tags = []
+            sound_ids_pre_selected = sound_ids_for_pack_id.get(p.id, None)
             for s in p.sounds.all():
                 tags += [ti.tag.name for ti in s.tags.all()]
                 licenses.append((s.license.name, s.license.id))
-                if len(selected_sounds_data) < num_sounds_selected_per_pack:
+                should_add_sound_to_selected_sounds = False
+                if sound_ids_pre_selected is None:
+                    if len(selected_sounds_data) < num_sounds_selected_per_pack:
+                        should_add_sound_to_selected_sounds = True
+                else:
+                    if s.id in sound_ids_pre_selected:
+                        should_add_sound_to_selected_sounds = True
+                if should_add_sound_to_selected_sounds:
                     selected_sounds_data.append({
-                        'id': s.id,
-                        'duration': s.duration,
-                        'preview_mp3': s.locations('preview.LQ.mp3.url'),
-                        'preview_ogg': s.locations('preview.LQ.ogg.url'),
-                        'wave': s.locations('display.wave_bw.L.url'),
-                        'spectral': s.locations('display.spectral_bw.L.url')
-                    })
-            p.licenses_data = ([lid for _, lid in licenses], [lname for lname, _ in licenses])
+                            'id': s.id,
+                            'duration': s.duration,
+                            'preview_mp3': s.locations('preview.LQ.mp3.url'),
+                            'preview_ogg': s.locations('preview.LQ.ogg.url'),
+                            'wave': s.locations('display.wave_bw.L.url'),
+                            'spectral': s.locations('display.spectral_bw.L.url')
+                        })
+            p.licenses_data_precomputed = ([lid for _, lid in licenses], [lname for lname, _ in licenses])
             p.pack_tags = [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
                 for tag, count in Counter(tags).most_common(10)]  # See pack.get_pack_tags_bw
             p.selected_sounds_data = selected_sounds_data
@@ -1587,6 +1594,7 @@ class Pack(SocialModel):
         Returns:
             List[Sound]: List of randomly selected Sound objects from the pack
         """
+        # TODO: only used in NG, remove after we switch to BW (?)
         sound_ids = list(Sound.public.filter(pack=self.id).order_by('?').values_list('id', flat=True)[:N])
         return Sound.objects.ordered_ids(sound_ids=sound_ids)
 
@@ -1677,8 +1685,8 @@ class Pack(SocialModel):
 
     @cached_property
     def licenses_data(self):
-        if hasattr(self, 'licenses_data'):
-            return self.licenses_data  # If precomputed from PackManager.bulk_query_id method
+        if hasattr(self, 'licenses_data_precomputed'):
+            return self.licenses_data_precomputed  # If precomputed from PackManager.bulk_query_id method
         else:
             licenses_data = list(Sound.objects.select_related('license').filter(pack=self).values_list('license__name', 'license_id'))
             license_ids = [lid for _, lid in licenses_data]

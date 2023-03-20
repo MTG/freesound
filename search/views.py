@@ -114,6 +114,10 @@ def search_view_helper(request, tags_mode=False):
     disable_group_by_pack_option = 'pack:' in query_params['query_filter'] or only_sounds_with_pack_in_request
     disable_only_sounds_by_pack_option= 'pack:' in query_params['query_filter']
     only_sounds_with_pack = "1" if query_params['only_sounds_with_pack'] else ""
+    if only_sounds_with_pack:
+        # If displaying seachr results as packs, include 3 sounds per pack group in the results so we can display these sounds as selected sounds in the
+        # display_pack templatetag
+        query_params['num_sounds_per_pack_group'] = 3
 
     tvars = {
         'error_text': None,
@@ -157,8 +161,13 @@ def search_view_helper(request, tags_mode=False):
             for d in docs:
                 d["sound"] = allsounds[d["id"]]
         else:
-            resultspackids = [int(d.get("group_name").split('_')[0]) for d in results.docs]
-            resultpacks = sounds.models.Pack.objects.bulk_query_id(resultspackids)
+            resultspackids = []
+            sound_ids_for_pack_id = {}
+            for d in results.docs:
+                pack_id = int(d.get("group_name").split('_')[0])
+                resultspackids.append(pack_id)
+                sound_ids_for_pack_id[pack_id] = [int(sound['id']) for sound in d.get('group_docs', [])]
+            resultpacks = sounds.models.Pack.objects.bulk_query_id(resultspackids, sound_ids_for_pack_id=sound_ids_for_pack_id)
             allpacks = {}
             for p in resultpacks:
                 allpacks[p.id] = p

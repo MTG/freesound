@@ -1378,7 +1378,6 @@ def account(request, username):
     latest_pack_ids = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
                         .order_by("-last_updated").values_list('id', flat=True)[0:10 if not using_beastwhoosh(request) else 15]
     latest_packs = Pack.objects.ordered_ids(pack_ids=latest_pack_ids)
-    latest_packs = []
     following = follow_utils.get_users_following_qs(user)
     followers = follow_utils.get_users_followers_qs(user)
     following_tags = follow_utils.get_tags_following_qs(user)

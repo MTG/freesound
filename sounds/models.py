@@ -1513,6 +1513,7 @@ class PackManager(models.Manager):
                             'wave': s.locations('display.wave_bw.L.url'),
                             'spectral': s.locations('display.spectral_bw.L.url')
                         })
+            p.num_sounds_unpublished_precomputed = p.sounds.count() - p.num_sounds
             p.licenses_data_precomputed = ([lid for _, lid in licenses], [lname for lname, _ in licenses])
             p.pack_tags = [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
                 for tag, count in Counter(tags).most_common(10)]  # See pack.get_pack_tags_bw
@@ -1646,7 +1647,8 @@ class Pack(SocialModel):
         # This might need further investigation
         for player_size in ['small', 'big']:
             invalidate_template_cache("bw_display_pack", self.id, player_size)
-
+        invalidate_template_cache("bw_pack_stats", self.id)
+        
     def get_attribution(self):
         sounds_list = self.sounds.filter(processing_state="OK",
                 moderation_state="OK").select_related('user', 'license')
@@ -1664,7 +1666,6 @@ class Pack(SocialModel):
     @property
     def avg_rating(self):
         # Return average rating from 0 to 10
-        # TODO: don't compute this realtime, store it in DB
         ratings = list(SoundRating.objects.filter(sound__pack=self).values_list('rating', flat=True))
         if ratings:
             return old_div(1.0*sum(ratings),len(ratings))
@@ -1678,17 +1679,17 @@ class Pack(SocialModel):
 
     @property
     def num_ratings(self):
-        # TODO: store this as pack field instead of computing it live
         return SoundRating.objects.filter(sound__pack=self).count()
 
     def get_total_pack_sounds_length(self):
-        # TODO: don't compute this realtime, store it in DB
         durations = list(Sound.objects.filter(pack=self).values_list('duration', flat=True))
         return sum(durations)
 
     def num_sounds_unpublished(self):
-        # TODO: don't compute this realtime, store it in DB (?)
-        return self.sounds.count() - self.num_sounds
+        if hasattr(self, 'num_sounds_unpublished_precomputed'):
+            return self.num_sounds_unpublished_precomputed
+        else:
+            return self.sounds.count() - self.num_sounds
 
     @cached_property
     def licenses_data(self):

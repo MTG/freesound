@@ -7,6 +7,7 @@
 {% load filter_img %}
 {% load display_sound %}
 {% load absurl %}
+{% load cache %}
 
 {% block title %}Pack: {{pack.name}} by {{pack.user.username}}{% endblock title %}
 
@@ -77,6 +78,7 @@
                 <div class="col-md-3 offset-md-1">
                     <div class="divider-light v-spacing-top-6 v-spacing-5 d-md-none"></div>
                     <div class="bw-sound__sidebar">
+                        {% cache 3600 bw_pack_stats pack.id %}
                         <div>
                             <ol>
                                 <li class="v-spacing-3">
@@ -96,13 +98,12 @@
                         <div class="text-grey v-spacing-top-1">
                             {{ pack.license_summary_text|safe }} {% if pack.license_summary_deed_url %}<a href="{{ pack.license_summary_deed_url }}" target="_blank" class="bw-link--black">More...</a>{% endif %}
                         </div>
-                        {% with pack.num_sounds_unpublished as num_sounds_unpublished %}
-                            {% if num_sounds_unpublished %}
-                                <div class="v-spacing-top-6 text-red">
-                                    {% bw_icon "notification" %}This pack has {{ num_sounds_unpublished}} unpublished sounds
-                                </div>
-                            {% endif %}
-                        {% endwith %}
+                        {% endcache %}
+                        {% if pack.num_sounds_unpublished %}
+                            <div class="v-spacing-top-6 text-red">
+                                {% bw_icon "notification" %}This pack has {{ pack.num_sounds_unpublished}} unpublished sounds
+                            </div>
+                        {% endif %}
                         {% if pack.num_sounds %}
                         <div class="v-spacing-top-6">
                             {% if request.user.is_authenticated %}

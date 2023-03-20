@@ -847,7 +847,10 @@ class Sound(SocialModel):
 
     @property
     def license_bw_icon_name(self):
-        return self.license.icon_name
+        if hasattr(self, 'license_name'):
+            return License.bw_cc_icon_name_from_license_name(self.license_name)
+        else:
+            return self.license.icon_name
 
     def get_license_history(self):
         """
@@ -1477,7 +1480,7 @@ class PackManager(models.Manager):
         the ordered_ids method below.
         """
         packs = Pack.objects.prefetch_related(
-            Prefetch('sounds', queryset=Sound.objects.all().order_by('-created')),
+            Prefetch('sounds', queryset=Sound.public.order_by('-created')),
             Prefetch('sounds__tags__tag'),
             Prefetch('sounds__license'),
         ).select_related('user').select_related('user__profile').filter(id__in=pack_ids)
@@ -1637,6 +1640,8 @@ class Pack(SocialModel):
         self.save()
 
     def invalidate_template_caches(self):
+        # NOTE: we're currently using no cache on pack_display as it does not seem to speed up responses
+        # This might need further investigation
         for player_size in ['small', 'big']:
             invalidate_template_cache("bw_display_pack", self.id, player_size)
 
@@ -1695,7 +1700,6 @@ class Pack(SocialModel):
     
     @property
     def license_summary_name_and_id(self):
-        # TODO: store this in DB?
         license_ids, license_names = self.licenses_data
         
         if len(set(license_ids)) == 1:
@@ -1714,7 +1718,6 @@ class Pack(SocialModel):
 
     @property
     def license_summary_text(self):
-        # TODO: store this in DB?
         license_summary_name, license_summary_id = self.license_summary_name_and_id
         if license_summary_name != self.VARIOUS_LICENSES_NAME:
             return License.objects.get(id=license_summary_id).get_short_summary

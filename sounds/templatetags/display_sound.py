@@ -84,7 +84,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None):
 
         """
         return hasattr(sound, 'tag_array')
-
+    
     if isinstance(sound, Sound):
         if sound_object_retrieved_using_bulk_query_id(sound):
             sound_obj = sound
@@ -92,7 +92,12 @@ def display_sound(context, sound, player_size='small', show_bookmark=None):
             # If 'sound' is a Sound instance but has not been retrieved using bulk_query_id, we would need to make
             # some extra DB queries to get the metadata that must be rendered. Instead, we retreive again
             # the sound using the bulk_query_id method which will get all needed maetadaata in only one query.
-            sound_obj = get_sound_using_bulk_query_id(sound.id)
+            # Note that we don't re-retrieve when player size contains "no_info" as in these cases there is
+            # no extra metadata needed to be shown.
+            if 'no_info' not in player_size:
+                sound_obj = get_sound_using_bulk_query_id(sound.id)
+            else:
+                sound_obj = sound
     else:
         # If 'sound' argument is not a Sound instance then we assume it is a sound ID and we retreive the
         # corresponding object from the DB.
@@ -106,10 +111,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None):
         request = context['request']
         return {
             'sound': sound_obj,
-            'sound_tags': sound_obj.tag_array,
-            'sound_user': sound_obj.username,
-            'license_name': sound_obj.license_name,
-            'user_profile_locations': Profile.locations_static(sound_obj.user_id, sound_obj.user_has_avatar),
+            'user_profile_locations': Profile.locations_static(sound_obj.user_id, getattr(sound_obj, 'user_has_avatar', False)),
             'media_url': context['media_url'],
             'request': request,
             'is_explicit': sound_obj.is_explicit and
@@ -156,7 +158,7 @@ def display_sound_infowindow(context, sound):
     return display_sound(context, sound, player_size='infowindow')
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound_big_no_sound_object(context, file_data):
+def display_sound_no_sound_object(context, file_data, player_size):
     '''
     This player works for sounds which have no Sound object. It requires
     URLs to the sound files (mp3 and ogg)a and the wave/spectral images, and
@@ -172,7 +174,6 @@ def display_sound_big_no_sound_object(context, file_data):
         'spectral': sound.locations('display.spectral_bw.L.url')
     }
     '''
-    player_size  ='big_no_info'
     return {
         'sound': {
             'id': file_data['preview_mp3'].split('/')[-2],  # Pass a unique fake ID to avoid caching problems
@@ -200,6 +201,17 @@ def display_sound_big_no_sound_object(context, file_data):
         'show_bookmark_button': False,
         'player_size': player_size
     }
+
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_big_no_sound_object(context, file_data):
+    return display_sound_no_sound_object(context, file_data, player_size='big_no_info')
+
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small_no_sound_object(context, file_data):
+    return display_sound_no_sound_object(context, file_data, player_size='small_no_info')
+   
 
 @register.inclusion_tag('sounds/display_sound_selectable.html', takes_context=True)
 def display_sound_small_selectable(context, sound, selected=False):

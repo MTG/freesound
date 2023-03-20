@@ -428,16 +428,13 @@ class ProfileForm(forms.ModelForm):
 
 
 class BwProfileForm(ProfileForm):
-    
-    disallow_simultaneous_playback = forms.BooleanField(
-        label="Disallow simultaneous audio playback", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-    prefer_spectrogram = forms.BooleanField(
-        label="Display spectrogram in sound players by default", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-    prefer_compact_mode = forms.BooleanField(
+
+    allow_simultaneous_playback = forms.BooleanField(
+        label="Allow simultaneous audio playback", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
+    prefer_spectrograms = forms.BooleanField(
+        label="Show spectrograms in sound players by default", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
+    use_compact_mode = forms.BooleanField(
         label="Display search results in compact mode", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-    ui_theme_preference = forms.ChoiceField(
-        label="User interface theme", required=False, choices=[('s', 'Follow system default'), ('l', 'Light'), ('d', 'Dark')])
-    
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
@@ -471,7 +468,9 @@ class BwProfileForm(ProfileForm):
 
     class Meta:
         model = Profile
-        fields = ('username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', )
+        fields = ('username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', 
+            'allow_simultaneous_playback', 'prefer_spectrograms', 'use_compact_mode', 
+            'ui_theme_preference' )
 
 
 class EmailResetForm(forms.Form):

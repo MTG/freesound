@@ -15,8 +15,21 @@ carousels.forEach(carousel => {
     ...carousel.getElementsByClassName('bw-carousel'),
   ][0]
   if (!carouselContainer) return
-  const totalPages = carouselContainer.childElementCount
-  const hasDots = carouselContainer.classList.contains('with-dots')
+  
+  let totalPages = 0;
+  if (carousel.dataset.carouselType === "adaptive"){
+    // Adaptive carousels will count the number of pages depending on the size of the child elements instead of separating 
+    // them in rows. In this way we can have players with adapted size depending on overall screen size and carousels will 
+    // adapt as well
+    const rowWithElements = carouselContainer.children[0];
+    const firstElement = rowWithElements.children[0];
+    const elementsPerPage = Math.round(rowWithElements.offsetWidth / firstElement.offsetWidth);
+    totalPages = Math.round(rowWithElements.childElementCount / elementsPerPage);
+  } else {
+    totalPages = carouselContainer.childElementCount
+  }
+  
+  const hasDots = carouselContainer.classList.contains('with-dots') && totalPages > 1;
   let currentPage = 0
   const leftArrow = document.createElement('div')
   const rightArrow = document.createElement('div')
@@ -27,28 +40,30 @@ carousels.forEach(carousel => {
     autoprefixedTransformProperties.forEach(transform => {
       carouselContainer.style[transform] = `translateX(-${desiredTranslation}%)`
     })
-    if (currentPage === 0) {
-      leftArrow.classList.add('carousel-nav-hidden')
-      rightArrow.classList.remove('carousel-nav-hidden')
-    } else if (currentPage === totalPages - 1) {
-      leftArrow.classList.remove('carousel-nav-hidden')
-      rightArrow.classList.add('carousel-nav-hidden')
-    } else {
-      leftArrow.classList.remove('carousel-nav-hidden')
-      rightArrow.classList.remove('carousel-nav-hidden')
-    }
-    if (hasDots) {
-      const dotsParent = carouselContainer.parentNode.parentNode.getElementsByClassName(
-        'carousel__dot-icons'
-      )[0]
-      const dots = [...dotsParent.getElementsByClassName('bw-icon-atom')]
-      dots.forEach((dot, dotIndex) => {
-        if (dotIndex === desiredPage) {
-          dot.classList.add('active-point')
-        } else {
-          dot.classList.remove('active-point')
-        }
-      })
+    if (totalPages > 1){
+      if (currentPage === 0) {
+        leftArrow.classList.add('carousel-nav-hidden')
+        rightArrow.classList.remove('carousel-nav-hidden')
+      } else if (currentPage === totalPages - 1) {
+        leftArrow.classList.remove('carousel-nav-hidden')
+        rightArrow.classList.add('carousel-nav-hidden')
+      } else {
+        leftArrow.classList.remove('carousel-nav-hidden')
+        rightArrow.classList.remove('carousel-nav-hidden')
+      }
+      if (hasDots) {
+        const dotsParent = carouselContainer.parentNode.parentNode.getElementsByClassName(
+          'carousel__dot-icons'
+        )[0]
+        const dots = [...dotsParent.getElementsByClassName('bw-icon-atom')]
+        dots.forEach((dot, dotIndex) => {
+          if (dotIndex === desiredPage) {
+            dot.classList.add('active-point')
+          } else {
+            dot.classList.remove('active-point')
+          }
+        })
+      }
     }
   }
   const width = `${totalPages * 100}%`
@@ -65,7 +80,11 @@ carousels.forEach(carousel => {
     element.append(createIconElement('bw-icon-arrow'))
   })
   leftArrow.classList.add('carousel-left', 'carousel-nav-hidden')
-  rightArrow.classList.add('carousel-right')
+  if (totalPages > 1){
+    rightArrow.classList.add('carousel-right')
+  } else {
+    rightArrow.classList.add('carousel-right', 'carousel-nav-hidden')
+  }
   carousel.append(leftArrow)
   carousel.append(rightArrow)
   rightArrow.addEventListener('click', () => {

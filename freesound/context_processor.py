@@ -25,6 +25,7 @@ from django.conf import settings
 from accounts.forms import BwFsAuthenticationForm, BwRegistrationForm, BwProblemsLoggingInForm
 from messages.models import Message
 from tickets.views import new_sound_tickets_count
+from utils.frontend_handling import using_beastwhoosh
 
 
 def context_extra(request):
@@ -38,7 +39,8 @@ def context_extra(request):
     if request.user.is_authenticated:
         if request.user.has_perm('tickets.can_moderate'):
             new_tickets_count = new_sound_tickets_count()
-        num_pending_sounds = request.user.profile.num_sounds_pending_moderation()
+        if using_beastwhoosh(request):
+            num_pending_sounds = request.user.profile.num_sounds_pending_moderation()
         num_messages = Message.objects.filter(user_to=request.user, is_archived=False, is_sent=False, is_read=False).count()
 
     # Determine if anniversary special css and js content should be loaded

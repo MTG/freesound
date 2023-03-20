@@ -521,17 +521,6 @@ def edit(request):
         profile_form = profile_form_class(request, request.POST, instance=profile, prefix="profile")
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
-            # Update spectrogram/waveform and compact mode preference in user session
-            # TODO: these should be stored as new fields in the profile instead of in the session
-            if 'prefer_spectrogram' in profile_form.cleaned_data:
-                request.session['preferSpectrogram'] = profile_form.cleaned_data['prefer_spectrogram']
-            if 'prefer_compact_mode' in profile_form.cleaned_data:
-                request.session['preferCompactMode'] = profile_form.cleaned_data['prefer_compact_mode']
-            if 'ui_theme_preference' in profile_form.fields:
-                request.session['uiThemePreference'] = profile_form.cleaned_data['ui_theme_preference']
-            if 'disallow_simultaneous_playback' in profile_form.fields:
-                request.session['disallowSimultaneousAudioPlayback'] = profile_form.cleaned_data['disallow_simultaneous_playback']
-
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
             request.user.save()
@@ -548,15 +537,6 @@ def edit(request):
                 return HttpResponseRedirect(reverse("accounts-edit"))
     else:
         profile_form = profile_form_class(request, instance=profile, prefix="profile")
-        # TODO: once prefer_spectrogram is saved as a profile field, this won't be needed
-        if 'prefer_spectrogram' in profile_form.fields:  # That field only exists in BW
-            profile_form.fields['prefer_spectrogram'].initial = request.session.get('preferSpectrogram')
-        if 'prefer_compact_mode' in profile_form.fields:  # That field only exists in BW
-            profile_form.fields['prefer_compact_mode'].initial = request.session.get('preferCompactMode')
-        if 'ui_theme_preference' in profile_form.fields:  # That field only exists in BW
-            profile_form.fields['ui_theme_preference'].initial = request.session.get('uiThemePreference')
-        if 'disallow_simultaneous_playback' in profile_form.fields: # That field only exists in BW
-            profile_form.fields['disallow_simultaneous_playback'].initial = request.session.get('disallowSimultaneousAudioPlayback')
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")
@@ -578,9 +558,12 @@ def edit(request):
         image_form = AvatarForm(prefix="image")
 
     has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
-    has_old_avatar = not os.path.exists(profile.locations('avatar.XL.path')) \
-                     or os.path.getsize(profile.locations('avatar.XL.path')) == \
-                     os.path.getsize(profile.locations('avatar.L.path'))
+    has_old_avatar = False
+    if not os.path.exists(profile.locations('avatar.XL.path')) and os.path.exists(profile.locations('avatar.L.path')):
+        has_old_avatar = True
+    if os.path.exists(profile.locations('avatar.XL.path')) and os.path.exists(profile.locations('avatar.L.path')):
+        if os.path.getsize(profile.locations('avatar.XL.path')) == os.path.getsize(profile.locations('avatar.L.path')):
+            has_old_avatar = True
 
     tvars = {
         'user': request.user,
@@ -1370,11 +1353,11 @@ def charts(request):
 @redirect_if_old_username_or_404
 def account(request, username):
     user = request.parameter_user
-
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
-    latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
-                               .order_by("-last_updated")[0:10 if not using_beastwhoosh(request) else 15]
+    latest_pack_ids = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
+                        .order_by("-last_updated").values_list('id', flat=True)[0:10 if not using_beastwhoosh(request) else 15]
+    latest_packs = Pack.objects.ordered_ids(pack_ids=latest_pack_ids)
     following = follow_utils.get_users_following_qs(user)
     followers = follow_utils.get_users_followers_qs(user)
     following_tags = follow_utils.get_tags_following_qs(user)

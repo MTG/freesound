@@ -47,7 +47,7 @@
         {% else %}
             <div class="v-spacing-top-2">
             {% for user, sound_objs, more_url_params, more_count, new_count in users_sounds %}
-                <h5 class="text-grey v-spacing-top-3">From user "{{ user.0.username }}"</h5>
+                <h5 class="text-grey v-spacing-top-3 v-spacing-2">From user "{{ user.0.username }}"</h5>
                 <a id="{{ user.0 }}" ></a>
                 <div>    
                 {% for sound_chunk_objs in sound_objs|chunks:4 %}
@@ -62,7 +62,7 @@
                 </div>
                 {% if more_count > 0 %}
                 <div class="center v-spacing-4">
-                    <a class="btn-inverse" href="{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}">See {{ more_count }} more sounds</a>
+                    <a class="btn-inverse no-hover" href="{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}">See {{ more_count }} more sounds</a>
                 </div>
                 {% endif %}
             {% endfor %}
@@ -80,7 +80,7 @@
         {% else %}
             <div class="v-spacing-top-2">
             {% for tags, sound_objs, more_url_params, more_count, new_count in tags_sounds %}
-                <h5 class="text-grey v-spacing-top-3">From tag{{ tags|pluralize }} "{{ tags|join:", " }}"</h5>
+                <h5 class="text-grey v-spacing-top-3 v-spacing-2">From tag{{ tags|pluralize }} "{{ tags|join:", " }}"</h5>
                 <a id="{{ tags|join:"/" }}"></a>
                 <div>
                 {% for sound_chunk_objs in sound_objs|chunks:4 %}
@@ -94,7 +94,7 @@
                 {% endfor %}
                 {% if more_count > 0 %}
                 <div class="center v-spacing-4">
-                    <a class="btn-inverse" href="{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}">See {{ more_count }} more sounds</a>
+                    <a class="btn-inverse no-hover" href="{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}">See {{ more_count }} more sounds</a>
                 </div>
                 {% endif %}
                 </div>

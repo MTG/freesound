@@ -1,3 +1,4 @@
+import './select';
 import './player';
 import './afterDownloadModal';
 import './bookmarkSound';
@@ -18,7 +19,6 @@ import './navbar';
 import './propagation';
 import './radio';
 import './rating';
-import './select';
 import './similarSoundsModal';
 import './toast';
 import './typeahead';

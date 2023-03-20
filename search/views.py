@@ -113,6 +113,11 @@ def search_view_helper(request, tags_mode=False):
     only_sounds_with_pack_in_request = request.GET.get("only_p", "0") == "1"
     disable_group_by_pack_option = 'pack:' in query_params['query_filter'] or only_sounds_with_pack_in_request
     disable_only_sounds_by_pack_option= 'pack:' in query_params['query_filter']
+    only_sounds_with_pack = "1" if query_params['only_sounds_with_pack'] else ""
+    if only_sounds_with_pack:
+        # If displaying seachr results as packs, include 3 sounds per pack group in the results so we can display these sounds as selected sounds in the
+        # display_pack templatetag
+        query_params['num_sounds_per_pack_group'] = 3
 
     tvars = {
         'error_text': None,
@@ -121,7 +126,7 @@ def search_view_helper(request, tags_mode=False):
         'search_query': query_params['textual_query'],
         'group_by_pack_in_request': "1" if group_by_pack_in_request else "", 
         'disable_group_by_pack_option': disable_group_by_pack_option,
-        'only_sounds_with_pack': "1" if query_params['only_sounds_with_pack'] else "",
+        'only_sounds_with_pack': only_sounds_with_pack,
         'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
         'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
         'advanced': extra_vars['advanced'],
@@ -142,18 +147,37 @@ def search_view_helper(request, tags_mode=False):
 
     try:       
         results, paginator = perform_search_engine_query(query_params)
-        resultids = [d.get("id") for d in results.docs]
-        resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
-        allsounds = {}
-        for s in resultsounds:
-            allsounds[s.id] = s
-        # allsounds will contain info from all the sounds returned by bulk_query_id. This should
-        # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
-        # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
-        # in docs that have not been loaded in allsounds.
-        docs = [doc for doc in results.docs if doc["id"] in allsounds]
-        for d in docs:
-            d["sound"] = allsounds[d["id"]]
+        if not only_sounds_with_pack:
+            resultids = [d.get("id") for d in results.docs]
+            resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
+            allsounds = {}
+            for s in resultsounds:
+                allsounds[s.id] = s
+            # allsounds will contain info from all the sounds returned by bulk_query_id. This should
+            # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
+            # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
+            # in docs that have not been loaded in allsounds.
+            docs = [doc for doc in results.docs if doc["id"] in allsounds]
+            for d in docs:
+                d["sound"] = allsounds[d["id"]]
+        else:
+            resultspackids = []
+            sound_ids_for_pack_id = {}
+            for d in results.docs:
+                pack_id = int(d.get("group_name").split('_')[0])
+                resultspackids.append(pack_id)
+                sound_ids_for_pack_id[pack_id] = [int(sound['id']) for sound in d.get('group_docs', [])]
+            resultpacks = sounds.models.Pack.objects.bulk_query_id(resultspackids, sound_ids_for_pack_id=sound_ids_for_pack_id)
+            allpacks = {}
+            for p in resultpacks:
+                allpacks[p.id] = p
+            # allpacks will contain info from all the packs returned by bulk_query_id. This should
+            # be all packs in docs, but if solr and db are not synchronised, it might happen that there
+            # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
+            # in docs that have not been loaded in allsounds.
+            docs = [d for d in results.docs if int(d.get("group_name").split('_')[0]) in allpacks]
+            for d in docs:
+                d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
 
         search_logger.info('Search (%s)' % json.dumps({
             'ip': get_client_ip(request),

@@ -164,7 +164,7 @@ def search_prepare_parameters(request):
 
     filter_query_non_facets, has_facet_filter = remove_facet_filters(parsed_filters)
 
-    compact_mode = request.session.get('preferCompactMode', False)
+    compact_mode = request.user.is_authenticated and request.user.profile.use_compact_mode
     query_params = {
         'textual_query': search_query,
         'query_filter': filter_query,

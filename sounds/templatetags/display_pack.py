@@ -44,35 +44,28 @@ def display_pack(context, pack, size='small'):
         dict: dictionary with the variables needed for rendering the pack with the display_pack.html template
 
     """
-    if isinstance(pack, Pack):
-        pack_obj = [pack]
-    else:
+    if not isinstance(pack, Pack):
         try:
             # use filter here instead of get because we don't want the query to be evaluated before rendering the
             # template as this would bypass the html cache in the template
-            pack_obj = Pack.objects.select_related('user').filter(id=int(pack))
+            pack = Pack.objects.bulk_query_id([int(pack)])[0]
         except ValueError:
-            # Invalid ID, we set pack_obj to empty list so "if pack" check in template returns False
-            pack_obj = []
+            pack = None
         except Pack.DoesNotExist:
-            # Pack does not exist, we set pack_obj to empty list so "if pack" check in template returns False
-            pack_obj = []
+            pack = None
 
     request = context.get('request')
-    if using_beastwhoosh(request):
-        try:
-            user_profile_locations = pack_obj[0].user.profile.locations()
-        except IndexError:
-            user_profile_locations = None
-    else:
-        user_profile_locations = None
 
     # Add 'request' to the returned context dictionary below so when the display_sound templatetag is called inside
     # display_pack templatetag it is given request in the context as well.
+    if not using_beastwhoosh(request):
+        # In old UI we pass pack as a list so queries are not evaluated before cache
+        # In BW there is no cache on display pack and we simply pass the object
+        if pack is not None:
+            pack = [pack]
     return {
-        'pack': pack_obj,
+        'pack': pack,
         'size': size,
-        'user_profile_locations': user_profile_locations,
         'media_url': context['media_url'],
         'request': request
     }

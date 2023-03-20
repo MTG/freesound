@@ -367,4 +367,7 @@ advanced_search_options_div.getElementsByTagName("input").forEach(inputElement =
   inputElement.addEventListener('change', evt => {
     onAdvancedSearchOptionsInputsChange();
   });
+  inputElement.addEventListener('input', evt => {
+    onAdvancedSearchOptionsInputsChange();
+  });
 });

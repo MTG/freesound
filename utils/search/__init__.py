@@ -216,8 +216,8 @@ class SearchEngineBase:
 
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
                       num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
-                      group_by_pack=False, facets=None, only_sounds_with_pack=False, only_sounds_within_ids=False,
-                      group_counts_as_one_in_facets=False):
+                      group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
+                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
         """Search for sounds that match specific criteria and return them in a SearchResults object
 
         Args:
@@ -234,8 +234,9 @@ class SearchEngineBase:
             num_sounds (int, optional): number of sounds to return
             sort (str, optional): sorting criteria. should be one of settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB
             group_by_pack (bool, optional): whether the search results should be grouped by sound pack. When grouped
-                by pack, only 1 sound per pack will be returned, together with additional information about the number
-                of other sounds in the pack that would be i the same group.
+                by pack, only "num_sounds_per_pack_group" sounds per pack will be returned, together with additional 
+                information about the number of other sounds in the pack that would be i the same group.
+            num_sounds_per_pack_group (int, optional): number of sounds to return per pack group
             facets (Dict{str: Dict}, optional): information about facets to be returned. Can be None if no faceting
                 information is required. Facets should be specified as a dictionary with the "db" field names to be
                 included in the faceting as keys, and a dictionary as values with optional specific parameters for

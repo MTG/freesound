@@ -277,7 +277,7 @@
                         {% endif %}
                         <div class="v-spacing-6">
                             {% if paginator.count > 0 %}
-                                {% if request.session.preferCompactMode %}
+                                {% if request.user.profile.use_compact_mode %}
                                     <div class="row no-margins">
                                         {% for result in docs %}
                                             <div class="col-6 col-lg-4">

@@ -129,7 +129,17 @@ class Profile(SocialModel):
     # "is_anonymized_user" used to be called "is_deleted_user"
     is_anonymized_user = models.BooleanField(db_index=True, default=False)
 
+    # The following are user preferences that relate to how interface is displayed
     is_adult = models.BooleanField(default=False)
+    allow_simultaneous_playback = models.BooleanField(default=True)
+    prefer_spectrograms = models.BooleanField(default=False)
+    use_compact_mode = models.BooleanField(default=False)
+    UI_THEME_CHOICES = (
+        ('f', 'Follow system default'),
+        ('l', 'Light'),
+        ('d', 'Dark'),
+    )
+    ui_theme_preference = models.CharField(max_length=1, choices=UI_THEME_CHOICES, default='f')
 
     objects = ProfileManager()
 
@@ -566,7 +576,6 @@ class Profile(SocialModel):
     @property
     def avg_rating(self):
         # Returns the average raring from 0 to 10
-        # TODO: don't compute this realtime, store it in DB
         ratings = list(SoundRating.objects.filter(sound__user=self.user).values_list('rating', flat=True))
         if ratings:
             return old_div(1.0*sum(ratings),len(ratings))
@@ -579,7 +588,6 @@ class Profile(SocialModel):
         return old_div(self.avg_rating,2)
 
     def get_total_uploaded_sounds_length(self):
-        # TODO: don't compute this realtime, store it in DB
         # NOTE: this only includes duration of sounds that have been processed and moderated
         durations = list(Sound.public.filter(user=self.user).values_list('duration', flat=True))
         return sum(durations)
@@ -587,7 +595,6 @@ class Profile(SocialModel):
     @property
     def num_packs(self):
         # Return the number of packs for which at least one sound has been published
-        # TODO: store this as an account field instead of computing it live
         return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by('pack_id').distinct('pack').count()
 
     class Meta(SocialModel.Meta):

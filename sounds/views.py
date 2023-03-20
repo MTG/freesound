@@ -1234,7 +1234,10 @@ def old_pack_link_redirect(request):
 
 @redirect_if_old_username_or_404
 def display_sound_wrapper(request, username, sound_id):
-    sound_obj = get_object_or_404(Sound, id=sound_id)
+    try:
+        sound_obj = Sound.objects.bulk_query_id(sound_id)[0]
+    except IndexError:
+        raise Http404
     if sound_obj.user.username.lower() != username.lower():
         raise Http404
 
@@ -1247,9 +1250,6 @@ def display_sound_wrapper(request, username, sound_id):
     tvars = {
         'sound_id': sound_id,
         'sound': sound_obj,
-        'sound_tags': sound_obj.get_sound_tags(12),
-        'sound_user': sound_obj.user.username,
-        'license_name': sound_obj.license.name,
         'media_url': settings.MEDIA_URL,
         'request': request,
         'is_explicit': is_explicit,

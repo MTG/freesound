@@ -189,7 +189,7 @@ class PackManagerQueryMethods(TestCase):
     def test_ordered_ids(self):
 
         # Test that ordered_ids returns a sorted list of Pack objects with the requested IDs, including duplicates
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(2):
             pack_ids_with_duplicates = self.pack_ids + self.pack_ids
             for i, pack in enumerate(Pack.objects.ordered_ids(pack_ids=pack_ids_with_duplicates)):
                 self.assertEqual(type(pack), Pack)

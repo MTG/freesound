@@ -84,7 +84,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None):
 
         """
         return hasattr(sound, 'tag_array')
-
+    
     if isinstance(sound, Sound):
         if sound_object_retrieved_using_bulk_query_id(sound):
             sound_obj = sound

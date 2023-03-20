@@ -1479,6 +1479,8 @@ class PackManager(models.Manager):
         Note that this method does not return the results sorted as in pack_ids, to do that you should use
         the ordered_ids method below.
         """
+        if not isinstance(pack_ids, list):
+            pack_ids = [pack_ids]
         packs = Pack.objects.prefetch_related(
             Prefetch('sounds', queryset=Sound.public.order_by('-created')),
             Prefetch('sounds__tags__tag'),

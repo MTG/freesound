@@ -213,14 +213,13 @@ def front_page(request):
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
         try:
-            random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+            random_sound = lambda: Sound.objects.bulk_query_id([random_sound_id])[0]
         except IndexError:
             # Clear existing cache for random sound of the day as it contains invalid sound id
             cache.delete(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY)
             random_sound = None
     else:
         random_sound = None
-
     tvars = {
         'rss_cache': rss_cache,
         'popular_searches': popular_searches,
@@ -1042,10 +1041,11 @@ def similar(request, username, sound_id):
 @transaction.atomic()
 def pack(request, username, pack_id):
     try:
-        pack = Pack.objects.select_related().get(id=pack_id)
+        #pack = Pack.objects.select_related().get(id=pack_id)
+        pack = Pack.objects.bulk_query_id(pack_id)[0]
         if pack.user.username.lower() != username.lower():
             raise Http404
-    except Pack.DoesNotExist:
+    except (Pack.DoesNotExist, IndexError) as e:
         raise Http404
 
     if pack.is_deleted:

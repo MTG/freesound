@@ -150,8 +150,8 @@
                     <hr />
                 {% endif %}
 
-                {% if random_sound %}
-                    {% cache 300 bw_front_page_random_sound %}
+                {% cache 300 bw_front_page_random_sound %}
+                {% if random_sound %}                    
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-4">Guess the random sound of the day</h3>
                         {% with random_sound as sound %}
@@ -231,8 +231,8 @@
                             </div>
                         {% endwith %}
                     </section>
-                    {% endcache %}
                 {% endif %}
+                {% endcache %}
             </main>
             <aside class="col-lg-3">
                 <div class="v-spacing-4 d-lg-none">

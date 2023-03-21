@@ -94,25 +94,25 @@
                     {% if sound.pack_id %}
                     <div class="h-spacing-left-2" title="Pack: {{ sound.pack_name }}">
                         <a href="{% url 'pack' sound.username sound.pack_id %}" class="bw-link--grey-light">
-                            <span class="bw-icon-stack"></span><span class="h-spacing-left-1">{{ sound.pack_name|truncatechars:20 }}</span>
+                            <span class="bw-icon-stack"></span> {{ sound.pack_name|truncatechars:20 }}
                         </a>
                     </div>
                     {% endif %}
                     {% if sound.geotag_id %}
                     <div class="h-spacing-left-2" title="Geotag: {{ sound.get_geotag_name }}">
                         <a href="{% url 'sound-geotag' sound.username sound.id %}" class="bw-link--grey-light">
-                            <span class="bw-icon-pin"></span><span class="h-spacing-left-1">{{ sound.get_geotag_name|truncatechars:20 }}</span>
+                            <span class="bw-icon-pin"></span> {{ sound.get_geotag_name|truncatechars:20 }}
                         </a>
                     </div>
                     {% endif %}
                     <div class="h-spacing-left-2" title="{{ sound.num_downloads }} downloads">
-                        <a href="" class="bw-link--grey-light">
-                            <span class="bw-icon-download"></span><span class="h-spacing-left-1">{{ sound.num_downloads }}</span>
+                        <a href="{% url 'sound-downloaders' sound.username sound.id %}" class="bw-link--grey-light">
+                            <span class="bw-icon-download"></span> {{ sound.num_downloads }}
                         </a>
                     </div>
                     <div class="h-spacing-left-2" title="{{ sound.num_comments }} comments">
                         <a href="{% url 'sound' sound.username sound.id %}#comments" class="bw-link--grey-light">
-                            <span class="bw-icon-comments"></span><span class="h-spacing-left-1">{{ sound.num_comments }}</span>
+                            <span class="bw-icon-comments"></span> {{ sound.num_comments }}
                         </a>
                     </div>
                     <div class="h-spacing-left-2" title="License: {{ sound.license_name }}">

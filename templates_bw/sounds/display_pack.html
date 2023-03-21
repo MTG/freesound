@@ -72,17 +72,17 @@
             <div class="text-light-grey right">
                 <div title="{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}">
                     <a href="{% url 'sounds-search' %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1" class="bw-link--grey-light">
-                        <span class="bw-icon-wave"></span><span class="h-spacing-left-1">{{ pack.num_sounds }}</span>
+                        <span class="bw-icon-wave"></span> {{ pack.num_sounds }}
                     </a>
                 </div>
                 <div class="h-spacing-left-2" title="{{ pack.num_downloads }} download{{ pack.num_downloads|pluralize }}">
-                    <a href="" class="bw-link--grey-light">
-                        <span class="bw-icon-download"></span><span class="h-spacing-left-1">{{ pack.num_downloads }}</span>
+                    <a href="{% url 'pack-downloaders' pack.user.username pack.id %}" class="bw-link--grey-light">
+                        <span class="bw-icon-download"></span> {{ pack.num_downloads }}
                     </a>
                 </div>
                 <div class="h-spacing-left-2" title="License: {{ pack.license_summary_name_and_id.0 }}">
                     <span class="bw-icon-{{ pack.license_bw_icon_name }}"></span>
-                    <span class="h-spacing-left-1 d-none d-lg-inline">{{ pack.license_summary_name_and_id.0 }}</span>
+                    <span class="d-none d-lg-inline"> {{ pack.license_summary_name_and_id.0 }}</span>
                 </div>
             </div>
         </div>

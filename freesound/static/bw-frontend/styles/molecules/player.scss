@@ -176,10 +176,18 @@
   }
 }
 
-.bw-player__favorite {
+.bw-player__top_controls {
   position: absolute;
   top: 0;
   right: -7px;
+}
+
+.bw-player__favorite {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.bw-player__similar {
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -194,6 +202,9 @@
   &:hover {
     .bw-player__controls,
     .bw-player__favorite {
+      opacity: 0.85;
+    }
+    .bw-player__similar {
       opacity: 0.85;
     }
     .bw-player__progress {

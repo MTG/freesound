@@ -48,61 +48,34 @@
         {% endif %}
         <div class="{% if is_explicit %}blur{% endif %}">
             <div class="row no-gutters no-wrap">
-                <div class="col-3">
+                <div class="col-4 col-sm-3">
                     {% include "sounds/player.html" %}
                 </div>
                 {% cache 43200 bw_display_sound sound.id player_size %}
-                <div class="padding-left-3 w-75">
-                    <div class="between">
-                        <div>
-                            <h5 class="v-spacing-1"><a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}" title="{{ sound.original_filename }}">{{ sound.original_filename|truncate_string:45 }}</a></h5>
-                            <div class="middle">{% bw_sound_stars sound %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
+                <div class="col-8 col-sm-9">
+                    <div class="padding-left-3">
+                        <div class="between">
+                            <div>
+                                <h5 class="v-spacing-1"><a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}" title="{{ sound.original_filename }}">{{ sound.original_filename|truncate_string:45 }}</a></h5>
+                            </div>
+                            <div class="text-grey text-right between">
+                                <div style="min-width:130px;" class="top right">{% bw_sound_stars sound %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}({{ sound.num_ratings }}){% endif %}</span></div>
+                            </div>
                         </div>
-                        <div class="text-grey text-right">
-                            {% if sound.similarity_state == 'OK' %}
-                                <button title="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-content-url="{% url 'sound-similar' sound.username sound.id %}?ajax=1">
-                                    {% bw_icon 'similar' %}
-                                </button>
-                            {% endif %}
-                            <button title="Save as favorite" class="btn-neutral h-spacing-left-2" data-toggle="bookmark-modal" data-modal-url="{% url 'bookmarks-add-form-for-sound' sound.id %}" data-add-bookmark-url="{% url 'add-bookmark' sound.id %}">
-                                {% bw_icon 'bookmark' %}
-                            </button>
+                        <div class="max-h-85px-md-75px text-black overflow-hidden v-spacing-1">{{ sound.description|striptags|safe|truncatewords_html:35 }}</div>
+                        {% for tag in sound.tag_array|slice:":5" %}
+                            {% bw_tag tag %}
+                        {% endfor %}
+                        {% if sound.moderation_state != 'OK' or sound.processing_state != 'OK' %}
+                        <div class="right">
+                            <div class="h-spacing-2">{% include 'sounds/sound_state_processing_indicator.html' %}</div>
+                            {% include 'sounds/sound_state_moderation_indicator.html' %}
                         </div>
+                        {% endif %}
                     </div>
-
-                    <p class="text-black overflow-hidden">{{ sound.description|striptags|safe|truncatewords_html:20 }}</p>
-                    {% for tag in sound.tag_array|slice:":5" %}
-                        {% bw_tag tag %}
-                    {% endfor %}
-
-                    {% if sound.moderation_state != 'OK' or sound.processing_state != 'OK' %}
-                        <p class="text-red">
-                        Processing state:
-                        {% if sound.processing_state == 'PE' %}
-                            Pending
-                        {% elif sound.processing_state == 'QU' %}
-                            Queued
-                        {% elif sound.processing_state == 'FA' %}
-                            Failed
-                        {% elif sound.processing_state == 'PR' %}
-                            Processing
-                        {% else %}
-                            {{sound.processing_state}}
-                        {% endif %}
-                         <br>
-                        Moderation state:
-                        {% if sound.moderation_state == 'PE' %}
-                            Pending
-                        {% elif sound.moderation_state == 'DE' %}
-                            Deferred
-                        {% else %}
-                            {{sound.moderation_state}}
-                        {% endif %}
-                        </p>
-                    {% endif %}
                 </div>
             </div>
-            <div class="between v-spacing-top-2 v-spacing-3">
+            <div class="between v-spacing-top-1 v-spacing-2">
                 <div class="middle text-grey h-spacing-1">
                     <div class="row no-gutters">
                         <div class="col-12 col-lg-12 middle">
@@ -118,18 +91,33 @@
                     </div>
                 </div>
                 <div class="middle text-light-grey bw_sound-info-extended right">
-                    {% if sound.geotag_id %}
-                    <div><span class="bw-icon-pin"></span>
-                        <span class="h-spacing-left-1" title="{{ sound.get_geotag_name }}">{{ sound.get_geotag_name|truncatechars:20 }}</span></div>
-                        {% comment %}In the span above we should put the textual name of the place where the sound was recorded
-                        (if there is geotag). For now we'll put cooedinates{% endcomment %}
+                    {% if sound.pack_id %}
+                    <div class="h-spacing-left-2" title="Pack: {{ sound.pack_name }}">
+                        <a href="{% url 'pack' sound.username sound.pack_id %}" class="bw-link--grey-light">
+                            <span class="bw-icon-stack"></span> {{ sound.pack_name|truncatechars:20 }}
+                        </a>
+                    </div>
                     {% endif %}
-                    <div class="h-spacing-left-3"><span class="bw-icon-download"></span>
-                        <span class="h-spacing-left-1">{{ sound.num_downloads }}</span></div>
-                    <div class="h-spacing-left-3"><span class="bw-icon-comments"></span>
-                        <span class="h-spacing-left-1">{{ sound.num_comments }}</span></div>
-                    <div class="h-spacing-left-3"><span class="bw-icon-{{ sound.license_bw_icon_name }}"></span>
-                        <span class="h-spacing-left-1">{{ sound.license_name }}</span></div>
+                    {% if sound.geotag_id %}
+                    <div class="h-spacing-left-2" title="Geotag: {{ sound.get_geotag_name }}">
+                        <a href="{% url 'sound-geotag' sound.username sound.id %}" class="bw-link--grey-light">
+                            <span class="bw-icon-pin"></span> {{ sound.get_geotag_name|truncatechars:20 }}
+                        </a>
+                    </div>
+                    {% endif %}
+                    <div class="h-spacing-left-2" title="{{ sound.num_downloads }} downloads">
+                        <a href="{% url 'sound-downloaders' sound.username sound.id %}" class="bw-link--grey-light">
+                            <span class="bw-icon-download"></span> {{ sound.num_downloads }}
+                        </a>
+                    </div>
+                    <div class="h-spacing-left-2" title="{{ sound.num_comments }} comments">
+                        <a href="{% url 'sound' sound.username sound.id %}#comments" class="bw-link--grey-light">
+                            <span class="bw-icon-comments"></span> {{ sound.num_comments }}
+                        </a>
+                    </div>
+                    <div class="h-spacing-left-2" title="License: {{ sound.license_name }}">
+                        <span class="bw-icon-{{ sound.license_bw_icon_name }}"></span>
+                    </div>
                 </div>
             </div>
         </div>

@@ -86,7 +86,7 @@ const bindBookmarkSoundButtons = () => {
             if (!evt.altKey) {
                 handleGenericModal(element.dataset.modalUrl, () => {
                     initBookmarkFormModal(soundId, element.dataset.addBookmarkUrl);
-                }, () => {}, true, false);
+                }, () => {}, true, true);
             } else {
                 saveBookmark(element.dataset.addBookmarkUrl);
             }

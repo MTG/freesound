@@ -10,16 +10,16 @@
             </a>
             <ul class="dropdown-menu" aria-labelledby="avatar-menu">
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--black" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
+                    <a class="bw-link--black" href="{% url 'account' request.user.username %}">Your profile</a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--black" href="{% url 'accounts-attribution' %}">Attribution</a>
+                    <a class="bw-link--black" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'bookmarks' %}">Bookmarks</a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--black" href="{% url 'stream' %}">Activity stream</a>
+                    <a class="bw-link--black" href="{% url 'accounts-attribution' %}">Attribution</a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'messages' %}">Messages
@@ -27,18 +27,18 @@
                     </a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--black" href="{% url 'account' request.user.username %}">View your profile</a>
+                    <a class="bw-link--grey" href="{% url 'accounts-edit' %}">Account settings</a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--red" href="{% url 'accounts-edit' %}">Account settings</a>
+                    <a class="bw-link--grey" href="{{ next_path }}?&fend=ng">Switch to old UI</a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--grey" href="{% url 'logout' %}?next=/?fend=bw">Logout</a>
+                    <a class="bw-link--red" href="{% url 'logout' %}?next=/?fend=bw">Logout</a>
                 </li>
             </ul>
         </li>
         <li class="bw-nav__action d-none d-lg-flex">
-            <a class="btn-secondary" href="{% url 'donate' %}">Donate</a>
+            <a class="btn-secondary no-hover" href="{% url 'donate' %}">Donate</a>
         </li>
         <li class="bw-nav__action d-none d-lg-flex">
             <a class="btn-primary no-hover" href="{% url 'accounts-upload' %}">Upload sound</a>

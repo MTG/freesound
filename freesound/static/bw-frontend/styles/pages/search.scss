@@ -42,7 +42,7 @@
   margin-left: $small-spacing;
   margin-right: $small-spacing;
 
-  padding-top: $small-spacing;
+  padding-top: $tiny-spacing;
   padding-bottom: $small-spacing;
 
   .bw-search__filter-section-name > span {
@@ -64,8 +64,8 @@
 }
 
 .bw-search__result {
-  padding-top: $smedium-spacing;
-  padding-bottom: $smedium-spacing;
+  padding-top: $tiny-spacing;
+  padding-bottom: $tiny-spacing;
 }
 
 .bw-search__active-filters-button {

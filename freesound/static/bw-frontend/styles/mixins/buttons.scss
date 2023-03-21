@@ -26,6 +26,19 @@
   }
 }
 
+@mixin underline-on-hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  text-decoration-color: transparent;
+  text-decoration-skip-ink: none;
+
+  @include active() {
+    text-decoration-color: currentColor;
+    transition: 0.2s ease;
+  }
+}
+
 @mixin rounded-button($color, $hover-color, $font-color) {
   padding-top: 14px;
   padding-right: 30px;

@@ -20,6 +20,14 @@
   }
 }
 
+.max-h-85px-md-75px {
+  max-height: 85px;
+
+  @include md-and-above {
+    max-height: 75px;
+  }
+}
+
 .overflow-hidden {
   overflow: hidden;
 }

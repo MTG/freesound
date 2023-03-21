@@ -344,8 +344,9 @@ class SoundManager(models.Manager):
                     sounds_sound
                 where
                     processing_state = 'OK' and
-                    moderation_state = 'OK'
-                    and greatest(created, moderation_date) > %s
+                    moderation_state = 'OK' and
+                    is_explicit is false and
+                    greatest(created, moderation_date) > %s
                 group by
                     user_id
                 ) as X order by created desc limit %s"""
@@ -1283,10 +1284,9 @@ class Sound(SocialModel):
             if name:
                 return name
         if hasattr(self, 'geotag_lat'):
-            return f'{self.geotag_lat:.3f}, {self.geotag_lon:.3f}'
+            return f'{self.geotag_lat:.2f}, {self.geotag_lon:.3f}'
         else:
-            return f'{self.geotag.lat:.3f}, {self.geotag.lon:.3f}'
-
+            return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
@@ -1507,11 +1507,13 @@ class PackManager(models.Manager):
                 if should_add_sound_to_selected_sounds:
                     selected_sounds_data.append({
                             'id': s.id,
+                            'username': p.user.username,  # Packs have same username as sounds inside pack
+                            'similarity_state': s.similarity_state,
                             'duration': s.duration,
                             'preview_mp3': s.locations('preview.LQ.mp3.url'),
                             'preview_ogg': s.locations('preview.LQ.ogg.url'),
                             'wave': s.locations('display.wave_bw.L.url'),
-                            'spectral': s.locations('display.spectral_bw.L.url')
+                            'spectral': s.locations('display.spectral_bw.L.url'),
                         })
             p.num_sounds_unpublished_precomputed = p.sounds.count() - p.num_sounds
             p.licenses_data_precomputed = ([lid for _, lid in licenses], [lname for lname, _ in licenses])

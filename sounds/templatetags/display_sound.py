@@ -29,7 +29,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound(context, sound, player_size='small', show_bookmark=None):
+def display_sound(context, sound, player_size='small', show_bookmark=None, show_similar_sounds=None):
     """This templatetag is used to display a sound with its player. It prepares some variables that are then passed
     to the display_sound.html template to show sound information together with the player.
 
@@ -42,6 +42,8 @@ def display_sound(context, sound, player_size='small', show_bookmark=None):
           See functions below and template file for available sizes. Information about the contents of each
           size is given in the display_sound.html template code.
         show_bookmark (bool, optional): whether or not to show the bookmark button (BW frontend only). If set to None
+          it will be decided based on player size and other properties.
+        show_similar_sounds (bool, optional): whether or not to show the similar sounds button (BW frontend only). If set to None
           it will be decided based on player size and other properties.
 
     Returns:
@@ -118,6 +120,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None):
                            (not request.user.is_authenticated or not request.user.profile.is_adult),
             'is_authenticated': request.user.is_authenticated,
             'show_bookmark_button': show_bookmark if show_bookmark is not None else (player_size == 'small' or player_size == 'small_no_info'),  # Only BW
+            'show_similar_sounds_button': show_similar_sounds if show_similar_sounds is not None else (player_size == 'small' or player_size == 'small_no_info'),  # Only BW
             'request_user_is_author': request.user.is_authenticated and sound_obj.user_id == request.user.id,
             'player_size': player_size,
             'show_milliseconds': 'true' if (player_size == 'big_no_info' or sound_obj.duration < 10) else 'false',  # Only BW
@@ -131,11 +134,11 @@ def display_sound_small(context, sound):
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_bookmark(context, sound):
-    return display_sound(context, sound, player_size='small', show_bookmark=False)
+    return display_sound(context, sound, player_size='small', show_bookmark=False, show_similar_sounds=False)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_middle(context, sound):
-    return display_sound(context, sound, player_size='middle')
+    return display_sound(context, sound, player_size='middle', show_bookmark=True, show_similar_sounds=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_big_no_info(context, sound):
@@ -143,7 +146,7 @@ def display_sound_big_no_info(context, sound):
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_big_no_info_no_bookmark(context, sound):
-    return display_sound(context, sound, player_size='big_no_info', show_bookmark=False)
+    return display_sound(context, sound, player_size='big_no_info', show_bookmark=False, show_similar_sounds=False)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_info(context, sound):
@@ -171,12 +174,17 @@ def display_sound_no_sound_object(context, file_data, player_size):
         'preview_mp3': sound.locations('preview.LQ.mp3.url'),
         'preview_ogg': sound.locations('preview.LQ.ogg.url'),
         'wave': sound.locations('display.wave_bw.L.url'),
-        'spectral': sound.locations('display.spectral_bw.L.url')
+        'spectral': sound.locations('display.spectral_bw.L.url'),
+        'id': sound.id,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity buttons
+        'username': sound.user.username,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity buttons
+        'similarity_state': sound.similarity_state  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity buttons
     }
     '''
     return {
         'sound': {
-            'id': file_data['preview_mp3'].split('/')[-2],  # Pass a unique fake ID to avoid caching problems
+            'id': file_data.get('id', file_data['preview_mp3'].split('/')[-2]),  # If no id, use a unique fake ID to avoid caching problems
+            'username': file_data.get('username', 'nousername'),
+            'similarity_state': file_data.get('similarity_state', 'FA'),
             'duration': file_data['duration'],
             'locations': {
                 'preview': {
@@ -198,7 +206,8 @@ def display_sound_no_sound_object(context, file_data, player_size):
             }
         },
         'show_milliseconds': 'true' if ('big' in player_size ) else 'false',
-        'show_bookmark_button': False,
+        'show_bookmark_button': 'id' in file_data,
+        'show_similar_sounds_button': 'similarity_state' in file_data,
         'player_size': player_size
     }
 

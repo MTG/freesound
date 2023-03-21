@@ -212,6 +212,7 @@ const createLoopButton = audioElement => {
 const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize) => {
   const controlsElement = playerImgNode.parentElement.querySelector('.bw-player__controls');
   const bookmarkElement = playerImgNode.parentElement.querySelector('.bw-player__favorite');
+  const similarSoundsElement = playerImgNode.parentElement.querySelector('.bw-player__similar');
   let spectrogramButton = undefined;
   try {
     spectrogramButton = controlsElement.querySelector('i.bw-icon-spectogram').parentElement;
@@ -226,6 +227,9 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
     if (bookmarkElement !== null){
       bookmarkElement.classList.add('bw-player__controls-inverted');
     }
+    if (similarSoundsElement !== null){
+      similarSoundsElement.classList.add('bw-player__controls-inverted');
+    }
   } else {
     playerImgNode.src = waveform
     if (spectrogramButton !== undefined){
@@ -234,6 +238,9 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
     controlsElement.classList.remove('bw-player__controls-inverted');
     if (bookmarkElement !== null){
       bookmarkElement.classList.remove('bw-player__controls-inverted');
+    }
+    if (similarSoundsElement !== null){
+      similarSoundsElement.classList.remove('bw-player__controls-inverted');
     }
   }
 }
@@ -420,11 +427,44 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
 }
 
 /**
+ *
+ * @param {HTMLDivElement} parentNode
+ * @param {HTMLImgElement} playerImgNode
+ */
+const createSimilarSoundsButton = (parentNode, playerImgNode) => {
+  const similarSoundsButtonContainer = document.createElement('div')
+  const similarSoundsButton = createControlButton('similar')
+  similarSoundsButton.setAttribute('title', 'Find similar sounds')
+  similarSoundsButtonContainer.classList.add(
+    'bw-player__similar',
+    'stop-propagation'
+  )
+  let startWithSpectrum = false;
+  if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
+    startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+  }
+  if (startWithSpectrum){
+    similarSoundsButtonContainer.classList.add('bw-player__controls-inverted')
+  }
+  if (isTouchEnabledDevice()){
+    // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
+    // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
+    //similarSoundsButtonContainer.classList.add('opacity-050')
+  }
+  similarSoundsButton.setAttribute('data-toggle', 'similar-sounds-modal');
+  similarSoundsButton.setAttribute('data-modal-content-url', parentNode.dataset.similarSoundsModalUrl);
+  similarSoundsButtonContainer.appendChild(similarSoundsButton)
+  return similarSoundsButtonContainer
+}
+
+
+/**
  * @param {HTMLDivElement} parentNode
  */
 const createPlayer = parentNode => {
   const playerSize = parentNode.dataset.size
   const showBookmarkButton = parentNode.dataset.bookmark === 'true'
+  const showSimilarSoundsButton = parentNode.dataset.similarSounds === 'true'
   const audioElement = createAudioElement(parentNode)
   const playerImage = createPlayerImage(
     parentNode,
@@ -433,14 +473,20 @@ const createPlayer = parentNode => {
   )
   const playerImgNode = playerImage.getElementsByTagName('img')[0]
   const controls = createPlayerControls(parentNode, playerImgNode, audioElement, playerSize)
-  const bookmarkButton = createSetFavoriteButton(parentNode, playerImgNode)
-
   parentNode.appendChild(playerImage)
   parentNode.appendChild(audioElement)
   playerImage.appendChild(controls)
-  if (showBookmarkButton){
-    playerImage.appendChild(bookmarkButton)
+  const topControls = document.createElement('div')
+  topControls.className = 'bw-player__top_controls right'
+  if (showSimilarSoundsButton){
+    const similarSoundsButton = createSimilarSoundsButton(parentNode, playerImgNode)
+    topControls.appendChild(similarSoundsButton)
   }
+  if (showBookmarkButton){
+    const bookmarkButton = createSetFavoriteButton(parentNode, playerImgNode)
+    topControls.appendChild(bookmarkButton)
+  }
+  playerImage.appendChild(topControls)
 }
 
 export {createPlayer};

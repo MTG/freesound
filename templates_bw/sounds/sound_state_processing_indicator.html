@@ -1,4 +1,4 @@
 {% load bw_templatetags %}
-<div class="{% if sound.processing_state == "FA" and sound.processing_ongoing_state != "PR" %}text-red{% elif sound.processing_ongoing_state == "PR" %}text-green{% else %}text-blue{% endif %}">
-    {% if sound.processing_state == "FA" and sound.processing_ongoing_state != "PR" %}{% bw_icon "notification" %}Failed processing{% else %}{% if sound.processing_ongoing_state == "PR" %}{% bw_icon "cogs" %} Currently processing{% else %}{% bw_icon "clock" %} In queue{% endif %}{% endif %}
+<div class="{% if sound.processing_state == "OK" %}text-green{% else %}{% if sound.processing_state == "FA" and sound.processing_ongoing_state != "PR" %}text-red{% elif sound.processing_ongoing_state == "PR" %}text-green{% else %}text-blue{% endif %}{% endif %}">
+    {% if sound.processing_state == "OK" %}{% bw_icon "check" %}Processed{% else %}{% if sound.processing_state == "FA" and sound.processing_ongoing_state != "PR" %}{% bw_icon "notification" %}Failed processing{% else %}{% if sound.processing_ongoing_state == "PR" %}{% bw_icon "cogs" %}Currently processing{% else %}{% bw_icon "clock" %}In processing queue{% endif %}{% endif %}{% endif %}
 </div>

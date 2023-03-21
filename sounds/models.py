@@ -344,8 +344,9 @@ class SoundManager(models.Manager):
                     sounds_sound
                 where
                     processing_state = 'OK' and
-                    moderation_state = 'OK'
-                    and greatest(created, moderation_date) > %s
+                    moderation_state = 'OK' and
+                    is_explicit is false and
+                    greatest(created, moderation_date) > %s
                 group by
                     user_id
                 ) as X order by created desc limit %s"""

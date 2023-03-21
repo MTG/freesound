@@ -421,7 +421,7 @@ NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 # Some BW settings
 ENABLE_QUERY_SUGGESTIONS = False
 ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE = False
-
+SHOW_LINK_TO_NEW_UI_IN_OLD_FRONT_PAGE = False
 
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls

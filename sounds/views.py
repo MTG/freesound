@@ -234,6 +234,7 @@ def front_page(request):
         'total_num_sounds': total_num_sounds,
         'is_authenticated': request.user.is_authenticated,
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
+        'show_link_to_new_ui': settings.SHOW_LINK_TO_NEW_UI_IN_OLD_FRONT_PAGE,
         'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beast whoosh only
         'query_suggestions_url': reverse('query-suggestions'),  # Used for beast whoosh only
         'enable_popular_searches': settings.ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE,  # Used for beast whoosh only

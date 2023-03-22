@@ -52,7 +52,7 @@
             {% endif %}
             <div class="row no-gutters {% if is_explicit %}blur{% endif %}">
                 <div class="col-md-8">
-                    {% display_sound_big_no_info sound %}
+                    {% display_sound_big_no_info_no_bookmark sound %}
                     <div class="bw-sound-page__information v-spacing-top-5">
                         {% cache 3600 bw_sound_page sound.id %}
                         <div class="row middle">

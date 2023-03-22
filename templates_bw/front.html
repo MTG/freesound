@@ -45,6 +45,12 @@
                                         <div class="col-6 col-md-4">
                                             {% display_sound_small sound_id %}
                                         </div>
+                                        <div class="col-6 col-md-4">
+                                            {% display_sound_small sound_id %}
+                                        </div>
+                                        <div class="col-6 col-md-4">
+                                            {% display_sound_small sound_id %}
+                                        </div>
                                     {% endfor %}
                                     </div>
                                 </div>
@@ -63,7 +69,7 @@
                 {% if trending_sound_ids %}
                     {% cache 300 bw_front_page_trending_sounds %}
                     <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds during the last week">Trending sounds</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds during the last week">Trending sounds</h3>
                         <div class="bw-carousel-container" data-carousel-type="adaptive">
                             <div class="bw-carousel-wrapper" style="margin-left: -15px">
                                 <div class="bw-carousel with-dots dots-distance-1">
@@ -85,7 +91,7 @@
                 {% if trending_new_sound_ids %}
                     {% cache 300 bw_front_page_trending_new_sounds %}
                     <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
                         <div class="bw-carousel-container" data-carousel-type="adaptive">
                             <div class="bw-carousel-wrapper" style="margin-left: -15px">
                                 <div class="bw-carousel with-dots dots-distance-1">
@@ -107,7 +113,7 @@
                 {% if trending_new_pack_ids %}
                     {% cache 300 bw_front_page_trending_new_packs %}
                     <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-4" title="Most downloaded pack created in the last week">Trending new packs</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded pack created in the last week">Trending new packs</h3>
                         <div class="bw-carousel-container" data-carousel-type="adaptive">
                             <div class="bw-carousel-wrapper" style="margin-left: -15px">
                                 <div class="bw-carousel with-dots dots-distance-1">
@@ -122,13 +128,13 @@
                             </div>
                         </div>
                     </section>
-                    <hr />
                     {% endcache %}
                 {% endif %}
 
                 {% if popular_searches and enable_popular_searches %}
+                    <hr />
                     <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-4">Popular searches</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-3">Popular searches</h3>
                         <div class="bw-carousel-container">
                             <div class="bw-carousel-wrapper" style="margin-left: -15px">
                                 <div class="bw-carousel with-dots">
@@ -149,96 +155,39 @@
                     </section>
                     <hr />
                 {% endif %}
-
-                {% cache 300 bw_front_page_random_sound %}
-                {% if random_sound %}                    
-                    <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-4">Guess the random sound of the day</h3>
-                        {% with random_sound as sound %}
-                            {% display_sound_big_no_info random_sound %}
-                            <div id="collapsable-random-sound" class="collapsable-block bw-sound-page__information v-spacing-top-2">
-                                <div class="row middle">
-                                    <div class="col-10 overflow-hidden">
-                                        <h4 class="padding-bottom-1"><a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{sound.original_filename}}</a></h4>
-                                    </div>
-                                    <div class="col-2 text-right">
-                                        <div class="text-grey">
-                                            {% if sound.similarity_state == 'OK' %}
-                                                <button title="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
-                                                    {% bw_icon 'similar' %}
-                                                </button>
-                                            {% endif %}
-                                            <span class="h-spacing-left-2"></span>
-                                            <button title="Save as favorite" class="btn-neutral" data-toggle="bookmark-modal" data-modal-url="{% url 'bookmarks-add-form-for-sound' sound.id %}" data-add-bookmark-url="{% url 'add-bookmark' sound.id %}">
-                                                {% bw_icon 'bookmark' %}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="middle v-spacing-top-1">{% bw_sound_stars sound False False %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
-                                <div class="middle bw-sound-page__user v-spacing-top-2">
-                                    <div class="h-spacing-1">
-                                        {% bw_user_avatar sound.user.profile.locations.avatar.M.url sound.username 40 %}
-                                    </div>
-                                    <div class="h-spacing-left-1">
-                                        <a href="{% url 'account' sound.username %}">{{ sound.username | truncate_string:15 }}</a>
-                                        <p class="text-grey">{{ sound.created|date:"F jS, Y" }}</p>
-                                    </div>
-                                    {% if sound.user != request.user  %}
-                                        <div class="h-spacing-left-3">
-                                            <a class="no-hover btn-inverse" href="{% url 'follow-user' sound.username %}?next={{ next_path }}">Follow</a>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                <div class="middle v-spacing-top-3">
-                                    {% if sound.geotag_id %}
-                                        <div>
-                                            <a href="{% url 'sound-geotag' sound.username sound.id %}">
-                                                {% bw_icon 'pin' %} {{ sound.geotag.lat|floatformat:3 }}, {{ sound.geotag.lon|floatformat:3 }}
-                                            </a>
-                                        </div>
-                                        {% if sound.pack_id or sound.remix_group.all.count %}
-                                            <div class="text-grey h-spacing-left-2 h-spacing-2">·</div>
-                                        {% endif %}
-                                    {% endif %}
-                                    {% if sound.pack_id %}
-                                        <div class="text-grey">
-                                            This sound is part of the pack <a href="{% url 'pack' sound.username sound.pack.id %}">{{ sound.pack.name}}</a>
-                                        </div>
-                                        {% if sound.remix_group.all.count %}
-                                            <div class="text-grey h-spacing-left-2 h-spacing-2">·</div>
-                                        {% endif %}
-                                    {% endif %}
-                                    {% if sound.remix_group.all.count %}
-                                        <div class="text-grey">
-                                            This sound has <a href="{% url 'sound-remixes' sound.username sound.id %}">remixes or has been remixed</a>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                <div class="v-spacing-top-1">
-                                    <div class="text-17 line-height-30">
-                                        {{ sound.description|replace_img|safe|linebreaks|truncatewords_html:30 }}
-                                    </div>
-                                    <div class="v-spacing-top-3">
-                                        {% for tag in sound.tag_array %}
-                                            {% bw_tag tag 1 "h-spacing-1" %}
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-center v-spacing-top-2">
-                                <span data-target="collapsable-random-sound" data-show-text="Reveal sound details" data-hide-text="Hide sound details" data-hide-on-load class="collapsable-toggle text-16"></span>
-                            </div>
-                        {% endwith %}
-                    </section>
-                {% endif %}
-                {% endcache %}
             </main>
             <aside class="col-lg-3">
-                <div class="v-spacing-4 d-lg-none">
-                    <hr />
-                </div>
+                <hr class="d-lg-none v-spacing-3"/>
+                {% cache 300 bw_front_page_random_sound %}
+                {% if random_sound %}  
                 <section class="v-spacing-4">
+                    <h4 class="v-spacing-1 display-none d-lg-block">Sound of the day</h4>
+                    <h4 class="v-spacing-1 d-lg-none">Random sound of the day</h4>
+                    <p class="text-grey v-spacing-2">Can you guess the random sound of the day?</p>
+                    {% with random_sound as sound %}
+                        <div class="display-none d-lg-block">{% display_sound_small_no_info random_sound %}</div>
+                        <div class="d-lg-none">{% display_sound_big_no_info random_sound %}</div>
+                        <div id="collapsable-random-sound" class="collapsable-block bw-sound-page__information v-spacing-top-1 overflow-hidden">
+                            <h5 class="ellipsis line-height-percentage-150 v-spacing-top-1">
+                                <a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{ sound.original_filename }}</a>
+                            </h5>
+                            <div>
+                                <a href="{% url 'account' sound.username %}">{{ sound.username|truncate_string:15 }}</a>
+                                <br><span class="text-grey">{{ sound.created|timesince }} ago</span>
+                            </div>
+                            <div class="v-spacing-top-1 text-grey overflow-hidden" style="height:52px;">
+                                {{ sound.description|striptags|safe|truncatechars_html:55 }}
+                            </div>
+                        </div>
+                        <div class="text-center v-spacing-top-2">
+                            <span data-target="collapsable-random-sound" data-show-text="Reveal sound details" data-hide-text="Hide sound details" data-hide-on-load class="collapsable-toggle"></span>
+                        </div>
+                    {% endwith %}
+                </section>
+                <hr class="v-spacing-3" />
+                {% endif %}
+                {% endcache %}
+                <section class="v-spacing-3">
                     <h4 class="v-spacing-1">Enjoying Freesound?</h4>
                     <p class="text-grey v-spacing-2">Please consider donating some money. It doesn't take a large donation to help us!</p>
                     <div class="no-paddings offset-3 col-6 offset-lg-2 col-lg-8 offset-xl-0 col-xl-12">
@@ -258,9 +207,9 @@
                         {% endcache %}
                     {% endif %}
                 </section>
-                <hr />
+                <hr class="v-spacing-3" />
                 {% cache 300 bw_forum_threads %}
-                    <section class="v-padding-4">
+                    <section class="v-spacing-top-2 v-spacing-4">
                         <h4 class="v-spacing-1">Hot forum threads</h4>
                         {% for forum in current_forum_threads %}
                             <article class="v-padding-2">
@@ -278,9 +227,9 @@
                             <a class="no-hover" href="{% url 'forums-hot-threads' %}"><button class="btn-inverse">More threads here</button></a>
                         </div>
                     </section>
-                    <hr />
+                    <hr class="v-spacing-3" />
                 {% endcache %}
-                <section class="v-padding-4">
+                <section class="v-spacing-top-2">
                     <div class="bw-front__freesound_labs_logo v-spacing-3"></div>
                     <p class="text-grey v-spacing-2">Freesound Labs is a directory of apps, hacks, projects, and research using Freesound. <a class="bw-link--grey" href="https://labs.freesound.org" target="_blank">Click here to learn more!</a></p>
                 </section>

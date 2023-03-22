@@ -94,9 +94,10 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             # more_url_quoted = urllib.quote(more_url)
 
             sound_ids = [element['id'] for element in result.docs]
-            sound_objs = sounds.models.Sound.objects.filter(id__in=sound_ids).select_related('license', 'user')
+            #sound_objs = sounds.models.Sound.objects.ordered_ids(sound_ids)
+            # NOTE: for now we add sound_ids in users_sounds insetad of the actual sound objetcs. We retrieve sound objs later in a single query.
             new_count = more_count + len(sound_ids)
-            users_sounds.append(((user_following, False), sound_objs, more_url_params, more_count, new_count))
+            users_sounds.append(((user_following, False), sound_ids, more_url_params, more_count, new_count))
 
     #
     # TAGS FOLLOWING
@@ -135,9 +136,28 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             # more_url_quoted = urllib.quote(more_url)
 
             sound_ids = [element['id'] for element in result.docs]
-            sound_objs = sounds.models.Sound.objects.filter(id__in=sound_ids)
+            # NOTE: for now we add sound_ids in users_sounds insetad of the actual sound objetcs. We retrieve sound objs later in a single query.
             new_count = more_count + len(sound_ids)
-            tags_sounds.append((tags, sound_objs, more_url_params, more_count, new_count))
+            tags_sounds.append((tags, sound_ids, more_url_params, more_count, new_count))
+
+    # Now retrieve all sound objects that will be needed
+    all_sound_ids_to_retrieve = []
+    for _, sound_ids, _, _, _ in users_sounds:
+        all_sound_ids_to_retrieve += sound_ids
+    for _, sound_ids, _, _, _ in tags_sounds:
+        all_sound_ids_to_retrieve += sound_ids
+    all_sound_ids_to_retrieve = list(set(all_sound_ids_to_retrieve))
+    sound_objs_dict = sounds.models.Sound.objects.dict_ids(all_sound_ids_to_retrieve)
+
+    # Replace lists of sound_ids by actual sound objects
+    for count, (user, sound_ids, more_url_params, more_count, new_count) in enumerate(users_sounds):
+        sound_objs = [sound_objs_dict.get(sid, None) for sid in sound_ids]
+        sound_objs = [sound_obj for sound_obj in sound_objs if sound_obj is not None]
+        users_sounds[count] = (user, sound_objs, more_url_params, more_count, new_count)
+    for count, (tags, sound_ids, more_url_params, more_count, new_count) in enumerate(tags_sounds):
+        sound_objs = [sound_objs_dict.get(sid, None) for sid in sound_ids]
+        sound_objs = [sound_obj for sound_obj in sound_objs if sound_obj is not None]
+        tags_sounds[count] = (tags, sound_objs, more_url_params, more_count, new_count)
 
     return users_sounds, tags_sounds
 

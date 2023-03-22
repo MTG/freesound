@@ -780,7 +780,7 @@ def manage_sounds(request, tab):
         sound_ids = list(sounds.values_list('id', flat=True))
 
         # Paginate and get corresponding sound objects
-        paginator = paginate(request, sound_ids, 12)
+        paginator = paginate(request, sound_ids, 9)
         tvars.update(paginator)
         sounds_to_select = Sound.objects.ordered_ids(paginator['page'].object_list)
         for sound in sounds_to_select:

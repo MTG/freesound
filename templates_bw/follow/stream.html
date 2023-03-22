@@ -3,14 +3,14 @@
 {% load bw_templatetags %}
 {% load display_sound %}
 {% load util %}
-{% block page-title %}Activity stream{% endblock %}
-{% block title %}Activity stream{% endblock %}
+{% block page-title %}Sound stream{% endblock %}
+{% block title %}Sound stream{% endblock %}
 
 {% block page-content %}
 <div>
 
     <p>In this page you'll see new sounds uploaded by <a href="{% url "user-following-users" request.user %}">users you follow</a> and new sounds tagged with the <a href="{% url "user-following-tags" request.user %}">tags you follow</a>.<br>
-    You can configure email notifications for updates in your activity stream through your <a href="{% url "accounts-email-settings" %}">email settings</a> page.</p>
+    You can configure email notifications for updates in your sound stream through your <a href="{% url "accounts-email-settings" %}">email settings</a> page.</p>
 
     <div class="v-spacing-top-4">
         <form id="stream_form" class="form-activity-stream" action="." method="post">
@@ -39,7 +39,7 @@
     <div class="divider-light v-spacing-top-3 v-spacing-4"></div>
     <div>
         <a id="new_sounds_users"></a>
-        <h3>New sounds by users you follow</h3>
+        <h3>Sounds by users you follow</h3>
         {% if not users_sounds %}
             <div class="v-spacing-7 v-spacing-top-5">
                 <p class="text-grey v-spacing-2">Looks like there are no new sounds from users you follow in that time period... &#128543</p>
@@ -50,19 +50,19 @@
                 <h5 class="text-grey v-spacing-top-3 v-spacing-2">From user "{{ user.0.username }}"</h5>
                 <a id="{{ user.0 }}" ></a>
                 <div>    
-                {% for sound_chunk_objs in sound_objs|chunks:4 %}
+                {% if sound_objs %}
                     <div class="row no-margin">
-                        {% for sound_obj in sound_chunk_objs %}
+                        {% for sound_obj in sound_objs %}
                             <div class="col-lg-3 col-6">
                                 {% display_sound_small sound_obj %}
                             </div>
                         {% endfor %}
                     </div>
-                {% endfor %}
+                {% endif %}
                 </div>
                 {% if more_count > 0 %}
                 <div class="center v-spacing-4">
-                    <a class="btn-inverse no-hover" href="{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}">See {{ more_count }} more sounds</a>
+                    <a class="btn-inverse no-hover" href="{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}">See all {{ new_count }} sounds</a>
                 </div>
                 {% endif %}
             {% endfor %}
@@ -72,7 +72,7 @@
     <div class="divider-light v-spacing-top-3 v-spacing-4"></div>
     <div>
         <a id="new_sounds_tags"></a>
-        <h3>New sounds with tags you follow</h3>
+        <h3>Sounds with tags you follow</h3>
         {% if not tags_sounds %}
             <div class="v-spacing-7 v-spacing-top-5">
                 <p class="text-grey v-spacing-2">Looks like there are no new sounds from tags you follow in that time period... &#128543</p>
@@ -83,18 +83,18 @@
                 <h5 class="text-grey v-spacing-top-3 v-spacing-2">From tag{{ tags|pluralize }} "{{ tags|join:", " }}"</h5>
                 <a id="{{ tags|join:"/" }}"></a>
                 <div>
-                {% for sound_chunk_objs in sound_objs|chunks:4 %}
+                {% if sound_objs %}
                 <div class="row no-margin">
-                    {% for sound_obj in sound_chunk_objs %}
+                    {% for sound_obj in sound_objs %}
                         <div class="col-lg-3 col-6">
                             {% display_sound_small sound_obj %}
                         </div>
                     {% endfor %}
                 </div>
-                {% endfor %}
+                {% endif %}
                 {% if more_count > 0 %}
                 <div class="center v-spacing-4">
-                    <a class="btn-inverse no-hover" href="{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}">See {{ more_count }} more sounds</a>
+                    <a class="btn-inverse no-hover" href="{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}">See all {{ new_count }} sounds</a>
                 </div>
                 {% endif %}
                 </div>

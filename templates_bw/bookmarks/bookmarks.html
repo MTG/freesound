@@ -33,10 +33,10 @@
             <div class="col-lg-8">
                 <h4><span class="text-light-grey">Category:</span> {% if category %}{{category.name}}{% else %}Uncategorized{% endif %} </h4>
                 <div class="v-spacing-top-3">
-                {% for bookmarks_chunk in page.object_list|chunks:3 %}
+                {% if page.object_list %}
                     <div class="row no-margins">
-                        {% for bookmark in bookmarks_chunk %}
-                            <div class="col-4">
+                        {% for bookmark in page.object_list %}
+                            <div class="col-6 col-md-4">
                                 {% display_sound_small bookmark.sound %}                     
                                 {% if is_owner %}
                                     <div class="right v-spacing-4 v-spacing-top-negative-2"><a class="cursor-pointer bw-link--grey" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove this bookmark from '{{bookmark.category_name_or_uncategorized}}'?" data-modal-confirmation-url="{% url "delete-bookmark" bookmark.id %}?next={{request.path}}&page={{current_page}}" alt="Remove from bookmarks">{% bw_icon 'trash' %} Remove bookmark</a></div>
@@ -44,9 +44,9 @@
                             </div>
                         {% endfor %}
                     </div>
-                {% empty %}
+                {% else %}
                     <div class="text-grey">There are no {% if not category %}uncategorized{% endif %} bookmarks {% if category %}in this category{% endif %} &#128543</div>
-                {% endfor %}
+                {% endif %}
                 {% bw_paginator paginator page current_page request "bookmark" %}
                 </div>
             </div>

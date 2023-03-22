@@ -1,12 +1,13 @@
 .bw-carousel-container {
   position: relative;
-  @media (hover) {
-    // If hover is not supported (touch devices), don't add this hover as it will require two taps in touch devices for interaction with carousel dots
-    // This means that in touch devices there'll be no arrows (but there'll be the dots)
+  
+  //@media (hover) {
+    // If hover is not supported (touch devices), don't add this hover as it will require two taps in touch devices for interaction with carousel dots/arrows
+    // NOTE: for the moment we keep the default hover-on-tap behaviour as it is not that bad actually
     &:hover > .bw-carousel-icon {
       opacity: 1; 
     }
-  }
+  //}
 }
 
 .bw-carousel-wrapper {
@@ -31,6 +32,14 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+
+  /*@media (hover: none) {
+    // Make arrows always visible for devices that don't support hover (touch devices)
+    opacity: 1;
+    width: 25px;
+    height: 25px;
+    font-size: 80%;
+  }*/
 }
 
 .carousel-right {
@@ -59,6 +68,11 @@
   padding-top: 3px;
   padding-left: 4px;
   padding-right: 4px;
+
+  @media (hover: none) {
+    // Make dots always visible for devices that don't support hover (touch devices) to suggest carousel interaction
+    opacity: 0.2;
+  }
 
   .bw-carousel-container:hover > & {
     opacity: 1;

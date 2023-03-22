@@ -33,7 +33,7 @@
 <div class="row no-gutters">
     <div class="{% if tab != "packs" %}col-lg-8{% else %}col-12{% endif %} v-spacing-4">
         {% if tab != 'pending_description' %}
-            <div class="v-spacing-4">
+            <div class="v-spacing-3">
                 <form method="get" action=".">
                 <div class="row middle">
                     <div class="col-md-5">
@@ -82,7 +82,7 @@
                 {% endif %}
             {% else %}
                 {% if sounds_to_select %}
-                    {% sounds_selector sounds_to_select %}
+                    {% sounds_selector_with_select_buttons sounds_to_select %}
                     {% bw_paginator paginator page current_page request "sound" %}
                 {% else %}
                     <div class="v-spacing-7 v-spacing-top-6 text-center">
@@ -104,10 +104,7 @@
                 {% else %}
                     <div class="v-spacing-5">
                         <h5 class="v-spacing-3">Select the files you want to describe:</h5>
-                        <div class="v-spacing-2">
-                            <button id="select-all" class="btn-inverse">Select all</button>
-                            <button id="select-none" class="btn-inverse">Select none</button>
-                        </div>
+                        <div class="center v-spacing-2"><a id="select-all" class="bw-link--grey cursor-pointer">Select all</a><span class="h-spacing-left-1 h-spacing-1 text-grey">·</span><a id="select-none" class="bw-link--grey cursor-pointer select-button">Select None</a></div>
                         <div id="describe-file-checkboxes">
                             {% show_file file_structure True %}
                         </div>

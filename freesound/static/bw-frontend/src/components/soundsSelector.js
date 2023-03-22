@@ -41,5 +41,37 @@ const initializeSoundSelector = (selectorElement, onChangeCallback) => {
             });
         }
     });
+
+    // Configure select all/none buttons
+    const selectAllSelectNoneButtons = selectorElement.parentNode.getElementsByClassName('select-button');
+    if (selectAllSelectNoneButtons.length == 2){
+        const selectAllButton = selectAllSelectNoneButtons[0];
+        const selectNoneButton = selectAllSelectNoneButtons[1];
+        selectAllButton.addEventListener('click', evt => {
+            selectableSoundElements.forEach(element => {
+                const checkbox = element.querySelectorAll('input.bw-checkbox')[0];
+                checkbox.checked = true;
+                if (checkbox.checked) {
+                    element.classList.add('selected');    
+                } else {
+                    element.classList.remove('selected');
+                }
+                debouncedUpdateSoundsSelectorDataProperties(element.parentNode.parentNode, debouncedOnChangeCallback);
+            });
+        });
+        selectNoneButton.addEventListener('click', evt => {
+            selectableSoundElements.forEach(element => {
+                const checkbox = element.querySelectorAll('input.bw-checkbox')[0];
+                checkbox.checked = false;
+                if (checkbox.checked) {
+                    element.classList.add('selected');    
+                } else {
+                    element.classList.remove('selected');
+                }
+                debouncedUpdateSoundsSelectorDataProperties(element.parentNode.parentNode, debouncedOnChangeCallback);
+            });
+        });
+    }
+    
 }
 export {initializeSoundSelector, updateSoundsSelectorDataProperties};

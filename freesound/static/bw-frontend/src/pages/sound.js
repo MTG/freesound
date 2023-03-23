@@ -52,8 +52,8 @@ toggleShareLinkElement.addEventListener('click',  toggleShareLink);
 
 
 const generateEmbedCode = (size) => {
-    var sizes = embedCodeElement.dataset['size-' + size].split(',');
-    var urlTemplate = embedCodeElement.dataset['iframe-url-template'];
+    var sizes = embedCodeElement.dataset['size' + size].split(',');
+    var urlTemplate = embedCodeElement.dataset.iframeUrlTemplate;
     var embedText = '<iframe frameborder="0" scrolling="no" src="' + urlTemplate + '" width="WIDTH" height="HEIGHT"></iframe>';
     embedText = embedText.replace('SIZE', size);
     embedText = embedText.replace('WIDTH', sizes[0]);
@@ -61,9 +61,9 @@ const generateEmbedCode = (size) => {
     embedCodeElement.value = embedText;
 }
 
-smallEmbedImageElement.addEventListener('click',  () => generateEmbedCode('small'));
-mediumEmbedImageElement.addEventListener('click', () => generateEmbedCode('medium'));
-largeEmbedImageElement.addEventListener('click', () => generateEmbedCode('large'));
+smallEmbedImageElement.addEventListener('click',  () => generateEmbedCode('Small'));
+mediumEmbedImageElement.addEventListener('click', () => generateEmbedCode('Medium'));
+largeEmbedImageElement.addEventListener('click', () => generateEmbedCode('Large'));
 
 embedLinksElement.style.display = "none"
 shareLinkElement.style.display = "none"
@@ -109,4 +109,3 @@ if (similarSoundsButtons.length > 0){
         openSimilarSoundsModal(similarSoundsButtons[0].dataset.modalContentUrl, similarSoundsModalActivationParam);
     }
 }
-

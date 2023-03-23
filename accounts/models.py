@@ -209,7 +209,7 @@ class Profile(SocialModel):
     @property
     def num_downloads_on_sounds_and_packs(self):
         # Number of downloads on user's sounds and packs
-        return Download.objects.filter(sound__user_id=self.id).count() + PackDownload.objects.filter(pack__user_id=self.id).count()
+        return Download.objects.filter(sound__user_id=self.user_id).count() + PackDownload.objects.filter(pack__user_id=self.user_id).count()
     
     def get_absolute_url(self):
         return reverse('account', args=[smart_str(self.user.username)])

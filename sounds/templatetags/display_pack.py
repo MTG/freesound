@@ -58,11 +58,6 @@ def display_pack(context, pack, size='small'):
 
     # Add 'request' to the returned context dictionary below so when the display_sound templatetag is called inside
     # display_pack templatetag it is given request in the context as well.
-    if not using_beastwhoosh(request):
-        # In old UI we pass pack as a list so queries are not evaluated before cache
-        # In BW there is no cache on display pack and we simply pass the object
-        if pack is not None:
-            pack = [pack]
     return {
         'pack': pack,
         'size': size,

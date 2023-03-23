@@ -206,6 +206,11 @@ class Profile(SocialModel):
         # We consider each pack download as a single download
         return self.num_sound_downloads + self.num_pack_downloads
 
+    @property
+    def num_downloads_on_sounds_and_packs(self):
+        # Number of downloads on user's sounds and packs
+        return Download.objects.filter(sound__user_id=self.id).count() + PackDownload.objects.filter(pack__user_id=self.id).count()
+    
     def get_absolute_url(self):
         return reverse('account', args=[smart_str(self.user.username)])
 

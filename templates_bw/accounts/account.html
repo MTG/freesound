@@ -163,7 +163,7 @@
                             {% bw_icon 'download' 'text-light-grey' %} <a class="text-19 bw-link--black" href="{% url "user-downloaded-sounds" user.username %}">{{ user.profile.num_sound_downloads|add:user.profile.num_pack_downloads }} downloads</a>
                         </a>
                         <li class="v-spacing-3">
-                            {% bw_icon 'comments' 'text-light-grey' %} <a class="text-19 bw-link--black" href="{% url "forums-search" %}?f=post_author:%22{{ user.username }}%22">{{ user.profile.num_posts }} forum post{{ user.profile.num_posts|pluralize }}</a>
+                            {% bw_icon 'comments' 'text-light-grey' %} <span class="text-19">{{ user.profile.num_posts }} forum post{{ user.profile.num_posts|pluralize }}</span>
                         </li>
                     </ol>
                 </section>

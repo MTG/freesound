@@ -165,9 +165,11 @@ class BWPackForm(forms.Form):
         self.fields['pack'].choices = [(self.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
                                        (self.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] \
                                       + ([(pack.id, pack.name) for pack in pack_choices] if pack_choices else [])
-        # The attrs below are used so that some elements of the dropdown are displayed in gray 
+        # The attrs below are used so that some elements of the dropdown are displayed in gray and to enable
+        # pre-selecting options using keyboard
         self.fields['pack'].widget.attrs = \
-            {'data-grey-items': f'{self.NO_PACK_CHOICE_VALUE},{self.NEW_PACK_CHOICE_VALUE}'}
+            {'data-grey-items': f'{self.NO_PACK_CHOICE_VALUE},{self.NEW_PACK_CHOICE_VALUE}', 
+             'data-select-with-keyboard': True}
 
     def clean_pack(self):
         return _pack_form_clean_pack_helper(self.cleaned_data)
@@ -386,8 +388,10 @@ class BWSoundEditAndDescribeForm(forms.Form):
         self.fields['pack'].choices = [(BWPackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
                                        (BWPackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + \
                                       ([(pack.id, pack.name) for pack in user_packs] if user_packs else [])
-        # The attrs below are used so that some elements of the dropdown are displayed in gray 
-        self.fields['pack'].widget.attrs = {'data-grey-items': f'{BWPackForm.NO_PACK_CHOICE_VALUE},{BWPackForm.NEW_PACK_CHOICE_VALUE}'}
+        # The attrs below are used so that some elements of the dropdown are displayed in gray and to enable
+        # pre-selecting options using keyboard
+        self.fields['pack'].widget.attrs = {'data-grey-items': f'{BWPackForm.NO_PACK_CHOICE_VALUE},{BWPackForm.NEW_PACK_CHOICE_VALUE}', 
+                                            'data-select-with-keyboard': True}
 
     def clean(self):
         data = self.cleaned_data

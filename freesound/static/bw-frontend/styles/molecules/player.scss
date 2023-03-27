@@ -2,6 +2,8 @@
   position: relative;
   height: 100px;
   display: flex;
+  border-radius: 2px;
+  overflow: hidden;
 
   &.bw-player__img-container--big {
     height: 330px;

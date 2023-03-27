@@ -823,7 +823,7 @@ def edit_and_describe_sounds_helper(request):
                 f'Successfully finished sound description round {current_round} of {num_rounds}!')
             if not request.session['describe_sounds']:
                 clear_session_edit_and_describe_data(request)
-                return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
+                return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['processing']))
             else:
                 return HttpResponseRedirect(reverse('accounts-describe-sounds'))
         else:

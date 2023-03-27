@@ -189,7 +189,7 @@ def for_user(request, username):
 @redirect_if_old_username_or_404
 def for_sound(request, username, sound_id):
     sound = get_object_or_404(
-        Sound.objects.select_related('geotag', 'user'), id=sound_id, moderation_state="OK", processing_state="OK")
+        Sound.objects.select_related('geotag', 'user'), id=sound_id)
     if sound.user.username.lower() != username.lower():
         raise Http404
     if not using_beastwhoosh(request):

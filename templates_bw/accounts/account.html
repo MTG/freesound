@@ -192,8 +192,8 @@
                 <div class="divider-light"></div>
                 <section id="latest_geotags" class="v-spacing-top-5" data-map-loaded="false">
                     <h5 class="padding-bottom-3">Latest geotags</h5>
-                    <div id="static_map_wrapper"  class="sidebar-map w-100 middle center cursor-pointer" data-pins="{{ last_geotags_serialized }}"></div>
-                    <div id="map_canvas" class="sidebar-map display-none w-100" data-geotags-url="{% url "geotags-for-user-latest-barray" user.username %}"></div>
+                    <div id="static_map_wrapper"  class="map sidebar-map w-100 middle center cursor-pointer" data-pins="{{ last_geotags_serialized }}"></div>
+                    <div id="map_canvas" class="map sidebar-map display-none w-100" data-geotags-url="{% url "geotags-for-user-latest-barray" user.username %}"></div>
                     <div class="v-spacing-top-2 center">
                         <a class="no-hover" href="{% url "geotags-for-user" user.username %}">See all geotags by {{ user.username }}</a>
                     </div>

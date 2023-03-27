@@ -130,8 +130,8 @@
                         {% if geotags_in_pack_serialized %}
                             <div id="pack_geotags" class="v-spacing-top-6" data-map-loaded="false">
                                 <h5 class="padding-bottom-3">Geotags in this pack</h5>
-                                <div id="static_map_wrapper"  class="sidebar-map w-100 middle center cursor-pointer" data-pins="{{ geotags_in_pack_serialized }}"></div>
-                                <div id="map_canvas" class="sidebar-map display-none w-100" data-geotags-url="{% url "geotags-for-pack-barray" pack.id %}"></div>
+                                <div id="static_map_wrapper"  class="map sidebar-map w-100 middle center cursor-pointer" data-pins="{{ geotags_in_pack_serialized }}"></div>
+                                <div id="map_canvas" class="map sidebar-map display-none w-100" data-geotags-url="{% url "geotags-for-pack-barray" pack.id %}"></div>
                             </div>
                         {% endif %}
                     </div>

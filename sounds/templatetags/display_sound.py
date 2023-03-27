@@ -158,7 +158,7 @@ def display_sound_minimal(context, sound):
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_infowindow(context, sound):
-    return display_sound(context, sound, player_size='infowindow')
+    return display_sound(context, sound, player_size='infowindow', show_bookmark=True, show_similar_sounds=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_no_sound_object(context, file_data, player_size):

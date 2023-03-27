@@ -34,6 +34,10 @@ const openSimilarSoundsModal = (modalUrl, modalActivationParam) => {
 const bindSimilarSoundButtons = () => {
     const similarSoundsButtons = document.querySelectorAll('[data-toggle="similar-sounds-modal"]');
     similarSoundsButtons.forEach(element => {
+        if (element.dataset.alreadyBinded !== undefined){
+            return;
+        }
+        element.dataset.alreadyBinded = true;
         element.addEventListener('click', (evt) => {
             evt.preventDefault();
             openSimilarSoundsModal(element.dataset.modalContentUrl, element.dataset.modalActivationParam);
@@ -44,4 +48,4 @@ const bindSimilarSoundButtons = () => {
 bindSimilarSoundButtons();
 
 
-export {openSimilarSoundsModal};
+export {openSimilarSoundsModal, bindSimilarSoundButtons};

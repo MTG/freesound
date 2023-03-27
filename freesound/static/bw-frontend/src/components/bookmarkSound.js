@@ -79,6 +79,10 @@ const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
 const bindBookmarkSoundButtons = () => {
     const bookmarkSoundButtons = [...document.querySelectorAll('[data-toggle="bookmark-modal"]')];
     bookmarkSoundButtons.forEach(element => {
+        if (element.dataset.alreadyBinded !== undefined){
+            return;
+        }
+        element.dataset.alreadyBinded = true;
         element.addEventListener('click', (evt) => {
             evt.preventDefault();
             const modalUrlSplitted = element.dataset.modalUrl.split('/');
@@ -95,3 +99,5 @@ const bindBookmarkSoundButtons = () => {
 }
 
 bindBookmarkSoundButtons();
+
+export {bindBookmarkSoundButtons};

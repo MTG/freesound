@@ -1,3 +1,14 @@
+.map {
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.main-map {
+  height:700px; 
+  max-height: 700px;
+  z-index: 0;
+}
+
 .sidebar-map {
   width: 300px;
   height: 300px;
@@ -6,6 +17,7 @@
 .map_terrain_menu {
     position:absolute;
     background: #fff;
+    color: #141424;
     padding: 8px;
     right: 52px;
     top: 8px;
@@ -17,7 +29,7 @@
 }
 
 .map_terrain_menu:hover {
-    background: #eeeeee;
+    background: #efefef;
     background-clip: padding-box;
 }
 
@@ -29,4 +41,19 @@
 
 .mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right, .mapboxgl-ctrl-top-left, .mapboxgl-ctrl-top-right {
   z-index: 1 !important; // Fix mapbox controls z-index being too high
+}
+
+.mapboxgl-popup-tip {
+  border-top-color: $navy-light-grey !important;
+  border-bottom-color: $navy-light-grey !important;
+}
+
+.mapboxgl-popup-content {
+  background-color: $white !important;
+  /*border: 1px solid $navy-light-grey !important;*/
+}
+
+.mapboxgl-popup-close-button {
+  color: $black !important;
+  font-size: 140%;
 }

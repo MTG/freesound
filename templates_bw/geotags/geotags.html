@@ -35,7 +35,7 @@
 
 {% block page-content %}
     <div class="col-12 v-spacing-top-3 no-paddings {% if sound or username %}v-spacing-2{% endif %}">
-        <div id="mapCanvas" style="height:700px; max-height: 700px;z-index: 0;"
+        <div id="mapCanvas" class="map main-map"
              data-map-center-lat="{{ center_lat }}"
              data-map-center-lon="{{ center_lon }}"
              data-map-zoom="{{ zoom }}"

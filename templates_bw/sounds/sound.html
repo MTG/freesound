@@ -187,7 +187,7 @@
                     <div class="divider-light v-spacing-top-4 v-spacing-4 d-md-none"></div>
                     <div class="bw-sound__sidebar">
                         {% if display_random_link %}
-                            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-4" href="{% url 'sounds-random' %}">Get another random sound!</a>
+                            <a class="no-hover btn-blue display-inline-block w-100 text-center v-spacing-4" href="{% url 'sounds-random' %}">Get another random sound!</a>
                         {% endif %}
                         {% cache 3600 bw_sound_page_sidebar sound.id %}
                         <div>

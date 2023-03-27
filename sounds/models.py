@@ -674,6 +674,10 @@ class Sound(SocialModel):
         # N.B. This is used in the ticket template (ugly, but a quick fix)
         return True
 
+    @property
+    def moderated_and_processed_ok(self):
+        return self.moderation_state == "OK" and self.processing_state == "OK"
+
     def friendly_filename(self):
         filename_slug = slugify(os.path.splitext(self.original_filename)[0])
         username_slug = slugify(self.user.username)

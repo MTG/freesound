@@ -171,6 +171,7 @@ def display_sound_no_sound_object(context, file_data, player_size):
     
     file_data = {
         'duration': sound.duration,
+        'samplerate': sound.samplerate,  # Useful for the ruler of the player, if not indicated, a default will be assumed
         'preview_mp3': sound.locations('preview.LQ.mp3.url'),
         'preview_ogg': sound.locations('preview.LQ.ogg.url'),
         'wave': sound.locations('display.wave_bw.L.url'),
@@ -186,6 +187,7 @@ def display_sound_no_sound_object(context, file_data, player_size):
             'username': file_data.get('username', 'nousername'),
             'similarity_state': file_data.get('similarity_state', 'FA'),
             'duration': file_data['duration'],
+            'samplerate': file_data.get('samplerate', 44100),
             'locations': {
                 'preview': {
                     'LQ': {

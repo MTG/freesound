@@ -59,7 +59,7 @@
                                 <h5 class="v-spacing-1"><a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}" title="{{ sound.original_filename }}">{{ sound.original_filename|truncate_string:45 }}</a></h5>
                             </div>
                             <div class="text-grey text-right between">
-                                <div style="min-width:130px;" class="top right">{% bw_sound_stars sound %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}({{ sound.num_ratings }}){% endif %}</span></div>
+                                <div style="min-width:130px;" class="top right">{% bw_sound_stars sound %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}({{ sound.num_ratings|formatnumber }}){% endif %}</span></div>
                             </div>
                         </div>
                         <div class="max-h-85px-md-75px text-black overflow-hidden v-spacing-1">{{ sound.description|striptags|safe|truncatewords_html:35 }}</div>
@@ -107,12 +107,12 @@
                     {% endif %}
                     <div class="h-spacing-left-2" title="{{ sound.num_downloads }} downloads">
                         <a href="{% url 'sound-downloaders' sound.username sound.id %}" class="bw-link--grey-light">
-                            <span class="bw-icon-download"></span> {{ sound.num_downloads }}
+                            <span class="bw-icon-download"></span> {{ sound.num_downloads|formatnumber }}
                         </a>
                     </div>
                     <div class="h-spacing-left-2" title="{{ sound.num_comments }} comments">
                         <a href="{% url 'sound' sound.username sound.id %}#comments" class="bw-link--grey-light">
-                            <span class="bw-icon-comments"></span> {{ sound.num_comments }}
+                            <span class="bw-icon-comments"></span> {{ sound.num_comments|formatnumber }}
                         </a>
                     </div>
                     <div class="h-spacing-left-2" title="License: {{ sound.license_name }}">

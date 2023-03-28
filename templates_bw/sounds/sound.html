@@ -76,7 +76,7 @@
                             </div>
                         </div>
 
-                        <div class="middle v-spacing-top-2">{% bw_sound_stars sound False False %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
+                        <div class="middle v-spacing-top-2">{% bw_sound_stars sound False False %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings|formatnumber }}){% else %}Not enough ratings{% endif %}</span></div>
 
                         <div class="middle bw-sound-page__user v-spacing-top-5">
                             <div class="h-spacing-1">
@@ -123,11 +123,11 @@
                         </div>
                         <div class="v-spacing-top-1">
                             <div id="soundDescriptionSection" class="text-17 line-height-30">
-                                {{ sound.description|replace_img|safe|linebreaks }}
+                                {{ sound.description|replace_img|safe|linebreaks|strip_unnecessary_br }}
                             </div>
                             {% if sound.user.profile.sound_signature %}
                                 <div class="v-spacing-top-3 text-grey">
-                                    <p>{{sound.user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks}}</p>
+                                    <p>{{ sound.user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks|strip_unnecessary_br }}</p>
                                 </div>
                             {% endif %}
                             <div class="v-spacing-top-3">
@@ -187,16 +187,16 @@
                     <div class="divider-light v-spacing-top-4 v-spacing-4 d-md-none"></div>
                     <div class="bw-sound__sidebar">
                         {% if display_random_link %}
-                            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-4" href="{% url 'sounds-random' %}">Get another random sound!</a>
+                            <a class="no-hover btn-blue display-inline-block w-100 text-center v-spacing-4" href="{% url 'sounds-random' %}">Get another random sound!</a>
                         {% endif %}
                         {% cache 3600 bw_sound_page_sidebar sound.id %}
                         <div>
                             <ol>
                                 <li class="v-spacing-3"> {% bw_icon 'download' 'text-light-grey' %}
-                                    <a class="text-19 bw-link--black" title="This sound has been downloaded {{ sound.num_downloads }} time{{ sound.num_downloads|pluralize }}" href="{% url 'sound-downloaders' sound.user.username sound.id %}">{{ sound.num_downloads }} download{{ sound.num_downloads|pluralize }}</a>
+                                    <a class="text-19 bw-link--black" title="This sound has been downloaded {{ sound.num_downloads }} time{{ sound.num_downloads|pluralize }}" href="{% url 'sound-downloaders' sound.user.username sound.id %}">{{ sound.num_downloads|formatnumber }} download{{ sound.num_downloads|pluralize }}</a>
                                 </li>
                                 <li class="v-spacing-3">{% bw_icon 'comments' 'text-light-grey' %}
-                                    <a class="text-19 bw-link--black" title="This sound has received {{ sound.num_comments }} comment{{ sound.num_comments|pluralize }}" href="#comments">{{ sound.num_comments }} comment{{ sound.num_comments|pluralize }}</a>
+                                    <a class="text-19 bw-link--black" title="This sound has received {{ sound.num_comments }} comment{{ sound.num_comments|pluralize }}" href="#comments">{{ sound.num_comments|formatnumber }} comment{{ sound.num_comments|pluralize }}</a>
                                 </li>
                             </ol>
                         </div>
@@ -338,7 +338,7 @@
                                                     {% endif %}
                                                 </div>
                                             </div>
-                                            <p class="text-16 v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks }}</p>
+                                            <p class="text-16 v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks|strip_unnecessary_br }}</p>
                                             {% if not forloop.last %}
                                                 <div class="divider-light v-spacing-top-3 v-spacing-2"></div>
                                             {% endif %}

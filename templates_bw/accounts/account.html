@@ -83,7 +83,7 @@
             {% if not user.profile.is_deleted_user %}
                 <div class="bw-profile__description v-spacing-top-3">
                     {% if user.profile.about and show_about %}
-                        {{ user.profile.about|replace_img|safe|linebreaksbr }}
+                        {{ user.profile.about|replace_img|safe|linebreaks|strip_unnecessary_br }}
                     {% endif %}
                     {% if user.profile.home_page and user.profile.get_total_downloads > 0 %}
                         <div class="v-spacing-top-3">
@@ -93,9 +93,9 @@
                 </div>
                 <div class="bw-profile__stats v-spacing-top-1 padding-left-4 padding-right-4">
                     <div class="text-grey">Has been a user for {{user.date_joined|timesince}}</div>
-                    <div><a id="user-followers-button" data-modal-activation-param="followers" data-modal-content-url="{% url 'user-followers' user.username %}?ajax=1&page={{ followers_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_followers_count user.id %}{{ followers.count }}{% endcache %} followers</a></div>
+                    <div><a id="user-followers-button" data-modal-activation-param="followers" data-modal-content-url="{% url 'user-followers' user.username %}?ajax=1&page={{ followers_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_followers_count user.id %}{% with followers.count as followers_count %}{{ followers_count }} follower{{ followers_count|pluralize }}{% endwith %}{% endcache %}</a></div>
                     <div><a id="user-following-users-button" data-modal-activation-param="following" data-modal-content-url="{% url 'user-following-users' user.username %}?ajax=1&page={{ following_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_count user.id %}{{ following.count }}{% endcache %} following</a></div>
-                    <div><a id="user-following-tags-button" data-modal-activation-param="followingTags" data-modal-content-url="{% url 'user-following-tags' user.username %}?ajax=1&page={{ following_tags_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_tags_count user.id %}{{ following_tags.count }}{% endcache %} tags following</a></div>
+                    <div><a id="user-following-tags-button" data-modal-activation-param="followingTags" data-modal-content-url="{% url 'user-following-tags' user.username %}?ajax=1&page={{ following_tags_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_tags_count user.id %}{% with following_tags.count as following_tags_count %}{{ following_tags.count }} tag{{ following_tags_count|pluralize }} following{% endwith %}{% endcache %}</a></div>
                 </div>
             {% endif %}
         </div>
@@ -158,10 +158,10 @@
                 <section class="bw-profile__section_stats v-spacing-top-4">
                     <ol>
                         <li class="v-spacing-3">
-                            {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black" title="{{ user.username }} has uploaded {{ user.profile.num_sounds }} sound{{ user.profile.num_sounds|pluralize }}" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1">{{ user.profile.num_sounds }} sound{{ user.profile.num_sounds|pluralize }}</a>
+                            {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black" title="{{ user.username }} has uploaded {{ user.profile.num_sounds }} sound{{ user.profile.num_sounds|pluralize }}" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1">{{ user.profile.num_sounds|formatnumber }} sound{{ user.profile.num_sounds|pluralize }}</a>
                         </li>
                         <li class="v-spacing-3">
-                            {% with user.profile.num_packs as num_packs %}{% bw_icon 'stack' 'text-light-grey' %} <a class="text-19 bw-link--black" title="{{ user.username }} has created {{ num_packs }} pack{{ num_packs|pluralize }}" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1&only_p=1">{{ num_packs }} pack{{ num_packs|pluralize }}</a>{% endwith %}
+                            {% with user.profile.num_packs as num_packs %}{% bw_icon 'stack' 'text-light-grey' %} <a class="text-19 bw-link--black" title="{{ user.username }} has created {{ num_packs }} pack{{ num_packs|pluralize }}" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1&only_p=1">{{ num_packs|formatnumber }} pack{{ num_packs|pluralize }}</a>{% endwith %}
                         </li>
                         <li class="v-spacing-3">
                             {% with user.profile.get_total_uploaded_sounds_length as total_uploaded_sounds_length %}{% bw_icon 'clock' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds together account for {{ total_uploaded_sounds_length|duration_hours }} hours of audio">{{ total_uploaded_sounds_length|duration_hours }} hours of audio</span>{% endwith %}
@@ -170,24 +170,14 @@
                             {% with user.profile.avg_rating_0_5 as avg_rating_0_5 %}{% bw_icon 'star' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds have an average rating of {{ avg_rating_0_5|floatformat:1 }}">{{ avg_rating_0_5|floatformat:1 }} average rating</span>{% endwith %}
                         </li>
                         <li class="v-spacing-3">
-                            {% with user.profile.num_downloads_on_sounds_and_packs as num_downloads %}{% bw_icon 'download' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds and packs have been downloaded {{ num_downloads }} times">{{ num_downloads }} downloads</span>{% endwith %}
+                            {% with user.profile.num_downloads_on_sounds_and_packs as num_downloads %}{% bw_icon 'download' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds and packs have been downloaded {{ num_downloads }} times">{{ num_downloads|formatnumber }} download{{ num_downloads|pluralize }}</span>{% endwith %}
                         </a>
                         <li class="v-spacing-3">
-                            {% bw_icon 'comments' 'text-light-grey' %} <span class="text-19" title="{{ user.username }} has written {{ user.profile.num_posts }} forum posts">{{ user.profile.num_posts }} forum post{{ user.profile.num_posts|pluralize }}</span>
+                            {% bw_icon 'comments' 'text-light-grey' %} <span class="text-19" title="{{ user.username }} has written {{ user.profile.num_posts }} forum posts">{{ user.profile.num_posts|formatnumber }} forum post{{ user.profile.num_posts|pluralize }}</span>
                         </li>
                     </ol>
                 </section>
                 {% endcache %}
-
-                {% if tags %}
-                    <div class="divider-light"></div>
-                    <section class="v-spacing-top-5 padding-bottom-5">
-                        <h5 class="padding-bottom-3">Most used tags</h5>
-                        {% for tag in tags|add_sizes:"count:0.1:1.0" %}
-                            {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
-                        {% endfor %}
-                    </section>
-                {% endif %}
                 {% if last_geotags_serialized %}
                 <div class="divider-light"></div>
                 <section id="latest_geotags" class="v-spacing-top-5" data-map-loaded="false">
@@ -197,7 +187,17 @@
                     <div class="v-spacing-top-2 center">
                         <a class="no-hover" href="{% url "geotags-for-user" user.username %}">See all geotags by {{ user.username }}</a>
                     </div>
-                </section>{% endif %}
+                </section>
+                {% endif %}
+                {% if tags %}
+                <div class="divider-light"></div>
+                <section class="v-spacing-top-5 padding-bottom-5">
+                    <h5 class="padding-bottom-3">Most used tags</h5>
+                    {% for tag in tags|add_sizes:"count:0.1:1.0" %}
+                        {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
+                    {% endfor %}
+                </section>
+                {% endif %}
             </aside>
         </div>
     </div>

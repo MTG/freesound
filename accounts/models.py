@@ -121,8 +121,10 @@ class Profile(SocialModel):
     # The following 4 fields are updated using django signals (methods 'update_num_downloads*')
     num_sounds = models.PositiveIntegerField(editable=False, default=0)
     num_posts = models.PositiveIntegerField(editable=False, default=0)
-    num_sound_downloads = models.PositiveIntegerField(editable=False, default=0)
-    num_pack_downloads = models.PositiveIntegerField(editable=False, default=0)
+    num_sound_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of sounds the user has downloaded
+    num_pack_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of packs the user has downloaded
+    num_user_sounds_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of times user's sounds have been downloaded
+    num_user_packs_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of times user's packs have been downloaded
 
     # "is_anonymized_user" indicates that the user account has been anonimized and no longer contains personal data
     # This is what we do when we delete a user to still preserve statistics and information and downloads
@@ -209,7 +211,7 @@ class Profile(SocialModel):
     @property
     def num_downloads_on_sounds_and_packs(self):
         # Number of downloads on user's sounds and packs
-        return Download.objects.filter(sound__user_id=self.user_id).count() + PackDownload.objects.filter(pack__user_id=self.user_id).count()
+        return self.num_user_sounds_downloads + self.num_user_packs_downloads
     
     def get_absolute_url(self):
         return reverse('account', args=[smart_str(self.user.username)])

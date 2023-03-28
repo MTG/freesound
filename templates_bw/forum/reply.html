@@ -1,6 +1,7 @@
 {% extends "simple_page.html" %}
 {% load bw_templatetags %}
 {% load static %}
+{% load util %}
 {% load filter_img %}
 
 {% block title %}Forums - {{forum.name}} - {{ thread.title }} - {% if editing %}Edit post{% else %}Post reply{% endif %}{% endblock %}
@@ -59,7 +60,7 @@
                                     <div class="v-spacing-2">
                                         <a href="{% url "account" post.author.username %}">{{post.author.username}}</a><span class="text-grey">, {{post.created|timesince}} ago:</span>
                                         <p>
-                                            {{post.body|replace_img|safe|linebreaks}}
+                                            {{ post.body|replace_img|safe|linebreaks|strip_unnecessary_br }}
                                         </p>
                                     </div>
                                     {% if not forloop.last %}

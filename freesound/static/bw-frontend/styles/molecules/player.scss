@@ -106,6 +106,10 @@
     color: $player-inverted-color;
     opacity: 0.95;
   }
+
+  .bw-player__ruler-indicator {
+    color: $player-inverted-color;
+  }
 }
 
 .bw-player__progress-container {
@@ -193,6 +197,12 @@
 .bw-player__similar {
   opacity: 0;
   transition: opacity 0.2s ease;
+}
+
+.bw-player__ruler-indicator {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: $player-ruler-text;
 }
 
 .bw-player {

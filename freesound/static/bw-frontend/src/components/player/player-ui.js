@@ -158,17 +158,17 @@ const createPlayButton = (audioElement, playerSize) => {
   )
   playButton.setAttribute('title', 'Play/Pause')
   playButton.classList.add('bw-player__play-btn')
-  playButton.addEventListener('click', (e) => {
+  playButton.addEventListener('click', (evt) => {
     const isPlaying = !audioElement.paused
     if (isPlaying) {
       audioElement.pause()
     } else {
-      if (simultaneousPlaybackDisallowed()){
+      if (simultaneousPlaybackDisallowed() || evt.altKey){
         stopAllPlayers();
       }
       audioElement.play()
     }
-    e.stopPropagation()
+    evt.stopPropagation()
   })
   return playButton
 }

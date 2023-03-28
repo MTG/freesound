@@ -123,11 +123,11 @@
                         </div>
                         <div class="v-spacing-top-1">
                             <div id="soundDescriptionSection" class="text-17 line-height-30">
-                                {{ sound.description|replace_img|safe|linebreaks }}
+                                {{ sound.description|replace_img|safe|linebreaks|strip_unnecessary_br }}
                             </div>
                             {% if sound.user.profile.sound_signature %}
                                 <div class="v-spacing-top-3 text-grey">
-                                    <p>{{sound.user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks}}</p>
+                                    <p>{{ sound.user.profile.sound_signature|sound_signature_replace:sound|replace_img|safe|linebreaks|strip_unnecessary_br }}</p>
                                 </div>
                             {% endif %}
                             <div class="v-spacing-top-3">
@@ -338,7 +338,7 @@
                                                     {% endif %}
                                                 </div>
                                             </div>
-                                            <p class="text-16 v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks }}</p>
+                                            <p class="text-16 v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks|strip_unnecessary_br }}</p>
                                             {% if not forloop.last %}
                                                 <div class="divider-light v-spacing-top-3 v-spacing-2"></div>
                                             {% endif %}

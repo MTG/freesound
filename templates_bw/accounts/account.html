@@ -83,7 +83,7 @@
             {% if not user.profile.is_deleted_user %}
                 <div class="bw-profile__description v-spacing-top-3">
                     {% if user.profile.about and show_about %}
-                        {{ user.profile.about|replace_img|safe|linebreaksbr }}
+                        {{ user.profile.about|replace_img|safe|linebreaks|strip_unnecessary_br }}
                     {% endif %}
                     {% if user.profile.home_page and user.profile.get_total_downloads > 0 %}
                         <div class="v-spacing-top-3">

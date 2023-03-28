@@ -596,7 +596,7 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
         raise AudioProcessingException(stdout)
 
 
-def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
+def convert_using_ffmpeg(input_filename, output_filename, force_output_format=False, mono_out=False):
     """
     converts the incoming wave file to 16bit, 44kHz pcm using fffmpeg
     unlike the convert_to_pcm function above, this one does not try to preserve
@@ -606,7 +606,9 @@ def convert_using_ffmpeg(input_filename, output_filename, mono_out=False):
     if not os.path.exists(input_filename):
         raise AudioProcessingException(f"file {input_filename} does not exist")
 
-    command = ["ffmpeg", "-y", "-i", input_filename, "-acodec", "pcm_s16le", "-ar", "44100"]
+    command = ["ffmpeg", "-y", "-i", input_filename]
+    if force_output_format:
+        command += ["-acodec", "pcm_s16le", "-ar", "44100"]
     if mono_out:
         command += ['-ac', '1']
     command += [output_filename]

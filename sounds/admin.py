@@ -89,15 +89,15 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
             queryset_or_object.process(force=True, high_priority=True)
             queryset_or_object.analyze(force=True, high_priority=True)
             messages.add_message(request, messages.INFO,
-                                 f'Sound {queryset_or_object.id} was sent to re-process and re-analyze.')
+                                 f'Sound {queryset_or_object.id} was sent to re-process.')
         else:
             for sound in queryset_or_object:
                 sound.process(force=True, high_priority=True)
                 sound.analyze(force=True, high_priority=True)
             messages.add_message(request, messages.INFO,
-                                 f'{queryset_or_object.count()} sounds were send to re-process and re-analyze.')
+                                 f'{queryset_or_object.count()} sounds were send to re-process.')
 
-    reprocess_sound.label = 'Re-process/analyze sound'
+    reprocess_sound.label = 'Re-process sound'
 
 
 

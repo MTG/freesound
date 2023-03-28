@@ -1793,6 +1793,8 @@ def update_num_downloads_on_delete(**kwargs):
             is_index_dirty=True, num_downloads=Greatest(F('num_downloads') - 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
             num_sound_downloads=Greatest(F('num_sound_downloads') - 1, 0))
+        accounts.models.Profile.objects.filter(user_id=download.sound.user_id).update(
+            num_user_sounds_downloads=Greatest(F('num_user_sounds_downloads') - 1, 0))
 
 
 @receiver(post_save, sender=Download)
@@ -1804,6 +1806,8 @@ def update_num_downloads_on_insert(**kwargs):
                 is_index_dirty=True, num_downloads=Greatest(F('num_downloads') + 1, 0))
             accounts.models.Profile.objects.filter(user_id=download.user_id).update(
                 num_sound_downloads=Greatest(F('num_sound_downloads') + 1, 0))
+            accounts.models.Profile.objects.filter(user_id=download.sound.user_id).update(
+                num_user_sounds_downloads=Greatest(F('num_user_sounds_downloads') + 1, 0))
 
 
 class PackDownload(models.Model):
@@ -1827,6 +1831,8 @@ def update_num_downloads_on_delete_pack(**kwargs):
     Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
     accounts.models.Profile.objects.filter(user_id=download.user_id).update(
         num_pack_downloads=Greatest(F('num_pack_downloads') - 1, 0))
+    accounts.models.Profile.objects.filter(user_id=download.pack.user_id).update(
+        num_user_packs_downloads=Greatest(F('num_user_packs_downloads') - 1, 0))
 
 
 @receiver(post_save, sender=PackDownload)
@@ -1836,6 +1842,8 @@ def update_num_downloads_on_insert_pack(**kwargs):
         Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
             num_pack_downloads=Greatest(F('num_pack_downloads') + 1, 0))
+        accounts.models.Profile.objects.filter(user_id=download.pack.user_id).update(
+            num_user_packs_downloads=Greatest(F('num_user_packs_downloads') + 1, 0))
 
 
 class RemixGroup(models.Model):

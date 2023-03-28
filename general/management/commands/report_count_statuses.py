@@ -197,6 +197,11 @@ class Command(LoggingBaseCommand):
 
         if not options['skip-downloads']:
             total = User.objects.all().count()
+            # NOTE: this code checks consistency in the num_sound_downloads and num_pack_downloads fields, which store
+            # the number of sounds/packs that a user has downloaded. It does not look at num_user_sounds_downloads and
+            # num_user_packs_downloads which stores how many time user's sounds and packs have been downloaded. We might
+            # want to add code in the future to sync these numbers, but this is most likely not needed as small deviations
+            # will cause no problems.
 
             # Look at number of sound downloads for all active users
             # NOTE: a possible optimization here would be to first get user candidates that have downloaded sounds.

@@ -57,6 +57,16 @@ def duration_hours(total_seconds):
     minutes = int((total_seconds % 3600) // 60)
     return f'{hours}:{minutes:02d}'
 
+@register.filter
+def formatnumber(number):
+    if 1000 <= number < 1000000:
+        return f'{number/1000:.1f}K'
+    elif 1000000 <= number:
+        return f'{number/1000000:.1f}M'
+    else:
+        return f'{number}'
+    
+
 
 @register.filter
 def in_list(value,arg):

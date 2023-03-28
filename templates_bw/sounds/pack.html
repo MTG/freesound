@@ -22,7 +22,7 @@
                                 <h1><span class="text-light-grey">Pack: </span>{{ pack.name }} </h1>
                             </div>
                         </div>
-                        <div class="middle v-spacing-top-2">{% bw_generic_stars pack.avg_rating %}<span class="text-grey h-spacing-left-1">{% if pack.num_ratings >= min_num_ratings %}Overall rating ({{ pack.num_ratings }}){% else %}Not enough ratings{% endif %}</span></div>
+                        <div class="middle v-spacing-top-2">{% bw_generic_stars pack.avg_rating %}<span class="text-grey h-spacing-left-1">{% if pack.num_ratings >= min_num_ratings %}Overall rating ({{ pack.num_ratings|formatnumber }}){% else %}Not enough ratings{% endif %}</span></div>
                         <div class="middle bw-sound-page__user v-spacing-top-5">
                             <div class="h-spacing-1">
                                 {% bw_user_avatar pack.user.profile.locations.avatar.M.url pack.user.username 40 %}
@@ -82,13 +82,13 @@
                         <div>
                             <ol>
                                 <li class="v-spacing-3">
-                                    {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black" title="This pack has {{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}"  href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1" >{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}</a>
+                                    {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black" title="This pack has {{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}"  href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1" >{{ pack.num_sounds|formatnumber }} sound{{ pack.num_sounds|pluralize }}</a>
                                 </li>
                                 <li class="v-spacing-3">
                                     {% with pack.get_total_pack_sounds_length as total_pack_sounds_length %}{% bw_icon 'clock' 'text-light-grey' %} <span class="text-19" title="The sounds of this pack together account for {{ total_pack_sounds_length|duration_hours }} hours of audio">{{ total_pack_sounds_length|duration_hours }} hours of audio</span>{% endwith %}
                                 </li>
                                 <li class="v-spacing-3">
-                                    {% bw_icon 'download' 'text-light-grey' %}<a class="text-19 bw-link--black" title="This pack has been downloaded {{ pack.num_downloads }} time{{ pack.num_downloads|pluralize }}"  href="{% url 'pack-downloaders' pack.user.username pack.id %}">{{ pack.num_downloads }} download{{ pack.num_downloads|pluralize }}</a>
+                                    {% bw_icon 'download' 'text-light-grey' %}<a class="text-19 bw-link--black" title="This pack has been downloaded {{ pack.num_downloads }} time{{ pack.num_downloads|pluralize }}"  href="{% url 'pack-downloaders' pack.user.username pack.id %}">{{ pack.num_downloads|formatnumber }} download{{ pack.num_downloads|pluralize }}</a>
                                 </li>
                             </ol>
                         </div>

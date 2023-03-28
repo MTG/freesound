@@ -4,6 +4,7 @@ import playerSettings from './settings'
 import { formatAudioDuration, playAtTime, isTouchEnabledDevice, getAudioElementDurationOrDurationProperty, stopAllPlayers, simultaneousPlaybackDisallowed } from './utils'
 import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator, onPlayerTimeUpdate } from './audio-element'
+import { rulerFrequencyMapping } from './utils'
 
 const updateProgressBarIndicator = (parentNode, audioElement, progressPercentage) => {
   const progressBar = parentNode.getElementsByClassName('bw-player__progress-bar')[0]
@@ -37,7 +38,7 @@ export const hideProgressBarIndicator = (parentNode) => {
  * @param {HTMLAudioElement} audioElement
  * @param {'small' | 'big'} playerSize
  */
-const createProgressIndicator = (parentNode, audioElement, playerSize) => {
+const createProgressIndicator = (parentNode, audioElement, playerImgNode, playerSize) => {
   const progressIndicatorContainer = document.createElement('div')
   progressIndicatorContainer.className =
     'bw-player__progress-indicator-container'
@@ -50,12 +51,31 @@ const createProgressIndicator = (parentNode, audioElement, playerSize) => {
   progressIndicatorContainer.addEventListener(
     'mousemove',
     throttle(evt => {
-      // Update playhead
-      const progressPercentage = evt.offsetX / progressIndicatorContainer.clientWidth
-      setProgressIndicator(progressPercentage * 100, parentNode)
+      if (parentNode.dataset.rulerActive) {
+        const imgHeight = playerImgNode.clientHeight;
+        const showingSpectrogram = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+        let readout = "";
+        const posY = Math.min(evt.offsetY, imgHeight);
+        const height2 = imgHeight/2;
+        if (showingSpectrogram) {
+          readout = rulerFrequencyMapping[Math.floor(posY/imgHeight * 500.0)].toFixed(2) + "hz";
+        } else {
+          if (posY == height2)
+              readout = "-inf";
+          else
+              readout = (20 * Math.log( Math.abs(posY/height2 - 1) ) / Math.LN10).toFixed(2);
+          readout = readout + " dB";
+        }
+        const rulerIndicator = playerImgNode.parentNode.getElementsByClassName('bw-player__ruler-indicator')[0];
+        rulerIndicator.innerText = readout;
+      } else {
+        // Update playhead
+        const progressPercentage = evt.offsetX / progressIndicatorContainer.clientWidth
+        setProgressIndicator(progressPercentage * 100, parentNode)
 
-      // Update selected time indicator (only in big players)
-      updateProgressBarIndicator(parentNode, audioElement, progressPercentage)
+        // Update selected time indicator (only in big players)
+        updateProgressBarIndicator(parentNode, audioElement, progressPercentage)
+      }
     }),
     50
   )
@@ -211,6 +231,7 @@ const createLoopButton = audioElement => {
 
 const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize) => {
   const controlsElement = playerImgNode.parentElement.querySelector('.bw-player__controls');
+  const topControlsElement = playerImgNode.parentElement.querySelector('.bw-player__top_controls');
   const bookmarkElement = playerImgNode.parentElement.querySelector('.bw-player__favorite');
   const similarSoundsElement = playerImgNode.parentElement.querySelector('.bw-player__similar');
   let spectrogramButton = undefined;
@@ -224,6 +245,7 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
       spectrogramButton.classList.add('text-red-important')
     }
     controlsElement.classList.add('bw-player__controls-inverted');
+    topControlsElement.classList.add('bw-player__controls-inverted');
     if (bookmarkElement !== null){
       bookmarkElement.classList.add('bw-player__controls-inverted');
     }
@@ -236,6 +258,7 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
       spectrogramButton.classList.remove('text-red-important')
     }
     controlsElement.classList.remove('bw-player__controls-inverted');
+    topControlsElement.classList.remove('bw-player__controls-inverted');
     if (bookmarkElement !== null){
       bookmarkElement.classList.remove('bw-player__controls-inverted');
     }
@@ -265,10 +288,34 @@ const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWith
   return spectogramButton
 }
 
-const createRulerButton = () => {
+const createRulerButton = (parentNode) => {
   const rulerButton = createControlButton('ruler')
   rulerButton.setAttribute('title', 'Ruler')
+  rulerButton.addEventListener('click', () => {
+    if (parentNode.dataset.rulerActive !== undefined){
+      delete parentNode.dataset.rulerActive;
+    } else {
+      parentNode.dataset.rulerActive = true;
+    }
+    const rulerIndicator = parentNode.getElementsByClassName('bw-player__ruler-indicator')[0];
+    if (parentNode.dataset.rulerActive){
+      rulerButton.classList.add('text-red-important');
+      rulerIndicator.classList.add('opacity-090');
+    } else {
+      rulerButton.classList.remove('text-red-important');
+      rulerIndicator.classList.remove('opacity-090');
+    }
+  })
+
   return rulerButton
+}
+
+const createRulerIndicator = (playerImage) => {
+  const rulerIndicator = document.createElement('div')
+  rulerIndicator.className = 'bw-player__ruler-indicator h-spacing-2'
+  rulerIndicator.innerText = '-12.45 dB'
+  rulerIndicator.style.pointerEvents = "none";  // Do that so mouse events are propagated to the progress indicator layer
+  return rulerIndicator
 }
 
 /**
@@ -296,7 +343,7 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
       playerImage.src = waveform
     }
     playerImage.alt = title
-    const progressIndicator = createProgressIndicator(parentNode, audioElement, playerSize)
+    const progressIndicator = createProgressIndicator(parentNode, audioElement, playerImage, playerSize)
     imageContainer.appendChild(playerImage)
     imageContainer.appendChild(progressIndicator)
     const progressStatus = createProgressStatus(parentNode, audioElement, playerSize, startWithSpectrum)
@@ -373,11 +420,38 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
          createStopButton(audioElement, parentNode),
          createPlayButton(audioElement, playerSize),
          createSpectogramButton(playerImgNode, parentNode, playerSize, startWithSpectrum),
-         createRulerButton()]
+         createRulerButton(parentNode)]
       : [createPlayButton(audioElement, playerSize),
          createLoopButton(audioElement)]
   controls.forEach(el => playerControls.appendChild(el))
   return playerControls
+}
+
+const createPlayerTopControls = (parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton) => {
+  const topControls = document.createElement('div')
+  topControls.className = 'bw-player__top_controls right'
+  if (showSimilarSoundsButton){
+    const similarSoundsButton = createSimilarSoundsButton(parentNode, playerImgNode)
+    topControls.appendChild(similarSoundsButton)
+  }
+  if (showBookmarkButton){
+    const bookmarkButton = createSetFavoriteButton(parentNode, playerImgNode)
+    topControls.appendChild(bookmarkButton)
+  }
+  if (playerSize == 'big'){
+    const rulerIndicator = createRulerIndicator(playerImgNode);
+    topControls.appendChild(rulerIndicator)
+  }
+
+  let startWithSpectrum = false;
+  if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
+    startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+  }
+  if (startWithSpectrum){
+    topControls.classList.add('bw-player__controls-inverted');
+  }
+
+  return topControls;
 }
 
 /**
@@ -396,13 +470,7 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
     'bw-player__favorite',
     'stop-propagation'
   )
-  let startWithSpectrum = false;
-  if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
-    startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
-  }
-  if (startWithSpectrum){
-    favoriteButtonContainer.classList.add('bw-player__controls-inverted')
-  }
+  
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
     // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
@@ -439,13 +507,7 @@ const createSimilarSoundsButton = (parentNode, playerImgNode) => {
     'bw-player__similar',
     'stop-propagation'
   )
-  let startWithSpectrum = false;
-  if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
-    startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
-  }
-  if (startWithSpectrum){
-    similarSoundsButtonContainer.classList.add('bw-player__controls-inverted')
-  }
+  
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
     // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
@@ -472,20 +534,11 @@ const createPlayer = parentNode => {
     playerSize
   )
   const playerImgNode = playerImage.getElementsByTagName('img')[0]
-  const controls = createPlayerControls(parentNode, playerImgNode, audioElement, playerSize)
   parentNode.appendChild(playerImage)
   parentNode.appendChild(audioElement)
+  const controls = createPlayerControls(parentNode, playerImgNode, audioElement, playerSize)
   playerImage.appendChild(controls)
-  const topControls = document.createElement('div')
-  topControls.className = 'bw-player__top_controls right'
-  if (showSimilarSoundsButton){
-    const similarSoundsButton = createSimilarSoundsButton(parentNode, playerImgNode)
-    topControls.appendChild(similarSoundsButton)
-  }
-  if (showBookmarkButton){
-    const bookmarkButton = createSetFavoriteButton(parentNode, playerImgNode)
-    topControls.appendChild(bookmarkButton)
-  }
+  const topControls = createPlayerTopControls(parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton)
   playerImage.appendChild(topControls)
 }
 

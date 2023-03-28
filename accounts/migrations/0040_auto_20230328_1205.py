@@ -23,6 +23,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounts', '0039_auto_20230328_1114'),
+        ('sounds', '0049_license_summary_for_describe_form'),
     ]
 
     operations = [

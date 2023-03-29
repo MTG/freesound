@@ -47,8 +47,17 @@ def tags(request, multiple_tags=None):
     if using_beastwhoosh(request):
         if multiple_tags:
             # If using BW and tags in URL, we re-write tags as query filter and redirect
-            tags_as_filter = "+".join('tag:"' + tag + '"' for tag in multiple_tags)
-            return HttpResponseRedirect(f"{reverse('tags')}?f={tags_as_filter}")
+            search_filter = "+".join('tag:"' + tag + '"' for tag in multiple_tags)
+            username_flt = request.GET.get('username_flt', None)
+            if username_flt is not None:
+                # If username is passed as a GET parameter, add it as well to the filter
+                search_filter += f'+username:{username_flt}'
+            pack_flt = request.GET.get('pack_flt', None)
+            if pack_flt is not None:
+                # If username is passed as a GET parameter, add it as well to the filter
+                search_filter += f'+grouping_pack:{pack_flt}'
+                
+            return HttpResponseRedirect(f"{reverse('tags')}?f={search_filter}")
         else:
             # Share same view code as for the search view, but set "tags mode" on
             tvars = search_view_helper(request, tags_mode=True)

@@ -1521,7 +1521,7 @@ class PackManager(models.Manager):
                         })
             p.num_sounds_unpublished_precomputed = p.sounds.count() - p.num_sounds
             p.licenses_data_precomputed = ([lid for _, lid in licenses], [lname for lname, _ in licenses])
-            p.pack_tags = [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
+            p.pack_tags = [{'name': tag, 'count': count, 'browse_url': p.browse_pack_tag_url(tag)}
                 for tag, count in Counter(tags).most_common(10)]  # See pack.get_pack_tags_bw
             p.selected_sounds_data = selected_sounds_data
             p.user_profile_locations = p.user.profile.locations()
@@ -1620,13 +1620,16 @@ class Pack(SocialModel):
         except Exception as e:
             return False
 
+    def browse_pack_tag_url(self, tag):
+        return reverse('tags', args=[tag]) + f'?pack_flt="{self.id}_{self.name}"'
+
     def get_pack_tags_bw(self):
         try:
             if hasattr(self, 'pack_tags'):
                 return self.pack_tags  # If precomputed from PackManager.bulk_query_id method
             else:
                 pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
-                return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
+                return [{'name': tag, 'count': count, 'browse_url': browse_pack_tag_url(tag)}
                         for tag, count in pack_tags_counts]
         except SearchEngineException as e:
             return []

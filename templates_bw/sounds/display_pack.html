@@ -54,7 +54,7 @@
             {% if tags %}
                 <div class=" v-spacing-top-1">
                 {% for tag in tags|slice:":5" %}
-                    {% bw_tag tag.name %}
+                    {% bw_tag tag.name 1 '' tag.browse_url %}
                 {% endfor %}
                 </div>
             {% endif %}

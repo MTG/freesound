@@ -151,23 +151,19 @@
                                     <p class="no-margins">{{sound.duration|duration}}</p>
                                 </div>
                                 <div class="col-2 text-center text-17">
-                                    <p class="text-grey no-margins">Fliesize</p>
+                                    <p class="text-grey no-margins">Filesize</p>
                                     <p class="no-margins">{{sound.filesize|filesizeformat}}</p>
                                 </div>
-                                {% if sound.bitdepth %}
                                     <div class="col-2 text-center text-17">
                                         <p class="text-grey no-margins">Samplerate</p>
                                         <p class="no-margins">{{sound.samplerate}} Hz</p>
                                     </div>
+                                {% if sound.bitdepth %}
                                     <div class="col-2 text-center text-17">
                                         <p class="text-grey no-margins">Bitdepth</p>
                                         <p class="no-margins">{{sound.bitdepth}} bit</p>
                                     </div>
                                 {% else %}
-                                    <div class="col-2 text-center text-17">
-                                        <p class="text-grey no-margins">Samplerate</p>
-                                        <p class="no-margins">-</p>
-                                    </div>
                                     <div class="col-2 text-center text-17">
                                         <p class="text-grey no-margins">Bitrate</p>
                                         <p class="no-margins">{{sound.bitrate}} kbps</p>

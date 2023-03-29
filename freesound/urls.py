@@ -142,11 +142,11 @@ urlpatterns = [
     path('p/<int:pack_id>/', sounds.views.pack_short_link, name="short-pack-link"),
 
     # old url format redirects
-    path('usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
-    path('samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),
-    path('packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
-    path('tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
-    path('forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
+    re_path(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
+    re_path(r'^samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),
+    re_path(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
+    re_path(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
+    re_path(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
 ]
 
 urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]

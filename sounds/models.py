@@ -44,6 +44,7 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import smart_str
+from django.utils.http import urlquote
 from django.utils.functional import cached_property
 from django.utils.text import Truncator, slugify
 
@@ -1620,8 +1621,11 @@ class Pack(SocialModel):
         except Exception as e:
             return False
 
+    def pack_filter_value(self):
+        return f"\"{self.id}_{urlquote(self.name)}\""
+
     def browse_pack_tag_url(self, tag):
-        return reverse('tags', args=[tag]) + f'?pack_flt="{self.id}_{self.name}"'
+        return reverse('tags', args=[tag]) + f'?pack_flt={self.pack_filter_value()}'
 
     def get_pack_tags_bw(self):
         try:

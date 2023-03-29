@@ -64,7 +64,7 @@
                                     {% endfor %}
                                 </div>
                                 <div class="v-spacing-top-4 text-center">
-                                    <a class="no-hover" href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1"><button class="btn-primary">See all sounds in this pack</button></a>
+                                    <a class="no-hover" href="{% url "sounds-search" %}?f=grouping_pack:{{ pack.pack_filter_value }}&s=Date+added+(newest+first)&g=1"><button class="btn-primary">See all sounds in this pack</button></a>
                                 </div>
                             {% else %}
                                 <div class="text-center v-spacing-top-4">
@@ -82,7 +82,7 @@
                         <div>
                             <ol>
                                 <li class="v-spacing-3">
-                                    {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black" title="This pack has {{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}"  href="{% url "sounds-search" %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1" >{{ pack.num_sounds|formatnumber }} sound{{ pack.num_sounds|pluralize }}</a>
+                                    {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black" title="This pack has {{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}"  href="{% url "sounds-search" %}?f=grouping_pack:{{ pack.pack_filter_value }}&s=Date+added+(newest+first)&g=1" >{{ pack.num_sounds|formatnumber }} sound{{ pack.num_sounds|pluralize }}</a>
                                 </li>
                                 <li class="v-spacing-3">
                                     {% with pack.get_total_pack_sounds_length as total_pack_sounds_length %}{% bw_icon 'clock' 'text-light-grey' %} <span class="text-19" title="The sounds of this pack together account for {{ total_pack_sounds_length|duration_hours }} hours of audio">{{ total_pack_sounds_length|duration_hours }} hours of audio</span>{% endwith %}

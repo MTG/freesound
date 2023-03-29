@@ -71,7 +71,7 @@
             </div>
             <div class="text-light-grey right">
                 <div title="{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}">
-                    <a href="{% url 'sounds-search' %}?f=grouping_pack:%22{{ pack.id }}_{{ pack.name }}%22&s=Date+added+(newest+first)&g=1" class="bw-link--grey-light">
+                    <a href="{% url 'sounds-search' %}?f=grouping_pack:{{ pack.pack_filter_value }}&s=Date+added+(newest+first)&g=1" class="bw-link--grey-light">
                         <span class="bw-icon-wave"></span> {{ pack.num_sounds }}
                     </a>
                 </div>

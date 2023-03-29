@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+import datetime
 import logging
 
 from django.conf import settings
@@ -86,7 +87,7 @@ class Command(LoggingBaseCommand):
         cache.set("trending_new_pack_ids", list(trending_new_pack_ids), cache_time)
 
         # Generate latest "random sound of the day" ids
-        recent_random_sound_ids = [sd.sound_id for sd in SoundOfTheDay.objects.order_by('-date_display')[1:13]]
+        recent_random_sound_ids = [sd.sound_id for sd in SoundOfTheDay.objects.filter(date_display__lt=datetime.datetime.today()).order_by('-date_display')[:12]]
         cache.set("recent_random_sound_ids", list(recent_random_sound_ids), cache_time)
 
         # Add total number of sounds in Freesound to the cache

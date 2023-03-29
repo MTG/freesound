@@ -122,6 +122,28 @@
                             </div>
                         </div>
                     </section>
+                    <hr />
+                    {% endcache %}
+                {% endif %}
+
+                {% if recent_random_sound_ids %}
+                {% cache 300 bw_front_page_recent_sounds_of_the_day %}
+                    <section class="v-spacing-3">
+                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds created in the last week">Recent random sounds of the day</h3>
+                        <div class="bw-carousel-container" data-carousel-type="adaptive">
+                            <div class="bw-carousel-wrapper" style="margin-left: -15px">
+                                <div class="bw-carousel with-dots dots-distance-1">
+                                    <div class="row no-margins no-wrap">
+                                    {% for sound_id in recent_random_sound_ids %}
+                                        <div class="col-6 col-md-4">
+                                            {% display_sound_small sound_id %}
+                                        </div>
+                                    {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                     {% endcache %}
                 {% endif %}
 

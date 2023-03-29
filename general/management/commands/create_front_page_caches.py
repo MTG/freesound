@@ -27,7 +27,7 @@ from django.template.loader import render_to_string
 from django.core.cache import cache
 
 from donations.models import Donation
-from sounds.models import Download, Pack, Sound
+from sounds.models import Download, Pack, Sound, SoundOfTheDay
 from sounds.views import get_n_weeks_back_datetime
 from utils.management_commands import LoggingBaseCommand
 
@@ -83,8 +83,11 @@ class Command(LoggingBaseCommand):
         trending_new_pack_ids = Pack.objects.select_related('user') \
             .filter(created__gte=last_week,  num_sounds__gt=0).exclude(is_deleted=True) \
             .order_by("-num_downloads").values_list('id', flat=True)[0:12]
-        print(trending_new_pack_ids,Pack.objects.get(id=trending_new_pack_ids[0]).num_sounds )
         cache.set("trending_new_pack_ids", list(trending_new_pack_ids), cache_time)
+
+        # Generate latest "random sound of the day" ids
+        recent_random_sound_ids = [sd.sound_id for sd in SoundOfTheDay.objects.order_by('-date_display')[1:13]]
+        cache.set("recent_random_sound_ids", list(recent_random_sound_ids), cache_time)
 
         # Add total number of sounds in Freesound to the cache
         total_num_sounds = Sound.public.all().count()

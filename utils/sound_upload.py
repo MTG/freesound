@@ -84,6 +84,15 @@ def get_duration_from_processing_before_describe_files(audio_file_path):
         return 0.0
 
 
+def get_samplerate_from_processing_before_describe_files(audio_file_path):
+    info_file_path = os.path.join(get_processing_before_describe_sound_folder(audio_file_path), 'info.json')
+    try:
+        with open(info_file_path) as f:
+            return float(json.load(f)['samplerate'])
+    except Exception as e:
+        return 44100.0
+
+
 def get_processing_before_describe_sound_folder(audio_file_path):
     """
     Get the path to the folder where the sound files generated during procesing-before-describe

@@ -72,7 +72,8 @@ from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 from utils.username import redirect_if_old_username_or_404
 from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsException, CantMoveException, \
-    clean_processing_before_describe_files, get_processing_before_describe_sound_base_url, get_duration_from_processing_before_describe_files
+    clean_processing_before_describe_files, get_processing_before_describe_sound_base_url, get_duration_from_processing_before_describe_files, \
+    get_samplerate_from_processing_before_describe_files
 
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
@@ -738,6 +739,7 @@ def edit_and_describe_sounds_helper(request):
                 processing_before_describe_base_url = get_processing_before_describe_sound_base_url(audio_file_path)
                 file_data = {
                     'duration': duration,
+                    'samplerate': get_samplerate_from_processing_before_describe_files(audio_file_path),
                     'preview_mp3': processing_before_describe_base_url + 'preview.mp3',
                     'preview_ogg': processing_before_describe_base_url + 'preview.ogg',
                     'wave': processing_before_describe_base_url + 'wave.png',

@@ -9,13 +9,17 @@ const followTextPlural = `Follow these tags`;
 const followTags = (tags, button) => {
     const url = button.dataset.followTagsUrl;
     button.disabled = true;
-    makePostRequest(url, {}, () => {
-        // Tags followed successfully, show feedback
+    makePostRequest(url, {}, (responseText) => {        
         button.disabled = false;
-        button.innerText = tags.length > 1 ? unfollowTextPlural: unfollowText;
-        button.classList.remove('btn-inverse');
-        button.classList.add('btn-secondary');
-        showToast(`Started following tag(s): ${tags.join(', ')}`);
+        if (responseText.indexOf('Log in to Freesound') == -1){
+            // Tags followed successfully, show feedback
+            button.innerText = tags.length > 1 ? unfollowTextPlural: unfollowText;
+            button.classList.remove('btn-inverse');
+            button.classList.add('btn-secondary');
+            showToast(`Started following tag(s): ${tags.join(', ')}`);
+        } else {
+            showToast(`You need to log in before following any tag(s)`);
+        }        
     }, () => {
         // Unexpected errors happened while processing request: show errors
         showToast('Some errors occurred while following tags');
@@ -25,13 +29,17 @@ const followTags = (tags, button) => {
 const unfollowTags = (tags, button) => {
     const url = button.dataset.unfollowTagsUrl;
     button.disabled = true;
-    makePostRequest(url, {}, () => {
-        // Tags followed successfully, show feedback
+    makePostRequest(url, {}, (responseText) => {
         button.disabled = false;
-        button.innerText = tags.length > 1 ? followTextPlural: followText;
-        button.classList.remove('btn-secondary');
-        button.classList.add('btn-inverse');
-        showToast(`Stopped following tag(s): ${tags.join(', ')}`);
+        if (responseText.indexOf('Log in to Freesound') == -1){
+        // Tags followed successfully, show feedback
+            button.innerText = tags.length > 1 ? followTextPlural: followText;
+            button.classList.remove('btn-secondary');
+            button.classList.add('btn-inverse');
+            showToast(`Stopped following tag(s): ${tags.join(', ')}`);
+        } else {
+            showToast(`You need to log in before following any tag(s)`);
+        }      
     }, () => {
         // Unexpected errors happened while processing request: show errors
         showToast('Some errors occurred while unfollowing tags');

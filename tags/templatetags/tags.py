@@ -56,5 +56,6 @@ def bw_follow_tags_widget(context):
     return {
         'follow_tags_url': follow_tags_url,
         'unfollow_tags_url': unfollow_tags_url,
-        'show_unfollow_button': show_unfollow_button 
+        'show_unfollow_button': show_unfollow_button,
+        'is_authenticated': request.user.is_authenticated
     }

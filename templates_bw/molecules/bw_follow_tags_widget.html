@@ -1,1 +1,1 @@
-<button {% if not request.user.is_authenticated %}disabled{% endif %} class="follow-tags-button" data-follow-tags-url="{{ follow_tags_url }}" data-unfollow-tags-url="{{ unfollow_tags_url }}" data-initial-should-unfollow="{% if show_unfollow_button %}true{% else %}false{% endif %}"></button>
+<button {% if not is_authenticated %}disabled{% endif %} class="follow-tags-button" data-follow-tags-url="{{ follow_tags_url }}" data-unfollow-tags-url="{{ unfollow_tags_url }}" data-initial-should-unfollow="{% if show_unfollow_button %}true{% else %}false{% endif %}"></button>

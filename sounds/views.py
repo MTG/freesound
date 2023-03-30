@@ -786,7 +786,7 @@ def edit_and_describe_sounds_helper(request):
                             sources=','.join([str(item) for item in sound_sources_ids]))
             else:
                 sound_sources_ids = []
-                initial = dict(name=element.name)
+                initial = dict(name=os.path.splitext(element.name)[0])
                 if preselected_license:
                     initial['license'] = preselected_license
                 if preselected_pack:
@@ -798,6 +798,8 @@ def edit_and_describe_sounds_helper(request):
                 hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
                 user_packs=Pack.objects.filter(user=request.user if describing else element.user).exclude(is_deleted=True))
             form.sound_sources_ids = sound_sources_ids
+            if describing:
+                form.audio_filename = element.name
             forms.append(form)  
 
     tvars = {

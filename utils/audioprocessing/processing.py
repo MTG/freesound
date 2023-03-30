@@ -463,7 +463,7 @@ class NoSpaceLeftException(Exception):
     pass
 
 
-def convert_to_pcm(input_filename, output_filename, use_ffmpeg_for_unknown_type=True):
+def convert_to_pcm(input_filename, output_filename, use_ffmpeg_for_unknown_type=False):
     """
     converts any audio file type to pcm audio
     """

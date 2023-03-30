@@ -94,6 +94,8 @@ class License(OrderedModel):
             return 'nc'
         elif 'attribution' in license_name.lower():
             return 'by'
+        elif 'sampling' in license_name.lower():
+            return 'splus'
         return 'cc'
     
     @property

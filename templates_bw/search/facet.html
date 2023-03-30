@@ -32,8 +32,8 @@
             {% for f in facet %}
                 <li class="bw-search__filter-value v-padding-1">
                     <div class="bw-search__filter-name">
-                        <a href="{{ f.add_filter_url }}" class="bw-link--black">{{ f.display_name }}</a>
-                        <div class="bw-search__filter-count">({{ f.count }})</div>
+                        <a href="{{ f.add_filter_url }}" class="bw-link--black">{% if f.icon %}{% bw_icon f.icon %}{% endif %}{{ f.display_name }}</a>
+                        <div class="bw-search__filter-count padding-left-1">({{ f.count }})</div>
                     </div>
                 </li>
             {% endfor %}

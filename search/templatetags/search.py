@@ -23,6 +23,7 @@ from past.utils import old_div
 from django import template
 from urllib.parse import quote_plus
 
+from sounds.models import License
 from utils.frontend_handling import using_beastwhoosh
 from utils.tags import annotate_tags
 
@@ -74,6 +75,11 @@ def display_facet(context, flt, facet, facet_type, title=""):
             max_count = max([element['count'] for element in filtered_facet])
             for element in filtered_facet:
                 element['weight'] = old_div((1.0 * element['count']), max_count)
+
+        # In BW we also add icons to license facets
+        if flt == 'license':
+            for element in filtered_facet:
+                element['icon'] = License.bw_cc_icon_name_from_license_name(element['display_name'])
 
     context.update({
         "facet": filtered_facet,

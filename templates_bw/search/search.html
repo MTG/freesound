@@ -226,14 +226,14 @@
                             {% display_facet "license" facets.license "list" "Licenses" %}
                         {% endif %}
 
-                        {% if facets.type and facets.type|length > 1 %}
-                            {% display_facet "type" facets.type "list" "Type" %}
-                        {% endif %}
-
                         {% if not tags_mode %}
                             {% if facets.tag and facets.tag|length > 1 %}
                                 {% display_facet "tag" facets.tag "cloud" "Related Tags" %}
                             {% endif %}
+                        {% endif %}
+
+                        {% if facets.type and facets.type|length > 1 %}
+                            {% display_facet "type" facets.type "list" "Type" %}
                         {% endif %}
 
                         {% if facets.samplerate and facets.samplerate|length > 1 %}

@@ -30,7 +30,9 @@ button {
   @include rounded-button(transparent, $inverse-button-hover, $inverse-button-font-color);
   color: $navy-grey;
   @include active() {
-    color: $inverse-button-hover-font-color;
+    &:not(:disabled){
+      color: $inverse-button-hover-font-color;
+    }
   }
   border: 1px solid $navy-light-grey;
 }

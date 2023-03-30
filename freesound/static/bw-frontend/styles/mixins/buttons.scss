@@ -58,7 +58,9 @@
   }
 
   @include active() {
-    background-color: $hover-color;
+    &:not(:disabled){
+      background-color: $hover-color;
+    }
   }
 
   &:disabled {
@@ -77,7 +79,9 @@
   @include border-bottom-on-hover;
 
   @include active() {
-    color: $hover-color;
+    &:not(:disabled){
+      color: $hover-color;
+    }
 
     &:focus {
       outline-width: 5px;

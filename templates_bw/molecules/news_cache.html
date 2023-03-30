@@ -8,15 +8,17 @@
             <div class="bw-carousel-wrapper">
                 <div class="bw-carousel with-dots dots-distance-4">
                     {% for entry in rss.entries|slice:":5" %}
-                        <div class="padding-5">
-                            <h2 class="text-center v-spacing-2">{{entry.title|truncatewords:10}}</h2>
-                            <p class="text-grey text-center">
-                                {{entry.published_parsed|tuple_to_time|date:"F jS, Y"}}
-                                {{entry.summary|safe|striptags|slice:":-24"|truncatewords:100}}
-                            </p>
-                            <div class="center">
-                                <a class="no-hover btn-primary h-spacing-2" href="{{ entry.link }}">Read more</a>
-                                <a class="no-hover btn-inverse" href="https://blog.freesound.org">Go to the blog</a>
+                        <div class="padding-4 middle">
+                            <div>
+                                <h2 class="text-center v-spacing-2">{{entry.title|truncatewords:10}}</h2>
+                                <p class="text-grey text-center">
+                                    {{entry.published_parsed|tuple_to_time|date:"F jS, Y"}}<br>
+                                    {{entry.summary|safe|striptags|slice:":-24"|truncatewords:100}}
+                                </p>
+                                <div class="center">
+                                    <a class="no-hover btn-primary h-spacing-2" href="{{ entry.link }}">Read more</a>
+                                    <a class="no-hover btn-inverse" href="https://blog.freesound.org">Go to the blog</a>
+                                </div>
                             </div>
                         </div>
                     {% endfor %}

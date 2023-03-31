@@ -97,6 +97,9 @@
 		]
 	},
 	"settings": {
-		"python.defaultInterpreterPath": ".venv/bin/python"
+		"python.defaultInterpreterPath": ".venv/bin/python",
+		"files.associations": {
+			"*.html": "django-html"
+		}
 	}
 }

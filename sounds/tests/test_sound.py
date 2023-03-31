@@ -660,7 +660,7 @@ class SoundTemplateCacheTests(TestCase):
         if frontend == settings.FRONTEND_NIGHTINGALE:
             return [get_template_cache_key('display_sound', self.sound.id, is_authenticated, is_explicit)]
         else:
-            return [get_template_cache_key('bw_display_sound', self.sound.id, player_size)]
+            return [get_template_cache_key('bw_display_sound', self.sound.id, player_size, is_authenticated)]
 
     def _assertCacheAbsent(self, cache_keys):
         for cache_key in cache_keys:

@@ -58,9 +58,8 @@ def context_extra(request):
         'num_pending_sounds': num_pending_sounds,
         'num_messages': num_messages,
         'load_anniversary_content': load_anniversary_content,
-        'next_path': request.GET.get('next', request.get_full_path()),  # Used for beast whoosh login modal only
+        'next_path': request.GET.get('next', request.get_full_path()),
         'login_form': BwFsAuthenticationForm(),  # Used for beast whoosh login modal only
-        'registration_form': BwRegistrationForm(), # Used for beast whoosh login modal only
         'problems_logging_in_form': BwProblemsLoggingInForm(),  # Used for beast whoosh login modal only
         'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', False)  # Determine the user's system preference for dark/light theme
     }

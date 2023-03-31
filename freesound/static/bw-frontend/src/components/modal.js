@@ -1,4 +1,4 @@
-import {initRegistrationForm, initProblemsLoggingInForm} from "../pages/loginAndRegistration";
+import {initRegistrationForm, initProblemsLoggingInForm, initLoginForm} from "../pages/loginAndRegistration";
 import {showToast, showToastNoTimeout, dismissToast} from "./toast";
 
 const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
@@ -16,17 +16,52 @@ const handleDismissModal = modalContainerId => {
   }
 };
 
-const handleModal = modalContainerId => {
-  const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
+
+const initLoginAndRegistrationModalLinks = (modalContainerId) => {
   const modalLinks = [
     document.querySelectorAll('[data-link="forgottenPasswordModal"]'),
     document.querySelectorAll('[data-link="loginModal"]'),
     document.querySelectorAll('[data-link="registerModal"]'),
   ];
 
+  modalLinks.forEach(links => {
+    links.forEach(link => {
+      link.addEventListener('click', () => {
+        handleDismissModal(modalContainerId);
+        handleModal(link.dataset.link);
+      });
+    });
+  });
+}
+
+const initModalDismissButton = (modalContainerElement) => {
+  const modalDismiss = [...modalContainerElement.querySelectorAll('[data-dismiss="modal"]')];
+  modalDismiss.forEach(dismiss => {
+    dismiss.addEventListener('click', () => handleDismissModal(modalContainerElement.id));
+  });
+}
+
+const handleModal = modalContainerId => {
+  if (modalContainerId === "registerModal"){
+    handleGenericModal('/home/register/', () => {
+      const modalContainer = document.getElementById(modalContainerId);
+      initLoginAndRegistrationModalLinks(modalContainerId);
+      const registerModalForm = modalContainer.querySelector("#registerModalForm");
+      initRegistrationForm(registerModalForm);
+      // No need to init the dismiss button here because it is already done by "handleGenericModal"
+    }, () => {}, true, false);
+    return;
+  }
+
   const modalContainer = document.getElementById(modalContainerId);
   modalContainer.classList.add('show');
   modalContainer.style.display = 'block';
+
+  // Activate links inside the modal that toggle other modals
+  initLoginAndRegistrationModalLinks(modalContainerId);
+
+  // Activate modal dismiss button
+  initModalDismissButton(modalContainer);
 
   // In case the modal we are activating contains some specific forms, carry out some special init actions
   const registerModalForm = modalContainer.querySelector("#registerModalForm");
@@ -37,36 +72,28 @@ const handleModal = modalContainerId => {
   if (problemsLoggingInForm !== null){
     initProblemsLoggingInForm(problemsLoggingInForm);
   }
-
-  modalDismiss.forEach(dismiss => {
-    dismiss.addEventListener('click', () => handleDismissModal(modalContainerId));
-  });
-
-  modalLinks.forEach(links => {
-    links.forEach(link => {
-      link.addEventListener('click', () => {
-        handleDismissModal(modalContainerId);
-        handleModal(link.dataset.link);
-      });
-    });
-  });
+  const loginForm = modalContainer.querySelector("#loginForm");
+  if (loginForm !== null){
+    initLoginForm(loginForm);
+  }
 };
 
 modals.forEach(modal => {
   modal.addEventListener('click', () => handleModal(modal.dataset.target.substring(1)));
 });
 
-if (registrationParam)  {
-  handleModal('registerModal');
-}
 
-if (feedbackRegistrationParam) {
-  handleModal('feedbackRegistration');
-}
-
-if (problemsLoggingInParam) {
-  handleModal('forgottenPasswordModal');
-}
+document.addEventListener("DOMContentLoaded", () => {
+  if (registrationParam)  {
+    handleModal('registerModal');
+  }
+  if (feedbackRegistrationParam) {
+    handleModal('feedbackRegistration');
+  }
+  if (problemsLoggingInParam) {
+    handleModal('forgottenPasswordModal');
+  }
+});
 
 // Confirmation modal
 const confirmationModalButtons = [...document.querySelectorAll('[data-toggle="confirmation-modal"]')];

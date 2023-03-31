@@ -40,17 +40,21 @@ const customRegistrationSubmit = (event) => {
                 window.location.href = data.redirectURL;
             }  else {
                 // There were errors in the registration form. In that case the response are the HTML elements of the
-                // form (including error warnings) and we should re-create it
-
-                // Close current modal and remove element
-                handleDismissModal('registerModal');
-                registerModalElement.remove();
-
-                // Create new modal element and place it adjacent to newPasswordModal
-                document.getElementById('newPasswordModal').insertAdjacentHTML('afterend', req.responseText);
-
-                // Open the newly created modal
-                handleModal('registerModal');
+                // form (including error warnings) and we should replace current modal HTML with this one (and re-init all needed
+                // javascript)
+                const genericModalWrapper = registerModalElement.parentNode;
+                genericModalWrapper.innerHTML = req.responseText;
+                const modalContainerId = genericModalWrapper.getElementsByClassName('modal')[0].id;
+                const modalContainer = document.getElementById(modalContainerId);
+                modalContainer.classList.add('show');
+                modalContainer.style.display = 'block';
+                const registerModalForm = modalContainer.querySelector("#registerModalForm");
+                initRegistrationForm(registerModalForm);
+                const modalDismiss = genericModalWrapper.querySelectorAll('[data-dismiss="modal"]');
+                modalDismiss.forEach(dismiss => {
+                    dismiss.addEventListener('click', () => {
+                        handleDismissModal('registerModal');});
+                });
             }
         }
     };
@@ -107,6 +111,19 @@ const customProblemsLoggingInSubmit = (event) => {
 };
 
 const initRegistrationForm = (registrationForm) => {
+
+    // Load grecaptcha script tag (needed if this is loaded ajax)
+    var scriptTag = registrationForm.getElementsByTagName('script')[0];
+    var file = scriptTag.getAttribute('src');
+    var fileref = document.createElement('script');
+    fileref.setAttribute('type', 'text/javascript');
+    fileref.setAttribute('src', file);
+    document.getElementsByTagName('head').item(0).appendChild(fileref);
+
+    // Add "next" parameter to the form action so users are redirected to the same page when registration finishes
+    const pathWithParameters = window.location.pathname + window.location.search;
+    registrationForm.action = registrationForm.action + '&next=' + encodeURI(pathWithParameters);
+
     // Initialize checkboxes (registration form contains checkboxes)
     addCheckboxVisibleElements();
 
@@ -135,6 +152,16 @@ const initRegistrationForm = (registrationForm) => {
     }
 };
 
+const initLoginForm = (loginForm) => {
+    // Set "next" value in the hidden "next" input so users are redirected to the same page when login finishes
+    const pathWithParameters = window.location.pathname + window.location.search;
+    const loginNextHiddenInput = loginForm.querySelectorAll('input[name="next"]')[0];
+    if (!loginNextHiddenInput.value){
+        // Only if next value is not yet set, set it automatically
+        loginNextHiddenInput.value = pathWithParameters;
+    }
+};
+
 const initProblemsLoggingInForm = (problemsLoggingInForm) => {
     // Assign custom onsubmit method which will submit the form via AJAX and show notification
     problemsLoggingInForm.onsubmit = (event) => {
@@ -143,4 +170,4 @@ const initProblemsLoggingInForm = (problemsLoggingInForm) => {
 };
 
 
-export {initRegistrationForm, initProblemsLoggingInForm};
+export {initRegistrationForm, initProblemsLoggingInForm, initLoginForm};

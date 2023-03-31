@@ -47,6 +47,10 @@ const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     const modalElement = document.getElementById(`bookmarkSoundModal`);
     const selectElement = modalElement.getElementsByTagName('select')[0];
     const wrapper = document.createElement('div');
+    if (selectElement === undefined){
+        // If no select element, the modal has probably loaded for an unauthenticated user
+        return;
+    }
     selectElement.parentNode.insertBefore(wrapper, selectElement.parentNode.firstChild);
     const label = document.createElement('div');
     label.innerHTML = "Select a bookmark category:"

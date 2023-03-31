@@ -322,7 +322,8 @@ def registration(request):
                 # will then take this URL and redirect the user.
                 next_param = request.GET.get('next', None)
                 if next_param is not None:
-                    return JsonResponse({'redirectURL': next_param + '?feedbackRegistration=1'})
+                    return JsonResponse({'redirectURL': next_param + '?feedbackRegistration=1' if '?' not in next_param \
+                                        else next_param + '&feedbackRegistration=1'})
                 else:
                     return JsonResponse({'redirectURL': reverse('front-page') + '?feedbackRegistration=1'})
             else:
@@ -340,13 +341,14 @@ def registration(request):
     if using_beastwhoosh(request):
         # In beastwhoosh we don't have a dedicated registration page, redirect to front-page and auto-open the
         # registration modal
-        return HttpResponseRedirect(f"{reverse('front-page')}?registration=1")
+        #return HttpResponseRedirect(f"{reverse('front-page')}?registration=1")
+        return render(request, 'accounts/modal_registration.html', {'registration_form': form})
     else:
         return render(request, 'accounts/registration.html', {'form': form})
 
 
 def activate_user(request, username, uid_hash):
-    # NOTE: in these views we overwrite "next_path" variable from the context processor so we make sure that if the
+    # NOTE: in these views we set "next_path" variable so we make sure that if the
     # login modal is used the user will be redirected to the front-page instead of that same page
 
     try:

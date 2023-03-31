@@ -68,6 +68,7 @@
         if (scale < 1){
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale);
         }
+        const userIsAuthenticated = {{ request.user.is_authenticated|yesno:'true,false' }};
     </script>
     <script src="{% static 'bw-frontend/dist/index.js' %}"></script>
     {% block extrabody %}

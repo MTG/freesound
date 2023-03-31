@@ -78,4 +78,8 @@
   top:120px;
 }
 
+.compensate-col-gutter {
+  margin-left: -$grid-gutter-width / 2;
+}
+
 @include make-grid-columns();

@@ -2,8 +2,8 @@
   margin-left: auto;
   margin-right: auto;
   max-width: 780px;
-  padding-top: 140px;
-  padding-bottom: 30px;
+  padding-top: 110px;
+  padding-bottom: 10px;
 
   header {
     text-align: center;
@@ -16,6 +16,8 @@
 
 .bw-front__hero-container--search {
   margin-top: 50px;
+  width: 90%;
+  margin-left: 5%;
 
   .input-wrapper {
     height: 50px;

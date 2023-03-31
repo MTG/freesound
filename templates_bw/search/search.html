@@ -16,14 +16,14 @@
 
     <div class="container">
         {% if error_text %}
-            <div class="navbar-space-filler v-spacing-3 v-spacing-top-3">
+            <div class="navbar-space-filler v-spacing-3 v-spacing-top-2">
                 <div class="v-spacing-6 v-spacing-top-4">
                     <p class="v-spacing-4">{{ error_text }}</p>
                     <p><button onclick="window.history.back();" class="btn-primary">Go back</button></p>
                 </div>
             </div>
         {% else %}
-            <div class="navbar-space-filler v-spacing-3 v-spacing-top-3">
+            <div class="navbar-space-filler v-spacing-3 v-spacing-top-2">
                 <form method="get" id="search_form" action="{% if not tags_mode %}{% url 'sounds-search' %}{% else %}{% url 'tags' %}{% endif %}">
 
                     <div class="v-spacing-5 {% if tags_mode %}display-none{% endif %}">

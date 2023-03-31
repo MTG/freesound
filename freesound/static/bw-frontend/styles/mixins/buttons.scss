@@ -40,10 +40,10 @@
 }
 
 @mixin rounded-button($color, $hover-color, $font-color) {
-  padding-top: 14px;
-  padding-right: 30px;
-  padding-bottom: 14px;
-  padding-left: 30px;
+  padding-top: 13px;
+  padding-right: 28px;
+  padding-bottom: 13px;
+  padding-left: 28px;
   border-radius: $button-border-radius;
   background-color: $color;
   color: $font-color;

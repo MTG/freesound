@@ -90,12 +90,12 @@ $navbar-height-mobile: 64px;
 .bw-nav__action {
   display: flex;
   align-items: center;
-  margin-left: 25px;
+  margin-left: 21px;
 
   @include lg-and-above {
     margin-left: 0px;
     &:not(:last-child) {
-      margin-right: 20px;
+      margin-right: 16px;
     }
   }
 

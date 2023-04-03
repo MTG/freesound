@@ -21,7 +21,7 @@ let currentBoxTrLon;
 let centerLat;
 let centerLon;
 let zoom;
-const showSearch = (mapCanvas.hasAttribute('mapShowSearch') && mapCanvas.getAttribute('mapShowSearch') === 'true');
+const showSearch = (mapCanvas.dataset.mapShowSearch !== undefined && mapCanvas.dataset.mapShowSearch === 'true');
 const showStyleSelector = true;
 const clusterGeotags = true;
 const showMapEvenIfNoGeotags = true;

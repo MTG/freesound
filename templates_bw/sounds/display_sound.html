@@ -13,13 +13,39 @@
         {% endif %}
         <div class="v-spacing-3 overfow-hidden {% if is_explicit %}blur{% endif %}">
             {% include "sounds/player.html" %}
-            {% cache 43200 bw_display_sound sound.id player_size %}
-            <h5 class="ellipsis line-height-percentage-150 v-spacing-top-1">
-                <a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{ sound.original_filename }}</a>
-            </h5>
+            {% cache 43200 bw_display_sound sound.id player_size is_authenticated %}
+            <div class="between line-height-percentage-150 v-spacing-top-1">
+                <h5 class="ellipsis">
+                    <a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{ sound.original_filename }}</a>
+                </h5>
+                <div class="right text-light-grey">                    
+                    {% if sound.pack_id %}
+                    <div class="h-spacing-left-1" title="Pack: {{ sound.pack_name }}">
+                        <a href="{% url 'pack' sound.username sound.pack_id %}" class="bw-link--grey-light">
+                            <span class="bw-icon-stack"></span>
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if sound.geotag_id %}
+                    <div class="h-spacing-left-1" title="Geotag: {{ sound.get_geotag_name }}">
+                        <a href="{% url 'sound-geotag' sound.username sound.id %}" class="bw-link--grey-light">
+                            <span class="bw-icon-pin"></span>
+                        </a>
+                    </div>
+                    {% endif %}
+                    <div class="h-spacing-left-1" title="License: {{ sound.license_name }}">
+                        <span class="bw-icon-{{ sound.license_bw_icon_name }}"></span>
+                    </div>
+                    <div class="h-spacing-left-1" title="Average rating: {% if sound.num_ratings >= min_num_ratings %}{{ sound.avg_rating }}{% else %}Not enough ratings{% endif %}">
+                        <span class="bw-icon-star {% if sound.num_ratings < min_num_ratings %}opacity-050{% endif %}"></span>{% if sound.num_ratings >= min_num_ratings %} {{ sound.avg_rating_0_5|floatformat:1}}{% endif %}
+                    </div>
+                </div>
+            </div>
             <div>
                 <a href="{% url 'account' sound.username %}">{{ sound.username|truncate_string:15 }}</a>
-                <br><span class="text-grey">{{ sound.created|timesince }} ago</span>
+            </div>
+            <div>
+                <span class="text-grey">{{ sound.created|timesince }} ago</span>
             </div>
             <div class="v-spacing-top-1 text-grey overflow-hidden" style="height:52px;">
                 {{ sound.description|striptags|safe|truncatechars_html:55 }}
@@ -51,12 +77,12 @@
                 <div class="col-4 col-sm-3">
                     {% include "sounds/player.html" %}
                 </div>
-                {% cache 43200 bw_display_sound sound.id player_size %}
+                {% cache 43200 bw_display_sound sound.id player_size is_authenticated %}
                 <div class="col-8 col-sm-9">
                     <div class="padding-left-3">
                         <div class="between">
                             <div>
-                                <h5 class="v-spacing-1"><a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}" title="{{ sound.original_filename }}">{{ sound.original_filename|truncate_string:45 }}</a></h5>
+                                <h5 class="v-spacing-1"><a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}" title="{{ sound.original_filename }}">{{ sound.original_filename|truncate_string:52 }}</a></h5>
                             </div>
                             <div class="text-grey text-right between">
                                 <div style="min-width:130px;" class="top right">{% bw_sound_stars sound %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}({{ sound.num_ratings|formatnumber }}){% endif %}</span></div>
@@ -142,7 +168,7 @@
         {% comment %}This size is used in geotags map infowindows. If uses a small player and also shows some metadatata{% endcomment %}
         <div class="v-spacing-1 overfow-scroll">
             {% include "sounds/player.html" %}
-            {% cache 43200 bw_display_sound sound.id player_size %}
+            {% cache 43200 bw_display_sound sound.id player_size is_authenticated %}
             <h5 class="v-spacing-top-1">
                 <a href="#"></a>{% comment %}Placing an empty anchor here is a workaround to prevent mapbox infowindows to focus first anchor found{% endcomment %}
                 <a target="_blank" class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{ sound.original_filename|truncate_string:20 }}</a>

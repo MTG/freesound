@@ -37,7 +37,7 @@
                     {% if latest_sounds %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4">Latest additions</h3>
-                        <div class="bw-carousel-container" data-carousel-type="adaptive">
+                        <div class="bw-carousel-container" {% if latest_sounds|length > 3 %}data-carousel-type="adaptive"{% endif %}>
                             <div class="bw-carousel-wrapper compensate-col-gutter">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     <div class="row no-margins no-wrap">
@@ -64,7 +64,7 @@
                     {% cache 300 bw_front_page_trending_sounds %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds during the last week">Trending sounds</h3>
-                        <div class="bw-carousel-container" data-carousel-type="adaptive">
+                        <div class="bw-carousel-container" {% if trending_sound_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
                             <div class="bw-carousel-wrapper compensate-col-gutter">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     <div class="row no-margins no-wrap">
@@ -86,7 +86,7 @@
                     {% cache 300 bw_front_page_trending_new_sounds %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
-                        <div class="bw-carousel-container" data-carousel-type="adaptive">
+                        <div class="bw-carousel-container" {% if trending_new_sound_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
                             <div class="bw-carousel-wrapper compensate-col-gutter">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     <div class="row no-margins no-wrap">
@@ -108,7 +108,7 @@
                     {% cache 300 bw_front_page_trending_new_packs %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded pack created in the last week">Trending new packs</h3>
-                        <div class="bw-carousel-container" data-carousel-type="adaptive">
+                        <div class="bw-carousel-container" {% if trending_new_pack_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
                             <div class="bw-carousel-wrapper compensate-col-gutter">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     <div class="row no-margins no-wrap">
@@ -130,7 +130,7 @@
                 {% cache 300 bw_front_page_recent_sounds_of_the_day %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds created in the last week">Recent random sounds of the day</h3>
-                        <div class="bw-carousel-container" data-carousel-type="adaptive">
+                        <div class="bw-carousel-container" {% if recent_random_sound_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
                             <div class="bw-carousel-wrapper compensate-col-gutter">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     <div class="row no-margins no-wrap">
@@ -177,7 +177,8 @@
                 {% cache 300 bw_front_page_random_sound %}
                 {% if random_sound %}  
                 <section class="v-spacing-4">
-                    <h4 class="v-spacing-1 display-none d-lg-block">Sound of the day</h4>
+                    <h4 class="v-spacing-1 display-none d-xl-block">Random sound of the day</h4>
+                    <h4 class="v-spacing-1 display-none d-lg-block d-xl-none">Sound of the day</h4>
                     <h4 class="v-spacing-1 d-lg-none">Random sound of the day</h4>
                     <p class="text-grey v-spacing-2">Can you guess the random sound of the day?</p>
                     {% with random_sound as sound %}

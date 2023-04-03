@@ -16,7 +16,7 @@
             <div class="v-spacing-4">Please, login to Freesound before bookmarking any sounds.</div>
             <button class="btn-primary" data-dismiss="modal">Ok</button>
         </div>
-    {% elif not sound.moderated_and_processed_ok %}
+    {% elif not sound_is_moderated_and_processed_ok %}
         <div class="text-center">
             <h5 class="v-spacing-5">Can't bookmark sound</h5>
         </div>

@@ -210,7 +210,7 @@ def front_page(request):
 
     current_forum_threads = get_hot_threads(n=10)
 
-    num_latest_sounds = 5 if not using_beastwhoosh(request) else 9
+    num_latest_sounds = 5 if not using_beastwhoosh(request) else 12
     latest_sounds = Sound.objects.latest_additions(num_sounds=num_latest_sounds, period_days=2)
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:

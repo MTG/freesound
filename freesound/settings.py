@@ -758,12 +758,14 @@ APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
     0: ['0/minute', '0/day', '0/hour'],  # Client 'disabled'
     1: ['60/minute', '2000/day', None],  # Ip limit not yet enabled
     2: ['300/minute', '5000/day', None],  # Ip limit not yet enabled
+    3: ['300/minute', '15000/day', None],  # Ip limit not yet enabled
     99: [],  # No limit of requests
 }
 APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
     0: ['0/minute', '0/day',  '0/hour'],  # Client 'disabled'
     1: ['30/minute', '500/day', None],  # Ip limit not yet enabled
     2: ['60/minute', '1000/day', None],  # Ip limit not yet enabled
+    3: ['60/minute', '3000/day', None],  # Ip limit not yet enabled
     99: [],  # No limit of requests
 }
 

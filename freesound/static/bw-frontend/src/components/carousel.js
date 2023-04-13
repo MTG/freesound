@@ -9,6 +9,7 @@ const autoprefixedTransformProperties = [
   'transform',
 ]
 
+
 carousels.forEach(carousel => {
   const carouselContainer = [
     ...carousel.getElementsByClassName('bw-carousel'),
@@ -111,4 +112,11 @@ carousels.forEach(carousel => {
     carousel.append(dotIconsParent)
   }
   setPage(0)
+
+  if (carousel.dataset.carouselAutoRotateSeconds !== undefined){
+    const seconds = parseInt(carousel.dataset.carouselAutoRotateSeconds, 10);
+    setInterval(() => {
+      setPage((currentPage + 1) % totalPages);
+    }, seconds * 1000);
+  }
 })

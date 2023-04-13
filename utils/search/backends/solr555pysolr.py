@@ -229,10 +229,8 @@ def search_process_sort(sort):
         List[str]: list containing the sorting field names list for the search engine.
     """
     if sort in [sort_web_name for sort_web_name, sort_field_name in SORT_OPTIONS_MAP.items()]:
-        if sort == "avg_rating desc":
+        if SORT_OPTIONS_MAP[sort] == "avg_rating desc" or SORT_OPTIONS_MAP[sort] == "avg_rating asc":
             sort = [SORT_OPTIONS_MAP[sort], "num_ratings desc"]
-        elif sort == "avg_rating asc":
-            sort = [SORT_OPTIONS_MAP[sort], "num_ratings asc"]
         else:
             sort = [SORT_OPTIONS_MAP[sort]]
     else:

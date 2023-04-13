@@ -76,7 +76,7 @@
                             </div>
                         </div>
 
-                        <div class="middle v-spacing-top-2">{% bw_sound_stars sound False False %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings|formatnumber }}){% else %}Not enough ratings{% endif %}</span></div>
+                        <div class="middle v-spacing-top-2">{% bw_sound_stars sound False False %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}Overall rating ({{ sound.num_ratings|formatnumber }} rating{{ sound.num_ratings|pluralize }}){% else %}Not enough ratings{% endif %}</span></div>
 
                         <div class="middle bw-sound-page__user v-spacing-top-5">
                             <div class="h-spacing-1">

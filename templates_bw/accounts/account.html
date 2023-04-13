@@ -180,7 +180,7 @@
                 {% endcache %}
                 {% if last_geotags_serialized %}
                 <div class="divider-light"></div>
-                <section id="latest_geotags" class="v-spacing-top-5" data-map-loaded="false">
+                <section id="latest_geotags" class="v-spacing-top-4 v-spacing-4" data-map-loaded="false">
                     <h5 class="padding-bottom-3">Latest geotags</h5>
                     <div id="static_map_wrapper"  class="map sidebar-map w-100 middle center cursor-pointer" data-pins="{{ last_geotags_serialized }}"></div>
                     <div id="map_canvas" class="map sidebar-map display-none w-100" data-geotags-url="{% url "geotags-for-user-latest-barray" user.username %}"></div>
@@ -191,7 +191,7 @@
                 {% endif %}
                 {% if tags %}
                 <div class="divider-light"></div>
-                <section class="v-spacing-top-5 padding-bottom-5">
+                <section class="v-spacing-top-4 v-spacing-4">
                     <h5 class="padding-bottom-3">Most used tags</h5>
                     {% for tag in tags|add_sizes:"count:0.1:1.0" %}
                         {% bw_tag tag.name 1 '' tag.browse_url tag.size %}

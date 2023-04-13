@@ -1,4 +1,6 @@
 import { createIconElement } from '../utils/icons'
+import { addHorizontalSwipeListener } from '../utils/swipeDetector'
+
 
 const carousels = [...document.getElementsByClassName('bw-carousel-container')]
 
@@ -88,9 +90,11 @@ carousels.forEach(carousel => {
   carousel.append(leftArrow)
   carousel.append(rightArrow)
   rightArrow.addEventListener('click', () => {
+    clearAutoRotateTimer() // When manually selection one page, stop auto rotating
     setPage(currentPage + 1)
   })
   leftArrow.addEventListener('click', () => {
+    clearAutoRotateTimer() // When manually selection one page, stop auto rotating
     setPage(currentPage - 1)
   })
   if (hasDots) {
@@ -106,6 +110,7 @@ carousels.forEach(carousel => {
       const dotIcon = createIconElement('bw-icon-atom')
       dotIconsParent.append(dotIcon)
       dotIcon.addEventListener('click', () => {
+        clearAutoRotateTimer() // When manually selection one page, stop auto rotating
         setPage(i)
       })
     }
@@ -115,8 +120,24 @@ carousels.forEach(carousel => {
 
   if (carousel.dataset.carouselAutoRotateSeconds !== undefined){
     const seconds = parseInt(carousel.dataset.carouselAutoRotateSeconds, 10);
-    setInterval(() => {
+    carousel.autoRotateInterval = setInterval(() => {
       setPage((currentPage + 1) % totalPages);
     }, seconds * 1000);
   }
+
+  const clearAutoRotateTimer = () => {
+    if (carousel.autoRotateInterval !== null){
+      window.clearInterval(carousel.autoRotateInterval);
+    } 
+  }
+
+  addHorizontalSwipeListener(carousel, (direction) => {
+    clearAutoRotateTimer() // When manually selection one page, stop auto rotating
+    if (direction) {
+      setPage(currentPage - 1);
+    } else {
+      setPage(currentPage + 1);
+    }
+  })
 })
+

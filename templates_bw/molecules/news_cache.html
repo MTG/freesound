@@ -9,11 +9,11 @@
                 <div class="bw-carousel with-dots dots-distance-4">
                     {% for entry in rss.entries|slice:":5" %}
                         <div class="padding-4 middle">
-                            <div>
-                                <h2 class="text-center v-spacing-2">{{entry.title|truncatewords:10}}</h2>
+                            <div class="w-100">
+                                <h3 class="text-center v-spacing-2 ellipsis">{{ entry.title }}</h3>
                                 <p class="text-grey text-center">
                                     {{entry.published_parsed|tuple_to_time|date:"F jS, Y"}}<br>
-                                    {{entry.summary|safe|striptags|slice:":-24"|truncatewords:100}}
+                                    {{entry.summary_custom}}
                                 </p>
                                 <div class="center">
                                     <a class="no-hover btn-primary h-spacing-2" href="{{ entry.link }}">Read more</a>

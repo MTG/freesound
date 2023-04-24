@@ -194,8 +194,9 @@ def add_solr_suffix_to_dynamic_fieldname(fieldname):
         if 'descriptors_map' in analyzer_data:
             descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
             for _, db_descriptor_key, descriptor_type in descriptors_map:
-                dynamic_fields_map[db_descriptor_key] = '{}{}'.format(
-                    db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
+                if descriptor_type is not None:
+                    dynamic_fields_map[db_descriptor_key] = '{}{}'.format(
+                        db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
     return dynamic_fields_map.get(fieldname, fieldname)
 
 
@@ -211,9 +212,10 @@ def add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter):
         if 'descriptors_map' in analyzer_data:
             descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
             for _, db_descriptor_key, descriptor_type in descriptors_map:
-                query_filter = query_filter.replace(
-                    f'{db_descriptor_key}:','{}{}:'.format(
-                        db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
+                if descriptor_type is not None:
+                    query_filter = query_filter.replace(
+                        f'{db_descriptor_key}:','{}{}:'.format(
+                            db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
     return query_filter
 
 

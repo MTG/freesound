@@ -137,7 +137,9 @@ class TextSearch(GenericAPIView):
         id_score_map = dict(object_list)
         sound_ids = [ob[0] for ob in object_list]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=sound_ids)
-        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids)
+        # In search queries, only include audio analyers's output if requested through the fields parameter
+        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '')  
+        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_analyzers_output=needs_analyzers_ouptut)
         sounds = []
         for i, sid in enumerate(sound_ids):
             try:
@@ -227,7 +229,9 @@ class ContentSearch(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
+        # In search queries, only include audio analyers's output if requested through the fields parameter
+        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '')  
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -347,7 +351,9 @@ class CombinedSearch(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = results
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
+        # In search queries, only include audio analyers's output if requested through the fields parameter
+        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '')  
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -474,16 +480,14 @@ class SimilarSounds(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
-        qs = Sound.objects.select_related('user', 'pack', 'license')\
-            .filter(id__in=ids)\
-            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
-        qs_sound_objects = dict()
-        for sound_object in qs:
-            qs_sound_objects[sound_object.id] = sound_object
+        # In search queries, only include audio analyers's output if requested through the fields parameter
+        needs_analyzers_ouptut = 'analyzers_output' in similarity_sound_form.cleaned_data.get('fields', '')  
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
+
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
+                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sid]
@@ -602,13 +606,11 @@ class UserSounds(ListAPIView):
 
     def get_queryset(self):
         try:
-            User.objects.get(username=self.kwargs['username'], is_active=True)
+            user = User.objects.get(username=self.kwargs['username'], is_active=True)
         except User.DoesNotExist:
             raise NotFoundException(resource=self)
-
-        queryset = Sound.objects.select_related('user', 'pack', 'license')\
-            .filter(moderation_state="OK", processing_state="OK", user__username=self.kwargs['username'])\
-            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
+        needs_analyzers_ouptut = 'analyzers_output' in self.request.GET.get('fields', '')  
+        queryset = Sound.objects.bulk_sounds_for_user(user_id=user.id, include_analyzers_output=needs_analyzers_ouptut)
         return queryset
 
 
@@ -743,10 +745,8 @@ class PackSounds(ListAPIView):
             Pack.objects.get(id=self.kwargs['pk'], is_deleted=False)
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
-
-        queryset = Sound.objects.select_related('user', 'pack', 'license')\
-            .filter(moderation_state="OK", processing_state="OK", pack__id=self.kwargs['pk'])\
-            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
+        needs_analyzers_ouptut = 'analyzers_output' in self.request.GET.get('fields', '')  
+        queryset = Sound.objects.bulk_sounds_for_pack(pack_id=self.kwargs['pk'], include_analyzers_output=needs_analyzers_ouptut)
         return queryset
 
 

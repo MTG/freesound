@@ -1295,10 +1295,13 @@ def embed_iframe(request, sound_id, player_size):
     """
     if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info', 'medium_no_info', 'full_size']:
         raise Http404
-    sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
+    try:
+        sound = Sound.objects.bulk_query_id_public(sound_id)[0]
+    except IndexError:
+        raise Http404
     tvars = {
         'sound': sound,
-        'username_and_filename': f'{sound.user.username} - {sound.original_filename}',
+        'username_and_filename': f'{sound.username} - {sound.original_filename}',
         'size': player_size,
         'use_spectrogram': request.GET.get('spec', None) == '1',
         'show_toggle_display_button': request.GET.get('td', None) == '1',

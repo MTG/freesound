@@ -548,11 +548,19 @@ class SoundManager(models.Manager):
         if limit:
             limit = str(limit)
         return self.bulk_query(where, order_by, limit, (pack_id, ))
-
+    
     def bulk_query_id(self, sound_ids):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]
         where = "sound.id = ANY(%s)"
+        return self.bulk_query(where, "", "", (sound_ids, ))
+
+    def bulk_query_id_public(self, sound_ids):
+        if not isinstance(sound_ids, list):
+            sound_ids = [sound_ids]
+        where = """sound.id = ANY(%s) 
+            AND sound.moderation_state = 'OK' 
+            AND sound.processing_state = 'OK'"""
         return self.bulk_query(where, "", "", (sound_ids, ))
 
     def dict_ids(self, sound_ids):

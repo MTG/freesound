@@ -477,7 +477,9 @@ ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7 # in hours
 AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v3'
 FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
 AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
-
+BIRDNET_ANALYZER_NAME = 'birdnet_v1'
+FSDSINET_ANALYZER_NAME = 'fsd-sinet_v1'
+ 
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
         'descriptors_map': [
@@ -509,6 +511,20 @@ ANALYZERS_CONFIGURATION = {
     AUDIOSET_YAMNET_ANALYZER_NAME: {
         'descriptors_map': [
             ('classes', 'yamnet_class', list)
+        ]
+    },
+    BIRDNET_ANALYZER_NAME: {
+        'descriptors_map': [
+            ('detections', 'birdnet_detections', None),  # Use None so detections are not indexed in solr but stored in database
+            ('detected_classes', 'birdnet_detected_class', list),
+            ('num_detections', 'birdnet_detections_count', int),
+        ]
+    },
+    FSDSINET_ANALYZER_NAME: {
+        'descriptors_map': [
+            ('detections', 'fsdsinet_detections', None),  # Use None so detections are not indexed in solr but stored in database
+            ('detected_classes', 'fsdsinet_detected_class', list),
+            ('num_detections', 'fsdsinet_detections_count', int),
         ]
     },
 }

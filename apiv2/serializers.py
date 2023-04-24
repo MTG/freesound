@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+import json
+
 from past.utils import old_div
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -313,6 +315,8 @@ class SoundListSerializer(AbstractSoundSerializer):
                 query_select_name = analyzer_name.replace('-', '_')
                 analysis_data = getattr(obj, query_select_name, None)
                 if analysis_data is not None:
+                    if type(analysis_data) == str:
+                        analysis_data = json.loads(analysis_data)
                     analyzers_output.update(analysis_data)
         return analyzers_output
 
@@ -375,6 +379,8 @@ class SoundSerializer(AbstractSoundSerializer):
                     except SoundAnalysis.DoesNotExist:
                         analysis_data = None
                 if analysis_data is not None:
+                    if type(analysis_data) == str:
+                        analysis_data = json.loads(analysis_data)
                     analyzers_output.update(analysis_data)
         return analyzers_output
 

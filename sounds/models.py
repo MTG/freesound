@@ -462,7 +462,7 @@ class SoundManager(models.Manager):
         query += "WHERE sound.id IN %s"
         return self.raw(query, [tuple(sound_ids)])
 
-    def bulk_query(self, where, order_by, limit, args):
+    def bulk_query(self, where, order_by, limit, args, include_analyzers_output=False):
         """For each sound, get all fields needed to display a sound on the web (using display_sound templatetag) or
          in the API (including AudioCommons output analysis). Using this custom query to avoid the need of having to do
          some extra queries when displaying some fields related to the sound (e.g. for tags). Using this method, all the
@@ -521,9 +521,9 @@ class SoundManager(models.Manager):
           %s
           LEFT OUTER JOIN sounds_remixgroup_sounds ON sounds_remixgroup_sounds.sound_id = sound.id
         WHERE %s """ % (self.get_analysis_state_essentia_exists_sql(),
-                        self.get_analyzers_data_select_sql(),
+                        self.get_analyzers_data_select_sql() if include_analyzers_output else '',
                         ContentType.objects.get_for_model(Sound).id,
-                        self.get_analyzers_data_left_join_sql(),
+                        self.get_analyzers_data_left_join_sql() if include_analyzers_output else '',
                         where, )
         if order_by:
             query = f"{query} ORDER BY {order_by}"
@@ -531,43 +531,43 @@ class SoundManager(models.Manager):
             query = f"{query} LIMIT {limit}"
         return self.raw(query, args)
 
-    def bulk_sounds_for_user(self, user_id, limit=None):
+    def bulk_sounds_for_user(self, user_id, limit=None, include_analyzers_output=False):
         where = """sound.moderation_state = 'OK'
             AND sound.processing_state = 'OK'
             AND sound.user_id = %s"""
         order_by = "sound.created DESC"
         if limit:
             limit = str(limit)
-        return self.bulk_query(where, order_by, limit, (user_id, ))
+        return self.bulk_query(where, order_by, limit, (user_id, ), include_analyzers_output=include_analyzers_output)
 
-    def bulk_sounds_for_pack(self, pack_id, limit=None):
+    def bulk_sounds_for_pack(self, pack_id, limit=None, include_analyzers_output=False):
         where = """sound.moderation_state = 'OK'
             AND sound.processing_state = 'OK'
             AND sound.pack_id = %s"""
         order_by = "sound.created DESC"
         if limit:
             limit = str(limit)
-        return self.bulk_query(where, order_by, limit, (pack_id, ))
+        return self.bulk_query(where, order_by, limit, (pack_id, ), include_analyzers_output=include_analyzers_output)
     
-    def bulk_query_id(self, sound_ids):
+    def bulk_query_id(self, sound_ids, include_analyzers_output=False):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]
         where = "sound.id = ANY(%s)"
-        return self.bulk_query(where, "", "", (sound_ids, ))
+        return self.bulk_query(where, "", "", (sound_ids, ), include_analyzers_output=include_analyzers_output)
 
-    def bulk_query_id_public(self, sound_ids):
+    def bulk_query_id_public(self, sound_ids, include_analyzers_output=False):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]
         where = """sound.id = ANY(%s) 
             AND sound.moderation_state = 'OK' 
             AND sound.processing_state = 'OK'"""
-        return self.bulk_query(where, "", "", (sound_ids, ))
+        return self.bulk_query(where, "", "", (sound_ids, ), include_analyzers_output=include_analyzers_output)
 
-    def dict_ids(self, sound_ids):
-        return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids)}
+    def dict_ids(self, sound_ids, include_analyzers_output=False):
+        return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids, include_analyzers_output=include_analyzers_output)}
 
-    def ordered_ids(self, sound_ids):
-        sounds = self.dict_ids(sound_ids)
+    def ordered_ids(self, sound_ids, include_analyzers_output=False):
+        sounds = self.dict_ids(sound_ids, include_analyzers_output=include_analyzers_output)
         return [sounds[sound_id] for sound_id in sound_ids if sound_id in sounds]
 
 

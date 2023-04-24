@@ -55,7 +55,7 @@ const generateEmbedCode = (size) => {
     var sizes = embedCodeElement.dataset['size' + size].split(',');
     var urlTemplate = embedCodeElement.dataset.iframeUrlTemplate;
     var embedText = '<iframe frameborder="0" scrolling="no" src="' + urlTemplate + '" width="WIDTH" height="HEIGHT"></iframe>';
-    embedText = embedText.replace('SIZE', size);
+    embedText = embedText.replace('SIZE', size.toLowerCase());
     embedText = embedText.replace('WIDTH', sizes[0]);
     embedText = embedText.replace('HEIGHT', sizes[1]);
     embedCodeElement.value = embedText;

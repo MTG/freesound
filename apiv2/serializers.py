@@ -44,6 +44,28 @@ DEFAULT_FIELDS_IN_SOUND_DETAIL = None  # Separated by commas (None = all)
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
 
+def get_sound_analyzers_output_helper(sound, fallback_to_db=True):
+    analyzers_output = {}
+    for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
+        if 'descriptors_map' in analyzer_info:
+            query_select_name = analyzer_name.replace('-', '_')
+            analysis_data = None
+            if hasattr(sound, query_select_name):
+                analysis_data = getattr(sound, query_select_name)
+                if type(analysis_data) == str:
+                    analysis_data = json.loads(analysis_data)
+            else:
+                if fallback_to_db:
+                    # Retrieve the analysis data from the db
+                    try:
+                        analysis_data = sound.analyses.get(analyzer=analyzer_name, analysis_status="OK").analysis_data
+                    except SoundAnalysis.DoesNotExist:
+                        pass
+            if analysis_data is not None:
+                analyzers_output.update(analysis_data)
+    return analyzers_output
+
+
 class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     """
     In this abstract class we define ALL possible fields that a sound object should serialize/deserialize.
@@ -309,16 +331,7 @@ class SoundListSerializer(AbstractSoundSerializer):
         # Note that audio commons analyzer data can also be obtained with the ac_analysis field name but all
         # other analyzers' output is only accessible via analyzers_output field. This is kept like that
         # for legacy reasons.
-        analyzers_output = {}
-        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_info:
-                query_select_name = analyzer_name.replace('-', '_')
-                analysis_data = getattr(obj, query_select_name, None)
-                if analysis_data is not None:
-                    if type(analysis_data) == str:
-                        analysis_data = json.loads(analysis_data)
-                    analyzers_output.update(analysis_data)
-        return analyzers_output
+        return get_sound_analyzers_output_helper(obj)
 
 
 class SoundSerializer(AbstractSoundSerializer):
@@ -366,23 +379,7 @@ class SoundSerializer(AbstractSoundSerializer):
         # otherwise it is loaded from db. Note that audio commons analyzer data can also be
         # obtained with the ac_analysis field name but all other analyzers' output is only accessible
         # via analyzers_output field. This is kept like that for legacy reasons.
-        analyzers_output = {}
-        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_info:
-                query_select_name = analyzer_name.replace('-', '_')
-                if hasattr(obj, query_select_name):
-                    analysis_data = getattr(obj, query_select_name)
-                else:
-                    # Retrieve the analysis data from the db
-                    try:
-                        analysis_data = obj.analyses.get(analyzer=analyzer_name, analysis_status="OK").analysis_data
-                    except SoundAnalysis.DoesNotExist:
-                        analysis_data = None
-                if analysis_data is not None:
-                    if type(analysis_data) == str:
-                        analysis_data = json.loads(analysis_data)
-                    analyzers_output.update(analysis_data)
-        return analyzers_output
+        return get_sound_analyzers_output_helper(obj)
 
 
 ##################

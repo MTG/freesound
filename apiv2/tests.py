@@ -402,7 +402,7 @@ class TestSoundSerializer(TestCase):
         # extra query. Because in this test we get sound info using Sound.objects.bulk_query_id, the serializer
         # should perform no extra queries to render the data
         with self.assertNumQueries(0):
-            dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound.id]))
+            dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound.id]) + '?fields=*')
             serialized_sound = SoundSerializer(self.sound, context={'request': dummy_request}).data
             self.assertCountEqual(list(serialized_sound.keys()), SoundSerializer.Meta.fields)
 

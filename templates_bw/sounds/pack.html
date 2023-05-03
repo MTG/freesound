@@ -132,6 +132,9 @@
                                 <h5 class="padding-bottom-3">Geotags in this pack</h5>
                                 <div id="static_map_wrapper"  class="map sidebar-map w-100 middle center cursor-pointer" data-pins="{{ geotags_in_pack_serialized }}"></div>
                                 <div id="map_canvas" class="map sidebar-map display-none w-100" data-geotags-url="{% url "geotags-for-pack-barray" pack.id %}"></div>
+                                <div class="v-spacing-top-2 center">
+                                    <a class="no-hover" href="{% url "pack-geotags" pack.user.username pack.id %}">See all geotags from this pack</a>
+                                </div>
                             </div>
                         {% endif %}
                     </div>

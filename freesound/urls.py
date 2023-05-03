@@ -68,6 +68,7 @@ urlpatterns = [
     re_path(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
     path('people/<username>/packs/<int:pack_id>/downloaders/', sounds.views.pack_downloaders, name="pack-downloaders"),
     path('people/<username>/packs/<int:pack_id>/licenses/', sounds.views.pack_licenses, name="pack-licenses"),
+    path('people/<username>/packs/<int:pack_id>/geotags/', geotags.views.for_pack, name="pack-geotags"),
     path('people/<username>/sounds/<int:sound_id>/display/', sounds.views.display_sound_wrapper, name="sound-display"),
     path('people/<username>/downloaded_sounds/', accounts.views.downloaded_sounds, name="user-downloaded-sounds"),
     path('people/<username>/downloaded_packs/', accounts.views.downloaded_packs, name="user-downloaded-packs"),

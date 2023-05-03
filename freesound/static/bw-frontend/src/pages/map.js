@@ -83,6 +83,9 @@ const updateEmbedCode = (_, lat, lon, zoom, boxBlLat, boxBlLon, boxTrLat, boxTrL
     if (mapCanvas.dataset.mapTag !== "None"){
         embedCode += "&tag=" + mapCanvas.dataset.mapTag;
     }
+    if (mapCanvas.dataset.mapPackId !== "None"){
+        embedCode += "&pack=" + mapCanvas.dataset.mapPackId;
+    }
     embedCode += box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
     embedCodeElement.innerText = embedCode;
 

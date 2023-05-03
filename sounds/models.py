@@ -110,9 +110,19 @@ class License(OrderedModel):
         elif '4.0' in self.deed_url:
             version_label = ' 4.0'
         name = self.name
-        if name == 'Attribution Noncommercial':
-            # For dipslaying purposes, we make the name shorter, otherwise it overflows in BW sound page
-            name = 'Noncommercial'
+        return f'{name}{version_label}'
+
+    @property
+    def abbreviated_name_with_version(self):
+        version_label = ''
+        if '3.0' in self.deed_url:
+            version_label = ' 3.0'
+        elif '4.0' in self.deed_url:
+            version_label = ' 4.0'
+        name = self.abbreviation.upper()
+        if name != 'CC0' and 'SAMP+' not in name:
+            name = 'CC ' + name
+        name = name.replace('SAMP+', 'Sampling Plus 1.0')
         return f'{name}{version_label}'
 
     def __str__(self):

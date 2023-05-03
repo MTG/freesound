@@ -289,7 +289,7 @@
                                                     </p>
                                                 {% endif %}
                                             {% else %}
-                                                {% display_pack result.sound.pack_id %}
+                                                {% display_pack result.pack %}
                                                 <p class="text-grey text-right v-spacing-top-negative-2">
                                                     {% bw_icon 'plus' %} <a href='.?q={{ search_query }}&f=grouping_pack:{{ result.pack.pack_filter_value }}+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from pack</a>
                                                 </p>
@@ -309,7 +309,7 @@
                                                 {% endif %}
                                             {% else %}
                                                 {% display_pack_big result.pack %}
-                                                <div class="text-grey text-right v-spacing-top-negative-1 v-spacing-2">
+                                                <div class="text-grey text-right v-spacing-top-negative-1 v-spacing-2 padding-right-1">
                                                     {% bw_icon 'plus' %} <a href='.?q={{ search_query }}&f=grouping_pack:{{ result.pack.pack_filter_value }}+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group|add:1}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
                                                 </div>
                                             {% endif %}

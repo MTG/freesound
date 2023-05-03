@@ -1513,10 +1513,16 @@ class PackManager(models.Manager):
             licenses = []
             selected_sounds_data = []
             tags = []
+            has_geotags = False
             sound_ids_pre_selected = sound_ids_for_pack_id.get(p.id, None)
+            ratings = []
             for s in p.sounds.all():
                 tags += [ti.tag.name for ti in s.tags.all()]
                 licenses.append((s.license.name, s.license.id))
+                if s.num_ratings >= settings.MIN_NUMBER_RATINGS:
+                    ratings.append(s.avg_rating)
+                if not has_geotags and s.geotag_id is not None:
+                    has_geotags = True
                 should_add_sound_to_selected_sounds = False
                 if sound_ids_pre_selected is None:
                     if len(selected_sounds_data) < num_sounds_selected_per_pack:
@@ -1541,6 +1547,9 @@ class PackManager(models.Manager):
                 for tag, count in Counter(tags).most_common(10)]  # See pack.get_pack_tags_bw
             p.selected_sounds_data = selected_sounds_data
             p.user_profile_locations = p.user.profile.locations()
+            p.has_geotags_precomputed = has_geotags
+            p.num_ratings_precomputed = len(ratings)
+            p.avg_rating_precomputed = old_div(1.0*sum(ratings),len(ratings)) if len(ratings) else 0.0
 
         return packs
 
@@ -1593,6 +1602,9 @@ class Pack(SocialModel):
 
     def get_absolute_url(self):
         return reverse('pack', args=[self.user.username, smart_str(self.id)])
+    
+    def get_pack_sounds_in_search_url(self):
+        return f'{reverse("sounds-search")}?f=grouping_pack:{ self.pack_filter_value() }&s=Date+added+(newest+first)&g=1'
 
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name', 'is_deleted')
@@ -1689,16 +1701,19 @@ class Pack(SocialModel):
                 pack=self,
                 licenses=licenses,
                 sound_list=sounds_list))
-        return attribution
+        return attribution        
 
     @property
     def avg_rating(self):
-        # Return average rating from 0 to 10
-        ratings = list(SoundRating.objects.filter(sound__pack=self).values_list('rating', flat=True))
-        if ratings:
-            return old_div(1.0*sum(ratings),len(ratings))
+        # Return the average rating of the average ratings of the sounds of the pack that have more than MIN_NUM_RATINGS
+        if hasattr(self, 'avg_rating_precomputed'):
+            return self.avg_rating_precomputed
         else:
-            return 0
+            ratings = list(Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUM_RATINGS).values_list('avg_rating', flat=True))
+            if ratings:
+                return old_div(1.0*sum(ratings),len(ratings))
+            else:
+                return 0
 
     @property
     def avg_rating_0_5(self):
@@ -1707,7 +1722,11 @@ class Pack(SocialModel):
 
     @property
     def num_ratings(self):
-        return SoundRating.objects.filter(sound__pack=self).count()
+        # The number of ratings for a pack is the number of sounds that have >= 3 ratings
+        if hasattr(self, 'num_ratings_precomputed'):
+            return self.num_ratings_precomputed
+        else:
+            return Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUM_RATINGS)
 
     def get_total_pack_sounds_length(self):
         durations = list(Sound.objects.filter(pack=self).values_list('duration', flat=True))
@@ -1767,11 +1786,10 @@ class Pack(SocialModel):
 
     @property
     def has_geotags(self):
-        # Returns whether or not the pack has geotags
-        # This is used in the pack page to decide whether or not to show the geotags map. Doing this generates one
-        # extra DB query, but avoid doing unnecessary map loads and a request to get all geotags by a pack (which would
-        # return empty query set if no geotags and indeed generate more queries).
-        return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
+        if hasattr(self, "has_geotags_precomputed"):
+            return self.has_geotags_precomputed
+        else:
+            return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
 
 
 class Flag(models.Model):

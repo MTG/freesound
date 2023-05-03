@@ -1081,7 +1081,6 @@ def pack(request, username, pack_id):
         'pack': pack,
         'num_sounds_ok': num_sounds_ok,
         'pack_sounds': pack_sounds,
-        'min_num_ratings': settings.MIN_NUMBER_RATINGS,  # BW only
         'is_following': is_following,
         'geotags_in_pack_serialized': geotags_in_pack_serialized  # BW only
     }

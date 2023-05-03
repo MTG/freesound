@@ -18,18 +18,28 @@
                 </div>
             </div>
         </div>
-        <h5 class="ellipsis line-height-percentage-150 v-spacing-top-1">
-            <a class="bw-link--black" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a>
-        </h5>
-        <div class="overflow-hidden">
-            <a href="{% url "account" pack.user.username %}">{{ pack.user.username|truncate_string:15 }}</a> <span class="text-grey h-spacing-left-1 h-spacing-1">·</span><span class="text-grey">{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}</span>
-            <br><span class="text-grey">{{ pack.created|timesince }} ago</span>
+        <div class="between line-height-percentage-150 v-spacing-top-1">
+            <h5 class="ellipsis">
+                <span class="bw-icon-stack h-spacing-1 text-light-grey"></span><a class="bw-link--black" href="{% url "pack" pack.user.username pack.id %}">{{ pack.name }}</a>
+            </h5>
+            {% if pack.name|length <= 22 %}{% include 'sounds/display_pack_small_icons.html' %}{% endif %}
         </div>
-        {% if pack.description %}
-            <div class="v-spacing-top-1 text-grey overflow-hidden" style="height:52px;">
-                {{ pack.description|striptags|safe|truncatechars_html:55 }}
+        <div class="between">
+            <div>
+                <a href="{% url "account" pack.user.username %}" title="Username: {{ pack.user.username }}">{{ pack.user.username|truncate_string:15 }}</a><span class="text-grey h-spacing-left-1 h-spacing-1">·</span><a href="{{ pack.get_pack_sounds_in_search_url }}" class="bw-link--grey">{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}</a>
             </div>
-        {% endif %}
+            {% if pack.name|length > 22 %}{% include 'sounds/display_pack_small_icons.html' %}{% endif %}
+        </div>
+        <div>
+            <span class="text-grey">{{ pack.created|timesince }} ago</span>
+        </div>
+        <div class="v-spacing-top-1 text-grey overflow-hidden" style="height:52px;">
+            {% if pack.description %}
+                {{ pack.description|striptags|safe|truncatechars_html:55 }}
+            {% else %}
+                This pack has no description.
+            {% endif %}
+        </div>
     </div>
 {% elif size == 'big' %}
     <div>
@@ -44,22 +54,30 @@
         {% else %}
             <div class="bw-player-small-thumbnail-empty-space"></div>
         {% endif %}
-        <h5 class="v-spacing-top-1">
-            <span class="text-light-grey">Pack: </span><a class="bw-link--black ellipsis" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a>
-        </h5>
-        {% if pack.description %}
-            <div class="text-black v-spacing-top-1">{{ pack.description|striptags|safe|truncatewords_html:20 }}</div>
-        {% endif %}
-        {% with pack.get_pack_tags_bw as tags %}
-            {% if tags %}
-                <div class=" v-spacing-top-1">
-                {% for tag in tags|slice:":5" %}
-                    {% bw_tag tag.name 1 '' tag.browse_url %}
-                {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-        <div class="between middle v-spacing-top-1 v-spacing-2">
+        <div class="between v-spacing-top-1">
+            <div>
+                <h5><span class="bw-icon-stack h-spacing-1 text-light-grey"></span><a class="bw-link--black ellipsis" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a></h5>
+            </div>
+            <div class="text-grey text-right between">
+                <div style="min-width:130px;" class="top right" title="Overall rating of pack's sounds: {% if pack.num_ratings %}{{ pack.avg_rating_0_5|floatformat:1 }} ({{ pack.num_ratings|formatnumber }} rating{{ pack.num_ratings|pluralize }}){% else %}Not enough ratings{% endif %}">{% bw_generic_stars pack.avg_rating %}<span class="text-grey h-spacing-left-1">{% if pack.num_ratings %}({{ pack.num_ratings|formatnumber }}){% endif %}</span></div>
+            </div>
+        </div>
+        <div class="between">
+            <div class="text-black v-spacing-top-1 padding-right-2 v-spacing-1">
+                {% if pack.description %}{{ pack.description|striptags|safe|truncatewords_html:20 }}
+                {% else %}This pack has no description.{% endif %}
+            </div>
+            {% with pack.get_pack_tags_bw as tags %}
+                {% if tags %}
+                    <div class="right wrap">
+                    {% for tag in tags|slice:":5" %}
+                        {% bw_tag tag.name 1 '' tag.browse_url %}
+                    {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+        <div class="between middle v-spacing-2">
             <div class="">
                 <div class="middle text-grey h-spacing-1">
                     <div class="h-spacing-1">
@@ -69,12 +87,19 @@
                     <span class="h-spacing-left-1 text-light-grey">{{ pack.created|date:"F jS, Y" }}</span>
                 </div>
             </div>
-            <div class="text-light-grey right">
+            <div class="text-light-grey right padding-right-1">
                 <div title="{{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}">
-                    <a href="{% url 'sounds-search' %}?f=grouping_pack:{{ pack.pack_filter_value }}&s=Date+added+(newest+first)&g=1" class="bw-link--grey-light">
+                    <a href="{{ pack.get_pack_sounds_in_search_url }}" class="bw-link--grey-light">
                         <span class="bw-icon-wave"></span> {{ pack.num_sounds }}
                     </a>
                 </div>
+                {% if pack.has_geotags %}
+                    <div class="h-spacing-left-2" title="Pack has geotags">
+                        <a href="{% url 'pack-geotags' pack.user.username pack.id %}" class="bw-link--grey-light">
+                            <span class="bw-icon-pin"></span>
+                        </a>
+                    </div>
+                {% endif %}
                 <div class="h-spacing-left-2" title="{{ pack.num_downloads }} download{{ pack.num_downloads|pluralize }}">
                     <a href="{% url 'pack-downloaders' pack.user.username pack.id %}" class="bw-link--grey-light">
                         <span class="bw-icon-download"></span> {{ pack.num_downloads }}
@@ -82,7 +107,6 @@
                 </div>
                 <div class="h-spacing-left-2" title="License: {{ pack.license_summary_name_and_id.0 }}">
                     <span class="bw-icon-{{ pack.license_bw_icon_name }}"></span>
-                    <span class="d-none d-lg-inline"> {{ pack.license_summary_name_and_id.0 }}</span>
                 </div>
             </div>
         </div>

@@ -52,7 +52,7 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
     else:
         opacity_class = 'opacity-' + str(int(math.ceil(pow(weight, 0.6) * 10) * 10)).zfill(3)
 
-    line_height_class = 'line-height-fs-3' if size < 4 else 'line-height-fs-1'
+    line_height_class = 'line-height-38' if size < 4 else 'line-height-fs-1'
 
     return {'tag_name': tag_name,
             'size': size,

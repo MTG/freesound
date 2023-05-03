@@ -215,6 +215,9 @@ class Profile(SocialModel):
     
     def get_absolute_url(self):
         return reverse('account', args=[smart_str(self.user.username)])
+    
+    def get_user_sounds_in_search_url(self):
+        return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=0'
 
     @staticmethod
     def locations_static(user_id, has_avatar):

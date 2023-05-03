@@ -120,7 +120,7 @@
                             {% endfor %}
                         </div>
                         <div class="v-spacing-top-4 text-center">
-                            <a class="no-hover btn-primary" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1">See all sounds by {{ user.username }}</a>
+                            <a class="no-hover btn-primary" href="{{ user.profile.get_user_sounds_in_search_url }}">See all sounds by {{ user.username }}</a>
                         </div>
                     {% else %}
                         <div class="text-center">
@@ -158,7 +158,7 @@
                 <section class="bw-profile__section_stats v-spacing-top-4">
                     <ol>
                         <li class="v-spacing-3">
-                            {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black" title="{{ user.username }} has uploaded {{ user.profile.num_sounds }} sound{{ user.profile.num_sounds|pluralize }}" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1">{{ user.profile.num_sounds|formatnumber }} sound{{ user.profile.num_sounds|pluralize }}</a>
+                            {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black" title="{{ user.username }} has uploaded {{ user.profile.num_sounds }} sound{{ user.profile.num_sounds|pluralize }}" href="{{ user.profile.get_user_sounds_in_search_url }}">{{ user.profile.num_sounds|formatnumber }} sound{{ user.profile.num_sounds|pluralize }}</a>
                         </li>
                         <li class="v-spacing-3">
                             {% with user.profile.num_packs as num_packs %}{% bw_icon 'stack' 'text-light-grey' %} <a class="text-19 bw-link--black" title="{{ user.username }} has created {{ num_packs }} pack{{ num_packs|pluralize }}" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1&only_p=1">{{ num_packs|formatnumber }} pack{{ num_packs|pluralize }}</a>{% endwith %}

@@ -11,6 +11,6 @@
         <span class="bw-icon-{{ pack.license_bw_icon_name }}"></span>
     </div>
     <div class="h-spacing-left-1" title="Overall rating of pack's sounds: {% if pack.num_ratings %}{{ pack.avg_rating_0_5|floatformat:1 }} ({{ pack.num_ratings|formatnumber }} rating{{ pack.num_ratings|pluralize }}){% else %}Not enough ratings{% endif %}">
-        <span class="bw-icon-star {% if not pack.num_ratings %}opacity-040{% endif %}"></span>{% if pack.num_ratings %} {{ pack.avg_rating_0_5|floatformat:1 }}{% endif %}
+        <span class="bw-icon-star {% if not pack.num_ratings %}opacity-030{% endif %}"></span>{% if pack.num_ratings %} {{ pack.avg_rating_0_5|floatformat:1 }}{% endif %}
     </div>
 </div>

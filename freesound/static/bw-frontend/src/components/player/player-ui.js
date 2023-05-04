@@ -475,7 +475,7 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
   const favoriteButtonContainer = document.createElement('div')
   const favoriteButton = createControlButton('bookmark')
   const unfavoriteButton = createControlButton('bookmark-filled')
-  favoriteButton.setAttribute('title', 'Bookmark')
+  favoriteButton.setAttribute('title', 'Bookmark this sound')
   unfavoriteButton.setAttribute('title', 'Remove bookmark')
   favoriteButtonContainer.classList.add(
     'bw-player__favorite',

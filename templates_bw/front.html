@@ -9,6 +9,7 @@
 {% load bw_templatetags %}
 {% load filter_img %}
 {% load ratings %}
+{% load humanize %}
 
 {% block title %}Freesound{% endblock %}
 
@@ -19,7 +20,7 @@
         <div class="bw-front__hero-container">
             <header>
                 <h1>Find any sound you like</h1>
-                <p class="bw-front__subheader">In a collaborative collection of {{ total_num_sounds }} <a class="bw-link--grey" href="/help/faq/#licenses">free sounds</a></p>
+                <p class="bw-front__subheader">In a collaborative collection of {{ total_num_sounds|intcomma }} <a class="bw-link--grey" href="/help/faq/#licenses">free sounds</a></p>
             </header>
             <div class="bw-front__hero-container--search">
                 <form method="get" action="/search/">

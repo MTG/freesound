@@ -218,6 +218,7 @@ const createStopButton = (audioElement, parentNode) => {
 const createLoopButton = audioElement => {
   const loopButton = createControlButton('loop')
   loopButton.setAttribute('title', 'Loop')
+  loopButton.classList.add('text-20')
   loopButton.addEventListener('click', (e) => {
     const willLoop = !audioElement.loop
     if (willLoop) {
@@ -233,6 +234,7 @@ const createLoopButton = audioElement => {
 
 const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize) => {
   const controlsElement = playerImgNode.parentElement.querySelector('.bw-player__controls');
+  const progressStatusContainerElement = playerImgNode.parentElement.querySelector('.bw-player__progress-container');
   const topControlsElement = playerImgNode.parentElement.querySelector('.bw-player__top_controls');
   const bookmarkElement = playerImgNode.parentElement.querySelector('.bw-player__favorite');
   const similarSoundsElement = playerImgNode.parentElement.querySelector('.bw-player__similar');
@@ -254,6 +256,9 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
     if (similarSoundsElement !== null){
       similarSoundsElement.classList.add('bw-player__controls-inverted');
     }
+    if (progressStatusContainerElement !== null){
+      progressStatusContainerElement.classList.add('bw-player__progress-container--inverted');
+    }
   } else {
     playerImgNode.src = waveform
     if (spectrogramButton !== undefined){
@@ -266,6 +271,9 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
     }
     if (similarSoundsElement !== null){
       similarSoundsElement.classList.remove('bw-player__controls-inverted');
+    }
+    if (progressStatusContainerElement !== null){
+      progressStatusContainerElement.classList.remove('bw-player__progress-container--inverted');
     }
   }
 }
@@ -293,6 +301,7 @@ const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWith
 const createRulerButton = (parentNode) => {
   const rulerButton = createControlButton('ruler')
   rulerButton.setAttribute('title', 'Ruler')
+  rulerButton.classList.add('text-20')
   rulerButton.addEventListener('click', () => {
     if (parentNode.dataset.rulerActive !== undefined){
       delete parentNode.dataset.rulerActive;

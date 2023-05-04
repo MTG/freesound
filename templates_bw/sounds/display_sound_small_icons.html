@@ -17,7 +17,9 @@
     <div class="h-spacing-left-1" title="License: {{ sound.license_name }}">
         <span class="bw-icon-{{ sound.license_bw_icon_name }}"></span>
     </div>
+    {% if sound.num_ratings >= min_num_ratings %}
     <div class="h-spacing-left-1" title="Overall rating: {% if sound.num_ratings >= min_num_ratings %}{{ sound.avg_rating_0_5|floatformat:1 }} ({{ sound.num_ratings|formatnumber }} rating{{ sound.num_ratings|pluralize }}){% else %}Not enough ratings{% endif %}">
         <span class="bw-icon-star {% if sound.num_ratings < min_num_ratings %}opacity-030{% endif %}"></span>{% if sound.num_ratings >= min_num_ratings %} {{ sound.avg_rating_0_5|floatformat:1 }}{% endif %}
     </div>
+    {% endif %}
 </div>

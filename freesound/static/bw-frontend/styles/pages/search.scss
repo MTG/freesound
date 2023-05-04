@@ -1,10 +1,11 @@
 .bw-search__filter-value-list {
   list-style: none;
   padding-left: 0;
+  margin-top: 8px;
 }
 
 .bw-search__filter-tags-list {
-  margin: 23px 0;
+  margin: 13px 0;
 }
 
 .bw-search__filter-value {
@@ -39,8 +40,13 @@
 }
 
 .bw-search__filter-section {
+
   margin-left: $small-spacing;
   margin-right: $small-spacing;
+
+  @include md-and-above {
+    margin-right: 0px;
+  }
 
   padding-top: $tiny-spacing;
   padding-bottom: $small-spacing;

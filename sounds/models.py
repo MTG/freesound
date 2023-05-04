@@ -91,7 +91,7 @@ class License(OrderedModel):
         if '0' in license_name.lower():
             return 'zero'
         elif 'noncommercial' in license_name.lower():
-            return 'nc'
+            return 'by-nc'
         elif 'attribution' in license_name.lower():
             return 'by'
         elif 'sampling' in license_name.lower():

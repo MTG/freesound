@@ -45,11 +45,19 @@
 .carousel-right {
   transform: translateX(50%) translateY(-50%);
   right: 0px;
+
+  .bw-icon-arrow:hover {
+    color: $red;
+  }
 }
 
 .carousel-left {
   transform: rotate(-180deg) translateY(50%) translateX(50%);
   left: 0;
+
+  .bw-icon-arrow:hover {
+    color: $red;
+  }
 }
 
 .carousel-nav-hidden {
@@ -96,6 +104,10 @@
 
   &.dots-distance-4 {
     bottom: -40px;
+  }
+
+  .bw-icon-atom:hover {
+    color: $red;
   }
 
   > * {

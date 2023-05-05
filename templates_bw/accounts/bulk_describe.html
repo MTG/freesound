@@ -34,7 +34,7 @@
 
     {% if lines_failed_validation and not global_errors %}
         <p>
-            The following <b>{{ lines_failed_validation|length }} sound{{ lines_failed_validation|pluralize }}
+            The following <b>{{ lines_failed_validation|length|bw_intcomma }} sound{{ lines_failed_validation|pluralize }}
             ha{{ lines_failed_validation|pluralize:"s,ve" }} failed validation</b> and won't be added
             to Freesound. Move your mouse over the red cells to see the errors:
         </p>
@@ -90,7 +90,7 @@
 
     {% if lines_validated_ok and not global_errors %}
         <p><br>
-            The following <b>{{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }}
+            The following <b>{{ lines_validated_ok|length|bw_intcomma }} sound{{ lines_validated_ok|length|pluralize }}
             ha{{ lines_validated_ok|pluralize:"s,ve" }} validated correctly</b> and will be added to
             Freesound with the following <i>cleaned</i> metadata:
         </p>
@@ -119,7 +119,7 @@
     <form action="." method="POST" class="v-spacing-top-5 disable-on-submit">{% csrf_token %}
         <div class="between">
             <button class="btn-secondary" name="delete">Delete this data file and upload a new one</button>
-            <button class="btn-primary" name="start" {% if not lines_validated_ok|length %}disabled{% endif %}>Continue and add the {{ lines_validated_ok|length }} valid sound{{ lines_validated_ok|length|pluralize }} to Freesound</button>
+            <button class="btn-primary" name="start" {% if not lines_validated_ok|length %}disabled{% endif %}>Continue and add the {{ lines_validated_ok|length|bw_intcomma }} valid sound{{ lines_validated_ok|length|pluralize }} to Freesound</button>
         </div>
     </form>
 
@@ -128,7 +128,7 @@
         {% if progress_info.progress_percentage < 100 %}
             <h3 class="text-grey">Your sounds are being described and processed <img width="24px" height="24px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"/></h3>
             <p>
-                Your {{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }} for this bulk
+                Your {{ lines_validated_ok|length|bw_intcomma }} sound{{ lines_validated_ok|length|pluralize }} for this bulk
                 description process {{ lines_validated_ok|pluralize:"is,are" }} being described and processed. This is
                 the current status of the process:
             </p>
@@ -137,7 +137,7 @@
         {% else %}
             <h3 class="text-grey">The bulk description process has finished!</h3>
             <p>
-                Your {{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }} for this bulk
+                Your {{ lines_validated_ok|length|bw_intcomma }} sound{{ lines_validated_ok|length|pluralize }} for this bulk
                 description process {{ lines_validated_ok|pluralize:"has,have" }} been described and processed. Here
                 are the results of the process:
             </p>

@@ -189,10 +189,10 @@
                         <div>
                             <ol>
                                 <li class="v-spacing-3"> {% bw_icon 'download' 'text-light-grey' %}
-                                    <a class="text-19 bw-link--black" title="This sound has been downloaded {{ sound.num_downloads }} time{{ sound.num_downloads|pluralize }}" href="{% url 'sound-downloaders' sound.user.username sound.id %}">{{ sound.num_downloads|formatnumber }} download{{ sound.num_downloads|pluralize }}</a>
+                                    <a class="text-19 bw-link--black" title="This sound has been downloaded {{ sound.num_downloads|bw_intcomma }} time{{ sound.num_downloads|pluralize }}" href="{% url 'sound-downloaders' sound.user.username sound.id %}">{{ sound.num_downloads|formatnumber }} download{{ sound.num_downloads|pluralize }}</a>
                                 </li>
                                 <li class="v-spacing-3">{% bw_icon 'comments' 'text-light-grey' %}
-                                    <a class="text-19 bw-link--black" title="This sound has received {{ sound.num_comments }} comment{{ sound.num_comments|pluralize }}" href="#comments">{{ sound.num_comments|formatnumber }} comment{{ sound.num_comments|pluralize }}</a>
+                                    <a class="text-19 bw-link--black" title="This sound has received {{ sound.num_comments|bw_intcomma }} comment{{ sound.num_comments|pluralize }}" href="#comments">{{ sound.num_comments|formatnumber }} comment{{ sound.num_comments|pluralize }}</a>
                                 </li>
                             </ol>
                         </div>

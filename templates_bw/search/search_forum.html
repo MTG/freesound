@@ -33,7 +33,7 @@
             </form>
             <div class="text-grey">
                 {% if paginator %}
-                    {{ paginator.count }} post{{ paginator.count|pluralize }}
+                    {{ paginator.count|bw_intcomma }} post{{ paginator.count|pluralize }}
                 {% else %}
                     0 posts
                 {% endif %}

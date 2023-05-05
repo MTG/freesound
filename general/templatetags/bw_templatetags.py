@@ -22,6 +22,7 @@ import math
 
 from django import template
 from django.conf import settings
+from django.contrib.humanize.templatetags.humanize import intcomma
 from django.urls import reverse
 
 from follow.follow_utils import is_user_following_tag
@@ -181,3 +182,8 @@ def user_following_tags(user, tags_slash):
 @register.inclusion_tag('molecules/plausible_scripts.html', takes_context=False)
 def bw_plausible_scripts():
     return plausible_scripts()
+
+
+@register.filter
+def bw_intcomma(value):
+    return intcomma(value)

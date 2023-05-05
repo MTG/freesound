@@ -32,8 +32,8 @@
                         </div>
                         <div class="col-8">
                             <h6 class="text-16 no-margins"><a href="{% url 'account' request.user.username %}">{{ request.user.username }}</a></h6>
-                            <p class="text-grey no-margins">{{ request.user.profile.num_sounds }} sound{{ request.user.profile.num_sounds|pluralize }}</p>
-                            <p class="text-grey no-margins">{{ request.user.profile.num_posts }} post{{ request.user.profile.num_posts|pluralize }}</p>
+                            <p class="text-grey no-margins">{{ request.user.profile.num_sounds|bw_intcomma }} sound{{ request.user.profile.num_sounds|pluralize }}</p>
+                            <p class="text-grey no-margins">{{ request.user.profile.num_posts|bw_intcomma }} post{{ request.user.profile.num_posts|pluralize }}</p>
                         </div>
                     </div>
                 </div>

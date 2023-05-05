@@ -21,7 +21,7 @@
                                 <div class="col-8">
                                     <a href="{% url 'account' user_data.0.username %}">{{ user_data.0.username }}</a>
                                     <div class="text-grey ellipsis">
-                                        {{ user_data.1.uploads }} sound{{ user_data.1.uploads|pluralize }} · {{ user_data.1.posts }} post{{ user_data.1.posts|pluralize }} · {{ user_data.1.comments }} comment{{ user_data.1.comments|pluralize }}
+                                        {{ user_data.1.uploads|bw_intcomma }} sound{{ user_data.1.uploads|pluralize }} · {{ user_data.1.posts|bw_intcomma }} post{{ user_data.1.posts|pluralize }} · {{ user_data.1.comments|bw_intcomma }} comment{{ user_data.1.comments|pluralize }}
                                     </div>
                                 </div>
                             </div>
@@ -47,7 +47,7 @@
                                 <div class="col-8">
                                     <a href="{% url 'account' user_data.0.username %}">{{ user_data.0.username }}</a>
                                     <div class="text-grey ellipsis">
-                                        {{ user_data.1.uploads }} sound{{ user_data.1.uploads|pluralize }} · {{ user_data.1.posts }} post{{ user_data.1.posts|pluralize }} · {{ user_data.1.comments }} comment{{ user_data.1.comments|pluralize }}
+                                        {{ user_data.1.uploads|bw_intcomma }} sound{{ user_data.1.uploads|pluralize }} · {{ user_data.1.posts|bw_intcomma }} post{{ user_data.1.posts|pluralize }} · {{ user_data.1.comments|bw_intcomma }} comment{{ user_data.1.comments|pluralize }}
                                     </div>
                                 </div>
                             </div>
@@ -76,7 +76,7 @@
                                 <div class="col-8">
                                     <a href="{% url 'account' username %}">{{ username }}</a>
                                     <div class="text-grey ellipsis">
-                                        {{ count }} sound{{ count|pluralize }}
+                                        {{ count|bw_intcomma }} sound{{ count|pluralize }}
                                     </div>
                                 </div>
                             </div>
@@ -131,7 +131,7 @@
                                 <div class="col-8">
                                     <a href="{% url 'account' username %}">{{ username }}</a>
                                     <div class="text-grey ellipsis">
-                                        {{ count }} sound{{ count|pluralize }}
+                                        {{ count|bw_intcomma }} sound{{ count|pluralize }}
                                     </div>
                                 </div>
                             </div>

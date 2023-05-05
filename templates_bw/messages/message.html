@@ -20,8 +20,8 @@
                         </div>
                         <div class="col-8">
                             <h6><a href="{% url "account" message.user_from.username %}">{{ message.user_from.username }}</a></h6>
-                            <p class="text-grey no-margins">{{ message.user_from.profile.num_sounds }} sound{{ message.user_from.profile.num_sounds|pluralize }}</p>
-                            <p class="text-grey no-margins">{{ message.user_from.profile.num_posts }} post{{ message.user_from.profile.num_posts|pluralize }}</p>
+                            <p class="text-grey no-margins">{{ message.user_from.profile.num_sounds|bw_intcomma }} sound{{ message.user_from.profile.num_sounds|pluralize }}</p>
+                            <p class="text-grey no-margins">{{ message.user_from.profile.num_posts|bw_intcomma }} post{{ message.user_from.profile.num_posts|pluralize }}</p>
                         </div>
                     </div>
                 {% else %}
@@ -32,8 +32,8 @@
                         </div>
                         <div class="col-8">
                             <h6><a href="{% url "account" message.user_to.username %}">{{ message.user_to.username }}</a></h6>
-                            <p class="text-grey no-margins">{{ message.user_to.profile.num_sounds }} sound{{ message.user_to.profile.num_sounds|pluralize }}</p>
-                            <p class="text-grey no-margins">{{ message.user_to.profile.num_posts }} post{{ message.user_to.profile.num_posts|pluralize }}</p>
+                            <p class="text-grey no-margins">{{ message.user_to.profile.num_sounds|bw_intcomma }} sound{{ message.user_to.profile.num_sounds|pluralize }}</p>
+                            <p class="text-grey no-margins">{{ message.user_to.profile.num_posts|bw_intcomma }} post{{ message.user_to.profile.num_posts|pluralize }}</p>
                         </div>
                     </div>
                 {% endif %}

@@ -13,8 +13,8 @@
                 </div>
                 <div class="col-8">
                     <h6><a href="{% url "account" post.author.username %}">{{ post.author.username }}</a></h6>
-                    <p class="text-grey no-margins">{{ post.author.profile.num_sounds }} sound{{ post.author.profile.num_sounds|pluralize }}</p>
-                    <p class="text-grey no-margins">{{ post.author.profile.num_posts }} post{{ post.author.profile.num_posts|pluralize }}</p>
+                    <p class="text-grey no-margins">{{ post.author.profile.num_sounds|bw_intcomma }} sound{{ post.author.profile.num_sounds|pluralize }}</p>
+                    <p class="text-grey no-margins">{{ post.author.profile.num_posts|bw_intcomma }} post{{ post.author.profile.num_posts|pluralize }}</p>
                 </div>
             </div>
         </div>

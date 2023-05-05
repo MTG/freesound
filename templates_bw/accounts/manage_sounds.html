@@ -4,7 +4,6 @@
 {% load bw_templatetags %}
 {% load display_pack %}
 {% load filefunctions %}
-{% load humanize %}
 
 {% block title %}Manage sounds{% endblock %}
 {% block page-title %}Manage sounds{% endblock %}
@@ -14,19 +13,19 @@
 <div class="divider-light v-spacing-top-4 v-spacing-4"></div>
     <ul class="navbar-messages center">
         <li class="nav-item">
-            <a class="nav-link {% if tab == "published" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'published' %}">Published{% if sounds_published_count %} ({{ sounds_published_count|intcomma }}){% endif %}</a>
+            <a class="nav-link {% if tab == "published" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'published' %}">Published{% if sounds_published_count %} ({{ sounds_published_count|bw_intcomma }}){% endif %}</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == "pending_moderation" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_moderation' %}">Moderation{% if sounds_moderation_count %} ({{ sounds_moderation_count|intcomma }}){% endif %}</a>
+            <a class="nav-link {% if tab == "pending_moderation" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_moderation' %}">Moderation{% if sounds_moderation_count %} ({{ sounds_moderation_count|bw_intcomma }}){% endif %}</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == "processing" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'processing' %}">Processing{% if sounds_processing_count %} ({{ sounds_processing_count|intcomma }}){% endif %}</a>
+            <a class="nav-link {% if tab == "processing" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'processing' %}">Processing{% if sounds_processing_count %} ({{ sounds_processing_count|bw_intcomma }}){% endif %}</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == "pending_description" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_description' %}">Pending description{% if sounds_pending_description_count|intcomma%} ({{ sounds_pending_description_count }}){% endif %}</a>
+            <a class="nav-link {% if tab == "pending_description" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_description' %}">Pending description{% if sounds_pending_description_count|bw_intcomma%} ({{ sounds_pending_description_count }}){% endif %}</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == "packs" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'packs' %}">Packs{% if packs_count %} ({{ packs_count }}){% endif %}</a>
+            <a class="nav-link {% if tab == "packs" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'packs' %}">Packs{% if packs_count %} ({{ packs_count|bw_intcomma }}){% endif %}</a>
         </li>
     </ul>
 <div class="divider-light v-spacing-top-4 v-spacing-4"></div>
@@ -43,7 +42,7 @@
                         </div>
                     </div>
                     <div class="col-md-2 font-weight-bold text-center d-none d-md-inline">
-                        {{ paginator.count|intcomma }} {% if tab == "packs" %}pack{% else %}sound{% endif %}{{ paginator.count|pluralize }}
+                        {{ paginator.count|bw_intcomma }} {% if tab == "packs" %}pack{% else %}sound{% endif %}{{ paginator.count|pluralize }}
                     </div>
                     <div class="col-md-5 text-right v-spacing-top-2 v-spacing-2">
                         <span class="text-light-grey"><b>Sort by:</b></span>

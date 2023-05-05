@@ -12,7 +12,7 @@
         </div>
         <div class="col-10 col-md-5">
             <h6><a href="{% url "forums-thread" thread.forum.name_slug thread.id %}" {% if thread.status != 2 %}class="text-black"{% endif %}>{{ thread.title|safe }}</a></h6>
-            <p>Started by <a href="{% url 'account' thread.author.username%}">{{ thread.author.username }}</a> {{thread.first_post.created|timesince}} ago · {{ thread.num_posts }} repl{{ thread.num_posts|pluralize:"y,ies" }}</p>
+            <p>Started by <a href="{% url 'account' thread.author.username%}">{{ thread.author.username }}</a> {{thread.first_post.created|timesince}} ago · {{ thread.num_posts|bw_intcomma }} repl{{ thread.num_posts|pluralize:"y,ies" }}</p>
         </div>
         <div class="col-md-4 offset-md-2 d-none d-md-block">
             {% cache 86400 bw_thread_common_commenters thread.id %}

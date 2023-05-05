@@ -1,4 +1,5 @@
 {% load util %}
+{% load bw_templatetags %}
 <div class="right text-light-grey col-auto" style="max-height: 22px;overflow: hidden;padding-right:0px!important;padding-left:0px!important;">                    
     {% if sound.pack_id %}
     <div class="h-spacing-left-1" title="Pack: {{ sound.pack_name }}">
@@ -18,7 +19,7 @@
         <span class="bw-icon-{{ sound.license_bw_icon_name }}"></span>
     </div>
     {% if sound.num_ratings >= min_num_ratings %}
-    <div class="h-spacing-left-1" title="Overall rating: {% if sound.num_ratings >= min_num_ratings %}{{ sound.avg_rating_0_5|floatformat:1 }} ({{ sound.num_ratings|formatnumber }} rating{{ sound.num_ratings|pluralize }}){% else %}Not enough ratings{% endif %}">
+    <div class="h-spacing-left-1" title="Overall rating: {% if sound.num_ratings >= min_num_ratings %}{{ sound.avg_rating_0_5|floatformat:1 }} ({{ sound.num_ratings|bw_intcomma }} rating{{ sound.num_ratings|pluralize }}){% else %}Not enough ratings{% endif %}">
         <span class="bw-icon-star {% if sound.num_ratings < min_num_ratings %}opacity-030{% endif %}"></span>{% if sound.num_ratings >= min_num_ratings %} {{ sound.avg_rating_0_5|floatformat:1 }}{% endif %}
     </div>
     {% endif %}

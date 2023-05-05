@@ -433,8 +433,6 @@ class BwProfileForm(ProfileForm):
         label="Allow simultaneous audio playback", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
     prefer_spectrograms = forms.BooleanField(
         label="Show spectrograms in sound players by default", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-    use_compact_mode = forms.BooleanField(
-        label="Display search results in a grid", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
@@ -469,8 +467,7 @@ class BwProfileForm(ProfileForm):
     class Meta:
         model = Profile
         fields = ('username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', 
-            'allow_simultaneous_playback', 'prefer_spectrograms', 'use_compact_mode', 
-            'ui_theme_preference' )
+            'allow_simultaneous_playback', 'prefer_spectrograms', 'ui_theme_preference' )
 
 
 class EmailResetForm(forms.Form):

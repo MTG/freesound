@@ -41,7 +41,7 @@ from utils.frontend_handling import render, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
-    split_filter_query
+    split_filter_query, should_use_compact_mode
 from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator
 
 search_logger = logging.getLogger("search")
@@ -129,6 +129,7 @@ def search_view_helper(request, tags_mode=False):
         'only_sounds_with_pack': only_sounds_with_pack,
         'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
         'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
+        'use_compact_mode': should_use_compact_mode(request),
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
         'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],

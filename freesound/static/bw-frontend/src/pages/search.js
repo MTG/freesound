@@ -95,6 +95,21 @@ var filter_is_geotagged_element = document.getElementById('filter_is_geotagged')
 var sort_by_element = document.getElementById('sort-by');
 var group_by_pack_element  = document.getElementById('group_by_pack');
 var only_sounds_with_pack_element  = document.getElementById('only_sounds_with_pack');
+var use_compact_mode_element  = document.getElementById('use_compact_mode');
+
+function update_hidden_compact_mode_element() {
+  var hiddenElement = document.getElementById('use_compact_mode_hidden');
+  if (use_compact_mode_element.checked) {
+    hiddenElement.value = "1";
+  } else {
+    hiddenElement.value = "0";
+  }
+}
+
+update_hidden_compact_mode_element()
+use_compact_mode_element.addEventListener('change', function() {
+  update_hidden_compact_mode_element()
+})
 
 function advancedSearchOptionsIsVisible()
 {

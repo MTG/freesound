@@ -197,6 +197,15 @@
                                                 <div class="bw-search__filter-name">Display results as packs</div>
                                             </label>
                                         </li>
+                                        <li class="bw-search__filter-value v-padding-1">
+                                            <label class="between w-100">
+                                                <div class="bw-search__filter-checkbox">
+                                                    <input id="use_compact_mode" type="checkbox" class="bw-checkbox" {% if use_compact_mode %}checked{% endif %}/>
+                                                    <input id="use_compact_mode_hidden" type="hidden" name="cm" value="{{ use_compact_mode|yesno:"1,0" }}"/>
+                                                </div>
+                                                <div class="bw-search__filter-name">Display results in grid</div>
+                                            </label>
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
@@ -277,7 +286,7 @@
                         {% endif %}
                         <div class="v-spacing-6">
                             {% if paginator.count > 0 %}
-                                {% if request.user.profile.use_compact_mode %}
+                                {% if use_compact_mode %}
                                     <div class="row no-margins">
                                         {% for result in docs %}
                                             <div class="col-6 col-lg-4">

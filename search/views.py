@@ -119,8 +119,6 @@ def search_view_helper(request, tags_mode=False):
         # display_pack templatetag
         query_params['num_sounds_per_pack_group'] = 3
 
-    import pprint
-    pprint.pprint(extra_vars)
     tvars = {
         'error_text': None,
         'filter_query': query_params['query_filter'],

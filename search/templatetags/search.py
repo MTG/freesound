@@ -55,12 +55,13 @@ def display_facet(context, flt, facet, facet_type, title=""):
                 continue
         else:
             element['display_name'] = element['name']
-
         element['params'] = f"{filter_query} {flt}:\"{quote_plus(element['name'])}\""
         element['id'] = f"{flt}--{quote_plus(element['name'])}"
-        element['add_filter_url'] = '.?g={}&only_p={}&q={}&f={}&s={}&w={}'.format(
+        element['add_filter_url'] = '.?advanced={}&g={}&only_p={}&fcw={}&q={}&f={}&s={}&w={}'.format(
+            context['advanced'],
             context['group_by_pack_in_request'],
             context['only_sounds_with_pack'],
+            'on' if context['fcw_license_filter'] else 'off',
             context['search_query'],
             element['params'],
             context['sort'] if context['sort'] is not None else '',

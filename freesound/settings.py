@@ -532,6 +532,8 @@ ANALYZERS_CONFIGURATION = {
 # -------------------------------------------------------------------------------
 # Search engine
 
+FCW_FILTER_VALUE = '("Attribution" OR "Creative Commons 0")'
+
 # Define the names of some of the indexed sound fields which are to be used later
 SEARCH_SOUNDS_FIELD_ID = 'sound_id'
 SEARCH_SOUNDS_FIELD_NAME = 'name'

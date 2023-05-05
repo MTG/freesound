@@ -182,6 +182,16 @@ def search_prepare_parameters(request):
         parsed_filters = []
         parsing_error = True
 
+    # Process "free cultural works" filter stuff   
+    fcw_license_filter = request.GET.get('fcw', False) == 'on'
+    if fcw_license_filter:
+        # If using fcw license filter, replace all other existing license filters for this one
+        parsed_filters = [parsed_filter for parsed_filter in parsed_filters if parsed_filter[0] != 'license']
+        parsed_filters.append(['license', ':', settings.FCW_FILTER_VALUE])
+    else:
+        # If not filtering by fcw, remove fcw filter if exists
+        parsed_filters = [parsed_filter for parsed_filter in parsed_filters if parsed_filter[2] == settings.FCW_FILTER_VALUE]
+
     filter_query = ' '.join([''.join(filter_str) for filter_str in parsed_filters])
 
     filter_query_non_facets, has_facet_filter = remove_facet_filters(parsed_filters)
@@ -194,7 +204,7 @@ def search_prepare_parameters(request):
         'num_sounds': settings.SOUNDS_PER_PAGE if not should_use_compact_mode(request) else settings.SOUNDS_PER_PAGE_COMPACT_MODE,
         'query_fields': field_weights,
         'group_by_pack': group_by_pack,
-        'only_sounds_with_pack': only_sounds_with_pack,
+        'only_sounds_with_pack': only_sounds_with_pack
     }
 
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ', '+')
@@ -210,7 +220,8 @@ def search_prepare_parameters(request):
         'has_facet_filter': has_facet_filter,
         'parsed_filters': parsed_filters,
         'parsing_error': parsing_error,
-        'raw_weights_parameter': weights_parameter
+        'raw_weights_parameter': weights_parameter,
+        'fcw_license_filter': fcw_license_filter
     }
 
     return query_params, advanced_search_params_dict, extra_vars
@@ -261,7 +272,8 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
         for filter_list_str in parsed_filters:
             # filter_list_str is a list of str ['<filter_name>', ':', '"', '<filter_value>', '"']
             filter_name = filter_list_str[0]
-            if filter_name != "duration" and filter_name != "is_geotagged":
+            filter_value = filter_list_str[2]
+            if filter_name != "duration" and filter_name != "is_geotagged" and filter_value != settings.FCW_FILTER_VALUE:
                 valid_filter = True
                 filter_str = ''.join(filter_list_str)
                 filter_display = ''.join(filter_list_str).replace('"', '')

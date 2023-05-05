@@ -73,7 +73,7 @@ def search_view_helper(request, tags_mode=False):
     query_params.update({'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS})
 
     filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], cluster_id)
-
+    
     # Get tags taht are being used in filters (this is used later to remove them from the facet and also for tags mode)
     tags_in_filter = []
     for filter_data in filter_query_split:
@@ -119,6 +119,8 @@ def search_view_helper(request, tags_mode=False):
         # display_pack templatetag
         query_params['num_sounds_per_pack_group'] = 3
 
+    import pprint
+    pprint.pprint(extra_vars)
     tvars = {
         'error_text': None,
         'filter_query': query_params['query_filter'],
@@ -130,6 +132,7 @@ def search_view_helper(request, tags_mode=False):
         'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
         'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
         'use_compact_mode': should_use_compact_mode(request),
+        'fcw_license_filter': extra_vars['fcw_license_filter'],
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
         'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],

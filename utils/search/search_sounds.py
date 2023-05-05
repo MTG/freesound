@@ -52,6 +52,22 @@ def should_use_compact_mode(request):
                 request.user.profile.use_compact_mode = False
                 request.user.profile.save()
             return False
+        
+def contains_active_advanced_search_filters(request, query_params, extra_vars):
+    duration_filter_is_default = True
+    if 'duration:' in query_params['query_filter']:
+        if 'duration:[0 TO *]' not in query_params['query_filter']:
+            duration_filter_is_default = False
+    using_advanced_search_weights = request.GET.get("a_tag", False) \
+        or request.GET.get("a_filename", False) \
+        or request.GET.get("a_description", False) \
+        or request.GET.get("a_packname", False) \
+        or request.GET.get("a_soundid", False) \
+        or request.GET.get("a_username", False)
+    return using_advanced_search_weights \
+        or extra_vars['fcw_license_filter'] \
+        or 'is_geotagged:' in query_params['query_filter'] \
+        or not duration_filter_is_default
 
 
 def search_prepare_parameters(request):
@@ -190,7 +206,7 @@ def search_prepare_parameters(request):
         parsed_filters.append(['license', ':', settings.FCW_FILTER_VALUE])
     else:
         # If not filtering by fcw, remove fcw filter if exists
-        parsed_filters = [parsed_filter for parsed_filter in parsed_filters if parsed_filter[2] == settings.FCW_FILTER_VALUE]
+        parsed_filters = [parsed_filter for parsed_filter in parsed_filters if parsed_filter[2] != settings.FCW_FILTER_VALUE]
 
     filter_query = ' '.join([''.join(filter_str) for filter_str in parsed_filters])
 

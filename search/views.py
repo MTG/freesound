@@ -41,7 +41,7 @@ from utils.frontend_handling import render, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
-    split_filter_query, should_use_compact_mode
+    split_filter_query, should_use_compact_mode, contains_active_advanced_search_filters
 from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator
 
 search_logger = logging.getLogger("search")
@@ -142,7 +142,8 @@ def search_view_helper(request, tags_mode=False):
         'weights': extra_vars['raw_weights_parameter'],
         'initial_tagcloud': initial_tagcloud,
         'tags_mode': tags_mode,
-        'tags_in_filter': tags_in_filter
+        'tags_in_filter': tags_in_filter,
+        'has_advanced_search_settings_set': contains_active_advanced_search_filters(request, query_params, extra_vars)
     }
 
     tvars.update(advanced_search_params_dict)

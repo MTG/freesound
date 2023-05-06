@@ -68,7 +68,7 @@ def display_facet(context, flt, facet, facet_type, title=""):
                 # means this corresponds to the "no pack" grouping which we don't want to show as a facet element.
                 continue
         elif element['name'] == settings.FCW_FILTER_VALUE:
-            element['display_name'] = "FCW approved licenses"
+            element['display_name'] = "Approved for Free Cultural Works"
         else:
             element['display_name'] = element['name']
         
@@ -105,7 +105,7 @@ def display_facet(context, flt, facet, facet_type, title=""):
                 if element['name'] != settings.FCW_FILTER_VALUE:
                     element['icon'] = License.bw_cc_icon_name_from_license_name(element['display_name'])
                 else:
-                    element['icon'] = None
+                    element['icon'] = 'fcw'
     context.update({
         "facet": filtered_facet,
         "type": facet_type,

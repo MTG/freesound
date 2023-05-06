@@ -53,7 +53,6 @@ class SearchUtilsTest(TestCase):
 
         expected_extra_vars = {
             'advanced': '',
-            'fcw_license_filter': False,
             'filter_query_link_more_when_grouping_packs': '',
             'cluster_id': '',
             'filter_query_non_facets': '',
@@ -98,7 +97,6 @@ class SearchUtilsTest(TestCase):
 
         expected_extra_vars = {
             'advanced': '1',
-            'fcw_license_filter': False,
             'filter_query_link_more_when_grouping_packs': 'duration:[1+TO+10]+is_geotagged:1',
             'cluster_id': '',
             'filter_query_non_facets': 'duration:[1 TO 10] is_geotagged:1',

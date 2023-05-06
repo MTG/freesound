@@ -175,14 +175,6 @@
                                         <li class="bw-search__filter-value v-padding-1">
                                             <label class="between w-100">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input name="fcw" type="checkbox" class="bw-checkbox" {% if fcw_license_filter %}checked{% endif %}/>
-                                                </div>
-                                                <div class="bw-search__filter-name"><span>Only sounds with a "<a href="https://creativecommons.org/share-your-work/public-domain/freeworks/" target="_blank" class="bw-link--black">Free cultural works</a>" approved license</span></div>
-                                            </label>
-                                        </li>
-                                        <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
-                                                <div class="bw-search__filter-checkbox">
                                                     <input id="filter_is_geotagged" type="checkbox" class="bw-checkbox"/>
                                                 </div>
                                                 <div class="bw-search__filter-name">Only geotagged sounds</div>
@@ -240,10 +232,8 @@
                             {% endif %}
                         {% endif %}
                     
-                        {% if not fcw_license_filter %}
                         {% if facets.license and facets.license|length > 1 %}
                             {% display_facet "license" facets.license "list" "Licenses" %}
-                        {% endif %}
                         {% endif %}
 
                         {% if not tags_mode %}
@@ -289,7 +279,7 @@
                         {% if filter_query_split %}
                         <div class="v-spacing-3 v-spacing-top-2 line-height-33">
                             {% for filter in filter_query_split %}
-                                <a class="no-hover btn-inverse bw-search__active-filters-button" href=".?advanced={{ advanced }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&fcw={{ fcw_license_filter|yesno:"on,off" }}&s={{ sort }}&cluster_id={{ filter.cluster_id }}&w={{ weights }}&q={{search_query}}&f={{ filter.remove_url }}" title="Remove this filter">
+                                <a class="no-hover btn-inverse bw-search__active-filters-button" href=".?advanced={{ advanced }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&s={{ sort }}&cluster_id={{ filter.cluster_id }}&w={{ weights }}&q={{search_query}}&f={{ filter.remove_url }}" title="Remove this filter">
                                     {{ filter.name }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
                                 </a>
                             {% endfor %}

@@ -130,7 +130,6 @@ def search_view_helper(request, tags_mode=False):
         'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
         'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
         'use_compact_mode': should_use_compact_mode(request),
-        'fcw_license_filter': extra_vars['fcw_license_filter'],
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
         'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],

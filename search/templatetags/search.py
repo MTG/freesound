@@ -21,6 +21,7 @@
 
 from past.utils import old_div
 from django import template
+from django.conf import settings
 from urllib.parse import quote_plus
 
 from sounds.models import License
@@ -43,25 +44,45 @@ def display_facet(context, flt, facet, facet_type, title=""):
 
     filter_query = quote_plus(context['filter_query'])
     filtered_facet = []
+    if flt == 'license':
+        fcw_count = 0
+        only_fcw_in_facet = True
+        for element in facet:
+            if element['name'] == 'Attribution' or element['name'] == 'Creative Commons 0':
+                fcw_count += element['count']
+            else:
+                only_fcw_in_facet = False
+        if fcw_count and not only_fcw_in_facet:
+            facet.append({
+                    'name': settings.FCW_FILTER_VALUE,
+                    'count': fcw_count,
+                    'size': 1.0,
+                })
     for element in facet:
         if flt == "grouping_pack":
             if element['name'].count("_") > 0:
                 # We also modify the display name to remove the id
                 element['display_name'] = element['name'][element['name'].find("_")+1:]
-                element['params'] = f"{filter_query} {flt}:\"{quote_plus(element['name'])}\""
             else:
                 # If facet element belongs to "grouping pack" filter but does not have the "_" character in it, it
                 # means this corresponds to the "no pack" grouping which we don't want to show as a facet element.
                 continue
+        elif element['name'] == settings.FCW_FILTER_VALUE:
+            element['display_name'] = "FCW approved licenses"
         else:
             element['display_name'] = element['name']
-        element['params'] = f"{filter_query} {flt}:\"{quote_plus(element['name'])}\""
+        
+        if element['name'] == settings.FCW_FILTER_VALUE:
+            # If adding the FCW filter (which has more complex logic) don't wrap the filter in " as it breaks the syntax parsing    
+            element['params'] = f"{filter_query} {flt}:{quote_plus(element['name'])}"
+        else:
+            element['params'] = f"{filter_query} {flt}:\"{quote_plus(element['name'])}\""
+
         element['id'] = f"{flt}--{quote_plus(element['name'])}"
-        element['add_filter_url'] = '.?advanced={}&g={}&only_p={}&fcw={}&q={}&f={}&s={}&w={}'.format(
+        element['add_filter_url'] = '.?advanced={}&g={}&only_p={}&q={}&f={}&s={}&w={}'.format(
             context['advanced'],
             context['group_by_pack_in_request'],
             context['only_sounds_with_pack'],
-            'on' if context['fcw_license_filter'] else 'off',
             context['search_query'],
             element['params'],
             context['sort'] if context['sort'] is not None else '',
@@ -70,7 +91,8 @@ def display_facet(context, flt, facet, facet_type, title=""):
         filtered_facet.append(element)
 
     if using_beastwhoosh(context['request']):
-        # In BW ui, we sort the facets of type "cloud" by their frequency of occurrence and apply an opacity filter
+        # In BW ui, we sort the facets by count
+        # Also, we apply an opacity filter on "could" type pacets
         if filtered_facet:
             filtered_facet = sorted(filtered_facet, key=lambda x: x['count'], reverse=True)
             max_count = max([element['count'] for element in filtered_facet])
@@ -80,8 +102,10 @@ def display_facet(context, flt, facet, facet_type, title=""):
         # In BW we also add icons to license facets
         if flt == 'license':
             for element in filtered_facet:
-                element['icon'] = License.bw_cc_icon_name_from_license_name(element['display_name'])
-
+                if element['name'] != settings.FCW_FILTER_VALUE:
+                    element['icon'] = License.bw_cc_icon_name_from_license_name(element['display_name'])
+                else:
+                    element['icon'] = None
     context.update({
         "facet": filtered_facet,
         "type": facet_type,

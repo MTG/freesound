@@ -42,22 +42,25 @@ def display_facet(context, flt, facet, facet_type, title=""):
     # are not unique!. What we do then is filter out the facet elements where, only for the case of grouping_pack,
     # the element name is a single number that does not contain the character "_"
 
-    filter_query = quote_plus(context['filter_query'])
+    if using_beastwhoosh(context['request']):
+        # In BW we add the extra Free Cultural Works license facet
+        if flt == 'license':
+            fcw_count = 0
+            only_fcw_in_facet = True
+            for element in facet:
+                if element['name'] == 'Attribution' or element['name'] == 'Creative Commons 0':
+                    fcw_count += element['count']
+                else:
+                    only_fcw_in_facet = False
+            if fcw_count and not only_fcw_in_facet:
+                facet.append({
+                        'name': settings.FCW_FILTER_VALUE,
+                        'count': fcw_count,
+                        'size': 1.0,
+                    })
+    
     filtered_facet = []
-    if flt == 'license':
-        fcw_count = 0
-        only_fcw_in_facet = True
-        for element in facet:
-            if element['name'] == 'Attribution' or element['name'] == 'Creative Commons 0':
-                fcw_count += element['count']
-            else:
-                only_fcw_in_facet = False
-        if fcw_count and not only_fcw_in_facet:
-            facet.append({
-                    'name': settings.FCW_FILTER_VALUE,
-                    'count': fcw_count,
-                    'size': 1.0,
-                })
+    filter_query = quote_plus(context['filter_query'])
     for element in facet:
         if flt == "grouping_pack":
             if element['name'].count("_") > 0:

@@ -104,10 +104,10 @@ class CleanHtmlTest(TestCase):
         self.assertEqual('<p></p>', ret)
 
         ret = clean_html('<A REL="nofollow" hREF="http://www.google.com"><strong>http://www.google.com</strong></a>')
-        self.assertEqual('<a href="http://www.google.com" rel="nofollow"><strong>http://www.google.com</strong></a>', ret)
+        self.assertEqual('<a rel="nofollow" href="http://www.google.com"><strong>http://www.google.com</strong></a>', ret)
 
         ret = clean_html('<a rel="nofollow" href="http://www.google.com"><strong>http://www.google.com</strong></a>')
-        self.assertEqual('<a href="http://www.google.com" rel="nofollow"><strong>http://www.google.com</strong></a>', ret)
+        self.assertEqual('<a rel="nofollow" href="http://www.google.com"><strong>http://www.google.com</strong></a>', ret)
 
         ret = clean_html('http://www.google.com <a href="">http://www.google.com</a>')
         self.assertEqual('<a href="http://www.google.com" rel="nofollow">http://www.google.com</a> <a href="http://www.google.com" rel="nofollow">http://www.google.com</a>', ret)

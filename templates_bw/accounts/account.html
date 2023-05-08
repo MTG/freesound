@@ -108,11 +108,11 @@
             </ol>
         </div>
         <div class="divider-light"></div>
-        <div class="row no-gutters">
+        <div class="row">
             <div class="col-md-8 v-spacing-top-4">
                 <div class="bw-profile__tap_container bw-profile__tap_container__active" id="tapSounds">
                     {% if latest_sounds %}
-                        <div class="row no-margins">
+                        <div class="row">
                             {% for sound in latest_sounds %}
                                 <div class="col-6 col-lg-4">
                                     {% display_sound_small sound %}
@@ -131,7 +131,7 @@
                 </div>
                 <div class="bw-profile__tap_container" id="tapPacks">
                     {% if latest_packs %}
-                        <div class="row no-margins">
+                        <div class="row">
                             {% for pack in latest_packs %}
                                 <div class="col-6 col-lg-4">
                                     {% display_pack pack %}
@@ -152,7 +152,7 @@
                     downloaded
                 </div>
             </div>
-            <aside class="col-md-3 offset-md-1 bw-profile__sections">
+            <aside class="col-md-4 col-extra-left-padding-large-md bw-profile__sections">
                 <div class="divider-light v-spacing-top-6 v-spacing-5 d-md-none"></div>
                 {% cache 3600 bw_user_profile_stats user.id %}
                 <section class="bw-profile__section_stats v-spacing-top-4">

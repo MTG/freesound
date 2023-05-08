@@ -219,7 +219,7 @@
 
                 </form>
             </div>
-            <div class="row no-gutters {% if tags_mode and initial_tagcloud %}display-none{% endif %}">
+            <div class="row {% if tags_mode and initial_tagcloud %}display-none{% endif %}">
 
                     <div class="col-12 center v-spacing-top-negative-2 d-md-none">
                         <div data-target="collapsable-filters" data-show-text="Show filters" data-hide-text="Hide filters" data-hide-on-load class="collapsable-toggle v-spacing-top-2 font-weight-bold text-light-grey"></div>
@@ -275,7 +275,7 @@
 
                     <div class="col-12 divider-light d-md-none v-spacing-top-3 v-spacing-3"></div>
 
-                    <main class="col-12 col-md-7 offset-md-1 col-lg-8 offset-lg-1">
+                    <main class="col-12 col-md-8 col-lg-9 col-extra-left-padding-md">
                         {% if filter_query_split %}
                         <div class="v-spacing-3 v-spacing-top-2 line-height-33">
                             {% for filter in filter_query_split %}
@@ -285,10 +285,10 @@
                             {% endfor %}
                         </div>
                         {% endif %}
-                        <div class="v-spacing-6">
+                        <div class="v-spacing-6 v-spacing-top-2">
                             {% if paginator.count > 0 %}
                                 {% if use_compact_mode %}
-                                    <div class="row no-margins">
+                                    <div class="row">
                                         {% for result in docs %}
                                             <div class="col-6 col-lg-4">
                                             {% if not only_sounds_with_pack %}
@@ -324,7 +324,7 @@
                                                 </div>
                                             {% endif %}
                                             {% if not forloop.last %}
-                                                <div class="divider-light"></div>
+                                                <div class="divider-light v-spacing-1"></div>
                                             {% endif %}
                                         </div>
                                     {% endfor %}

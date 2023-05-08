@@ -12,7 +12,7 @@
         <h5 class="v-spacing-5">Similar sounds</h5>
     </div>
     <div class="v-spacing-4">
-        <div class="row no-margins">
+        <div class="row">
             {% for sound in similar_sounds|slice:"1:13" %}
                 <div class="col-6 col-lg-4">
                     {% display_sound_small_no_bookmark sound %}

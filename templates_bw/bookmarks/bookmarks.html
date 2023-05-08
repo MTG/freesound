@@ -34,7 +34,7 @@
                 <h4><span class="text-light-grey">Category:</span> {% if category %}{{category.name}}{% else %}Uncategorized{% endif %} </h4>
                 <div class="v-spacing-top-3">
                 {% if page.object_list %}
-                    <div class="row no-margins">
+                    <div class="row">
                         {% for bookmark in page.object_list %}
                             <div class="col-6 col-md-4">
                                 {% display_sound_small bookmark.sound %}                     

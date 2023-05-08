@@ -78,8 +78,16 @@
   top:120px;
 }
 
-.compensate-col-gutter {
-  margin-left: -$grid-gutter-width / 2;
+.col-extra-left-padding-md {
+  @include md-and-above {
+    padding-left: 26px!important;
+  }
+}
+
+.col-extra-left-padding-large-md {
+  @include md-and-above {
+    padding-left: 50px!important;
+  }
 }
 
 @include make-grid-columns();

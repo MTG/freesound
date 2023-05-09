@@ -32,13 +32,13 @@
             </div>
         </div>
         <div class="row bw-front__content">
-            <main class="col-lg-9">
+            <main class="col-lg-9 col-extra-right-padding-lg">
                 {% cache 300 bw_front_page_latest_additions %}
                     {% if latest_sounds %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4">Latest additions</h3>
                         <div class="bw-carousel-container" {% if latest_sounds|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="bw-carousel-wrapper">
+                            <div class="bw-carousel-wrapper carousel-no-margins">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     <div class="row no-wrap">
                                     {% for sound_id in latest_sounds %}
@@ -65,7 +65,7 @@
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds during the last week">Trending sounds</h3>
                         <div class="bw-carousel-container" {% if trending_sound_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="bw-carousel-wrapper">
+                            <div class="bw-carousel-wrapper carousel-no-margins">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     <div class="row no-wrap">
                                     {% for sound_id in trending_sound_ids %}
@@ -87,7 +87,7 @@
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
                         <div class="bw-carousel-container" {% if trending_new_sound_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="bw-carousel-wrapper">
+                            <div class="bw-carousel-wrapper carousel-no-margins">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     <div class="row no-wrap">
                                     {% for sound_id in trending_new_sound_ids %}
@@ -109,7 +109,7 @@
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded pack created in the last week">Trending new packs</h3>
                         <div class="bw-carousel-container" {% if trending_new_pack_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="bw-carousel-wrapper">
+                            <div class="bw-carousel-wrapper carousel-no-margins">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     <div class="row no-wrap">
                                     {% for pack_id in trending_new_pack_ids %}
@@ -131,7 +131,7 @@
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds created in the last week">Recent random sounds of the day</h3>
                         <div class="bw-carousel-container" {% if recent_random_sound_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="bw-carousel-wrapper">
+                            <div class="bw-carousel-wrapper carousel-no-margins">
                                 <div class="bw-carousel with-dots dots-distance-1">
                                     <div class="row no-wrap">
                                     {% for sound_id in recent_random_sound_ids %}

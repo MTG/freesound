@@ -90,4 +90,10 @@
   }
 }
 
+.col-extra-right-padding-lg {
+  @include md-and-above {
+    padding-right: 26px!important;
+  }
+}
+
 @include make-grid-columns();

@@ -12,6 +12,18 @@
 
 .bw-carousel-wrapper {
   overflow: hidden;
+
+  &.carousel-no-margins {
+    margin-left: calc(-#{$grid-gutter-width/2} + 1px);
+    width: calc(100% + #{$grid-gutter-width});
+  
+    .bw-carousel {
+      .row:first-child {
+        margin: 0;
+      }
+    }
+    
+  }
 }
 
 .bw-carousel {

@@ -78,21 +78,21 @@
   top:120px;
 }
 
-.col-extra-left-padding-md {
+.col-extra-left-padding-middle-md {
   @include md-and-above {
-    padding-left: 26px!important;
+    padding-left: 30px!important;
   }
 }
 
 .col-extra-left-padding-large-md {
   @include md-and-above {
-    padding-left: 50px!important;
+    padding-left: 40px!important;
   }
 }
 
-.col-extra-right-padding-lg {
+.col-extra-right-padding-middle-lg {
   @include md-and-above {
-    padding-right: 26px!important;
+    padding-right: 30px!important;
   }
 }
 

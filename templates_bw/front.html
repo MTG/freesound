@@ -38,14 +38,16 @@
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4">Latest additions</h3>
                         <div class="bw-carousel-container" {% if latest_sounds|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="bw-carousel-wrapper carousel-no-margins">
-                                <div class="bw-carousel with-dots dots-distance-1">
-                                    <div class="row no-wrap">
-                                    {% for sound_id in latest_sounds %}
-                                        <div class="col-6 col-md-4">
-                                            {% display_sound_small sound_id %}
+                            <div class="overflow-hidden">
+                                <div class="bw-carousel-wrapper carousel-no-margins">
+                                    <div class="bw-carousel with-dots dots-distance-1">
+                                        <div class="row no-wrap">
+                                        {% for sound_id in latest_sounds %}
+                                            <div class="col-6 col-md-4">
+                                                {% display_sound_small sound_id %}
+                                            </div>
+                                        {% endfor %}
                                         </div>
-                                    {% endfor %}
                                     </div>
                                 </div>
                             </div>
@@ -65,14 +67,16 @@
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds during the last week">Trending sounds</h3>
                         <div class="bw-carousel-container" {% if trending_sound_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="bw-carousel-wrapper carousel-no-margins">
-                                <div class="bw-carousel with-dots dots-distance-1">
-                                    <div class="row no-wrap">
-                                    {% for sound_id in trending_sound_ids %}
-                                        <div class="col-6 col-md-4">
-                                            {% display_sound_small sound_id %}
+                            <div class="overflow-hidden">
+                                <div class="bw-carousel-wrapper carousel-no-margins">
+                                    <div class="bw-carousel with-dots dots-distance-1">
+                                        <div class="row no-wrap">
+                                        {% for sound_id in trending_sound_ids %}
+                                            <div class="col-6 col-md-4">
+                                                {% display_sound_small sound_id %}
+                                            </div>
+                                        {% endfor %}
                                         </div>
-                                    {% endfor %}
                                     </div>
                                 </div>
                             </div>
@@ -87,14 +91,16 @@
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
                         <div class="bw-carousel-container" {% if trending_new_sound_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="bw-carousel-wrapper carousel-no-margins">
-                                <div class="bw-carousel with-dots dots-distance-1">
-                                    <div class="row no-wrap">
-                                    {% for sound_id in trending_new_sound_ids %}
-                                        <div class="col-6 col-md-4">
-                                            {% display_sound_small sound_id %}
+                            <div class="overflow-hidden">
+                                <div class="bw-carousel-wrapper carousel-no-margins">
+                                    <div class="bw-carousel with-dots dots-distance-1">
+                                        <div class="row no-wrap">
+                                        {% for sound_id in trending_new_sound_ids %}
+                                            <div class="col-6 col-md-4">
+                                                {% display_sound_small sound_id %}
+                                            </div>
+                                        {% endfor %}
                                         </div>
-                                    {% endfor %}
                                     </div>
                                 </div>
                             </div>
@@ -109,14 +115,16 @@
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded pack created in the last week">Trending new packs</h3>
                         <div class="bw-carousel-container" {% if trending_new_pack_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="bw-carousel-wrapper carousel-no-margins">
-                                <div class="bw-carousel with-dots dots-distance-1">
-                                    <div class="row no-wrap">
-                                    {% for pack_id in trending_new_pack_ids %}
-                                        <div class="col-6 col-md-4">
-                                            {% display_pack pack_id %}
+                            <div class="overflow-hidden">
+                                <div class="bw-carousel-wrapper carousel-no-margins">
+                                    <div class="bw-carousel with-dots dots-distance-1">
+                                        <div class="row no-wrap">
+                                        {% for pack_id in trending_new_pack_ids %}
+                                            <div class="col-6 col-md-4">
+                                                {% display_pack pack_id %}
+                                            </div>
+                                        {% endfor %}
                                         </div>
-                                    {% endfor %}
                                     </div>
                                 </div>
                             </div>

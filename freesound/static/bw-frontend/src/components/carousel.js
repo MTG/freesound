@@ -2,7 +2,7 @@ import { createIconElement } from '../utils/icons'
 import { addHorizontalSwipeListener } from '../utils/swipeDetector'
 
 
-const carousels = [...document.getElementsByClassName('bw-carousel-container')]
+const carouselContainers = [...document.getElementsByClassName('bw-carousel-container')]
 
 const autoprefixedTransformProperties = [
   'WebkitTransform',
@@ -12,26 +12,26 @@ const autoprefixedTransformProperties = [
 ]
 
 
-carousels.forEach(carousel => {
-  const carouselContainer = [
-    ...carousel.getElementsByClassName('bw-carousel'),
+carouselContainers.forEach(carouselContainer => {
+  const carousel = [
+    ...carouselContainer.getElementsByClassName('bw-carousel'),
   ][0]
-  if (!carouselContainer) return
+  if (!carousel) return
   
   let totalPages = 0;
-  if (carousel.dataset.carouselType === "adaptive"){
+  if (carouselContainer.dataset.carouselType === "adaptive"){
     // Adaptive carousels will count the number of pages depending on the size of the child elements instead of separating 
     // them in rows. In this way we can have players with adapted size depending on overall screen size and carousels will 
     // adapt as well
-    const rowWithElements = carouselContainer.children[0];
+    const rowWithElements = carousel.children[0];
     const firstElement = rowWithElements.children[0];
     const elementsPerPage = Math.round(rowWithElements.offsetWidth / firstElement.offsetWidth);
     totalPages = Math.round(rowWithElements.childElementCount / elementsPerPage);
   } else {
-    totalPages = carouselContainer.childElementCount
+    totalPages = carousel.childElementCount
   }
   
-  const hasDots = carouselContainer.classList.contains('with-dots') && totalPages > 1;
+  const hasDots = carousel.classList.contains('with-dots') && totalPages > 1;
   let currentPage = 0
   const leftArrow = document.createElement('div')
   const rightArrow = document.createElement('div')
@@ -40,7 +40,7 @@ carousels.forEach(carousel => {
     currentPage = desiredPage
     const desiredTranslation = (100 / totalPages) * desiredPage
     autoprefixedTransformProperties.forEach(transform => {
-      carouselContainer.style[transform] = `translateX(-${desiredTranslation}%)`
+      carousel.style[transform] = `translateX(-${desiredTranslation}%)`
     })
     if (totalPages > 1){
       if (currentPage === 0) {
@@ -54,10 +54,7 @@ carousels.forEach(carousel => {
         rightArrow.classList.remove('carousel-nav-hidden')
       }
       if (hasDots) {
-        const dotsParent = carouselContainer.parentNode.parentNode.getElementsByClassName(
-          'carousel__dot-icons'
-        )[0]
-        const dots = [...dotsParent.getElementsByClassName('bw-icon-atom')]
+        const dots = [...carouselContainer.getElementsByClassName('bw-icon-atom')]
         dots.forEach((dot, dotIndex) => {
           if (dotIndex === desiredPage) {
             dot.classList.add('active-point')
@@ -69,8 +66,8 @@ carousels.forEach(carousel => {
     }
   }
   const width = `${totalPages * 100}%`
-  carouselContainer.style.width = width
-  const children = [...carouselContainer.children]
+  carousel.style.width = width
+  const children = [...carousel.children]
   children.forEach(child => {
     // eslint-disable-next-line no-param-reassign
     child.style.width = `${100 / totalPages}%`
@@ -87,8 +84,8 @@ carousels.forEach(carousel => {
   } else {
     rightArrow.classList.add('carousel-right', 'carousel-nav-hidden')
   }
-  carousel.append(leftArrow)
-  carousel.append(rightArrow)
+  carouselContainer.append(leftArrow)
+  carouselContainer.append(rightArrow)
   rightArrow.addEventListener('click', () => {
     clearAutoRotateTimer() // When manually selection one page, stop auto rotating
     setPage(currentPage + 1)
@@ -100,8 +97,8 @@ carousels.forEach(carousel => {
   if (hasDots) {
     const dotIconsParent = document.createElement('div')
     dotIconsParent.classList.add('carousel__dot-icons')
-    if (carouselContainer.className.match(/dots-distance-\d/)) {
-      const distance = carouselContainer.className.match(
+    if (carousel.className.match(/dots-distance-\d/)) {
+      const distance = carousel.className.match(
         /dots-distance-(\d)/
       )[1]
       dotIconsParent.classList.add(`dots-distance-${distance}`)
@@ -114,24 +111,24 @@ carousels.forEach(carousel => {
         setPage(i)
       })
     }
-    carousel.append(dotIconsParent)
+    carouselContainer.append(dotIconsParent)
   }
   setPage(0)
 
-  if (carousel.dataset.carouselAutoRotateSeconds !== undefined){
-    const seconds = parseInt(carousel.dataset.carouselAutoRotateSeconds, 10);
-    carousel.autoRotateInterval = setInterval(() => {
+  if (carouselContainer.dataset.carouselAutoRotateSeconds !== undefined){
+    const seconds = parseInt(carouselContainer.dataset.carouselAutoRotateSeconds, 10);
+    carouselContainer.autoRotateInterval = setInterval(() => {
       setPage((currentPage + 1) % totalPages);
     }, seconds * 1000);
   }
 
   const clearAutoRotateTimer = () => {
-    if (carousel.autoRotateInterval !== null){
-      window.clearInterval(carousel.autoRotateInterval);
+    if (carouselContainer.autoRotateInterval !== null){
+      window.clearInterval(carouselContainer.autoRotateInterval);
     } 
   }
 
-  addHorizontalSwipeListener(carousel, (direction) => {
+  addHorizontalSwipeListener(carouselContainer, (direction) => {
     clearAutoRotateTimer() // When manually selection one page, stop auto rotating
     if (direction) {
       setPage(currentPage - 1);

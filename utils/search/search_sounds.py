@@ -276,7 +276,6 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
         for filter_list_str in parsed_filters:
             # filter_list_str is a list of str ['<filter_name>', ':', '"', '<filter_value>', '"']
             filter_name = filter_list_str[0]
-            filter_value = filter_list_str[2]
             if filter_name != "duration" and filter_name != "is_geotagged":
                 valid_filter = True
                 filter_str = ''.join(filter_list_str)

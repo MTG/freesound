@@ -91,7 +91,7 @@ def get_n_weeks_back_datetime(n_weeks):
     """
     now = datetime.datetime.now()
     if settings.DEBUG:
-        now = Download.objects.first().created
+        now = Sound.objects.last().created
     return now - datetime.timedelta(weeks=n_weeks)
 
 

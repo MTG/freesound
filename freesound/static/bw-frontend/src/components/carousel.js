@@ -35,8 +35,14 @@ carouselContainers.forEach(carouselContainer => {
   let currentPage = 0
   const leftArrow = document.createElement('div')
   const rightArrow = document.createElement('div')
+  const transitionWrapper = carouselContainer.getElementsByClassName('bw-transition-wrapper')[0]; // Might be undefined
   const setPage = desiredPage => {
     if (desiredPage < 0 || desiredPage >= totalPages) return
+    if (transitionWrapper !== undefined) {
+      // While transitining, add overflow hidden to the transition wrapper div so no "artifacts" are created because the negative margin to align the carousels
+      transitionWrapper.classList.add('overflow-hidden');
+      setTimeout( () => {transitionWrapper.classList.remove('overflow-hidden');}, 300)
+    }
     currentPage = desiredPage
     const desiredTranslation = (100 / totalPages) * desiredPage
     autoprefixedTransformProperties.forEach(transform => {
@@ -65,6 +71,7 @@ carouselContainers.forEach(carouselContainer => {
       }
     }
   }
+
   const width = `${totalPages * 100}%`
   carousel.style.width = width
   const children = [...carousel.children]

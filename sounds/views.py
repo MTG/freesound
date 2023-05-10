@@ -86,7 +86,7 @@ def get_n_weeks_back_datetime(n_weeks):
     Returns a datetime object set to a time `n_weeks` back from now.
     If DEBUG=True, it is likely that the contents of the development databse have not been updated and no
     activity will be registered for the last `n_weeks`. To compensate for that, when in DEBUG mode the returned
-    date is calculated with respect to the date of the most recent download stored in database. In this way it is
+    date is calculated with respect to the date of the most recent sound stored in database. In this way it is
     more likely that the selected time range will include activity in database.
     """
     now = datetime.datetime.now()

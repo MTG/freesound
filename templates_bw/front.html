@@ -37,21 +37,7 @@
                     {% if latest_sounds %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4">Latest additions</h3>
-                        <div class="bw-carousel-container" {% if latest_sounds|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="overflow-hidden">
-                                <div class="bw-carousel-wrapper carousel-no-margins">
-                                    <div class="bw-carousel with-dots dots-distance-1">
-                                        <div class="row no-wrap">
-                                        {% for sound_id in latest_sounds %}
-                                            <div class="col-6 col-md-4">
-                                                {% display_sound_small sound_id %}
-                                            </div>
-                                        {% endfor %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {% sound_carousel latest_sounds %}
                     </section>
                     {% endif %}
                 {% endcache %}
@@ -66,21 +52,7 @@
                     {% cache 300 bw_front_page_trending_sounds %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds during the last week">Trending sounds</h3>
-                        <div class="bw-carousel-container" {% if trending_sound_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="overflow-hidden">
-                                <div class="bw-carousel-wrapper carousel-no-margins">
-                                    <div class="bw-carousel with-dots dots-distance-1">
-                                        <div class="row no-wrap">
-                                        {% for sound_id in trending_sound_ids %}
-                                            <div class="col-6 col-md-4">
-                                                {% display_sound_small sound_id %}
-                                            </div>
-                                        {% endfor %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {% sound_carousel trending_sound_ids %}
                     </section>
                     <hr />
                     {% endcache %}
@@ -90,21 +62,7 @@
                     {% cache 300 bw_front_page_trending_new_sounds %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
-                        <div class="bw-carousel-container" {% if trending_new_sound_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="overflow-hidden">
-                                <div class="bw-carousel-wrapper carousel-no-margins">
-                                    <div class="bw-carousel with-dots dots-distance-1">
-                                        <div class="row no-wrap">
-                                        {% for sound_id in trending_new_sound_ids %}
-                                            <div class="col-6 col-md-4">
-                                                {% display_sound_small sound_id %}
-                                            </div>
-                                        {% endfor %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {% sound_carousel trending_new_sound_ids %}
                     </section>
                     <hr />
                     {% endcache %}
@@ -114,21 +72,7 @@
                     {% cache 300 bw_front_page_trending_new_packs %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded pack created in the last week">Trending new packs</h3>
-                        <div class="bw-carousel-container" {% if trending_new_pack_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="overflow-hidden">
-                                <div class="bw-carousel-wrapper carousel-no-margins">
-                                    <div class="bw-carousel with-dots dots-distance-1">
-                                        <div class="row no-wrap">
-                                        {% for pack_id in trending_new_pack_ids %}
-                                            <div class="col-6 col-md-4">
-                                                {% display_pack pack_id %}
-                                            </div>
-                                        {% endfor %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {% pack_carousel trending_new_pack_ids %}
                     </section>
                     <hr />
                     {% endcache %}
@@ -138,21 +82,7 @@
                 {% cache 300 bw_front_page_recent_sounds_of_the_day %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds created in the last week">Recent random sounds of the day</h3>
-                        <div class="bw-carousel-container" {% if recent_random_sound_ids|length > 3 %}data-carousel-type="adaptive"{% endif %}>
-                            <div class="overflow-hidden">
-                                <div class="bw-carousel-wrapper carousel-no-margins">
-                                    <div class="bw-carousel with-dots dots-distance-1">
-                                        <div class="row no-wrap">
-                                        {% for sound_id in recent_random_sound_ids %}
-                                            <div class="col-6 col-md-4">
-                                                {% display_sound_small sound_id %}
-                                            </div>
-                                        {% endfor %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {% sound_carousel recent_random_sound_ids %}
                     </section>
                     {% endcache %}
                 {% endif %}

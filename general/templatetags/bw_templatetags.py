@@ -187,3 +187,17 @@ def bw_plausible_scripts():
 @register.filter
 def bw_intcomma(value):
     return intcomma(value)
+
+
+@register.inclusion_tag('molecules/carousel.html', takes_context=True)
+def sound_carousel(context, sounds):
+    # Update context and pass it to templatetag so nested template tags also have it
+    context.update({'elements': sounds, 'type': 'sound'})  
+    return context
+
+
+@register.inclusion_tag('molecules/carousel.html', takes_context=True)
+def pack_carousel(context, packs):
+    # Update context and pass it to templatetag so nested template tags also have it
+    context.update({'elements': packs, 'type': 'pack'})
+    return context

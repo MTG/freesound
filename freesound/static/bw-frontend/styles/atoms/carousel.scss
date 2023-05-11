@@ -56,7 +56,7 @@
 
 .carousel-right {
   transform: translateX(50%) translateY(-50%);
-  right: 0px;
+  right: 2px;
 
   .bw-icon-arrow:hover {
     color: $red;
@@ -65,7 +65,7 @@
 
 .carousel-left {
   transform: rotate(-180deg) translateY(50%) translateX(50%);
-  left: 0;
+  left: 2px;
 
   .bw-icon-arrow:hover {
     color: $red;

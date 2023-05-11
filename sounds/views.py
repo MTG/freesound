@@ -716,9 +716,11 @@ def edit_and_describe_sounds_helper(request):
     files = request.session.get('describe_sounds', None)  # List of File objects of sounds to describe
     sounds = request.session.get('edit_sounds', None)  # List of Sound objects to edit
     if sounds is None and files is None:
-        raise Exception('Expecting either a list of sounds or audio files to describe, got none.')
+        # Expecting either a list of sounds or audio files to describe, got none. Redirect to main manage sounds page.
+        return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['published']))
     if sounds is not None and files is not None:
-        raise Exception('Got both a list of sounds and audio files to describe, expected only one of the two.')
+        # Got both a list of sounds and audio files to describe, expected only one of the two. Redirect to main manage sounds page.
+        return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['published']))
     describing = sounds is None and files is not None
     forms = []
     forms_per_round = settings.SOUNDS_PER_DESCRIBE_ROUND

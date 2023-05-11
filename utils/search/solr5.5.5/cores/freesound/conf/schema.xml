@@ -226,7 +226,7 @@
 		<field name="tag" type="alphaOnlySort" indexed="true" stored="true" required="false" multiValued="true"/>
 		<field name="is_explicit" type="boolean" indexed="true" stored="true" required="false" />
 
-		<field name="license" type="string" indexed="true" stored="true" />
+		<field name="license" type="lowercase" indexed="true" stored="true" />
 
 		<field name="is_remix" type="boolean" indexed="true" stored="true" required="true" />
 		<field name="was_remixed" type="boolean" indexed="true" stored="true" required="true" />

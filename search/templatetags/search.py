@@ -72,6 +72,10 @@ def display_facet(context, flt, facet, facet_type, title=""):
                 continue
         elif element['name'] == settings.FCW_FILTER_VALUE:
             element['display_name'] = "Approved for Free Cultural Works"
+        elif flt == 'license':
+            # License field in solr is case insensitive and will return facet names in lowercase. 
+            # We need to properly capitalize them to use official CC license names.
+            element['display_name'] = element['name'].title().replace('Noncommercial', 'NonCommercial')
         else:
             element['display_name'] = element['name']
         

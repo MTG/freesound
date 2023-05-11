@@ -634,6 +634,7 @@ def handle_uploaded_image(profile, f):
 
 @login_required
 def manage_sounds(request, tab):
+    if not using_beastwhoosh(request): raise Http404
 
     def process_filter_and_sort_options(request, sort_options, tab):
         sort_by = request.GET.get('s', sort_options[0][0])

@@ -13,7 +13,7 @@
             wiki page content as script tag would be stripped.{% endcomment %}
             {% bw_maps_js_scripts %}
         {% endif %}
-        {{ content.body|markdown:"wikilinks,codehilite,markdown.extensions.toc" }}
+        {{ content.body|markdown_wiki }}
         {% if perms.wiki.change_page %}
         <div class="v-spacing-top-5 text-right">
             <a class="btn-primary no-hover" href="{% url "wiki-page-edit" name %}">Edit this page</a>

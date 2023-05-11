@@ -46,8 +46,8 @@ from utils.spam import is_spam
 web_logger = logging.getLogger('web')
 
 html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
-                <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
-                <code>blockquote</code> and <code>code</code>."""
+                <code>b</code>, <code>em</code>, <code>ul</code>, <code>li</code>, <code>u</code>, 
+                <code>p</code>, <code>br</code>, <code>blockquote</code> and <code>code</code>."""
 
 
 def validate_file_extension(audiofiles):

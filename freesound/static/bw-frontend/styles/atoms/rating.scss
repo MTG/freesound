@@ -13,10 +13,10 @@
   input ~ label:hover,
   input ~ label:hover ~ label {
     span {
-      color: $yellow;
+      color: $yellow!important;
 
       :before {
-        color: $yellow;
+        color: $yellow!important;
       }
       
     }
@@ -26,4 +26,11 @@
 .bw-rating__star-no-editable {
   padding: 0 2px;
   float: right;
+  opacity: 0.3;
+}
+
+.bw-sound-page__information {
+  .bw-rating__star-no-editable {
+    opacity: 1.0!important;
+  }
 }

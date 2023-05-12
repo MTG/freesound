@@ -107,6 +107,12 @@
   .bw-player__ruler-indicator {
     color: $player-inverted-color;
   }
+
+  .bw-player__rate__widget {
+    .text-light-grey {
+      color: $player-inverted-color;
+    }
+  }
 }
 
 .bw-player__progress-container {
@@ -191,6 +197,17 @@
   right: 2px;
 }
 
+.bw-player__top_controls_left {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+}
+
+.bw-player__rate__widget {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
 .bw-player__favorite {
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -215,13 +232,14 @@
   }
 
   &:hover {
+    .bw-player__rate__widget,
     .bw-player__controls,
     .bw-player__similar,
     .bw-player__progress,
     .bw-player__progress-indicator,
     .bw-player__favorite {
       opacity: 1.0;
-    }
+    } 
   }
 }
 

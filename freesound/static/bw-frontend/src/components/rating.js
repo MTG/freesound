@@ -43,6 +43,16 @@ const handleRatingInput = ratingInput => {
   req.send(null);
 };
 
-ratingInputs.forEach(ratingInput => {
-  ratingInput.addEventListener('click', () => handleRatingInput(ratingInput))
-});
+
+const addRatingInputEventListeners = inputs => {
+  inputs.forEach(ratingInput => {
+    ratingInput.addEventListener('click', evt => {
+      handleRatingInput(ratingInput);
+      evt.stopPropagation();
+    })
+  });
+}
+
+
+addRatingInputEventListeners(ratingInputs)
+

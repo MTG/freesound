@@ -1550,6 +1550,8 @@ class PackManager(models.Manager):
                             'preview_ogg': s.locations('preview.LQ.ogg.url'),
                             'wave': s.locations('display.wave_bw.L.url'),
                             'spectral': s.locations('display.spectral_bw.L.url'),
+                            'num_ratings': s.num_ratings,
+                            'avg_rating': s.avg_rating
                         })
             p.num_sounds_unpublished_precomputed = p.sounds.count() - p.num_sounds
             p.licenses_data_precomputed = ([lid for _, lid in licenses], [lname for lname, _ in licenses])

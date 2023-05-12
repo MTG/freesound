@@ -102,15 +102,15 @@
         <div class="divider-light"></div>
         <div class="row bw-profile__taps_nav">
             <ol>
-                <li class="active" data-toggle="tap" data-target="#tapSounds">Latest sounds</li>
-                <li data-toggle="tap" data-target="#tapPacks">Latest packs</li>
+                <li class="active" data-toggle="tap" data-target="#sounds">Latest sounds</li>
+                <li data-toggle="tap" data-target="#packs">Latest packs</li>
                 {% comment %}<li data-toggle="tap" data-target="#tapDownloaded">Downloads</li>{% endcomment %}
             </ol>
         </div>
         <div class="divider-light"></div>
         <div class="row">
             <div class="col-md-8 v-spacing-top-4">
-                <div class="bw-profile__tap_container bw-profile__tap_container__active" id="tapSounds">
+                <div class="bw-profile__tap_container bw-profile__tap_container__active" id="sounds">
                     {% if latest_sounds %}
                         <div class="row">
                             {% for sound in latest_sounds %}
@@ -129,7 +129,7 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="bw-profile__tap_container" id="tapPacks">
+                <div class="bw-profile__tap_container" id="packs">
                     {% if latest_packs %}
                         <div class="row">
                             {% for pack in latest_packs %}

@@ -88,21 +88,27 @@ def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
 def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=False, update_stars_color_on_save=False):
-    if hasattr(sound, 'username'):
-        sound_user = sound.username
+    if isinstance(sound, dict):
+        sound_user = sound['username']
+        sound_avg_rating = sound['avg_rating']
+        sound_num_ratings = sound['num_ratings']
     else:
-        sound_user = sound.user.username
+        if hasattr(sound, 'username'):
+            sound_user = sound.username
+        else:
+            sound_user = sound.user.username
+        sound_avg_rating = sound.avg_rating
+        sound_num_ratings = sound.num_ratings
     request = context['request']
-    request_user = request.user.username
     is_authenticated = request.user.is_authenticated
 
     if allow_rating is None:
         # If allow_rating is None (default), allow rating only if the request user is not the author of the sound
-        allow_rating = request.user.id != sound.user_id
+        allow_rating = request.user.username != sound_user
 
     if not use_request_user_rating:
-        if sound.num_ratings >= settings.MIN_NUMBER_RATINGS:
-            sound_rating = sound.avg_rating
+        if sound_num_ratings >= settings.MIN_NUMBER_RATINGS:
+            sound_rating = sound_avg_rating
         else:
             sound_rating = 0
     else:

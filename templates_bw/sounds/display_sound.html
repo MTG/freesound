@@ -14,6 +14,7 @@
         <div class="v-spacing-3 overfow-hidden {% if is_explicit %}blur{% endif %}">
             {% include "sounds/player.html" %}
             {% cache 43200 bw_display_sound sound.id player_size is_authenticated %}
+            {% if show_rate_widget %}<div class="display-none bw-player__rate__widget">{% bw_sound_stars sound %}</div>{% endif %}
             <div class="between line-height-percentage-150 v-spacing-top-1">
                 <h5 class="ellipsis">
                     <a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{ sound.original_filename }}</a>
@@ -141,6 +142,7 @@
         {% comment %}This size will be used inside a pack carousel. For this size we only include the basic
         player and show no sound metadata{% endcomment %}
         {% include "sounds/player.html" %}
+        {% if show_rate_widget %}<div class="display-none bw-player__rate__widget">{% bw_sound_stars sound %}</div>{% endif %}
 
     {% elif player_size == 'minimal' %}
         {% comment %}This size is used in map info windows and only includes a play/stop and loop button{% endcomment %}

@@ -14,7 +14,7 @@
 
     {% for num in page_numbers %}
         {% ifequal num current_page %}
-            <li class="bw-pagination_circle bw-pagination_selected">{{ num }}</li>
+            <li class="bw-pagination_circle bw-pagination_selected"><a class="text-white" href="{{ url }}{{ num }}{% if anchor %}#{{anchor}}{% endif %}" title="Page {{ num }}">{{ num }}</a></li>
         {% else %}
             <li><a href="{{ url }}{{ num }}{% if anchor %}#{{anchor}}{% endif %}" title="Page {{ num }}">{{ num }}</a></li>
         {% endifequal %}

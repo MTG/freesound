@@ -1,5 +1,6 @@
 import {makeSoundsMapWithStaticMapFirst} from '../components/mapsMapbox';
-import {handleGenericModal, handleModal} from "../components/modal";
+import {handleGenericModal} from '../components/modal';
+import {setURLHash, hashEquals} from '../utils/urls'
 
 // Latest sounds/Latest tags taps
 
@@ -15,9 +16,9 @@ const cleanActiveClass = () => {
 
 const handleTap = tap => {
   cleanActiveClass();
-
-  const tapContainer = document.getElementById(tap.dataset.target.substring(1));
-
+  const tapName = tap.dataset.target.substring(1);
+  const tapContainer = document.getElementById(tapName);
+  setURLHash(tapName);
   tap.classList.add('active');
   tapContainer.classList.add('bw-profile__tap_container__active');
 };
@@ -36,7 +37,10 @@ const removeFollowModalUrlParams = () => {
   [userFollowersButton, userFollowUsersButton, userFollowTagsButton].forEach(button => {
     searchParams.delete(button.dataset.modalActivationParam);
   });
-  const url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + searchParams.toString();
+  let url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + searchParams.toString();
+  if (location.hash) {
+    url += location.hash;
+  }
   window.history.replaceState(null, "", url);
 };
 
@@ -50,7 +54,10 @@ const setFollowModalUrlParamToCurrentPage = (modalActivationParam) => {
     page = parseInt(element.innerHTML, 10);
   });
   searchParams.set(modalActivationParam, page);
-  const url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + searchParams.toString();
+  let url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + searchParams.toString();
+  if (location.hash) {
+    url += location.hash;
+  }
   window.history.replaceState(null, "", url);
 };
 
@@ -64,6 +71,12 @@ const setFollowModalUrlParamToCurrentPage = (modalActivationParam) => {
   });
 });
 
+
+// User geotags map
+makeSoundsMapWithStaticMapFirst('latest_geotags', 'map_canvas', 'static_map_wrapper')
+
+
+// Activate following modals from URL params if needbe
 const urlParams = new URLSearchParams(window.location.search);
 const followersModalParam = urlParams.get(userFollowersButton.dataset.modalActivationParam);
 const followingModalParam = urlParams.get(userFollowUsersButton.dataset.modalActivationParam);
@@ -93,5 +106,10 @@ if (followingTagsModalParam) {
   });
 }
 
-// User geotags map
-makeSoundsMapWithStaticMapFirst('latest_geotags', 'map_canvas', 'static_map_wrapper')
+// Activate tap sections based on hash
+taps.forEach(tap => {
+  const tapName = tap.dataset.target.substring(1);
+  if (hashEquals(tapName)) {
+    handleTap(tap);
+  }
+});

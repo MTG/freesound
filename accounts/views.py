@@ -801,7 +801,7 @@ def manage_sounds(request, tab):
 
 @login_required
 def edit_sounds(request):
-    # BW only view
+    if not using_beastwhoosh(request): raise Http404
     return edit_and_describe_sounds_helper(request)  # Note that the list of sounds to describe is stored in the session object
 
 

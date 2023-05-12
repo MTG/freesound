@@ -236,6 +236,7 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
   const controlsElement = playerImgNode.parentElement.querySelector('.bw-player__controls');
   const progressStatusContainerElement = playerImgNode.parentElement.querySelector('.bw-player__progress-container');
   const topControlsElement = playerImgNode.parentElement.querySelector('.bw-player__top_controls');
+  const topControlsLeftElement = playerImgNode.parentElement.querySelector('.bw-player__top_controls_left');
   const bookmarkElement = playerImgNode.parentElement.querySelector('.bw-player__favorite');
   const similarSoundsElement = playerImgNode.parentElement.querySelector('.bw-player__similar');
   let spectrogramButton = undefined;
@@ -250,6 +251,9 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
     }
     controlsElement.classList.add('bw-player__controls-inverted');
     topControlsElement.classList.add('bw-player__controls-inverted');
+    if (topControlsLeftElement !== null){
+      topControlsLeftElement.classList.add('bw-player__controls-inverted');
+    }
     if (bookmarkElement !== null){
       bookmarkElement.classList.add('bw-player__controls-inverted');
     }
@@ -266,6 +270,9 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
     }
     controlsElement.classList.remove('bw-player__controls-inverted');
     topControlsElement.classList.remove('bw-player__controls-inverted');
+    if (topControlsLeftElement !== null){
+      topControlsLeftElement.classList.remove('bw-player__controls-inverted');
+    }
     if (bookmarkElement !== null){
       bookmarkElement.classList.remove('bw-player__controls-inverted');
     }
@@ -389,8 +396,8 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
           // mouseleave event is ever fired
           hideProgressBarIndicator(parentNode)
         }
-        evt.stopPropagation()
-      }      
+      }  
+      evt.stopPropagation()    
     })
   }
   return imageContainer
@@ -551,6 +558,25 @@ const createPlayer = parentNode => {
   playerImage.appendChild(controls)
   const topControls = createPlayerTopControls(parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton)
   playerImage.appendChild(topControls)
+
+  const rateSoundHiddenWidget = parentNode.parentNode.getElementsByClassName('bw-player__rate__widget')[0]
+  if (rateSoundHiddenWidget){
+    const ratingWidget = document.createElement('div')
+    ratingWidget.className = 'bw-player__top_controls_left'
+    rateSoundHiddenWidget.classList.remove('display-none')
+    ratingWidget.append(rateSoundHiddenWidget)
+    ratingWidget.addEventListener('click', e => {
+      e.stopPropagation();  // Need to use this here to stop propagation of the click event and prevent player from start playing
+    })
+    let startWithSpectrum = false;
+    if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
+      startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+    }
+    if (startWithSpectrum){
+      ratingWidget.classList.add('bw-player__controls-inverted');
+    }
+    playerImage.appendChild(ratingWidget)
+  }
 }
 
 export {createPlayer};

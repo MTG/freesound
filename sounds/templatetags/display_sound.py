@@ -29,7 +29,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound(context, sound, player_size='small', show_bookmark=None, show_similar_sounds=None):
+def display_sound(context, sound, player_size='small', show_bookmark=None, show_similar_sounds=None, show_rate_widget=False):
     """This templatetag is used to display a sound with its player. It prepares some variables that are then passed
     to the display_sound.html template to show sound information together with the player.
 
@@ -45,6 +45,8 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
           it will be decided based on player size and other properties.
         show_similar_sounds (bool, optional): whether or not to show the similar sounds button (BW frontend only). If set to None
           it will be decided based on player size and other properties.
+        show_rate_widget (bool, optional): whether or not to show the widget for ratings sounds (BW frontend only). Note that rate
+          widget can only be shown in small players.
 
     Returns:
         dict: dictionary with the variables needed for rendering the sound with the display_sound.html template
@@ -121,6 +123,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
             'is_authenticated': request.user.is_authenticated,
             'show_bookmark_button': show_bookmark if show_bookmark is not None else (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),  # Only BW
             'show_similar_sounds_button': show_similar_sounds if show_similar_sounds is not None else (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),  # Only BW
+            'show_rate_widget': show_rate_widget if (player_size == 'small' or player_size == 'small_no_info') else False,  # Only BW
             'request_user_is_author': request.user.is_authenticated and sound_obj.user_id == request.user.id,
             'player_size': player_size,
             'show_milliseconds': 'true' if (player_size == 'big_no_info' or sound_obj.duration < 10) else 'false',  # Only BW
@@ -130,7 +133,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small(context, sound):
-    return display_sound(context, sound, player_size='small')
+    return display_sound(context, sound, player_size='small', show_rate_widget=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_bookmark(context, sound):
@@ -150,7 +153,7 @@ def display_sound_big_no_info_no_bookmark(context, sound):
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_info(context, sound):
-    return display_sound(context, sound, player_size='small_no_info')
+    return display_sound(context, sound, player_size='small_no_info', show_rate_widget=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_minimal(context, sound):
@@ -175,6 +178,8 @@ def display_sound_no_sound_object(context, file_data, player_size):
         'id': sound.id,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity buttons
         'username': sound.user.username,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity buttons
         'similarity_state': sound.similarity_state  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity buttons
+        'num_ratings': sound.num_ratings,  # Used to display rating widget in players
+        'avg_rating': sound.avg_rating,  # Used to display rating widget in players
     }
     '''
     return {
@@ -184,6 +189,8 @@ def display_sound_no_sound_object(context, file_data, player_size):
             'similarity_state': file_data.get('similarity_state', 'FA'),
             'duration': file_data['duration'],
             'samplerate': file_data.get('samplerate', 44100),
+            'num_ratings': file_data.get('num_ratings', 0),
+            'avg_rating': file_data.get('avg_rating', 0.0),
             'locations': {
                 'preview': {
                     'LQ': {
@@ -206,7 +213,9 @@ def display_sound_no_sound_object(context, file_data, player_size):
         'show_milliseconds': 'true' if ('big' in player_size ) else 'false',
         'show_bookmark_button': 'id' in file_data,
         'show_similar_sounds_button': 'similarity_state' in file_data,
-        'player_size': player_size
+        'show_rate_widget': 'avg_rating' in file_data,
+        'player_size': player_size,
+        'request': context['request']
     }
 
 

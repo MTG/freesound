@@ -610,7 +610,7 @@ class CreateCommentSerializer(serializers.Serializer):
 def validate_license(value):
     if value not in [key for key, name in LICENSE_CHOICES]:
         raise serializers.ValidationError('Invalid License, must be either \'Attribution\', \'Attribution '
-                                          'Noncommercial\' or \'Creative Commons 0\'.')
+                                          'NonCommercial\' or \'Creative Commons 0\'.')
     return value
 
 
@@ -672,7 +672,7 @@ def validate_geotag(value):
 
 LICENSE_CHOICES = (
         ('Attribution', 'Attribution'),
-        ('Attribution Noncommercial', 'Attribution Noncommercial'),
+        ('Attribution NonCommercial', 'Attribution NonCommercial'),
         ('Creative Commons 0', 'Creative Commons 0'),)
 
 
@@ -687,7 +687,7 @@ class SoundDescriptionSerializer(serializers.Serializer):
     description = serializers.CharField(help_text='Textual description of the sound.')
     license = serializers.ChoiceField(choices=LICENSE_CHOICES,
                                       help_text='License for the sound. Must be either \'Attribution\', \'Attribution '
-                                                'Noncommercial\' or \'Creative Commons 0\'.')
+                                                'NonCommercial\' or \'Creative Commons 0\'.')
     pack = serializers.CharField(required=False, help_text='Not required. Pack name (if there is no such pack with '
                                                            'that name, a new one will be created).')
     geotag = serializers.CharField(max_length=100, required=False,
@@ -728,7 +728,7 @@ class EditSoundDescriptionSerializer(serializers.Serializer):
                                         help_text='Not required. New textual description for the sound.')
     license = serializers.ChoiceField(required=False, allow_blank=True, choices=LICENSE_CHOICES,
                                       help_text='Not required. New license for the sound. Must be either '
-                                                '\'Attribution\', \'Attribution Noncommercial\' or '
+                                                '\'Attribution\', \'Attribution NonCommercial\' or '
                                                 '\'Creative Commons 0\'.')
     pack = serializers.CharField(required=False, help_text='Not required. New pack name for the sound (if there is no '
                                                            'such pack with that name, a new one will be created).')
@@ -766,7 +766,7 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
                                                   'description of the sound.')
     license = serializers.ChoiceField(required=False, allow_blank=True, choices=LICENSE_CHOICES,
                                       help_text='Only required if providing file description. License for the sound. '
-                                                'Must be either \'Attribution\', \'Attribution Noncommercial\' '
+                                                'Must be either \'Attribution\', \'Attribution NonCommercial\' '
                                                 'or \'Creative Commons 0\'.')
     pack = serializers.CharField(help_text='Not required. Pack name (if there is no such pack with that name, a new '
                                            'one will be created).', required=False)

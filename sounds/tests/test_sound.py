@@ -973,13 +973,13 @@ class SoundTemplateCacheTests(TestCase):
     def test_change_license_display(self):
         self._test_change_license(
             self._get_sound_display_cache_keys(),
-            License.objects.filter(name='Attribution').first(),
+            License.objects.filter(name__iexact='Attribution').first(),
             "images/licenses/by.png",
             self._get_sound_from_home,
         )
 
     def test_change_license_view(self):
-        license = License.objects.filter(name='Attribution').first()
+        license = License.objects.filter(name__iexact='Attribution').first()
         self._test_change_license(
             self._get_sound_view_footer_top_cache_keys(),
             license,

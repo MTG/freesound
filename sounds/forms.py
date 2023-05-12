@@ -236,14 +236,14 @@ def _license_form_clean_license_helper(cleaned_data):
 
 
 class LicenseForm(forms.Form):
-    license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
+    license_qs = License.objects.filter(Q(name__istartswith='Attribution') | Q(name__istartswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True)
 
     def __init__(self, *args, **kwargs):
         hide_old_license_versions = kwargs.pop('hide_old_license_versions', False)
         super().__init__(*args, **kwargs)
         if hide_old_license_versions:
-            new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
+            new_qs = License.objects.filter(Q(name__istartswith='Attribution') | Q(name__istartswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
             self.license_qs = new_qs
         valid_licenses = ', '.join([f'"{name}"' for name in list(self.license_qs.values_list('name', flat=True))])
@@ -336,7 +336,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
         help_text="You can add <i>timestamped</i> comments by using a syntax like \"#1:07 nice bird chirp\" in the description. "
                   "This will be rendered with little play button to play the sound at that timestamp. " + html_tags_help_text)
     is_explicit = forms.BooleanField(required=False, label="The sound contains explicit content")
-    license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
+    license_qs = License.objects.filter(Q(name__istartswith='Attribution') | Q(name__istartswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True, widget=forms.RadioSelect())
     pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[], required=False)
     new_pack = forms.CharField(widget=forms.TextInput(attrs={'placeholder': 'Fill in the name for the new pack'}),
@@ -377,7 +377,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
 
         # Prepare license field
         if hide_old_license_versions:
-            new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
+            new_qs = License.objects.filter(Q(name__istartswith='Attribution') | Q(name__istartswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
             self.license_qs = new_qs
         valid_licenses = ', '.join([f'"{name}"' for name in list(self.license_qs.values_list('name', flat=True))])

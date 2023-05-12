@@ -166,25 +166,25 @@ class SearchUtilsTest(TestCase):
 
     def test_split_filter_query_duration_and_facet(self):
         # We check that the combination of a duration filter and a facet filter (CC Attribution) works correctly.
-        filter_query_string = 'duration:[0 TO 10] license:"Attribution" username:"XavierFav" grouping_pack:"1_best-pack-ever"'
+        filter_query_string = 'duration:[0 TO 10] license:"attribution" username:"XavierFav" grouping_pack:"1_best-pack-ever"'
         parsed_filters = parse_query_filter_string(filter_query_string)
         filter_query_split = split_filter_query(filter_query_string, parsed_filters, '')
 
         # duraton filter is not a facet, but should stay present when removing a facet.
         expected_filter_query_split = [
-            {'remove_url': 'duration:[0 TO 10]', 'name': 'license:Attribution'}, 
+            {'remove_url': 'duration:[0 TO 10]', 'name': 'license:"attribution"'}, 
         ]
         expected_filter_query_split = [
-            {'remove_url': quote_plus('duration:[0 TO 10] username:"XavierFav" grouping_pack:"1_best-pack-ever"'), 'name': 'license:Attribution'}, 
-            {'remove_url': quote_plus('duration:[0 TO 10] license:"Attribution" grouping_pack:"1_best-pack-ever"'), 'name': 'username:XavierFav'}, 
-            {'remove_url': quote_plus('duration:[0 TO 10] license:"Attribution" username:"XavierFav"'), 'name': 'pack:best-pack-ever'},
+            {'remove_url': quote_plus('duration:[0 TO 10] username:"XavierFav" grouping_pack:"1_best-pack-ever"'), 'name': 'license:"attribution"'}, 
+            {'remove_url': quote_plus('duration:[0 TO 10] license:"attribution" grouping_pack:"1_best-pack-ever"'), 'name': 'username:"XavierFav"'}, 
+            {'remove_url': quote_plus('duration:[0 TO 10] license:"attribution" username:"XavierFav"'), 'name': 'pack:best-pack-ever'},
         ]
 
         # the order does not matter for the list of facet dicts.
         # we get the index of the correspondings facets dicts.
         filter_query_names = [filter_query_dict['name'] for filter_query_dict in filter_query_split]
-        cc_attribution_facet_dict_idx = filter_query_names.index('license:Attribution')
-        username_facer_dict_idx = filter_query_names.index('username:XavierFav')
+        cc_attribution_facet_dict_idx = filter_query_names.index('license:"attribution"')
+        username_facer_dict_idx = filter_query_names.index('username:"XavierFav"')
         grouping_pack_facet_dict_idx = filter_query_names.index('pack:best-pack-ever')
 
         # we use assertIn because the unicode strings that split_filter_query generates can incorporate 
@@ -211,17 +211,16 @@ class SearchUtilsTest(TestCase):
                       filter_query_split[grouping_pack_facet_dict_idx]['remove_url'].replace('++', '+'))
 
     def test_split_filter_query_special_chars(self):
-        filter_query_string = 'license:"Sampling+" grouping_pack:"1_example pack + @ #()*"'
+        filter_query_string = 'license:"sampling+" grouping_pack:"1_example pack + @ #()*"'
         parsed_filters = parse_query_filter_string(filter_query_string)
         filter_query_split = split_filter_query(filter_query_string, parsed_filters, '')
         filter_query_names = [filter_query_dict['name'] for filter_query_dict in filter_query_split]
 
         expected_filter_query_split = [
-            {'remove_url': quote_plus('grouping_pack:"1_example pack + @ #()*"'), 'name': 'license:Sampling+'},
-            {'remove_url': quote_plus('license:"Sampling+"'), 'name': 'pack:example pack + @ #()*'},
+            {'remove_url': quote_plus('grouping_pack:"1_example pack + @ #()*"'), 'name': 'license:"sampling+"'},
+            {'remove_url': quote_plus('license:"sampling+"'), 'name': 'pack:example pack + @ #()*'},
         ]
-
-        cc_samplingplus_facet_dict_idx = filter_query_names.index('license:Sampling+')
+        cc_samplingplus_facet_dict_idx = filter_query_names.index('license:"sampling+"')
         grouping_pack_facet_dict_idx = filter_query_names.index('pack:example pack + @ #()*')
 
         self.assertIn(expected_filter_query_split[0]['name'],
@@ -283,14 +282,14 @@ class SearchUtilsTest(TestCase):
     def test_split_filter_query_cluster_facet(self):
         # We check that the combination of a duration filter, a facet filter (CC Attribution) and a cluster filter
         # works correctly.
-        filter_query_string = 'duration:[0 TO 10] license:"Attribution"'
+        filter_query_string = 'duration:[0 TO 10] license:"attribution"'
         # the cluster filter is set in the second argument of split_filter_query()
         parsed_filters = parse_query_filter_string(filter_query_string)
         filter_query_split = split_filter_query(filter_query_string, parsed_filters, '1')
 
         expected_filter_query_split = [
-            {'remove_url': quote_plus('duration:[0 TO 10]'), 'name': 'license:Attribution'},
-            {'remove_url': quote_plus('duration:[0 TO 10] license:"Attribution"'), 'name': 'Cluster #1'}
+            {'remove_url': quote_plus('duration:[0 TO 10]'), 'name': 'license:"attribution"'},
+            {'remove_url': quote_plus('duration:[0 TO 10] license:"attribution"'), 'name': 'Cluster #1'}
         ]
 
         # check that the cluster facet exists
@@ -299,7 +298,7 @@ class SearchUtilsTest(TestCase):
 
         # the order does not matter for the list of facet dicts.
         # we get the index of the correspondings facets dicts.
-        cc_attribution_facet_dict_idx = filter_query_names.index('license:Attribution')
+        cc_attribution_facet_dict_idx = filter_query_names.index('license:"attribution"')
         cluster_facet_dict_idx = filter_query_names.index('Cluster #1')
 
         self.assertIn(expected_filter_query_split[0]['name'],

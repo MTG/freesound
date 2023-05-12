@@ -155,10 +155,10 @@ class Profile(SocialModel):
         return self.user.sounds.select_related('license').filter(license__deed_url__contains="3.0").count() > 0
 
     def upgrade_old_cc_licenses_to_new_cc_licenses(self):
-        old_cc_by = License.objects.get(name="Attribution", deed_url__contains="3.0")
-        old_cc_by_nc = License.objects.get(name="Attribution Noncommercial", deed_url__contains="3.0")
-        new_cc_by = License.objects.get(name="Attribution", deed_url__contains="4.0")
-        new_cc_by_nc = License.objects.get(name="Attribution Noncommercial", deed_url__contains="4.0")
+        old_cc_by = License.objects.get(name__iexact="Attribution", deed_url__contains="3.0")
+        old_cc_by_nc = License.objects.get(name__iexact="Attribution NonCommercial", deed_url__contains="3.0")
+        new_cc_by = License.objects.get(name__iexact="Attribution", deed_url__contains="4.0")
+        new_cc_by_nc = License.objects.get(name__iexact="Attribution NonCommercial", deed_url__contains="4.0")
         for old_license, new_license in [(old_cc_by, new_cc_by), (old_cc_by_nc, new_cc_by_nc)]:
             self.user.sounds.filter(license=old_license).update(license=new_license)
 

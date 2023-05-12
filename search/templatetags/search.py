@@ -48,7 +48,7 @@ def display_facet(context, flt, facet, facet_type, title=""):
             fcw_count = 0
             only_fcw_in_facet = True
             for element in facet:
-                if element['name'] == 'Attribution' or element['name'] == 'Creative Commons 0':
+                if element['name'].lower() == 'attribution' or element['name'].lower() == 'creative commons 0':
                     fcw_count += element['count']
                 else:
                     only_fcw_in_facet = False

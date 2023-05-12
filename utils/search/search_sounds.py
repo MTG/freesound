@@ -279,7 +279,7 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
             if filter_name != "duration" and filter_name != "is_geotagged":
                 valid_filter = True
                 filter_str = ''.join(filter_list_str)
-                filter_display = ''.join(filter_list_str).replace('"', '')
+                filter_display = ''.join(filter_list_str)
                 if filter_name == "grouping_pack":
                     filter_value = filter_list_str[-1].rstrip('"')
                     # If pack does not contain "_" then it's not a valid pack filter

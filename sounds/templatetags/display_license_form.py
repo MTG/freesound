@@ -27,9 +27,9 @@ register = template.Library()
 @register.inclusion_tag('sounds/license_form.html', takes_context=True)
 def display_license_form(context, form):
     # NOTE: this is only used in old UI and can be safely removed when fully migrating to BW
-    cc0_license_id = License.objects.get(name='Creative Commons 0').id
-    cc_by_license_id =  License.objects.get(name="Attribution", deed_url__contains="4.0").id
-    cc_by_nc_license_id = License.objects.get(name="Attribution Noncommercial", deed_url__contains="4.0").id    
+    cc0_license_id = License.objects.get(name__iexact='Creative Commons 0').id
+    cc_by_license_id =  License.objects.get(name__iexact="Attribution", deed_url__contains="4.0").id
+    cc_by_nc_license_id = License.objects.get(name__iexact="Attribution NonCommercial", deed_url__contains="4.0").id    
     return {
         'form': form, 
         'media_url': context['media_url'],

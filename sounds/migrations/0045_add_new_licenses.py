@@ -25,9 +25,9 @@ def add_new_licenses(apps, schema_editor):
             pass
 
     # CC BY NC 4.0
-    if not License.objects.filter(name="Attribution Noncommercial", deed_url__contains="4.0").count():
+    if not License.objects.filter(name__iexact="Attribution NonCommercial", deed_url__contains="4.0").count():
         try:
-            old_cc_by_nc = License.objects.get(name="Attribution Noncommercial", deed_url__contains="3.0")
+            old_cc_by_nc = License.objects.get(name__iexact="Attribution NonCommercial", deed_url__contains="3.0")
             License.objects.create(
                 name = old_cc_by_nc.name,
                 abbreviation = old_cc_by_nc.abbreviation,

@@ -154,7 +154,7 @@ def create_sound(user,
         license = sound_fields['license']
     else:
         # Get license, sort by -id so that 4.0 licenses appear before 3.0
-        license = License.objects.filter(name=sound_fields['license']).order_by('-id').first()
+        license = License.objects.filter(name__iexact=sound_fields['license']).order_by('-id').first()
     sound.type = get_sound_type(sound.original_path)
     sound.license = license
     sound.md5 = md5file(sound.original_path)
@@ -424,7 +424,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                                 filenames_to_describe.append(src_path)
 
                 # 3) Check that all the other sound fields are ok
-                license = License.objects.filter(name=line['license']).order_by('-id').first()
+                license = License.objects.filter(name__iexact=line['license']).order_by('-id').first()
                 if license:
                     license_id = license.id
                     license_name = license.name

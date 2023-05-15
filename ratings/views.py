@@ -18,14 +18,16 @@
 #     See AUTHORS file.
 #
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import Http404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 
 from ratings.models import SoundRating
 from sounds.models import Sound
+from utils.frontend_handling import using_beastwhoosh
 
 
 @login_required
@@ -50,5 +52,13 @@ def rate_sound(request, username, sound_id, rating):
         # make sure the rating is seen on the next page load by invalidating the cache for it.
         sound.invalidate_template_caches()
         Sound.objects.filter(id=sound_id).update(is_index_dirty=True)  # Set index dirty to true
-
-    return HttpResponse(str(SoundRating.objects.filter(sound_id=sound_id).count()))
+        
+    if using_beastwhoosh(request):
+        sound.refresh_from_db()
+        return JsonResponse({
+            'num_ratings': sound.num_ratings, 
+            'num_ratings_display': sound.get_ratings_count_text(),
+            'avg_rating': sound.avg_rating, 
+            'min_num_ratings': settings.MIN_NUMBER_RATINGS})
+    else:
+        return HttpResponse(str(SoundRating.objects.filter(sound_id=sound_id).count()))

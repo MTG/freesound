@@ -137,6 +137,7 @@ def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=Fa
             'allow_rating': is_authenticated and allow_rating,
             'sound': sound,
             'update_stars_color_on_save': update_stars_color_on_save,
+            'fill_class': 'text-red' if not use_request_user_rating else 'text-yellow',
             'stars_range': list(zip(stars_5, list(range(1, 6))))}
 
 

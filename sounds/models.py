@@ -56,6 +56,7 @@ from general import tasks
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
+from general.templatetags.util import formatnumber
 from tags.models import TaggedItem, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, Queue, TicketComment
@@ -867,6 +868,12 @@ class Sound(SocialModel):
     def avg_rating_0_5(self):
         # Returns the average raring, normalized from 0 tp 5
         return old_div(self.avg_rating, 2)
+    
+    def get_ratings_count_text(self):
+        if self.num_ratings >= settings.MIN_NUMBER_RATINGS:
+            return f'Overall rating ({ formatnumber(self.num_ratings) } rating{"s" if self.num_ratings != 1 else ""})'
+        else:
+            return 'Not enough ratings'
 
     def get_absolute_url(self):
         return reverse('sound', args=[self.user.username, smart_str(self.id)])
@@ -1717,11 +1724,11 @@ class Pack(SocialModel):
 
     @property
     def avg_rating(self):
-        # Return the average rating of the average ratings of the sounds of the pack that have more than MIN_NUM_RATINGS
+        # Return the average rating of the average ratings of the sounds of the pack that have more than MIN_NUMBER_RATINGS
         if hasattr(self, 'avg_rating_precomputed'):
             return self.avg_rating_precomputed
         else:
-            ratings = list(Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUM_RATINGS).values_list('avg_rating', flat=True))
+            ratings = list(Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS).values_list('avg_rating', flat=True))
             if ratings:
                 return old_div(1.0*sum(ratings),len(ratings))
             else:
@@ -1738,7 +1745,7 @@ class Pack(SocialModel):
         if hasattr(self, 'num_ratings_precomputed'):
             return self.num_ratings_precomputed
         else:
-            return Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUM_RATINGS)
+            return Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS)
 
     def get_total_pack_sounds_length(self):
         durations = list(Sound.objects.filter(pack=self).values_list('duration', flat=True))

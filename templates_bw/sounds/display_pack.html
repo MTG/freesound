@@ -4,7 +4,7 @@
 {% load bw_templatetags %}
 
 {% if size == 'small' %}
-    <div class="v-spacing-3 overfow-hidden">
+    <div class="bw-display-pack v-spacing-3 overfow-hidden">
         <div class="bw-carousel-container">
             <div class="bw-carousel-wrapper">
                 <div class="bw-carousel with-dots dots-distance-02">
@@ -42,7 +42,7 @@
         </div>
     </div>
 {% elif size == 'big' %}
-    <div>
+    <div class="bw-display-pack">
         {% if pack.selected_sounds_data %}
         <div class="row no-margins" style="margin-left: -15px">
             {% for sound_data in pack.selected_sounds_data %}
@@ -58,8 +58,8 @@
             <div>
                 <h5><span class="bw-icon-stack h-spacing-1 text-light-grey"></span><a class="bw-link--black ellipsis" href="{% url "pack" pack.user.username pack.id %}" >{{ pack.name }}</a></h5>
             </div>
-            <div class="text-grey text-right between">
-                <div style="min-width:130px;" class="top right" title="Overall rating of pack's sounds: {% if pack.num_ratings %}{{ pack.avg_rating_0_5|floatformat:1 }} ({{ pack.num_ratings|formatnumber }} rating{{ pack.num_ratings|pluralize }}){% else %}Not enough ratings{% endif %}">{% bw_generic_stars pack.avg_rating %}<span class="text-grey h-spacing-left-1">{% if pack.num_ratings %}({{ pack.num_ratings|formatnumber }}){% endif %}</span></div>
+            <div class="text-grey text-right between padding-right-1">
+                <div style="min-width:130px;" class="top right">{% bw_generic_stars pack.avg_rating %}<span class="text-grey h-spacing-left-1">{% if pack.num_ratings %}({{ pack.num_ratings|formatnumber }}){% endif %}</span></div>
             </div>
         </div>
         <div class="between">

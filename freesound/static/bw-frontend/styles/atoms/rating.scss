@@ -35,8 +35,14 @@
   }
 }
 
+.bw-display-pack {
+  .bw-rating__star-no-editable {
+    opacity: 1.0!important;
+  }
+}
+
 
 .bw-icon-half-star .path2:before {
   // Overwrite half-star grey part to match fs grey color
-  color: $navy-light-grey!important;
+  color: $navy-light-grey;
 }

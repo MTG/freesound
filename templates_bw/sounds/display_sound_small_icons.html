@@ -19,8 +19,8 @@
         <span class="bw-icon-{{ sound.license_bw_icon_name }}"></span>
     </div>
     {% if sound.num_ratings >= min_num_ratings %}
-    <div class="h-spacing-left-1" title="Overall rating: {% if sound.num_ratings >= min_num_ratings %}{{ sound.avg_rating_0_5|floatformat:1 }} ({{ sound.num_ratings|bw_intcomma }} rating{{ sound.num_ratings|pluralize }}){% else %}Not enough ratings{% endif %}">
-        <span class="bw-icon-star {% if sound.num_ratings < min_num_ratings %}opacity-030{% endif %}"></span>{% if sound.num_ratings >= min_num_ratings %} {{ sound.avg_rating_0_5|floatformat:1 }}{% endif %}
+    <div class="h-spacing-left-1" title="{{ sound.get_ratings_count_text }}">
+        <span class="bw-icon-star {% if sound.num_ratings < min_num_ratings %}opacity-030{% endif %}"></span>{% if sound.num_ratings >= min_num_ratings %} <span class="bw-rating__avg">{{ sound.avg_rating_0_5|floatformat:1 }}</span>{% endif %}
     </div>
     {% endif %}
 </div>

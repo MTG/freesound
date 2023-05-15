@@ -87,7 +87,7 @@ def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
 
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
-def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=False, update_stars_color_on_save=False):
+def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=False, show_added_rating_on_save=False):
     if isinstance(sound, dict):
         sound_user = sound['username']
         sound_avg_rating = sound['avg_rating']
@@ -116,6 +116,7 @@ def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=Fa
             sound_rating = sound.ratings.get(user=request.user).rating
         except (SoundRating.DoesNotExist, TypeError):
             sound_rating = 0
+    has_min_ratings = sound_num_ratings >= settings.MIN_NUMBER_RATINGS
 
     # Pre process rating values to do less work in the template
     stars_10 = []
@@ -136,7 +137,8 @@ def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=Fa
     return {'sound_user': sound_user,
             'allow_rating': is_authenticated and allow_rating,
             'sound': sound,
-            'update_stars_color_on_save': update_stars_color_on_save,
+            'has_min_ratings': has_min_ratings,
+            'show_added_rating_on_save': show_added_rating_on_save,
             'fill_class': 'text-red' if not use_request_user_rating else 'text-yellow',
             'stars_range': list(zip(stars_5, list(range(1, 6))))}
 
@@ -159,9 +161,13 @@ def bw_generic_stars(context, rating_0_10):
         else:
             stars_5.append('half')
 
+    has_min_ratings = rating_0_10 > 0
+
     return {
         'allow_rating': False,
-        'update_stars_color_on_save': False,
+        'show_added_rating_on_save': False,
+        'fill_class': 'text-red',
+        'has_min_ratings': has_min_ratings,
         'stars_range': list(zip(stars_5, list(range(1, 6))))
     }
 

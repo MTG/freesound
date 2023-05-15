@@ -1,5 +1,5 @@
 {% load bw_templatetags %}
-<div class="bw-rating__container" data-update-stars-color-on-save="{{ update_stars_color_on_save|yesno:"true,false" }}">
+<div class="bw-rating__container" data-show-added-rating-on-save="{{ show_added_rating_on_save|yesno:"true,false" }}" {% if not has_min_ratings %}title="Average rating not shown as there are not enough ratings"{% endif %}>
     {% for star_type, i in stars_range reversed %}
         {% if allow_rating %}
             <input class="bw-rating__input" type="radio" name="rate-{{ sound.id }}" data-rate-url="{% url "sound-rating-add" sound_user sound.id i %}" id="rate-{{ sound.id }}-{{ i }}" value="{{ i }}">

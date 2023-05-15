@@ -875,6 +875,12 @@ class Sound(SocialModel):
         else:
             return 'Not enough ratings'
 
+    def get_ratings_count_text_short(self):
+        if self.num_ratings >= settings.MIN_NUMBER_RATINGS:
+            return f'({ formatnumber(self.num_ratings) })'
+        else:
+            return ''
+
     def get_absolute_url(self):
         return reverse('sound', args=[self.user.username, smart_str(self.id)])
 

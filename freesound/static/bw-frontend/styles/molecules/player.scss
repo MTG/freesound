@@ -112,6 +112,11 @@
     .text-light-grey {
       color: $player-inverted-color;
     }
+
+    .bw-icon-half-star .path2:before {
+      // Overwrite half-star grey part to match fs grey color
+      color: $player-inverted-color;
+    }
   }
 }
 

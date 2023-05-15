@@ -12,7 +12,7 @@
         <span class="bw-icon-{{ pack.license_bw_icon_name }}"></span>
     </div>
     {% if pack.num_ratings %}
-    <div class="h-spacing-left-1" title="Overall rating of pack's sounds: {% if pack.num_ratings %}{{ pack.avg_rating_0_5|floatformat:1 }} ({{ pack.num_ratings|bw_intcomma }} rating{{ pack.num_ratings|pluralize }}){% else %}Not enough ratings{% endif %}">
+    <div class="h-spacing-left-1" title="Overall rating of pack's sounds ({{ pack.num_ratings|bw_intcomma }} rating{{ pack.num_ratings|pluralize }})">
         <span class="bw-icon-star {% if not pack.num_ratings %}opacity-030{% endif %}"></span>{% if pack.num_ratings %} {{ pack.avg_rating_0_5|floatformat:1 }}{% endif %}
     </div>
     {% endif %}

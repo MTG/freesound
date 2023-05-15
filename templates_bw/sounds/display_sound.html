@@ -14,7 +14,7 @@
         <div class="v-spacing-3 overfow-hidden {% if is_explicit %}blur{% endif %}">
             {% include "sounds/player.html" %}
             {% cache 43200 bw_display_sound sound.id player_size is_authenticated %}
-            {% if show_rate_widget %}<div class="display-none bw-player__rate__widget">{% bw_sound_stars sound %}</div>{% endif %}
+            {% if show_rate_widget %}<div class="display-none bw-player__rate__widget">{% bw_sound_stars sound None False %}</div>{% endif %}
             <div class="between line-height-percentage-150 v-spacing-top-1">
                 <h5 class="ellipsis">
                     <a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{ sound.original_filename }}</a>
@@ -68,7 +68,7 @@
                                 <h5 class="v-spacing-1"><a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}" title="{{ sound.original_filename }}">{{ sound.original_filename|truncate_string:52 }}</a></h5>
                             </div>
                             <div class="text-grey text-right between">
-                                <div style="min-width:130px;" class="top right">{% bw_sound_stars sound %}<span class="text-grey h-spacing-left-1">{% if sound.num_ratings >= min_num_ratings %}({{ sound.num_ratings|formatnumber }}){% endif %}</span></div>
+                                <div style="min-width:130px;" class="top right">{% bw_sound_stars sound %}<span class="bw-rating__count text-grey h-spacing-left-1">{{ sound.get_ratings_count_text_short }}</span></div>
                             </div>
                         </div>
                         <div class="max-h-85px-md-75px text-black overflow-hidden v-spacing-1">{{ sound.description|striptags|safe|truncatewords_html:35 }}</div>
@@ -142,7 +142,7 @@
         {% comment %}This size will be used inside a pack carousel. For this size we only include the basic
         player and show no sound metadata{% endcomment %}
         {% include "sounds/player.html" %}
-        {% if show_rate_widget %}<div class="display-none bw-player__rate__widget">{% bw_sound_stars sound %}</div>{% endif %}
+        {% if show_rate_widget %}<div class="display-none bw-player__rate__widget">{% bw_sound_stars sound None False %}</div>{% endif %}
 
     {% elif player_size == 'minimal' %}
         {% comment %}This size is used in map info windows and only includes a play/stop and loop button{% endcomment %}

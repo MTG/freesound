@@ -58,6 +58,7 @@ def rate_sound(request, username, sound_id, rating):
         return JsonResponse({
             'num_ratings': sound.num_ratings, 
             'num_ratings_display': sound.get_ratings_count_text(),
+            'num_ratings_display_short': sound.get_ratings_count_text_short(),
             'avg_rating': sound.avg_rating, 
             'min_num_ratings': settings.MIN_NUMBER_RATINGS})
     else:

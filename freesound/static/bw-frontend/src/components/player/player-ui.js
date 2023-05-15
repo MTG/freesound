@@ -84,18 +84,10 @@ const createProgressIndicator = (parentNode, audioElement, playerImgNode, player
   progressIndicatorContainer.addEventListener('mouseleave', () => {
     // Update playhead
     const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
-    const isPlaying = !audioElement.paused
-    if (isPlaying) {
-      setProgressIndicator(
-        ((100 * audioElement.currentTime) / duration) % 100,
-        parentNode
-      )
-    } else {
-      setProgressIndicator(
-        -10.0,  // On mouseleave event, if sound is not playing, set progress at a negative value so playhead is not visible at "0"
-        parentNode
-      )
-    }
+    setProgressIndicator(
+      ((100 * audioElement.currentTime) / duration) % 100,
+      parentNode
+    )
     
     // Update selected time indicator (only in big players)
     hideProgressBarIndicator(parentNode)
@@ -586,6 +578,8 @@ const createPlayer = parentNode => {
     }
     playerImage.appendChild(ratingWidget)
   }
+
+  setProgressIndicator(0, parentNode);
 }
 
 export {createPlayer};

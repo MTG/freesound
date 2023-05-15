@@ -25,6 +25,11 @@ export const setProgressIndicator = (progressPercentage, parentNode) => {
     'bw-player__progress-bar-indicator'
   )[0]
 
+  if (progressPercentage == 0.0){
+    // When progress is at 0, move it to -1 so we make sure progress indicator does not appear
+    progressPercentage = -1.0;
+  }
+
   if (progressIndicator) {
     const progressIndicatorRightBorderSize = progressIndicator.offsetWidth - progressIndicator.clientWidth
     const width = progressIndicator.parentElement.clientWidth - progressIndicatorRightBorderSize
@@ -32,11 +37,14 @@ export const setProgressIndicator = (progressPercentage, parentNode) => {
   }
 
   if (progressBarIndicator) {
+    if (progressPercentage < 0.0) {
+      progressBarIndicator.style.opacity = 0.0;
+    } else {
+      progressBarIndicator.style.opacity = 1.0;
+    }
     const width = progressBarIndicator.parentElement.clientWidth - progressBarIndicator.clientWidth
     progressBarIndicator.style.transform = `translateX(${(width * progressPercentage) / 100}px)`
   }
-
-
 }
 
 /**

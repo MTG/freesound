@@ -26,7 +26,7 @@
 .bw-rating__star-no-editable {
   padding: 0 2px;
   float: right;
-  opacity: 0.3;
+  opacity: 0.5;
 }
 
 .bw-sound-page__information {
@@ -39,10 +39,4 @@
   .bw-rating__star-no-editable {
     opacity: 1.0!important;
   }
-}
-
-
-.bw-icon-half-star .path2:before {
-  // Overwrite half-star grey part to match fs grey color
-  color: $navy-light-grey;
 }

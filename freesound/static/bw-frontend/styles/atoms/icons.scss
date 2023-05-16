@@ -1,14 +1,21 @@
 .bw-icon-half-star {
-  display: flex;
-  padding-top: 4px;
 
-  .path2 {
-    margin-left: -15px;
-
+  .path1 {
     &:before {
-      margin-left: 0;
+      color: $navy-light-grey;
     }
   }
+  
+  .path2 {
+    margin-left: -1.5em;
+    &:before {
+      
+      margin-left: 0.5em;
+    }
+  }
+
+  
+
 }
 
 .cleanIcon {

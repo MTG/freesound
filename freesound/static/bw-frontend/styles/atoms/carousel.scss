@@ -1,13 +1,13 @@
 .bw-carousel-container {
   position: relative;
   
-  //@media (hover) {
+  @media (hover) {
     // If hover is not supported (touch devices), don't add this hover as it will require two taps in touch devices for interaction with carousel dots/arrows
     // NOTE: for the moment we keep the default hover-on-tap behaviour as it is not that bad actually
     &:hover > .bw-carousel-icon {
       opacity: 1; 
     }
-  //}
+  }
 }
 
 .bw-carousel-wrapper {
@@ -45,13 +45,13 @@
   justify-content: center;
   cursor: pointer;
 
-  /*@media (hover: none) {
+  @media (hover: none) {
     // Make arrows always visible for devices that don't support hover (touch devices)
     opacity: 1;
     width: 25px;
     height: 25px;
     font-size: 80%;
-  }*/
+  }
 }
 
 .carousel-right {

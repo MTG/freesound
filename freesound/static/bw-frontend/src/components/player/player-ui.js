@@ -422,7 +422,7 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
 
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
-    playerControls.classList.add('opacity-050')
+    playerControls.classList.add('opacity-100')
   }
 
   let startWithSpectrum = false;

@@ -77,24 +77,25 @@ const handleRatingInput = ratingInput => {
     if (req.readyState === 4) {
       if (req.status === 200) {
         const data = JSON.parse(req.responseText);
-        if (showAddedRatingOnSave === "true"){
-          // Keep the added rating in the stars widget
-          updateStarIconsClasses(ratingInput.parentNode, ratingInput.value, 'text-yellow');
-        } else {
-          // Update the stars widget to reflect the new average rating (only if num ratings above minimum)
+        if (data.success) {
+          if (showAddedRatingOnSave === "true"){
+            // Keep the added rating in the stars widget
+            updateStarIconsClasses(ratingInput.parentNode, ratingInput.value, 'text-yellow');
+          } else {
+            // Update the stars widget to reflect the new average rating (only if num ratings above minimum)
+            if (data.num_ratings >= data.min_num_ratings) {
+              updateStarIconsClasses(ratingInput.parentNode, data.avg_rating/2, 'text-red');
+            }
+          }
           if (data.num_ratings >= data.min_num_ratings) {
-            updateStarIconsClasses(ratingInput.parentNode, data.avg_rating/2, 'text-red');
+            // Update related count and avg indicators (if any)
+            updateRelatedCountAndAvgIndicators(data, ratingInput);
+            
+            // Update related rating widget and count indicator in sound information section (only applies to sound page)
+            updateRatingWidgetInSoundPageDescriptionSection(data);
           }
         }
-        if (data.num_ratings >= data.min_num_ratings) {
-          // Update related count and avg indicators (if any)
-          updateRelatedCountAndAvgIndicators(data, ratingInput);
-          
-          // Update related rating widget and count indicator in sound information section (only applies to sound page)
-          updateRatingWidgetInSoundPageDescriptionSection(data);
-        }
-
-        showToast('Your rating has been recorded!');
+        showToast(data.message);
       } else {
         showToast('There were problems entering your rating. Please try again later');
       }

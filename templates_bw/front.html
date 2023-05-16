@@ -33,14 +33,14 @@
         </div>
         <div class="row bw-front__content">
             <main class="col-lg-9 col-extra-right-padding-middle-lg">
-                {% cache 300 bw_front_page_latest_additions %}
-                    {% if latest_sounds %}
+                {% if latest_sounds %}
+                    {% cache 300 bw_front_page_latest_additions %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4">Latest additions</h3>
                         {% sound_carousel latest_sounds %}
                     </section>
-                    {% endif %}
-                {% endcache %}
+                    {% endcache %}
+                {% endif %}
 
                 {% if rss_cache %}
                     {{ rss_cache }}

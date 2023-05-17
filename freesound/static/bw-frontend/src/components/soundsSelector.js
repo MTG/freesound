@@ -6,9 +6,9 @@ const updateSoundsSelectorDataProperties = (selectorElement, callback) => {
     const unselectedIds = [];
     soundCheckboxes.forEach(checkbox => {
         if (checkbox.checked) {
-            selectedIds.push(checkbox.dataset.soundId);    
+            selectedIds.push(checkbox.dataset.objectId);    
         } else {
-            unselectedIds.push(checkbox.dataset.soundId);    
+            unselectedIds.push(checkbox.dataset.objectId);    
         } 
     });
     selectorElement.dataset.selectedIds = selectedIds.join(',');

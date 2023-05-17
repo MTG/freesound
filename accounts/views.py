@@ -633,6 +633,7 @@ def handle_uploaded_image(profile, f):
 
 
 @login_required
+@transaction.atomic()
 def manage_sounds(request, tab):
     if not using_beastwhoosh(request): raise Http404
 
@@ -703,8 +704,10 @@ def manage_sounds(request, tab):
         pack_ids = list(packs.values_list('id', flat=True))
         paginator = paginate(request, pack_ids, 12)
         tvars.update(paginator)
-        pack_objects = Pack.objects.ordered_ids(paginator['page'].object_list, exclude_deleted=False)
-        tvars['packs'] = pack_objects
+        packs_to_select = Pack.objects.ordered_ids(paginator['page'].object_list, exclude_deleted=False)
+        for pack in packs_to_select:
+            pack.show_unpublished_sounds_warning = True
+        tvars['packs_to_select'] = packs_to_select
 
     elif tab in ['published', 'pending_moderation', 'processing']:
         # If user has selected sounds to edit or to re-process
@@ -731,10 +734,11 @@ def manage_sounds(request, tab):
                         web_logger.info(f"User {request.user.username} requested to delete sound {sound.id}")
                         try:
                             ticket = sound.ticket
-                            tc = TicketComment(sender=request.user,
-                                               text=f"User {request.user} deleted the sound",
-                                               ticket=ticket,
-                                               moderator_only=False)
+                            tc = TicketComment(
+                                sender=request.user,
+                                text=f"User {request.user} deleted the sound",
+                                ticket=ticket,
+                                moderator_only=False)
                             tc.save()
                         except Ticket.DoesNotExist:
                             pass

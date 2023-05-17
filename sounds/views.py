@@ -1129,6 +1129,7 @@ def for_user(request, username):
 @login_required
 @transaction.atomic()
 def delete(request, username, sound_id):
+    # NOTE: this is no longer used in BW as sound deletion is handled at the "manage sounds" page
     sound = get_object_or_404(Sound, id=sound_id)
     if sound.user.username.lower() != username.lower():
         raise Http404

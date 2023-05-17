@@ -688,6 +688,12 @@ def manage_sounds(request, tab):
             return tvars_or_redirect
 
     elif tab == 'packs':
+        if request.POST and ('delete_confirm' in request.POST):
+            try:
+                pack_ids = [int(part) for part in request.POST.get('pack-ids', '').split(',')]
+            except ValueError:
+                pack_ids = []
+            print(pack_ids)
         sort_options = [
             ('updated_desc', 'Last modified (newest first)', '-last_updated'),
             ('updated_asc', 'Last modified (oldest first)', 'last_updated'),

@@ -1,4 +1,4 @@
-import {initializeSoundSelector} from '../components/soundsSelector'
+import {initializeObjectSelector} from '../components/objectSelector'
 import {handleModal} from "../components/modal";
 
 const editSelectedSoundsButton = document.getElementById('edit-button');
@@ -21,9 +21,9 @@ if (describeSelectedSoundsButton !== null){
     describeSelectedSoundsButton.disabled = true;
 }
 
-const soundSelector = [...document.getElementsByClassName('bw-sounds-selector-container')];
-soundSelector.forEach(selectorElement => {
-    initializeSoundSelector(selectorElement, (element) => {
+const objectSelector = [...document.getElementsByClassName('bw-sounds-selector-container')];
+objectSelector.forEach(selectorElement => {
+    initializeObjectSelector(selectorElement, (element) => {
         if (editSelectedSoundsButton !== null){
             editSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
             editSelectedSoundsButton.closest('form').querySelector('input[name="sound-ids"]').value = element.dataset.selectedIds;
@@ -88,7 +88,7 @@ if (removeSelectedSoundsButton !== null){
     removeSelectedSoundsButton.addEventListener('click', evt =>{
         evt.preventDefault();
         const confirmationModalTitle = document.getElementById('confirmationModalTitle');
-        confirmationModalTitle.innerText = "Are you sure you want to remove these sounds?";
+        confirmationModalTitle.innerText = "Are you sure you want to remove these objects?";
         const confirmationModalHelpText = document.getElementById('confirmationModalHelpText');
         confirmationModalHelpText.innerText = "Be aware that this action is irreversible..."
         const confirmationModalAcceptForm = document.getElementById('confirmationModalAcceptSubmitForm');

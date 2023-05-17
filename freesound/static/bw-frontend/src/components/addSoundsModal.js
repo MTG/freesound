@@ -1,7 +1,7 @@
 import {handleDismissModal, handleGenericModal} from "../components/modal"
 import {stopAllPlayers} from '../components/player/utils'
 import {createPlayer} from '../components/player/player-ui'
-import {initializeSoundSelector, updateSoundsSelectorDataProperties} from '../components/soundsSelector'
+import {initializeObjectSelector, updateObjectSelectorDataProperties} from '../components/objectSelector'
 import addCheckboxVisibleElements from "../components/checkbox"
 import {serializedIdListToIntList, combineIdsLists} from "../utils/data"
 
@@ -24,15 +24,15 @@ const openAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement,
             }
         });
 
-        const soundSelectorElement = modalWrapper.getElementsByClassName('bw-sounds-selector-container')[0];
-        initializeSoundSelector(soundSelectorElement, (element) => {
+        const objectSelectorElement = modalWrapper.getElementsByClassName('bw-sounds-selector-container')[0];
+        initializeObjectSelector(objectSelectorElement, (element) => {
             addSelectedSoundsButton.disabled = element.dataset.selectedIds == ""
         });
 
         const addSelectedSoundsButton = modalWrapper.getElementsByTagName('button')[0];
         addSelectedSoundsButton.disabled = true;
         addSelectedSoundsButton.addEventListener('click', evt => {
-            const selectableSoundElements = [...modalWrapper.getElementsByClassName('bw-selectable-sound')];
+            const selectableSoundElements = [...modalWrapper.getElementsByClassName('bw-selectable-object')];
             selectableSoundElements.forEach( element => {
                 const checkbox = element.querySelectorAll('input.bw-checkbox')[0];
                 if (checkbox.checked) {
@@ -44,7 +44,7 @@ const openAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement,
                     selectedSoundsDestinationElement.appendChild(element.parentNode);
                 }
             });
-            onSoundsSelectedCallback(soundSelectorElement.dataset.selectedIds);
+            onSoundsSelectedCallback(objectSelectorElement.dataset.selectedIds);
             handleDismissModal(modalId);
         });
     }, () => {
@@ -60,7 +60,7 @@ const prepareAddSoundsModalAndFields = () => {
         removeSoundsButton.disabled = true;
 
         const selectedSoundsDestinationElement = addSoundsButton.parentNode.parentNode.getElementsByClassName('bw-sounds-selector-container')[0];
-        initializeSoundSelector(selectedSoundsDestinationElement, (element) => {
+        initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
             removeSoundsButton.disabled = element.dataset.selectedIds == ""
         });
 
@@ -69,10 +69,10 @@ const prepareAddSoundsModalAndFields = () => {
             const soundCheckboxes = selectedSoundsDestinationElement.querySelectorAll('input.bw-checkbox');
             soundCheckboxes.forEach(checkbox => {
                 if (checkbox.checked) {
-                    checkbox.closest('.bw-selectable-sound').parentNode.remove();
+                    checkbox.closest('.bw-selectable-object').parentNode.remove();
                 }
             });
-            updateSoundsSelectorDataProperties(selectedSoundsDestinationElement);
+            updateObjectSelectorDataProperties(selectedSoundsDestinationElement);
             const selectedSoundsHiddenInput = document.getElementById(addSoundsButton.dataset.selectedSoundsHiddenInputId);
             selectedSoundsHiddenInput.value = selectedSoundsDestinationElement.dataset.unselectedIds;
             removeSoundsButton.disabled = true;
@@ -86,7 +86,7 @@ const prepareAddSoundsModalAndFields = () => {
                 const newSoundIds = serializedIdListToIntList(selectedSoundIds);
                 const combinedIds = combineIdsLists(currentSoundIds, newSoundIds);
                 selectedSoundsHiddenInput.value = combinedIds.join(',');
-                initializeSoundSelector(selectedSoundsDestinationElement, (element) => {
+                initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
                     removeSoundsButton.disabled = element.dataset.selectedIds == ""
                 });
         

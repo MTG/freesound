@@ -24,7 +24,7 @@ const openAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement,
             }
         });
 
-        const objectSelectorElement = modalWrapper.getElementsByClassName('bw-sounds-selector-container')[0];
+        const objectSelectorElement = modalWrapper.getElementsByClassName('bw-object-selector-container')[0];
         initializeObjectSelector(objectSelectorElement, (element) => {
             addSelectedSoundsButton.disabled = element.dataset.selectedIds == ""
         });
@@ -59,7 +59,7 @@ const prepareAddSoundsModalAndFields = () => {
         const removeSoundsButton = addSoundsButton.nextElementSibling;
         removeSoundsButton.disabled = true;
 
-        const selectedSoundsDestinationElement = addSoundsButton.parentNode.parentNode.getElementsByClassName('bw-sounds-selector-container')[0];
+        const selectedSoundsDestinationElement = addSoundsButton.parentNode.parentNode.getElementsByClassName('bw-object-selector-container')[0];
         initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
             removeSoundsButton.disabled = element.dataset.selectedIds == ""
         });

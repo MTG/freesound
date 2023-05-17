@@ -690,7 +690,7 @@ def manage_sounds(request, tab):
     elif tab == 'packs':
         if request.POST and ('delete_confirm' in request.POST):
             try:
-                pack_ids = [int(part) for part in request.POST.get('pack-ids', '').split(',')]
+                pack_ids = [int(part) for part in request.POST.get('object-ids', '').split(',')]
             except ValueError:
                 pack_ids = []
             print(pack_ids)
@@ -719,7 +719,7 @@ def manage_sounds(request, tab):
         # If user has selected sounds to edit or to re-process
         if request.POST and ('edit' in request.POST or 'process' in request.POST or 'delete_confirm' in request.POST):
             try:
-                sound_ids = [int(part) for part in request.POST.get('sound-ids', '').split(',')]
+                sound_ids = [int(part) for part in request.POST.get('object-ids', '').split(',')]
             except ValueError:
                 sound_ids = []
             sounds = Sound.objects.ordered_ids(sound_ids)

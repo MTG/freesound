@@ -693,7 +693,23 @@ def manage_sounds(request, tab):
                 pack_ids = [int(part) for part in request.POST.get('object-ids', '').split(',')]
             except ValueError:
                 pack_ids = []
-            print(pack_ids)
+            packs = Pack.objects.ordered_ids(pack_ids)
+            if not request.user.is_superuser:
+                # Unless user is superuser, only allow to select packs owned by user
+                packs = [pack for pack in packs if pack.user == pack.user]
+            if packs:
+                if 'delete_confirm' in request.POST:
+                    # Delete the selected packs
+                    n_packs_deleted = 0
+                    for pack in packs:
+                        web_logger.info(f"User {request.user.username} requested to delete pack {pack.id}")
+                        pack.delete_pack(remove_sounds=False)
+                        n_packs_deleted += 1
+                    messages.add_message(request, messages.INFO,
+                                         f'Successfully deleted {n_packs_deleted} '
+                                         f'pack{"s" if n_packs_deleted != 1 else ""}')
+                    return HttpResponseRedirect(reverse('accounts-manage-sounds', args=[tab]))
+
         sort_options = [
             ('updated_desc', 'Last modified (newest first)', '-last_updated'),
             ('updated_asc', 'Last modified (oldest first)', 'last_updated'),

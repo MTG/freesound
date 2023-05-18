@@ -31,7 +31,7 @@
 <div class="divider-light v-spacing-top-4 v-spacing-4"></div>
 
 <div class="row no-gutters">
-    <div class="col-lg-8 v-spacing-4">
+    <div class="col-lg-9 v-spacing-4">
         {% if tab != 'pending_description' %}
             <div class="v-spacing-3">
                 <form method="get" action=".">
@@ -127,7 +127,7 @@
             {% endif %}
         {% endif %}
     </div>
-    <div class="col-lg-3 offset-lg-1 d-lg-block">
+    <div class="col-lg-3 col-extra-left-padding-large-md d-lg-block">
         <div class="bw-sticky-top">
             {% if tab == 'published' or tab == 'pending_moderation' %}
                 <form action="." method="post">{% csrf_token %}

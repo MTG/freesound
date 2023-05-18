@@ -78,7 +78,11 @@ def search_view_helper(request, tags_mode=False):
     tags_in_filter = []
     for filter_data in filter_query_split:
         if filter_data['name'].startswith('tag:'):
-            tags_in_filter.append(filter_data['name'].replace('tag:', ''))
+            tag = filter_data['name'].replace('tag:', '')
+            if tag.startswith('"'):
+                # If tag name has quotes, remove them
+                tag = tag[1:-1]
+            tags_in_filter.append(tag)
     
     # Process tags mode stuff
     initial_tagcloud = None

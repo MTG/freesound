@@ -20,11 +20,11 @@
   }
 }
 
-.max-h-85px-md-75px {
-  max-height: 85px;
+.max-h-60px-md-50px {
+  max-height: 60px;
 
   @include md-and-above {
-    max-height: 75px;
+    max-height: 50px;
   }
 }
 

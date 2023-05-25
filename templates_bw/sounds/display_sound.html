@@ -57,21 +57,21 @@
         {% endif %}
         <div class="{% if is_explicit %}blur{% endif %}">
             <div class="row no-gutters no-wrap">
-                <div class="col-4 col-sm-3">
+                <div class="col-4 col-lg-3">
                     {% include "sounds/player.html" %}
                 </div>
                 {% cache 43200 bw_display_sound sound.id player_size is_authenticated %}
-                <div class="col-8 col-sm-9">
+                <div class="col-8 col-lg-9">
                     <div class="padding-left-3">
                         <div class="between">
                             <div>
                                 <h5 class="v-spacing-1"><a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}" title="{{ sound.original_filename }}">{{ sound.original_filename|truncate_string:52 }}</a></h5>
                             </div>
-                            <div class="text-grey text-right between">
+                            <div class="text-grey text-right between stars-margin-top-middle-player">
                                 <div style="min-width:130px;" class="top right">{% bw_sound_stars sound %}<span class="bw-rating__count text-grey h-spacing-left-1">{{ sound.get_ratings_count_text_short }}</span></div>
                             </div>
                         </div>
-                        <div class="max-h-85px-md-75px text-black overflow-hidden v-spacing-1">{{ sound.description|striptags|safe|truncatewords_html:35 }}</div>
+                        <div class="max-h-60px-md-50px text-black overflow-hidden v-spacing-1">{{ sound.description|striptags|safe|truncatewords_html:28 }}</div>
                         {% for tag in sound.tag_array|slice:":5" %}
                             {% bw_tag tag %}
                         {% endfor %}

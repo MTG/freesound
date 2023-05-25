@@ -71,6 +71,22 @@
 
 .bw-search__result {
   padding-bottom: $tiny-spacing;
+
+  .bw-player__img-container {
+    height: 135px;
+
+    @include md-and-above {
+      height: 115px;
+    }
+  }
+
+  .stars-margin-top-middle-player {
+    margin-top: -5px;
+    
+    @include md-and-above {
+      height: 0px;
+    }
+  }
 }
 
 .bw-search__active-filters-button {

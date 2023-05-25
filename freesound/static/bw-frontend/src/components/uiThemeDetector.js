@@ -2,6 +2,9 @@
 const styleLink = document.getElementById("style");
 
 const userPrefersDarkTheme = () => {
+    if (!userIsAuthenticated){
+        return false;  // For non-authenticated users, always use default "light" theme
+    }
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 

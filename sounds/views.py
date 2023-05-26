@@ -1287,6 +1287,8 @@ def embed_iframe(request, sound_id, player_size):
           Eg: /embed/sound/iframe/1234/simple/large_no_info/.
         - 'full_size': like 'large' but taking the full width (used in twitter embeds).
           Eg: /embed/sound/iframe/1234/simple/full_size/.
+        - 'full_size_no_info': like 'full_size' but without sound title/license and link to freesound.
+          Eg: /embed/sound/iframe/1234/simple/full_size_no_info/.
 
     The sizes 'medium', 'medium_no_info', 'large', 'large_no_info' and 'full_size' can optionally show the spectrogram
     image instead of the waveform if being passed a request parameter 'spec=1' in the URL.
@@ -1295,7 +1297,7 @@ def embed_iframe(request, sound_id, player_size):
     The sizes 'medium' and 'medium_no_info' can optionally show a button to toggle the background image between the
     waveform and the spectrogram by passing the request parameter 'td=1'. Bigger sizes always show that button.
     """
-    if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info', 'medium_no_info', 'full_size']:
+    if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info', 'medium_no_info', 'full_size', 'full_size_no_info']:
         raise Http404
     try:
         sound = Sound.objects.bulk_query_id_public(sound_id)[0]

@@ -2,6 +2,9 @@ import './page-polyfills';
 import {showToast} from '../components/toast';
 import {playAtTime} from '../components/player/utils';
 import {openSimilarSoundsModal} from "../components/similarSoundsModal";
+import {handleGenericModal} from '../components/modal';
+import {createSelect} from "../components/select";
+import {addRecaptchaScriptTagToMainHead} from '../utils/recaptchaDynamicReload'
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -11,7 +14,7 @@ const smallEmbedImageElement = document.getElementById('small-embed-image');
 const mediumEmbedImageElement = document.getElementById('medium-embed-image');
 const largeEmbedImageElement = document.getElementById('large-embed-image');
 const shareLinkElement = document.getElementById('share-link');
-
+const urlParams = new URLSearchParams(window.location.search);
 
 const copyShareUrlToClipboard = () => {
     var shareLinkInputElement = shareLinkElement.getElementsByTagName("input")[0];
@@ -100,7 +103,6 @@ soundCommentElements.forEach(element => {
 findTimeLinksAndAddEventListeners(soundDescriptionElement);
 
 // Open similar sounds modal if activation parameter is passed
-const urlParams = new URLSearchParams(window.location.search);
 const similarSoundsButtons = [...document.querySelectorAll('[data-toggle^="similar-sounds-modal"]')];
 if (similarSoundsButtons.length > 0){
     const similarSoundsModalActivationParam = similarSoundsButtons[0].dataset.modalActivationParam;
@@ -109,3 +111,37 @@ if (similarSoundsButtons.length > 0){
         openSimilarSoundsModal(similarSoundsButtons[0].dataset.modalContentUrl, similarSoundsModalActivationParam);
     }
 }
+
+
+// Open flag sound modal if activation parameter is passed
+const flagSoundButton = [...document.querySelectorAll('[data-toggle^="flag-sound-modal"]')][0];
+const flagSoundModalActivationParam = flagSoundButton.dataset.modalActivationParam;
+const flagSoundModalParamValue = urlParams.get(flagSoundModalActivationParam);
+
+const handleFlagSoundModal = () => {
+    handleGenericModal(flagSoundButton.dataset.modalContentUrl, () => {
+        // Modify the form structure to add a "Reason type:" label inline with the select dropdown
+        const modalElement = document.getElementById(`flagSoundModal`);
+        const selectElement = modalElement.getElementsByTagName('select')[0];
+        const wrapper = document.createElement('div');
+        selectElement.parentNode.insertBefore(wrapper, selectElement);
+        const label = document.createElement('div');
+        label.innerHTML = "Reason type:"
+        label.style = 'display:inline-block;';
+        label.classList.add('text-grey');
+        wrapper.appendChild(label)
+        wrapper.appendChild(selectElement)
+
+        // Init select and recaptcha fields
+        createSelect();
+        addRecaptchaScriptTagToMainHead(modalElement);
+    });
+}
+
+
+if (flagSoundModalParamValue) {
+    handleFlagSoundModal();
+}
+flagSoundButton.addEventListener('click', (evt) => {
+    handleFlagSoundModal();
+})

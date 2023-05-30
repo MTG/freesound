@@ -54,7 +54,7 @@ from forum.views import get_hot_threads
 from geotags.models import GeoTag
 from search.views import search_view_helper
 from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, LicenseForm, PackEditForm, \
-    RemixForm, PackForm, BWSoundEditAndDescribeForm
+    RemixForm, PackForm, BWSoundEditAndDescribeForm, BWFlagForm
 from sounds.models import PackDownload, PackDownloadSound
 from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, SoundOfTheDay
 from tickets import TICKET_STATUS_CLOSED
@@ -1173,6 +1173,9 @@ def delete(request, username, sound_id):
 @redirect_if_old_username_or_404
 @transaction.atomic()
 def flag(request, username, sound_id):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('flag', args=[username, sound_id]) + '?flag=1')
+    
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
@@ -1181,8 +1184,10 @@ def flag(request, username, sound_id):
     if request.user.is_authenticated:
         user = request.user
 
+    FlagFormClass = FlagForm if not using_beastwhoosh(request) else BWFlagForm
+
     if request.method == "POST":
-        flag_form = FlagForm(request.POST)
+        flag_form = FlagFormClass(request.POST)
         if flag_form.is_valid():
             flag = flag_form.save()
             flag.reporting_user = user
@@ -1202,12 +1207,15 @@ def flag(request, username, sound_id):
         initial = {}
         if user:
             initial["email"] = user.email
-        flag_form = FlagForm(initial=initial)
+        flag_form = FlagFormClass(initial=initial)
 
     tvars = {"sound": sound,
              "flag_form": flag_form}
-
-    return render(request, 'sounds/sound_flag.html', tvars)
+    
+    if using_beastwhoosh(request):
+        return render(request, 'sounds/modal_flag_sound.html', tvars)
+    else:
+        return render(request, 'sounds/sound_flag.html', tvars)
 
 
 def sound_short_link(request, sound_id):

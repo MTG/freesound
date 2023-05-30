@@ -1,0 +1,20 @@
+{% extends "molecules/modal_base.html" %}
+{% load util %}
+
+{% block id %}flagSoundModal{% endblock %}
+{% block extra-class %}{% endblock %}
+{% block aria-labelledby %}flagSoundModalLabel{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h5 class="v-spacing-5">Flag sound</h5>
+    </div>
+    <div class="v-spacing-4">
+        <form method="post" action="." class="disable-on-submit bw-form form-flag-sound" novalidate>{% csrf_token %}
+            {{ flag_form }}
+            <button class="btn-primary v-spacing-top-3">Flag this sound</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

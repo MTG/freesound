@@ -131,7 +131,7 @@
                                 </div>
                             {% endif %}
                             <div class="v-spacing-top-3">
-                                <a href="{% url 'sound-flag' sound.user.username sound.id %}" title="Flag this sound as ilegal, offensive or other..." class="text-light-grey">
+                                <a href="javascript:void(0);" title="Flag this sound as ilegal, offensive or other..." class="text-light-grey" data-toggle="flag-sound-modal" data-modal-activation-param="flag" data-modal-content-url="{% url 'sound-flag' sound.user.username sound.id %}?ajax=1">
                                     {% bw_icon 'flag' %} Sound illegal or offensive? Flag it!
                                 </a>
                             </div>

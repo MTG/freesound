@@ -3,6 +3,7 @@ import {handleDismissModal, handleModal} from '../components/modal';
 import {showToast} from '../components/toast';
 import serialize from '../utils/formSerializer'
 import addCheckboxVisibleElements from "../components/checkbox";
+import {addRecaptchaScriptTagToMainHead} from '../utils/recaptchaDynamicReload'
 
 
 const modalLinks = [
@@ -113,12 +114,7 @@ const customProblemsLoggingInSubmit = (event) => {
 const initRegistrationForm = (registrationForm) => {
 
     // Load grecaptcha script tag (needed if this is loaded ajax)
-    var scriptTag = registrationForm.getElementsByTagName('script')[0];
-    var file = scriptTag.getAttribute('src');
-    var fileref = document.createElement('script');
-    fileref.setAttribute('type', 'text/javascript');
-    fileref.setAttribute('src', file);
-    document.getElementsByTagName('head').item(0).appendChild(fileref);
+    addRecaptchaScriptTagToMainHead(registrationForm);
 
     // Add "next" parameter to the form action so users are redirected to the same page when registration finishes
     const pathWithParameters = window.location.pathname + window.location.search;

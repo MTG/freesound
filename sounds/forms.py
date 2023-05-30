@@ -268,6 +268,20 @@ class FlagForm(forms.Form):
         f.email = self.cleaned_data['email']
         return f
 
+class BWFlagForm(FlagForm):
+    email = forms.EmailField(label="Your email", required=True, help_text="Required.",
+                             error_messages={'required': 'Required, please enter your email address.', 'invalid': 'Your'
+                                             ' email address appears to be invalid, please check if it\'s correct.'})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].label = False
+        self.fields['email'].widget.attrs['placeholder'] = 'Your email'
+        self.fields['email'].help_text = False
+        self.fields['reason_type'].label = False
+        self.fields['reason'].label = False
+        self.fields['reason'].widget.attrs['placeholder'] = 'Write here comments about why this sound is being flagged'
+
 
 class DeleteSoundForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())

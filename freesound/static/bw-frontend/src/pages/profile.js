@@ -51,7 +51,7 @@ const setFollowModalUrlParamToCurrentPage = (modalActivationParam) => {
   let page = 1;
   const genericModalWrapperElement = document.getElementById('genericModalWrapper');
   genericModalWrapperElement.getElementsByClassName('bw-pagination_selected').forEach(element => {
-    page = parseInt(element.innerHTML, 10);
+    page = parseInt(element.firstChild.innerHTML, 10);
   });
   searchParams.set(modalActivationParam, page);
   let url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + searchParams.toString();

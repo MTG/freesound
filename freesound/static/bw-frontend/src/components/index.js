@@ -7,6 +7,7 @@ import './checkbox';
 import './collapsableBlock';
 import './cookieConsent';
 import './djangoMessages';
+import './downloadersModals';
 import './dropdown';
 import './explicit';
 import './formDisableOnSubmit';

@@ -1,0 +1,40 @@
+{% extends "molecules/modal_base.html" %}
+{% load util %}
+{% load bw_templatetags %}
+{% load display_user %}
+
+{% block id %}downloadersModal{% endblock %}
+{% block extra-class %}modal-width-80{% endblock %}
+{% block aria-label %}Users that downloaded modal{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h5 class="v-spacing-5">Users that downloaded {% if sound %}<a href="{% url "sound" username sound.id %}">{{ sound.original_filename }}</a>{% elif pack %}<a href="{% url "pack" username pack.id %}">{{ pack.name }}</a>{% endif %}</h5>
+    </div>
+    <div class="v-spacing-4">
+        {% if paginator.count > 0 %}
+            {% regroup download_list by created|date:"F jS, Y" as downloaders %}
+            {% for group in downloaders %}
+                <h5 class="text-grey v-spacing-top-4">Downloaded on {{group.grouper}}</h5>
+                <div class="row v-spacing-top-4">
+                {% for i in group.list %}
+                    {% with i.user as user %}
+                        <div class="col-sm-6 col-md-4 col-lg-3 v-spacing-2">
+                            {% display_user user %}
+                        </div>
+                    {% endwith %}
+                {% endfor %}
+                </div>
+            {% endfor %}
+            <div class="v-spacing-top-5">
+                {% bw_paginator paginator page current_page request "" -1 %}
+            </div>
+        {% else %}
+            <div class="text-center">
+                <div class="text-grey v-spacing-top-1">Looks like no one has downloaded this {% if sound %}sound{% elif pack %}pack{% endif %} so far... &#128543</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

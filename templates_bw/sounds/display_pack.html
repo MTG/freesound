@@ -110,7 +110,7 @@
                     </div>
                 {% endif %}
                 <div class="h-spacing-left-2" title="{{ pack.num_downloads|bw_intcomma }} download{{ pack.num_downloads|pluralize }}">
-                    <a href="{% url 'pack-downloaders' pack.user.username pack.id %}" class="bw-link--grey-light">
+                    <a href="javascript:void(0);" data-toggle="downloaders-modal" data-modal-content-url="{% url 'pack-downloaders' pack.user.username pack.id %}?ajax=1" class="bw-link--grey-light">
                         <span class="bw-icon-download"></span> {{ pack.num_downloads|formatnumber }}
                     </a>
                 </div>

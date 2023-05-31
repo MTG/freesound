@@ -1,7 +1,8 @@
 import './page-polyfills';
 import {showToast} from '../components/toast';
 import {playAtTime} from '../components/player/utils';
-import {openSimilarSoundsModal} from "../components/similarSoundsModal";
+import {handleSimilarSoundsModal} from "../components/similarSoundsModal";
+import {handleDownloadersModal} from "../components/downloadersModals";
 import {handleGenericModalWithForm} from '../components/modal';
 import {createSelect} from "../components/select";
 import {addRecaptchaScriptTagToMainHead} from '../utils/recaptchaDynamicReload'
@@ -108,10 +109,9 @@ if (similarSoundsButtons.length > 0){
     const similarSoundsModalActivationParam = similarSoundsButtons[0].dataset.modalActivationParam;
     const similarSoundsModalParamValue = urlParams.get(similarSoundsModalActivationParam);
     if (similarSoundsModalParamValue) {
-        openSimilarSoundsModal(similarSoundsButtons[0].dataset.modalContentUrl, similarSoundsModalActivationParam);
+        handleSimilarSoundsModal(similarSoundsButtons[0].dataset.modalContentUrl, similarSoundsModalActivationParam);
     }
 }
-
 
 // Open flag sound modal if activation parameter is passed
 const flagSoundButton = [...document.querySelectorAll('[data-toggle^="flag-sound-modal"]')][0];
@@ -146,3 +146,13 @@ if (flagSoundModalParamValue) {
 flagSoundButton.addEventListener('click', (evt) => {
     handleFlagSoundModal();
 })
+
+// Open downloaders modal if activation parameter is passed
+const downloadersButtons = document.querySelectorAll('[data-toggle="downloaders-modal"]');
+if (downloadersButtons.length > 0){
+    const downloadersModalActivationParam = downloadersButtons[0].dataset.modalActivationParam;
+    const downloadersModalParamValue = urlParams.get(downloadersModalActivationParam);
+    if (downloadersModalParamValue) {
+        handleDownloadersModal(downloadersButtons[0].dataset.modalContentUrl, downloadersModalActivationParam, downloadersModalParamValue);
+    }
+}

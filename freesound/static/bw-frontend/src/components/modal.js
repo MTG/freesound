@@ -57,7 +57,7 @@ confirmationModalButtons.forEach(modalButton => {
 // Generic modals logic
 const genericModalWrapper = document.getElementById('genericModalWrapper');
 
-const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback, doRequestAsync, showLoadingToast) => {
+const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback, doRequestAsync, showLoadingToast, modalActivationParam) => {
   if (showLoadingToast !== false) { showToastNoTimeout('Loading...'); }
   const req = new XMLHttpRequest();
   req.open('GET', fetchContentUrl, doRequestAsync !== false);
@@ -82,6 +82,13 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
             if (onClosedCallback !== undefined){
               onClosedCallback(modalContainer);
             }
+            // If modal is activated with a param, remove the param to the URL when closing the modal
+              if (modalActivationParam !== undefined) {
+                const searchParams = new URLSearchParams(window.location.search);
+                searchParams.delete(modalActivationParam);
+                const url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + searchParams.toString();
+                window.history.replaceState(null, "", url);
+            }
           });
         });
         
@@ -91,7 +98,7 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
             const loadPageUrl = paginatorLinkElement.href;
             paginatorLinkElement.href = 'javascript:void(0);';
             paginatorLinkElement.onclick = () => {
-              handleGenericModal(loadPageUrl, onLoadedCallback, onClosedCallback);
+              handleGenericModal(loadPageUrl, onLoadedCallback, onClosedCallback, doRequestAsync, showLoadingToast, modalActivationParam);
             };
           });
         });
@@ -100,6 +107,16 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
         if (showLoadingToast !== false) { dismissToast(); }
         if (onLoadedCallback !== undefined){
           onLoadedCallback(modalContainer);
+        }
+
+        // If modal is activated with a param, add the param to the URL when opening the modal
+        if (modalActivationParam !== undefined){
+          const modalAjaxRequestSearchParams = new URLSearchParams(fetchContentUrl);
+          const currentPage = modalAjaxRequestSearchParams.get('page') || '1';
+          const searchParams = new URLSearchParams(window.location.search);
+          searchParams.set(modalActivationParam, currentPage);
+          const url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + searchParams.toString();
+          window.history.replaceState(null, "", url);
         }
       } else {
         // If response contents are empty, do not show any modal but dismiss the loading toast (if used)
@@ -120,7 +137,7 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
 };
 
 
-const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast) => {
+const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast, modalActivationParam) => {
   // This version of the generic modal is useful for modal contents that contain forms which, upon submission, will return HTML content if there were form errors
   // which should be used to replace the current contents of the form, and will return a JSON response if the form validated correctly in the backend. That JSON
   // response could include some relevant data or no data at all, but is used to differentiate from the HTML response
@@ -198,7 +215,7 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
     }
     const form = modalContainer.getElementsByTagName('form')[0];
     form.onsubmit = genericModalWithFormCustomSubmit
-  }, onClosedCallback, doRequestAsync, showLoadingToast)
+  }, onClosedCallback, doRequestAsync, showLoadingToast, modalActivationParam)
 }
 
 export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm};

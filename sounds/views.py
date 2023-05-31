@@ -1347,6 +1347,9 @@ def oembed(request):
 
 
 def downloaders(request, username, sound_id):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('sound-downloaders', args=[username, sound_id]) + '?downloaders=1')
+
     sound = get_object_or_404(Sound, id=sound_id)
 
     # Retrieve all users that downloaded a sound
@@ -1373,10 +1376,16 @@ def downloaders(request, username, sound_id):
              "download_list": download_list}
     tvars.update(pagination)
 
-    return render(request, 'sounds/downloaders.html', tvars)
+    if using_beastwhoosh(request):
+        return render(request, 'sounds/modal_downloaders.html', tvars)
+    else:
+        return render(request, 'sounds/downloaders.html', tvars)
 
 
 def pack_downloaders(request, username, pack_id):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('pack-downloaders', args=[username, pack_id]) + '?downloaders=1')
+    
     pack = get_object_or_404(Pack, id=pack_id)
 
     # Retrieve all users that downloaded a sound
@@ -1386,4 +1395,8 @@ def pack_downloaders(request, username, pack_id):
     tvars = {'username': username,
              'pack': pack}
     tvars.update(paginator)
-    return render(request, 'sounds/pack_downloaders.html', tvars)
+    
+    if using_beastwhoosh(request):
+        return render(request, 'sounds/modal_downloaders.html', tvars)
+    else:
+        render(request, 'sounds/pack_downloaders.html', tvars)

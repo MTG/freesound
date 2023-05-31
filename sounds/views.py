@@ -1174,7 +1174,7 @@ def delete(request, username, sound_id):
 @transaction.atomic()
 def flag(request, username, sound_id):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('flag', args=[username, sound_id]) + '?flag=1')
+        return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '?flag=1')
     
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
@@ -1202,7 +1202,10 @@ def flag(request, username, sound_id):
             send_mail_template_to_support(settings.EMAIL_SUBJECT_SOUND_FLAG, "sounds/email_flag.txt", {"flag": flag},
                                           extra_subject=f"{sound.user.username} - {sound.original_filename}",
                                           reply_to=user_email)
-            return redirect(sound)
+            if using_beastwhoosh(request):
+                return JsonResponse({'success': True})
+            else:
+                return redirect(sound)
     else:
         initial = {}
         if user:

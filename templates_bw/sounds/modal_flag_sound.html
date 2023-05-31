@@ -11,7 +11,7 @@
         <h5 class="v-spacing-5">Flag sound</h5>
     </div>
     <div class="v-spacing-4">
-        <form method="post" action="." class="disable-on-submit bw-form form-flag-sound" novalidate>{% csrf_token %}
+        <form method="post" action="{% url 'sound-flag' sound.user.username sound.id %}?ajax=1." class="disable-on-submit bw-form form-flag-sound" novalidate>{% csrf_token %}
             {{ flag_form }}
             <button class="btn-primary v-spacing-top-3">Flag this sound</button>
         </form>

@@ -34,9 +34,9 @@ const customRegistrationSubmit = (event) => {
     req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
     req.onload = () => {
         if (req.status >= 200 && req.status < 300) {
-            if (req.responseText.indexOf('registerModalForm') === -1){
-                // Registration was successful, we should have received the redirect URL where we should redirect the
-                // user in the response
+            if (req.getResponseHeader('content-type') === 'application/json'){
+                // If response is of type JSON, that means registration was successful, we should have received the redirect URL 
+                // where we should redirect the user in the response
                 const data = JSON.parse(req.responseText);
                 window.location.href = data.redirectURL;
             }  else {

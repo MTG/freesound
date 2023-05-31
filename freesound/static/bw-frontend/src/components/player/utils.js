@@ -1,4 +1,5 @@
 /* eslint-disable import/prefer-default-export */
+import {createPlayer} from './player-ui'
 
 export const isTouchEnabledDevice = () => {
   return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
@@ -52,6 +53,20 @@ export const stopAllPlayers = () => {
   players.forEach(player => {
     player.getElementsByTagName('audio').forEach(audioElement=>{audioElement.pause()});
   });
+}
+
+
+export const stopAllPlayersInContainer = (container) => {
+  const players = [...container.getElementsByClassName('bw-player')]
+  players.forEach(player => {
+    player.getElementsByTagName('audio').forEach(audioElement=>{audioElement.pause()});
+  });
+}
+
+
+export const initializePlayersInContainer = (container) => {
+  const players = [...container.getElementsByClassName('bw-player')]
+  players.forEach(createPlayer)  
 }
 
 /**

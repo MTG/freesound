@@ -1,7 +1,5 @@
 import {showToast} from "./toast";
 
-const ratingInputs = document.getElementsByClassName('bw-rating__input');
-
 const halfStarHtml = '<span class="bw-icon-half-star text-red"><span class="path1"></span><span class="path2"></span></span>';
 const starHtml = '<span class="bw-icon-star text-red"></span></span>';
 
@@ -115,5 +113,16 @@ const addRatingInputEventListeners = inputs => {
 }
 
 
-addRatingInputEventListeners(ratingInputs)
+const initRatingWidgets = (baseContainer) => {
+  if (baseContainer === undefined){
+    baseContainer = document;
+  }
+  const ratingInputs = baseContainer.getElementsByClassName('bw-rating__input');
+  addRatingInputEventListeners(ratingInputs)
+}
+
+initRatingWidgets();
+
+export {initRatingWidgets}
+
 

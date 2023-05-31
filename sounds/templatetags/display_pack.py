@@ -28,7 +28,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('sounds/display_pack.html', takes_context=True)
-def display_pack(context, pack, size='small'):
+def display_pack(context, pack, size='small', show_bookmark_similarity_buttons=True):
     """This templatetag is used to display a pack with some randomly selected sound players.
 
     Args:
@@ -62,8 +62,14 @@ def display_pack(context, pack, size='small'):
         'pack': pack,
         'size': size,
         'media_url': context['media_url'],
-        'request': request
+        'request': request,
+        'show_bookmark_similarity_buttons': show_bookmark_similarity_buttons,
     }
+
+
+@register.inclusion_tag('sounds/display_pack.html', takes_context=True)
+def display_pack_small_no_bookmark(context, pack):
+    return display_pack(context, pack, size='small', show_bookmark_similarity_buttons=False)
 
 
 @register.inclusion_tag('sounds/display_pack.html', takes_context=True)

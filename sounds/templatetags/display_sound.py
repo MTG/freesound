@@ -137,7 +137,7 @@ def display_sound_small(context, sound):
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_bookmark(context, sound):
-    return display_sound(context, sound, player_size='small', show_bookmark=False, show_similar_sounds=False)
+    return display_sound(context, sound, player_size='small', show_bookmark=False, show_similar_sounds=False, show_rate_widget=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_middle(context, sound):
@@ -160,7 +160,7 @@ def display_sound_minimal(context, sound):
     return display_sound(context, sound, player_size='minimal')
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound_no_sound_object(context, file_data, player_size):
+def display_sound_no_sound_object(context, file_data, player_size, show_bookmark=True, show_similar_sounds=True):
     '''
     This player works for sounds which have no Sound object. It requires
     URLs to the sound files (mp3 and ogg)a and the wave/spectral images, and
@@ -211,13 +211,12 @@ def display_sound_no_sound_object(context, file_data, player_size):
             }
         },
         'show_milliseconds': 'true' if ('big' in player_size ) else 'false',
-        'show_bookmark_button': 'id' in file_data,
-        'show_similar_sounds_button': 'similarity_state' in file_data,
+        'show_bookmark_button': show_bookmark and 'id' in file_data,
+        'show_similar_sounds_button': show_similar_sounds and 'similarity_state' in file_data,
         'show_rate_widget': 'avg_rating' in file_data,
         'player_size': player_size,
         'request': context['request']
     }
-
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_big_no_sound_object(context, file_data):
@@ -228,6 +227,9 @@ def display_sound_big_no_sound_object(context, file_data):
 def display_sound_small_no_sound_object(context, file_data):
     return display_sound_no_sound_object(context, file_data, player_size='small_no_info')
    
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small_no_sound_object_no_bookmark(context, file_data):
+    return display_sound_no_sound_object(context, file_data, player_size='small_no_info', show_bookmark=False, show_similar_sounds=False)
 
 @register.inclusion_tag('sounds/display_sound_selectable.html', takes_context=True)
 def display_sound_small_selectable(context, sound, selected=False):

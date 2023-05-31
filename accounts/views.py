@@ -1170,6 +1170,8 @@ def download_attribution(request):
 @redirect_if_old_username_or_404
 @raise_404_if_user_is_deleted
 def downloaded_sounds(request, username):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('accounts-account', args=[username]) + '?downloaded_sounds=1')
     user = request.parameter_user
     qs = Download.objects.filter(user_id=user.id)
     paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE, object_count=user.profile.num_sound_downloads)
@@ -1180,12 +1182,17 @@ def downloaded_sounds(request, username):
              "user": user,
              "sounds": sounds}
     tvars.update(paginator)
-    return render(request, 'accounts/downloaded_sounds.html', tvars)
+    if using_beastwhoosh(request):
+        return render(request, 'accounts/modal_downloads.html', tvars)
+    else:
+        return render(request, 'accounts/downloaded_sounds.html', tvars)
 
 
 @redirect_if_old_username_or_404
 @raise_404_if_user_is_deleted
 def downloaded_packs(request, username):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('accounts-account', args=[username]) + '?downloaded_packs=1')
     user = request.parameter_user
     qs = PackDownload.objects.filter(user=user.id)
     paginator = paginate(request, qs, settings.PACKS_PER_PAGE, object_count=user.profile.num_pack_downloads)
@@ -1195,7 +1202,10 @@ def downloaded_packs(request, username):
     tvars = {"username": username,
              "packs": packs}
     tvars.update(paginator)
-    return render(request, 'accounts/downloaded_packs.html', tvars)
+    if using_beastwhoosh(request):
+        return render(request, 'accounts/modal_downloads.html', tvars)
+    else:
+        return render(request, 'accounts/downloaded_packs.html', tvars)
 
 
 def latest_content_type(scores):

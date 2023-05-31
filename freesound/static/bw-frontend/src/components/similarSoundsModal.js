@@ -1,16 +1,12 @@
 import {handleGenericModal} from './modal';
-import {stopAllPlayers} from './player/utils'
-import {createPlayer} from './player/player-ui'
+import {stopAllPlayersInContainer, initializePlayersInContainer} from './player/utils'
 
 
 const handleSimilarSoundsModal = (modalUrl, modalActivationParam) => {
     handleGenericModal(modalUrl, (modalContainer) => {
-        // Init sound player inside popup
-        const players = [...modalContainer.getElementsByClassName('bw-player')]
-        players.forEach(createPlayer)
-    }, () => {
-        // Stop all players that could be being played inside the modal
-        stopAllPlayers();
+        initializePlayersInContainer(modalContainer);
+    }, (modalContainer) => {
+        stopAllPlayersInContainer(modalContainer);
     }, true, true, modalActivationParam);
 }
 

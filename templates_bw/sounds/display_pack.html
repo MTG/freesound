@@ -10,7 +10,11 @@
                 <div class="bw-carousel with-dots dots-distance-02">
                     {% for sound_data in pack.selected_sounds_data %}
                         <div>
+                            {% if show_bookmark_similarity_buttons %}
                             {% display_sound_small_no_sound_object sound_data %}
+                            {% else %}
+                            {% display_sound_small_no_sound_object_no_bookmark sound_data %}
+                            {% endif %}
                         </div>
                     {% empty %}
                         <div class="bw-player-small-thumbnail-empty-space"></div>
@@ -56,7 +60,11 @@
         <div class="row no-margins" style="margin-left: -15px">
             {% for sound_data in pack.selected_sounds_data %}
                 <div class="col-4">
+                    {% if show_bookmark_similarity_buttons %}
                     {% display_sound_small_no_sound_object sound_data %}
+                    {% else %}
+                    {% display_sound_small_no_sound_object_no_bookmark sound_data %}
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>
@@ -110,7 +118,7 @@
                     </div>
                 {% endif %}
                 <div class="h-spacing-left-2" title="{{ pack.num_downloads|bw_intcomma }} download{{ pack.num_downloads|pluralize }}">
-                    <a href="javascript:void(0);" data-toggle="downloaders-modal" data-modal-content-url="{% url 'pack-downloaders' pack.user.username pack.id %}?ajax=1" class="bw-link--grey-light">
+                    <a href="{% url 'pack-downloaders' pack.user.username pack.id %}" class="bw-link--grey-light">
                         <span class="bw-icon-download"></span> {{ pack.num_downloads|formatnumber }}
                     </a>
                 </div>

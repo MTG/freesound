@@ -45,12 +45,12 @@
                                 </li>
                             {% endif %}
                             <li class="bw-nav__action dropdown-item">
-                                <a class="bw-link--black" href="{% url "user-downloaded-sounds" user.username %}">
-                                    See downloaded downloads
+                                <a class="bw-link--black" data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);">
+                                    See downloaded sounds
                                 </a>
                             </li>
                             <li class="bw-nav__action dropdown-item">
-                                <a class="bw-link--black" href="{% url "user-downloaded-packs" user.username %}">
+                                <a class="bw-link--black" data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);">
                                     See downloaded packs
                                 </a>
                             </li>

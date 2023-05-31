@@ -38,4 +38,16 @@ const bindDownloadersButtons = () => {
 
 bindDownloadersButtons();
 
+// Open downloaders modal if activation parameter is passed
+const urlParams = new URLSearchParams(window.location.search);
+for (const element of [...document.querySelectorAll('[data-toggle="downloaders-modal"]')]) {
+    const activationParam = element.dataset.modalActivationParam;
+    const paramValue = urlParams.get(activationParam);
+    if (paramValue) {
+      handleDownloadersModal(element.dataset.modalContentUrl, activationParam, paramValue);
+      break;  // Only open one modal (the first found with an activated parameter)
+    }
+}
+
+
 export {handleDownloadersModal};

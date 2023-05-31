@@ -1,6 +1,7 @@
 import {makeSoundsMapWithStaticMapFirst} from '../components/mapsMapbox';
 import {handleGenericModal} from '../components/modal';
 import {setURLHash, hashEquals} from '../utils/urls'
+import {handleDownloadersModal} from "../components/downloadersModals";
 
 // Latest sounds/Latest tags taps
 
@@ -113,13 +114,3 @@ taps.forEach(tap => {
     handleTap(tap);
   }
 });
-
-// Open downloaders modal if activation parameter is passed
-const downloadersButtons = document.querySelectorAll('[data-toggle="downloaders-modal"]');
-if (downloadersButtons.length > 0){
-    const downloadersModalActivationParam = downloadersButtons[0].dataset.modalActivationParam;
-    const downloadersModalParamValue = urlParams.get(downloadersModalActivationParam);
-    if (downloadersModalParamValue) {
-        handleDownloadersModal(downloadersButtons[0].dataset.modalContentUrl, downloadersModalActivationParam, downloadersModalParamValue);
-    }
-}

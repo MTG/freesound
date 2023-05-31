@@ -6,11 +6,11 @@
 {% block page-content %}
     {% if all_ok %}
         <p class="text-grey v-spacing-3">Your account has been activated. You may go ahead and log in now.</p>
-        <button class="btn-primary" data-toggle="modal" data-target="#loginModal">Log in</button>
+        <button class="btn-primary" data-toggle="login-modal" data-target="#loginModal">Log in</button>
     {% else %}
         {% if user_does_not_exist %}
             <p class="text-grey v-spacing-3">We're sorry but the user you are trying to activate does not exist anymore! Please register again...</p>
-            <button class="btn-secondary" data-toggle="modal" data-target="#registerModal">Join</button>
+            <button class="btn-secondary" data-toggle="registration-modal" data-target="#registerModal">Join</button>
         {% endif %}
         {% if decode_error %}
             <p class="text-grey v-spacing-3">We're sorry but we can't find that activation key in the database. Try copy-pasting the link that we sent you instead of clicking it...</p>

@@ -2,10 +2,9 @@ import './page-polyfills';
 import {showToast} from '../components/toast';
 import {playAtTime} from '../components/player/utils';
 import {openSimilarSoundsModal} from "../components/similarSoundsModal";
-import {handleGenericModal, handleDismissModal} from '../components/modal';
+import {handleGenericModalWithForm, handleDismissModal} from '../components/modal';
 import {createSelect} from "../components/select";
 import {addRecaptchaScriptTagToMainHead} from '../utils/recaptchaDynamicReload'
-import serialize from '../utils/formSerializer'
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -32,7 +31,7 @@ const toggleEmbedCode = () => {
     } else {
         embedLinksElement.style.display = "none";
     }
-
+    
     if (shareLinkElement.style.display !== "none") {
         shareLinkElement.style.display = "none";
     }
@@ -45,7 +44,7 @@ const toggleShareLink = () => {
     } else {
         shareLinkElement.style.display = "none";
     }
-
+    
     if (embedLinksElement.style.display !== "none") {
         embedLinksElement.style.display = "none";
     }
@@ -119,9 +118,8 @@ const flagSoundButton = [...document.querySelectorAll('[data-toggle^="flag-sound
 const flagSoundModalActivationParam = flagSoundButton.dataset.modalActivationParam;
 const flagSoundModalParamValue = urlParams.get(flagSoundModalActivationParam);
 
-const initSoundFlagForm = () => {
+const initSoundFlagForm = (modalElement) => {
     // Modify the form structure to add a "Reason type:" label inline with the select dropdown
-    const modalElement = document.getElementById(`flagSoundModal`);;
     const selectElement = modalElement.getElementsByTagName('select')[0];
     const wrapper = document.createElement('div');
     selectElement.parentNode.insertBefore(wrapper, selectElement);
@@ -131,74 +129,16 @@ const initSoundFlagForm = () => {
     label.classList.add('text-grey');
     wrapper.appendChild(label)
     wrapper.appendChild(selectElement)
-
+    
     // Init select and recaptcha fields
     const form = modalElement.getElementsByTagName('form')[0];
     createSelect();
     addRecaptchaScriptTagToMainHead(form);
-
-    // Set custom submit function so we can show errors properly, etc
-    form.onsubmit = (evt) => {
-        customFlagSoundFormSubmit(evt);
-        evt.preventDefault();
-    }
 }
 
 const handleFlagSoundModal = () => {
-    handleGenericModal(flagSoundButton.dataset.modalContentUrl, () => {
-        initSoundFlagForm();
-    });
+    handleGenericModalWithForm(flagSoundButton.dataset.modalContentUrl, initSoundFlagForm, undefined, (req) => {showToast('Sound flagged successfully!')}, undefined);  
 }
-
-const customFlagSoundFormSubmit = (event) => {
-
-    const modalElement = document.getElementById("flagSoundModal");
-    const form = modalElement.getElementsByTagName('form')[0];
-    const params = serialize(form);
-    
-    // Create new Ajax request to submit flag form contents
-    const req = new XMLHttpRequest();
-    req.open('POST', form.action, true);
-    req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-    req.onload = () => {
-        if (req.status >= 200 && req.status < 300) {
-            if (req.getResponseHeader('content-type') === 'application/json'){
-                // If response is of type JSON, that means flagging was successful, show toast and close modal
-                handleDismissModal('flagSoundModal');
-                showToast('Sound flagged successfully!')
-            }  else {
-                // There were errors in the flag form. In that case the response are the HTML elements of the
-                // form (including error warnings) and we should replace current modal HTML with this one (and 
-                // re-init all needed javascript)
-                const genericModalWrapper = modalElement.parentNode;
-                genericModalWrapper.innerHTML = req.responseText;
-                const modalContainerId = genericModalWrapper.getElementsByClassName('modal')[0].id;
-                const modalContainer = document.getElementById(modalContainerId);
-                modalContainer.classList.add('show');
-                modalContainer.style.display = 'block';
-                const form = modalContainer.getElementsByTagName('form')[0];
-                initSoundFlagForm();
-                const modalDismiss = genericModalWrapper.querySelectorAll('[data-dismiss="modal"]');
-                modalDismiss.forEach(dismiss => {
-                    dismiss.addEventListener('click', () => {
-                        handleDismissModal('flagSoundModal');});
-                });
-            }
-        }
-    };
-    req.onerror = () => {
-        // Unexpected errors happened while processing request: close modal and show error in toast
-        handleDismissModal('flagSoundModal');
-        showToast('Some errors occurred while processing the form. Please try again later.')
-    };
-
-    // Send the form
-    req.send(params);
-
-    // Return false so default submission does not happen
-    return false;
-};
-
 
 if (flagSoundModalParamValue) {
     handleFlagSoundModal();

@@ -1,4 +1,3 @@
-import {handleDismissModal, handleModal} from "../components/modal";
 import {showToast} from "../components/toast";
 import serialize from "../utils/formSerializer";
 

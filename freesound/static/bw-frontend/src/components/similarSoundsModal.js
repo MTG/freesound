@@ -4,10 +4,9 @@ import {createPlayer} from './player/player-ui'
 
 
 const openSimilarSoundsModal = (modalUrl, modalActivationParam) => {
-    handleGenericModal(modalUrl, () => {
+    handleGenericModal(modalUrl, (modalElement) => {
         // Init sound player inside popup
-        const modalWrapper = document.getElementById('genericModalWrapper');
-        const players = [...modalWrapper.getElementsByClassName('bw-player')]
+        const players = [...modalElement.getElementsByClassName('bw-player')]
         players.forEach(createPlayer)
 
         // If modal is activated with a param, add the param to the URL when opening the modal

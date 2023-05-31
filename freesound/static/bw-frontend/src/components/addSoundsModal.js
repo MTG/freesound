@@ -6,15 +6,13 @@ import addCheckboxVisibleElements from "../components/checkbox"
 import {serializedIdListToIntList, combineIdsLists} from "../utils/data"
 
 const openAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement, onSoundsSelectedCallback) => {
-    handleGenericModal(modalUrl, () => {
-        const modalWrapper = document.getElementById('genericModalWrapper');
-        
-        const players = [...modalWrapper.getElementsByClassName('bw-player')]
+    handleGenericModal(modalUrl, (modalElement) => {        
+        const players = [...modalElement.getElementsByClassName('bw-player')]
         players.forEach(createPlayer)
         
         addCheckboxVisibleElements()
 
-        const inputElement = modalWrapper.getElementsByTagName('input')[0];
+        const inputElement = modalElement.getElementsByTagName('input')[0];
         inputElement.addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault();
@@ -24,15 +22,15 @@ const openAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement,
             }
         });
 
-        const objectSelectorElement = modalWrapper.getElementsByClassName('bw-object-selector-container')[0];
+        const objectSelectorElement = modalElement.getElementsByClassName('bw-object-selector-container')[0];
         initializeObjectSelector(objectSelectorElement, (element) => {
             addSelectedSoundsButton.disabled = element.dataset.selectedIds == ""
         });
 
-        const addSelectedSoundsButton = modalWrapper.getElementsByTagName('button')[0];
+        const addSelectedSoundsButton = modalElement.getElementsByTagName('button')[0];
         addSelectedSoundsButton.disabled = true;
         addSelectedSoundsButton.addEventListener('click', evt => {
-            const selectableSoundElements = [...modalWrapper.getElementsByClassName('bw-selectable-object')];
+            const selectableSoundElements = [...modalElement.getElementsByClassName('bw-selectable-object')];
             selectableSoundElements.forEach( element => {
                 const checkbox = element.querySelectorAll('input.bw-checkbox')[0];
                 if (checkbox.checked) {
@@ -47,7 +45,7 @@ const openAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement,
             onSoundsSelectedCallback(objectSelectorElement.dataset.selectedIds);
             handleDismissModal(modalId);
         });
-    }, () => {
+    }, (modalElement) => {
         // Stop all players that could be being played inside the modal
         stopAllPlayers();
     }, true, true);

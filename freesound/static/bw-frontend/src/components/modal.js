@@ -1,13 +1,8 @@
-import {initRegistrationForm, initProblemsLoggingInForm, initLoginForm} from "../pages/loginAndRegistration";
+import {initRegistrationForm, initProblemsLoggingInForm, initLoginForm} from "./loginModals";
 import {showToast, showToastNoTimeout, dismissToast} from "./toast";
+import serialize from '../utils/formSerializer'
 
-const modals = [...document.querySelectorAll('[data-toggle="modal"]')];
-
-const urlParams = new URLSearchParams(window.location.search);
-const registrationParam = urlParams.get('registration');
-const feedbackRegistrationParam = urlParams.get('feedbackRegistration');
-const problemsLoggingInParam = urlParams.get('loginProblems');
-
+// Util functions to dismiss a modal
 const handleDismissModal = modalContainerId => {
   const modalContainer = document.getElementById(modalContainerId);
   if (modalContainer !== null){
@@ -16,24 +11,6 @@ const handleDismissModal = modalContainerId => {
   }
 };
 
-
-const initLoginAndRegistrationModalLinks = (modalContainerId) => {
-  const modalLinks = [
-    document.querySelectorAll('[data-link="forgottenPasswordModal"]'),
-    document.querySelectorAll('[data-link="loginModal"]'),
-    document.querySelectorAll('[data-link="registerModal"]'),
-  ];
-
-  modalLinks.forEach(links => {
-    links.forEach(link => {
-      link.addEventListener('click', () => {
-        handleDismissModal(modalContainerId);
-        handleModal(link.dataset.link);
-      });
-    });
-  });
-}
-
 const initModalDismissButton = (modalContainerElement) => {
   const modalDismiss = [...modalContainerElement.querySelectorAll('[data-dismiss="modal"]')];
   modalDismiss.forEach(dismiss => {
@@ -41,84 +18,34 @@ const initModalDismissButton = (modalContainerElement) => {
   });
 }
 
+// Function to make modals visible
 const handleModal = modalContainerId => {
-  if (modalContainerId === "registerModal"){
-    handleGenericModal('/home/register/', () => {
-      const modalContainer = document.getElementById(modalContainerId);
-      initLoginAndRegistrationModalLinks(modalContainerId);
-      const registerModalForm = modalContainer.querySelector("#registerModalForm");
-      initRegistrationForm(registerModalForm);
-      // No need to init the dismiss button here because it is already done by "handleGenericModal"
-    }, () => {}, true, false);
-    return;
-  }
-
   const modalContainer = document.getElementById(modalContainerId);
   modalContainer.classList.add('show');
   modalContainer.style.display = 'block';
-
-  // Activate links inside the modal that toggle other modals
-  initLoginAndRegistrationModalLinks(modalContainerId);
-
-  // Activate modal dismiss button
   initModalDismissButton(modalContainer);
-
-  // In case the modal we are activating contains some specific forms, carry out some special init actions
-  const registerModalForm = modalContainer.querySelector("#registerModalForm");
-  if (registerModalForm !== null){
-    initRegistrationForm(registerModalForm);
-  }
-  const problemsLoggingInForm = modalContainer.querySelector("#problemsLoggingInModalForm");
-  if (problemsLoggingInForm !== null){
-    initProblemsLoggingInForm(problemsLoggingInForm);
-  }
-  const loginForm = modalContainer.querySelector("#loginForm");
-  if (loginForm !== null){
-    initLoginForm(loginForm);
-  }
 };
 
-modals.forEach(modal => {
-  modal.addEventListener('click', () => handleModal(modal.dataset.target.substring(1)));
-});
-
-
-document.addEventListener("DOMContentLoaded", () => {
-  if (registrationParam)  {
-    handleModal('registerModal');
-  }
-  if (feedbackRegistrationParam) {
-    handleModal('feedbackRegistration');
-  }
-  if (problemsLoggingInParam) {
-    handleModal('forgottenPasswordModal');
-  }
-});
-
-// Confirmation modal
+// Confirmation modal logic
 const confirmationModalButtons = [...document.querySelectorAll('[data-toggle="confirmation-modal"]')];
 confirmationModalButtons.forEach(modalButton => {
   modalButton.addEventListener('click', () => {
-      const confirmationModalTitle = document.getElementById('confirmationModalTitle');
-      confirmationModalTitle.innerText = modalButton.dataset.modalConfirmationTitle;
-      
-      const confirmationModalHelpText = document.getElementById('confirmationModalHelpText');
-      const helpText = modalButton.dataset.modalConfirmationHelpText;
-      if (helpText !== undefined){
-        confirmationModalHelpText.innerText = helpText;
-      } else {
-        confirmationModalHelpText.innerText = '';
-      }
-      
-      const confirmationModalAcceptForm = document.getElementById('confirmationModalAcceptSubmitForm');
-      confirmationModalAcceptForm.action = modalButton.dataset.modalConfirmationUrl;
-      handleModal('confirmationModal');
+    const confirmationModalTitle = document.getElementById('confirmationModalTitle');
+    confirmationModalTitle.innerText = modalButton.dataset.modalConfirmationTitle;
+    const confirmationModalHelpText = document.getElementById('confirmationModalHelpText');
+    const helpText = modalButton.dataset.modalConfirmationHelpText;
+    if (helpText !== undefined){
+      confirmationModalHelpText.innerText = helpText;
+    } else {
+      confirmationModalHelpText.innerText = '';
+    }
+    const confirmationModalAcceptForm = document.getElementById('confirmationModalAcceptSubmitForm');
+    confirmationModalAcceptForm.action = modalButton.dataset.modalConfirmationUrl;
+    handleModal('confirmationModal');
   });
 });
 
-
-// Generic modals
-
+// Generic modals logic
 const genericModalWrapper = document.getElementById('genericModalWrapper');
 
 const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback, doRequestAsync, showLoadingToast) => {
@@ -127,60 +54,142 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
   req.open('GET', fetchContentUrl, doRequestAsync !== false);
   req.onload = () => {
     if (req.status >= 200 && req.status < 300) {
-        if (req.responseText !== ""){
-            // If response contents are not empty, add modal contents to the generic modal wrapper (the requested URL
-            // should return a modal template extending "modal_base.html")
-            genericModalWrapper.innerHTML = req.responseText;
-            const modalContainerId = genericModalWrapper.getElementsByClassName('modal')[0].id;
-            const modalContainer = document.getElementById(modalContainerId);
-
-            // Make modal visible
-            modalContainer.classList.add('show');
-            modalContainer.style.display = 'block';
-
-            // Add dismiss click handler including call to callback if defined
-            const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
-            modalDismiss.forEach(dismiss => {
-              dismiss.addEventListener('click', () => {
-                handleDismissModal(modalContainerId);
-                if (onClosedCallback !== undefined){
-                  onClosedCallback();
-                }
-              });
-            });
-
-            // Make paginator update modal (if any)
-            modalContainer.getElementsByClassName('bw-pagination_container').forEach(paginationContainer => {
-              paginationContainer.getElementsByTagName('a').forEach(paginatorLinkElement => {
-                const loadPageUrl = paginatorLinkElement.href;
-                paginatorLinkElement.href = 'javascript:void(0);';
-                paginatorLinkElement.onclick = () => {
-                  handleGenericModal(loadPageUrl, onLoadedCallback, onClosedCallback);
-                };
-              });
-            });
-
-            // Dismiss loading indicator toast and call "on loaded" call back
-            if (showLoadingToast !== false) { dismissToast(); }
-            if (onLoadedCallback !== undefined){
-              onLoadedCallback();
+      if (req.responseText !== ""){
+        // If response contents are not empty, add modal contents to the generic modal wrapper (the requested URL
+        // should return a modal template extending "modal_base.html")
+        genericModalWrapper.innerHTML = req.responseText;
+        const modalContainerId = genericModalWrapper.getElementsByClassName('modal')[0].id;
+        const modalContainer = document.getElementById(modalContainerId);
+        
+        // Make modal visible
+        modalContainer.classList.add('show');
+        modalContainer.style.display = 'block';
+        
+        // Add dismiss click handler including call to callback if defined
+        const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
+        modalDismiss.forEach(dismiss => {
+          dismiss.addEventListener('click', () => {
+            handleDismissModal(modalContainerId);
+            if (onClosedCallback !== undefined){
+              onClosedCallback(modalContainer);
             }
-        } else {
-            // If response contents are empty, do not show any modal but dismiss the loading toast (if used)
-            if (showLoadingToast !== false) { dismissToast(); }
+          });
+        });
+        
+        // Make paginator update modal (if any)
+        modalContainer.getElementsByClassName('bw-pagination_container').forEach(paginationContainer => {
+          paginationContainer.getElementsByTagName('a').forEach(paginatorLinkElement => {
+            const loadPageUrl = paginatorLinkElement.href;
+            paginatorLinkElement.href = 'javascript:void(0);';
+            paginatorLinkElement.onclick = () => {
+              handleGenericModal(loadPageUrl, onLoadedCallback, onClosedCallback);
+            };
+          });
+        });
+        
+        // Dismiss loading indicator toast and call "on loaded" call back
+        if (showLoadingToast !== false) { dismissToast(); }
+        if (onLoadedCallback !== undefined){
+          onLoadedCallback(modalContainer);
         }
+      } else {
+        // If response contents are empty, do not show any modal but dismiss the loading toast (if used)
+        if (showLoadingToast !== false) { dismissToast(); }
+      }
     } else {
       // Unexpected errors happened while processing request: close modal and show error in toast
-      showToast('Some errors occurred while loading the requested content.')
+      showToast('Unexpected errors occurred while loading the requested content. Please try again later...')
     }
   };
   req.onerror = () => {
     // Unexpected errors happened while processing request: close modal and show error in toast
-    showToast('Some errors occurred while loading the requested content.')
+    showToast('Unexpected errors occurred while loading the requested content. Please try again later...')
   };
-
+  
   // Send the form
   req.send();
 };
 
-export {handleDismissModal, handleModal, handleGenericModal};
+
+const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast) => {
+  // This version of the generic modal is useful for modal contents that contain forms which, upon submission, will return HTML content if there were form errors
+  // which should be used to replace the current contents of the form, and will return a JSON response if the form validated correctly in the backend. That JSON
+  // response could include some relevant data or no data at all, but is used to differentiate from the HTML response
+
+  const genericModalWithFormCustomSubmit = (evt) => {
+    
+    // Create new XMLHttpRequest request to submit form contents
+    const form = evt.target;
+    const params = serialize(form);
+    const req = new XMLHttpRequest();
+    req.open('POST', form.action, true);
+    req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+    
+    req.onload = () => {
+      if (req.status >= 200 && req.status < 300) {
+        if (req.getResponseHeader('content-type') === 'application/json'){
+          // If response is of type JSON, that means the form was submitted and validated successfully, show toast and close modal
+          const modalElementId = genericModalWrapper.getElementsByClassName('modal')[0].id;
+          handleDismissModal(modalElementId);
+          if (onFormSubmissionSucceeded !== undefined){
+            onFormSubmissionSucceeded(req);
+          }
+        }  else {
+          // If the response is not JSON, that means the response are the HTML elements of the
+          // form (including error warnings) and we should replace current modal HTML with this one
+          // and re-run any needed modal initialization
+          genericModalWrapper.innerHTML = req.responseText;
+          const modalElementId = genericModalWrapper.getElementsByClassName('modal')[0].id;
+          const modalElement = document.getElementById(modalElementId);
+          modalElement.classList.add('show');
+          modalElement.style.display = 'block';
+          
+          // Re-run modal initialization
+          const form = modalElement.getElementsByTagName('form')[0];
+          if (onLoadedCallback !== undefined){
+            onLoadedCallback(modalElement);
+          }
+          form.onsubmit = genericModalWithFormCustomSubmit
+          
+          // Re-bind dismiss modal buttons
+          const modalDismiss = genericModalWrapper.querySelectorAll('[data-dismiss="modal"]');
+          modalDismiss.forEach(dismiss => {
+            dismiss.addEventListener('click', () => {
+              handleDismissModal(modalElementId);
+              if (onClosedCallback !== undefined){
+                onClosedCallback(modalElement);
+              }
+            });
+          });
+        }
+      }
+    };
+    
+    req.onerror = () => {
+      // Unexpected errors happened while processing request: close modal and show error in toast
+      const modalElementId = genericModalWrapper.getElementsByClassName('modal')[0].id;
+      handleDismissModal(modalElementId);
+      if (onFormSubmissionError !== undefined){
+        onFormSubmissionError(req);
+      } else {
+        showToast("Unexpected errors occurred while processing the form, pelase try again later...")
+      }
+    };
+    
+    // Send the request with form data
+    req.send(params);
+    
+    // Return false so default submission does not happen
+    return false;
+  }
+  
+  handleGenericModal(fetchContentUrl, (modalElement) => {
+    if (onLoadedCallback !== undefined){
+      onLoadedCallback(modalElement);
+    }
+    const form = modalElement.getElementsByTagName('form')[0];
+    form.onsubmit = genericModalWithFormCustomSubmit
+  }, onClosedCallback, doRequestAsync, showLoadingToast)
+}
+
+export {handleDismissModal, handleModal, handleGenericModal, handleGenericModalWithForm};

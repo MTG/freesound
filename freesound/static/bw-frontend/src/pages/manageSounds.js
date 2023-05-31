@@ -1,5 +1,5 @@
 import {initializeObjectSelector} from '../components/objectSelector'
-import {handleModal} from "../components/modal";
+import {activateModal} from "../components/modal";
 
 const editSelectedSoundsButton = document.getElementById('edit-button');
 if (editSelectedSoundsButton !== null){
@@ -130,7 +130,7 @@ if (removeSelectedItemsButton !== null){
             const removeSelectedItemsButton = document.getElementById('remove-button-hidden');
             removeSelectedItemsButton.click();  // This will trigger submitting the form with the name of the button in it and without submit being intercepted
         })
-        handleModal('confirmationModal');
+        activateModal('confirmationModal');
     })
 }
 
@@ -138,10 +138,10 @@ const bulkDescribeButton = document.getElementById('bulk-describe-button');
 if (bulkDescribeButton !== null) {
     bulkDescribeButton.addEventListener('click', evt => {
         evt.preventDefault();
-        handleModal('bulkDescribeModal');
+        activateModal('bulkDescribeModal');
     })
     if (bulkDescribeButton.dataset.formHasErrors !== undefined) {
-        handleModal('bulkDescribeModal');
+        activateModal('bulkDescribeModal');
     }
 }
 

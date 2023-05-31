@@ -36,9 +36,9 @@
                 {% endif %}
                 {% if perms.tickets.can_moderate or request.user.is_staff %}
                     <div class="dropdown display-inline-block">
-                        <a class="no-hover dropdown-toggle" aria-haspopup="true"
+                        <a class="no-hover dropdown-toggle" id="mod-actions-menu" aria-haspopup="true"
                            aria-expanded="false" data-toggle="dropdown"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Mod actions</button></a>
-                        <ul class="dropdown-menu" aria-labelledby="three-dots-menu">
+                        <ul class="dropdown-menu" aria-labelledby="mod-actions-menu">
                             {% if not user.profile.is_whitelisted %}
                                 <li class="bw-nav__action dropdown-item text-light-grey">
                                     This user is whitelisted

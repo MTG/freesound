@@ -1,7 +1,7 @@
 import { showToast } from './toast';
 import serialize from '../utils/formSerializer'
 import addCheckboxVisibleElements from "../components/checkbox";
-import { handleModal, handleDismissModal, handleGenericModalWithForm } from "../components/modal";
+import { activateModal, dismissModal, handleGenericModalWithForm } from "../components/modal";
 import { addRecaptchaScriptTagToMainHead } from '../utils/recaptchaDynamicReload'
 
 const checkUsernameAvailability = (username, baseURL, callback) => {
@@ -98,32 +98,32 @@ const initLoginAndRegistrationModalLinks = (modalContainerId) => {
   const modalContainer = document.getElementById(modalContainerId);
   [...modalContainer.querySelectorAll('[data-link="forgottenPasswordModal"]')].forEach(link => {
     link.addEventListener('click', () => {
-      handleDismissModal(modalContainerId);
+      dismissModal(modalContainerId);
       handleProblemsLoggingInModal();
     });
   });
   [...modalContainer.querySelectorAll('[data-link="loginModal"]')].forEach(link => {
     link.addEventListener('click', () => {
-      handleDismissModal(modalContainerId);
+      dismissModal(modalContainerId);
       handleLoginModal();
     });
   });
   [...modalContainer.querySelectorAll('[data-link="registerModal"]')].forEach(link => {
     link.addEventListener('click', () => {
-      handleDismissModal(modalContainerId);
+      dismissModal(modalContainerId);
       handleRegistrationModal();
     });
   });
 }
 
 const handleLoginModal = () => {
-  handleModal('loginModal');
+  activateModal('loginModal');
   initLoginAndRegistrationModalLinks('loginModal');
   initLoginForm(document.getElementById("loginForm"));
 }
 
 const handleProblemsLoggingInModal = () => {
-  handleModal('forgottenPasswordModal');
+  activateModal('forgottenPasswordModal');
   initLoginAndRegistrationModalLinks('forgottenPasswordModal');
   initProblemsLoggingInForm(document.getElementById("problemsLoggingInModalForm"));
 }
@@ -137,7 +137,7 @@ const handleRegistrationModal = () => {
 }
 
 const handleRegistrationFeedbackModal = () => {
-  handleModal('feedbackRegistration');
+  activateModal('feedbackRegistration');
 }
 
 // Bind login modal buttons

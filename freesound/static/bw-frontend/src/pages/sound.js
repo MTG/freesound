@@ -2,7 +2,7 @@ import './page-polyfills';
 import {showToast} from '../components/toast';
 import {playAtTime} from '../components/player/utils';
 import {openSimilarSoundsModal} from "../components/similarSoundsModal";
-import {handleGenericModalWithForm, handleDismissModal} from '../components/modal';
+import {handleGenericModalWithForm} from '../components/modal';
 import {createSelect} from "../components/select";
 import {addRecaptchaScriptTagToMainHead} from '../utils/recaptchaDynamicReload'
 
@@ -118,9 +118,9 @@ const flagSoundButton = [...document.querySelectorAll('[data-toggle^="flag-sound
 const flagSoundModalActivationParam = flagSoundButton.dataset.modalActivationParam;
 const flagSoundModalParamValue = urlParams.get(flagSoundModalActivationParam);
 
-const initSoundFlagForm = (modalElement) => {
+const initSoundFlagForm = (modalContainer) => {
     // Modify the form structure to add a "Reason type:" label inline with the select dropdown
-    const selectElement = modalElement.getElementsByTagName('select')[0];
+    const selectElement = modalContainer.getElementsByTagName('select')[0];
     const wrapper = document.createElement('div');
     selectElement.parentNode.insertBefore(wrapper, selectElement);
     const label = document.createElement('div');
@@ -131,7 +131,7 @@ const initSoundFlagForm = (modalElement) => {
     wrapper.appendChild(selectElement)
     
     // Init select and recaptcha fields
-    const form = modalElement.getElementsByTagName('form')[0];
+    const form = modalContainer.getElementsByTagName('form')[0];
     createSelect();
     addRecaptchaScriptTagToMainHead(form);
 }

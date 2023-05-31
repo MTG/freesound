@@ -1,4 +1,4 @@
-import {handleDismissModal, handleGenericModal} from "./modal";
+import {dismissModal, handleGenericModal} from "./modal";
 import {createSelect} from "./select";
 import {showToast} from "./toast";
 import {makePostRequest} from "../utils/postRequest";
@@ -16,7 +16,7 @@ const saveBookmark = (addBookmarkUrl, data) => {
     }
     makePostRequest(addBookmarkUrl, formData, (responseText) => {
         // Bookmark saved successfully. Close model and show feedback
-        handleDismissModal(`bookmarkSoundModal`);
+        dismissModal(`bookmarkSoundModal`);
         try {
             showToast(JSON.parse(responseText).message);
         } catch (error) {
@@ -25,7 +25,7 @@ const saveBookmark = (addBookmarkUrl, data) => {
         }
     }, () => {
         // Unexpected errors happened while processing request: close modal and show error in toast
-        handleDismissModal(`bookmarkSoundModal`);
+        dismissModal(`bookmarkSoundModal`);
         showToast('Some errors occurred while bookmarking the sound.');
     });
 }
@@ -44,8 +44,8 @@ const toggleNewCategoryNameDiv = (select, newCategoryNameDiv) => {
 const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     
     // Modify the form structure to add a "Category" label inline with the select dropdown
-    const modalElement = document.getElementById(`bookmarkSoundModal`);
-    const selectElement = modalElement.getElementsByTagName('select')[0];
+    const modalContainer = document.getElementById(`bookmarkSoundModal`);
+    const selectElement = modalContainer.getElementsByTagName('select')[0];
     const wrapper = document.createElement('div');
     if (selectElement === undefined){
         // If no select element, the modal has probably loaded for an unauthenticated user
@@ -60,7 +60,7 @@ const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     wrapper.appendChild(selectElement)
     createSelect();  // We need to trigger create select elements because bookmark form has one
 
-    const formElement = modalElement.getElementsByTagName('form')[0];
+    const formElement = modalContainer.getElementsByTagName('form')[0];
     const buttonsInModalForm = formElement.getElementsByTagName('button');
     const saveButtonElement = buttonsInModalForm[buttonsInModalForm.length - 1];
     const categorySelectElement = document.getElementById(`id_${  soundId.toString()  }-category`);

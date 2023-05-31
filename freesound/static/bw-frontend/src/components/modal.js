@@ -1,30 +1,39 @@
-import {initRegistrationForm, initProblemsLoggingInForm, initLoginForm} from "./loginModals";
 import {showToast, showToastNoTimeout, dismissToast} from "./toast";
 import serialize from '../utils/formSerializer'
 
+const bwPageElement = document.getElementsByClassName('bw-page')[0];
+
+// Function to make modals visible
+const activateModal = modalContainerId => {
+  const modalContainer = document.getElementById(modalContainerId);
+  if (modalContainer !== null){
+    modalContainer.classList.add('show');
+    modalContainer.style.display = 'block';
+    modalContainer.setAttribute('aria-hidden', 'false');
+    bwPageElement.setAttribute('aria-hidden', 'true');
+    initModalDismissButton(modalContainer);
+    modalContainer.focus()
+  }
+};
+
 // Util functions to dismiss a modal
-const handleDismissModal = modalContainerId => {
+const dismissModal = modalContainerId => {
   const modalContainer = document.getElementById(modalContainerId);
   if (modalContainer !== null){
     modalContainer.classList.remove('show');
     modalContainer.style.display = 'none';
+    modalContainer.setAttribute('aria-hidden', 'true');
+    bwPageElement.setAttribute('aria-hidden', 'false');
+    modalContainer.blur()
   }
 };
 
 const initModalDismissButton = (modalContainerElement) => {
   const modalDismiss = [...modalContainerElement.querySelectorAll('[data-dismiss="modal"]')];
   modalDismiss.forEach(dismiss => {
-    dismiss.addEventListener('click', () => handleDismissModal(modalContainerElement.id));
+    dismiss.addEventListener('click', () => dismissModal(modalContainerElement.id));
   });
 }
-
-// Function to make modals visible
-const handleModal = modalContainerId => {
-  const modalContainer = document.getElementById(modalContainerId);
-  modalContainer.classList.add('show');
-  modalContainer.style.display = 'block';
-  initModalDismissButton(modalContainer);
-};
 
 // Confirmation modal logic
 const confirmationModalButtons = [...document.querySelectorAll('[data-toggle="confirmation-modal"]')];
@@ -69,7 +78,7 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
         const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
         modalDismiss.forEach(dismiss => {
           dismiss.addEventListener('click', () => {
-            handleDismissModal(modalContainerId);
+            dismissModal(modalContainerId);
             if (onClosedCallback !== undefined){
               onClosedCallback(modalContainer);
             }
@@ -129,8 +138,8 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
       if (req.status >= 200 && req.status < 300) {
         if (req.getResponseHeader('content-type') === 'application/json'){
           // If response is of type JSON, that means the form was submitted and validated successfully, show toast and close modal
-          const modalElementId = genericModalWrapper.getElementsByClassName('modal')[0].id;
-          handleDismissModal(modalElementId);
+          const modalContainerId = genericModalWrapper.getElementsByClassName('modal')[0].id;
+          dismissModal(modalContainerId);
           if (onFormSubmissionSucceeded !== undefined){
             onFormSubmissionSucceeded(req);
           }
@@ -139,15 +148,15 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
           // form (including error warnings) and we should replace current modal HTML with this one
           // and re-run any needed modal initialization
           genericModalWrapper.innerHTML = req.responseText;
-          const modalElementId = genericModalWrapper.getElementsByClassName('modal')[0].id;
-          const modalElement = document.getElementById(modalElementId);
-          modalElement.classList.add('show');
-          modalElement.style.display = 'block';
+          const modalContainerId = genericModalWrapper.getElementsByClassName('modal')[0].id;
+          const modalContainer = document.getElementById(modalContainerId);
+          modalContainer.classList.add('show');
+          modalContainer.style.display = 'block';
           
           // Re-run modal initialization
-          const form = modalElement.getElementsByTagName('form')[0];
+          const form = modalContainer.getElementsByTagName('form')[0];
           if (onLoadedCallback !== undefined){
-            onLoadedCallback(modalElement);
+            onLoadedCallback(modalContainer);
           }
           form.onsubmit = genericModalWithFormCustomSubmit
           
@@ -155,9 +164,9 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
           const modalDismiss = genericModalWrapper.querySelectorAll('[data-dismiss="modal"]');
           modalDismiss.forEach(dismiss => {
             dismiss.addEventListener('click', () => {
-              handleDismissModal(modalElementId);
+              dismissModal(modalContainerId);
               if (onClosedCallback !== undefined){
-                onClosedCallback(modalElement);
+                onClosedCallback(modalContainer);
               }
             });
           });
@@ -167,8 +176,8 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
     
     req.onerror = () => {
       // Unexpected errors happened while processing request: close modal and show error in toast
-      const modalElementId = genericModalWrapper.getElementsByClassName('modal')[0].id;
-      handleDismissModal(modalElementId);
+      const modalContainerId = genericModalWrapper.getElementsByClassName('modal')[0].id;
+      dismissModal(modalContainerId);
       if (onFormSubmissionError !== undefined){
         onFormSubmissionError(req);
       } else {
@@ -183,13 +192,13 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
     return false;
   }
   
-  handleGenericModal(fetchContentUrl, (modalElement) => {
+  handleGenericModal(fetchContentUrl, (modalContainer) => {
     if (onLoadedCallback !== undefined){
-      onLoadedCallback(modalElement);
+      onLoadedCallback(modalContainer);
     }
-    const form = modalElement.getElementsByTagName('form')[0];
+    const form = modalContainer.getElementsByTagName('form')[0];
     form.onsubmit = genericModalWithFormCustomSubmit
   }, onClosedCallback, doRequestAsync, showLoadingToast)
 }
 
-export {handleDismissModal, handleModal, handleGenericModal, handleGenericModalWithForm};
+export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm};

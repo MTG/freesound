@@ -266,7 +266,7 @@
 </div><!-- #content -->
 
 <div id="sidebar">
-
+    {% with user.profile.get_user_tags as tags %}
     {% if tags %}
         <div id="user_most_used_tags" class="content_box">
             <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} most used tags</h3>
@@ -275,6 +275,7 @@
             </p>
         </div><!-- #user_most_used_tags -->
     {% endif %}
+    {% endwith %}
 
     {% if following or followers or following_tags %}
 

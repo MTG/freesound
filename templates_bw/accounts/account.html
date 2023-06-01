@@ -189,6 +189,8 @@
                     </div>
                 </section>
                 {% endif %}
+                {% cache 3600 bw_user_profile_tags user.id %}
+                {% with user.profile.get_user_tags as tags %}
                 {% if tags %}
                 <div class="divider-light"></div>
                 <section class="v-spacing-top-4 v-spacing-4">
@@ -198,6 +200,8 @@
                     {% endfor %}
                 </section>
                 {% endif %}
+                {% endwith%}
+                {% endcache %}
             </aside>
         </div>
     </div>

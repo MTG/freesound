@@ -1410,7 +1410,6 @@ def charts(request):
 @redirect_if_old_username_or_404
 def account(request, username):
     user = request.parameter_user
-    tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
     latest_pack_ids = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
                         .order_by("-last_updated").values_list('id', flat=True)[0:10 if not using_beastwhoosh(request) else 15]
@@ -1445,7 +1444,6 @@ def account(request, username):
     tvars = {
         'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
-        'tags': tags,
         'latest_sounds': latest_sounds,
         'latest_packs': latest_packs,
         'follow_user_url': follow_user_url,

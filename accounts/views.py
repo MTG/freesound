@@ -1171,7 +1171,7 @@ def download_attribution(request):
 @raise_404_if_user_is_deleted
 def downloaded_sounds(request, username):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('accounts-account', args=[username]) + '?downloaded_sounds=1')
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_sounds=1')
     user = request.parameter_user
     qs = Download.objects.filter(user_id=user.id)
     paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE, object_count=user.profile.num_sound_downloads)
@@ -1192,7 +1192,7 @@ def downloaded_sounds(request, username):
 @raise_404_if_user_is_deleted
 def downloaded_packs(request, username):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('accounts-account', args=[username]) + '?downloaded_packs=1')
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_packs=1')
     user = request.parameter_user
     qs = PackDownload.objects.filter(user=user.id)
     paginator = paginate(request, qs, settings.PACKS_PER_PAGE, object_count=user.profile.num_pack_downloads)

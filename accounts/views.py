@@ -1458,7 +1458,8 @@ def account(request, username):
         'following_modal_page': request.GET.get('following', 1),  # BW only, used to load a specific modal page
         'followers_modal_page': request.GET.get('followers', 1),  # BW only
         'following_tags_modal_page': request.GET.get('followingTags', 1),  # BW only
-        'last_geotags_serialized': last_geotags_serialized,  # BW only
+        'last_geotags_serialized': last_geotags_serialized,  # BW only,
+        'user_downloads_public': settings.USER_DOWNLOADS_PUBLIC,  # BW only,
     }
     return render(request, 'accounts/account.html', tvars)
 

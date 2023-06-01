@@ -44,24 +44,26 @@
                                     This user is whitelisted
                                 </li>
                             {% endif %}
+                            {% if not user_downloads_public %}
                             <li class="bw-nav__action dropdown-item">
                                 <a class="bw-link--black" data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);">
-                                    See downloaded sounds
+                                    See downloaded sounds ({{ user.profile.num_sound_downloads }})
                                 </a>
                             </li>
                             <li class="bw-nav__action dropdown-item">
                                 <a class="bw-link--black" data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);">
-                                    See downloaded packs
+                                    See downloaded packs ({{ user.profile.num_pack_downloads }})
                                 </a>
                             </li>
+                            {% endif %}
                             <li class="bw-nav__action dropdown-item">
                                 <a class="bw-link--black" href="{% url "forums-search" %}?f=post_author:%22{{ user.username }}%22">
-                                    See all forum posts
+                                    All forum posts ({{ user.profile.num_posts }})
                                 </a>
                             </li>
                             <li class="bw-nav__action dropdown-item">
                                 <a class="bw-link--black" href="{% url "comments-by-user" user.username %}">
-                                    See all comments
+                                    All comments ({{ user.profile.num_comments }})
                                 </a>
                             </li>
                             <li class="bw-nav__action dropdown-item">
@@ -97,6 +99,12 @@
                     <div><a id="user-following-users-button" data-modal-activation-param="following" data-modal-content-url="{% url 'user-following-users' user.username %}?ajax=1&page={{ following_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_count user.id %}{{ following.count }}{% endcache %} following</a></div>
                     <div><a id="user-following-tags-button" data-modal-activation-param="followingTags" data-modal-content-url="{% url 'user-following-tags' user.username %}?ajax=1&page={{ following_tags_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_tags_count user.id %}{% with following_tags.count as following_tags_count %}{{ following_tags.count|bw_intcomma }} tag{{ following_tags_count|pluralize }} following{% endwith %}{% endcache %}</a></div>
                 </div>
+                {% if user_downloads_public %}
+                <div class="bw-profile__stats v-spacing-top-1 padding-left-4 padding-right-4">
+                    <div><a data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);" >{{ user.profile.num_sound_downloads }} sound{{ user.profile.num_sound_downloads|pluralize}} downloaded</a></div>
+                    <div><a data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);" >{{ user.profile.num_pack_downloads }} pack{{ user.profile.num_pack_downloads|pluralize}} downloaded</a></div>
+                </div>
+                {% endif %}
             {% endif %}
         </div>
         <div class="divider-light"></div>

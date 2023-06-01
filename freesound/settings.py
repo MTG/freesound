@@ -425,6 +425,7 @@ ENABLE_QUERY_SUGGESTIONS = False
 ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE = False
 SHOW_LINK_TO_NEW_UI_IN_OLD_FRONT_PAGE = False
 ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD = True
+USER_DOWNLOADS_PUBLIC = True
 
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls

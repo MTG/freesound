@@ -3,8 +3,6 @@ import {stopAllPlayersInContainer, initializePlayersInContainer} from './player/
 import {initializeCarousels} from './carousel';
 import {initRatingWidgets} from './rating';
 
-
-
 const handleDownloadersModal = (modalUrl, modalActivationParam, atPage) => {
     if ((atPage !== undefined) && modalUrl.indexOf('&page') == -1){
         modalUrl += '&page=' + atPage;
@@ -48,6 +46,5 @@ for (const element of [...document.querySelectorAll('[data-toggle="downloaders-m
       break;  // Only open one modal (the first found with an activated parameter)
     }
 }
-
 
 export {handleDownloadersModal};

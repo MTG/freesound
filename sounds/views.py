@@ -1399,4 +1399,4 @@ def pack_downloaders(request, username, pack_id):
     if using_beastwhoosh(request):
         return render(request, 'sounds/modal_downloaders.html', tvars)
     else:
-        render(request, 'sounds/pack_downloaders.html', tvars)
+        return render(request, 'sounds/pack_downloaders.html', tvars)

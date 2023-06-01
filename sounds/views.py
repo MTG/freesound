@@ -1355,7 +1355,8 @@ def downloaders(request, username, sound_id):
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(sound=sound_id)
 
-    pagination = paginate(request, qs, 32, object_count=sound.num_downloads)
+    num_items_per_page = 32 if not using_beastwhoosh(request) else settings.USERS_PER_DOWNLOADS_MODAL_PAGE_BW
+    pagination = paginate(request, qs, num_items_per_page, object_count=sound.num_downloads)
     page = pagination["page"]
 
     # Get all users+profiles for the user ids
@@ -1390,7 +1391,8 @@ def pack_downloaders(request, username, pack_id):
 
     # Retrieve all users that downloaded a sound
     qs = PackDownload.objects.filter(pack_id=pack_id).select_related("user", "user__profile")
-    paginator = paginate(request, qs, 32, object_count=pack.num_downloads)
+    num_items_per_page = 32 if not using_beastwhoosh(request) else settings.USERS_PER_DOWNLOADS_MODAL_PAGE_BW
+    paginator = paginate(request, qs, num_items_per_page, object_count=pack.num_downloads)
 
     tvars = {'username': username,
              'pack': pack}

@@ -1174,7 +1174,8 @@ def downloaded_sounds(request, username):
         return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_sounds=1')
     user = request.parameter_user
     qs = Download.objects.filter(user_id=user.id)
-    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE, object_count=user.profile.num_sound_downloads)
+    num_items_per_page = settings.SOUNDS_PER_PAGE if not using_beastwhoosh(request) else settings.DOWNLOADED_SOUNDS_PACKS_PER_PAGE_BW
+    paginator = paginate(request, qs, num_items_per_page, object_count=user.profile.num_sound_downloads)
     page = paginator["page"]
     sound_ids = [d.sound_id for d in page]
     sounds = Sound.objects.ordered_ids(sound_ids)
@@ -1195,7 +1196,8 @@ def downloaded_packs(request, username):
         return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_packs=1')
     user = request.parameter_user
     qs = PackDownload.objects.filter(user=user.id)
-    paginator = paginate(request, qs, settings.PACKS_PER_PAGE, object_count=user.profile.num_pack_downloads)
+    num_items_per_page = settings.PACKS_PER_PAGE if not using_beastwhoosh(request) else settings.DOWNLOADED_SOUNDS_PACKS_PER_PAGE_BW
+    paginator = paginate(request, qs, num_items_per_page, object_count=user.profile.num_pack_downloads)
     page = paginator["page"]
     pack_ids = [d.pack_id for d in page]
     packs = Pack.objects.ordered_ids(pack_ids)

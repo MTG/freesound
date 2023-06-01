@@ -13,7 +13,7 @@
 <div class="col-12 col-lg-10 offset-lg-1">
     {% if follow_page == 'followers' %}
         <div class="text-center">
-            <h5 class="v-spacing-5">{{ user.username }}'s followers</h5>
+            <h4 class="v-spacing-5">{{ user.username }}'s followers</h4>
         </div>
         {% for follow_user_item in page.object_list %}
             {% display_user_follow_lists follow_user_item.user_from %}
@@ -31,7 +31,7 @@
 
     {% elif follow_page == 'following' %}
         <div class="v-spacing-5 text-center">
-            <h5>Users followed by {{ user.username }}</h5>
+            <h4>Users followed by {{ user.username }}</h4>
         </div>
         {% for follow_user_item in page.object_list %}
             {% display_user_follow_lists follow_user_item.user_to %}
@@ -49,7 +49,7 @@
 
     {% elif follow_page == 'tags' %}
         <div class="v-spacing-5 text-center">
-            <h5>Tags followed by {{ user.username }}</h5>
+            <h4>Tags followed by {{ user.username }}</h4>
         </div>
         {% for follow_tag_item in page.object_list %}
             <div class="row bw-follows middle">

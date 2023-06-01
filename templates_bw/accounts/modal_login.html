@@ -6,7 +6,7 @@
 {% block body %}
 <div class="col-12">
     <div class="text-center">
-        <h5 class="v-spacing-5">Log in to Freesound</h5>
+        <h4 class="v-spacing-5">Log in to Freesound</h4>
         <form id="loginForm" method="post" action="{% url 'login' %}">{% csrf_token %}
             {{ login_form }}
             <input type="hidden" name="next" value="{{ next_path }}" />

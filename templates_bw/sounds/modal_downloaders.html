@@ -10,7 +10,7 @@
 {% block body %}
 <div class="col-12">
     <div class="text-center">
-        <h5 class="v-spacing-5">Users that downloaded {% if sound %}<a href="{% url "sound" username sound.id %}">{{ sound.original_filename }}</a>{% elif pack %}<a href="{% url "pack" username pack.id %}">{{ pack.name }}</a>{% endif %}</h5>
+        <h4 class="v-spacing-5">Users that downloaded {% if sound %}<a href="{% url "sound" username sound.id %}">{{ sound.original_filename }}</a>{% elif pack %}<a href="{% url "pack" username pack.id %}">{{ pack.name }}</a>{% endif %}</h4>
     </div>
     <div class="v-spacing-4">
         {% if paginator.count > 0 %}

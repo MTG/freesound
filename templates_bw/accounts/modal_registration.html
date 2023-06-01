@@ -6,7 +6,7 @@
 {% block body %}
 <div class="col-12">
     <div class="text-center">
-        <h5 class="v-spacing-5">Join Freesound</h5>
+        <h4 class="v-spacing-5">Join Freesound</h4>
         <form id="registerModalForm" method="post" action="{% url 'accounts-register' %}?in_modal=1" data-check-username-url="{% url 'check_username' %}" novalidate>{% csrf_token %}
             {{ registration_form }}
             <button type="submit" class="btn-primary v-spacing-top-3">Join</button>

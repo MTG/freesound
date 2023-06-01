@@ -10,7 +10,7 @@
 <div class="col-12">
     {% if not request.user.is_authenticated %}
         <div class="text-center">
-            <h5 class="v-spacing-5">Can't bookmark sound</h5>
+            <h4 class="v-spacing-5">Can't bookmark sound</h4>
         </div>
         <div class="v-spacing-4 text-center">
             <div class="v-spacing-4">Please, login to Freesound before bookmarking any sounds.</div>
@@ -18,7 +18,7 @@
         </div>
     {% elif not sound_is_moderated_and_processed_ok %}
         <div class="text-center">
-            <h5 class="v-spacing-5">Can't bookmark sound</h5>
+            <h4 class="v-spacing-5">Can't bookmark sound</h4>
         </div>
         <div class="v-spacing-4 text-center">
             <div class="v-spacing-4">This sound can't be bookmarked because it has not yet been processed or moderated.</div>
@@ -26,7 +26,7 @@
         </div>
     {% else %}
     <div class="text-center">
-        <h5 class="v-spacing-5">Bookmark this sound</h5>
+        <h4 class="v-spacing-5">Bookmark this sound</h4>
     </div>
     <div class="v-spacing-4">
         {% if bookmarks %}

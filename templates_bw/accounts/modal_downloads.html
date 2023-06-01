@@ -11,7 +11,7 @@
 {% block body %}
 <div class="col-12">
     <div class="text-center">
-        <h5 class="v-spacing-5">{% if type_sounds %}Sounds{% else %}Packs{% endif %} downloaded by <a href="{% url "account" username %}">{{ username }}</a></h5>
+        <h4 class="v-spacing-5">{% if type_sounds %}Sounds{% else %}Packs{% endif %} downloaded by <a href="{% url "account" username %}">{{ username }}</a></h4>
     </div>
     <div class="v-spacing-4">
         {% if paginator.count > 0 %}           

@@ -1173,19 +1173,27 @@ def downloaded_sounds(request, username):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
         return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_sounds=1')
     user = request.parameter_user
-    qs = Download.objects.filter(user_id=user.id)
+    qs = Download.objects.filter(user_id=user.id).order_by('-created')
     num_items_per_page = settings.SOUNDS_PER_PAGE if not using_beastwhoosh(request) else settings.DOWNLOADED_SOUNDS_PACKS_PER_PAGE_BW
     paginator = paginate(request, qs, num_items_per_page, object_count=user.profile.num_sound_downloads)
     page = paginator["page"]
     sound_ids = [d.sound_id for d in page]
-    sounds = Sound.objects.ordered_ids(sound_ids)
-    tvars = {"username": username,
-             "user": user,
-             "sounds": sounds}
-    tvars.update(paginator)
     if using_beastwhoosh(request):
+        sounds_dict = Sound.objects.dict_ids(sound_ids)
+        download_list = []
+        for d in page:
+            download_list.append({"created": d.created, "sound": sounds_dict[d.sound_id]})
+        tvars = {"username": username,
+                "user": user,
+                "download_list": download_list,
+                "type_sounds": True}
+        tvars.update(paginator)
         return render(request, 'accounts/modal_downloads.html', tvars)
     else:
+        tvars = {"username": username,
+                "user": user,
+                "sounds": Sound.objects.ordered_ids(sound_ids)}
+        tvars.update(paginator)
         return render(request, 'accounts/downloaded_sounds.html', tvars)
 
 
@@ -1195,18 +1203,26 @@ def downloaded_packs(request, username):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
         return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_packs=1')
     user = request.parameter_user
-    qs = PackDownload.objects.filter(user=user.id)
+    qs = PackDownload.objects.filter(user=user.id).order_by('-created')
     num_items_per_page = settings.PACKS_PER_PAGE if not using_beastwhoosh(request) else settings.DOWNLOADED_SOUNDS_PACKS_PER_PAGE_BW
     paginator = paginate(request, qs, num_items_per_page, object_count=user.profile.num_pack_downloads)
     page = paginator["page"]
     pack_ids = [d.pack_id for d in page]
-    packs = Pack.objects.ordered_ids(pack_ids)
-    tvars = {"username": username,
-             "packs": packs}
-    tvars.update(paginator)
     if using_beastwhoosh(request):
+        packs_dict = Pack.objects.dict_ids(pack_ids)
+        download_list = []
+        for d in page:
+            download_list.append({"created": d.created, "pack": packs_dict[d.pack_id]})
+        tvars = {"username": username,
+                "download_list": download_list,
+                "type_sounds": False}
+        tvars.update(paginator)
         return render(request, 'accounts/modal_downloads.html', tvars)
     else:
+        packs = Pack.objects.ordered_ids(pack_ids)
+        tvars = {"username": username,
+                "packs": packs}
+        tvars.update(paginator)
         return render(request, 'accounts/downloaded_packs.html', tvars)
 
 

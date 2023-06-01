@@ -6,41 +6,40 @@
 
 {% block id %}downloadsModal{% endblock %}
 {% block extra-class %}modal-width-80{% endblock %}
-{% block aria-label %}{% if sounds %}Sounds{% elif packs %}Packs{% endif %} downloaded by user modal{% endblock %}
+{% block aria-label %}{% if type_sounds %}Sounds{% else %}Packs{% endif %} downloaded by user modal{% endblock %}
 
 {% block body %}
 <div class="col-12">
     <div class="text-center">
-        <h5 class="v-spacing-5">{% if sounds %}Sounds{% elif packs %}Packs{% endif %} downloaded by <a href="{% url "account" username %}">{{ username }}</a></h5>
+        <h5 class="v-spacing-5">{% if type_sounds %}Sounds{% else %}Packs{% endif %} downloaded by <a href="{% url "account" username %}">{{ username }}</a></h5>
     </div>
     <div class="v-spacing-4">
-        {% if paginator.count > 0 %}
-            <div class="row">
-                {% if sounds %}
-                    {% for sound in sounds %}
-                    <div class="col-6 col-lg-4">
-                        {% display_sound_small_no_bookmark sound %}
-                    </div>
+        {% if paginator.count > 0 %}           
+                {% regroup download_list by created|date:"F jS, Y" as download_groups %}
+                {% for group in download_groups %}
+                    <h5 class="text-grey v-spacing-top-4">Downloaded on {{group.grouper}}</h5>
+                    <div class="row v-spacing-top-4">
+                    {% for i in group.list %}
+                        <div class="col-6 col-lg-4">
+                            {% if type_sounds %}
+                            {% display_sound_small_no_bookmark i.sound %}
+                            {% else %}
+                            {% display_pack_small_no_bookmark i.pack %}
+                            {% endif %}
+                        </div>
                     {% endfor %}
-                {% elif packs %}
-                    {% for pack in packs %}
-                    <div class="col-6 col-lg-4">
-                        {% display_pack_small_no_bookmark pack %}
                     </div>
-                    {% endfor %}
-                {% endif %}
-            </div>
-            <div class="v-spacing-top-5">
-                {% if sounds %}
+                {% endfor %}
+                <div class="v-spacing-top-5">
+                    {% if type_sounds %}
                     {% bw_paginator paginator page current_page request "sounds" %}
-                {% elif packs %}
+                    {% else %}
                     {% bw_paginator paginator page current_page request "packs" %}    
-                {% endif %}
-            </div>
-            
+                    {% endif %}
+                </div>   
         {% else %}
             <div class="text-center">
-                <div class="text-grey v-spacing-top-1">Looks like {{ username }} has not downloaded any {% if sounds %}sounds{% elif packs %}packs{% endif %} yet... &#128543</div>
+                <div class="text-grey v-spacing-top-1">Looks like {{ username }} has not downloaded any {% if type_sounds %}sounds{% else %}packs{% endif %} yet... &#128543</div>
             </div>
         {% endif %}
     </div>

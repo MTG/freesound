@@ -146,7 +146,8 @@ def search_view_helper(request, tags_mode=False):
         'initial_tagcloud': initial_tagcloud,
         'tags_mode': tags_mode,
         'tags_in_filter': tags_in_filter,
-        'has_advanced_search_settings_set': contains_active_advanced_search_filters(request, query_params, extra_vars)
+        'has_advanced_search_settings_set': contains_active_advanced_search_filters(request, query_params, extra_vars),
+        'advanced_search_closed_on_load': settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD
     }
 
     tvars.update(advanced_search_params_dict)

@@ -90,9 +90,9 @@
                             </div>
                         </div>
                         <div class="divider-light"></div>
-                        <div id="advanced-search-options" class="{% if not advanced == "1" %}display-none{% endif %}">
+                        <div id="advanced-search-options" class="{% if not advanced == "1" or advanced_search_closed_on_load %}display-none{% endif %}">
                             <div class="v-padding-2 between">
-                                <input id="advanced_search_hidden" type="hidden" name="advanced" value="{% if advanced == "1" %}1{% else %}0{% endif %}" />
+                                <input id="advanced_search_hidden" type="hidden" name="advanced" value="{% if advanced == "1" and not advanced_search_closed_on_load %}1{% else %}0{% endif %}" />
 
                                 <div class="col-md-4 bw-search__advanced-search-filter-section">
                                     <div class="bw-search__filter-section-name caps text-light-grey between">

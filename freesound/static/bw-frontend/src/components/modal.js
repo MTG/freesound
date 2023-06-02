@@ -1,5 +1,5 @@
 import {showToast, showToastNoTimeout, dismissToast} from "./toast";
-import {initializePlayersInContainer} from './player/utils';
+import {initializePlayersInContainer, stopAllPlayersInContainer} from './player/utils';
 import {initializeCarousels} from './carousel';
 import {initRatingWidgets} from './rating';
 import serialize from '../utils/formSerializer'
@@ -21,12 +21,12 @@ const stopPlayersInModal = (modalContainer) => {
 const bindModalActivationElements = (querySelectorStr, handleModalFunction, container) => {
   if (container === undefined){ container = document; }
   container.querySelectorAll(querySelectorStr).forEach(element => {
-      if (element.dataset.alreadyBinded !== undefined){ return; }
-      element.dataset.alreadyBinded = true;
-      element.addEventListener('click', (evt) => {
-          evt.preventDefault();
-          handleModalFunction(element.dataset.modalContentUrl, element.dataset.modalActivationParam);
-      });
+    if (element.dataset.alreadyBinded !== undefined){ return; }
+    element.dataset.alreadyBinded = true;
+    element.addEventListener('click', (evt) => {
+      evt.preventDefault();
+      handleModalFunction(element.dataset.modalContentUrl, element.dataset.modalActivationParam);
+    });
   });
 }
 
@@ -34,12 +34,12 @@ const bindModalActivationElements = (querySelectorStr, handleModalFunction, cont
 const activateModalsIfParameters = (querySelectorStr, handleModalFunction) => {
   const urlParams = new URLSearchParams(window.location.search);
   for (const element of [...document.querySelectorAll(querySelectorStr)]) {
-      const activationParam = element.dataset.modalActivationParam;
-      const paramValue = urlParams.get(activationParam);
-      if (paramValue) {
-          handleModalFunction(element.dataset.modalContentUrl, activationParam, paramValue);
-          break;  // Only open one modal (the first found with an activated parameter)
-      }
+    const activationParam = element.dataset.modalActivationParam;
+    const paramValue = urlParams.get(activationParam);
+    if (paramValue) {
+      handleModalFunction(element.dataset.modalContentUrl, activationParam, paramValue);
+      break;  // Only open one modal (the first found with an activated parameter)
+    }
   }
 }
 
@@ -123,11 +123,11 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
               onClosedCallback(modalContainer);
             }
             // If modal is activated with a param, remove the param to the URL when closing the modal
-              if (modalActivationParam !== undefined) {
-                const searchParams = new URLSearchParams(window.location.search);
-                searchParams.delete(modalActivationParam);
-                const url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + searchParams.toString();
-                window.history.replaceState(null, "", url);
+            if (modalActivationParam !== undefined) {
+              const searchParams = new URLSearchParams(window.location.search);
+              searchParams.delete(modalActivationParam);
+              const url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + searchParams.toString();
+              window.history.replaceState(null, "", url);
             }
           });
         });
@@ -148,7 +148,7 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
         if (onLoadedCallback !== undefined){
           onLoadedCallback(modalContainer);
         }
-
+        
         // If modal is activated with a param, add the param to the URL when opening the modal
         if (modalActivationParam !== undefined){
           const modalAjaxRequestSearchParams = new URLSearchParams(fetchContentUrl);
@@ -181,7 +181,7 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
   // This version of the generic modal is useful for modal contents that contain forms which, upon submission, will return HTML content if there were form errors
   // which should be used to replace the current contents of the form, and will return a JSON response if the form validated correctly in the backend. That JSON
   // response could include some relevant data or no data at all, but is used to differentiate from the HTML response
-
+  
   const genericModalWithFormCustomSubmit = (evt) => {
     
     // Create new XMLHttpRequest request to submit form contents

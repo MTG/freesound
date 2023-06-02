@@ -1,6 +1,6 @@
 {% extends "molecules/modal_base.html" %}
 {% load util %}
-
+{% load display_sound %}
 {% block id %}remixGroupModal{% endblock %}
 {% block extra-class %}modal-width-80{% endblock %}
 {% block aria-label %}Remix group modal{% endblock %}
@@ -12,11 +12,22 @@
     </div>
     <div class="v-spacing-4">
         <ul>
-			<li>Original sound by: <a href="/people/{{ sounds.0.user.username }}">{{ sounds.0.user.username }}</a></li>
-			<li>Original sound created on: <b>{{ sounds.0.created }}</b></li>
-			<li>Last remix done on: <b>{{ last_sound.created }}</b></li>
-			<li>Number of sounds in group: <b>{{ sounds|length }}</b></li>
-		</ul>
+            <li>Original sound by: <a href="/people/{{ sounds.0.user.username }}">{{ sounds.0.user.username }}</a></li>
+            <li>Original sound created on: <b>{{ sounds.0.created }}</b></li>
+            <li>Last remix done on: <b>{{ last_sound.created }}</b></li>
+            <li>Number of sounds in group: <b>{{ sounds|length }}</b></li>
+        </ul>
+        <div>
+            {% for sound in sounds %}
+                <div class="row">
+                    <div class="offset-6 col-6">
+                    {% display_sound_small_no_bookmark sound %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
+
+
 {% endblock %}

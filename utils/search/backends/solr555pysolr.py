@@ -129,6 +129,8 @@ def convert_sound_to_search_engine_document(sound):
         if not math.isnan(getattr(sound, "geotag_lon")) and not math.isnan(getattr(sound, "geotag_lat")):
             document["geotag"] = str(getattr(sound, "geotag_lon")) + " " + str(getattr(sound, "geotag_lat"))
 
+    document["in_remix_group"] = getattr(sound, "was_remixed") or getattr(sound, "is_remix")
+
     document["bitdepth"] = getattr(sound, "bitdepth") if getattr(sound, "bitdepth") else 0
     document["bitrate"] = getattr(sound, "bitrate") if getattr(sound, "bitrate") else 0
     document["samplerate"] = int(getattr(sound, "samplerate")) if getattr(sound, "samplerate") else 0

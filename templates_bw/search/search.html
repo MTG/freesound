@@ -181,6 +181,14 @@
                                             </label>
                                         </li>
                                         <li class="bw-search__filter-value v-padding-1">
+                                            <label class="between w-100">
+                                                <div class="bw-search__filter-checkbox">
+                                                    <input id="filter_in_remix_group" type="checkbox" class="bw-checkbox"/>
+                                                </div>
+                                                <div class="bw-search__filter-name">Only remix sounds</div>
+                                            </label>
+                                        </li>
+                                        <li class="bw-search__filter-value v-padding-1">
                                             <label class="between w-100 {% if disable_group_by_pack_option %}opacity-020{% endif %}">
                                                 <div class="bw-search__filter-checkbox">
                                                     <input id="group_by_pack" type="checkbox" class="bw-checkbox" {% if group_by_pack_in_request == "1" %}checked{% endif %} {% if disable_group_by_pack_option %}disabled="disabled"{% endif %}/>

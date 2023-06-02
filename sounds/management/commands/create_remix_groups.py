@@ -115,6 +115,7 @@ def _create_and_save_remixgroup(sg, remixgroup):
 
     for sound in remixgroup.sounds.all():
         sound.invalidate_template_caches()
+        sound.mark_index_dirty(commit=True)
 
     remixgroup.group_size = len(node_list)
     # FIXME: seems like double work here, maybe convert container to list and sort?

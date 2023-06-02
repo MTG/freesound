@@ -66,6 +66,7 @@ def contains_active_advanced_search_filters(request, query_params, extra_vars):
         or request.GET.get("a_username", False)
     return using_advanced_search_weights \
         or 'is_geotagged:' in query_params['query_filter'] \
+        or 'in_remix_group:' in query_params['query_filter'] \
         or not duration_filter_is_default
 
 
@@ -276,7 +277,7 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
         for filter_list_str in parsed_filters:
             # filter_list_str is a list of str ['<filter_name>', ':', '"', '<filter_value>', '"']
             filter_name = filter_list_str[0]
-            if filter_name != "duration" and filter_name != "is_geotagged":
+            if filter_name != "duration" and filter_name != "is_geotagged"  and filter_name != "in_remix_group":
                 valid_filter = True
                 filter_str = ''.join(filter_list_str)
                 filter_display = ''.join(filter_list_str)

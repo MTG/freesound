@@ -20,6 +20,7 @@ import './navbar';
 import './propagation';
 import './radio';
 import './rating';
+import './remixGroupModal';
 import './similarSoundsModal';
 import './toast';
 import './typeahead';

@@ -62,12 +62,18 @@
                             <div class="col-2 text-right">
                                 <div class="text-grey">
                                     {% if sound.similarity_state == 'OK' %}
-                                        <button title="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
-                                            {% bw_icon 'similar' %}
-                                        </button>
+                                    <button title="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
+                                        {% bw_icon 'similar' %}
+                                    </button>
+                                    {% endif %}
+                                    {% if sound.remix_group.all.count %}
+                                    <span class="h-spacing-left-1"></span>
+                                    <button title="See sound's remix group" class="btn-neutral" data-toggle="remix-group-modal" data-modal-activation-param="remix_group" data-modal-content-url="{% url 'sound-remixes' sound.user.username sound.id %}">
+                                        {% bw_icon 'remix' %}
+                                    </button>
                                     {% endif %}
                                     {% if request.user.is_authenticated %}
-                                    <span class="h-spacing-left-2"></span>
+                                    <span class="h-spacing-left-1"></span>
                                     <button title="Bookmark this sound" class="btn-neutral" data-toggle="bookmark-modal" data-modal-url="{% url 'bookmarks-add-form-for-sound' sound.id %}" data-add-bookmark-url="{% url 'add-bookmark' sound.id %}">
                                         {% bw_icon 'bookmark' %}
                                     </button>
@@ -103,7 +109,7 @@
                                         {% bw_icon 'pin' %} {{ sound.get_geotag_name }}
                                     </a>
                                 </div>
-                                {% if sound.pack_id or sound.remix_group.all.count %}
+                                {% if sound.pack_id %}
                                     <div class="text-grey h-spacing-left-2 h-spacing-2">·</div>
                                 {% endif %}
                             {% endif %}
@@ -111,14 +117,7 @@
                                 <div class="text-grey">
                                    This sound is part of the pack <a href="{% url 'pack' username sound.pack.id %}">{{ sound.pack.name}}</a>
                                 </div>
-                                {% if sound.remix_group.all.count %}
-                                    <div class="text-grey h-spacing-left-2 h-spacing-2">·</div>
-                                {% endif %}
-                            {% endif %}
-                            {% if sound.remix_group.all.count %}
-                                <div class="text-grey">
-                                   This sound has <a href="{% url 'sound-remixes' sound.user.username sound.id %}">remixes or has been remixed</a>
-                                </div>
+                                
                             {% endif %}
                         </div>
                         <div class="v-spacing-top-1">
@@ -231,12 +230,6 @@
                                     <div class="v-spacing-top-3 text-grey text-center">{% include 'sounds/sound_state_processing_indicator.html' %} (cannot edit)</div>
                                 {% endif %}
                             {% endif %}
-
-                            {% comment %}
-                            {% if sound.similarity_state == 'OK' %}
-                                <a class="no-hover btn-inverse col-12 v-spacing-top-3" href="{% url 'sound-similar' sound.user.username sound.id %}" rel="nofollow"  title="Find similar sounds">Find similar sounds</a>
-                            {% endif %}
-                            {% endcomment %}
 
                             {% if request.user.is_staff or perms.tickets.can_moderate or sound.user == request.user %}
                                 <div class="divider-light v-spacing-top-4 padding-bottom-1"></div>

@@ -1,7 +1,6 @@
 import {makeSoundsMapWithStaticMapFirst} from '../components/mapsMapbox';
 import {handleGenericModal} from '../components/modal';
 import {setURLHash, hashEquals} from '../utils/urls'
-import {handleDownloadersModal} from "../components/downloadersModals";
 
 // Latest sounds/Latest tags taps
 

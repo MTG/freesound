@@ -1,30 +1,18 @@
-import {handleGenericModal} from './modal';
-import {stopAllPlayersInContainer, initializePlayersInContainer} from './player/utils'
-
+import {handleGenericModal, bindModalActivationElements, activateModalsIfParameters, initPlayersInModal, stopPlayersInModal} from './modal';
 
 const handleSimilarSoundsModal = (modalUrl, modalActivationParam) => {
     handleGenericModal(modalUrl, (modalContainer) => {
-        initializePlayersInContainer(modalContainer);
+        initPlayersInModal(modalContainer);
     }, (modalContainer) => {
-        stopAllPlayersInContainer(modalContainer);
+        stopPlayersInModal(modalContainer);
     }, true, true, modalActivationParam);
 }
 
-const bindSimilarSoundButtons = () => {
-    const similarSoundsButtons = document.querySelectorAll('[data-toggle="similar-sounds-modal"]');
-    similarSoundsButtons.forEach(element => {
-        if (element.dataset.alreadyBinded !== undefined){
-            return;
-        }
-        element.dataset.alreadyBinded = true;
-        element.addEventListener('click', (evt) => {
-            evt.preventDefault();
-            handleSimilarSoundsModal(element.dataset.modalContentUrl, element.dataset.modalActivationParam);
-        });
-    });
+const bindSimilarSoundModals = (container) => {
+    bindModalActivationElements('[data-toggle="similar-sounds-modal"]', handleSimilarSoundsModal, container);
 }
 
-bindSimilarSoundButtons();
+bindSimilarSoundModals();
+activateModalsIfParameters('[data-toggle="similar-sounds-modal"]', handleSimilarSoundsModal);
 
-
-export {handleSimilarSoundsModal, bindSimilarSoundButtons};
+export {bindSimilarSoundModals};

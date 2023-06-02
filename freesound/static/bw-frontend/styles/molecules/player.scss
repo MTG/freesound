@@ -223,6 +223,11 @@
   transition: opacity 0.2s ease;
 }
 
+.bw-player__remix {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
 .bw-player__ruler-indicator {
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -240,6 +245,7 @@
     .bw-player__rate__widget,
     .bw-player__controls,
     .bw-player__similar,
+    .bw-player__remix,
     .bw-player__progress,
     .bw-player__progress-indicator,
     .bw-player__favorite {

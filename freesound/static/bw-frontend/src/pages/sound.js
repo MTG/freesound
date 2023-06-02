@@ -1,8 +1,6 @@
 import './page-polyfills';
 import {showToast} from '../components/toast';
 import {playAtTime} from '../components/player/utils';
-import {handleSimilarSoundsModal} from "../components/similarSoundsModal";
-import {handleDownloadersModal} from "../components/downloadersModals";
 import {handleGenericModalWithForm} from '../components/modal';
 import {createSelect} from "../components/select";
 import {addRecaptchaScriptTagToMainHead} from '../utils/recaptchaDynamicReload'
@@ -102,16 +100,6 @@ soundCommentElements.forEach(element => {
 });
 
 findTimeLinksAndAddEventListeners(soundDescriptionElement);
-
-// Open similar sounds modal if activation parameter is passed
-const similarSoundsButtons = [...document.querySelectorAll('[data-toggle^="similar-sounds-modal"]')];
-if (similarSoundsButtons.length > 0){
-    const similarSoundsModalActivationParam = similarSoundsButtons[0].dataset.modalActivationParam;
-    const similarSoundsModalParamValue = urlParams.get(similarSoundsModalActivationParam);
-    if (similarSoundsModalParamValue) {
-        handleSimilarSoundsModal(similarSoundsButtons[0].dataset.modalContentUrl, similarSoundsModalActivationParam);
-    }
-}
 
 // Open flag sound modal if activation parameter is passed
 const flagSoundButton = [...document.querySelectorAll('[data-toggle^="flag-sound-modal"]')][0];

@@ -147,13 +147,6 @@ def sounds(request):
     return render(request, 'sounds/sounds.html', tvars)
 
 
-def remixed(request):
-    qs = RemixGroup.objects.all().order_by('-group_size')
-    tvars = dict()
-    tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
-    return render(request, 'sounds/remixed.html', tvars)
-
-
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
 def random(request):
     random_sound_id = get_random_sound_id_from_search_engine()
@@ -994,20 +987,7 @@ def add_sounds_modal_for_edit_sources(request):
     })
     return render(request, 'sounds/modal_add_sounds.html', tvars)
 
-
-@redirect_if_old_username_or_404
-def remixes(request, username, sound_id):
-    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
-    if sound.user.username.lower() != username.lower():
-        raise Http404
-    try:
-        remix_group = sound.remix_group.all()[0]
-    except:
-        raise Http404
-    return HttpResponseRedirect(reverse("remix-group", args=[remix_group.id]))
-
-
-def remix_group(request, group_id):
+def _remix_group_view_helper(request, group_id):
     group = get_object_or_404(RemixGroup, id=group_id)
     data = group.protovis_data
     sounds = Sound.objects.ordered_ids(
@@ -1018,8 +998,43 @@ def remix_group(request, group_id):
         'group_sound': sounds[0],
         'data': data,
     }
-    return render(request, 'sounds/remixes.html', tvars)
+    return tvars
 
+@redirect_if_old_username_or_404
+def remixes(request, username, sound_id):
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
+    try:
+        remix_group = sound.remix_group.all()[0]
+    except:
+        raise Http404
+    
+    tvars = _remix_group_view_helper(request, remix_group.id)    
+    if not using_beastwhoosh(request):
+        return render(request, 'sounds/remixes.html', tvars)
+    else:
+        tvars.update({'sound': sound})
+        return render(request, 'sounds/modal_remix_group.html', tvars)
+
+
+@redirect_if_beastwhoosh('front-page')
+def remixed(request):
+    # NOTE: the page listing remix groups no longer exists in the new UI. Instead, users can filter
+    # search queries by "remixed" property
+    qs = RemixGroup.objects.all().order_by('-group_size')
+    tvars = dict()
+    tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
+    return render(request, 'sounds/remixed.html', tvars)
+
+
+@redirect_if_beastwhoosh('front-page')
+def remix_group(request, group_id):
+    # NOTE: there is no dedicated page to a remix group in the new UI, instead, users can open a modal and
+    # show the remix group of a particular sound
+    tvars = _remix_group_view_helper(request, group_id)
+    return render(request, 'sounds/remixes.html', tvars)
+    
 
 @redirect_if_old_username_or_404
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SIMILARITY_GROUP, block=True)
@@ -1038,7 +1053,7 @@ def similar(request, username, sound_id):
     similarity_results, count = get_similar_sounds(sound, request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
     similar_sounds = Sound.objects.ordered_ids([sound_id for sound_id, distance in similarity_results])
 
-    tvars = {'similar_sounds': similar_sounds}
+    tvars = {'similar_sounds': similar_sounds, 'sound': sound}
     if using_beastwhoosh(request):
         # In BW similar sounds are displayed in a modal
         return render(request, 'sounds/modal_similar_sounds.html', tvars)

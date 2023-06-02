@@ -7,6 +7,8 @@
     data-add-bookmark-url="{% if show_bookmark_button %}{% url 'add-bookmark' sound.id %}{% endif %}"
     data-similar-sounds="{% if show_similar_sounds_button and sound.similarity_state == 'OK' %}true{% else %}false{% endif %}"
     data-similar-sounds-modal-url="{% if show_similar_sounds_button %}{% url 'sound-similar' sound.username sound.id %}?ajax=1{% endif %}"
+    data-remix-group="{% if show_remix_group_button and sound.remixgroup_id %}true{% else %}false{% endif %}"
+    data-remix-group-modal-url="{% if show_remix_group_button %}{% url 'sound-remixes' sound.user.username sound.id %}{% endif %}"
     data-mp3="{{ sound.locations.preview.LQ.mp3.url }}"
     data-ogg="{{ sound.locations.preview.LQ.ogg.url }}"
     data-waveform="{% if player_size != 'big_no_info' %}{{ sound.locations.display.wave_bw.M.url }}{% else %}{{ sound.locations.display.wave_bw.L.url }}{% endif %}"

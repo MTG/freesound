@@ -240,6 +240,7 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
   const topControlsLeftElement = playerImgNode.parentElement.querySelector('.bw-player__top_controls_left');
   const bookmarkElement = playerImgNode.parentElement.querySelector('.bw-player__favorite');
   const similarSoundsElement = playerImgNode.parentElement.querySelector('.bw-player__similar');
+  const remixSoundsElement = playerImgNode.parentElement.querySelector('.bw-player__remix');
   let spectrogramButton = undefined;
   try {
     spectrogramButton = controlsElement.querySelector('i.bw-icon-spectogram').parentElement;
@@ -261,6 +262,9 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
     if (similarSoundsElement !== null){
       similarSoundsElement.classList.add('bw-player__controls-inverted');
     }
+    if (remixSoundsElement !== null){
+      remixSoundsElement.classList.add('bw-player__controls-inverted');
+    }
     if (progressStatusContainerElement !== null){
       progressStatusContainerElement.classList.add('bw-player__progress-container--inverted');
     }
@@ -279,6 +283,9 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
     }
     if (similarSoundsElement !== null){
       similarSoundsElement.classList.remove('bw-player__controls-inverted');
+    }
+    if (remixSoundsElement !== null){
+      remixSoundsElement.classList.remove('bw-player__controls-inverted');
     }
     if (progressStatusContainerElement !== null){
       progressStatusContainerElement.classList.remove('bw-player__progress-container--inverted');
@@ -446,12 +453,16 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
   return playerControls
 }
 
-const createPlayerTopControls = (parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton) => {
+const createPlayerTopControls = (parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton, showRemixGroupButton) => {
   const topControls = document.createElement('div')
   topControls.className = 'bw-player__top_controls right'
   if (showSimilarSoundsButton){
     const similarSoundsButton = createSimilarSoundsButton(parentNode, playerImgNode)
     topControls.appendChild(similarSoundsButton)
+  }
+  if (showRemixGroupButton){
+    const remixGroupButton = createRemixGroupButton(parentNode, playerImgNode)
+    topControls.appendChild(remixGroupButton)
   }
   if (showBookmarkButton){
     const bookmarkButton = createSetFavoriteButton(parentNode, playerImgNode)
@@ -538,6 +549,31 @@ const createSimilarSoundsButton = (parentNode, playerImgNode) => {
   return similarSoundsButtonContainer
 }
 
+/**
+ *
+ * @param {HTMLDivElement} parentNode
+ * @param {HTMLImgElement} playerImgNode
+ */
+const createRemixGroupButton = (parentNode, playerImgNode) => {
+  const remixGroupButtonContainer = document.createElement('div')
+  const remixGroupButton = createControlButton('remix')
+  remixGroupButton.setAttribute('title', 'See sound\'s remix group')
+  remixGroupButtonContainer.classList.add(
+    'bw-player__remix',
+    'stop-propagation'
+  )
+  
+  if (isTouchEnabledDevice()){
+    // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
+    // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
+    //similarSoundsButtonContainer.classList.add('opacity-050')
+  }
+  remixGroupButton.setAttribute('data-toggle', 'remix-group-modal');
+  remixGroupButton.setAttribute('data-modal-content-url', parentNode.dataset.remixGroupModalUrl);
+  remixGroupButtonContainer.appendChild(remixGroupButton)
+  return remixGroupButtonContainer
+}
+
 
 /**
  * @param {HTMLDivElement} parentNode
@@ -546,6 +582,7 @@ const createPlayer = parentNode => {
   const playerSize = parentNode.dataset.size
   const showBookmarkButton = parentNode.dataset.bookmark === 'true'
   const showSimilarSoundsButton = parentNode.dataset.similarSounds === 'true'
+  const showRemixGroupButton = parentNode.dataset.remixGroup === 'true'
   const audioElement = createAudioElement(parentNode)
   const playerImage = createPlayerImage(
     parentNode,
@@ -557,7 +594,7 @@ const createPlayer = parentNode => {
   parentNode.appendChild(audioElement)
   const controls = createPlayerControls(parentNode, playerImgNode, audioElement, playerSize)
   playerImage.appendChild(controls)
-  const topControls = createPlayerTopControls(parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton)
+  const topControls = createPlayerTopControls(parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton, showRemixGroupButton)
   playerImage.appendChild(topControls)
 
   const rateSoundHiddenWidget = parentNode.parentNode.getElementsByClassName('bw-player__rate__widget')[0]

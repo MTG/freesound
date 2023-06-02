@@ -1,7 +1,47 @@
 import {showToast, showToastNoTimeout, dismissToast} from "./toast";
+import {initializePlayersInContainer} from './player/utils';
+import {initializeCarousels} from './carousel';
+import {initRatingWidgets} from './rating';
 import serialize from '../utils/formSerializer'
 
 const bwPageElement = document.getElementsByClassName('bw-page')[0];
+
+// Util functions to initialize/stop players and other stuff that could usually be found in modals with sound players
+const initPlayersInModal = (modalContainer) => {
+  initializePlayersInContainer(modalContainer);
+  initRatingWidgets(modalContainer);
+  initializeCarousels(modalContainer);
+}
+
+const stopPlayersInModal = (modalContainer) => {
+  stopAllPlayersInContainer(modalContainer);
+}
+
+// Util function to bind modal activation elements
+const bindModalActivationElements = (querySelectorStr, handleModalFunction, container) => {
+  if (container === undefined){ container = document; }
+  container.querySelectorAll(querySelectorStr).forEach(element => {
+      if (element.dataset.alreadyBinded !== undefined){ return; }
+      element.dataset.alreadyBinded = true;
+      element.addEventListener('click', (evt) => {
+          evt.preventDefault();
+          handleModalFunction(element.dataset.modalContentUrl, element.dataset.modalActivationParam);
+      });
+  });
+}
+
+// Util function to activate modals with parameters
+const activateModalsIfParameters = (querySelectorStr, handleModalFunction) => {
+  const urlParams = new URLSearchParams(window.location.search);
+  for (const element of [...document.querySelectorAll(querySelectorStr)]) {
+      const activationParam = element.dataset.modalActivationParam;
+      const paramValue = urlParams.get(activationParam);
+      if (paramValue) {
+          handleModalFunction(element.dataset.modalContentUrl, activationParam, paramValue);
+          break;  // Only open one modal (the first found with an activated parameter)
+      }
+  }
+}
 
 // Function to make modals visible
 const activateModal = modalContainerId => {
@@ -218,4 +258,4 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
   }, onClosedCallback, doRequestAsync, showLoadingToast, modalActivationParam)
 }
 
-export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm};
+export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm, bindModalActivationElements, activateModalsIfParameters, initPlayersInModal, stopPlayersInModal};

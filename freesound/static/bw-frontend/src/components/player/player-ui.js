@@ -456,13 +456,13 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
 const createPlayerTopControls = (parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton, showRemixGroupButton) => {
   const topControls = document.createElement('div')
   topControls.className = 'bw-player__top_controls right'
-  if (showSimilarSoundsButton){
-    const similarSoundsButton = createSimilarSoundsButton(parentNode, playerImgNode)
-    topControls.appendChild(similarSoundsButton)
-  }
   if (showRemixGroupButton){
     const remixGroupButton = createRemixGroupButton(parentNode, playerImgNode)
     topControls.appendChild(remixGroupButton)
+  }
+  if (showSimilarSoundsButton){
+    const similarSoundsButton = createSimilarSoundsButton(parentNode, playerImgNode)
+    topControls.appendChild(similarSoundsButton)
   }
   if (showBookmarkButton){
     const bookmarkButton = createSetFavoriteButton(parentNode, playerImgNode)

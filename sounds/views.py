@@ -996,7 +996,7 @@ def _remix_group_view_helper(request, group_id):
         'sounds': sounds,
         'last_sound': sounds[len(sounds)-1],
         'group_sound': sounds[0],
-        'data': data,
+        'data': data
     }
     return tvars
 

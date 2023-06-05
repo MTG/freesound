@@ -17,17 +17,15 @@
             <li>Last remix done on: <b>{{ last_sound.created }}</b></li>
             <li>Number of sounds in group: <b>{{ sounds|length }}</b></li>
         </ul>
-        <div>
+        <div class="row">
+            <div class="remix-group-arrows-panel col-6" data-remix-group-data="{{ data }}">
+            </div>
+            <div class="remix-group-sounds-panel col-6">
             {% for sound in sounds %}
-                <div class="row">
-                    <div class="offset-6 col-6">
-                    {% display_sound_small_no_bookmark sound %}
-                    </div>
-                </div>
+                {% display_sound_small_no_bookmark sound %}
             {% endfor %}
+            </div>
         </div>
     </div>
 </div>
-
-
 {% endblock %}

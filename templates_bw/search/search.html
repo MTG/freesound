@@ -173,7 +173,7 @@
                                     </div>
                                     <ul class="bw-search__filter-value-list">
                                         <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
+                                            <label class="between w-100" title="Only find sounds that have geolocation information">
                                                 <div class="bw-search__filter-checkbox">
                                                     <input id="filter_is_geotagged" type="checkbox" class="bw-checkbox"/>
                                                 </div>
@@ -181,7 +181,7 @@
                                             </label>
                                         </li>
                                         <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
+                                            <label class="between w-100" title="Only find sounds that are a remix of other sounds or have been remixed">
                                                 <div class="bw-search__filter-checkbox">
                                                     <input id="filter_in_remix_group" type="checkbox" class="bw-checkbox"/>
                                                 </div>
@@ -189,7 +189,7 @@
                                             </label>
                                         </li>
                                         <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100 {% if disable_group_by_pack_option %}opacity-020{% endif %}">
+                                            <label class="between w-100 {% if disable_group_by_pack_option %}opacity-020{% endif %}" title="Group search results so that multiple sounds of the same pack only represent one item">
                                                 <div class="bw-search__filter-checkbox">
                                                     <input id="group_by_pack" type="checkbox" class="bw-checkbox" {% if group_by_pack_in_request == "1" %}checked{% endif %} {% if disable_group_by_pack_option %}disabled="disabled"{% endif %}/>
                                                     <input id="group_by_pack_hidden" type="hidden" name="g" {% ifequal group_by_pack_in_request "1" %}value="1"{% else %}value=""{% endifequal %} />
@@ -198,7 +198,7 @@
                                             </label>
                                         </li>
                                         <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100 {% if disable_only_sounds_by_pack_option %}opacity-020{% endif %}">
+                                            <label class="between w-100 {% if disable_only_sounds_by_pack_option %}opacity-020{% endif %}" title="Display search results as packs rather than individual sounds">
                                                 <div class="bw-search__filter-checkbox">
                                                     <input id="only_sounds_with_pack" type="checkbox" class="bw-checkbox" {% if only_sounds_with_pack_in_request == "1" %}checked{% endif %} {% if disable_only_sounds_by_pack_option %}disabled="disabled"{% endif %}/>
                                                     <input id="only_sounds_with_pack_hidden" type="hidden" name="only_p" {% ifequal only_sounds_with_pack_in_request "1" %}value="1"{% else %}value=""{% endifequal %} />
@@ -207,7 +207,7 @@
                                             </label>
                                         </li>
                                         <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100">
+                                            <label class="between w-100" title="Dipslay search results in a grid so that more sounds are visible per search results page">
                                                 <div class="bw-search__filter-checkbox">
                                                     <input id="use_compact_mode" type="checkbox" class="bw-checkbox" {% if use_compact_mode %}checked{% endif %}/>
                                                     <input id="use_compact_mode_hidden" type="hidden" name="cm" value="{{ use_compact_mode|yesno:"1,0" }}"/>

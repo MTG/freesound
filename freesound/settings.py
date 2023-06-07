@@ -344,6 +344,7 @@ BOOKMARKS_PER_PAGE_BW = 12
 
 # Weights using to compute BW charts
 BW_CHARTS_ACTIVE_USERS_WEIGHTS = {'upload': 1, 'post': 0.8, 'comment': 0.05}
+CHARTS_DATA_CACHE_KEY = 'bw-charts-data'
 
 # Whether or not user bookmarks and bookmark categories should be public (visible to all other users) in BW
 BW_BOOKMARK_PAGES_PUBLIC = False

@@ -121,7 +121,7 @@
                             {% endif %}
                         </div>
                         <div class="v-spacing-top-1">
-                            <div id="soundDescriptionSection" class="text-17 line-height-30">
+                            <div id="soundDescriptionSection">
                                 {{ sound.description|replace_img|safe|linebreaks|strip_unnecessary_br }}
                             </div>
                             {% if sound.user.profile.sound_signature %}
@@ -326,7 +326,7 @@
                                                     {% endif %}
                                                 </div>
                                             </div>
-                                            <p class="text-16 v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks|strip_unnecessary_br }}</p>
+                                            <p class="v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks|strip_unnecessary_br }}</p>
                                             {% if not forloop.last %}
                                                 <div class="divider-light v-spacing-top-3 v-spacing-2"></div>
                                             {% endif %}

@@ -26,7 +26,7 @@ const drawArrows =() => {
             y: targetSoundDiv.offsetTop  + targetSoundDiv.offsetHeight / 2
         };
         const linkLength = Math.abs(link.target - link.source);
-        const eccentricity = arrowsPanel.offsetWidth * linkLength / maxLinkLength * 1.1;
+        const eccentricity = arrowsPanel.offsetWidth * linkLength / maxLinkLength;
         const dStr =
             "M" +
             (posStart.x      ) + "," + (posStart.y) + " " +

@@ -5,6 +5,7 @@ import './bookmarkSound';
 import './carousel';
 import './checkbox';
 import './collapsableBlock';
+import './commentsModal';
 import './cookieConsent';
 import './djangoMessages';
 import './downloadersModals';

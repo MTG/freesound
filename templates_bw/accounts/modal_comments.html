@@ -1,0 +1,47 @@
+{% extends "molecules/modal_base.html" %}
+{% load util %}
+{% load bw_templatetags %}
+{% load display_sound %}
+{% load display_user %}
+{% load flag_user %}
+{% load filter_img %}
+
+{% block id %}commentsModal{% endblock %}
+{% block extra-class %}modal-width-80{% endblock %}
+{% block aria-label %}Comments on {{ user.username }}'s sounds{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h4 class="v-spacing-5">Comments on <a href="{% url "account" user.username %}">{{ user.username }}</a>'s sounds</h4>
+    </div>
+    <div class="v-spacing-4">
+        {% if paginator.count > 0 %}           
+                {% for comment in page.object_list %}    
+                <div>
+                    <div style="display: flex; justify-content: space-between;">
+                        {% display_user_comment comment.user comment.created %}
+                        <div class="text-right v-spacing-top-1">
+                            {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
+                            {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
+                                <a class="cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this comment?" data-modal-confirmation-url="{% url 'comment-delete' comment.id %}?next={{request.path}}&page={{current_page}}" title="Delete comment">Delete comment</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <p class="v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks|strip_unnecessary_br }}</p>
+                    {% if not forloop.last %}
+                        <div class="divider-light v-spacing-top-3 v-spacing-2"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <div class="v-spacing-top-5">
+                    {% bw_paginator paginator page current_page request "comments" %}
+                </div>   
+        {% else %}
+            <div class="text-center">
+                <div class="text-grey v-spacing-top-1">Looks like there are no comments for {{ user.username }}'s sounds yet... &#128543</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

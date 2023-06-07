@@ -24,9 +24,11 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 
 from comments.models import Comment
 from sounds.models import Sound
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
@@ -53,6 +55,9 @@ def delete(request, comment_id):
 @raise_404_if_user_is_deleted
 def for_user(request, username):
     """ Display all comments for the sounds of the user """
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?comments=1')
+
     user = request.parameter_user
     sounds = Sound.objects.filter(user=user)
     qs = Comment.objects.filter(sound__in=sounds).select_related("user", "user__profile",
@@ -65,7 +70,10 @@ def for_user(request, username):
         "mode": "for_user"
     }
     tvars.update(paginator)
-    return render(request, 'sounds/comments.html', tvars)
+    if using_beastwhoosh(request):
+        return render(request, 'accounts/modal_comments.html', tvars)
+    else:
+        return render(request, 'sounds/comments.html', tvars)
 
 
 @redirect_if_old_username_or_404

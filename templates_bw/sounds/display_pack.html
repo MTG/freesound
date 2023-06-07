@@ -37,7 +37,7 @@
         <div>
             <span class="text-grey">{{ pack.created|timesince }} ago</span>
         </div>
-        <div class="v-spacing-top-1 text-grey overflow-hidden" style="height:54px;">
+        <div class="v-spacing-top-1 overflow-hidden" style="height:54px;">
             {% if pack.description %}
                 {{ pack.description|striptags|safe|truncatechars_html:55 }}
             {% else %}

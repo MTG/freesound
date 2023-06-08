@@ -25,8 +25,12 @@ urlpatterns = [
 
     path('', monitor.views.monitor_home, name='monitor-home'),
 
-    path('processing/process_sounds/', monitor.views.process_sounds, name='monitor-processing-process'),
+    
     path('stats/', monitor.views.monitor_stats, name='monitor-stats'),
+    path('analysis/', monitor.views.monitor_analysis, name='monitor-analysis'),
+    path('processing/', monitor.views.monitor_processing, name='monitor-processing'),
+    path('moderation/', monitor.views.monitor_moderation, name='monitor-moderation'),
+    path('processing/process_sounds/', monitor.views.process_sounds, name='monitor-processing-process'),
     path('queues_stats/', monitor.views.get_queues_status, name='queues-stats'),
     path('moderators_stats/', monitor.views.moderators_stats, name='monitor-moderators-stats'),
     path('totals_stats_ajax/', monitor.views.totals_stats_ajax, name='monitor-totals-stats-ajax'),

@@ -101,7 +101,8 @@ def by_user(request, username):
     user = request.parameter_user
     qs = Comment.objects.filter(user=user).select_related("user", "user__profile",
                                                           "sound__user", "sound__user__profile")
-    paginator = paginate(request, qs, 30)
+    num_items_per_page = 30 if not using_beastwhoosh(request) else settings.COMMENTS_IN_MODAL_PER_PAGE_BW
+    paginator = paginate(request, qs, num_items_per_page)
     if using_beastwhoosh(request):
         page = paginator["page"]
         sound_ids = [d.sound_id for d in page]

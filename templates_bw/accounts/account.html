@@ -67,7 +67,7 @@
                                 </a>
                             </li>
                             <li class="bw-nav__action dropdown-item">
-                                <a class="bw-link--black" href="{% url "comments-by-user" user.username %}">
+                                <a class="bw-link--black" data-toggle="comments-modal" data-modal-content-url="{% url "comments-by-user" user.username %}?ajax=1" data-modal-activation-param="comments_by" href="javascript:void(0);" title="See all sound comments by {{ user.username }}">
                                     All comments ({{ user.profile.num_comments }})
                                 </a>
                             </li>

@@ -8,12 +8,12 @@
 
 {% block id %}commentsModal{% endblock %}
 {% block extra-class %}modal-width-80{% endblock %}
-{% block aria-label %}Comments on {{ user.username }}'s sounds{% endblock %}
+{% block aria-label %}{% if mode == "for_user" %}Comments on {{ user.username }}'s sounds{% else %}Sound comments by {{ user.username }}{% endif %}{% endblock %}
 
 {% block body %}
 <div class="col-12">
     <div class="text-center">
-        <h4 class="v-spacing-5">Comments on <a href="{% url "account" user.username %}">{{ user.username }}</a>'s sounds</h4>
+        <h4 class="v-spacing-5">{% if mode == "for_user" %}Comments on <a href="{% url "account" user.username %}">{{ user.username }}</a>'s sounds{% else %}Sound comments by <a href="{% url "account" user.username %}">{{ user.username }}</a>{% endif %}</h4>
     </div>
     <div class="v-spacing-4">
         {% if paginator.count > 0 %}
@@ -50,7 +50,7 @@
                 </div>   
         {% else %}
             <div class="text-center">
-                <div class="text-grey v-spacing-top-1">Looks like there are no comments for {{ user.username }}'s sounds yet... &#128543</div>
+                <div class="text-grey v-spacing-top-1">Looks like {% if mode == "for_user" %}there are no comments for {{ user.username }}'s sounds{% else %}{{ user.username }} hasn't made any comments{% endif %} yet... &#128543</div>
             </div>
         {% endif %}
     </div>

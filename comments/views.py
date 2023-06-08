@@ -95,19 +95,35 @@ def for_user(request, username):
 @raise_404_if_user_is_deleted
 def by_user(request, username):
     """ Display all comments made by the user """
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?comments_by=1')
+    
     user = request.parameter_user
     qs = Comment.objects.filter(user=user).select_related("user", "user__profile",
                                                           "sound__user", "sound__user__profile")
     paginator = paginate(request, qs, 30)
-    comments = paginator["page"].object_list
-    tvars = {
-        "user": user,
-        "comments": comments,
-        "mode": "by_user"
-    }
-    tvars.update(paginator)
-    return render(request, 'sounds/comments.html', tvars)
-
+    if using_beastwhoosh(request):
+        page = paginator["page"]
+        sound_ids = [d.sound_id for d in page]
+        sounds_dict = Sound.objects.dict_ids(sound_ids)
+        for comment in page.object_list:
+            comment.sound_object = sounds_dict[comment.sound_id]
+        tvars = {
+            "user": user,
+            "mode": "by_user",
+            "delete_next_url": reverse('account', args=[username]) + f'?comments_by={paginator["current_page"]}'
+        }
+        tvars.update(paginator)
+        return render(request, 'accounts/modal_comments.html', tvars)
+    else:
+        comments = paginator["page"].object_list
+        tvars = {
+            "user": user,
+            "comments": comments,
+            "mode": "by_user"
+        }
+        tvars.update(paginator)
+        return render(request, 'sounds/comments.html', tvars)
 
 def all(request):
     """ Display all comments """

@@ -6,6 +6,20 @@ import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator, onPlayerTimeUpdate } from './audio-element'
 import { rulerFrequencyMapping } from './utils'
 
+const removeAllLastPlayedClasses = () => {
+  document.getElementsByClassName('last-played').forEach(element => {
+    element.classList.remove('last-played');
+  });
+}
+
+if (isTouchEnabledDevice()){
+  document.addEventListener('click', (evt) => {
+    /* In touch devics, make sure we remove the last-played class when user touches
+    somewhere outside a player */
+    removeAllLastPlayedClasses();
+  })
+}
+
 const updateProgressBarIndicator = (parentNode, audioElement, progressPercentage) => {
   const progressBar = parentNode.getElementsByClassName('bw-player__progress-bar')[0]
   if (progressBar !== undefined) { // progress bar is only there in big players
@@ -588,9 +602,7 @@ const createPlayer = parentNode => {
   const audioElement = createAudioElement(parentNode)
   audioElement.addEventListener('play', () => {
     // When a player is played, add the last-played class to it and remove it from other players that might have it
-    document.getElementsByClassName('last-played').forEach(element => {
-      element.classList.remove('last-played');
-    });
+    removeAllLastPlayedClasses();
     parentNode.classList.add('last-played');
   })
   const playerImage = createPlayerImage(

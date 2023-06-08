@@ -2,6 +2,7 @@ import {showToast, showToastNoTimeout, dismissToast} from "./toast";
 import {initializePlayersInContainer, stopAllPlayersInContainer} from './player/utils';
 import {initializeCarousels} from './carousel';
 import {initRatingWidgets} from './rating';
+import {bindExplicitWarningElements} from './explicit';
 import serialize from '../utils/formSerializer'
 
 const bwPageElement = document.getElementsByClassName('bw-page')[0];
@@ -11,6 +12,7 @@ const initPlayersInModal = (modalContainer) => {
   initializePlayersInContainer(modalContainer);
   initRatingWidgets(modalContainer);
   initializeCarousels(modalContainer);
+  bindExplicitWarningElements(modalContainer);
 }
 
 const stopPlayersInModal = (modalContainer) => {
@@ -76,23 +78,27 @@ const initModalDismissButton = (modalContainerElement) => {
 }
 
 // Confirmation modal logic
-const confirmationModalButtons = [...document.querySelectorAll('[data-toggle="confirmation-modal"]')];
-confirmationModalButtons.forEach(modalButton => {
-  modalButton.addEventListener('click', () => {
-    const confirmationModalTitle = document.getElementById('confirmationModalTitle');
-    confirmationModalTitle.innerText = modalButton.dataset.modalConfirmationTitle;
-    const confirmationModalHelpText = document.getElementById('confirmationModalHelpText');
-    const helpText = modalButton.dataset.modalConfirmationHelpText;
-    if (helpText !== undefined){
-      confirmationModalHelpText.innerText = helpText;
-    } else {
-      confirmationModalHelpText.innerText = '';
-    }
-    const confirmationModalAcceptForm = document.getElementById('confirmationModalAcceptSubmitForm');
-    confirmationModalAcceptForm.action = modalButton.dataset.modalConfirmationUrl;
-    handleModal('confirmationModal');
+const bindConfirmationModalElements = (container) => {
+  if (container === undefined){ container = document; }
+  [...container.querySelectorAll('[data-toggle="confirmation-modal"]')].forEach(modalButton => {
+    modalButton.addEventListener('click', () => {
+      const confirmationModalTitle = document.getElementById('confirmationModalTitle');
+      confirmationModalTitle.innerText = modalButton.dataset.modalConfirmationTitle;
+      const confirmationModalHelpText = document.getElementById('confirmationModalHelpText');
+      const helpText = modalButton.dataset.modalConfirmationHelpText;
+      if (helpText !== undefined){
+        confirmationModalHelpText.innerText = helpText;
+      } else {
+        confirmationModalHelpText.innerText = '';
+      }
+      const confirmationModalAcceptForm = document.getElementById('confirmationModalAcceptSubmitForm');
+      confirmationModalAcceptForm.action = modalButton.dataset.modalConfirmationUrl;
+      activateModal('confirmationModal');
+    });
   });
-});
+}
+bindConfirmationModalElements();
+
 
 // Generic modals logic
 const genericModalWrapper = document.getElementById('genericModalWrapper');
@@ -115,7 +121,7 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
         modalContainer.style.display = 'block';
         
         // Add dismiss click handler including call to callback if defined
-        const modalDismiss = [...document.querySelectorAll('[data-dismiss="modal"]')];
+        const modalDismiss = [...modalContainer.querySelectorAll('[data-dismiss="modal"]')];
         modalDismiss.forEach(dismiss => {
           dismiss.addEventListener('click', () => {
             dismissModal(modalContainerId);
@@ -258,4 +264,4 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
   }, onClosedCallback, doRequestAsync, showLoadingToast, modalActivationParam)
 }
 
-export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm, bindModalActivationElements, activateModalsIfParameters, initPlayersInModal, stopPlayersInModal};
+export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm, bindModalActivationElements, bindConfirmationModalElements, activateModalsIfParameters, initPlayersInModal, stopPlayersInModal};

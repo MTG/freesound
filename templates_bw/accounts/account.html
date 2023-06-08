@@ -13,26 +13,30 @@
 
 {% block content %}
     <div class="container">
-        <div class="row navbar-space-filler v-spacing-top-6 v-spacing-4 bw-profile__hero">
+        <div class="row navbar-space-filler v-spacing-top-6 v-spacing-2 bw-profile__hero">
             <div>
                 {% bw_user_avatar user.profile.locations.avatar.XL.url user.username 100 %}
             </div>
             <div class="bw-profile__username v-spacing-top-2">
                 <h1>{{ user.username }}</h1>
             </div>
-            <div class="v-spacing-top-3">
+            <div class="v-spacing-top-4 v-spacing-4 middle padding-left-2 padding-right-2">
                 {% if home %}
-                    <a class="no-hover btn-inverse btn-profile-adapt" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
-                    <a class="no-hover btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url 'accounts-edit' %}">Account settings</a>
-                    <a class="no-hover btn-inverse h-spacing-left-2 btn-profile-adapt"  data-toggle="comments-modal" data-modal-content-url="{% url "comments-for-user" user.username %}?ajax=1" data-modal-activation-param="comments" href="javascript:void(0);" title="See all comments on your sounds">Comments</a>
+                    {% if user.profile.num_sounds %}    
+                    <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt"  data-toggle="comments-modal" data-modal-content-url="{% url "comments-for-user" user.username %}?ajax=1" data-modal-activation-param="comments" href="javascript:void(0);" title="See all comments on your sounds">Comments</a>
+                    {% else %}
+                    <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'accounts-upload' %}">Upload a sound</a>
+                    {% endif %}
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url 'accounts-edit' %}">Account settings</a>
                 {% else %}
                     {% if not user.profile.is_deleted_user %}
                         {% if show_unfollow_button %}
-                            <a class="no-hover btn-secondary" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}">Unfollow</a>
+                            <a class="no-hover text-center btn-secondary" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}">Unfollow</a>
                         {% else %}
-                            <a class="no-hover btn-inverse btn-profile-adapt" href="{% url 'follow-user' user.username %}?next={{ next_path }}">Follow</a>
+                            <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'follow-user' user.username %}?next={{ next_path }}">Follow</a>
                         {% endif %}
-                        <a class="no-hover btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url "messages-new" user.username %}">Message</a>
+                        <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url "messages-new" user.username %}">Message</a>
                     {% endif %}
                 {% endif %}
                 {% if perms.tickets.can_moderate or request.user.is_staff %}
@@ -84,7 +88,7 @@
                 {% endif %}
             </div>
             {% if not user.profile.is_deleted_user %}
-                <div class="bw-profile__description v-spacing-top-3">
+                <div class="bw-profile__description v-spacing-3">
                     {% if user.profile.about and show_about %}
                         {{ user.profile.about|replace_img|safe|linebreaks|strip_unnecessary_br }}
                     {% endif %}
@@ -94,16 +98,18 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="bw-profile__stats v-spacing-top-1 padding-left-4 padding-right-4">
-                    <div class="text-grey">Has been a user for {{user.date_joined|timesince}}</div>
-                    <div><a id="user-followers-button" data-modal-activation-param="followers" data-modal-content-url="{% url 'user-followers' user.username %}?ajax=1&page={{ followers_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_followers_count user.id %}{% with followers.count as followers_count %}{{ followers_count|bw_intcomma }} follower{{ followers_count|pluralize }}{% endwith %}{% endcache %}</a></div>
-                    <div><a id="user-following-users-button" data-modal-activation-param="following" data-modal-content-url="{% url 'user-following-users' user.username %}?ajax=1&page={{ following_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_count user.id %}{{ following.count }}{% endcache %} following</a></div>
-                    <div><a id="user-following-tags-button" data-modal-activation-param="followingTags" data-modal-content-url="{% url 'user-following-tags' user.username %}?ajax=1&page={{ following_tags_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_tags_count user.id %}{% with following_tags.count as following_tags_count %}{{ following_tags.count|bw_intcomma }} tag{{ following_tags_count|pluralize }} following{% endwith %}{% endcache %}</a></div>
-                </div>
-                {% if user_downloads_public %}
-                <div class="bw-profile__stats v-spacing-top-1 padding-left-4 padding-right-4">
-                    <div><a data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);" >{{ user.profile.num_sound_downloads }} sound{{ user.profile.num_sound_downloads|pluralize}} downloaded</a></div>
-                    <div><a data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);" >{{ user.profile.num_pack_downloads }} pack{{ user.profile.num_pack_downloads|pluralize}} downloaded</a></div>
+                <div class="v-spacing-2">
+                    <div class="bw-profile__stats padding-left-4 padding-right-4">
+                        <div class="text-grey">Has been a user for {{user.date_joined|timesince}}</div>
+                        <div><a id="user-followers-button" data-modal-activation-param="followers" data-modal-content-url="{% url 'user-followers' user.username %}?ajax=1&page={{ followers_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_followers_count user.id %}{% with followers.count as followers_count %}{{ followers_count|bw_intcomma }} follower{{ followers_count|pluralize }}{% endwith %}{% endcache %}</a></div>
+                        <div><a id="user-following-users-button" data-modal-activation-param="following" data-modal-content-url="{% url 'user-following-users' user.username %}?ajax=1&page={{ following_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_count user.id %}{{ following.count }}{% endcache %} following</a></div>
+                        <div><a id="user-following-tags-button" data-modal-activation-param="followingTags" data-modal-content-url="{% url 'user-following-tags' user.username %}?ajax=1&page={{ following_tags_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_tags_count user.id %}{% with following_tags.count as following_tags_count %}{{ following_tags.count|bw_intcomma }} tag{{ following_tags_count|pluralize }} following{% endwith %}{% endcache %}</a></div>
+                    </div>
+                    {% if user_downloads_public %}
+                    <div class="bw-profile__stats v-spacing-top-1 padding-left-4 padding-right-4">
+                        <div><a data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);" >{{ user.profile.num_sound_downloads }} sound{{ user.profile.num_sound_downloads|pluralize}} downloaded</a></div>
+                        <div><a data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);" >{{ user.profile.num_pack_downloads }} pack{{ user.profile.num_pack_downloads|pluralize}} downloaded</a></div>
+                    </div>
                 </div>
                 {% endif %}
             {% endif %}

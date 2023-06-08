@@ -1,4 +1,5 @@
-import {handleGenericModal, bindModalActivationElements, activateModalsIfParameters, initPlayersInModal, stopPlayersInModal} from './modal';
+import {handleGenericModal, bindModalActivationElements, activateModalsIfParameters, initPlayersInModal, stopPlayersInModal, bindConfirmationModalElements} from './modal';
+import {bindFlagUserElements} from './flagging';
 
 const handleCommentsModal = (modalUrl, modalActivationParam, atPage) => {
     if ((atPage !== undefined) && modalUrl.indexOf('&page') == -1){
@@ -6,6 +7,8 @@ const handleCommentsModal = (modalUrl, modalActivationParam, atPage) => {
     }
     handleGenericModal(modalUrl, (modalContainer) => {
         initPlayersInModal(modalContainer);
+        bindConfirmationModalElements(modalContainer); // For the "delete comment" buttons which need confirmation
+        bindFlagUserElements(modalContainer); // For the "flag comment" buttons
     }, (modalContainer) => {
         stopPlayersInModal(modalContainer);
     }, true, true, modalActivationParam);

@@ -1832,7 +1832,6 @@ def problems_logging_in(request):
 @login_required
 @transaction.atomic()
 def flag_user(request, username):
-
     if request.POST:
         flagged_user = User.objects.get(username__iexact=username)
         reporting_user = request.user

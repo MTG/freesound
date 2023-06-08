@@ -11,6 +11,7 @@ import './djangoMessages';
 import './downloadersModals';
 import './dropdown';
 import './explicit';
+import './flagging';
 import './formDisableOnSubmit';
 import './geotagPicker';
 import './input';

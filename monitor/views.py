@@ -37,7 +37,7 @@ import tickets
 from freesound.celery import get_queues_task_counts
 from sounds.models import Sound, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
 
 
 @login_required

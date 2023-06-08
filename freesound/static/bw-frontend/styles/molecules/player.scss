@@ -63,7 +63,6 @@
   font-size: 17px;
 
   &:hover {
-    opacity: 1;
     color: $red;
   }
 }
@@ -249,17 +248,34 @@
     display: none;
   }
 
-  &:hover {
-    .bw-player__rate__widget,
-    /*.bw-player__controls, */ /* this one no longer needed as player buttons are always visible now */
-    .loop-button,  
-    .bw-player__similar,
-    .bw-player__remix,
-    .bw-player__progress,
-    .bw-player__progress-indicator,
-    .bw-player__favorite {
-      opacity: 1.0;
-    } 
+  @media (hover: hover) { /* if device supports hover, make extra controls visible on hover */
+    &:hover {
+      .bw-player__rate__widget,
+      /*.bw-player__controls, */ /* this one no longer needed as player buttons are always visible now */
+      .loop-button,  
+      .bw-player__similar,
+      .bw-player__remix,
+      .bw-player__progress,
+      .bw-player__progress-indicator,
+      .bw-player__favorite {
+        opacity: 1.0;
+      } 
+    }
+  }
+
+  @media (hover: none) {  /* if device does not hover, we'll make extra controls visible for the last player that was played */
+    &.last-played {
+      .bw-player__rate__widget,
+      /*.bw-player__controls, */ /* this one no longer needed as player buttons are always visible now */
+      .loop-button,  
+      .bw-player__similar,
+      .bw-player__remix,
+      .bw-player__progress,
+      .bw-player__progress-indicator,
+      .bw-player__favorite {
+        opacity: 1.0;
+      } 
+    }
   }
 }
 

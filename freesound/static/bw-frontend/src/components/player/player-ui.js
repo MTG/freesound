@@ -586,6 +586,13 @@ const createPlayer = parentNode => {
   const showSimilarSoundsButton = parentNode.dataset.similarSounds === 'true'
   const showRemixGroupButton = parentNode.dataset.remixGroup === 'true'
   const audioElement = createAudioElement(parentNode)
+  audioElement.addEventListener('play', () => {
+    // When a player is played, add the last-played class to it and remove it from other players that might have it
+    document.getElementsByClassName('last-played').forEach(element => {
+      element.classList.remove('last-played');
+    });
+    parentNode.classList.add('last-played');
+  })
   const playerImage = createPlayerImage(
     parentNode,
     audioElement,

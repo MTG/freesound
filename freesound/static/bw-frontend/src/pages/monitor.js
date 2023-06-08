@@ -292,7 +292,6 @@ $( document ).ready(function() {
             });
         });
         $.get(soundsDataUrl, function(d){
-            alert(soundsDataUrl, d)
             var new_sounds = [];
             for (var i=0 ; i<d.new_sounds.length; i++) {
                 new_sounds.push([

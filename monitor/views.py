@@ -216,6 +216,7 @@ def monitor_stats(request):
     return render(request, 'monitor/stats.html', tvars)
 
 
+@redirect_if_beastwhoosh('monitor-moderation')
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def moderators_stats(request):

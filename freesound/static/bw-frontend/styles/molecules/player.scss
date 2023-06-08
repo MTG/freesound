@@ -72,11 +72,15 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  opacity: 0;
+  /*opacity: 0; */ /* No longer set to 0 as we don't hide controls by default anymore */
   color: $navy-grey;
   transition: opacity 0.2s ease;
   display: flex;
   align-items: center;
+
+  .loop-button {
+    opacity: 0;  /* loop button is invisible without hovering */
+  }
 
   button:focus {
     outline: none;
@@ -91,6 +95,10 @@
 
     .bw-player__play-btn {
       font-size: 36px;
+    }
+
+    .loop-button {
+      opacity: 1; /* In big player, the loop button is visible from start */
     }
   }
 
@@ -243,7 +251,8 @@
 
   &:hover {
     .bw-player__rate__widget,
-    .bw-player__controls,
+    /*.bw-player__controls, */ /* this one no longer needed as player buttons are always visible now */
+    .loop-button,  
     .bw-player__similar,
     .bw-player__remix,
     .bw-player__progress,

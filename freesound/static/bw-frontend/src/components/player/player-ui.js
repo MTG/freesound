@@ -220,6 +220,7 @@ const createLoopButton = audioElement => {
   const loopButton = createControlButton('loop')
   loopButton.setAttribute('title', 'Loop')
   loopButton.classList.add('text-20')
+  loopButton.classList.add('loop-button')
   loopButton.addEventListener('click', (e) => {
     const willLoop = !audioElement.loop
     if (willLoop) {
@@ -429,7 +430,8 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
 
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
-    playerControls.classList.add('opacity-100')
+    // Edit: play buttons are now always visible in both touch and non-touch devices, so this is not needed anymore
+    // playerControls.classList.add('opacity-100')
   }
 
   let startWithSpectrum = false;

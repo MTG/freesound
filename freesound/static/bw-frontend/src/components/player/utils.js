@@ -1,14 +1,9 @@
 /* eslint-disable import/prefer-default-export */
 import {createPlayer} from './player-ui'
 
-export const isTouchEnabledDevice = () => {
-  return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
-}
-
 export const simultaneousPlaybackDisallowed = () => {
   return document.cookie.indexOf('disallowSimultaneousAudioPlayback=yes') > -1;
 }
-
 
 /**
  * @param {number} value

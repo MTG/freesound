@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import throttle from 'lodash.throttle'
 import playerSettings from './settings'
-import { formatAudioDuration, playAtTime, isTouchEnabledDevice, getAudioElementDurationOrDurationProperty, stopAllPlayers, simultaneousPlaybackDisallowed } from './utils'
+import { formatAudioDuration, playAtTime, getAudioElementDurationOrDurationProperty, stopAllPlayers, simultaneousPlaybackDisallowed } from './utils'
 import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator, onPlayerTimeUpdate } from './audio-element'
 import { rulerFrequencyMapping } from './utils'
@@ -10,6 +10,10 @@ const removeAllLastPlayedClasses = () => {
   document.getElementsByClassName('last-played').forEach(element => {
     element.classList.remove('last-played');
   });
+}
+
+export const isTouchEnabledDevice = () => {
+  return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
 }
 
 if (isTouchEnabledDevice()){

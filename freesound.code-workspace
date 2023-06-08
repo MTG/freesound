@@ -93,6 +93,12 @@
 				"type": "shell",
 				"command": "docker-compose run --rm web python manage.py makemigrations",
 				"problemMatcher": []
+			},
+			{
+				"label": "Shell plus",
+				"type": "shell",
+				"command": "docker-compose run --rm web python manage.py shell_plus",
+				"problemMatcher": []
 			}
 		]
 	},

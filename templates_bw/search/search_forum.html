@@ -19,7 +19,9 @@
                     </li>
                 {% endif %}
                 <li class="nav-item text-16">
-                    Search
+                    Search {% if username_filter %} <a class="h-spacing-left-4 no-hover btn-inverse bw-search__active-filters-button" href="{{ remove_username_filter_url }}" title="Remove this filter">
+                        user:{{ username_filter }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
+                    </a> {% endif %}
                 </li>
             </ul>
         </div>

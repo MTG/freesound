@@ -306,7 +306,7 @@ class SearchEngineBase:
         raise NotImplementedError
 
 
-    def search_forum_posts(self, textual_query='', query_filter='', offset=0, current_page=None,
+    def search_forum_posts(self, textual_query='', query_filter='', offset=0, sort=None, current_page=None,
                            num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
         """Search for forum posts that match specific criteria and return them in a SearchResults object
 
@@ -314,6 +314,7 @@ class SearchEngineBase:
             textual_query (str, optional): the textual query
             query_filter (str, optional): filter expression following lucene filter syntax
             offset (int, optional): offset for the returned results
+            sort (str, optional): sorting criteria. should be one of settings.SEARCH_FORUM_SORT_OPTIONS_WEB
             current_page (int, optional): alternative way to set offset using page numbers. Using current_page will
                 set offset like offset=current_page*num_sounds
             num_posts (int, optional): number of forum posts to return

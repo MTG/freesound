@@ -399,8 +399,18 @@ def search_forum(request):
         current_forum = get_object_or_404(forum.models.Forum.objects, name_slug=current_forum_name_slug)
     else:
         current_forum = None
-    sort = ["thread_created desc"]
+    sort = settings.SEARCH_FORUM_SORT_DEFAULT
 
+    # Get username filter if any and prepare URL to remove the filter
+    # NOTE: the code below is not robust to more complex filters. To do that we should do proper parsing
+    # of the filters like we do for the search view
+    username_filter = None
+    remove_username_filter_url = ''
+    if 'post_author' in filter_query:
+        username_filter = filter_query.split('post_author:"')[1].split('"')[0]
+        remove_username_filter_url = '{}?{}'.format(reverse('forums-search'), filter_query.replace('post_author:"{}"'.format(username_filter), ''))
+        sort = settings.SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST
+    
     # Parse advanced search options
     advanced_search = request.GET.get("advanced_search", "")
     date_from = request.GET.get("dt_from", "")
@@ -440,6 +450,7 @@ def search_forum(request):
             results = get_search_engine().search_forum_posts(
                 textual_query=search_query,
                 query_filter=filter_query,
+                sort=sort,
                 num_posts=settings.FORUM_POSTS_PER_PAGE,
                 current_page=current_page,
                 group_by_thread=not using_beastwhoosh(request))
@@ -469,18 +480,22 @@ def search_forum(request):
         'error': error,
         'error_text': error_text,
         'filter_query': filter_query,
+        'username_filter': username_filter,
+        'remove_username_filter_url': remove_username_filter_url,
         'num_results': num_results,
         'page': page,
         'paginator': paginator,
         'search_query': search_query,
         'sort': sort,
-        'results': results,
+        'results': results
     }
 
     if using_beastwhoosh(request):
         if results:
-            posts = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
+            posts_unsorted = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
                 .filter(id__in=[d['id'] for d in results.docs])
+            posts_map = {post.id:post for post in posts_unsorted}
+            posts = [posts_map[d['id']] for d in results.docs]            
         else:
             posts = []
         tvars.update({

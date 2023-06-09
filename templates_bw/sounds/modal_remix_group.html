@@ -22,7 +22,9 @@
             </div>
             <div class="remix-group-sounds-panel col-6">
             {% for sound in sounds %}
-                {% display_sound_small_no_bookmark sound %}
+                <div>
+                    {% display_sound_small_no_bookmark sound %}
+                </div>
             {% endfor %}
             </div>
         </div>

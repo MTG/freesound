@@ -49,7 +49,7 @@ from apiv2.authentication import OAuth2Authentication, TokenAuthentication, Sess
 from apiv2.exceptions import NotFoundException, InvalidUrlException, BadRequestException, ConflictException, \
     UnauthorizedException, ServerErrorException, OtherException, APIException
 from apiv2.forms import ApiV2ClientForm, SoundCombinedSearchFormAPI, SoundTextSearchFormAPI, \
-    SoundContentSearchFormAPI, SimilarityFormAPI
+    SoundContentSearchFormAPI, SimilarityFormAPI, BWApiV2ClientForm
 from apiv2.models import ApiV2Client
 from apiv2.serializers import SimilarityFileSerializer, UploadAndDescribeAudioFileSerializer, \
     EditSoundDescriptionSerializer, SoundDescriptionSerializer, CreateCommentSerializer, SoundCommentsSerializer, \
@@ -1341,8 +1341,10 @@ def invalid_url(request):
 def create_apiv2_key(request):
     """View for applying for an apikey"""
 
+    FormToUse = BWApiV2ClientForm if using_beastwhoosh(request) else ApiV2ClientForm
+
     if request.method == 'POST':
-        form = ApiV2ClientForm(request.POST)
+        form = FormToUse(request.POST)
         if form.is_valid():
             api_client = ApiV2Client()
             api_client.user = request.user
@@ -1352,11 +1354,11 @@ def create_apiv2_key(request):
             api_client.redirect_uri = form.cleaned_data['redirect_uri']
             api_client.accepted_tos = form.cleaned_data['accepted_tos']
             api_client.save()
-            form = ApiV2ClientForm()
+            form = FormToUse()
             api_logger.info('new_credential <> (ApiV2 Auth:%s Dev:%s User:%s Client:%s)' %
                             (None, request.user.username, None, api_client.client_id))
     else:
-        form = ApiV2ClientForm()
+        form = FormToUse()
 
     user_credentials = request.user.apiv2_client.all()
 
@@ -1371,7 +1373,10 @@ def create_apiv2_key(request):
         'user_credentials': user_credentials,
         'fs_callback_url': fs_callback_url,
     }
-    return render(request, 'api/apply_key_apiv2.html', tvars)
+    if using_beastwhoosh(request):
+        return render(request, 'api/credentials.html', tvars)
+    else:
+        return render(request, 'api/apply_key_apiv2.html', tvars)
 
 
 @login_required
@@ -1384,9 +1389,11 @@ def edit_api_credential(request, key):
 
     if not client:
         raise Http404
+    
+    FormToUse = BWApiV2ClientForm if using_beastwhoosh(request) else ApiV2ClientForm
 
     if request.method == 'POST':
-        form = ApiV2ClientForm(request.POST)
+        form = FormToUse(request.POST)
         if form.is_valid():
             client.name = form.cleaned_data['name']
             client.url = form.cleaned_data['url']
@@ -1397,22 +1404,23 @@ def edit_api_credential(request, key):
             messages.add_message(request, messages.INFO, f"Credentials with name {client.name} have been updated.")
             return HttpResponseRedirect(reverse("apiv2-apply"))
     else:
-        form = ApiV2ClientForm(initial={'name': client.name,
+        form = FormToUse(initial={'name': client.name,
                                         'url': client.url,
                                         'redirect_uri': client.redirect_uri,
                                         'description': client.description,
                                         'accepted_tos': client.accepted_tos
                                         })
-
     use_https_in_callback = True
     if settings.DEBUG:
         use_https_in_callback = False
     fs_callback_url = prepend_base(reverse('permission-granted'), use_https=use_https_in_callback)
-    return render(request, 'api/edit_api_credential.html',
-                              {'client': client,
-                               'form': form,
-                               'fs_callback_url': fs_callback_url,
-                               })
+
+    tvars = {
+        'client': client,
+        'form': form,
+        'fs_callback_url': fs_callback_url,
+    }
+    return render(request, 'api/edit_api_credential.html', tvars)
 
 
 @login_required

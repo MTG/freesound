@@ -62,8 +62,11 @@
   padding-left: 7px;
   font-size: 17px;
 
-  &:hover {
-    color: $red;
+  @media (hover: hover) {
+    /* Only add hover sttles if device supports it */
+    &:hover {
+      color: $red;
+    }
   }
 }
 

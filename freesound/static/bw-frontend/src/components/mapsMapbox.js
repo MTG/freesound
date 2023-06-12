@@ -2,6 +2,7 @@ import {initPlayersInModal, stopPlayersInModal} from './modal';
 import {bindSimilarSoundModals} from './similarSoundsModal';
 import {bindBookmarkSoundButtons} from './bookmarkSound';
 import {bindRemixSoundModals} from './remixGroupModal';
+import {stopAllPlayers} from '../components/player/utils'
 
 
 var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';

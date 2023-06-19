@@ -78,7 +78,7 @@ const createProgressIndicator = (parentNode, audioElement, playerImgNode, player
         if (showingSpectrogram) {
           const sampleRate = parseFloat(parentNode.dataset.samplerate, 10);
           const srScaleCorrection = sampleRate/44100.0
-          readout = (srScaleCorrection * rulerFrequencyMapping[Math.floor((posY/imgHeight) * 500.0)]).toFixed(2) + "hz";
+          readout = (srScaleCorrection * rulerFrequencyMapping[Math.floor((posY/imgHeight) * 500.0)]).toFixed(2) + " Hz";
         } else {
           if (posY == height2)
               readout = "-inf";

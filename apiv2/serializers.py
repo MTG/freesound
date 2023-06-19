@@ -43,7 +43,7 @@ DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by c
 DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,geotag,created,license,type,channels,filesize,bitrate,' + \
 'bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,' + \
 'num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,' +  \
-'analysis,analysis_frames,analysis_stats'  # All except for analyzers
+'analysis,analysis_frames,analysis_stats,is_explicit'  # All except for analyzers
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
 
@@ -131,6 +131,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'analysis_stats',
                   'ac_analysis',  # Kept for legacy reasons only as it is also contained in 'analyzers_output'
                   'analyzers_output',
+                  'is_explicit',
                   'score',
                   )
 
@@ -228,7 +229,6 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                                           request_is_secure=self.context['request'].is_secure()),
         }
 
-
     def get_or_compute_analysis_state_essentia_exists(self, sound_obj):
         if hasattr(sound_obj, 'analysis_state_essentia_exists'):
             return sound_obj.analysis_state_essentia_exists
@@ -308,6 +308,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     analyzers_output = serializers.SerializerMethodField()
     def get_analyzers_output(self, obj):
         raise NotImplementedError  # Should be implemented in subclasses
+    
+    is_explicit = serializers.SerializerMethodField()
+    def get_is_explicit(self, obj):
+        return obj.is_explicit
 
 
 class SoundListSerializer(AbstractSoundSerializer):

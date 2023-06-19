@@ -75,7 +75,7 @@ def context_extra(request):
             'next_path': request.GET.get('next', request.get_full_path()),
             'login_form': BwFsAuthenticationForm(),  # Used for beast whoosh login modal only
             'problems_logging_in_form': BwProblemsLoggingInForm(),  # Used for beast whoosh login modal only
-            'system_prefers_dark_theme': request.user.is_authenticated and request.COOKIES.get('systemPrefersDarkTheme', False)  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
+            'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', False)  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
         })
     
     return tvars

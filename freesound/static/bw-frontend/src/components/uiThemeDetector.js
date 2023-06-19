@@ -1,10 +1,10 @@
 
 const styleLink = document.getElementById("style");
 
-const userPrefersDarkTheme = () => {
-    if (!userIsAuthenticated){
+const browserPrefersDarkTheme = () => {
+    /*if (!userIsAuthenticated){
         return false;  // For non-authenticated users, always use default "light" theme
-    }
+    }*/
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
@@ -32,16 +32,16 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', eve
 });
 
 
-if (userPrefersDarkTheme()){
+if (browserPrefersDarkTheme()){
     document.cookie = "systemPrefersDarkTheme=yes;path=/";
 } else {
     document.cookie = "systemPrefersDarkTheme=no;path=/";
 }
 
 if (styleLink.dataset.forcedTheme === undefined){
-    if (userPrefersDarkTheme() && !isUsingDarkTheme()){
+    if (browserPrefersDarkTheme() && !isUsingDarkTheme()){
         switchToDarkMode();
-    } else if (!userPrefersDarkTheme() && isUsingDarkTheme()){
+    } else if (!browserPrefersDarkTheme() && isUsingDarkTheme()){
         switchToLightMode();
     }
 }

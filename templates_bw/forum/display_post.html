@@ -31,20 +31,20 @@
                 {% if show_action_icons %}
                 <div class="text-14">
                     <span class="padding-right-2">
-                        <a class="text-grey" href="{% url "forums-reply-quote" post.thread.forum.name_slug post.thread.id post.id %}" title="Quote and reply"><i class="bw-icon-quote-reverse"></i><i class="bw-icon-quote"></i></a>
+                        <a class="bw-link--grey" href="{% url "forums-reply-quote" post.thread.forum.name_slug post.thread.id post.id %}" title="Quote and reply"><i class="bw-icon-quote-reverse"></i><i class="bw-icon-quote"></i></a>
                     </span>
                     {% if post.author == request.user or perms.forums.change_post %}
                     <span class="padding-right-2">
-                        <a class="text-grey" href="{% url "forums-post-edit" post.id %}" title="Edit post"><i class="bw-icon-edit"></i></a>
+                        <a class="bw-link--grey" href="{% url "forums-post-edit" post.id %}" title="Edit post"><i class="bw-icon-edit"></i></a>
                     </span>
                     {% endif %}
                     {% if post.author == request.user or perms.forums.delete_post %}
                     <span class="padding-right-2">
-                        <a class="text-grey text-20 cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this post?" data-modal-confirmation-url="{% url "forums-post-delete-confirm" post.id %}" title="Delete post"><i class="bw-icon-trash-filled"></i></a>
+                        <a class="bw-link--grey cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this post?" data-modal-confirmation-url="{% url "forums-post-delete-confirm" post.id %}" title="Delete post"><i class="bw-icon-trash-filled"></i></a>
                     </span>
                     {% endif %}
                     {% if post_number > 0 %}
-                        <a class="text-grey" href="{% url "forums-post" post.thread.forum.name_slug post.thread.id post.id %}">
+                        <a class="bw-link--grey" href="{% url "forums-post" post.thread.forum.name_slug post.thread.id post.id %}">
                             #{{ post_number }}
                         </a>
                     {% endif %}

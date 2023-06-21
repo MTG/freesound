@@ -1,10 +1,11 @@
+import './carousel';
+import './collapsableBlock';
+import './uiThemeDetector';
 import './select';
 import './player';
 import './afterDownloadModal';
 import './bookmarkSound';
-import './carousel';
 import './checkbox';
-import './collapsableBlock';
 import './commentsModal';
 import './cookieConsent';
 import './djangoMessages';
@@ -30,4 +31,3 @@ import './unsecureImageCheck';
 import './followUnfollowTags';
 import './textareaCharactersCounter';
 import './scrollSpy';
-import './uiThemeDetector';

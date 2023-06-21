@@ -24,8 +24,12 @@ from tickets import views
 urlpatterns = [
 
     path('moderation/',
-        views.moderation_home,
+        views.assign_sounds,
         name='tickets-moderation-home'),
+
+    path('moderation/guide',
+        views.guide,
+        name='tickets-moderation-guide'),
 
     path('moderation/tardy_users_sounds/',
         views.moderation_tardy_users_sounds,

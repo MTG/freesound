@@ -28,7 +28,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User, Group
 from django.db import transaction
 from django.db.models import Count, Min, Q, F
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from general.tasks import whitelist_user
 
@@ -38,8 +38,10 @@ from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_
 from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, AnonymousContactForm, \
     SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY
 from utils.cache import invalidate_user_template_caches
+from utils.frontend_handling import render, using_beastwhoosh
 from utils.username import redirect_if_old_username_or_404
 from utils.pagination import paginate
+from wiki.models import Content, Page
 
 
 def _get_tc_form(request, use_post=True):
@@ -266,7 +268,7 @@ def _get_sounds_in_moderators_queue_count(user):
 
 
 @permission_required('tickets.can_moderate')
-def moderation_home(request):
+def assign_sounds(request):
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
 
     unsure_tickets = _get_unsure_sound_tickets()
@@ -295,7 +297,11 @@ def moderation_home(request):
              "moderator_tickets_count": sounds_in_moderators_queue_count
             }
 
-    return render(request, 'tickets/moderation_home.html', tvars)
+    if using_beastwhoosh(request):
+        tvars.update({'section': 'assign'})
+        return render(request, 'moderation/assign_sounds.html', tvars)    
+    else:
+        return render(request, 'tickets/moderation_home.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
@@ -559,7 +565,11 @@ def moderation_assigned(request, user_id):
         "default_include_deferred": request.GET.get('include_d', '') == 'on',
     }
 
-    return render(request, 'tickets/moderation_assigned.html', tvars)
+    if using_beastwhoosh(request):
+        tvars.update({'section': 'assigned'})
+        return render(request, 'moderation/assigned.html', tvars)
+    else:
+        return render(request, 'tickets/moderation_assigned.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
@@ -634,3 +644,14 @@ def pending_tickets_per_user(request, username):
     tvars.update(paginated)
 
     return render(request, 'accounts/pending.html', tvars)
+
+
+@permission_required('tickets.can_moderate')
+def guide(request):
+    name = "moderators_bw"
+    page = Page.objects.get(name__iexact=name)
+    content = Content.objects.select_related().filter(page=page).latest()
+    tvars = {'content': content,
+             'name': name,
+             'section': 'guide'}
+    return render(request, 'moderation/guide.html', tvars)

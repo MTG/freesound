@@ -1,0 +1,17 @@
+<div class="divider-light v-spacing-top-4 v-spacing-2"></div>
+<div class="row middle">
+    <div class="col-12">
+        <ul class="navbar-messages center">
+            <li class="nav-item">
+                <a class="nav-link {% if section == "assign" %}active{% endif %}" href="{% url 'tickets-moderation-home' %}">Assign sounds</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if section == "assigned" %}active{% endif %}" href="{% url 'tickets-moderation-assigned' request.user.id %}">Your sound queue</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if section == "guide" %}active{% endif %}" href="{% url 'tickets-moderation-guide' %}">Moderation guide</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div class="divider-light v-spacing-top-2 v-spacing-4"></div>

@@ -16,9 +16,18 @@ const addVisibleRadio = radioEl => {
     const visibleRadioContainer = document.createElement('span');
     visibleRadioContainer.className = 'bw-radio-container';
     parent.insertBefore(visibleRadioContainer, radioEl.nextSibling);
-    const RadioIcon = document.createElement('span');
-    RadioIcon.className = 'bw-icon-radio-unchecked';
-    visibleRadioContainer.append(RadioIcon);
+    const radioIcon = document.createElement('span');
+    radioIcon.className = 'bw-icon-radio-unchecked';
+    radioIcon.setAttribute('role', 'radio');
+    radioIcon.setAttribute('aria-checked', radioEl.checked);
+    radioEl.addEventListener('change', () => {
+      const radioOptions = document.getElementsByName(radioEl.name);
+      radioOptions.forEach(option => {
+        option.parentNode.getElementsByClassName('bw-icon-radio-unchecked')[0].setAttribute('aria-checked', false);
+      })
+      radioIcon.setAttribute('aria-checked', radioEl.checked)
+    })
+    visibleRadioContainer.append(radioIcon);
   }
 
 };

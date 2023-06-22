@@ -3,7 +3,7 @@
     {% for star_type, i in stars_range reversed %}
         {% if allow_rating %}
             <input class="bw-rating__input" type="radio" name="rate-{{ sound.id }}" data-rate-url="{% url "sound-rating-add" sound_user sound.id i %}" id="rate-{{ sound.id }}-{{ i }}" value="{{ i }}">
-            <label for="rate-{{ sound.id }}-{{ i }}" data-value="{{ i }}">
+            <label for="rate-{{ sound.id }}-{{ i }}" data-value="{{ i }}" aria-label="Rate sound {{ i }} star{{ i|pluralize }}">
         {% else %}
             <div class="bw-rating__star-no-editable" data-value="{{ i }}">
         {% endif %}

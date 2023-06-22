@@ -198,6 +198,7 @@ const createPlayButton = (audioElement, playerSize) => {
     playerSize === 'big' ? 'play-stroke' : 'play'
   )
   playButton.setAttribute('title', 'Play/Pause')
+  playButton.setAttribute('aria-label', 'Play/Pause')
   playButton.classList.add('bw-player__play-btn')
   playButton.addEventListener('click', (evt) => {
     const isPlaying = !audioElement.paused
@@ -221,6 +222,7 @@ const createPlayButton = (audioElement, playerSize) => {
 const createStopButton = (audioElement, parentNode) => {
   const stopButton = createControlButton('stop')
   stopButton.setAttribute('title', 'Stop')
+  stopButton.setAttribute('aria-label', 'Stop')
   stopButton.addEventListener('click', (e) => {
     audioElement.pause()
     audioElement.currentTime = 0
@@ -237,6 +239,7 @@ const createStopButton = (audioElement, parentNode) => {
 const createLoopButton = audioElement => {
   const loopButton = createControlButton('loop')
   loopButton.setAttribute('title', 'Loop')
+  loopButton.setAttribute('aria-label', 'Loop')
   loopButton.classList.add('text-20')
   loopButton.classList.add('loop-button')
   loopButton.addEventListener('click', (e) => {
@@ -322,6 +325,7 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
 const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWithSpectrum) => {
   const spectogramButton = createControlButton('spectogram')
   spectogramButton.setAttribute('title', 'Spectrogram/Waveform')
+  spectogramButton.setAttribute('aria-label', 'Spectrogram/Waveform')
   const { spectrum, waveform } = parentNode.dataset
   if (startWithSpectrum){
     spectogramButton.classList.add('text-red-important');
@@ -335,6 +339,7 @@ const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWith
 const createRulerButton = (parentNode) => {
   const rulerButton = createControlButton('ruler')
   rulerButton.setAttribute('title', 'Ruler')
+  rulerButton.setAttribute('aria-label', 'Ruler')
   rulerButton.classList.add('text-20')
   rulerButton.addEventListener('click', () => {
     if (parentNode.dataset.rulerActive !== undefined){
@@ -515,7 +520,9 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
   const favoriteButton = createControlButton('bookmark')
   const unfavoriteButton = createControlButton('bookmark-filled')
   favoriteButton.setAttribute('title', 'Bookmark this sound')
+  favoriteButton.setAttribute('aria-label', 'Bookmark this sound')
   unfavoriteButton.setAttribute('title', 'Remove bookmark')
+  unfavoriteButton.setAttribute('aria-label', 'Remove bookmark')
   favoriteButtonContainer.classList.add(
     'bw-player__favorite',
     'stop-propagation'
@@ -553,6 +560,7 @@ const createSimilarSoundsButton = (parentNode, playerImgNode) => {
   const similarSoundsButtonContainer = document.createElement('div')
   const similarSoundsButton = createControlButton('similar')
   similarSoundsButton.setAttribute('title', 'Find similar sounds')
+  similarSoundsButton.setAttribute('aria-label', 'Find similar sounds')
   similarSoundsButtonContainer.classList.add(
     'bw-player__similar',
     'stop-propagation'
@@ -578,6 +586,7 @@ const createRemixGroupButton = (parentNode, playerImgNode) => {
   const remixGroupButtonContainer = document.createElement('div')
   const remixGroupButton = createControlButton('remix')
   remixGroupButton.setAttribute('title', 'See sound\'s remix group')
+  remixGroupButton.setAttribute('aria-label', 'See sound\'s remix group')
   remixGroupButtonContainer.classList.add(
     'bw-player__remix',
     'stop-propagation'

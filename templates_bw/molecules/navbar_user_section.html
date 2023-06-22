@@ -4,7 +4,7 @@
 {% if request.user.is_authenticated %}
     {% cache 3600 bw_user_header request.user.id %}
         <li class="bw-nav__action dropdown">
-            <a class="bw-link--grey avatar bw-nav__menu--avatar-with{% if not num_messages and new_tickets_count < 1 %}out{% endif %}-notifications dropdown-toggle no-hover cursor-pointer" id="avatar-menu"
+            <a class="bw-link--grey avatar bw-nav__menu--avatar-with{% if not num_messages and new_tickets_count < 1 %}out{% endif %}-notifications dropdown-toggle no-hover cursor-pointer" title="User menu" id="avatar-menu"
                aria-haspopup="true" aria-expanded="false" data-toggle="dropdown">
                 {% bw_user_avatar request.user.profile.locations.avatar.S.url request.user.username 32 %}
             </a>

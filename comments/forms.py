@@ -48,5 +48,5 @@ class BwCommentForm(CommentForm):
         self.fields['comment'].widget.attrs['rows'] = False
         self.fields['comment'].widget.attrs['cols'] = False
         self.fields['comment'].label = ""
-        self.fields['comment'].help_text = "You can refer to a specific second of the sound using the syntax #mm:ss (e.g., use #1:34 to refer to 1 minute and 23 seconds)."
+        self.fields['comment'].help_text = "You can add comments with a timestamp using the syntax #minute:second (e.g., \"The sound in #1:34 is really neat\")."
         #self.fields['comment'].widget.attrs['class'] = 'unsecure-image-check'

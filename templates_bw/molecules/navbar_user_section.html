@@ -12,6 +12,9 @@
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'account' request.user.username %}">Your profile</a>
                 </li>
+                <li class="bw-nav__action dropdown-item d-lg-none">
+                    <a class="bw-link--black" href="{% url 'accounts-upload' %}">Upload sounds</a>
+                </li>
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
                 </li>
@@ -48,7 +51,7 @@
             <a class="btn-secondary no-hover" href="{% url 'donate' %}">Donate</a>
         </li>
         <li class="bw-nav__action d-none d-lg-flex">
-            <a class="btn-primary no-hover" href="{% url 'accounts-upload' %}">Upload sound</a>
+            <a class="btn-primary no-hover" href="{% url 'accounts-upload' %}">Upload sounds</a>
         </li>
     {% endcache %}
 {% else %}

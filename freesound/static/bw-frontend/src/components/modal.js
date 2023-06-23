@@ -116,9 +116,11 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
         const modalContainerId = genericModalWrapper.getElementsByClassName('modal')[0].id;
         const modalContainer = document.getElementById(modalContainerId);
         
-        // Make modal visible
+        // Make modal visible (and set aria properties)
         modalContainer.classList.add('show');
         modalContainer.style.display = 'block';
+        modalContainer.setAttribute('aria-hidden', 'false');
+        bwPageElement.setAttribute('aria-hidden', 'true');
         
         // Add dismiss click handler including call to callback if defined
         const modalDismiss = [...modalContainer.querySelectorAll('[data-dismiss="modal"]')];
@@ -215,6 +217,8 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
           const modalContainer = document.getElementById(modalContainerId);
           modalContainer.classList.add('show');
           modalContainer.style.display = 'block';
+          modalContainer.setAttribute('aria-hidden', 'false');
+          bwPageElement.setAttribute('aria-hidden', 'true');
           
           // Re-run modal initialization
           const form = modalContainer.getElementsByTagName('form')[0];

@@ -11,8 +11,8 @@
   }
 
   &.bw-player__img-container--minimal {
-    height: 20px;
-    width: 43px;
+    height: 25px;
+    width: 50px;
   }
 }
 
@@ -106,6 +106,10 @@
 
   &.bw-player__controls--minimal {
     opacity: 1;
+
+    .loop-button {
+      opacity: 1; /* In minimal player, the loop button is visible from start */
+    }
   }
 }
 

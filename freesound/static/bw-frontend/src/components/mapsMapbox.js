@@ -1,7 +1,7 @@
-import {initPlayersInModal, stopPlayersInModal} from './modal';
+import {initPlayersInModal} from './modal';
 import {bindSimilarSoundModals} from './similarSoundsModal';
 import {bindBookmarkSoundButtons} from './bookmarkSound';
-import {bindRemixSoundModals} from './remixGroupModal';
+import {bindRemixGroupModals} from './remixGroupModal';
 import {stopAllPlayers} from '../components/player/utils'
 
 
@@ -261,16 +261,11 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                         const zoomLinkElement = document.getElementById('infoWindowZoomLink-' + sound_id);
                         zoomLinkElement.onclick = () => {setMaxZoomCenter(zoomLinkElement.dataset.lat, zoomLinkElement.dataset.lon, zoomLinkElement.dataset.zoom)};
 
-                        // Stop sound on popup close
-                        popup.on('close', function(e) {
-                            stopPlayersInModal(document.getElementById('infoWindowPlayerWrapper-' + sound_id));
-                        });
-
                         // Init sound player inside popup
                         initPlayersInModal(document.getElementById('infoWindowPlayerWrapper-' + sound_id));
                         bindSimilarSoundModals();
                         bindBookmarkSoundButtons();
-                        bindRemixSoundModals();
+                        bindRemixGroupModals();
                     });
                 });
 

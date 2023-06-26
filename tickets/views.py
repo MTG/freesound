@@ -290,8 +290,8 @@ def assign_sounds(request):
     tvars = {"new_sounds_users": new_sounds_users,
              "order": order,
              "unsure_tickets": unsure_tickets,
-             "tardy_moderator_tickets": tardy_moderator_tickets[:5],
-             "tardy_user_tickets": tardy_user_tickets[:5],
+             "tardy_moderator_tickets": tardy_moderator_tickets,
+             "tardy_user_tickets": tardy_user_tickets,
              "tardy_moderator_tickets_count": tardy_moderator_tickets_count,
              "tardy_user_tickets_count": tardy_user_tickets_count,
              "moderator_tickets_count": sounds_in_moderators_queue_count
@@ -382,7 +382,7 @@ def moderation_assign_user_pending(request, user_id):
 
 @permission_required('tickets.can_moderate')
 @transaction.atomic()
-def moderation_assign_single_ticket(request, user_id, ticket_id):
+def moderation_assign_single_ticket(request, ticket_id):
     # REASSIGN SINGLE TICKET
     ticket = Ticket.objects.get(id=ticket_id)
     ticket.assignee = User.objects.get(id=request.user.id)

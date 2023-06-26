@@ -55,7 +55,7 @@ urlpatterns = [
         views.moderation_assigned,
         name='tickets-moderation-assigned'),
 
-    path('moderation/assign/ticket/<int:user_id>/<int:ticket_id>/',
+    path('moderation/assign/ticket/<int:ticket_id>/',
         views.moderation_assign_single_ticket,
         name='tickets-moderation-assign-single-ticket'),
 

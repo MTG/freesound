@@ -1,13 +1,94 @@
 {% extends "simple_page.html" %}
 {% load static %}
+{% load bw_templatetags %}
+{% load display_ticket %}
 {% block title %}Moderation - Assign sounds{% endblock %}
 {% block page-title %}Moderation{% endblock %}
 
 {% block page-content %}
 {% include 'moderation/moderation_navbar.html' %}
 <div class="v-spacing-top-4">
+    <h3>Sounds pending moderation (grouped by user)</h3>    
+    {% if new_sounds_users %}
+        <form action="." method="GET">
+        <div class="v-spacing-top-4 v-spacing-2">
+            <span class="text-light-grey"><b>Sort by:</b></span>
+            <select id="sort-by" name="order" onchange="this.form.submit()">
+                <option value="" {% ifequal order "" %}selected{% endifequal %}>Days in queue</option>
+                <option value="username" {% ifequal order "username" %}selected{% endifequal %}>Username</option>
+                <option value="new_count" {% ifequal order "new_count" %}selected{% endifequal %}>Number of sounds</option>
+            </select>
+        </div>
+        </form>
+        <div class="row v-spacing-top-4">
+        {% for item in new_sounds_users %}
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="start">
+                <div>
+                    {% bw_user_avatar item.user.profile.locations.avatar.L.url item.user.username 70 %}
+                </div>
+                <div class="padding-left-3">
+                    <a href="{% url "account" item.username %}">{{ item.username }}</a>
+                    <br><a href="{% url "tickets-user-pending_sounds" item.username %}">{{ item.new_count }} new sound{{ item.new_count|pluralize }}</a>
+                    <br><span class="text-grey">{{ item.time }} day{{ item.time|pluralize }} in queue</span>
+                </div>
+            </div>
+            <div class="v-spacing-top-2 padding-bottom-5 center">
+                <a class="btn-inverse no-hover" href="{% url 'tickets-moderation-assign-user-new' item.user.id %}">{% bw_icon "plus" %}Assign to me</a>
+            </div>
+        </div>
+        {% endfor %}
+        </div>
+        <div class="v-spacing-top-4 center">
+            <a class="btn-primary no-hover" href="{% url 'tickets-moderation-assign-all-new' %}">{% bw_icon "plus" %}Assign all new sounds to me</a>
+        </div>
+    {% else %}
+        <div class="v-spacing-top-4 v-spacing-2">
+            <h5>No new sounds... &#128543</h5>
+            <p class="text-grey v-spacing-2">It looks like there are no sounds to moderate</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="v-spacing-top-6">
+    <h3>Sounds by tardy moderators ({{tardy_moderator_tickets_count}})</h3>
+    <p>Sounds in this list have already been assigned to a moderator but have still not been moderated. Feel free to assign any of this to your queue.</p>
+    <div class="row v-spacing-top-4">
+    {% for ticket in tardy_moderator_tickets|slice:"0:8" %}
+        <div class="col-6 col-md-4 col-lg-3">
+            {% display_ticket ticket %}
+        </div>
+    {% endfor %}
+    </div>
+    {% if tardy_moderator_tickets %}
+    <div class="v-spacing-top-4 center">
+        <button class="btn-primary">See all sounds by tardy moderators</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="v-spacing-top-6">
+    <h3>Sounds by tardy users ({{tardy_user_tickets_count}})</h3>   
+    <p>Sounds in this list belong to users that are not responding to moderators' requests.</p>
+    <div class="row v-spacing-top-4">
+    {% for ticket in tardy_user_tickets|slice:"0:8" %}
+        <div class="col-6 col-md-4 col-lg-3">
+            {% display_ticket ticket %}
+        </div>
+    {% endfor %}
+    </div>
+    {% if tardy_user_tickets %}
+    <div class="v-spacing-top-4 center">
+        <button class="btn-primary">See all sounds by tardy users</a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
+
+{% comment %}
+In the old UI there used to be a section here with "returned" sounds, but I quite certain this was not being used as sounds returned to the
+queue appeared at the top section of this page. I'm not adding this section to the new UI for now. If it is needed in the future, we can add it. 
+{% endcomment %}
 
 {% block extrabody %}
 <script src="{% static 'bw-frontend/dist/moderation.js' %}"></script>

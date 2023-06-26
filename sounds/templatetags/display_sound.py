@@ -159,6 +159,10 @@ def display_sound_small_no_info(context, sound):
     return display_sound(context, sound, player_size='small_no_info', show_rate_widget=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small_no_info_no_buttons(context, sound):
+    return display_sound(context, sound, player_size='small_no_info', show_rate_widget=False, show_bookmark=False, show_similar_sounds=False, show_remix=False)
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_minimal(context, sound):
     return display_sound(context, sound, player_size='minimal')
 

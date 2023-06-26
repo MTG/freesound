@@ -35,18 +35,23 @@
                     {% endif %}
                 </div>
                 <div>
-                    <div class="v-spacing-5 v-spacing-top-2">
-                    {% if not describing %}
-                        {% display_sound_big_no_info_no_bookmark sound_objects|element_at_index:forloop.counter0 %}
-                    {% else %}
-                        {% with files_data_for_players|element_at_index:forloop.counter0 as sound_data %}
-                            {% if sound_data %}
-                                {% display_sound_big_no_sound_object sound_data %}
-                            {% else %}
-                                <div class="center text-grey bg-navy-light-grey padding-7">Sound player not currently available</div>
-                            {% endif %}
-                        {% endwith %}
-                    {% endif %}
+                    <div class="text-center v-spacing-top-2">
+                        <span data-target="sound-player-{{ forloop.counter0 }}" data-show-text="Show player" data-hide-text="Hide player" {% if num_forms > 1 %}data-hide-on-load{% endif %} class="collapsable-toggle"></span>
+                    </div>
+                    <div class="collapsable-block" id="sound-player-{{ forloop.counter0 }}">
+                        <div class="v-spacing-5 v-spacing-top-2">
+                        {% if not describing %}
+                            {% display_sound_big_no_info_no_bookmark sound_objects|element_at_index:forloop.counter0 %}
+                        {% else %}
+                            {% with files_data_for_players|element_at_index:forloop.counter0 as sound_data %}
+                                {% if sound_data %}
+                                    {% display_sound_big_no_sound_object sound_data %}
+                                {% else %}
+                                    <div class="center text-grey bg-navy-light-grey padding-7">Sound player not currently available</div>
+                                {% endif %}
+                            {% endwith %}
+                        {% endif %}
+                        </div>
                     </div>
                     
                     <div>

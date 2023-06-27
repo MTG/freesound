@@ -10,6 +10,7 @@ import './commentsModal';
 import './cookieConsent';
 import './djangoMessages';
 import './downloadersModals';
+import './pendingModerationModal';
 import './dropdown';
 import './explicit';
 import './flagging';

@@ -28,6 +28,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User, Group
 from django.db import transaction
 from django.db.models import Count, Min, Q, F
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from general.tasks import whitelist_user
@@ -612,6 +613,9 @@ def get_pending_sounds(user):
 @permission_required('tickets.can_moderate')
 @redirect_if_old_username_or_404
 def pending_tickets_per_user(request, username):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?pending=1')
+    
     user = request.parameter_user
     tickets_sounds = get_pending_sounds(user)
     pendings = []
@@ -643,7 +647,10 @@ def pending_tickets_per_user(request, username):
              "no_assign_button": no_assign_button}
     tvars.update(paginated)
 
-    return render(request, 'accounts/pending.html', tvars)
+    if using_beastwhoosh(request):
+        return render(request, 'moderation/modal_pending.html', tvars)
+    else:
+        return render(request, 'accounts/pending.html', tvars)
 
 
 @permission_required('tickets.can_moderate')

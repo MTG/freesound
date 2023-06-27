@@ -29,7 +29,9 @@
                 </div>
                 <div class="padding-left-3">
                     <a href="{% url "account" item.username %}">{{ item.username }}</a>
-                    <br><a href="{% url "tickets-user-pending_sounds" item.username %}">{{ item.new_count }} new sound{{ item.new_count|pluralize }}</a>
+                    <br><a class="bw-link--black" data-toggle="pending-moderation-modal" data-modal-content-url="{% url "tickets-user-pending_sounds" item.username %}?ajax=1" href="javascript:void(0);">
+                        {{ item.new_count }} new sound{{ item.new_count|pluralize }}
+                    </a>
                     <br><span class="text-grey">{{ item.time }} day{{ item.time|pluralize }} in queue</span>
                 </div>
             </div>

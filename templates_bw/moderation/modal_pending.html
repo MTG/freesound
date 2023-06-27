@@ -1,0 +1,23 @@
+{% extends "molecules/modal_base.html" %}
+{% load util %}
+{% load bw_templatetags %}
+{% load display_sound %}
+
+{% block id %}pendingModerationModal{% endblock %}
+{% block extra-class %}modal-width-80{% endblock %}
+{% block aria-label %}{{ user.username}}'s sounds pending moderation{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h4 class="v-spacing-5"><a href="{% url "account" user.username %}">{{user.username}}</a>'s sounds pending moderation</h4>
+    </div>
+    <div class="v-spacing-4">
+        {% if paginator.count > 0 %}           
+                
+        {% else %}
+            
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

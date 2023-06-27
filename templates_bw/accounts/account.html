@@ -71,7 +71,7 @@
                                 </a>
                             </li>
                             <li class="bw-nav__action dropdown-item">
-                                <a class="bw-link--black" href="{% url "tickets-user-pending_sounds" user.username %}">
+                                <a class="bw-link--black" data-toggle="pending-moderation-modal" data-modal-content-url="{% url "tickets-user-pending_sounds" user.username %}?ajax=1" data-modal-activation-param="pending_moderation" href="javascript:void(0);">
                                     Sounds pending moderation ({{ num_sounds_pending_count }})
                                 </a>
                             </li>

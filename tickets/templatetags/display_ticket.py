@@ -20,18 +20,28 @@
 
 from django import template
 
+from sounds.models import Sound
+
 register = template.Library()
 
 
 @register.inclusion_tag('moderation/display_ticket.html', takes_context=True)
-def display_ticket(context, ticket):
+def display_ticket(context, ticket, sound=None, include_last_message=False):
+    if sound == None:
+        sound = Sound.objects.bulk_query_id(sound_ids=ticket.sound_id)[0]
     ticket_messages = ticket.messages.all()
     num_messages = len(ticket_messages)
     tvars = {
         'request': context['request'],
         'media_url': context['media_url'],
         'ticket': ticket,
+        'sound': sound,
+        'include_last_message': include_last_message,
         'num_messages': num_messages,
-        'last_message': ticket_messages[0] if num_messages else None
+        'last_message': ticket_messages[0] if num_messages and include_last_message else None
     }
     return tvars
+
+@register.inclusion_tag('moderation/display_ticket.html', takes_context=True)
+def display_ticket_with_message(context, ticket, sound=None):
+    return display_ticket(context, ticket, sound=sound, include_last_message=True)

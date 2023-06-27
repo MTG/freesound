@@ -606,7 +606,11 @@ def get_pending_sounds(user):
     for user_ticket in user_tickets:
         sound = user_ticket.sound
         if sound.processing_state == 'OK' and sound.moderation_state == 'PE':
-            ret.append( (user_ticket, sound) )
+            ret.append( (user_ticket, sound.id) )
+    # Now replace sound_ids in "ret" for actual sound objects ready to be used in display_sound
+    sound_objects = Sound.objects.dict_ids(sound_ids=[sound_id for _, sound_id in ret])
+    for i in range(0, len(ret)):
+        ret[i] = (ret[i][0], sound_objects[ret[i][1]])
     return ret
 
 
@@ -614,7 +618,7 @@ def get_pending_sounds(user):
 @redirect_if_old_username_or_404
 def pending_tickets_per_user(request, username):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('account', args=[username]) + '?pending=1')
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?pending_moderation=1')
     
     user = request.parameter_user
     tickets_sounds = get_pending_sounds(user)

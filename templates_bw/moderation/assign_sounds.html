@@ -46,7 +46,7 @@
         </div>
     {% else %}
         <div class="v-spacing-top-4 v-spacing-2">
-            <h5>No new sounds... &#128543</h5>
+            <h5>No new sounds... &#128522</h5>
             <p class="text-grey v-spacing-2">It looks like there are no sounds to moderate</p>
         </div>
     {% endif %}
@@ -58,7 +58,7 @@
     <div class="row v-spacing-top-4">
     {% for ticket in tardy_moderator_tickets|slice:"0:8" %}
         <div class="col-6 col-md-4 col-lg-3">
-            {% display_ticket ticket %}
+            {% display_ticket_with_message ticket %}
         </div>
     {% endfor %}
     </div>
@@ -75,7 +75,7 @@
     <div class="row v-spacing-top-4">
     {% for ticket in tardy_user_tickets|slice:"0:8" %}
         <div class="col-6 col-md-4 col-lg-3">
-            {% display_ticket ticket %}
+            {% display_ticket_with_message ticket %}
         </div>
     {% endfor %}
     </div>

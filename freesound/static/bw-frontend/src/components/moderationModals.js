@@ -1,6 +1,6 @@
 import {handleGenericModal, bindModalActivationElements, activateModalsIfParameters, initPlayersInModal, stopPlayersInModal} from './modal';
 
-const handlePendingModerationModal = (modalUrl, modalActivationParam, atPage) => {
+const handleModerationModal = (modalUrl, modalActivationParam, atPage) => {
     if ((atPage !== undefined) && modalUrl.indexOf('&page') == -1){
         modalUrl += '&page=' + atPage;
     }
@@ -15,11 +15,15 @@ const handlePendingModerationModal = (modalUrl, modalActivationParam, atPage) =>
     }, true, true, modalActivationParam);
 }
 
-const bindPendingModerationModals = (container) => {
-    bindModalActivationElements('[data-toggle="pending-moderation-modal"]', handlePendingModerationModal, container);
+const bindModerationModals = (container) => {
+    bindModalActivationElements('[data-toggle="pending-moderation-modal"]', handleModerationModal, container);
+    bindModalActivationElements('[data-toggle="tardy-users-modal"]', handleModerationModal, container);
+    bindModalActivationElements('[data-toggle="tardy-moderators-modal"]', handleModerationModal, container);
 }
 
-bindPendingModerationModals();
-activateModalsIfParameters('[data-toggle="pending-moderation-modal"]', handlePendingModerationModal);
+bindModerationModals();
+activateModalsIfParameters('[data-toggle="pending-moderation-modal"]', handleModerationModal);
+activateModalsIfParameters('[data-toggle="tardy-users-modal"]', handleModerationModal);
+activateModalsIfParameters('[data-toggle="tardy-moderators-modal"]', handleModerationModal);
 
-export {bindPendingModerationModals};
+export {bindModerationModals};

@@ -28,7 +28,10 @@ register = template.Library()
 @register.inclusion_tag('moderation/display_ticket.html', takes_context=True)
 def display_ticket(context, ticket, sound=None, include_last_message=False):
     if sound == None:
-        sound = Sound.objects.bulk_query_id(sound_ids=ticket.sound_id)[0]
+        if ticket.sound_id is not None:
+            sound = Sound.objects.bulk_query_id(sound_ids=ticket.sound_id)[0]
+        else:
+            sound = None
     ticket_messages = ticket.messages.all()
     num_messages = len(ticket_messages)
     tvars = {

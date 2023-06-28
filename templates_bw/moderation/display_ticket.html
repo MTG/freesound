@@ -1,13 +1,26 @@
 {% load display_sound %}
 {% load bw_templatetags %}
 <div>
-    {% display_sound_small_no_info_no_buttons sound %}
+    {% if sound is not None %}
+        {% display_sound_small_no_info_no_buttons sound %}
+    {% else %}
+        <div class="bw-player-small-thumbnail-empty-space center middle text-grey">No sound available for this ticket</div>
+    {% endif %}
 </div>
 <div class="v-spacing-top-2 text-grey">
-    {% bw_icon "file-text" %} Ticket: <a href="{% url 'tickets-ticket' ticket.key %}">{{ ticket.title }}</a> by <a class="bw-link--black" href="{% url "account" sound.user.username %}">{{ sound.user.username }}</a>
-    <br><span class="text-blue">{% if ticket.assignee %}Assigned to {% if ticket.assignee != request.user.username %}{{ticket.assignee}}{% else %}you{% endif %}{% else %}{% bw_icon "notification" %}Unassigned{% endif %}</span><span class="h-spacing-left-1 h-spacing-1">·</span>{{ num_messages }} message{{ num_messages|pluralize }} 
+    <div>
+        {% bw_icon "file-text" %} Ticket: <a href="{% url 'tickets-ticket' ticket.key %}">{{ ticket.title }}</a> by <a class="bw-link--black" href="{% url "account" ticket.sender.username %}">{{ ticket.sender.username }}</a>
+    </div>
+    <div>
+        <span class="text-grey">{{ ticket.created|timesince }} ago</span>
+    </div>
+    <div>
+        <span class="text-blue">{% if ticket.assignee %}Assigned to {% if ticket.assignee != request.user %}{{ticket.assignee}}{% else %}you{% endif %}{% else %}{% bw_icon "notification" %}Unassigned{% endif %}</span><span class="h-spacing-left-1 h-spacing-1">·</span>{{ num_messages }} message{{ num_messages|pluralize }} 
+    </div>
     {% if num_messages and include_last_message %}
-    <br>Last message by {% if last_message.sender %}{{last_message.sender.username}}{% else %}anonymous{% endif %}:
+    <div>
+        Last message by {% if last_message.sender %}{{last_message.sender.username}}{% else %}anonymous{% endif %}:
+    </div>
     <div class="moderation-unsure-ticket-last">
         <em>"{{ last_message.text | truncatechars:200 }}"</em>
     </div>

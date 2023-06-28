@@ -22,7 +22,7 @@
             {% endfor %}
         </div>
         <div class="v-spacing-top-5">
-            {% bw_paginator paginator page current_page request "sounds" %}
+            {% bw_paginator paginator page current_page request "tickets" %}
         </div>
         <div class="v-spacing-top-5 center">
             <a class="btn-primary no-hover" href="{% url 'tickets-moderation-assign-user-pending' user.id %}">{% bw_icon "plus" %}Assign all sounds to me</a>

@@ -237,7 +237,6 @@ def _get_unsure_sound_tickets():
 def _get_tardy_moderator_tickets():
     """Get tickets for moderators that haven't responded in the last day"""
     time_span = datetime.date.today() - datetime.timedelta(days=1)
-
     tt = Ticket.objects.filter(
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
@@ -250,13 +249,13 @@ def _get_tardy_moderator_tickets():
 def _get_tardy_user_tickets():
     """Get tickets for users that haven't responded in the last 2 days"""
     time_span = datetime.date.today() - datetime.timedelta(days=2)
-
     tt = Ticket.objects.filter(
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
         ~Q(last_commenter=F('sender')) &
         Q(comment_date__lt=time_span)
     )
+    tt = Ticket.objects.all()[0:20]
     return tt
 
 
@@ -307,30 +306,52 @@ def assign_sounds(request):
 
 @permission_required('tickets.can_moderate')
 def moderation_tardy_users_sounds(request):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?tardy_users=1')
+    
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
     tardy_user_tickets = _get_tardy_user_tickets()
-    paginated = paginate(request, tardy_user_tickets, 10)
+    paginated = paginate(request, tardy_user_tickets, settings.SOUNDS_PENDING_MODERATION_PER_PAGE)
 
     tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
              "tardy_user_tickets": tardy_user_tickets,
              "selected": "assigned"}
     tvars.update(paginated)
 
-    return render(request, 'tickets/moderation_tardy_users.html', tvars)
+    if using_beastwhoosh(request):
+        # Retrieve sound objects using bulk stuff so extra sound information is retrieved in one query
+        sound_objects = Sound.objects.dict_ids(sound_ids=[ticket.sound_id for ticket in tvars['page'].object_list])
+        for ticket in tvars['page'].object_list:
+            ticket.sound_obj = sound_objects.get(ticket.sound_id, None)
+        tvars.update({'type': 'tardy_users'})
+        return render(request, 'moderation/modal_tardy.html', tvars)
+    else:
+        return render(request, 'tickets/moderation_tardy_users.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
 def moderation_tardy_moderators_sounds(request):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?tardy_moderators=1')
+    
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
     tardy_moderators_tickets = _get_tardy_moderator_tickets()
-    paginated = paginate(request, tardy_moderators_tickets, 10)
+    paginated = paginate(request, tardy_moderators_tickets, settings.SOUNDS_PENDING_MODERATION_PER_PAGE)
 
     tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
              "tardy_moderators_tickets": tardy_moderators_tickets,
              "selected": "assigned"}
     tvars.update(paginated)
 
-    return render(request, 'tickets/moderation_tardy_moderators.html', tvars)
+    if using_beastwhoosh(request):
+        # Retrieve sound objects using bulk stuff so extra sound information is retrieved in one query
+        sound_objects = Sound.objects.dict_ids(sound_ids=[ticket.sound_id for ticket in tvars['page'].object_list])
+        for ticket in tvars['page'].object_list:
+            ticket.sound_obj = sound_objects.get(ticket.sound_id, None)
+        tvars.update({'type': 'tardy_moderators'})
+        return render(request, 'moderation/modal_tardy.html', tvars)
+    else:
+        return render(request, 'tickets/moderation_tardy_moderators.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
@@ -610,7 +631,7 @@ def get_pending_sounds(user):
     # Now replace sound_ids in "ret" for actual sound objects ready to be used in display_sound
     sound_objects = Sound.objects.dict_ids(sound_ids=[sound_id for _, sound_id in ret])
     for i in range(0, len(ret)):
-        ret[i] = (ret[i][0], sound_objects[ret[i][1]])
+        ret[i] = (ret[i][0], sound_objects.get(ret[i][1], None))
     return ret
 
 

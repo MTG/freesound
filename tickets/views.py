@@ -255,7 +255,6 @@ def _get_tardy_user_tickets():
         ~Q(last_commenter=F('sender')) &
         Q(comment_date__lt=time_span)
     )
-    tt = Ticket.objects.all()[0:20]
     return tt
 
 

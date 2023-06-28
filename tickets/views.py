@@ -184,7 +184,17 @@ def ticket(request, ticket_key):
              "tc_form": tc_form,
              "sound_form": sound_form,
              "can_view_moderator_only_messages": can_view_moderator_only_messages}
-    return render(request, 'tickets/ticket.html', tvars)
+    if using_beastwhoosh(request):
+        sound_object = Sound.objects.bulk_query_id(sound_ids=[ticket.sound_id])[0] if ticket.sound_id is not None else None
+        if sound_object is not None:
+            sound_object.show_processing_status = True
+            sound_object.show_moderation_status = True
+        tvars.update({
+            'sound': sound_object
+        })
+        return render(request, 'moderation/ticket.html', tvars)
+    else:
+        return render(request, 'tickets/ticket.html', tvars)
 
 
 # In the next 2 functions we return a queryset os the evaluation is lazy.

@@ -1,0 +1,90 @@
+{% extends "simple_page.html" %}
+{% load static %}
+{% load bw_templatetags %}
+{% load display_sound %}
+{% block title %}Moderation ticket #{{ ticket.id }}{% endblock %}
+{% block page-title %}Moderation ticket #{{ ticket.id }}{% endblock %}
+
+{% block page-content %}
+<div class="v-spacing-top-4">
+    <h3 class="text-grey">Ticket details</h3> 
+    <div class="row">
+        <div class="col-lg-6">
+            <table class="w-100 v-spacing-top-2 v-spacing-1">
+                <tr><td class="text-grey">Assigned to</td><td>
+                    {% if ticket.assignee %}
+                    <a href="{% url "account" ticket.assignee.username %}">{{ ticket.assignee.username }}</a>
+                    {% else %}
+                    <span class="text-blue">{% bw_icon "notification" %} Unassigned</span>
+                    {% endif %}
+                </td></tr>
+                <tr><td class="text-grey">Created by</td><td>
+                    {% if ticket.sender %}
+                    <a href="{% url "account" ticket.sender.username %}">{{ ticket.sender.username }}</a>
+                    {% if perms.tickets.can_moderate %}
+                    (<a class="bw-link--black" data-toggle="pending-moderation-modal" data-modal-content-url="{% url "tickets-user-pending_sounds" ticket.sender.username %}?ajax=1" href="javascript:void(0);">{{ num_sounds_pending }} pending</a>)
+                    {% endif %}
+                    {% else %}
+                    anonymous
+                    {% endif %}
+                </td></tr>
+                <tr><td class="text-grey">Created on</td><td>{{ ticket.created }} ({{ ticket.created|timesince }} ago)</td></tr>
+                <tr><td class="text-grey">Last modified on</td><td>{{ ticket.modified }} ({{ ticket.modified|timesince }} ago)</td></tr>
+                <tr><td class="text-grey">Status</td><td>
+                    <b>{{ ticket.status|capfirst }}</b>
+                </td></tr>
+            </table>
+            {% if perms.tickets.can_moderate and ticket.assignee.id != user.id %}
+            <div class="center v-spacing-top-2">
+                <a class="btn-inverse no-hover" href="{% url 'tickets-moderation-assign-single-ticket' ticket.id %}">{% bw_icon "plus" %}Assign to me</a>
+            </div>
+            {% endif %}
+        </div>
+        <div class="offset-lg-1 col-lg-4">
+            {% if sound is not None %}
+                {% display_sound_small sound %}
+            {% else %}
+                <div class="bw-player-small-thumbnail-empty-space center middle text-grey">No sound available for this ticket</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6 v-spacing-top-4">
+        <h3 class="text-grey">Messages ({{ticket.messages.all.count}})</h3>
+        <div>
+        {% for message in ticket.messages.all reversed %}
+            {% if not message.moderator_only or can_view_moderator_only_messages %}
+            <p>{% if message.sender %} <a href="{% url "account" message.sender.username %}">{{ message.sender.username }}</a> {% else %} Anonymous {% endif %} <span class="text-grey">({{ message.created }})</span></p>
+            <p class="message-list-message message-list-message{% if message.moderator_only %}-mod{% else %}-nomod{%endif%}">{{ message.text|safe|linebreaksbr }}</p>
+            {% endif %}
+        {% endfor %}
+        {% if request.user.is_authenticated %}
+            <form method="post" action="." class="bw-form">
+                {% csrf_token %}
+                {{tc_form}}
+                <button class="btn-inverse">Add message to ticket</button>
+            </form>
+        {% else %}
+            <p>Please <a href="{% url "login" %}?next={% url "tickets-ticket" ticket.key %}">log in</a> to add messages</p>
+        {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4 offset-md-1 v-spacing-top-4">
+        <h3 class="text-grey">Actions</h3> 
+        {% if perms.tickets.can_moderate and sound %}
+        <form action="." method="post" class="bw-form">{% csrf_token %}
+            {{ sound_form.as_p }}
+            <button class="btn-primary v-spacing-top-4">Update ticket</button>
+        </form>
+        {% else %}
+        You do not have permission to carry out any actions or the ticket has no sound.
+        {% endif %}
+    </div>
+</div> 
+{% endblock %}
+
+{% block extrabody %}
+<script src="{% static 'bw-frontend/dist/moderation.js' %}"></script>
+{% endblock %}
+    

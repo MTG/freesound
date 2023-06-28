@@ -30,7 +30,7 @@
             <div>
                 <span class="text-grey">{{ sound.created|timesince }} ago</span>
             </div>
-            <div class="v-spacing-top-1 overflow-hidden" style="height:54px;">
+            <div class="v-spacing-top-1 overflow-hidden" style="max-height:54px;">
                 {{ sound.description|striptags|safe|truncatechars_html:55 }}
             </div>
         </div>
@@ -43,6 +43,11 @@
         {% if sound.show_processing_status %}
         <div class="v-spacing-3 v-spacing-top-negative-2">
             {% include 'sounds/sound_state_processing_indicator.html' %}
+        </div>
+        {% endif %}
+        {% if sound.show_moderation_status %}
+        <div class="v-spacing-3 v-spacing-top-negative-2">
+            {% include 'sounds/sound_state_moderation_indicator.html' %}
         </div>
         {% endif %}
 

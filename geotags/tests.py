@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from past.utils import old_div
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -95,5 +94,5 @@ class GeoTagsTests(TestCase):
 
         resp = self.client.get(reverse('geotags-barray', kwargs={'tag': tag}))
         # Response contains 3 int32 objects per sound: id, lat and lng. Total size = 3 * 4 bytes = 12 bytes
-        n_sounds = old_div(len(resp.content), 12)
+        n_sounds = len(resp.content) // 12
         self.assertEqual(n_sounds, 2)

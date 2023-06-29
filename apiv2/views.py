@@ -18,11 +18,10 @@
 #     See AUTHORS file.
 #
 
-
-from past.utils import old_div
 import datetime
 import json
 import logging
+import math
 import os
 from collections import OrderedDict
 from urllib.parse import quote
@@ -213,8 +212,7 @@ class ContentSearch(GenericAPIView):
         page = paginator.page(search_form.cleaned_data['page'])
         response_data = dict()
         if self.analysis_file:
-            response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name,
-                                                                    old_div(self.analysis_file._size,1024))
+            response_data['target_analysis_file'] = f'{self.analysis_file.name} ({self.analysis_file.size // 1024:d} KB)'
         response_data['count'] = paginator.count
         response_data['previous'] = None
         response_data['next'] = None
@@ -243,7 +241,7 @@ class ContentSearch(GenericAPIView):
                 sounds.append(sound)
             except:
                 # This will happen if there are synchronization errors between solr index, gaia and the database.
-                # In that case sounds are are set to null
+                # In that case sounds are set to null
                 sounds.append(None)
         response_data['results'] = sounds
 
@@ -256,8 +254,7 @@ class ContentSearch(GenericAPIView):
         # This view has a post version to handle analysis file uploads
         serializer = SimilarityFileSerializer(data=request.data)
         if serializer.is_valid():
-            analysis_file = request.FILES['analysis_file']
-            self.analysis_file = analysis_file
+            self.analysis_file = request.FILES['analysis_file']
             return self.get(request,  *args, **kwargs)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -327,8 +324,7 @@ class CombinedSearch(GenericAPIView):
 
         response_data = dict()
         if self.analysis_file:
-            response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name,
-                                                                    old_div(self.analysis_file._size,1024))
+            response_data['target_analysis_file'] = f'{self.analysis_file._name} ({self.analysis_file._size // 1024:d} KB)'
 
         # Build 'more' link (only add it if we know there might be more results)
         if 'no_more_results' not in extra_parameters:
@@ -336,8 +332,7 @@ class CombinedSearch(GenericAPIView):
                 response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'),
                                                                    include_page=False)
             else:
-                num_pages = old_div(count, search_form.cleaned_data['page_size']) + \
-                            int(count % search_form.cleaned_data['page_size'] != 0)
+                num_pages = math.ceil(count / search_form.cleaned_data['page_size'])
                 if search_form.cleaned_data['page'] < num_pages:
                     response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'),
                                                                        page=search_form.cleaned_data['page'] + 1)
@@ -1483,9 +1478,9 @@ def granted_permissions(request):
     # both cases.
 
     for token in tokens_raw:
-        if not token.application.apiv2_client.name in token_names:
+        if token.application.apiv2_client.name not in token_names:
             td = (token.expires - datetime.datetime.today())
-            seconds_to_expiration_date = old_div((td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6), 10**6)
+            seconds_to_expiration_date = td.total_seconds()
             tokens.append({
                 'client_name': token.application.apiv2_client.name,
                 'expiration_date': token.expires,
@@ -1500,9 +1495,9 @@ def granted_permissions(request):
     grants = []
     grant_and_token_names = token_names[:]
     for grant in grants_pending_access_token_request_raw:
-        if not grant.application.apiv2_client.name in grant_and_token_names:
+        if grant.application.apiv2_client.name not in grant_and_token_names:
             td = (grant.expires - datetime.datetime.today())
-            seconds_to_expiration_date = old_div((td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6), 10**6)
+            seconds_to_expiration_date = td.total_seconds()
             if seconds_to_expiration_date > 0:
                 grants.append({
                     'client_name': grant.application.apiv2_client.name,

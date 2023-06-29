@@ -18,11 +18,11 @@
 #     See AUTHORS file.
 #
 
-from past.utils import old_div
 import collections
 import datetime
 import json
 import logging
+import math
 import urllib.parse
 from urllib.parse import unquote
 
@@ -502,13 +502,13 @@ class ApiSearchPaginator:
     def __init__(self, results, count, num_per_page):
         self.num_per_page = num_per_page
         self.count = count
-        self.num_pages = old_div(count, num_per_page) + int(count % num_per_page != 0)
+        self.num_pages = math.ceil(count / num_per_page)
         self.page_range = list(range(1, self.num_pages + 1))
         self.results = results
 
     def page(self, page_num):
         has_next = page_num < self.num_pages
-        has_previous = page_num > 1 and page_num <= self.num_pages
+        has_previous = 1 < page_num <= self.num_pages
 
         return {'object_list': self.results,
                 'has_next': has_next,

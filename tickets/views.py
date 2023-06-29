@@ -36,7 +36,7 @@ from general.tasks import whitelist_user
 from .models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
-from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, AnonymousContactForm, \
+from tickets.forms import AnonymousMessageForm, BWAnonymousMessageForm, UserMessageForm, BWUserMessageForm, ModeratorMessageForm, BWModeratorMessageForm, \
     SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY
 from utils.cache import invalidate_user_template_caches
 from utils.frontend_handling import render, using_beastwhoosh
@@ -46,12 +46,15 @@ from wiki.models import Content, Page
 
 
 def _get_tc_form(request, use_post=True):
-    return _get_anon_or_user_form(request, AnonymousMessageForm, UserMessageForm, use_post)
+    return _get_anon_or_user_form(request, 
+                                  BWAnonymousMessageForm if using_beastwhoosh(request) else AnonymousMessageForm, 
+                                  BWUserMessageForm if using_beastwhoosh(request) else UserMessageForm, 
+                                  use_post)
 
 
 def _get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
-    if _can_view_mod_msg(request) and anonymous_form != AnonymousContactForm:
-        user_form = ModeratorMessageForm
+    if _can_view_mod_msg(request):
+        user_form = BWModeratorMessageForm if using_beastwhoosh(request) else ModeratorMessageForm
     if len(request.POST.keys()) > 0 and use_post:
         if request.user.is_authenticated:
             return user_form(request.POST)

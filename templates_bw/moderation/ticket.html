@@ -7,9 +7,9 @@
 
 {% block page-content %}
 <div class="v-spacing-top-4">
-    <h3 class="text-grey">Ticket details</h3> 
     <div class="row">
-        <div class="col-lg-6">
+        <div class="col-md-6">
+            <h3 class="text-grey">Ticket details</h3> 
             <table class="w-100 v-spacing-top-2 v-spacing-1">
                 <tr><td class="text-grey">Assigned to</td><td>
                     {% if ticket.assignee %}
@@ -40,33 +40,41 @@
             </div>
             {% endif %}
         </div>
-        <div class="offset-lg-1 col-lg-4">
+        <div class="offset-md-1 col-md-4">
+            <h3 class="text-grey">Sound</h3>
+            <div class="v-spacing-top-2">
             {% if sound is not None %}
                 {% display_sound_small sound %}
             {% else %}
                 <div class="bw-player-small-thumbnail-empty-space center middle text-grey">No sound available for this ticket</div>
             {% endif %}
+            </div>
         </div>
     </div>
 </div>
 <div class="row">
     <div class="col-md-6 v-spacing-top-4">
         <h3 class="text-grey">Messages ({{ticket.messages.all.count}})</h3>
-        <div>
+        <div class="v-spacing-top-2">
         {% for message in ticket.messages.all reversed %}
             {% if not message.moderator_only or can_view_moderator_only_messages %}
-            <p>{% if message.sender %} <a href="{% url "account" message.sender.username %}">{{ message.sender.username }}</a> {% else %} Anonymous {% endif %} <span class="text-grey">({{ message.created }})</span></p>
-            <p class="message-list-message message-list-message{% if message.moderator_only %}-mod{% else %}-nomod{%endif%}">{{ message.text|safe|linebreaksbr }}</p>
+            <div class="v-spacing-2">
+                <div>
+                    {% if message.sender %} <a href="{% url "account" message.sender.username %}">{{ message.sender.username }}</a> {% else %} Anonymous {% endif %}<span class="h-spacing-left-1 h-spacing-1 text-grey">·</span><span class="text-grey">{{ message.created }}</span>
+                    {% if message.moderator_only %}<span title="This message is only visible to other moderators" class="text-blue">{% bw_icon 'notification' 'rotate180' %}</span>{% endif %}
+                </div>
+                <div class="{% if message.moderator_only %}text-blue{%endif%}">{{ message.text|safe|linebreaksbr }}</div>
+            </div>
             {% endif %}
         {% endfor %}
         {% if request.user.is_authenticated %}
-            <form method="post" action="." class="bw-form">
+            <form method="post" action="." class="bw-form v-spacing-top-4">
                 {% csrf_token %}
                 {{tc_form}}
-                <button class="btn-inverse">Add message to ticket</button>
+                <button class="btn-inverse v-spacing-top-4">Add message to ticket</button>
             </form>
         {% else %}
-            <p>Please <a href="{% url "login" %}?next={% url "tickets-ticket" ticket.key %}">log in</a> to add messages</p>
+            <div class="v-spacing-top-3 v-spacing-3 text-center text-grey">Please <a href="{% url "login" %}?next={% url "tickets-ticket" ticket.key %}">log in</a> to add a message to this ticket</div>
         {% endif %}
         </div>
     </div>
@@ -78,7 +86,9 @@
             <button class="btn-primary v-spacing-top-4">Update ticket</button>
         </form>
         {% else %}
-        You do not have permission to carry out any actions or the ticket has no sound.
+        <div class="v-spacing-top-2 text-grey">
+            You do not have permissions to perform any actions or the ticket has no assigned sound.
+        </div>
         {% endif %}
     </div>
 </div> 

@@ -48,6 +48,18 @@
         </div>
     </div>
 
+    {% if show_link_to_new_ui %}
+    <div class="sidebar_box">
+        <h3>New Freesound user interface</h3>
+        <p>We are working on a new user interface which will replace the current one later this year. You can <b>try it today</b> and <a href="https://freesound.org/forum/beast_whoosh_beta_ui_feedback/">provide feedback</a> by clicking on the button below.
+        </p>
+        <a class="donation_button" style="padding-left:8px;float:initial;margin-top:-10px;margin-left:98px;margin-bottom:15px;" href="{% url 'front-page' %}?fend=bw">Try the new UI</a>
+        <div style="clear:both"></div>
+        <img src="{{media_url}}images/mini_screenshot.png" width="315px" alt="New UI screenshot" />
+        <div style="margin-bottom:15px">&nbsp;</div>
+    </div>
+    {% endif %}
+
     <!-- donations -->
     <div id="donation_box">
         <p><strong>Love Freesound?</strong></p>

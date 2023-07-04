@@ -28,29 +28,6 @@
     margin-top: 30px;
   }
 
-  table {
-    border-collapse: collapse;
-    margin-bottom: 18px;
-    padding: 4px;
-  }
-
-  th {
-    font-size: 15px;
-    font-weight: bold;
-    text-align: left;
-    padding: 6px 6px 6px 12px;
-  }
-
-  td {
-    padding: 6px 6px 6px 12px;
-  }
-
-  tr:nth-child(even) {
-    background: $almost-white;
-  }
-
-  
-
   table.diff {font-family:Courier; border:medium;}
   .diff_header {background-color:$almost-white;color:$black;}
   td.diff_header {text-align:right;color:$black;}

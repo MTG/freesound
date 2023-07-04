@@ -30,3 +30,4 @@ shareLinkElement.style.display = "none"
 
 // Pack geotags map
 makeSoundsMapWithStaticMapFirst('pack_geotags', 'map_canvas', 'static_map_wrapper')
+

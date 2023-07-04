@@ -29,7 +29,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('accounts/display_user.html', takes_context=True)
-def display_user(context, user, size='small', comment_created=None, donated_amount=None):
+def display_user(context, user, size='basic', comment_created=None, donated_amount=None):
     """This templatetag is used to display a user with some information next to it. It prepares some variables that
     are then passed to the display_user.html template to show user information.
 

@@ -23,10 +23,15 @@ const addVisibleCheckbox = (checkboxEl) => {
         checkboxEl.parentNode.insertBefore(visibleCheckboxContainer, checkboxEl.nextSibling);
         const checkboxIcon = document.createElement('span');
         checkboxIcon.className = 'bw-icon-checkbox';
+        checkboxIcon.setAttribute('role', 'checkbox');
+        checkboxIcon.setAttribute('aria-checked', checkboxEl.checked);
         if (checkboxEl.disabled) {
             checkboxIcon.classList.add('disabled');
         } 
         visibleCheckboxContainer.append(checkboxIcon);
+        checkboxEl.addEventListener('change', () => {
+            checkboxIcon.setAttribute('aria-checked', checkboxEl.checked)
+        })
     }
 };
 

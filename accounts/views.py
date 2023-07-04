@@ -41,6 +41,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import LoginView, PasswordResetCompleteView, PasswordResetConfirmView, \
     PasswordChangeView, PasswordChangeDoneView
 from django.contrib.postgres.search import SearchQuery, SearchVector
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.db import transaction
@@ -53,7 +54,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.http import base36_to_int
 from django.utils.http import int_to_base36
-from django.views.decorators.cache import never_cache, cache_page
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from oauth2_provider.models import AccessToken
 
@@ -322,7 +323,8 @@ def registration(request):
                 # will then take this URL and redirect the user.
                 next_param = request.GET.get('next', None)
                 if next_param is not None:
-                    return JsonResponse({'redirectURL': next_param + '?feedbackRegistration=1'})
+                    return JsonResponse({'redirectURL': next_param + '?feedbackRegistration=1' if '?' not in next_param \
+                                        else next_param + '&feedbackRegistration=1'})
                 else:
                     return JsonResponse({'redirectURL': reverse('front-page') + '?feedbackRegistration=1'})
             else:
@@ -340,13 +342,14 @@ def registration(request):
     if using_beastwhoosh(request):
         # In beastwhoosh we don't have a dedicated registration page, redirect to front-page and auto-open the
         # registration modal
-        return HttpResponseRedirect(f"{reverse('front-page')}?registration=1")
+        #return HttpResponseRedirect(f"{reverse('front-page')}?registration=1")
+        return render(request, 'accounts/modal_registration.html', {'registration_form': form})
     else:
         return render(request, 'accounts/registration.html', {'form': form})
 
 
 def activate_user(request, username, uid_hash):
-    # NOTE: in these views we overwrite "next_path" variable from the context processor so we make sure that if the
+    # NOTE: in these views we set "next_path" variable so we make sure that if the
     # login modal is used the user will be redirected to the front-page instead of that same page
 
     try:
@@ -521,17 +524,6 @@ def edit(request):
         profile_form = profile_form_class(request, request.POST, instance=profile, prefix="profile")
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
-            # Update spectrogram/waveform and compact mode preference in user session
-            # TODO: these should be stored as new fields in the profile instead of in the session
-            if 'prefer_spectrogram' in profile_form.cleaned_data:
-                request.session['preferSpectrogram'] = profile_form.cleaned_data['prefer_spectrogram']
-            if 'prefer_compact_mode' in profile_form.cleaned_data:
-                request.session['preferCompactMode'] = profile_form.cleaned_data['prefer_compact_mode']
-            if 'ui_theme_preference' in profile_form.fields:
-                request.session['uiThemePreference'] = profile_form.cleaned_data['ui_theme_preference']
-            if 'disallow_simultaneous_playback' in profile_form.fields:
-                request.session['disallowSimultaneousAudioPlayback'] = profile_form.cleaned_data['disallow_simultaneous_playback']
-
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
             request.user.save()
@@ -548,15 +540,6 @@ def edit(request):
                 return HttpResponseRedirect(reverse("accounts-edit"))
     else:
         profile_form = profile_form_class(request, instance=profile, prefix="profile")
-        # TODO: once prefer_spectrogram is saved as a profile field, this won't be needed
-        if 'prefer_spectrogram' in profile_form.fields:  # That field only exists in BW
-            profile_form.fields['prefer_spectrogram'].initial = request.session.get('preferSpectrogram')
-        if 'prefer_compact_mode' in profile_form.fields:  # That field only exists in BW
-            profile_form.fields['prefer_compact_mode'].initial = request.session.get('preferCompactMode')
-        if 'ui_theme_preference' in profile_form.fields:  # That field only exists in BW
-            profile_form.fields['ui_theme_preference'].initial = request.session.get('uiThemePreference')
-        if 'disallow_simultaneous_playback' in profile_form.fields: # That field only exists in BW
-            profile_form.fields['disallow_simultaneous_playback'].initial = request.session.get('disallowSimultaneousAudioPlayback')
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")
@@ -578,9 +561,12 @@ def edit(request):
         image_form = AvatarForm(prefix="image")
 
     has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
-    has_old_avatar = not os.path.exists(profile.locations('avatar.XL.path')) \
-                     or os.path.getsize(profile.locations('avatar.XL.path')) == \
-                     os.path.getsize(profile.locations('avatar.L.path'))
+    has_old_avatar = False
+    if not os.path.exists(profile.locations('avatar.XL.path')) and os.path.exists(profile.locations('avatar.L.path')):
+        has_old_avatar = True
+    if os.path.exists(profile.locations('avatar.XL.path')) and os.path.exists(profile.locations('avatar.L.path')):
+        if os.path.getsize(profile.locations('avatar.XL.path')) == os.path.getsize(profile.locations('avatar.L.path')):
+            has_old_avatar = True
 
     tvars = {
         'user': request.user,
@@ -648,7 +634,9 @@ def handle_uploaded_image(profile, f):
 
 
 @login_required
+@transaction.atomic()
 def manage_sounds(request, tab):
+    if not using_beastwhoosh(request): raise Http404
 
     def process_filter_and_sort_options(request, sort_options, tab):
         sort_by = request.GET.get('s', sort_options[0][0])
@@ -701,6 +689,28 @@ def manage_sounds(request, tab):
             return tvars_or_redirect
 
     elif tab == 'packs':
+        if request.POST and ('delete_confirm' in request.POST):
+            try:
+                pack_ids = [int(part) for part in request.POST.get('object-ids', '').split(',')]
+            except ValueError:
+                pack_ids = []
+            packs = Pack.objects.ordered_ids(pack_ids)
+            if not request.user.is_superuser:
+                # Unless user is superuser, only allow to select packs owned by user
+                packs = [pack for pack in packs if pack.user == pack.user]
+            if packs:
+                if 'delete_confirm' in request.POST:
+                    # Delete the selected packs
+                    n_packs_deleted = 0
+                    for pack in packs:
+                        web_logger.info(f"User {request.user.username} requested to delete pack {pack.id}")
+                        pack.delete_pack(remove_sounds=False)
+                        n_packs_deleted += 1
+                    messages.add_message(request, messages.INFO,
+                                         f'Successfully deleted {n_packs_deleted} '
+                                         f'pack{"s" if n_packs_deleted != 1 else ""}')
+                    return HttpResponseRedirect(reverse('accounts-manage-sounds', args=[tab]))
+
         sort_options = [
             ('updated_desc', 'Last modified (newest first)', '-last_updated'),
             ('updated_asc', 'Last modified (oldest first)', 'last_updated'),
@@ -717,14 +727,16 @@ def manage_sounds(request, tab):
         pack_ids = list(packs.values_list('id', flat=True))
         paginator = paginate(request, pack_ids, 12)
         tvars.update(paginator)
-        pack_objects = Pack.objects.ordered_ids(paginator['page'].object_list, exclude_deleted=False)
-        tvars['packs'] = pack_objects
+        packs_to_select = Pack.objects.ordered_ids(paginator['page'].object_list, exclude_deleted=False)
+        for pack in packs_to_select:
+            pack.show_unpublished_sounds_warning = True
+        tvars['packs_to_select'] = packs_to_select
 
     elif tab in ['published', 'pending_moderation', 'processing']:
         # If user has selected sounds to edit or to re-process
         if request.POST and ('edit' in request.POST or 'process' in request.POST or 'delete_confirm' in request.POST):
             try:
-                sound_ids = [int(part) for part in request.POST.get('sound-ids', '').split(',')]
+                sound_ids = [int(part) for part in request.POST.get('object-ids', '').split(',')]
             except ValueError:
                 sound_ids = []
             sounds = Sound.objects.ordered_ids(sound_ids)
@@ -745,10 +757,11 @@ def manage_sounds(request, tab):
                         web_logger.info(f"User {request.user.username} requested to delete sound {sound.id}")
                         try:
                             ticket = sound.ticket
-                            tc = TicketComment(sender=request.user,
-                                               text=f"User {request.user} deleted the sound",
-                                               ticket=ticket,
-                                               moderator_only=False)
+                            tc = TicketComment(
+                                sender=request.user,
+                                text=f"User {request.user} deleted the sound",
+                                ticket=ticket,
+                                moderator_only=False)
                             tc.save()
                         except Ticket.DoesNotExist:
                             pass
@@ -797,7 +810,7 @@ def manage_sounds(request, tab):
         sound_ids = list(sounds.values_list('id', flat=True))
 
         # Paginate and get corresponding sound objects
-        paginator = paginate(request, sound_ids, 12)
+        paginator = paginate(request, sound_ids, 9)
         tvars.update(paginator)
         sounds_to_select = Sound.objects.ordered_ids(paginator['page'].object_list)
         for sound in sounds_to_select:
@@ -815,7 +828,7 @@ def manage_sounds(request, tab):
 
 @login_required
 def edit_sounds(request):
-    # BW only view
+    if not using_beastwhoosh(request): raise Http404
     return edit_and_describe_sounds_helper(request)  # Note that the list of sounds to describe is stored in the session object
 
 
@@ -1158,32 +1171,60 @@ def download_attribution(request):
 @redirect_if_old_username_or_404
 @raise_404_if_user_is_deleted
 def downloaded_sounds(request, username):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_sounds=1')
     user = request.parameter_user
-    qs = Download.objects.filter(user_id=user.id)
-    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE, object_count=user.profile.num_sound_downloads)
+    qs = Download.objects.filter(user_id=user.id).order_by('-created')
+    num_items_per_page = settings.SOUNDS_PER_PAGE if not using_beastwhoosh(request) else settings.DOWNLOADED_SOUNDS_PACKS_PER_PAGE_BW
+    paginator = paginate(request, qs, num_items_per_page, object_count=user.profile.num_sound_downloads)
     page = paginator["page"]
     sound_ids = [d.sound_id for d in page]
-    sounds = Sound.objects.ordered_ids(sound_ids)
-    tvars = {"username": username,
-             "user": user,
-             "sounds": sounds}
-    tvars.update(paginator)
-    return render(request, 'accounts/downloaded_sounds.html', tvars)
+    if using_beastwhoosh(request):
+        sounds_dict = Sound.objects.dict_ids(sound_ids)
+        download_list = []
+        for d in page:
+            download_list.append({"created": d.created, "sound": sounds_dict[d.sound_id]})
+        tvars = {"username": username,
+                "user": user,
+                "download_list": download_list,
+                "type_sounds": True}
+        tvars.update(paginator)
+        return render(request, 'accounts/modal_downloads.html', tvars)
+    else:
+        tvars = {"username": username,
+                "user": user,
+                "sounds": Sound.objects.ordered_ids(sound_ids)}
+        tvars.update(paginator)
+        return render(request, 'accounts/downloaded_sounds.html', tvars)
 
 
 @redirect_if_old_username_or_404
 @raise_404_if_user_is_deleted
 def downloaded_packs(request, username):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_packs=1')
     user = request.parameter_user
-    qs = PackDownload.objects.filter(user=user.id)
-    paginator = paginate(request, qs, settings.PACKS_PER_PAGE, object_count=user.profile.num_pack_downloads)
+    qs = PackDownload.objects.filter(user=user.id).order_by('-created')
+    num_items_per_page = settings.PACKS_PER_PAGE if not using_beastwhoosh(request) else settings.DOWNLOADED_SOUNDS_PACKS_PER_PAGE_BW
+    paginator = paginate(request, qs, num_items_per_page, object_count=user.profile.num_pack_downloads)
     page = paginator["page"]
     pack_ids = [d.pack_id for d in page]
-    packs = Pack.objects.ordered_ids(pack_ids)
-    tvars = {"username": username,
-             "packs": packs}
-    tvars.update(paginator)
-    return render(request, 'accounts/downloaded_packs.html', tvars)
+    if using_beastwhoosh(request):
+        packs_dict = Pack.objects.dict_ids(pack_ids)
+        download_list = []
+        for d in page:
+            download_list.append({"created": d.created, "pack": packs_dict[d.pack_id]})
+        tvars = {"username": username,
+                "download_list": download_list,
+                "type_sounds": False}
+        tvars.update(paginator)
+        return render(request, 'accounts/modal_downloads.html', tvars)
+    else:
+        packs = Pack.objects.ordered_ids(pack_ids)
+        tvars = {"username": username,
+                "packs": packs}
+        tvars.update(paginator)
+        return render(request, 'accounts/downloaded_packs.html', tvars)
 
 
 def latest_content_type(scores):
@@ -1272,16 +1313,7 @@ def accounts(request):
     return render(request, 'accounts/accounts.html', tvars)
 
 
-@cache_page(60 * 60)
-def charts(request):
-    """
-    This view shows some general Freesound use statistics. Some of the queries can be a bit slow but the view is
-    cached every 60 minutes so load time should be fast for most users. If this simple caching strategy is not good
-    enough, then we should move computation of statistics to a cron job.
-    """
-    if not using_beastwhoosh(request):
-        return HttpResponseRedirect(reverse('accounts'))
-
+def compute_charts_stats():
     num_days = 14
     num_items = 10
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
@@ -1355,7 +1387,7 @@ def charts(request):
          user_objects[item['user_id']].username,
          item['total_duration']) for item in all_time_top_uploaders_by_length]
 
-    tvars = {
+    return {
         'num_days': num_days,
         'recent_most_active_users': most_active_users_display,
         'new_active_users': new_users_display,
@@ -1364,17 +1396,32 @@ def charts(request):
         'all_time_top_uploaders_by_count': all_time_top_uploaders_by_count_display,
         'all_time_top_uploaders_by_length': all_time_top_uploaders_by_length_display
     }
+
+
+def charts(request):
+    """
+    This view shows some general Freesound use statistics. Some of the queries can be a bit so their results
+    should be in the cache and generated by a cron job. If not found there, the view will compute the stats
+    and cache them.
+    """
+    if not using_beastwhoosh(request):
+        return HttpResponseRedirect(reverse('accounts'))
+
+    tvars = cache.get(settings.CHARTS_DATA_CACHE_KEY, None)
+    if tvars is None:
+        print("Computing")
+        tvars = compute_charts_stats()
+        cache.set(settings.CHARTS_DATA_CACHE_KEY, tvars, 60 * 60 * 24)
     return render(request, 'accounts/charts.html', tvars)
 
 
 @redirect_if_old_username_or_404
 def account(request, username):
     user = request.parameter_user
-
-    tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
-    latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
-                               .order_by("-last_updated")[0:10 if not using_beastwhoosh(request) else 15]
+    latest_pack_ids = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
+                        .order_by("-last_updated").values_list('id', flat=True)[0:10 if not using_beastwhoosh(request) else 15]
+    latest_packs = Pack.objects.ordered_ids(pack_ids=latest_pack_ids)
     following = follow_utils.get_users_following_qs(user)
     followers = follow_utils.get_users_followers_qs(user)
     following_tags = follow_utils.get_tags_following_qs(user)
@@ -1405,7 +1452,6 @@ def account(request, username):
     tvars = {
         'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
-        'tags': tags,
         'latest_sounds': latest_sounds,
         'latest_packs': latest_packs,
         'follow_user_url': follow_user_url,
@@ -1420,7 +1466,8 @@ def account(request, username):
         'following_modal_page': request.GET.get('following', 1),  # BW only, used to load a specific modal page
         'followers_modal_page': request.GET.get('followers', 1),  # BW only
         'following_tags_modal_page': request.GET.get('followingTags', 1),  # BW only
-        'last_geotags_serialized': last_geotags_serialized,  # BW only
+        'last_geotags_serialized': last_geotags_serialized,  # BW only,
+        'user_downloads_public': settings.USER_DOWNLOADS_PUBLIC,  # BW only,
     }
     return render(request, 'accounts/account.html', tvars)
 
@@ -1785,7 +1832,6 @@ def problems_logging_in(request):
 @login_required
 @transaction.atomic()
 def flag_user(request, username):
-
     if request.POST:
         flagged_user = User.objects.get(username__iexact=username)
         reporting_user = request.user

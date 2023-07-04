@@ -1,5 +1,8 @@
-import {stopAllPlayers} from './player/utils'
-import {createPlayer} from './player/player-ui'
+import {initPlayersInModal} from './modal';
+import {bindSimilarSoundModals} from './similarSoundsModal';
+import {bindBookmarkSoundButtons} from './bookmarkSound';
+import {bindRemixGroupModals} from './remixGroupModal';
+import {stopAllPlayers} from '../components/player/utils'
 
 
 var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';
@@ -258,15 +261,11 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                         const zoomLinkElement = document.getElementById('infoWindowZoomLink-' + sound_id);
                         zoomLinkElement.onclick = () => {setMaxZoomCenter(zoomLinkElement.dataset.lat, zoomLinkElement.dataset.lon, zoomLinkElement.dataset.zoom)};
 
-                        // Stop sound on popup close
-                        popup.on('close', function(e) {
-                            stopAllPlayers();
-                        });
-
                         // Init sound player inside popup
-                        const playerWrapper = document.getElementById('infoWindowPlayerWrapper-' + sound_id);
-                        const players = [...playerWrapper.getElementsByClassName('bw-player')]
-                        players.forEach(createPlayer)
+                        initPlayersInModal(document.getElementById('infoWindowPlayerWrapper-' + sound_id));
+                        bindSimilarSoundModals();
+                        bindBookmarkSoundButtons();
+                        bindRemixGroupModals();
                     });
                 });
 

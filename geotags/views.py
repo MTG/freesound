@@ -32,7 +32,7 @@ from django.urls import reverse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
 
-from sounds.models import Sound
+from sounds.models import Sound, Pack
 from utils.frontend_handling import render, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
@@ -147,6 +147,7 @@ def _get_geotags_query_params(request):
         'center_lon': request.GET.get('c_lon', None),
         'zoom': request.GET.get('z', None),
         'username': request.GET.get('username', None),
+        'pack': request.GET.get('pack', None),
         'tag': request.GET.get('tag', None)
     }
 
@@ -168,6 +169,7 @@ def geotags(request, tag=None):
     tvars.update({  # Overwrite tag and username query params (if present)
         'tag': tag,
         'username': None,
+        'pack': None,
         'url': url,
     })
     return render(request, 'geotags/geotags.html', tvars)
@@ -180,6 +182,7 @@ def for_user(request, username):
     tvars.update({  # Overwrite tag and username query params (if present)
         'tag': None,
         'username': request.parameter_user.username,
+        'pack': None,
         'sound': None,
         'url': reverse('geotags-for-user-barray', args=[username]),
     })
@@ -189,7 +192,7 @@ def for_user(request, username):
 @redirect_if_old_username_or_404
 def for_sound(request, username, sound_id):
     sound = get_object_or_404(
-        Sound.objects.select_related('geotag', 'user'), id=sound_id, moderation_state="OK", processing_state="OK")
+        Sound.objects.select_related('geotag', 'user'), id=sound_id)
     if sound.user.username.lower() != username.lower():
         raise Http404
     if not using_beastwhoosh(request):
@@ -200,6 +203,7 @@ def for_sound(request, username, sound_id):
         tvars.update({
             'tag': None,
             'username': None,
+            'pack': None,
             'sound': sound,
             'center_lat': sound.geotag.lat,
             'center_lon': sound.geotag.lon,
@@ -207,6 +211,20 @@ def for_sound(request, username, sound_id):
             'url': reverse('geotags-for-sound-barray', args=[sound.id]),
         })
         return render(request, 'geotags/geotags.html', tvars)
+
+
+@redirect_if_old_username_or_404
+def for_pack(request, username, pack_id):
+    pack = get_object_or_404(Pack.objects.select_related('user'), id=pack_id)
+    tvars = _get_geotags_query_params(request)
+    tvars.update({  # Overwrite tag and username query params (if present)
+        'tag': None,
+        'username': None,
+        'pack': pack,
+        'sound': None,
+        'url': reverse('geotags-for-pack-barray', args=[pack.id]),
+    })
+    return render(request, 'geotags/geotags.html', tvars)
 
 
 def geotags_box(request):

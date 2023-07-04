@@ -62,7 +62,7 @@ Filter name             Type           Description
 ``original_filename``   string         Name given to the sound (tokenized).
 ``description``         string         Textual description given to the sound (tokenized).
 ``tag``                 string         Tag
-``license``             string         Name of the Creative Commons license, one of["Attribution", "Attribution Noncommercial", "Creative Commons 0"].
+``license``             string         Name of the Creative Commons license, one of["Attribution", "Attribution NonCommercial", "Creative Commons 0"].
 ``is_remix``            boolean        Whether the sound is a remix of another Freesound sound.
 ``was_remixed``         boolean        Whether the sound has remixes in Freesound.
 ``pack``                string         Pack name (not tokenized).
@@ -684,7 +684,7 @@ Name                  Type              Description
 ``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
 ``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            A textual description of the sound.
-``license``           string            The license of the sound. Must be either "Attribution", "Attribution Noncommercial" or "Creative Commons 0".
+``license``           string            The license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
 ``pack``              string            (OPTIONAL) The name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
 ``geotag``            string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
 ====================  ================  ====================================================================================
@@ -757,7 +757,7 @@ Name                  Type              Description
 ``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
 ``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            A textual description of the sound.
-``license``           string            The license of the sound. Must be either "Attribution", "Attribution Noncommercial" or "Creative Commons 0".
+``license``           string            The license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
 ``pack``              string            (OPTIONAL) The name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
 ``geotag``            string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
 ====================  ================  ====================================================================================
@@ -873,7 +873,7 @@ Name                  Type              Description
 ``name``              string            (OPTIONAL) The new name that will be given to the sound.
 ``tags``              string            (OPTIONAL) The new tags that will be assigned to the sound. Note that if this parameter is filled, old tags will be deleted. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            (OPTIONAL) The new textual description for the sound.
-``license``           string            (OPTIONAL) The new license of the sound. Must be either "Attribution", "Attribution Noncommercial" or "Creative Commons 0".
+``license``           string            (OPTIONAL) The new license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
 ``pack``              string            (OPTIONAL) The new name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
 ``geotag``            string            (OPTIONAL) New geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
 ====================  ================  ====================================================================================

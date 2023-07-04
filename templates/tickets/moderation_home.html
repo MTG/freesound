@@ -49,14 +49,14 @@
     {% if tardy_moderator_tickets %}
         <h3>Sounds by tardy moderators {% if tardy_moderator_tickets_count > 5 %} (only showing first 5, {{tardy_moderator_tickets_count}} in total, <a href="{% url "tickets-moderation-tardy-moderators" %}">see all</a>) {% endif %}</h3>
         <p>Sounds in this list have already been assigned to a moderator but have still not been moderated. Feel free to moderate any of these sounds.</p>
-        {% for ticket in tardy_moderator_tickets %}
+        {% for ticket in tardy_moderator_tickets|slice:"0:5" %}
             <div style="height:90px;">
             {% include 'tickets/ticket_sound.html' %}
             </div>
             <div style="margin-top:-20px;height:30px;width:100px;margin-bottom:18px">
             {% if ticket.assignee.id != request.user.id %}
                 <p>
-                    <a href="{% url 'tickets-moderation-assign-single-ticket' user.id ticket.id %}">
+                    <a href="{% url 'tickets-moderation-assign-single-ticket' ticket.id %}">
                         <img style="position: relative; top: 5px;" src="{{media_url}}images/moderation_plus.png" />Assign to me
                     </a>
                 </p>
@@ -69,14 +69,14 @@
     {% if tardy_user_tickets %}
         <h3>Sounds by tardy users {% if tardy_user_tickets_count > 5 %} (only showing first 5, {{tardy_user_tickets_count}} in total, <a href="{% url "tickets-moderation-tardy-users" %}">see all</a>) {% endif %}</h3>
         <p>Sounds in this list belong to users that are not responding to moderators requests.</p>
-        {% for ticket in tardy_user_tickets %}
+        {% for ticket in tardy_user_tickets|slice:"0:5" %}
             <div style="height:90px;">
             {% include 'tickets/ticket_sound.html' %}
             </div>
             <div style="margin-top:-20px;height:30px;width:100px;margin-bottom:18px">
             {% if ticket.assignee.id != request.user.id %}
                 <p>
-                    <a href="{% url 'tickets-moderation-assign-single-ticket' user.id ticket.id %}">
+                    <a href="{% url 'tickets-moderation-assign-single-ticket' ticket.id %}">
                         <img style="position: relative; top: 5px;" src="{{media_url}}images/moderation_plus.png" />Assign to me
                     </a>
                 </p>
@@ -93,7 +93,7 @@
                 {% include 'tickets/ticket_sound.html' %}
                 <div style="margin-top:-20px;height:30px;width:100px;margin-bottom:18px">
                 <p>
-                    <a href="{% url 'tickets-moderation-assign-single-ticket' user.id ticket.id %}">
+                    <a href="{% url 'tickets-moderation-assign-single-ticket' ticket.id %}">
                         <img style="position: relative; top: 5px;" src="{{media_url}}images/moderation_plus.png" />Assign to me
                     </a>
                 </p>

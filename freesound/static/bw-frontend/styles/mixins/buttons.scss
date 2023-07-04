@@ -26,11 +26,24 @@
   }
 }
 
+@mixin underline-on-hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  text-decoration-color: transparent;
+  text-decoration-skip-ink: none;
+
+  @include active() {
+    text-decoration-color: currentColor;
+    transition: 0.2s ease;
+  }
+}
+
 @mixin rounded-button($color, $hover-color, $font-color) {
-  padding-top: 14px;
-  padding-right: 30px;
-  padding-bottom: 14px;
-  padding-left: 30px;
+  padding-top: 13px;
+  padding-right: 28px;
+  padding-bottom: 13px;
+  padding-left: 28px;
   border-radius: $button-border-radius;
   background-color: $color;
   color: $font-color;
@@ -45,7 +58,9 @@
   }
 
   @include active() {
-    background-color: $hover-color;
+    &:not(:disabled){
+      background-color: $hover-color;
+    }
   }
 
   &:disabled {
@@ -64,7 +79,9 @@
   @include border-bottom-on-hover;
 
   @include active() {
-    color: $hover-color;
+    &:not(:disabled){
+      color: $hover-color;
+    }
 
     &:focus {
       outline-width: 5px;

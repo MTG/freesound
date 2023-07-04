@@ -22,6 +22,8 @@
 
     {% if username %}
         url = '{% url "geotags-for-user-barray" username %}?embed=1';
+    {% elif pack %}
+        url = '{% url "geotags-for-pack-barray" pack %}?embed=1';
     {% else %}
         {% if tag %}
             url = '{% url "geotags-barray" tag %}?embed=1';

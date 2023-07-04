@@ -4,15 +4,15 @@
 
 {% block id %}similarSoundsModal{% endblock %}
 {% block extra-class %}modal-width-80{% endblock %}
-{% block aria-labelledby %}similarSoundsModalLabel{% endblock %}
+{% block aria-label %}Similar sounds modal{% endblock %}
 
 {% block body %}
 <div class="col-12">
     <div class="text-center">
-        <h5 class="v-spacing-5">Similar sounds</h5>
+        <h4 class="v-spacing-5">Sounds similar to <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a></h4>
     </div>
     <div class="v-spacing-4">
-        <div class="row no-margins">
+        <div class="row">
             {% for sound in similar_sounds|slice:"1:13" %}
                 <div class="col-6 col-lg-4">
                     {% display_sound_small_no_bookmark sound %}

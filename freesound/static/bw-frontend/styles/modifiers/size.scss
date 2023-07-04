@@ -20,6 +20,14 @@
   }
 }
 
+.max-h-60px-md-50px {
+  max-height: 60px;
+
+  @include md-and-above {
+    max-height: 50px;
+  }
+}
+
 .overflow-hidden {
   overflow: hidden;
 }

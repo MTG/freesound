@@ -1,0 +1,4 @@
+{% load bw_templatetags %}
+<div class="{% if sound.moderation_state == "OK" %}text-green{% elif sound.moderation_state == "PE" %}text-blue{% else %}text-red{% endif %}">
+    {% if sound.moderation_state == "OK" %}{% bw_icon "check" %}Moderated{% elif sound.moderation_state == "PE" %}{% bw_icon "clock" %}Pending moderation{% else %}{% bw_icon "notification" %}Moderation deferred{% endif %}
+</div>

@@ -5,14 +5,14 @@
     $red-hover: #fd5b65;
     $black: #ffffff;
     $black-hover: #f4f4f6;
-    $navy-grey: #848495;
-    $navy-light-grey: #6d6d7a;
-    $white: #141424;
+    $navy-grey: #9595a7;
+    $navy-light-grey: #7e7e8d;
+    $white: #11111d;
     $almost-white: #21212d;
     $almost-white-border: #333337;
 
     $primary-button-font-color: #ffffff;
-    $secondary-button-font-color: #141424;
+    $secondary-button-font-color: #11111d;
     $blue-button-font-color: #ffffff;
     $inverse-button-font-color: $navy-grey;
     $inverse-button-hover: #1e1e32;
@@ -21,13 +21,14 @@
     $player-playhead: #ffffff;
     $player-playhead-elapsed: rgba(#ffffff, 0.05);
     $player-inverted-color: #ffffff;
+    $player-ruler-text: #ffffff;
 
     $disabled-input-opacity: 0.2;
     $disabled-button-opacity: 0.3;
 
     $modal-outer-bg-color: #{$white}EE;
     $carousel-bg-color: #1e1e32;
-    $dividers-color: $almost-white-border;
+    $dividers-color: rgba($navy-light-grey, 0.40);
 
     $border-input: $almost-white-border;
     $search-bg: $almost-white;
@@ -35,6 +36,9 @@
     $background-textarea: $almost-white;
     
     $color-footer: #0f0f1b;
+    $html-bg: #0f0f1b;
+
+    $explicit-sound-overlay: rgba(#11111d,0.5);
 
 
     // Redefine logos

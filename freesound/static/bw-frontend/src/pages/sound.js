@@ -1,7 +1,9 @@
 import './page-polyfills';
 import {showToast} from '../components/toast';
 import {playAtTime} from '../components/player/utils';
-import {openSimilarSoundsModal} from "../components/similarSoundsModal";
+import {handleGenericModalWithForm} from '../components/modal';
+import {createSelect} from "../components/select";
+import {addRecaptchaScriptTagToMainHead} from '../utils/recaptchaDynamicReload'
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -11,7 +13,7 @@ const smallEmbedImageElement = document.getElementById('small-embed-image');
 const mediumEmbedImageElement = document.getElementById('medium-embed-image');
 const largeEmbedImageElement = document.getElementById('large-embed-image');
 const shareLinkElement = document.getElementById('share-link');
-
+const urlParams = new URLSearchParams(window.location.search);
 
 const copyShareUrlToClipboard = () => {
     var shareLinkInputElement = shareLinkElement.getElementsByTagName("input")[0];
@@ -28,7 +30,7 @@ const toggleEmbedCode = () => {
     } else {
         embedLinksElement.style.display = "none";
     }
-
+    
     if (shareLinkElement.style.display !== "none") {
         shareLinkElement.style.display = "none";
     }
@@ -41,7 +43,7 @@ const toggleShareLink = () => {
     } else {
         shareLinkElement.style.display = "none";
     }
-
+    
     if (embedLinksElement.style.display !== "none") {
         embedLinksElement.style.display = "none";
     }
@@ -52,18 +54,18 @@ toggleShareLinkElement.addEventListener('click',  toggleShareLink);
 
 
 const generateEmbedCode = (size) => {
-    var sizes = embedCodeElement.dataset['size-' + size].split(',');
-    var urlTemplate = embedCodeElement.dataset['iframe-url-template'];
+    var sizes = embedCodeElement.dataset['size' + size].split(',');
+    var urlTemplate = embedCodeElement.dataset.iframeUrlTemplate;
     var embedText = '<iframe frameborder="0" scrolling="no" src="' + urlTemplate + '" width="WIDTH" height="HEIGHT"></iframe>';
-    embedText = embedText.replace('SIZE', size);
+    embedText = embedText.replace('SIZE', size.toLowerCase());
     embedText = embedText.replace('WIDTH', sizes[0]);
     embedText = embedText.replace('HEIGHT', sizes[1]);
     embedCodeElement.value = embedText;
 }
 
-smallEmbedImageElement.addEventListener('click',  () => generateEmbedCode('small'));
-mediumEmbedImageElement.addEventListener('click', () => generateEmbedCode('medium'));
-largeEmbedImageElement.addEventListener('click', () => generateEmbedCode('large'));
+smallEmbedImageElement.addEventListener('click',  () => generateEmbedCode('Small'));
+mediumEmbedImageElement.addEventListener('click', () => generateEmbedCode('Medium'));
+largeEmbedImageElement.addEventListener('click', () => generateEmbedCode('Large'));
 
 embedLinksElement.style.display = "none"
 shareLinkElement.style.display = "none"
@@ -99,14 +101,36 @@ soundCommentElements.forEach(element => {
 
 findTimeLinksAndAddEventListeners(soundDescriptionElement);
 
-// Open similar sounds modal if activation parameter is passed
-const urlParams = new URLSearchParams(window.location.search);
-const similarSoundsButtons = [...document.querySelectorAll('[data-toggle^="similar-sounds-modal"]')];
-if (similarSoundsButtons.length > 0){
-    const similarSoundsModalActivationParam = similarSoundsButtons[0].dataset.modalActivationParam;
-    const similarSoundsModalParamValue = urlParams.get(similarSoundsModalActivationParam);
-    if (similarSoundsModalParamValue) {
-        openSimilarSoundsModal(similarSoundsButtons[0].dataset.modalContentUrl, similarSoundsModalActivationParam);
-    }
+// Open flag sound modal if activation parameter is passed
+const flagSoundButton = [...document.querySelectorAll('[data-toggle^="flag-sound-modal"]')][0];
+const flagSoundModalActivationParam = flagSoundButton.dataset.modalActivationParam;
+const flagSoundModalParamValue = urlParams.get(flagSoundModalActivationParam);
+
+const initSoundFlagForm = (modalContainer) => {
+    // Modify the form structure to add a "Reason type:" label inline with the select dropdown
+    const selectElement = modalContainer.getElementsByTagName('select')[0];
+    const wrapper = document.createElement('div');
+    selectElement.parentNode.insertBefore(wrapper, selectElement);
+    const label = document.createElement('div');
+    label.innerHTML = "Reason type:"
+    label.style = 'display:inline-block;';
+    label.classList.add('text-grey');
+    wrapper.appendChild(label)
+    wrapper.appendChild(selectElement)
+    
+    // Init select and recaptcha fields
+    const form = modalContainer.getElementsByTagName('form')[0];
+    createSelect();
+    addRecaptchaScriptTagToMainHead(form);
 }
 
+const handleFlagSoundModal = () => {
+    handleGenericModalWithForm(flagSoundButton.dataset.modalContentUrl, initSoundFlagForm, undefined, (req) => {showToast('Sound flagged successfully!')}, undefined);  
+}
+
+if (flagSoundModalParamValue) {
+    handleFlagSoundModal();
+}
+flagSoundButton.addEventListener('click', (evt) => {
+    handleFlagSoundModal();
+})

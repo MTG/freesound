@@ -2,14 +2,17 @@
   position: relative;
   height: 100px;
   display: flex;
+  border-radius: 2px;
+  overflow: hidden;
 
   &.bw-player__img-container--big {
     height: 330px;
+    overflow: initial;
   }
 
   &.bw-player__img-container--minimal {
-    height: 20px;
-    width: 43px;
+    height: 25px;
+    width: 50px;
   }
 }
 
@@ -53,18 +56,17 @@
 }
 
 .bw-player-control-btn {
-  color: $black;
+  color: $navy-grey;
   background-color: transparent;
-  opacity: 0.80;
-  padding-right: 10px;
-  padding-left: 5px;
+  padding-right: 3px;
+  padding-left: 7px;
+  font-size: 17px;
 
-  i {
-    font-weight: 900 !important;
-  }
-
-  &:hover {
-    opacity: 1;
+  @media (hover: hover) {
+    /* Only add hover sttles if device supports it */
+    &:hover {
+      color: $red;
+    }
   }
 }
 
@@ -72,11 +74,15 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  opacity: 0;
+  /*opacity: 0; */ /* No longer set to 0 as we don't hide controls by default anymore */
   color: $navy-grey;
   transition: opacity 0.2s ease;
   display: flex;
   align-items: center;
+
+  .loop-button {
+    opacity: 0;  /* loop button is invisible without hovering */
+  }
 
   button:focus {
     outline: none;
@@ -92,17 +98,39 @@
     .bw-player__play-btn {
       font-size: 36px;
     }
+
+    .loop-button {
+      opacity: 1; /* In big player, the loop button is visible from start */
+    }
   }
 
   &.bw-player__controls--minimal {
     opacity: 1;
+
+    .loop-button {
+      opacity: 1; /* In minimal player, the loop button is visible from start */
+    }
   }
 }
 
 .bw-player__controls-inverted {
   button {
     color: $player-inverted-color;
-    opacity: 0.95;
+  }
+
+  .bw-player__ruler-indicator {
+    color: $player-inverted-color;
+  }
+
+  .bw-player__rate__widget {
+    .text-light-grey {
+      color: $player-inverted-color;
+    }
+
+    .bw-icon-half-star .path1:before {
+      // Overwrite half-star grey part to match fs grey color
+      color: $player-inverted-color;
+    }
   }
 }
 
@@ -145,22 +173,26 @@
   bottom: 12px;
   padding: 3px 10px;
   border-radius: 16px;
-  background: transparentize($black, 0.2);
+  background: $black;
   color: $white;
   transition: opacity 0.6s ease-in-out;
   opacity: 0;
   pointer-events: none;
+  z-index: 1;
 }
 
 .bw-player__progress {
   display: flex;
   justify-content: space-between;
   flex-direction: row-reverse;
+  margin-bottom: -5px;
+
+  @include md-and-above {
+    margin-bottom: 0px;
+  }
 
   span {
-    :not(.bw-player__progress--big) {
-      background-color: transparentize($white, 0.5);
-    }
+    background-color: transparentize($white, 0.3);
     padding: 2px;
     border-radius: 2px;
   }
@@ -168,20 +200,52 @@
 }
 
 .bw-player__progress-container--inverted {
+  
   .bw-player__progress {
-    color: $black-hover;
+    
     span {
-      background-color: transparentize($white, 0.4);
+      background-color: transparentize($white, 0.3);
     }
+    color: $black-hover;
   }
 }
 
-.bw-player__favorite {
+.bw-player__top_controls {
   position: absolute;
-  top: 0;
-  right: -7px;
+  top: 2px;
+  right: 2px;
+}
+
+.bw-player__top_controls_left {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+}
+
+.bw-player__rate__widget {
   opacity: 0;
   transition: opacity 0.2s ease;
+}
+
+.bw-player__favorite {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.bw-player__similar {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.bw-player__remix {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.bw-player__ruler-indicator {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: $player-ruler-text;
 }
 
 .bw-player {
@@ -191,16 +255,33 @@
     display: none;
   }
 
-  &:hover {
-    .bw-player__controls,
-    .bw-player__favorite {
-      opacity: 0.85;
+  @media (hover: hover) { /* if device supports hover, make extra controls visible on hover */
+    &:hover {
+      .bw-player__rate__widget,
+      /*.bw-player__controls, */ /* this one no longer needed as player buttons are always visible now */
+      .loop-button,  
+      .bw-player__similar,
+      .bw-player__remix,
+      .bw-player__progress,
+      .bw-player__progress-indicator,
+      .bw-player__favorite {
+        opacity: 1.0;
+      } 
     }
-    .bw-player__progress {
-      opacity: 0.85;
-    }
-    .bw-player__progress-indicator {
-      opacity: 1;
+  }
+
+  @media (hover: none) {  /* if device does not hover, we'll make extra controls visible for the last player that was played */
+    &.last-played {
+      .bw-player__rate__widget,
+      /*.bw-player__controls, */ /* this one no longer needed as player buttons are always visible now */
+      .loop-button,  
+      .bw-player__similar,
+      .bw-player__remix,
+      .bw-player__progress,
+      .bw-player__progress-indicator,
+      .bw-player__favorite {
+        opacity: 1.0;
+      } 
     }
   }
 }

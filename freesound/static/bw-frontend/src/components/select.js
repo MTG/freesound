@@ -10,29 +10,30 @@ function createSelect() {
 
   for (var select_i = 0, len = select.length; select_i < len; select_i++) {
     // Check if select element already wrapped, otherwise wrap the element, make it invisible and create new visible version
-    const alreadyWrapped = select[select_i].parentElement.classList.contains('select-dropdown');
+    const selectElement = select[select_i];
+    const alreadyWrapped = selectElement.parentElement.classList.contains('select-dropdown');
     if (!alreadyWrapped){
-      if (select[select_i].selectedIndex > -1){
-        var selected_index_text = select[select_i].options[select[select_i].selectedIndex].text
+      if (selectElement.selectedIndex > -1){
+        var selected_index_text = selectElement.options[selectElement.selectedIndex].text
       } else {
-        var selected_index_text = select[select_i].options[0].text
+        var selected_index_text = selectElement.options[0].text
       }
 
-      select[select_i].style.display = 'none';
-      wrapElement(
-        document.getElementById(select[select_i].id),
+      selectElement.style.display = 'none';
+      const wrapper = wrapElement(
+        document.getElementById(selectElement.id),
         document.createElement('div'),
         select_i,
         selected_index_text
       );
 
-      for (var i = 0; i < select[select_i].options.length; i++) {
+      for (var i = 0; i < selectElement.options.length; i++) {
         liElement = document.createElement('li');
-        optionValue = select[select_i].options[i].value;
-        optionText = document.createTextNode(select[select_i].options[i].text);
+        optionValue = selectElement.options[i].value;
+        optionText = document.createTextNode(selectElement.options[i].text);
         liElement.className = 'select-dropdown__list-item';
-        if (select[select_i].dataset.greyItems !== undefined){
-          if (select[select_i].dataset.greyItems.split(',').indexOf(optionValue.toString()) > -1){
+        if (selectElement.dataset.greyItems !== undefined){
+          if (selectElement.dataset.greyItems.split(',').indexOf(optionValue.toString()) > -1){
             liElement.className += ' text-grey';
           }
         }
@@ -47,6 +48,53 @@ function createSelect() {
           false
         );
       }
+
+      const selectWithKeyboard = selectElement.dataset.selectWithKeyboard !== undefined;
+      if (selectWithKeyboard){
+        let clearCurrentKeysTimeout = undefined;
+        let currentKeysPressed = '';
+        document.addEventListener('keydown', evt => {
+          ulElement = wrapper.getElementsByTagName('ul')[0];
+          if (ulElement.classList.contains('active')){
+            if (["ArrowUp", "ArrowDown", "Enter"].indexOf(evt.key) > -1){
+              if (evt.key === "ArrowUp"){
+                // Pre-select element on top
+                const previousLiElement = getPreviousLiElementIfAny(ulElement, getPreSelectedLiElement(ulElement));
+                preSelectLiElement(previousLiElement);
+              } else if  (evt.key === "ArrowDown"){
+                // Pre-select element on top
+                const currentPreSelectedElement = getPreSelectedLiElement(ulElement);
+                const nextLiElement = getNextLiElementIfAny(ulElement, currentPreSelectedElement);
+                preSelectLiElement(nextLiElement);
+              } else { 
+                // Enter (select the pre-selected element)
+                const liElement = getPreSelectedLiElement(ulElement);
+                if (liElement !== undefined){
+                  displyUl(liElement);
+                }
+              }
+            } else {
+              currentKeysPressed += evt.key;
+              Array.from(ulElement.children).every(liElement => {
+                if (liElement.innerHTML.toLowerCase().startsWith(currentKeysPressed.toLowerCase())){
+                  preSelectLiElement(liElement);
+                  return false;
+                }
+                return true;
+              });
+              if (clearCurrentKeysTimeout !== undefined){
+                window.clearTimeout(clearCurrentKeysTimeout);
+              }
+              clearCurrentKeysTimeout = setTimeout(() => {
+                currentKeysPressed = '';
+              }, 500);
+            }
+            evt.stopPropagation();
+            evt.preventDefault();
+          }
+        });
+      }
+
     }
   }
 
@@ -57,8 +105,9 @@ function createSelect() {
     document.addEventListener('click', function(e) {
       let clickInside = wrapper.contains(e.target);
       if (!clickInside) {
-        let menu = wrapper.getElementsByClassName('select-dropdown__list');
-        menu[0].classList.remove('active');
+        let menu = wrapper.getElementsByClassName('select-dropdown__list')[0];
+        menu.classList.remove('active');
+        removeActiveClassFromAllLiElements(menu);
       }
     });
 
@@ -82,37 +131,81 @@ function createSelect() {
     buttonElement.appendChild(spanElement);
     buttonElement.appendChild(iElement);
     wrapper.appendChild(ulElement);
+    return wrapper;
   }
 
   function displyUl(element) {
+    var select = element.parentNode.parentNode.getElementsByTagName('select')[0];
     if (element.tagName == 'BUTTON') {
-      selectDropdown = element.parentNode.getElementsByTagName('ul');
-      //var labelWrapper = document.getElementsByClassName('js-label-wrapper');
-      for (var i = 0, len = selectDropdown.length; i < len; i++) {
-        selectDropdown[i].classList.toggle('active');
-        //var parentNode = $(selectDropdown[i]).closest('.js-label-wrapper');
-        //parentNode[0].classList.toggle("active");
+      selectDropdown = element.parentNode.getElementsByTagName('ul')[0];
+      selectDropdown.classList.toggle('active');
+      // Pre-select the already selected element
+      for (var i=0; i<selectDropdown.children.length; i++){
+        const liElement = selectDropdown.children[i];
+        if (liElement.dataset.value === select.value){
+          preSelectLiElement(liElement);
+        }
       }
     } else if (element.tagName == 'LI') {
-      var select = element.parentNode.parentNode.getElementsByTagName('select')[0];
-      selectElement(select.id, element.getAttribute('data-value'));
-      elementParentSpan = element.parentNode.parentNode.getElementsByTagName('span');
-      element.parentNode.classList.toggle('active');
-      elementParentSpan[0].textContent = element.textContent;
-      elementParentSpan[0].parentNode.setAttribute(
-        'data-value',
-        element.getAttribute('data-value')
-      );
+      selectElement(select, element);
     }
   }
 
-  function selectElement(id, valueToSelect) {
+  function removeActiveClassFromAllLiElements(ulElement) {
+    Array.from(ulElement.children).forEach(liElement => {
+      liElement.classList.remove('active');  
+    });
+  }
+
+  function getPreSelectedLiElement(ulElement) {
+    return ulElement.getElementsByClassName('active')[0];
+  }
+
+  function getPreviousLiElementIfAny(ulElement, liElement) {
+    if (liElement === undefined){
+      return ulElement.children[ulElement.children.length - 1];
+    }
+    const index = Array.from(ulElement.children).indexOf(liElement);
+    if (index > 0){
+      return ulElement.children[index - 1];
+    } else {
+      return ulElement.children[index];
+    }
+  }
+
+  function getNextLiElementIfAny(ulElement, liElement) {
+    if (liElement === undefined){
+      return ulElement.children[0];
+    }
+    const index = Array.from(ulElement.children).indexOf(liElement);
+    if (Array.from(ulElement.children).length > index + 1){
+      return ulElement.children[index + 1];
+    } else {
+      return ulElement.children[index];
+    }
+  }
+
+  function preSelectLiElement(liElement) {
+    const ulElement = liElement.parentNode;
+    removeActiveClassFromAllLiElements(ulElement);
+    liElement.classList.add('active');
+    const topPos = liElement.offsetTop;
+    ulElement.scrollTop = topPos - 20;
+  }
+
+  function selectElement(select, selectedLiElement) {
     // Update underlying select element with new value
-    var element = document.getElementById(id);
-    element.value = valueToSelect;
+    select.value = selectedLiElement.getAttribute('data-value');
 
     // Trigger change event manually (setting the value programatically does not trigger the event)
-    element.dispatchEvent(new Event('change'));
+    select.dispatchEvent(new Event('change'));
+
+    // Update the "fake" select
+    const elementParentSpan = selectedLiElement.parentNode.parentNode.getElementsByTagName('span')[0];
+    selectedLiElement.parentNode.classList.toggle('active');
+    elementParentSpan.textContent = selectedLiElement.textContent;
+    elementParentSpan.parentNode.setAttribute('data-value', selectedLiElement.getAttribute('data-value'));
+    removeActiveClassFromAllLiElements(selectedLiElement.parentNode);
   }
 
   var buttonSelect = document.getElementsByClassName('select-dropdown__button');

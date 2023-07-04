@@ -1,0 +1,14 @@
+{% load display_sound %}
+{% load display_pack %}
+<div>
+    {% if show_select_all_buttons %}<div class="center"><a class="bw-link--grey cursor-pointer select-button">Select all</a><span class="h-spacing-left-1 h-spacing-1 text-grey">·</span><a class="bw-link--grey cursor-pointer select-button">Select None</a></div>{% endif %}
+    <div class="bw-object-selector-container row {% if show_select_all_buttons %}v-spacing-top-1{% else %}v-spacing-top-2{% endif %} no-gutters" style="margin-left:-8px;margin-right:-8px;" data-type="{{ type }}">
+        {% for object in objects %}
+        <div class="col-md-4 col-6">
+            {% if type == "sounds" %}{% display_sound_small_selectable object object.selected %}
+            {% elif type == "packs" %}{% display_pack_small_selectable object object.selected %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>

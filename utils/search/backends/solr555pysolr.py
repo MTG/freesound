@@ -68,7 +68,10 @@ SORT_OPTIONS_MAP = {
     settings.SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST: "avg_rating desc",
     settings.SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST: "avg_rating asc"
 }
-
+SORT_OPTIONS_MAP_FORUM = {
+    settings.SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST: "thread_created desc",
+    settings.SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST: "post_created desc",
+}
 
 # Map of suffixes used for each type of dynamic fields defined in our Solr schema
 # The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer),
@@ -128,6 +131,8 @@ def convert_sound_to_search_engine_document(sound):
         document["is_geotagged"] = True
         if not math.isnan(getattr(sound, "geotag_lon")) and not math.isnan(getattr(sound, "geotag_lat")):
             document["geotag"] = str(getattr(sound, "geotag_lon")) + " " + str(getattr(sound, "geotag_lat"))
+
+    document["in_remix_group"] = getattr(sound, "was_remixed") or getattr(sound, "is_remix")
 
     document["bitdepth"] = getattr(sound, "bitdepth") if getattr(sound, "bitdepth") else 0
     document["bitrate"] = getattr(sound, "bitrate") if getattr(sound, "bitrate") else 0
@@ -194,8 +199,9 @@ def add_solr_suffix_to_dynamic_fieldname(fieldname):
         if 'descriptors_map' in analyzer_data:
             descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
             for _, db_descriptor_key, descriptor_type in descriptors_map:
-                dynamic_fields_map[db_descriptor_key] = '{}{}'.format(
-                    db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
+                if descriptor_type is not None:
+                    dynamic_fields_map[db_descriptor_key] = '{}{}'.format(
+                        db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
     return dynamic_fields_map.get(fieldname, fieldname)
 
 
@@ -211,32 +217,33 @@ def add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter):
         if 'descriptors_map' in analyzer_data:
             descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
             for _, db_descriptor_key, descriptor_type in descriptors_map:
-                query_filter = query_filter.replace(
-                    f'{db_descriptor_key}:','{}{}:'.format(
-                        db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
+                if descriptor_type is not None:
+                    query_filter = query_filter.replace(
+                        f'{db_descriptor_key}:','{}{}:'.format(
+                            db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
     return query_filter
 
 
-def search_process_sort(sort):
+def search_process_sort(sort, forum=False):
     """Translates sorting criteria to solr sort criteria and add extra criteria if sorting by ratings.
 
     If order by rating, when rating is the same sort also by number of ratings.
 
     Args:
         sort (str): sorting criteria as defined in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB.
+        forum (bool, optional): use the forum sort options map instead of the standard sort map
 
     Returns:
         List[str]: list containing the sorting field names list for the search engine.
     """
-    if sort in [sort_web_name for sort_web_name, sort_field_name in SORT_OPTIONS_MAP.items()]:
-        if sort == "avg_rating desc":
-            sort = [SORT_OPTIONS_MAP[sort], "num_ratings desc"]
-        elif sort == "avg_rating asc":
-            sort = [SORT_OPTIONS_MAP[sort], "num_ratings asc"]
+    search_map = SORT_OPTIONS_MAP_FORUM if forum else SORT_OPTIONS_MAP
+    if sort in [sort_web_name for sort_web_name, _ in search_map.items()]:
+        if search_map[sort] == "avg_rating desc" or search_map[sort] == "avg_rating asc":
+            sort = [search_map[sort], "num_ratings desc"]
         else:
-            sort = [SORT_OPTIONS_MAP[sort]]
+            sort = [search_map[sort]]
     else:
-        sort = [SORT_OPTIONS_MAP[settings.SEARCH_SOUNDS_SORT_DEFAULT]]
+        sort = [search_map[settings.SEARCH_FORUM_SORT_DEFAULT if forum else settings.SEARCH_SOUNDS_SORT_DEFAULT]]
     return sort
 
 
@@ -421,8 +428,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
                       num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
-                      group_by_pack=False, facets=None, only_sounds_with_pack=False, only_sounds_within_ids=False,
-                      group_counts_as_one_in_facets=False):
+                      group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
+                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
 
         query = SolrQuery()
 
@@ -471,7 +478,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 group_query=None,
                 group_rows=10,  # TODO: if limit is lower than rows and start=0, this should probably be equal to limit
                 group_start=0,
-                group_limit=1,  # This is the number of documents that will be returned for each group.
+                group_limit=num_sounds_per_pack_group,  # This is the number of documents that will be returned for each group.
                 group_offset=0,
                 group_sort=None,
                 group_sort_ingroup=None,
@@ -556,8 +563,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         response = self.search_forum_posts(query_filter=f'id:{post_id}', offset=0, num_posts=1)
         return response.num_found > 0
 
-    def search_forum_posts(self, textual_query='', query_filter='', offset=0, current_page=None,
-                           num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
+    def search_forum_posts(self, textual_query='', query_filter='', sort=settings.SEARCH_FORUM_SORT_DEFAULT, 
+                           offset=0, current_page=None, num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
         query = SolrQuery()
         query.set_dismax_query(textual_query, query_fields=[("thread_title", 4),
                                                             ("post_body", 3),
@@ -587,7 +594,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                                             "post_created",
                                             "num_posts"],
                                 filter_query=query_filter,
-                                sort=["thread_created desc"])
+                                sort=search_process_sort(sort, forum=True))
 
         if group_by_thread:
             query.set_group_field("thread_title_grouped")
@@ -598,6 +605,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # We do it in this way to conform to SearchEngine.search_sounds definition which must return SearchResults
         try:
             results = self.get_forum_index().search(**query.as_kwargs())
+            print(results.docs)
             return SearchResults(
                 docs=results.docs,
                 num_found=results.num_found,

@@ -7,7 +7,9 @@
     {% if username %}
         Map of sounds for user {{ username }}
     {% elif tag %}
-        Map of sounds with tag {{tag}}
+        Map of sounds with tag {{ tag }}
+    {% elif pack %}
+        Map of sounds for pack {{ pack.name }}
     {% elif sound %}
         Map for sound {{ sound.original_filename }}
     {% else %}
@@ -21,6 +23,8 @@
                 Map of sounds for user <a href="{% url "account" username %}">{{ username }}</a>
             {% elif tag %}
                 Map of sounds with tag <a href="{% url "tags" tag %}">{{tag}}</a>
+            {% elif pack %}
+                Map of sounds for pack <a href="{% url "pack" pack.user.username pack.id %}">{{ pack.name }}</a>
             {% elif sound %}
                 Map for sound <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a>
             {% else %}
@@ -35,12 +39,13 @@
 
 {% block page-content %}
     <div class="col-12 v-spacing-top-3 no-paddings {% if sound or username %}v-spacing-2{% endif %}">
-        <div id="mapCanvas" style="height:700px; max-height: 700px;z-index: 0;"
+        <div id="mapCanvas" class="map main-map"
              data-map-center-lat="{{ center_lat }}"
              data-map-center-lon="{{ center_lon }}"
              data-map-zoom="{{ zoom }}"
              data-map-show-search="{% if sound %}false{% else %}true{% endif %}"
              data-map-username="{{ username }}"
+             data-map-pack-id="{{ pack.id }}"
              data-map-tag="{{ tag }}"
              data-geotags-url="{{ url }}"
              data-geotags-url-box="{% url "geotags-box-barray" %}"
@@ -49,8 +54,8 @@
     </div>
 
     <div class="row middle">
-        <div class="col-md-10 v-spacing-top-2 v-spacing-2">
-            {% if username or sound %}
+        <div class="col-md-10 v-spacing-top-3 v-spacing-2">
+            {% if username or sound or pack %}
                 <a class="no-hover btn-secondary btn-inverse" href="{% url "geotags" %}">View all geotags</a>
             {% else %}
                 <div class="start">
@@ -62,7 +67,9 @@
             {% endif %}
         </div>
         <div class="col-md-2 v-spacing-top-2 v-spacing-2">
+            {% if not sound %}
             <div><a id="embedControlsLabel" href="javascript:void(0);">Embed this map</a></div>
+            {% endif %}
         </div>
     </div>
 

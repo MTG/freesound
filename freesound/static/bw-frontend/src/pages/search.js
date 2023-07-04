@@ -92,9 +92,25 @@ var filter_query_element = document.getElementById('filter_query');
 var filter_duration_min_element = document.getElementById('filter_duration_min');
 var filter_duration_max_element = document.getElementById('filter_duration_max');
 var filter_is_geotagged_element = document.getElementById('filter_is_geotagged');
+var filter_in_remix_group_element = document.getElementById('filter_in_remix_group');
 var sort_by_element = document.getElementById('sort-by');
 var group_by_pack_element  = document.getElementById('group_by_pack');
 var only_sounds_with_pack_element  = document.getElementById('only_sounds_with_pack');
+var use_compact_mode_element  = document.getElementById('use_compact_mode');
+
+function update_hidden_compact_mode_element() {
+  var hiddenElement = document.getElementById('use_compact_mode_hidden');
+  if (use_compact_mode_element.checked) {
+    hiddenElement.value = "1";
+  } else {
+    hiddenElement.value = "0";
+  }
+}
+
+update_hidden_compact_mode_element()
+use_compact_mode_element.addEventListener('change', function() {
+  update_hidden_compact_mode_element()
+})
 
 function advancedSearchOptionsIsVisible()
 {
@@ -230,6 +246,12 @@ function onDocumentReady(){
     filter_is_geotagged_element.checked = true;
   }
 
+  // Remix filter
+  if (getFilterValue("in_remix_group") === "1"){
+    // NOTE we only check "is_remix" and don't check "was_remixed" because these will go together
+    filter_in_remix_group_element.checked = true;
+  }
+
   // Update the text of the button to toggle advanced search options panel
   updateToggleAdvancedSearchOptionsText();
 
@@ -245,6 +267,7 @@ function addAdvancedSearchOptionsFilters()
   var existing_duration_filter = "duration:[" + getFilterValue("duration","min") + " TO " + getFilterValue("duration","max") + "]";
   removeFilter(existing_duration_filter);
   removeFilter("is_geotagged:1");
+  removeFilter("in_remix_group:1");
 
   // if advanced options is activated add all updated filters
   if (advanced_search_hidden_field.value === "1")
@@ -280,6 +303,14 @@ function addAdvancedSearchOptionsFilters()
         filter = filter + " ";
       }
       filter = filter + "is_geotagged:1";
+    }
+
+    // Is remix filter
+    if (filter_in_remix_group_element.checked){
+      if (filter !== ""){
+        filter = filter + " ";
+      }
+      filter = filter + "in_remix_group:1";
     }
 
     // Update general filter with the advanced options filter
@@ -365,6 +396,9 @@ const onAdvancedSearchOptionsInputsChange = () => {
 
 advanced_search_options_div.getElementsByTagName("input").forEach(inputElement => {
   inputElement.addEventListener('change', evt => {
+    onAdvancedSearchOptionsInputsChange();
+  });
+  inputElement.addEventListener('input', evt => {
     onAdvancedSearchOptionsInputsChange();
   });
 });

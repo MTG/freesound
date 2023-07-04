@@ -1,0 +1,17 @@
+{% load display_sound %}
+{% load display_pack %}
+<div class="bw-carousel-container" {% if elements|length > 3 %}data-carousel-type="adaptive"{% endif %}>
+    <div class="bw-transition-wrapper">
+        <div class="bw-carousel-wrapper carousel-no-margins">
+            <div class="bw-carousel with-dots dots-distance-1">
+                <div class="row no-wrap">
+                {% for element in elements %}
+                    <div class="col-6 col-md-4">
+                        {% if type == "sound"%}{% display_sound_small element %}{% elif type == "pack" %}{% display_pack element %}{% endif %}
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

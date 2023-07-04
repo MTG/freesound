@@ -3,52 +3,15 @@
     <!-- do noting -->
 {% else %}
     {% if user_sounds < 1 %}
-        <script type="text/javascript">
-            function post_flag(div_id, flag_type, object_id, url) {
-                const wheelElement = document.getElementById(div_id + "_wheel");
-                wheelElement.innerHTML = '<img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"/>';
-                xhr = new XMLHttpRequest();
-                xhr.open('POST', url);
-                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                xhr.setRequestHeader('X-CSRFToken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-                xhr.onload = function() {
-                    if (xhr.status === 200) {
-                        display_flagged_feedback(div_id);
-                    }
-                    else if (xhr.status !== 200) {
-                        display_error_feedback(div_id);
-                    }
-                };
-                xhr.send(encodeURI('flag_type=' + flag_type + '&object_id=' + object_id));
-            }
-
-            function display_flagged_feedback(id){
-                const linkElement = document.getElementById(id.toString() + "_link");
-                const wheelElement = document.getElementById(id.toString() + "_wheel");
-                linkElement.innerHTML = "{{ done_text }}";
-                wheelElement.innerHTML = "";
-            }
-
-            function display_error_feedback(id){
-                const linkElement = document.getElementById(id.toString() + "_link");
-                const wheelElement = document.getElementById(id.toString() + "_wheel");
-                linkElement.innerHTML = "An error occurred, try again later";
-                wheelElement.innerHTML = "";
-            }
-
-        </script>
-
-        {% csrf_token %}
         <div>
             <span class="text-light-grey" id="{{content_obj_id}}{{flag_type}}_link">
             {% if flagged %}
-                {{ done_text }}
+                Marked as spam/offensive
             {% else %}
-                <a class="text-grey" onclick="post_flag('{{content_obj_id}}{{flag_type}}','{{ flag_type }}',{{ content_obj_id }},'{% url "flag-user" username %}')" href="javascript:void(0)">{{ link_text }}</a>
+                <a aria-label="Report spam/offensive" class="text-grey post-flag" data-content-obj-id="{{content_obj_id}}" data-flag-type="{{ flag_type }}" data-post-flag-url="{% url "flag-user" username %}" href="javascript:void(0)">{{ link_text }}</a>
             {% endif %}
             </span>
             <span class="text-light-grey" id="{{content_obj_id}}{{flag_type}}_wheel"></span>
         </div>
-
     {% endif %}
 {% endif %}

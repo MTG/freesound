@@ -4,7 +4,7 @@ a {
   position: relative;
 
   &:not(.no-hover) {
-    @include border-bottom-on-hover;
+    @include underline-on-hover;
   }
 
   .dropdown-menu & {

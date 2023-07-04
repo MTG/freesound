@@ -4,12 +4,12 @@
 
 {% block id %}addSoundsModal{% endblock %}
 {% block extra-class %}modal-width-80{% endblock %}
-{% block aria-labelledby %}addSoundsModalLabel{% endblock %}
+{% block aria-label %}Add sounds modal{% endblock %}
 
 {% block body %}
 <div class="col-12">
     <div class="text-center">
-        <h5 class="v-spacing-5">{% if not modal_title %}Add sounds{% else %}{{ modal_title }}{% endif %}</h5>
+        <h4 class="v-spacing-5">{% if not modal_title %}Add sounds{% else %}{{ modal_title }}{% endif %}</h4>
     </div>
     <div class="v-spacing-4">
         {% if help_text %}

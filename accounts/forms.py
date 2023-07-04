@@ -46,8 +46,8 @@ from utils.spam import is_spam
 web_logger = logging.getLogger('web')
 
 html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
-                <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
-                <code>blockquote</code> and <code>code</code>."""
+                <code>b</code>, <code>em</code>, <code>ul</code>, <code>li</code>, <code>u</code>, 
+                <code>p</code>, <code>br</code>, <code>blockquote</code> and <code>code</code>."""
 
 
 def validate_file_extension(audiofiles):
@@ -428,16 +428,11 @@ class ProfileForm(forms.ModelForm):
 
 
 class BwProfileForm(ProfileForm):
-    
-    disallow_simultaneous_playback = forms.BooleanField(
-        label="Disallow simultaneous audio playback", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-    prefer_spectrogram = forms.BooleanField(
-        label="Display spectrogram in sound players by default", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-    prefer_compact_mode = forms.BooleanField(
-        label="Display search results in compact mode", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-    ui_theme_preference = forms.ChoiceField(
-        label="User interface theme", required=False, choices=[('s', 'Follow system default'), ('l', 'Light'), ('d', 'Dark')])
-    
+
+    allow_simultaneous_playback = forms.BooleanField(
+        label="Allow simultaneous audio playback", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
+    prefer_spectrograms = forms.BooleanField(
+        label="Show spectrograms in sound players by default", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
@@ -471,7 +466,8 @@ class BwProfileForm(ProfileForm):
 
     class Meta:
         model = Profile
-        fields = ('username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', )
+        fields = ('username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', 
+            'allow_simultaneous_playback', 'prefer_spectrograms', 'ui_theme_preference' )
 
 
 class EmailResetForm(forms.Form):

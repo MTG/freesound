@@ -12,43 +12,24 @@
       }
     }
 
-    &:hover {
+    @media (hover) {
+      // If hover is not supported (touch devices), don't add this interaction
+      &:hover {
 
-      .bw-checkbox-container {
-        display: block;
-      }
+        .bw-checkbox-container {
+          display: block;
+        }
 
-      .date {
-        display: none;
-      }
+        .date {
+          display: none;
+        }
 
-      .icons {
-        display: block;
+        .icons {
+          display: block;
 
-        a {
-          color: $navy-light-grey;
-          position: relative;
-
-          &:hover {
+          a {
             cursor: pointer;
-            color: $black;
-            text-decoration: none;
-          }
-
-          &:before {
-            display: none;
-          }
-
-          &[title]:hover::after {
-            content: attr(title);
-            position: absolute;
-            top: -40px;
-            right: -10px;
-            width: max-content;
-            border-radius: 100px;
-            background-color: $black;
-            color: $white;
-            padding: 2px 18px;
+            margin-left: $tiny-spacing;
           }
         }
       }

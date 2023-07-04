@@ -168,6 +168,7 @@ def get_form_for_sound(request, sound_id):
     tvars = {
         'bookmarks': Bookmark.objects.filter(user=request.user, sound=sound).exists(),
         'sound_id': sound.id,
+        'sound_is_moderated_and_processed_ok': sound.moderated_and_processed_ok,
         'form': form,
         'sound_has_bookmark_without_category': sound_has_bookmark_without_category,
         'categories_aready_containing_sound': categories_already_containing_sound,

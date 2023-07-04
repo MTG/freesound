@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+import json
+
 from past.utils import old_div
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -38,8 +40,33 @@ from utils.tags import clean_and_split_tags
 ###################
 
 DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by commas (None = all)
-DEFAULT_FIELDS_IN_SOUND_DETAIL = None  # Separated by commas (None = all)
+DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,geotag,created,license,type,channels,filesize,bitrate,' + \
+'bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,' + \
+'num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,' +  \
+'analysis,analysis_frames,analysis_stats,is_explicit'  # All except for analyzers
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
+
+
+def get_sound_analyzers_output_helper(sound, fallback_to_db=True):
+    analyzers_output = {}
+    for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
+        if 'descriptors_map' in analyzer_info:
+            query_select_name = analyzer_name.replace('-', '_')
+            analysis_data = None
+            if hasattr(sound, query_select_name):
+                analysis_data = getattr(sound, query_select_name)
+                if type(analysis_data) == str:
+                    analysis_data = json.loads(analysis_data)
+            else:
+                if fallback_to_db:
+                    # Retrieve the analysis data from the db
+                    try:
+                        analysis_data = sound.analyses.get(analyzer=analyzer_name, analysis_status="OK").analysis_data
+                    except SoundAnalysis.DoesNotExist:
+                        pass
+            if analysis_data is not None:
+                analyzers_output.update(analysis_data)
+    return analyzers_output
 
 
 class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
@@ -104,6 +131,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'analysis_stats',
                   'ac_analysis',  # Kept for legacy reasons only as it is also contained in 'analyzers_output'
                   'analyzers_output',
+                  'is_explicit',
                   'score',
                   )
 
@@ -201,7 +229,6 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                                           request_is_secure=self.context['request'].is_secure()),
         }
 
-
     def get_or_compute_analysis_state_essentia_exists(self, sound_obj):
         if hasattr(sound_obj, 'analysis_state_essentia_exists'):
             return sound_obj.analysis_state_essentia_exists
@@ -281,6 +308,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     analyzers_output = serializers.SerializerMethodField()
     def get_analyzers_output(self, obj):
         raise NotImplementedError  # Should be implemented in subclasses
+    
+    is_explicit = serializers.SerializerMethodField()
+    def get_is_explicit(self, obj):
+        return obj.is_explicit
 
 
 class SoundListSerializer(AbstractSoundSerializer):
@@ -307,14 +338,7 @@ class SoundListSerializer(AbstractSoundSerializer):
         # Note that audio commons analyzer data can also be obtained with the ac_analysis field name but all
         # other analyzers' output is only accessible via analyzers_output field. This is kept like that
         # for legacy reasons.
-        analyzers_output = {}
-        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_info:
-                query_select_name = analyzer_name.replace('-', '_')
-                analysis_data = getattr(obj, query_select_name, None)
-                if analysis_data is not None:
-                    analyzers_output.update(analysis_data)
-        return analyzers_output
+        return get_sound_analyzers_output_helper(obj)
 
 
 class SoundSerializer(AbstractSoundSerializer):
@@ -362,21 +386,7 @@ class SoundSerializer(AbstractSoundSerializer):
         # otherwise it is loaded from db. Note that audio commons analyzer data can also be
         # obtained with the ac_analysis field name but all other analyzers' output is only accessible
         # via analyzers_output field. This is kept like that for legacy reasons.
-        analyzers_output = {}
-        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_info:
-                query_select_name = analyzer_name.replace('-', '_')
-                if hasattr(obj, query_select_name):
-                    analysis_data = getattr(obj, query_select_name)
-                else:
-                    # Retrieve the analysis data from the db
-                    try:
-                        analysis_data = obj.analyses.get(analyzer=analyzer_name, analysis_status="OK").analysis_data
-                    except SoundAnalysis.DoesNotExist:
-                        analysis_data = None
-                if analysis_data is not None:
-                    analyzers_output.update(analysis_data)
-        return analyzers_output
+        return get_sound_analyzers_output_helper(obj)
 
 
 ##################
@@ -604,7 +614,7 @@ class CreateCommentSerializer(serializers.Serializer):
 def validate_license(value):
     if value not in [key for key, name in LICENSE_CHOICES]:
         raise serializers.ValidationError('Invalid License, must be either \'Attribution\', \'Attribution '
-                                          'Noncommercial\' or \'Creative Commons 0\'.')
+                                          'NonCommercial\' or \'Creative Commons 0\'.')
     return value
 
 
@@ -666,7 +676,7 @@ def validate_geotag(value):
 
 LICENSE_CHOICES = (
         ('Attribution', 'Attribution'),
-        ('Attribution Noncommercial', 'Attribution Noncommercial'),
+        ('Attribution NonCommercial', 'Attribution NonCommercial'),
         ('Creative Commons 0', 'Creative Commons 0'),)
 
 
@@ -681,7 +691,7 @@ class SoundDescriptionSerializer(serializers.Serializer):
     description = serializers.CharField(help_text='Textual description of the sound.')
     license = serializers.ChoiceField(choices=LICENSE_CHOICES,
                                       help_text='License for the sound. Must be either \'Attribution\', \'Attribution '
-                                                'Noncommercial\' or \'Creative Commons 0\'.')
+                                                'NonCommercial\' or \'Creative Commons 0\'.')
     pack = serializers.CharField(required=False, help_text='Not required. Pack name (if there is no such pack with '
                                                            'that name, a new one will be created).')
     geotag = serializers.CharField(max_length=100, required=False,
@@ -722,7 +732,7 @@ class EditSoundDescriptionSerializer(serializers.Serializer):
                                         help_text='Not required. New textual description for the sound.')
     license = serializers.ChoiceField(required=False, allow_blank=True, choices=LICENSE_CHOICES,
                                       help_text='Not required. New license for the sound. Must be either '
-                                                '\'Attribution\', \'Attribution Noncommercial\' or '
+                                                '\'Attribution\', \'Attribution NonCommercial\' or '
                                                 '\'Creative Commons 0\'.')
     pack = serializers.CharField(required=False, help_text='Not required. New pack name for the sound (if there is no '
                                                            'such pack with that name, a new one will be created).')
@@ -760,7 +770,7 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
                                                   'description of the sound.')
     license = serializers.ChoiceField(required=False, allow_blank=True, choices=LICENSE_CHOICES,
                                       help_text='Only required if providing file description. License for the sound. '
-                                                'Must be either \'Attribution\', \'Attribution Noncommercial\' '
+                                                'Must be either \'Attribution\', \'Attribution NonCommercial\' '
                                                 'or \'Creative Commons 0\'.')
     pack = serializers.CharField(help_text='Not required. Pack name (if there is no such pack with that name, a new '
                                            'one will be created).', required=False)

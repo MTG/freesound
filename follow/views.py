@@ -32,6 +32,7 @@ from django.urls import reverse
 from follow import follow_utils
 from follow.models import FollowingQueryItem
 from follow.models import FollowingUserItem
+from utils.cache import invalidate_user_template_caches
 from utils.frontend_handling import using_beastwhoosh, render
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
@@ -154,6 +155,8 @@ def follow_user(request, username):
     user_from = request.user
     user_to = get_object_or_404(User, username=username)
     FollowingUserItem.objects.get_or_create(user_from=user_from, user_to=user_to)
+    invalidate_user_template_caches(user_from.id)
+    invalidate_user_template_caches(user_to.id)
 
     # In BW we check if there's next parameter, and if there is we redirect to it
     # This is to implement follow/unfollow without Javascript
@@ -170,6 +173,8 @@ def unfollow_user(request, username):
     user_to = get_object_or_404(User, username=username)
     try:
         FollowingUserItem.objects.get(user_from=user_from, user_to=user_to).delete()
+        invalidate_user_template_caches(user_from.id)
+        invalidate_user_template_caches(user_to.id)
     except FollowingUserItem.DoesNotExist:
         # If the relation does not exist we're fine, should have never got to here...
         pass
@@ -188,6 +193,7 @@ def follow_tags(request, slash_tags):
     user = request.user
     space_tags = slash_tags.replace("/", " ")
     FollowingQueryItem.objects.get_or_create(user=user, query=space_tags)
+    invalidate_user_template_caches(user.id)
 
     # In BW we check if there's next parameter, and if there is we redirect to it
     # This is to implement follow/unfollow without Javascript
@@ -204,6 +210,7 @@ def unfollow_tags(request, slash_tags):
     space_tags = slash_tags.replace("/", " ")
     try:
         FollowingQueryItem.objects.get(user=user, query=space_tags).delete()
+        invalidate_user_template_caches(user.id)
     except FollowingQueryItem.DoesNotExist:
         # If the relation does not exist we're fine, should have never got to here...
         pass

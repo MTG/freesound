@@ -558,12 +558,12 @@ def get_analysis_data_for_sound_ids(request, sound_ids=[]):
     sound_analysis_data = {}
     analysis_data_is_requested = 'analysis' in request.query_params.get('fields', '').split(',')
     if analysis_data_is_requested:
-        descriptors = request.query_params.get('descriptors', '').split(',')
+        descriptors = request.query_params.get('descriptors', '')
         normalized = request.query_params.get('normalized', '0') == '1'
         ids = [int(sid) for sid in sound_ids]
         if descriptors:
             try:
-                sound_analysis_data = get_sounds_descriptors(ids, descriptors, normalized, only_leaf_descriptors=True)
+                sound_analysis_data = get_sounds_descriptors(ids, descriptors.split(','), normalized, only_leaf_descriptors=True)
             except:
                 pass
         else:

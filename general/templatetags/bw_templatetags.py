@@ -22,6 +22,7 @@ import math
 
 from django import template
 from django.conf import settings
+from django.contrib.humanize.templatetags.humanize import intcomma
 from django.urls import reverse
 
 from follow.follow_utils import is_user_following_tag
@@ -52,7 +53,7 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
     else:
         opacity_class = 'opacity-' + str(int(math.ceil(pow(weight, 0.6) * 10) * 10)).zfill(3)
 
-    line_height_class = 'line-height-fs-3' if size < 4 else 'line-height-fs-1'
+    line_height_class = 'line-height-38' if size < 4 else 'line-height-fs-1'
 
     return {'tag_name': tag_name,
             'size': size,
@@ -86,22 +87,23 @@ def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
 
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
-def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=False, update_stars_color_on_save=False):
-    if hasattr(sound, 'username'):
-        sound_user = sound.username
+def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=False, show_added_rating_on_save=False):
+    if isinstance(sound, dict):
+        sound_user = sound['username']
+        sound_avg_rating = sound['avg_rating']
+        sound_num_ratings = sound['num_ratings']
     else:
-        sound_user = sound.user.username
+        if hasattr(sound, 'username'):
+            sound_user = sound.username
+        else:
+            sound_user = sound.user.username
+        sound_avg_rating = sound.avg_rating
+        sound_num_ratings = sound.num_ratings
     request = context['request']
-    request_user = request.user.username
-    is_authenticated = request.user.is_authenticated
-
-    if allow_rating is None:
-        # If allow_rating is None (default), allow rating only if the request user is not the author of the sound
-        allow_rating = request.user.id != sound.user_id
 
     if not use_request_user_rating:
-        if sound.num_ratings >= settings.MIN_NUMBER_RATINGS:
-            sound_rating = sound.avg_rating
+        if sound_num_ratings >= settings.MIN_NUMBER_RATINGS:
+            sound_rating = sound_avg_rating
         else:
             sound_rating = 0
     else:
@@ -109,6 +111,7 @@ def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=Fa
             sound_rating = sound.ratings.get(user=request.user).rating
         except (SoundRating.DoesNotExist, TypeError):
             sound_rating = 0
+    has_min_ratings = sound_num_ratings >= settings.MIN_NUMBER_RATINGS
 
     # Pre process rating values to do less work in the template
     stars_10 = []
@@ -127,9 +130,11 @@ def bw_sound_stars(context, sound, allow_rating=None, use_request_user_rating=Fa
             stars_5.append('half')
 
     return {'sound_user': sound_user,
-            'allow_rating': is_authenticated and allow_rating,
+            'allow_rating': allow_rating,
             'sound': sound,
-            'update_stars_color_on_save': update_stars_color_on_save,
+            'has_min_ratings': has_min_ratings,
+            'show_added_rating_on_save': show_added_rating_on_save,
+            'fill_class': 'text-red' if not use_request_user_rating else 'text-yellow',
             'stars_range': list(zip(stars_5, list(range(1, 6))))}
 
 
@@ -151,9 +156,13 @@ def bw_generic_stars(context, rating_0_10):
         else:
             stars_5.append('half')
 
+    has_min_ratings = rating_0_10 > 0
+
     return {
         'allow_rating': False,
-        'update_stars_color_on_save': False,
+        'show_added_rating_on_save': False,
+        'fill_class': 'text-red',
+        'has_min_ratings': has_min_ratings,
         'stars_range': list(zip(stars_5, list(range(1, 6))))
     }
 
@@ -181,3 +190,22 @@ def user_following_tags(user, tags_slash):
 @register.inclusion_tag('molecules/plausible_scripts.html', takes_context=False)
 def bw_plausible_scripts():
     return plausible_scripts()
+
+
+@register.filter
+def bw_intcomma(value):
+    return intcomma(value)
+
+
+@register.inclusion_tag('molecules/carousel.html', takes_context=True)
+def sound_carousel(context, sounds):
+    # Update context and pass it to templatetag so nested template tags also have it
+    context.update({'elements': sounds, 'type': 'sound'})  
+    return context
+
+
+@register.inclusion_tag('molecules/carousel.html', takes_context=True)
+def pack_carousel(context, packs):
+    # Update context and pass it to templatetag so nested template tags also have it
+    context.update({'elements': packs, 'type': 'pack'})
+    return context

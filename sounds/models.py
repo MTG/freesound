@@ -29,19 +29,22 @@ import random
 import yaml
 import zlib
 
+from collections import Counter
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Prefetch
 from django.db.models.functions import Greatest
 from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import smart_str
+from django.utils.http import urlquote
 from django.utils.functional import cached_property
 from django.utils.text import Truncator, slugify
 
@@ -53,6 +56,7 @@ from general import tasks
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
+from general.templatetags.util import formatnumber
 from tags.models import TaggedItem, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, Queue, TicketComment
@@ -88,9 +92,11 @@ class License(OrderedModel):
         if '0' in license_name.lower():
             return 'zero'
         elif 'noncommercial' in license_name.lower():
-            return 'nc'
+            return 'by-nc'
         elif 'attribution' in license_name.lower():
             return 'by'
+        elif 'sampling' in license_name.lower():
+            return 'splus'
         return 'cc'
     
     @property
@@ -105,9 +111,19 @@ class License(OrderedModel):
         elif '4.0' in self.deed_url:
             version_label = ' 4.0'
         name = self.name
-        if name == 'Attribution Noncommercial':
-            # For dipslaying purposes, we make the name shorter, otherwise it overflows in BW sound page
-            name = 'Noncommercial'
+        return f'{name}{version_label}'
+
+    @property
+    def abbreviated_name_with_version(self):
+        version_label = ''
+        if '3.0' in self.deed_url:
+            version_label = ' 3.0'
+        elif '4.0' in self.deed_url:
+            version_label = ' 4.0'
+        name = self.abbreviation.upper()
+        if name != 'CC0' and 'SAMP+' not in name:
+            name = 'CC ' + name
+        name = name.replace('SAMP+', 'Sampling Plus 1.0')
         return f'{name}{version_label}'
 
     def __str__(self):
@@ -342,8 +358,9 @@ class SoundManager(models.Manager):
                     sounds_sound
                 where
                     processing_state = 'OK' and
-                    moderation_state = 'OK'
-                    and greatest(created, moderation_date) > %s
+                    moderation_state = 'OK' and
+                    is_explicit is false and
+                    greatest(created, moderation_date) > %s
                 group by
                     user_id
                 ) as X order by created desc limit %s"""
@@ -456,7 +473,7 @@ class SoundManager(models.Manager):
         query += "WHERE sound.id IN %s"
         return self.raw(query, [tuple(sound_ids)])
 
-    def bulk_query(self, where, order_by, limit, args):
+    def bulk_query(self, where, order_by, limit, args, include_analyzers_output=False):
         """For each sound, get all fields needed to display a sound on the web (using display_sound templatetag) or
          in the API (including AudioCommons output analysis). Using this custom query to avoid the need of having to do
          some extra queries when displaying some fields related to the sound (e.g. for tags). Using this method, all the
@@ -515,9 +532,9 @@ class SoundManager(models.Manager):
           %s
           LEFT OUTER JOIN sounds_remixgroup_sounds ON sounds_remixgroup_sounds.sound_id = sound.id
         WHERE %s """ % (self.get_analysis_state_essentia_exists_sql(),
-                        self.get_analyzers_data_select_sql(),
+                        self.get_analyzers_data_select_sql() if include_analyzers_output else '',
                         ContentType.objects.get_for_model(Sound).id,
-                        self.get_analyzers_data_left_join_sql(),
+                        self.get_analyzers_data_left_join_sql() if include_analyzers_output else '',
                         where, )
         if order_by:
             query = f"{query} ORDER BY {order_by}"
@@ -525,35 +542,43 @@ class SoundManager(models.Manager):
             query = f"{query} LIMIT {limit}"
         return self.raw(query, args)
 
-    def bulk_sounds_for_user(self, user_id, limit=None):
+    def bulk_sounds_for_user(self, user_id, limit=None, include_analyzers_output=False):
         where = """sound.moderation_state = 'OK'
             AND sound.processing_state = 'OK'
             AND sound.user_id = %s"""
         order_by = "sound.created DESC"
         if limit:
             limit = str(limit)
-        return self.bulk_query(where, order_by, limit, (user_id, ))
+        return self.bulk_query(where, order_by, limit, (user_id, ), include_analyzers_output=include_analyzers_output)
 
-    def bulk_sounds_for_pack(self, pack_id, limit=None):
+    def bulk_sounds_for_pack(self, pack_id, limit=None, include_analyzers_output=False):
         where = """sound.moderation_state = 'OK'
             AND sound.processing_state = 'OK'
             AND sound.pack_id = %s"""
         order_by = "sound.created DESC"
         if limit:
             limit = str(limit)
-        return self.bulk_query(where, order_by, limit, (pack_id, ))
-
-    def bulk_query_id(self, sound_ids):
+        return self.bulk_query(where, order_by, limit, (pack_id, ), include_analyzers_output=include_analyzers_output)
+    
+    def bulk_query_id(self, sound_ids, include_analyzers_output=False):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]
         where = "sound.id = ANY(%s)"
-        return self.bulk_query(where, "", "", (sound_ids, ))
+        return self.bulk_query(where, "", "", (sound_ids, ), include_analyzers_output=include_analyzers_output)
 
-    def dict_ids(self, sound_ids):
-        return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids)}
+    def bulk_query_id_public(self, sound_ids, include_analyzers_output=False):
+        if not isinstance(sound_ids, list):
+            sound_ids = [sound_ids]
+        where = """sound.id = ANY(%s) 
+            AND sound.moderation_state = 'OK' 
+            AND sound.processing_state = 'OK'"""
+        return self.bulk_query(where, "", "", (sound_ids, ), include_analyzers_output=include_analyzers_output)
 
-    def ordered_ids(self, sound_ids):
-        sounds = self.dict_ids(sound_ids)
+    def dict_ids(self, sound_ids, include_analyzers_output=False):
+        return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids, include_analyzers_output=include_analyzers_output)}
+
+    def ordered_ids(self, sound_ids, include_analyzers_output=False):
+        sounds = self.dict_ids(sound_ids, include_analyzers_output=include_analyzers_output)
         return [sounds[sound_id] for sound_id in sound_ids if sound_id in sounds]
 
 
@@ -670,6 +695,10 @@ class Sound(SocialModel):
     def is_sound():
         # N.B. This is used in the ticket template (ugly, but a quick fix)
         return True
+
+    @property
+    def moderated_and_processed_ok(self):
+        return self.moderation_state == "OK" and self.processing_state == "OK"
 
     def friendly_filename(self):
         filename_slug = slugify(os.path.splitext(self.original_filename)[0])
@@ -839,13 +868,28 @@ class Sound(SocialModel):
     def avg_rating_0_5(self):
         # Returns the average raring, normalized from 0 tp 5
         return old_div(self.avg_rating, 2)
+    
+    def get_ratings_count_text(self):
+        if self.num_ratings >= settings.MIN_NUMBER_RATINGS:
+            return f'Overall rating ({ formatnumber(self.num_ratings) } rating{"s" if self.num_ratings != 1 else ""})'
+        else:
+            return 'Not enough ratings'
+
+    def get_ratings_count_text_short(self):
+        if self.num_ratings >= settings.MIN_NUMBER_RATINGS:
+            return f'({ formatnumber(self.num_ratings) })'
+        else:
+            return ''
 
     def get_absolute_url(self):
         return reverse('sound', args=[self.user.username, smart_str(self.id)])
 
     @property
     def license_bw_icon_name(self):
-        return self.license.icon_name
+        if hasattr(self, 'license_name'):
+            return License.bw_cc_icon_name_from_license_name(self.license_name)
+        else:
+            return self.license.icon_name
 
     def get_license_history(self):
         """
@@ -1238,7 +1282,11 @@ class Sound(SocialModel):
             if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
                 sound_path = self.locations("preview.LQ.mp3.path")
             celery_app.send_task(analyzer, kwargs={'sound_id': self.id, 'sound_path': sound_path,
-                        'analysis_folder': self.locations('analysis.base_path'), 'metadata':json.dumps({'duration': self.duration})}, queue=analyzer)
+                        'analysis_folder': self.locations('analysis.base_path'), 'metadata':json.dumps({
+                            'duration': self.duration,
+                            'tags': self.get_sound_tags(),
+                            'geotag': [self.geotag.lat, self.geotag.lon] if self.geotag else None,
+                        })}, queue=analyzer)
             if verbose:
                 sounds_logger.info(f"Sending sound {self.id} to analyzer {analyzer}")
         else:
@@ -1263,8 +1311,9 @@ class Sound(SocialModel):
             for is_explicit in [True, False]:
                 invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
         
-        for player_size in ['small', 'middle', 'big_no_info', 'small_no_info', 'minimal', 'infowindow']:
-            invalidate_template_cache("bw_display_sound", self.id, player_size)
+        for player_size in ['small', 'middle', 'big_no_info', 'small_no_info', 'minimal']:
+             for is_authenticated in [True, False]:
+                invalidate_template_cache("bw_display_sound", self.id, player_size, is_authenticated)
 
         invalidate_template_cache("bw_sound_page", self.id)
         invalidate_template_cache("bw_sound_page_sidebar", self.id)
@@ -1278,10 +1327,9 @@ class Sound(SocialModel):
             if name:
                 return name
         if hasattr(self, 'geotag_lat'):
-            return f'{self.geotag_lat:.3f}, {self.geotag_lon:.3f}'
+            return f'{self.geotag_lat:.2f}, {self.geotag_lon:.3f}'
         else:
-            return f'{self.geotag.lat:.3f}, {self.geotag.lon:.3f}'
-
+            return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
@@ -1466,6 +1514,78 @@ post_delete.connect(post_delete_sound, sender=Sound)
 
 class PackManager(models.Manager):
 
+    def bulk_query_id(self, pack_ids, sound_ids_for_pack_id=dict(), exclude_deleted=True):
+        """
+        Returns a list of Pack with some added data properties that are used in display_pack. In this way,
+        a single call to bulk_query_id can be used to retrieve information from all needed packs at once and
+        with a 5 total queries instead of several queries per pack.
+        Note that this method does not return the results sorted as in pack_ids, to do that you should use
+        the ordered_ids method below.
+        """
+        if not isinstance(pack_ids, list):
+            pack_ids = [pack_ids]
+        packs = Pack.objects.prefetch_related(
+            Prefetch('sounds', queryset=Sound.public.order_by('-created')),
+            Prefetch('sounds__tags__tag'),
+            Prefetch('sounds__license'),
+        ).select_related('user').select_related('user__profile').filter(id__in=pack_ids)
+        if exclude_deleted:
+            packs = packs.exclude(is_deleted=True)
+        num_sounds_selected_per_pack = 3
+        for p in packs:
+            licenses = []
+            selected_sounds_data = []
+            tags = []
+            has_geotags = False
+            sound_ids_pre_selected = sound_ids_for_pack_id.get(p.id, None)
+            ratings = []
+            for s in p.sounds.all():
+                tags += [ti.tag.name for ti in s.tags.all()]
+                licenses.append((s.license.name, s.license.id))
+                if s.num_ratings >= settings.MIN_NUMBER_RATINGS:
+                    ratings.append(s.avg_rating)
+                if not has_geotags and s.geotag_id is not None:
+                    has_geotags = True
+                should_add_sound_to_selected_sounds = False
+                if sound_ids_pre_selected is None:
+                    if len(selected_sounds_data) < num_sounds_selected_per_pack:
+                        should_add_sound_to_selected_sounds = True
+                else:
+                    if s.id in sound_ids_pre_selected:
+                        should_add_sound_to_selected_sounds = True
+                if should_add_sound_to_selected_sounds:
+                    selected_sounds_data.append({
+                            'id': s.id,
+                            'username': p.user.username,  # Packs have same username as sounds inside pack
+                            'similarity_state': s.similarity_state,
+                            'duration': s.duration,
+                            'preview_mp3': s.locations('preview.LQ.mp3.url'),
+                            'preview_ogg': s.locations('preview.LQ.ogg.url'),
+                            'wave': s.locations('display.wave_bw.L.url'),
+                            'spectral': s.locations('display.spectral_bw.L.url'),
+                            'num_ratings': s.num_ratings,
+                            'avg_rating': s.avg_rating
+                        })
+            p.num_sounds_unpublished_precomputed = p.sounds.count() - p.num_sounds
+            p.licenses_data_precomputed = ([lid for _, lid in licenses], [lname for lname, _ in licenses])
+            p.pack_tags = [{'name': tag, 'count': count, 'browse_url': p.browse_pack_tag_url(tag)}
+                for tag, count in Counter(tags).most_common(10)]  # See pack.get_pack_tags_bw
+            p.selected_sounds_data = selected_sounds_data
+            p.user_profile_locations = p.user.profile.locations()
+            p.has_geotags_precomputed = has_geotags
+            p.num_ratings_precomputed = len(ratings)
+            p.avg_rating_precomputed = old_div(1.0*sum(ratings),len(ratings)) if len(ratings) else 0.0
+
+        return packs
+
+    def dict_ids(self, pack_ids, exclude_deleted=True):
+        return {pack_obj.id: pack_obj for pack_obj in self.bulk_query_id(pack_ids, exclude_deleted=exclude_deleted)}
+
+    def ordered_ids(self, pack_ids, exclude_deleted=True):
+        packs = self.dict_ids(pack_ids, exclude_deleted=exclude_deleted)
+        return [packs[pack_id] for pack_id in pack_ids if pack_id in packs]
+
+    '''
     def ordered_ids(self, pack_ids, exclude_deleted=True):
         """
         Returns a list of Pack objects with ID in pack_ids and in the same order. pack_ids can include ID duplicates
@@ -1483,6 +1603,7 @@ class PackManager(models.Manager):
             base_qs = base_qs.exclude(is_deleted=True)
         packs = {pack_obj.id: pack_obj for pack_obj in base_qs}
         return [packs[pack_id] for pack_id in pack_ids if pack_id in packs]
+    '''
 
 
 class Pack(SocialModel):
@@ -1506,6 +1627,9 @@ class Pack(SocialModel):
 
     def get_absolute_url(self):
         return reverse('pack', args=[self.user.username, smart_str(self.id)])
+    
+    def get_pack_sounds_in_search_url(self):
+        return f'{reverse("sounds-search")}?f=grouping_pack:{ self.pack_filter_value() }&s=Date+added+(newest+first)&g=1'
 
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name', 'is_deleted')
@@ -1535,6 +1659,7 @@ class Pack(SocialModel):
         Returns:
             List[Sound]: List of randomly selected Sound objects from the pack
         """
+        # TODO: only used in NG, remove after we switch to BW (?)
         sound_ids = list(Sound.public.filter(pack=self.id).order_by('?').values_list('id', flat=True)[:N])
         return Sound.objects.ordered_ids(sound_ids=sound_ids)
 
@@ -1548,11 +1673,20 @@ class Pack(SocialModel):
         except Exception as e:
             return False
 
+    def pack_filter_value(self):
+        return f"\"{self.id}_{urlquote(self.name)}\""
+
+    def browse_pack_tag_url(self, tag):
+        return reverse('tags', args=[tag]) + f'?pack_flt={self.pack_filter_value()}'
+
     def get_pack_tags_bw(self):
         try:
-            pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
-            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])}
-                    for tag, count in pack_tags_counts]
+            if hasattr(self, 'pack_tags'):
+                return self.pack_tags  # If precomputed from PackManager.bulk_query_id method
+            else:
+                pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
+                return [{'name': tag, 'count': count, 'browse_url': browse_pack_tag_url(tag)}
+                        for tag, count in pack_tags_counts]
         except SearchEngineException as e:
             return []
         except Exception as e:
@@ -1574,9 +1708,12 @@ class Pack(SocialModel):
         self.save()
 
     def invalidate_template_caches(self):
+        # NOTE: we're currently using no cache on pack_display as it does not seem to speed up responses
+        # This might need further investigation
         for player_size in ['small', 'big']:
             invalidate_template_cache("bw_display_pack", self.id, player_size)
-
+        invalidate_template_cache("bw_pack_stats", self.id)
+        
     def get_attribution(self):
         sounds_list = self.sounds.filter(processing_state="OK",
                 moderation_state="OK").select_related('user', 'license')
@@ -1589,17 +1726,19 @@ class Pack(SocialModel):
                 pack=self,
                 licenses=licenses,
                 sound_list=sounds_list))
-        return attribution
+        return attribution        
 
     @property
     def avg_rating(self):
-        # Return average rating from 0 to 10
-        # TODO: don't compute this realtime, store it in DB
-        ratings = list(SoundRating.objects.filter(sound__pack=self).values_list('rating', flat=True))
-        if ratings:
-            return old_div(1.0*sum(ratings),len(ratings))
+        # Return the average rating of the average ratings of the sounds of the pack that have more than MIN_NUMBER_RATINGS
+        if hasattr(self, 'avg_rating_precomputed'):
+            return self.avg_rating_precomputed
         else:
-            return 0
+            ratings = list(Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS).values_list('avg_rating', flat=True))
+            if ratings:
+                return old_div(1.0*sum(ratings),len(ratings))
+            else:
+                return 0
 
     @property
     def avg_rating_0_5(self):
@@ -1608,28 +1747,34 @@ class Pack(SocialModel):
 
     @property
     def num_ratings(self):
-        # TODO: store this as pack field instead of computing it live
-        return SoundRating.objects.filter(sound__pack=self).count()
+        # The number of ratings for a pack is the number of sounds that have >= 3 ratings
+        if hasattr(self, 'num_ratings_precomputed'):
+            return self.num_ratings_precomputed
+        else:
+            return Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS)
 
     def get_total_pack_sounds_length(self):
-        # TODO: don't compute this realtime, store it in DB
         durations = list(Sound.objects.filter(pack=self).values_list('duration', flat=True))
         return sum(durations)
 
     def num_sounds_unpublished(self):
-        # TODO: don't compute this realtime, store it in DB (?)
-        return self.sounds.count() - self.num_sounds
+        if hasattr(self, 'num_sounds_unpublished_precomputed'):
+            return self.num_sounds_unpublished_precomputed
+        else:
+            return self.sounds.count() - self.num_sounds
 
     @cached_property
     def licenses_data(self):
-        licenses_data = list(Sound.objects.select_related('license').filter(pack=self).values_list('license__name', 'license_id'))
-        license_ids = [lid for _, lid in licenses_data]
-        license_names = [lname for lname, _ in licenses_data]
-        return license_ids, license_names
+        if hasattr(self, 'licenses_data_precomputed'):
+            return self.licenses_data_precomputed  # If precomputed from PackManager.bulk_query_id method
+        else:
+            licenses_data = list(Sound.objects.select_related('license').filter(pack=self).values_list('license__name', 'license_id'))
+            license_ids = [lid for _, lid in licenses_data]
+            license_names = [lname for lname, _ in licenses_data]
+            return license_ids, license_names
     
     @property
     def license_summary_name_and_id(self):
-        # TODO: store this in DB?
         license_ids, license_names = self.licenses_data
         
         if len(set(license_ids)) == 1:
@@ -1648,7 +1793,6 @@ class Pack(SocialModel):
 
     @property
     def license_summary_text(self):
-        # TODO: store this in DB?
         license_summary_name, license_summary_id = self.license_summary_name_and_id
         if license_summary_name != self.VARIOUS_LICENSES_NAME:
             return License.objects.get(id=license_summary_id).get_short_summary
@@ -1667,11 +1811,10 @@ class Pack(SocialModel):
 
     @property
     def has_geotags(self):
-        # Returns whether or not the pack has geotags
-        # This is used in the pack page to decide whether or not to show the geotags map. Doing this generates one
-        # extra DB query, but avoid doing unnecessary map loads and a request to get all geotags by a pack (which would
-        # return empty query set if no geotags and indeed generate more queries).
-        return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
+        if hasattr(self, "has_geotags_precomputed"):
+            return self.has_geotags_precomputed
+        else:
+            return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
 
 
 class Flag(models.Model):
@@ -1715,6 +1858,8 @@ def update_num_downloads_on_delete(**kwargs):
             is_index_dirty=True, num_downloads=Greatest(F('num_downloads') - 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
             num_sound_downloads=Greatest(F('num_sound_downloads') - 1, 0))
+        accounts.models.Profile.objects.filter(user_id=download.sound.user_id).update(
+            num_user_sounds_downloads=Greatest(F('num_user_sounds_downloads') - 1, 0))
 
 
 @receiver(post_save, sender=Download)
@@ -1726,6 +1871,8 @@ def update_num_downloads_on_insert(**kwargs):
                 is_index_dirty=True, num_downloads=Greatest(F('num_downloads') + 1, 0))
             accounts.models.Profile.objects.filter(user_id=download.user_id).update(
                 num_sound_downloads=Greatest(F('num_sound_downloads') + 1, 0))
+            accounts.models.Profile.objects.filter(user_id=download.sound.user_id).update(
+                num_user_sounds_downloads=Greatest(F('num_user_sounds_downloads') + 1, 0))
 
 
 class PackDownload(models.Model):
@@ -1749,6 +1896,8 @@ def update_num_downloads_on_delete_pack(**kwargs):
     Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
     accounts.models.Profile.objects.filter(user_id=download.user_id).update(
         num_pack_downloads=Greatest(F('num_pack_downloads') - 1, 0))
+    accounts.models.Profile.objects.filter(user_id=download.pack.user_id).update(
+        num_user_packs_downloads=Greatest(F('num_user_packs_downloads') - 1, 0))
 
 
 @receiver(post_save, sender=PackDownload)
@@ -1758,6 +1907,8 @@ def update_num_downloads_on_insert_pack(**kwargs):
         Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
             num_pack_downloads=Greatest(F('num_pack_downloads') + 1, 0))
+        accounts.models.Profile.objects.filter(user_id=download.pack.user_id).update(
+            num_user_packs_downloads=Greatest(F('num_user_packs_downloads') + 1, 0))
 
 
 class RemixGroup(models.Model):

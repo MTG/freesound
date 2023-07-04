@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="container">
+        <div class="navbar-space-filler v-spacing-7 v-spacing-top-5">
+            <div class="no-paddings col-12 v-spacing-3">
+                <h1>Monitor</h1>
+            </div>
+            <div class="row bw-edit-profile">
+                <aside class="col-md-4 col-extra-left-padding-large-md v-spacing-3 order-md-last">
+                    <ul class="navbar-profile bw-sticky-top padding-0">
+                        <li class="nav-item">
+                            <a class="nav-link {% if activePage == 'stats'%} active {% endif %}" href="{% url "monitor-stats" %}">Stats</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if activePage == 'moderation'%} active {% endif %}" href="{% url 'monitor-moderation' %}">Moderation</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if activePage == 'processing'%} active {% endif %}" href="{% url "monitor-processing" %}">Processing</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if activePage == 'analysis'%} active {% endif %}" href="{% url "monitor-analysis" %}">Analysis</a>
+                        </li>
+                    </ul>
+                </aside>
+                <div class="col-md-8 bw-edit-profile__info">
+                    {% block main_content %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block extrabody %}
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>    
+<script src="{% static 'bw-frontend/dist/monitor.js' %}"></script>
+<script src="https://d3js.org/d3.v4.min.js" type="text/javascript"></script>
+<script src="https://d3js.org/d3-axis.v1.min.js"></script>
+<script src="https://d3js.org/d3-array.v1.min.js"></script>
+<script src="https://d3js.org/d3-collection.v1.min.js"></script>
+<script src="https://d3js.org/d3-color.v1.min.js"></script>
+<script src="https://d3js.org/d3-format.v1.min.js"></script>
+<script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+<script src="https://d3js.org/d3-time.v1.min.js"></script>
+<script src="https://d3js.org/d3-time-format.v2.min.js"></script>
+<script src="https://d3js.org/d3-scale.v1.min.js"></script>
+<script src="https://d3js.org/d3-path.v1.min.js"></script>
+<script src="https://d3js.org/d3-shape.v1.min.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.0.2/wordcloud2.min.js"></script>
+{% endblock %}

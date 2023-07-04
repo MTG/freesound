@@ -12,9 +12,9 @@
     <meta name="keywords" content="free, sound">
     {% block extrahead %}
     {% endblock %}
-    {% if request.session.uiThemePreference == 'l' %}
+    {% if request.user.profile.ui_theme_preference == 'l' %}
     <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}" data-forced-theme="yes">
-    {% elif request.session.uiThemePreference == 'd' %}
+    {% elif request.user.profile.ui_theme_preference == 'd' %}
     <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}" data-forced-theme="yes">
     {% else %}
     {% if system_prefers_dark_theme %}
@@ -30,7 +30,6 @@
     </noscript>
     {% include 'accounts/modal_login.html' %}
     {% include 'accounts/modal_login_problems.html' %}
-    {% include 'accounts/modal_registration.html' %}
     {% include 'accounts/modal_registration_feedback.html' %}
     {% include 'molecules/confirmation_modal.html' %}
     <div id="genericModalWrapper"></div>
@@ -45,7 +44,7 @@
             </ul>
         </div>
     {% endif %}
-    <div class="bw-page">
+    <div class="bw-page" aria-hidden="false">
     {% block navbar %}
         {% comment %}This block can be overriden by pages that use a different navbar{% endcomment %}
         {% include 'molecules/navbar.html' %}
@@ -56,13 +55,19 @@
     </div>
     {% bw_plausible_scripts %}
     <script>
-        document.cookie = "preferSpectrogram={{request.session.preferSpectrogram|yesno}};path=/";
-        document.cookie = "disallowSimultaneousAudioPlayback={{request.session.disallowSimultaneousAudioPlayback|yesno}};path=/"
+        {% if request.user.is_authenticated %}
+        document.cookie = "preferSpectrogram={{request.user.profile.prefer_spectrograms|yesno}};path=/";
+        document.cookie = "disallowSimultaneousAudioPlayback={{request.user.profile.allow_simultaneous_playback|yesno:'no,yes'}};path=/"
+        {% else %}
+        document.cookie = "preferSpectrogram=no;path=/";
+        document.cookie = "disallowSimultaneousAudioPlayback=no;path=/"
+        {% endif %}
         const siteWidth = 580;  // Minimum expected width. If screen is smaller, scale website.
         const scale = window.innerWidth / siteWidth;
         if (scale < 1){
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale);
         }
+        const userIsAuthenticated = {{ request.user.is_authenticated|yesno:'true,false' }};
     </script>
     <script src="{% static 'bw-frontend/dist/index.js' %}"></script>
     {% block extrabody %}

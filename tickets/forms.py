@@ -30,16 +30,24 @@ class ModeratorMessageForm(forms.Form):
     moderator_only = forms.BooleanField(required=False)
 
 
+class BWModeratorMessageForm(ModeratorMessageForm):
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super().__init__(*args, **kwargs)
+        self.fields['message'].label = False
+        self.fields['message'].widget.attrs['placeholder'] = 'Add a new message to the ticket'
+        self.fields['message'].widget.attrs['rows'] = '1'
+        self.fields['message'].widget.attrs['style'] = 'min-height:100px;'
+        self.fields['moderator_only'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['moderator_only'].label = mark_safe('Make this message only visible to other moderators')
+
+
 class UserMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea)
 
 
-class UserContactForm(UserMessageForm):
-    title = HtmlCleaningCharField()
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields.keyOrder = ['title', 'message']
+class BWUserMessageForm(UserMessageForm):
+    pass
 
 
 class AnonymousMessageForm(forms.Form):
@@ -47,13 +55,8 @@ class AnonymousMessageForm(forms.Form):
     recaptcha = ReCaptchaField(label="")
 
 
-class AnonymousContactForm(AnonymousMessageForm):
-    title = HtmlCleaningCharField()
-    email = forms.EmailField()
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields.keyOrder = ['email', 'title', 'message']
+class BWAnonymousMessageForm(AnonymousMessageForm):
+    pass
 
 
 # Sound moderation forms

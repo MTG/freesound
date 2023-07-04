@@ -41,7 +41,7 @@ from utils.frontend_handling import render, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
-    split_filter_query
+    split_filter_query, should_use_compact_mode, contains_active_advanced_search_filters
 from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator
 
 search_logger = logging.getLogger("search")
@@ -73,12 +73,16 @@ def search_view_helper(request, tags_mode=False):
     query_params.update({'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS})
 
     filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], cluster_id)
-
+    
     # Get tags taht are being used in filters (this is used later to remove them from the facet and also for tags mode)
     tags_in_filter = []
     for filter_data in filter_query_split:
         if filter_data['name'].startswith('tag:'):
-            tags_in_filter.append(filter_data['name'].replace('tag:', ''))
+            tag = filter_data['name'].replace('tag:', '')
+            if tag.startswith('"'):
+                # If tag name has quotes, remove them
+                tag = tag[1:-1]
+            tags_in_filter.append(tag)
     
     # Process tags mode stuff
     initial_tagcloud = None
@@ -113,6 +117,11 @@ def search_view_helper(request, tags_mode=False):
     only_sounds_with_pack_in_request = request.GET.get("only_p", "0") == "1"
     disable_group_by_pack_option = 'pack:' in query_params['query_filter'] or only_sounds_with_pack_in_request
     disable_only_sounds_by_pack_option= 'pack:' in query_params['query_filter']
+    only_sounds_with_pack = "1" if query_params['only_sounds_with_pack'] else ""
+    if only_sounds_with_pack:
+        # If displaying seachr results as packs, include 3 sounds per pack group in the results so we can display these sounds as selected sounds in the
+        # display_pack templatetag
+        query_params['num_sounds_per_pack_group'] = 3
 
     tvars = {
         'error_text': None,
@@ -121,9 +130,10 @@ def search_view_helper(request, tags_mode=False):
         'search_query': query_params['textual_query'],
         'group_by_pack_in_request': "1" if group_by_pack_in_request else "", 
         'disable_group_by_pack_option': disable_group_by_pack_option,
-        'only_sounds_with_pack': "1" if query_params['only_sounds_with_pack'] else "",
+        'only_sounds_with_pack': only_sounds_with_pack,
         'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
         'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
+        'use_compact_mode': should_use_compact_mode(request),
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
         'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
@@ -135,25 +145,46 @@ def search_view_helper(request, tags_mode=False):
         'weights': extra_vars['raw_weights_parameter'],
         'initial_tagcloud': initial_tagcloud,
         'tags_mode': tags_mode,
-        'tags_in_filter': tags_in_filter
+        'tags_in_filter': tags_in_filter,
+        'has_advanced_search_settings_set': contains_active_advanced_search_filters(request, query_params, extra_vars),
+        'advanced_search_closed_on_load': settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD
     }
 
     tvars.update(advanced_search_params_dict)
 
     try:       
         results, paginator = perform_search_engine_query(query_params)
-        resultids = [d.get("id") for d in results.docs]
-        resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
-        allsounds = {}
-        for s in resultsounds:
-            allsounds[s.id] = s
-        # allsounds will contain info from all the sounds returned by bulk_query_id. This should
-        # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
-        # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
-        # in docs that have not been loaded in allsounds.
-        docs = [doc for doc in results.docs if doc["id"] in allsounds]
-        for d in docs:
-            d["sound"] = allsounds[d["id"]]
+        if not only_sounds_with_pack:
+            resultids = [d.get("id") for d in results.docs]
+            resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
+            allsounds = {}
+            for s in resultsounds:
+                allsounds[s.id] = s
+            # allsounds will contain info from all the sounds returned by bulk_query_id. This should
+            # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
+            # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
+            # in docs that have not been loaded in allsounds.
+            docs = [doc for doc in results.docs if doc["id"] in allsounds]
+            for d in docs:
+                d["sound"] = allsounds[d["id"]]
+        else:
+            resultspackids = []
+            sound_ids_for_pack_id = {}
+            for d in results.docs:
+                pack_id = int(d.get("group_name").split('_')[0])
+                resultspackids.append(pack_id)
+                sound_ids_for_pack_id[pack_id] = [int(sound['id']) for sound in d.get('group_docs', [])]
+            resultpacks = sounds.models.Pack.objects.bulk_query_id(resultspackids, sound_ids_for_pack_id=sound_ids_for_pack_id)
+            allpacks = {}
+            for p in resultpacks:
+                allpacks[p.id] = p
+            # allpacks will contain info from all the packs returned by bulk_query_id. This should
+            # be all packs in docs, but if solr and db are not synchronised, it might happen that there
+            # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
+            # in docs that have not been loaded in allsounds.
+            docs = [d for d in results.docs if int(d.get("group_name").split('_')[0]) in allpacks]
+            for d in docs:
+                d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
 
         search_logger.info('Search (%s)' % json.dumps({
             'ip': get_client_ip(request),
@@ -368,8 +399,18 @@ def search_forum(request):
         current_forum = get_object_or_404(forum.models.Forum.objects, name_slug=current_forum_name_slug)
     else:
         current_forum = None
-    sort = ["thread_created desc"]
+    sort = settings.SEARCH_FORUM_SORT_DEFAULT
 
+    # Get username filter if any and prepare URL to remove the filter
+    # NOTE: the code below is not robust to more complex filters. To do that we should do proper parsing
+    # of the filters like we do for the search view
+    username_filter = None
+    remove_username_filter_url = ''
+    if 'post_author' in filter_query:
+        username_filter = filter_query.split('post_author:"')[1].split('"')[0]
+        remove_username_filter_url = '{}?{}'.format(reverse('forums-search'), filter_query.replace('post_author:"{}"'.format(username_filter), ''))
+        sort = settings.SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST
+    
     # Parse advanced search options
     advanced_search = request.GET.get("advanced_search", "")
     date_from = request.GET.get("dt_from", "")
@@ -409,6 +450,7 @@ def search_forum(request):
             results = get_search_engine().search_forum_posts(
                 textual_query=search_query,
                 query_filter=filter_query,
+                sort=sort,
                 num_posts=settings.FORUM_POSTS_PER_PAGE,
                 current_page=current_page,
                 group_by_thread=not using_beastwhoosh(request))
@@ -438,18 +480,22 @@ def search_forum(request):
         'error': error,
         'error_text': error_text,
         'filter_query': filter_query,
+        'username_filter': username_filter,
+        'remove_username_filter_url': remove_username_filter_url,
         'num_results': num_results,
         'page': page,
         'paginator': paginator,
         'search_query': search_query,
         'sort': sort,
-        'results': results,
+        'results': results
     }
 
     if using_beastwhoosh(request):
         if results:
-            posts = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
+            posts_unsorted = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
                 .filter(id__in=[d['id'] for d in results.docs])
+            posts_map = {post.id:post for post in posts_unsorted}
+            posts = [posts_map[d['id']] for d in results.docs]            
         else:
             posts = []
         tvars.update({

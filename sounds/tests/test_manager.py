@@ -57,14 +57,14 @@ class SoundManagerQueryMethods(TestCase):
 
         # Check that all fields for each sound are retrieved with one query
         with self.assertNumQueries(1):
-            for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids):
+            for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_analyzers_output=True):
                 for field in self.fields_to_check_bulk_query_id:
                     self.assertTrue(hasattr(sound, field), True)
 
     def test_bulk_query_id_field_contents(self):
 
         # Check the contents of some fields are correct
-        for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids):
+        for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_analyzers_output=True):
             self.assertEqual(Sound.objects.get(id=sound.id).user.username, sound.username)
             self.assertEqual(Sound.objects.get(id=sound.id).original_filename, sound.original_filename)
             self.assertEqual(Sound.objects.get(id=sound.id).pack_id, sound.pack_id)
@@ -189,7 +189,7 @@ class PackManagerQueryMethods(TestCase):
     def test_ordered_ids(self):
 
         # Test that ordered_ids returns a sorted list of Pack objects with the requested IDs, including duplicates
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(2):
             pack_ids_with_duplicates = self.pack_ids + self.pack_ids
             for i, pack in enumerate(Pack.objects.ordered_ids(pack_ids=pack_ids_with_duplicates)):
                 self.assertEqual(type(pack), Pack)

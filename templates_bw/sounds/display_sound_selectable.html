@@ -1,10 +1,10 @@
-<div class="bw-selectable-sound between {% if selected %}selected{% endif %}">
+<div class="bw-selectable-object between {% if selected %}selected{% endif %}">
     <div class="middle spacing-2">
         <label>
-        <input type="checkbox" class="bw-checkbox" data-sound-id="{{ sound.id }}" {% if selected %}checked{% endif %}>
+        <input type="checkbox" class="bw-checkbox" data-object-id="{{ sound.id }}" {% if selected %}checked{% endif %}>
         </label>
     </div>
-    <div style="min-width: 0;">{% comment %}This min-width is needed here for "ellipsis" in sound title to work when inside flexbox used by "between"{% endcomment %}
+    <div style="min-width: 0;width:100%;">{% comment %}This min-width is needed here for "ellipsis" in sound title to work when inside flexbox used by "between"{% endcomment %}
         {% include "sounds/display_sound.html" %}
     </div>
 </div>

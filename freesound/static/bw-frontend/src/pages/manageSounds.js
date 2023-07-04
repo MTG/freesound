@@ -1,14 +1,14 @@
-import {initializeSoundSelector} from '../components/soundsSelector'
-import {handleModal} from "../components/modal";
+import {initializeObjectSelector} from '../components/objectSelector'
+import {activateModal} from "../components/modal";
 
 const editSelectedSoundsButton = document.getElementById('edit-button');
 if (editSelectedSoundsButton !== null){
     editSelectedSoundsButton.disabled = true;
 }
 
-const removeSelectedSoundsButton = document.getElementById('remove-button');
-if (removeSelectedSoundsButton !== null){
-    removeSelectedSoundsButton.disabled = true;
+const removeSelectedItemsButton = document.getElementById('remove-button');
+if (removeSelectedItemsButton !== null){
+    removeSelectedItemsButton.disabled = true;
 }
 
 const reprocessSelectedSoundsButton = document.getElementById('reprocess-button');
@@ -21,22 +21,24 @@ if (describeSelectedSoundsButton !== null){
     describeSelectedSoundsButton.disabled = true;
 }
 
-const soundSelector = [...document.getElementsByClassName('bw-sounds-selector-container')];
-soundSelector.forEach(selectorElement => {
-    initializeSoundSelector(selectorElement, (element) => {
+const objectSelector = [...document.getElementsByClassName('bw-object-selector-container')];
+objectSelector.forEach(selectorElement => {
+    initializeObjectSelector(selectorElement, (element) => {
         if (editSelectedSoundsButton !== null){
             editSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
-            editSelectedSoundsButton.closest('form').querySelector('input[name="sound-ids"]').value = element.dataset.selectedIds;
         }
-        if (removeSelectedSoundsButton !== null){
-            removeSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
+        if (removeSelectedItemsButton !== null){
+            removeSelectedItemsButton.disabled = element.dataset.selectedIds === "";
         }
         if (reprocessSelectedSoundsButton !== null){
             reprocessSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
-            reprocessSelectedSoundsButton.closest('form').querySelector('input[name="sound-ids"]').value = element.dataset.selectedIds;
         }
         if (describeSelectedSoundsButton !== null){
             describeSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
+        }
+        const objectIdsInput = document.querySelector('input[name="object-ids"]');
+        if (objectIdsInput !== null){
+            objectIdsInput.value = element.dataset.selectedIds;
         }
     })
 });
@@ -51,14 +53,18 @@ if (sortByElement !== null){
 const describeFileCheckboxesWrapper = document.getElementById("describe-file-checkboxes");
 const describeFilesForm = document.getElementById("fileform");
 
-const noCheckboxSelected = describeFileCheckboxes => {
+const numCheckboxesSelected = describeFileCheckboxes => {
     let numChecked = 0;
     describeFileCheckboxes.forEach(checkboxElement => {
         if (checkboxElement.checked) {
             numChecked += 1;
         }
     })
-    return numChecked === 0;
+    return numChecked;
+}
+
+const noCheckboxSelected = describeFileCheckboxes => {
+    return numCheckboxesSelected(describeFileCheckboxes) === 0;
 }
 
 
@@ -71,7 +77,7 @@ var optionInFilesForm = describeFilesForm.querySelectorAll("option[value=" + che
         }
         const disabled = noCheckboxSelected(describeFileCheckboxes);
         describeSelectedSoundsButton.disabled = disabled;
-            removeSelectedSoundsButton.disabled = disabled;
+            removeSelectedItemsButton.disabled = disabled;
 }
 
 
@@ -84,21 +90,47 @@ if (describeFileCheckboxesWrapper !== null){
     });
 }
 
-if (removeSelectedSoundsButton !== null){
-    removeSelectedSoundsButton.addEventListener('click', evt =>{
+if (removeSelectedItemsButton !== null){
+    removeSelectedItemsButton.addEventListener('click', evt =>{
         evt.preventDefault();
         const confirmationModalTitle = document.getElementById('confirmationModalTitle');
-        confirmationModalTitle.innerText = "Are you sure you want to remove these sounds?";
         const confirmationModalHelpText = document.getElementById('confirmationModalHelpText');
-        confirmationModalHelpText.innerText = "Be aware that this action is irreversible..."
+        if (objectSelector.length > 0){
+            // We are either selecting sounds or packs
+            const multipleElementsSelected = objectSelector[0].dataset.selectedIds.split(',').length > 1;
+            if (objectSelector[0].dataset.type == "packs"){
+                if (multipleElementsSelected){
+                    confirmationModalTitle.innerText = "Are you sure you want to remove these packs?";
+                    confirmationModalHelpText.innerText = "Note that the sounds inside these packs will not be deleted."
+                } else {
+                    confirmationModalTitle.innerText = "Are you sure you want to remove this pack?";
+                    confirmationModalHelpText.innerText = "Note that the sounds inside this pack will not be deleted."
+                }
+            } else {
+                if (multipleElementsSelected){
+                    confirmationModalTitle.innerText = "Are you sure you want to remove these sounds?";
+                } else {
+                    confirmationModalTitle.innerText = "Are you sure you want to remove this sound?";
+                }
+                confirmationModalHelpText.innerText = "Be aware that this action is irreversible..."
+            }
+        } else {
+            // Pending description tab
+            if (numCheckboxesSelected(describeFileCheckboxesWrapper.querySelectorAll('input')) > 1){
+                confirmationModalTitle.innerText = "Are you sure you want to remove these sound files?";
+            } else {
+                confirmationModalTitle.innerText = "Are you sure you want to remove this sound file?";
+            }
+            confirmationModalHelpText.innerText = "Be aware that this action is irreversible..."
+        }
         const confirmationModalAcceptForm = document.getElementById('confirmationModalAcceptSubmitForm');
         const confirmationModalAcceptButton = confirmationModalAcceptForm.querySelectorAll('button')[0];
         confirmationModalAcceptButton.addEventListener('click', evt => {
             evt.preventDefault();
-            const removeSelectedSoundsButton = document.getElementById('remove-button-hidden');
-            removeSelectedSoundsButton.click();  // This will trigger submitting the form with the name of the button in it and without submit being intercepted
+            const removeSelectedItemsButton = document.getElementById('remove-button-hidden');
+            removeSelectedItemsButton.click();  // This will trigger submitting the form with the name of the button in it and without submit being intercepted
         })
-        handleModal('confirmationModal');
+        activateModal('confirmationModal');
     })
 }
 
@@ -106,10 +138,10 @@ const bulkDescribeButton = document.getElementById('bulk-describe-button');
 if (bulkDescribeButton !== null) {
     bulkDescribeButton.addEventListener('click', evt => {
         evt.preventDefault();
-        handleModal('bulkDescribeModal');
+        activateModal('bulkDescribeModal');
     })
     if (bulkDescribeButton.dataset.formHasErrors !== undefined) {
-        handleModal('bulkDescribeModal');
+        activateModal('bulkDescribeModal');
     }
 }
 

@@ -154,7 +154,7 @@ class SearchPageTests(TestCase):
 
         # In this case we check if a non valid filter is applied it should be ignored.
         # grouping_pack it shouldn't be in filter_query_split, since is a not valid filter
-        self.assertEqual(resp.context['filter_query_split'][0]['name'], 'tag:acoustic-guitar')
+        self.assertEqual(resp.context['filter_query_split'][0]['name'], 'tag:"acoustic-guitar"')
         self.assertEqual(len(resp.context['filter_query_split']), 1)
 
         resp = self.client.get(reverse('sounds-search'), {"f": 'grouping_pack:"19894_Clutter" tag:"acoustic-guitar"'})

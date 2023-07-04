@@ -1,8 +1,0 @@
-{% load display_sound %}
-<div class="bw-sounds-selector-container row v-spacing-top-2 no-gutters" style="margin-left:-8px;margin-right:-8px;">
-    {% for sound in sounds %}
-    <div class="col-md-4 col-6">
-        {% display_sound_small_selectable sound sound.selected %}
-    </div>
-    {% endfor %}
-</div>

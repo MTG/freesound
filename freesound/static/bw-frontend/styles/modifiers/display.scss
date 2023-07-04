@@ -9,3 +9,8 @@
 .visibility-hidden {
   visibility: hidden;
 }
+
+.zindex2000 {
+  // Use a large z-index to be higher than usual modal's z-index
+  z-index: 2000;
+}

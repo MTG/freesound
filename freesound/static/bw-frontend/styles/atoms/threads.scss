@@ -81,7 +81,6 @@
   p {
     margin: 0;
     color: $navy-grey;
-    font-size: 14px;
   }
 
   h6 {
@@ -102,16 +101,11 @@
   }
 
   h6 {
-    font-size: 16px;
+    font-size: 18px;
     margin: 0;
   }
 
-  p {
-    font-size: 14px;
-  }
-
   i {
-    font-size: 12px;
     margin: 0 2px;
   }
 
@@ -123,9 +117,7 @@
     margin: 0px;
 
     p {
-      font-size: 15px;
-      line-height: 20px;
-      color: #333;
+      color: $black;
     }
   }
 }

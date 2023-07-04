@@ -56,13 +56,13 @@
         {% endfor %}
         {% with form.accepted_tos as tos %}
             {{ tos.errors }}
-            {{ tos }} <label for="{{ tos.id_for_label }}" class="bw-checkbox-label">{{ tos.help_text|safe }}</label>
+            <label for="{{ tos.id_for_label }}" class="bw-checkbox-label">{{ tos }} {{ tos.help_text|safe }}</label>
         {% endwith %}
         {% if has_sounds_with_old_cc_licenses %}
         <br>
         {% with form.accepted_license_change as alc %}
             {{ alc.errors }}
-            {{ alc }} <label for="{{ alc.id_for_label }}" class="bw-checkbox-label">{{ alc.help_text|safe }}</label>
+            <label for="{{ alc.id_for_label }}" class="bw-checkbox-label">{{ alc }} {{ alc.help_text|safe }}</label>
         {% endwith %}
         {% endif %}
     <br><br>

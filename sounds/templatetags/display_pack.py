@@ -28,7 +28,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('sounds/display_pack.html', takes_context=True)
-def display_pack(context, pack, size='small'):
+def display_pack(context, pack, size='small', show_bookmark_similarity_buttons=True):
     """This templatetag is used to display a pack with some randomly selected sound players.
 
     Args:
@@ -44,40 +44,44 @@ def display_pack(context, pack, size='small'):
         dict: dictionary with the variables needed for rendering the pack with the display_pack.html template
 
     """
-    if isinstance(pack, Pack):
-        pack_obj = [pack]
-    else:
+    if not isinstance(pack, Pack):
         try:
             # use filter here instead of get because we don't want the query to be evaluated before rendering the
             # template as this would bypass the html cache in the template
-            pack_obj = Pack.objects.select_related('user').filter(id=int(pack))
+            pack = Pack.objects.bulk_query_id([int(pack)])[0]
         except ValueError:
-            # Invalid ID, we set pack_obj to empty list so "if pack" check in template returns False
-            pack_obj = []
+            pack = None
         except Pack.DoesNotExist:
-            # Pack does not exist, we set pack_obj to empty list so "if pack" check in template returns False
-            pack_obj = []
+            pack = None
 
     request = context.get('request')
-    if using_beastwhoosh(request):
-        try:
-            user_profile_locations = pack_obj[0].user.profile.locations()
-        except IndexError:
-            user_profile_locations = None
-    else:
-        user_profile_locations = None
 
     # Add 'request' to the returned context dictionary below so when the display_sound templatetag is called inside
     # display_pack templatetag it is given request in the context as well.
     return {
-        'pack': pack_obj,
+        'pack': pack,
         'size': size,
-        'user_profile_locations': user_profile_locations,
         'media_url': context['media_url'],
-        'request': request
+        'request': request,
+        'show_bookmark_similarity_buttons': show_bookmark_similarity_buttons,
     }
+
+
+@register.inclusion_tag('sounds/display_pack.html', takes_context=True)
+def display_pack_small_no_bookmark(context, pack):
+    return display_pack(context, pack, size='small', show_bookmark_similarity_buttons=False)
 
 
 @register.inclusion_tag('sounds/display_pack.html', takes_context=True)
 def display_pack_big(context, pack):
     return display_pack(context, pack, size='big')
+
+
+@register.inclusion_tag('sounds/display_pack_selectable.html', takes_context=True)
+def display_pack_small_selectable(context, pack, selected=False):
+    context = context.get('original_context', context)  # This is to allow passing context in nested inclusion tags
+    tvars = display_pack(context, pack, size='small')
+    tvars.update({
+        'selected': selected,
+    })
+    return tvars

@@ -209,8 +209,14 @@ class TestSearchEngineBackend():
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST:
                     assert_and_continue(sound1.avg_rating <= sound2.avg_rating,
                                         f'Wrong ordering in {sort_option_web}')
+                    if sound1.avg_rating == sound2.avg_rating:
+                        assert_and_continue(sound1.num_ratings >= sound2.num_ratings,
+                                        f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST:
                     assert_and_continue(sound1.avg_rating >= sound2.avg_rating,
+                                        f'Wrong ordering in {sort_option_web}')
+                    if sound1.avg_rating == sound2.avg_rating:
+                        assert_and_continue(sound1.num_ratings >= sound2.num_ratings,
                                         f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST:
                     assert_and_continue(sound1.duration >= sound2.duration,

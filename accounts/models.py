@@ -121,15 +121,27 @@ class Profile(SocialModel):
     # The following 4 fields are updated using django signals (methods 'update_num_downloads*')
     num_sounds = models.PositiveIntegerField(editable=False, default=0)
     num_posts = models.PositiveIntegerField(editable=False, default=0)
-    num_sound_downloads = models.PositiveIntegerField(editable=False, default=0)
-    num_pack_downloads = models.PositiveIntegerField(editable=False, default=0)
+    num_sound_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of sounds the user has downloaded
+    num_pack_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of packs the user has downloaded
+    num_user_sounds_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of times user's sounds have been downloaded
+    num_user_packs_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of times user's packs have been downloaded
 
     # "is_anonymized_user" indicates that the user account has been anonimized and no longer contains personal data
     # This is what we do when we delete a user to still preserve statistics and information and downloads
     # "is_anonymized_user" used to be called "is_deleted_user"
     is_anonymized_user = models.BooleanField(db_index=True, default=False)
 
+    # The following are user preferences that relate to how interface is displayed
     is_adult = models.BooleanField(default=False)
+    allow_simultaneous_playback = models.BooleanField(default=True)
+    prefer_spectrograms = models.BooleanField(default=False)
+    use_compact_mode = models.BooleanField(default=False)
+    UI_THEME_CHOICES = (
+        ('f', 'Follow system default'),
+        ('l', 'Light'),
+        ('d', 'Dark'),
+    )
+    ui_theme_preference = models.CharField(max_length=1, choices=UI_THEME_CHOICES, default='f')
 
     objects = ProfileManager()
 
@@ -143,10 +155,10 @@ class Profile(SocialModel):
         return self.user.sounds.select_related('license').filter(license__deed_url__contains="3.0").count() > 0
 
     def upgrade_old_cc_licenses_to_new_cc_licenses(self):
-        old_cc_by = License.objects.get(name="Attribution", deed_url__contains="3.0")
-        old_cc_by_nc = License.objects.get(name="Attribution Noncommercial", deed_url__contains="3.0")
-        new_cc_by = License.objects.get(name="Attribution", deed_url__contains="4.0")
-        new_cc_by_nc = License.objects.get(name="Attribution Noncommercial", deed_url__contains="4.0")
+        old_cc_by = License.objects.get(name__iexact="Attribution", deed_url__contains="3.0")
+        old_cc_by_nc = License.objects.get(name__iexact="Attribution NonCommercial", deed_url__contains="3.0")
+        new_cc_by = License.objects.get(name__iexact="Attribution", deed_url__contains="4.0")
+        new_cc_by_nc = License.objects.get(name__iexact="Attribution NonCommercial", deed_url__contains="4.0")
         for old_license, new_license in [(old_cc_by, new_cc_by), (old_cc_by_nc, new_cc_by_nc)]:
             self.user.sounds.filter(license=old_license).update(license=new_license)
 
@@ -196,8 +208,20 @@ class Profile(SocialModel):
         # We consider each pack download as a single download
         return self.num_sound_downloads + self.num_pack_downloads
 
+    @property
+    def num_downloads_on_sounds_and_packs(self):
+        # Number of downloads on user's sounds and packs
+        return self.num_user_sounds_downloads + self.num_user_packs_downloads
+
+    @property
+    def num_comments(self):
+        return Comment.objects.filter(user=self.user).count()
+    
     def get_absolute_url(self):
         return reverse('account', args=[smart_str(self.user.username)])
+    
+    def get_user_sounds_in_search_url(self):
+        return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=0'
 
     @staticmethod
     def locations_static(user_id, has_avatar):
@@ -322,7 +346,7 @@ class Profile(SocialModel):
         try:
             search_engine = get_search_engine()
             tags_counts = search_engine.get_user_tags(self.user.username)
-            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag])} for tag, count in
+            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag]) + f'?username_flt={self.user.username}'} for tag, count in
                     tags_counts]
         except SearchEngineException as e:
             return False
@@ -566,7 +590,6 @@ class Profile(SocialModel):
     @property
     def avg_rating(self):
         # Returns the average raring from 0 to 10
-        # TODO: don't compute this realtime, store it in DB
         ratings = list(SoundRating.objects.filter(sound__user=self.user).values_list('rating', flat=True))
         if ratings:
             return old_div(1.0*sum(ratings),len(ratings))
@@ -579,7 +602,6 @@ class Profile(SocialModel):
         return old_div(self.avg_rating,2)
 
     def get_total_uploaded_sounds_length(self):
-        # TODO: don't compute this realtime, store it in DB
         # NOTE: this only includes duration of sounds that have been processed and moderated
         durations = list(Sound.public.filter(user=self.user).values_list('duration', flat=True))
         return sum(durations)
@@ -587,7 +609,6 @@ class Profile(SocialModel):
     @property
     def num_packs(self):
         # Return the number of packs for which at least one sound has been published
-        # TODO: store this as an account field instead of computing it live
         return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by('pack_id').distinct('pack').count()
 
     class Meta(SocialModel.Meta):

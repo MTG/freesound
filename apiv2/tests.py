@@ -368,7 +368,7 @@ class TestSoundListSerializer(TestCase):
 
         # Test when serializing a single sound
         for field_set in field_sets:
-            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids[0])
+            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids[0], include_analyzers_output=True)
             with self.assertNumQueries(0):
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
                 # Call serializer .data to actually get the data and potentially trigger unwanted extra queries
@@ -376,7 +376,7 @@ class TestSoundListSerializer(TestCase):
 
         # Test when serializing mulitple sounds
         for field_set in field_sets:
-            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids)
+            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids, include_analyzers_output=True)
             with self.assertNumQueries(0):
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
                 for sound in sounds_dict.values():
@@ -389,7 +389,7 @@ class TestSoundSerializer(TestCase):
     fixtures = ['licenses', 'sounds']
 
     def setUp(self):
-        self.sound = Sound.objects.bulk_query_id(Sound.objects.first().id)[0]
+        self.sound = Sound.objects.bulk_query_id(Sound.objects.first().id, include_analyzers_output=True)[0]
         self.factory = RequestFactory()
 
     def test_num_fields_and_num_queries(self):
@@ -402,7 +402,7 @@ class TestSoundSerializer(TestCase):
         # extra query. Because in this test we get sound info using Sound.objects.bulk_query_id, the serializer
         # should perform no extra queries to render the data
         with self.assertNumQueries(0):
-            dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound.id]))
+            dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound.id]) + '?fields=*')
             serialized_sound = SoundSerializer(self.sound, context={'request': dummy_request}).data
             self.assertCountEqual(list(serialized_sound.keys()), SoundSerializer.Meta.fields)
 

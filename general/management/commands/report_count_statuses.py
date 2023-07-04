@@ -27,8 +27,9 @@ from django.contrib.auth.models import User
 from django.db.models import Count, Avg, Value
 from django.db.models.functions import Coalesce
 
+from accounts.models import Profile
 from forum.models import Post
-from sounds.models import Sound, Pack
+from sounds.models import Sound, Pack, Download, PackDownload
 from utils.management_commands import LoggingBaseCommand
 
 console_logger = logging.getLogger("console")
@@ -57,8 +58,8 @@ class Command(LoggingBaseCommand):
     def handle(self,  *args, **options):
         self.log_start()
 
-        def report_progress(message, total, count):
-            if count % 10000 == 0:
+        def report_progress(message, total, count, scale=10000):
+            if count % scale == 0:
                 console_logger.info(message % (total, 100 * float(count + 1) / total))
 
         mismatches_report = defaultdict(int)
@@ -196,8 +197,8 @@ class Command(LoggingBaseCommand):
             report_progress('Checking number of posts in %i users... %.2f%%', total, count)
 
         if not options['skip-downloads']:
+            
             total = User.objects.all().count()
-
             # Look at number of sound downloads for all active users
             # NOTE: a possible optimization here would be to first get user candidates that have downloaded sounds.
             # It seems like 1/8th of the users do not have downloaded sounds, so we could probably make this step last
@@ -234,6 +235,30 @@ class Command(LoggingBaseCommand):
                         user_profile.save()
 
                 report_progress('Checking number of downloaded packs in %i users... %.2f%%', total, count)
+            
+            # Look at counts of sounds/packs downloaded from a user (i.e. for a given profile, the number of times her sounds/packs
+            # have been downloaded by other users)
+            qs = Profile.objects.filter(num_sounds__gt=0).all().only('user_id')
+            total = qs.count()
+            for count, profile in enumerate(qs):
+                real_num_user_sounds_downloads = Download.objects.filter(sound__user_id=profile.user_id).count() 
+                real_num_user_packs_downloads = PackDownload.objects.filter(pack__user_id=profile.user_id).count()
+
+                if real_num_user_sounds_downloads != profile.num_user_sounds_downloads or real_num_user_packs_downloads != profile.num_user_packs_downloads:
+                    
+                    if real_num_user_sounds_downloads != profile.num_user_sounds_downloads:
+                        mismatches_report['User.num_user_sounds_downloads'] += 1
+                        mismatches_object_ids['User.num_user_sounds_downloads'].append(profile.user_id)
+                        profile.num_user_sounds_downloads = real_num_user_sounds_downloads
+
+                    if real_num_user_packs_downloads != profile.num_user_packs_downloads:
+                        mismatches_report['User.num_user_packs_downloads'] += 1
+                        mismatches_object_ids['User.num_user_packs_downloads'].append(profile.user_id)
+                        profile.num_user_packs_downloads = real_num_user_packs_downloads
+
+                    profile.save()
+
+                report_progress('Checking number of downloaded sounds and packs from %i users... %.2f%%', total, count, scale=1000)
 
         console_logger.info("Number of mismatched counts: ")
         console_logger.info('\n' + pprint.pformat(mismatches_report))

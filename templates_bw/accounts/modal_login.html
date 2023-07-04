@@ -1,13 +1,13 @@
 {% extends "molecules/modal_base.html" %}
 
 {% block id %}loginModal{% endblock %}
-{% block aria-labelledby %}loginModalLabel{% endblock %}
+{% block aria-label %}Login modal{% endblock %}
 
 {% block body %}
 <div class="col-12">
     <div class="text-center">
-        <h5 class="v-spacing-5">Log in to Freesound</h5>
-        <form method="post" action="{% url 'login' %}">{% csrf_token %}
+        <h4 class="v-spacing-5">Log in to Freesound</h4>
+        <form id="loginForm" method="post" action="{% url 'login' %}">{% csrf_token %}
             {{ login_form }}
             <input type="hidden" name="next" value="{{ next_path }}" />
             <button type="submit" class="btn-primary">Log in</button>

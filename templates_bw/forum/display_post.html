@@ -1,6 +1,7 @@
 {% load bw_templatetags %}
 {% load smileys %}
 {% load flag_user %}
+{% load util %}
 {% load filter_img %}
 
 <div class="bw-post">
@@ -12,8 +13,8 @@
                 </div>
                 <div class="col-8">
                     <h6><a href="{% url "account" post.author.username %}">{{ post.author.username }}</a></h6>
-                    <p class="text-grey no-margins">{{ post.author.profile.num_sounds }} sound{{ post.author.profile.num_sounds|pluralize }}</p>
-                    <p class="text-grey no-margins">{{ post.author.profile.num_posts }} post{{ post.author.profile.num_posts|pluralize }}</p>
+                    <p class="text-grey no-margins">{{ post.author.profile.num_sounds|bw_intcomma }} sound{{ post.author.profile.num_sounds|pluralize }}</p>
+                    <p class="text-grey no-margins">{{ post.author.profile.num_posts|bw_intcomma }} post{{ post.author.profile.num_posts|pluralize }}</p>
                 </div>
             </div>
         </div>
@@ -30,20 +31,20 @@
                 {% if show_action_icons %}
                 <div class="text-14">
                     <span class="padding-right-2">
-                        <a class="text-grey" href="{% url "forums-reply-quote" post.thread.forum.name_slug post.thread.id post.id %}" title="Quote and reply"><i class="bw-icon-quote-reverse"></i><i class="bw-icon-quote"></i></a>
+                        <a class="bw-link--grey" href="{% url "forums-reply-quote" post.thread.forum.name_slug post.thread.id post.id %}" title="Quote and reply"><i class="bw-icon-quote-reverse"></i><i class="bw-icon-quote"></i></a>
                     </span>
                     {% if post.author == request.user or perms.forums.change_post %}
                     <span class="padding-right-2">
-                        <a class="text-grey" href="{% url "forums-post-edit" post.id %}" title="Edit post"><i class="bw-icon-edit"></i></a>
+                        <a class="bw-link--grey" href="{% url "forums-post-edit" post.id %}" title="Edit post"><i class="bw-icon-edit"></i></a>
                     </span>
                     {% endif %}
                     {% if post.author == request.user or perms.forums.delete_post %}
                     <span class="padding-right-2">
-                        <a class="text-grey text-20 cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this post?" data-modal-confirmation-url="{% url "forums-post-delete-confirm" post.id %}" title="Delete post"><i class="bw-icon-trash-filled"></i></a>
+                        <a class="bw-link--grey cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this post?" data-modal-confirmation-url="{% url "forums-post-delete-confirm" post.id %}" title="Delete post"><i class="bw-icon-trash-filled"></i></a>
                     </span>
                     {% endif %}
                     {% if post_number > 0 %}
-                        <a class="text-grey" href="{% url "forums-post" post.thread.forum.name_slug post.thread.id post.id %}">
+                        <a class="bw-link--grey" href="{% url "forums-post" post.thread.forum.name_slug post.thread.id post.id %}">
                             #{{ post_number }}
                         </a>
                     {% endif %}
@@ -59,7 +60,7 @@
                 </div>
             {% else %}
                 <div class="text-left text-black v-spacing-top-1">
-                {{ post.body|replace_img|smileys|safe|linebreaks }}
+                {{ post.body|replace_img|smileys|safe|linebreaks|strip_unnecessary_br }}
                 {% if post.author.profile.signature %}
                     <div class="text-grey">
                         {{post.author.profile.signature|replace_img|smileys|safe}}

@@ -68,6 +68,7 @@ urlpatterns = [
     re_path(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
     path('people/<username>/packs/<int:pack_id>/downloaders/', sounds.views.pack_downloaders, name="pack-downloaders"),
     path('people/<username>/packs/<int:pack_id>/licenses/', sounds.views.pack_licenses, name="pack-licenses"),
+    path('people/<username>/packs/<int:pack_id>/geotags/', geotags.views.for_pack, name="pack-geotags"),
     path('people/<username>/sounds/<int:sound_id>/display/', sounds.views.display_sound_wrapper, name="sound-display"),
     path('people/<username>/downloaded_sounds/', accounts.views.downloaded_sounds, name="user-downloaded-sounds"),
     path('people/<username>/downloaded_packs/', accounts.views.downloaded_packs, name="user-downloaded-packs"),
@@ -142,11 +143,11 @@ urlpatterns = [
     path('p/<int:pack_id>/', sounds.views.pack_short_link, name="short-pack-link"),
 
     # old url format redirects
-    path('usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
-    path('samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),
-    path('packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
-    path('tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
-    path('forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
+    re_path(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
+    re_path(r'^samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),
+    re_path(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
+    re_path(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
+    re_path(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
 ]
 
 urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]

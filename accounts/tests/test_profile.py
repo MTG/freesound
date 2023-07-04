@@ -546,6 +546,7 @@ class ProfileTestDownloadCountFields(TestCase):
             Download.objects.create(user=self.user, sound=self.sounds[i], license_id=self.sounds[i].license_id)
             self.user.profile.refresh_from_db()
             self.assertEqual(self.user.profile.num_sound_downloads, i + 1)
+            self.assertEqual(self.sounds[0].user.profile.num_user_sounds_downloads, i + 1)
 
         # Test deleting downloaded sounds decreases the "num_sound_downloads" field
         # Delete 2 of the 3 downloaded sounds
@@ -553,6 +554,7 @@ class ProfileTestDownloadCountFields(TestCase):
             self.sounds[i].delete()  # This should decrease "num_sound_downloads" field
             self.user.profile.refresh_from_db()
             self.assertEqual(self.user.profile.num_sound_downloads, len(self.sounds) - 1 - i)
+            self.assertEqual(self.sounds[0].user.profile.num_user_sounds_downloads, len(self.sounds) - 1 - i)
 
         # Now test that if the "num_sound_downloads" field is out of sync and deleting a sound would set it to
         # -1, we will set it to 0 instead to avoid DB check constraint error
@@ -561,6 +563,7 @@ class ProfileTestDownloadCountFields(TestCase):
         self.sounds[2].delete()  # Delete the remaining sound
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.num_sound_downloads, 0)
+        self.assertEqual(self.sounds[2].user.profile.num_user_sounds_downloads, 0)
 
     def test_download_pack_count_field_is_updated(self):
         # Test downloading packs increases the "num_pack_downloads" field
@@ -568,6 +571,7 @@ class ProfileTestDownloadCountFields(TestCase):
             PackDownload.objects.create(user=self.user, pack=self.packs[i])
             self.user.profile.refresh_from_db()
             self.assertEqual(self.user.profile.num_pack_downloads, i + 1)
+            self.assertEqual(self.packs[i].user.profile.num_user_packs_downloads, i + 1)
 
         # Test deleting downloaded packs decreases the "num_pack_downloads" field
         # Delete 2 of the 3 downloaded packs
@@ -575,6 +579,7 @@ class ProfileTestDownloadCountFields(TestCase):
             self.packs[i].delete()  # This should decrease "num_sound_downloads" field
             self.user.profile.refresh_from_db()
             self.assertEqual(self.user.profile.num_pack_downloads, len(self.packs) - 1 - i)
+            self.assertEqual(self.packs[i].user.profile.num_user_packs_downloads, len(self.packs) - 1 - i)
 
         # Now test that if the "num_pack_downloads" field is out of sync and deleting a pack would set it to
         # -1, we will set it to 0 instead to avoid DB check constraint error
@@ -583,3 +588,4 @@ class ProfileTestDownloadCountFields(TestCase):
         self.packs[2].delete()  # Delete the remaining sound
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.num_pack_downloads, 0)
+        self.assertEqual(self.packs[2].user.profile.num_user_packs_downloads, 0)

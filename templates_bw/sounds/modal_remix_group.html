@@ -1,0 +1,33 @@
+{% extends "molecules/modal_base.html" %}
+{% load util %}
+{% load display_sound %}
+{% block id %}remixGroupModal{% endblock %}
+{% block extra-class %}modal-width-80{% endblock %}
+{% block aria-label %}Remix group modal{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h4 class="v-spacing-5">Remix group for <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a> </h4>
+    </div>
+    <div class="v-spacing-4">
+        <ul>
+            <li>Original sound by: <a href="/people/{{ sounds.0.user.username }}">{{ sounds.0.user.username }}</a></li>
+            <li>Original sound created on: <b>{{ sounds.0.created }}</b></li>
+            <li>Last remix done on: <b>{{ last_sound.created }}</b></li>
+            <li>Number of sounds in group: <b>{{ sounds|length }}</b></li>
+        </ul>
+        <div class="row">
+            <div class="remix-group-arrows-panel col-6" data-remix-group-data="{{ data }}">
+            </div>
+            <div class="remix-group-sounds-panel col-6">
+            {% for sound in sounds %}
+                <div>
+                    {% display_sound_small_no_bookmark sound %}
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

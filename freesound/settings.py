@@ -324,13 +324,16 @@ FORUM_THREADS_PER_PAGE = 40
 FORUM_THREADS_PER_PAGE_BW = 15
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
-PACKS_PER_PAGE = 15
 SOUNDS_PER_PAGE_COMPACT_MODE = 30
+PACKS_PER_PAGE = 15
+DOWNLOADED_SOUNDS_PACKS_PER_PAGE_BW = 12
+USERS_PER_DOWNLOADS_MODAL_PAGE_BW = 15
+COMMENTS_IN_MODAL_PER_PAGE_BW = 15 
 REMIXES_PER_PAGE = 10
 MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 100
 MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN = 20
 SOUNDS_PER_DESCRIBE_ROUND = 10
-SOUNDS_PENDING_MODERATION_PER_PAGE = 8
+SOUNDS_PENDING_MODERATION_PER_PAGE = 9
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
 FOLLOW_ITEMS_PER_PAGE = 5  # BW only
@@ -342,6 +345,7 @@ BOOKMARKS_PER_PAGE_BW = 12
 
 # Weights using to compute BW charts
 BW_CHARTS_ACTIVE_USERS_WEIGHTS = {'upload': 1, 'post': 0.8, 'comment': 0.05}
+CHARTS_DATA_CACHE_KEY = 'bw-charts-data'
 
 # Whether or not user bookmarks and bookmark categories should be public (visible to all other users) in BW
 BW_BOOKMARK_PAGES_PUBLIC = False
@@ -421,7 +425,9 @@ NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 # Some BW settings
 ENABLE_QUERY_SUGGESTIONS = False
 ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE = False
-
+SHOW_LINK_TO_NEW_UI_IN_OLD_FRONT_PAGE = False
+ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD = True
+USER_DOWNLOADS_PUBLIC = True
 
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls
@@ -477,7 +483,9 @@ ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7 # in hours
 AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v3'
 FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
 AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
-
+BIRDNET_ANALYZER_NAME = 'birdnet_v1'
+FSDSINET_ANALYZER_NAME = 'fsd-sinet_v1'
+ 
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
         'descriptors_map': [
@@ -511,10 +519,26 @@ ANALYZERS_CONFIGURATION = {
             ('classes', 'yamnet_class', list)
         ]
     },
+    BIRDNET_ANALYZER_NAME: {
+        'descriptors_map': [
+            ('detections', 'birdnet_detections', None),  # Use None so detections are not indexed in solr but stored in database
+            ('detected_classes', 'birdnet_detected_class', list),
+            ('num_detections', 'birdnet_detections_count', int),
+        ]
+    },
+    FSDSINET_ANALYZER_NAME: {
+        'descriptors_map': [
+            ('detections', 'fsdsinet_detections', None),  # Use None so detections are not indexed in solr but stored in database
+            ('detected_classes', 'fsdsinet_detected_class', list),
+            ('num_detections', 'fsdsinet_detections_count', int),
+        ]
+    },
 }
 
 # -------------------------------------------------------------------------------
 # Search engine
+
+FCW_FILTER_VALUE = '("attribution" OR "creative commons 0")'
 
 # Define the names of some of the indexed sound fields which are to be used later
 SEARCH_SOUNDS_FIELD_ID = 'sound_id'
@@ -541,7 +565,6 @@ SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS = {
     SEARCH_SOUNDS_FIELD_NAME: 2
 }
 
-
 SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC = "Automatic by relevance"
 SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST = "Duration (longest first)"
 SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST = "Duration (shortest first)"
@@ -563,8 +586,7 @@ SEARCH_SOUNDS_SORT_OPTIONS_WEB = [
     SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST,
     SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST,
 ]
-SEARCH_SOUNDS_SORT_DEFAULT = "Automatic by relevance"
-
+SEARCH_SOUNDS_SORT_DEFAULT = SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC
 
 SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_SAMPLERATE: {},
@@ -577,6 +599,14 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_CHANNELS: {},
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
 }
+
+SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST = "Thread creation (newest first)"
+SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST = "Post creation (newest first)"
+SEARCH_FORUM_SORT_OPTIONS_WEB = [
+    SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST,
+    SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST
+]
+SEARCH_FORUM_SORT_DEFAULT = SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST
 
 SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr555pysolr.Solr555PySolrSearchEngine'
 SOLR5_SOUNDS_URL = "http://search:8983/solr/freesound/"
@@ -761,12 +791,14 @@ APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
     0: ['0/minute', '0/day', '0/hour'],  # Client 'disabled'
     1: ['60/minute', '2000/day', None],  # Ip limit not yet enabled
     2: ['300/minute', '5000/day', None],  # Ip limit not yet enabled
+    3: ['300/minute', '15000/day', None],  # Ip limit not yet enabled
     99: [],  # No limit of requests
 }
 APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
     0: ['0/minute', '0/day',  '0/hour'],  # Client 'disabled'
     1: ['30/minute', '500/day', None],  # Ip limit not yet enabled
     2: ['60/minute', '1000/day', None],  # Ip limit not yet enabled
+    3: ['60/minute', '3000/day', None],  # Ip limit not yet enabled
     99: [],  # No limit of requests
 }
 

@@ -223,7 +223,7 @@ class UserUploadAndDescribeSounds(TestCase):
         }, follow=True)
         
         # Check that post redirected to first describe page with confirmation message on sounds described
-        self.assertRedirects(resp, '/home/sounds/manage/pending_description/')
+        self.assertRedirects(resp, '/home/sounds/manage/processing/')
         self.assertEqual('Successfully finished sound description round' in list(resp.context['messages'])[2].message, True)
 
         # Check that sounds have been created along with related tags, geotags and packs

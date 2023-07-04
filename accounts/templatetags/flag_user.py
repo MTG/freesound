@@ -40,7 +40,7 @@ def flag_user(context, flag_type, username, content_id, text = None, user_sounds
             link_text = text
 
     return {'user_sounds': user_sounds,
-            'done_text': "Marked as spam/offensive",
+            'done_text': "Marked as spam/offensive",  # Not used in BW
             'flagged': len(flagged),
             'flag_type': flag_type,
             'username': username,

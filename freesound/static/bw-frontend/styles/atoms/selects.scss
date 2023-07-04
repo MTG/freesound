@@ -43,7 +43,7 @@
     max-height: 300px;
     overflow: auto;
     margin: 0;
-    padding: 25px;
+    padding: 25px 15px;
     list-style-type: none;
     opacity: 0;
     pointer-events: none;
@@ -64,19 +64,29 @@
   &__list-item {
     display: block;
     list-style-type: none;
-    padding: 10px 0;
+    padding: 10px 10px;
     background: $white;
     font-size: 14px;
+    font-weight: 500;
     line-height: 1.4;
     cursor: pointer;
     text-align: left;
     transition: all ease-in-out 0.3s;
+
+    &.active {
+      color: $black;
+      background-color: $background-textarea;
+    }  
 
     &:hover {
       color: $red;
       transition: all ease-in-out 0.3s;
     }
   }
+}
+
+select {
+  display: none;  /* Make "original" select's globally invisible so they don't show up before bw-select-forum is created */
 }
 
 .bw-select-forum {

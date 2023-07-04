@@ -2,11 +2,11 @@ $red: #ff3546;
 $red-hover: #fd5b65;
 $black: #141424;
 $black-hover: #393947;
-$navy-grey: #9696aa;
-$navy-light-grey: #bbbbc4;
+$navy-grey: #747490;
+$navy-light-grey: #A2A2B4;
 $white: #ffffff;
-$almost-white: #f4f4f6;
-$almost-white-border: #efeff2;
+$almost-white: #f4f4fa;
+$almost-white-border: #efeff8;
 $yellow: #fd4;
 $blue: #0064af;
 $blue-hover: #2f74b1;
@@ -22,13 +22,14 @@ $inverse-button-hover-font-color: $white;
 $player-playhead: $almost-white-border;
 $player-playhead-elapsed: rgba($white, 0.3);
 $player-inverted-color: $white;
+$player-ruler-text: $navy-grey;
 
 $disabled-input-opacity: 0.3;
 $disabled-button-opacity: 0.5;
 
 $modal-outer-bg-color: #{$black}EE;
 $carousel-bg-color: rgba($white, 0.85);
-$dividers-color: $almost-white-border;
+$dividers-color: rgba($navy-light-grey, 0.15);
 
 $border-input: $almost-white-border;
 $search-bg: $almost-white;
@@ -36,3 +37,6 @@ $background-input: $almost-white;
 $background-textarea: $almost-white;
 
 $color-footer: $black;
+$html-bg: $black;
+
+$explicit-sound-overlay: rgba(255,255,255,0.5);

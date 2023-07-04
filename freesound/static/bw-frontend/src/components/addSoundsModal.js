@@ -1,38 +1,36 @@
-import {handleDismissModal, handleGenericModal} from "../components/modal"
+import {dismissModal, handleGenericModal} from "../components/modal"
 import {stopAllPlayers} from '../components/player/utils'
 import {createPlayer} from '../components/player/player-ui'
-import {initializeSoundSelector, updateSoundsSelectorDataProperties} from '../components/soundsSelector'
+import {initializeObjectSelector, updateObjectSelectorDataProperties} from '../components/objectSelector'
 import addCheckboxVisibleElements from "../components/checkbox"
 import {serializedIdListToIntList, combineIdsLists} from "../utils/data"
 
-const openAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement, onSoundsSelectedCallback) => {
-    handleGenericModal(modalUrl, () => {
-        const modalWrapper = document.getElementById('genericModalWrapper');
-        
-        const players = [...modalWrapper.getElementsByClassName('bw-player')]
+const handleAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement, onSoundsSelectedCallback) => {
+    handleGenericModal(modalUrl, (modalContainer) => {        
+        const players = [...modalContainer.getElementsByClassName('bw-player')]
         players.forEach(createPlayer)
         
         addCheckboxVisibleElements()
 
-        const inputElement = modalWrapper.getElementsByTagName('input')[0];
+        const inputElement = modalContainer.getElementsByTagName('input')[0];
         inputElement.addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault();
                 const baseUrl = modalUrl.split('?')[0];
                 const soundIdsToExclude = combineIdsLists(serializedIdListToIntList(selectedSoundsDestinationElement.dataset.selectedIds), serializedIdListToIntList(selectedSoundsDestinationElement.dataset.unselectedIds)).join(',');
-                openAddSoundsModal(modalId, `${baseUrl}?q=${inputElement.value}&exclude=${soundIdsToExclude}`, selectedSoundsDestinationElement, onSoundsSelectedCallback);
+                handleAddSoundsModal(modalId, `${baseUrl}?q=${inputElement.value}&exclude=${soundIdsToExclude}`, selectedSoundsDestinationElement, onSoundsSelectedCallback);
             }
         });
 
-        const soundSelectorElement = modalWrapper.getElementsByClassName('bw-sounds-selector-container')[0];
-        initializeSoundSelector(soundSelectorElement, (element) => {
+        const objectSelectorElement = modalContainer.getElementsByClassName('bw-object-selector-container')[0];
+        initializeObjectSelector(objectSelectorElement, (element) => {
             addSelectedSoundsButton.disabled = element.dataset.selectedIds == ""
         });
 
-        const addSelectedSoundsButton = modalWrapper.getElementsByTagName('button')[0];
+        const addSelectedSoundsButton = modalContainer.getElementsByTagName('button')[0];
         addSelectedSoundsButton.disabled = true;
         addSelectedSoundsButton.addEventListener('click', evt => {
-            const selectableSoundElements = [...modalWrapper.getElementsByClassName('bw-selectable-sound')];
+            const selectableSoundElements = [...modalContainer.getElementsByClassName('bw-selectable-object')];
             selectableSoundElements.forEach( element => {
                 const checkbox = element.querySelectorAll('input.bw-checkbox')[0];
                 if (checkbox.checked) {
@@ -44,10 +42,10 @@ const openAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement,
                     selectedSoundsDestinationElement.appendChild(element.parentNode);
                 }
             });
-            onSoundsSelectedCallback(soundSelectorElement.dataset.selectedIds);
-            handleDismissModal(modalId);
+            onSoundsSelectedCallback(objectSelectorElement.dataset.selectedIds);
+            dismissModal(modalId);
         });
-    }, () => {
+    }, (modalContainer) => {
         // Stop all players that could be being played inside the modal
         stopAllPlayers();
     }, true, true);
@@ -59,8 +57,8 @@ const prepareAddSoundsModalAndFields = () => {
         const removeSoundsButton = addSoundsButton.nextElementSibling;
         removeSoundsButton.disabled = true;
 
-        const selectedSoundsDestinationElement = addSoundsButton.parentNode.parentNode.getElementsByClassName('bw-sounds-selector-container')[0];
-        initializeSoundSelector(selectedSoundsDestinationElement, (element) => {
+        const selectedSoundsDestinationElement = addSoundsButton.parentNode.parentNode.getElementsByClassName('bw-object-selector-container')[0];
+        initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
             removeSoundsButton.disabled = element.dataset.selectedIds == ""
         });
 
@@ -69,10 +67,10 @@ const prepareAddSoundsModalAndFields = () => {
             const soundCheckboxes = selectedSoundsDestinationElement.querySelectorAll('input.bw-checkbox');
             soundCheckboxes.forEach(checkbox => {
                 if (checkbox.checked) {
-                    checkbox.closest('.bw-selectable-sound').parentNode.remove();
+                    checkbox.closest('.bw-selectable-object').parentNode.remove();
                 }
             });
-            updateSoundsSelectorDataProperties(selectedSoundsDestinationElement);
+            updateObjectSelectorDataProperties(selectedSoundsDestinationElement);
             const selectedSoundsHiddenInput = document.getElementById(addSoundsButton.dataset.selectedSoundsHiddenInputId);
             selectedSoundsHiddenInput.value = selectedSoundsDestinationElement.dataset.unselectedIds;
             removeSoundsButton.disabled = true;
@@ -80,13 +78,13 @@ const prepareAddSoundsModalAndFields = () => {
 
         addSoundsButton.addEventListener('click', (evt) => {
             evt.preventDefault();
-            openAddSoundsModal('addSoundsModal', addSoundsButton.dataset.modalUrl, selectedSoundsDestinationElement, (selectedSoundIds) => {
+            handleAddSoundsModal('addSoundsModal', addSoundsButton.dataset.modalUrl, selectedSoundsDestinationElement, (selectedSoundIds) => {
                 const selectedSoundsHiddenInput = document.getElementById(addSoundsButton.dataset.selectedSoundsHiddenInputId);
                 const currentSoundIds = serializedIdListToIntList(selectedSoundsHiddenInput.value);
                 const newSoundIds = serializedIdListToIntList(selectedSoundIds);
                 const combinedIds = combineIdsLists(currentSoundIds, newSoundIds);
                 selectedSoundsHiddenInput.value = combinedIds.join(',');
-                initializeSoundSelector(selectedSoundsDestinationElement, (element) => {
+                initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
                     removeSoundsButton.disabled = element.dataset.selectedIds == ""
                 });
         

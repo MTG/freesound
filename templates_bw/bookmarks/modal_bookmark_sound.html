@@ -4,21 +4,29 @@
 
 {% block id %}bookmarkSoundModal{% endblock %}
 {% block extra-class %}{% if request.user.is_authenticated %}modal-width-60{% endif %}{% endblock %}
-{% block aria-labelledby %}bookmarkSoundModalLabel{% endblock %}
+{% block aria-label %}Bookmark sound modal{% endblock %}
 
 {% block body %}
 <div class="col-12">
     {% if not request.user.is_authenticated %}
         <div class="text-center">
-            <h5 class="v-spacing-5">Can't bookmark sound</h5>
+            <h4 class="v-spacing-5">Can't bookmark sound</h4>
         </div>
         <div class="v-spacing-4 text-center">
             <div class="v-spacing-4">Please, login to Freesound before bookmarking any sounds.</div>
             <button class="btn-primary" data-dismiss="modal">Ok</button>
         </div>
+    {% elif not sound_is_moderated_and_processed_ok %}
+        <div class="text-center">
+            <h4 class="v-spacing-5">Can't bookmark sound</h4>
+        </div>
+        <div class="v-spacing-4 text-center">
+            <div class="v-spacing-4">This sound can't be bookmarked because it has not yet been processed or moderated.</div>
+            <button class="btn-primary" data-dismiss="modal">Ok</button>
+        </div>
     {% else %}
     <div class="text-center">
-        <h5 class="v-spacing-5">Bookmark this sound</h5>
+        <h4 class="v-spacing-5">Bookmark this sound</h4>
     </div>
     <div class="v-spacing-4">
         {% if bookmarks %}

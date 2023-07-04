@@ -1,0 +1,34 @@
+{% load display_sound %}
+{% load bw_templatetags %}
+<div>
+    {% if sound is not None %}
+        {% display_sound_small_no_info_no_buttons sound %}
+    {% else %}
+        <div class="bw-player-small-thumbnail-empty-space center middle text-grey">No sound available for this ticket</div>
+    {% endif %}
+</div>
+<div class="v-spacing-top-2 text-grey">
+    <div>
+        <a href="{% url 'tickets-ticket' ticket.key %}"><span class="text-grey">{% bw_icon "file-text" %} Ticket #{{ ticket.id }}:</span> {{ sound.original_filename }}</a> by <a class="bw-link--black" href="{% url "account" ticket.sender.username %}">{{ ticket.sender.username }}</a>
+    </div>
+    <div>
+        <span class="text-grey">{{ ticket.created|timesince }} ago</span>
+    </div>
+    <div>
+        <span class="text-blue">{% if ticket.assignee %}Assigned to {% if ticket.assignee != request.user %}{{ticket.assignee}}{% else %}you{% endif %}{% else %}{% bw_icon "notification" %}Unassigned{% endif %}</span><span class="h-spacing-left-1 h-spacing-1">·</span>{{ num_messages }} message{{ num_messages|pluralize }} 
+    </div>
+    {% if num_messages and include_last_message %}
+    <div>
+        Last message by {% if last_message.sender %}{{last_message.sender.username}}{% else %}anonymous{% endif %}:
+    </div>
+    <div class="moderation-unsure-ticket-last">
+        <em>"{{ last_message.text | truncatechars:200 }}"</em>
+    </div>
+    {% endif %}
+</div>
+
+<div class="v-spacing-top-2 padding-bottom-5 center">
+    {% if ticket.assignee.id != request.user.id %}
+    <a class="btn-inverse no-hover" href="{% url 'tickets-moderation-assign-single-ticket' ticket.id %}">{% bw_icon "plus" %}Assign to me</a>
+    {% endif %}
+</div>

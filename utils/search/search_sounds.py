@@ -32,6 +32,44 @@ search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
 
 
+def should_use_compact_mode(request):
+    use_compact_mode_enabled_in_form = request.GET.get('cm')
+    if not request.user.is_authenticated:
+        return use_compact_mode_enabled_in_form == '1'
+    else:
+        if use_compact_mode_enabled_in_form is None:
+            # Use user default
+            return request.user.profile.use_compact_mode
+        elif use_compact_mode_enabled_in_form == '1':
+            # Use compact mode, but update user preferences if these differ from form value
+            if use_compact_mode_enabled_in_form and not request.user.profile.use_compact_mode:
+                request.user.profile.use_compact_mode = True
+                request.user.profile.save()
+            return True
+        else:
+            # Do not use compact mode, but update user preferences if these differ from form value
+            if use_compact_mode_enabled_in_form and request.user.profile.use_compact_mode:
+                request.user.profile.use_compact_mode = False
+                request.user.profile.save()
+            return False
+        
+def contains_active_advanced_search_filters(request, query_params, extra_vars):
+    duration_filter_is_default = True
+    if 'duration:' in query_params['query_filter']:
+        if 'duration:[0 TO *]' not in query_params['query_filter']:
+            duration_filter_is_default = False
+    using_advanced_search_weights = request.GET.get("a_tag", False) \
+        or request.GET.get("a_filename", False) \
+        or request.GET.get("a_description", False) \
+        or request.GET.get("a_packname", False) \
+        or request.GET.get("a_soundid", False) \
+        or request.GET.get("a_username", False)
+    return using_advanced_search_weights \
+        or 'is_geotagged:' in query_params['query_filter'] \
+        or 'in_remix_group:' in query_params['query_filter'] \
+        or not duration_filter_is_default
+
+
 def search_prepare_parameters(request):
     """Parses and pre-process search input parameters from the search view request object and returns them as a dict.
 
@@ -164,16 +202,15 @@ def search_prepare_parameters(request):
 
     filter_query_non_facets, has_facet_filter = remove_facet_filters(parsed_filters)
 
-    compact_mode = request.session.get('preferCompactMode', False)
     query_params = {
         'textual_query': search_query,
         'query_filter': filter_query,
         'sort': sort,
         'current_page': current_page,
-        'num_sounds': settings.SOUNDS_PER_PAGE if not compact_mode else settings.SOUNDS_PER_PAGE_COMPACT_MODE,
+        'num_sounds': settings.SOUNDS_PER_PAGE if not should_use_compact_mode(request) else settings.SOUNDS_PER_PAGE_COMPACT_MODE,
         'query_fields': field_weights,
         'group_by_pack': group_by_pack,
-        'only_sounds_with_pack': only_sounds_with_pack,
+        'only_sounds_with_pack': only_sounds_with_pack
     }
 
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ', '+')
@@ -240,10 +277,10 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
         for filter_list_str in parsed_filters:
             # filter_list_str is a list of str ['<filter_name>', ':', '"', '<filter_value>', '"']
             filter_name = filter_list_str[0]
-            if filter_name != "duration" and filter_name != "is_geotagged":
+            if filter_name != "duration" and filter_name != "is_geotagged"  and filter_name != "in_remix_group":
                 valid_filter = True
                 filter_str = ''.join(filter_list_str)
-                filter_display = ''.join(filter_list_str).replace('"', '')
+                filter_display = ''.join(filter_list_str)
                 if filter_name == "grouping_pack":
                     filter_value = filter_list_str[-1].rstrip('"')
                     # If pack does not contain "_" then it's not a valid pack filter

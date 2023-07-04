@@ -39,7 +39,7 @@
         </div>
     </div>
     {% if thread.last_post.id %}
-        <p class="text-grey v-spacing-7">Started {{ thread.first_post.created|date:"F jS, Y" }}  ·  {{thread.num_posts}} repl{{thread.num_posts|pluralize:"y,ies"}}  ·  <a href="{% url "forums-post" forum.name_slug thread.id thread.last_post.id %}">Latest reply</a> by <a href="{% url "account" thread.last_post.author.username %}">{{ thread.last_post.author.username }}</a> {{ thread.last_post.created|timesince }} ago</p>
+        <p class="text-grey v-spacing-7">Started {{ thread.first_post.created|date:"F jS, Y" }}  ·  {{thread.num_posts|bw_intcomma}} repl{{thread.num_posts|pluralize:"y,ies"}}  ·  <a href="{% url "forums-post" forum.name_slug thread.id thread.last_post.id %}">Latest reply</a> by <a href="{% url "account" thread.last_post.author.username %}">{{ thread.last_post.author.username }}</a> {{ thread.last_post.created|timesince }} ago</p>
     {% endif %}
     <div class="v-spacing-top-4">
         {% for post in page.object_list %}
@@ -51,7 +51,7 @@
         {% endfor %}
     </div>
     <div class="v-spacing-top-7 text-center">
-        <a class="btn-primary" href="{% url "forums-reply" forum.name_slug thread.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Post reply</a>
+        <a class="btn-primary no-hover" href="{% url "forums-reply" forum.name_slug thread.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Post reply</a>
     </div>
     <div class="v-spacing-top-4">
         {% bw_paginator paginator page current_page request "thread" %}

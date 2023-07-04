@@ -43,8 +43,8 @@
     "model": "sounds.license",
     "fields": {
       "deed_url": "http://creativecommons.org/licenses/by-nc/4.0/",
-      "name": "Attribution Noncommercial",
-      "summary": "<p>\r\n    You are free:\r\n</p>\r\n<ul>\r\n    <li>To Share \u2014 to copy, distribute and transmit the work</li>\r\n    <li>To Remix \u2014 to adapt the work</li>\r\n<ul>\r\n\r\n<p>\r\n    Under the following conditions:\r\n</p>\r\n<ul>\r\n    <li>Attribution. You must attribute the work in the manner specified by the author or licensor (but not in any way that suggests that they endorse you or your use of the work).</li>\r\n    <li>Noncommercial. You may not use this work for commercial purposes.</li>\r\n</ul>\r\n\r\n<ul>\r\n    <li>For any reuse or distribution, you must make clear to others the license terms of this work. The best way to do this is with a link to this web page.</li>\r\n    <li>Any of the above conditions can be waived if you get permission from the copyright holder.</li>\r\n    <li>Nothing in this license impairs or restricts the author's moral rights.</li>\r\n<ul>",
+      "name": "Attribution NonCommercial",
+      "summary": "<p>\r\n    You are free:\r\n</p>\r\n<ul>\r\n    <li>To Share \u2014 to copy, distribute and transmit the work</li>\r\n    <li>To Remix \u2014 to adapt the work</li>\r\n<ul>\r\n\r\n<p>\r\n    Under the following conditions:\r\n</p>\r\n<ul>\r\n    <li>Attribution. You must attribute the work in the manner specified by the author or licensor (but not in any way that suggests that they endorse you or your use of the work).</li>\r\n    <li>NonCommercial. You may not use this work for commercial purposes.</li>\r\n</ul>\r\n\r\n<ul>\r\n    <li>For any reuse or distribution, you must make clear to others the license terms of this work. The best way to do this is with a link to this web page.</li>\r\n    <li>Any of the above conditions can be waived if you get permission from the copyright holder.</li>\r\n    <li>Nothing in this license impairs or restricts the author's moral rights.</li>\r\n<ul>",
       "abbreviation": "by-nc",
       "is_public": true,
       "order": 4,

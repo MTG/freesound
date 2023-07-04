@@ -1,183 +1,98 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-    <head>
-        <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-        <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?" />
-        <meta name="keywords" content="free, sound" />
-        <title>Freesound - 504 Gateway Timeout</title>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=575, initial-scale=1">
+    <meta name="theme-color" content="#000000">
+    <title>Server Error</title>
+    <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?">
+    <meta name="keywords" content="free, sound">
+    <link id="style" rel="stylesheet" href="/static/bw-frontend/dist/index.css" data-forced-theme="yes">
+</head>
+<body>
+    <noscript>
+        You need to enable JavaScript to run this app.
+    </noscript>
+    
+    <div class="bw-page">
+        
+        <nav class="bw-nav bw-nav--expanded">
+            <div class="container bw-nav__container">
+                <form method="get" action="/search/">
+                    <div class="bw-nav__logo-search-container">
+                        <div class="bw-nav__logo-with-text">
+                            <a href="/" class="no-hover"></a>
+                        </div>
+                        <div class="input-wrapper">
+                            <input name="q" type="search" class="bw-nav__search" placeholder="Search sounds..." autocomplete="off" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </nav>
+        
+        <div class="container">
+            <div class="navbar-space-filler v-spacing-7 v-spacing-top-5">
+                <div class="no-paddings col-12 v-spacing-3">
+                    <h1>Server Error</h1>
+                </div>
+                <div class="col-12 no-paddings v-spacing-5">
+                    <p>Ouch.. we screwed something up! You found some part of Freesound that's broken.</p>
+                    <p>Luckily, we'll get an email about it and we'll try to fix it as soon as possible. In the
+                        meantime, try some other parts of website we haven't managed to break yet.</p>
+                        <p class="text-light-grey v-spacing-top-6 divider-light padding-top-2">Django isn't responding in a timely manner (nginx 504 gateway timeout)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="bw-footer padding-7 v-spacing-top-7">
+                <div class="center">
+                    <div class="footer-logo-container">
+                        <div class="row">
+                            <div class="col-sm-8">
+                                <a href="https://www.upf.edu/web/mtg" class="no-hover">
+                                    <img class="w-100" src="/static/bw-frontend/dist/upf_logo.png" />
+                                </a>
+                            </div>
+                            <div class="col-sm-4">
+                                <a href="https://www.upf.edu/web/phonos/" class="no-hover">
+                                    <img class="w-100" src="/static/bw-frontend/dist/phonos_logo.png" />
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row v-spacing-top-4 center">
+                    <a class="bw-link--grey h-spacing-1" href="/help/about/">About Freesound</a>
+                    <a class="bw-link--grey h-spacing-1" href="/help/tos_web/">Terms of use</a>
+                    <a class="bw-link--grey h-spacing-1" href="/help/privacy/">Privacy</a>
+                    <a class="bw-link--grey h-spacing-1" href="/help/cookies_policy/">Cookies</a>
+                    <a class="bw-link--grey h-spacing-1" href="/help/developers/">Developers</a>
+                    <a class="bw-link--grey h-spacing-1" href="/help/faq/">Help</a>
+                    <a class="bw-link--grey h-spacing-1" href="/donations/donors/">Donations</a>
+                    <a class="bw-link--grey h-spacing-1" href="https://blog.freesound.org">Blog</a>
+                    <a class="bw-link--grey h-spacing-1" href="https://labs.freesound.org">Freesound Labs</a>
+                    <a class="bw-link--grey h-spacing-1" href="/help/tshirt/">Get your t-shirt!</a>
+                </div>
+                <div class="center v-spacing-top-4">
+                    <span>© 2023</span>
+                </div>
+                <div class="center">
+                    <span>Freesound</span>
+                </div>
+                
+            </footer>
 
-        <style>
-        body,div,h1,p
-        {
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAB6CAIAAADxkq7cAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAGdJREFUeNqETwkKwDAIq5b+/6G+obpZFhCxrhA8k0YyM8oQER5j8FqL55y892YiYn+qeiJ6vge83NPziB72416Ez7NGV0cO/CD3mH05H77+vFZ+Oh/VrNLsuN2/4GXN2z3VfV/9CDAA11JjfUVHzLQAAAAASUVORK5CYII=) repeat-x top #CECECE;
-            font-family: Verdana, sans-serif;
-            font-size: 100%;
-        }
-
-        h1 {
-            font-size: 32px;
-            font-weight: bold;
-            line-height: 1em;
-            margin-bottom: 18px;
-            width: 100%;
-        }
-
-        p {
-            font-size: 12px;
-            line-height: 18px;
-            margin-bottom: 18px;
-        }
-
-        body {
-            background-color: #fff;
-        }
-
-        #header {
-            height: 115px;
-            width: 980px;
-            margin: 0 auto;
-            background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAB6CAIAAADxkq7cAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAGdJREFUeNqETwkKwDAIq5b+/6G+obpZFhCxrhA8k0YyM8oQER5j8FqL55y892YiYn+qeiJ6vge83NPziB72416Ez7NGV0cO/CD3mH05H77+vFZ+Oh/VrNLsuN2/4GXN2z3VfV/9CDAA11JjfUVHzLQAAAAASUVORK5CYII=) repeat-x bottom #F8F8F8;
-            position: relative;
-            margin-top: 7px;
-        }
-
-        #logo {
-            display: block;
-            width: 239px;
-            height: 62px;
-            position: relative;
-            left: 10px;
-            top: 5px;
-        }
-
-        #wrapper {
-            background-color: #F9F9F9;
-        }
-
-        #container {
-            width: 944px;
-            margin: 0 auto;
-            border-left: solid 1px #F0EEF1;
-            border-right: solid 1px #F0EEF1;
-            background-color: #FFF;
-            padding: 18px;
-        }
-        #content_full {
-            width: 100%;
-        }
-
-        .clear {
-            clear: both;
-        }
-
-
-        </style>
-
-    </head>
-
-    <body>
-        <div id="header">
-
-            <a href="/" id="logo">
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-viewBox="0 0 490 162" style="enable-background:new 0 0 490 162;" xml:space="preserve">
-<style type="text/css">
-.st0{fill:none;}
-.st1{fill:#A81921;}
-</style>
-<g id="snijdoos">
-<rect class="st0" width="490" height="162"/>
-</g>
-<g id="FS">
-<g>
-<g>
-<path d="M200.8,73c0.1,0,0.4,0,0.9,0.1v10.5c-0.6-0.1-1.2-0.1-1.7-0.1c-0.5,0-0.9,0-1.2,0c-4.1,0-6.9,1.3-8.3,4
-c-0.8,1.5-1.2,3.8-1.2,7v18.7h-10.3V73.9h9.8v6.8c1.6-2.6,3-4.4,4.1-5.4c1.9-1.6,4.4-2.4,7.5-2.4C200.5,73,200.6,73,200.8,73z"/>
-<path d="M230.8,74.7c2.7,1.2,5,3.2,6.8,5.8c1.6,2.3,2.6,5,3.1,8.1c0.3,1.8,0.4,4.4,0.3,7.8h-28.5c0.2,3.9,1.5,6.7,4.1,8.3
-c1.6,1,3.4,1.5,5.6,1.5c2.3,0,4.2-0.6,5.7-1.8c0.8-0.6,1.5-1.5,2.1-2.7h10.4c-0.3,2.3-1.5,4.7-3.8,7.1c-3.5,3.8-8.4,5.7-14.7,5.7
-c-5.2,0-9.8-1.6-13.8-4.8c-4-3.2-6-8.4-6-15.7c0-6.8,1.8-12,5.4-15.6c3.6-3.6,8.3-5.4,14-5.4C225,72.9,228,73.5,230.8,74.7z
-M215.4,83.6c-1.4,1.5-2.4,3.5-2.7,6.1h17.6c-0.2-2.7-1.1-4.8-2.7-6.2c-1.6-1.4-3.7-2.1-6.1-2.1
-C218.9,81.3,216.9,82.1,215.4,83.6z"/>
-<path class="st1" d="M294.4,100.6c0.2,1.8,0.7,3.1,1.4,3.9c1.3,1.4,3.6,2,7.1,2c2,0,3.6-0.3,4.8-0.9c1.2-0.6,1.8-1.5,1.8-2.7
-c0-1.2-0.5-2-1.4-2.6c-1-0.6-4.5-1.6-10.7-3.1c-4.4-1.1-7.6-2.5-9.4-4.1c-1.8-1.6-2.7-4-2.7-7c0-3.6,1.4-6.7,4.3-9.3
-c2.8-2.6,6.8-3.9,12-3.9c4.9,0,8.9,1,12,2.9c3.1,2,4.9,5.3,5.3,10.1h-10.2c-0.1-1.3-0.5-2.4-1.1-3.1c-1.1-1.4-3-2.1-5.8-2.1
-c-2.2,0-3.8,0.3-4.8,1c-0.9,0.7-1.4,1.5-1.4,2.4c0,1.2,0.5,2,1.5,2.5c1,0.6,4.6,1.5,10.7,2.8c4.1,1,7.1,2.4,9.2,4.3
-c2,2,3,4.4,3,7.4c0,3.9-1.4,7-4.3,9.5c-2.9,2.5-7.4,3.7-13.4,3.7c-6.2,0-10.7-1.3-13.7-3.9c-2.9-2.6-4.4-5.9-4.4-9.9H294.4z"/>
-<path class="st1" d="M356.2,108.3c-3.3,4.1-8.3,6.1-15,6.1c-6.7,0-11.7-2-15-6.1c-3.3-4.1-5-9-5-14.7c0-5.6,1.7-10.5,5-14.7
-c3.3-4.1,8.3-6.2,15-6.2c6.7,0,11.7,2.1,15,6.2c3.3,4.1,5,9,5,14.7C361.2,99.3,359.5,104.2,356.2,108.3z M348,102.6
-c1.6-2.1,2.4-5.2,2.4-9.1c0-3.9-0.8-6.9-2.4-9.1c-1.6-2.1-3.9-3.2-6.9-3.2c-3,0-5.3,1.1-6.9,3.2c-1.6,2.1-2.4,5.1-2.4,9.1
-c0,3.9,0.8,6.9,2.4,9.1c1.6,2.1,3.9,3.2,6.9,3.2C344.1,105.8,346.4,104.7,348,102.6z"/>
-<path class="st1" d="M373.7,73.9v23.6c0,2.2,0.3,3.9,0.8,5c0.9,2,2.8,3,5.5,3c3.5,0,5.9-1.4,7.1-4.2c0.7-1.5,1-3.6,1-6.1V73.9
-h10.4v39.1h-9.9v-5.5c-0.1,0.1-0.3,0.5-0.7,1.1c-0.4,0.6-0.8,1.1-1.4,1.6c-1.6,1.4-3.1,2.4-4.6,2.9c-1.5,0.5-3.2,0.8-5.2,0.8
-c-5.8,0-9.7-2.1-11.7-6.2c-1.1-2.3-1.7-5.7-1.7-10.2V73.9H373.7z"/>
-<path class="st1" d="M433.7,76.2c2.6,2.1,3.8,5.6,3.8,10.5v26.4H427V89.3c0-2.1-0.3-3.6-0.8-4.7c-1-2-2.9-3-5.7-3
-c-3.4,0-5.8,1.5-7.1,4.4c-0.7,1.6-1,3.5-1,6v21.2h-10.2V74h9.9v5.7c1.3-2,2.6-3.5,3.7-4.3c2.1-1.6,4.8-2.4,8-2.4
-C427.8,73,431.1,74,433.7,76.2z"/>
-<path class="st1" d="M463.1,74.5c1.8,1,3.3,2.5,4.5,4.3V60.2H478v52.9H468v-5.4c-1.5,2.3-3.1,4-5,5.1c-1.9,1.1-4.2,1.6-7,1.6
-c-4.6,0-8.4-1.8-11.5-5.5c-3.1-3.7-4.7-8.4-4.7-14.2c0-6.7,1.5-11.9,4.6-15.8c3.1-3.8,7.2-5.7,12.3-5.7
-C459.1,73,461.3,73.5,463.1,74.5z M465.6,102.4c1.5-2.2,2.3-4.9,2.3-8.4c0-4.8-1.2-8.2-3.6-10.3c-1.5-1.2-3.2-1.9-5.2-1.9
-c-3,0-5.2,1.1-6.6,3.4c-1.4,2.3-2.1,5.1-2.1,8.4c0,3.6,0.7,6.5,2.1,8.7c1.4,2.2,3.6,3.2,6.5,3.2
-C461.9,105.7,464.1,104.6,465.6,102.4z"/>
-</g>
-<path d="M272.1,74.7c2.7,1.2,5,3.2,6.8,5.8c1.6,2.3,2.6,5,3.1,8.1c0.3,1.8,0.4,4.4,0.3,7.8h-28.5c0.2,3.9,1.5,6.7,4.1,8.3
-c1.6,1,3.4,1.5,5.6,1.5c2.3,0,4.2-0.6,5.7-1.8c0.8-0.6,1.5-1.5,2.1-2.7h10.5c-0.3,2.3-1.5,4.7-3.8,7.1c-3.5,3.8-8.4,5.7-14.7,5.7
-c-5.2,0-9.8-1.6-13.8-4.8c-4-3.2-6-8.4-6-15.7c0-6.8,1.8-12,5.4-15.6c3.6-3.6,8.3-5.4,14-5.4C266.3,72.9,269.4,73.5,272.1,74.7z
-M256.8,83.6c-1.4,1.5-2.4,3.5-2.7,6.1h17.6c-0.2-2.7-1.1-4.8-2.7-6.2c-1.6-1.4-3.7-2.1-6.1-2.1C260.3,81.3,258.2,82.1,256.8,83.6
-z"/>
-<path d="M170.2,74.3V71c0-0.8,0.3-1.5,0.8-2.1c0.5-0.6,1.4-0.9,2.8-0.9c1.4,0,2.3,0.1,2.9,0.2v-8.3c-0.9-0.1-1.6-0.1-2.2-0.2
-c-0.5,0-1.1-0.1-1.8-0.1c-5.7,0-9.3,1.2-10.7,3.5c-1.4,1.6-2.1,4.5-2.1,8.7v2.5h-10.8c-2.4,0-4.7,0.8-6.7,2c-2,1.2-3.7,2.9-4.8,5
-l-0.9,1.7l-2.2-9c-0.2-1-0.5-1.8-1.1-2.7c-0.3-0.4-0.6-0.9-1.2-1.4c-0.6-0.5-1.5-0.9-2.6-0.9c-1.1,0-2,0.4-2.6,0.9
-c-1.7,1.4-1.9,2.6-2.3,4.1l-3.4,13.4l-5.1-37.3c-0.1-0.9-0.3-1.7-0.5-2.5c-0.1-0.4-0.3-0.8-0.7-1.4c-0.2-0.3-0.5-0.6-1-1
-c-0.5-0.3-1.3-0.6-2.1-0.6c-0.8,0-1.6,0.3-2.1,0.6c-0.9,0.6-1.2,1.1-1.4,1.5c-0.6,1.2-0.7,2-0.9,3.2l-8.5,55.2l-3.3-45.4
-c-0.1-0.9-0.1-1.6-0.3-2.4c-0.1-0.4-0.2-0.8-0.5-1.3c-0.2-0.3-0.4-0.7-0.9-1.1c-0.5-0.4-1.4-0.9-2.4-0.9c-1,0-1.9,0.4-2.3,0.8
-c-0.8,0.7-1,1.2-1.2,1.5c-0.5,1.1-0.6,1.8-0.8,3l-3.5,22.2l-5.5-51.8c-0.1-0.9-0.2-1.6-0.4-2.3c-0.1-0.4-0.2-0.7-0.5-1.3
-c-0.2-0.3-0.4-0.6-0.9-1.1c-0.5-0.4-1.4-0.9-2.4-0.9c-1.1,0-2,0.5-2.4,0.9c-0.8,0.7-1,1.2-1.2,1.6c-0.4,1.1-0.5,1.8-0.7,3
-l-9.3,78.1l-5.2-40.2c-0.1-0.9-0.3-1.7-0.6-2.6c-0.2-0.4-0.3-0.9-0.8-1.5c-0.4-0.5-1.5-1.5-3.1-1.5c-1.5,0-2.5,0.8-2.9,1.3
-c-0.7,0.8-0.9,1.4-1.1,2c-0.2,0.6-0.4,1.2-0.5,1.9l-4.5,22l-3.2-7.7c-1-2.3-2.6-4-4.5-5.3c-1.9-1.3-4.2-2.1-6.7-2.1H15.7
-c-2,0-3.6,1.6-3.6,3.6c0,2,1.6,3.6,3.6,3.6h11.7c0.6,0,1.7,0.3,2.6,0.9c0.9,0.6,1.6,1.5,1.9,2.1l7.7,18.6c0.6,1.5,2.1,2.4,3.7,2.2
-c1.6-0.2,2.9-1.3,3.2-2.9l3.6-17.6l6.1,47.5c0.1,0.9,0.2,1.6,0.5,2.4c0.1,0.4,0.2,0.8,0.6,1.3c0.2,0.3,0.4,0.6,0.9,1
-c0.5,0.4,1.3,0.8,2.3,0.8c1,0,1.8-0.4,2.3-0.8c0.8-0.7,1-1.2,1.2-1.6c0.5-1.1,0.6-1.9,0.7-3.1l9-75.2l5,47.1
-c0.1,0.9,0.2,1.6,0.4,2.4c0.1,0.4,0.2,0.8,0.6,1.4c0.2,0.3,0.5,0.7,1,1c0.5,0.4,1.3,0.8,2.3,0.7c0.9,0,1.7-0.4,2.2-0.7
-c0.8-0.6,1.1-1.1,1.3-1.5c0.5-1.1,0.7-1.9,0.9-3.1l2.9-18.3l3.3,45.9c0.1,0.9,0.1,1.6,0.3,2.3c0.1,0.4,0.2,0.7,0.5,1.3
-c0.2,0.3,0.4,0.7,0.9,1.1c0.5,0.4,1.4,0.9,2.4,0.9h0c1.1,0,1.9-0.5,2.4-0.8c0.8-0.7,1-1.2,1.2-1.5c0.5-1.1,0.6-1.8,0.8-3l9.6-62.2
-l4.2,31c0.1,1,0.3,1.8,0.7,2.7c0.2,0.4,0.4,0.9,1,1.5c0.5,0.6,1.6,1.3,2.9,1.3c1.3,0,2.2-0.6,2.7-1.1c0.8-0.7,1.1-1.3,1.3-2
-c0.3-0.6,0.5-1.2,0.6-1.9l4.4-17.3l1.1,4.5c0.3,1.1,0.7,2.2,1.4,3.2c0.7,1,2.2,2,3.9,2c1.5,0,2.7-0.7,3.5-1.5
-c0.8-0.7,1.3-1.6,1.8-2.5l2.7-5.5c0.3-0.6,1.1-1.5,2.1-2.1c1-0.6,2.2-1,2.8-0.9h10.9v31.6h10.2V81.5h6.7v-7.2H170.2z"/>
-</g>
-</g>
-</svg>
-            </a>
+            <script>
+                const siteWidth = 580;  // Minimum expected width. If screen is smaller, scale website.
+                const scale = window.innerWidth / siteWidth;
+                if (scale < 1){
+                    document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale);
+                }
+                const userIsAuthenticated = false;
+            </script>
+            <script src="/static/bw-frontend/dist/index.js"></script>
         </div>
-
-        <div id="wrapper">
-        <div id="container">
-
-<div id="content_full"> <!-- START of Content area -->
-
-
-    <h1>Server Error</h1>
-    <p>Ouch.. we screwed something up! You found some part of Freesound that's broken.
-
-    <p>Luckily, we'll get an email about it and we'll try to fix it as soon as possible. In the
-       meantime, try some other parts of website we haven't managed to break yet.
-
-    <p style="color:gray;border-top:thin gray solid;">Django isn't responding in a timely manner (nginx 504 gateway timeout)</p>
-
-</div> <!-- END of Content area -->
-
-<br class="clear" />
-
-
-
-        </div>
-        </div>
-
-
-    </body>
-
+    </div>
+</body>
 </html>

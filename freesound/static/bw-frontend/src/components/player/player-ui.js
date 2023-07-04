@@ -1,9 +1,28 @@
 /* eslint-disable no-param-reassign */
 import throttle from 'lodash.throttle'
 import playerSettings from './settings'
-import { formatAudioDuration, playAtTime, isTouchEnabledDevice, getAudioElementDurationOrDurationProperty, stopAllPlayers, simultaneousPlaybackDisallowed } from './utils'
+import { formatAudioDuration, playAtTime, getAudioElementDurationOrDurationProperty, stopAllPlayers, simultaneousPlaybackDisallowed } from './utils'
 import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator, onPlayerTimeUpdate } from './audio-element'
+import { rulerFrequencyMapping } from './utils'
+
+const removeAllLastPlayedClasses = () => {
+  document.getElementsByClassName('last-played').forEach(element => {
+    element.classList.remove('last-played');
+  });
+}
+
+export const isTouchEnabledDevice = () => {
+  return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
+}
+
+if (isTouchEnabledDevice()){
+  document.addEventListener('click', (evt) => {
+    /* In touch devics, make sure we remove the last-played class when user touches
+    somewhere outside a player */
+    removeAllLastPlayedClasses();
+  })
+}
 
 const updateProgressBarIndicator = (parentNode, audioElement, progressPercentage) => {
   const progressBar = parentNode.getElementsByClassName('bw-player__progress-bar')[0]
@@ -37,7 +56,7 @@ export const hideProgressBarIndicator = (parentNode) => {
  * @param {HTMLAudioElement} audioElement
  * @param {'small' | 'big'} playerSize
  */
-const createProgressIndicator = (parentNode, audioElement, playerSize) => {
+const createProgressIndicator = (parentNode, audioElement, playerImgNode, playerSize) => {
   const progressIndicatorContainer = document.createElement('div')
   progressIndicatorContainer.className =
     'bw-player__progress-indicator-container'
@@ -50,12 +69,33 @@ const createProgressIndicator = (parentNode, audioElement, playerSize) => {
   progressIndicatorContainer.addEventListener(
     'mousemove',
     throttle(evt => {
-      // Update playhead
-      const progressPercentage = evt.offsetX / progressIndicatorContainer.clientWidth
-      setProgressIndicator(progressPercentage * 100, parentNode)
+      if (parentNode.dataset.rulerActive) {
+        const imgHeight = playerImgNode.clientHeight;
+        const showingSpectrogram = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+        let readout = "";
+        const posY = Math.min(evt.offsetY, imgHeight);
+        const height2 = imgHeight/2;
+        if (showingSpectrogram) {
+          const sampleRate = parseFloat(parentNode.dataset.samplerate, 10);
+          const srScaleCorrection = sampleRate/44100.0
+          readout = (srScaleCorrection * rulerFrequencyMapping[Math.floor((posY/imgHeight) * 500.0)]).toFixed(2) + " Hz";
+        } else {
+          if (posY == height2)
+              readout = "-inf";
+          else
+              readout = (20 * Math.log( Math.abs(posY/height2 - 1) ) / Math.LN10).toFixed(2);
+          readout = readout + " dB";
+        }
+        const rulerIndicator = playerImgNode.parentNode.getElementsByClassName('bw-player__ruler-indicator')[0];
+        rulerIndicator.innerText = readout;
+      } else {
+        // Update playhead
+        const progressPercentage = evt.offsetX / progressIndicatorContainer.clientWidth
+        setProgressIndicator(progressPercentage * 100, parentNode)
 
-      // Update selected time indicator (only in big players)
-      updateProgressBarIndicator(parentNode, audioElement, progressPercentage)
+        // Update selected time indicator (only in big players)
+        updateProgressBarIndicator(parentNode, audioElement, progressPercentage)
+      }
     }),
     50
   )
@@ -66,6 +106,7 @@ const createProgressIndicator = (parentNode, audioElement, playerSize) => {
       ((100 * audioElement.currentTime) / duration) % 100,
       parentNode
     )
+    
     // Update selected time indicator (only in big players)
     hideProgressBarIndicator(parentNode)
   })
@@ -157,18 +198,19 @@ const createPlayButton = (audioElement, playerSize) => {
     playerSize === 'big' ? 'play-stroke' : 'play'
   )
   playButton.setAttribute('title', 'Play/Pause')
+  playButton.setAttribute('aria-label', 'Play/Pause')
   playButton.classList.add('bw-player__play-btn')
-  playButton.addEventListener('click', (e) => {
+  playButton.addEventListener('click', (evt) => {
     const isPlaying = !audioElement.paused
     if (isPlaying) {
       audioElement.pause()
     } else {
-      if (simultaneousPlaybackDisallowed()){
+      if (simultaneousPlaybackDisallowed() || evt.altKey){
         stopAllPlayers();
       }
       audioElement.play()
     }
-    e.stopPropagation()
+    evt.stopPropagation()
   })
   return playButton
 }
@@ -180,6 +222,7 @@ const createPlayButton = (audioElement, playerSize) => {
 const createStopButton = (audioElement, parentNode) => {
   const stopButton = createControlButton('stop')
   stopButton.setAttribute('title', 'Stop')
+  stopButton.setAttribute('aria-label', 'Stop')
   stopButton.addEventListener('click', (e) => {
     audioElement.pause()
     audioElement.currentTime = 0
@@ -196,6 +239,9 @@ const createStopButton = (audioElement, parentNode) => {
 const createLoopButton = audioElement => {
   const loopButton = createControlButton('loop')
   loopButton.setAttribute('title', 'Loop')
+  loopButton.setAttribute('aria-label', 'Loop')
+  loopButton.classList.add('text-20')
+  loopButton.classList.add('loop-button')
   loopButton.addEventListener('click', (e) => {
     const willLoop = !audioElement.loop
     if (willLoop) {
@@ -209,6 +255,66 @@ const createLoopButton = audioElement => {
   return loopButton
 }
 
+const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize) => {
+  const controlsElement = playerImgNode.parentElement.querySelector('.bw-player__controls');
+  const progressStatusContainerElement = playerImgNode.parentElement.querySelector('.bw-player__progress-container');
+  const topControlsElement = playerImgNode.parentElement.querySelector('.bw-player__top_controls');
+  const topControlsLeftElement = playerImgNode.parentElement.querySelector('.bw-player__top_controls_left');
+  const bookmarkElement = playerImgNode.parentElement.querySelector('.bw-player__favorite');
+  const similarSoundsElement = playerImgNode.parentElement.querySelector('.bw-player__similar');
+  const remixSoundsElement = playerImgNode.parentElement.querySelector('.bw-player__remix');
+  let spectrogramButton = undefined;
+  try {
+    spectrogramButton = controlsElement.querySelector('i.bw-icon-spectogram').parentElement;
+  } catch (error){}
+  const hasWaveform = playerImgNode.src.indexOf(waveform) > -1
+  if (hasWaveform) {
+    playerImgNode.src = spectrum
+    if (spectrogramButton !== undefined){
+      spectrogramButton.classList.add('text-red-important')
+    }
+    controlsElement.classList.add('bw-player__controls-inverted');
+    topControlsElement.classList.add('bw-player__controls-inverted');
+    if (topControlsLeftElement !== null){
+      topControlsLeftElement.classList.add('bw-player__controls-inverted');
+    }
+    if (bookmarkElement !== null){
+      bookmarkElement.classList.add('bw-player__controls-inverted');
+    }
+    if (similarSoundsElement !== null){
+      similarSoundsElement.classList.add('bw-player__controls-inverted');
+    }
+    if (remixSoundsElement !== null){
+      remixSoundsElement.classList.add('bw-player__controls-inverted');
+    }
+    if (progressStatusContainerElement !== null){
+      progressStatusContainerElement.classList.add('bw-player__progress-container--inverted');
+    }
+  } else {
+    playerImgNode.src = waveform
+    if (spectrogramButton !== undefined){
+      spectrogramButton.classList.remove('text-red-important')
+    }
+    controlsElement.classList.remove('bw-player__controls-inverted');
+    topControlsElement.classList.remove('bw-player__controls-inverted');
+    if (topControlsLeftElement !== null){
+      topControlsLeftElement.classList.remove('bw-player__controls-inverted');
+    }
+    if (bookmarkElement !== null){
+      bookmarkElement.classList.remove('bw-player__controls-inverted');
+    }
+    if (similarSoundsElement !== null){
+      similarSoundsElement.classList.remove('bw-player__controls-inverted');
+    }
+    if (remixSoundsElement !== null){
+      remixSoundsElement.classList.remove('bw-player__controls-inverted');
+    }
+    if (progressStatusContainerElement !== null){
+      progressStatusContainerElement.classList.remove('bw-player__progress-container--inverted');
+    }
+  }
+}
+
 /**
  *
  * @param {HTMLImgElement} playerImgNode
@@ -219,39 +325,47 @@ const createLoopButton = audioElement => {
 const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWithSpectrum) => {
   const spectogramButton = createControlButton('spectogram')
   spectogramButton.setAttribute('title', 'Spectrogram/Waveform')
+  spectogramButton.setAttribute('aria-label', 'Spectrogram/Waveform')
   const { spectrum, waveform } = parentNode.dataset
   if (startWithSpectrum){
     spectogramButton.classList.add('text-red-important');
   }
   spectogramButton.addEventListener('click', () => {
-    const hasWaveform = playerImgNode.src.indexOf(waveform) > -1
-    if (hasWaveform) {
-      playerImgNode.src = spectrum
-      spectogramButton.classList.add('text-red-important')
-      spectogramButton.parentElement.classList.add('bw-player__controls-inverted');
-      if (playerSize !== 'big'){
-        spectogramButton.parentElement.parentElement.querySelector('.bw-player__progress-container').forEach((progressIndicator) => {
-          progressIndicator.classList.add('bw-player__progress-inverted');
-        });
-      }
-    } else {
-      playerImgNode.src = waveform
-      spectogramButton.classList.remove('text-red-important')
-      spectogramButton.parentElement.classList.remove('bw-player__controls-inverted');
-      if (playerSize !== 'big') {
-        spectogramButton.parentElement.parentElement.querySelector('.bw-player__progress-container').forEach((progressIndicator) => {
-          progressIndicator.classList.remove('bw-player__progress-inverted');
-        });
-      }
-    }
+    toggleSpectrogramWaveform(playerImgNode, waveform, spectrum, playerSize)
   })
   return spectogramButton
 }
 
-const createRulerButton = () => {
+const createRulerButton = (parentNode) => {
   const rulerButton = createControlButton('ruler')
   rulerButton.setAttribute('title', 'Ruler')
+  rulerButton.setAttribute('aria-label', 'Ruler')
+  rulerButton.classList.add('text-20')
+  rulerButton.addEventListener('click', () => {
+    if (parentNode.dataset.rulerActive !== undefined){
+      delete parentNode.dataset.rulerActive;
+    } else {
+      parentNode.dataset.rulerActive = true;
+    }
+    const rulerIndicator = parentNode.getElementsByClassName('bw-player__ruler-indicator')[0];
+    if (parentNode.dataset.rulerActive){
+      rulerButton.classList.add('text-red-important');
+      rulerIndicator.classList.add('opacity-090');
+    } else {
+      rulerButton.classList.remove('text-red-important');
+      rulerIndicator.classList.remove('opacity-090');
+    }
+  })
+
   return rulerButton
+}
+
+const createRulerIndicator = (playerImage) => {
+  const rulerIndicator = document.createElement('div')
+  rulerIndicator.className = 'bw-player__ruler-indicator h-spacing-2'
+  rulerIndicator.innerText = '-12.45 dB'
+  rulerIndicator.style.pointerEvents = "none";  // Do that so mouse events are propagated to the progress indicator layer
+  return rulerIndicator
 }
 
 /**
@@ -279,39 +393,43 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
       playerImage.src = waveform
     }
     playerImage.alt = title
-    const progressIndicator = createProgressIndicator(parentNode, audioElement, playerSize)
+    const progressIndicator = createProgressIndicator(parentNode, audioElement, playerImage, playerSize)
     imageContainer.appendChild(playerImage)
     imageContainer.appendChild(progressIndicator)
     const progressStatus = createProgressStatus(parentNode, audioElement, playerSize, startWithSpectrum)
     imageContainer.appendChild(progressStatus)
     imageContainer.addEventListener('click', evt => {
-      const clickPosition = evt.offsetX
-      const width = evt.target.clientWidth
-      let positionRatio = clickPosition / width
-      if (playerSize === "small"){
-        if (isTouchEnabledDevice() && positionRatio < 0.15) {
-          // In small player and touch device, quantize touches near the start of the sound to position-0
-          positionRatio = 0.0
-        } else if (positionRatio < 0.05){
-          // In small player but non-touch device, the quantization is less strict
-          positionRatio = 0.0
-        }
-      }
-      const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
-      const time = duration * positionRatio
-      if (audioElement.paused) {
-        // If paused, use playAtTime util function because it supports setting currentTime event if data is not yet loaded
-        playAtTime(audioElement, time)
+      if (evt.altKey){
+        toggleSpectrogramWaveform(playerImage, waveform, spectrum, playerSize);
       } else {
-        // If already playing, just change current time and continue playing
-        audioElement.currentTime = time
-      }
-      if (isTouchEnabledDevice()){
-        // In touch enabled devices hide the progress indicator here because otherwise it will remain visible as no
-        // mouseleave event is ever fired
-        hideProgressBarIndicator(parentNode)
-      }
-      evt.stopPropagation()
+        const clickPosition = evt.offsetX
+        const width = evt.target.clientWidth
+        let positionRatio = clickPosition / width
+        if (playerSize === "small"){
+          if (isTouchEnabledDevice() && positionRatio < 0.15) {
+            // In small player and touch device, quantize touches near the start of the sound to position-0
+            positionRatio = 0.0
+          } else if (positionRatio < 0.05){
+            // In small player but non-touch device, the quantization is less strict
+            positionRatio = 0.0
+          }
+        }
+        const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
+        const time = duration * positionRatio
+        if (audioElement.paused) {
+          // If paused, use playAtTime util function because it supports setting currentTime event if data is not yet loaded
+          playAtTime(audioElement, time)
+        } else {
+          // If already playing, just change current time and continue playing
+          audioElement.currentTime = time
+        }
+        if (isTouchEnabledDevice()){
+          // In touch enabled devices hide the progress indicator here because otherwise it will remain visible as no
+          // mouseleave event is ever fired
+          hideProgressBarIndicator(parentNode)
+        }
+      }  
+      evt.stopPropagation()    
     })
   }
   return imageContainer
@@ -335,7 +453,8 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
 
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
-    playerControls.classList.add('opacity-050')
+    // Edit: play buttons are now always visible in both touch and non-touch devices, so this is not needed anymore
+    // playerControls.classList.add('opacity-100')
   }
 
   let startWithSpectrum = false;
@@ -352,11 +471,42 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
          createStopButton(audioElement, parentNode),
          createPlayButton(audioElement, playerSize),
          createSpectogramButton(playerImgNode, parentNode, playerSize, startWithSpectrum),
-         createRulerButton()]
+         createRulerButton(parentNode)]
       : [createPlayButton(audioElement, playerSize),
          createLoopButton(audioElement)]
   controls.forEach(el => playerControls.appendChild(el))
   return playerControls
+}
+
+const createPlayerTopControls = (parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton, showRemixGroupButton) => {
+  const topControls = document.createElement('div')
+  topControls.className = 'bw-player__top_controls right'
+  if (showRemixGroupButton){
+    const remixGroupButton = createRemixGroupButton(parentNode, playerImgNode)
+    topControls.appendChild(remixGroupButton)
+  }
+  if (showSimilarSoundsButton){
+    const similarSoundsButton = createSimilarSoundsButton(parentNode, playerImgNode)
+    topControls.appendChild(similarSoundsButton)
+  }
+  if (showBookmarkButton){
+    const bookmarkButton = createSetFavoriteButton(parentNode, playerImgNode)
+    topControls.appendChild(bookmarkButton)
+  }
+  if (playerSize == 'big'){
+    const rulerIndicator = createRulerIndicator(playerImgNode);
+    topControls.appendChild(rulerIndicator)
+  }
+
+  let startWithSpectrum = false;
+  if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
+    startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+  }
+  if (startWithSpectrum){
+    topControls.classList.add('bw-player__controls-inverted');
+  }
+
+  return topControls;
 }
 
 /**
@@ -369,19 +519,15 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
   const favoriteButtonContainer = document.createElement('div')
   const favoriteButton = createControlButton('bookmark')
   const unfavoriteButton = createControlButton('bookmark-filled')
-  favoriteButton.setAttribute('title', 'Bookmark')
+  favoriteButton.setAttribute('title', 'Bookmark this sound')
+  favoriteButton.setAttribute('aria-label', 'Bookmark this sound')
   unfavoriteButton.setAttribute('title', 'Remove bookmark')
+  unfavoriteButton.setAttribute('aria-label', 'Remove bookmark')
   favoriteButtonContainer.classList.add(
     'bw-player__favorite',
     'stop-propagation'
   )
-  let startWithSpectrum = false;
-  if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
-    startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
-  }
-  if (startWithSpectrum){
-    favoriteButtonContainer.classList.add('bw-player__controls-inverted')
-  }
+  
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
     // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
@@ -406,27 +552,105 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
 }
 
 /**
+ *
+ * @param {HTMLDivElement} parentNode
+ * @param {HTMLImgElement} playerImgNode
+ */
+const createSimilarSoundsButton = (parentNode, playerImgNode) => {
+  const similarSoundsButtonContainer = document.createElement('div')
+  const similarSoundsButton = createControlButton('similar')
+  similarSoundsButton.setAttribute('title', 'Find similar sounds')
+  similarSoundsButton.setAttribute('aria-label', 'Find similar sounds')
+  similarSoundsButtonContainer.classList.add(
+    'bw-player__similar',
+    'stop-propagation'
+  )
+  
+  if (isTouchEnabledDevice()){
+    // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
+    // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
+    //similarSoundsButtonContainer.classList.add('opacity-050')
+  }
+  similarSoundsButton.setAttribute('data-toggle', 'similar-sounds-modal');
+  similarSoundsButton.setAttribute('data-modal-content-url', parentNode.dataset.similarSoundsModalUrl);
+  similarSoundsButtonContainer.appendChild(similarSoundsButton)
+  return similarSoundsButtonContainer
+}
+
+/**
+ *
+ * @param {HTMLDivElement} parentNode
+ * @param {HTMLImgElement} playerImgNode
+ */
+const createRemixGroupButton = (parentNode, playerImgNode) => {
+  const remixGroupButtonContainer = document.createElement('div')
+  const remixGroupButton = createControlButton('remix')
+  remixGroupButton.setAttribute('title', 'See sound\'s remix group')
+  remixGroupButton.setAttribute('aria-label', 'See sound\'s remix group')
+  remixGroupButtonContainer.classList.add(
+    'bw-player__remix',
+    'stop-propagation'
+  )
+  
+  if (isTouchEnabledDevice()){
+    // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
+    // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
+    //similarSoundsButtonContainer.classList.add('opacity-050')
+  }
+  remixGroupButton.setAttribute('data-toggle', 'remix-group-modal');
+  remixGroupButton.setAttribute('data-modal-content-url', parentNode.dataset.remixGroupModalUrl);
+  remixGroupButtonContainer.appendChild(remixGroupButton)
+  return remixGroupButtonContainer
+}
+
+
+/**
  * @param {HTMLDivElement} parentNode
  */
 const createPlayer = parentNode => {
   const playerSize = parentNode.dataset.size
   const showBookmarkButton = parentNode.dataset.bookmark === 'true'
+  const showSimilarSoundsButton = parentNode.dataset.similarSounds === 'true'
+  const showRemixGroupButton = parentNode.dataset.remixGroup === 'true'
   const audioElement = createAudioElement(parentNode)
+  audioElement.addEventListener('play', () => {
+    // When a player is played, add the last-played class to it and remove it from other players that might have it
+    removeAllLastPlayedClasses();
+    parentNode.classList.add('last-played');
+  })
   const playerImage = createPlayerImage(
     parentNode,
     audioElement,
     playerSize
   )
   const playerImgNode = playerImage.getElementsByTagName('img')[0]
-  const controls = createPlayerControls(parentNode, playerImgNode, audioElement, playerSize)
-  const bookmarkButton = createSetFavoriteButton(parentNode, playerImgNode)
-
   parentNode.appendChild(playerImage)
   parentNode.appendChild(audioElement)
+  const controls = createPlayerControls(parentNode, playerImgNode, audioElement, playerSize)
   playerImage.appendChild(controls)
-  if (showBookmarkButton){
-    playerImage.appendChild(bookmarkButton)
+  const topControls = createPlayerTopControls(parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton, showRemixGroupButton)
+  playerImage.appendChild(topControls)
+
+  const rateSoundHiddenWidget = parentNode.parentNode.getElementsByClassName('bw-player__rate__widget')[0]
+  if (rateSoundHiddenWidget){
+    const ratingWidget = document.createElement('div')
+    ratingWidget.className = 'bw-player__top_controls_left'
+    rateSoundHiddenWidget.classList.remove('display-none')
+    ratingWidget.append(rateSoundHiddenWidget)
+    ratingWidget.addEventListener('click', e => {
+      e.stopPropagation();  // Need to use this here to stop propagation of the click event and prevent player from start playing
+    })
+    let startWithSpectrum = false;
+    if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
+      startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
+    }
+    if (startWithSpectrum){
+      ratingWidget.classList.add('bw-player__controls-inverted');
+    }
+    playerImage.appendChild(ratingWidget)
   }
+
+  setProgressIndicator(0, parentNode);
 }
 
 export {createPlayer};

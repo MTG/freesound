@@ -1,0 +1,18 @@
+{% extends "simple_page.html" %}
+{% load markup_freesound %}
+{% load bw_templatetags %}
+
+{% block title %}Moderation guide{% endblock %}
+{% block page-title %}Moderation{% endblock %}
+
+{% block page-content %}
+    {% include 'moderation/moderation_navbar.html' %}
+    <div class="bw-wiki"> 
+        {{ content.body|markdown_wiki }}
+        {% if perms.wiki.change_page %}
+        <div class="v-spacing-top-5 text-right">
+            <a class="btn-primary no-hover" href="{% url "wiki-page-edit" name %}">Edit this page</a>
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}

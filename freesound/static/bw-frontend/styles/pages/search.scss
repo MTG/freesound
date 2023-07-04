@@ -1,10 +1,11 @@
 .bw-search__filter-value-list {
   list-style: none;
   padding-left: 0;
+  margin-top: 8px;
 }
 
 .bw-search__filter-tags-list {
-  margin: 23px 0;
+  margin: 13px 0;
 }
 
 .bw-search__filter-value {
@@ -39,10 +40,15 @@
 }
 
 .bw-search__filter-section {
+
   margin-left: $small-spacing;
   margin-right: $small-spacing;
 
-  padding-top: $small-spacing;
+  @include md-and-above {
+    margin-right: 0px;
+  }
+
+  padding-top: $tiny-spacing;
   padding-bottom: $small-spacing;
 
   .bw-search__filter-section-name > span {
@@ -64,8 +70,23 @@
 }
 
 .bw-search__result {
-  padding-top: $smedium-spacing;
-  padding-bottom: $smedium-spacing;
+  padding-bottom: $tiny-spacing;
+
+  .bw-player__img-container {
+    height: 135px;
+
+    @include md-and-above {
+      height: 115px;
+    }
+  }
+
+  .stars-margin-top-middle-player {
+    margin-top: -5px;
+    
+    @include md-and-above {
+      height: 0px;
+    }
+  }
 }
 
 .bw-search__active-filters-button {
@@ -135,12 +156,18 @@
   .bw-search_input-duration {
     padding: 16px 13px;
     border: 1px solid $navy-light-grey;
+    background-color: $background-input;
     border-radius: 5px;
     font-size: 14px;
     max-width: 85px;
 
     &::-webkit-calendar-picker-indicator {
       display: none;
+    }
+
+    &:focus {
+      background-color: $white;
+      border: 1px solid $black;
     }
   }
 }

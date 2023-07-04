@@ -19,6 +19,8 @@
 #
 
 from django import template
+from django.utils.text import Truncator
+from bs4 import BeautifulSoup
 import feedparser
 import urllib.request, urllib.error, urllib.parse
 
@@ -40,6 +42,14 @@ class RssParserNode(template.Node):
                 context[self.var_name] = feedparser.parse(context[self.url_var_name], handlers=[proxy])
             except KeyError:
                 raise template.TemplateSyntaxError(f"the variable '{self.url_var_name}' can't be found in the context")
+
+        # Add custom-made summaries with a specific length of 300 chars which are slightly longer that those auto-generated
+        # by feedparser. These summaries are used in BW only.
+        for entry in context[self.var_name]['entries']:
+            soup = BeautifulSoup(entry['content'][0]['value'], features="html.parser")
+            text_without_html_tags = soup.get_text()
+            truncated_text = Truncator(text_without_html_tags).chars(300, truncate="...")
+            entry['summary_custom'] = truncated_text
         return ''
 
 import re

@@ -175,12 +175,12 @@ Freesound, it needs to be created following the specification and instructions o
 need to be dockerized and incorporate a Python script which implements a simple API for analyzing sounds. That script also
 takes care of logging in the Freesound infrastructure.
 
-The new analysis pipeline uses job queues based on Celery/RabbitMQ. There is one job queue for every avialable analyzer. The 
+The new analysis pipeline uses job queues based on Celery/RabbitMQ. There is one job queue for every available analyzer. The 
 available analyzers are exposed as workers that can consume tasks from their queues (this is also done by the Python script
 included in the analyzers). If several workers are instantiated for a single analyzer, then the queue for that analyzer will 
 be consumed at a faster rate, but there'll still be only one queue per analyzer.
 
-Analysis jobs can be manuallt triggered using the `analyze(analyzer_name)` method of Freesound `Sound` objects. When a job
+Analysis jobs can be manually triggered using the `analyze(analyzer_name)` method of Freesound `Sound` objects. When a job
 is triggered, it will be added to the corresponding Celery/RabbitMQ queue, and a `SoundAnalysis` object will be created in the
 database. That object will be used to store the state of the analysis job as well as the results when the job finishes. Only one
 `SoundAnalysis` object can exist per pair of sound ID <> analyzer name. If an analysis job for an analyzer is triggered for a

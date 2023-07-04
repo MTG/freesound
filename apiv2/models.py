@@ -19,6 +19,7 @@
 #
 
 import datetime
+import random
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -115,10 +116,13 @@ class ApiV2Client(models.Model):
             end_date = datetime.datetime.now().date()
         for i in range(0, n_days_back):
             date_filter = end_date - datetime.timedelta(days=i)
-            try:
-                number_of_requests = self.usage.get(date=date_filter).number_of_requests
-            except APIClientDailyUsageHistory.DoesNotExist:
-                number_of_requests = 0
+            if settings.DEBUG:
+                number_of_requests = random.randint(0, 1000)
+            else:
+                try:
+                    number_of_requests = self.usage.get(date=date_filter).number_of_requests
+                except APIClientDailyUsageHistory.DoesNotExist:
+                    number_of_requests = 0    
             usage.append((date_filter, number_of_requests))
         return sorted(usage, reverse=True)
 

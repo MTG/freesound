@@ -21,7 +21,7 @@ let currentBoxTrLon;
 let centerLat;
 let centerLon;
 let zoom;
-const showSearch = (mapCanvas.hasAttribute('mapShowSearch') && mapCanvas.getAttribute('mapShowSearch') === 'true');
+const showSearch = (mapCanvas.dataset.mapShowSearch !== undefined && mapCanvas.dataset.mapShowSearch === 'true');
 const showStyleSelector = true;
 const clusterGeotags = true;
 const showMapEvenIfNoGeotags = true;
@@ -82,6 +82,9 @@ const updateEmbedCode = (_, lat, lon, zoom, boxBlLat, boxBlLon, boxTrLat, boxTrL
     }
     if (mapCanvas.dataset.mapTag !== "None"){
         embedCode += "&tag=" + mapCanvas.dataset.mapTag;
+    }
+    if (mapCanvas.dataset.mapPackId !== "None"){
+        embedCode += "&pack=" + mapCanvas.dataset.mapPackId;
     }
     embedCode += box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
     embedCodeElement.innerText = embedCode;

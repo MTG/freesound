@@ -1,13 +1,9 @@
 /* eslint-disable import/prefer-default-export */
-
-export const isTouchEnabledDevice = () => {
-  return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
-}
+import {createPlayer} from './player-ui'
 
 export const simultaneousPlaybackDisallowed = () => {
   return document.cookie.indexOf('disallowSimultaneousAudioPlayback=yes') > -1;
 }
-
 
 /**
  * @param {number} value
@@ -54,6 +50,20 @@ export const stopAllPlayers = () => {
   });
 }
 
+
+export const stopAllPlayersInContainer = (container) => {
+  const players = [...container.getElementsByClassName('bw-player')]
+  players.forEach(player => {
+    player.getElementsByTagName('audio').forEach(audioElement=>{audioElement.pause()});
+  });
+}
+
+
+export const initializePlayersInContainer = (container) => {
+  const players = [...container.getElementsByClassName('bw-player')]
+  players.forEach(createPlayer)  
+}
+
 /**
  * @param {HTMLAudioElement} audioElement
  * @param {number} timeInSeconds
@@ -92,3 +102,10 @@ export const getAudioElementDurationOrDurationProperty = (audioElement, parentNo
     }
     return audioDuration;
 }
+
+
+export const rulerFrequencyMapping = [];
+var y_min = Math.log(100.0) / Math.LN10;  // See utils.audioprocessing.processing.SpectrogramImage as this must match
+var y_max = Math.log(22050.0) / Math.LN10;
+for (var y = 500;y >= 0; y--)
+  rulerFrequencyMapping.push(Math.pow(10.0, y_min + y / 500.0 * (y_max - y_min)));

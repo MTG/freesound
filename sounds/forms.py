@@ -165,9 +165,11 @@ class BWPackForm(forms.Form):
         self.fields['pack'].choices = [(self.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
                                        (self.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] \
                                       + ([(pack.id, pack.name) for pack in pack_choices] if pack_choices else [])
-        # The attrs below are used so that some elements of the dropdown are displayed in gray 
+        # The attrs below are used so that some elements of the dropdown are displayed in gray and to enable
+        # pre-selecting options using keyboard
         self.fields['pack'].widget.attrs = \
-            {'data-grey-items': f'{self.NO_PACK_CHOICE_VALUE},{self.NEW_PACK_CHOICE_VALUE}'}
+            {'data-grey-items': f'{self.NO_PACK_CHOICE_VALUE},{self.NEW_PACK_CHOICE_VALUE}', 
+             'data-select-with-keyboard': True}
 
     def clean_pack(self):
         return _pack_form_clean_pack_helper(self.cleaned_data)
@@ -234,14 +236,14 @@ def _license_form_clean_license_helper(cleaned_data):
 
 
 class LicenseForm(forms.Form):
-    license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
+    license_qs = License.objects.filter(Q(name__istartswith='Attribution') | Q(name__istartswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True)
 
     def __init__(self, *args, **kwargs):
         hide_old_license_versions = kwargs.pop('hide_old_license_versions', False)
         super().__init__(*args, **kwargs)
         if hide_old_license_versions:
-            new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
+            new_qs = License.objects.filter(Q(name__istartswith='Attribution') | Q(name__istartswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
             self.license_qs = new_qs
         valid_licenses = ', '.join([f'"{name}"' for name in list(self.license_qs.values_list('name', flat=True))])
@@ -265,6 +267,20 @@ class FlagForm(forms.Form):
         f.reason = self.cleaned_data['reason']
         f.email = self.cleaned_data['email']
         return f
+
+class BWFlagForm(FlagForm):
+    email = forms.EmailField(label="Your email", required=True, help_text="Required.",
+                             error_messages={'required': 'Required, please enter your email address.', 'invalid': 'Your'
+                                             ' email address appears to be invalid, please check if it\'s correct.'})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].label = False
+        self.fields['email'].widget.attrs['placeholder'] = 'Your email'
+        self.fields['email'].help_text = False
+        self.fields['reason_type'].label = False
+        self.fields['reason'].label = False
+        self.fields['reason'].widget.attrs['placeholder'] = 'Write here comments about why this sound is being flagged'
 
 
 class DeleteSoundForm(forms.Form):
@@ -331,10 +347,10 @@ class BWSoundEditAndDescribeForm(forms.Form):
                   "Note that you can <b>copy</b> and <b>paste</b> between tag fields.")
     description = HtmlCleaningCharField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
-        help_text="You can add <i>timestamped</i> comments by using a syntax like \"#1:07 nice bird chirp\" in the description. "
-                  "This will be rendered with little play button to play the sound at that timestamp. " + html_tags_help_text)
+        help_text="You can add timestamps to the description using the syntax #minute:second (e.g. \"#1:07 nice bird chirp\"). "
+                  "This will be rendered with a little play button to play the sound at that timestamp. " + html_tags_help_text)
     is_explicit = forms.BooleanField(required=False, label="The sound contains explicit content")
-    license_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative'))
+    license_qs = License.objects.filter(Q(name__istartswith='Attribution') | Q(name__istartswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True, widget=forms.RadioSelect())
     pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[], required=False)
     new_pack = forms.CharField(widget=forms.TextInput(attrs={'placeholder': 'Fill in the name for the new pack'}),
@@ -375,7 +391,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
 
         # Prepare license field
         if hide_old_license_versions:
-            new_qs = License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')).exclude(deed_url__contains="3.0")
+            new_qs = License.objects.filter(Q(name__istartswith='Attribution') | Q(name__istartswith='Creative')).exclude(deed_url__contains="3.0")
             self.fields['license'].queryset = new_qs
             self.license_qs = new_qs
         valid_licenses = ', '.join([f'"{name}"' for name in list(self.license_qs.values_list('name', flat=True))])
@@ -386,8 +402,10 @@ class BWSoundEditAndDescribeForm(forms.Form):
         self.fields['pack'].choices = [(BWPackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
                                        (BWPackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + \
                                       ([(pack.id, pack.name) for pack in user_packs] if user_packs else [])
-        # The attrs below are used so that some elements of the dropdown are displayed in gray 
-        self.fields['pack'].widget.attrs = {'data-grey-items': f'{BWPackForm.NO_PACK_CHOICE_VALUE},{BWPackForm.NEW_PACK_CHOICE_VALUE}'}
+        # The attrs below are used so that some elements of the dropdown are displayed in gray and to enable
+        # pre-selecting options using keyboard
+        self.fields['pack'].widget.attrs = {'data-grey-items': f'{BWPackForm.NO_PACK_CHOICE_VALUE},{BWPackForm.NEW_PACK_CHOICE_VALUE}', 
+                                            'data-select-with-keyboard': True}
 
     def clean(self):
         data = self.cleaned_data

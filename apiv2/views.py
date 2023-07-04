@@ -49,7 +49,7 @@ from apiv2.authentication import OAuth2Authentication, TokenAuthentication, Sess
 from apiv2.exceptions import NotFoundException, InvalidUrlException, BadRequestException, ConflictException, \
     UnauthorizedException, ServerErrorException, OtherException, APIException
 from apiv2.forms import ApiV2ClientForm, SoundCombinedSearchFormAPI, SoundTextSearchFormAPI, \
-    SoundContentSearchFormAPI, SimilarityFormAPI
+    SoundContentSearchFormAPI, SimilarityFormAPI, BWApiV2ClientForm
 from apiv2.models import ApiV2Client
 from apiv2.serializers import SimilarityFileSerializer, UploadAndDescribeAudioFileSerializer, \
     EditSoundDescriptionSerializer, SoundDescriptionSerializer, CreateCommentSerializer, SoundCommentsSerializer, \
@@ -137,7 +137,9 @@ class TextSearch(GenericAPIView):
         id_score_map = dict(object_list)
         sound_ids = [ob[0] for ob in object_list]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=sound_ids)
-        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids)
+        # In search queries, only include audio analyers's output if requested through the fields parameter
+        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '')  
+        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_analyzers_output=needs_analyzers_ouptut)
         sounds = []
         for i, sid in enumerate(sound_ids):
             try:
@@ -227,7 +229,9 @@ class ContentSearch(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
+        # In search queries, only include audio analyers's output if requested through the fields parameter
+        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '')  
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -347,7 +351,9 @@ class CombinedSearch(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = results
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
+        # In search queries, only include audio analyers's output if requested through the fields parameter
+        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '')  
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -474,16 +480,14 @@ class SimilarSounds(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
-        qs = Sound.objects.select_related('user', 'pack', 'license')\
-            .filter(id__in=ids)\
-            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
-        qs_sound_objects = dict()
-        for sound_object in qs:
-            qs_sound_objects[sound_object.id] = sound_object
+        # In search queries, only include audio analyers's output if requested through the fields parameter
+        needs_analyzers_ouptut = 'analyzers_output' in similarity_sound_form.cleaned_data.get('fields', '')  
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
+
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
+                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sid]
@@ -602,13 +606,11 @@ class UserSounds(ListAPIView):
 
     def get_queryset(self):
         try:
-            User.objects.get(username=self.kwargs['username'], is_active=True)
+            user = User.objects.get(username=self.kwargs['username'], is_active=True)
         except User.DoesNotExist:
             raise NotFoundException(resource=self)
-
-        queryset = Sound.objects.select_related('user', 'pack', 'license')\
-            .filter(moderation_state="OK", processing_state="OK", user__username=self.kwargs['username'])\
-            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
+        needs_analyzers_ouptut = 'analyzers_output' in self.request.GET.get('fields', '')  
+        queryset = Sound.objects.bulk_sounds_for_user(user_id=user.id, include_analyzers_output=needs_analyzers_ouptut)
         return queryset
 
 
@@ -743,10 +745,8 @@ class PackSounds(ListAPIView):
             Pack.objects.get(id=self.kwargs['pk'], is_deleted=False)
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
-
-        queryset = Sound.objects.select_related('user', 'pack', 'license')\
-            .filter(moderation_state="OK", processing_state="OK", pack__id=self.kwargs['pk'])\
-            .annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
+        needs_analyzers_ouptut = 'analyzers_output' in self.request.GET.get('fields', '')  
+        queryset = Sound.objects.bulk_sounds_for_pack(pack_id=self.kwargs['pk'], include_analyzers_output=needs_analyzers_ouptut)
         return queryset
 
 
@@ -1341,8 +1341,10 @@ def invalid_url(request):
 def create_apiv2_key(request):
     """View for applying for an apikey"""
 
+    FormToUse = BWApiV2ClientForm if using_beastwhoosh(request) else ApiV2ClientForm
+
     if request.method == 'POST':
-        form = ApiV2ClientForm(request.POST)
+        form = FormToUse(request.POST)
         if form.is_valid():
             api_client = ApiV2Client()
             api_client.user = request.user
@@ -1352,11 +1354,11 @@ def create_apiv2_key(request):
             api_client.redirect_uri = form.cleaned_data['redirect_uri']
             api_client.accepted_tos = form.cleaned_data['accepted_tos']
             api_client.save()
-            form = ApiV2ClientForm()
+            form = FormToUse()
             api_logger.info('new_credential <> (ApiV2 Auth:%s Dev:%s User:%s Client:%s)' %
                             (None, request.user.username, None, api_client.client_id))
     else:
-        form = ApiV2ClientForm()
+        form = FormToUse()
 
     user_credentials = request.user.apiv2_client.all()
 
@@ -1371,7 +1373,10 @@ def create_apiv2_key(request):
         'user_credentials': user_credentials,
         'fs_callback_url': fs_callback_url,
     }
-    return render(request, 'api/apply_key_apiv2.html', tvars)
+    if using_beastwhoosh(request):
+        return render(request, 'api/credentials.html', tvars)
+    else:
+        return render(request, 'api/apply_key_apiv2.html', tvars)
 
 
 @login_required
@@ -1384,9 +1389,11 @@ def edit_api_credential(request, key):
 
     if not client:
         raise Http404
+    
+    FormToUse = BWApiV2ClientForm if using_beastwhoosh(request) else ApiV2ClientForm
 
     if request.method == 'POST':
-        form = ApiV2ClientForm(request.POST)
+        form = FormToUse(request.POST)
         if form.is_valid():
             client.name = form.cleaned_data['name']
             client.url = form.cleaned_data['url']
@@ -1397,22 +1404,23 @@ def edit_api_credential(request, key):
             messages.add_message(request, messages.INFO, f"Credentials with name {client.name} have been updated.")
             return HttpResponseRedirect(reverse("apiv2-apply"))
     else:
-        form = ApiV2ClientForm(initial={'name': client.name,
+        form = FormToUse(initial={'name': client.name,
                                         'url': client.url,
                                         'redirect_uri': client.redirect_uri,
                                         'description': client.description,
                                         'accepted_tos': client.accepted_tos
                                         })
-
     use_https_in_callback = True
     if settings.DEBUG:
         use_https_in_callback = False
     fs_callback_url = prepend_base(reverse('permission-granted'), use_https=use_https_in_callback)
-    return render(request, 'api/edit_api_credential.html',
-                              {'client': client,
-                               'form': form,
-                               'fs_callback_url': fs_callback_url,
-                               })
+
+    tvars = {
+        'client': client,
+        'form': form,
+        'fs_callback_url': fs_callback_url,
+    }
+    return render(request, 'api/edit_api_credential.html', tvars)
 
 
 @login_required

@@ -1,6 +1,7 @@
 {% extends "simple_page.html" %}
 {% load static %}
 {% load absurl %}
+{% load bw_templatetags %}
 {% block page-title %}Upload Sound Files{% endblock %}
 {% block title %}Upload Sound Files{% endblock %}
 
@@ -52,7 +53,7 @@
                 <div>
                     {% if successes %}
                     <p>
-                        <b>{{ successes }} file{{ successes|pluralize }} uploaded successfully!</b>
+                        <b>{{ successes|bw_intcomma }} file{{ successes|pluralize }} uploaded successfully!</b>
                     </p>
                     {% endif %}
                     {% if errors %}

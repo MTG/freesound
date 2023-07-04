@@ -22,6 +22,7 @@ from past.utils import old_div
 import datetime
 import time
 
+from django.utils.safestring import mark_safe
 from django.template import Library
 from django.template.defaultfilters import stringfilter
 
@@ -58,6 +59,16 @@ def duration_hours(total_seconds):
 
 
 @register.filter
+def formatnumber(number):
+    if 1000 <= number < 1000000:
+        return f'{number/1000:.1f}K'
+    elif 1000000 <= number:
+        return f'{number/1000000:.1f}M'
+    else:
+        return f'{number}'
+    
+
+@register.filter
 def in_list(value,arg):
     return value in arg
 
@@ -87,3 +98,14 @@ def license_with_version(license_name, license_deed_url):
 @register.filter
 def element_at_index(l, index):
     return l[index]
+
+
+@register.filter
+def strip_unnecessary_br(value):
+    # In HTMLCleaningFields some HTML tags are allowed. When the contents of these fields are passed to Django's |linebreaks 
+    # templatetag, <br> tags can be inserted between other HTML tags (linebreaks is not HTML-aware). This templatetag
+    # implements a hacky fix for the most common issue which is the unnecessary br elements introduced after ul and li elements.
+    value = value.replace('</li><br>', '</li>')
+    value = value.replace('<ul><br>', '<ul>')
+    value = value.replace('</ul><br>', '</ul>')
+    return mark_safe(value)

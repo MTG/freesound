@@ -479,6 +479,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
                 return False
 
             # Save info data to json file
+            info['audio_file_path'] = self.audio_file_path 
             with open(self.output_info_file, 'w') as f:
                 json.dump(info, f)
         return True

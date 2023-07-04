@@ -18,7 +18,7 @@
     {% if num_forms > 1%}<strong>Click on the sound filenames below to display the form for {% if describing %}describing{% else %}editing{% endif %} each sound</strong>.{% endif %}</p>
 </div>
 
-<form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit bw-form" onkeydown="return event.key != 'Enter';">{% csrf_token %}
+<form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit do-not-submit-on-enter bw-form">{% csrf_token %}
 <div class="row no-gutters">
     <div class="col-lg-8 {% if num_forms == 1 %}offset-lg-2{% endif %}">
         <div>
@@ -29,24 +29,29 @@
             <div id="form-{{ forloop.counter0 }}">
                 <div class="middle">
                     {% if num_forms > 1 %}
-                    <h2>#{{ forloop.counter }}) {{ form.name.value }}{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-green h-spacing-left-1' %}{% endif %}{% endif %}</h2>
+                    <h2>#{{ forloop.counter }}) {% if describing %}{{ form.audio_filename }}{% else %}{{ form.name.value }}{% endif %}{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-green h-spacing-left-1' %}{% endif %}{% endif %}</h2>
                     {% else %}
-                    <h2>{{ form.name.value }}{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-green h-spacing-left-1' %}{% endif %}{% endif %}</h2>
+                    <h2>{% if describing %}{{ form.audio_filename }}{% else %}{{ form.name.value }}{% endif %}{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-green h-spacing-left-1' %}{% endif %}{% endif %}</h2>
                     {% endif %}
                 </div>
                 <div>
-                    <div class="v-spacing-5 v-spacing-top-2">
-                    {% if not describing %}
-                        {% display_sound_big_no_info_no_bookmark sound_objects|element_at_index:forloop.counter0 %}
-                    {% else %}
-                        {% with files_data_for_players|element_at_index:forloop.counter0 as sound_data %}
-                            {% if sound_data %}
-                                {% display_sound_big_no_sound_object sound_data %}
-                            {% else %}
-                                <div class="center text-grey bg-navy-light-grey padding-7">Sound player not currently available</div>
-                            {% endif %}
-                        {% endwith %}
-                    {% endif %}
+                    <div class="text-center v-spacing-top-2">
+                        <span data-target="sound-player-{{ forloop.counter0 }}" data-show-text="Show player" data-hide-text="Hide player" {% if num_forms > 1 %}data-hide-on-load{% endif %} class="collapsable-toggle"></span>
+                    </div>
+                    <div class="collapsable-block" id="sound-player-{{ forloop.counter0 }}">
+                        <div class="v-spacing-5 v-spacing-top-2">
+                        {% if not describing %}
+                            {% display_sound_big_no_info_no_bookmark sound_objects|element_at_index:forloop.counter0 %}
+                        {% else %}
+                            {% with files_data_for_players|element_at_index:forloop.counter0 as sound_data %}
+                                {% if sound_data %}
+                                    {% display_sound_big_no_sound_object sound_data %}
+                                {% else %}
+                                    <div class="center text-grey bg-navy-light-grey padding-7">Sound player not currently available</div>
+                                {% endif %}
+                            {% endwith %}
+                        {% endif %}
+                        </div>
                     </div>
                     
                     <div>
@@ -76,7 +81,7 @@
                         </div>
                     </div>
 
-                    <div class="v-spacing-4">
+                    <div class="v-spacing-2">
                         <h5 class="text-light-grey v-spacing-2">Sound license</h5>
                         {% include "molecules/license_form_field.html" %}
                     </div>
@@ -116,7 +121,7 @@
             {% endif %}
             {% for form in forms %}
             <div class="v-spacing-1">
-                <a class="bw-link--grey scroll-spy" href="#form-{{ forloop.counter0 }}">#{{ forloop.counter }} {{ form.name.value }}</a>{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-green h-spacing-left-1' %}{% endif %}{% endif %}
+                <a class="bw-link--grey scroll-spy" href="#form-{{ forloop.counter0 }}">#{{ forloop.counter }} {% if describing %}{{ form.audio_filename }}{% else %}{{ form.name.value }}{% endif %}</a>{% if form.errors %}{% bw_icon 'notification' 'text-red h-spacing-left-1' %}{% else %}{% if request.method == "POST" %}{% bw_icon 'check' 'text-green h-spacing-left-1' %}{% endif %}{% endif %}
             </div>
             {% endfor %}
             {% if num_forms > 1 %}

@@ -1,0 +1,14 @@
+{% extends "simple_page.html" %}
+{% load static %}
+{% block title %}Moderation - Your sound queue{% endblock %}
+{% block page-title %}Moderation{% endblock %}
+
+{% block page-content %}
+{% include 'moderation/moderation_navbar.html' %}
+<div class="v-spacing-top-4">
+</div>
+{% endblock %}
+
+{% block extrabody %}
+<script src="{% static 'bw-frontend/dist/moderation.js' %}"></script>
+{% endblock %}

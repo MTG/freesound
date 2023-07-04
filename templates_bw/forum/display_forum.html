@@ -11,7 +11,7 @@
         </div>
         <div class="col-10 col-md-4">
             <h6><a href="{{ forum.get_absolute_url }}">{{ forum.name }}</a></h6>
-            <p>{{ forum.num_threads }} thread{{ forum.num_threads|pluralize }} · {{ forum.num_posts }} repl{{ forum.num_posts|pluralize:"y,ies" }}</p>
+            <p>{{ forum.num_threads|bw_intcomma }} thread{{ forum.num_threads|pluralize }} · {{ forum.num_posts|bw_intcomma }} repl{{ forum.num_posts|pluralize:"y,ies" }}</p>
         </div>
         {% if forum.last_post %}
             <div class="col-md-4 offset-md-1 d-none d-md-block">

@@ -3,7 +3,7 @@
 }
 
 html {
-  background-color: $black;
+  background-color: $html-bg;
   scroll-behavior:smooth;
   scroll-padding-top: 110px;
 }
@@ -17,7 +17,7 @@ body {
   background-color: $white;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-weight: 500;
+  font-weight: 400; /* designer sugegsted overall font weight 500, but we're making it 400 as otherwise it felt too heavy */
 
   @include md-and-above {
     font-size: $base-size;

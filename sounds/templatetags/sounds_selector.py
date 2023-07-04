@@ -22,14 +22,13 @@
 from django import template
 from django.conf import settings
 
-from sounds.models import Sound
-from sounds.templatetags.display_sound import display_sound_small_no_bookmark
+from sounds.models import Sound, Pack
 
 register = template.Library()
 
 
-@register.inclusion_tag('molecules/sounds_selector.html', takes_context=True)
-def sounds_selector(context, sounds, selected_sound_ids=[]):
+@register.inclusion_tag('molecules/object_selector.html', takes_context=True)
+def sounds_selector(context, sounds, selected_sound_ids=[], show_select_all_buttons=False):
     if sounds:
         if not isinstance(sounds[0], Sound):
             # sounds are passed as a list of sound ids, retrieve the Sound objects from DB
@@ -37,6 +36,28 @@ def sounds_selector(context, sounds, selected_sound_ids=[]):
         for sound in sounds:
             sound.selected = sound.id in selected_sound_ids
     return {
-        'sounds': sounds,
+        'objects': sounds,
+        'type': 'sounds',
+        'show_select_all_buttons': show_select_all_buttons,
+        'original_context': context  # This will be used so a nested inclusion tag can get the original context
+    }
+
+@register.inclusion_tag('molecules/object_selector.html', takes_context=True)
+def sounds_selector_with_select_buttons(context, sounds, selected_sound_ids=[]):
+    return sounds_selector(context, sounds, selected_sound_ids=selected_sound_ids, show_select_all_buttons=True)
+
+
+@register.inclusion_tag('molecules/object_selector.html', takes_context=True)
+def packs_selector_with_select_buttons(context, packs, selected_pack_ids=[]):
+    if packs:
+        if not isinstance(packs[0], Pack):
+            # packs are passed as a list of pack ids, retrieve the Pack objects from DB
+            packs = Pack.objects.ordered_ids(packs)
+        for pack in packs:
+            pack.selected = pack.id in selected_pack_ids
+    return {
+        'objects': packs,
+        'type': 'packs',
+        'show_select_all_buttons': True,
         'original_context': context  # This will be used so a nested inclusion tag can get the original context
     }

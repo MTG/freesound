@@ -1,0 +1,19 @@
+{% load util %}
+{% load bw_templatetags %}
+<div class="right text-light-grey col-auto" style="max-height: 22px;overflow: hidden;padding-right:0px!important;padding-left:0px!important;">                    
+    {% if pack.has_geotags %}
+    <div class="h-spacing-left-1" title="This pack has geotags">
+        <a href="{% url 'pack-geotags' pack.user.username pack.id %}" class="bw-link--grey-light">
+            <span class="bw-icon-pin"></span>
+        </a>
+    </div>
+    {% endif %}
+    <div class="h-spacing-left-1" title="License: {{ pack.license_summary_name_and_id.0 }}">
+        <span class="bw-icon-{{ pack.license_bw_icon_name }}"></span>
+    </div>
+    {% if pack.num_ratings %}
+    <div class="h-spacing-left-1" title="Overall rating of pack's sounds ({{ pack.num_ratings|bw_intcomma }} rating{{ pack.num_ratings|pluralize }})">
+        <span class="bw-icon-star {% if not pack.num_ratings %}opacity-030{% endif %}"></span>{% if pack.num_ratings %} {{ pack.avg_rating_0_5|floatformat:1 }}{% endif %}
+    </div>
+    {% endif %}
+</div>

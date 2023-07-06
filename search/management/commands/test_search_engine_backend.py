@@ -22,6 +22,7 @@ import logging
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+import requests
 
 from utils.search import get_search_engine
 from utils.search.backends.test_search_engine_backend import TestSearchEngineBackend
@@ -34,10 +35,30 @@ global_backend_name = ''
 global_output_file = None
 
 
+def core_exists(solr_base_url, core_name):
+    r = requests.get(f'{solr_base_url}/admin/cores?action=STATUS&core={core_name}')
+    r.raise_for_status()
+    try:
+        status = r.json()
+        return status['status'][core_name] != {}
+    except ValueError:
+        # Solr 5 returns xml. "Empty list" means that the core does not exist
+        return f"""<lst name="{core_name}"/></lst>""" not in r.text
+
+
+def create_core(solr_base_url, core_name, configSet, delete_core=False):
+    if core_exists(solr_base_url, core_name):
+        if delete_core:
+            requests.get(f'{solr_base_url}/admin/cores?action=UNLOAD&core={core_name}&deleteInstanceDir=true')
+        else:
+            raise Exception(f"Core {core_name} already exists, use --force to delete it.")
+    requests.get(f'{solr_base_url}/admin/cores?action=CREATE&name={core_name}&configSet={configSet}')
+
+
 class Command(BaseCommand):
-    help = 'Test a search engine backend and output test results. To run these tests, a search engine backend is' \
-           'expected to be running with some sounds/forum posts indexed in accordance to Sound and Post objects' \
-           'from the database. The Freesound development data will work nicely with these tests. After running the' \
+    help = 'Test a search engine backend and output test results. To run these tests, a search engine backend is ' \
+           'expected to be running. A new core is created for these tests and is populated with some with some ' \
+           'sounds/forum posts. The Freesound development data will work nicely with these tests. After running the' \
            'tests, DB contents will not be changed, but it could happen that the search engine index is not left' \
            'in the exact same state. Therefore, this command SHOULD NOT be run in a production database.' \
            '' \
@@ -54,6 +75,13 @@ class Command(BaseCommand):
             dest='backend_class',
             default=settings.SEARCH_ENGINE_BACKEND_CLASS,
             help='Path to the backend class to test, eg: utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine')
+
+        parser.add_argument(
+            '--force',
+            action='store_true',
+            dest='force_create_core',
+            default=False,
+            help='Test sound-related methods of the SearchEngine')
 
         parser.add_argument(
             '-s', '--sound_methods',
@@ -79,13 +107,15 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         if not settings.DEBUG:
-            raise Exception('Running search engine tests in a production deployment. This should not be done as'
-                            'running these tests will modify the contents of the production search engine index'
+            raise Exception('Running search engine tests in a production deployment. This should not be done as '
+                            'running these tests will modify the contents of the production search engine index '
                             'and leave it in a "wrong" state.')
 
         # Instantiate search engine
         try:
-            search_engine = get_search_engine(backend_class=options['backend_class'])
+            search_engine = get_search_engine(
+                backend_class=options['backend_class']
+            )
         except ValueError:
             raise Exception('Wrong backend name format. Should be a path like '
                             'utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine')
@@ -95,6 +125,16 @@ class Command(BaseCommand):
         console_logger.info(f"Testing search engine backend: {options['backend_class']}")
         backend_name = options['backend_class']
         write_output = options['write_output']
+
+        # Create the engine above to get the base url for that engine and check that the given class exists.
+        # Then create temporary cores using this base url and re-create the engine with these core urls.
+        create_core(search_engine.solr_base_url, "engine_test_freesound", "freesound", delete_core=options['force_create_core'])
+        create_core(search_engine.solr_base_url, "engine_test_forum", "forum", delete_core=options['force_create_core'])
+        sounds_index_url = f'{search_engine.solr_base_url}/engine_test_freesound'
+        forum_index_url = f'{search_engine.solr_base_url}/engine_test_forum'
+        search_engine = get_search_engine(
+                backend_class=options['backend_class'], sounds_index_url=sounds_index_url, forum_index_url=forum_index_url
+        )
 
         if not options['sound_methods'] and not options['forum_methods']:
             console_logger.info('None of sound methods or forum methods were selected, so nothing will be tested. '

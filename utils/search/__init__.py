@@ -18,24 +18,25 @@
 #     See AUTHORS file.
 #
 
-from past.utils import old_div
 import importlib
 
 from django.conf import settings
 
 
-def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS):
+def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds_index_url=None, forum_index_url=None):
     """Return SearchEngine class instance to carry out search engine actions
 
     Args:
         backend_class: path to the search engine backend class (defaults to settings.SEARCH_ENGINE_BACKEND_CLASS)
+        sounds_index_url: url of the sounds index in solr. If not set, use the default URL for the backend
+        forum_index_url: url of the forum index in solr. If not set, use the default URL for the backend
 
     Returns:
         utils.search.SearchEngineBase: search engine backend class instance
     """
     module_name, class_name = backend_class.rsplit('.', 1)
     module = importlib.import_module(module_name)
-    return getattr(module, class_name)()
+    return getattr(module, class_name)(sounds_index_url, forum_index_url)
 
 
 class SearchResults:
@@ -157,7 +158,7 @@ class SearchResultsPaginator:
         self.num_per_page = num_per_page
         self.results = search_results.docs
         self.count = search_results.num_found
-        self.num_pages = old_div(search_results.num_found, num_per_page) + int(search_results.num_found % num_per_page != 0)
+        self.num_pages = search_results.num_found // num_per_page + int(search_results.num_found % num_per_page != 0)
         self.page_range = list(range(1, self.num_pages + 1))
 
     def page(self, page_num):

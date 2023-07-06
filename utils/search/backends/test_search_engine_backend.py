@@ -41,8 +41,10 @@ def assert_and_continue(expression, error_message):
 
 
 class TestSearchEngineBackend():
-    def __init__(self, backend_name, write_output):
-        self.search_engine = get_search_engine(backend_class=backend_name)
+    def __init__(self, backend_name, write_output, sounds_index_url=None, forum_index_url=None):
+        self.search_engine = get_search_engine(
+            backend_class=backend_name, sounds_index_url=sounds_index_url, forum_index_url=forum_index_url
+        )
         if write_output:
             base_dir = os.path.join(settings.DATA_PATH, 'search_backend_tests')
             if not os.path.exists(base_dir):

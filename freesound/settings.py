@@ -609,12 +609,8 @@ SEARCH_FORUM_SORT_OPTIONS_WEB = [
 SEARCH_FORUM_SORT_DEFAULT = SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST
 
 SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr555pysolr.Solr555PySolrSearchEngine'
-SOLR5_SOUNDS_URL = "http://search:8983/solr/freesound/"
-SOLR5_FORUM_URL = "http://search:8983/solr/forum/"
-
-SOLR9_SOUNDS_URL = "http://solr9:8983/solr/freesound/"
-SOLR9_FORUM_URL = "http://solr9:8983/solr/forum/"
-
+SOLR5_BASE_URL = "http://search:8983/solr"
+SOLR9_BASE_URL = "http://solr9:8983/solr"
 
 # -------------------------------------------------------------------------------
 # Similarity client settings

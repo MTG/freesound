@@ -34,8 +34,8 @@ from utils.search import SearchEngineBase, SearchResults, SearchEngineException
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
 
 
-SOLR_FORUM_URL = settings.SOLR5_FORUM_URL
-SOLR_SOUNDS_URL = settings.SOLR5_SOUNDS_URL
+SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
+SOLR_SOUNDS_URL = f"{settings.SOLR5_BASE_URL}/freesound"
 
 
 # Mapping from db sound field names to solr sound field names
@@ -319,13 +319,22 @@ class FreesoundSoundJsonEncoder(json.JSONEncoder):
 
 
 class Solr555PySolrSearchEngine(SearchEngineBase):
+    solr_base_url = settings.SOLR5_BASE_URL
     sounds_index = None
     forum_index = None
+
+    def __init__(self, sounds_index_url=None, forum_index_url=None):
+        if sounds_index_url is None:
+            sounds_index_url = SOLR_SOUNDS_URL
+        if forum_index_url is None:
+            forum_index_url = SOLR_FORUM_URL
+        self.sounds_index_url = sounds_index_url
+        self.forum_index_url = forum_index_url
 
     def get_sounds_index(self):
         if self.sounds_index is None:
             self.sounds_index = pysolr.Solr(
-                SOLR_SOUNDS_URL,
+                self.sounds_index_url,
                 encoder=FreesoundSoundJsonEncoder(),
                 results_cls=SolrResponseInterpreter,
                 search_handler="fsquery",
@@ -336,7 +345,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def get_forum_index(self):
         if self.forum_index is None:
             self.forum_index = pysolr.Solr(
-                SOLR_FORUM_URL,
+                self.forum_index_url,
                 encoder=FreesoundSoundJsonEncoder(),
                 results_cls=SolrResponseInterpreter,
                 search_handler="fsquery",
@@ -605,7 +614,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # We do it in this way to conform to SearchEngine.search_sounds definition which must return SearchResults
         try:
             results = self.get_forum_index().search(**query.as_kwargs())
-            print(results.docs)
             return SearchResults(
                 docs=results.docs,
                 num_found=results.num_found,

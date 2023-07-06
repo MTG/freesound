@@ -26,17 +26,26 @@ from django.conf import settings
 
 from utils.search.backends import solr555pysolr
 
-
-SOLR_FORUM_URL = settings.SOLR9_FORUM_URL
-SOLR_SOUNDS_URL = settings.SOLR9_SOUNDS_URL
+SOLR_FORUM_URL = f"{settings.SOLR9_BASE_URL}/forum"
+SOLR_SOUNDS_URL = f"{settings.SOLR9_BASE_URL}/freesound"
 
 
 class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
+    solr_base_url = settings.SOLR9_BASE_URL
+
+    def __init__(self, sounds_index_url=None, forum_index_url=None):
+        if sounds_index_url is None:
+            sounds_index_url = SOLR_SOUNDS_URL
+        if forum_index_url is None:
+            forum_index_url = SOLR_FORUM_URL
+        self.sounds_index_url = sounds_index_url
+        self.forum_index_url = forum_index_url
+
 
     def get_sounds_index(self):
         if self.sounds_index is None:
             self.sounds_index = pysolr.Solr(
-                SOLR_SOUNDS_URL,
+                self.sounds_index_url,
                 encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
                 results_cls=solr555pysolr.SolrResponseInterpreter,
                 always_commit=True
@@ -46,7 +55,7 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
     def get_forum_index(self):
         if self.forum_index is None:
             self.forum_index = pysolr.Solr(
-                SOLR_FORUM_URL,
+                self.forum_index_url,
                 encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
                 results_cls=solr555pysolr.SolrResponseInterpreter,
                 always_commit=True

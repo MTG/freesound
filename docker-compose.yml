@@ -59,11 +59,13 @@ services:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8983:8983"
 
     solr9:
-        image: solr:9.1.1
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.solr
         volumes:
-            - solr9data:/opt/solr/server/solr/mycores
-            - ./utils/search/solr9.0.0/cores:/cores
-            - ./utils/search/solr9.0.0/docker-entrypoint:/docker-entrypoint-initdb.d
+            - ./utils/search/solr9/cores:/var/solr/data/configsets
+            - solr9data:/var/solr
+            - ./utils/search/solr9/docker-entrypoint:/docker-entrypoint-initdb.d
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8984:8983"
 

@@ -25,14 +25,15 @@ from django.conf import settings
 from pyparsing import ParseException
 
 from utils.search.search_sounds import parse_weights_parameter, parse_query_filter_string, \
-    remove_facet_filters, should_use_compact_mode, get_ids_in_cluster
+    remove_facet_filters, should_use_compact_mode
+from clustering.interface import get_ids_in_cluster
 
 
 search_logger = logging.getLogger("search")
 
 
 class SoundSearchForm(forms.Form):
-    q = forms.CharField(required=False)  # query
+    q = forms.CharField(required=False, initial="test query")  # query
     f = forms.CharField(required=False)  # filter
     s = forms.CharField(required=False)  # sort
 
@@ -51,7 +52,7 @@ class SoundSearchForm(forms.Form):
     duration_min = forms.CharField(required=False, initial='0')
     duration_max = forms.CharField(required=False, initial='*')
 
-    g = forms.BooleanField(required=False)  # group by pack
+    g = forms.BooleanField(required=False, initial=True)  # group by pack
     only_p = forms.BooleanField(required=False)  # only sounds with packs
     only_g = forms.BooleanField(required=False)  # only geotagged sounds
     only_r = forms.BooleanField(required=False)  # only remixed sounds
@@ -69,16 +70,41 @@ class SoundSearchForm(forms.Form):
         return self.cleaned_data['f'].strip().lstrip()
     
     def clean_page(self):
+        if not hasattr(self.data, 'page'):
+            return 1
         try:
             return int(self.cleaned_data.get('page', 1))
         except ValueError:
             return 1
+        
+    def clean_g(self):
+        if not 'g' in self.data:
+            self.data = self.data.copy()
+            self.data['g'] = 'on'
+            return True  # If parameter not form data, retun the default value 
+        return self.cleaned_data['g']
     
     def clean_duration_min(self):
-        return self.cleaned_data.get('duration_min', '0')
+        if not 'duration_min' in self.data:
+            self.data = self.data.copy()
+            self.data['duration_min'] = self.fields['duration_min'].initial
+            return self.fields['duration_min'].initial # If parameter not form data, retun the default value
+        return self.cleaned_data['duration_min']
 
     def clean_duration_max(self):
-        return self.cleaned_data.get('duration_max', '*') 
+        if not 'duration_max' in self.data:
+            self.data = self.data.copy()
+            self.data['duration_max'] = self.fields['duration_max'].initial
+            return self.fields['duration_max'].initial # If parameter not form data, retun the default value
+        return self.cleaned_data['duration_max']
+    
+    def clean_cm(self):
+        if not 'cm' in self.data:
+            should_cm = should_use_compact_mode(self.request)  # If cm not indicated, follow user preference
+            self.data = self.data.copy()
+            self.data['cm'] = '1' if should_cm else '0'
+            return should_cm
+        return self.cleaned_data['cm']
 
     def _has_pack_filter(self):
         return "pack:" in self.cleaned_data['f']
@@ -144,19 +170,19 @@ class SoundSearchForm(forms.Form):
                 original_filename_weight = 0
 
                 # Set the weights of selected checkboxes
-                if  self.cleaned_data['a_soundid']:
+                if self.cleaned_data['a_soundid']:
                     id_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_ID]
-                if  self.cleaned_data['a_tag']:
+                if self.cleaned_data['a_tag']:
                     tag_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_TAGS]
-                if  self.cleaned_data['a_description']:
+                if self.cleaned_data['a_description']:
                     description_weight = \
                         settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_DESCRIPTION]
-                if  self.cleaned_data['a_username']:
+                if self.cleaned_data['a_username']:
                     username_weight = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_USER_NAME]
-                if  self.cleaned_data['a_packname']:
+                if self.cleaned_data['a_packname']:
                     pack_tokenized_weight = \
                         settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_PACK_NAME]
-                if  self.cleaned_data['a_filename']:
+                if self.cleaned_data['a_filename']:
                     original_filename_weight = \
                         settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_NAME]
             else:

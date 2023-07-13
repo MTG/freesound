@@ -25,8 +25,6 @@ from django.db.models.query import RawQuerySet
 from urllib.parse import quote_plus
 from pyparsing import ParseException
 
-from clustering.clustering_settings import DEFAULT_FEATURES
-from clustering.interface import cluster_sound_results
 from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
 from utils.search.lucene_parser import parse_query_filter_string
 
@@ -460,30 +458,3 @@ def get_random_sound_id_from_search_engine():
     except SearchEngineException as e:
         search_logger.error(f"Could not retrieve a random sound ID from search engine: {str(e)}")
     return 0
-
-
-def get_ids_in_cluster(request, requested_cluster_id):
-    """Get the sound ids in the requested cluster. Used for applying a filter by id when using a cluster facet.
-    """
-    try:
-        requested_cluster_id = int(requested_cluster_id) - 1
-
-        # results are cached in clustering_utilities, available features are defined in the clustering settings file.
-        result = cluster_sound_results(request, features=DEFAULT_FEATURES)
-        results = result['result']
-
-        sounds_from_requested_cluster = results[int(requested_cluster_id)]
-
-    except ValueError:
-        return []
-    except IndexError:
-        return []
-    except KeyError:
-        # If the clustering is not in cache the 'result' key won't exist
-        # This means that the clustering computation will be triggered asynchronously.
-        # Moreover, the applied clustering filter will have no effect.
-        # Somehow, we should inform the user that the clustering results were not available yet, and that
-        # he should try again later to use a clustering facet.
-        return []
-
-    return sounds_from_requested_cluster

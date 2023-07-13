@@ -24,8 +24,11 @@
             </div>
         {% else %}
             <div class="navbar-space-filler v-spacing-3 v-spacing-top-2">
+                <div>
+                    {{ form.as_p }}
+                    </div>
                 <form method="get" id="search_form" action="{% if not tags_mode %}{% url 'sounds-search' %}{% else %}{% url 'tags' %}{% endif %}">
-
+                    
                     <div class="v-spacing-5 {% if tags_mode %}display-none{% endif %}">
                         <div class="middle center">
                             <div class="bw-search__input_wrapper"><i class="bw-icon-search input-icon text-light-grey"></i><input id="search-input-browse" name="q" type="text" value="{{ search_query }}" placeholder="Search {% if not only_sounds_with_pack %}sounds{% else %}packs{% endif %}..." class="bw-search__input" autocomplete="off"/></div>

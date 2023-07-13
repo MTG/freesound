@@ -35,15 +35,15 @@ import forum
 import sounds
 from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET, \
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
-from clustering.interface import cluster_sound_results, get_sound_ids_from_search_engine_query
+from clustering.interface import cluster_sound_results, get_sound_ids_from_search_engine_query, \
+    get_ids_in_cluster
 from forum.models import Post
 from search.forms import SoundSearchForm
 from utils.frontend_handling import render, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
-    split_filter_query, should_use_compact_mode, contains_active_advanced_search_filters, \
-    get_ids_in_cluster
+    split_filter_query, should_use_compact_mode, contains_active_advanced_search_filters
 from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator
 
 search_logger = logging.getLogger("search")
@@ -225,6 +225,8 @@ def search_view_helper_form(request, tags_mode=False):
     
     form = SoundSearchForm(request.GET, request=request)
     form.is_valid()
+    #print("HEY")
+    #print(form.cleaned_data['g'], form.cleaned_data['cm'], form.cleaned_data['only_p'])
     query_params, extra_vars = form.get_processed_query_params_and_extra_vars()
  
     # Process tag mode stuff
@@ -250,6 +252,8 @@ def search_view_helper_form(request, tags_mode=False):
                 initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
                 cache.set('initial_tagcloud', initial_tagcloud, 60 * 60)
 
+    # TODO: check that form loads as expected
+    # TODO: revise all info in tvars as most things are most likely not needed anymore
 
     # In the tvars section we pass the original group_by_pack value to avoid it being set to false if there is a pack filter (see search_prepare_parameters)
     # This is so that we keep track of the original setting of group_by_pack before the filter was applied, and so that if the pack filter is removed, we can 
@@ -267,6 +271,7 @@ def search_view_helper_form(request, tags_mode=False):
         query_params['num_sounds_per_pack_group'] = 3
 
     tvars = {
+        'form': form,
         'error_text': None,
         'filter_query': query_params['query_filter'],
         'filter_query_split': split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], extra_vars['cluster_id']),
@@ -371,7 +376,7 @@ def search2(request):
 
 def search(request):
     tvars = search_view_helper_form(request, tags_mode=False)
-    template = 'search/search2.html' if request.GET.get("ajax", "") != "1" else 'search/search_ajax.html'
+    template = 'search/search.html' if request.GET.get("ajax", "") != "1" else 'search/search_ajax.html'
     return render(request, template, tvars)
 
 

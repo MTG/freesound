@@ -86,35 +86,20 @@ window.addEventListener('scroll', checkShouldShowSearchInNavbar)
 var search_form_element = document.getElementById('search_form');
 var search_page_navbar_form = document.getElementById('search-page-navbar-form');
 var advanced_search_options_div = document.getElementById('advanced-search-options');
-var advanced_search_hidden_field = document.getElementById('advanced_search_hidden');
 var toggle_advanced_search_options_element = document.getElementById('toggle_advanced_search_options');
 var filter_query_element = document.getElementById('filter_query');
 var filter_duration_min_element = document.getElementById('filter_duration_min');
 var filter_duration_max_element = document.getElementById('filter_duration_max');
 var filter_is_geotagged_element = document.getElementById('filter_is_geotagged');
 var filter_in_remix_group_element = document.getElementById('filter_in_remix_group');
-var sort_by_element = document.getElementById('sort-by');
+var sort_by_element = document.getElementsByName('s')[0];
 var group_by_pack_element  = document.getElementById('group_by_pack');
 var only_sounds_with_pack_element  = document.getElementById('only_sounds_with_pack');
-var use_compact_mode_element  = document.getElementById('use_compact_mode');
 
-function update_hidden_compact_mode_element() {
-  var hiddenElement = document.getElementById('use_compact_mode_hidden');
-  if (use_compact_mode_element.checked) {
-    hiddenElement.value = "1";
-  } else {
-    hiddenElement.value = "0";
-  }
-}
-
-update_hidden_compact_mode_element()
-use_compact_mode_element.addEventListener('change', function() {
-  update_hidden_compact_mode_element()
-})
 
 function advancedSearchOptionsIsVisible()
 {
-  return advanced_search_hidden_field.value === "1";
+  return !advanced_search_options_div.classList.contains('display-none');
 }
 
 function updateToggleAdvancedSearchOptionsText()
@@ -128,15 +113,13 @@ function updateToggleAdvancedSearchOptionsText()
 
 function showAdvancedSearchOptions()
 {
-  advanced_search_hidden_field.value = "1";
-  advanced_search_options_div.style.display = 'block';
+  advanced_search_options_div.classList.remove('display-none');
   updateToggleAdvancedSearchOptionsText();
 }
 
 function hideAdvancedSearchOptions()
 {
-  advanced_search_hidden_field.value = "0";
-  advanced_search_options_div.style.display = 'none';
+  advanced_search_options_div.classList.add('display-none');
   updateToggleAdvancedSearchOptionsText();
 }
 
@@ -270,8 +253,7 @@ function addAdvancedSearchOptionsFilters()
   removeFilter("in_remix_group:1");
 
   // if advanced options is activated add all updated filters
-  if (advanced_search_hidden_field.value === "1")
-  {
+  
     // Create and add new filter with all the advanced options
     var filter = "";
 
@@ -320,7 +302,7 @@ function addAdvancedSearchOptionsFilters()
     } else {
       filter_query_element.value = filter;
     }
-  }
+  
 }
 
 search_form_element.addEventListener('submit', function() {

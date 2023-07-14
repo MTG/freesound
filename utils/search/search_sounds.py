@@ -33,6 +33,7 @@ console_logger = logging.getLogger("console")
 
 
 def should_use_compact_mode(request):
+    # NO longer used in refactored BW search, should be eliminated
     use_compact_mode_enabled_in_form = request.GET.get('cm')
     if not request.user.is_authenticated:
         return use_compact_mode_enabled_in_form == '1'

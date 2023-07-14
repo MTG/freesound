@@ -223,10 +223,9 @@ def search_view_helper(request, tags_mode=False):
 
 def search_view_helper_form(request, tags_mode=False):
     
+    # Process form filter 
     form = SoundSearchForm(request.GET, request=request)
     form.is_valid()
-    #print("HEY")
-    #print(form.cleaned_data['g'], form.cleaned_data['cm'], form.cleaned_data['only_p'])
     query_params, extra_vars = form.get_processed_query_params_and_extra_vars()
  
     # Process tag mode stuff
@@ -251,9 +250,6 @@ def search_view_helper_form(request, tags_mode=False):
                 ))
                 initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
                 cache.set('initial_tagcloud', initial_tagcloud, 60 * 60)
-
-    # TODO: check that form loads as expected
-    # TODO: revise all info in tvars as most things are most likely not needed anymore
 
     # In the tvars section we pass the original group_by_pack value to avoid it being set to false if there is a pack filter (see search_prepare_parameters)
     # This is so that we keep track of the original setting of group_by_pack before the filter was applied, and so that if the pack filter is removed, we can 
@@ -281,19 +277,20 @@ def search_view_helper_form(request, tags_mode=False):
         'only_sounds_with_pack': only_sounds_with_pack,
         'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
         'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
-        'use_compact_mode': should_use_compact_mode(request),
-        'advanced': extra_vars['advanced'],
-        'sort': query_params['sort'],
-        'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
+        
+
+        
+        
+        
+        
+        
+        
         'filter_query_link_more_when_grouping_packs': extra_vars['filter_query_link_more_when_grouping_packs'],
-        'current_page': query_params['current_page'],
-        'cluster_id': extra_vars['cluster_id'],
         'clustering_on': settings.ENABLE_SEARCH_RESULTS_CLUSTERING,
-        'weights': extra_vars['raw_weights_parameter'],
         'initial_tagcloud': initial_tagcloud,
         'tags_mode': tags_mode,
         'tags_in_filter': extra_vars['tags_in_filter'],
-        'has_advanced_search_settings_set': contains_active_advanced_search_filters(request, query_params, extra_vars),
+        'has_advanced_search_settings_set': form.contains_active_advanced_search_filters(),
         'advanced_search_closed_on_load': settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD
     }
 
@@ -350,6 +347,7 @@ def search_view_helper_form(request, tags_mode=False):
 
         tvars.update({
             'paginator': paginator,
+            'current_page': query_params['current_page'],
             'page': paginator.page(query_params['current_page']),
             'docs': docs,
             'facets': results.facets,

@@ -86,15 +86,25 @@ def display_facet(context, flt, facet, facet_type, title=""):
             element['params'] = f"{filter_query} {flt}:\"{quote_plus(element['name'])}\""
 
         element['id'] = f"{flt}--{quote_plus(element['name'])}"
-        element['add_filter_url'] = '.?advanced={}&g={}&only_p={}&q={}&f={}&s={}&w={}'.format(
-            context['advanced'],
-            context['group_by_pack_in_request'],
-            context['only_sounds_with_pack'],
-            context['search_query'],
-            element['params'],
-            context['sort'] if context['sort'] is not None else '',
-            context['weights'] or ''
-        )
+        if not using_beastwhoosh(context['request']):
+            element['add_filter_url'] = '.?advanced={}&g={}&only_p={}&q={}&f={}&s={}&w={}'.format(
+                context['advanced'],
+                context['group_by_pack_in_request'],
+                context['only_sounds_with_pack'],
+                context['search_query'],
+                element['params'],
+                context['sort'] if context['sort'] is not None else '',
+                context['weights'] or ''
+            )
+        else:
+            element['add_filter_url'] = '.?g={}&only_p={}&q={}&f={}{}{}'.format(
+                context['group_by_pack_in_request'],
+                context['only_sounds_with_pack'],
+                context['search_query'],
+                element['params'],
+                '&s={}'.format(context['form'].data['s']) if 's' in context['form'].data else '',
+                '&w={}'.format(context['form'].data['w']) if 'w' in context['form'].data else '',
+            )
         filtered_facet.append(element)
 
     if using_beastwhoosh(context['request']):

@@ -35,7 +35,7 @@ ipython==4.2.0
 mapbox==0.18.0
 markdown==3.4.1
 networkx==1.5
-numpy==1.16.6
+numpy==1.21.6
 pillow==6.2.2
 psycopg2==2.7.7
 PyJWT==1.4.2

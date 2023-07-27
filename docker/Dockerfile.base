@@ -1,7 +1,7 @@
 ARG PYTHON
-FROM debian:10
+FROM python:3.10
 
-MAINTAINER Freesound support@freesound.org
+LABEL org.opencontainers.image.authors="support@freesound.org"
 
 ENV PYTHONUNBUFFERED=1
 
@@ -13,15 +13,10 @@ RUN apt-get update \
                        gosu \
                        pkg-config \
                        procps \
-                       python3-dev \
-                       python3-pip \
-                       python3-setuptools \
-                       python3-wheel \
                        wget \
     && rm -rf /var/lib/apt/lists/*
 
 RUN adduser -q --gecos "" --disabled-password fsweb
-RUN ln -s /usr/bin/python3 /usr/bin/python
 
 COPY entrypoint.sh /usr/local/bin
 

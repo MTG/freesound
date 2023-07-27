@@ -30,12 +30,13 @@ freezegun==1.2.2
 future~=0.18.2
 graypy==0.2.12
 gunicorn==21.2.0
-ipython==4.2.0
+ipython==8.14.0
 mapbox==0.18.1
 markdown==3.4.1
 networkx==1.5
 numpy==1.24.3
 Pillow==9.5.0
+pip-tools==7.1.0
 psycopg2-binary==2.9.6
 PyJWT==2.6.0
 pyparsing==2.4.7

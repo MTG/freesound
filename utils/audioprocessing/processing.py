@@ -116,7 +116,7 @@ class AudioProcessor:
         fft = numpy.fft.rfft(numpy.ones(fft_size) * self.window)
         max_fft = (numpy.abs(fft)).max()
         # set the scale to normalized audio and normalized FFT
-        self.scale = old_div(1.0 / max_level, max_fft) if max_level > 0 else 1
+        self.scale = (1.0 / max_level) / max_fft if max_level > 0 else 1
 
     def read(self, start, size, resize_if_less=False):
         """ read size samples starting at start, if resize_if_less is True and less than size

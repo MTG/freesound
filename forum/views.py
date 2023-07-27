@@ -19,7 +19,6 @@
 #
 
 
-from past.utils import old_div
 import datetime
 import re
 import functools
@@ -196,7 +195,7 @@ def post(request, forum_name_slug, thread_id, post_id):
                              moderation_state="OK")
 
     posts_before = Post.objects.filter(thread=post.thread, moderation_state="OK", created__lt=post.created).count()
-    page = 1 + old_div(posts_before, settings.FORUM_POSTS_PER_PAGE)
+    page = 1 + (posts_before // settings.FORUM_POSTS_PER_PAGE)
     url = post.thread.get_absolute_url() + "?page=%d#post%d" % (page, post.id)
 
     return HttpResponseRedirect(url)

@@ -38,7 +38,7 @@ jobs:
     - name: Pull docker images
       run: docker-compose -f docker-compose.test.yml pull
 
-    - uses: satackey/action-docker-layer-caching@v0.0.11
+    - uses: jpribyl/action-docker-layer-caching@v0.1.1
       continue-on-error: true
 
     - name: Build base image

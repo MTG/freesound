@@ -17,17 +17,16 @@
 # Authors:
 #     See AUTHORS file.
 #
-from urllib.parse import urlparse
-
-from past.utils import old_div
 import datetime
 import json
 import logging
 import math
 import os
 import time
-from django.views.decorators.clickjacking import xframe_options_exempt
+from builtins import map
+from builtins import str
 from operator import itemgetter
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
@@ -35,6 +34,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.core.cache import cache, caches
 from django.core.exceptions import PermissionDenied
+from django.core.signing import BadSignature, SignatureExpired
 from django.db import transaction
 from django.db.models.functions import Greatest
 from django.http import HttpResponse
@@ -43,8 +43,8 @@ from django.http import HttpResponseRedirect, Http404, \
 from django.shortcuts import get_object_or_404, redirect
 from django.template import loader
 from django.urls import reverse, resolve
+from django.views.decorators.clickjacking import xframe_options_exempt
 from ratelimit.decorators import ratelimit
-from django.core.signing import BadSignature, SignatureExpired
 
 from comments.forms import CommentForm, BwCommentForm
 from comments.models import Comment
@@ -52,7 +52,6 @@ from donations.models import DonationsModalSettings
 from follow import follow_utils
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
-from search.views import search_view_helper
 from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, LicenseForm, PackEditForm, \
     RemixForm, PackForm, BWSoundEditAndDescribeForm, BWFlagForm
 from sounds.models import PackDownload, PackDownloadSound
@@ -69,11 +68,12 @@ from utils.pagination import paginate
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import get_random_sound_id_from_search_engine, perform_search_engine_query
 from utils.similarity_utilities import get_similar_sounds
+from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsException, CantMoveException, \
+    clean_processing_before_describe_files, get_processing_before_describe_sound_base_url, \
+    get_duration_from_processing_before_describe_files, \
+    get_samplerate_from_processing_before_describe_files
 from utils.text import remove_control_chars
 from utils.username import redirect_if_old_username_or_404
-from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsException, CantMoveException, \
-    clean_processing_before_describe_files, get_processing_before_describe_sound_base_url, get_duration_from_processing_before_describe_files, \
-    get_samplerate_from_processing_before_describe_files
 
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
@@ -375,7 +375,7 @@ def sound_download(request, username, sound_id):
         cdn_filename = cache_cdn_map.get(str(sound_id), None)
         if cdn_filename is not None:
             # If USE_CDN_FOR_DOWNLOADS option is on and we find an URL for that sound in the CDN, then we redirect to that one
-            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(int(old_div(int(sound_id),1000)), cdn_filename, sound.friendly_filename())
+            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(int(sound_id) // 1000, cdn_filename, sound.friendly_filename())
             return HttpResponseRedirect(cdn_url)
 
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
@@ -540,7 +540,7 @@ def sound_edit(request, username, sound_id):
         else:
             geotag_form = GeotaggingForm(prefix="geotag")
 
-    license_form = LicenseForm(request.POST, 
+    license_form = LicenseForm(request.POST,
                                   hide_old_license_versions="3.0" not in sound.license.deed_url)
     if request.method == 'POST':
         if license_form.is_valid():
@@ -554,7 +554,7 @@ def sound_edit(request, username, sound_id):
             update_sound_tickets(sound, f'{request.user.username} updated the sound license.')
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = LicenseForm(initial={'license': sound.license}, 
+        license_form = LicenseForm(initial={'license': sound.license},
                                       hide_old_license_versions="3.0" not in sound.license.deed_url)
 
     tvars = {
@@ -699,9 +699,9 @@ def edit_and_describe_sounds_helper(request):
         
         sound.mark_index_dirty()  # Sound is saved here
         sound.invalidate_template_caches()
-        update_sound_tickets(sound, f'{request.user.username} updated one or more fields of the sound description.')   
+        update_sound_tickets(sound, f'{request.user.username} updated one or more fields of the sound description.')
         messages.add_message(request, messages.INFO,
-            f'Sound <a href="{sound.get_absolute_url()}">{sound.original_filename}</a> succesfully edited!')
+            f'Sound <a href="{sound.get_absolute_url()}">{sound.original_filename}</a> successfully edited!')
 
         for packs_to_process in packs_to_process:
             packs_to_process.process()
@@ -748,7 +748,7 @@ def edit_and_describe_sounds_helper(request):
                 # or there might have been problems while processing-before-description the sound. In that case
                 # we won't show the player
                 files_data_for_players.append(None)
-        
+
         if request.method == "POST":
             form = BWSoundEditAndDescribeForm(
                 request.POST, 
@@ -767,7 +767,7 @@ def edit_and_describe_sounds_helper(request):
             else:
                 all_forms_validated_ok = False
                 form.sound_sources_ids = list(form.cleaned_data['sources'])  # Add sources ids to list so sources sound selector can be initialized
-        else:            
+        else:
             if not describing:
                 sound_sources_ids = list(element.get_sound_sources_as_set())
                 initial = dict(tags=element.get_sound_tags_string(),

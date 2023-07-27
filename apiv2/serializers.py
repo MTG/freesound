@@ -20,7 +20,6 @@
 
 import json
 
-from past.utils import old_div
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -287,7 +286,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     avg_rating = serializers.SerializerMethodField()
     def get_avg_rating(self, obj):
-        return old_div(obj.avg_rating,2)
+        return obj.avg_rating / 2
 
     comments = serializers.SerializerMethodField()
     def get_comments(self, obj):

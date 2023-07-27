@@ -19,7 +19,6 @@
 #
 
 
-from past.utils import old_div
 import json
 import os
 import time
@@ -59,7 +58,7 @@ class CommentSoundsTestCase(TestCase):
         sound.add_comment(user, "Test comment")
         sound.refresh_from_db()
         self.assertEqual(current_num_comments + 1, sound.num_comments)
-        self.assertEqual(sound.is_index_dirty, True)
+        self.assertTrue(sound.is_index_dirty)
 
     def test_email_notificaiton_on_send_email(self):
         # Add a comment to a sound using the view and test that email was sent
@@ -110,7 +109,7 @@ class CommentSoundsTestCase(TestCase):
         sound.post_delete_comment()
         sound.refresh_from_db()
         self.assertEqual(2, sound.num_comments)
-        self.assertEqual(sound.is_index_dirty, True)
+        self.assertTrue(sound.is_index_dirty)
 
     def test_delete_comment(self):
         sound = Sound.objects.get(id=19)
@@ -121,7 +120,7 @@ class CommentSoundsTestCase(TestCase):
         comment.delete()
         sound = Sound.objects.get(id=19)
         self.assertEqual(current_num_comments, sound.num_comments)
-        self.assertEqual(sound.is_index_dirty, True)
+        self.assertTrue(sound.is_index_dirty)
 
 
 class ChangeSoundOwnerTestCase(TestCase):
@@ -164,7 +163,7 @@ class ChangeSoundOwnerTestCase(TestCase):
         self.assertEqual(userA.profile.num_sounds, 3)
         self.assertEqual(userB.profile.num_sounds, 1)
         self.assertEqual(sound.user, userB)
-        self.assertEqual(sound.is_index_dirty, True)
+        self.assertTrue(sound.is_index_dirty)
         self.assertEqual(sound.pack.name, target_sound_pack.name)
         self.assertEqual(sound.pack.num_sounds, 1)
         self.assertEqual(target_sound_pack.num_sounds, 3)
@@ -1094,7 +1093,7 @@ class SoundAnalysisModel(TestCase):
 
         # Now create an analysis object which stores output in a JSON file. Again check that get_analysis works.
         analysis_filename = '%i-TestExtractor2.json' % sound.id
-        sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(old_div(sound.id, 1000)))
+        sound_analysis_folder = os.path.join(settings.ANALYSIS_PATH, str(sound.id // 1000))
         os.makedirs(sound_analysis_folder, exist_ok=True)
         with open(os.path.join(sound_analysis_folder, analysis_filename), 'w') as f:
             json.dump(analysis_data, f)
@@ -1227,7 +1226,7 @@ class SoundEditTestCase(TestCase):
         self.assertEqual(self.sound.original_filename, new_name)
         self.assertListEqual(sorted(self.sound.get_sound_tags()), sorted(new_tags))
         self.assertEqual(self.sound.sources.all().count(), len(new_sound_sources))
-        self.assertEqual(Pack.objects.filter(name='Name of a new pack').exists(), True)
+        self.assertTrue(Pack.objects.filter(name='Name of a new pack').exists())
         self.assertEqual(self.sound.pack.name, new_pack_name)
-        self.assertTrue(self.sound.geotag is not None)
+        self.assertIsNotNone(self.sound.geotag)
         self.assertAlmostEqual(self.sound.geotag.lat, geotag_lat)

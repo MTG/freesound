@@ -15,7 +15,7 @@
             {% if forloop.counter0 == 0 %}
                 <tr><td><b>analyzer</b></td><td><b>% done</b></td><td><b>missing</b></td><td><b>queued</b></td><td><b>ok</b></td><td><b>skipped</b></td><td><b>failed</b></td></tr>
             {% endif %}
-            <tr><td>{{ analyzer_name }}</td><td>{{ analyzer_data.Percentage }}</td><td>{{ analyzer_data.Missing }}</td><td>{{ analyzer_data.QU }}</td><td>{{ analyzer_data.OK }}</td><td>{{ analyzer_data.SK }}</td><td>{{ analyzer_data.FA }}</td></tr>
+            <tr><td>{{ analyzer_name }}</td><td>{{ analyzer_data.Percentage|floatformat:3 }}</td><td>{{ analyzer_data.Missing }}</td><td>{{ analyzer_data.QU }}</td><td>{{ analyzer_data.OK }}</td><td>{{ analyzer_data.SK }}</td><td>{{ analyzer_data.FA }}</td></tr>
         {% endfor %} 
         </table>
     </div>
@@ -23,7 +23,7 @@
     <h1>RabbitMQ queue status</h1>
     <div class="v-spacing-4">
         <div id="queuesStatus" data-url="{{ queues_stats_url }}"></div>
-        <a href="/rabbitmq-admin/">More RabbitMQ stats</a>
+        <a href="/rabbitmq-admin/" target="_blank">More RabbitMQ stats</a>
     </div>
 
 {% endblock %}

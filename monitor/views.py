@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from past.utils import old_div
 import datetime
 from collections import Counter
 
@@ -185,7 +184,7 @@ def monitor_moderation(request):
         len(tickets.views._get_tardy_moderator_tickets())
     tardy_user_sounds_count = len(tickets.views._get_tardy_user_tickets())
 
-    time_span = datetime.datetime.now()-datetime.timedelta(old_div(6*365,12))
+    time_span = datetime.datetime.now() - datetime.timedelta((6 * 365) // 12)
     #Maybe we should user created and not modified
     user_ids = tickets.models.Ticket.objects.filter(
             status=TICKET_STATUS_CLOSED,
@@ -220,7 +219,7 @@ def monitor_stats(request):
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def moderators_stats(request):
-    time_span = datetime.datetime.now()-datetime.timedelta(old_div(6*365,12))
+    time_span = datetime.datetime.now() - datetime.timedelta((6 * 365) // 12)
     #Maybe we should user created and not modified
     user_ids = tickets.models.Ticket.objects.filter(
             status=TICKET_STATUS_CLOSED,
@@ -327,7 +326,7 @@ def process_sounds(request):
 
 def moderator_stats_ajax(request):
     user_id = request.GET.get('user_id', None)
-    time_span = datetime.datetime.now()-datetime.timedelta(old_div(6*365,12))
+    time_span = datetime.datetime.now() - datetime.timedelta((6 * 365) // 12)
     tickets_mod = tickets.models.Ticket.objects.filter(
             assignee_id=user_id,
             status=TICKET_STATUS_CLOSED,

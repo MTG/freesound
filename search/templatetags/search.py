@@ -19,7 +19,6 @@
 #
 
 
-from past.utils import old_div
 from django import template
 from django.conf import settings
 from urllib.parse import quote_plus
@@ -114,7 +113,7 @@ def display_facet(context, flt, facet, facet_type, title=""):
             filtered_facet = sorted(filtered_facet, key=lambda x: x['count'], reverse=True)
             max_count = max([element['count'] for element in filtered_facet])
             for element in filtered_facet:
-                element['weight'] = old_div((1.0 * element['count']), max_count)
+                element['weight'] = element['count'] / max_count
 
         # In BW we also add icons to license facets
         if flt == 'license':

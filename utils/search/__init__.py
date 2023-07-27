@@ -17,9 +17,8 @@
 # Authors:
 #     See AUTHORS file.
 #
-
-from past.utils import old_div
 import importlib
+import math
 
 from django.conf import settings
 
@@ -157,7 +156,7 @@ class SearchResultsPaginator:
         self.num_per_page = num_per_page
         self.results = search_results.docs
         self.count = search_results.num_found
-        self.num_pages = old_div(search_results.num_found, num_per_page) + int(search_results.num_found % num_per_page != 0)
+        self.num_pages = math.ceil(search_results.num_found / num_per_page)
         self.page_range = list(range(1, self.num_pages + 1))
 
     def page(self, page_num):
@@ -356,5 +355,3 @@ class SearchEngineBase:
                 Eg: [('cat', 1), ('echo', 1), ('forest', 1)]
         """
         raise NotImplementedError
-
-

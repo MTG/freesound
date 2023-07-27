@@ -1,6 +1,6 @@
 FROM debian:10
 
-MAINTAINER Freesound support@freesound.org
+LABEL org.opencontainers.image.authors="support@freesound.org"
 
 ENV PYTHONUNBUFFERED=1
 

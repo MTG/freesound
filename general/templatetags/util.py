@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from past.utils import old_div
 import datetime
 import time
 
@@ -45,7 +44,7 @@ def truncate_string(value, length):
 
 @register.filter
 def duration(value):
-    duration_minutes = int(old_div(value,60))
+    duration_minutes = int(value / 60)
     duration_seconds = int(value) % 60
     duration_miliseconds = int((value - int(value)) * 1000)
     return "%d:%02d.%03d" % (duration_minutes, duration_seconds, duration_miliseconds)
@@ -66,7 +65,7 @@ def formatnumber(number):
         return f'{number/1000000:.1f}M'
     else:
         return f'{number}'
-    
+
 
 @register.filter
 def in_list(value,arg):
@@ -102,7 +101,7 @@ def element_at_index(l, index):
 
 @register.filter
 def strip_unnecessary_br(value):
-    # In HTMLCleaningFields some HTML tags are allowed. When the contents of these fields are passed to Django's |linebreaks 
+    # In HTMLCleaningFields some HTML tags are allowed. When the contents of these fields are passed to Django's |linebreaks
     # templatetag, <br> tags can be inserted between other HTML tags (linebreaks is not HTML-aware). This templatetag
     # implements a hacky fix for the most common issue which is the unnecessary br elements introduced after ul and li elements.
     value = value.replace('</li><br>', '</li>')

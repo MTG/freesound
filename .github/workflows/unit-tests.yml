@@ -21,9 +21,10 @@ jobs:
         driver: docker
 
     - name: Notify workflow starting
+      uses: voxmedia/github-action-slack-notify-build@v1
+      continue-on-error: true
       if: success()
       id: slack
-      uses: voxmedia/github-action-slack-notify-build@v1
       with:
         channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
         status: STARTING
@@ -58,6 +59,7 @@ jobs:
 
     - name: Notify success
       uses: voxmedia/github-action-slack-notify-build@v1
+      continue-on-error: true
       if: success()
       with:
         message_id: ${{ steps.slack.outputs.message_id }}

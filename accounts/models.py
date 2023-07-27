@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from past.utils import old_div
 import datetime
 import os
 import random
@@ -216,16 +215,16 @@ class Profile(SocialModel):
     @property
     def num_comments(self):
         return Comment.objects.filter(user=self.user).count()
-    
+
     def get_absolute_url(self):
         return reverse('account', args=[smart_str(self.user.username)])
-    
+
     def get_user_sounds_in_search_url(self):
         return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=0'
 
     @staticmethod
     def locations_static(user_id, has_avatar):
-        id_folder = str(old_div(user_id, 1000))
+        id_folder = str(user_id // 1000)
         if has_avatar:
             s_avatar = settings.AVATARS_URL + "%s/%d_S.jpg" % (id_folder, user_id)
             m_avatar = settings.AVATARS_URL + "%s/%d_M.jpg" % (id_folder, user_id)
@@ -589,17 +588,17 @@ class Profile(SocialModel):
 
     @property
     def avg_rating(self):
-        # Returns the average raring from 0 to 10
+        """Returns the average raring from 0 to 10"""
         ratings = list(SoundRating.objects.filter(sound__user=self.user).values_list('rating', flat=True))
         if ratings:
-            return old_div(1.0*sum(ratings),len(ratings))
+            return sum(ratings) / len(ratings)
         else:
             return 0
 
     @property
     def avg_rating_0_5(self):
-        # Returns the average raring, normalized from 0 tp 5
-        return old_div(self.avg_rating,2)
+        """Returns the average raring, normalized from 0 to 5"""
+        return self.avg_rating / 2
 
     def get_total_uploaded_sounds_length(self):
         # NOTE: this only includes duration of sounds that have been processed and moderated

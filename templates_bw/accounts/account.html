@@ -186,7 +186,7 @@
                         </li>
                         <li class="v-spacing-3">
                             {% with user.profile.num_downloads_on_sounds_and_packs as num_downloads %}{% bw_icon 'download' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds and packs have been downloaded {{ num_downloads }} times">{{ num_downloads|formatnumber }} download{{ num_downloads|pluralize }}</span>{% endwith %}
-                        </a>
+                        </li>
                         <li class="v-spacing-3">
                             {% bw_icon 'comments' 'text-light-grey' %} <span class="text-19" title="{{ user.username }} has written {{ user.profile.num_posts }} forum posts">{{ user.profile.num_posts|formatnumber }} forum post{{ user.profile.num_posts|pluralize }}</span>
                         </li>

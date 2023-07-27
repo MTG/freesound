@@ -275,7 +275,7 @@ class ClusteringEngine(object):
         sound_features, sound_ids_out = self.feature_store.return_features(sound_ids_list)
         A = kneighbors_graph(sound_features, k)
         for idx_from, (idx_to, distance) in enumerate(zip(A.indices, A.data)):
-            idx_from = int(old_div(idx_from, k))
+            idx_from = int(idx_from / k)
             if distance < clust_settings.MAX_NEIGHBORS_DISTANCE:
                 graph.add_edge(sound_ids_out[idx_from], sound_ids_out[idx_to])
 

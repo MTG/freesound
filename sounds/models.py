@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from past.utils import old_div
 import datetime
 import glob
 import json
@@ -98,7 +97,7 @@ class License(OrderedModel):
         elif 'sampling' in license_name.lower():
             return 'splus'
         return 'cc'
-    
+
     @property
     def icon_name(self):
         return self.bw_cc_icon_name_from_license_name(self.name)
@@ -269,21 +268,21 @@ class BulkUploadProgress(models.Model):
                                                     n_sounds_currently_processing +
                                                     n_sounds_pending_processing +
                                                     n_sounds_failed_processing)
-        
+
         progress = 0
         if n_lines_validated_ok == 0:
             # If no sounds were supposed to be described, set progress to 100
             progress = 100
         else:
             if self.description_output is not None:
-                progress = old_div(100.0 * (n_sounds_published +
-                                    n_sounds_moderation +
-                                    n_sounds_failed_processing +
-                                    n_sounds_error +
-                                    n_sounds_unknown), \
-                        (n_sounds_described_ok +
-                            n_sounds_error +
-                            n_sounds_remaining_to_describe))
+                progress = (100.0 * (n_sounds_published +
+                                     n_sounds_moderation +
+                                     n_sounds_failed_processing +
+                                     n_sounds_error +
+                                     n_sounds_unknown)
+                            ) / (n_sounds_described_ok +
+                                 n_sounds_error +
+                                 n_sounds_remaining_to_describe)
                 progress = int(progress)
                 # NOTE: progress percentage is determined as the total number of sounds "that won't change" vs the total
                 # number of sounds that should have been described and processed. Sounds that fail processing or description
@@ -559,7 +558,7 @@ class SoundManager(models.Manager):
         if limit:
             limit = str(limit)
         return self.bulk_query(where, order_by, limit, (pack_id, ), include_analyzers_output=include_analyzers_output)
-    
+
     def bulk_query_id(self, sound_ids, include_analyzers_output=False):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]
@@ -707,7 +706,7 @@ class Sound(SocialModel):
 
     @locations_decorator()
     def locations(self):
-        id_folder = str(old_div(self.id,1000))
+        id_folder = str(self.id // 1000)
         sound_user_id = self.user_id
         previews_url = settings.PREVIEWS_URL if not settings.USE_CDN_FOR_PREVIEWS else settings.CDN_PREVIEWS_URL
         displays_url = settings.DISPLAYS_URL if not settings.USE_CDN_FOR_DISPLAYS else settings.CDN_DISPLAYS_URL
@@ -866,9 +865,9 @@ class Sound(SocialModel):
 
     @property
     def avg_rating_0_5(self):
-        # Returns the average raring, normalized from 0 tp 5
-        return old_div(self.avg_rating, 2)
-    
+        # Returns the average raring, normalized from 0 to 5
+        return self.avg_rating / 2
+
     def get_ratings_count_text(self):
         if self.num_ratings >= settings.MIN_NUMBER_RATINGS:
             return f'Overall rating ({ formatnumber(self.num_ratings) } rating{"s" if self.num_ratings != 1 else ""})'
@@ -1310,7 +1309,7 @@ class Sound(SocialModel):
         for is_authenticated in [True, False]:
             for is_explicit in [True, False]:
                 invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
-        
+
         for player_size in ['small', 'middle', 'big_no_info', 'small_no_info', 'minimal']:
              for is_authenticated in [True, False]:
                 invalidate_template_cache("bw_display_sound", self.id, player_size, is_authenticated)
@@ -1574,7 +1573,7 @@ class PackManager(models.Manager):
             p.user_profile_locations = p.user.profile.locations()
             p.has_geotags_precomputed = has_geotags
             p.num_ratings_precomputed = len(ratings)
-            p.avg_rating_precomputed = old_div(1.0*sum(ratings),len(ratings)) if len(ratings) else 0.0
+            p.avg_rating_precomputed = sum(ratings) / len(ratings) if len(ratings) else 0.0
 
         return packs
 
@@ -1627,7 +1626,7 @@ class Pack(SocialModel):
 
     def get_absolute_url(self):
         return reverse('pack', args=[self.user.username, smart_str(self.id)])
-    
+
     def get_pack_sounds_in_search_url(self):
         return f'{reverse("sounds-search")}?f=grouping_pack:{ self.pack_filter_value() }&s=Date+added+(newest+first)&g=1'
 
@@ -1713,7 +1712,7 @@ class Pack(SocialModel):
         for player_size in ['small', 'big']:
             invalidate_template_cache("bw_display_pack", self.id, player_size)
         invalidate_template_cache("bw_pack_stats", self.id)
-        
+
     def get_attribution(self):
         sounds_list = self.sounds.filter(processing_state="OK",
                 moderation_state="OK").select_related('user', 'license')
@@ -1726,24 +1725,24 @@ class Pack(SocialModel):
                 pack=self,
                 licenses=licenses,
                 sound_list=sounds_list))
-        return attribution        
+        return attribution
 
     @property
     def avg_rating(self):
-        # Return the average rating of the average ratings of the sounds of the pack that have more than MIN_NUMBER_RATINGS
+        """Return average rating of the average ratings of the sounds of the pack that have more than MIN_NUMBER_RATINGS"""
         if hasattr(self, 'avg_rating_precomputed'):
             return self.avg_rating_precomputed
         else:
             ratings = list(Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS).values_list('avg_rating', flat=True))
             if ratings:
-                return old_div(1.0*sum(ratings),len(ratings))
+                return sum(ratings) / len(ratings)
             else:
                 return 0
 
     @property
     def avg_rating_0_5(self):
-        # Returns the average raring, normalized from 0 tp 5
-        return old_div(self.avg_rating,2)
+        """Returns the average raring, normalized from 0 to 5"""
+        return self.avg_rating / 2
 
     @property
     def num_ratings(self):
@@ -1957,7 +1956,7 @@ class SoundAnalysis(models.Model):
          include analysis output but also logs. The base filepath should be complemented with the extension, which
          could be '.json' or '.yaml' (for analysis outputs) or '.log' for log file. The related files should be in
          the ANALYSIS_PATH and under a sound ID folder structure like sounds and other sound-related files."""
-        id_folder = str(old_div(self.sound_id, 1000))
+        id_folder = str(self.sound_id // 1000)
         return os.path.join(settings.ANALYSIS_PATH, id_folder, f"{self.sound_id}-{self.analyzer}")
 
     def load_analysis_data_from_file_to_db(self):

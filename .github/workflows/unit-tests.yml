@@ -14,6 +14,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      with:
+        install: true
+        driver: docker
+
     - name: Notify workflow starting
       if: success()
       id: slack
@@ -38,7 +44,7 @@ jobs:
     - name: Pull docker images
       run: docker-compose -f docker-compose.test.yml pull
 
-    - uses: satackey/action-docker-layer-caching@v0.0.11
+    - uses: jpribyl/action-docker-layer-caching@v0.1.1
       continue-on-error: true
 
     - name: Build base image

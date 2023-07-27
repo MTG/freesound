@@ -29,7 +29,7 @@ feedparser~=6.0.10
 freezegun==1.2.2
 future~=0.18.2
 graypy==0.2.12
-gunicorn==19.9.0
+gunicorn==21.2.0
 ipython==4.2.0
 mapbox==0.18.1
 markdown==3.4.1

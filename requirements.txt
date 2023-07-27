@@ -129,7 +129,7 @@ gprof2dot==2022.7.29
     # via django-silk
 graypy==0.2.12
     # via -r requirements.in
-gunicorn==19.9.0
+gunicorn==21.2.0
     # via -r requirements.in
 idna==3.4
     # via requests
@@ -173,6 +173,8 @@ oauthlib==3.2.2
     #   django-oauth-toolkit
 openpyxl==3.1.0
     # via -r requirements.in
+packaging==23.1
+    # via gunicorn
 paramiko==3.1.0
     # via fabric
 pathlib2==2.3.7.post1

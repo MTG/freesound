@@ -19,9 +19,11 @@
 #
 
 import logging
+from typing import Any, Optional, Sequence, Type, Union
 import django.forms as forms
 
 from django.conf import settings
+from django.forms.widgets import Widget
 from pyparsing import ParseException
 
 from utils.search.search_sounds import parse_weights_parameter, parse_query_filter_string, \
@@ -32,8 +34,35 @@ from clustering.interface import get_ids_in_cluster
 search_logger = logging.getLogger("search")
 
 
+class ExplicitBooleanField(forms.BooleanField):
+        
+    def __init__(self, *args, **kwargs):
+        self.value_if_not_present = kwargs.pop('value_if_not_present', None)
+        super().__init__(*args, **kwargs)
+        self.widget.attrs['class'] = 'bw-checkbox bw-checkbox-add-hidden'
+
+    def set_form_and_field_name(self, form, field_name):
+        self.form = form
+        self.field_name = field_name
+        self.widget.attrs['data-hidden-checkbox-name'] = self.get_hidden_field_name()
+
+    def get_hidden_field_name(self):
+        return self.field_name + '-hidden'
+        
+    def clean(self, value):
+        if self.get_hidden_field_name() not in self.form.data:
+            if callable(self.value_if_not_present):
+                default_value = self.value_if_not_present(self.form)
+            else:
+                default_value = self.value_if_not_present
+            self.form.data = self.form.data.copy()
+            self.form.data[self.field_name] = default_value
+            return default_value
+        return value
+
+
 class SoundSearchForm(forms.Form):
-    q = forms.CharField(required=False, initial="test query")  # query
+    q = forms.CharField(required=False)  # query
     f = forms.CharField(required=False)  # filter
     s = forms.ChoiceField(required=False, choices=[(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB])  # sort
 
@@ -57,13 +86,20 @@ class SoundSearchForm(forms.Form):
     
     cluster_id = forms.CharField(required=False)
 
-    cm = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))  # compact mode
+    cm = ExplicitBooleanField(required=False, 
+                              value_if_not_present=lambda form: False if form.request.user.is_anonymous 
+                              else form.request.user.profile.use_compact_mode)  # compact mode
     
-
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
+        self.request = kwargs.pop('request', None)        
         super().__init__(*args, **kwargs)
-    
+        
+        # Pass a reference of the form instance to all ExplicitBooleanField fields as this is needed
+        # to distinguish between unchecked checkboxes and non-present checkboxes in the form data
+        for field in self.fields:
+            if isinstance(self.fields[field], ExplicitBooleanField):
+                self.fields[field].set_form_and_field_name(self, field)
+                
     def clean_f(self):
         return self.cleaned_data['f'].strip().lstrip()
         
@@ -106,24 +142,12 @@ class SoundSearchForm(forms.Form):
         return self.cleaned_data['duration_max']
 
     def clean_cm(self):
-        # TODO: this does not work because we can't distinguish when the user has not checked the checkbox
-        # we need to add a hidden checkbox... or make some new type that handles that?
-        if not 'cm' in self.data:
-            # If compact mode not indicated in form data, follow user preference and update form data
-            # so it is rendered correctly
-            user_preference = False if self.request.user.is_anonymous else self.request.user.profile.use_compact_mode
-            self.data = self.data.copy()
-            self.data['cm'] = 'on' if user_preference else ''
-            return user_preference
-        else:
-            # If compact mode indicated in form data, use whatever is indicated by the form and update
-            # user preferences if these differ from form value
-            use_compact_mode = self.cleaned_data['cm']
-            if self.request.user.is_authenticated:
-                if use_compact_mode != self.request.user.profile.use_compact_mode:
-                    self.request.user.profile.use_compact_mode = use_compact_mode
-                    self.request.user.profile.save()
-            return use_compact_mode
+        use_compact_mode = self.cleaned_data['cm']
+        if self.request.user.is_authenticated:
+            if use_compact_mode != self.request.user.profile.use_compact_mode:
+                self.request.user.profile.use_compact_mode = use_compact_mode
+                self.request.user.profile.save()
+        return use_compact_mode
 
     def _has_pack_filter(self):
         return "pack:" in self.cleaned_data['f']

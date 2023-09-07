@@ -384,3 +384,19 @@ advanced_search_options_div.getElementsByTagName("input").forEach(inputElement =
     onAdvancedSearchOptionsInputsChange();
   });
 });
+
+// Create hidden elements for checkboxes that require knowing if they were submitted even if they are not checked
+const addHiddenCheckboxesForAddHiddenElements = () => {
+  [...document.querySelectorAll('input.bw-checkbox-add-hidden')].forEach(checkboxEl => {
+      const newElementId = checkboxEl.id + '-hidden';
+      if (document.getElementById(newElementId) === null){
+          const newElement = document.createElement('input');
+          newElement.type = 'hidden';
+          newElement.id = newElementId;
+          newElement.name = checkboxEl.dataset.hiddenCheckboxName;
+          newElement.value = '1';
+          checkboxEl.parentNode.insertBefore(newElement, checkboxEl);
+      }
+  });
+};
+addHiddenCheckboxesForAddHiddenElements();

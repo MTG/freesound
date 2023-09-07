@@ -277,14 +277,6 @@ def search_view_helper_form(request, tags_mode=False):
         'only_sounds_with_pack': only_sounds_with_pack,
         'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
         'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
-        
-
-        
-        
-        
-        
-        
-        
         'filter_query_link_more_when_grouping_packs': extra_vars['filter_query_link_more_when_grouping_packs'],
         'clustering_on': settings.ENABLE_SEARCH_RESULTS_CLUSTERING,
         'initial_tagcloud': initial_tagcloud,
@@ -366,14 +358,11 @@ def search_view_helper_form(request, tags_mode=False):
     
 
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
-def search2(request):
-    tvars = search_view_helper(request, tags_mode=False)
-    template = 'search/search.html' if request.GET.get("ajax", "") != "1" else 'search/search_ajax.html'
-    return render(request, template, tvars)
-
-
 def search(request):
-    tvars = search_view_helper_form(request, tags_mode=False)
+    if using_beastwhoosh(request):
+        tvars = search_view_helper_form(request, tags_mode=False)
+    else:
+        tvars = search_view_helper(request, tags_mode=False)
     template = 'search/search.html' if request.GET.get("ajax", "") != "1" else 'search/search_ajax.html'
     return render(request, template, tvars)
 

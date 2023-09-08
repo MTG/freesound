@@ -30,7 +30,7 @@
                     <div class="v-spacing-5 {% if tags_mode %}display-none{% endif %}">
                         <div class="middle center">
                             <div class="bw-search__input_wrapper"><i class="bw-icon-search input-icon text-light-grey"></i><input id="search-input-browse" name="q" type="text" value="{{ search_query }}" placeholder="Search {% if not only_sounds_with_pack %}sounds{% else %}packs{% endif %}..." class="bw-search__input" autocomplete="off"/></div>
-                            <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" />
+                            {{ form.f.as_hidden }}
                             {{ form.w.as_hidden }}
                             <input id="tags-mode" type="hidden" name="tm" value="{% if tags_mode %}1{% else %}0{% endif %}" />  {% comment %}This is used so that we can know from JS whether we are in tags mode or not{% endcomment %}
                             <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
@@ -101,7 +101,7 @@
                                                 <li class="bw-search__filter-value v-padding-1">
                                                     <label class="between w-100">
                                                         <div class="bw-search__filter-checkbox">
-                                                            <input type="checkbox" class="bw-checkbox" on name="a_tag" {% if a_tag %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                            {{ form.a_tag }}
                                                         </div>
                                                         <div class="bw-search__filter-name">Tags</div>
                                                     </label>
@@ -109,7 +109,7 @@
                                                 <li class="bw-search__filter-value v-padding-1">
                                                     <label class="between w-100">
                                                         <div class="bw-search__filter-checkbox">
-                                                            <input type="checkbox" class="bw-checkbox" name="a_filename" {% if a_filename %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                            {{ form.a_filename }}
                                                         </div>
                                                         <div class="bw-search__filter-name">Sound name</div>
                                                     </label>
@@ -117,7 +117,7 @@
                                                 <li class="bw-search__filter-value v-padding-1">
                                                     <label class="between w-100">
                                                         <div class="bw-search__filter-checkbox">
-                                                            <input type="checkbox" class="bw-checkbox" name="a_description" {% if a_description %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                            {{ form.a_description }}
                                                         </div>
                                                         <div class="bw-search__filter-name">Description</div>
                                                     </label>
@@ -129,7 +129,7 @@
                                                 <li class="bw-search__filter-value v-padding-1">
                                                     <label class="between w-100">
                                                         <div class="bw-search__filter-checkbox">
-                                                            <input type="checkbox" class="bw-checkbox" name="a_packname" {% if a_packname %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                            {{ form.a_packname }}
                                                         </div>
                                                         <div class="bw-search__filter-name">Pack name</div>
                                                     </label>
@@ -137,7 +137,7 @@
                                                 <li class="bw-search__filter-value v-padding-1">
                                                     <label class="between w-100">
                                                         <div class="bw-search__filter-checkbox">
-                                                            <input type="checkbox" class="bw-checkbox" name="a_soundid" {% if a_soundid %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                            {{ form.a_soundid }}
                                                         </div>
                                                         <div class="bw-search__filter-name">Sound ID</div>
                                                     </label>
@@ -145,7 +145,7 @@
                                                 <li class="bw-search__filter-value v-padding-1">
                                                     <label class="between w-100">
                                                         <div class="bw-search__filter-checkbox">
-                                                            <input type="checkbox" class="bw-checkbox" name="a_username" {% if a_username %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                            {{ form.a_username }}
                                                         </div>
                                                         <div class="bw-search__filter-name">Username</div>
                                                     </label>
@@ -160,7 +160,7 @@
                                         <span>Duration</span>
                                     </div>
                                     <div class="bw-search__filter-tags-list bw-search__filter-duration">
-                                        <input id="filter_duration_min" class="bw-search_input-duration v-spacing-1" type="text" value="0" /> - <input id="filter_duration_max" class="bw-search_input-duration" type="text" value="*" /> <span>seconds</span>
+                                        {{ form.duration_min }} - {{ form.duration_max }}<span>seconds</span>
                                     </div>
                                 </div>
 
@@ -172,7 +172,7 @@
                                         <li class="bw-search__filter-value v-padding-1">
                                             <label class="between w-100" title="Only find sounds that have geolocation information">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input id="filter_is_geotagged" type="checkbox" class="bw-checkbox"/>
+                                                    {{ form.only_g }}
                                                 </div>
                                                 <div class="bw-search__filter-name">Only geotagged sounds</div>
                                             </label>
@@ -180,25 +180,23 @@
                                         <li class="bw-search__filter-value v-padding-1">
                                             <label class="between w-100" title="Only find sounds that are a remix of other sounds or have been remixed">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input id="filter_in_remix_group" type="checkbox" class="bw-checkbox"/>
+                                                    {{ form.only_r }}
                                                 </div>
                                                 <div class="bw-search__filter-name">Only remix sounds</div>
                                             </label>
                                         </li>
                                         <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100 {% if disable_group_by_pack_option %}opacity-020{% endif %}" title="Group search results so that multiple sounds of the same pack only represent one item">
+                                            <label class="between w-100" title="Group search results so that multiple sounds of the same pack only represent one item">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input id="group_by_pack" type="checkbox" class="bw-checkbox" {% if group_by_pack_in_request == "1" %}checked{% endif %} {% if disable_group_by_pack_option %}disabled="disabled"{% endif %}/>
-                                                    <input id="group_by_pack_hidden" type="hidden" name="g" {% ifequal group_by_pack_in_request "1" %}value="1"{% else %}value=""{% endifequal %} />
+                                                    {{ form.g }}
                                                 </div>
                                                 <div class="bw-search__filter-name">Group sounds by pack</div>
                                             </label>
                                         </li>
                                         <li class="bw-search__filter-value v-padding-1">
-                                            <label class="between w-100 {% if disable_only_sounds_by_pack_option %}opacity-020{% endif %}" title="Display search results as packs rather than individual sounds">
+                                            <label class="between w-100" title="Display search results as packs rather than individual sounds">
                                                 <div class="bw-search__filter-checkbox">
-                                                    <input id="only_sounds_with_pack" type="checkbox" class="bw-checkbox" {% if only_sounds_with_pack_in_request == "1" %}checked{% endif %} {% if disable_only_sounds_by_pack_option %}disabled="disabled"{% endif %}/>
-                                                    <input id="only_sounds_with_pack_hidden" type="hidden" name="only_p" {% ifequal only_sounds_with_pack_in_request "1" %}value="1"{% else %}value=""{% endifequal %} />
+                                                    {{ form.only_p }}
                                                 </div>
                                                 <div class="bw-search__filter-name">Display results as packs</div>
                                             </label>

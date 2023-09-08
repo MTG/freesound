@@ -251,20 +251,31 @@ def search_view_helper_form(request, tags_mode=False):
                 initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
                 cache.set('initial_tagcloud', initial_tagcloud, 60 * 60)
 
-    # In the tvars section we pass the original group_by_pack value to avoid it being set to false if there is a pack filter (see search_prepare_parameters)
+    # In the tvars section below, we pass the original group_by_pack value to avoid it being set to false if there is a pack filter 
     # This is so that we keep track of the original setting of group_by_pack before the filter was applied, and so that if the pack filter is removed, we can 
-    # automatically revert to the previous group_by_pack setting. Also, we compute "disable_group_by_pack_option" so that when we have changed the real
-    # group_by_pack because there is a pack filter, we can grey out the option in the search form. Similar thing we do for only_sounds_with_pack as also
-    # it does not make sense when filtering by pack
-    group_by_pack_in_request = request.GET.get("g", "1") == "1"
-    only_sounds_with_pack_in_request = request.GET.get("only_p", "0") == "1"
-    disable_group_by_pack_option = 'pack:' in query_params['query_filter'] or only_sounds_with_pack_in_request
-    disable_only_sounds_by_pack_option= 'pack:' in query_params['query_filter']
-    only_sounds_with_pack = "1" if query_params['only_sounds_with_pack'] else ""
+    # automatically revert to the previous group_by_pack setting.
+    only_sounds_with_pack = "on" if query_params['only_sounds_with_pack'] else ""
     if only_sounds_with_pack:
         # If displaying seachr results as packs, include 3 sounds per pack group in the results so we can display these sounds as selected sounds in the
         # display_pack templatetag
         query_params['num_sounds_per_pack_group'] = 3
+    
+    # Mark some fields as disabled depending on the form parameters 
+    # TODO: can we move this to the form processing code?
+    if 'pack:' in query_params['query_filter'] or form.cleaned_data['only_p']:
+        # Disable group by pack option (it does not make sense when filtering by pack or when only showing sounds with pack)
+        form.fields['g'].widget.attrs['disabled'] = True
+    if 'pack:' in query_params['query_filter']:
+        # Disable only sounds with pack option (it does not make sense when filtering by pack)
+        form.fields['only_p'].widget.attrs['disabled'] = True
+    if tags_mode:
+        # Disable field matching filters (they don't make sense in tags mode)
+        form.fields['a_tag'].widget.attrs['disabled'] = True
+        form.fields['a_filename'].widget.attrs['disabled'] = True
+        form.fields['a_description'].widget.attrs['disabled'] = True
+        form.fields['a_packname'].widget.attrs['disabled'] = True
+        form.fields['a_soundid'].widget.attrs['disabled'] = True
+        form.fields['a_username'].widget.attrs['disabled'] = True
 
     tvars = {
         'form': form,
@@ -272,11 +283,9 @@ def search_view_helper_form(request, tags_mode=False):
         'filter_query': query_params['query_filter'],
         'filter_query_split': split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], extra_vars['cluster_id']),
         'search_query': query_params['textual_query'],
-        'group_by_pack_in_request': "1" if group_by_pack_in_request else "", 
-        'disable_group_by_pack_option': disable_group_by_pack_option,
+        'group_by_pack_in_request': "on" if form.cleaned_data['g'] else "", 
+        'only_sounds_with_pack_in_request': "on" if form.cleaned_data['only_p'] else "",
         'only_sounds_with_pack': only_sounds_with_pack,
-        'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
-        'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
         'filter_query_link_more_when_grouping_packs': extra_vars['filter_query_link_more_when_grouping_packs'],
         'clustering_on': settings.ENABLE_SEARCH_RESULTS_CLUSTERING,
         'initial_tagcloud': initial_tagcloud,

@@ -34,86 +34,110 @@ from clustering.interface import get_ids_in_cluster
 search_logger = logging.getLogger("search")
 
 
-class ExplicitBooleanField(forms.BooleanField):
-        
-    def __init__(self, *args, **kwargs):
-        self.value_if_not_present = kwargs.pop('value_if_not_present', None)
-        super().__init__(*args, **kwargs)
-        self.widget.attrs['class'] = 'bw-checkbox bw-checkbox-add-hidden'
+class FieldWithFormAndFieldNameMixin(object):
 
     def set_form_and_field_name(self, form, field_name):
         self.form = form
         self.field_name = field_name
-        self.widget.attrs['data-hidden-checkbox-name'] = self.get_hidden_field_name()
+
+
+class SearchFormBooleanField(FieldWithFormAndFieldNameMixin, forms.BooleanField):
+
+    def __init__(self, *args, **kwargs):
+        self.value_if_not_present = kwargs.pop('value_if_not_present', None)
+        self.no_hidden_field = kwargs.pop('no_hidden_field', False)
+        super().__init__(*args, **kwargs)
+        if not self.no_hidden_field:
+            self.widget.attrs['class'] = 'bw-checkbox bw-checkbox-add-hidden'
+        else:
+            self.widget.attrs['class'] = 'bw-checkbox'
+
+    def set_form_and_field_name(self, form, field_name):
+        super().set_form_and_field_name(form, field_name)
+        if not self.no_hidden_field:
+            self.widget.attrs['data-hidden-checkbox-name'] = self.get_hidden_field_name()
 
     def get_hidden_field_name(self):
         return self.field_name + '-hidden'
         
     def clean(self, value):
-        if self.get_hidden_field_name() not in self.form.data:
-            if callable(self.value_if_not_present):
-                default_value = self.value_if_not_present(self.form)
-            else:
-                default_value = self.value_if_not_present
-            self.form.data = self.form.data.copy()
-            self.form.data[self.field_name] = default_value
-            return default_value
-        return value
+        if not self.no_hidden_field:
+            if self.get_hidden_field_name() not in self.form.data:
+                if callable(self.value_if_not_present):
+                    default_value = self.value_if_not_present(self.form)
+                else:
+                    default_value = self.value_if_not_present
+                self.form.data = self.form.data.copy()
+                self.form.data[self.field_name] = default_value
+                return default_value
+            return value
+        else:
+            return super().clean(value)
 
+
+class SearchFormBooleanFieldWithFilter(SearchFormBooleanField):
+
+    def __init__(self, *args, **kwargs):
+        self.search_engine_filter = kwargs.pop('search_engine_filter', None)
+        super().__init__(*args, **kwargs)
+
+    def update_filter_query(self, filter_query):
+        if self.search_engine_filter is not None:
+            filter_query += f" {self.search_engine_filter}"
+        return filter_query
+
+
+class SearchFormDurationField(FieldWithFormAndFieldNameMixin, forms.CharField):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widget.attrs['class'] = 'bw-search_input-duration v-spacing-1'
 
 class SoundSearchForm(forms.Form):
+    # Basic query fields
     q = forms.CharField(required=False)  # query
-    f = forms.CharField(required=False)  # filter
     s = forms.ChoiceField(required=False, choices=[(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB])  # sort
-
+    
+    # Pagination and display fields
     page = forms.CharField(required=False, initial='1')
-    w = forms.CharField(required=False)  # weights
+    g = SearchFormBooleanField(required=False, value_if_not_present=True)  # group by pack
+    cm = SearchFormBooleanField(required=False, 
+        value_if_not_present=lambda form: False if form.request.user.is_anonymous else form.request.user.profile.use_compact_mode)  # compact mode
     
-    a_packname = forms.BooleanField(required=False)  # Fields -> pack name
-    a_filename = forms.BooleanField(required=False)  # Fields -> file name
-    a_soundid = forms.BooleanField(required=False)  # Fields -> sound id
-    a_username = forms.BooleanField(required=False)  # Fields -> username
-    a_tag = forms.BooleanField(required=False)  # Fields -> tags
-    a_description = forms.BooleanField(required=False)  # Fields -> description
-    
-    duration_min = forms.CharField(required=False, initial='0')
-    duration_max = forms.CharField(required=False, initial='*')
+    # Search engine weight-related fields
+    w = forms.CharField(required=False)  # search engine matching weights
+    a_packname = SearchFormBooleanField(required=False, value_if_not_present=False, no_hidden_field=True)  # Fields -> pack name
+    a_filename = SearchFormBooleanField(required=False, value_if_not_present=False, no_hidden_field=True)  # Fields -> file name
+    a_soundid = SearchFormBooleanField(required=False, value_if_not_present=False, no_hidden_field=True)  # Fields -> sound id
+    a_username = SearchFormBooleanField(required=False, value_if_not_present=False, no_hidden_field=True) # Fields -> username
+    a_tag = SearchFormBooleanField(required=False, value_if_not_present=False, no_hidden_field=True)  # Fields -> tags
+    a_description = SearchFormBooleanField(required=False, value_if_not_present=False, no_hidden_field=True)   # Fields -> description
 
-    g = forms.BooleanField(required=False, initial=True)  # group by pack
-    only_p = forms.BooleanField(required=False)  # only sounds with packs
-    only_g = forms.BooleanField(required=False)  # only geotagged sounds
-    only_r = forms.BooleanField(required=False)  # only remixed sounds
+    # Search engine filter-related fields
+    f = forms.CharField(required=False)  # raw filter (only used for some filters like pack filter and to allow custom raw filters)
+    duration_min = SearchFormDurationField(required=False, initial='0.0')
+    duration_max = SearchFormDurationField(required=False, initial='*')
+    only_p = SearchFormBooleanField(required=False, value_if_not_present=False)  # only sounds with packs
+    only_g = SearchFormBooleanFieldWithFilter(required=False, value_if_not_present=False, search_engine_filter='is_geotagged:1')  # only geotagged sounds
+    only_r = SearchFormBooleanFieldWithFilter(required=False, value_if_not_present=False, search_engine_filter='in_remix_group:1')  # only remixed sounds
     
+    # Clustering related fields
     cluster_id = forms.CharField(required=False)
 
-    cm = ExplicitBooleanField(required=False, 
-                              value_if_not_present=lambda form: False if form.request.user.is_anonymous 
-                              else form.request.user.profile.use_compact_mode)  # compact mode
-    
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)        
         super().__init__(*args, **kwargs)
         
-        # Pass a reference of the form instance to all ExplicitBooleanField fields as this is needed
+        # Pass a reference of the form instance to all SearchFormBooleanField fields as this is needed
         # to distinguish between unchecked checkboxes and non-present checkboxes in the form data
         for field in self.fields:
-            if isinstance(self.fields[field], ExplicitBooleanField):
+            if hasattr(self.fields[field], 'set_form_and_field_name'):
                 self.fields[field].set_form_and_field_name(self, field)
                 
     def clean_f(self):
+        # Note that f is only used for pack filters or custom raw filters. Most of the filters are set
+        # through the different form fields
         return self.cleaned_data['f'].strip().lstrip()
-        
-    def clean_g(self):
-        # Fields that have initial value need a special treatment as not only the initial values
-        # should be set in the form cleaned_data when the field is not passed in the form, but also
-        # the form data itself should be updated with the initial value so that the form is rendered
-        # with the initial value in the field. This is because search form takes parameters from a GET
-        # request and therefore the number of fields could be incomplete.
-        if not 'g' in self.data:
-            self.data = self.data.copy()
-            self.data['g'] = 'on'
-            return True  # If parameter not form data, retun the default value 
-        return self.cleaned_data['g']
     
     def clean_page(self):
         if not 'page' in self.data:
@@ -126,22 +150,33 @@ class SoundSearchForm(forms.Form):
             return int(self.fields['page'].initial)
     
     def clean_duration_min(self):
-        # See note in self.clean_g method about fields with initial values
+        # If no duration_min is provided, set the initial value in the form data
         if not 'duration_min' in self.data:
             self.data = self.data.copy()
             self.data['duration_min'] = self.fields['duration_min'].initial
             return self.fields['duration_min'].initial
-        return self.cleaned_data['duration_min']
+        if self.cleaned_data['duration_min'] == '*':
+            return self.cleaned_data['duration_min']
+        try:
+            return str(float(self.cleaned_data['duration_min']))
+        except ValueError:
+            self.fields['duration_min'].initial
 
     def clean_duration_max(self):
-        # See note in self.clean_g method about fields with initial values
+        # If no duration_max is provided, set the initial value in the form data
         if not 'duration_max' in self.data:
             self.data = self.data.copy()
             self.data['duration_max'] = self.fields['duration_max'].initial
             return self.fields['duration_max'].initial
-        return self.cleaned_data['duration_max']
+        if self.cleaned_data['duration_max'] == '*':
+            return self.cleaned_data['duration_max']
+        try:
+            return str(float(self.cleaned_data['duration_max']))
+        except ValueError:
+            self.fields['duration_max'].initial
 
     def clean_cm(self):
+        # Update user preferences if specified cm is diferent from current user preference
         use_compact_mode = self.cleaned_data['cm']
         if self.request.user.is_authenticated:
             if use_compact_mode != self.request.user.profile.use_compact_mode:
@@ -153,7 +188,8 @@ class SoundSearchForm(forms.Form):
         return "pack:" in self.cleaned_data['f']
     
     def _has_duration_filter(self):
-        return "duration:" in self.cleaned_data['f']
+        return float(self.cleaned_data['duration_min']) > 0 \
+            or self.cleaned_data['duration_max'] != self.fields['duration_max'].initial
     
     def _search_in_options_checked(self):
          # Check if any of the "search in" options is checked
@@ -165,10 +201,6 @@ class SoundSearchForm(forms.Form):
         if not hasattr(self, 'cleaned_data'):
             raise Exception("You must call is_valid() before calling contains_active_advanced_search_filters()")
         
-        duration_filter_is_default = True
-        if 'duration:' in self.cleaned_data['f']:
-            if 'duration:[0 TO *]' not in self.cleaned_data['f']:
-                duration_filter_is_default = False
         using_advanced_search_weights = self.request.GET.get("a_tag", False) \
             or self.request.GET.get("a_filename", False) \
             or self.request.GET.get("a_description", False) \
@@ -176,9 +208,9 @@ class SoundSearchForm(forms.Form):
             or self.request.GET.get("a_soundid", False) \
             or self.request.GET.get("a_username", False)
         return using_advanced_search_weights \
-            or 'is_geotagged:' in self.cleaned_data['f'] \
-            or 'in_remix_group:' in self.cleaned_data['f'] \
-            or not duration_filter_is_default
+            or self.cleaned_data['only_g'] \
+            or self.cleaned_data['only_r'] \
+            or self._has_duration_filter() 
     
     def get_processed_query_params_and_extra_vars(self):
         if not hasattr(self, 'cleaned_data'):
@@ -189,7 +221,7 @@ class SoundSearchForm(forms.Form):
             'textual_query': self.cleaned_data['q'],
             'sort': self.cleaned_data['s'],
             'current_page': self.cleaned_data['page'],
-            'group_by_pack': True if not 'g' in self.data else self.cleaned_data['g'],  # Group by default
+            'group_by_pack': self.cleaned_data['g'],
             'only_sounds_with_pack': self.cleaned_data['only_p'],
             'num_sounds': settings.SOUNDS_PER_PAGE if not self.cleaned_data['cm'] else settings.SOUNDS_PER_PAGE_COMPACT_MODE,
             'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS
@@ -265,11 +297,23 @@ class SoundSearchForm(forms.Form):
                 settings.SEARCH_SOUNDS_FIELD_NAME: original_filename_weight
             }
 
+        # Consruct filter query based on form data
+        f_param = self.cleaned_data['f']
+        for field in self.fields:
+            if isinstance(self.fields[field], SearchFormBooleanFieldWithFilter):
+                if self.cleaned_data[field]:
+                    f_param = self.fields[field].update_filter_query(f_param)
+        if self._has_duration_filter():
+            # If duration filter is specified, add it to the filter query
+            duration_filter = "duration:[{} TO {}]".format(self.cleaned_data['duration_min'],
+                                                           self.cleaned_data['duration_max'])
+            f_param += f' {duration_filter}'
+        
         # Parse query filter string and remove empty value fields
         # Also compute some things that will be useful later
         parsing_error = False
         try:
-            parsed_filters = parse_query_filter_string(self.cleaned_data['f'])
+            parsed_filters = parse_query_filter_string(f_param)
         except ParseException:
             search_logger.error(f"Query filter parsing error. filter: {self.request.GET.get('f', '')}")
             parsed_filters = []
@@ -289,21 +333,6 @@ class SoundSearchForm(forms.Form):
         else:
             in_ids = []
         query_params.update({'only_sounds_within_ids': in_ids})
-
-        # If duration_min/max are not specified but a duration filter is present, set the values to those of the filter
-        # so the form values match those of the filter. Also, update the raw form data so the form is rendered with
-        # the expected filter values
-        if self._has_duration_filter():
-            for filter_data in parsed_filters:
-                if filter_data[0] == 'duration':
-                    index_of_to_clause = [e.lower().strip() for e in filter_data].index('to')
-                    duration_min = filter_data[index_of_to_clause - 1]
-                    duration_max = filter_data[index_of_to_clause + 1]
-                    self.cleaned_data['duration_min'] = duration_min
-                    self.cleaned_data['duration_max'] = duration_max
-                    self.data = self.data.copy()
-                    self.data['duration_min'] = duration_min
-                    self.data['duration_max'] = duration_max
 
         # These variables are not used for querying the sound collection
         # We keep them separated in order to facilitate the distinction between variables used for performing

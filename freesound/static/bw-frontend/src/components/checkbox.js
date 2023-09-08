@@ -11,6 +11,10 @@ const addVisibleCheckbox = (checkboxEl) => {
 
     // Add CSS class to the label element
     checkboxEl.parentNode.classList.add('bw-checkbox-label');
+    if (checkboxEl.disabled) {
+        // If checkbox is disabled, add CSS class to parent element to make it look disabled
+        checkboxEl.parentNode.parentNode.classList.add('opacity-030');
+    }
 
     // Create the visible version of checkbox element (if it has not been already created)
     let visibleElementAlreadyAdded = false;

@@ -93,6 +93,20 @@ class SearchFormDurationField(FieldWithFormAndFieldNameMixin, forms.CharField):
         super().__init__(*args, **kwargs)
         self.widget.attrs['class'] = 'bw-search_input-duration v-spacing-1'
 
+    def clean(self, value):
+        if value is None or value.strip() == '':
+            self.form.data = self.form.data.copy()
+            self.form.data[self.field_name] = self.initial
+            return self.initial
+        if value == '*':
+            return value
+        try:
+            # Make sure value is convertible to float, but still return it as a string because
+            # the field is a CharField
+            return str(float(value))
+        except ValueError:
+            return self.initial
+
 class SoundSearchForm(forms.Form):
     # Basic query fields
     q = forms.CharField(required=False)  # query
@@ -140,41 +154,15 @@ class SoundSearchForm(forms.Form):
         return self.cleaned_data['f'].strip().lstrip()
     
     def clean_page(self):
+        # If page is not indicated, use initial value
+        # Also convert page to integer
         if not 'page' in self.data:
-            self.data = self.data.copy()
-            self.data['page'] = self.fields['page'].initial
             return int(self.fields['page'].initial)
         try:
             return int(self.cleaned_data.get('page', self.fields['page'].initial))
         except ValueError:
             return int(self.fields['page'].initial)
     
-    def clean_duration_min(self):
-        # If no duration_min is provided, set the initial value in the form data
-        if not 'duration_min' in self.data:
-            self.data = self.data.copy()
-            self.data['duration_min'] = self.fields['duration_min'].initial
-            return self.fields['duration_min'].initial
-        if self.cleaned_data['duration_min'] == '*':
-            return self.cleaned_data['duration_min']
-        try:
-            return str(float(self.cleaned_data['duration_min']))
-        except ValueError:
-            self.fields['duration_min'].initial
-
-    def clean_duration_max(self):
-        # If no duration_max is provided, set the initial value in the form data
-        if not 'duration_max' in self.data:
-            self.data = self.data.copy()
-            self.data['duration_max'] = self.fields['duration_max'].initial
-            return self.fields['duration_max'].initial
-        if self.cleaned_data['duration_max'] == '*':
-            return self.cleaned_data['duration_max']
-        try:
-            return str(float(self.cleaned_data['duration_max']))
-        except ValueError:
-            self.fields['duration_max'].initial
-
     def clean_cm(self):
         # Update user preferences if specified cm is diferent from current user preference
         use_compact_mode = self.cleaned_data['cm']

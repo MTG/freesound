@@ -41,7 +41,7 @@ def join_tags_include(list, include):
 @register.inclusion_tag('molecules/bw_follow_tags_widget.html', takes_context=True)
 def bw_follow_tags_widget(context):
     request = context['request']
-    slash_tag = "/".join(context['tags_in_filter'])
+    slash_tag = "/".join([tag.replace('"', '') for tag in context['tags_in_filter']])
     follow_tags_url = ''
     unfollow_tags_url = ''
     show_unfollow_button = False

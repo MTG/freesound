@@ -27,7 +27,7 @@ from django.urls import Resolver404, reverse
 
 import sounds.models
 from follow import follow_utils
-from search.views import search_view_helper
+from search.views import search_view_helper_form
 from tags.models import Tag, FS1Tag
 from utils.frontend_handling import render, using_beastwhoosh
 from utils.search import SearchEngineException
@@ -60,7 +60,7 @@ def tags(request, multiple_tags=None):
             return HttpResponseRedirect(f"{reverse('tags')}?f={search_filter}")
         else:
             # Share same view code as for the search view, but set "tags mode" on
-            tvars = search_view_helper(request, tags_mode=True)
+            tvars = search_view_helper_form(request, tags_mode=True)
             return render(request, 'search/search.html', tvars)
 
     # NOTE: all code below will not be used when NG UI is retired as tags page is calcualted using search views

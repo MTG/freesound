@@ -26,8 +26,14 @@ from comments.models import Comment
 class CommentAdmin(admin.ModelAdmin):
     fieldsets = ((None, {'fields': ('user', 'sound', 'comment')}),)
     raw_id_fields = ('user', 'parent', 'sound')
-    list_display = ('user', 'sound', 'created')
-    search_fields = ('comment', )
+    list_display = ('user', 'created', 'get_comment_summary', 'sound')
+    list_select_related = ('user', 'sound')
+    search_fields = ('comment', '=user__username', '=sound__id')
+
+    @admin.display(description='Comment')
+    def get_comment_summary(self, obj):
+        max_len = 80
+        return f"{obj.comment[:max_len]}{'...' if len(obj.comment) > max_len else ''}"
 
     def has_add_permission(self, request):
         return False

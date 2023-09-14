@@ -101,6 +101,10 @@ def remove_control_chars(text):
     return ''.join(c for c in text if (ord(c) >= 32 or ord(c) in [9, 10, 13]))
 
 
+def text_has_hyperlink(text):
+    return "http://" in text or "https://" in text
+
+
 def text_may_be_spam(text):
     """Some heuristics to determine if some text may be spam.
     Arguments:
@@ -113,7 +117,7 @@ def text_may_be_spam(text):
         return False
 
     # If link in text
-    if "http://" in text or "https://" in text:
+    if text_has_hyperlink(text):
         return True
 
     # If emails or short urls

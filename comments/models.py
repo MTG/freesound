@@ -21,7 +21,10 @@
 import sounds
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, pre_save
+from django.dispatch import receiver
+
+from utils.text import text_has_hyperlink
 
 
 class Comment(models.Model):
@@ -31,6 +34,7 @@ class Comment(models.Model):
     parent = models.ForeignKey(
         'self', null=True, blank=True, related_name='replies', default=None, on_delete=models.SET_NULL)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
+    contains_hyperlink = models.BooleanField(db_index=True, default=False)
 
     def __str__(self):
         return f"{self.user} comment on {self.sound}"
@@ -38,7 +42,14 @@ class Comment(models.Model):
     class Meta:
         ordering = ('-created', )
 
+    def set_has_hyperlink(self, commit=False):
+        if text_has_hyperlink(self.comment):
+            self.contains_hyperlink = True
+            if commit:
+                self.save()
 
+
+@receiver(post_delete, sender=Comment)
 def on_delete_comment(sender, instance, **kwargs):
     try:
         instance.sound.post_delete_comment()
@@ -48,4 +59,8 @@ def on_delete_comment(sender, instance, **kwargs):
         sound will no longer exist so we don't need to update it
         """
         pass
-post_delete.connect(on_delete_comment, sender=Comment)
+
+
+@receiver(pre_save, sender=Comment)
+def update_hyperlink_field(sender, instance, **kwargs):
+    instance.set_has_hyperlink()

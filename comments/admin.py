@@ -28,6 +28,7 @@ class CommentAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', 'parent', 'sound')
     list_display = ('user', 'created', 'get_comment_summary', 'sound')
     list_select_related = ('user', 'sound')
+    list_filter = ('contains_hyperlink',)
     search_fields = ('comment', '=user__username', '=sound__id')
 
     @admin.display(description='Comment')

@@ -20,7 +20,6 @@
 
 from django.contrib import admin
 
-from accounts.admin import LargeTablePaginator
 from comments.models import Comment
 
 
@@ -32,7 +31,6 @@ class CommentAdmin(admin.ModelAdmin):
     list_select_related = ('user', 'sound')
     list_filter = ('contains_hyperlink',)
     search_fields = ('comment', '=user__username', '=sound__id')
-    paginator = LargeTablePaginator
 
     @admin.display(description='Comment')
     def get_comment_summary(self, obj):

@@ -28,7 +28,6 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django_object_actions import DjangoObjectActions
 
-from accounts.admin import LargeTablePaginator
 from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress, SoundAnalysis
 
 
@@ -61,7 +60,6 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     readonly_fields = ('num_downloads', )
     actions = ('reprocess_sound', )
     change_actions = ('reprocess_sound', )
-    paginator = LargeTablePaginator
 
     def has_add_permission(self, request):
         return False
@@ -269,7 +267,6 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
     actions = ('re_run_analysis',)
     change_actions = ('re_run_analysis',)
     readonly_fields = []
-    paginator = LargeTablePaginator
 
     def has_add_permission(self, request):
         return False

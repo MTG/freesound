@@ -25,19 +25,17 @@ from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.models import User
-from django.core.paginator import Paginator
-from django.db import connection
 from django.forms import ValidationError
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django_object_actions import DjangoObjectActions
 
 from accounts.forms import username_taken_by_other_user
 from accounts.models import Profile, UserFlag, EmailPreferenceType, OldUsername, DeletedUser, UserDeletionRequest, EmailBounce, GdprAcceptance
 from general import tasks
+from utils.admin_helpers import LargeTablePaginator
 
 web_logger = logging.getLogger("web")
 
@@ -101,24 +99,6 @@ class DeletedUserAdmin(admin.ModelAdmin):
     )
     def get_num_sounds(self, obj):
         return f'{obj.profile.num_sounds}'
-
-
-class LargeTablePaginator(Paginator):
-    """ We use the information on postgres table 'reltuples' to avoid using count(*) for performance. """
-    @cached_property
-    def count(self):
-        try:
-            if not self.object_list.query.where:
-                cursor = connection.cursor()
-                cursor.execute("SELECT reltuples FROM pg_class WHERE relname = %s",
-                    [self.object_list.query.model._meta.db_table])
-                ret = int(cursor.fetchone()[0])
-                return ret
-            else :
-                return self.object_list.count()
-        except :
-            # AttributeError if object_list has no count() method.
-            return len(self.object_list)
 
 
 class AdminUserForm(UserChangeForm):

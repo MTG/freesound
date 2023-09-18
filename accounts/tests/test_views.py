@@ -46,9 +46,9 @@ class SimpleUserTest(TestCase):
         self.sound.similarity_state = "OK"
         self.sound.save()
         SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
-        Download.objects.create(user=self.user, sound=self.sound, license=self.sound.license,
+        self.download = Download.objects.create(user=self.user, sound=self.sound, license=self.sound.license,
                                 created=self.sound.created)
-        PackDownload.objects.create(user=self.user, pack=self.pack, created=self.pack.created)
+        self.pack_download = PackDownload.objects.create(user=self.user, pack=self.pack, created=self.pack.created)
 
     def test_account_response(self):
         # 200 response on account access
@@ -130,9 +130,9 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         # response content as expected
         self.assertContains(resp,
-                            'Download Type,File Name,User,License\r\nP,{0},{1},{0}\r\nS,{2},{3},{4}\r\n'.format(
+                            'Download Type,File Name,User,License,Timestamp\r\nP,{0},{1},{0},{6}\r\nS,{2},{3},{4},{5}\r\n'.format(
                                 self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
-                                self.sound.license))
+                                self.sound.license, self.download.created, self.pack_download.created))
 
     def test_download_attribution_txt(self):
         self.client.force_login(self.user)
@@ -141,9 +141,9 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         # response content as expected
         self.assertContains(resp,
-                         'P: {0} by {1} | License: {0}\nS: {2} by {3} | License: {4}\n'.format(
+                         'P: {0} by {1} | License: {0} | Timestamp: {6}\nS: {2} by {3} | License: {4} | Timestamp: {5}\n'.format(
                              self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
-                             self.sound.license))
+                             self.sound.license, self.download.created, self.pack_download.created))
 
 
         # If user is deleted, get 404

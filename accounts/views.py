@@ -1148,20 +1148,22 @@ def download_attribution(request):
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         output = io.StringIO()
         if download == 'csv':
-            output.write('Download Type,File Name,User,License\r\n')
+            output.write('Download Type,File Name,User,License,Timestamp\r\n')
             csv_writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in qs:
                 csv_writer.writerow(
                     [row['download_type'][0].upper(), row['sound__original_filename'],
                      row['sound__user__username'],
                      license_with_version(row['license__name'] or row['sound__license__name'],
-                                          row['license__deed_url'] or row['sound__license__deed_url'])])
+                                          row['license__deed_url'] or row['sound__license__deed_url']),
+                     row['created']])
         elif download == 'txt':
             for row in qs:
-                output.write("{}: {} by {} | License: {}\n".format(row['download_type'][0].upper(),
+                output.write("{}: {} by {} | License: {} | Timestamp: {}\n".format(row['download_type'][0].upper(),
                              row['sound__original_filename'], row['sound__user__username'],
                              license_with_version(row['license__name'] or row['sound__license__name'],
-                                                  row['license__deed_url'] or row['sound__license__deed_url'])))
+                                                  row['license__deed_url'] or row['sound__license__deed_url']),
+                             row['created']))
         response.writelines(output.getvalue())
         return response
     else:

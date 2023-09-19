@@ -49,6 +49,7 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         tags: freesound:2023-07
+        load: true
 
     - name: Build cached image
       uses: docker/build-push-action@v4
@@ -57,6 +58,7 @@ jobs:
         file: docker/Dockerfile.workers_web
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        load: true
 
     - name: Pull docker images
       run: docker-compose -f docker-compose.test.yml pull

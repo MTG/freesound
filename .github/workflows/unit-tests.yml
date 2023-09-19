@@ -42,17 +42,33 @@ jobs:
       run: echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
       continue-on-error: true
 
+    - name: Log in to GitHub registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
     - name: Pull docker images
       run: docker-compose -f docker-compose.test.yml pull
 
-    - uses: jpribyl/action-docker-layer-caching@v0.1.1
-      continue-on-error: true
-
     - name: Build base image
-      run: make -C docker
+      uses: docker/build-push-action@v4
+      with:
+        context: docker
+        file: Dockerfile.base
+        cache-from: ghcr.io/mtg/freesound-base-cache:latest
+        # use mode=max to cache intermediate layers as well
+        cache-to: type=registry,mode=max,oci-mediatypes=true,compression=zstd,compression-level=7,ref=ghcr.io/mtg/freesound-base-cache:latest
+        tags: freesound:2023-07
+
+    - name: Build cached image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: docker/Dockerfile.workers_web
+        cache-from: ghcr.io/mtg/freesound-test-cache:latest
+        # use mode=max to cache intermediate layers as well
+        cache-to: type=registry,mode=max,oci-mediatypes=true,compression=zstd,compression-level=7,ref=ghcr.io/mtg/freesound-test-cache:latest
 
     - name: Build images
-      run: docker-compose -f docker-compose.test.yml build db test_runner
+      run: docker-compose -f docker-compose.test.yml build test_runner
 
     - name: Run tests
       run: docker-compose -f docker-compose.test.yml run --rm test_runner python manage.py test --noinput --settings=freesound.test_settings

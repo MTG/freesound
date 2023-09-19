@@ -5,10 +5,9 @@ services:
         image: postgres:12.1
         volumes:
             - pgdata:/var/lib/postgresql/data
+            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         env_file:
             - environment
-        volumes:
-            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         ports:
             - "5432:5432"
         environment:

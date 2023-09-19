@@ -70,8 +70,4 @@ urlpatterns = [
     path('<ticket_key>/',
         views.ticket,
         name='tickets-ticket'),
-
-    path('<ticket_key>/messages/',
-        views.sound_ticket_messages,
-        name='tickets-ticket-messages'),
 ]

@@ -28,7 +28,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User, Group
 from django.db import transaction
 from django.db.models import Count, Min, Q, F
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from general.tasks import whitelist_user
@@ -84,11 +84,15 @@ def invalidate_all_moderators_header_cache():
         invalidate_user_template_caches(mod.id)
 
 
+@login_required
 def ticket(request, ticket_key):
     can_view_moderator_only_messages = _can_view_mod_msg(request)
     clean_status_forms = True
     clean_comment_form = True
     ticket = get_object_or_404(Ticket.objects.select_related('sound__license', 'sound__user'), key=ticket_key)
+
+    if not (ticket.sender == request.user or _can_view_mod_msg(request)):
+        raise Http404
 
     if request.method == 'POST':
 
@@ -207,14 +211,6 @@ def new_sound_tickets_count():
                                      sound__moderation_state='PE',
                                      sound__processing_state='OK',
                                      status=TICKET_STATUS_NEW))
-
-@login_required
-def sound_ticket_messages(request, ticket_key):
-    can_view_moderator_only_messages = _can_view_mod_msg(request)
-    ticket = get_object_or_404(Ticket, key=ticket_key)
-    tvars = {"can_view_moderator_only_messages": can_view_moderator_only_messages,
-             "ticket": ticket}
-    return render(request, 'tickets/message_list.html', tvars)
 
 
 def _get_new_uploaders_by_ticket():

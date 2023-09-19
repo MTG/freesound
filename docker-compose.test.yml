@@ -3,9 +3,6 @@ version: "3.7"
 services:
     db:
         image: postgres:12.1
-        volumes:
-            - pgdata:/var/lib/postgresql/data
-            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         env_file:
             - environment
         ports:

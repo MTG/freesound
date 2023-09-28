@@ -265,7 +265,7 @@ requests==2.31.0
     #   zenpy
 s3transfer==0.6.1
     # via boto3
-sentry-sdk==1.9.10
+sentry-sdk==1.31.0
     # via -r requirements.in
 sgmllib3k==1.0.0
     # via feedparser

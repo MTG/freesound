@@ -33,7 +33,6 @@ import forum.views
 import comments.views
 import bookmarks.views
 import follow.views
-import general.views
 import donations.views
 import utils.tagrecommendation_utilities as tagrec
 from apiv2.apiv2_utils import apiv1_end_of_life_message
@@ -123,8 +122,6 @@ urlpatterns = [
     re_path(r'^crossdomain\.xml$', TemplateView.as_view(template_name='crossdomain.xml'), name="crossdomain"),
 
     # admin views
-    re_path(r'^admin/orderedmove/(?P<direction>up|down)/(?P<model_type_id>\d+)/(?P<model_id>\d+)/$',
-            general.views.admin_move_ordered_model, name="admin-move"),
     path('admin/doc/', include('django.contrib.admindocs.urls')),
     path('admin/', admin.site.urls),
 

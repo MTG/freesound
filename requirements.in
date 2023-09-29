@@ -6,6 +6,7 @@ boto3==1.26.130
 celery==4.4.7
 debugpy==1.5.1
 dj-database-url==0.5.0
+django-admin-sortable==2.2.4
 django-amazon-ses==4.0.1
 django-cors-headers==3.13.0
 django-debug-toolbar==3.1.1

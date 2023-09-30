@@ -17,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from adminsortable.models import SortableMixin
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.db import models
@@ -37,10 +36,3 @@ class AkismetSpam(SocialModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     spam = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
-
-class OrderedModel(SortableMixin):
-    order = models.PositiveIntegerField(default=0, editable=False)
-
-    class Meta:
-        ordering = ["order"]
-        abstract = True

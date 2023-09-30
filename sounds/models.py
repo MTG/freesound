@@ -52,7 +52,7 @@ from apiv2.models import ApiV2Client
 from comments.models import Comment
 from freesound.celery import app as celery_app
 from general import tasks
-from general.models import OrderedModel, SocialModel
+from general.models import SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
@@ -71,7 +71,7 @@ web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
 
 
-class License(OrderedModel):
+class License(models.Model):
     """A creative commons license model"""
     name = models.CharField(max_length=512)
     abbreviation = models.CharField(max_length=8, db_index=True)

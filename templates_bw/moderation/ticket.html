@@ -54,7 +54,7 @@
 
         <div class="v-spacing-top-4">
             <h3 class="text-grey">Messages ({{ticket.messages.all.count}})</h3>
-            <div class="v-spacing-top-2">
+            <div class="v-spacing-top-2 overflow-hidden">
             {% for message in ticket.messages.all reversed %}
                 {% if not message.moderator_only or can_view_moderator_only_messages %}
                 <div class="v-spacing-2">

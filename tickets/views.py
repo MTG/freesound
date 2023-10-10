@@ -235,6 +235,7 @@ def _get_new_uploaders_by_ticket():
         new_sounds_users.append({"user": users_dict[t['sender']],
                                  "username": users_dict[t['sender']].username,
                                  "new_count": t['total'],
+                                 "num_uploaded_sounds": users_dict[t['sender']].profile.num_sounds,
                                  "time": (datetime.datetime.now() - t['older']).days})
     return new_sounds_users
 

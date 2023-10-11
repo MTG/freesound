@@ -63,6 +63,10 @@ urlpatterns = [
         views.user_annotations,
         name='tickets-user-annotations'),
 
+    path('moderation/annotations/add/<int:user_id>/',
+        views.add_user_annotation,
+        name='tickets-add-user-annotation'),
+
     path('moderation/pending/<username>/',
         views.pending_tickets_per_user,
         name='tickets-user-pending_sounds'),

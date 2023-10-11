@@ -102,6 +102,12 @@ class UserAnnotationForm(forms.Form):
                                  required=True,
                                  label='')
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['text'].widget.attrs['placeholder'] = 'Type here a new annotation for that user'
+        self.fields['text'].widget.attrs['rows'] = '1'
+        self.fields['text'].widget.attrs['style'] = 'min-height:70px;'
+
 
 class SoundStateForm(forms.Form):
     action = forms.ChoiceField(choices=MODERATION_CHOICES,

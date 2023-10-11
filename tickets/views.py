@@ -31,14 +31,14 @@ from django.db.models import Count, Min, Q, F
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from general.tasks import whitelist_user
+from general.tasks import whitelist_user as whitelist_user_task
 
 from .models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
 from tickets.forms import AnonymousMessageForm, BWAnonymousMessageForm, UserMessageForm, BWUserMessageForm, ModeratorMessageForm, BWModeratorMessageForm, \
     SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY
-from utils.cache import invalidate_user_template_caches
+from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
 from utils.frontend_handling import render, using_beastwhoosh
 from utils.username import redirect_if_old_username_or_404
 from utils.pagination import paginate
@@ -76,12 +76,6 @@ def is_selected(request, prefix):
         if name.startswith(prefix):
             return True
     return False
-
-
-def invalidate_all_moderators_header_cache():
-    mods = Group.objects.get(name='moderators').user_set.all()
-    for mod in mods:
-        invalidate_user_template_caches(mod.id)
 
 
 def ticket(request, ticket_key):
@@ -157,7 +151,7 @@ def ticket(request, ticket_key):
                     notification = ticket.NOTIFICATION_APPROVED
 
                 elif sound_action == 'Whitelist':
-                    whitelist_user.delay(ticket_ids=[ticket.id])  # async job should take care of whitelisting
+                    whitelist_user_task.delay(ticket_ids=[ticket.id])  # async job should take care of whitelisting
                     comment += f'whitelisted all sounds from user {ticket.sender}'
                     notification = ticket.NOTIFICATION_WHITELISTED
 
@@ -203,10 +197,11 @@ def ticket(request, ticket_key):
 # In the next 2 functions we return a queryset os the evaluation is lazy.
 # N.B. these functions are used in the home page as well.
 def new_sound_tickets_count():
-    return len(Ticket.objects.filter(assignee=None,
-                                     sound__moderation_state='PE',
-                                     sound__processing_state='OK',
-                                     status=TICKET_STATUS_NEW))
+    return Ticket.objects.filter(
+        assignee=None,
+        sound__moderation_state='PE',
+        sound__processing_state='OK',
+        status=TICKET_STATUS_NEW).count()
 
 @login_required
 def sound_ticket_messages(request, ticket_key):
@@ -322,7 +317,7 @@ def assign_sounds(request):
 @permission_required('tickets.can_moderate')
 def moderation_tardy_users_sounds(request):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('account', args=[username]) + '?tardy_users=1')
+        return HttpResponseRedirect(reverse('tickets-moderation-home') + '?tardy_users=1')
     
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
     tardy_user_tickets = _get_tardy_user_tickets()
@@ -347,7 +342,7 @@ def moderation_tardy_users_sounds(request):
 @permission_required('tickets.can_moderate')
 def moderation_tardy_moderators_sounds(request):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('account', args=[username]) + '?tardy_moderators=1')
+        return HttpResponseRedirect(reverse('tickets-moderation-home') + '?tardy_moderators=1')
     
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
     tardy_moderators_tickets = _get_tardy_moderator_tickets()
@@ -523,7 +518,7 @@ def moderation_assigned(request, user_id):
 
             elif action == "Whitelist":
                 ticket_ids = list(tickets.values_list('id',flat=True))
-                whitelist_user.delay(ticket_ids=ticket_ids)  # async job should take care of whitelisting
+                whitelist_user_task.delay(ticket_ids=ticket_ids)  # async job should take care of whitelisting
                 notification = Ticket.NOTIFICATION_WHITELISTED
 
                 users = set(tickets.values_list('sender__username', flat=True))
@@ -702,3 +697,25 @@ def guide(request):
              'name': name,
              'section': 'guide'}
     return render(request, 'moderation/guide.html', tvars)
+
+
+@permission_required('tickets.can_moderate')
+def whitelist_user(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except (User.DoesNotExist, AttributeError):
+        messages.add_message(request, messages.ERROR,
+                             """The user you are trying to whitelist does not exist""")
+        return HttpResponseRedirect(reverse('tickets-moderation-home'))
+    
+    whitelist_user_task(user_id=user_id)  # async job should take care of whitelisting
+    
+    messages.add_message(request, messages.INFO,
+        f"""User {user.username} has been whitelisted. Note that some of tickets might
+        still appear on her pending tickets list for some time.""")
+
+    redirect_to = request.GET.get('next', None)
+    if redirect_to is not None:
+        return HttpResponseRedirect(redirect_to)
+
+    return HttpResponseRedirect('tickets-moderation-home')

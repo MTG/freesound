@@ -74,4 +74,8 @@ urlpatterns = [
     path('<ticket_key>/messages/',
         views.sound_ticket_messages,
         name='tickets-ticket-messages'),
+
+    path('moderation/whitelist/<int:user_id>/',
+        views.whitelist_user,
+        name='tickets-whitelist-user'),
 ]

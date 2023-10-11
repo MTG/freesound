@@ -47,6 +47,12 @@
                                 <li class="bw-nav__action dropdown-item text-light-grey">
                                     This user is whitelisted
                                 </li>
+                            {% else %}
+                                <li class="bw-nav__action dropdown-item text-light-grey">
+                                    <a class="bw-link--black" href="{% url 'tickets-whitelist-user' user.id %}?next={{ next_path }}">
+                                        Whitelist this user
+                                    </a>
+                                </li>
                             {% endif %}
                             {% if not user_downloads_public %}
                             <li class="bw-nav__action dropdown-item">

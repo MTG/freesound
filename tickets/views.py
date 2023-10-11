@@ -291,6 +291,8 @@ def assign_sounds(request):
         new_sounds_users = sorted(new_sounds_users, key=lambda x: x["username"])
     elif order == "new_count":
         new_sounds_users = sorted(new_sounds_users, key=lambda x: x["new_count"], reverse=True)
+    elif order == "num_uploaded_sounds":
+        new_sounds_users = sorted(new_sounds_users, key=lambda x: x["num_uploaded_sounds"], reverse=True)
     else:
         # Default option, sort by number of days in queue
         new_sounds_users = sorted(new_sounds_users, key=lambda x: x["time"], reverse=True)

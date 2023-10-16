@@ -19,8 +19,9 @@
 #
 
 import logging
-
 from collections import Counter
+
+from adminsortable.models import SortableMixin
 from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.db.models import F
@@ -29,18 +30,18 @@ from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.encoding import smart_str
+from django.utils.text import slugify
 
 import accounts
-from general.models import OrderedModel
 from utils.cache import invalidate_template_cache
 from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_forum import delete_posts_from_search_engine
-from django.utils.text import slugify
 
 web_logger = logging.getLogger('web')
 
 
-class Forum(OrderedModel):
+class Forum(SortableMixin):
+    order = models.PositiveIntegerField(default=0, editable=False)
 
     name = models.CharField(max_length=50)
     name_slug = models.CharField(max_length=50, unique=True, db_index=True)
@@ -73,6 +74,9 @@ class Forum(OrderedModel):
 
     def get_absolute_url(self):
         return reverse("forums-forum", args=[smart_str(self.name_slug)])
+
+    class Meta:
+        ordering = ["order"]
 
 
 @receiver(pre_save, sender=Forum)

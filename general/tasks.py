@@ -25,7 +25,7 @@ import os
 import time
 
 
-from celery.decorators import task
+from celery import shared_task
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -53,7 +53,7 @@ DELETE_USER_DELETE_SOUNDS_ACTION_NAME = 'delete_user_delete_sounds'
 DELETE_USER_KEEP_SOUNDS_ACTION_NAME = 'delete_user_keep_sounds'
 
 
-@task(name=WHITELIST_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+@shared_task(name=WHITELIST_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def whitelist_user(ticket_ids=None, user_id=None):
     # Whitelist "sender" users from the tickets with given ids
     workers_logger.info("Start whitelisting users from tickets (%s)" % json.dumps({
@@ -113,7 +113,7 @@ def whitelist_user(ticket_ids=None, user_id=None):
          'work_time': round(time.time() - start_time)}))
 
 
-@task(name=DELETE_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+@shared_task(name=DELETE_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def delete_user(user_id, deletion_action, deletion_reason):
     try:
         user = User.objects.get(id=user_id)
@@ -171,7 +171,7 @@ def delete_user(user_id, deletion_action, deletion_reason):
                 'deletion_reason': deletion_reason, 'error': str(e), 'work_time': round(time.time() - start_time)}))
 
 
-@task(name=VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+@shared_task(name=VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def validate_bulk_describe_csv(bulk_upload_progress_object_id):
     # Import BulkUploadProgress model from apps to avoid circular dependency
     BulkUploadProgress = apps.get_model('sounds.BulkUploadProgress')
@@ -193,7 +193,7 @@ def validate_bulk_describe_csv(bulk_upload_progress_object_id):
                 'work_time': round(time.time() - start_time)}))
 
 
-@task(name=BULK_DESCRIBE_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+@shared_task(name=BULK_DESCRIBE_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def bulk_describe(bulk_upload_progress_object_id):
     # Import BulkUploadProgress model from apps to avoid circular dependency
     BulkUploadProgress = apps.get_model('sounds.BulkUploadProgress')
@@ -218,7 +218,7 @@ def bulk_describe(bulk_upload_progress_object_id):
                 'work_time': round(time.time() - start_time)}))
 
 
-@task(name=PROCESS_ANALYSIS_RESULTS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+@shared_task(name=PROCESS_ANALYSIS_RESULTS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def process_analysis_results(sound_id, analyzer, status, analysis_time, exception=None):
     """Process the results of the analysis of a file and update the SoundAnalysis object accordingly.
 
@@ -269,7 +269,7 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
                  'error': str(e), 'work_time': round(time.time() - start_time)}))
 
 
-@task(name=SOUND_PROCESSING_TASK_NAME, queue=settings.CELERY_SOUND_PROCESSING_QUEUE_NAME)
+@shared_task(name=SOUND_PROCESSING_TASK_NAME, queue=settings.CELERY_SOUND_PROCESSING_QUEUE_NAME)
 def process_sound(sound_id, skip_previews=False, skip_displays=False):
     """Process a sound and generate the mp3/ogg preview files and the waveform/spectrogram displays
 
@@ -323,7 +323,7 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
     cancel_timeout_alarm()
 
 
-@task(name=PROCESS_BEFORE_DESCRIPTION_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+@shared_task(name=PROCESS_BEFORE_DESCRIPTION_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def process_before_description(audio_file_path):
     """Processes an uploaed sound file before the sound is described and saves generated previews
     and wave/spectral images in a specfic directory so these can be served in the sound players

@@ -3,7 +3,7 @@ autopep8==1.5.7
 beautifulsoup4==4.9.3
 bleach==5.0.1
 boto3==1.26.130
-celery==4.4.7
+celery==5.3.4
 debugpy==1.5.1
 dj-database-url==0.5.0
 django-admin-sortable==2.2.4

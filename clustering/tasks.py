@@ -22,7 +22,7 @@ from __future__ import absolute_import
 
 from django.conf import settings
 from django.core.cache import caches
-from celery.decorators import task
+from celery import shared_task
 from celery import Task
 import logging
 
@@ -43,7 +43,7 @@ class ClusteringTask(Task):
             self.engine = ClusteringEngine()
             
 
-@task(name="cluster_sounds", base=ClusteringTask)
+@shared_task(name="cluster_sounds", base=ClusteringTask)
 def cluster_sounds(cache_key_hashed, sound_ids, features):
     """ Triggers the clustering of the sounds given as argument with the specified features.
 

@@ -18,21 +18,10 @@
 #     See AUTHORS file.
 #
 from django.contrib.auth.models import User
-from django.contrib.contenttypes import fields
 from django.db import models
 
-from favorites.models import Favorite
-from tags.models import TaggedItem
 
-
-class SocialModel(models.Model):
-    tags = fields.GenericRelation(TaggedItem)
-    fans = fields.GenericRelation(Favorite)
-
-    class Meta:
-        abstract = True
-
-class AkismetSpam(SocialModel):
+class AkismetSpam(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     spam = models.TextField()
     created = models.DateTimeField(auto_now_add=True)

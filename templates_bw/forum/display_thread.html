@@ -25,9 +25,7 @@
                         {% endfor %}
                         {% if info.num_extra_commenters > 0 %}
                             <div class="bw-threads__avatar-mini-container">
-                                <div class="bw-threads__avatar-mini-cover">
-                                    <p>+{{ info.num_extra_commenters }}</p>
-                                </div>
+                                <div class="bw-threads__avatar-mini-cover text-black">+{{ info.num_extra_commenters }}</div>
                             </div>
                         {% endif %}
                     {% endwith %}

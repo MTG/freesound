@@ -12,24 +12,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
       with:
         install: true
-
-    - name: Notify workflow starting
-      uses: voxmedia/github-action-slack-notify-build@v1
-      continue-on-error: true
-      if: success()
-      id: slack
-      with:
-        channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
-        status: STARTING
-        color: warning
-      env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
 
     - name: Setup
       run: bash -c 'mkdir -p ./freesound-data/{packs,uploads,avatars} && echo FS_USER_ID_FROM_ENV=$(id -u) > .env && cp freesound/local_settings.example.py freesound/local_settings.py'
@@ -42,16 +28,16 @@ jobs:
       continue-on-error: true
 
     - name: Build base image
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v5
       with:
-        context: ./docker
         file: docker/Dockerfile.base
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        tags: mtgupf/freesound:2023-07
         push: false
-        outputs: type=docker,name=mtgupf/freesound:2023-07
         load: true
+
+    - name: check images
+      run: docker image ls
 
     - name: Build cached image
       uses: docker/build-push-action@v4

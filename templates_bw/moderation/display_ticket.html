@@ -21,7 +21,7 @@
     <div>
         Last message by {% if last_message.sender %}{{last_message.sender.username}}{% else %}anonymous{% endif %}:
     </div>
-    <div class="moderation-unsure-ticket-last">
+    <div class="overflow-hidden">
         <em>"{{ last_message.text | truncatechars:200 }}"</em>
     </div>
     {% endif %}

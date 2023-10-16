@@ -63,6 +63,10 @@ urlpatterns = [
         views.user_annotations,
         name='tickets-user-annotations'),
 
+    path('moderation/annotations/add/<int:user_id>/',
+        views.add_user_annotation,
+        name='tickets-add-user-annotation'),
+
     path('moderation/pending/<username>/',
         views.pending_tickets_per_user,
         name='tickets-user-pending_sounds'),
@@ -71,7 +75,7 @@ urlpatterns = [
         views.ticket,
         name='tickets-ticket'),
 
-    path('<ticket_key>/messages/',
-        views.sound_ticket_messages,
-        name='tickets-ticket-messages'),
+    path('moderation/whitelist/<int:user_id>/',
+        views.whitelist_user,
+        name='tickets-whitelist-user'),
 ]

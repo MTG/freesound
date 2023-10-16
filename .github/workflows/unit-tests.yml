@@ -48,7 +48,8 @@ jobs:
         file: docker/Dockerfile.base
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        tags: freesound:2023-07
+        tags: mtgupf/freesound:2023-07
+        push: false
         load: true
 
     - name: Build cached image

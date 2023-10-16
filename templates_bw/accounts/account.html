@@ -54,6 +54,16 @@
                                     </a>
                                 </li>
                             {% endif %}
+                            <li class="bw-nav__action dropdown-item">
+                                <a class="bw-link--black" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" user.id %}?ajax=1" data-modal-activation-param="mod_annotations" href="javascript:void(0);">
+                                    Moderation annotations (<span class="annotation-counter-{{ user.id }}">{{ num_mod_annotations }}</span>)
+                                </a>
+                            </li>
+                            <li class="bw-nav__action dropdown-item">
+                                <a class="bw-link--black" data-toggle="pending-moderation-modal" data-modal-content-url="{% url "tickets-user-pending_sounds" user.username %}?ajax=1" data-modal-activation-param="pending_moderation" href="javascript:void(0);">
+                                    Sounds pending moderation ({{ num_sounds_pending }})
+                                </a>
+                            </li>
                             {% if not user_downloads_public %}
                             <li class="bw-nav__action dropdown-item">
                                 <a class="bw-link--black" data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);">
@@ -74,11 +84,6 @@
                             <li class="bw-nav__action dropdown-item">
                                 <a class="bw-link--black" data-toggle="comments-modal" data-modal-content-url="{% url "comments-by-user" user.username %}?ajax=1" data-modal-activation-param="comments_by" href="javascript:void(0);" title="See all sound comments by {{ user.username }}">
                                     All comments ({{ user.profile.num_comments }})
-                                </a>
-                            </li>
-                            <li class="bw-nav__action dropdown-item">
-                                <a class="bw-link--black" data-toggle="pending-moderation-modal" data-modal-content-url="{% url "tickets-user-pending_sounds" user.username %}?ajax=1" data-modal-activation-param="pending_moderation" href="javascript:void(0);">
-                                    Sounds pending moderation ({{ num_sounds_pending_count }})
                                 </a>
                             </li>
                             {% if request.user.is_staff %}

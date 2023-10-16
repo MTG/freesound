@@ -176,10 +176,10 @@ def ticket(request, ticket_key):
         tc_form = _get_tc_form(request, False)
 
     num_sounds_pending = ticket.sender.profile.num_sounds_pending_moderation()
-    num_sender_annotations = UserAnnotation.objects.filter(user=ticket.sender).count()
+    num_mod_annotations = UserAnnotation.objects.filter(user=ticket.sender).count()
     tvars = {"ticket": ticket,
              "num_sounds_pending": num_sounds_pending,
-             "num_sender_annotations": num_sender_annotations,
+             "num_mod_annotations": num_mod_annotations,
              "tc_form": tc_form,
              "sound_form": sound_form,
              "can_view_moderator_only_messages": can_view_moderator_only_messages}
@@ -611,7 +611,7 @@ def moderation_assigned(request, user_id):
 def user_annotations(request, user_id):
     user = get_object_or_404(User, id=user_id)
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('account', args=[user.username]) + '?moderation_annotations=1')
+        return HttpResponseRedirect(reverse('account', args=[user.username]) + '?mod_annotations=1')
     annotations = UserAnnotation.objects.filter(user=user)
     if using_beastwhoosh(request):
         user_recent_ticket_comments = TicketComment.objects.filter(sender=user).select_related('ticket').order_by('-created')[:15]

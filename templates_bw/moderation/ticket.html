@@ -23,7 +23,7 @@
                     <a href="{% url "account" ticket.sender.username %}">{{ ticket.sender.username }}</a>
                     {% if perms.tickets.can_moderate %}
                     <span class="h-spacing-1">·</span><a class="bw-link--black" data-toggle="pending-moderation-modal" data-modal-content-url="{% url "tickets-user-pending_sounds" ticket.sender.username %}?ajax=1" href="javascript:void(0);">{{ num_sounds_pending }} pending</a>
-                    <span class="h-spacing-1">·</span><a class="bw-link--black" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);"><span class="annotation-counter-{{ ticket.sender.id }}">{{ num_sender_annotations }}</span> mod annotations</a>
+                    <span class="h-spacing-1">·</span><a class="bw-link--black" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);"><span class="annotation-counter-{{ ticket.sender.id }}">{{ num_mod_annotations }}</span> mod annotations</a>
                     {% endif %}
                     {% else %}
                     anonymous

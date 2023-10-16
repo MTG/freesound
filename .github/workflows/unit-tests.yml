@@ -50,7 +50,7 @@ jobs:
         cache-to: type=gha,mode=max
         tags: mtgupf/freesound:2023-07
         push: false
-        outputs: type=docker
+        outputs: type=docker,name=mtgupf/freesound:2023-07
         load: true
 
     - name: Build cached image

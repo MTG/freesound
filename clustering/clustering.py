@@ -104,7 +104,7 @@ class ClusteringEngine(object):
         Returns:
             Numpy.float: Average Mutual Information.
         """
-        reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(classes)
+        reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(partition)
         return np.average(mutual_info_classif(reference_features, clusters, discrete_features=True))
 
     def _silouhette_coeff_reference_features_clusters(self, partition):
@@ -116,7 +116,7 @@ class ClusteringEngine(object):
         Returns:
             Numpy.float: mean Silhouette Coefficient.
         """
-        reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(classes)
+        reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(partition)
         return metrics.silhouette_score(reference_features, clusters, metric='euclidean')
 
     def _calinski_idx_reference_features_clusters(self, partition):

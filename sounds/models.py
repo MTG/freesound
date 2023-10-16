@@ -1768,7 +1768,7 @@ class Pack(models.Model):
                 return [{
                     'name': tag,
                     'count': count,
-                    'browse_url': browse_pack_tag_url(tag)
+                    'browse_url': self.browse_pack_tag_url(tag)
                 } for tag, count in pack_tags_counts]
         except SearchEngineException as e:
             return []

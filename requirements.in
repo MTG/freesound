@@ -26,7 +26,7 @@ djangorestframework==3.15.2
 fabric==2.6.0
 feedparser~=6.0.10
 freezegun==1.2.2
-future~=0.18.2
+future~=1.0.0
 graypy==2.1.0
 gunicorn==21.2.0
 ipython==8.14.0
@@ -35,15 +35,14 @@ luqum==0.13.0
 mapbox==0.18.1
 markdown==3.4.1
 networkx==3.2.1
-numpy==1.24.3
 oauthlib
 openpyxl==3.1.0  # for reading .xlsx files (but not .xls)
-Pillow==9.5.0
-pip-tools==7.1.0
-psycopg2-binary==2.9.6
+numpy==1.26.1
+Pillow==10.1.0
+psycopg2-binary==2.9.9
 PyJWT==2.6.0
 pyparsing==2.4.7
-pysndfile==1.4.4
+pysndfile==1.4.6
 pysolr==3.10.0b1
 python-louvain==0.16  # community detection in clustering
 pytz==2023.3
@@ -55,6 +54,6 @@ scikit-learn==1.4.1.post1  # clustering
 scipy==1.12.0  # clustering
 sentry-sdk[django]~=2.21.0
 Sphinx==1.6.3
-stripe==2.28.1
+stripe==11.5.0
 xlrd==2.0.1  # for reading .xls files (but not .xlsx)
 zenpy==1.1.3

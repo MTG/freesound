@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'silk',
     'admin_reorder',
     'captcha',
+    'adminsortable',
 ]
 
 # Specify custom ordering of models in Django Admin index

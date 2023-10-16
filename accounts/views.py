@@ -77,7 +77,7 @@ from messages.models import Message
 from sounds.forms import LicenseForm, PackForm, BWPackForm, SoundDescriptionForm, GeotaggingForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
 from sounds.views import edit_and_describe_sounds_helper, clear_session_edit_and_describe_data
-from tickets.models import TicketComment, Ticket
+from tickets.models import TicketComment, Ticket, UserAnnotation
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
 from utils.filesystem import generate_tree, remove_directory_if_empty
@@ -1434,9 +1434,11 @@ def account(request, username):
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
     if request.user.has_perm('tickets.can_moderate'):
-        num_sounds_pending_count = user.profile.num_sounds_pending_moderation()
+        num_sounds_pending = user.profile.num_sounds_pending_moderation()
+        num_mod_annotations = UserAnnotation.objects.filter(user=user).count()
     else:
-        num_sounds_pending_count = None
+        num_sounds_pending = None
+        num_mod_annotations = None
 
     show_about = ((request.user == user)  # user is looking at own page
                   or request.user.is_superuser  # admins should always see about fields
@@ -1464,7 +1466,8 @@ def account(request, username):
         'show_unfollow_button': show_unfollow_button,
         'has_bookmarks': has_bookmarks,
         'show_about': show_about,
-        'num_sounds_pending_count': num_sounds_pending_count,
+        'num_sounds_pending': num_sounds_pending,
+        'num_mod_annotations': num_mod_annotations,
         'following_modal_page': request.GET.get('following', 1),  # BW only, used to load a specific modal page
         'followers_modal_page': request.GET.get('followers', 1),  # BW only
         'following_tags_modal_page': request.GET.get('followingTags', 1),  # BW only

@@ -16,7 +16,8 @@
             <select id="sort-by" name="order" onchange="this.form.submit()">
                 <option value="" {% ifequal order "" %}selected{% endifequal %}>Days in queue</option>
                 <option value="username" {% ifequal order "username" %}selected{% endifequal %}>Username</option>
-                <option value="new_count" {% ifequal order "new_count" %}selected{% endifequal %}>Number of sounds</option>
+                <option value="new_count" {% ifequal order "new_count" %}selected{% endifequal %}>Sounds in queue</option>
+                <option value="num_uploaded_sounds" {% ifequal order "num_uploaded_sounds" %}selected{% endifequal %}>Uploaded sounds</option>
             </select>
         </div>
         </form>
@@ -33,6 +34,7 @@
                         {{ item.new_count }} new sound{{ item.new_count|pluralize }}
                     </a>
                     <br><span class="text-grey">{{ item.time }} day{{ item.time|pluralize }} in queue</span>
+                    <br><span class="text-grey">{{ item.num_uploaded_sounds }} uploaded sound{{ item.num_uploaded_sounds|pluralize }}</span>
                 </div>
             </div>
             <div class="v-spacing-top-2 padding-bottom-5 center">

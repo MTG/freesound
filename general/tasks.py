@@ -34,6 +34,7 @@ from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
 from utils.audioprocessing.freesound_audio_processing import set_timeout_alarm, check_if_free_space, \
     FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm, FreesoundAudioProcessorBeforeDescription
+from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
 
 
 workers_logger = logging.getLogger("workers")
@@ -53,14 +54,28 @@ DELETE_USER_KEEP_SOUNDS_ACTION_NAME = 'delete_user_keep_sounds'
 
 
 @task(name=WHITELIST_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
-def whitelist_user(ticket_ids):
+def whitelist_user(ticket_ids=None, user_id=None):
+    # Whitelist "sender" users from the tickets with given ids
     workers_logger.info("Start whitelisting users from tickets (%s)" % json.dumps({
-        'task_name': WHITELIST_USER_TASK_NAME, 'n_tickets': len(ticket_ids)}))
+        'task_name': WHITELIST_USER_TASK_NAME, 
+        'n_tickets': len(ticket_ids) if ticket_ids is not None else 0, 
+        'user_id': user_id if user_id is not None else ''})) 
     start_time = time.time()
     count_done = 0
-    for ticket_id in ticket_ids:
-        ticket = Ticket.objects.get(id=ticket_id)
-        whitelist_user = ticket.sender
+
+    users_to_whitelist_ids = []
+
+    if ticket_ids is not None:
+        for ticket_id in ticket_ids:
+            ticket = Ticket.objects.get(id=ticket_id)
+            users_to_whitelist_ids.append(ticket.sender.id)
+
+    if user_id is not None:
+        users_to_whitelist_ids.append(user_id)
+
+    users_to_whitelist_ids = list(set(users_to_whitelist_ids))    
+    users_to_whitelist = User.objects.filter(id__in=users_to_whitelist_ids).select_related('profile')
+    for whitelist_user in users_to_whitelist:
         if not whitelist_user.profile.is_whitelisted:
             local_start_time = time.time()
             whitelist_user.profile.is_whitelisted = True
@@ -78,15 +93,24 @@ def whitelist_user(ticket_ids):
                 pending_ticket.status = TICKET_STATUS_CLOSED
                 pending_ticket.save()
 
+            # Invalidate template caches for sender user
+            invalidate_user_template_caches(whitelist_user.id)
+
             workers_logger.info("Whitelisted user (%s)" % json.dumps(
                 {'user_id': whitelist_user.id,
-                    'username': whitelist_user.username,
-                    'work_time': round(time.time() - local_start_time)}))
+                 'username': whitelist_user.username,
+                 'work_time': round(time.time() - local_start_time)}))
 
         count_done = count_done + 1
 
+    # Invalidate template caches for moderators
+    invalidate_all_moderators_header_cache()
+
     workers_logger.info("Finished whitelisting users from tickets (%s)" % json.dumps(
-        {'task_name': WHITELIST_USER_TASK_NAME, 'n_tickets': len(ticket_ids), 'work_time': round(time.time() - start_time)}))
+        {'task_name': WHITELIST_USER_TASK_NAME, 
+         'n_tickets': len(ticket_ids) if ticket_ids is not None else 0, 
+         'user_id': user_id if user_id is not None else '',
+         'work_time': round(time.time() - start_time)}))
 
 
 @task(name=DELETE_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)

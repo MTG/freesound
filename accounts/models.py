@@ -43,11 +43,11 @@ from bookmarks.models import Bookmark
 from comments.models import Comment
 from donations.models import Donation
 from forum.models import Post, Thread
-from general.models import SocialModel
 from geotags.models import GeoTag
 from messages.models import Message
 from ratings.models import SoundRating
 from sounds.models import DeletedSound, License, Sound, Pack, Download, PackDownload, BulkUploadProgress
+from tags.models import TaggedItem
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from utils.search import get_search_engine, SearchEngineException
@@ -96,7 +96,7 @@ class ProfileManager(models.Manager):
             return None
 
 
-class Profile(SocialModel):
+class Profile(models.Model):
     user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
@@ -610,7 +610,7 @@ class Profile(SocialModel):
         # Return the number of packs for which at least one sound has been published
         return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by('pack_id').distinct('pack').count()
 
-    class Meta(SocialModel.Meta):
+    class Meta:
         ordering = ('-user__date_joined', )
 
 

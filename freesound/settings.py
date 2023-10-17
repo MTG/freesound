@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     'general.apps.GeneralConfig',
     'support',
     'wiki',
-    'favorites',
     'sounds',
     'comments',
     'bookmarks',

@@ -32,6 +32,7 @@ from collections import Counter
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
@@ -52,7 +53,6 @@ from apiv2.models import ApiV2Client
 from comments.models import Comment
 from freesound.celery import app as celery_app
 from general import tasks
-from general.models import SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
@@ -587,7 +587,7 @@ class PublicSoundManager(models.Manager):
         return super().get_queryset().filter(moderation_state="OK", processing_state="OK")
 
 
-class Sound(SocialModel):
+class Sound(models.Model):
     user = models.ForeignKey(User, related_name="sounds", on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
@@ -613,6 +613,7 @@ class Sound(SocialModel):
     license = models.ForeignKey(License, on_delete=models.CASCADE)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
+    tags = fields.GenericRelation(TaggedItem)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # fields for specifying if the sound was uploaded via API or via bulk upload process (or none)
@@ -1330,7 +1331,7 @@ class Sound(SocialModel):
         else:
             return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
 
-    class Meta(SocialModel.Meta):
+    class Meta:
         ordering = ("-created", )
 
 
@@ -1605,7 +1606,7 @@ class PackManager(models.Manager):
     '''
 
 
-class Pack(SocialModel):
+class Pack(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True, default=None)
@@ -1630,7 +1631,7 @@ class Pack(SocialModel):
     def get_pack_sounds_in_search_url(self):
         return f'{reverse("sounds-search")}?f=grouping_pack:{ self.pack_filter_value() }&s=Date+added+(newest+first)&g=1'
 
-    class Meta(SocialModel.Meta):
+    class Meta:
         unique_together = ('user', 'name', 'is_deleted')
         ordering = ("-created",)
 

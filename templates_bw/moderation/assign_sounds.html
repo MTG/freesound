@@ -8,7 +8,7 @@
 {% block page-content %}
 {% include 'moderation/moderation_navbar.html' %}
 <div class="v-spacing-top-4">
-    <h3>Sounds pending moderation (grouped by user)</h3>    
+    <h3>Unassigned sound tickets ({{ num_sounds_pending }})</h3>    
     {% if new_sounds_users %}
         <form action="." method="GET">
         <div class="v-spacing-top-4 v-spacing-2">
@@ -31,7 +31,7 @@
                 <div class="padding-left-3">
                     <a href="{% url "account" item.username %}">{{ item.username }}</a>
                     <br><a class="bw-link--black" data-toggle="pending-moderation-modal" data-modal-content-url="{% url "tickets-user-pending_sounds" item.username %}?ajax=1" href="javascript:void(0);">
-                        {{ item.new_count }} new sound{{ item.new_count|pluralize }}
+                        {{ item.new_count }} unassigned sound{{ item.new_count|pluralize }}
                     </a>
                     <br><span class="text-grey">{{ item.time }} day{{ item.time|pluralize }} in queue</span>
                     <br><span class="text-grey">{{ item.num_uploaded_sounds }} uploaded sound{{ item.num_uploaded_sounds|pluralize }}</span>

@@ -279,6 +279,7 @@ def assign_sounds(request):
 
     unsure_tickets = _get_unsure_sound_tickets()
     new_sounds_users = _get_new_uploaders_by_ticket()
+    num_sounds_pending = sum([u['new_count'] for u in new_sounds_users])
     order = request.GET.get("order", "")
     if order == "username":
         new_sounds_users = sorted(new_sounds_users, key=lambda x: x["username"])
@@ -296,6 +297,7 @@ def assign_sounds(request):
     tardy_user_tickets_count = len(tardy_user_tickets)
 
     tvars = {"new_sounds_users": new_sounds_users,
+             "num_sounds_pending": num_sounds_pending,
              "order": order,
              "unsure_tickets": unsure_tickets,
              "tardy_moderator_tickets": tardy_moderator_tickets,

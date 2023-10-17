@@ -1617,7 +1617,6 @@ class Pack(models.Model):
     num_downloads = models.PositiveIntegerField(default=0)  # Updated via db trigger
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method
     is_deleted = models.BooleanField(db_index=True, default=False)
-    tags = fields.GenericRelation(TaggedItem)
 
     VARIOUS_LICENSES_NAME = 'Various licenses'
 

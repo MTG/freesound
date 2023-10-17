@@ -102,7 +102,6 @@ class Profile(models.Model):
     home_page = models.URLField(null=True, blank=True, default=None)
     signature = models.TextField(max_length=256, null=True, blank=True)
     sound_signature = models.TextField(max_length=256, null=True, blank=True)
-    tags = fields.GenericRelation(TaggedItem)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
     has_avatar = models.BooleanField(default=False)
     is_whitelisted = models.BooleanField(default=False, db_index=True)

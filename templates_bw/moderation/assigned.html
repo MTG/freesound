@@ -1,11 +1,101 @@
 {% extends "simple_page.html" %}
 {% load static %}
+{% load util %}
+{% load bw_templatetags %}
 {% block title %}Moderation - Your sound queue{% endblock %}
 {% block page-title %}Moderation{% endblock %}
 
 {% block page-content %}
 {% include 'moderation/moderation_navbar.html' %}
-<div class="v-spacing-top-4">
+<div>
+    <div class="row">
+        <div class="col-lg-7">
+            {% if not moderator_tickets_count %}
+                <div class="v-spacing-7 v-spacing-top-5">
+                    <h5>No sound tickets in your queue... &#128543</h5>
+                    <p class="text-grey v-spacing-2">You've finished all the sounds in your queue. Maybe you want to  <a href="{% url "tickets-moderation-home" %}">assign some more?</a></p>
+                </div>
+            {% else %}
+                <div class="v-spacing-1">
+                    <div class="text-center">
+                        <a class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select all</a>
+                        <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
+                        <a class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select other sounds from same user</a>
+                        <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
+                        <a class="bw-link--grey cursor-pointer" href="javascript:void(0);">Stop all sounds</a>
+                    </div>
+                </div>
+                <div>
+                    <table id="assigned-tickets-table" class="w-100 tickets-table">
+                    {% for ticket in page.object_list %}
+                        {% if ticket.sound %}
+                            <tr id="row_{{ ticket.id }}" class="{% if ticket.status == "deferred" %}ticket-row-highlighted{% endif %}"
+                                data-sound-id="{{ ticket.sound.id }}"
+                                data-sound-url="{% url "sound-display" ticket.sound.user.username ticket.sound.id %}"
+                                data-messages-url="{% url "tickets-ticket" ticket.key %}"
+                                data-sender-id="{{ticket.sender.id}}"
+                                data-ticket-status="{{ticket.status}}">
+                                <td class="w-50">
+                                    <label title="Add sound to selection"><input type="checkbox" class="bw-checkbox ticket-check"
+                                        data-id="{{ticket.id}}"  
+                                        data-sound-id="{{ ticket.sound.id }}"/></label> 
+                                    <a class="ticket-select" title="Add sound to selection and unselect others" href="javascript:void(0);"
+                                        data-id="{{ticket.id}}" 
+                                        data-sound-id="{{ ticket.sound.id }}">{{ticket.sound.original_filename}}</a>
+                                </td>
+                                <td><a class="bw-link--black" title="Open user mod annotations modal" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);">{{ticket.sender.username}}</a></td>
+                                <td class="text-grey">{{ticket.created|date:"d/m/Y" }}</td>
+                                <td class="text-grey">{{ticket.status|capfirst}}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </table>
+                </div>
+                {% if show_pagination %}
+                    {% bw_paginator paginator page current_page request "ticket" %}
+                {% endif %}
+                <div class="v-spacing-4">
+                    <div>
+                        <label for="select_deferred_option">
+                            <input type="checkbox" class="bw-checkbox" id="select_deferred_option"  {% if default_include_deferred %}checked="checked"{% endif %}/>Include deferred sounds when selecting   
+                        </label>
+                    </div>
+                    <div>
+                        <label for="select_autoplay_option">
+                            <input type="checkbox" class="bw-checkbox" id="select_autoplay_option"  {% if default_autoplay %}checked="checked"{% endif %}/>Autoplay sounds when selecting   
+                        </label>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-lg-5">
+            <div>
+                <h4 id="moderate-form-title-label">Moderate sound #12234</h4>
+                <div id="moderation-form">
+                    <form action="." method="post" class="bw-form disable-on-submit do-not-submit-on-enter">{% csrf_token %}
+                        <div class="bw-inline-radio">
+                        {{ mod_sound_form.as_p }}
+                        </div>
+                        <div class="v-spacing-top-2">
+                            <span class="h-spacing-1">Template repsonses:</span>
+                            {% for label, text in moderation_texts %}
+                                <a class="bw-link--grey cursor-pointer" href="javascript:void(0);"
+                                    data-text="{{text|escapejs}}" title="{{text|escape}}">{{ label }}</a>
+                                {% if not forloop.last %}
+                                <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
+                                {% endif%}
+                            {% endfor %}
+                        </div>
+                        <div class="v-spacing-top-2 v-spacing-4">
+                        {{ msg_form }}
+                        </div>
+                        <button class="btn-primary w-100" type="submit">Update tickets</button>
+                    </form>
+                </div>  
+                <div id="sounds_info"></div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 

@@ -90,12 +90,30 @@ class SoundModerationForm(forms.Form):
                                     label=mark_safe("<i>Is explicit</i> flag"))
 
 
+class BWSoundModerationForm(SoundModerationForm):
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super().__init__(*args, **kwargs)
+        self.fields['action'].widget.attrs['class'] = 'bw-radio'
+
+
 class ModerationMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea,
                                     required=False,
                                     label='')
     moderator_only = forms.BooleanField(required=False)
 
+
+class BWModerationMessageForm(ModerationMessageForm):
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super().__init__(*args, **kwargs)
+        self.fields['message'].label = False
+        self.fields['message'].widget.attrs['placeholder'] = 'Add a new message to the ticket'
+        self.fields['message'].widget.attrs['style'] = 'margin-bottom: 10px;'
+        self.fields['message'].widget.attrs['rows'] = '1'
+        self.fields['moderator_only'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['moderator_only'].label = 'Only visible to other moderators'
 
 class UserAnnotationForm(forms.Form):
     text = HtmlCleaningCharField(widget=forms.Textarea,

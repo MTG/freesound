@@ -1,0 +1,19 @@
+.tickets-table {
+    width: 100%;
+    
+    td {
+        max-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 3px 3px 3px 8px;
+    }
+
+    .ticket-row-highlighted td {
+        background-color: #edd38f!important;
+    }
+
+    .mod-selected-row td {
+        background-color: #ececec;
+    }
+}

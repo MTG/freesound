@@ -38,7 +38,8 @@ from .models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
 from tickets.forms import AnonymousMessageForm, BWAnonymousMessageForm, UserMessageForm, BWUserMessageForm, ModeratorMessageForm, BWModeratorMessageForm, \
-    SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY
+    SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, \
+    BWSoundModerationForm, BWModerationMessageForm
 from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
 from utils.frontend_handling import render, using_beastwhoosh
 from utils.username import redirect_if_old_username_or_404
@@ -464,9 +465,11 @@ def moderation_assigned(request, user_id):
     clear_forms = True
     mod_sound_form = None
     msg_form = None
+    SoundModerationFormClass = SoundModerationForm if not using_beastwhoosh(request) else BWSoundModerationForm
+    ModerationMessageFormClass = ModerationMessageForm if not using_beastwhoosh(request) else BWModerationMessageForm
     if request.method == 'POST':
-        mod_sound_form = SoundModerationForm(request.POST)
-        msg_form = ModerationMessageForm(request.POST)
+        mod_sound_form = SoundModerationFormClass(request.POST)
+        msg_form = ModerationMessageFormClass(request.POST)
 
         if mod_sound_form.is_valid() and msg_form.is_valid():
 
@@ -574,8 +577,8 @@ def moderation_assigned(request, user_id):
         else:
             clear_forms = False
     if clear_forms:
-        mod_sound_form = SoundModerationForm(initial={'action': 'Approve'})
-        msg_form = ModerationMessageForm()
+        mod_sound_form = SoundModerationFormClass(initial={'action': 'Approve'})
+        msg_form = ModerationMessageFormClass()
 
     qs = Ticket.objects.select_related('sound') \
                        .filter(assignee=user_id) \

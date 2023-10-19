@@ -85,21 +85,4 @@
         {% endfor %}
     {% endif %}
 
-    {% if unsure_tickets %}
-        <br>
-        <h3>Returned</h3>
-        <div class="moderation-unsure-list">
-            {% for ticket in unsure_tickets %}
-                {% include 'tickets/ticket_sound.html' %}
-                <div style="margin-top:-20px;height:30px;width:100px;margin-bottom:18px">
-                <p>
-                    <a href="{% url 'tickets-moderation-assign-single-ticket' ticket.id %}">
-                        <img style="position: relative; top: 5px;" src="{{media_url}}images/moderation_plus.png" />Assign to me
-                    </a>
-                </p>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
 {% endblock section_content %}

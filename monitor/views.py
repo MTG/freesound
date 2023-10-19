@@ -63,7 +63,7 @@ def monitor_home(request):
     tardy_moderator_sounds_count =\
         len(tickets.views._get_tardy_moderator_tickets())
 
-    tardy_user_sounds_count = len(tickets.views._get_tardy_user_tickets())
+    _, tardy_user_sounds_count = tickets.views._get_tardy_user_tickets_and_count()
 
     # Processing
     sounds_queued_count = Sound.objects.filter(
@@ -182,7 +182,7 @@ def monitor_moderation(request):
     new_upload_count = tickets.views.new_sound_tickets_count()
     tardy_moderator_sounds_count =\
         len(tickets.views._get_tardy_moderator_tickets())
-    tardy_user_sounds_count = len(tickets.views._get_tardy_user_tickets())
+    _, tardy_user_sounds_count = tickets.views._get_tardy_user_tickets_and_count()
 
     time_span = datetime.datetime.now() - datetime.timedelta((6 * 365) // 12)
     #Maybe we should user created and not modified

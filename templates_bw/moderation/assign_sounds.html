@@ -58,13 +58,13 @@
     <h3>Tickets with tardy moderators ({{tardy_moderator_tickets_count}})</h3>
     <p>Sound moderation tickets in this list have already been assigned to a moderator but have still not been moderated. Feel free to assign any of this to your queue.</p>
     <div class="row v-spacing-top-4">
-    {% for ticket in tardy_moderator_tickets|slice:"0:8" %}
+    {% for ticket in tardy_moderator_tickets %}
         <div class="col-6 col-md-4 col-lg-3">
             {% display_ticket_with_message ticket %}
         </div>
     {% endfor %}
     </div>
-    {% if tardy_moderator_tickets|length > 8 %}
+    {% if tardy_moderator_tickets_count > tardy_moderator_tickets|length %}
     <div class="v-spacing-top-4 center">
         <button class="btn-primary" data-toggle="tardy-moderators-modal" data-modal-content-url="{% url "tickets-moderation-tardy-moderators" %}?ajax=1" data-modal-activation-param="tardy_moderators">See all tickets with tardy moderators</a>
     </div>
@@ -75,13 +75,13 @@
     <h3>Tickets with tardy users ({{tardy_user_tickets_count}})</h3>   
     <p>Sound moderation tickets in this list belong to users that are not responding to moderators' requests.</p>
     <div class="row v-spacing-top-4">
-    {% for ticket in tardy_user_tickets|slice:"0:8" %}
+    {% for ticket in tardy_user_tickets %}
         <div class="col-6 col-md-4 col-lg-3">
             {% display_ticket_with_message ticket %}
         </div>
     {% endfor %}
     </div>
-    {% if tardy_user_tickets|length > 8 %}
+    {% if tardy_user_tickets_count > tardy_user_tickets|length %}
     <div class="v-spacing-top-4 center">
         <button class="btn-primary" data-toggle="tardy-users-modal" data-modal-content-url="{% url "tickets-moderation-tardy-users" %}?ajax=1" data-modal-activation-param="tardy_users">See all tickets with tardy users</a>
     </div>

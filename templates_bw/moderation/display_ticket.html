@@ -19,10 +19,10 @@
     </div>
     {% if num_messages and include_last_message %}
     <div>
-        Last message by {% if last_message.sender %}{{last_message.sender.username}}{% else %}anonymous{% endif %}:
+        Last message by {% if last_message_sender_username %}{{last_message_sender_username}}{% else %}anonymous{% endif %}:
     </div>
     <div class="overflow-hidden">
-        <em>"{{ last_message.text | truncatechars:200 }}"</em>
+        <em>"{{ last_message_text | truncatechars:200 }}"</em>
     </div>
     {% endif %}
 </div>

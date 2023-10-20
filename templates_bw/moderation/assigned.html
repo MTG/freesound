@@ -18,11 +18,11 @@
             {% else %}
                 <div class="v-spacing-1">
                     <div class="text-center">
-                        <a class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select all</a>
+                        <a id="select-all" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select all</a>
                         <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
-                        <a class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select other sounds from same user</a>
+                        <a id="select-other" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select other sounds from same user</a>
                         <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
-                        <a class="bw-link--grey cursor-pointer" href="javascript:void(0);">Stop all sounds</a>
+                        <a id="stop-sounds" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Stop all sounds</a>
                     </div>
                 </div>
                 <div>
@@ -56,22 +56,22 @@
                 {% endif %}
                 <div class="v-spacing-4">
                     <div>
-                        <label for="select_deferred_option">
-                            <input type="checkbox" class="bw-checkbox" id="select_deferred_option"  {% if default_include_deferred %}checked="checked"{% endif %}/>Include deferred sounds when selecting   
+                        <label for="include-deferred">
+                            <input type="checkbox" class="bw-checkbox" id="include-deferred" {% if default_include_deferred %}checked="checked"{% endif %}/>Include deferred sounds when selecting   
                         </label>
                     </div>
                     <div>
-                        <label for="select_autoplay_option">
-                            <input type="checkbox" class="bw-checkbox" id="select_autoplay_option"  {% if default_autoplay %}checked="checked"{% endif %}/>Autoplay sounds when selecting   
+                        <label for="autoplay-sounds">
+                            <input type="checkbox" class="bw-checkbox" id="autoplay-sounds" {% if default_autoplay %}checked="checked"{% endif %}/>Autoplay sounds when selecting   
                         </label>
                     </div>
                 </div>
             {% endif %}
         </div>
         <div class="col-lg-5">
-            <div>
-                <h4 id="moderate-form-title-label">Moderate sound #12234</h4>
-                <div id="moderation-form">
+            <div id="moderate-form-wrapper" class="display-none">
+                <h4 id="moderate-form-title-label"></h4>
+                <div>
                     <form action="." method="post" class="bw-form disable-on-submit do-not-submit-on-enter">{% csrf_token %}
                         <div class="bw-inline-radio">
                         {{ mod_sound_form.as_p }}

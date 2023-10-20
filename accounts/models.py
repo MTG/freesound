@@ -415,15 +415,7 @@ class Profile(models.Model):
             return True
 
     def num_sounds_pending_moderation(self):
-        # Get non closed tickets with related sound objects referring to sounds
-        # that have not been deleted
-
-        return len(tickets.models.Ticket.objects.filter(\
-                Q(sender=self.user) &\
-                Q(sound__isnull=False) &\
-                Q(sound__processing_state='OK') &\
-                ~Q(sound__moderation_state='OK') &\
-                ~Q(status='closed')))
+        return tickets.views._get_pending_tickets_for_user_base_qs(self.user).count()
 
     def get_info_before_delete_user(self, include_sounds=False, include_other_related_objects=False):
         """

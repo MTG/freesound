@@ -181,11 +181,7 @@ def ticket(request, ticket_key):
     if clean_comment_form:
         tc_form = _get_tc_form(request, False)
 
-    num_sounds_pending = ticket.sender.profile.num_sounds_pending_moderation()
-    num_mod_annotations = UserAnnotation.objects.filter(user=ticket.sender).count()
     tvars = {"ticket": ticket,
-             "num_sounds_pending": num_sounds_pending,
-             "num_mod_annotations": num_mod_annotations,
              "tc_form": tc_form,
              "sound_form": sound_form,
              "can_view_moderator_only_messages": can_view_moderator_only_messages}
@@ -199,6 +195,10 @@ def ticket(request, ticket_key):
         })
         return render(request, 'moderation/ticket.html', tvars)
     else:
+        num_sounds_pending = ticket.sender.profile.num_sounds_pending_moderation()
+        tvars.update({
+            "num_sounds_pending": num_sounds_pending
+        })
         return render(request, 'tickets/ticket.html', tvars)
 
 
@@ -291,14 +291,18 @@ def _get_tardy_user_tickets_and_count(num=None, include_mod_messages=True):
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 
 
-def _get_pending_tickets_for_user(user, include_mod_messages=True):
-    # gets all tickets from a user that have not been closed (and that have an assigned sound)
-    tt = Ticket.objects\
+def _get_pending_tickets_for_user_base_qs(user):
+    return Ticket.objects\
         .filter(sender=user)\
         .exclude(status=TICKET_STATUS_CLOSED)\
         .exclude(sound=None)\
-        .filter(sound__moderation_state='PE', sound__processing_state='OK')\
-        .order_by('-assignee')
+        .filter(sound__processing_state='OK')\
+        .exclude(sound__moderation_state='OK')
+
+
+def _get_pending_tickets_for_user(user, include_mod_messages=True):
+    # gets all tickets from a user that have not been closed (and that have an assigned sound)
+    tt = _get_pending_tickets_for_user_base_qs(user).order_by('-assignee')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt, include_mod_messages=include_mod_messages), count
 

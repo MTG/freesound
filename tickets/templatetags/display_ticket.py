@@ -28,7 +28,6 @@ register = template.Library()
 @register.inclusion_tag('moderation/display_ticket.html', takes_context=True)
 def display_ticket(context, ticket, include_last_message=False):
     if not hasattr(ticket, 'sound_obj'):
-        print("GETTING SOUN FROM DB")    
         if ticket.sound_id is not None:
             sound = Sound.objects.bulk_query_id(sound_ids=ticket.sound_id)[0]
         else:

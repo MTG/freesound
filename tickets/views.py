@@ -213,7 +213,6 @@ def new_sound_tickets_count():
 
 
 def _get_new_uploaders_by_ticket():
-
     tickets = Ticket.objects.filter(assignee=None,
                                     sound__processing_state='OK',
                                     sound__moderation_state='PE',
@@ -235,12 +234,18 @@ def _get_new_uploaders_by_ticket():
     return new_sounds_users
 
 
-def _annotate_tickets_queryset_with_message_info(qs):
-    return qs.select_related('assignee', 'sender').annotate(
-        num_messages=Count('messages'),
-        last_message=TicketComment.objects.filter(ticket_id=OuterRef('id')).select_related('sender').order_by('-created').values(
-        data=JSONObject(text="text", sender_username='sender__username'))[:1])
-
+def _annotate_tickets_queryset_with_message_info(qs, include_mod_messages=True):
+    if include_mod_messages:
+        return qs.select_related('assignee', 'sender').annotate(
+            num_messages=Count('messages'),
+            last_message=TicketComment.objects.filter(ticket_id=OuterRef('id')).select_related('sender').order_by('-created').values(
+            data=JSONObject(text="text", sender_username='sender__username'))[:1])
+    else:
+        return qs.select_related('assignee', 'sender').annotate(
+            num_messages=Count('messages', filter=Q(messages__moderator_only=False)),
+            last_message=TicketComment.objects.filter(ticket_id=OuterRef('id'), moderator_only=False).select_related('sender').order_by('-created').values(
+            data=JSONObject(text="text", sender_username='sender__username'))[:1])
+    
 
 def _add_sound_objects_to_tickets(tickets):
     sound_objects = Sound.objects.dict_ids(sound_ids=[ticket.sound_id for ticket in tickets])
@@ -248,7 +253,7 @@ def _add_sound_objects_to_tickets(tickets):
         ticket.sound_obj = sound_objects.get(ticket.sound_id, None)
 
 
-def _get_unsure_sound_tickets_and_count(num=None):
+def _get_unsure_sound_tickets_and_count(num=None, include_mod_messages=True):
     """Query to get tickets that were returned to the queue by moderators that
     didn't know what to do with the sound."""
     # NOTE: I don't think we are using this anymore as returned tickets will appear in the main unassigned queue (?)
@@ -257,10 +262,10 @@ def _get_unsure_sound_tickets_and_count(num=None):
         status=TICKET_STATUS_ACCEPTED
     )
     count = tt.count()
-    return _annotate_tickets_queryset_with_message_info(tt[:num]), count
+    return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 
 
-def _get_tardy_moderator_tickets_and_count(num=None):
+def _get_tardy_moderator_tickets_and_count(num=None, include_mod_messages=True):
     """Get tickets for moderators that haven't responded in the last day"""
     time_span = datetime.date.today() - datetime.timedelta(days=1)
     tt = Ticket.objects\
@@ -270,10 +275,10 @@ def _get_tardy_moderator_tickets_and_count(num=None):
         (Q(last_commenter=F('sender')) | Q(messages__sender=None)) &
         Q(comment_date__lt=time_span))
     count = tt.count()
-    return _annotate_tickets_queryset_with_message_info(tt[:num]), count
+    return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 
 
-def _get_tardy_user_tickets_and_count(num=None):
+def _get_tardy_user_tickets_and_count(num=None, include_mod_messages=True):
     """Get tickets for users that haven't responded in the last 2 days"""
     time_span = datetime.date.today() - datetime.timedelta(days=2)
     tt = Ticket.objects\
@@ -283,7 +288,19 @@ def _get_tardy_user_tickets_and_count(num=None):
         ~Q(last_commenter=F('sender')) &
         Q(comment_date__lt=time_span))
     count = tt.count()
-    return _annotate_tickets_queryset_with_message_info(tt[:num]), count
+    return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
+
+
+def _get_pending_tickets_for_user(user, include_mod_messages=True):
+    # gets all tickets from a user that have not been closed (and that have an assigned sound)
+    tt = Ticket.objects\
+        .filter(sender=user)\
+        .exclude(status=TICKET_STATUS_CLOSED)\
+        .exclude(sound=None)\
+        .filter(sound__moderation_state='PE', sound__processing_state='OK')\
+        .order_by('-assignee')
+    count = tt.count()
+    return _annotate_tickets_queryset_with_message_info(tt, include_mod_messages=include_mod_messages), count
 
 
 def _get_sounds_in_moderators_queue_count(user):
@@ -296,7 +313,7 @@ def _get_sounds_in_moderators_queue_count(user):
 
 @permission_required('tickets.can_moderate')
 def assign_sounds(request):
-    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
+    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user, include_mod_messages=True)
 
     new_sounds_users = _get_new_uploaders_by_ticket()
     num_sounds_pending = sum([u['new_count'] for u in new_sounds_users])
@@ -311,8 +328,8 @@ def assign_sounds(request):
         # Default option, sort by number of days in queue
         new_sounds_users = sorted(new_sounds_users, key=lambda x: x["time"], reverse=True)
 
-    tardy_moderator_tickets, tardy_moderator_tickets_count = _get_tardy_moderator_tickets_and_count(num=8)
-    tardy_user_tickets, tardy_user_tickets_count = _get_tardy_user_tickets_and_count(num=8)
+    tardy_moderator_tickets, tardy_moderator_tickets_count = _get_tardy_moderator_tickets_and_count(num=8, include_mod_messages=True)
+    tardy_user_tickets, tardy_user_tickets_count = _get_tardy_user_tickets_and_count(num=8, include_mod_messages=True)
 
     tvars = {"new_sounds_users": new_sounds_users,
              "num_sounds_pending": num_sounds_pending,
@@ -339,7 +356,7 @@ def moderation_tardy_users_sounds(request):
         return HttpResponseRedirect(reverse('tickets-moderation-home') + '?tardy_users=1')
     
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
-    tardy_user_tickets, _ = _get_tardy_user_tickets_and_count()
+    tardy_user_tickets, _ = _get_tardy_user_tickets_and_count(include_mod_messages=True)
     paginated = paginate(request, tardy_user_tickets, settings.SOUNDS_PENDING_MODERATION_PER_PAGE)
 
     tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
@@ -362,7 +379,7 @@ def moderation_tardy_moderators_sounds(request):
         return HttpResponseRedirect(reverse('tickets-moderation-home') + '?tardy_moderators=1')
     
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
-    tardy_moderators_tickets, _ = _get_tardy_moderator_tickets_and_count()
+    tardy_moderators_tickets, _ = _get_tardy_moderator_tickets_and_count(include_mod_messages=True)
     paginated = paginate(request, tardy_moderators_tickets, settings.SOUNDS_PENDING_MODERATION_PER_PAGE)
 
     tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
@@ -672,21 +689,6 @@ def add_user_annotation(request, user_id):
     return JsonResponse({'message': 'Annotation could not be added', 'num_annotations': UserAnnotation.objects.filter(user=user).count()})
 
 
-def get_pending_sounds(user):
-    # gets all tickets from a user that have not been closed (and that have an assigned sound)
-    ret = []
-    user_tickets = Ticket.objects.filter(sender=user).exclude(status=TICKET_STATUS_CLOSED).exclude(sound=None).order_by('-assignee')
-    for user_ticket in user_tickets:
-        sound = user_ticket.sound
-        if sound.processing_state == 'OK' and sound.moderation_state == 'PE':
-            ret.append( (user_ticket, sound.id) )
-    # Now replace sound_ids in "ret" for actual sound objects ready to be used in display_sound
-    sound_objects = Sound.objects.dict_ids(sound_ids=[sound_id for _, sound_id in ret])
-    for i in range(0, len(ret)):
-        ret[i] = (ret[i][0], sound_objects.get(ret[i][1], None))
-    return ret
-
-
 @permission_required('tickets.can_moderate')
 @redirect_if_old_username_or_404
 def pending_tickets_per_user(request, username):
@@ -694,16 +696,13 @@ def pending_tickets_per_user(request, username):
         return HttpResponseRedirect(reverse('account', args=[username]) + '?pending_moderation=1')
     
     user = request.parameter_user
-    tickets_sounds = get_pending_sounds(user)
-    pendings = []
+    tickets, _ = _get_pending_tickets_for_user(user, include_mod_messages=True)
+    _add_sound_objects_to_tickets(tickets)
     mods = set()
-    for ticket, sound in tickets_sounds:
-        last_comments = ticket.get_n_last_non_moderator_only_comments(3)
-        pendings.append( (ticket, sound, last_comments) )
+    for ticket in tickets:
         mods.add(ticket.assignee)
-
-    show_pagination = len(pendings) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE
-
+    show_pagination = len(tickets) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE
+    
     n_unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK").count()
     if n_unprocessed_sounds:
         messages.add_message(request, messages.WARNING,
@@ -716,7 +715,7 @@ def pending_tickets_per_user(request, username):
     own_page = user == request.user
     no_assign_button = len(mods) == 0 or (len(mods) == 1 and request.user in mods)
 
-    paginated = paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE)
+    paginated = paginate(request, tickets, settings.SOUNDS_PENDING_MODERATION_PER_PAGE)
     tvars = {"show_pagination": show_pagination,
              "moderators_version": moderators_version,
              "user": user,

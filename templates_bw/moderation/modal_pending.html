@@ -15,9 +15,9 @@
     <div class="v-spacing-4">
         {% if paginator.count > 0 %}           
         <div class="row">
-            {% for ticket, sound, comments in page.object_list %}
+            {% for ticket in page.object_list %}
                 <div class="col-6 col-md-4">
-                    {% display_ticket ticket %}
+                    {% display_ticket_with_message ticket %}
                 </div>
             {% endfor %}
         </div>

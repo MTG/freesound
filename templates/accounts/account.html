@@ -189,8 +189,8 @@
             <br>
             <div id="unmoderated_sounds" class="content_box">
                 <h3>Uploaded sounds awaiting moderation ({{ unmoderated_sounds_count }})</h3>
-                {% for ticket, sound in unmoderated_sounds %}
-                    <li><span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span> <span class="ticket_link"><a href="{% url "tickets-ticket" ticket.key %}">Go to ticket</a></span></li>
+                {% for ticket in unmoderated_sounds %}
+                    <li><span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{ticket.sound_obj.created}}</span> <span class="ticket_link"><a href="{% url "tickets-ticket" ticket.key %}">Go to ticket</a></span></li>
                 {% endfor %}
                 {% if num_more_unmoderated_sounds > 0 %}
                     <li> And {{ num_more_unmoderated_sounds }} other uploaded sound{{ num_more_unmoderated_sounds|pluralize}}

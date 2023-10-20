@@ -35,11 +35,11 @@ class BWModeratorMessageForm(ModeratorMessageForm):
         kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
         self.fields['message'].label = False
-        self.fields['message'].widget.attrs['placeholder'] = 'Add a new message to the ticket'
+        self.fields['message'].widget.attrs['placeholder'] = 'Add a message to the ticket'
         self.fields['message'].widget.attrs['rows'] = '1'
         self.fields['message'].widget.attrs['style'] = 'min-height:70px;'
         self.fields['moderator_only'].widget.attrs['class'] = 'bw-checkbox'
-        self.fields['moderator_only'].label = mark_safe('Make this message only visible to other moderators')
+        self.fields['moderator_only'].label = 'Make this message only visible to other moderators'
 
 
 class UserMessageForm(forms.Form):
@@ -109,11 +109,11 @@ class BWModerationMessageForm(ModerationMessageForm):
         kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
         self.fields['message'].label = False
-        self.fields['message'].widget.attrs['placeholder'] = 'Add a new message to the ticket'
-        self.fields['message'].widget.attrs['style'] = 'margin-bottom: 10px;'
+        self.fields['message'].widget.attrs['placeholder'] = 'Add a message to the ticket'
+        self.fields['message'].widget.attrs['style'] = 'margin-bottom: 10px;min-height:80px;'
         self.fields['message'].widget.attrs['rows'] = '1'
         self.fields['moderator_only'].widget.attrs['class'] = 'bw-checkbox'
-        self.fields['moderator_only'].label = 'Only visible to other moderators'
+        self.fields['moderator_only'].label = 'Make this message only visible to moderators'
 
 class UserAnnotationForm(forms.Form):
     text = HtmlCleaningCharField(widget=forms.Textarea,

@@ -435,8 +435,8 @@ def home(request):
     # Sounds
     latest_sounds = Sound.objects.bulk_sounds_for_user(user_id=user.id, limit=5)
     unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
-    unmoderated_sounds = TicketViews.get_pending_sounds(request.user)
-    unmoderated_sounds_count = len(unmoderated_sounds)
+    unmoderated_sounds, unmoderated_sounds_count = TicketViews._get_pending_tickets_for_user(request.user, include_mod_messages=False)
+    TicketViews._add_sound_objects_to_tickets(unmoderated_sounds)
     num_more_unmoderated_sounds = 0
     if unmoderated_sounds_count > settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE:
         num_more_unmoderated_sounds = unmoderated_sounds_count - settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE
@@ -1926,13 +1926,11 @@ def clear_flags_user(request, username):
 
 @login_required
 def pending(request):
+    # NOTE: this view is never used in BW
     user = request.user
-    tickets_sounds = TicketViews.get_pending_sounds(user)
-    pendings = []
-    for ticket, sound in tickets_sounds:
-        last_comments = ticket.get_n_last_non_moderator_only_comments(3)
-        pendings.append((ticket, sound, last_comments))
-    show_pagination = len(pendings) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE
+    tickets, _ = TicketViews._get_pending_tickets_for_user(user, include_mod_messages=False)
+    TicketViews._add_sound_objects_to_tickets(tickets)
+    show_pagination = len(tickets) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE
     n_unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK").count()
     if n_unprocessed_sounds:
         messages.add_message(request, messages.WARNING,
@@ -1944,5 +1942,5 @@ def pending(request):
         'moderators_version': moderators_version,
         'own_page': True,
     }
-    tvars.update(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE))
+    tvars.update(paginate(request, tickets, settings.SOUNDS_PENDING_MODERATION_PER_PAGE))
     return render(request, 'accounts/pending.html', tvars)

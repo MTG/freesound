@@ -313,7 +313,7 @@ def _get_sounds_in_moderators_queue_count(user):
 
 @permission_required('tickets.can_moderate')
 def assign_sounds(request):
-    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user, include_mod_messages=True)
+    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
 
     new_sounds_users = _get_new_uploaders_by_ticket()
     num_sounds_pending = sum([u['new_count'] for u in new_sounds_users])

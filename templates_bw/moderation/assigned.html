@@ -2,7 +2,7 @@
 {% load static %}
 {% load util %}
 {% load bw_templatetags %}
-{% block title %}Moderation - Your sound queue{% endblock %}
+{% block title %}Moderation - Your queue{% endblock %}
 {% block page-title %}Moderation{% endblock %}
 
 {% block page-content %}
@@ -20,7 +20,9 @@
                     <div class="text-center">
                         <a id="select-all" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select all</a>
                         <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
-                        <a id="select-other" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select other sounds from same user</a>
+                        <a id="select-other" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select other from same user</a>
+                        <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
+                        <a id="select-none" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select none</a>
                         <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
                         <a id="stop-sounds" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Stop all sounds</a>
                     </div>
@@ -29,19 +31,14 @@
                     <table id="assigned-tickets-table" class="w-100 tickets-table">
                     {% for ticket in page.object_list %}
                         {% if ticket.sound %}
-                            <tr id="row_{{ ticket.id }}" class="{% if ticket.status == "deferred" %}ticket-row-highlighted{% endif %}"
+                            <tr id="row_{{ ticket.id }}" class="{% if ticket.status == "deferred" %}deferred{% endif %}"
                                 data-sound-id="{{ ticket.sound.id }}"
-                                data-sound-url="{% url "sound-display" ticket.sound.user.username ticket.sound.id %}"
-                                data-messages-url="{% url "tickets-ticket" ticket.key %}"
-                                data-sender-id="{{ticket.sender.id}}"
-                                data-ticket-status="{{ticket.status}}">
+                                data-ticket-url="{% url "tickets-ticket" ticket.key %}"
+                                data-sender-id="{{ ticket.sender.id }}"
+                                data-ticket-status="{{ ticket.status }}">
                                 <td class="w-50">
-                                    <label title="Add sound to selection"><input type="checkbox" class="bw-checkbox ticket-check"
-                                        data-id="{{ticket.id}}"  
-                                        data-sound-id="{{ ticket.sound.id }}"/></label> 
-                                    <a class="ticket-select" title="Add sound to selection and unselect others" href="javascript:void(0);"
-                                        data-id="{{ticket.id}}" 
-                                        data-sound-id="{{ ticket.sound.id }}">{{ticket.sound.original_filename}}</a>
+                                    <label title="Add sound to selection"><input type="checkbox" class="bw-checkbox ticket-check"/></label> 
+                                    <a class="ticket-select" title="Add sound to selection and unselect others" href="javascript:void(0);">{{ticket.sound.original_filename}}</a>
                                 </td>
                                 <td><a class="bw-link--black" title="Open user mod annotations modal" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);">{{ticket.sender.username}}</a></td>
                                 <td class="text-grey">{{ticket.created|date:"d/m/Y" }}</td>
@@ -57,7 +54,7 @@
                 <div class="v-spacing-4">
                     <div>
                         <label for="include-deferred">
-                            <input type="checkbox" class="bw-checkbox" id="include-deferred" {% if default_include_deferred %}checked="checked"{% endif %}/>Include deferred sounds when selecting   
+                            <input type="checkbox" class="bw-checkbox" id="include-deferred" {% if default_include_deferred %}checked="checked"{% endif %}/>Include deferred tickets when selecting   
                         </label>
                     </div>
                     <div>
@@ -76,11 +73,11 @@
                         <div class="bw-inline-radio">
                         {{ mod_sound_form.as_p }}
                         </div>
-                        <div class="v-spacing-top-2">
+                        <div id="template-responses" class="v-spacing-top-2">
                             <span class="h-spacing-1">Template repsonses:</span>
                             {% for label, text in moderation_texts %}
                                 <a class="bw-link--grey cursor-pointer" href="javascript:void(0);"
-                                    data-text="{{text|escapejs}}" title="{{text|escape}}">{{ label }}</a>
+                                    data-text="{{text|escape}}" title="{{text|escape}}">{{ label }}</a>
                                 {% if not forloop.last %}
                                 <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
                                 {% endif%}

@@ -9,11 +9,11 @@
         padding: 3px 3px 3px 8px;
     }
 
-    .ticket-row-highlighted td {
-        background-color: #edd38f!important;
+    tr.deferred td {
+        background-color: $yellow!important;
     }
 
-    .mod-selected-row td {
-        background-color: #ececec;
+    tr.selected td {
+        background-color: $almost-white-less-white!important;
     }
 }

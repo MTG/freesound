@@ -601,7 +601,7 @@ def moderation_assigned(request, user_id):
         mod_sound_form = SoundModerationFormClass(initial={'action': 'Approve'})
         msg_form = ModerationMessageFormClass()
 
-    qs = Ticket.objects.select_related('sound') \
+    qs = Ticket.objects.select_related('sound', 'sender') \
                        .filter(assignee=user_id) \
                        .exclude(status=TICKET_STATUS_CLOSED) \
                        .exclude(sound=None) \

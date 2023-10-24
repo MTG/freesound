@@ -1,7 +1,6 @@
 /* SELECT FORUM PAGE */
 
 const createForumSelect = () => {
-  console.log('hola');
 
   var x, i, j, l, ll, selElmnt, a, b, c;
   /* Look for any elements with the class "custom-select": */

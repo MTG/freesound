@@ -134,8 +134,10 @@ ticketCheckboxes.forEach(checkbox => {
     // in the "change" event below (which otherwise does not hold information about the alt key)
     checkbox.addEventListener('click', (evt) => {
         checkbox.dataset.altKey = evt.altKey ? "true" : "false";
+        checkbox.dataset.shiftKey = evt.shiftKey ? "true" : "false";
         setTimeout(() => {
             checkbox.dataset.altKey = false;
+            checkbox.dataset.shiftKey = false;
         }, 100);
     })
 
@@ -151,6 +153,40 @@ ticketCheckboxes.forEach(checkbox => {
             // Make sure the clicked checkbox is selected (even if the change event would unselect it initially)
             checkbox.checked = true;
         }
+        let didMultipleSelection = false;
+        if (checkbox.dataset.shiftKey === "true") {
+            didMultipleSelection = true;
+            // If holding shift, then do mulitple selection since the last selected checkbox
+            let lastSelectedCheckbox = undefined;
+            let shouldSkip = false;
+            ticketCheckboxes.forEach(otherCheckbox => {
+                if (!shouldSkip) {
+                    if (otherCheckbox !== checkbox) {
+                        if (otherCheckbox.checked) {
+                            lastSelectedCheckbox = otherCheckbox;
+                        }
+                    } else {
+                        // Once we iterated until the clicked checkbox, we stop
+                        shouldSkip = true;
+                    }
+                }
+            });
+            if (lastSelectedCheckbox !== undefined) {
+                // Now we mark all checkboxes between last selected checkbox and current checkbox as selected
+                let selecting = false;
+                ticketCheckboxes.forEach(otherCheckbox => {
+                    if (otherCheckbox === lastSelectedCheckbox) {
+                        selecting = true;
+                    }
+                    if (selecting) {
+                        otherCheckbox.checked = true;
+                    }
+                    if (otherCheckbox === checkbox) {
+                        selecting = false;
+                    }
+                }); 
+            }
+        }
         postTicketsSelected();
 
         // Manage sound playback
@@ -158,7 +194,7 @@ ticketCheckboxes.forEach(checkbox => {
         const audioElement = soundInfoElement.getElementsByTagName('audio')[0];
         if (checkbox.checked) {
             // Trigger autoplay of the selected sound if autoplay is on 
-            if (shouldAutoplaySounds()) {
+            if (shouldAutoplaySounds() && !didMultipleSelection) {
                 stopAllPlayers();
                 audioElement.play();
                 // NOTE: this can fail if autoplay is not allowed by the browser
@@ -191,3 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
         postTicketsSelected();
     }
 })
+
+// Highlight whitelist option in a different colour to avoid mistakes
+const whitelistOptionLabelElement = document.querySelector("[for='id_action_4']");
+whitelistOptionLabelElement.style = 'color:#0064af!important;'

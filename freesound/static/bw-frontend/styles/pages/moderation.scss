@@ -1,5 +1,7 @@
 .tickets-table {
     width: 100%;
+    user-select: none;
+    -webkit-user-select: none;
     
     td {
         max-width: 0;

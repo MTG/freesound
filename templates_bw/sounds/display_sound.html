@@ -33,8 +33,8 @@
             <div class="v-spacing-top-1 overflow-hidden" style="max-height:54px;">
                 {{ sound.description|striptags|safe|truncatechars_html:55 }}
             </div>
+            {% endcache %}
         </div>
-        {% endcache %}
         {% if sound.show_moderation_ticket and sound.ticket_key %}
         <div class="v-spacing-3 v-spacing-top-negative-2">
             <a class="bw-link--black" href="{% url 'tickets-ticket' sound.ticket_key %}">{% bw_icon "file-text" %} See moderation ticket</a>
@@ -80,9 +80,8 @@
                         {% for tag in sound.tag_array|slice:":5" %}
                             {% bw_tag tag %}
                         {% endfor %}
-                        {% if sound.moderation_state != 'OK' or sound.processing_state != 'OK' %}
+                        {% if sound.moderation_state != 'OK' %}
                         <div class="right">
-                            <div class="h-spacing-2">{% include 'sounds/sound_state_processing_indicator.html' %}</div>
                             {% include 'sounds/sound_state_moderation_indicator.html' %}
                         </div>
                         {% endif %}
@@ -137,6 +136,50 @@
         </div>
         {% endcache %}
 
+    {% elif player_size == 'moderation' %}
+        <div class="overfow-hidden">
+            {% include "sounds/player.html" %}
+            <div class="between line-height-percentage-150 v-spacing-top-1">
+                <h5 class="ellipsis">
+                    <a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{ sound.original_filename }}</a>
+                </h5>
+                {% if sound.original_filename|length <= 30 %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
+            </div>
+            <div class="between">
+                <div>
+                    <a href="{% url 'account' sound.username %}" title="Username: {{ sound.username }}">{{ sound.username|truncate_string:15 }}</a>
+                </div>
+                {% if sound.original_filename|length > 30 %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
+            </div>
+            <div>
+                <span class="text-grey">{{ sound.created|timesince }} ago</span>
+            </div>
+        </div>
+        <div id="collapsable-sound-info-{{ sound.id }}-{{ random_number }}" class="v-spacing-top-1 collapsable-block">
+            {% comment %}When showing information for moderation pages we put the full description and also the tags in a collapsable element{% endcomment %}
+            {% for tag in sound.tag_array%}
+                {% bw_tag tag %}
+            {% endfor %}
+            <div class="v-spacing-top-1">
+                {{ sound.description|safe|linebreaks }}
+            </div>
+        </div>
+        <div class="text-center v-spacing-top-1 v-spacing-2">
+            <span data-target="collapsable-sound-info-{{ sound.id }}-{{ random_number }}" data-show-text="Show more info" data-hide-text="Show less info" data-max-height-when-closed="150" data-hide-on-load class="collapsable-toggle"></span>
+        </div>
+        {% if not is_explicit %}
+        <div class="v-spacing-top-1">
+            <div class="text-grey">
+                {% bw_icon "notification" %} Marked as explicit
+            </div>
+        </div>
+        {% endif %}
+        <div class="v-spacing-top-1">
+            {% include 'sounds/sound_state_processing_indicator.html' %}
+        </div>
+        <div class="v-spacing-top-1">
+            {% include 'sounds/sound_state_moderation_indicator.html' %}
+        </div>
     {% elif player_size == 'big_no_info' %}
         {% comment %}This size includes a placeholder for the controls of the big player but shows no sound
         metadata{% endcomment %}

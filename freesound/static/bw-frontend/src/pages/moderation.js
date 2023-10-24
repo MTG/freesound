@@ -13,6 +13,7 @@ const ticketsTable = document.getElementById('assigned-tickets-table');
 const ticketCheckboxes = ticketsTable.getElementsByClassName('bw-checkbox');
 const templateResponses = document.getElementById('template-responses').getElementsByTagName('a');
 const messageTextArea = document.getElementsByName('message')[0];
+const ticketIdsInput = document.getElementsByName('ticket')[0];
 
 
 const postTicketsSelected = () => {
@@ -21,13 +22,14 @@ const postTicketsSelected = () => {
 
     const selectedTicketsData = [];
     
-    // Set css classes in table rows
+    // Collect selection informaiton and set css classes in table rows
     ticketCheckboxes.forEach(checkbox => {
         const trElement = checkbox.closest('tr');
         if (checkbox.checked) {
             trElement.classList.add('selected');
             selectedTicketsData.push({
                 'soundId': trElement.dataset.soundId,
+                'ticketId': trElement.dataset.ticketId,
             });
         } else {
             trElement.classList.remove('selected');
@@ -36,8 +38,7 @@ const postTicketsSelected = () => {
 
     // Set moderation form tilte and show/hide moderation form
     if (selectedTicketsData.length === 0) {
-        moderateFormWrapper.classList.add('display-none');
-        
+        moderateFormWrapper.classList.add('display-none');        
     } else {
         moderateFormWrapper.classList.remove('display-none');
         if (selectedTicketsData.length === 1) {
@@ -47,6 +48,9 @@ const postTicketsSelected = () => {
         }
     }
 
+    // Set "ticket" field in moderation form with the ticket ids of the selected tickets
+    const ticketIdsSerialized = selectedTicketsData.map(ticketData => ticketData['ticketId']).join('|');
+    ticketIdsInput.value = ticketIdsSerialized;
 }
 
 const shouldInludeDeferredTickets = () => {
@@ -106,9 +110,30 @@ stopAllSounds.addEventListener('click', () => {
     stopAllPlayers();
 })
 
-
 ticketCheckboxes.forEach(checkbox => {
-    checkbox.addEventListener('change', postTicketsSelected);
+    // The click event below if used to detect if the user is holding the alt key when clicking the checkbox and so we can use that information
+    // in the "change" event below (which otherwise does not hold information about the alt key)
+    checkbox.addEventListener('click', (evt) => {
+        checkbox.dataset.altKey = evt.altKey ? "true" : "false";
+        setTimeout(() => {
+            checkbox.dataset.altKey = false;
+        }, 100);
+    })
+
+    // NOTE: the 'change' event is triggered when the checkbox is clicked by the user, but not when programatically setting .checked to true/false
+    checkbox.addEventListener('change', () => {
+        if (checkbox.dataset.altKey === "true") {
+            // Unselect all other checkboxes
+            ticketCheckboxes.forEach(otherCheckbox => {
+                if (otherCheckbox !== checkbox) {
+                    otherCheckbox.checked = false;
+                }
+            });
+            // Make sure the clicked checkbox is selected (even if the change event would unselect it initially)
+            checkbox.checked = true;
+        }
+        postTicketsSelected();
+    });
 })
 
 moderateForm.addEventListener('submit', () => {

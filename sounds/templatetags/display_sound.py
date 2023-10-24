@@ -21,6 +21,7 @@
 
 from django import template
 from django.conf import settings
+from random import randint
 
 from accounts.models import Profile
 from sounds.models import Sound
@@ -131,12 +132,17 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
             'player_size': player_size,
             'show_milliseconds': 'true' if (player_size == 'big_no_info' or sound_obj.duration < 10) else 'false',  # Only BW
             'min_num_ratings': settings.MIN_NUMBER_RATINGS,
+            'random_number': randint(1, 1000000),  # Used to generate IDs for HTML elements that need to be unique per sound/player instance
         }
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small(context, sound):
     return display_sound(context, sound, player_size='small', show_rate_widget=True)
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small_moderation(context, sound):
+    return display_sound(context, sound, player_size='moderation', show_bookmark=False, show_similar_sounds=False, show_remix=True, show_rate_widget=False)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_bookmark(context, sound):

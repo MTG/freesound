@@ -22,8 +22,8 @@
                     {% if ticket.sender %}
                     <a href="{% url "account" ticket.sender.username %}">{{ ticket.sender.username }}</a>
                     {% if perms.tickets.can_moderate %}
-                    <span class="h-spacing-1">·</span><a class="bw-link--black" data-toggle="pending-moderation-modal" data-modal-content-url="{% url "tickets-user-pending_sounds" ticket.sender.username %}?ajax=1" href="javascript:void(0);">{{ num_sounds_pending }} pending</a>
-                    <span class="h-spacing-1">·</span><a class="bw-link--black" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);"><span class="annotation-counter-{{ ticket.sender.id }}">{{ num_mod_annotations }}</span> mod annotations</a>
+                    <span class="h-spacing-1">·</span><a class="bw-link--grey" data-toggle="pending-moderation-modal" data-modal-content-url="{% url "tickets-user-pending_sounds" ticket.sender.username %}?ajax=1" href="javascript:void(0);">{{ num_sounds_pending }} pending</a>
+                    <span class="h-spacing-1">·</span><a class="bw-link--grey" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);"><span class="annotation-counter-{{ ticket.sender.id }}">{{ num_mod_annotations }}</span>Mod annotations</a>
                     {% endif %}
                     {% else %}
                     anonymous
@@ -40,17 +40,6 @@
                 <a class="btn-inverse no-hover" href="{% url 'tickets-moderation-assign-single-ticket' ticket.id %}">{% bw_icon "plus" %}Assign to me</a>
             </div>
             {% endif %}
-        </div>
-
-        <div class="v-spacing-top-4 d-md-none">
-            <h3 class="text-grey">Sound</h3>
-            <div class="v-spacing-top-2">
-            {% if sound is not None %}
-                {% display_sound_small sound %}
-            {% else %}
-                <div class="bw-player-small-thumbnail-empty-space center middle text-grey">No sound available for this ticket</div>
-            {% endif %}
-            </div>
         </div>
 
         <div class="v-spacing-top-4">
@@ -80,12 +69,12 @@
         </div>
     </div>
     
-    <div class="offset-md-1 col-md-4">
-        <div class="v-spacing-top-4 d-none d-md-block">
+    <div class="offset-md-1 col-md-5">
+        <div class="v-spacing-top-4">
             <h3 class="text-grey">Sound</h3>
             <div class="v-spacing-top-2">
             {% if sound is not None %}
-                {% display_sound_small sound %}
+                {% display_sound_small_moderation sound %}
             {% else %}
                 <div class="bw-player-small-thumbnail-empty-space center middle text-grey">No sound available for this ticket</div>
             {% endif %}
@@ -109,7 +98,4 @@
 </div>
 {% endblock %}
 
-{% block extrabody %}
-<script src="{% static 'bw-frontend/dist/moderation.js' %}"></script>
-{% endblock %}
     

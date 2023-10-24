@@ -33,16 +33,17 @@
                         {% if ticket.sound %}
                             <tr id="row_{{ ticket.id }}" class="{% if ticket.status == "deferred" %}deferred{% endif %}"
                                 data-sound-id="{{ ticket.sound.id }}"
+                                data-ticket-id="{{ ticket.id }}"
                                 data-ticket-url="{% url "tickets-ticket" ticket.key %}"
-                                data-sender-id="{{ ticket.sender.id }}"
-                                data-ticket-status="{{ ticket.status }}">
+                                data-ticket-status="{{ ticket.status }}"
+                                data-sender-id="{{ ticket.sender.id }}">
                                 <td class="w-50">
-                                    <label title="Add sound to selection"><input type="checkbox" class="bw-checkbox ticket-check"/></label> 
-                                    <a class="ticket-select" title="Add sound to selection and unselect others" href="javascript:void(0);">{{ticket.sound.original_filename}}</a>
+                                    <label title="Add sound to selection"><input type="checkbox" class="bw-checkbox ticket-check"/>{{ticket.sound.original_filename}}</label> 
                                 </td>
-                                <td><a class="bw-link--black" title="Open user mod annotations modal" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);">{{ticket.sender.username}}</a></td>
-                                <td class="text-grey">{{ticket.created|date:"d/m/Y" }}</td>
-                                <td class="text-grey">{{ticket.status|capfirst}}</td>
+                                <td><a title="Open user mod annotations modal" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);">{{ticket.sender.username}}</a></td>
+                                <td class="text-grey">{{ ticket.created|date:"d/m/Y" }}</td>
+                                <td class="text-grey">{{ ticket.status|capfirst }}</td>
+                                <td style="width:30px;"><a title="Open moderation ticket in new tab" href="{% url "tickets-ticket" ticket.key %}" class="no-hover" target="_blank">{% bw_icon 'open' %}</a></td>
                             </tr>
                         {% endif %}
                     {% endfor %}
@@ -61,6 +62,9 @@
                         <label for="autoplay-sounds">
                             <input type="checkbox" class="bw-checkbox" id="autoplay-sounds" {% if default_autoplay %}checked="checked"{% endif %}/>Autoplay sounds when selecting   
                         </label>
+                    </div>
+                    <div class="text-grey">
+                        You can do alt+click on a row to select <i>only</i> this row
                     </div>
                 </div>
             {% endif %}
@@ -86,7 +90,7 @@
                         <div class="v-spacing-top-2 v-spacing-4">
                         {{ msg_form }}
                         </div>
-                        <button class="btn-primary w-100" type="submit">Update tickets</button>
+                        <button class="btn-primary w-100" type="submit">Update ticket(s)</button>
                     </form>
                 </div>  
                 <div id="sounds_info"></div>

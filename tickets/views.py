@@ -184,7 +184,9 @@ def ticket(request, ticket_key):
     tvars = {"ticket": ticket,
              "tc_form": tc_form,
              "sound_form": sound_form,
-             "can_view_moderator_only_messages": can_view_moderator_only_messages}
+             "can_view_moderator_only_messages": can_view_moderator_only_messages,
+             "num_sounds_pending": ticket.sender.profile.num_sounds_pending_moderation()
+    }
     if using_beastwhoosh(request):
         sound_object = Sound.objects.bulk_query_id(sound_ids=[ticket.sound_id])[0] if ticket.sound_id is not None else None
         if sound_object is not None:
@@ -195,10 +197,6 @@ def ticket(request, ticket_key):
         })
         return render(request, 'moderation/ticket.html', tvars)
     else:
-        num_sounds_pending = ticket.sender.profile.num_sounds_pending_moderation()
-        tvars.update({
-            "num_sounds_pending": num_sounds_pending
-        })
         return render(request, 'tickets/ticket.html', tvars)
 
 
@@ -482,7 +480,7 @@ def moderation_assign_single_ticket(request, ticket_id):
 @permission_required('tickets.can_moderate')
 @transaction.atomic()
 def moderation_assigned(request, user_id):
-
+    # TODO: once removing NG code, this view can be simplified as the msg form is now handled in the annotations modal
     clear_forms = True
     mod_sound_form = None
     msg_form = None
@@ -595,6 +593,8 @@ def moderation_assigned(request, user_id):
             # Process packs
             for pack in packs_to_update:
                 pack.process()
+
+            messages.add_message(request, messages.INFO, f"{len(tickets)} ticket(s) successfully updated")
         else:
             clear_forms = False
     if clear_forms:

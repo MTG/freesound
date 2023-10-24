@@ -92,7 +92,6 @@ class SoundModerationForm(forms.Form):
 
 class BWSoundModerationForm(SoundModerationForm):
     def __init__(self, *args, **kwargs):
-        kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
         self.fields['action'].widget.attrs['class'] = 'bw-radio'
 

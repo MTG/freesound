@@ -1,6 +1,7 @@
 {% extends "simple_page.html" %}
 {% load static %}
 {% load util %}
+{% load display_sound %}
 {% load bw_templatetags %}
 {% block title %}Moderation - Your queue{% endblock %}
 {% block page-title %}Moderation{% endblock %}
@@ -10,6 +11,7 @@
 <div>
     <div class="row">
         <div class="col-lg-7">
+            <div class="bw-sticky-top">
             {% if not moderator_tickets_count %}
                 <div class="v-spacing-7 v-spacing-top-5">
                     <h5>No sound tickets in your queue... &#128543</h5>
@@ -68,6 +70,7 @@
                     </div>
                 </div>
             {% endif %}
+            </div>
         </div>
         <div class="col-lg-5">
             <div id="moderate-form-wrapper" class="display-none">
@@ -93,10 +96,18 @@
                         <button class="btn-primary w-100" type="submit">Update ticket(s)</button>
                     </form>
                 </div>  
-                <div id="sounds_info"></div>
+                <div id="selected-sounds-info" class="v-spacing-top-4 v-spacing-4"></div>
             </div>
         </div>
     </div>
+</div>
+<div id="sound-info-elements" style="max-height:0px;overflow:hidden;">{% comment %}Need this strategy for hiding the contents so that collapsable block logic for sound descriptions work properly and does not return 0 height values{% endcomment %}
+    {% for ticket in page.object_list %}
+    <div class="sound-info-element" data-sound-id="{{ticket.sound_obj.id}}">
+        {% display_sound_moderation ticket.sound_obj %}
+        <div class="divider-light v-spacing-top-2 v-spacing-2"></div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}
 

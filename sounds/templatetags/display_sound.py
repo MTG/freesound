@@ -141,7 +141,7 @@ def display_sound_small(context, sound):
     return display_sound(context, sound, player_size='small', show_rate_widget=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound_small_moderation(context, sound):
+def display_sound_moderation(context, sound):
     return display_sound(context, sound, player_size='moderation', show_bookmark=False, show_similar_sounds=False, show_remix=True, show_rate_widget=False)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)

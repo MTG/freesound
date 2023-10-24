@@ -14,6 +14,8 @@ const ticketCheckboxes = ticketsTable.getElementsByClassName('bw-checkbox');
 const templateResponses = document.getElementById('template-responses').getElementsByTagName('a');
 const messageTextArea = document.getElementsByName('message')[0];
 const ticketIdsInput = document.getElementsByName('ticket')[0];
+const soundInfoElementsPool = document.getElementById('sound-info-elements');
+const selectedSoundsInfoPanel = document.getElementById('selected-sounds-info');
 
 
 const postTicketsSelected = () => {
@@ -51,6 +53,23 @@ const postTicketsSelected = () => {
     // Set "ticket" field in moderation form with the ticket ids of the selected tickets
     const ticketIdsSerialized = selectedTicketsData.map(ticketData => ticketData['ticketId']).join('|');
     ticketIdsInput.value = ticketIdsSerialized;
+
+    // Show information about the selected sounds
+    // First move all selected sound info elements to the main pool
+    while (selectedSoundsInfoPanel.childNodes.length > 0) {
+        soundInfoElementsPool.appendChild(selectedSoundsInfoPanel.childNodes[0]);
+    }
+
+    // Then move the selected ones to the selected panel
+    selectedTicketsData.forEach(ticketData => {
+        const soundInfoElement = document.querySelector(`.sound-info-element[data-sound-id="${ticketData['soundId']}"]`);
+        selectedSoundsInfoPanel.appendChild(soundInfoElement);
+    });
+
+    // Stop playing sounds if no tickets are selected
+    if (selectedTicketsData.length === 0) {
+        stopAllPlayers();
+    }
 }
 
 const shouldInludeDeferredTickets = () => {
@@ -133,6 +152,22 @@ ticketCheckboxes.forEach(checkbox => {
             checkbox.checked = true;
         }
         postTicketsSelected();
+
+        // Manage sound playback
+        const soundInfoElement = document.querySelector(`.sound-info-element[data-sound-id="${checkbox.closest('tr').dataset.soundId}"]`);
+        const audioElement = soundInfoElement.getElementsByTagName('audio')[0];
+        if (checkbox.checked) {
+            // Trigger autoplay of the selected sound if autoplay is on 
+            if (shouldAutoplaySounds()) {
+                stopAllPlayers();
+                audioElement.play();
+                // NOTE: this can fail if autoplay is not allowed by the browser
+            }
+        } else {
+            // Stop playing sound in case it was being played
+            audioElement.pause();
+            audioElement.currentTime = 0;
+        }
     });
 })
 

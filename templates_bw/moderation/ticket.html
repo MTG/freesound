@@ -2,7 +2,7 @@
 {% load static %}
 {% load bw_templatetags %}
 {% load display_sound %}
-{% block title %}Moderation ticket #{{ ticket.id }}{% endblock %}
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
 {% block page-title %}Moderation ticket #{{ ticket.id }}{% endblock %}
 
 {% block page-content %}
@@ -74,7 +74,7 @@
             <h3 class="text-grey">Sound</h3>
             <div class="v-spacing-top-2">
             {% if sound is not None %}
-                {% display_sound_small_moderation sound %}
+                {% display_sound_moderation sound %}
             {% else %}
                 <div class="bw-player-small-thumbnail-empty-space center middle text-grey">No sound available for this ticket</div>
             {% endif %}

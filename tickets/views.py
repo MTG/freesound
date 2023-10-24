@@ -636,6 +636,7 @@ def moderation_assigned(request, user_id):
     }
 
     if using_beastwhoosh(request):
+        _add_sound_objects_to_tickets(tvars['page'].object_list)
         tvars.update({'section': 'assigned'})
         return render(request, 'moderation/assigned.html', tvars)
     else:

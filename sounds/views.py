@@ -1336,7 +1336,7 @@ def embed_iframe(request, sound_id, player_size):
         'use_spectrogram': request.GET.get('spec', None) == '1',
         'show_toggle_display_button': request.GET.get('td', None) == '1',
     }
-    return render(request, 'sounds/sound_iframe.html', tvars)
+    return render(request, 'embeds/sound_iframe.html', tvars)
 
 
 def oembed(request):

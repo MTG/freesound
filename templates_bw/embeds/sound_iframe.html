@@ -51,7 +51,7 @@
                 <nobr>
                     <img class="avatar" src="{{sound.user_profile_locations.avatar.S.url}}" alt="avatar" />
                     <h3>{{ sound.username }} - {{ sound.original_filename|truncate_string:120 }}</h3>
-                        {% include "sounds/widget_license.html" %}
+                        {% include "embeds/sound_widget_license.html" %}
                         <a href="{% absurl 'sound' sound.username sound.id %}" alt="see this sound on freesound" target="_parent"></a>
                 </nobr>
                 <br style="clear: both;" />
@@ -59,7 +59,7 @@
             <div class="player large">
             <div class="metadata">
                 {% with 'L' as size %}
-                    {% include 'sounds/metadata.html' %}
+                    {% include 'embeds/sound_metadata.html' %}
                 {% endwith %}
             </div>
             </div>
@@ -72,7 +72,7 @@
                 <div class="player small">
                     <div class="metadata">
                         {% with 'M' as size %}
-                            {% include 'sounds/metadata.html' %}
+                            {% include 'embeds/sound_metadata.html' %}
                         {% endwith %}
                     </div>
                 </div>
@@ -81,7 +81,7 @@
             <div class="sample_info">
                 <span class="title">
                     <nobr><h3>{{ sound.original_filename|truncate_string:45 }}</h3>
-                          {% include "sounds/widget_license.html" %}
+                          {% include "embeds/sound_widget_license.html" %}
                     </nobr>
                 </span>
                 <div class="sample_info_left">
@@ -107,7 +107,7 @@
                 <div class="player mini">
                     <div class="metadata">
                     {% with 'S' as size %}
-                            {% include 'sounds/metadata.html' %}
+                            {% include 'embeds/sound_metadata.html' %}
                     {% endwith %}
                     </div>
                 </div>
@@ -125,7 +125,7 @@
             <div class="player mini">
                 <div class="metadata">
                     {% with 'S' as size %}
-                        {% include 'sounds/metadata.html' %}
+                        {% include 'embeds/sound_metadata.html' %}
                     {% endwith %}
                 </div>
             </div>
@@ -137,7 +137,7 @@
             <div class="player large">
             <div class="metadata">
                 {% with 'L' as size %}
-                    {% include 'sounds/metadata.html' %}
+                    {% include 'embeds/sound_metadata.html' %}
                 {% endwith %}
             </div>
             </div>
@@ -151,7 +151,7 @@
                 <div class="player small">
                     <div class="metadata">
                         {% with 'M' as size %}
-                            {% include 'sounds/metadata.html' %}
+                            {% include 'embeds/sound_metadata.html' %}
                         {% endwith %}
                     </div>
                 </div>
@@ -172,13 +172,13 @@
                     <a href="{% absurl 'sound' sound.username sound.id %}" alt="see this sound on freesound" target="_parent"></a>
                 </div>
                 <div class="license">
-                    {% include "sounds/widget_license.html" %}
+                    {% include "embeds/sound_widget_license.html" %}
                 </div>
             </div>
             <div class="player large full_size" id="player_element">
                 <div class="metadata">
                     {% with 'L' as size %}
-                        {% include 'sounds/metadata.html' %}
+                        {% include 'embeds/sound_metadata.html' %}
                     {% endwith %}
                 </div>
             </div>
@@ -190,7 +190,7 @@
             <div class="player large full_size" id="player_element">
                 <div class="metadata">
                     {% with 'L' as size %}
-                        {% include 'sounds/metadata.html' %}
+                        {% include 'embeds/sound_metadata.html' %}
                     {% endwith %}
                 </div>
             </div>

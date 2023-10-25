@@ -26,5 +26,6 @@ register = template.Library()
 
 @register.inclusion_tag('templatetags/maps_js_scripts.html', takes_context=True)
 def maps_js_scripts(context):
+    # TODO: this will no longer be needed with BW as the equivalent is implemented in bw_templatetags
     return {'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'media_url': settings.MEDIA_URL}

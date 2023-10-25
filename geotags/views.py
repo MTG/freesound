@@ -245,7 +245,9 @@ def embed_iframe(request):
         'cluster': request.GET.get('c', 'on') != 'off',
         'media_url': settings.MEDIA_URL,
     })
-    return render(request, 'geotags/geotags_box_iframe.html', tvars)
+    tvars.update({'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
+                  'media_url': settings.MEDIA_URL})
+    return render(request, 'embeds/geotags_box_iframe.html', tvars)
 
 
 def infowindow(request, sound_id):

@@ -37,7 +37,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Freesound API'
-copyright = '2014, Universitat Pompeu Fabra'
+copyright = 'Universitat Pompeu Fabra'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -172,7 +172,7 @@ htmlhelp_basename = 'FreesoundAPIdoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'FreesoundAPI.tex', 'Freesound API Documentation',
-   'Vincent Akkermans, Bram de Jong', 'manual'),
+   'Frederic Font', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

@@ -14,6 +14,7 @@ body {
     color: #000;
     margin: 0;
     padding: 0;
+    font-weight: 400;
 }
 
 div.document {
@@ -58,7 +59,7 @@ div.related {
     background-color: {{ theme_relbarbgcolor }};
     line-height: 40px;
     color: {{ theme_relbartextcolor }};
-    border-top: 5px solid #8B0700;
+    border-top: 5px solid #ff3546;
 }
 
 div.related a {
@@ -79,7 +80,7 @@ div.sphinxsidebar {
     right: 0;
     {%- endif %}
     {%- endif %}
-    /*border-top: 6px solid #8B0700;*/
+    /*border-top: 6px solid #ff3546;*/
 }
 
 {%- if theme_stickysidebar|tobool %}
@@ -142,6 +143,10 @@ div.sphinxsidebar input {
     font-size: 1em;
 }
 
+#searchbox {
+    margin-top:20px;
+}
+
 /* -- body styles ----------------------------------------------------------- */
 
 a {
@@ -155,7 +160,7 @@ a:hover {
 
 div.body p, div.body dd, div.body li {
     text-align: justify;
-    line-height: 130%;
+    line-height: 140%;
 }
 
 div.body h1,
@@ -168,7 +173,7 @@ div.body h6 {
     background-color: {{ theme_headbgcolor }};
     font-weight: normal;
     color: {{ theme_textcolor }};
-    /*border-top: 6px solid #8B0700;*/
+    /*border-top: 6px solid #ff3546;*/
     /*border-bottom: 1px solid #cccccc;*/
     margin: 20px -20px 10px -20px;
     padding: 3px 0 3px 10px;
@@ -207,7 +212,7 @@ div.body h4 {
     margin-right: -10px;
     /*border-radius: 5px;*/
     background-color: #FFFFFF;
-    border-bottom: 1px solid #8B0700;
+    border-bottom: 1px solid #ff3546;
 }
 div.body h5 {
     /*color: {{ theme_headtextcolor }};*/
@@ -217,7 +222,7 @@ div.body h5 {
     margin-right: -10px;
     border-radius: 5px;
     /*background-color: #FFFFFF;
-    border-bottom: 1px solid #8B0700;*/
+    border-bottom: 1px solid #ff3546;*/
 }
 
 .section.section.section {
@@ -242,7 +247,7 @@ a.headerlink:hover {
 
 div.body p, div.body dd, div.body li {
     text-align: justify;
-    line-height: 130%;
+    line-height: 140%;
 }
 
 div.admonition p.admonition-title + p {

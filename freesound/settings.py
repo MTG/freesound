@@ -808,7 +808,7 @@ FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'
 FRONTEND_SESSION_PARAM_NAME = 'frontend'
 FRONTEND_NIGHTINGALE = 'ng'  # https://freesound.org/people/reinsamba/sounds/14854/
 FRONTEND_BEASTWHOOSH = 'bw'  # https://freesound.org/people/martian/sounds/403973/
-FRONTEND_DEFAULT = FRONTEND_NIGHTINGALE
+FRONTEND_DEFAULT = FRONTEND_BEASTWHOOSH
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

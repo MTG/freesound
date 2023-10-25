@@ -62,19 +62,19 @@
                             <div class="col-2 text-right">
                                 <div class="text-grey">
                                     {% if sound.remix_group.all.count %}
-                                    <button title="See sound's remix group" class="btn-neutral" data-toggle="remix-group-modal" data-modal-activation-param="remix_group" data-modal-content-url="{% url 'sound-remixes' sound.user.username sound.id %}">
+                                    <button title="See sound's remix group" aria-label="See sound's remix group" class="btn-neutral" data-toggle="remix-group-modal" data-modal-activation-param="remix_group" data-modal-content-url="{% url 'sound-remixes' sound.user.username sound.id %}">
                                         {% bw_icon 'remix' %}
                                     </button>
                                     {% endif %}
                                     {% if sound.similarity_state == 'OK' %}
                                     <span class="h-spacing-left-1"></span>
-                                    <button title="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
+                                    <button title="Find similar sounds" aria-label="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
                                         {% bw_icon 'similar' %}
                                     </button>
                                     {% endif %}
                                     {% if request.user.is_authenticated %}
                                     <span class="h-spacing-left-1"></span>
-                                    <button title="Bookmark this sound" class="btn-neutral" data-toggle="bookmark-modal" data-modal-url="{% url 'bookmarks-add-form-for-sound' sound.id %}" data-add-bookmark-url="{% url 'add-bookmark' sound.id %}">
+                                    <button title="Bookmark this sound" aria-label="Bookmark this sound" class="btn-neutral" data-toggle="bookmark-modal" data-modal-url="{% url 'bookmarks-add-form-for-sound' sound.id %}" data-add-bookmark-url="{% url 'add-bookmark' sound.id %}">
                                         {% bw_icon 'bookmark' %}
                                     </button>
                                     {% endif %}
@@ -215,9 +215,9 @@
                         <div class="v-padding-bottom-5 {% if sound.user == request.user %}v-spacing-top-5{% endif %}">
                             {% if sound.moderation_state == 'OK' and sound.processing_state == 'OK' %}
                                 {% if request.user.is_authenticated %}
-                                    <a class="no-hover btn-primary display-inline-block w-100 text-center sound-download-button" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" data-show-after-download-modal-url="{% url "after-download-modal" %}" title="Download sound">Download sound</a>
+                                    <a class="no-hover btn-primary display-inline-block w-100 text-center sound-download-button" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" data-show-after-download-modal-url="{% url "after-download-modal" %}">Download sound</a>
                                 {% else %}
-                                    <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" title="Login to download">Login to download</a>
+                                    <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}">Login to download</a>
                                 {% endif %}
                             {% else %}
                                 <div class="v-spacing-top-3 text-center">Download unavailable, sound not yet processed or moderated</div>
@@ -236,12 +236,12 @@
                             {% endif %}
 
                             {% if request.user.is_staff %}
-                                <a class="no-hover btn-inverse display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'admin:sounds_sound_change' sound.id %}" title="Edit sound in the admin">Edit in the admin</a>
+                                <a class="no-hover btn-inverse display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'admin:sounds_sound_change' sound.id %}">Edit in the admin</a>
                             {% endif %}
 
                             {% if perms.tickets.can_moderate or sound.user == request.user %}
                                 {% if sound.ticket %}
-                                    <a class="no-hover btn-inverse display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'tickets-ticket' sound.ticket.key %}" title="Go to moderation ticket">Go to moderation ticket</a>
+                                    <a class="no-hover btn-inverse display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'tickets-ticket' sound.ticket.key %}">Go to moderation ticket</a>
                                 {% else %}
                                     <div class="v-spacing-top-3 text-grey text-center">No moderation ticket for this sound</div>
                                 {% endif %}

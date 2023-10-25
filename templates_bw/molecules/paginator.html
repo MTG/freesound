@@ -4,7 +4,7 @@
 
 <ul class="bw-pagination_container">
     {% if page.has_previous %}
-        <li class="bw-pagination_circle bw-pagination_direction"> <a href="{{ url_prev_page }}{% if anchor %}#{{anchor}}{% endif %}" class="bw-link--white no-hover" title="Previous Page">{% bw_icon 'arrow-left' 'white' %}</a> </li>
+        <li class="bw-pagination_circle bw-pagination_direction"> <a href="{{ url_prev_page }}{% if anchor %}#{{anchor}}{% endif %}" class="bw-link--white no-hover" title="Previous Page" aria-label="Previous Page">{% bw_icon 'arrow-left' 'white' %}</a> </li>
     {% endif %}
 
     {% if show_first %}
@@ -22,11 +22,11 @@
 
     {% if show_last %}
         {% if not last_is_next %}<li class="text-grey no-paddings">...</li>{% endif %}
-        <li><a href="{{ url_last_page }}{% if anchor %}#{{anchor}}{% endif %}" title="Last Page">{{ paginator.num_pages }}</a></li>
+        <li><a href="{{ url_last_page }}{% if anchor %}#{{anchor}}{% endif %}" title="Last Page" aria-label="Last Page">{{ paginator.num_pages }}</a></li>
     {% endif %}
 
     {% if page.has_next %}
-        <li class="bw-pagination_circle bw-pagination_direction"> <a href="{{ url_next_page }}{% if anchor %}#{{anchor}}{% endif %}" class="bw-link--white no-hover" title="Next Page">{% bw_icon 'arrow' %}</a> </li>
+        <li class="bw-pagination_circle bw-pagination_direction"> <a href="{{ url_next_page }}{% if anchor %}#{{anchor}}{% endif %}" class="bw-link--white no-hover" title="Next Page" aria-label="Next Page">{% bw_icon 'arrow' %}</a> </li>
     {% endif %}
 </ul>
 

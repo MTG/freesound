@@ -19,7 +19,7 @@
                         {% for cat in bookmark_categories %}
                             <li><a href="{% url "bookmarks-for-user-for-category" user.username cat.id %}" {% if category.id == cat.id %}style="font-weight:bold"{% endif %}>{{cat.name}}</a> <span class="text-grey"> · {{cat.num_bookmarks|bw_intcomma}} bookmark{{ cat.num_bookmarks|pluralize }}</span>
                             {% if is_owner %}
-                            <a class="cursor-pointer h-spacing-left-1" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove this bookmark category?" data-modal-confirmation-help-text="Note that all the bookmarks inside this category will also be removed" data-modal-confirmation-url="{% url "delete-bookmark-category" cat.id %}{% if cat.id != category.id %}?next={{request.path}}&page={{current_page}}{% endif %}" title="Remove bookmark category">{% bw_icon 'trash' %}</a>
+                            <a class="cursor-pointer h-spacing-left-1" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove this bookmark category?" data-modal-confirmation-help-text="Note that all the bookmarks inside this category will also be removed" data-modal-confirmation-url="{% url "delete-bookmark-category" cat.id %}{% if cat.id != category.id %}?next={{request.path}}&page={{current_page}}{% endif %}" title="Remove bookmark category" aria-label="Remove bookmark category">{% bw_icon 'trash' %}</a>
                             {% endif %}</li>
                         {% endfor %}
                     </ul>
@@ -39,7 +39,7 @@
                             <div class="col-6 col-md-4">
                                 {% display_sound_small bookmark.sound %}                     
                                 {% if is_owner %}
-                                    <div class="right v-spacing-4 v-spacing-top-negative-2"><a class="cursor-pointer bw-link--grey" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove this bookmark from '{{bookmark.category_name_or_uncategorized}}'?" data-modal-confirmation-url="{% url "delete-bookmark" bookmark.id %}?next={{request.path}}&page={{current_page}}" alt="Remove from bookmarks">{% bw_icon 'trash' %} Remove bookmark</a></div>
+                                    <div class="right v-spacing-4 v-spacing-top-negative-2"><a class="cursor-pointer bw-link--grey" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove this bookmark from '{{bookmark.category_name_or_uncategorized}}'?" data-modal-confirmation-url="{% url "delete-bookmark" bookmark.id %}?next={{request.path}}&page={{current_page}}" title="Remove from bookmarks" aria-label="Remove from bookmarks">{% bw_icon 'trash' %} Remove bookmark</a></div>
                                 {% endif %}
                             </div>
                         {% endfor %}

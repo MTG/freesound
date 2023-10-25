@@ -11,7 +11,7 @@
                 <button class="btn-primary">Show anyway</button>
             </div>
         {% endif %}
-        <div class="v-spacing-3 overfow-hidden {% if is_explicit %}blur{% endif %}">
+        <div class="v-spacing-3 overfow-hidden {% if is_explicit %}blur{% endif %}" aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
             {% include "sounds/player.html" %}
             {% cache 43200 bw_display_sound sound.id player_size is_authenticated %}
             {% if show_rate_widget %}<div class="display-none bw-player__rate__widget">{% bw_sound_stars sound %}</div>{% endif %}
@@ -60,7 +60,7 @@
                 <button class="btn-primary">Show anyway</button>
             </div>
         {% endif %}
-        <div class="{% if is_explicit %}blur{% endif %}">
+        <div class="{% if is_explicit %}blur{% endif %}" aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
             <div class="row no-gutters no-wrap">
                 <div class="col-4 col-lg-3">
                     {% include "sounds/player.html" %}
@@ -137,7 +137,7 @@
         {% endcache %}
 
     {% elif player_size == 'moderation' %}
-        <div class="overfow-hidden">
+        <div class="overfow-hidden" aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
             {% include "sounds/player.html" %}
             <div class="between line-height-percentage-150 v-spacing-top-1">
                 <h5 class="ellipsis">
@@ -183,18 +183,24 @@
     {% elif player_size == 'big_no_info' %}
         {% comment %}This size includes a placeholder for the controls of the big player but shows no sound
         metadata{% endcomment %}
+        <div aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
         {% include "sounds/player.html" %}
         <div class="bw-player-big__controls"></div>
+        </div>
 
     {% elif player_size == 'small_no_info' %}
         {% comment %}This size will be used inside a pack carousel. For this size we only include the basic
         player and show no sound metadata{% endcomment %}
+        <div aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
         {% include "sounds/player.html" %}
         {% if show_rate_widget %}<div class="display-none bw-player__rate__widget">{% bw_sound_stars sound %}</div>{% endif %}
+        </div>
 
     {% elif player_size == 'minimal' %}
         {% comment %}This size is used in map info windows and only includes a play/stop and loop button{% endcomment %}
+        <div aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
         {% include "sounds/player.html" %}
+        </div>
 
     {% endif %}
 {% endif %}

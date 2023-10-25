@@ -11,7 +11,7 @@
 <div>
     <div class="row">
         <div class="col-lg-7">
-            <div class="bw-sticky-top">
+            <div class="bw-sticky-top v-spacing-4">
             {% if not moderator_tickets_count %}
                 <div class="v-spacing-7 v-spacing-top-5">
                     <h5>No sound tickets in your queue... &#128543</h5>
@@ -43,9 +43,9 @@
                                     <label title="Add sound to selection"><input type="checkbox" class="bw-checkbox ticket-check"/>{{ticket.sound.original_filename}}</label> 
                                 </td>
                                 <td><a title="Open user mod annotations modal" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);">{{ticket.sender.username}}</a></td>
-                                <td class="text-grey">{{ ticket.created|date:"d/m/Y" }}</td>
-                                <td class="text-grey">{{ ticket.status|capfirst }}</td>
-                                <td style="width:30px;"><a title="Open moderation ticket in new tab" href="{% url "tickets-ticket" ticket.key %}" class="no-hover" target="_blank">{% bw_icon 'open' %}</a></td>
+                                <td class="text-grey" title="Ticket created on {{ ticket.created|date:"d/m/Y" }}">{{ ticket.created|date:"d/m/Y" }}</td>
+                                <td class="text-grey" title="Ticket status is {{ ticket.status|capfirst }}">{{ ticket.status|capfirst }}</td>
+                                <td><a title="Open moderation ticket in new tab" href="{% url "tickets-ticket" ticket.key %}" class="bw-link--black" target="_blank">#{{ticket.id}}</a></td>
                             </tr>
                         {% endif %}
                     {% endfor %}
@@ -102,7 +102,7 @@
         </div>
     </div>
 </div>
-<div id="sound-info-elements" style="max-height:0px;overflow:hidden;">{% comment %}Need this strategy for hiding the contents so that collapsable block logic for sound descriptions work properly and does not return 0 height values{% endcomment %}
+<div id="sound-info-elements" class="col-lg-5" style="max-height:0px;overflow:hidden;">{% comment %}Need this strategy for hiding the contents so that collapsable block logic for sound descriptions work properly and does not return 0 height values{% endcomment %}
     {% for ticket in page.object_list %}
     <div class="sound-info-element" data-sound-id="{{ticket.sound_obj.id}}">
         {% display_sound_moderation ticket.sound_obj %}

@@ -1,4 +1,4 @@
-{% extends "email_base.txt" %}
+{% extends "emails/email_base.txt" %}
 
 {% load absurl %}
 
@@ -15,6 +15,6 @@ To see this comment in context, please visit:
 
 <{% absurl 'sound' sound.user.username sound.id %}>
 
-{% include "email_opt_out_text.txt" %}
+{% include "emails/email_opt_out_text.txt" %}
 
 {% endblock %}

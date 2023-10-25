@@ -375,7 +375,7 @@ def send_activation(user):
         'username': username,
         'hash': token
     }
-    send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'accounts/email_activation.txt', tvars, user_to=user)
+    send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'emails/email_activation.txt', tvars, user_to=user)
 
 
 @redirect_if_beastwhoosh('front-page', query_string='loginProblems=1')
@@ -407,7 +407,7 @@ def username_reminder(request):
 
             try:
                 user = User.objects.get(email__iexact=email)
-                send_mail_template(settings.EMAIL_SUBJECT_USERNAME_REMINDER, 'accounts/email_username_reminder.txt',
+                send_mail_template(settings.EMAIL_SUBJECT_USERNAME_REMINDER, 'emails/email_username_reminder.txt',
                                    {'user': user}, user_to=user)
             except User.DoesNotExist:
                 pass
@@ -1726,7 +1726,7 @@ def email_reset(request):
                     'token': default_token_generator.make_token(user)
                 }
                 send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
-                                   'accounts/email_reset_email.txt', tvars,
+                                   'emails/email_reset_email.txt', tvars,
                                    email_to=email)
 
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
@@ -1786,7 +1786,7 @@ def email_reset_complete(request, uidb36=None, token=None):
         'activePage': 'email' # For BW account settings sidebar
     }
     send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
-                       'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
+                       'emails/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
 
     return render(request, 'accounts/email_reset_complete.html', tvars)
 
@@ -1890,9 +1890,9 @@ def flag_user(request, username):
             clear_url = reverse("clear-flags-user", args=[flagged_user.username])
             clear_url = request.build_absolute_uri(clear_url)
             if reports_count < settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING:
-                template_to_use = 'accounts/report_spammer_admins.txt'
+                template_to_use = 'emails/email_report_spammer_admins.txt'
             else:
-                template_to_use = 'accounts/report_blocked_spammer_admins.txt'
+                template_to_use = 'emails/email_report_blocked_spammer_admins.txt'
 
             tvars = {'flagged_user': flagged_user,
                      'objects_data': objects_data,

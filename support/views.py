@@ -103,7 +103,7 @@ def send_email_to_support(request_email, subject, message, user=None):
         except User.DoesNotExist:
             pass
 
-    send_mail_template_to_support(settings.EMAIL_SUBJECT_SUPPORT_EMAIL, "support/email_support.txt",
+    send_mail_template_to_support(settings.EMAIL_SUBJECT_SUPPORT_EMAIL, "emails/email_support.txt",
                                   {'message': message, 'user': user}, extra_subject=subject, reply_to=request_email)
 
 

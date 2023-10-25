@@ -1,4 +1,4 @@
-{% extends "email_base.txt" %}
+{% extends "emails/email_base.txt" %}
 
 {% load absurl %}
 
@@ -15,6 +15,6 @@ The remix is called {{remix.original_filename}}, listen to it here:
 
 {% absurl 'sound' remix.user.username remix.id %}
 
-{% include "email_opt_out_text.txt" %}
+{% include "emails/email_opt_out_text.txt" %}
 
 {% endblock %}

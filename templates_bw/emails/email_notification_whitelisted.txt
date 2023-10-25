@@ -1,4 +1,4 @@
-{% extends "email_base.txt" %}
+{% extends "emails/email_base.txt" %}
 
 {% block salutation %}{{user_to.username}}{% endblock %}
 

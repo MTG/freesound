@@ -276,7 +276,7 @@ def sound(request, username, sound_id):
                     comment_text = form.cleaned_data["comment"]
                     sound.add_comment(request.user, comment_text)
                     sound.invalidate_template_caches()
-                    send_mail_template(settings.EMAIL_SUBJECT_NEW_COMMENT, 'sounds/email_new_comment.txt',
+                    send_mail_template(settings.EMAIL_SUBJECT_NEW_COMMENT, 'emails/email_new_comment.txt',
                                        {'sound': sound, 'user': request.user, 'comment': comment_text},
                                        user_to=sound.user, email_type_preference_check="new_comment")
 
@@ -1214,7 +1214,7 @@ def flag(request, username, sound_id):
             else:
                 user_email = flag_form.cleaned_data["email"]
 
-            send_mail_template_to_support(settings.EMAIL_SUBJECT_SOUND_FLAG, "sounds/email_flag.txt", {"flag": flag},
+            send_mail_template_to_support(settings.EMAIL_SUBJECT_SOUND_FLAG, "emails/email_flag.txt", {"flag": flag},
                                           extra_subject=f"{sound.user.username} - {sound.original_filename}",
                                           reply_to=user_email)
             if using_beastwhoosh(request):
@@ -1358,7 +1358,7 @@ def oembed(request):
         'sizes': sizes,
         'player_size': player_size,
     }
-    return render(request, 'sounds/sound_oembed.xml', tvars, content_type='text/xml')
+    return render(request, 'embeds/sound_oembed.xml', tvars, content_type='text/xml')
 
 
 def downloaders(request, username, sound_id):

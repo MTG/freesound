@@ -81,7 +81,7 @@ class Command(LoggingBaseCommand):
         for user in users_to_notify.all():
             email_sent_successfully = send_mail_template(
                 settings.EMAIL_SUBJECT_DONATION_REMINDER,
-                'donations/email_donation_reminder.txt', {'user': user},
+                'emails/email_donation_reminder.txt', {'user': user},
                 user_to=user, email_type_preference_check='donation_request')
             if email_sent_successfully:
                 user.profile.last_donation_email_sent = datetime.datetime.now()
@@ -145,7 +145,7 @@ class Command(LoggingBaseCommand):
                 if send_email:
                     email_sent_successfully = send_mail_template(
                         settings.EMAIL_SUBJECT_DONATION_REQUEST,
-                        'donations/email_donation_request.txt', {
+                        'emails/email_donation_request.txt', {
                             'user': user,
                             }, user_to=user, email_type_preference_check='donation_request')
 

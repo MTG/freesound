@@ -1,4 +1,4 @@
-{% extends "email_base.txt" %}
+{% extends "emails/email_base.txt" %}
 
 {% load absurl %}
 
@@ -8,9 +8,14 @@
 The sound {{ ticket.sound.original_filename }} has been 
 approved by a Freesound moderator and is now available in Freesound.
 
+However, the moderator had some remarks. Please see the following link
+to see the moderator's message:
+
+{% absurl "tickets-ticket" ticket.key %}
+
 You can access the sound's page here:
 
-{% absurl "sound" ticket.sound.user ticket.sound.id %}
+{% absurl "sound" ticket.sound.user ticket.sound.id  %}
 
 Thank you for adding to Freesound!
 {% endblock %}

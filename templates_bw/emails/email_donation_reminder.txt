@@ -1,4 +1,4 @@
-{% extends "email_base.txt" %}
+{% extends "emails/email_base.txt" %}
 {% load absurl %}
 
 {% block salutation %}{{ user.username }}{% endblock %}
@@ -14,6 +14,6 @@ Please, feel free to use the link below to make a new donation:
 
 {% absurl 'donate' %}
 
-{% include "email_opt_out_text.txt" %}
+{% include "emails/email_opt_out_text.txt" %}
 
 {% endblock %}

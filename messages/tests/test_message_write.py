@@ -119,11 +119,10 @@ class UsernameLookup(TestCase):
         # Check username lookup view returns userames of users previously contacted by the sender or users who
         # previously contacted the sender
         self.client.force_login(self.sender)
-        resp = self.client.get(reverse('messages-username_lookup'))
+        resp = self.client.get(reverse('messages-username_lookup') + '?q=re')
         response_json = json.loads(resp.content)
         self.assertEqual(resp.status_code, 200)
-        self.assertCountEqual([self.receiver3.username, self.receiver2.username, self.receiver1.username,
-                                    self.sender2.username, self.sender.username],
+        self.assertCountEqual([self.receiver3.username, self.receiver2.username, self.receiver1.username],
                              response_json)
 
 

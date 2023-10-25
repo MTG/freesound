@@ -972,7 +972,7 @@ class Sound(models.Model):
             source.invalidate_template_caches()
             self.sources.add(source)
             send_mail_template(
-                settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX, 'sounds/email_remix_update.txt',
+                settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX, 'emails/email_remix_update.txt',
                 {'source': source, 'action': 'added', 'remix': self},
                 user_to=source.user, email_type_preference_check='new_remix')
         
@@ -1401,7 +1401,7 @@ class SoundOfTheDay(models.Model):
             return False
 
         send_mail_template(
-            settings.EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN, 'sounds/email_random_sound.txt',
+            settings.EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN, 'emails/email_random_sound.txt',
             {'sound': self.sound, 'user': self.sound.user},
             user_to=self.sound.user, email_type_preference_check="random_sound")
         self.email_sent = True

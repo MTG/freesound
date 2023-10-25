@@ -1,4 +1,4 @@
-{% extends "email_base.txt" %}
+{% extends "emails/email_base.txt" %}
 
 {% load absurl %}
 
@@ -18,6 +18,6 @@ Post URL:
 If you wish to stop receiving subscription messages from this thread, you can unsubscribe by clicking this link:
 {% absurl "forums-thread-unsubscribe" forum.name_slug thread.id %}
 
-{% include "email_opt_out_text.txt" %}
+{% include "emails/email_opt_out_text.txt" %}
 
 {% endblock %}

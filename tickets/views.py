@@ -619,7 +619,8 @@ def moderation_assigned(request, user_id):
                        .exclude(status=TICKET_STATUS_CLOSED) \
                        .exclude(sound=None) \
                        .order_by('status', '-created')
-    pagination_response = paginate(request, qs, settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE)
+    page_size = settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_BW if using_beastwhoosh(request) else settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
+    pagination_response = paginate(request, qs, page_size)
     pagination_response['page'].object_list = list(pagination_response['page'].object_list)
     # Because some tickets can have related sound which has disappeared or on deletion time the ticket
     # has not been properly updated, we need to check whether the sound that is related does in fact
@@ -632,7 +633,7 @@ def moderation_assigned(request, user_id):
             ticket.save()
 
     moderator_tickets_count = qs.count()
-    show_pagination = moderator_tickets_count > settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
+    show_pagination = moderator_tickets_count > page_size
 
     tvars = {
         "moderator_tickets_count": moderator_tickets_count,
@@ -641,7 +642,7 @@ def moderation_assigned(request, user_id):
         "paginator": pagination_response['paginator'],
         "current_page": pagination_response['current_page'],
         "show_pagination": show_pagination,
-        "max_selected_tickets_in_right_panel": settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN,
+        "max_selected_tickets_in_right_panel": settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN,  # Not used in BW
         "mod_sound_form": mod_sound_form,
         "msg_form": msg_form,
         "default_autoplay": request.GET.get('autoplay', 'on') == 'on',

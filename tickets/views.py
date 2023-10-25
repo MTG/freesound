@@ -753,9 +753,12 @@ def guide(request):
     name = "moderators_bw"
     page = Page.objects.get(name__iexact=name)
     content = Content.objects.select_related().filter(page=page).latest()
-    tvars = {'content': content,
-             'name': name,
-             'section': 'guide'}
+    tvars = {
+        'content': content,
+        'name': name,
+        'section': 'guide',
+        'moderator_tickets_count': _get_sounds_in_moderators_queue_count(request.user)
+    }
     return render(request, 'moderation/guide.html', tvars)
 
 

@@ -1,0 +1,35 @@
+{% extends "simple_page.html" %}
+{% load static %}
+{% load util %}
+{% load filter_img %}
+{% load smileys %}
+{% load display_forum_objects %}
+{% load bw_templatetags %}
+{% block title %}Moderate forum posts{% endblock %}
+{% block page-title %}Moderate forum posts ({{ post_list|length }}){% endblock %}
+
+{% block page-content %}
+<div>Below is a list of forum posts that require moderation. You can either approve or reject them individually. Also you have the option to
+    delete the whole corresponding user object if it is believed to be a spammer.
+</div>
+<div class="v-spacing-top-6">
+    {% for post in post_list %}
+        <div class="row">
+            <div class="col-9">
+                {% display_post post.post 0 0 False False False %}
+            </div>
+            <div class="col-3">
+                <form action="." method="post" class="bw-form bw-multiple-radio">{% csrf_token %}
+                    {{ post.form }}
+                    <button type="submit" class="btn-primary v-spacing-top-4 w-100 center">Send</button>
+                </form>
+            </div>
+        </div>
+        {% if not forloop.last %}
+            <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+        {% endif %}  
+    {% endfor %}
+</div>
+{% endblock %}
+
+

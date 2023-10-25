@@ -34,9 +34,9 @@ from django.urls import reverse
 from django.db import transaction
 
 from accounts.models import DeletedUser
-from forum.forms import PostReplyForm, BwPostReplyForm, NewThreadForm, BwNewThreadForm, PostModerationForm
+from forum.forms import PostReplyForm, BwPostReplyForm, NewThreadForm, BwNewThreadForm, PostModerationForm, BwPostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_template_cache, invalidate_all_moderators_header_cache
 from utils.frontend_handling import render, using_beastwhoosh
 from utils.mail import send_mail_template
 from utils.pagination import paginate
@@ -489,8 +489,9 @@ def post_edit(request, post_id):
 @permission_required('forum.can_moderate_forum')
 @transaction.atomic()
 def moderate_posts(request):
+    PostModerationFormClass = PostModerationForm if not using_beastwhoosh(request) else BwPostModerationForm
     if request.method == 'POST':
-        mod_form = PostModerationForm(request.POST)
+        mod_form = PostModerationFormClass(request.POST)
         if mod_form.is_valid():
             action = mod_form.cleaned_data.get("action")
             post_id = mod_form.cleaned_data.get("post")
@@ -517,10 +518,12 @@ def moderate_posts(request):
             except Post.DoesNotExist:
                 messages.add_message(request, messages.INFO, 'This post no longer exists. It may have already been deleted.')
 
-    pending_posts = Post.objects.filter(moderation_state='NM')
+            invalidate_all_moderators_header_cache()
+
+    pending_posts = Post.objects.filter(moderation_state='NM').select_related('author', 'author__profile')
     post_list = []
     for p in pending_posts:
-        f = PostModerationForm(initial={'action': 'Approve', 'post': p.id})
+        f = PostModerationFormClass(initial={'action': 'Approve', 'post': p.id})
         post_list.append({'post': p, 'form': f})
 
     tvars = {'post_list': post_list,

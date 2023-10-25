@@ -112,3 +112,9 @@ class PostModerationForm(forms.Form):
                                widget=forms.RadioSelect(),
                                label='')
     post = forms.IntegerField(widget=forms.widgets.HiddenInput)
+
+
+class BwPostModerationForm(PostModerationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['action'].widget.attrs['class'] = 'bw-radio'

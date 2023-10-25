@@ -448,11 +448,6 @@ def home(request):
     packs_without_sounds = Pack.objects.select_related().filter(user=user, num_sounds=0).exclude(is_deleted=True)
     # 'packs_without_sounds' also includes packs that only contain unmoderated or unprocessed sounds
 
-    # Moderation stats
-    new_posts = 0
-    if request.user.has_perm('forum.can_moderate_forum'):
-        new_posts = Post.objects.filter(moderation_state='NM').count()
-
     # Followers
     following = follow_utils.get_users_following_qs(user)
     followers = follow_utils.get_users_followers_qs(user)
@@ -469,7 +464,6 @@ def home(request):
         'num_more_unmoderated_sounds': num_more_unmoderated_sounds,
         'latest_packs': latest_packs,
         'packs_without_sounds': packs_without_sounds,
-        'new_posts': new_posts,
         'following': following,
         'followers': followers,
         'following_tags': following_tags,

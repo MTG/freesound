@@ -23,6 +23,7 @@ import datetime
 from django.conf import settings
 
 from accounts.forms import BwFsAuthenticationForm, BwRegistrationForm, BwProblemsLoggingInForm
+from forum.models import Post
 from messages.models import Message
 from tickets.views import new_sound_tickets_count
 from utils.frontend_handling import using_beastwhoosh
@@ -51,10 +52,13 @@ def context_extra(request):
         new_tickets_count = -1  # Initially set to -1 (to distinguish later users that can not moderate)
         num_pending_sounds = 0
         num_messages = 0
+        new_posts_pending_moderation = 0
 
         if request.user.is_authenticated:
             if request.user.has_perm('tickets.can_moderate'):
                 new_tickets_count = new_sound_tickets_count()
+            if request.user.has_perm('forum.can_moderate_forum'):
+                new_posts_pending_moderation = Post.objects.filter(moderation_state='NM').count()
             if using_beastwhoosh(request):
                 num_pending_sounds = request.user.profile.num_sounds_pending_moderation()
             num_messages = Message.objects.filter(user_to=request.user, is_archived=False, is_sent=False, is_read=False).count()
@@ -69,6 +73,7 @@ def context_extra(request):
         tvars.update({
             'last_restart_date': settings.LAST_RESTART_DATE,
             'new_tickets_count': new_tickets_count,
+            'new_posts_pending_moderation': new_posts_pending_moderation,
             'num_pending_sounds': num_pending_sounds,
             'num_messages': num_messages,
             'load_anniversary_content': load_anniversary_content,

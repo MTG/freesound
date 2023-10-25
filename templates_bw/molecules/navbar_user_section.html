@@ -32,6 +32,11 @@
                     <a class="bw-link--black" href="{% url 'tickets-moderation-home' %}">Moderation {% if new_tickets_count %}<span class="text-red">({{ new_tickets_count }} new)</span>{% endif %}</a>
                 </li>
                 {% endif %}
+                {% if perms.forum.can_moderate_forum %}
+                    <li class="bw-nav__action dropdown-item">
+                        <a class="bw-link--black" href="{% url 'forums-moderate' %}">Moderate forum {% if new_posts_pending_moderation %}<span class="text-red">({{ new_posts_pending_moderation }})</span>{% endif %}</a>
+                    </li>
+                {% endif %}
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--grey" href="{% url 'accounts-edit' %}">Account settings</a>
                 </li>

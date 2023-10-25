@@ -123,6 +123,7 @@ selectOtherFromSameUser.addEventListener('click', () => {
             selectConsiderringDeferredStatus(checkbox);
         };
     });
+    postTicketsSelected();
 })
 
 stopAllSounds.addEventListener('click', () => {

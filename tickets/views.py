@@ -120,6 +120,13 @@ def ticket(request, ticket_key):
         # update sound ticket
         elif is_selected(request, 'ss'):
             sound_form = SoundStateForm(request.POST, prefix='ss')
+
+            if ticket.sound is None:
+                # If ticket has not sound associated, we allow an extra option to close the ticket
+                # Even if the options will not be displayed to the user, we need this extra option so the form
+                # validates properly when the hardcoded "Close" option is used
+                sound_form.fields['action'].choices += (('Close', 'Close'),)
+
             if sound_form.is_valid():
                 clean_status_forms = True
                 clean_comment_form = True
@@ -161,19 +168,25 @@ def ticket(request, ticket_key):
                     comment += f'whitelisted all sounds from user {ticket.sender}'
                     notification = ticket.NOTIFICATION_WHITELISTED
 
+                elif sound_action == 'Close':
+                    # This option in never shown in the form, but used when needing to close a ticket which has no sound associated (see ticket.html)
+                    ticket.status = TICKET_STATUS_CLOSED
+                    comment = None  # Avoid adding a comment to the ticket
+
                 if notification is not None:
                     ticket.send_notification_emails(notification,
                                                     ticket.USER_ONLY)
 
                 if ticket.sound is not None:
                     ticket.sound.save()
-
+                
                 ticket.save()
-                tc = TicketComment(sender=request.user,
-                                   text=comment,
-                                   ticket=ticket,
-                                   moderator_only=False)
-                tc.save()
+                if comment is not None:
+                    tc = TicketComment(sender=request.user,
+                                    text=comment,
+                                    ticket=ticket,
+                                    moderator_only=False)
+                    tc.save()
 
     if clean_status_forms:
         default_action = 'Return' if ticket.sound and ticket.sound.moderation_state == 'OK' else 'Approve'

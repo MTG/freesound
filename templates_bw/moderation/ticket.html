@@ -71,7 +71,7 @@
     
     <div class="offset-md-1 col-md-5">
         <div class="v-spacing-top-4">
-            <h3 class="text-grey">Sound</h3>
+            <h3 class="text-grey">Sound {{ sound.id }}</h3>
             <div class="v-spacing-top-2">
             {% if sound is not None %}
                 {% display_sound_moderation sound %}
@@ -83,14 +83,31 @@
 
         <div class="v-spacing-top-4">
             <h3 class="text-grey">Actions</h3> 
-            {% if perms.tickets.can_moderate and sound %}
-            <form action="." method="post" class="bw-form">{% csrf_token %}
-                {{ sound_form.as_p }}
-                <button class="btn-primary v-spacing-top-4">Update ticket</button>
-            </form>
+            {% if perms.tickets.can_moderate %}
+                {% if sound %}
+                <form action="." method="post" class="bw-form">{% csrf_token %}
+                    {{ sound_form.as_p }}
+                    <button class="btn-primary v-spacing-top-4">Update ticket</button>
+                </form>
+                {% else %}
+                    {% if ticket.status == 'closed' %}
+                    <div class="v-spacing-top-2 text-grey">
+                        This ticket no longer has a sound associated with it, no further actions can be performed.
+                    </div>
+                    {% else %}
+                    <div class="v-spacing-top-2 text-grey">
+                        This ticket no longer has a sound associated with it but for some reason it has not been closed.
+                        Please close it using the button below.
+                        <form action="." method="post" class="bw-form">{% csrf_token %}
+                            <input type="hidden" name="ss-action" value="Close">
+                            <button class="btn-primary v-spacing-top-4">Close this ticket</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                {% endif %}
             {% else %}
             <div class="v-spacing-top-2 text-grey">
-                You do not have permissions to perform any actions or the ticket has no assigned sound.
+                You do not have permissions to perform any actions.
             </div>
             {% endif %}
         </div>

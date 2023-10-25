@@ -660,7 +660,7 @@ def moderation_assigned(request, user_id):
 @permission_required('tickets.can_moderate')
 @transaction.atomic()
 def user_annotations(request, user_id):
-    user = get_object_or_404(User, id=user_id)
+    user = get_object_or_404(User.objects.select_related('profile'), id=user_id)
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
         return HttpResponseRedirect(reverse('account', args=[user.username]) + '?mod_annotations=1')
     annotations = UserAnnotation.objects.filter(user=user)

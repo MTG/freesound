@@ -13,6 +13,18 @@
     </div>
     <div class="row">
         <div class="col-lg-6 v-spacing-4">
+            <div class="v-spacing-4 row">
+                <div class="col-2">
+                    {% bw_user_avatar user.profile.locations.avatar.M.url user.username 50 %}
+                </div>
+                <div class="col-8">
+                    <a href="{% url 'account' user.username %}">{{ user.username }}</a>
+                    <div class="text-grey ellipsis">
+                        {{ user.profile.num_sounds|bw_intcomma }} sound{{ user.profile.num_sounds|pluralize }} · {{ user.profile.num_posts|bw_intcomma }} post{{ user.profile.num_posts|pluralize }} · {{ user.profile.num_comments|bw_intcomma }} comment{{ user.profile.num_comments|pluralize }}
+                    </div>
+                </div>
+            </div>
+            
             <h4 class="text-grey">Annotations ({{ annotations|length }})</h4>
             <div class="v-spacing-top-2 overflow-hidden">
             {% for annotation in annotations %}

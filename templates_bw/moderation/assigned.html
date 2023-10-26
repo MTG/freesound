@@ -65,8 +65,13 @@
                             <input type="checkbox" class="bw-checkbox" id="autoplay-sounds" {% if default_autoplay %}checked="checked"{% endif %}/>Autoplay sounds when selecting   
                         </label>
                     </div>
+                    <div>
+                        <label for="autoscroll-sounds">
+                            <input type="checkbox" class="bw-checkbox" id="autoscroll-sounds" {% if default_autoscroll %}checked="checked"{% endif %}/>Scroll to sounds when selecting 
+                        </label>
+                    </div>
                     <div class="text-grey">
-                        You can do alt+click on a row to select <i>multiple</i> rows
+                        You can do alt+click on a row to expand the current selection
                         <br>You can do shift+click on a row to select all the rows since the last previously selected row
                     </div>
                 </div>
@@ -74,7 +79,7 @@
             </div>
         </div>
         <div class="col-lg-5">
-            <div class="bw-sticky-top3">
+            <div class="bw-sticky-top">
                 <div id="moderate-form-wrapper" class="display-none">
                     <h4 id="moderate-form-title-label"></h4>
                     <div>

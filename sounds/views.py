@@ -46,6 +46,7 @@ from django.urls import reverse, resolve
 from django.views.decorators.clickjacking import xframe_options_exempt
 from ratelimit.decorators import ratelimit
 
+from accounts.models import Profile
 from comments.forms import CommentForm, BwCommentForm
 from comments.models import Comment
 from donations.models import DonationsModalSettings
@@ -1331,6 +1332,7 @@ def embed_iframe(request, sound_id, player_size):
         raise Http404
     tvars = {
         'sound': sound,
+        'user_profile_locations': Profile.locations_static(sound.user_id, getattr(sound, 'user_has_avatar', False)),
         'username_and_filename': f'{sound.username} - {sound.original_filename}',
         'size': player_size,
         'use_spectrogram': request.GET.get('spec', None) == '1',

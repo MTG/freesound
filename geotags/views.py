@@ -245,8 +245,7 @@ def embed_iframe(request):
         'cluster': request.GET.get('c', 'on') != 'off',
         'media_url': settings.MEDIA_URL,
     })
-    tvars.update({'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
-                  'media_url': settings.MEDIA_URL})
+    tvars.update({'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN})
     return render(request, 'embeds/geotags_box_iframe.html', tvars)
 
 
@@ -255,9 +254,11 @@ def infowindow(request, sound_id):
         sound = Sound.objects.select_related('user', 'geotag').get(id=sound_id)
     except Sound.DoesNotExist:
         raise Http404
-
     tvars = {
         'sound': sound,
         'minimal': request.GET.get('minimal', False)
     }
+    if request.GET.get('embed', False):
+        # When loading infowindow for an embed, use the template for old UI as embeds have not been updated to new UI
+        return render(request, 'embeds/geotags_infowindow.html', tvars)
     return render(request, 'geotags/infowindow.html', tvars)

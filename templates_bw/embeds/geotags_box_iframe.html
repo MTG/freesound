@@ -1,23 +1,20 @@
+{% load static %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">  
     <head>
-        <script src="{{media_url}}js/jquery-1.5.2.min.js" type="text/javascript"></script>
-        
-        <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js'></script>
-        <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css' rel='stylesheet' />
-        <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js'></script>
-        <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css' type='text/css' />
-        <script type="text/javascript" src="{{ media_url }}/js/maps-mapbox.js?v={{ last_restart_date }}"></script>
-        <script type="text/javascript">
-            mapboxgl.accessToken = '{{ mapbox_access_token }}';
-        </script>
-
-        <link href='//fonts.googleapis.com/css?family=Inconsolata&v1' rel='stylesheet' type='text/css' />
-        <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/embed.css" />
-        <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/player.css" />
-        <script src="{{ media_url }}html_player/soundmanager2.js"></script>
-        <script type="text/javascript" src="{{ media_url }}html_player/player.js"></script>
-        <script src="{{media_url}}js/ajax_utils.js" type="text/javascript"></script>
+        <script type="text/javascript" src="{% static 'bw-frontend/public/embeds/jquery-1.5.2.min.js' %}" type="text/javascript"></script>
+        <script type="text/javascript" src='https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js'></script>
+        <link type="text/css" rel="stylesheet" href='https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css' rel='stylesheet' />
+        <script type="text/javascript" src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js'></script>
+        <link type="text/css" rel="stylesheet" href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css' />
+        <script type="text/javascript" src="{% static 'bw-frontend/public/embeds/maps-mapbox.js' %}?v={{ last_restart_date }}"></script>
+        <script type="text/javascript">mapboxgl.accessToken = '{{ mapbox_access_token }}';</script>
+        <link type="text/css" rel="stylesheet" href='//fonts.googleapis.com/css?family=Inconsolata&v1' />
+        <link type="text/css" rel="stylesheet" href="{% static 'bw-frontend/public/embeds/html_player/embed.css' %}"/>
+        <link type="text/css" rel="stylesheet" href="{% static 'bw-frontend/public/embeds/html_player/player.css' %}" />
+        <script type="text/javascript" src="{% static 'bw-frontend/public/embeds/html_player/soundmanager2.js' %}"></script>
+        <script type="text/javascript" src="{% static 'bw-frontend/public/embeds/html_player/player.js' %}"></script>
+        <script type="text/javascript" src="{% static 'bw-frontend/public/embeds/ajax_utils.js' %}" ></script>
     </head>
 <body>
 

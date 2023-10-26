@@ -144,7 +144,7 @@ ticketCheckboxes.forEach(checkbox => {
 
     // NOTE: the 'change' event is triggered when the checkbox is clicked by the user, but not when programatically setting .checked to true/false
     checkbox.addEventListener('change', () => {
-        if (checkbox.dataset.altKey === "true") {
+        if (checkbox.dataset.altKey !== "true" && checkbox.dataset.shiftKey !== "true") {
             // Unselect all other checkboxes
             ticketCheckboxes.forEach(otherCheckbox => {
                 if (otherCheckbox !== checkbox) {

@@ -29,7 +29,7 @@
                         <a id="stop-sounds" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Stop all sounds</a>
                     </div>
                 </div>
-                <div>
+                <div class="v-spacing-3" style="overflow-y:auto;max-height:450px;">
                     <table id="assigned-tickets-table" class="w-100 tickets-table">
                     {% for ticket in page.object_list %}
                         {% if ticket.sound %}
@@ -66,7 +66,7 @@
                         </label>
                     </div>
                     <div class="text-grey">
-                        You can do alt+click on a row to select <i>only</i> this row
+                        You can do alt+click on a row to select <i>multiple</i> rows
                         <br>You can do shift+click on a row to select all the rows since the last previously selected row
                     </div>
                 </div>
@@ -74,30 +74,32 @@
             </div>
         </div>
         <div class="col-lg-5">
-            <div id="moderate-form-wrapper" class="display-none">
-                <h4 id="moderate-form-title-label"></h4>
-                <div>
-                    <form action="." method="post" class="bw-form disable-on-submit do-not-submit-on-enter">{% csrf_token %}
-                        <div class="bw-inline-radio">
-                        {{ mod_sound_form.as_p }}
-                        </div>
-                        <div id="template-responses" class="v-spacing-top-2">
-                            <span class="h-spacing-1">Template repsonses:</span>
-                            {% for label, text in moderation_texts %}
-                                <a class="bw-link--grey cursor-pointer" href="javascript:void(0);"
-                                    data-text="{{text|escape}}" title="{{text|escape}}">{{ label }}</a>
-                                {% if not forloop.last %}
-                                <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
-                                {% endif%}
-                            {% endfor %}
-                        </div>
-                        <div class="v-spacing-top-2 v-spacing-4">
-                        {{ msg_form }}
-                        </div>
-                        <button class="btn-primary w-100" type="submit">Update ticket(s)</button>
-                    </form>
-                </div>  
-                <div id="selected-sounds-info" class="v-spacing-top-4 v-spacing-4"></div>
+            <div class="bw-sticky-top3">
+                <div id="moderate-form-wrapper" class="display-none">
+                    <h4 id="moderate-form-title-label"></h4>
+                    <div>
+                        <form action="." method="post" class="bw-form disable-on-submit do-not-submit-on-enter">{% csrf_token %}
+                            <div class="bw-inline-radio">
+                            {{ mod_sound_form.as_p }}
+                            </div>
+                            <div id="template-responses" class="v-spacing-top-2">
+                                <span class="h-spacing-1">Template repsonses:</span>
+                                {% for label, text in moderation_texts %}
+                                    <a class="bw-link--grey cursor-pointer" href="javascript:void(0);"
+                                        data-text="{{text|escape}}" title="{{text|escape}}">{{ label }}</a>
+                                    {% if not forloop.last %}
+                                    <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
+                                    {% endif%}
+                                {% endfor %}
+                            </div>
+                            <div class="v-spacing-top-2 v-spacing-4">
+                            {{ msg_form }}
+                            </div>
+                            <button class="btn-primary w-100" type="submit">Update ticket(s)</button>
+                        </form>
+                    </div>  
+                    <div id="selected-sounds-info" class="v-spacing-top-4 v-spacing-4" style="padding-bottom:1000px;"></div>
+                </div>
             </div>
         </div>
     </div>

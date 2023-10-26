@@ -6,6 +6,7 @@ const selectOtherFromSameUser = document.getElementById('select-other');
 const stopAllSounds = document.getElementById('stop-sounds');
 const includeDeferredTicketsCheckbox = document.getElementById('include-deferred');
 const autoplaySoundsCheckbox = document.getElementById('autoplay-sounds');
+const autoscrollSoundsCheckbox = document.getElementById('autoscroll-sounds');
 const moderateFormTitle = document.getElementById('moderate-form-title-label');
 const moderateFormWrapper = document.getElementById('moderate-form-wrapper');
 const moderateForm = moderateFormWrapper.getElementsByTagName('form')[0];
@@ -70,6 +71,23 @@ const postTicketsSelected = () => {
     if (selectedTicketsData.length === 0) {
         stopAllPlayers();
     }
+
+    // If no sound is selected after this method is run, scroll window to top
+    if (selectedTicketsData.length === 0) {
+        document.documentElement.scrollTop = document.body.scrollTop = 0;
+    }
+}
+
+const scrollWindowToSoundInfoElement = (soundId) => {
+    if (selectedSoundsInfoPanel.offsetHeight - parseFloat(selectedSoundsInfoPanel.style.paddingBottom) + moderateForm.offsetHeight > window.innerHeight) {
+        const soundInfoElement = selectedSoundsInfoPanel.querySelector(`.sound-info-element[data-sound-id="${soundId}"]`);
+        if (soundInfoElement !== undefined){
+            const amountToScroll = soundInfoElement.offsetTop + moderateForm.offsetHeight - 180;
+            document.documentElement.scrollTop = document.body.scrollTop = amountToScroll;
+        }
+    } else {
+        document.documentElement.scrollTop = document.body.scrollTop = 0;
+    }
 }
 
 const shouldInludeDeferredTickets = () => {
@@ -79,6 +97,26 @@ const shouldInludeDeferredTickets = () => {
 const shouldAutoplaySounds = () => {
     return autoplaySoundsCheckbox.checked;
 }
+
+const shouldAutoscroll = () => {
+    return autoscrollSoundsCheckbox.checked;
+}
+
+// set cookie when changing checkbox
+includeDeferredTicketsCheckbox.addEventListener('change', (evt) => {
+    const cookieValue = evt.target.checked ? 'on' : 'off';
+    document.cookie = `mod_include_d=${cookieValue};path=/`;
+})
+
+autoplaySoundsCheckbox.addEventListener('change', (evt) => {
+    const cookieValue = evt.target.checked ? 'on' : 'off';
+    document.cookie = `mod_autoplay=${cookieValue};path=/`;
+})
+
+autoscrollSoundsCheckbox.addEventListener('change', (evt) => {
+    const cookieValue = evt.target.checked ? 'on' : 'off';
+    document.cookie = `mod_autoscroll=${cookieValue};path=/`;
+})
 
 const correspondingTicketIsDeferred = (checkbox) => {
     return checkbox.closest('tr').dataset.ticketStatus === 'deferred';
@@ -145,14 +183,14 @@ ticketCheckboxes.forEach(checkbox => {
     // NOTE: the 'change' event is triggered when the checkbox is clicked by the user, but not when programatically setting .checked to true/false
     checkbox.addEventListener('change', () => {
         if (checkbox.dataset.altKey !== "true" && checkbox.dataset.shiftKey !== "true") {
-            // Unselect all other checkboxes
-            ticketCheckboxes.forEach(otherCheckbox => {
-                if (otherCheckbox !== checkbox) {
-                    otherCheckbox.checked = false;
-                }
-            });
-            // Make sure the clicked checkbox is selected (even if the change event would unselect it initially)
-            checkbox.checked = true;
+            // If the current is being selected, then unselect all other checkboxes
+            if (checkbox.checked) {
+                ticketCheckboxes.forEach(otherCheckbox => {
+                    if (otherCheckbox !== checkbox) {
+                        otherCheckbox.checked = false;
+                    }
+                });
+            }
         }
         let didMultipleSelection = false;
         if (checkbox.dataset.shiftKey === "true") {
@@ -205,15 +243,20 @@ ticketCheckboxes.forEach(checkbox => {
             audioElement.pause();
             audioElement.currentTime = 0;
         }
-    });
-})
 
-moderateForm.addEventListener('submit', () => {
-    var url = new URL(moderateForm.action);
-    url.searchParams.set('include_d', shouldInludeDeferredTickets() ? 'on': 'off');
-    url.searchParams.set('autoplay', shouldAutoplaySounds() ? 'on': 'off');
-    moderateForm.action = url.href;
-    return true;
+        // Scroll to sound if not doing multiple selection and sound was checked
+        if (shouldAutoscroll()) {
+            if (!didMultipleSelection) {
+                if (checkbox.checked) {
+                    scrollWindowToSoundInfoElement(checkbox.closest('tr').dataset.soundId);
+                } else {
+                    // If unchecked, scroll a bit to top (the ammount of a sound info element)
+                    const currentScrollPosition = document.documentElement.scrollTop;
+                    document.documentElement.scrollTop = document.body.scrollTop = currentScrollPosition - soundInfoElement.offsetHeight;
+                }
+            }
+        }
+    });
 })
 
 templateResponses.forEach(templateResponse => {

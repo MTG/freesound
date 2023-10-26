@@ -1,3 +1,4 @@
+{% load static %}
 {% load apiv2_templatetags %}
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
@@ -40,7 +41,7 @@
 
 <div class="container_main">
 <div class="container">
-    <img src="/media/images/logo.png"/>
+    <img src="{% static 'bw-frontend/public/logos/logo-text.svg' %}"/>
     {% if not error %}
         <p>The application <strong>{{ application.name }}</strong> is requesting<br> permission to access your data.
         </p>

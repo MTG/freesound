@@ -122,8 +122,10 @@ def login(request, template_name, authentication_form):
     # NOTE: in the function below we need to make the template depend on the front-end because LoginView will not
     # use our custom "render" function which would select the template for the chosen front-end automatically
     # Also, we set the authentication form depending on front-end as there are small modifications.
+    if using_beastwhoosh(request) and template_name == 'registration/login.html':
+        template_name = 'accounts/login.html'
     response = LoginView.as_view(
-        template_name=template_name if not using_beastwhoosh(request) else 'accounts/login.html',
+        template_name=template_name,
         authentication_form=authentication_form if not using_beastwhoosh(request) else BwFsAuthenticationForm)(request)
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful

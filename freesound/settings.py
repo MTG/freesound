@@ -813,27 +813,6 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(os.path.dirname(__file__), '../templates')
-        ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.contrib.auth.context_processors.auth',
-                'django.template.context_processors.debug',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'django.template.context_processors.tz',
-                'django.template.context_processors.request',
-                'django.contrib.messages.context_processors.messages',
-                'freesound.context_processor.context_extra',
-            ],
-        },
-        'NAME': FRONTEND_NIGHTINGALE,
-    },
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
             os.path.join(os.path.dirname(__file__), '../templates_bw'),
         ],
         'APP_DIRS': True,
@@ -852,7 +831,27 @@ TEMPLATES = [
         },
         'NAME': FRONTEND_BEASTWHOOSH,
     },
-
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(os.path.dirname(__file__), '../templates')
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.template.context_processors.request',
+                'django.contrib.messages.context_processors.messages',
+                'freesound.context_processor.context_extra',
+            ],
+        },
+        'NAME': FRONTEND_NIGHTINGALE,
+    },
 ]
 
 # We use the last restart date as a timestamp of the last time freesound web was restarted (lat time

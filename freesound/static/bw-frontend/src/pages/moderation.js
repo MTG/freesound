@@ -1,4 +1,5 @@
-import {stopAllPlayers} from '../components/player/utils'
+import { stopAllPlayers } from '../components/player/utils'
+import { getCookie, setCookie } from "../utils/cookies";
 
 const selectAllButton = document.getElementById('select-all');
 const selectNoneButton = document.getElementById('select-none');
@@ -102,20 +103,27 @@ const shouldAutoscroll = () => {
     return autoscrollSoundsCheckbox.checked;
 }
 
-// set cookie when changing checkbox
+// set cookie when changing checkbox and set initial cookie value
+if (getCookie('mod_include_d') === 'on') {
+    includeDeferredTicketsCheckbox.checked = true;
+}
+if (getCookie('mod_autoplay') === 'on') {
+    autoplaySoundsCheckbox.checked = true;
+}
+if (getCookie('mod_autoscroll') === 'on') {
+    autoscrollSoundsCheckbox.checked = true;
+}
+
 includeDeferredTicketsCheckbox.addEventListener('change', (evt) => {
-    const cookieValue = evt.target.checked ? 'on' : 'off';
-    document.cookie = `mod_include_d=${cookieValue};path=/`;
+    setCookie('mod_include_d', evt.target.checked ? 'on' : 'off');
 })
 
 autoplaySoundsCheckbox.addEventListener('change', (evt) => {
-    const cookieValue = evt.target.checked ? 'on' : 'off';
-    document.cookie = `mod_autoplay=${cookieValue};path=/`;
+    setCookie('mod_autoplay', evt.target.checked ? 'on' : 'off');
 })
 
 autoscrollSoundsCheckbox.addEventListener('change', (evt) => {
-    const cookieValue = evt.target.checked ? 'on' : 'off';
-    document.cookie = `mod_autoscroll=${cookieValue};path=/`;
+    setCookie('mod_autoscroll', evt.target.checked ? 'on' : 'off');
 })
 
 const correspondingTicketIsDeferred = (checkbox) => {

@@ -644,10 +644,7 @@ def moderation_assigned(request, user_id):
         "show_pagination": show_pagination,
         "max_selected_tickets_in_right_panel": settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN,  # Not used in BW
         "mod_sound_form": mod_sound_form,
-        "msg_form": msg_form,
-        "default_autoplay": request.COOKIES.get('mod_autoplay', 'on') == 'on',
-        "default_autoscroll": request.COOKIES.get('mod_autoscroll', 'on') == 'on',
-        "default_include_deferred": request.COOKIES.get('mod_include_d', '') == 'on',
+        "msg_form": msg_form
     }
 
     if using_beastwhoosh(request):

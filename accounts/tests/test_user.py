@@ -116,7 +116,7 @@ class UserRegistrationAndActivation(TestCase):
             'email2': ['example@email.com']
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Registration done, activate your account')
+        self.assertContains(resp, 'feedbackRegistration=1')
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # An email was sent!
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
@@ -772,7 +772,7 @@ class PasswordReset(TestCase):
         self.client.post(reverse("problems-logging-in"), {"username_or_email": "testuser@freesound.org"})
 
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
+        self.assertEqual(mail.outbox[0].subject, "[freesound] Password reset")
 
     @override_settings(SITE_ID=2)
     def test_reset_view_with_username(self):
@@ -782,7 +782,7 @@ class PasswordReset(TestCase):
         self.client.post(reverse("problems-logging-in"), {"username_or_email": "testuser"})
 
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
+        self.assertEqual(mail.outbox[0].subject, "[freesound] Password reset")
 
 
 class EmailResetTestCase(TestCase):

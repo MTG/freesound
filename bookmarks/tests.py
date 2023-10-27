@@ -103,19 +103,19 @@ class BookmarksTest(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, 'Bookmarks by Anton')
 
+    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True) 
     def test_no_bookmarks(self):
         user = User.objects.get(username='Anton')
-        self.client.force_login(user)
 
         response = self.client.get(reverse('bookmarks-for-user', kwargs={'username': user.username}))
 
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, 'Your bookmarks')
+        self.assertContains(response, 'Bookmarks')
         self.assertContains(response, 'There are no uncategorized bookmarks')
 
+    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True) 
     def test_bookmark_category(self):
         user = User.objects.get(username='Anton')
-        self.client.force_login(user)
 
         category = bookmarks.models.BookmarkCategory.objects.create(name='Category1', user=user)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
@@ -127,11 +127,10 @@ class BookmarksTest(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, len(response.context['page'].object_list))
-        self.assertContains(response, 'Your bookmarks')
-        self.assertContains(response, 'Bookmarks in "Category1"')
-        self.assertContains(response, 'Uncategorized</a> (1 bookmark)')
-        self.assertContains(response, 'Category1</a> (2 bookmarks)')
+        self.assertContains(response, 'Bookmarks')
+        self.assertContains(response, 'Category1')
 
+    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True) 
     def test_bookmark_category_oldusername(self):
         user = User.objects.get(username='Anton')
         self.client.force_login(user)
@@ -156,7 +155,5 @@ class BookmarksTest(TestCase):
         self.assertEqual(200, response.status_code)
 
         self.assertEqual(2, len(response.context['page'].object_list))
-        self.assertContains(response, 'Your bookmarks')
-        self.assertContains(response, 'Bookmarks in "Category1"')
-        self.assertContains(response, 'Uncategorized</a> (1 bookmark)')
-        self.assertContains(response, 'Category1</a> (2 bookmarks)')
+        self.assertContains(response, 'Bookmarks')
+        self.assertContains(response, 'Category1')

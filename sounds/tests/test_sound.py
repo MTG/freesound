@@ -42,8 +42,7 @@ from general.templatetags.filter_img import replace_img
 from sounds.forms import BWPackForm
 from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis, Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
-from utils.encryption import sign_with_timestamp
-from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory, test_using_bw_ui
+from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
 
 
 class CommentSoundsTestCase(TestCase):
@@ -341,35 +340,26 @@ class SoundViewsTestCase(TestCase):
     fixtures = ['licenses']
 
     @mock.patch('sounds.models.delete_sounds_from_search_engine')
-    def test_delete_sound_view(self, delete_sounds_from_search_engine):
+    def test_delete_sound(self, delete_sounds_from_search_engine):
         user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
         sound = sounds[0]
         sound_id = sound.id
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
         self.client.force_login(user)
+        _, _, sounds_other_user = create_user_and_sounds(num_sounds=1, username="testuser4")
 
-        # Try to delete with incorrect encrypted sound id link (should not delete sound)
-        encrypted_link = sign_with_timestamp(1234)
-        resp = self.client.post(reverse('sound-delete',
-            args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
-        self.assertEqual(resp.status_code, 403)
-        self.assertEqual(Sound.objects.filter(id=sound_id).count(), 1)
-
-        # Try to delete with expired encrypted link (should not delete sound)
-        encrypted_link = sign_with_timestamp(sound.id)
-        time.sleep(10)
-        resp = self.client.post(reverse('sound-delete',
-            args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
+        # Try to delete a sound not owned by the request user (should return 200 but not delete the sound)
+        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']), 
+            {"delete_confirm": "delete_confirm", "object-ids": [sounds_other_user[0].id]})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(Sound.objects.filter(id=sound_id).count(), 1)
+        self.assertEqual(Sound.objects.filter(id=sounds_other_user[0].id).count(), 1)
 
-        # Try to delete with valid link (should delete sound)
-        encrypted_link = sign_with_timestamp(sound.id)
-        resp = self.client.post(reverse('sound-delete',
-            args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
+        # Try to delete a sound owned the user (should delete sound)
+        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']), 
+            {"delete_confirm": "delete_confirm", "object-ids": [sound.id]}, follow=True)
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 0)
-        self.assertRedirects(resp, reverse('accounts-home'))
+        self.assertEqual(resp.status_code, 200)
         delete_sounds_from_search_engine.assert_called_once_with([sound.id])
 
     def test_embed_iframe(self):
@@ -682,39 +672,7 @@ class SoundTemplateCacheTests(TestCase):
         print(list(locmem._caches[''].keys()))
         print(cache_keys)
 
-    # Make sure the sound name and description are updated
     def test_update_description(self):
-        cache_keys = self._get_sound_view_cache_keys()
-        self._assertCacheAbsent(cache_keys)
-
-        # Test as an authenticated user, although it doesn't matter in this case because cache templates are the same
-        # for both logged in and anonymous user.
-        self.client.force_login(self.user)
-
-        resp = self._get_sound_view()
-        self.assertEqual(resp.status_code, 200)
-        self._assertCachePresent(cache_keys)
-
-        # Edit sound
-        new_description = 'New description'
-        new_name = 'New name'
-        resp = self.client.post(self._get_sound_url('sound-edit'), {
-            'description-description': new_description,
-            'description-name': new_name,
-            'description-tags': 'tag1 tag2 tag3'
-        })
-        self.assertEqual(resp.status_code, 302)
-
-        # Check that keys are no longer in cache
-        self._assertCacheAbsent(cache_keys)
-
-        # Check that the information is updated properly
-        resp = self._get_sound_view()
-        self.assertContains(resp, new_description, html=True)
-        self.assertContains(resp, new_name, html=True)
-
-    def test_update_description_bw(self):
-        test_using_bw_ui(self)
         
         cache_keys = self._get_sound_view_cache_keys(frontend=settings.FRONTEND_BEASTWHOOSH)
         self._assertCacheAbsent(cache_keys)
@@ -1138,22 +1096,6 @@ class SoundEditDeletePermissionTestCase(TestCase):
         resp = self.client.post(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]))
         self.assertEqual(resp.status_code, 403)
 
-    def test_delete_sound_owner(self):
-        # Sound owner
-        self.client.force_login(self.sound_user)
-        resp = self.client.get(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
-        self.assertEqual(resp.status_code, 200)
-
-        # Admin
-        self.client.force_login(self.admin_user)
-        resp = self.client.get(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
-        self.assertEqual(resp.status_code, 200)
-
-        # Other user
-        self.client.force_login(self.other_user)
-        resp = self.client.post(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
-        self.assertEqual(resp.status_code, 403)
-
     def test_edit_pack_owner(self):
         # Pack owner
         self.client.force_login(self.sound_user)
@@ -1170,21 +1112,6 @@ class SoundEditDeletePermissionTestCase(TestCase):
         resp = self.client.post(reverse('pack-edit', args=[self.pack.user.username, self.pack.id]))
         self.assertEqual(resp.status_code, 403)
 
-    def test_delete_pack_owner(self):
-        # Pack owner
-        self.client.force_login(self.sound_user)
-        resp = self.client.get(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
-        self.assertEqual(resp.status_code, 200)
-
-        # Admin
-        self.client.force_login(self.admin_user)
-        resp = self.client.get(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
-        self.assertEqual(resp.status_code, 200)
-
-        # Other user
-        self.client.force_login(self.other_user)
-        resp = self.client.post(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
-        self.assertEqual(resp.status_code, 403)
 
 
 class SoundEditTestCase(TestCase):
@@ -1198,8 +1125,8 @@ class SoundEditTestCase(TestCase):
         self.sound.change_moderation_state("OK")
         self.user = user
     
-    def test_update_description_bw(self):
-        test_using_bw_ui(self)
+    def test_update_description(self):
+        
         self.client.force_login(self.user)
         new_description = 'New description'
         new_name = 'New name'

@@ -1703,7 +1703,9 @@ class Pack(models.Model):
             for sound in self.sounds.all():
                 sound.delete()  # Create DeletedSound objects and delete original objects
         else:
-            self.sounds.update(pack=None)
+            for sound in self.sounds.all():
+                sound.invalidate_template_caches()
+            self.sounds.update(pack=None, is_index_dirty=True)
         self.is_deleted = True
         self.save()
 

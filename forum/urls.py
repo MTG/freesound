@@ -38,6 +38,6 @@ urlpatterns = [
     re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/reply/$', forum_views.reply, name="forums-reply-quote"),
 
     path('post/<int:post_id>/edit/', forum_views.post_edit, name="forums-post-edit"),
-    path('post/<int:post_id>/delete/', forum_views.post_delete, name="forums-post-delete"),
+    path('post/<int:post_id>/delete/', forum_views.post_delete, name="forums-post-delete"),  # TODO: Delete after final switch to BW
     path('post/<int:post_id>/delete-confirm/', forum_views.post_delete_confirm, name="forums-post-delete-confirm"),
 ]

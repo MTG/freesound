@@ -769,7 +769,7 @@ class PasswordReset(TestCase):
         """Check that the reset password view calls our form"""
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        self.client.post(reverse("password_reset"), {"username_or_email": "testuser@freesound.org"})
+        self.client.post(reverse("problems-logging-in"), {"username_or_email": "testuser@freesound.org"})
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
@@ -779,20 +779,10 @@ class PasswordReset(TestCase):
         """Check that the reset password view calls our form"""
         Site.objects.create(id=2, domain="freesound.org", name="Freesound")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        self.client.post(reverse("password_reset"), {"username_or_email": "testuser"})
+        self.client.post(reverse("problems-logging-in"), {"username_or_email": "testuser"})
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
-
-    @override_settings(SITE_ID=2)
-    def test_reset_view_with_long_username(self):
-        """Check that the reset password fails with long username"""
-        Site.objects.create(id=2, domain="freesound.org", name="Freesound")
-        user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        long_mail = ('1' * 255) + '@freesound.org'
-        resp = self.client.post(reverse("password_reset"), {"username_or_email": long_mail})
-
-        self.assertNotEqual(resp.context['form'].errors, None)
 
 
 class EmailResetTestCase(TestCase):
@@ -844,16 +834,16 @@ class ReSendActivationTestCase(TestCase):
         Check that resend activation code doesn't return an error with post request (use email to identify user)
         """
         user = User.objects.create_user("testuser", email="testuser@freesound.org", is_active=False)
-        resp = self.client.post(reverse('accounts-resend-activation'), {
-            'user': 'testuser@freesound.org',
+        resp = self.client.post(reverse('problems-logging-in'), {
+            'username_or_email': 'testuser@freesound.org',
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check email was sent
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
-        resp = self.client.post(reverse('accounts-resend-activation'), {
-            'user': 'new_email@freesound.org',
+        resp = self.client.post(reverse('problems-logging-in'), {
+            'username_or_email': 'new_email@freesound.org',
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
@@ -863,59 +853,19 @@ class ReSendActivationTestCase(TestCase):
         Check that resend activation code doesn't return an error with post request (use username to identify user)
         """
         user = User.objects.create_user("testuser", email="testuser@freesound.org", is_active=False)
-        resp = self.client.post(reverse('accounts-resend-activation'), {
-            'user': 'testuser',
+        resp = self.client.post(reverse('problems-logging-in'), {
+            'username_or_email': 'testuser',
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check email was sent
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
-        resp = self.client.post(reverse('accounts-resend-activation'), {
-            'user': 'testuser_does_not_exist',
+        resp = self.client.post(reverse('problems-logging-in'), {
+            'username_or_email': 'testuser_does_not_exist',
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
-
-    def test_resend_activation_code_from_long_username(self):
-        """
-        Check that resend activation code returns an error if username is too long
-        """
-        long_mail = ('1' * 255) + '@freesound.org'
-        resp = self.client.post(reverse('accounts-resend-activation'), {
-            'user': long_mail,
-        })
-        self.assertNotEqual(resp.context['form'].errors, None)
-        self.assertEqual(len(mail.outbox), 0)  # Check email wasn't sent
-
-
-class UsernameReminderTestCase(TestCase):
-    def test_username_reminder(self):
-        """ Check that send username reminder doesn't return an error with post request """
-        user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        resp = self.client.post(reverse('accounts-username-reminder'), {
-            'user': 'testuser@freesound.org',
-        })
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(mail.outbox), 1)  # Check email was sent
-        self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
-        self.assertTrue(settings.EMAIL_SUBJECT_USERNAME_REMINDER in mail.outbox[0].subject)
-
-        resp = self.client.post(reverse('accounts-username-reminder'), {
-            'user': 'new_email@freesound.org',
-        })
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
-
-    def test_username_reminder_length(self):
-        """ Check that send long username reminder return an error with post request """
-        long_mail = ('1' * 255) + '@freesound.org'
-        user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        resp = self.client.post(reverse('accounts-username-reminder'), {
-            'user': long_mail,
-        })
-        self.assertNotEqual(resp.context['form'].errors, None)
-        self.assertEqual(len(mail.outbox), 0)
 
 
 class ChangeUsernameTest(TestCase):
@@ -958,14 +908,14 @@ class ChangeUsernameTest(TestCase):
         userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
         self.client.login(username='userA', password='testpass')
 
-        # Test save profile without changing username
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userA']})
-        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
+        # Test save profile without changing username (note we set all mandatory fields)
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userA'], 'profile-ui_theme_preference': 'f'})
+        self.assertRedirects(resp, reverse('accounts-edit'))
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
 
         # Try rename user with an existing username from another user
         userB = User.objects.create_user('userB', email='userB@freesound.org')
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': [userB.username]})
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': [userB.username], 'profile-ui_theme_preference': 'f'})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
         self.assertIn('This username is already taken or has been in used in the past',
@@ -975,14 +925,14 @@ class ChangeUsernameTest(TestCase):
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
 
         # Now rename user for the first time
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewName']})
-        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewName'], 'profile-ui_theme_preference': 'f'})
+        self.assertRedirects(resp, reverse('accounts-edit'))
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'userANewName')
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
 
         # Try rename again user with a username that was already used by the same user in the past
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userA']})
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userA'], 'profile-ui_theme_preference': 'f'})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
         self.assertIn('This username is already taken or has been in used in the past',
@@ -992,8 +942,8 @@ class ChangeUsernameTest(TestCase):
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
 
         # Now rename user for the second time
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewNewName']})
-        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewNewName'], 'profile-ui_theme_preference': 'f'})
+        self.assertRedirects(resp, reverse('accounts-edit'))
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'userANewNewName')
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
@@ -1003,8 +953,8 @@ class ChangeUsernameTest(TestCase):
         # NOTE: when USERNAME_CHANGE_MAX_TIMES is reached, the form renders the "username" field as "disabled" and
         # therefore the username can't be changed. Other than that the form behaves normally, therefore no
         # form errors will be raised because the field is ignored
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewNewNewName']})
-        self.assertRedirects(resp, reverse('accounts-home'))  # Successful edit redirects to home but...
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewNewNewName'], 'profile-ui_theme_preference': 'f'})
+        self.assertRedirects(resp, reverse('accounts-edit'))  # Successful edit redirects to home but...
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'userANewNewName')  # ...username has not changed...
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)  # ...and no new OldUsername objects created
@@ -1093,8 +1043,8 @@ class ChangeUsernameTest(TestCase):
         self.client.login(username='userA', password='testpass')
 
         # Rename "userA" to "UserA", should not create OldUsername object
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['UserA']})
-        self.assertRedirects(resp, reverse('accounts-home'))
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['UserA'], 'profile-ui_theme_preference': 'f'})
+        self.assertRedirects(resp, reverse('accounts-edit'))
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'UserA')  # Username capitalization was changed ...
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)  # ... but not OldUsername was created

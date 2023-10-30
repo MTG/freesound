@@ -1,4 +1,5 @@
 import { stopAllPlayers } from '../components/player/utils'
+import { toggleCollapse } from '../components/collapsableBlock'
 import { getCookie, setCookie } from "../utils/cookies";
 
 const selectAllButton = document.getElementById('select-all');
@@ -18,6 +19,23 @@ const messageTextArea = document.getElementsByName('message')[0];
 const ticketIdsInput = document.getElementsByName('ticket')[0];
 const soundInfoElementsPool = document.getElementById('sound-info-elements');
 const selectedSoundsInfoPanel = document.getElementById('selected-sounds-info');
+
+
+const closeCollapsableBlocks = (soundElement) => {
+    const collapsableToggleElement = soundElement.getElementsByClassName('collapsable-toggle')[0];
+    const collapsableContainer = document.getElementById(collapsableToggleElement.dataset.target)
+    if (collapsableContainer.className.indexOf('-close') === -1) {
+        toggleCollapse(collapsableToggleElement);
+    }
+}
+
+const openCollapsableBlocks = (soundElement) => {
+    const collapsableToggleElement = soundElement.getElementsByClassName('collapsable-toggle')[0];
+    const collapsableContainer = document.getElementById(collapsableToggleElement.dataset.target)
+    if (collapsableContainer.className.indexOf('-close') !== -1) {
+        toggleCollapse(collapsableToggleElement);
+    }
+}
 
 
 const postTicketsSelected = () => {
@@ -58,13 +76,20 @@ const postTicketsSelected = () => {
 
     // Show information about the selected sounds
     // First move all selected sound info elements to the main pool
+    // Also "hide" the "show more info" collapsable block (if any)
     while (selectedSoundsInfoPanel.childNodes.length > 0) {
-        soundInfoElementsPool.appendChild(selectedSoundsInfoPanel.childNodes[0]);
+        const selectedSoundElement = selectedSoundsInfoPanel.childNodes[0];
+        closeCollapsableBlocks(selectedSoundElement);
+        soundInfoElementsPool.appendChild(selectedSoundElement);
     }
 
     // Then move the selected ones to the selected panel
+    // If only one sound is selected, then open the "show more info" collapsable block
     selectedTicketsData.forEach(ticketData => {
         const soundInfoElement = document.querySelector(`.sound-info-element[data-sound-id="${ticketData['soundId']}"]`);
+        if (selectedTicketsData.length === 1) { 
+            openCollapsableBlocks(soundInfoElement);
+        }
         selectedSoundsInfoPanel.appendChild(soundInfoElement);
     });
 

@@ -1,0 +1,7 @@
+<a class="mp3_file" href="{{sound.locations.preview.LQ.mp3.url}}" title="mp3 file">{{sound.original_filename}} - mp3 version</a>
+<a class="ogg_file" href="{{sound.locations.preview.LQ.ogg.url}}" title="ogg file">{{sound.original_filename}} - ogg version</a>
+<a class="waveform" href="{% if size == 'L' %}{{sound.locations.display.wave.L.url}}{% else %}{{sound.locations.display.wave.M.url}}{% endif %}"
+   title="waveform file">{{sound.original_filename}} - waveform</a>
+<a class="spectrum" href="{% if size == 'L' %}{{sound.locations.display.spectral.L.url}}{% else %}{{sound.locations.display.spectral.M.url}}{% endif %}"
+   title="spectrogram file">{{sound.original_filename}} - spectrogram</a>
+<span class="duration" title="duration in seconds">{{sound.duration_ms}}</span>

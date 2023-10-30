@@ -1,0 +1,14 @@
+{% extends "emails/email_base.txt" %}
+{% load absurl %}
+
+{% block salutation %}{% if user %}{{ user.username }}{% else %}{{display_name}}{% endif %}{% endblock %}
+
+{% block body %}
+It looks like you just donated to Freesound... you are awesome!
+
+Your money will be used for further development and for general support of community-building efforts for Freesound!
+
+If you didn't choose to donate anonymously, your name should now be displayed in the list of donors:
+
+{% absurl 'donors' %}
+{% endblock %}

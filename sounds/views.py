@@ -46,6 +46,7 @@ from django.urls import reverse, resolve
 from django.views.decorators.clickjacking import xframe_options_exempt
 from ratelimit.decorators import ratelimit
 
+from accounts.models import Profile
 from comments.forms import CommentForm, BwCommentForm
 from comments.models import Comment
 from donations.models import DonationsModalSettings
@@ -276,7 +277,7 @@ def sound(request, username, sound_id):
                     comment_text = form.cleaned_data["comment"]
                     sound.add_comment(request.user, comment_text)
                     sound.invalidate_template_caches()
-                    send_mail_template(settings.EMAIL_SUBJECT_NEW_COMMENT, 'sounds/email_new_comment.txt',
+                    send_mail_template(settings.EMAIL_SUBJECT_NEW_COMMENT, 'emails/email_new_comment.txt',
                                        {'sound': sound, 'user': request.user, 'comment': comment_text},
                                        user_to=sound.user, email_type_preference_check="new_comment")
 
@@ -1002,6 +1003,9 @@ def _remix_group_view_helper(request, group_id):
 
 @redirect_if_old_username_or_404
 def remixes(request, username, sound_id):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '?remixes=1')
+    
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
@@ -1214,7 +1218,7 @@ def flag(request, username, sound_id):
             else:
                 user_email = flag_form.cleaned_data["email"]
 
-            send_mail_template_to_support(settings.EMAIL_SUBJECT_SOUND_FLAG, "sounds/email_flag.txt", {"flag": flag},
+            send_mail_template_to_support(settings.EMAIL_SUBJECT_SOUND_FLAG, "emails/email_flag.txt", {"flag": flag},
                                           extra_subject=f"{sound.user.username} - {sound.original_filename}",
                                           reply_to=user_email)
             if using_beastwhoosh(request):
@@ -1331,12 +1335,13 @@ def embed_iframe(request, sound_id, player_size):
         raise Http404
     tvars = {
         'sound': sound,
+        'user_profile_locations': Profile.locations_static(sound.user_id, getattr(sound, 'user_has_avatar', False)),
         'username_and_filename': f'{sound.username} - {sound.original_filename}',
         'size': player_size,
         'use_spectrogram': request.GET.get('spec', None) == '1',
         'show_toggle_display_button': request.GET.get('td', None) == '1',
     }
-    return render(request, 'sounds/sound_iframe.html', tvars)
+    return render(request, 'embeds/sound_iframe.html', tvars)
 
 
 def oembed(request):
@@ -1358,12 +1363,12 @@ def oembed(request):
         'sizes': sizes,
         'player_size': player_size,
     }
-    return render(request, 'sounds/sound_oembed.xml', tvars, content_type='text/xml')
+    return render(request, 'embeds/sound_oembed.xml', tvars, content_type='text/xml')
 
 
 def downloaders(request, username, sound_id):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('sound-downloaders', args=[username, sound_id]) + '?downloaders=1')
+        return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '?downloaders=1')
 
     sound = get_object_or_404(Sound, id=sound_id)
 
@@ -1400,7 +1405,7 @@ def downloaders(request, username, sound_id):
 
 def pack_downloaders(request, username, pack_id):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('pack-downloaders', args=[username, pack_id]) + '?downloaders=1')
+        return HttpResponseRedirect(reverse('pack', args=[username, pack_id]) + '?downloaders=1')
     
     pack = get_object_or_404(Pack, id=pack_id)
 

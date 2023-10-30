@@ -1,0 +1,73 @@
+{% load static %}
+{% load apiv2_templatetags %}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<meta name='viewport' content='width=device-width, initial-scale=0.65' />
+
+<head>
+    <title>Freesound - authorize app</title>
+    <style>
+       body {
+            font-family: Verdana, sans-serif;
+            font-size: 11px;
+            margin:0px 0px;
+            padding:0px;
+            text-align:center;
+            -webkit-text-size-adjust: 100%;
+        }
+        .container_main {
+            margin: auto;
+            padding:20px;
+            width:440px;
+        }
+        .container {
+            width:400px;
+            background-color: #f3f3f3;
+            border-radius:10px;
+            padding:20px;
+            border: solid 1px #e0e0e0;
+        }
+        ul.errorlist {
+            list-style-type: none;
+            padding: 0 0 4px 0;
+            color: #bd2d33;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container_main">
+<div class="container">
+    <img src="{% static 'bw-frontend/public/logos/logo-text.svg' %}"/>
+    {% if not error %}
+        <p>The application <strong>{{ application.name }}</strong> is requesting<br> permission to access your data.
+        </p>
+        <form method="post" action="{% url "oauth2_provider:authorize" %}">
+            {% csrf_token %}
+            {{ form.errors }}
+            {{ form.non_field_errors }}
+            
+            {% for field in form %}
+                {% if field.is_hidden %}
+                   {{ field }}
+                {% endif %}
+            {% endfor %} 
+            <input type="submit" class="btn login large danger" value="Deny access" />
+            <input type="submit" class="btn login large primary" name="allow" value="Authorize!" />
+        </form>
+        <p>(logged in as <strong>{{ user }}</strong>, <a href="{% url "api-logout" %}?next={% next_url_for_login form.client_id.value form.response_type.value form.state.value %}">login as another user</a>)</p>
+    {% else %}
+        <p>Oops! there were some errors...</p>
+
+        <!--error: {{ error.error }}, {{ error.description }} -->
+
+    {% endif %}
+
+</div>
+</div>
+
+</body>
+</html>

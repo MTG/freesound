@@ -47,7 +47,6 @@ from utils.search import get_search_engine, SearchEngineException, SearchResults
 search_logger = logging.getLogger("search")
 
 
-
 def search_view_helper(request, tags_mode=False):
     query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 

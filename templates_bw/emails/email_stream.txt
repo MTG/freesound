@@ -1,0 +1,30 @@
+{% extends "emails/email_base.txt" %}
+
+{% load absurl %}
+
+{% block salutation %}{{ username }}{% endblock %}
+{% block body %}
+Check out these new cool sounds that you might be interested in:
+
+
+{% for user, sound_objs, more_url_params, more_count, new_count in users_sounds %}{{ user.0 }} has uploaded {{ new_count }} new sound{{ new_count|pluralize }}:
+{% for sound_obj in sound_objs %}
+    {{ sound_obj.original_filename }}
+    {% absurl "sound" user.0 sound_obj.id %}
+{% endfor %}{% if more_count > 0 %}
+    See all results in Freesound ({{ more_count }} more)
+    {% absurl "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}
+{% endif %}
+
+{% endfor %}{% for tags, sound_objs, more_url_params, more_count, new_count in tags_sounds %}There {% if new_count == 1 %}is{% else %}are{% endif %} {{ new_count }} new sound{{ new_count|pluralize }} with tag{{tags|pluralize}} [{{ tags|join:", " }}]:
+{% for sound_obj in sound_objs %}
+    {{ sound_obj.original_filename }}, uploaded by {{ sound_obj.user.username }}
+    {% absurl "sound" sound_obj.user.username sound_obj.id %}
+{% endfor %}{% if more_count > 0 %}
+    See all results in Freesound ({{ more_count }} more)
+    {% absurl "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}
+{% endif %}
+
+{% include "email_opt_out_text.txt" %}
+
+{% endfor %}{% endblock %}

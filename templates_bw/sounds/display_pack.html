@@ -47,9 +47,9 @@
     </div>
     {% if pack.show_unpublished_sounds_warning %}
     {% with pack.num_sounds_unpublished as num_sounds_unpublished %}
-        {% if num_sounds_unpublished %}
-            <div class="v-spacing-3 v-spacing-top-negative-2 text-red">
-                {% bw_icon "notification" %}Has {{ num_sounds_unpublished}} unpublished sounds
+        {% if num_sounds_unpublished > 0 %}
+            <div class="v-spacing-3 v-spacing-top-negative-2 text-blue">
+                {% bw_icon "notification" %}Has {{ num_sounds_unpublished}} unpublished sound{{ num_sounds_unpublished|pluralize }}
             </div>
         {% endif %}
     {% endwith %}

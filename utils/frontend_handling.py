@@ -53,22 +53,15 @@ def render(request, template_name, context=None, content_type=None, status=None,
     This wrapper is intented to be use while we implement the new frontend. Once the whole implementation
     process is finished and we don't need the two frontends to coexist anymore, then we can get rid of this
     wrapper.
-    """
 
+    NOTE: as BW implementation is now complete and we're in the process of releasing it, this method has been
+    simplified to not fallback to any default frontend and simply choose the appropriate frontend folder
+    based on the session variable.
+    """
     # Get the name of the template engine/frontend
     name = selected_frontend(request)
-
-    try:
-        return django_render(request, template_name, context, content_type, status, using=name)
-    except TemplateDoesNotExist:
-
-        if name != settings.FRONTEND_DEFAULT:
-            # If the required template does can't be found using the selected engine, try with the default engine
-            return django_render(request, template_name, context, content_type, status, using=settings.FRONTEND_DEFAULT)
-        else:
-            # If the default engine was being used, then raise the exception normally
-            raise
-
+    return django_render(request, template_name, context, content_type, status, using=name)
+    
 
 def using_frontend(request, frontend_name):
     """

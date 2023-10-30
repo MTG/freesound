@@ -1,0 +1,23 @@
+{% extends "emails/email_base.txt" %}
+
+{% load absurl %}
+
+{% block salutation %}Freesounder{% endblock %}
+
+{% block body %}
+A thread you are subscribed to over at Freesound has been replied to by user {{post.author.username}}:
+
+Thread: "{{thread.title}}"
+Post URL:
+
+{% absurl "forums-post" forum.name_slug thread.id post.id %}
+
+
+
+
+If you wish to stop receiving subscription messages from this thread, you can unsubscribe by clicking this link:
+{% absurl "forums-thread-unsubscribe" forum.name_slug thread.id %}
+
+{% include "emails/email_opt_out_text.txt" %}
+
+{% endblock %}

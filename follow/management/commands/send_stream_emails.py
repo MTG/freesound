@@ -95,7 +95,7 @@ class Command(LoggingBaseCommand):
             tvars = {'username': username,
                      'users_sounds': users_sounds,
                      'tags_sounds': tags_sounds}
-            text_content = render_mail_template('follow/email_stream.txt', tvars)
+            text_content = render_mail_template('emails/email_stream.txt', tvars)
 
             # Send email
             try:

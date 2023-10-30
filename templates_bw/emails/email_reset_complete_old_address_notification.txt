@@ -1,0 +1,13 @@
+{% extends "emails/email_base.txt" %}
+
+{% load absurl %}
+
+{% block salutation %}{{user.username}}{% endblock %}
+
+{% block body %}
+In response to a request, the email address for the Freesound account {{user.username}} has been changed from
+{{ old_email }} to {{ user.email }}. You will no longer receive emails to this email address.
+
+If you didn't perform this action, please contact us at support@freesound.org so that we can assist you.
+
+{% endblock %}

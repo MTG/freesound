@@ -122,8 +122,10 @@ def login(request, template_name, authentication_form):
     # NOTE: in the function below we need to make the template depend on the front-end because LoginView will not
     # use our custom "render" function which would select the template for the chosen front-end automatically
     # Also, we set the authentication form depending on front-end as there are small modifications.
+    if using_beastwhoosh(request) and template_name == 'registration/login.html':
+        template_name = 'accounts/login.html'
     response = LoginView.as_view(
-        template_name=template_name if not using_beastwhoosh(request) else 'accounts/login.html',
+        template_name=template_name,
         authentication_form=authentication_form if not using_beastwhoosh(request) else BwFsAuthenticationForm)(request)
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful
@@ -375,7 +377,7 @@ def send_activation(user):
         'username': username,
         'hash': token
     }
-    send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'accounts/email_activation.txt', tvars, user_to=user)
+    send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'emails/email_activation.txt', tvars, user_to=user)
 
 
 @redirect_if_beastwhoosh('front-page', query_string='loginProblems=1')
@@ -407,7 +409,7 @@ def username_reminder(request):
 
             try:
                 user = User.objects.get(email__iexact=email)
-                send_mail_template(settings.EMAIL_SUBJECT_USERNAME_REMINDER, 'accounts/email_username_reminder.txt',
+                send_mail_template(settings.EMAIL_SUBJECT_USERNAME_REMINDER, 'emails/email_username_reminder.txt',
                                    {'user': user}, user_to=user)
             except User.DoesNotExist:
                 pass
@@ -689,9 +691,8 @@ def manage_sounds(request, tab):
             except ValueError:
                 pack_ids = []
             packs = Pack.objects.ordered_ids(pack_ids)
-            if not request.user.is_superuser:
-                # Unless user is superuser, only allow to select packs owned by user
-                packs = [pack for pack in packs if pack.user == pack.user]
+            # Just as a sanity check, filter out packs not owned by the user
+            packs = [pack for pack in packs if pack.user == pack.user]
             if packs:
                 if 'delete_confirm' in request.POST:
                     # Delete the selected packs
@@ -734,9 +735,8 @@ def manage_sounds(request, tab):
             except ValueError:
                 sound_ids = []
             sounds = Sound.objects.ordered_ids(sound_ids)
-            if not request.user.is_superuser:
-                # Unless user is superuser, only allow to select sounds owned by user
-                sounds = [sound for sound in sounds if sound.user == request.user]
+            # Just as a sanity check, filter out sounds not owned by the user
+            sounds = [sound for sound in sounds if sound.user == request.user]
             if sounds:
                 if 'edit' in request.POST:
                     # Edit the selected sounds
@@ -871,8 +871,10 @@ def sounds_pending_description_helper(request, file_structure, files):
                 user_uploads_dir = request.user.profile.locations()['uploads_dir']
                 remove_directory_if_empty(user_uploads_dir)
                 remove_empty_user_directory_from_mirror_locations(user_uploads_dir)
-
-                return HttpResponseRedirect(reverse('accounts-describe'))
+                if using_beastwhoosh(request):
+                    return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
+                else:
+                    return HttpResponseRedirect(reverse('accounts-describe'))
             elif "describe" in request.POST:
                 clear_session_edit_and_describe_data(request)
                 request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
@@ -1726,7 +1728,7 @@ def email_reset(request):
                     'token': default_token_generator.make_token(user)
                 }
                 send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
-                                   'accounts/email_reset_email.txt', tvars,
+                                   'emails/email_reset_email.txt', tvars,
                                    email_to=email)
 
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
@@ -1786,7 +1788,7 @@ def email_reset_complete(request, uidb36=None, token=None):
         'activePage': 'email' # For BW account settings sidebar
     }
     send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
-                       'accounts/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
+                       'emails/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
 
     return render(request, 'accounts/email_reset_complete.html', tvars)
 
@@ -1815,8 +1817,8 @@ def problems_logging_in(request):
                     pwd_reset_form = FsPasswordResetForm(request.POST)
                     if pwd_reset_form.is_valid():
                         pwd_reset_form.save(
-                            subject_template_name='registration/password_reset_subject.txt',
-                            email_template_name='registration/password_reset_email.html',
+                            subject_template_name='emails/password_reset_subject.txt',
+                            email_template_name='emails/password_reset_email.html',
                             use_https=request.is_secure(),
                             request=request
                         )
@@ -1890,9 +1892,9 @@ def flag_user(request, username):
             clear_url = reverse("clear-flags-user", args=[flagged_user.username])
             clear_url = request.build_absolute_uri(clear_url)
             if reports_count < settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING:
-                template_to_use = 'accounts/report_spammer_admins.txt'
+                template_to_use = 'emails/email_report_spammer_admins.txt'
             else:
-                template_to_use = 'accounts/report_blocked_spammer_admins.txt'
+                template_to_use = 'emails/email_report_blocked_spammer_admins.txt'
 
             tvars = {'flagged_user': flagged_user,
                      'objects_data': objects_data,
@@ -1913,7 +1915,11 @@ def clear_flags_user(request, username):
         for flag in flags:
             flag.delete()
         tvars = {'num': num, 'username': username}
-        return render(request, 'accounts/flags_cleared.html', tvars)
+        if using_beastwhoosh(request):
+            messages.add_message(request, messages.INFO, f'{num} flag{"" if num == 1 else "s"} cleared for user {username}')
+            return HttpResponseRedirect(reverse('account', args=[username]))
+        else:
+            return render(request, 'accounts/flags_cleared.html', tvars)
     else:
         return HttpResponseRedirect(reverse('login'))
 

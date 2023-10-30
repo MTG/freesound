@@ -42,8 +42,7 @@ from general.templatetags.filter_img import replace_img
 from sounds.forms import BWPackForm
 from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis, Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
-from utils.encryption import sign_with_timestamp
-from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory, test_using_bw_ui
+from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
 
 
 class CommentSoundsTestCase(TestCase):
@@ -286,9 +285,12 @@ class PackNumSoundsTestCase(TestCase):
 
         self.client.force_login(user)
         resp = self.client.post(reverse('sound-edit', args=[sound.user.username, sound.id]), {
-            'submit': ['submit'],
-            'pack-new_pack': ['new pack name'],
-            'pack-pack': [''],
+            '0-description': 'this is a description for the sound',
+            '0-name': sound.original_filename,
+            '0-tags': 'tag1 tag2 tag3',
+            '0-license': '3',
+            '0-new_pack': 'new pack name',
+            '0-pack': ''
         })
         self.assertRedirects(resp, reverse('sound', args=[sound.user.username, sound.id]))
         self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, 0)  # Sound changed from pack
@@ -309,10 +311,9 @@ class PackNumSoundsTestCase(TestCase):
         sound_ids_pack2.append(sound_ids_pack1.pop())
         self.client.force_login(user)
         resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
-            'submit': ['submit'],
             'pack_sounds': ','.join([str(sid) for sid in sound_ids_pack2]),
-            'name': ['Test pack 1 (edited)'],
-            'description': ['A new description']
+            'name': 'Test pack 1 (edited)',
+            'description': 'A new description'
         })
         self.assertRedirects(resp, reverse('pack', args=[pack2.user.username, pack2.id]))
         self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 1)
@@ -324,11 +325,10 @@ class PackNumSoundsTestCase(TestCase):
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
         resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
-            'submit': ['submit'],
             'pack_sounds':
                 ','.join([str(snd.id) for snd in Pack.objects.get(id=pack2.id).sounds.all()] + [str(sound.id)]),
-            'name': ['Test pack 1 (edited again)'],
-            'description': ['A new description']
+            'name': 'Test pack 1 (edited again)',
+            'description': 'A new description'
         })
         self.assertRedirects(resp, reverse('pack', args=[pack2.user.username, pack2.id]))
         self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 1)
@@ -341,35 +341,26 @@ class SoundViewsTestCase(TestCase):
     fixtures = ['licenses']
 
     @mock.patch('sounds.models.delete_sounds_from_search_engine')
-    def test_delete_sound_view(self, delete_sounds_from_search_engine):
+    def test_delete_sound(self, delete_sounds_from_search_engine):
         user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
         sound = sounds[0]
         sound_id = sound.id
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
         self.client.force_login(user)
+        _, _, sounds_other_user = create_user_and_sounds(num_sounds=1, username="testuser4")
 
-        # Try to delete with incorrect encrypted sound id link (should not delete sound)
-        encrypted_link = sign_with_timestamp(1234)
-        resp = self.client.post(reverse('sound-delete',
-            args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
-        self.assertEqual(resp.status_code, 403)
-        self.assertEqual(Sound.objects.filter(id=sound_id).count(), 1)
-
-        # Try to delete with expired encrypted link (should not delete sound)
-        encrypted_link = sign_with_timestamp(sound.id)
-        time.sleep(10)
-        resp = self.client.post(reverse('sound-delete',
-            args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
+        # Try to delete a sound not owned by the request user (should return 200 but not delete the sound)
+        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']), 
+            {"delete_confirm": "delete_confirm", "object-ids": [sounds_other_user[0].id]})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(Sound.objects.filter(id=sound_id).count(), 1)
+        self.assertEqual(Sound.objects.filter(id=sounds_other_user[0].id).count(), 1)
 
-        # Try to delete with valid link (should delete sound)
-        encrypted_link = sign_with_timestamp(sound.id)
-        resp = self.client.post(reverse('sound-delete',
-            args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
+        # Try to delete a sound owned the user (should delete sound)
+        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']), 
+            {"delete_confirm": "delete_confirm", "object-ids": [sound.id]}, follow=True)
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 0)
-        self.assertRedirects(resp, reverse('accounts-home'))
+        self.assertEqual(resp.status_code, 200)
         delete_sounds_from_search_engine.assert_called_once_with([sound.id])
 
     def test_embed_iframe(self):
@@ -634,32 +625,21 @@ class SoundTemplateCacheTests(TestCase):
 
     def setUp(self):
         cache.clear()
-        user, packs, sounds = create_user_and_sounds(num_sounds=1)
+        user, packs, sounds = create_user_and_sounds(num_sounds=1, tags="tag1 tag2 tag3", description="Test description")
         self.sound = sounds[0]
         self.sound.change_processing_state("OK")
         self.sound.change_moderation_state("OK")
         self.user = user
 
-    def _get_sound_view_cache_keys(self, is_explicit=False, display_random_link=False, frontend=settings.FRONTEND_NIGHTINGALE):
-        if frontend == settings.FRONTEND_NIGHTINGALE:
-            return ([get_template_cache_key('sound_footer_bottom', self.sound.id),
-                    get_template_cache_key('sound_header', self.sound.id, is_explicit)] +
-                    self._get_sound_view_footer_top_cache_keys(display_random_link))
-        else:
-            return ([get_template_cache_key('bw_sound_page', self.sound.id),
-                    get_template_cache_key('bw_sound_page_sidebar', self.sound.id)])
+    def _get_sound_view_cache_keys(self):
+        return ([get_template_cache_key('bw_sound_page', self.sound.id),
+                 get_template_cache_key('bw_sound_page_sidebar', self.sound.id)])
+    
+    def _get_sound_view_footer_top_cache_keys(self):
+        return [get_template_cache_key('bw_sound_page', self.sound.id)]
 
-    def _get_sound_view_footer_top_cache_keys(self, display_random_link=False, frontend=settings.FRONTEND_NIGHTINGALE):
-        if frontend == settings.FRONTEND_NIGHTINGALE:
-            return [get_template_cache_key('sound_footer_top', self.sound.id, display_random_link)]
-        else:
-            return [get_template_cache_key('bw_sound_page', self.sound.id)]
-
-    def _get_sound_display_cache_keys(self, is_authenticated=True, is_explicit=False, player_size='small', frontend=settings.FRONTEND_NIGHTINGALE):
-        if frontend == settings.FRONTEND_NIGHTINGALE:
-            return [get_template_cache_key('display_sound', self.sound.id, is_authenticated, is_explicit)]
-        else:
-            return [get_template_cache_key('bw_display_sound', self.sound.id, player_size, is_authenticated)]
+    def _get_sound_display_cache_keys(self, is_authenticated=True, is_explicit=False, player_size='small'):
+        return [get_template_cache_key('bw_display_sound', self.sound.id, player_size, is_authenticated)]
 
     def _assertCacheAbsent(self, cache_keys):
         for cache_key in cache_keys:
@@ -675,48 +655,16 @@ class SoundTemplateCacheTests(TestCase):
     def _get_sound_view(self):
         return self.client.get(self._get_sound_url('sound'))
 
-    def _get_sound_from_home(self):
-        return self.client.get(reverse('accounts-home'))
+    def _get_sound_from_profile_page(self, user):
+        return self.client.get(reverse('account', args=[user.username]))
 
     def _print_cache(self, cache_keys):
         print(list(locmem._caches[''].keys()))
         print(cache_keys)
 
-    # Make sure the sound name and description are updated
     def test_update_description(self):
-        cache_keys = self._get_sound_view_cache_keys()
-        self._assertCacheAbsent(cache_keys)
-
-        # Test as an authenticated user, although it doesn't matter in this case because cache templates are the same
-        # for both logged in and anonymous user.
-        self.client.force_login(self.user)
-
-        resp = self._get_sound_view()
-        self.assertEqual(resp.status_code, 200)
-        self._assertCachePresent(cache_keys)
-
-        # Edit sound
-        new_description = 'New description'
-        new_name = 'New name'
-        resp = self.client.post(self._get_sound_url('sound-edit'), {
-            'description-description': new_description,
-            'description-name': new_name,
-            'description-tags': 'tag1 tag2 tag3'
-        })
-        self.assertEqual(resp.status_code, 302)
-
-        # Check that keys are no longer in cache
-        self._assertCacheAbsent(cache_keys)
-
-        # Check that the information is updated properly
-        resp = self._get_sound_view()
-        self.assertContains(resp, new_description, html=True)
-        self.assertContains(resp, new_name, html=True)
-
-    def test_update_description_bw(self):
-        test_using_bw_ui(self)
         
-        cache_keys = self._get_sound_view_cache_keys(frontend=settings.FRONTEND_BEASTWHOOSH)
+        cache_keys = self._get_sound_view_cache_keys()
         self._assertCacheAbsent(cache_keys)
 
         # Test as an authenticated user, although it doesn't matter in this case because cache templates are the same
@@ -748,8 +696,8 @@ class SoundTemplateCacheTests(TestCase):
 
     def _get_delete_comment_url(self, html):
         soup = BeautifulSoup(html, "html.parser")
-        tag = soup.find('a', {'id': 'delete_button'})
-        return tag['href']
+        tag = soup.find('a', {'title': 'Delete comment'})
+        return tag['data-modal-confirmation-url']
 
     # Comments are only cached in display
     def test_add_remove_comment(self):
@@ -758,8 +706,8 @@ class SoundTemplateCacheTests(TestCase):
         self.client.force_login(self.user)
 
         # Check the initial state (0 comments)
-        resp = self._get_sound_from_home()
-        self.assertContains(resp, '0 comments', html=True)
+        resp = self._get_sound_from_profile_page(self.user)
+        self.assertContains(resp, 'data-num-comments="0"')
         self._assertCachePresent(cache_keys)
 
         # Add comment
@@ -770,8 +718,8 @@ class SoundTemplateCacheTests(TestCase):
         self._assertCacheAbsent(cache_keys)
 
         # Verify that sound display has updated number of comments
-        resp = self._get_sound_from_home()
-        self.assertContains(resp, '1 comment', html=True)
+        resp = self._get_sound_from_profile_page(self.user)
+        self.assertContains(resp, 'data-num-comments="1"')
         self._assertCachePresent(cache_keys)
 
         # Delete the comment
@@ -780,8 +728,8 @@ class SoundTemplateCacheTests(TestCase):
         self._assertCacheAbsent(cache_keys)
 
         # Verify that sound display has no comments
-        resp = self._get_sound_from_home()
-        self.assertContains(resp, '0 comments', html=True)
+        resp = self._get_sound_from_profile_page(self.user)
+        self.assertContains(resp, 'data-num-comments="0"')
 
     # Downloads are only cached in display
     @mock.patch('sounds.views.sendfile', return_value=HttpResponse('Dummy response'))
@@ -792,8 +740,8 @@ class SoundTemplateCacheTests(TestCase):
 
         self.client.force_login(self.user)
 
-        resp = self._get_sound_from_home()
-        self.assertContains(resp, '0 downloads', html=True)
+        resp = self._get_sound_from_profile_page(self.user)
+        self.assertContains(resp, 'data-num-downloads="0"')
         self._assertCachePresent(cache_keys)
 
         # Download
@@ -805,12 +753,12 @@ class SoundTemplateCacheTests(TestCase):
         self._assertCacheAbsent(cache_keys)
 
         # Verify that sound display has updated number of downloads
-        resp = self._get_sound_from_home()
-        self.assertContains(resp, '1 download', html=True)
+        resp = self._get_sound_from_profile_page(self.user)
+        self.assertContains(resp, 'data-num-downloads="1"')
 
     # Similarity link (cached in display and view)
     @mock.patch('general.management.commands.similarity_update.Similarity.add', return_value='Dummy response')
-    def _test_similarity_update(self, cache_keys, expected, request_func, similarity_add):
+    def _test_similarity_update(self, cache_keys, expected, request_func, similarity_add, user=None):
         # Create a SoundAnalysis object with status OK so "similarity_update" command will pick it up
         SoundAnalysis.objects.create(sound=self.sound, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK")
         self.sound.save()
@@ -821,7 +769,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Initial check
         self.assertEqual(self.sound.similarity_state, 'PE')
-        self.assertNotContains(request_func(), expected)
+        self.assertNotContains(request_func(user) if user is not None else request_func(), expected)
         self._assertCachePresent(cache_keys)
 
         # Update similarity
@@ -832,36 +780,41 @@ class SoundTemplateCacheTests(TestCase):
         # Check similarity icon
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.similarity_state, 'OK')
-        self.assertContains(request_func(), expected)
+        self.assertContains(request_func(user) if user is not None else request_func(), expected)
 
     def test_similarity_update_display(self):
         self._test_similarity_update(
             self._get_sound_display_cache_keys(),
-            '<a class="similar"',
-            self._get_sound_from_home,
+            'data-similar-sounds="true"',
+            self._get_sound_from_profile_page,
+            user=self.user,
         )
 
     def test_similarity_update_view(self):
         self._test_similarity_update(
             self._get_sound_view_footer_top_cache_keys(),
-            '<a id="similar_sounds_link"',
+            'class="bw-icon-similar',
             self._get_sound_view,
         )
 
     # Pack link (cached in display and view)
-    def _test_add_remove_pack(self, cache_keys, text, request_func):
+    def _test_add_remove_pack(self, cache_keys, text, request_func, user=None):
         self._assertCacheAbsent(cache_keys)
 
         self.client.force_login(self.user)
 
         self.assertIsNone(self.sound.pack)
-        self.assertNotContains(request_func(), text)
+        self.assertNotContains(request_func(user) if user is not None else request_func(), text)
         self._assertCachePresent(cache_keys)
 
         # Add sound to pack
         pack_name = 'New pack'
         resp = self.client.post(self._get_sound_url('sound-edit'), {
-            'pack-new_pack': pack_name,
+            '0-description': self.sound.description,
+            '0-name': self.sound.original_filename,
+            '0-tags': self.sound.get_sound_tags_string(),
+            '0-license': self.sound.license_id,
+            '0-new_pack': pack_name,
         })
         self.assertEqual(resp.status_code, 302)
         self._assertCacheAbsent(cache_keys)
@@ -869,12 +822,16 @@ class SoundTemplateCacheTests(TestCase):
         # Check pack icon
         self.sound.refresh_from_db()
         self.assertIsNotNone(self.sound.pack)
-        self.assertContains(request_func(), text)  # request_func should render the template
+        self.assertContains(request_func(user) if user is not None else request_func(), text)  # request_func should render the template
         self._assertCachePresent(cache_keys)
 
         # Remove sound from pack
         resp = self.client.post(self._get_sound_url('sound-edit'), {
-            'pack-pack': '',
+            '0-description': self.sound.description,
+            '0-name': self.sound.original_filename,
+            '0-tags': self.sound.get_sound_tags_string(),
+            '0-license': self.sound.license_id,
+            '0-pack': '',
         })
         self.assertEqual(resp.status_code, 302)
         self._assertCacheAbsent(cache_keys)
@@ -882,37 +839,42 @@ class SoundTemplateCacheTests(TestCase):
         # Check pack icon being absent
         self.sound.refresh_from_db()
         self.assertIsNone(self.sound.pack)
-        self.assertNotContains(request_func(), text)
+        self.assertNotContains(request_func(user) if user is not None else request_func(), text)
 
     def test_add_remove_pack_display(self):
         self._test_add_remove_pack(
             self._get_sound_display_cache_keys(),
-            '<a class="pack"',
-            self._get_sound_from_home,
+            'class="bw-icon-stack"',
+            self._get_sound_from_profile_page,
+            user=self.user,
         )
 
     def test_add_remove_pack_view(self):
         self._test_add_remove_pack(
             self._get_sound_view_footer_top_cache_keys(),
-            '<a id="pack_link"',
+            'This sound is part of the pack',
             self._get_sound_view,
         )
 
     # Geotag link (cached in display and view)
-    def _test_add_remove_geotag(self, cache_keys, text, request_func):
+    def _test_add_remove_geotag(self, cache_keys, text, request_func, user=None):
         self._assertCacheAbsent(cache_keys)
 
         self.client.force_login(self.user)
 
         self.assertIsNone(self.sound.geotag)
-        self.assertNotContains(request_func(), text)
+        self.assertNotContains(request_func(user) if user is not None else request_func() if user is not None else request_func(), text)
         self._assertCachePresent(cache_keys)
 
         # Add a geotag to the sound
         resp = self.client.post(self._get_sound_url('sound-edit'), {
-            'geotag-lat': 20,
-            'geotag-lon': 20,
-            'geotag-zoom': 18
+            '0-description': self.sound.description,
+            '0-name': self.sound.original_filename,
+            '0-tags': self.sound.get_sound_tags_string(),
+            '0-license': self.sound.license_id,
+            '0-lat': 20,
+            '0-lon': 20,
+            '0-zoom': 18
         })
         self.assertEqual(resp.status_code, 302)
         self._assertCacheAbsent(cache_keys)
@@ -920,12 +882,16 @@ class SoundTemplateCacheTests(TestCase):
         # Check geotag icon
         self.sound.refresh_from_db()
         self.assertIsNotNone(self.sound.geotag)
-        self.assertContains(request_func(), text)
+        self.assertContains(request_func(user) if user is not None else request_func(), text)
         self._assertCachePresent(cache_keys)
 
         # Remove geotag from the sound
         resp = self.client.post(self._get_sound_url('sound-edit'), {
-            'geotag-remove_geotag': 'on',
+            '0-description': self.sound.description,
+            '0-name': self.sound.original_filename,
+            '0-tags': self.sound.get_sound_tags_string(),
+            '0-license': self.sound.license_id,
+            '0-remove_geotag': 'on',
         })
         self.assertEqual(resp.status_code, 302)
         self._assertCacheAbsent(cache_keys)
@@ -933,60 +899,65 @@ class SoundTemplateCacheTests(TestCase):
         # Check geotag icon being absent
         self.sound.refresh_from_db()
         self.assertIsNone(self.sound.geotag)
-        self.assertNotContains(request_func(), text)
+        self.assertNotContains(request_func(user) if user is not None else request_func(), text)
 
     def test_add_remove_geotag_display(self):
         self._test_add_remove_geotag(
             self._get_sound_display_cache_keys(),
-            '<a class="geotag"',
-            self._get_sound_from_home,
+            'class="bw-icon-pin',
+            self._get_sound_from_profile_page,
+            user=self.user,
         )
 
     def test_add_remove_geotag_view(self):
         self._test_add_remove_geotag(
             self._get_sound_view_footer_top_cache_keys(),
-            '<a id="geotag_link"',
+            'class="bw-icon-pin',
             self._get_sound_view,
         )
 
     # Changing license
-    def _test_change_license(self, cache_keys, new_license, expected_text, check_present):
+    def _test_change_license(self, cache_keys, new_license, expected_text, request_func, user=None):
         self._assertCacheAbsent(cache_keys)
 
         self.client.force_login(self.user)
 
         self.assertNotEqual(self.sound.license, new_license)
-        self.assertNotContains(check_present(), expected_text)
+        self.assertNotContains(request_func(user) if user is not None else request_func(), expected_text)
         self._assertCachePresent(cache_keys)
 
         # Change license
         resp = self.client.post(self._get_sound_url('sound-edit'), {
-            'license': new_license.id,
+            '0-description': self.sound.description,
+            '0-name': self.sound.original_filename,
+            '0-tags': self.sound.get_sound_tags_string(),
+            '0-license': new_license.id,
         })
         self.assertEqual(resp.status_code, 302)
         self._assertCacheAbsent(cache_keys)
 
         # Check that license is updated
-        self.assertContains(check_present(), expected_text)
+        self.assertContains(request_func(user) if user is not None else request_func(), expected_text)
 
     def test_change_license_display(self):
         self._test_change_license(
             self._get_sound_display_cache_keys(),
-            License.objects.filter(name__iexact='Attribution').first(),
-            "images/licenses/by.png",
-            self._get_sound_from_home,
+            License.objects.filter(name__iexact='Creative Commons 0').last(),
+            "bw-icon-zero",
+            self._get_sound_from_profile_page,
+            user=self.user,
         )
 
     def test_change_license_view(self):
-        license = License.objects.filter(name__iexact='Attribution').first()
+        license = License.objects.filter(name__iexact='Creative Commons 0').first()
         self._test_change_license(
             self._get_sound_view_footer_top_cache_keys(),
             license,
-            str(license.name),
+            str(license.name_with_version),
             self._get_sound_view,
         )
 
-    def _test_add_remove_remixes(self, cache_keys, text, request_func):
+    def _test_add_remove_remixes(self, cache_keys, text, request_func, user=None):
         _, _, sounds = create_user_and_sounds(num_sounds=1, user=self.user)
         another_sound = sounds[0]
         self._assertCacheAbsent(cache_keys)
@@ -994,48 +965,57 @@ class SoundTemplateCacheTests(TestCase):
         self.client.force_login(self.user)
 
         self.assertEqual(self.sound.remix_group.count(), 0)
-        self.assertNotContains(request_func(), text)
+        self.assertNotContains(request_func(user) if user is not None else request_func(), text)
         self._assertCachePresent(cache_keys)
 
         # Indicate another sound as source
-        resp = self.client.post(self._get_sound_url('sound-edit-sources'), {
-            'sources': str(another_sound.id)
+        resp = self.client.post(self._get_sound_url('sound-edit'), {
+            '0-description': self.sound.description,
+            '0-name': self.sound.original_filename,
+            '0-tags': self.sound.get_sound_tags_string(),
+            '0-license': self.sound.license_id,
+            '0-sources': str(another_sound.id)
         })
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 302)
         call_command('create_remix_groups')
         self._assertCacheAbsent(cache_keys)
 
         # Check remix icon
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.remix_group.count(), 1)
-        self.assertContains(request_func(), text)
+        self.assertContains(request_func(user) if user is not None else request_func(), text)
         self._assertCachePresent(cache_keys)
 
         # Remove remix from the sound
-        resp = self.client.post(self._get_sound_url('sound-edit-sources'), {
-            'sources': ''
+        resp = self.client.post(self._get_sound_url('sound-edit'), {
+            '0-description': self.sound.description,
+            '0-name': self.sound.original_filename,
+            '0-tags': self.sound.get_sound_tags_string(),
+            '0-license': self.sound.license_id,
+            '0-sources': ''
         })
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 302)
         call_command('create_remix_groups')
         self._assertCacheAbsent(cache_keys)
 
         # Check remix icon being absent
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.remix_group.count(), 0)
-        self.assertNotContains(request_func(), text)
+        self.assertNotContains(request_func(user) if user is not None else request_func(), text)
 
     def test_add_remove_remixes_display(self):
         self._test_add_remove_remixes(
             self._get_sound_display_cache_keys(),
-            '<a class="remixes"',
-            self._get_sound_from_home,
+            'data-remix-group="true"',
+            self._get_sound_from_profile_page,
+            user=self.user,
         )
 
     def test_add_remove_remixes_view(self):
         self._test_add_remove_remixes(
             self._get_sound_view_footer_top_cache_keys(),
-            '<a id="remixes_link"',
-            self._get_sound_view,
+            'class="bw-icon-remix',
+            self._get_sound_view
         )
 
     def _test_state_change(self, cache_keys, change_state, texts):
@@ -1043,7 +1023,7 @@ class SoundTemplateCacheTests(TestCase):
         self.client.force_login(self.user)
 
         self._assertCacheAbsent(cache_keys)
-        resp = self.client.get(self._get_sound_url('sound-display'))
+        resp = self.client.get(self._get_sound_url('sound'))
         for text in texts:
             self.assertContains(resp, text)
         self._assertCachePresent(cache_keys)
@@ -1052,25 +1032,25 @@ class SoundTemplateCacheTests(TestCase):
         change_state()
 
         self._assertCacheAbsent(cache_keys)
-        resp = self.client.get(self._get_sound_url('sound-display'))
+        resp = self.client.get(self._get_sound_url('sound'))
         for text in texts:
             self.assertNotContains(resp, text)
         self._assertCachePresent(cache_keys)
 
-    def test_processing_state_change_display(self):
+    def test_processing_state_change_view(self):
         self.sound.change_processing_state('PE')
         self._test_state_change(
-            self._get_sound_display_cache_keys(),
+            self._get_sound_view_cache_keys(),
             lambda: self.sound.change_processing_state('OK'),
-            ['Processing state:', 'Pending'],
+            ['sound not yet processed or moderated'],
         )
 
-    def test_moderation_state_change_display(self):
+    def test_moderation_state_change_view(self):
         self.sound.change_moderation_state('PE')
         self._test_state_change(
-            self._get_sound_display_cache_keys(),
+            self._get_sound_view_cache_keys(),
             lambda: self.sound.change_moderation_state('OK'),
-            ['Moderation state:', 'Pending'],
+            ['sound not yet processed or moderated'],
         )
 
 
@@ -1138,22 +1118,6 @@ class SoundEditDeletePermissionTestCase(TestCase):
         resp = self.client.post(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]))
         self.assertEqual(resp.status_code, 403)
 
-    def test_delete_sound_owner(self):
-        # Sound owner
-        self.client.force_login(self.sound_user)
-        resp = self.client.get(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
-        self.assertEqual(resp.status_code, 200)
-
-        # Admin
-        self.client.force_login(self.admin_user)
-        resp = self.client.get(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
-        self.assertEqual(resp.status_code, 200)
-
-        # Other user
-        self.client.force_login(self.other_user)
-        resp = self.client.post(reverse('sound-delete', args=[self.sound.user.username, self.sound.id]))
-        self.assertEqual(resp.status_code, 403)
-
     def test_edit_pack_owner(self):
         # Pack owner
         self.client.force_login(self.sound_user)
@@ -1170,21 +1134,6 @@ class SoundEditDeletePermissionTestCase(TestCase):
         resp = self.client.post(reverse('pack-edit', args=[self.pack.user.username, self.pack.id]))
         self.assertEqual(resp.status_code, 403)
 
-    def test_delete_pack_owner(self):
-        # Pack owner
-        self.client.force_login(self.sound_user)
-        resp = self.client.get(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
-        self.assertEqual(resp.status_code, 200)
-
-        # Admin
-        self.client.force_login(self.admin_user)
-        resp = self.client.get(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
-        self.assertEqual(resp.status_code, 200)
-
-        # Other user
-        self.client.force_login(self.other_user)
-        resp = self.client.post(reverse('pack-delete', args=[self.pack.user.username, self.pack.id]))
-        self.assertEqual(resp.status_code, 403)
 
 
 class SoundEditTestCase(TestCase):
@@ -1198,8 +1147,8 @@ class SoundEditTestCase(TestCase):
         self.sound.change_moderation_state("OK")
         self.user = user
     
-    def test_update_description_bw(self):
-        test_using_bw_ui(self)
+    def test_update_description(self):
+        
         self.client.force_login(self.user)
         new_description = 'New description'
         new_name = 'New name'

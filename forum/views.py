@@ -261,7 +261,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                     if users_to_notify and post.thread.get_status_display() != 'Sunk':
                         send_mail_template(
                             settings.EMAIL_SUBJECT_TOPIC_REPLY,
-                            "forum/email_new_post_notification.txt",
+                            "emails/email_new_post_notification.txt",
                             {'post': post, 'thread': thread, 'forum': forum},
                             extra_subject=thread.title,
                             user_to=users_to_notify, email_type_preference_check="new_post"

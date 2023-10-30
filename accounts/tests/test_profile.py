@@ -98,19 +98,19 @@ class UserEditProfile(TestCase):
     def test_edit_user_profile(self):
         user = User.objects.create_user("testuser")
         self.client.force_login(user)
-        self.client.post("/home/edit/", {
+        resp = self.client.post("/home/edit/", {
             'profile-home_page': 'http://www.example.com/',
             'profile-username': 'testuser',
             'profile-about': 'About test text',
             'profile-signature': 'Signature test text',
-            'profile-not_shown_in_online_users_list': True,
+            'profile-ui_theme_preference': 'd',            
         })
 
         user = User.objects.select_related('profile').get(username="testuser")
         self.assertEqual(user.profile.home_page, 'http://www.example.com/')
         self.assertEqual(user.profile.about, 'About test text')
         self.assertEqual(user.profile.signature, 'Signature test text')
-        self.assertEqual(user.profile.not_shown_in_online_users_list, True)
+        self.assertEqual(user.profile.ui_theme_preference, 'd')
 
         # Now we change the username the maximum allowed times
         for i in range(settings.USERNAME_CHANGE_MAX_TIMES):
@@ -119,7 +119,7 @@ class UserEditProfile(TestCase):
                 'profile-username': 'testuser%d' % i,
                 'profile-about': 'About test text',
                 'profile-signature': 'Signature test text',
-                'profile-not_shown_in_online_users_list': True,
+                'profile-ui_theme_preference': 'd',
             })
 
             user.refresh_from_db()
@@ -133,7 +133,7 @@ class UserEditProfile(TestCase):
             'profile-username': 'testuser-error',
             'profile-about': 'About test text',
             'profile-signature': 'Signature test text',
-            'profile-not_shown_in_online_users_list': True,
+            'profile-ui_theme_preference': 'd',
         })
         user.refresh_from_db()
         self.assertEqual(user.old_usernames.count(), settings.USERNAME_CHANGE_MAX_TIMES)

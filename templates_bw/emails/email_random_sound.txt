@@ -1,0 +1,15 @@
+{% extends "emails/email_base.txt" %}
+
+{% load absurl %}
+
+{% block salutation %}{{sound.user.username}}{% endblock %}
+
+{% block body %}
+Good news! your sound {{sound.original_filename}} has been selected as the random sound of the day!
+
+To see the random sound of the day, please visit:
+<https://freesound.org>
+
+{% include "emails/email_opt_out_text.txt" %}
+
+{% endblock %}

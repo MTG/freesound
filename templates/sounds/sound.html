@@ -202,7 +202,7 @@
         <li><a id="geotag_link" class="icon" href="{% url 'sound-geotag' sound.user.username sound.id %}">Geotag</a></li>
         {% endif %}
         {% if sound.remix_group.all.count %}
-        <li><a id="remixes_link" class="icon" href="{% url 'sound-remixes' sound.user.username sound.id %}">Remixes and Sources</a></li>
+        <li><a id="remixes_link" class="icon" href="{% url 'sound-remixes' sound.user.username sound.id %}?ajax=1">Remixes and Sources</a></li>
         {% endif %}
         {% if sound.similarity_state == 'OK' %}
         <li><a id="similar_sounds_link" rel="nofollow" class="icon" href="{% url 'sound-similar' sound.user.username sound.id %}">Similar sounds</a></li>

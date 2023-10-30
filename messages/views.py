@@ -178,8 +178,7 @@ def new_message(request, username=None, message_id=None):
                     # send the user an email to notify him of the sent message!
                     tvars = {'user_to': user_to,
                              'user_from': user_from}
-
-                    send_mail_template(settings.EMAIL_SUBJECT_PRIVATE_MESSAGE, 'messages/email_new_message.txt', tvars,
+                    send_mail_template(settings.EMAIL_SUBJECT_PRIVATE_MESSAGE, 'emails/email_new_message.txt', tvars,
                                        user_to=user_to, email_type_preference_check="private_message")
                 except:
                     # if the email sending fails, ignore...
@@ -235,8 +234,8 @@ def username_lookup(request):
         if not using_beastwhoosh(request):
             results = get_previously_contacted_usernames(request.user)
         else:
-            query = request.GET.get("q")
-            if query.strip():
+            query = request.GET.get("q", None)
+            if query is not None and query.strip():
                 results = get_previously_contacted_usernames(request.user)
                 results = [result for result in results if query in result]
     json_resp = json.dumps(results)

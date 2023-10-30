@@ -56,12 +56,12 @@ class Ticket(models.Model):
     queue           = models.ForeignKey(Queue, related_name='tickets', on_delete=models.CASCADE)
     sound           = models.OneToOneField('sounds.Sound', null=True, on_delete=models.SET_NULL)
 
-    NOTIFICATION_QUESTION     = 'tickets/email_notification_question.txt'
-    NOTIFICATION_APPROVED     = 'tickets/email_notification_approved.txt'
-    NOTIFICATION_APPROVED_BUT = 'tickets/email_notification_approved_but.txt'
-    NOTIFICATION_DELETED      = 'tickets/email_notification_deleted.txt'
-    NOTIFICATION_UPDATED      = 'tickets/email_notification_updated.txt'
-    NOTIFICATION_WHITELISTED  = 'tickets/email_notification_whitelisted.txt'
+    NOTIFICATION_QUESTION     = 'emails/email_notification_question.txt'
+    NOTIFICATION_APPROVED     = 'emails/email_notification_approved.txt'
+    NOTIFICATION_APPROVED_BUT = 'emails/email_notification_approved_but.txt'
+    NOTIFICATION_DELETED      = 'emails/email_notification_deleted.txt'
+    NOTIFICATION_UPDATED      = 'emails/email_notification_updated.txt'
+    NOTIFICATION_WHITELISTED  = 'emails/email_notification_whitelisted.txt'
 
     MODERATOR_ONLY = 1
     USER_ONLY = 2

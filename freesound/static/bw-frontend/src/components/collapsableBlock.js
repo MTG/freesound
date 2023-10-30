@@ -45,4 +45,6 @@ collapsableToggles.forEach(element => {
   element.addEventListener('click', handleCollapsable);
 });
 
+export {toggleCollapse};
+
 

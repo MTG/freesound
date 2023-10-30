@@ -1,0 +1,19 @@
+{% extends "emails/email_base.txt" %}
+{% load absurl %}
+
+{% block salutation %}{{ user.username }}{% endblock %}
+
+{% block body %}
+About a year ago you made a donation to Freesound.
+Thanks for that, we're really grateful for your support!
+
+We thought that you might want to donate again :)
+Your money will be used for further development of Freesound and for general support of community-building efforts for Freesound!
+
+Please, feel free to use the link below to make a new donation:
+
+{% absurl 'donate' %}
+
+{% include "emails/email_opt_out_text.txt" %}
+
+{% endblock %}

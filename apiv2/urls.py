@@ -97,8 +97,8 @@ urlpatterns = [
 
     # Oauth2
     path('oauth2/', include('apiv2.oauth2_urls', namespace='oauth2_provider')),
-    path('login/', login, {'template_name': 'api/minimal_login.html',
-                             'authentication_form': FsAuthenticationForm}, name="api-login"),
+    path('login/', login, {'template_name': 'oauth2_provider/oauth_login.html',
+                           'authentication_form': FsAuthenticationForm}, name="api-login"),
     path('logout/', LogoutView.as_view(next_page='/apiv2/'), name="api-logout"),
 
     #########

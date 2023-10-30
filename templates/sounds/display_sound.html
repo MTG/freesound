@@ -112,7 +112,7 @@
             </a>
             {% endif %}
             {% if sound.remixgroup_id %}
-             <a class="remixes" href="{% url "sound-remixes" sound.username sound.id %}">
+             <a class="remixes" href="{% url "sound-remixes" sound.username sound.id %}?ajax=1">
                 <img src="{{media_url}}images/remixes.png" width="16" height="16" alt="Remixes" title="This sound has remixes" />
             </a>
             {% endif %}

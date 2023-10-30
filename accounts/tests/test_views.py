@@ -128,8 +128,8 @@ class SimpleUserTest(TestCase):
         self.assertRedirects(resp, reverse('sound', args=[self.user.username, self.sound.id]) + '?flag=1')
 
         # Home to account
-        resp = self.client.get(reverse('home'))
-        self.assertRedirects(resp, reverse('account', args=[self.user.username, self.sound.id]))
+        resp = self.client.get(reverse('accounts-home'))
+        self.assertRedirects(resp, reverse('account', args=[self.user.username]))
 
         # Describe to manage sounds page
         resp = self.client.get(reverse('accounts-describe'))

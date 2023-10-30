@@ -64,7 +64,7 @@ sound_counter = count()  # Used in create_user_and_sounds to avoid repeating sou
 
 
 def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0, tags=None,
-                           processing_state='PE', moderation_state='PE', type='wav', 
+                           description=None, processing_state='PE', moderation_state='PE', type='wav', 
                            username="testuser"):
     """Creates User, Sound and Pack objects useful for testing.
 
@@ -78,6 +78,7 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
         user (User): user owner of the created sounds (if not provided, a new user will be created).
         count_offset (int): start counting sounds at X.
         tags (str or None): string of tags to be added to the sounds (all sounds will have the same tags).
+        description (str or None): description to be added to the sounds (all sounds will have the same description).
         processing_state (str): processing state of the created sounds.
         moderation_state (str): moderation state of the created sounds.
         type (str): type of the sounds to be created (e.g. 'wav').
@@ -101,7 +102,8 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
         sound = Sound.objects.create(user=user,
                                      original_filename="Test sound %i" % (i + count_offset),
                                      base_filename_slug="test_sound_%i" % (i + count_offset),
-                                     license=License.objects.all()[0],
+                                     license=License.objects.last(),
+                                     description=description if description is not None else '',
                                      pack=pack,
                                      md5="fakemd5_%i" % (i + count_offset),
                                      type=type,

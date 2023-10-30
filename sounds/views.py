@@ -1003,6 +1003,9 @@ def _remix_group_view_helper(request, group_id):
 
 @redirect_if_old_username_or_404
 def remixes(request, username, sound_id):
+    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '?remixes=1')
+    
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
@@ -1365,7 +1368,7 @@ def oembed(request):
 
 def downloaders(request, username, sound_id):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('sound-downloaders', args=[username, sound_id]) + '?downloaders=1')
+        return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '?downloaders=1')
 
     sound = get_object_or_404(Sound, id=sound_id)
 
@@ -1402,7 +1405,7 @@ def downloaders(request, username, sound_id):
 
 def pack_downloaders(request, username, pack_id):
     if using_beastwhoosh(request) and not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse('pack-downloaders', args=[username, pack_id]) + '?downloaders=1')
+        return HttpResponseRedirect(reverse('pack', args=[username, pack_id]) + '?downloaders=1')
     
     pack = get_object_or_404(Pack, id=pack_id)
 

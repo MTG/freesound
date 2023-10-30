@@ -32,17 +32,6 @@ class FollowTestCase(TestCase):
         self.user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(self.user)
 
-    def test_old_ng_redirects(self):
-        # Test that old NG pages redirect to new BW modals
-        resp = self.client.get(reverse('user-followers', args=['User2']))
-        self.assertRedirects(resp, reverse('account', args=['User2']) + '?followers=1')
-
-        resp = self.client.get(reverse('user-following-users', args=['User2']))
-        self.assertRedirects(resp, reverse('account', args=['User2']) + '?following=1')
-
-        resp = self.client.get(reverse('user-following-tags', args=['User2']))
-        self.assertRedirects(resp, reverse('account', args=['User2']) + '?followingTags=1')
-
     def test_following_users(self):
         # If we get following users for someone who exists, OK
         resp = self.client.get(reverse('user-following-users', args=['User2']) + '?ajax=1')

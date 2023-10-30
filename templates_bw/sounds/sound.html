@@ -62,7 +62,7 @@
                             <div class="col-2 text-right">
                                 <div class="text-grey">
                                     {% if sound.remix_group.all.count %}
-                                    <button title="See sound's remix group" aria-label="See sound's remix group" class="btn-neutral" data-toggle="remix-group-modal" data-modal-activation-param="remix_group" data-modal-content-url="{% url 'sound-remixes' sound.user.username sound.id %}">
+                                    <button title="See sound's remix group" aria-label="See sound's remix group" class="btn-neutral" data-toggle="remix-group-modal" data-modal-activation-param="remix_group" data-modal-content-url="{% url 'sound-remixes' sound.user.username sound.id %}?ajax=1">
                                         {% bw_icon 'remix' %}
                                     </button>
                                     {% endif %}

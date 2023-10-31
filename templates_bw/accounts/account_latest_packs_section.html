@@ -1,4 +1,7 @@
 {% load display_pack %}
+{% load cache %}
+{% cache 43200 bw_user_profile_latest_packs_section is_authenticated %}
+{% with user.profile.get_latest_packs_for_profile_page as latest_packs %}
 {% if latest_packs %}
     <div class="row">
         {% for pack in latest_packs %}
@@ -16,3 +19,5 @@
         <div class="text-grey v-spacing-top-1">Looks like {{ user.username }} has not uploaded any packs yet</div>
     </div>
 {% endif %}
+{% endwith %}
+{% endcache %}

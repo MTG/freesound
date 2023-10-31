@@ -6,7 +6,7 @@ const closeOnClickAway = () => {
   const { toggle, dropdownOptions } = lastOpenedDropdown;
   if (toggle && dropdownOptions) {
     dropdownOptions.classList.remove('show');
-    toggle.setAttribute('aria-expanded', 'false');
+    toggle.ariaExpanded = 'false';
     lastOpenedDropdown.toggle = undefined;
     lastOpenedDropdown.dropdownOptions = undefined;
   }
@@ -29,7 +29,7 @@ const toggleExpandDropdown = toggle => {
   const dropdownOptions = dropdownContainer.getElementsByClassName('dropdown-menu')[0];
   if (dropdownOptions && !isDropdownExpanded) {
     dropdownOptions.classList.add('show');
-    toggle.setAttribute('aria-expanded', 'true');
+    toggle.ariaExpanded = 'true';
     lastOpenedDropdown.toggle = toggle;
     lastOpenedDropdown.dropdownOptions = dropdownOptions;
     setTimeout(() => {
@@ -40,5 +40,13 @@ const toggleExpandDropdown = toggle => {
 };
 
 dropdownToggles.forEach(toggle => {
+  toggle.ariaExpanded = 'false';
+  toggle.ariaHasPopup = 'menu';
+  const dropdownContainer = toggle.closest('.dropdown');
+  const dropdownOptions = dropdownContainer.getElementsByClassName('dropdown-menu')[0];
+  dropdownOptions.setAttribute('role', 'menu');
+  dropdownOptions.getElementsByClassName('dropdown-item').forEach(item => {
+    item.setAttribute('role', 'menuitem');
+  });
   toggle.addEventListener('click', () => toggleExpandDropdown(toggle));
 });

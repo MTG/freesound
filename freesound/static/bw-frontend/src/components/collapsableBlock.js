@@ -16,9 +16,8 @@ const toggleCollapse = (toggleElement) => {
   collapsableContainer.classList.toggle(closeClass);
   const showText = toggleElement.dataset.showText;
   const hideText = toggleElement.dataset.hideText;
-  toggleElement.textContent = collapsableContainer.classList.contains(closeClass)
-    ? showText
-    : hideText;
+  toggleElement.ariaExpanded = collapsableContainer.classList.contains(closeClass) ? "false" : "true";
+  toggleElement.textContent = collapsableContainer.classList.contains(closeClass) ? showText: hideText;
 }
 
 const handleCollapsable = (e) => {
@@ -36,6 +35,9 @@ collapsableToggles.forEach(element => {
       return; // continue to next toggle element as this will not implement collapsable behaviour
     }
   }
+
+  // Set aria expanded attribute with is true by default
+  element.ariaExpanded = "true";
   
   if (element.dataset.hideOnLoad !== undefined){
     toggleCollapse(element);

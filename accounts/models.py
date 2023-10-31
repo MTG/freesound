@@ -29,6 +29,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
+from django.core.cache import cache
 from django.db import models, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_save, post_save
@@ -601,6 +602,26 @@ class Profile(models.Model):
     def num_packs(self):
         # Return the number of packs for which at least one sound has been published
         return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by('pack_id').distinct('pack').count()
+    
+    def get_stats_for_profile_page(self):
+        # Return a dictionary of user statistics to show on the user profile page
+        # Because some stats are expensive to compute, we cache them
+        stats_from_db = {
+                'num_sounds': self.num_sounds,
+                'num_downloads': self.num_downloads_on_sounds_and_packs,
+                'num_posts': self.num_posts
+            }
+        stats_from_cache = cache.get(settings.USER_STATS_CACHE_KEY.format(self.user_id), None)
+        if stats_from_cache is None:
+            stats_from_cache = {
+                'num_packs': self.num_packs,
+                'total_uploaded_sounds_length': self.get_total_uploaded_sounds_length(),
+                'avg_rating_0_5': self.avg_rating_0_5,
+            }
+            cache.set(settings.USER_STATS_CACHE_KEY.format(self.user_id), stats_from_cache, 60*60*24)
+        stats_from_db.update(stats_from_cache)
+        return stats_from_db
+
 
     class Meta:
         ordering = ('-user__date_joined', )

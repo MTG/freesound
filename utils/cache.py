@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
@@ -35,11 +36,11 @@ def invalidate_template_cache(fragment_name, *variables):
 def invalidate_user_template_caches(user_id):
     invalidate_template_cache('user_header', user_id)
     invalidate_template_cache('bw_user_header', user_id)
-    invalidate_template_cache('bw_user_profile_stats', user_id)
     invalidate_template_cache('bw_user_profile_tags', user_id)
     invalidate_template_cache('bw_user_profile_followers_count', user_id)
     invalidate_template_cache('bw_user_profile_following_count', user_id)
     invalidate_template_cache('bw_user_profile_following_tags_count', user_id)
+    cache.delete(settings.USER_STATS_CACHE_KEY.format(user_id))
 
 
 def invalidate_all_moderators_header_cache():

@@ -180,30 +180,9 @@
             </div>
             <aside class="col-md-4 col-extra-left-padding-middle-md bw-profile__sections">
                 <div class="divider-light v-spacing-top-6 v-spacing-5 d-md-none"></div>
-                {% cache 3600 bw_user_profile_stats user.id %}
-                <section class="bw-profile__section_stats v-spacing-top-4">
-                    <ol>
-                        <li class="v-spacing-3">
-                            {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black" title="{{ user.username }} has uploaded {{ user.profile.num_sounds|bw_intcomma }} sound{{ user.profile.num_sounds|pluralize }}" href="{{ user.profile.get_user_sounds_in_search_url }}">{{ user.profile.num_sounds|formatnumber }} sound{{ user.profile.num_sounds|pluralize }}</a>
-                        </li>
-                        <li class="v-spacing-3">
-                            {% with user.profile.num_packs as num_packs %}{% bw_icon 'stack' 'text-light-grey' %} <a class="text-19 bw-link--black" title="{{ user.username }} has created {{ num_packs|bw_intcomma }} pack{{ num_packs|pluralize }}" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1&only_p=1">{{ num_packs|formatnumber }} pack{{ num_packs|pluralize }}</a>{% endwith %}
-                        </li>
-                        <li class="v-spacing-3">
-                            {% with user.profile.get_total_uploaded_sounds_length as total_uploaded_sounds_length %}{% bw_icon 'clock' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds together account for {{ total_uploaded_sounds_length|duration_hours }} hours of audio">{{ total_uploaded_sounds_length|duration_hours }} hours of audio</span>{% endwith %}
-                        </li>
-                        <li class="v-spacing-3">
-                            {% with user.profile.avg_rating_0_5 as avg_rating_0_5 %}{% bw_icon 'star' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds have an average rating of {{ avg_rating_0_5|floatformat:1 }}">{{ avg_rating_0_5|floatformat:1 }} average rating</span>{% endwith %}
-                        </li>
-                        <li class="v-spacing-3">
-                            {% with user.profile.num_downloads_on_sounds_and_packs as num_downloads %}{% bw_icon 'download' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds and packs have been downloaded {{ num_downloads }} times">{{ num_downloads|formatnumber }} download{{ num_downloads|pluralize }}</span>{% endwith %}
-                        </li>
-                        <li class="v-spacing-3">
-                            {% bw_icon 'comments' 'text-light-grey' %} <span class="text-19" title="{{ user.username }} has written {{ user.profile.num_posts }} forum posts">{{ user.profile.num_posts|formatnumber }} forum post{{ user.profile.num_posts|pluralize }}</span>
-                        </li>
-                    </ol>
-                </section>
-                {% endcache %}
+                {% with user.profile.get_stats_for_profile_page as user_stats %}
+                    {% include 'accounts/account_stats.html' %}
+                {% endwith %}
                 {% if last_geotags_serialized %}
                 <div class="divider-light"></div>
                 <section id="latest_geotags" class="v-spacing-top-4 v-spacing-4" data-map-loaded="false">

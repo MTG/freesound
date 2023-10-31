@@ -25,6 +25,7 @@ import errno
 import json
 import logging
 import os
+import pickle
 import tempfile
 import time
 import uuid
@@ -1485,9 +1486,14 @@ def account_latest_packs_section(request, username):
     if not request.GET.get('ajax'):
         raise Http404  # Only accessible via ajax
     user = request.parameter_user
-    latest_pack_ids = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
-                        .order_by("-last_updated").values_list('id', flat=True)[0:15]
-    latest_packs = Pack.objects.ordered_ids(pack_ids=latest_pack_ids)
+    latest_packs_from_cache = cache.get(settings.USER_LATEST_PACKS_CACHE_KEY.format(user.id), None)
+    if latest_packs_from_cache is None:
+        latest_pack_ids = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
+                            .order_by("-last_updated").values_list('id', flat=True)[0:15]
+        latest_packs = Pack.objects.ordered_ids(pack_ids=latest_pack_ids)
+        cache.set(settings.USER_LATEST_PACKS_CACHE_KEY.format(user.id), pickle.dumps(latest_packs), 60 * 60 * 24)
+    else:
+        latest_packs = pickle.loads(latest_packs_from_cache)
     tvars = {
         'user': user,
         'latest_packs': latest_packs,

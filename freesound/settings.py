@@ -351,8 +351,9 @@ CHARTS_DATA_CACHE_KEY = 'bw-charts-data'
 # Whether or not user bookmarks and bookmark categories should be public (visible to all other users) in BW
 BW_BOOKMARK_PAGES_PUBLIC = False
 
-# User stats cache key template
+# User profile page cache key templates
 USER_STATS_CACHE_KEY = 'user_stats_{}'
+USER_LATEST_PACKS_CACHE_KEY = 'user_latest_packs_{}'
 
 # User flagging notification thresholds
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3

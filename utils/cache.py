@@ -40,8 +40,8 @@ def invalidate_user_template_caches(user_id):
     invalidate_template_cache('bw_user_profile_followers_count', user_id)
     invalidate_template_cache('bw_user_profile_following_count', user_id)
     invalidate_template_cache('bw_user_profile_following_tags_count', user_id)
-    invalidate_template_cache('bw_user_profile_latest_packs_section', True)
-    invalidate_template_cache('bw_user_profile_latest_packs_section', False)
+    invalidate_template_cache('bw_user_profile_latest_packs_section', user_id, True)
+    invalidate_template_cache('bw_user_profile_latest_packs_section', user_id, False)
     cache.delete(settings.USER_STATS_CACHE_KEY.format(user_id))
 
 

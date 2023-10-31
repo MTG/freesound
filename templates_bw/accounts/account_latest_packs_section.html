@@ -1,6 +1,6 @@
 {% load display_pack %}
 {% load cache %}
-{% cache 43200 bw_user_profile_latest_packs_section is_authenticated %}
+{% cache 43200 bw_user_profile_latest_packs_section user.id is_authenticated %}
 {% with user.profile.get_latest_packs_for_profile_page as latest_packs %}
 {% if latest_packs %}
     <div class="row">

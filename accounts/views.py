@@ -1182,7 +1182,9 @@ def downloaded_sounds(request, username):
         sounds_dict = Sound.objects.dict_ids(sound_ids)
         download_list = []
         for d in page:
-            download_list.append({"created": d.created, "sound": sounds_dict[d.sound_id]})
+            sound = sounds_dict.get(d.sound_id, None)
+            if sound is not None:
+                download_list.append({"created": d.created, "sound": sound})
         tvars = {"username": username,
                 "user": user,
                 "download_list": download_list,
@@ -1212,7 +1214,9 @@ def downloaded_packs(request, username):
         packs_dict = Pack.objects.dict_ids(pack_ids)
         download_list = []
         for d in page:
-            download_list.append({"created": d.created, "pack": packs_dict[d.pack_id]})
+            pack = packs_dict.get(d.pack_id, None)
+            if pack is not None:
+                download_list.append({"created": d.created, "pack": pack})
         tvars = {"username": username,
                 "download_list": download_list,
                 "type_sounds": False}

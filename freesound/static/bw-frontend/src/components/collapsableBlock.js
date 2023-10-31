@@ -25,6 +25,8 @@ const handleCollapsable = (e) => {
 };
 
 collapsableToggles.forEach(element => {
+  if (element.dataset.initialized !== undefined) { return;}
+  element.dataset.initialized = 'true';
   const collapsableContainer = document.getElementById(element.dataset.target);
   if (element.dataset.maxHeightWhenClosed !== undefined) {
     // If a max height is set, then the element will be partially visible when closed,

@@ -1407,7 +1407,6 @@ def charts(request):
 
     tvars = cache.get(settings.CHARTS_DATA_CACHE_KEY, None)
     if tvars is None:
-        print("Computing")
         tvars = compute_charts_stats()
         cache.set(settings.CHARTS_DATA_CACHE_KEY, tvars, 60 * 60 * 24)
     return render(request, 'accounts/charts.html', tvars)

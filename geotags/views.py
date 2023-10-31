@@ -193,7 +193,7 @@ def for_user(request, username):
 def for_sound(request, username, sound_id):
     sound = get_object_or_404(
         Sound.objects.select_related('geotag', 'user'), id=sound_id)
-    if sound.user.username.lower() != username.lower():
+    if sound.user.username.lower() != username.lower() or sound.geotag is None:
         raise Http404
     if not using_beastwhoosh(request):
         tvars = {'sound': sound}

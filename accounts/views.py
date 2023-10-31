@@ -1949,6 +1949,9 @@ def clear_flags_user(request, username):
 @login_required
 def pending(request):
     # NOTE: this view is never used in BW
+    if using_beastwhoosh(request):
+        return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
+
     user = request.user
     tickets, _ = TicketViews._get_pending_tickets_for_user(user, include_mod_messages=False)
     TicketViews._add_sound_objects_to_tickets(tickets)

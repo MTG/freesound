@@ -151,6 +151,9 @@ def thread(request, forum_name_slug, thread_id):
 
 @last_action
 def latest_posts(request):
+    if using_beastwhoosh(request):
+        # "latest posts" is a NG only page, if on BW, redirect to "hot threads"
+        return HttpResponseRedirect(reverse('forums-hot-threads'))
     paginator = paginate(request,
                          Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum')
                          .filter(moderation_state="OK").order_by('-created').all(), settings.FORUM_POSTS_PER_PAGE)

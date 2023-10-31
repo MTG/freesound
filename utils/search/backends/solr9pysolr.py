@@ -31,8 +31,6 @@ SOLR_SOUNDS_URL = f"{settings.SOLR9_BASE_URL}/freesound"
 
 
 class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
-    solr_base_url = settings.SOLR9_BASE_URL
-
     def __init__(self, sounds_index_url=None, forum_index_url=None):
         if sounds_index_url is None:
             sounds_index_url = SOLR_SOUNDS_URL

@@ -132,16 +132,13 @@ class Command(BaseCommand):
         create_core(search_engine.solr_base_url, "engine_test_forum", "forum", delete_core=options['force_create_core'])
         sounds_index_url = f'{search_engine.solr_base_url}/engine_test_freesound'
         forum_index_url = f'{search_engine.solr_base_url}/engine_test_forum'
-        search_engine = get_search_engine(
-                backend_class=options['backend_class'], sounds_index_url=sounds_index_url, forum_index_url=forum_index_url
-        )
 
         if not options['sound_methods'] and not options['forum_methods']:
             console_logger.info('None of sound methods or forum methods were selected, so nothing will be tested. '
                                 'Use the -s, -f or both options to test sound and/or forum methods.')
 
 
-        backend_test = TestSearchEngineBackend(backend_name, write_output)
+        backend_test = TestSearchEngineBackend(backend_name, write_output, sounds_index_url=sounds_index_url, forum_index_url=forum_index_url)
         if options['sound_methods']:
             backend_test.test_search_enginge_backend_sounds()
 

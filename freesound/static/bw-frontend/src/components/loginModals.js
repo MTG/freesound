@@ -3,6 +3,7 @@ import serialize from '../utils/formSerializer'
 import addCheckboxVisibleElements from "../components/checkbox";
 import { activateModal, dismissModal, handleGenericModalWithForm } from "../components/modal";
 import { addRecaptchaScriptTagToMainHead } from '../utils/recaptchaDynamicReload'
+import { bindDisableOnSubmitForms } from './formDisableOnSubmit';
 
 const checkUsernameAvailability = (username, baseURL, callback) => {
   const req = new XMLHttpRequest();
@@ -46,6 +47,9 @@ const initRegistrationForm = (registrationForm) => {
   
   // Bind click actions on links to move to other login modals
   initLoginAndRegistrationModalLinks('registerModal');
+
+  // Make the form button disabled on submit
+  bindDisableOnSubmitForms();
   
   // Load grecaptcha script tag (needed if this is loaded ajax)
   addRecaptchaScriptTagToMainHead(registrationForm);

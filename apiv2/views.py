@@ -1544,7 +1544,10 @@ def permission_granted(request):
     except Grant.DoesNotExist:
         grant = None
 
-    template = 'api/app_authorized.html'
+    if using_beastwhoosh(request):
+        template = 'oauth2_provider/app_authorized.html'
+    else:
+        template = 'api/app_authorized.html'
     logout_next = request.GET.get('original_path', None)
     if logout_next:
         logout_next = quote(logout_next)

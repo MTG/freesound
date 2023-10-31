@@ -44,6 +44,8 @@ urlpatterns = [
 
     path('people/', accounts.views.accounts, name="accounts"),
     path('people/<username>/', accounts.views.account, name="account"),
+    path('people/<username>/section/stats/', accounts.views.account_stats_section, name="account-stats-section"),
+    path('people/<username>/section/latest_packs/', accounts.views.account_latest_packs_section, name="account-latest-packs-section"),
     path('people/<username>/sounds/', sounds.views.for_user, name="sounds-for-user"),
     path('people/<username>/flag/', accounts.views.flag_user, name="flag-user"),
     path('people/<username>/clear_flags/', accounts.views.clear_flags_user, name="clear-flags-user"),

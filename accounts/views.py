@@ -1416,9 +1416,6 @@ def charts(request):
 def account(request, username):
     user = request.parameter_user
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
-    latest_pack_ids = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
-                        .order_by("-last_updated").values_list('id', flat=True)[0:10 if not using_beastwhoosh(request) else 15]
-    latest_packs = Pack.objects.ordered_ids(pack_ids=latest_pack_ids)
     following = follow_utils.get_users_following_qs(user)
     followers = follow_utils.get_users_followers_qs(user)
     following_tags = follow_utils.get_tags_following_qs(user)
@@ -1452,7 +1449,6 @@ def account(request, username):
         'home': request.user == user if using_beastwhoosh(request) else False,
         'user': user,
         'latest_sounds': latest_sounds,
-        'latest_packs': latest_packs,
         'follow_user_url': follow_user_url,
         'following': following,
         'followers': followers,
@@ -1470,6 +1466,33 @@ def account(request, username):
         'user_downloads_public': settings.USER_DOWNLOADS_PUBLIC,  # BW only,
     }
     return render(request, 'accounts/account.html', tvars)
+
+
+@redirect_if_old_username_or_404
+def account_stats_section(request, username):
+    if not request.GET.get('ajax'):
+        raise Http404  # Only accessible via ajax
+    user = request.parameter_user
+    tvars = {
+        'user': user,
+        'user_stats': user.profile.get_stats_for_profile_page(),
+    }
+    return render(request, 'accounts/account_stats_section.html', tvars)
+
+
+@redirect_if_old_username_or_404
+def account_latest_packs_section(request, username):
+    if not request.GET.get('ajax'):
+        raise Http404  # Only accessible via ajax
+    user = request.parameter_user
+    latest_pack_ids = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
+                        .order_by("-last_updated").values_list('id', flat=True)[0:15]
+    latest_packs = Pack.objects.ordered_ids(pack_ids=latest_pack_ids)
+    tvars = {
+        'user': user,
+        'latest_packs': latest_packs,
+    }
+    return render(request, 'accounts/account_latest_packs_section.html', tvars)
 
 
 def handle_uploaded_file(user_id, f):

@@ -156,23 +156,10 @@
                     {% endif %}
                 </div>
                 <div class="bw-profile__tap_container" id="packs">
-                    {% if latest_packs %}
-                        <div class="row">
-                            {% for pack in latest_packs %}
-                                <div class="col-6 col-lg-4">
-                                    {% display_pack pack %}
-                                </div>
-                            {% endfor %}
-                        </div>
-                        <div class="v-spacing-top-4 text-center">
-                            <a class="no-hover" href="{% url "sounds-search" %}?f=username:%22{{ user.username }}%22&s=Date+added+(newest+first)&g=1&only_p=1"><button class="btn-primary">See all packs by {{ user.username }}</button></a>
-                        </div>
-                    {% else %}
-                        <div class="text-center">
-                            <h5>No packs... &#128543</h5>
-                            <div class="text-grey v-spacing-top-1">Looks like {{ user.username }} has not uploaded any packs yet</div>
-                        </div>
-                    {% endif %}
+                    <div class="async-section"
+                        data-async-section-content-url="{% url 'account-latest-packs-section' user.username %}?ajax=1">
+                        <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
+                    </div>
                 </div>
                 <div class="bw-profile__tap_container" id="tapDownloaded">
                     downloaded
@@ -180,9 +167,10 @@
             </div>
             <aside class="col-md-4 col-extra-left-padding-middle-md bw-profile__sections">
                 <div class="divider-light v-spacing-top-6 v-spacing-5 d-md-none"></div>
-                {% with user.profile.get_stats_for_profile_page as user_stats %}
-                    {% include 'accounts/account_stats.html' %}
-                {% endwith %}
+                <section class="bw-profile__section_stats v-spacing-top-4 async-section"
+                    data-async-section-content-url="{% url 'account-stats-section' user.username %}?ajax=1">
+                    <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
+                </section>
                 {% if last_geotags_serialized %}
                 <div class="divider-light"></div>
                 <section id="latest_geotags" class="v-spacing-top-4 v-spacing-4" data-map-loaded="false">

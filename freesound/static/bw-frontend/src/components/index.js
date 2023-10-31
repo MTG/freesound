@@ -8,6 +8,7 @@ import './bookmarkSound';
 import './checkbox';
 import './commentsModal';
 import './cookieConsent';
+import './asyncSection';
 import './djangoMessages';
 import './downloadersModals';
 import './moderationModals';

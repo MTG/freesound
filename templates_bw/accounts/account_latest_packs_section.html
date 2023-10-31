@@ -1,0 +1,18 @@
+{% load display_pack %}
+{% if latest_packs %}
+    <div class="row">
+        {% for pack in latest_packs %}
+            <div class="col-6 col-lg-4">
+                {% display_pack pack %}
+            </div>
+        {% endfor %}
+    </div>
+    <div class="v-spacing-top-4 text-center">
+        <a class="no-hover" href="{{ user.profile.get_user_packs_in_search_url }}"><button class="btn-primary">See all packs by {{ user.username }}</button></a>
+    </div>
+{% else %}
+    <div class="text-center">
+        <h5>No packs... &#128543</h5>
+        <div class="text-grey v-spacing-top-1">Looks like {{ user.username }} has not uploaded any packs yet</div>
+    </div>
+{% endif %}

@@ -222,6 +222,9 @@ class Profile(models.Model):
 
     def get_user_sounds_in_search_url(self):
         return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=0'
+    
+    def get_user_packs_in_search_url(self):
+        return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=1&only_p=1'
 
     @staticmethod
     def locations_static(user_id, has_avatar):

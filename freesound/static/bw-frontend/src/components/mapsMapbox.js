@@ -1,7 +1,4 @@
-import {initPlayersInModal} from './modal';
-import {bindSimilarSoundModals} from './similarSoundsModal';
-import {bindBookmarkSoundButtons} from './bookmarkSound';
-import {bindRemixGroupModals} from './remixGroupModal';
+import {initPlayersAndPlayerModalsInElement} from './asyncSection';
 import {stopAllPlayers} from '../components/player/utils'
 
 
@@ -262,10 +259,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                         zoomLinkElement.onclick = () => {setMaxZoomCenter(zoomLinkElement.dataset.lat, zoomLinkElement.dataset.lon, zoomLinkElement.dataset.zoom)};
 
                         // Init sound player inside popup
-                        initPlayersInModal(document.getElementById('infoWindowPlayerWrapper-' + sound_id));
-                        bindSimilarSoundModals();
-                        bindBookmarkSoundButtons();
-                        bindRemixGroupModals();
+                        initPlayersAndPlayerModalsInElement(document.getElementById('infoWindowPlayerWrapper-' + sound_id));
                     });
                 });
 

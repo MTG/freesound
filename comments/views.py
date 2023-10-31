@@ -23,7 +23,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
@@ -128,6 +128,9 @@ def by_user(request, username):
 
 def all(request):
     """ Display all comments """
+    if using_beastwhoosh(request):
+        # Beastwhoosh has no such view
+        raise Http404
     qs = Comment.objects.select_related("user", "user__profile", "sound__user", "sound__user__profile")
     paginator = paginate(request, qs, 30)
     comments = paginator["page"].object_list

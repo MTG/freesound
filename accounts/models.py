@@ -225,6 +225,11 @@ class Profile(models.Model):
     
     def get_user_packs_in_search_url(self):
         return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=1&only_p=1'
+    
+    def get_latest_packs_for_profile_page(self):
+        latest_pack_ids = Pack.objects.select_related().filter(user=self.user, num_sounds__gt=0).exclude(is_deleted=True) \
+                            .order_by("-last_updated").values_list('id', flat=True)[0:15]
+        return Pack.objects.ordered_ids(pack_ids=latest_pack_ids)
 
     @staticmethod
     def locations_static(user_id, has_avatar):

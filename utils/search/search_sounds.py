@@ -202,12 +202,19 @@ def search_prepare_parameters(request):
 
     filter_query_non_facets, has_facet_filter = remove_facet_filters(parsed_filters)
 
+    if only_sounds_with_pack:
+        # When displaying results as packs, always return the same number regardless of the compact mode setting
+        # This because returning a large number of packs makes the search page very slow
+        num_sounds = settings.SOUNDS_PER_PAGE
+    else:
+        num_sounds = settings.SOUNDS_PER_PAGE if not should_use_compact_mode(request) else settings.SOUNDS_PER_PAGE_COMPACT_MODE
+
     query_params = {
         'textual_query': search_query,
         'query_filter': filter_query,
         'sort': sort,
         'current_page': current_page,
-        'num_sounds': settings.SOUNDS_PER_PAGE if not should_use_compact_mode(request) else settings.SOUNDS_PER_PAGE_COMPACT_MODE,
+        'num_sounds': num_sounds,
         'query_fields': field_weights,
         'group_by_pack': group_by_pack,
         'only_sounds_with_pack': only_sounds_with_pack

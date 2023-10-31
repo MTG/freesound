@@ -2,9 +2,9 @@ const collapsableToggles = document.getElementsByClassName('collapsable-toggle')
 
 const toggleCollapse = (toggleElement) => {
   const collapsableContainer = document.getElementById(toggleElement.dataset.target);
-  let closeClass =  'collapsable-block-close';
+  let closeClass = 'collapsable-block-close';
   if (toggleElement.dataset.maxHeightWhenClosed !== undefined) {
-    closeClass =  'collapsable-block-close-gradient';
+    closeClass = 'collapsable-block-close-gradient';
     if (collapsableContainer.classList.contains('collapsable-block-close-gradient')) {
       // If the block contains the closed gradient class, it means we will expand the collapsable block now so we 
       // unset the height that we manually set from the dataset property
@@ -25,24 +25,29 @@ const handleCollapsable = (e) => {
 };
 
 collapsableToggles.forEach(element => {
+  const collapsableContainer = document.getElementById(element.dataset.target);
   if (element.dataset.maxHeightWhenClosed !== undefined) {
     // If a max height is set, then the element will be partially visible when closed,
     // but if the element's height is actually less than the max height, then no "colappsable" 
     // actions will take place and we hide the toggle element
-    const collapsableContainer = document.getElementById(element.dataset.target);
     if (element.dataset.maxHeightWhenClosed >= collapsableContainer.clientHeight) {
       element.classList.add('display-none');  // Hide controls
       return; // continue to next toggle element as this will not implement collapsable behaviour
     }
   }
 
-  // Set aria expanded attribute with is true by default
-  element.ariaExpanded = "true";
-  
-  if (element.dataset.hideOnLoad !== undefined){
-    toggleCollapse(element);
+  if (collapsableContainer.classList.contains('collapsable-block-close') || collapsableContainer.classList.contains('collapsable-block-close-gradient')){
+    // The collapsable block is already hidden
+    element.ariaExpanded = "false";
+    element.textContent = element.dataset.showText;
   } else {
-    element.textContent = element.dataset.hideText;
+    // The collapsable block is not hidden, but if hideOnLoad is set, it should be hidden
+    element.ariaExpanded = "true";
+    if (element.dataset.hideOnLoad !== undefined){
+      toggleCollapse(element);  // this will set the ariaExpanded to false
+    } else {
+      element.textContent = element.dataset.hideText;
+    }
   }
   element.addEventListener('click', handleCollapsable);
 });

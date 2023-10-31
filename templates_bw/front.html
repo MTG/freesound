@@ -116,7 +116,7 @@
                 <hr class="d-lg-none v-spacing-3"/>
                 {% cache 300 bw_front_page_random_sound %}
                 {% if random_sound %}  
-                <section class="v-spacing-4">
+                <section id="random-sound-section" class="v-spacing-4">
                     <h4 class="v-spacing-1 display-none d-xl-block">Random sound of the day</h4>
                     <h4 class="v-spacing-1 display-none d-lg-block d-xl-none">Sound of the day</h4>
                     <h4 class="v-spacing-1 d-lg-none">Random sound of the day</h4>
@@ -124,7 +124,7 @@
                     {% with random_sound as sound %}
                         <div class="display-none d-lg-block">{% display_sound_small_no_info random_sound %}</div>
                         <div class="d-lg-none">{% display_sound_big_no_info_no_bookmark random_sound %}</div>
-                        <div id="collapsable-random-sound" class="collapsable-block bw-sound-page__information v-spacing-top-1 overflow-hidden">
+                        <div id="collapsable-random-sound" class="collapsable-block collapsable-block-close bw-sound-page__information v-spacing-top-1 overflow-hidden">
                             <div class="between line-height-percentage-150 v-spacing-top-1">
                                 <h5 class="ellipsis">
                                     <a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{ sound.original_filename }}</a>
@@ -145,7 +145,7 @@
                             </div>
                         </div>
                         <div class="text-center v-spacing-top-2">
-                            <span data-target="collapsable-random-sound" data-show-text="Reveal sound details" data-hide-text="Hide sound details" data-hide-on-load class="collapsable-toggle"></span>
+                            <span data-target="collapsable-random-sound" data-show-text="Reveal sound details" data-hide-text="Hide sound details" class="collapsable-toggle"></span>
                         </div>
                     {% endwith %}
                 </section>

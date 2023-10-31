@@ -37,7 +37,10 @@ class DonateForm(forms.Form):
         self.fields['donation_type'].choices = choices
 
         if default_donation_amount is not None:
-            self.initial['amount'] = float(default_donation_amount)
+            try:
+                self.initial['amount'] = float(default_donation_amount)
+            except ValueError:
+                pass
 
     def clean(self):
         cleaned_data = super().clean()

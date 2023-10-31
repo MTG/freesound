@@ -104,7 +104,12 @@ def search_view_helper(request, tags_mode=False):
                     group_counts_as_one_in_facets=False,
                 ))
                 initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
-                cache.set('initial_tagcloud', initial_tagcloud, 60 * 5)
+                cache.set('initial_tagcloud', initial_tagcloud, 60 * 60 * 12)  # cache for 12 hours
+            return {
+                'tags_mode': True,
+                'tags_in_filter': tags_in_filter,
+                'initial_tagcloud': initial_tagcloud,
+            }
 
 
     # In the tvars section we pass the original group_by_pack value to avoid it being set to false if there is a pack filter (see search_prepare_parameters)

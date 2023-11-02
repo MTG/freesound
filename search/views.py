@@ -52,7 +52,7 @@ def search_view_helper(request, tags_mode=False):
 
     # check if there was a filter parsing error
     if extra_vars['parsing_error']:
-        search_logger.error(f"Query filter parsing error. filter: {request.GET.get('f', '')}")
+        search_logger.info(f"Query filter parsing error. filter: {request.GET.get('f', '')}")
         extra_vars.update({'error_text': 'There was an error while searching, is your query correct?'})
         return extra_vars
 

@@ -581,7 +581,7 @@ apiv1_logger = logging.getLogger("api")
 
 
 def apiv1_end_of_life_message(request):
-    apiv1_logger.error('410 API error: End of life')
+    apiv1_logger.info('410 API error: End of life')
     content = {
         "explanation": "Freesound APIv1 has reached its end of life and is no longer available."
         "Please, upgrade to Freesound APIv2. More information: https://freesound.org/docs/api/"

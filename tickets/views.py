@@ -332,7 +332,12 @@ def assign_sounds(request):
 
     new_sounds_users = _get_new_uploaders_by_ticket()
     num_sounds_pending = sum([u['new_count'] for u in new_sounds_users])
-    order = request.GET.get("order", "")
+    order_from_req_param = request.GET.get("order", "")
+    if order_from_req_param != "":
+        # If a order is specified, update the session parameter with that order
+        request.session["mod_assign_sounds_order"] = order_from_req_param
+    order = request.session.get("mod_assign_sounds_order", "days_in_queue")
+    
     if order == "username":
         new_sounds_users = sorted(new_sounds_users, key=lambda x: x["username"])
     elif order == "new_count":

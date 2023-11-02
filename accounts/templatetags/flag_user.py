@@ -31,17 +31,17 @@ def flag_user(context, flag_type, username, content_id, text = None, user_sounds
 
     if not context['request'].user.is_authenticated:
         no_show = True
-        flagged = []
+        flagged = False
     else:
-        flagged = UserFlag.objects.filter(user__username=username,
-                                          reporting_user=context['request'].user,
-                                          object_id=content_id).values('reporting_user').distinct()
+        flagged = UserFlag.objects.filter(
+            user__username=username, reporting_user=context['request'].user, object_id=content_id
+        ).exists()
         if text:
             link_text = text
 
     return {'user_sounds': user_sounds,
             'done_text': "Marked as spam/offensive",  # Not used in BW
-            'flagged': len(flagged),
+            'flagged': flagged,
             'flag_type': flag_type,
             'username': username,
             'content_obj_id': content_id,

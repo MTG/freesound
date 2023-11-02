@@ -17,11 +17,11 @@
     {% elif request.user.profile.ui_theme_preference == 'd' %}
     <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}" data-forced-theme="yes">
     {% else %}
-    {% if system_prefers_dark_theme %}
-    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}">
-    {% else %}
-    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}">
-    {% endif %}
+      {% if system_prefers_dark_theme %}
+      <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}">
+      {% else %}
+      <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}">
+      {% endif %}
     {% endif %}
   </head>
   <body>

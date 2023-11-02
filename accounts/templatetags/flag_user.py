@@ -19,7 +19,9 @@
 #
 
 from django import template
+
 from accounts.models import UserFlag
+
 register = template.Library()
 
 
@@ -29,7 +31,8 @@ def flag_user(context, flag_type, username, content_id, text = None, user_sounds
     no_show = False
     link_text = "Report spam/offensive"
 
-    if not context['request'].user.is_authenticated:
+    has_sounds = user_sounds is not None and user_sounds > 0
+    if not context['request'].user.is_authenticated or has_sounds:
         no_show = True
         flagged = False
     else:
@@ -39,7 +42,7 @@ def flag_user(context, flag_type, username, content_id, text = None, user_sounds
         if text:
             link_text = text
 
-    return {'user_sounds': user_sounds,
+    return {
             'done_text': "Marked as spam/offensive",  # Not used in BW
             'flagged': flagged,
             'flag_type': flag_type,

@@ -900,9 +900,9 @@ CELERY_SOUND_PROCESSING_QUEUE_NAME = 'sound_processing_queue'
 if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        default_integrations=False,
         integrations=[DjangoIntegration()],
-        send_default_pii=True
+        send_default_pii=True,
+        traces_sample_rate=0.1,
     )
 
 

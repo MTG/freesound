@@ -1113,10 +1113,9 @@ def pack(request, username, pack_id):
 
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
-    if using_beastwhoosh(request):
-        return HttpResponseRedirect(f"{reverse('sounds-search')}?f=username:%22{username}%22&s=Date+added+(newest+first)&g=1&only_p=1")
-
     user = request.parameter_user
+    if using_beastwhoosh(request):
+        return HttpResponseRedirect(user.profile.get_user_packs_in_search_url())
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
@@ -1131,10 +1130,9 @@ def packs_for_user(request, username):
 
 @redirect_if_old_username_or_404
 def for_user(request, username):
-    if using_beastwhoosh(request):
-        return HttpResponseRedirect(f"{reverse('sounds-search')}?f=username:%22{username}%22&s=Date+added+(newest+first)&g=1")
-
     sound_user = request.parameter_user
+    if using_beastwhoosh(request):
+        return HttpResponseRedirect(sound_user.profile.get_user_sounds_in_search_url())
     paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)
     sound_ids = [sound_obj.id for sound_obj in paginator['page']]
     user_sounds = Sound.objects.ordered_ids(sound_ids)

@@ -121,7 +121,6 @@ urlpatterns = [
     path('follow/', include('follow.urls')),
 
     path('blog/', RedirectView.as_view(url='https://blog.freesound.org/'), name="blog"),
-    re_path(r'^crossdomain\.xml$', TemplateView.as_view(template_name='crossdomain.xml'), name="crossdomain"),
 
     # admin views
     path('admin/doc/', include('django.contrib.admindocs.urls')),

@@ -386,6 +386,7 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
     const startWithSpectrum = document.cookie.indexOf('preferSpectrogram=yes') > -1;
     const {waveform, spectrum, title} = parentNode.dataset
     const playerImage = document.createElement('img')
+    playerImage.setAttribute('loading', 'lazy');
     playerImage.className = 'bw-player__img'
     if (startWithSpectrum) {
       playerImage.src = spectrum

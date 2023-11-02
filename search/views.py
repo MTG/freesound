@@ -22,6 +22,7 @@ import datetime
 import json
 import logging
 import re
+import sentry_sdk
 from collections import defaultdict, Counter
 
 from django.core.cache import cache
@@ -217,10 +218,12 @@ def search_view_helper(request, tags_mode=False):
         })
 
     except SearchEngineException as e:
-        search_logger.error(f'Search error: query: {str(query_params)} error {e}')
+        search_logger.info(f'Search error: query: {str(query_params)} error {e}')
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception as e:
-        search_logger.error(f'Could probably not connect to Solr - {e}')
+        search_logger.info(f'Could probably not connect to Solr - {e}')
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
         tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
     return tvars
@@ -464,11 +467,13 @@ def search_forum(request):
             page = paginator.page(current_page)
             error = False
         except SearchEngineException as e:
-            error.warning(f"Search error: query: {search_query} error {e}")
+            error.info(f"Search error: query: {search_query} error {e}")
+            sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:
-            search_logger.error(f"Could probably not connect to the search engine - {e}")
+            search_logger.info(f"Could probably not connect to the search engine - {e}")
+            sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
             error = True
             error_text = 'The search server could not be reached, please try again later.'
 

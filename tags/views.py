@@ -19,6 +19,7 @@
 #
 
 import logging
+import sentry_sdk
 
 from django.conf import settings
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
@@ -109,10 +110,12 @@ def tags(request, multiple_tags=None):
 
     except SearchEngineException as e:
         error = True
-        search_logger.error(f'Search error: {e}')
+        search_logger.info(f'Search error: {e}')
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
     except Exception as e:
         error = True
-        search_logger.error(f'Could probably not connect to Solr - {e}')
+        search_logger.info(f'Could probably not connect to Solr - {e}')
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
     # Calculate follow_tags_url, unfollow_tags_url and show_unfollow_button tvars
     slash_tag = "/".join(multiple_tags)

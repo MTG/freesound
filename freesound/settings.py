@@ -634,6 +634,7 @@ TAGRECOMMENDATION_TIMEOUT = 10
 # -------------------------------------------------------------------------------
 # Sentry settings
 SENTRY_DSN = None
+TRACES_SAMPLE_RATE = 0.1
 
 # -------------------------------------------------------------------------------
 # Zendesk settings
@@ -902,7 +903,7 @@ if SENTRY_DSN:
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration()],
         send_default_pii=True,
-        traces_sample_rate=0.1,
+        traces_sample_rate=TRACES_SAMPLE_RATE,
     )
 
 

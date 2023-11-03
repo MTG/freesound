@@ -119,7 +119,7 @@
                     </div>
                     {% endif %}
                     <div class="h-spacing-left-2" title="{{ sound.num_downloads }} downloads">
-                        <a href="javascript:void(0)" data-toggle="downloaders-modal" data-modal-content-url="{% url 'sound-downloaders' sound.username sound.id %}?ajax=1" class="bw-link--grey-light">
+                        <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'sound-downloaders' sound.username sound.id %}?ajax=1" class="bw-link--grey-light">
                             <span class="bw-icon-download"></span> {{ sound.num_downloads|formatnumber }}
                         </a>
                     </div>

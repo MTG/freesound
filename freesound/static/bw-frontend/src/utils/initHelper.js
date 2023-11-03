@@ -4,8 +4,6 @@ import { bindBookmarkSoundModals } from '../components/bookmarkSound.js';
 import { makeCarousels } from '../components/carousel.js';
 import { makeCheckboxes } from '../components/checkbox.js';
 import { makeCollapsableBlocks } from '../components/collapsableBlock.js';
-import { bindCommentsModals, activateCommentsModalsIfParameters } from '../components/commentsModal.js';
-import { bindDownloadersModals, activateDownloadersModalsIfParameters } from '../components/downloadersModals.js';
 import { makeDropdowns } from '../components/dropdown.js';
 import { addExplicitSoundWarnings } from '../components/explicit.js';
 import { bindFlagUserButtons } from '../components/flagging.js';
@@ -13,13 +11,12 @@ import { bindFollowTagsButtons } from '../components/followUnfollowTags.js';
 import { bindDisableOnSubmitForms } from '../components/formDisableOnSubmit.js';
 import { bindDoNotSubmitOnEnterForms } from '../components/formDoNotSubmitOnEnter.js';
 import { addSearchIconToInputs } from '../components/input.js';
-import { bindConfirmationModalElements } from '../components/modal.js';
-import { bindModerationModals, activateModerationModalsIfParameters } from '../components/moderationModals.js';
+import { bindConfirmationModalElements, bindDefaultModals, activateDefaultModalsIfParameters } from '../components/modal.js';
+import { bindUserAnnotationsModal, activateUserAnnotationsModalIfParameters} from '../components/userAnnotationsModal.js';
 import { makeRadios } from '../components/radio.js';
 import { makeRatingWidgets } from '../components/rating.js';
 import { bindRemixGroupModals, activateRemixGroupModalsIfParameters } from '../components/remixGroupModal.js';
 import { makeSelect } from '../components/select.js';
-import { bindSimilarSoundModals, activateSimilarSoundsModalsIfParameters } from '../components/similarSoundsModal.js';
 import { makeTextareaCharacterCounter } from '../components/textareaCharactersCounter.js';
 import { bindUnsecureImageCheckListeners } from '../components/unsecureImageCheck.js';
 
@@ -49,22 +46,18 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
 
     // Bind modals
     if (bindModals === true){
+        bindDefaultModals(container);
         bindConfirmationModalElements(container);
-        bindBookmarkSoundModals(container);
-        bindCommentsModals(container);
-        bindDownloadersModals(container);
-        bindModerationModals(container);
         bindRemixGroupModals(container);
-        bindSimilarSoundModals(container);
+        bindBookmarkSoundModals(container);
+        bindUserAnnotationsModal(container); 
     }
     
     // Activate modals if needed (this should only be used the first time initializeStuffInContainer is called)
     if (activateModals === true){
-        activateDownloadersModalsIfParameters();
-        activateCommentsModalsIfParameters();
-        activateModerationModalsIfParameters();
+        activateDefaultModalsIfParameters();
+        activateUserAnnotationsModalIfParameters();
         activateRemixGroupModalsIfParameters();
-        activateSimilarSoundsModalsIfParameters();
     }
 }
 

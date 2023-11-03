@@ -1,4 +1,4 @@
-import {handleGenericModal, bindModalActivationElements, activateModalsIfParameters, dismissModal} from './modal';
+import {handleGenericModal, bindModalActivationElements, activateModalsIfParameters, dismissModal, handleDefaultModal} from './modal';
 import {makePostRequest} from "../utils/postRequest";
 import {showToast} from "./toast";
 
@@ -22,14 +22,7 @@ const saveAnnotation = (addAnnotationUrl, text, user_id) => {
     });
 }
 
-const handleModerationModal = (modalUrl, modalActivationParam, atPage) => {
-    if ((atPage !== undefined) && modalUrl.indexOf('&page') == -1){
-        modalUrl += '&page=' + atPage;
-    }
-    handleGenericModal(modalUrl, undefined, undefined, true, true, modalActivationParam);
-}
-
-const handleUserAnnnotationModal = (modalUrl, modalActivationParam) => {
+const handleUserAnnnotationsModal = (modalUrl, modalActivationParam) => {
     handleGenericModal(modalUrl, (modalContainer) => {
         // Bind action to save annotation (and prevent default form submit)
         const formElement = modalContainer.getElementsByTagName('form')[0];
@@ -43,18 +36,12 @@ const handleUserAnnnotationModal = (modalUrl, modalActivationParam) => {
     }, undefined, true, true, modalActivationParam);
 }
 
-const bindModerationModals = (container) => {
-    bindModalActivationElements('[data-toggle="pending-moderation-modal"]', handleModerationModal, container);
-    bindModalActivationElements('[data-toggle="user-annotations-modal"]', handleUserAnnnotationModal, container);
-    bindModalActivationElements('[data-toggle="tardy-users-modal"]', handleModerationModal, container);
-    bindModalActivationElements('[data-toggle="tardy-moderators-modal"]', handleModerationModal, container);
+const bindUserAnnotationsModal = (container) => {
+    bindModalActivationElements('[data-toggle="user-annotations-modal"]', handleUserAnnnotationsModal, container);
 }
 
-const activateModerationModalsIfParameters = () => {
-    activateModalsIfParameters('[data-toggle="pending-moderation-modal"]', handleModerationModal);
-    activateModalsIfParameters('[data-toggle="user-annotations-modal"]', handleUserAnnnotationModal);
-    activateModalsIfParameters('[data-toggle="tardy-users-modal"]', handleModerationModal);
-    activateModalsIfParameters('[data-toggle="tardy-moderators-modal"]', handleModerationModal);
+const activateUserAnnotationsModalIfParameters = () => {
+    activateModalsIfParameters('[data-toggle="user-annotations-modal"]', handleUserAnnnotationsModal);
 }
 
-export {bindModerationModals, activateModerationModalsIfParameters};
+export {bindUserAnnotationsModal, activateUserAnnotationsModalIfParameters};

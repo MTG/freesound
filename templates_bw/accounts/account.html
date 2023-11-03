@@ -25,7 +25,7 @@
                 {% if home %}
                     {% if user.profile.num_sounds %}    
                     <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
-                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt"  data-toggle="comments-modal" data-modal-content-url="{% url "comments-for-user" user.username %}?ajax=1" data-modal-activation-param="comments" href="javascript:void(0);" title="See all comments on your sounds">Comments</a>
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt"  data-toggle="modal-default" data-modal-content-url="{% url "comments-for-user" user.username %}?ajax=1" data-modal-activation-param="comments" href="javascript:void(0);" title="See all comments on your sounds">Comments</a>
                     {% else %}
                     <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'accounts-upload' %}">Upload a sound</a>
                     {% endif %}
@@ -60,18 +60,18 @@
                                 </a>
                             </li>
                             <li class="bw-nav__action dropdown-item">
-                                <a class="bw-link--black" data-toggle="pending-moderation-modal" data-modal-content-url="{% url "tickets-user-pending_sounds" user.username %}?ajax=1" data-modal-activation-param="pending_moderation" href="javascript:void(0);">
+                                <a class="bw-link--black" data-toggle="modal-default" data-modal-content-url="{% url "tickets-user-pending_sounds" user.username %}?ajax=1" data-modal-activation-param="pending_moderation" href="javascript:void(0);">
                                     Sounds pending moderation ({{ num_sounds_pending }})
                                 </a>
                             </li>
                             {% if not user_downloads_public %}
                             <li class="bw-nav__action dropdown-item">
-                                <a class="bw-link--black" data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);">
+                                <a class="bw-link--black" data-toggle="modal-default" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);">
                                     See downloaded sounds ({{ user.profile.num_sound_downloads }})
                                 </a>
                             </li>
                             <li class="bw-nav__action dropdown-item">
-                                <a class="bw-link--black" data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);">
+                                <a class="bw-link--black" data-toggle="modal-default" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);">
                                     See downloaded packs ({{ user.profile.num_pack_downloads }})
                                 </a>
                             </li>
@@ -82,7 +82,7 @@
                                 </a>
                             </li>
                             <li class="bw-nav__action dropdown-item">
-                                <a class="bw-link--black" data-toggle="comments-modal" data-modal-content-url="{% url "comments-by-user" user.username %}?ajax=1" data-modal-activation-param="comments_by" href="javascript:void(0);" title="See all sound comments by {{ user.username }}">
+                                <a class="bw-link--black" data-toggle="modal-default" data-modal-content-url="{% url "comments-by-user" user.username %}?ajax=1" data-modal-activation-param="comments_by" href="javascript:void(0);" title="See all sound comments by {{ user.username }}">
                                     All comments ({{ user.profile.num_comments }})
                                 </a>
                             </li>
@@ -118,8 +118,8 @@
                 </div>
                 {% if user_downloads_public %}
                 <div class="bw-profile__stats v-spacing-top-1 padding-left-4 padding-right-4">
-                    <div><a data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);" >{{ user.profile.num_sound_downloads }} sound{{ user.profile.num_sound_downloads|pluralize}} downloaded</a></div>
-                    <div><a data-toggle="downloaders-modal" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);" >{{ user.profile.num_pack_downloads }} pack{{ user.profile.num_pack_downloads|pluralize}} downloaded</a></div>
+                    <div><a data-toggle="modal-default" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);" >{{ user.profile.num_sound_downloads }} sound{{ user.profile.num_sound_downloads|pluralize}} downloaded</a></div>
+                    <div><a data-toggle="modal-default" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);" >{{ user.profile.num_pack_downloads }} pack{{ user.profile.num_pack_downloads|pluralize}} downloaded</a></div>
                 </div>
             </div>
             {% endif %}

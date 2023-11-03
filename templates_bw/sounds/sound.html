@@ -68,7 +68,7 @@
                                     {% endif %}
                                     {% if sound.similarity_state == 'OK' %}
                                     <span class="h-spacing-left-1"></span>
-                                    <button title="Find similar sounds" aria-label="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
+                                    <button title="Find similar sounds" aria-label="Find similar sounds" class="btn-neutral" data-toggle="modal-default" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
                                         {% bw_icon 'similar' %}
                                     </button>
                                     {% endif %}
@@ -188,7 +188,7 @@
                         <div>
                             <ol>
                                 <li class="v-spacing-3"> {% bw_icon 'download' 'text-light-grey' %}
-                                    <a class="text-19 bw-link--black" title="This sound has been downloaded {{ sound.num_downloads|bw_intcomma }} time{{ sound.num_downloads|pluralize }}" href="javascript:void(0);" data-toggle="downloaders-modal" data-modal-content-url="{% url 'sound-downloaders' sound.user.username sound.id %}?ajax=1" data-modal-activation-param="downloaders">{{ sound.num_downloads|formatnumber }} download{{ sound.num_downloads|pluralize }}</a>
+                                    <a class="text-19 bw-link--black" title="This sound has been downloaded {{ sound.num_downloads|bw_intcomma }} time{{ sound.num_downloads|pluralize }}" href="javascript:void(0);" data-toggle="modal-default" data-modal-content-url="{% url 'sound-downloaders' sound.user.username sound.id %}?ajax=1" data-modal-activation-param="downloaders">{{ sound.num_downloads|formatnumber }} download{{ sound.num_downloads|pluralize }}</a>
                                 </li>
                                 <li class="v-spacing-3">{% bw_icon 'comments' 'text-light-grey' %}
                                     <a class="text-19 bw-link--black" title="This sound has received {{ sound.num_comments|bw_intcomma }} comment{{ sound.num_comments|pluralize }}" href="#comments">{{ sound.num_comments|formatnumber }} comment{{ sound.num_comments|pluralize }}</a>

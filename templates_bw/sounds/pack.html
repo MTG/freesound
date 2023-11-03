@@ -88,7 +88,7 @@
                                     {% with pack.get_total_pack_sounds_length as total_pack_sounds_length %}{% bw_icon 'clock' 'text-light-grey' %} <span class="text-19" title="The sounds of this pack together account for {{ total_pack_sounds_length|duration_hours }} hours of audio">{{ total_pack_sounds_length|duration_hours }} hours of audio</span>{% endwith %}
                                 </li>
                                 <li class="v-spacing-3">
-                                    {% bw_icon 'download' 'text-light-grey' %}<a class="text-19 bw-link--black" title="This pack has been downloaded {{ pack.num_downloads|bw_intcomma }} time{{ pack.num_downloads|pluralize }}"  href="javascript:void(0);" data-toggle="downloaders-modal" data-modal-content-url="{% url 'pack-downloaders' pack.user.username pack.id %}?ajax=1" data-modal-activation-param="downloaders">{{ pack.num_downloads|formatnumber }} download{{ pack.num_downloads|pluralize }}</a>
+                                    {% bw_icon 'download' 'text-light-grey' %}<a class="text-19 bw-link--black" title="This pack has been downloaded {{ pack.num_downloads|bw_intcomma }} time{{ pack.num_downloads|pluralize }}"  href="javascript:void(0);" data-toggle="modal-default" data-modal-content-url="{% url 'pack-downloaders' pack.user.username pack.id %}?ajax=1" data-modal-activation-param="downloaders">{{ pack.num_downloads|formatnumber }} download{{ pack.num_downloads|pluralize }}</a>
                                 </li>
                             </ol>
                         </div>

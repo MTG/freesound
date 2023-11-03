@@ -30,7 +30,7 @@
                 </div>
                 <div class="padding-left-3">
                     <a href="{% url "account" item.username %}">{{ item.username }}</a>
-                    <br><a class="bw-link--black" data-toggle="pending-moderation-modal" data-modal-content-url="{% url "tickets-user-pending_sounds" item.username %}?ajax=1" href="javascript:void(0);">
+                    <br><a class="bw-link--black" data-toggle="modal-default" data-modal-content-url="{% url "tickets-user-pending_sounds" item.username %}?ajax=1" href="javascript:void(0);">
                         {{ item.new_count }} unassigned sound{{ item.new_count|pluralize }}
                     </a>
                     <br><span class="text-grey">{{ item.time }} day{{ item.time|pluralize }} in queue</span>
@@ -66,7 +66,7 @@
     </div>
     {% if tardy_moderator_tickets_count > tardy_moderator_tickets|length %}
     <div class="v-spacing-top-4 center">
-        <button class="btn-primary" data-toggle="tardy-moderators-modal" data-modal-content-url="{% url "tickets-moderation-tardy-moderators" %}?ajax=1" data-modal-activation-param="tardy_moderators">See all tickets with tardy moderators</a>
+        <button class="btn-primary" data-toggle="modal-default" data-modal-content-url="{% url "tickets-moderation-tardy-moderators" %}?ajax=1" data-modal-activation-param="tardy_moderators">See all tickets with tardy moderators</a>
     </div>
     {% endif %}
 </div>
@@ -83,7 +83,7 @@
     </div>
     {% if tardy_user_tickets_count > tardy_user_tickets|length %}
     <div class="v-spacing-top-4 center">
-        <button class="btn-primary" data-toggle="tardy-users-modal" data-modal-content-url="{% url "tickets-moderation-tardy-users" %}?ajax=1" data-modal-activation-param="tardy_users">See all tickets with tardy users</a>
+        <button class="btn-primary" data-toggle="modal-default" data-modal-content-url="{% url "tickets-moderation-tardy-users" %}?ajax=1" data-modal-activation-param="tardy_users">See all tickets with tardy users</a>
     </div>
     {% endif %}
 </div>

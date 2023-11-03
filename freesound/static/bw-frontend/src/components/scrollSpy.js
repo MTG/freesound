@@ -3,8 +3,7 @@ import debounce from 'lodash.debounce';
 
 const scrollSpyElements = document.getElementsByClassName('scroll-spy');
 
-
-const addClassToSipedElement = () => {
+const addClassToSpiedElement = () => {
     let elementToActivate = undefined;
     scrollSpyElements.forEach(linkElement => {
         const separatdParts = linkElement.href.split("#");
@@ -24,12 +23,12 @@ const addClassToSipedElement = () => {
 }
 
 // Use a debouced function to save computation when doing smooth scrolls
-const debouncedAddClassToSipedElement = debounce(addClassToSipedElement, 50, {'leading': false, 'maxWait': 200, 'trailing': true})
+const debouncedaddClassToSpiedElement = debounce(addClassToSpiedElement, 50, {'leading': false, 'maxWait': 200, 'trailing': true})
 
 if (scrollSpyElements.length > 0){
     // If there are elements which should be "scroll spied", then add a global listener for them all
-    debouncedAddClassToSipedElement();
+    debouncedaddClassToSpiedElement();
     addEventListener("scroll", () => {
-        debouncedAddClassToSipedElement();
+        debouncedaddClassToSpiedElement();
     });
 }

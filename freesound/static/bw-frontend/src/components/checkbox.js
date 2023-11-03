@@ -35,11 +35,9 @@ const addVisibleCheckbox = (checkboxEl) => {
     }
 };
 
-const addCheckboxVisibleElements = () => {
-    const checkboxes = [...document.querySelectorAll('input.bw-checkbox')];
+const makeCheckboxes = (container) => {
+    const checkboxes = [...container.querySelectorAll('input.bw-checkbox')];
     checkboxes.forEach(addVisibleCheckbox);
 };
 
-addCheckboxVisibleElements();
-
-export default addCheckboxVisibleElements;
+export { makeCheckboxes };

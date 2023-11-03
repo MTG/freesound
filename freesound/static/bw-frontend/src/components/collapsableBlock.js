@@ -1,5 +1,3 @@
-const collapsableToggles = document.getElementsByClassName('collapsable-toggle');
-
 const toggleCollapse = (toggleElement) => {
   const collapsableContainer = document.getElementById(toggleElement.dataset.target);
   let closeClass = 'collapsable-block-close';
@@ -24,36 +22,37 @@ const handleCollapsable = (e) => {
   toggleCollapse(e.target);
 };
 
-collapsableToggles.forEach(element => {
-  if (element.dataset.initialized !== undefined) { return;}
-  element.dataset.initialized = 'true';
-  const collapsableContainer = document.getElementById(element.dataset.target);
-  if (element.dataset.maxHeightWhenClosed !== undefined) {
-    // If a max height is set, then the element will be partially visible when closed,
-    // but if the element's height is actually less than the max height, then no "colappsable" 
-    // actions will take place and we hide the toggle element
-    if (element.dataset.maxHeightWhenClosed >= collapsableContainer.clientHeight) {
-      element.classList.add('display-none');  // Hide controls
-      return; // continue to next toggle element as this will not implement collapsable behaviour
+const makeCollapsableBlocks = (container) => {
+  const collapsableToggles = container.getElementsByClassName('collapsable-toggle');
+  collapsableToggles.forEach(element => {
+    if (element.dataset.initialized !== undefined) { return;}
+    element.dataset.initialized = 'true';
+    const collapsableContainer = document.getElementById(element.dataset.target);
+    if (element.dataset.maxHeightWhenClosed !== undefined) {
+      // If a max height is set, then the element will be partially visible when closed,
+      // but if the element's height is actually less than the max height, then no "colappsable" 
+      // actions will take place and we hide the toggle element
+      if (element.dataset.maxHeightWhenClosed >= collapsableContainer.clientHeight) {
+        element.classList.add('display-none');  // Hide controls
+        return; // continue to next toggle element as this will not implement collapsable behaviour
+      }
     }
-  }
 
-  if (collapsableContainer.classList.contains('collapsable-block-close') || collapsableContainer.classList.contains('collapsable-block-close-gradient')){
-    // The collapsable block is already hidden
-    element.ariaExpanded = "false";
-    element.textContent = element.dataset.showText;
-  } else {
-    // The collapsable block is not hidden, but if hideOnLoad is set, it should be hidden
-    element.ariaExpanded = "true";
-    if (element.dataset.hideOnLoad !== undefined){
-      toggleCollapse(element);  // this will set the ariaExpanded to false
+    if (collapsableContainer.classList.contains('collapsable-block-close') || collapsableContainer.classList.contains('collapsable-block-close-gradient')){
+      // The collapsable block is already hidden
+      element.ariaExpanded = "false";
+      element.textContent = element.dataset.showText;
     } else {
-      element.textContent = element.dataset.hideText;
+      // The collapsable block is not hidden, but if hideOnLoad is set, it should be hidden
+      element.ariaExpanded = "true";
+      if (element.dataset.hideOnLoad !== undefined){
+        toggleCollapse(element);  // this will set the ariaExpanded to false
+      } else {
+        element.textContent = element.dataset.hideText;
+      }
     }
-  }
-  element.addEventListener('click', handleCollapsable);
-});
+    element.addEventListener('click', handleCollapsable);
+  });
+}
 
-export {toggleCollapse};
-
-
+export {toggleCollapse, makeCollapsableBlocks};

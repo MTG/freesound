@@ -6,8 +6,8 @@ const togglePackNameDiv = (select, newPackNameDiv) => {
     }
 }
 
-const preparePackFormFields = () => {
-    const packSelectWrappers = document.getElementsByClassName('pack-select');
+const preparePackFormFields = (container) => {
+    const packSelectWrappers = container.getElementsByClassName('pack-select');
     packSelectWrappers.forEach(selectWrapper => {
         // Add event listener to toggle "new pack name" div if "create new pack" is selected
         const select = selectWrapper.getElementsByTagName('select')[0];

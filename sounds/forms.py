@@ -346,7 +346,7 @@ class BWSoundEditAndDescribeForm(forms.Form):
                   "Only use letters a-z and numbers 0-9 with no accents or diacritics. "
                   "Note that you can <b>copy</b> and <b>paste</b> between tag fields.")
     description = HtmlCleaningCharField(
-        widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
+        widget=forms.Textarea(attrs={'cols': 80, 'rows': 10, 'class': 'unsecure-image-check'}),
         help_text="You can add timestamps to the description using the syntax #minute:second (e.g. \"#1:07 nice bird chirp\"). "
                   "This will be rendered with a little play button to play the sound at that timestamp. " + html_tags_help_text)
     is_explicit = forms.BooleanField(required=False, label="The sound contains explicit content")

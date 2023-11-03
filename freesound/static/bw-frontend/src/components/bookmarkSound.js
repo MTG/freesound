@@ -1,5 +1,4 @@
 import {dismissModal, handleGenericModal} from "./modal";
-import {createSelect} from "./select";
 import {showToast} from "./toast";
 import {makePostRequest} from "../utils/postRequest";
 
@@ -47,6 +46,7 @@ const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     const modalContainer = document.getElementById(`bookmarkSoundModal`);
     const selectElement = modalContainer.getElementsByTagName('select')[0];
     const wrapper = document.createElement('div');
+    wrapper.style = 'display:inline-block;';
     if (selectElement === undefined){
         // If no select element, the modal has probably loaded for an unauthenticated user
         return;
@@ -54,11 +54,9 @@ const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     selectElement.parentNode.insertBefore(wrapper, selectElement.parentNode.firstChild);
     const label = document.createElement('div');
     label.innerHTML = "Select a bookmark category:"
-    label.style = 'display:inline-block;';
     label.classList.add('text-grey');
     wrapper.appendChild(label)
     wrapper.appendChild(selectElement)
-    createSelect();  // We need to trigger create select elements because bookmark form has one
 
     const formElement = modalContainer.getElementsByTagName('form')[0];
     const buttonsInModalForm = formElement.getElementsByTagName('button');
@@ -80,8 +78,8 @@ const initBookmarkFormModal = (soundId, addBookmarkUrl) => {
     });
 };
 
-const bindBookmarkSoundButtons = () => {
-    const bookmarkSoundButtons = [...document.querySelectorAll('[data-toggle="bookmark-modal"]')];
+const bindBookmarkSoundModals = (container) => {
+    const bookmarkSoundButtons = [...container.querySelectorAll('[data-toggle="bookmark-modal"]')];
     bookmarkSoundButtons.forEach(element => {
         if (element.dataset.alreadyBinded !== undefined){
             return;
@@ -94,7 +92,7 @@ const bindBookmarkSoundButtons = () => {
             if (!evt.altKey) {
                 handleGenericModal(element.dataset.modalUrl, () => {
                     initBookmarkFormModal(soundId, element.dataset.addBookmarkUrl);
-                }, () => {}, true, true);
+                }, undefined, true, true);
             } else {
                 saveBookmark(element.dataset.addBookmarkUrl);
             }
@@ -102,6 +100,4 @@ const bindBookmarkSoundButtons = () => {
     });
 }
 
-bindBookmarkSoundButtons();
-
-export {bindBookmarkSoundButtons};
+export { bindBookmarkSoundModals };

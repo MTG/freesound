@@ -1,5 +1,5 @@
-function createSelect() {
-  var select = document.getElementsByTagName('select'),
+function makeSelect(container) {
+  var select = container.getElementsByTagName('select'),
     liElement,
     ulElement,
     optionValue,
@@ -225,6 +225,4 @@ function createSelect() {
   }
 }
 
-createSelect();
-
-export {createSelect};
+export {makeSelect};

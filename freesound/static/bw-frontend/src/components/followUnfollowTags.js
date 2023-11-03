@@ -54,16 +54,20 @@ const followOrUnFollowTags = (tags, button) => {
     }
 }
 
-const followUnfollowButtons = document.getElementsByClassName('follow-tags-button');
-followUnfollowButtons.forEach((button) => {
-    const tags = button.dataset.followTagsUrl.split('/follow/follow_tags/')[1].split('/').filter(n => n);
-    if (tags.length > 1){
-        button.innerText = button.dataset.initialShouldUnfollow === 'true' ? unfollowTextPlural: followTextPlural;
-    } else {
-        button.innerText = button.dataset.initialShouldUnfollow === 'true' ? unfollowText: followText;
-    }
-    button.classList.add(button.dataset.initialShouldUnfollow === 'true' ? 'btn-secondary': 'btn-inverse');
-    button.addEventListener('click', () => {
-        followOrUnFollowTags(tags, button);
-    })
-});
+const bindFollowTagsButtons = (container) => {
+    const followUnfollowButtons = container.getElementsByClassName('follow-tags-button');
+    followUnfollowButtons.forEach((button) => {
+        const tags = button.dataset.followTagsUrl.split('/follow/follow_tags/')[1].split('/').filter(n => n);
+        if (tags.length > 1){
+            button.innerText = button.dataset.initialShouldUnfollow === 'true' ? unfollowTextPlural: followTextPlural;
+        } else {
+            button.innerText = button.dataset.initialShouldUnfollow === 'true' ? unfollowText: followText;
+        }
+        button.classList.add(button.dataset.initialShouldUnfollow === 'true' ? 'btn-secondary': 'btn-inverse');
+        button.addEventListener('click', () => {
+            followOrUnFollowTags(tags, button);
+        })
+    });
+}
+
+export {bindFollowTagsButtons}; 

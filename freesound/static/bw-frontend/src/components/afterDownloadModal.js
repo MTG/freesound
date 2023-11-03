@@ -1,14 +1,14 @@
 import {handleGenericModal} from './modal';
 
 
-const bindDownloadSoundButtons = () => {
+const prepareAfterDownloadSoundModals = () => {
     const downloadButtonElements = document.getElementsByClassName('sound-download-button');
     downloadButtonElements.forEach(element => {
         const showModalUrl = element.dataset.showAfterDownloadModalUrl;
         element.addEventListener('click', () => {
-            handleGenericModal(showModalUrl, () => {}, () => {}, false, true);
+            handleGenericModal(showModalUrl, undefined, undefined, false, true);
         });
     });
 }
 
-bindDownloadSoundButtons();
+export { prepareAfterDownloadSoundModals };

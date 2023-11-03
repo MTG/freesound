@@ -445,7 +445,8 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
  */
 const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSize) => {
   const playerControls = document.createElement('div')
-  playerControls.className = 'bw-player__controls stop-propagation'
+  playerControls.className = 'bw-player__controls'
+  playerControls.addEventListener('click', evt => evt.stopPropagation())
   if (playerSize === 'big') {
     playerControls.classList.add('bw-player__controls--big')
   } else if (playerSize === 'minimal') {
@@ -524,10 +525,8 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
   favoriteButton.setAttribute('aria-label', 'Bookmark this sound')
   unfavoriteButton.setAttribute('title', 'Remove bookmark')
   unfavoriteButton.setAttribute('aria-label', 'Remove bookmark')
-  favoriteButtonContainer.classList.add(
-    'bw-player__favorite',
-    'stop-propagation'
-  )
+  favoriteButtonContainer.classList.add('bw-player__favorite')
+  favoriteButtonContainer.addEventListener('click', evt => evt.stopPropagation())
   
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
@@ -562,10 +561,8 @@ const createSimilarSoundsButton = (parentNode, playerImgNode) => {
   const similarSoundsButton = createControlButton('similar')
   similarSoundsButton.setAttribute('title', 'Find similar sounds')
   similarSoundsButton.setAttribute('aria-label', 'Find similar sounds')
-  similarSoundsButtonContainer.classList.add(
-    'bw-player__similar',
-    'stop-propagation'
-  )
+  similarSoundsButtonContainer.classList.add('bw-player__similar')
+  similarSoundsButtonContainer.addEventListener('click', evt => evt.stopPropagation())
   
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
@@ -588,10 +585,8 @@ const createRemixGroupButton = (parentNode, playerImgNode) => {
   const remixGroupButton = createControlButton('remix')
   remixGroupButton.setAttribute('title', 'See sound\'s remix group')
   remixGroupButton.setAttribute('aria-label', 'See sound\'s remix group')
-  remixGroupButtonContainer.classList.add(
-    'bw-player__remix',
-    'stop-propagation'
-  )
+  remixGroupButtonContainer.classList.add('bw-player__remix')
+  remixGroupButtonContainer.addEventListener('click', evt => evt.stopPropagation())
   
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible

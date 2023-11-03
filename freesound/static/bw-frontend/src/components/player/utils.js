@@ -59,7 +59,7 @@ export const stopAllPlayersInContainer = (container) => {
 }
 
 
-export const initializePlayersInContainer = (container) => {
+export const makeSoundPlayers = (container) => {
   const players = [...container.getElementsByClassName('bw-player')]
   players.forEach(createPlayer)  
 }

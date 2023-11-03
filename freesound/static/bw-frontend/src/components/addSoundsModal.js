@@ -1,17 +1,9 @@
 import {dismissModal, handleGenericModal} from "../components/modal"
-import {stopAllPlayers} from '../components/player/utils'
-import {createPlayer} from '../components/player/player-ui'
 import {initializeObjectSelector, updateObjectSelectorDataProperties} from '../components/objectSelector'
-import addCheckboxVisibleElements from "../components/checkbox"
 import {serializedIdListToIntList, combineIdsLists} from "../utils/data"
 
 const handleAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement, onSoundsSelectedCallback) => {
     handleGenericModal(modalUrl, (modalContainer) => {        
-        const players = [...modalContainer.getElementsByClassName('bw-player')]
-        players.forEach(createPlayer)
-        
-        addCheckboxVisibleElements()
-
         const inputElement = modalContainer.getElementsByTagName('input')[0];
         inputElement.addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
@@ -45,14 +37,11 @@ const handleAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElemen
             onSoundsSelectedCallback(objectSelectorElement.dataset.selectedIds);
             dismissModal(modalId);
         });
-    }, (modalContainer) => {
-        // Stop all players that could be being played inside the modal
-        stopAllPlayers();
-    }, true, true);
+    }, undefined, true, true);
 }
 
-const prepareAddSoundsModalAndFields = () => {
-    const addSoundsButtons = [...document.querySelectorAll(`[data-toggle^="add-sounds-modal"]`)];
+const prepareAddSoundsModalAndFields = (container) => {
+    const addSoundsButtons = [...container.querySelectorAll(`[data-toggle^="add-sounds-modal"]`)];
     addSoundsButtons.forEach(addSoundsButton => {
         const removeSoundsButton = addSoundsButton.nextElementSibling;
         removeSoundsButton.disabled = true;

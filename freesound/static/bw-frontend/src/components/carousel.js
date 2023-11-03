@@ -8,14 +8,8 @@ const autoprefixedTransformProperties = [
   'transform',
 ]
 
-const initializeCarousels = (parentContainer) => {
-  let carouselContainers;
-  if (parentContainer === undefined){
-    carouselContainers = [...document.getElementsByClassName('bw-carousel-container')]
-  } else {
-    carouselContainers = [...parentContainer.getElementsByClassName('bw-carousel-container')]
-  }
-
+const makeCarousels = (container) => {
+  const carouselContainers = [...container.getElementsByClassName('bw-carousel-container')]
   carouselContainers.forEach(carouselContainer => {
     const carousel = [
       ...carouselContainer.getElementsByClassName('bw-carousel'),
@@ -150,6 +144,4 @@ const initializeCarousels = (parentContainer) => {
   })
 }
 
-initializeCarousels();
-
-export {initializeCarousels};
+export {makeCarousels};

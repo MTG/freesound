@@ -1,5 +1,5 @@
-import {initPlayersAndPlayerModalsInElement} from './asyncSection';
-import {stopAllPlayers} from '../components/player/utils'
+import { initializeStuffInContainer } from "../utils/initHelper";
+import { stopAllPlayers } from '../components/player/utils'
 
 
 var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';
@@ -259,7 +259,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                         zoomLinkElement.onclick = () => {setMaxZoomCenter(zoomLinkElement.dataset.lat, zoomLinkElement.dataset.lon, zoomLinkElement.dataset.zoom)};
 
                         // Init sound player inside popup
-                        initPlayersAndPlayerModalsInElement(document.getElementById('infoWindowPlayerWrapper-' + sound_id));
+                        initializeStuffInContainer(document.getElementById('infoWindowPlayerWrapper-' + sound_id), true, false);
                     });
                 });
 

@@ -16,8 +16,7 @@ function post_flag(div_id, flag_type, object_id, url) {
     });
 }
 
-const bindFlagUserElements = (container) => {
-    if (container === undefined){ container = document; }
+const bindFlagUserButtons = (container) => {
     const flagUserElements = container.getElementsByClassName('post-flag');
     flagUserElements.forEach(element => {
         element.addEventListener('click', () =>{
@@ -26,6 +25,4 @@ const bindFlagUserElements = (container) => {
     });
 }
 
-bindFlagUserElements();
-
-export {bindFlagUserElements};
+export {bindFlagUserButtons};

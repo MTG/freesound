@@ -2,8 +2,8 @@ import './page-polyfills';
 import {showToast} from '../components/toast';
 import {playAtTime} from '../components/player/utils';
 import {handleGenericModalWithForm} from '../components/modal';
-import {createSelect} from "../components/select";
 import {addRecaptchaScriptTagToMainHead} from '../utils/recaptchaDynamicReload'
+import { prepareAfterDownloadSoundModals } from '../components/afterDownloadModal.js';
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -14,6 +14,8 @@ const mediumEmbedImageElement = document.getElementById('medium-embed-image');
 const largeEmbedImageElement = document.getElementById('large-embed-image');
 const shareLinkElement = document.getElementById('share-link');
 const urlParams = new URLSearchParams(window.location.search);
+
+prepareAfterDownloadSoundModals();
 
 const copyShareUrlToClipboard = () => {
     var shareLinkInputElement = shareLinkElement.getElementsByTagName("input")[0];
@@ -110,17 +112,16 @@ const initSoundFlagForm = (modalContainer) => {
     // Modify the form structure to add a "Reason type:" label inline with the select dropdown
     const selectElement = modalContainer.getElementsByTagName('select')[0];
     const wrapper = document.createElement('div');
+    wrapper.style = 'display:inline-block;';
     selectElement.parentNode.insertBefore(wrapper, selectElement);
     const label = document.createElement('div');
     label.innerHTML = "Reason type:"
-    label.style = 'display:inline-block;';
     label.classList.add('text-grey');
     wrapper.appendChild(label)
     wrapper.appendChild(selectElement)
     
-    // Init select and recaptcha fields
+    // Init recaptcha fields
     const form = modalContainer.getElementsByTagName('form')[0];
-    createSelect();
     addRecaptchaScriptTagToMainHead(form);
 }
 

@@ -1,9 +1,7 @@
 import { showToast } from './toast';
 import serialize from '../utils/formSerializer'
-import addCheckboxVisibleElements from "../components/checkbox";
 import { activateModal, dismissModal, handleGenericModalWithForm } from "../components/modal";
 import { addRecaptchaScriptTagToMainHead } from '../utils/recaptchaDynamicReload'
-import { bindDisableOnSubmitForms } from './formDisableOnSubmit';
 
 const checkUsernameAvailability = (username, baseURL, callback) => {
   const req = new XMLHttpRequest();
@@ -47,9 +45,6 @@ const initRegistrationForm = (registrationForm) => {
   
   // Bind click actions on links to move to other login modals
   initLoginAndRegistrationModalLinks('registerModal');
-
-  // Make the form button disabled on submit
-  bindDisableOnSubmitForms();
   
   // Load grecaptcha script tag (needed if this is loaded ajax)
   addRecaptchaScriptTagToMainHead(registrationForm);
@@ -57,9 +52,6 @@ const initRegistrationForm = (registrationForm) => {
   // Add "next" parameter to the form action so users are redirected to the same page when registration finishes
   const pathWithParameters = window.location.pathname + window.location.search;
   registrationForm.action = registrationForm.action + '&next=' + encodeURI(pathWithParameters);
-  
-  // Initialize checkboxes (registration form contains checkboxes)
-  addCheckboxVisibleElements();
   
   // Add event handler to check username availability on focusout
   const usernameInputElement = registrationForm.querySelector('input[name="username"]');
@@ -170,5 +162,3 @@ document.addEventListener("DOMContentLoaded", () => {
     handleProblemsLoggingInModal();
   }
 });
-
-export {initRegistrationForm, initProblemsLoggingInForm, initLoginForm};

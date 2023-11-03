@@ -77,8 +77,8 @@ const updateTags = (inputElement, newTagsStr)  => {
     drawWrapperContents(inputWrapperElement, inputElement);
 }
 
-const prepareTagsFormFields = () => {
-    const tagsInputFields = document.getElementsByClassName('tags-field');
+const prepareTagsFormFields = (container) => {
+    const tagsInputFields = container.getElementsByClassName('tags-field');
     tagsInputFields.forEach(tagsFieldElement => {
         const tagsHiddenInput = tagsFieldElement.querySelectorAll('input[name$="tags"]')[0];
         const inputElement = tagsFieldElement.getElementsByClassName('tags-input')[0];

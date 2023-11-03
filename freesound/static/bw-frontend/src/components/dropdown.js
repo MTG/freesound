@@ -1,5 +1,3 @@
-const dropdownToggles = [...document.querySelectorAll('[data-toggle="dropdown"]')];
-
 const lastOpenedDropdown = { toggle: undefined, dropdownOptions: undefined };
 
 const closeOnClickAway = () => {
@@ -39,14 +37,19 @@ const toggleExpandDropdown = toggle => {
   }
 };
 
-dropdownToggles.forEach(toggle => {
-  toggle.ariaExpanded = 'false';
-  toggle.ariaHasPopup = 'menu';
-  const dropdownContainer = toggle.closest('.dropdown');
-  const dropdownOptions = dropdownContainer.getElementsByClassName('dropdown-menu')[0];
-  dropdownOptions.setAttribute('role', 'menu');
-  dropdownOptions.getElementsByClassName('dropdown-item').forEach(item => {
-    item.setAttribute('role', 'menuitem');
+const makeDropdowns = (container) => {
+  const dropdownToggles = [...container.querySelectorAll('[data-toggle="dropdown"]')];
+  dropdownToggles.forEach(toggle => {
+    toggle.ariaExpanded = 'false';
+    toggle.ariaHasPopup = 'menu';
+    const dropdownContainer = toggle.closest('.dropdown');
+    const dropdownOptions = dropdownContainer.getElementsByClassName('dropdown-menu')[0];
+    dropdownOptions.setAttribute('role', 'menu');
+    dropdownOptions.getElementsByClassName('dropdown-item').forEach(item => {
+      item.setAttribute('role', 'menuitem');
+    });
+    toggle.addEventListener('click', () => toggleExpandDropdown(toggle));
   });
-  toggle.addEventListener('click', () => toggleExpandDropdown(toggle));
-});
+}
+
+export {makeDropdowns};

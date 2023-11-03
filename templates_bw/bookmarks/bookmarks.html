@@ -15,9 +15,9 @@
                 <div class="v-spacing-top-3">
                 {% if bookmark_categories %}
                     <ul class="list-style-type-none">
-                        <li><a href="{% url "bookmarks-for-user" user.username %}" {% if not category %}style="font-weight:bold"{% endif %}>Uncategorized</a> <span class="text-grey"> · {{n_uncat|bw_intcomma}} bookmark{{ n_uncat|pluralize }}</span></li>
+                        <li><a href="{% url "bookmarks-for-user" user.username %}" {% if not category %}style="font-weight:bold"{% endif %} aria-label="Category: Uncategorized">Uncategorized</a> <span class="text-grey"> · {{n_uncat|bw_intcomma}} bookmark{{ n_uncat|pluralize }}</span></li>
                         {% for cat in bookmark_categories %}
-                            <li><a href="{% url "bookmarks-for-user-for-category" user.username cat.id %}" {% if category.id == cat.id %}style="font-weight:bold"{% endif %}>{{cat.name}}</a> <span class="text-grey"> · {{cat.num_bookmarks|bw_intcomma}} bookmark{{ cat.num_bookmarks|pluralize }}</span>
+                            <li><a href="{% url "bookmarks-for-user-for-category" user.username cat.id %}" {% if category.id == cat.id %}style="font-weight:bold"{% endif %} aria-label="Category: {{cat.name}}">{{cat.name}}</a> <span class="text-grey"> · {{cat.num_bookmarks|bw_intcomma}} bookmark{{ cat.num_bookmarks|pluralize }}</span>
                             {% if is_owner %}
                             <a class="cursor-pointer h-spacing-left-1" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove this bookmark category?" data-modal-confirmation-help-text="Note that all the bookmarks inside this category will also be removed" data-modal-confirmation-url="{% url "delete-bookmark-category" cat.id %}{% if cat.id != category.id %}?next={{request.path}}&page={{current_page}}{% endif %}" title="Remove bookmark category" aria-label="Remove bookmark category">{% bw_icon 'trash' %}</a>
                             {% endif %}</li>

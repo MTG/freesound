@@ -845,42 +845,6 @@ def pack_edit(request, username, pack_id):
 
 
 @login_required
-@transaction.atomic()
-def pack_delete(request, username, pack_id):
-    pack = get_object_or_404(Pack, id=pack_id)
-    if pack.user.username.lower() != username.lower():
-        raise Http404
-
-    if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
-        raise PermissionDenied
-
-    encrypted_string = request.GET.get("pack", None)
-    waited_too_long = False
-    if encrypted_string is not None:
-        try:
-            pack_id = unsign_with_timestamp(str(pack.id), encrypted_string, max_age=10)
-        except SignatureExpired:
-            waited_too_long = True
-        except BadSignature:
-            raise PermissionDenied
-        pack_id = int(pack_id)
-        if pack_id != pack.id:
-            raise PermissionDenied
-        if not waited_too_long:
-            web_logger.info(f"User {request.user.username} requested to delete pack {pack_id}")
-            pack.delete_pack(remove_sounds=False)
-            return HttpResponseRedirect(reverse("accounts-home"))
-
-    encrypted_link = sign_with_timestamp(pack.id)
-    tvars = {
-        'pack': pack,
-        'encrypted_link': encrypted_link,
-        'waited_too_long': waited_too_long
-    }
-    return render(request, 'sounds/pack_delete.html', tvars)
-
-
-@login_required
 def sound_edit_sources(request, username, sound_id):
     return HttpResponseRedirect(reverse('sound-edit', args=[username, sound_id]))
 
@@ -1065,50 +1029,6 @@ def for_user(request, username):
              'user_sounds': user_sounds}
     tvars.update(paginator)
     return render(request, 'sounds/for_user.html', tvars)
-
-
-@login_required
-@transaction.atomic()
-def delete(request, username, sound_id):
-    # NOTE: this is no longer used in BW as sound deletion is handled at the "manage sounds" page
-    sound = get_object_or_404(Sound, id=sound_id)
-    if sound.user.username.lower() != username.lower():
-        raise Http404
-
-    if not (request.user.has_perm('sound.delete_sound') or sound.user == request.user):
-        raise PermissionDenied
-
-    error_message = None
-    if request.method == "POST":
-        form = DeleteSoundForm(request.POST, sound_id=sound_id)
-        if not form.is_valid():
-            error_message = "Sorry, you waited too long, ... try again?"
-            form = DeleteSoundForm(sound_id=sound_id)
-        else:
-
-            web_logger.info(f"User {request.user.username} requested to delete sound {sound_id}")
-            try:
-                ticket = sound.ticket
-                tc = TicketComment(sender=request.user,
-                                   text=f"User {request.user} deleted the sound",
-                                   ticket=ticket,
-                                   moderator_only=False)
-                tc.save()
-            except Ticket.DoesNotExist:
-                # No ticket assigned, not adding any message (should not happen)
-                pass
-            sound.delete()
-
-            return HttpResponseRedirect(reverse("accounts-home"))
-    else:
-        form = DeleteSoundForm(sound_id=sound_id)
-
-    tvars = {
-            'error_message': error_message,
-            'delete_form': form,
-            'sound': sound
-            }
-    return render(request, 'sounds/delete.html', tvars)
 
 
 @redirect_if_old_username_or_404

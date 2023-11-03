@@ -57,7 +57,7 @@
                 {% endif %}
             {% endfor %}
             {% if request.user.is_authenticated %}
-                <form method="post" action="." class="bw-form v-spacing-top-4">
+                <form method="post" action="." class="bw-form v-spacing-top-4 disable-on-submit">
                     {% csrf_token %}
                     {{tc_form}}
                     <button class="btn-inverse v-spacing-top-4">Add message to ticket</button>

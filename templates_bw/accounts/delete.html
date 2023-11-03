@@ -13,7 +13,7 @@
             fully aware of what happens with your data. If you are entirely sure you want to delete your account, please choose one of the following options
             and confirm your password:
         </p>
-        <form method="post" class="bw-form w-100">{% csrf_token %}
+        <form method="post" class="bw-form w-100 disable-on-submit">{% csrf_token %}
             <div class="bw-multiple-radio">
                 {{delete_form}}
             </div>

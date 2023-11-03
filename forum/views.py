@@ -37,7 +37,7 @@ from accounts.models import DeletedUser
 from forum.forms import PostReplyForm, BwPostReplyForm, NewThreadForm, BwNewThreadForm, PostModerationForm, BwPostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
 from utils.cache import invalidate_template_cache, invalidate_all_moderators_header_cache
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.search.search_forum import add_posts_to_search_engine

@@ -27,16 +27,15 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db.models import Count
-from django.http import JsonResponse, HttpResponse
-from django.shortcuts import redirect
-from django.shortcuts import render
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 
 import tickets
 from freesound.celery import get_queues_task_counts
 from sounds.models import Sound, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
-from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh
 
 
 @login_required
@@ -215,27 +214,12 @@ def monitor_stats(request):
     return render(request, 'monitor/stats.html', tvars)
 
 
-@redirect_if_beastwhoosh('monitor-moderation')
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def moderators_stats(request):
-    time_span = datetime.datetime.now() - datetime.timedelta((6 * 365) // 12)
-    #Maybe we should user created and not modified
-    user_ids = tickets.models.Ticket.objects.filter(
-            status=TICKET_STATUS_CLOSED,
-            created__gt=time_span,
-            assignee__isnull=False
-    ).values_list("assignee_id", flat=True)
+    return HttpResponseRedirect(reverse('monitor-moderation'))
 
-    counter = Counter(user_ids)
-    moderators = User.objects.filter(id__in=list(counter.keys()))
-
-    moderators = [(counter.get(m.id), m) for m in moderators.all()]
-    ordered = sorted(moderators, key=lambda m: m[0], reverse=True)
-    tvars = {"moderators": ordered}
-    return render(request, 'monitor/moderators_stats.html', tvars)
-
-
+   
 def queries_stats_ajax(request):
     try:
         auth = (settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD)

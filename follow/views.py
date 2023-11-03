@@ -26,14 +26,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from follow import follow_utils
 from follow.models import FollowingQueryItem
 from follow.models import FollowingUserItem
 from utils.cache import invalidate_user_template_caches
-from utils.frontend_handling import using_beastwhoosh, render
+from utils.frontend_handling import using_beastwhoosh
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 

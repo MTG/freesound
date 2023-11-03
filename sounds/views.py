@@ -40,7 +40,7 @@ from django.db.models.functions import Greatest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404, \
     HttpResponsePermanentRedirect, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, resolve
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -62,7 +62,7 @@ from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_user_template_caches
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
-from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
@@ -119,33 +119,8 @@ def get_sound_of_the_day_id():
     return random_sound
 
 
-@redirect_if_beastwhoosh('sounds-search', query_string='s=Date+added+(newest+first)&g=1')
 def sounds(request):
-    latest_sounds = Sound.objects.latest_additions(num_sounds=5, period_days=2)    
-    latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
-    last_week = get_n_weeks_back_datetime(n_weeks=1)
-    popular_sounds = Sound.public.select_related('license', 'user') \
-                                 .annotate(greatest_date=Greatest('created', 'moderation_date')) \
-                                 .filter(greatest_date__gte=last_week).order_by("-num_downloads")[0:5]
-    popular_packs = Pack.objects.select_related('user').filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
-    random_sound_id = get_sound_of_the_day_id()
-    if random_sound_id:
-        try:
-            random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
-        except IndexError:
-            # Clear existing cache for random sound of the day as it contains invalid sound id
-            cache.delete(settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY)
-            random_sound = None
-    else:
-        random_sound = None
-    tvars = {
-        'latest_sounds': latest_sounds,
-        'latest_packs': latest_packs,
-        'popular_sounds': popular_sounds,
-        'popular_packs': popular_packs,
-        'random_sound': random_sound
-    }
-    return render(request, 'sounds/sounds.html', tvars)
+    return HttpResponseRedirect(reverse('sounds-search') + '?s=Date+added+(newest+first)&g=1')
 
 
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
@@ -174,18 +149,8 @@ def random(request):
         reverse('sound', args=[sound_obj.user.username, sound_obj.id])))
 
 
-@redirect_if_beastwhoosh('sounds-search', query_string='s=Date+added+(newest+first)&g=1&only_p=1')
 def packs(request):
-    order = request.GET.get("order", "name")
-    if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
-        order = "name"
-    qs = Pack.objects.select_related() \
-                     .filter(num_sounds__gt=0) \
-                     .exclude(is_deleted=True) \
-                     .order_by(order)
-    tvars = {'order': order}
-    tvars.update(paginate(request, qs, settings.PACKS_PER_PAGE))
-    return render(request, 'sounds/browse_packs.html', tvars)
+    return HttpResponseRedirect(reverse('sounds-search') + '?s=Date+added+(newest+first)&g=1&only_p=1')
 
 
 def front_page(request):
@@ -916,31 +881,8 @@ def pack_delete(request, username, pack_id):
 
 
 @login_required
-@redirect_if_beastwhoosh('sound-edit', kwarg_keys=['username', 'sound_id'])
-@transaction.atomic()
 def sound_edit_sources(request, username, sound_id):
-    sound = get_object_or_404(Sound, id=sound_id)
-    if sound.user.username.lower() != username.lower():
-        raise Http404
-
-    if not (request.user.is_superuser or sound.user == request.user):
-        raise PermissionDenied
-
-    current_sources = Sound.objects.ordered_ids([element['id'] for element in sound.sources.all().values('id')])
-    sources_string = ",".join(map(str, [source.id for source in current_sources]))
-    if request.method == 'POST':
-        form = RemixForm(sound, request.POST)
-        if form.is_valid():
-            form.save()
-            sound.invalidate_template_caches()
-    else:
-        form = RemixForm(sound, initial=dict(sources=sources_string))
-    tvars = {
-        'sound': sound,
-        'form': form,
-        'current_sources': current_sources
-    }
-    return render(request, 'sounds/sound_edit_sources.html', tvars)
+    return HttpResponseRedirect(reverse('sound-edit', args=[username, sound_id]))
 
 
 def add_sounds_modal_helper(request, username=None):
@@ -1020,24 +962,6 @@ def remixes(request, username, sound_id):
     else:
         tvars.update({'sound': sound})
         return render(request, 'sounds/modal_remix_group.html', tvars)
-
-
-@redirect_if_beastwhoosh('front-page')
-def remixed(request):
-    # NOTE: the page listing remix groups no longer exists in the new UI. Instead, users can filter
-    # search queries by "remixed" property
-    qs = RemixGroup.objects.all().order_by('-group_size')
-    tvars = dict()
-    tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
-    return render(request, 'sounds/remixed.html', tvars)
-
-
-@redirect_if_beastwhoosh('front-page')
-def remix_group(request, group_id):
-    # NOTE: there is no dedicated page to a remix group in the new UI, instead, users can open a modal and
-    # show the remix group of a particular sound
-    tvars = _remix_group_view_helper(request, group_id)
-    return render(request, 'sounds/remixes.html', tvars)
     
 
 @redirect_if_old_username_or_404

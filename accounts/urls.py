@@ -27,7 +27,9 @@ from accounts.forms import FsAuthenticationForm, FsPasswordResetForm
 import bookmarks.views as bookmarks
 import follow.views as follow
 import apiv2.views as api
-from utils.frontend_handling import redirect_if_beastwhoosh_inline
+from utils.urlpatterns import redirect_inline
+
+
 
 # By putting some URLs at the top that are the same as the ones listed in
 # django.contrib.auth.urls, we can override some configuration:
@@ -40,13 +42,13 @@ urlpatterns = [
     path('cleanup/', accounts.multi_email_cleanup, name="accounts-multi-email-cleanup"),
     path('password_reset/',
         login_redirect(
-            redirect_if_beastwhoosh_inline(
+            redirect_inline(
                 auth_views.PasswordResetView.as_view(form_class=FsPasswordResetForm),
                 redirect_url_name='front-page',
                 query_string='loginProblems=1')),
         name='password_reset'),
     path('password_reset/done/',
-        redirect_if_beastwhoosh_inline(
+        redirect_inline(
             auth_views.PasswordResetDoneView.as_view(),
             redirect_url_name='front-page'),
         name='password_reset_done'),

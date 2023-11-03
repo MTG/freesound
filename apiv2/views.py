@@ -34,6 +34,7 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponseRedirect, Http404
+from django.shortcuts import render 
 from django.urls import reverse
 from oauth2_provider.models import Grant, AccessToken
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
@@ -65,7 +66,7 @@ from similarity.client import Similarity
 from sounds.models import Sound, Pack, License, SoundAnalysis
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.tags import clean_and_split_tags
 

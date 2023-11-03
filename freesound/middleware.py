@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-import json
 import logging
 
 from admin_reorder.middleware import ModelAdminReorder
@@ -73,26 +72,6 @@ class BulkChangeLicenseHandler:
             if user.profile.has_old_license:
                 return HttpResponseRedirect(reverse("bulk-license-change"))
 
-        response = self.get_response(request)
-        return response
-
-
-class FrontendPreferenceHandler:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        """
-        This middleware sets a session variable when the parameter 'new_frontend' is received.
-        The 'render' method will use this session variable to display the new/old frontend
-        """
-        if request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME, None):
-            selected_ui = request.GET.get(settings.FRONTEND_CHOOSER_REQ_PARAM_NAME)
-            current_ui = request.session.get(settings.FRONTEND_SESSION_PARAM_NAME, None)
-            if selected_ui != current_ui:
-                web_logger.info('Frontend activation (%s)' % json.dumps({'name': selected_ui,
-                                                                         'username': request.user.username}))
-            request.session[settings.FRONTEND_SESSION_PARAM_NAME] = selected_ui
         response = self.get_response(request)
         return response
 

@@ -32,6 +32,7 @@ from django.db.models.functions import JSONObject
 from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.shortcuts import render 
 from general.tasks import whitelist_user as whitelist_user_task
 
 from .models import Ticket, TicketComment, UserAnnotation
@@ -41,7 +42,7 @@ from tickets.forms import AnonymousMessageForm, BWAnonymousMessageForm, UserMess
     SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, \
     BWSoundModerationForm, BWModerationMessageForm
 from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh
 from utils.username import redirect_if_old_username_or_404
 from utils.pagination import paginate
 from wiki.models import Content, Page

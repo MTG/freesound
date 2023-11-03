@@ -1,8 +1,0 @@
-{% load util %}
-
-<span class="people_user_info">New sound: <a href="{% url "sound" sound.user.username sound.id %}">{{sound.original_filename|truncate_string:35}}</a>
-</span>
-
-<div class="player_medium">
-    {% include "sounds/player_medium.html" %}
-</div>

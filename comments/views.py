@@ -29,7 +29,7 @@ from django.urls import reverse
 
 from comments.models import Comment
 from sounds.models import Sound
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 

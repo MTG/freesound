@@ -20,9 +20,10 @@
 
 from django.http import HttpResponseRedirect, Http404
 
+from django.shortcuts import render 
 from django.urls import reverse
 
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh
 from wiki.models import Content, Page
 from wiki.forms import ContentForm, BwContentForm
 

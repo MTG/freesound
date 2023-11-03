@@ -28,8 +28,7 @@ from collections import defaultdict, Counter
 from django.core.cache import cache
 from django.conf import settings
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.shortcuts import reverse
+from django.shortcuts import get_object_or_404, reverse, render
 from ratelimit.decorators import ratelimit
 
 import forum
@@ -38,7 +37,7 @@ from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
 from clustering.interface import cluster_sound_results, get_sound_ids_from_search_engine_query
 from forum.models import Post
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \

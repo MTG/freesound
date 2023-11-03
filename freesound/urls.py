@@ -96,9 +96,6 @@ urlpatterns = [
     re_path(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
     path('browse/geotags_box/', geotags.views.geotags_box, name="geotags-box"),
 
-    path('browse/remixed/', sounds.views.remixed, name="remix-groups"),
-    path('browse/remixed/<int:group_id>/', sounds.views.remix_group, name="remix-group"),
-
     path('contact/', support.views.contact, name="contact"),
 
     path('search/', search.views.search, name='sounds-search'),

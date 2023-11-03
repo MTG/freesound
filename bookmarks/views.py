@@ -24,13 +24,13 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Count
 from django.http import Http404, HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from bookmarks.forms import BookmarkForm, BwBookmarkForm
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
-from utils.frontend_handling import using_beastwhoosh, render
+from utils.frontend_handling import using_beastwhoosh
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 

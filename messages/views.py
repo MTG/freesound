@@ -29,12 +29,13 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.http import HttpResponseRedirect, Http404
+from django.shortcuts import render 
 from django.urls import reverse
 
 from messages.forms import MessageReplyForm, MessageReplyFormWithCaptcha, BwMessageReplyForm, BwMessageReplyFormWithCaptcha
 from messages.models import Message, MessageBody
 from utils.cache import invalidate_user_template_caches
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 

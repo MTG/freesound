@@ -51,7 +51,7 @@ from django.db.models.expressions import Value
 from django.db.models.fields import CharField
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
     HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.http import base36_to_int
 from django.utils.http import int_to_base36
@@ -82,7 +82,7 @@ from tickets.models import TicketComment, Ticket, UserAnnotation
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
 from utils.filesystem import generate_tree, remove_directory_if_empty
-from utils.frontend_handling import render, using_beastwhoosh, redirect_if_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh
 from utils.images import extract_square
 from utils.logging_filters import get_client_ip
 from utils.mail import send_mail_template, send_mail_template_to_support
@@ -381,46 +381,13 @@ def send_activation(user):
     send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'emails/email_activation.txt', tvars, user_to=user)
 
 
-@redirect_if_beastwhoosh('front-page', query_string='loginProblems=1')
 def resend_activation(request):
-    if request.method == 'POST':
-        form = ReactivationForm(request.POST)
-        if form.is_valid():
-            username_or_email = form.cleaned_data['user']
-            try:
-                user = User.objects.get((Q(email__iexact=username_or_email)\
-                         | Q(username__iexact=username_or_email))\
-                         & Q(is_active=False))
-                send_activation(user)
-            except User.DoesNotExist:
-                pass
-            return render(request, 'accounts/resend_activation_done.html')
-    else:
-        form = ReactivationForm()
-
-    return render(request, 'accounts/resend_activation.html', {'form': form})
+    return HttpResponseRedirect(reverse('front-page') + '?loginProblems=1')
 
 
-@redirect_if_beastwhoosh('front-page', query_string='loginProblems=1')
 def username_reminder(request):
-    if request.method == 'POST':
-        form = UsernameReminderForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['user']
-
-            try:
-                user = User.objects.get(email__iexact=email)
-                send_mail_template(settings.EMAIL_SUBJECT_USERNAME_REMINDER, 'emails/email_username_reminder.txt',
-                                   {'user': user}, user_to=user)
-            except User.DoesNotExist:
-                pass
-
-            return render(request, 'accounts/username_reminder.html', {'form': form, 'sent': True})
-    else:
-        form = UsernameReminderForm()
-
-    return render(request, 'accounts/username_reminder.html', {'form': form, 'sent': False})
-
+    return HttpResponseRedirect(reverse('front-page') + '?loginProblems=1')
+    
 
 @login_required
 def home(request):
@@ -822,8 +789,8 @@ def manage_sounds(request, tab):
 
 
 @login_required
+@transaction.atomic()
 def edit_sounds(request):
-    if not using_beastwhoosh(request): raise Http404
     return edit_and_describe_sounds_helper(request)  # Note that the list of sounds to describe is stored in the session object
 
 
@@ -951,157 +918,11 @@ def describe_pack(request):
 
 
 @login_required
+@transaction.atomic()
 def describe_sounds(request):
-    if using_beastwhoosh(request):
-        return edit_and_describe_sounds_helper(request)  # Note that the list of sounds to describe is stored in the session object
+    return edit_and_describe_sounds_helper(request)  # Note that the list of sounds to describe is stored in the session object
 
-    forms = []
-    sounds_to_process = []
-    sounds = request.session.get('describe_sounds', False)
-    if not sounds:
-        msg = 'Please pick at least one sound.'
-        messages.add_message(request, messages.WARNING, msg)
-        return HttpResponseRedirect(reverse('accounts-describe'))
-    sounds_to_describe = sounds[0:settings.SOUNDS_PER_DESCRIBE_ROUND]
-    request.session['describe_sounds_number'] = len(request.session.get('describe_sounds'))
-    selected_license = request.session.get('describe_license', False)
-    selected_pack = request.session.get('describe_pack', False)
-
-    # If there are no files in the session redirect to the first describe page
-    if len(sounds_to_describe) <= 0:
-        msg = 'You have finished describing your sounds.'
-        messages.add_message(request, messages.WARNING, msg)
-        return HttpResponseRedirect(reverse('accounts-describe'))
-
-    tvars = {
-        'sounds_per_round': settings.SOUNDS_PER_DESCRIBE_ROUND,
-        'forms': forms,
-        'last_latlong': request.user.profile.get_last_latlong(),
-    }
-
-    if request.method == 'POST':
-        # First get all the data
-        n_sounds_already_part_of_freesound = 0
-        for i in range(len(sounds_to_describe)):
-            prefix = str(i)
-            forms.append({})
-            forms[i]['sound'] = sounds_to_describe[i]
-            forms[i]['description'] = SoundDescriptionForm(request.POST, prefix=prefix, explicit_disable=False)
-            forms[i]['geotag'] = GeotaggingForm(request.POST, prefix=prefix)
-            forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
-                                        request.POST,
-                                        prefix=prefix)
-            forms[i]['license'] = LicenseForm(request.POST, prefix=prefix, hide_old_license_versions=True)
-        # Validate each form
-        for i in range(len(sounds_to_describe)):
-            for f in ['license', 'geotag', 'pack', 'description']:
-                if not forms[i][f].is_valid():
-                    # If at least one form is not valid, render template with form errors
-                    return render(request, 'accounts/describe_sounds.html', tvars)
-
-        # All valid, then create sounds and moderation tickets
-        dirty_packs = []
-        for i in range(len(sounds_to_describe)):
-            sound_fields = {
-                'name': forms[i]['description'].cleaned_data['name'],
-                'dest_path': forms[i]['sound'].full_path,
-                'license': forms[i]['license'].cleaned_data['license'],
-                'description': forms[i]['description'].cleaned_data.get('description', ''),
-                'tags': forms[i]['description'].cleaned_data.get('tags', ''),
-                'is_explicit': forms[i]['description'].cleaned_data['is_explicit'],
-            }
-
-            pack = forms[i]['pack'].cleaned_data.get('pack', False)
-            new_pack = forms[i]['pack'].cleaned_data.get('new_pack', False)
-            if not pack and new_pack:
-                sound_fields['pack'] = new_pack
-            elif pack:
-                sound_fields['pack'] = pack
-
-            data = forms[i]['geotag'].cleaned_data
-            if not data.get('remove_geotag') and data.get('lat'):  # if 'lat' is in data, we assume other fields are too
-                geotag = '%s,%s,%d' % (data.get('lat'), data.get('lon'), data.get('zoom'))
-                sound_fields['geotag'] = geotag
-
-            try:
-                user = request.user
-                sound = utils.sound_upload.create_sound(user, sound_fields, process=False)
-                sounds_to_process.append(sound)
-                if user.profile.is_whitelisted:
-                    messages.add_message(request, messages.INFO,
-                        'File <a href="%s">%s</a> has been described and has been added to freesound.' % \
-                        (sound.get_absolute_url(), sound.original_filename))
-                else:
-                    messages.add_message(request, messages.INFO,
-                        'File <a href="%s">%s</a> has been described and is now awaiting processing '
-                        'and moderation.' % (sound.get_absolute_url(), sound.original_filename))
-
-                    # Invalidate affected caches in user header
-                    invalidate_user_template_caches(request.user.id)
-                    for moderator in Group.objects.get(name='moderators').user_set.all():
-                        invalidate_user_template_caches(moderator.id)
-
-            except utils.sound_upload.NoAudioException:
-                # If for some reason audio file does not exist, skip creating this sound
-                messages.add_message(request, messages.ERROR,
-                                     f"Something went wrong with accessing the file {forms[i]['description'].cleaned_data['name']}.")
-            except utils.sound_upload.AlreadyExistsException as e:
-                messages.add_message(request, messages.WARNING, str(e))
-            except utils.sound_upload.CantMoveException as e:
-                upload_logger.error(str(e))
-
-        # Remove the files we just described from the session and redirect to this page
-        request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
-
-        # Process sounds and packs
-        # N.B. we do this at the end to avoid conflicts between django-web and django-workers
-        # If we're not careful django's save() functions will overwrite any processing we
-        # do on the workers.
-        # In the future if django-workers do not write to the db this might be changed
-        try:
-            for s in sounds_to_process:
-                s.process_and_analyze()
-        except Exception as e:
-            sounds_logger.error(f'Sound with id {s.id} could not be scheduled. ({str(e)})')
-        for p in dirty_packs:
-            p.process()
-
-        # Check if all sounds have been described after that round and redirect accordingly
-        if len(request.session['describe_sounds']) <= 0:
-            if len(sounds_to_describe) != n_sounds_already_part_of_freesound:
-                msg = 'You have described all the selected files and are now awaiting processing and moderation. ' \
-                      'You can check the status of your uploaded sounds in your <a href="%s">home page</a>. ' \
-                      'Once your sounds have been processed, you can also get information about the moderation ' \
-                      'status in the <a href="%s">uploaded sounds awaiting moderation' \
-                      '</a> page.' % (reverse('accounts-home'), reverse('accounts-pending'))
-                messages.add_message(request, messages.WARNING, msg)
-            clear_session_edit_and_describe_data(request)
-            return HttpResponseRedirect(reverse('accounts-describe'))
-        else:
-            return HttpResponseRedirect(reverse('accounts-describe-sounds'))
-    else:
-        for i in range(len(sounds_to_describe)):
-            prefix = str(i)
-            forms.append({})
-            forms[i]['sound'] = sounds_to_describe[i]
-            forms[i]['description'] = SoundDescriptionForm(initial={'name': forms[i]['sound'].name}, prefix=prefix)
-            forms[i]['geotag'] = GeotaggingForm(prefix=prefix)
-            if selected_pack:
-                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
-                                            prefix=prefix,
-                                            initial={'pack': selected_pack.id})
-            else:
-                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
-                                            prefix=prefix)
-            if selected_license:
-                forms[i]['license'] = LicenseForm(initial={'license': selected_license},
-                                                     prefix=prefix, hide_old_license_versions=True)
-            else:
-                forms[i]['license'] = LicenseForm(prefix=prefix, hide_old_license_versions=True)
-
-    return render(request, 'accounts/describe_sounds.html', tvars)
-
-
+    
 @login_required
 def attribution(request):
     qs_sounds = Download.objects.annotate(download_type=Value("sound", CharField()))\
@@ -1264,56 +1085,8 @@ def create_user_rank(uploaders, posters, commenters, weights=dict()):
     return user_rank, sort_list
 
 
-@redirect_if_beastwhoosh('charts')
 def accounts(request):
-    num_days = 14
-    num_active_users = 10
-    num_all_time_active_users = 10
-    last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
-
-    # Most active users in last num_days, newest active users in last num_days and logged in users
-    latest_uploaders = Sound.public.filter(created__gte=last_time).values("user").annotate(Count('id'))\
-        .order_by("-id__count")
-    latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id'))\
-        .order_by("-id__count")
-    latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id'))\
-        .order_by("-id__count")
-    user_rank, sort_list = create_user_rank(latest_uploaders, latest_posters, latest_commenters)
-    most_active_users = User.objects.select_related("profile")\
-        .filter(id__in=[u[1] for u in sorted(sort_list, reverse=True)[:num_active_users]])
-    new_users = User.objects.select_related("profile").filter(date_joined__gte=last_time)\
-        .filter(id__in=list(user_rank.keys())).order_by('-date_joined')[:num_active_users+5]
-    logged_users = User.objects.select_related("profile").filter(id__in=get_online_users())
-    most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
-    most_active_users_display = sorted(most_active_users_display,
-                                       key=lambda usr: user_rank[usr[0].id]['score'],
-                                       reverse=True)
-    new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
-
-    # All time most active users (these queries are kind of slow, but page is cached)
-    all_time_uploaders = Profile.objects.extra(select={'id__count': 'num_sounds'})\
-        .order_by("-num_sounds").values("user", "id__count")[:num_all_time_active_users]
-    all_time_posters = Profile.objects.extra(select={'id__count': 'num_posts', 'author_id': 'user_id'})\
-        .order_by("-num_posts").values("author_id", "id__count")[:num_all_time_active_users]
-    # Performing a count(*) on Comment table is slow, we could add 'num_comments' to user profile
-    all_time_commenters = Comment.objects.all().values("user_id").annotate(Count('id'))\
-        .order_by("-id__count")[:num_all_time_active_users]
-    all_time_user_rank, all_time_sort_list = create_user_rank(all_time_uploaders, all_time_posters, all_time_commenters)
-    all_time_most_active_users = User.objects.select_related("profile")\
-        .filter(id__in=[u[1] for u in sorted(all_time_sort_list, reverse=True)[:num_all_time_active_users]])
-    all_time_most_active_users_display = [[u, all_time_user_rank[u.id]] for u in all_time_most_active_users]
-    all_time_most_active_users_display = sorted(all_time_most_active_users_display,
-                                                key=lambda usr: all_time_user_rank[usr[0].id]['score'],
-                                                reverse=True)
-
-    tvars = {
-        'num_days': num_days,
-        'most_active_users': most_active_users_display,
-        'all_time_most_active_users': all_time_most_active_users_display,
-        'new_users': new_users_display,
-        'logged_users': logged_users,
-    }
-    return render(request, 'accounts/accounts.html', tvars)
+    return HttpResponseRedirect(reverse('charts'))
 
 
 def compute_charts_stats():

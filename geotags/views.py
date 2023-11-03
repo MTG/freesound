@@ -27,13 +27,13 @@ import struct
 from django.conf import settings
 from django.core.cache import cache
 from django.http import Http404, HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 from sounds.models import Sound, Pack
-from utils.frontend_handling import render, using_beastwhoosh
+from utils.frontend_handling import using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 

@@ -51,7 +51,7 @@
                 {% if trending_new_sound_ids %}
                     {% cache 300 bw_front_page_trending_new_sounds %}
                     <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds created in the last week">Trending new sounds</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds created in the last week">Most popular new sounds</h3>
                         {% sound_carousel trending_new_sound_ids %}
                     </section>
                     <hr />
@@ -61,7 +61,7 @@
                 {% if trending_new_pack_ids %}
                     {% cache 300 bw_front_page_trending_new_packs %}
                     <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded pack created in the last week">Trending new packs</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded pack created in the last week">Most popular new packs</h3>
                         {% pack_carousel trending_new_pack_ids %}
                     </section>
                     <hr />
@@ -71,7 +71,7 @@
                 {% if trending_sound_ids %}
                     {% cache 300 bw_front_page_trending_sounds %}
                     <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds during the last week">Trending sounds</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds during the last week">Top recently downloaded sounds</h3>
                         {% sound_carousel trending_sound_ids %}
                     </section>
                     <hr />

@@ -686,7 +686,7 @@ def manage_sounds(request, tab):
             return tvars_or_redirect
 
     elif tab == 'packs':
-        if request.POST and ('delete_confirm' in request.POST):
+        if request.POST and ('edit' in request.POST or 'delete_confirm' in request.POST):
             try:
                 pack_ids = [int(part) for part in request.POST.get('object-ids', '').split(',')]
             except ValueError:
@@ -694,8 +694,14 @@ def manage_sounds(request, tab):
             packs = Pack.objects.ordered_ids(pack_ids)
             # Just as a sanity check, filter out packs not owned by the user
             packs = [pack for pack in packs if pack.user == pack.user]
+    
             if packs:
-                if 'delete_confirm' in request.POST:
+                if 'edit' in request.POST:
+                    # There will be only one pack selected (otherwise the button is disabled)
+                    # Redirect to the edit pack page
+                    pack = packs[0]
+                    return HttpResponseRedirect(reverse('pack-edit', args=[pack.user.username, pack.id]) + '?next=' + request.path)
+                elif 'delete_confirm' in request.POST:
                     # Delete the selected packs
                     n_packs_deleted = 0
                     for pack in packs:
@@ -703,8 +709,8 @@ def manage_sounds(request, tab):
                         pack.delete_pack(remove_sounds=False)
                         n_packs_deleted += 1
                     messages.add_message(request, messages.INFO,
-                                         f'Successfully deleted {n_packs_deleted} '
-                                         f'pack{"s" if n_packs_deleted != 1 else ""}')
+                                        f'Successfully deleted {n_packs_deleted} '
+                                        f'pack{"s" if n_packs_deleted != 1 else ""}')
                     return HttpResponseRedirect(reverse('accounts-manage-sounds', args=[tab]))
 
         sort_options = [
@@ -744,7 +750,7 @@ def manage_sounds(request, tab):
                     clear_session_edit_and_describe_data(request)
                     request.session['edit_sounds'] = sounds  # Add the list of sounds to edit in the session object
                     request.session['len_original_describe_edit_sounds'] = len(sounds)
-                    return HttpResponseRedirect(reverse('accounts-edit-sounds'))
+                    return HttpResponseRedirect(reverse('accounts-edit-sounds') + '?next=' + request.path)
                 elif 'delete_confirm' in request.POST:
                     # Delete the selected sounds
                     n_sounds_deleted = 0

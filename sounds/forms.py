@@ -27,6 +27,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
 from django.core.signing import BadSignature, SignatureExpired
+from django.utils.timezone import now
 
 from accounts.forms import html_tags_help_text
 from sounds.models import License, Flag, Pack, Sound
@@ -215,6 +216,7 @@ class PackEditForm(ModelForm):
                 sound.pack = pack
                 sound.mark_index_dirty(commit=True)
         if commit:
+            pack.last_updated = now()
             pack.save()
         for affected_pack in affected_packs:
             affected_pack.process()

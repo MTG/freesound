@@ -101,6 +101,7 @@ def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=Fa
         sound_num_ratings = sound.num_ratings
     request = context['request']
 
+    user_has_rated_this_sound = False
     if not use_request_user_rating:
         if sound_num_ratings >= settings.MIN_NUMBER_RATINGS:
             sound_rating = sound_avg_rating
@@ -109,6 +110,7 @@ def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=Fa
     else:
         try:
             sound_rating = sound.ratings.get(user=request.user).rating
+            user_has_rated_this_sound = True
         except (SoundRating.DoesNotExist, TypeError):
             sound_rating = 0
     has_min_ratings = sound_num_ratings >= settings.MIN_NUMBER_RATINGS
@@ -132,8 +134,11 @@ def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=Fa
     return {'sound_user': sound_user,
             'allow_rating': allow_rating,
             'sound': sound,
+            'sound_rating_0_5': sound_rating/2,
+            'user_has_rated_this_sound': user_has_rated_this_sound,
             'has_min_ratings': has_min_ratings,
             'show_added_rating_on_save': show_added_rating_on_save,
+            'use_request_user_rating': use_request_user_rating,
             'fill_class': 'text-red' if not use_request_user_rating else 'text-yellow',
             'stars_range': list(zip(stars_5, list(range(1, 6))))}
 

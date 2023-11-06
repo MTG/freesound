@@ -59,7 +59,7 @@ from general.templatetags.util import formatnumber
 from tags.models import TaggedItem, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, Queue, TicketComment
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_template_cache, invalidate_user_template_caches
 from utils.locations import locations_decorator
 from utils.mail import send_mail_template
 from utils.search import get_search_engine, SearchEngineException
@@ -1645,9 +1645,14 @@ class Pack(models.Model):
         sounds = self.sounds.filter(processing_state="OK", moderation_state="OK").order_by("-created")
         self.num_sounds = sounds.count()
         if self.num_sounds:
-            self.last_updated = sounds[0].created
+            if sounds[0].created > self.last_updated:
+                # Only update last_updated if the sound that changed was created after the packs last_updated time
+                # Otherwise it could be that the pack was edited (e.g. the description was changed) ater the last
+                # sound was added and we could be setting the date of the sound here
+                self.last_updated = sounds[0].created
         self.save()
         self.invalidate_template_caches()
+        invalidate_user_template_caches(self.user_id)
 
     def get_random_sounds_from_pack(self, N=3):
         """

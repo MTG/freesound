@@ -194,9 +194,15 @@ def ticket(request, ticket_key):
     if clean_comment_form:
         tc_form = _get_tc_form(request, False)
 
+    if request.user.has_perm('tickets.can_moderate'):
+        num_mod_annotations = UserAnnotation.objects.filter(user=ticket.sender).count()
+    else:
+        num_mod_annotations = None
+
     tvars = {"ticket": ticket,
              "tc_form": tc_form,
              "sound_form": sound_form,
+             "num_mod_annotations": num_mod_annotations,
              "can_view_moderator_only_messages": can_view_moderator_only_messages,
              "num_sounds_pending": ticket.sender.profile.num_sounds_pending_moderation()
     }
@@ -637,6 +643,17 @@ def moderation_assigned(request, user_id):
             ticket.status = TICKET_STATUS_CLOSED
             ticket.save()
 
+    # We annotate the tickets with a boolean to indicate if their senders have any mod annotations.
+    # Note that we might be able to optimize this bit with some custom SQL or some django ORM magic
+    users_num_mod_annotations = {}
+    for ticket in pagination_response['page'].object_list:
+        if ticket.sender_id not in users_num_mod_annotations:
+            num_mod_annotations = UserAnnotation.objects.filter(user=ticket.sender).count()
+            users_num_mod_annotations[ticket.sender_id] = num_mod_annotations
+        else:
+            num_mod_annotations = users_num_mod_annotations[ticket.sender_id]
+        ticket.num_mod_annotations = num_mod_annotations
+    
     moderator_tickets_count = qs.count()
     show_pagination = moderator_tickets_count > page_size
 

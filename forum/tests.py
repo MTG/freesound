@@ -612,7 +612,7 @@ class ForumModerationTestCase(TestCase):
 
         self.client.force_login(self.admin_user)
         resp = self.client.post(reverse('forums-moderate'), data={
-            'action': ['Approve'], 'post': [str(self.post.id)],
+            f'{self.post.id}-action': ['Approve'], f'{self.post.id}-post': [f'{self.post.id}'],
         })
         self.assertEqual(resp.status_code, 200)
         self.post.refresh_from_db()
@@ -623,7 +623,7 @@ class ForumModerationTestCase(TestCase):
         self.client.force_login(self.admin_user)
 
         resp = self.client.post(reverse('forums-moderate'), data={
-            'action': ['Delete User'], 'post': [str(self.post.id)],
+            f'{self.post.id}-action': ['Delete User'], f'{self.post.id}-post': [f'{self.post.id}'],
         })
         self.assertEqual(resp.status_code, 200)
         with self.assertRaises(Post.DoesNotExist):
@@ -638,7 +638,7 @@ class ForumModerationTestCase(TestCase):
         self.client.force_login(self.admin_user)
 
         resp = self.client.post(reverse('forums-moderate'), data={
-            'action': ['Delete Post'], 'post': [str(self.post.id)],
+            f'{self.post.id}-action': ['Delete Post'], f'{self.post.id}-post': [f'{self.post.id}'],
         })
         self.assertEqual(resp.status_code, 200)
         with self.assertRaises(Post.DoesNotExist):
@@ -653,7 +653,7 @@ class ForumModerationTestCase(TestCase):
         self.client.force_login(self.admin_user)
 
         resp = self.client.post(reverse('forums-moderate'), data={
-            'action': ['Delete Post'], 'post': [str(self.post.id+1)],
+            f'{self.post.id}-action': ['Delete Post'], f'{self.post.id}-post': [f'{self.post.id}'],
         })
         self.assertEqual(resp.status_code, 200)
 

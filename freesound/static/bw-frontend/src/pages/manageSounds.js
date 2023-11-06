@@ -6,6 +6,11 @@ if (editSelectedSoundsButton !== null){
     editSelectedSoundsButton.disabled = true;
 }
 
+const editSelectedPacksButton = document.getElementById('edit-packs-button');
+if (editSelectedPacksButton !== null){
+    editSelectedPacksButton.disabled = true;
+}
+
 const removeSelectedItemsButton = document.getElementById('remove-button');
 if (removeSelectedItemsButton !== null){
     removeSelectedItemsButton.disabled = true;
@@ -26,6 +31,10 @@ objectSelector.forEach(selectorElement => {
     initializeObjectSelector(selectorElement, (element) => {
         if (editSelectedSoundsButton !== null){
             editSelectedSoundsButton.disabled = element.dataset.selectedIds === "";
+        }
+        if (editSelectedPacksButton !== null){
+            const numSelectedIds =  element.dataset.selectedIds === "" ? 0: element.dataset.selectedIds.split(',').length;
+            editSelectedPacksButton.disabled = numSelectedIds !== 1;
         }
         if (removeSelectedItemsButton !== null){
             removeSelectedItemsButton.disabled = element.dataset.selectedIds === "";

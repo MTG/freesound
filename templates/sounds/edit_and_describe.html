@@ -18,7 +18,7 @@
     {% if num_forms > 1%}<strong>Click on the sound filenames below to display the form for {% if describing %}describing{% else %}editing{% endif %} each sound</strong>.{% endif %}</p>
 </div>
 
-<form id="edit_describe_form" action="." method="post" novalidate class="disable-on-submit do-not-submit-on-enter bw-form">{% csrf_token %}
+<form id="edit_describe_form" method="post" novalidate class="disable-on-submit do-not-submit-on-enter bw-form">{% csrf_token %}
 <div class="row no-gutters">
     <div class="col-lg-8 {% if num_forms == 1 %}offset-lg-2{% endif %}">
         <div>

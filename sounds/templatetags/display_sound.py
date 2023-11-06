@@ -149,6 +149,10 @@ def display_sound_small_no_bookmark(context, sound):
     return display_sound(context, sound, player_size='small', show_bookmark=False, show_similar_sounds=False, show_remix=False, show_rate_widget=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small_no_bookmark_no_ratings(context, sound):
+    return display_sound(context, sound, player_size='small', show_bookmark=False, show_similar_sounds=False, show_remix=False, show_rate_widget=False)
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_middle(context, sound):
     return display_sound(context, sound, player_size='middle', show_bookmark=True, show_similar_sounds=True, show_remix=True)
 
@@ -249,7 +253,7 @@ def display_sound_small_no_sound_object_no_bookmark(context, file_data):
 @register.inclusion_tag('sounds/display_sound_selectable.html', takes_context=True)
 def display_sound_small_selectable(context, sound, selected=False):
     context = context.get('original_context', context)  # This is to allow passing context in nested inclusion tags
-    tvars = display_sound_small_no_bookmark(context, sound)
+    tvars = display_sound_small_no_bookmark_no_ratings(context, sound)
     tvars.update({
         'selected': selected,
     })

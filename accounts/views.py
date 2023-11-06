@@ -560,7 +560,7 @@ def handle_uploaded_image(profile, f):
         destination.close()
         upload_logger.info("\tfile upload done")
     except Exception as e:
-        upload_logger.error("\tfailed writing file error: %s", str(e))
+        upload_logger.info("\tfailed writing file error: %s", str(e))
 
     upload_logger.info("\tcreating thumbnails")
     path_s = profile.locations("avatar.S.path")
@@ -573,25 +573,25 @@ def handle_uploaded_image(profile, f):
         profile.has_avatar = True
         profile.save()
     except Exception as e:
-        upload_logger.error("\tfailed creating small thumbnails: " + str(e))
+        upload_logger.info("\tfailed creating small thumbnails: " + str(e))
 
     try:
         extract_square(tmp_image_path, path_m, 40)
         upload_logger.info("\tcreated medium thumbnail")
     except Exception as e:
-        upload_logger.error("\tfailed creating medium thumbnails: " + str(e))
+        upload_logger.info("\tfailed creating medium thumbnails: " + str(e))
 
     try:
         extract_square(tmp_image_path, path_l, 70)
         upload_logger.info("\tcreated large thumbnail")
     except Exception as e:
-        upload_logger.error("\tfailed creating large thumbnails: " + str(e))
+        upload_logger.info("\tfailed creating large thumbnails: " + str(e))
 
     try:
         extract_square(tmp_image_path, path_xl, 100)
         upload_logger.info("\tcreated extra-large thumbnail")
     except Exception as e:
-        upload_logger.error("\tfailed creating extra-large thumbnails: " + str(e))
+        upload_logger.info("\tfailed creating extra-large thumbnails: " + str(e))
 
     copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)
@@ -653,7 +653,7 @@ def manage_sounds(request, tab):
             return tvars_or_redirect
 
     elif tab == 'packs':
-        if request.POST and ('delete_confirm' in request.POST):
+        if request.POST and ('edit' in request.POST or 'delete_confirm' in request.POST):
             try:
                 pack_ids = [int(part) for part in request.POST.get('object-ids', '').split(',')]
             except ValueError:
@@ -661,8 +661,14 @@ def manage_sounds(request, tab):
             packs = Pack.objects.ordered_ids(pack_ids)
             # Just as a sanity check, filter out packs not owned by the user
             packs = [pack for pack in packs if pack.user == pack.user]
+    
             if packs:
-                if 'delete_confirm' in request.POST:
+                if 'edit' in request.POST:
+                    # There will be only one pack selected (otherwise the button is disabled)
+                    # Redirect to the edit pack page
+                    pack = packs[0]
+                    return HttpResponseRedirect(reverse('pack-edit', args=[pack.user.username, pack.id]) + '?next=' + request.path)
+                elif 'delete_confirm' in request.POST:
                     # Delete the selected packs
                     n_packs_deleted = 0
                     for pack in packs:
@@ -670,8 +676,8 @@ def manage_sounds(request, tab):
                         pack.delete_pack(remove_sounds=False)
                         n_packs_deleted += 1
                     messages.add_message(request, messages.INFO,
-                                         f'Successfully deleted {n_packs_deleted} '
-                                         f'pack{"s" if n_packs_deleted != 1 else ""}')
+                                        f'Successfully deleted {n_packs_deleted} '
+                                        f'pack{"s" if n_packs_deleted != 1 else ""}')
                     return HttpResponseRedirect(reverse('accounts-manage-sounds', args=[tab]))
 
         sort_options = [
@@ -711,7 +717,7 @@ def manage_sounds(request, tab):
                     clear_session_edit_and_describe_data(request)
                     request.session['edit_sounds'] = sounds  # Add the list of sounds to edit in the session object
                     request.session['len_original_describe_edit_sounds'] = len(sounds)
-                    return HttpResponseRedirect(reverse('accounts-edit-sounds'))
+                    return HttpResponseRedirect(reverse('accounts-edit-sounds') + '?next=' + request.path)
                 elif 'delete_confirm' in request.POST:
                     # Delete the selected sounds
                     n_sounds_deleted = 0
@@ -831,7 +837,7 @@ def sounds_pending_description_helper(request, file_structure, files):
                         remove_uploaded_file_from_mirror_locations(files[f].full_path)
                     except OSError as e:
                         if e.errno == errno.ENOENT:
-                            upload_logger.error("Failed to remove file %s", str(e))
+                            upload_logger.info("Failed to remove file %s", str(e))
                         else:
                             raise
 

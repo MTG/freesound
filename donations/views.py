@@ -147,7 +147,7 @@ def donation_complete_paypal(request):
         try:
             req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
         except requests.exceptions.Timeout:
-            web_logger.error("Can't verify donations information with paypal")
+            web_logger.info("Can't verify donations information with paypal")
             return HttpResponse("FAIL")
 
         if req.text == 'VERIFIED':

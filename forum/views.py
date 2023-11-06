@@ -494,7 +494,14 @@ def post_edit(request, post_id):
 def moderate_posts(request):
     PostModerationFormClass = PostModerationForm if not using_beastwhoosh(request) else BwPostModerationForm
     if request.method == 'POST':
-        mod_form = PostModerationFormClass(request.POST)
+        
+        # Only the form for one post will be sent at a time, but we need to get the post ID from the request so we know which form prefix to use
+        post_id = -1
+        for key in request.POST.keys():
+            if key.endswith('-post'):
+                post_id = int(key.split('-')[0])
+        
+        mod_form = PostModerationFormClass(request.POST, prefix=f'{post_id}')
         if mod_form.is_valid():
             action = mod_form.cleaned_data.get("action")
             post_id = mod_form.cleaned_data.get("post")
@@ -526,7 +533,7 @@ def moderate_posts(request):
     pending_posts = Post.objects.filter(moderation_state='NM').select_related('author', 'author__profile')
     post_list = []
     for p in pending_posts:
-        f = PostModerationFormClass(initial={'action': 'Approve', 'post': p.id})
+        f = PostModerationFormClass(initial={'action': 'Approve', 'post': p.id}, prefix=f'{p.id}')
         post_list.append({'post': p, 'form': f})
 
     tvars = {'post_list': post_list,

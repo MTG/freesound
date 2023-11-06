@@ -1,5 +1,8 @@
 {% load bw_templatetags %}
-<div class="bw-rating__container" data-show-added-rating-on-save="{{ show_added_rating_on_save|yesno:"true,false" }}" {% if not has_min_ratings %}title="Average rating not shown as there are not enough ratings"{% endif %}>
+<div class="bw-rating__container" 
+    data-show-added-rating-on-save="{{ show_added_rating_on_save|yesno:"true,false" }}" 
+    {% if use_request_user_rating %}aria-label={% if user_has_rated_this_sound %}"Rating of {{ sound_rating_0_5|floatformat:0 }}"{% else %}"User has not rated this sound"{% endif %}{% else %}
+    {% if not has_min_ratings %}title="Average rating not shown as there are not enough ratings" aria-label="Not enough ratings to show average"{% else %}aria-label="Average rating of {{ sound_rating_0_5|floatformat:1 }}"{% endif %}{% endif %}>
     {% for star_type, i in stars_range reversed %}
         {% if allow_rating %}
             <input class="bw-rating__input" type="radio" name="rate-{{ sound.id }}" data-rate-url="{% url "sound-rating-add" sound_user sound.id i %}" id="rate-{{ sound.id }}-{{ i }}" value="{{ i }}">

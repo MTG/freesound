@@ -68,4 +68,4 @@ def cluster_sounds(cache_key_hashed, sound_ids, features):
     except Exception as e:  
         # delete pending state if exception raised during clustering
         cache_clustering.set(cache_key_hashed, CLUSTERING_RESULT_STATUS_FAILED, CLUSTERING_PENDING_CACHE_TIME)
-        logger.error("Exception raised while clustering sounds", exc_info=True)
+        logger.info("Exception raised while clustering sounds", exc_info=True)

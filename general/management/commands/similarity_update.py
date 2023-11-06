@@ -19,6 +19,7 @@
 #
 
 import logging
+import sentry_sdk
 
 from django.conf import settings
 
@@ -99,7 +100,8 @@ class Command(LoggingBaseCommand):
                 if not options['indexing_server']:
                     sound.set_similarity_state('FA')
                 n_failed += 1
-                console_logger.error('Unexpected error while trying to add sound (id: %i, %i of %i): \n\t%s'
+                console_logger.info('Unexpected error while trying to add sound (id: %i, %i of %i): \n\t%s'
                                      % (sound.id, count+1, N, str(e)))
+                sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
         self.log_end({'n_sounds_added': n_added, 'n_sounds_failed': n_failed})

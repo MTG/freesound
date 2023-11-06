@@ -605,14 +605,14 @@ def edit_and_describe_sounds_helper(request):
             except AlreadyExistsException as e:
                 messages.add_message(request, messages.WARNING, str(e))
             except CantMoveException as e:
-                upload_logger.error(str(e))
+                upload_logger.info(str(e))
 
         # Trigger processing of sounds and of affected packs
         try:
             for s in sounds_to_process:
                 s.process_and_analyze()
         except Exception as e:
-            sounds_logger.error(f'Sound with id {s.id} could not be sent to processing. ({str(e)})')
+            sounds_logger.info(f'Sound with id {s.id} could not be sent to processing. ({str(e)})')
         for p in dirty_packs:
             p.process()
 
@@ -799,17 +799,20 @@ def edit_and_describe_sounds_helper(request):
 
             # If user was only editing one sound and has finished, redirect to the sound page
             if len(forms) == 1 and len_original_describe_edit_sounds == 1:
-                return HttpResponseRedirect(sounds[0].get_absolute_url())
+                redirect_to = request.GET.get('next', sounds[0].get_absolute_url())
+                return HttpResponseRedirect(redirect_to)
 
             messages.add_message(request, messages.INFO, 
                 f'Successfully finished sound editing round {current_round} of {num_rounds}!')
             if not request.session['edit_sounds']:
                 # If no more sounds to edit, redirect to manage sounds page
                 clear_session_edit_and_describe_data(request)
-                return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['published']))
+                redirect_to = request.GET.get('next', reverse('accounts-manage-sounds', args=['published']))
+                return HttpResponseRedirect(redirect_to)
             else:
                 # Otherwise, redirect to the same page to continue with next round of sounds
-                return HttpResponseRedirect(reverse('accounts-edit-sounds'))
+                next_arg = request.GET.get('next', None)
+                return HttpResponseRedirect(reverse('accounts-edit-sounds') + '?next=' + next_arg if next_arg else '')
         
     return render(request, 'sounds/edit_and_describe.html', tvars)
 
@@ -831,7 +834,8 @@ def pack_edit(request, username, pack_id):
         if form.is_valid():
             form.save()
             pack.sounds.all().update(is_index_dirty=True)
-            return HttpResponseRedirect(pack.get_absolute_url())
+            redirect_to = request.GET.get('next', pack.get_absolute_url())
+            return HttpResponseRedirect(redirect_to)
     else:
         form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds), label_suffix='' if using_beastwhoosh(request) else ':')
         current_sounds = Sound.objects.bulk_sounds_for_pack(pack_id=pack.id)

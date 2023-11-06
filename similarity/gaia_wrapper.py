@@ -535,7 +535,7 @@ class GaiaWrapper(object):
                     target_file_parsing_type = 'mapPoint'
 
                 except Exception as e:
-                    logger.error('Unable to create gaia point from uploaded file (%s). '
+                    logger.info('Unable to create gaia point from uploaded file (%s). '
                                  'Trying adding descriptors one by one.' % e)
 
                     # If does not work load descriptors one by one
@@ -577,7 +577,7 @@ class GaiaWrapper(object):
                         target_file_parsing_type = 'walkDict'
 
                     except Exception as e:
-                        logger.error('Unable to create gaia point from uploaded file and adding descriptors one by '
+                        logger.info('Unable to create gaia point from uploaded file and adding descriptors one by '
                                      'one (%s)' % e)
                         return {'error': True, 'result': 'Unable to create gaia point from uploaded file. Probably the '
                                                          'file does not have the required layout. Are you using the '

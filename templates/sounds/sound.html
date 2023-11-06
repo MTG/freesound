@@ -250,10 +250,10 @@
                         </div>
                         <div>
                             <ol class="center">
-                                <li><a class="no-hover" href="https://www.facebook.com/sharer/sharer.php?u={% absurl 'short-sound-link' sound.id %}" target="_blank"><div class="cleanIcon">{% bw_icon 'facebook' 'text-30' %}</div></a></li>
-                                <li class="h-spacing-left-2"><a class="no-hover" href="https://twitter.com/share?url={% absurl 'short-sound-link' sound.id %}" target="_blank"><div class="cleanIcon">{% bw_icon 'twitter' 'text-30' %}</div></a></li>
-                                <li class="h-spacing-left-2"><a id="toggle-share-link" class="cursor-pointer no-hover"><div class="cleanIcon">{% bw_icon 'share2' 'bw-icon__inside_circle' %}</div></a></li>
-                                <li class="h-spacing-left-2"><a id="toggle-embed-code" class="cursor-pointer no-hover"><div class="cleanIcon">{% bw_icon 'embed-stroke' 'text-30' %}</div></a></li>
+                                <li aria-label="Share in Facebook"><a class="no-hover" href="https://www.facebook.com/sharer/sharer.php?u={% absurl 'short-sound-link' sound.id %}" target="_blank"><div class="cleanIcon">{% bw_icon 'facebook' 'text-30' %}</div></a></li>
+                                <li aria-label="Share in Twitter" class="h-spacing-left-2"><a class="no-hover" href="https://twitter.com/share?url={% absurl 'short-sound-link' sound.id %}" target="_blank"><div class="cleanIcon">{% bw_icon 'twitter' 'text-30' %}</div></a></li>
+                                <li aria-label="Share URL" class="h-spacing-left-2"><a id="toggle-share-link" class="cursor-pointer no-hover"><div class="cleanIcon">{% bw_icon 'share2' 'bw-icon__inside_circle' %}</div></a></li>
+                                <li aria-label="Embed this sound" class="h-spacing-left-2"><a id="toggle-embed-code" class="cursor-pointer no-hover"><div class="cleanIcon">{% bw_icon 'embed-stroke' 'text-30' %}</div></a></li>
                             </ol>
                         </div>
 

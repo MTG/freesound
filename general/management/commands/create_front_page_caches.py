@@ -70,27 +70,27 @@ class Command(LoggingBaseCommand):
         trending_sound_ids = Download.objects \
             .filter(created__gte=last_week).exclude(sound__is_explicit=True) \
             .values('sound_id').annotate(n_downloads=Count('sound_id')) \
-            .order_by('-n_downloads').values_list('sound_id', flat=True)[0:NUM_ITEMS_PER_SECTION]
+            .order_by('-n_downloads').values_list('sound_id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
         trending_sound_ids = list(trending_sound_ids)
         random.shuffle(trending_sound_ids)  # Randomize the order of the sounds
-        cache.set("trending_sound_ids", trending_sound_ids,  cache_time)
+        cache.set("trending_sound_ids", trending_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
 
         # Generate trending new sounds cache (most downloaded sounds from those created last week)
         trending_new_sound_ids = Sound.public.select_related('license', 'user') \
             .annotate(greatest_date=Greatest('created', 'moderation_date')) \
             .filter(greatest_date__gte=last_week).exclude(is_explicit=True) \
-            .order_by("-num_downloads").values_list('id', flat=True)[0:NUM_ITEMS_PER_SECTION]
+            .order_by("-num_downloads").values_list('id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
         trending_new_sound_ids = list(trending_new_sound_ids)
         random.shuffle(trending_new_sound_ids)  # Randomize the order of the sounds
-        cache.set("trending_new_sound_ids", list(trending_new_sound_ids),  cache_time)
+        cache.set("trending_new_sound_ids", trending_new_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
 
         # Generate trending new packs cache (most downloaded packs from those created last week)
         trending_new_pack_ids = Pack.objects.select_related('user') \
             .filter(created__gte=last_week,  num_sounds__gt=0).exclude(is_deleted=True) \
-            .order_by("-num_downloads").values_list('id', flat=True)[0:NUM_ITEMS_PER_SECTION]
+            .order_by("-num_downloads").values_list('id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
         trending_new_pack_ids = list(trending_new_pack_ids)
         random.shuffle(trending_new_pack_ids)  # Randomize the order of the packs
-        cache.set("trending_new_pack_ids", list(trending_new_pack_ids), cache_time)
+        cache.set("trending_new_pack_ids", trending_new_pack_ids[0:NUM_ITEMS_PER_SECTION], cache_time)
 
         # Generate latest "random sound of the day" ids
         recent_random_sound_ids = [sd.sound_id for sd in SoundOfTheDay.objects.filter(date_display__lt=datetime.datetime.today()).order_by('-date_display')[:NUM_ITEMS_PER_SECTION]]

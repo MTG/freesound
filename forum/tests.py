@@ -653,7 +653,7 @@ class ForumModerationTestCase(TestCase):
         self.client.force_login(self.admin_user)
 
         resp = self.client.post(reverse('forums-moderate'), data={
-            f'{self.post.id}-action': ['Delete Post'], f'{self.post.id}-post': [f'{self.post.id}'],
+            f'1234-action': ['Delete Post'], f'1234-post': [f'1234'],
         })
         self.assertEqual(resp.status_code, 200)
 

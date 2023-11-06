@@ -132,7 +132,7 @@
             {% if tab == 'published' or tab == 'pending_moderation' %}
                 <form action="." method="post">{% csrf_token %}
                     <input type="hidden" name="object-ids" value="">
-                    <button id="edit-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" disabled  name="edit">Edit description</button>
+                    <button id="edit-button" class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-3" disabled  name="edit">Edit sounds</button>
                     <button id="remove-button" class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-3" name="delete" disabled>Remove sounds</button>
                     <button id="remove-button-hidden" class="display-none" name="delete_confirm"></button>
                 </form>

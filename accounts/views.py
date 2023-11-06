@@ -593,7 +593,7 @@ def handle_uploaded_image(profile, f):
         destination.close()
         upload_logger.info("\tfile upload done")
     except Exception as e:
-        upload_logger.error("\tfailed writing file error: %s", str(e))
+        upload_logger.info("\tfailed writing file error: %s", str(e))
 
     upload_logger.info("\tcreating thumbnails")
     path_s = profile.locations("avatar.S.path")
@@ -606,25 +606,25 @@ def handle_uploaded_image(profile, f):
         profile.has_avatar = True
         profile.save()
     except Exception as e:
-        upload_logger.error("\tfailed creating small thumbnails: " + str(e))
+        upload_logger.info("\tfailed creating small thumbnails: " + str(e))
 
     try:
         extract_square(tmp_image_path, path_m, 40)
         upload_logger.info("\tcreated medium thumbnail")
     except Exception as e:
-        upload_logger.error("\tfailed creating medium thumbnails: " + str(e))
+        upload_logger.info("\tfailed creating medium thumbnails: " + str(e))
 
     try:
         extract_square(tmp_image_path, path_l, 70)
         upload_logger.info("\tcreated large thumbnail")
     except Exception as e:
-        upload_logger.error("\tfailed creating large thumbnails: " + str(e))
+        upload_logger.info("\tfailed creating large thumbnails: " + str(e))
 
     try:
         extract_square(tmp_image_path, path_xl, 100)
         upload_logger.info("\tcreated extra-large thumbnail")
     except Exception as e:
-        upload_logger.error("\tfailed creating extra-large thumbnails: " + str(e))
+        upload_logger.info("\tfailed creating extra-large thumbnails: " + str(e))
 
     copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)
@@ -864,7 +864,7 @@ def sounds_pending_description_helper(request, file_structure, files):
                         remove_uploaded_file_from_mirror_locations(files[f].full_path)
                     except OSError as e:
                         if e.errno == errno.ENOENT:
-                            upload_logger.error("Failed to remove file %s", str(e))
+                            upload_logger.info("Failed to remove file %s", str(e))
                         else:
                             raise
 
@@ -1048,7 +1048,7 @@ def describe_sounds(request):
             except utils.sound_upload.AlreadyExistsException as e:
                 messages.add_message(request, messages.WARNING, str(e))
             except utils.sound_upload.CantMoveException as e:
-                upload_logger.error(str(e))
+                upload_logger.info(str(e))
 
         # Remove the files we just described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
@@ -1062,7 +1062,7 @@ def describe_sounds(request):
             for s in sounds_to_process:
                 s.process_and_analyze()
         except Exception as e:
-            sounds_logger.error(f'Sound with id {s.id} could not be scheduled. ({str(e)})')
+            sounds_logger.info(f'Sound with id {s.id} could not be scheduled. ({str(e)})')
         for p in dirty_packs:
             p.process()
 

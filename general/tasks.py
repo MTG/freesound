@@ -23,6 +23,7 @@ import json
 import logging
 import os
 import time
+import sentry_sdk
 
 
 from celery import shared_task
@@ -166,9 +167,10 @@ def delete_user(user_id, deletion_action, deletion_reason):
     except Exception as e:
         # This exception is broad but we catch it so that we can log that an error happened.
         # TODO: catching more specific exceptions would be desirable
-        workers_logger.error("Unexpected error while deleting user (%s)" % json.dumps(
+        workers_logger.info("Unexpected error while deleting user (%s)" % json.dumps(
             {'task_name': deletion_action, 'user_id': user.id, 'username': user.username,
                 'deletion_reason': deletion_reason, 'error': str(e), 'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
 
 @shared_task(name=VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
@@ -187,10 +189,11 @@ def validate_bulk_describe_csv(bulk_upload_progress_object_id):
                 'work_time': round(time.time() - start_time)}))
     
     except BulkUploadProgress.DoesNotExist as e:
-        workers_logger.error("Error validating of BulkUploadProgress (%s)" % json.dumps(
+        workers_logger.info("Error validating of BulkUploadProgress (%s)" % json.dumps(
             {'task_name': VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
                 'error': str(e),
                 'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
 
 @shared_task(name=BULK_DESCRIBE_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
@@ -212,10 +215,11 @@ def bulk_describe(bulk_upload_progress_object_id):
                 'work_time': round(time.time() - start_time)}))
     
     except BulkUploadProgress.DoesNotExist as e:
-        workers_logger.error("Error describing sounds of BulkUploadProgress (%s)" % json.dumps(
+        workers_logger.info("Error describing sounds of BulkUploadProgress (%s)" % json.dumps(
             {'task_name': BULK_DESCRIBE_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
                 'error': str(e),
                 'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
 
 @shared_task(name=PROCESS_ANALYSIS_RESULTS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
@@ -264,9 +268,10 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
                  'work_time': round(time.time() - start_time)}))
 
     except (SoundAnalysis.DoesNotExist, Exception) as e:
-        workers_logger.error("Error processing analysis results (%s)" % json.dumps(
+        workers_logger.info("Error processing analysis results (%s)" % json.dumps(
                 {'task_name': PROCESS_ANALYSIS_RESULTS_TASK_NAME, 'sound_id': sound_id, 'analyzer': analyzer, 'status': status,
                  'error': str(e), 'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
 
 @shared_task(name=SOUND_PROCESSING_TASK_NAME, queue=settings.CELERY_SOUND_PROCESSING_QUEUE_NAME)
@@ -305,9 +310,10 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
             sound.change_processing_state("FA", processing_log=str(e))
         except Sound.DoesNotExist:
             pass
-        workers_logger.error("WorkerException while processing sound (%s)" % json.dumps(
+        workers_logger.info("WorkerException while processing sound (%s)" % json.dumps(
             {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
     except Exception as e:
         try:
@@ -316,9 +322,10 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
             sound.change_processing_state("FA", processing_log=str(e))
         except Sound.DoesNotExist:
             pass
-        workers_logger.error("Unexpected error while processing sound (%s)" % json.dumps(
+        workers_logger.info("Unexpected error while processing sound (%s)" % json.dumps(
             {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
     cancel_timeout_alarm()
 
@@ -349,13 +356,15 @@ def process_before_description(audio_file_path):
                  'work_time': round(time.time() - start_time)}))
 
     except WorkerException as e:
-        workers_logger.error("WorkerException while processing-before-describe sound (%s)" % json.dumps(
+        workers_logger.info("WorkerException while processing-before-describe sound (%s)" % json.dumps(
             {'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
     except Exception as e:
-        workers_logger.error("Unexpected error while processing-before-describe sound (%s)" % json.dumps(
+        workers_logger.info("Unexpected error while processing-before-describe sound (%s)" % json.dumps(
             {'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
     cancel_timeout_alarm()

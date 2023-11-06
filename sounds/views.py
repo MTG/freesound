@@ -640,14 +640,14 @@ def edit_and_describe_sounds_helper(request):
             except AlreadyExistsException as e:
                 messages.add_message(request, messages.WARNING, str(e))
             except CantMoveException as e:
-                upload_logger.error(str(e))
+                upload_logger.info(str(e))
 
         # Trigger processing of sounds and of affected packs
         try:
             for s in sounds_to_process:
                 s.process_and_analyze()
         except Exception as e:
-            sounds_logger.error(f'Sound with id {s.id} could not be sent to processing. ({str(e)})')
+            sounds_logger.info(f'Sound with id {s.id} could not be sent to processing. ({str(e)})')
         for p in dirty_packs:
             p.process()
 

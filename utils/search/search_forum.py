@@ -41,8 +41,8 @@ def add_posts_to_search_engine(post_objects):
         get_search_engine().add_forum_posts_to_index(post_objects)
         return num_posts
     except SearchEngineException as e:
-        console_logger.error(f"Failed to add posts to search engine index: {str(e)}")
-        search_logger.error(f"Failed to add posts to search engine index: {str(e)}")
+        console_logger.info(f"Failed to add posts to search engine index: {str(e)}")
+        search_logger.info(f"Failed to add posts to search engine index: {str(e)}")
         return 0
 
 
@@ -57,8 +57,8 @@ def delete_posts_from_search_engine(post_ids):
     try:
         get_search_engine().remove_forum_posts_from_index(post_ids)
     except SearchEngineException as e:
-        console_logger.error(f"Could not delete forum posts: {str(e)}")
-        search_logger.error(f"Could not delete forum posts: {str(e)}")
+        console_logger.info(f"Could not delete forum posts: {str(e)}")
+        search_logger.info(f"Could not delete forum posts: {str(e)}")
 
 
 def delete_all_posts_from_search_engine():
@@ -66,7 +66,7 @@ def delete_all_posts_from_search_engine():
     try:
         get_search_engine().remove_all_forum_posts()
     except SearchEngineException as e:
-        console_logger.error(f"Could not delete forum posts: {str(e)}")
+        console_logger.info(f"Could not delete forum posts: {str(e)}")
 
 
 def get_all_post_ids_from_search_engine(page_size=2000):
@@ -91,5 +91,5 @@ def get_all_post_ids_from_search_engine(page_size=2000):
             solr_count = response.num_found
             current_page += 1
     except SearchEngineException as e:
-        console_logger.error(f"Could retrieve all forum post IDs from search engine: {str(e)}")
+        console_logger.info(f"Could retrieve all forum post IDs from search engine: {str(e)}")
     return sorted(solr_ids)

@@ -136,7 +136,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         return True
 
     except Exception as e:
-        emails_logger.error('Error in send_mail (%s)' % json.dumps({
+        emails_logger.info('Error in send_mail (%s)' % json.dumps({
             'subject': subject,
             'extra_subject': extra_subject,
             'email_to': str(email_to),

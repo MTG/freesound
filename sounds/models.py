@@ -1136,7 +1136,7 @@ class Sound(models.Model):
             try:
                 os.rename(path, replace_user_id_in_path(path, self.user.id, new_owner.id))
             except OSError:
-                web_logger.error('WARNING changing owner of sound %i: Could not rename file %s because '
+                web_logger.info('WARNING changing owner of sound %i: Could not rename file %s because '
                                  'it does not exist.\n' % (self.id, path))
 
         # Deal with pack

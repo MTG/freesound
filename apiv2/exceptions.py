@@ -20,6 +20,7 @@
 
 
 import logging
+import sentry_sdk
 
 from rest_framework import status
 from rest_framework.exceptions import APIException
@@ -101,9 +102,10 @@ class ServerErrorException(APIException):
 
     def __init__(self, msg="Server error", resource=None):
         summary_message = '%i Server error' % self.status_code
-        errors_logger.error(apiv2.apiv2_utils.log_message_helper(summary_message, data_dict={
+        errors_logger.info(apiv2.apiv2_utils.log_message_helper(summary_message, data_dict={
             'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
+        sentry_sdk.capture_exception(self)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
 
 class OtherException(APIException):

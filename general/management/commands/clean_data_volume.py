@@ -38,7 +38,7 @@ def remove_folder(folderpath, recursively=False):
         # Then delete the folder itself 
         shutil.rmtree(folderpath)
     except Exception as e:
-        console_logger.error(f'ERROR removing folder {folderpath}: {e}')
+        console_logger.info(f'ERROR removing folder {folderpath}: {e}')
 
 
 class Command(LoggingBaseCommand):

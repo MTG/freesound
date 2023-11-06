@@ -25,6 +25,7 @@ import os
 import signal
 import logging
 import tempfile
+import sentry_sdk
 
 from django.apps import apps
 from django.conf import settings
@@ -103,7 +104,7 @@ class FreesoundAudioProcessorBase:
         self.work_log += message + '\n'
 
     def log_error(self, message):
-        console_logger.error(f"{self.sound.id} - {message}")
+        console_logger.info(f"{self.sound.id} - {message}")
         self.work_log += message + '\n'
 
     def set_failure(self, message, error=None):
@@ -372,7 +373,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
         console_logger.info(f"{self.audio_file_path} - {message}")
 
     def log_error(self, message):
-        console_logger.error(f"{self.audio_file_path} - {message}")
+        console_logger.info(f"{self.audio_file_path} - {message}")
 
     def set_failure(self, message, error=None):
         logging_message = f"file with path {self.audio_file_path} failed\n"

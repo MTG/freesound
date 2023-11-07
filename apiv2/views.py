@@ -1511,7 +1511,7 @@ def granted_permissions(request):
         'tokens': tokens,
         'grants': grants,
         'show_expiration_date': False,
-        'activePage': 'api',  # BW only
+        'activePage': 'api', 
     })
 
 

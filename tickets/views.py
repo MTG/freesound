@@ -496,7 +496,6 @@ def moderation_assign_single_ticket(request, ticket_id):
 @permission_required('tickets.can_moderate')
 @transaction.atomic()
 def moderation_assigned(request, user_id):
-    # TODO: once removing NG code, this view can be simplified as the msg form is now handled in the annotations modal
     clear_forms = True
     mod_sound_form = None
     msg_form = None

@@ -395,7 +395,7 @@ def edit_email_settings(request):
             })
     tvars = {
         'form': form,
-        'activePage': 'notifications'  # BW only
+        'activePage': 'notifications'
     }
     return render(request, 'accounts/edit_email_settings.html', tvars)
 
@@ -467,7 +467,7 @@ def edit(request):
         'has_granted_permissions': has_granted_permissions,
         'has_old_avatar': has_old_avatar,
         'uploads_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED,
-        'activePage': 'profile',  # For BW account settings sidebar
+        'activePage': 'profile', 
     }
     return render(request, 'accounts/edit.html', tvars)
 
@@ -750,12 +750,7 @@ def sounds_pending_description_helper(request, file_structure, files):
             tasks.validate_bulk_describe_csv.delay(bulk_upload_progress_object_id=bulk.id)
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
         elif form.is_valid():
-            if "delete" in request.POST:
-                # NOTE: this bit is never reached in BW becauyse confirmation is done via javascript
-                filenames = [files[x].name for x in form.cleaned_data["files"]]
-                tvars = {'form': form, 'filenames': filenames}
-                return render(request, 'accounts/confirm_delete_undescribed_files.html', tvars)
-            elif "delete_confirm" in request.POST:
+            if "delete_confirm" in request.POST:
                 for f in form.cleaned_data["files"]:
                     try:
                         os.remove(files[f].full_path)
@@ -1138,11 +1133,11 @@ def account(request, username):
         'show_about': show_about,
         'num_sounds_pending': num_sounds_pending,
         'num_mod_annotations': num_mod_annotations,
-        'following_modal_page': request.GET.get('following', 1),  # BW only, used to load a specific modal page
-        'followers_modal_page': request.GET.get('followers', 1),  # BW only
-        'following_tags_modal_page': request.GET.get('followingTags', 1),  # BW only
-        'last_geotags_serialized': last_geotags_serialized,  # BW only,
-        'user_downloads_public': settings.USER_DOWNLOADS_PUBLIC,  # BW only,
+        'following_modal_page': request.GET.get('following', 1),
+        'followers_modal_page': request.GET.get('followers', 1),
+        'following_tags_modal_page': request.GET.get('followingTags', 1),
+        'last_geotags_serialized': last_geotags_serialized, 
+        'user_downloads_public': settings.USER_DOWNLOADS_PUBLIC,
     }
     return render(request, 'accounts/account.html', tvars)
 
@@ -1372,7 +1367,7 @@ def delete(request):
     tvars = {
             'delete_form': form,
             'num_sounds': num_sounds,
-            'activePage': 'account',  # BW only
+            'activePage': 'account',
     }
     return render(request, 'accounts/delete.html', tvars)
 
@@ -1428,14 +1423,14 @@ def email_reset(request):
     tvars = {
         'form': form,
         'user': request.user,
-        'activePage': 'email'  # For BW account settings sidebar
+        'activePage': 'email'
     }
     return render(request, 'accounts/email_reset_form.html', tvars)
 
 
 def email_reset_done(request):
     return render(request, 'accounts/email_reset_done.html', {
-        'activePage': 'email' # For BW account settings sidebar
+        'activePage': 'email'
     })
 
 
@@ -1476,7 +1471,7 @@ def email_reset_complete(request, uidb36=None, token=None):
     tvars = {
         'old_email': old_email,
         'user': user,
-        'activePage': 'email' # For BW account settings sidebar
+        'activePage': 'email'
     }
     send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
                        'emails/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)

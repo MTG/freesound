@@ -1654,20 +1654,6 @@ class Pack(models.Model):
         self.invalidate_template_caches()
         invalidate_user_template_caches(self.user_id)
 
-    def get_random_sounds_from_pack(self, N=3):
-        """
-        Get N random sounds from this pack. If Pack has less than N sounds, then less than N sounds will be returned.
-
-        Args:
-            N (int): maximum number of random sounds to get
-
-        Returns:
-            List[Sound]: List of randomly selected Sound objects from the pack
-        """
-        # TODO: only used in NG, remove after we switch to BW (?)
-        sound_ids = list(Sound.public.filter(pack=self.id).order_by('?').values_list('id', flat=True)[:N])
-        return Sound.objects.ordered_ids(sound_ids=sound_ids)
-
     def get_pack_tags(self):
         try:
             pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)

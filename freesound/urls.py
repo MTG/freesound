@@ -77,7 +77,7 @@ urlpatterns = [
     path('people/<username>/followers/', follow.views.followers, name="user-followers"),
     path('people/<username>/following_tags/', follow.views.following_tags, name="user-following-tags"),
 
-    path('charts/', accounts.views.charts, name="charts"),  # BW only
+    path('charts/', accounts.views.charts, name="charts"),
 
     path('embed/sound/iframe/<int:sound_id>/simple/<player_size>/', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
     path('embed/geotags_box/iframe/', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),

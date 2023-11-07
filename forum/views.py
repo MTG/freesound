@@ -387,17 +387,6 @@ def old_topic_link_redirect(request):
 
 
 @login_required
-def post_delete(request, post_id):
-    # NOTE: this view is not used in beast whoosh because we use JS modal for confirmation of deletion
-    post = get_object_or_404(Post, id=post_id)
-    if post.author == request.user or request.user.has_perm('forum.delete_post'):
-        tvars = {'post': post}
-        return render(request, 'forum/confirm_deletion.html', tvars)
-    else:
-        raise Http404
-
-
-@login_required
 def post_delete_confirm(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if request.method == 'POST':

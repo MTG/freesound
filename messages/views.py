@@ -69,7 +69,7 @@ base_qs = Message.objects.select_related('body', 'user_from', 'user_to')
 @login_required
 def inbox(request):
     qs = base_qs.filter(user_to=request.user, is_archived=False, is_sent=False)
-    tvars = {'list_type': 'inbox'}  # Used in BW tabs nav only
+    tvars = {'list_type': 'inbox'} 
     tvars.update(paginate(
         request, qs,
         items_per_page=settings.MESSAGES_PER_PAGE))
@@ -80,9 +80,9 @@ def inbox(request):
 def sent_messages(request):
     qs = base_qs.filter(user_from=request.user, is_archived=False, is_sent=True)
     tvars = {
-        'list_type': 'sent',  # Used in BW tabs nav only
-        'hide_toggle_read_unread': True,   # Used to control available actions in BW only
-        'hide_archive_unarchive': True   # Used to control available actions in BW only
+        'list_type': 'sent',
+        'hide_toggle_read_unread': True,
+        'hide_archive_unarchive': True 
     } 
     tvars.update(paginate(
         request, qs,
@@ -93,7 +93,7 @@ def sent_messages(request):
 @login_required
 def archived_messages(request):
     qs = base_qs.filter(user_to=request.user, is_archived=True, is_sent=False)
-    tvars = {'list_type': 'archived'}  # Used in BW tabs nav only
+    tvars = {'list_type': 'archived'}
     tvars.update(paginate(
         request, qs,
         items_per_page=settings.MESSAGES_PER_PAGE))

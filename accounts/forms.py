@@ -207,7 +207,7 @@ class RegistrationForm(forms.Form):
         required=True,
         error_messages={'required': 'You must accept the terms of use in order to register to Freesound'}
     )
-    recaptcha = ReCaptchaField(label="")  # Note that this field needs to be the last to appear last in BW form
+    recaptcha = ReCaptchaField(label="")  # Note that this field needs to be the last to appear last in the form
 
     def clean_username(self):
         username = self.cleaned_data["username"]

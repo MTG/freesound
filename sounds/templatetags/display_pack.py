@@ -35,9 +35,8 @@ def display_pack(context, pack, size='small', show_bookmark_similarity_buttons=T
           argument is automatically added by Django when calling the templatetag inside a template.
         pack (int or Pack): pack ID or Pack object of the pack that will be shown. If no pack exists for the
           given ID, the display_pack.html will be rendered with empty HTML.
-        size (str, optional): size of the "info" to display. This parameter only applies to BW interface.
-          Must be one of ['small' (default), 'big']. Information about the contents of each
-          size is given in the display_pack.html template code.
+        size (str, optional): size of the "info" to display. Must be one of ['small' (default), 'big']. 
+          Information about the contents of each size is given in the display_pack.html template code.
 
     Returns:
         dict: dictionary with the variables needed for rendering the pack with the display_pack.html template

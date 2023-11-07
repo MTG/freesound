@@ -195,9 +195,9 @@ def front_page(request):
         'is_authenticated': request.user.is_authenticated,
         'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM,
         'show_link_to_new_ui': settings.SHOW_LINK_TO_NEW_UI_IN_OLD_FRONT_PAGE,
-        'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,  # Used for beast whoosh only
-        'query_suggestions_url': reverse('query-suggestions'),  # Used for beast whoosh only
-        'enable_popular_searches': settings.ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE,  # Used for beast whoosh only
+        'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,
+        'query_suggestions_url': reverse('query-suggestions'),
+        'enable_popular_searches': settings.ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE,
     }
     return render(request, 'front.html', tvars)
 
@@ -846,7 +846,7 @@ def pack(request, username, pack_id):
         'num_sounds_ok': num_sounds_ok,
         'pack_sounds': pack_sounds,
         'is_following': is_following,
-        'geotags_in_pack_serialized': geotags_in_pack_serialized  # BW only
+        'geotags_in_pack_serialized': geotags_in_pack_serialized
     }
     return render(request, 'sounds/pack.html', tvars)
 

@@ -126,7 +126,7 @@ def follow_user(request, username):
     invalidate_user_template_caches(user_from.id)
     invalidate_user_template_caches(user_to.id)
 
-    # In BW we check if there's next parameter, and if there is we redirect to it
+    # Check if there's next parameter, and if there is we redirect to it
     # This is to implement follow/unfollow without Javascript
     redirect_to = request.GET.get('next', None)
     if redirect_to is not None:
@@ -147,7 +147,7 @@ def unfollow_user(request, username):
         # If the relation does not exist we're fine, should have never got to here...
         pass
 
-    # In BW we check if there's next parameter, and if there is we redirect to it
+    # Check if there's next parameter, and if there is we redirect to it
     # This is to implement follow/unfollow without Javascript
     redirect_to = request.GET.get('next', None)
     if redirect_to is not None:
@@ -163,7 +163,7 @@ def follow_tags(request, slash_tags):
     FollowingQueryItem.objects.get_or_create(user=user, query=space_tags)
     invalidate_user_template_caches(user.id)
 
-    # In BW we check if there's next parameter, and if there is we redirect to it
+    # Check if there's next parameter, and if there is we redirect to it
     # This is to implement follow/unfollow without Javascript
     redirect_to = request.GET.get('next', None)
     if redirect_to is not None:
@@ -183,7 +183,7 @@ def unfollow_tags(request, slash_tags):
         # If the relation does not exist we're fine, should have never got to here...
         pass
 
-    # In BW we check if there's next parameter, and if there is we redirect to it
+    # Check if there's next parameter, and if there is we redirect to it
     # This is to implement follow/unfollow without Javascript
     redirect_to = request.GET.get('next', None)
     if redirect_to is not None:

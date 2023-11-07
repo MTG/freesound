@@ -13,16 +13,14 @@
             var isEmbed = true;
             var spectrogramByDefault = {{ use_spectrogram|yesno:"true,false" }};
             var showToggleDisplayButton = {{ show_toggle_display_button|yesno:"true,false" }};
-            {% if size == "full_size" or "full_size_no_info" %}
+            {% if size == "full_size" or size ==  "full_size_no_info" %}
                 function adjust_size_for_twitter_card() {
                     var sampleInfoElement = document.getElementById('sample_info_element');
                     var sampleInfoElementHeight = 0;
                     if (sampleInfoElement !== null){        
                         sampleInfoElementHeight = sampleInfoElement.offsetHeight;
                     } 
-                
                     var playerElement = document.getElementById('player_element');
-
                     // Get width of player and height of header
                     var playerWidth = playerElement.offsetWidth;
                     var sampleInfoHeight = sampleInfoElementHeight
@@ -39,7 +37,6 @@
                     adjust_size_for_twitter_card();
                 }
             {% endif %}
-
         </script>
         <script type="text/javascript" src="{% static 'bw-frontend/public/embeds/html_player/player.js' %}"></script>
     </head>

@@ -222,8 +222,9 @@ function makePlayer(selector) {
 
         if (!$(this).hasClass("mini"))
             $(".background", this).css("backgroundImage", 'url("' + waveform + '")');
-            $(".background", this).css("backgroundSize", 'contain');
-            $(".background", this).css("backgroundRepeat", 'no-repeat');
+            $(".background", playerElement).css("backgroundSize", '100% 100%');
+            $(".background", playerElement).css("backgroundRepeat", 'no-repeat');
+            $(".background", playerElement).css("background-color", 'black');
 
         $(".loading-progress", playerElement).hide();
 
@@ -310,8 +311,9 @@ function makePlayer(selector) {
                 $(".background", playerElement).css("background", "url(" + spectrum + ")");
             else
                 $(".background", playerElement).css("background", "url(" + waveform + ")");
-            $(".background", playerElement).css("backgroundSize", 'contain');
+            $(".background", playerElement).css("backgroundSize", '100% 100%');
             $(".background", playerElement).css("backgroundRepeat", 'no-repeat');
+            $(".background", playerElement).css("background-color", 'black');
         });
 
         $(".measure", this).bind("toggle", function (event, on)
@@ -392,8 +394,9 @@ function makePlayer(selector) {
                     } else {
                         // Switch to to background spectrogram by replacing the image (toggle display button does not exist)
                         $(".background", playerElement).css("background", "url(" + spectrum + ")");
-                        $(".background", playerElement).css("backgroundSize", 'contain');
+                        $(".background", playerElement).css("backgroundSize", '100% 100%');
                         $(".background", playerElement).css("backgroundRepeat", 'no-repeat');
+                        $(".background", playerElement).css("background-color", 'black');
                     }
                 }
             }

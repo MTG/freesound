@@ -54,9 +54,9 @@ class Command(LoggingBaseCommand):
         # Create one for Freeesound Nightingale frontend and one for BeastWhoosh
         rss_cache_bw = render_to_string('molecules/news_cache.html', {'rss_url': settings.FREESOUND_RSS})
         if len(rss_cache_bw.strip()):
-            cache.set("rss_cache_bw", rss_cache_bw, cache_time)
+            cache.set("rss_cache", rss_cache_bw, cache_time)
         else:
-            cache.set("rss_cache_bw", None, cache_time)
+            cache.set("rss_cache", None, cache_time)
 
         # Generate popular searches cache
         # TODO: implement this properly if we want to add this functionality

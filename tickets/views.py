@@ -239,7 +239,7 @@ def _get_new_uploaders_by_ticket():
         .annotate(total=Count('sender'), older=Min('created'))\
         .order_by('older')
 
-    users = User.objects.filter(id__in=[t['sender'] for t in tickets]).select_related('profile')
+    users = User.objects.filter(id__in=[t['sender'] for t in tickets]).annotate(num_mod_annotations=Count('annotations')).select_related('profile')
     users_dict = {u.id: u for u in users}
     new_sounds_users = []
 

@@ -74,8 +74,8 @@ def context_extra(request):
             'num_messages': num_messages,
             'load_anniversary_content': load_anniversary_content,
             'next_path': request.GET.get('next', request.get_full_path()),
-            'login_form': BwFsAuthenticationForm(),  # Used for beast whoosh login modal only
-            'problems_logging_in_form': BwProblemsLoggingInForm(),  # Used for beast whoosh login modal only
+            'login_form': BwFsAuthenticationForm(),
+            'problems_logging_in_form': BwProblemsLoggingInForm(),
             'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', 'no') == 'yes'  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
         })
     

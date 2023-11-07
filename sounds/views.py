@@ -226,9 +226,8 @@ def sound(request, username, sound_id):
         else:
             raise Http404
 
-    CommentFormClass = CommentForm
     if request.method == "POST":
-        form = CommentFormClass(request, request.POST)
+        form = CommentForm(request, request.POST)
         if request.user.is_authenticated:
             if request.user.profile.is_blocked_for_spam_reports():
                 messages.add_message(request, messages.INFO, "You're not allowed to post the comment because your "
@@ -247,7 +246,7 @@ def sound(request, username, sound_id):
 
                     return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        form = CommentFormClass(request)
+        form = CommentForm(request)
 
     qs = Comment.objects.select_related("user", "user__profile")\
         .filter(sound_id=sound_id)
@@ -877,10 +876,8 @@ def flag(request, username, sound_id):
     if request.user.is_authenticated:
         user = request.user
 
-    FlagFormClass = FlagForm
-
     if request.method == "POST":
-        flag_form = FlagFormClass(request.POST)
+        flag_form = FlagForm(request.POST)
         if flag_form.is_valid():
             flag = flag_form.save()
             flag.reporting_user = user
@@ -900,7 +897,7 @@ def flag(request, username, sound_id):
         initial = {}
         if user:
             initial["email"] = user.email
-        flag_form = FlagFormClass(initial=initial)
+        flag_form = FlagForm(initial=initial)
 
     tvars = {"sound": sound,
              "flag_form": flag_form}

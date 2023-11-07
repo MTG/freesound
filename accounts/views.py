@@ -267,9 +267,8 @@ def bulk_license_change(request):
 @login_required
 def tos_acceptance(request):
     has_sounds_with_old_cc_licenses = request.user.profile.has_sounds_with_old_cc_licenses()
-    FormClass = TermsOfServiceForm
     if request.method == 'POST':
-        form = FormClass(request.POST)
+        form = TermsOfServiceForm(request.POST)
         if form.is_valid():
             profile = request.user.profile
             profile.agree_to_gdpr()
@@ -283,7 +282,7 @@ def tos_acceptance(request):
                 return HttpResponseRedirect(reverse('accounts-home'))
     else:
         next_param = request.GET.get('next')
-        form = FormClass(initial={'next': next_param})
+        form = TermsOfServiceForm(initial={'next': next_param})
     tvars = {'form': form, 'has_sounds_with_old_cc_licenses': has_sounds_with_old_cc_licenses}
     return render(request, 'accounts/gdpr_consent.html', tvars)
 
@@ -300,10 +299,8 @@ def update_old_cc_licenses(request):
 
 @transaction.atomic()
 def registration_modal(request):
-    form_class = RegistrationForm
-
     if request.method == 'POST':
-        form = form_class(request.POST)
+        form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
             send_activation(user)
@@ -322,7 +319,7 @@ def registration_modal(request):
             # modal contents to the user
             return render(request, 'accounts/modal_registration.html', {'registration_form': form})
     else:
-        form = form_class()
+        form = RegistrationForm()
 
     return render(request, 'accounts/modal_registration.html', {'registration_form': form})
 
@@ -375,10 +372,8 @@ def home(request):
 
 @login_required
 def edit_email_settings(request):
-    email_settings_form_class = EmailSettingsForm
-
     if request.method == "POST":
-        form = email_settings_form_class(request.POST)
+        form = EmailSettingsForm(request.POST)
         if form.is_valid():
             email_type_ids = form.cleaned_data['email_types']
             request.user.profile.set_enabled_email_types(email_type_ids)
@@ -386,7 +381,7 @@ def edit_email_settings(request):
     else:
         # Get list of enabled email_types
         all_emails = request.user.profile.get_enabled_email_types()
-        form = email_settings_form_class(initial={
+        form = EmailSettingsForm(initial={
             'email_types': all_emails,
             })
     tvars = {
@@ -400,7 +395,6 @@ def edit_email_settings(request):
 @transaction.atomic()
 def edit(request):
     profile = request.user.profile
-    profile_form_class = ProfileForm
 
     def is_selected(prefix):
         if request.method == "POST":
@@ -414,7 +408,7 @@ def edit(request):
         return False
 
     if is_selected("profile"):
-        profile_form = profile_form_class(request, request.POST, instance=profile, prefix="profile")
+        profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
             # Update username, this will create an entry in OldUsername
@@ -428,7 +422,7 @@ def edit(request):
             messages.add_message(request, messages.INFO, msg_txt)
             return HttpResponseRedirect(reverse("accounts-edit"))
     else:
-        profile_form = profile_form_class(request, instance=profile, prefix="profile")
+        profile_form = ProfileForm(request, instance=profile, prefix="profile")
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")
@@ -805,10 +799,9 @@ def describe_license(request):
 
 @login_required
 def describe_pack(request):
-    FormToUse = PackForm
     packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     if request.method == 'POST':
-        form = FormToUse(packs, request.POST, prefix="pack")
+        form = PackForm(packs, request.POST, prefix="pack")
         if form.is_valid():
             data = form.cleaned_data
             if data['new_pack']:
@@ -820,7 +813,7 @@ def describe_pack(request):
                 request.session['describe_pack'] = False
             return HttpResponseRedirect(reverse('accounts-describe-sounds'))
     else:
-        form = FormToUse(packs, prefix="pack")
+        form = PackForm(packs, prefix="pack")
     tvars = {'form': form, 'num_files': request.session.get('len_original_describe_edit_sounds', 0)}
     return render(request, 'accounts/describe_pack.html', tvars)
 
@@ -1324,10 +1317,8 @@ def bulk_describe(request, bulk_id):
 @transaction.atomic()
 def delete(request):
     num_sounds = request.user.sounds.all().count()
-    delete_user_form_class = DeleteUserForm
-
     if request.method == 'POST':
-        form = delete_user_form_class(request.POST, user_id=request.user.id)
+        form = DeleteUserForm(request.POST, user_id=request.user.id)
         if not form.is_valid():
             form.reset_encrypted_link(request.user.id)
         else:
@@ -1358,7 +1349,7 @@ def delete(request):
             # deleted soon
             return HttpResponseRedirect(reverse("front-page"))
     else:
-        form = delete_user_form_class(user_id=request.user.id)
+        form = DeleteUserForm(user_id=request.user.id)
 
     tvars = {
             'delete_form': form,

@@ -100,8 +100,7 @@ def add_bookmark(request, sound_id):
     msg_to_return = ''
     if request.method == 'POST':
         user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
-        FormToUse = BookmarkForm
-        form = FormToUse(request.POST,
+        form = BookmarkForm(request.POST,
                          user_bookmark_categories=user_bookmark_categories,
                          sound_id=sound_id,
                          user_saving_bookmark=request.user)
@@ -145,7 +144,6 @@ def get_form_for_sound(request, sound_id):
         return render(request, 'bookmarks/modal_bookmark_sound.html', {})
 
     sound = Sound.objects.get(id=sound_id)
-    FormToUse = BookmarkForm
     try:
         last_user_bookmark = \
             Bookmark.objects.filter(user=request.user).order_by('-created')[0]
@@ -155,7 +153,7 @@ def get_form_for_sound(request, sound_id):
     except IndexError:
         last_category = None
     user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
-    form = FormToUse(initial={'category': last_category.id if last_category else FormToUse.NO_CATEGORY_CHOICE_VALUE},
+    form = BookmarkForm(initial={'category': last_category.id if last_category else BookmarkForm.NO_CATEGORY_CHOICE_VALUE},
                      prefix=sound.id,
                      user_bookmark_categories=user_bookmark_categories)
     categories_already_containing_sound = BookmarkCategory.objects.filter(user=request.user,

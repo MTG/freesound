@@ -1336,10 +1336,8 @@ def invalid_url(request):
 def create_apiv2_key(request):
     """View for applying for an apikey"""
 
-    FormToUse = ApiV2ClientForm
-
     if request.method == 'POST':
-        form = FormToUse(request.POST)
+        form = ApiV2ClientForm(request.POST)
         if form.is_valid():
             api_client = ApiV2Client()
             api_client.user = request.user
@@ -1349,11 +1347,11 @@ def create_apiv2_key(request):
             api_client.redirect_uri = form.cleaned_data['redirect_uri']
             api_client.accepted_tos = form.cleaned_data['accepted_tos']
             api_client.save()
-            form = FormToUse()
+            form = ApiV2ClientForm()
             api_logger.info('new_credential <> (ApiV2 Auth:%s Dev:%s User:%s Client:%s)' %
                             (None, request.user.username, None, api_client.client_id))
     else:
-        form = FormToUse()
+        form = ApiV2ClientForm()
 
     user_credentials = request.user.apiv2_client.all()
 
@@ -1381,11 +1379,9 @@ def edit_api_credential(request, key):
 
     if not client:
         raise Http404
-    
-    FormToUse = ApiV2ClientForm
 
     if request.method == 'POST':
-        form = FormToUse(request.POST)
+        form = ApiV2ClientForm(request.POST)
         if form.is_valid():
             client.name = form.cleaned_data['name']
             client.url = form.cleaned_data['url']
@@ -1396,7 +1392,7 @@ def edit_api_credential(request, key):
             messages.add_message(request, messages.INFO, f"Credentials with name {client.name} have been updated.")
             return HttpResponseRedirect(reverse("apiv2-apply"))
     else:
-        form = FormToUse(initial={'name': client.name,
+        form = ApiV2ClientForm(initial={'name': client.name,
                                         'url': client.url,
                                         'redirect_uri': client.redirect_uri,
                                         'description': client.description,

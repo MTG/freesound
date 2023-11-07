@@ -497,11 +497,9 @@ def moderation_assigned(request, user_id):
     clear_forms = True
     mod_sound_form = None
     msg_form = None
-    SoundModerationFormClass = SoundModerationForm
-    ModerationMessageFormClass = ModerationMessageForm
     if request.method == 'POST':
-        mod_sound_form = SoundModerationFormClass(request.POST)
-        msg_form = ModerationMessageFormClass(request.POST)
+        mod_sound_form = SoundModerationForm(request.POST)
+        msg_form = ModerationMessageForm(request.POST)
 
         if mod_sound_form.is_valid() and msg_form.is_valid():
 
@@ -611,8 +609,8 @@ def moderation_assigned(request, user_id):
         else:
             clear_forms = False
     if clear_forms:
-        mod_sound_form = SoundModerationFormClass(initial={'action': 'Approve'})
-        msg_form = ModerationMessageFormClass()
+        mod_sound_form = SoundModerationForm(initial={'action': 'Approve'})
+        msg_form = ModerationMessageForm()
 
     qs = Ticket.objects.select_related('sound', 'sender') \
                        .filter(assignee=user_id) \

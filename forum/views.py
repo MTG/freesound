@@ -288,10 +288,9 @@ def new_thread(request, forum_name_slug):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
-    FormToUse = NewThreadForm
 
     if request.method == 'POST':
-        form = FormToUse(request.POST)
+        form = NewThreadForm(request.POST)
         if user_can_post_in_forum and not user_is_blocked_for_spam_reports:
             if form.is_valid():
                 post_title = form.cleaned_data["title"]
@@ -329,7 +328,7 @@ def new_thread(request, forum_name_slug):
                                                                  "approved by moderators")
                     return HttpResponseRedirect(post.thread.forum.get_absolute_url())
     else:
-        form = FormToUse()
+        form = NewThreadForm()
 
     if not user_can_post_in_forum:
         messages.add_message(request, messages.INFO, user_can_post_message)
@@ -467,16 +466,14 @@ def post_edit(request, post_id):
 @permission_required('forum.can_moderate_forum')
 @transaction.atomic()
 def moderate_posts(request):
-    PostModerationFormClass = PostModerationForm
     if request.method == 'POST':
-        
         # Only the form for one post will be sent at a time, but we need to get the post ID from the request so we know which form prefix to use
         post_id = -1
         for key in request.POST.keys():
             if key.endswith('-post'):
                 post_id = int(key.split('-')[0])
         
-        mod_form = PostModerationFormClass(request.POST, prefix=f'{post_id}')
+        mod_form = PostModerationForm(request.POST, prefix=f'{post_id}')
         if mod_form.is_valid():
             action = mod_form.cleaned_data.get("action")
             post_id = mod_form.cleaned_data.get("post")
@@ -508,7 +505,7 @@ def moderate_posts(request):
     pending_posts = Post.objects.filter(moderation_state='NM').select_related('author', 'author__profile')
     post_list = []
     for p in pending_posts:
-        f = PostModerationFormClass(initial={'action': 'Approve', 'post': p.id}, prefix=f'{p.id}')
+        f = PostModerationForm(initial={'action': 'Approve', 'post': p.id}, prefix=f'{p.id}')
         post_list.append({'post': p, 'form': f})
 
     tvars = {'post_list': post_list,

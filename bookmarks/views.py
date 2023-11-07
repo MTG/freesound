@@ -47,11 +47,11 @@ def bookmarks(request, category_id=None):
 def bookmarks_for_user(request, username, category_id=None):
     user = request.parameter_user
     is_owner = request.user.is_authenticated and user == request.user
-    if using_beastwhoosh(request) and not settings.BW_BOOKMARK_PAGES_PUBLIC and not is_owner:
-        # In BW we only make bookmarks available to bookmark owners (bookmarks are not public)
-        # When fully moved to BW, then we can add @login_required and use only the url pattern under /home for bookmarks
+    if not settings.BW_BOOKMARK_PAGES_PUBLIC and not is_owner:
+        # If settings.BW_BOOKMARK_PAGES_PUBLIC is not True, we only make bookmarks available to bookmark owners 
+        # (bookmarks are not public)
         raise Http404
-    if using_beastwhoosh(request) and is_owner:
+    if is_owner:
         # If accessing own bookmarks using the people/xx/bookmarks URL, redirect to the /home/bookmarks URL
         if category_id:
             return HttpResponseRedirect(reverse('bookmarks-category', args=[category_id]))
@@ -76,7 +76,7 @@ def bookmarks_view_helper(request, user, is_owner, category_id):
              'n_uncat': n_uncat,
              'category': category,
              'bookmark_categories': bookmark_categories}
-    tvars.update(paginate(request, bookmarked_sounds, settings.BOOKMARKS_PER_PAGE if not using_beastwhoosh(request) else settings.BOOKMARKS_PER_PAGE_BW))
+    tvars.update(paginate(request, bookmarked_sounds, settings.BOOKMARKS_PER_PAGE))
     return render(request, 'bookmarks/bookmarks.html', tvars)
 
 
@@ -143,8 +143,7 @@ def delete_bookmark(request, bookmark_id):
 
 def get_form_for_sound(request, sound_id):
     if not request.user.is_authenticated:
-        template = 'bookmarks/modal_bookmark_sound.html' if using_beastwhoosh(request) else 'bookmarks/bookmark_form.html'
-        return render(request, template, {})
+        return render(request, 'bookmarks/modal_bookmark_sound.html', {})
 
     sound = Sound.objects.get(id=sound_id)
     FormToUse = BwBookmarkForm if using_beastwhoosh(request) else BookmarkForm
@@ -174,5 +173,4 @@ def get_form_for_sound(request, sound_id):
         'categories_aready_containing_sound': categories_already_containing_sound,
         'add_bookmark_url': add_bookmark_url
     }
-    template = 'bookmarks/modal_bookmark_sound.html' if using_beastwhoosh(request) else 'bookmarks/bookmark_form.html'
-    return render(request, template, tvars)
+    return render(request, 'bookmarks/modal_bookmark_sound.html', tvars)

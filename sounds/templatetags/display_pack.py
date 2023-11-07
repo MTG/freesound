@@ -21,8 +21,7 @@
 
 from django import template
 
-from sounds.models import Pack, Sound
-from utils.frontend_handling import using_beastwhoosh
+from sounds.models import Pack
 
 register = template.Library()
 
@@ -61,7 +60,6 @@ def display_pack(context, pack, size='small', show_bookmark_similarity_buttons=T
     return {
         'pack': pack,
         'size': size,
-        'media_url': context['media_url'],
         'request': request,
         'show_bookmark_similarity_buttons': show_bookmark_similarity_buttons,
     }

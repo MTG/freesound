@@ -41,8 +41,7 @@ def dont_redirect(path):
         and 'tos_web' not in path \
         and 'privacy' not in path \
         and 'cookies' not in path \
-        and 'contact' not in path \
-        and not path.startswith(settings.MEDIA_URL)
+        and 'contact' not in path
 
 
 class OnlineUsersHandler:
@@ -115,8 +114,7 @@ class UpdateEmailHandler:
                 and 'tos_web' not in request.get_full_path() \
                 and 'contact' not in request.get_full_path() \
                 and 'bulklicensechange' not in request.get_full_path() \
-                and 'resetemail' not in request.get_full_path() \
-                and not request.get_full_path().startswith(settings.MEDIA_URL):
+                and 'resetemail' not in request.get_full_path():
                 # replace with dont_redirect() and add resetemail to it after merge with gdpr_acceptance pr
 
             user = request.user

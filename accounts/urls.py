@@ -56,7 +56,7 @@ urlpatterns = [
     path('password_change/done/', accounts.password_change_done, name='password_change_done'),
     path('reset/<uidb64>/<token>/', accounts.password_reset_confirm, name='password_reset_confirm'),
     path('reset/done/', accounts.password_reset_complete, name='password_reset_complete'),
-    path('register/', login_redirect(accounts.registration), name="accounts-register"),
+    path('registration_modal/', login_redirect(accounts.registration_modal), name="accounts-registration-modal"),
     path('reactivate/', login_redirect(accounts.resend_activation), name="accounts-resend-activation"),
     path('username/', login_redirect(accounts.username_reminder), name="accounts-username-reminder"),
     re_path(r'^activate/(?P<username>[^\/]+)/(?P<uid_hash>[^\/]+)/.*$', login_redirect(accounts.activate_user), name="accounts-activate"),
@@ -73,7 +73,6 @@ urlpatterns = [
     path('edit/', accounts.edit, name="accounts-edit"),
     path('email-settings/', accounts.edit_email_settings, name="accounts-email-settings"),
     path('delete/', accounts.delete, name="accounts-delete"),
-    path('pending/', accounts.pending, name="accounts-pending"),
     path('attribution/', accounts.attribution, name="accounts-attribution"),
     path('download-attribution/', accounts.download_attribution, name="accounts-download-attribution"),
     path('stream/', follow.stream, name='stream'),
@@ -84,13 +83,11 @@ urlpatterns = [
     path('upload/file/', accounts.upload_file, name="accounts-upload-file"),
     path('upload/bulk-describe/<int:bulk_id>/', accounts.bulk_describe, name="accounts-bulk-describe"),
 
-    path('describe/', accounts.describe, name="accounts-describe"),
+    path('sounds/manage/<tab>/', accounts.manage_sounds, name="accounts-manage-sounds"),
+    path('sounds/edit/', accounts.edit_sounds, name="accounts-edit-sounds"),
     path('describe/license/', accounts.describe_license, name="accounts-describe-license"),
     path('describe/pack/', accounts.describe_pack, name="accounts-describe-pack"),
     path('describe/sounds/', accounts.describe_sounds, name="accounts-describe-sounds"),
-
-    path('sounds/manage/<tab>/', accounts.manage_sounds, name="accounts-manage-sounds"),
-    path('sounds/edit/', accounts.edit_sounds, name="accounts-edit-sounds"),
     
     path('bookmarks/', bookmarks.bookmarks, name="bookmarks"),
     path('bookmarks/category/<int:category_id>/', bookmarks.bookmarks, name="bookmarks-category"),

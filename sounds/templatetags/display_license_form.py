@@ -32,7 +32,6 @@ def display_license_form(context, form):
     cc_by_nc_license_id = License.objects.get(name__iexact="Attribution NonCommercial", deed_url__contains="4.0").id    
     return {
         'form': form, 
-        'media_url': context['media_url'],
         'cc0_license_id': cc0_license_id, 
         'cc_by_license_id': cc_by_license_id, 
         'cc_by_nc_license_id': cc_by_nc_license_id

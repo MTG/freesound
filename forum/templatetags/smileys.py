@@ -1,5 +1,6 @@
 from django import template
 from django.conf import settings
+from django.templatetags.static import static
 import re
 
 register = template.Library()
@@ -26,7 +27,8 @@ emoticons = dict(d)
 def smiley_replace(matchobj):
     try:
         expression = emoticons[matchobj.group(0).lower()]
-        return f"<img src=\"{settings.MEDIA_URL}images/smileys/{expression}.png\" alt=\"{expression}\" class=\"smiley\" />"
+        url = static('bw-frontend/public/smileys/%s.png' % expression)
+        return f"<img src=\"{url}\" alt=\"{expression}\" class=\"smiley\" />"
     except KeyError:
         return matchobj.group(0)
 

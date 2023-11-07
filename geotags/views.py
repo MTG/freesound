@@ -33,7 +33,6 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 from sounds.models import Sound, Pack
-from utils.frontend_handling import using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
@@ -195,22 +194,18 @@ def for_sound(request, username, sound_id):
         Sound.objects.select_related('geotag', 'user'), id=sound_id)
     if sound.user.username.lower() != username.lower() or sound.geotag is None:
         raise Http404
-    if not using_beastwhoosh(request):
-        tvars = {'sound': sound}
-        return render(request, 'sounds/geotag.html', tvars)
-    else:
-        tvars = _get_geotags_query_params(request)
-        tvars.update({
-            'tag': None,
-            'username': None,
-            'pack': None,
-            'sound': sound,
-            'center_lat': sound.geotag.lat,
-            'center_lon': sound.geotag.lon,
-            'zoom': sound.geotag.zoom,
-            'url': reverse('geotags-for-sound-barray', args=[sound.id]),
-        })
-        return render(request, 'geotags/geotags.html', tvars)
+    tvars = _get_geotags_query_params(request)
+    tvars.update({
+        'tag': None,
+        'username': None,
+        'pack': None,
+        'sound': sound,
+        'center_lat': sound.geotag.lat,
+        'center_lon': sound.geotag.lon,
+        'zoom': sound.geotag.zoom,
+        'url': reverse('geotags-for-sound-barray', args=[sound.id]),
+    })
+    return render(request, 'geotags/geotags.html', tvars)
 
 
 @redirect_if_old_username_or_404
@@ -242,8 +237,7 @@ def embed_iframe(request):
     tvars.update({
         'm_width': request.GET.get('w', 942),
         'm_height': request.GET.get('h', 600),
-        'cluster': request.GET.get('c', 'on') != 'off',
-        'media_url': settings.MEDIA_URL,
+        'cluster': request.GET.get('c', 'on') != 'off'
     })
     tvars.update({'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN})
     return render(request, 'embeds/geotags_box_iframe.html', tvars)

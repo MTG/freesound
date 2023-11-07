@@ -56,7 +56,7 @@ class UserRegistrationAndActivation(TestCase):
         username = 'new_user'
 
         # Try registration without accepting tos
-        resp = self.client.post(reverse('accounts-register'), data={
+        resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [username],
             'password1': ['123456'],
             'accepted_tos': [''],
@@ -69,7 +69,7 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
         # Try registration with bad email
-        resp = self.client.post(reverse('accounts-register'), data={
+        resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [username],
             'password1': ['123456'],
             'accepted_tos': ['on'],
@@ -82,7 +82,7 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
         # Try registration with no username
-        resp = self.client.post(reverse('accounts-register'), data={
+        resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [''],
             'password1': ['123456'],
             'accepted_tos': ['on'],
@@ -95,7 +95,7 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
         # Try registration with different email addresses
-        resp = self.client.post(reverse('accounts-register'), data={
+        resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [''],
             'password1': ['123456'],
             'accepted_tos': ['on'],
@@ -108,7 +108,7 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
         # Try successful registration
-        resp = self.client.post(reverse('accounts-register'), data={
+        resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [username],
             'password1': ['123456'],
             'accepted_tos': ['on'],
@@ -123,7 +123,7 @@ class UserRegistrationAndActivation(TestCase):
         self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
         # Try register again with same username
-        resp = self.client.post(reverse('accounts-register'), data={
+        resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [username],
             'password1': ['123456'],
             'accepted_tos': ['on'],
@@ -136,7 +136,7 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(len(mail.outbox), 1)  # No new email sent
 
         # Try with repeated email address
-        resp = self.client.post(reverse('accounts-register'), data={
+        resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': ['a_different_username'],
             'password1': ['123456'],
             'accepted_tos': ['on'],

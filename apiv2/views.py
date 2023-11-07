@@ -1369,10 +1369,7 @@ def create_apiv2_key(request):
         'user_credentials': user_credentials,
         'fs_callback_url': fs_callback_url,
     }
-    if using_beastwhoosh(request):
-        return render(request, 'api/credentials.html', tvars)
-    else:
-        return render(request, 'api/apply_key_apiv2.html', tvars)
+    return render(request, 'api/credentials.html', tvars)
 
 
 @login_required
@@ -1509,8 +1506,7 @@ def granted_permissions(request):
                 })
                 grant_and_token_names.append(grant.application.apiv2_client.name)
 
-    return render(request, 'accounts/manage_api_permissions.html' if using_beastwhoosh(request)
-                            else 'api/manage_permissions.html', {
+    return render(request, 'accounts/manage_api_permissions.html', {
         'user': request.user,
         'tokens': tokens,
         'grants': grants,
@@ -1544,16 +1540,10 @@ def permission_granted(request):
         app_name = grant.application.apiv2_client.name
     except Grant.DoesNotExist:
         grant = None
-
-    if using_beastwhoosh(request):
-        template = 'oauth2_provider/app_authorized.html'
-    else:
-        template = 'api/app_authorized.html'
     logout_next = request.GET.get('original_path', None)
     if logout_next:
         logout_next = quote(logout_next)
     else:
         logout_next = reverse('api-login')
-
-    return render(request, template,
+    return render(request, 'oauth2_provider/app_authorized.html',
         {'code': code, 'app_name': app_name, 'logout_next': logout_next})

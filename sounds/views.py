@@ -53,15 +53,13 @@ from donations.models import DonationsModalSettings
 from follow import follow_utils
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
-from sounds.forms import DeleteSoundForm, FlagForm, SoundDescriptionForm, GeotaggingForm, LicenseForm, PackEditForm, \
-    RemixForm, PackForm, BWSoundEditAndDescribeForm, BWFlagForm
+from sounds.forms import FlagForm,PackEditForm, BWSoundEditAndDescribeForm, BWFlagForm
 from sounds.models import PackDownload, PackDownloadSound
 from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, SoundOfTheDay
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_user_template_caches
 from utils.downloads import download_sounds, should_suggest_donation
-from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.frontend_handling import using_beastwhoosh
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
@@ -154,7 +152,7 @@ def packs(request):
 
 
 def front_page(request):
-    rss_cache = cache.get("rss_cache_bw" if using_beastwhoosh(request) else "rss_cache", None)
+    rss_cache = cache.get("rss_cache", None)
     trending_sound_ids = cache.get("trending_sound_ids", None)
     trending_new_sound_ids = cache.get("trending_new_sound_ids", None)
     trending_new_pack_ids = cache.get("trending_new_pack_ids", None)
@@ -169,7 +167,7 @@ def front_page(request):
 
     current_forum_threads = get_hot_threads(n=10)
 
-    num_latest_sounds = 5 if not using_beastwhoosh(request) else 12
+    num_latest_sounds = 12
     latest_sounds = Sound.objects.latest_additions(num_sounds=num_latest_sounds, period_days=2)
     random_sound_id = get_sound_of_the_day_id()
     if random_sound_id:
@@ -301,18 +299,10 @@ def after_download_modal(request):
             should_show_modal = True
 
     if should_show_modal:
-        if using_beastwhoosh(request):
-            return render(request, 'donations/modal_after_download_donation_request.html',
-                          {'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM})
-        else:
-            template = loader.get_template('sounds/after_download_modal_donation.html')
-            response_content = template.render({'sound_name': sound_name})
-            return JsonResponse({'content': response_content})
+        return render(request, 'donations/modal_after_download_donation_request.html',
+                        {'donation_amount_request_param': settings.DONATION_AMOUNT_REQUEST_PARAM})
     else:
-        if using_beastwhoosh(request):
-            return HttpResponse()
-        else:
-            return JsonResponse({'content': None})
+        return HttpResponse()
 
 
 @redirect_if_old_username_or_404
@@ -395,144 +385,10 @@ def sound_edit(request, username, sound_id):
     if not (request.user.is_superuser or sound.user == request.user):
         raise PermissionDenied
 
-    if using_beastwhoosh(request):
-        clear_session_edit_and_describe_data(request)
-        request.session['edit_sounds'] = [sound]  # Add the list of sounds to edit in the session object
-        request.session['len_original_describe_edit_sounds'] = 1
-        return edit_and_describe_sounds_helper(request)
-
-    def is_selected(prefix):
-        if request.method == "POST":
-            for name in request.POST.keys():
-                if name.startswith(prefix + '-'):
-                    return True
-        return False
-
-    def update_sound_tickets(sound, text):
-        tickets = Ticket.objects.filter(sound_id=sound.id)\
-                               .exclude(status=TICKET_STATUS_CLOSED)
-        for ticket in tickets:
-            tc = TicketComment(sender=request.user,
-                               ticket=ticket,
-                               moderator_only=False,
-                               text=text)
-            tc.save()
-            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED,
-                                            ticket.MODERATOR_ONLY)
-
-    if is_selected("description"):
-        description_form = SoundDescriptionForm(
-                request.POST,
-                prefix="description",
-                explicit_disable=sound.is_explicit)
-
-        if description_form.is_valid():
-            data = description_form.cleaned_data
-            sound.is_explicit = data["is_explicit"]
-            sound.set_tags(data["tags"])
-            sound.description = remove_control_chars(data["description"])
-            sound.original_filename = data["name"]
-            sound.mark_index_dirty()
-            sound.invalidate_template_caches()
-            update_sound_tickets(sound, f'{request.user.username} updated the sound description and/or tags.')
-            return HttpResponseRedirect(sound.get_absolute_url())
-    else:
-        tags = " ".join([tagged_item.tag.name for tagged_item in sound.tags.all().order_by('tag__name')])
-        description_form = SoundDescriptionForm(prefix="description",
-                                                explicit_disable=sound.is_explicit,
-                                                initial=dict(tags=tags,
-                                                             description=sound.description,
-                                                             name=sound.original_filename))
-
-    packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
-    if is_selected("pack"):
-        pack_form = PackForm(packs, request.POST, prefix="pack")
-        if pack_form.is_valid():
-            data = pack_form.cleaned_data
-            affected_packs = []
-            if data['new_pack']:
-                (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
-                if sound.pack:
-                    affected_packs.append(sound.pack)  # Append previous sound pack if exists
-                sound.pack = pack
-                affected_packs.append(pack)
-            else:
-                new_pack = data["pack"]
-                old_pack = sound.pack
-                if new_pack != old_pack:
-                    sound.pack = new_pack
-                    if new_pack:
-                        affected_packs.append(new_pack)
-                    if old_pack:
-                        affected_packs.append(old_pack)
-
-            sound.mark_index_dirty()  # Marks as dirty and saves
-            sound.invalidate_template_caches()
-            update_sound_tickets(sound, f'{request.user.username} updated the sound pack.')
-            for affected_pack in affected_packs:  # Process affected packs
-                affected_pack.process()
-
-            return HttpResponseRedirect(sound.get_absolute_url())
-    else:
-        pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id) if sound.pack else None)
-
-    if is_selected("geotag"):
-        geotag_form = GeotaggingForm(request.POST, prefix="geotag")
-        if geotag_form.is_valid():
-            data = geotag_form.cleaned_data
-            if data["remove_geotag"]:
-                if sound.geotag:
-                    sound.geotag.delete()
-                    sound.geotag = None
-                    sound.mark_index_dirty()
-            else:
-                if sound.geotag:
-                    sound.geotag.lat = data["lat"]
-                    sound.geotag.lon = data["lon"]
-                    sound.geotag.zoom = data["zoom"]
-                    sound.geotag.should_update_information = True
-                    sound.geotag.save()
-                else:
-                    sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"],
-                                                         user=request.user)
-                    sound.mark_index_dirty()
-
-            sound.mark_index_dirty()
-            sound.invalidate_template_caches()
-            update_sound_tickets(sound, f'{request.user.username} updated the sound geotag.')
-            return HttpResponseRedirect(sound.get_absolute_url())
-    else:
-        if sound.geotag:
-            geotag_form = GeotaggingForm(prefix="geotag", initial=dict(lat=sound.geotag.lat, lon=sound.geotag.lon,
-                                                                       zoom=sound.geotag.zoom))
-        else:
-            geotag_form = GeotaggingForm(prefix="geotag")
-
-    license_form = LicenseForm(request.POST,
-                                  hide_old_license_versions="3.0" not in sound.license.deed_url)
-    if request.method == 'POST':
-        if license_form.is_valid():
-            new_license = license_form.cleaned_data["license"]
-            if new_license != sound.license:
-                sound.set_license(new_license)
-            sound.mark_index_dirty()  # Sound is saved here
-            if sound.pack:
-                sound.pack.process()  # Sound license changed, process pack (if sound has pack)
-            sound.invalidate_template_caches()
-            update_sound_tickets(sound, f'{request.user.username} updated the sound license.')
-            return HttpResponseRedirect(sound.get_absolute_url())
-    else:
-        license_form = LicenseForm(initial={'license': sound.license},
-                                      hide_old_license_versions="3.0" not in sound.license.deed_url)
-
-    tvars = {
-        'sound': sound,
-        'description_form': description_form,
-        'pack_form': pack_form,
-        'geotag_form': geotag_form,
-        'license_form': license_form
-    }
-    return render(request, 'sounds/sound_edit.html', tvars)
+    clear_session_edit_and_describe_data(request)
+    request.session['edit_sounds'] = [sound]  # Add the list of sounds to edit in the session object
+    request.session['len_original_describe_edit_sounds'] = 1
+    return edit_and_describe_sounds_helper(request)
 
 
 def clear_session_edit_and_describe_data(request):
@@ -832,14 +688,14 @@ def pack_edit(request, username, pack_id):
 
     current_sounds = list()
     if request.method == "POST":
-        form = PackEditForm(request.POST, instance=pack, label_suffix='' if using_beastwhoosh(request) else ':')
+        form = PackEditForm(request.POST, instance=pack, label_suffix='')
         if form.is_valid():
             form.save()
             pack.sounds.all().update(is_index_dirty=True)
             redirect_to = request.GET.get('next', pack.get_absolute_url())
             return HttpResponseRedirect(redirect_to)
     else:
-        form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds), label_suffix='' if using_beastwhoosh(request) else ':')
+        form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds), label_suffix='')
         current_sounds = Sound.objects.bulk_sounds_for_pack(pack_id=pack.id)
         form.pack_sound_objects = current_sounds
     tvars = {
@@ -915,7 +771,8 @@ def _remix_group_view_helper(request, group_id):
 
 @redirect_if_old_username_or_404
 def remixes(request, username, sound_id):
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
+        # If not loaded as modal, redirect to sound page with parameter to open modal
         return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '?remixes=1')
     
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
@@ -927,17 +784,15 @@ def remixes(request, username, sound_id):
         raise Http404
     
     tvars = _remix_group_view_helper(request, remix_group.id)    
-    if not using_beastwhoosh(request):
-        return render(request, 'sounds/remixes.html', tvars)
-    else:
-        tvars.update({'sound': sound})
-        return render(request, 'sounds/modal_remix_group.html', tvars)
-    
+    tvars.update({'sound': sound})
+    return render(request, 'sounds/modal_remix_group.html', tvars)
+
 
 @redirect_if_old_username_or_404
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SIMILARITY_GROUP, block=True)
 def similar(request, username, sound_id):
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
+        # If not loaded as modal, redirect to sound page with parameter to open modal
         return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '?similar=1')
 
     sound = get_object_or_404(Sound,
@@ -952,18 +807,13 @@ def similar(request, username, sound_id):
     similar_sounds = Sound.objects.ordered_ids([sound_id for sound_id, distance in similarity_results])
 
     tvars = {'similar_sounds': similar_sounds, 'sound': sound}
-    if using_beastwhoosh(request):
-        # In BW similar sounds are displayed in a modal
-        return render(request, 'sounds/modal_similar_sounds.html', tvars)
-    else:
-        return render(request, 'sounds/similar.html', tvars)
+    return render(request, 'sounds/modal_similar_sounds.html', tvars)
 
 
 @redirect_if_old_username_or_404
 @transaction.atomic()
 def pack(request, username, pack_id):
     try:
-        #pack = Pack.objects.select_related().get(id=pack_id)
         pack = Pack.objects.bulk_query_id(pack_id)[0]
         if pack.user.username.lower() != username.lower():
             raise Http404
@@ -974,23 +824,22 @@ def pack(request, username, pack_id):
         return render(request, 'sounds/pack_deleted.html')
 
     qs = Sound.public.only('id').filter(pack=pack).order_by('-created')
-    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE if not using_beastwhoosh(request) else 12)
-    sound_ids = [sound_obj.id for sound_obj in paginator['page']]
+    num_sounds_to_display = 12
+    sound_ids = [sound_obj.id for sound_obj in qs[0:num_sounds_to_display]]
     pack_sounds = Sound.objects.ordered_ids(sound_ids)
 
-    num_sounds_ok = paginator['paginator'].count
+    num_sounds_ok = qs.count()
     if num_sounds_ok < pack.num_sounds:
         messages.add_message(request, messages.INFO,
                              'Some sounds of this pack might <b>not have been moderated or processed</b> yet.')
 
     is_following = None
     geotags_in_pack_serialized = []
-    if using_beastwhoosh(request):
-        is_following = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, pack.user)
-        if pack.has_geotags and settings.MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING:
-            for sound in Sound.public.select_related('geotag').filter(pack__id=pack_id).exclude(geotag=None):
-                geotags_in_pack_serialized.append({'lon': sound.geotag.lon, 'lat': sound.geotag.lat})
-            geotags_in_pack_serialized = json.dumps(geotags_in_pack_serialized)
+    is_following = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, pack.user)
+    if pack.has_geotags and settings.MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING:
+        for sound in Sound.public.select_related('geotag').filter(pack__id=pack_id).exclude(geotag=None):
+            geotags_in_pack_serialized.append({'lon': sound.geotag.lon, 'lat': sound.geotag.lat})
+        geotags_in_pack_serialized = json.dumps(geotags_in_pack_serialized)
 
     tvars = {
         'pack': pack,
@@ -999,48 +848,26 @@ def pack(request, username, pack_id):
         'is_following': is_following,
         'geotags_in_pack_serialized': geotags_in_pack_serialized  # BW only
     }
-    if not using_beastwhoosh(request):
-        tvars.update(paginator)
-
     return render(request, 'sounds/pack.html', tvars)
 
 
 @redirect_if_old_username_or_404
 def packs_for_user(request, username):
     user = request.parameter_user
-    if using_beastwhoosh(request):
-        return HttpResponseRedirect(user.profile.get_user_packs_in_search_url())
-    order = request.GET.get("order", "name")
-    if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
-        order = "name"
-    qs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True).order_by(order)
-    paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
-
-    tvars = {'user': user,
-             'order': order}
-    tvars.update(paginator)
-    return render(request, 'sounds/packs.html', tvars)
+    return HttpResponseRedirect(user.profile.get_user_packs_in_search_url())
 
 
 @redirect_if_old_username_or_404
 def for_user(request, username):
-    sound_user = request.parameter_user
-    if using_beastwhoosh(request):
-        return HttpResponseRedirect(sound_user.profile.get_user_sounds_in_search_url())
-    paginator = paginate(request, Sound.public.only('id').filter(user=sound_user), settings.SOUNDS_PER_PAGE)
-    sound_ids = [sound_obj.id for sound_obj in paginator['page']]
-    user_sounds = Sound.objects.ordered_ids(sound_ids)
-
-    tvars = {'sound_user': sound_user,
-             'user_sounds': user_sounds}
-    tvars.update(paginator)
-    return render(request, 'sounds/for_user.html', tvars)
-
+    user = request.parameter_user
+    return HttpResponseRedirect(user.profile.get_user_sounds_in_search_url())
+    
 
 @redirect_if_old_username_or_404
 @transaction.atomic()
 def flag(request, username, sound_id):
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
+        # If not loaded as a modal, redirect to the sound page with parameter to open modal
         return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '?flag=1')
     
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
@@ -1069,10 +896,7 @@ def flag(request, username, sound_id):
             send_mail_template_to_support(settings.EMAIL_SUBJECT_SOUND_FLAG, "emails/email_flag.txt", {"flag": flag},
                                           extra_subject=f"{sound.user.username} - {sound.original_filename}",
                                           reply_to=user_email)
-            if using_beastwhoosh(request):
-                return JsonResponse({'success': True})
-            else:
-                return redirect(sound)
+            return JsonResponse({'success': True})
     else:
         initial = {}
         if user:
@@ -1081,11 +905,7 @@ def flag(request, username, sound_id):
 
     tvars = {"sound": sound,
              "flag_form": flag_form}
-    
-    if using_beastwhoosh(request):
-        return render(request, 'sounds/modal_flag_sound.html', tvars)
-    else:
-        return render(request, 'sounds/sound_flag.html', tvars)
+    return render(request, 'sounds/modal_flag_sound.html', tvars)
 
 
 def sound_short_link(request, sound_id):
@@ -1137,7 +957,6 @@ def display_sound_wrapper(request, username, sound_id):
     tvars = {
         'sound_id': sound_id,
         'sound': sound_obj,
-        'media_url': settings.MEDIA_URL,
         'request': request,
         'is_explicit': is_explicit,
         'is_authenticated': request.user.is_authenticated
@@ -1215,7 +1034,8 @@ def oembed(request):
 
 
 def downloaders(request, username, sound_id):
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
+        # If not loaded as a modal, redirect to sound page with parameter to open modal
         return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '?downloaders=1')
 
     sound = get_object_or_404(Sound, id=sound_id)
@@ -1223,7 +1043,7 @@ def downloaders(request, username, sound_id):
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(sound=sound_id)
 
-    num_items_per_page = 32 if not using_beastwhoosh(request) else settings.USERS_PER_DOWNLOADS_MODAL_PAGE_BW
+    num_items_per_page = settings.USERS_PER_DOWNLOADS_MODAL_PAGE
     pagination = paginate(request, qs, num_items_per_page, object_count=sound.num_downloads)
     page = pagination["page"]
 
@@ -1244,29 +1064,22 @@ def downloaders(request, username, sound_id):
              "username": username,
              "download_list": download_list}
     tvars.update(pagination)
-
-    if using_beastwhoosh(request):
-        return render(request, 'sounds/modal_downloaders.html', tvars)
-    else:
-        return render(request, 'sounds/downloaders.html', tvars)
+    return render(request, 'sounds/modal_downloaders.html', tvars)
 
 
 def pack_downloaders(request, username, pack_id):
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
+         # If not loaded as a modal, redirect to sound page with parameter to open modal
         return HttpResponseRedirect(reverse('pack', args=[username, pack_id]) + '?downloaders=1')
     
     pack = get_object_or_404(Pack, id=pack_id)
 
     # Retrieve all users that downloaded a sound
     qs = PackDownload.objects.filter(pack_id=pack_id).select_related("user", "user__profile")
-    num_items_per_page = 32 if not using_beastwhoosh(request) else settings.USERS_PER_DOWNLOADS_MODAL_PAGE_BW
+    num_items_per_page = settings.USERS_PER_DOWNLOADS_MODAL_PAGE
     paginator = paginate(request, qs, num_items_per_page, object_count=pack.num_downloads)
 
     tvars = {'username': username,
              'pack': pack}
     tvars.update(paginator)
-    
-    if using_beastwhoosh(request):
-        return render(request, 'sounds/modal_downloaders.html', tvars)
-    else:
-        return render(request, 'sounds/pack_downloaders.html', tvars)
+    return render(request, 'sounds/modal_downloaders.html', tvars)

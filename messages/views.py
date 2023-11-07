@@ -44,47 +44,21 @@ from utils.pagination import paginate
 def messages_change_state(request):
     if request.method == "POST":
         choice = request.POST.get("choice", False)
-
-        if not using_beastwhoosh(request):
-            # get all message ids in the format `cb_[number]` which have a value of 'on'
-            message_ids = []
-            for key, val in request.POST.items():
-                if key.startswith('cb_') and val == 'on':
-                    try:
-                        msgid = int(key.replace('cb_', ''))
-                        message_ids.append(msgid)
-                    except ValueError:
-                        pass
-        else:
-            # If using beastwhoosh, the IDs will come in a different form field
-            message_ids = [int(mid) for mid in request.POST.get("ids", "").split(',')]
-
+        message_ids = [int(mid) for mid in request.POST.get("ids", "").split(',')]
         if choice and message_ids:
             fs_messages = Message.objects.filter(Q(user_to=request.user, is_sent=False) |
                                               Q(user_from=request.user, is_sent=True)).filter(id__in=message_ids)
-
             if choice == "a":
-                if using_beastwhoosh(request):
-                    for message in fs_messages:
-                        # In BW we allow the option to toggle archived/unarchived, so we need to iterate messages
-                        # one by one
-                        message.is_archived = not message.is_archived
-                        message.save()
-                else:
-                    fs_messages.update(is_archived=True)
+                for message in fs_messages:
+                    message.is_archived = not message.is_archived
+                    message.save()
             elif choice == "d":
                 fs_messages.delete()
             elif choice == "r":
-                if using_beastwhoosh(request):
-                    for message in fs_messages:
-                        # In BW we allow the option to toggle read/unread, so we need to iterate messages one by one
-                        message.is_read = not message.is_read
-                        message.save()
-                else:
-                    fs_messages.update(is_read=True)
-
+                for message in fs_messages:
+                    message.is_read = not message.is_read
+                    message.save()
             invalidate_user_template_caches(request.user.id)
-
     return HttpResponseRedirect(request.POST.get("next", reverse("messages")))
 
 
@@ -98,7 +72,7 @@ def inbox(request):
     tvars = {'list_type': 'inbox'}  # Used in BW tabs nav only
     tvars.update(paginate(
         request, qs,
-        items_per_page=settings.MESSAGES_PER_PAGE_BW if using_beastwhoosh(request) else settings.MESSAGES_PER_PAGE))
+        items_per_page=settings.MESSAGES_PER_PAGE))
     return render(request, 'messages/inbox.html', tvars)
 
 
@@ -112,7 +86,7 @@ def sent_messages(request):
     } 
     tvars.update(paginate(
         request, qs,
-        items_per_page=settings.MESSAGES_PER_PAGE_BW if using_beastwhoosh(request) else settings.MESSAGES_PER_PAGE))
+        items_per_page=settings.MESSAGES_PER_PAGE))
     return render(request, 'messages/sent.html', tvars)
 
 
@@ -122,7 +96,7 @@ def archived_messages(request):
     tvars = {'list_type': 'archived'}  # Used in BW tabs nav only
     tvars.update(paginate(
         request, qs,
-        items_per_page=settings.MESSAGES_PER_PAGE_BW if using_beastwhoosh(request) else settings.MESSAGES_PER_PAGE))
+        items_per_page=settings.MESSAGES_PER_PAGE))
     return render(request, 'messages/archived.html', tvars)
 
 
@@ -232,12 +206,9 @@ def get_previously_contacted_usernames(user):
 def username_lookup(request):
     results = []
     if request.method == "GET":
-        if not using_beastwhoosh(request):
+        query = request.GET.get("q", None)
+        if query is not None and query.strip():
             results = get_previously_contacted_usernames(request.user)
-        else:
-            query = request.GET.get("q", None)
-            if query is not None and query.strip():
-                results = get_previously_contacted_usernames(request.user)
-                results = [result for result in results if query in result]
+            results = [result for result in results if query in result]
     json_resp = json.dumps(results)
     return HttpResponse(json_resp, content_type='application/json')

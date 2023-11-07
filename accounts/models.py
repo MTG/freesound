@@ -34,6 +34,7 @@ from django.db import models, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.encoding import smart_str
 from django.utils.timezone import now
@@ -240,10 +241,11 @@ class Profile(models.Model):
             l_avatar = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, user_id)
             xl_avatar = settings.AVATARS_URL + "%s/%d_XL.jpg" % (id_folder, user_id)
         else:
-            s_avatar = settings.MEDIA_URL + "images/32x32_avatar.png"
-            m_avatar = settings.MEDIA_URL + "images/40x40_avatar.png"
-            l_avatar = settings.MEDIA_URL + "images/70x70_avatar.png"
-            xl_avatar = settings.MEDIA_URL + "images/100x100_avatar.png"
+            # NOTE: this images are no longer used in the new UI, this might be refactored
+            s_avatar = static(f'bw-frontend/public/32x32_avatar.png')
+            m_avatar = static(f'bw-frontend/public/40x40_avatar.png')
+            l_avatar = static(f'bw-frontend/public/70x70_avatar.png')
+            xl_avatar = static(f'bw-frontend/public/100x100_avatar.png')
         return dict(
             avatar=dict(
                 S=dict(
@@ -265,7 +267,6 @@ class Profile(models.Model):
             ),
             uploads_dir=os.path.join(settings.UPLOADS_PATH, str(user_id))
         )
-
 
     @locations_decorator(cache=False)
     def locations(self):

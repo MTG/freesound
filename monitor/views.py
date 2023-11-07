@@ -28,14 +28,13 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db.models import Count
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.urls import reverse
 
 import tickets
 from freesound.celery import get_queues_task_counts
 from sounds.models import Sound, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
-from utils.frontend_handling import using_beastwhoosh
 
 
 @login_required
@@ -52,67 +51,7 @@ def get_queues_status(request):
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def monitor_home(request):
-    if using_beastwhoosh(request):
-        return redirect("monitor-stats")
-
-    sounds_in_moderators_queue_count =\
-        tickets.views._get_sounds_in_moderators_queue_count(request.user)
-
-    new_upload_count = tickets.views.new_sound_tickets_count()
-    tardy_moderator_sounds_count =\
-        len(tickets.views._get_tardy_moderator_tickets())
-
-    _, tardy_user_sounds_count = tickets.views._get_tardy_user_tickets_and_count()
-
-    # Processing
-    sounds_queued_count = Sound.objects.filter(
-            processing_ongoing_state='QU').count()
-    sounds_pending_count = Sound.objects.\
-        filter(processing_state='PE')\
-        .exclude(processing_ongoing_state='PR')\
-        .exclude(processing_ongoing_state='QU')\
-        .count()
-    sounds_processing_count = Sound.objects.filter(
-            processing_ongoing_state='PR').count()
-    sounds_failed_count = Sound.objects.filter(
-            processing_state='FA').count()
-    sounds_ok_count = Sound.objects.filter(
-            processing_state='OK').count()
-
-    # Analysis
-    analyzers_data = {}  
-    all_sound_ids = Sound.objects.all().values_list('id', flat=True).order_by('id')
-    n_sounds = len(all_sound_ids)
-    for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
-        ok = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="OK").count()
-        sk = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="SK").count()
-        fa = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="FA").count()
-        qu = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="QU").count()
-        missing = n_sounds - (ok + sk + fa + qu)
-        percentage_done = (ok + sk + fa) * 100.0/n_sounds
-        analyzers_data[analyzer_name] = {
-            'OK': ok,
-            'SK': sk,
-            'FA': fa,
-            'QU': qu,
-            'Missing': missing,
-            'Percentage': percentage_done,
-        }
-
-    tvars = {"new_upload_count": new_upload_count,
-             "tardy_moderator_sounds_count": tardy_moderator_sounds_count,
-             "tardy_user_sounds_count": tardy_user_sounds_count,
-             "sounds_queued_count": sounds_queued_count,
-             "sounds_pending_count": sounds_pending_count,
-             "sounds_processing_count": sounds_processing_count,
-             "sounds_failed_count": sounds_failed_count,
-             "sounds_ok_count": sounds_ok_count,
-             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
-             "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
-             "queues_stats_url": reverse('queues-stats'),
-    }
-
-    return render(request, 'monitor/monitor.html', tvars)
+    return HttpResponseRedirect(reverse("monitor-stats"))
 
 
 @login_required
@@ -303,9 +242,8 @@ def process_sounds(request):
             for sound in sounds_to_process:
                 sound.process(force=True)
     
-    if using_beastwhoosh(request):
-        return redirect("monitor-processing")
-    return redirect("monitor-home")
+    return HttpResponseRedirect(reverse("monitor-processing"))
+    
 
 
 def moderator_stats_ajax(request):

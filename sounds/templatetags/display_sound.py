@@ -119,7 +119,6 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
         return {
             'sound': sound_obj,
             'user_profile_locations': Profile.locations_static(sound_obj.user_id, getattr(sound_obj, 'user_has_avatar', False)),
-            'media_url': context['media_url'],
             'request': request,
             'is_explicit': sound_obj.is_explicit and
                            (not request.user.is_authenticated or not request.user.profile.is_adult),

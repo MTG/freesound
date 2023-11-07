@@ -7,7 +7,7 @@
 <div class="col-12">
     <div class="text-center">
         <h4 class="v-spacing-5">Join Freesound</h4>
-        <form id="registerModalForm" class="disable-on-submit" method="post" action="{% url 'accounts-register' %}?in_modal=1" data-check-username-url="{% url 'check_username' %}" novalidate>{% csrf_token %}
+        <form id="registerModalForm" class="disable-on-submit" method="post" action="{% url 'accounts-registration-modal' %}?in_modal=1" data-check-username-url="{% url 'check_username' %}" novalidate>{% csrf_token %}
             {{ registration_form }}
             <button type="submit" class="btn-primary v-spacing-top-3">Join</button>
         </form>

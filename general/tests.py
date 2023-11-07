@@ -139,7 +139,6 @@ class PaginatorTestCase(TestCase):
         all GET parameters and values. This test checks that if non-ascii characters are passed as GET parameter names
         or values, paginator does not break.
         """
-        context = {'media_url': 'fake URL'}
         text_with_non_ascii = '�textèé'
         dummy_request = RequestFactory().get(reverse('sounds'), {
             text_with_non_ascii: '1',
@@ -147,4 +146,4 @@ class PaginatorTestCase(TestCase):
             'param2_name': 'ok_value',
         })
         paginator = paginate(dummy_request, Sound.objects.all(), 10)
-        show_paginator(context, paginator['paginator'], paginator['page'], paginator['current_page'], dummy_request)
+        show_paginator({}, paginator['paginator'], paginator['page'], paginator['current_page'], dummy_request)

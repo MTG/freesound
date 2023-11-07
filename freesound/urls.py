@@ -89,7 +89,6 @@ urlpatterns = [
     path('browse/tags/', tags.views.tags, name="tags"),
     re_path(r'^browse/tags/(?P<multiple_tags>[\w//-]+)/$', tags.views.tags, name="tags"),
     path('browse/packs/', sounds.views.packs, name="packs"),
-    path('browse/comments/', comments.views.all, name="comments"),
     path('browse/random/', sounds.views.random, name="sounds-random"),
     re_path(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
     path('browse/geotags_box/', geotags.views.geotags_box, name="geotags-box"),
@@ -157,8 +156,6 @@ if settings.DEBUG:
         return serve(request, path, document_root=document_root, show_indexes=False)
 
     urlpatterns += [
-        re_path(r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), serve,
-                {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
         re_path(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve,
                 {'document_root': settings.DATA_PATH, 'show_indexes': True}),
         path('__debug__/', include(debug_toolbar.urls)),

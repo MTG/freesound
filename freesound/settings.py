@@ -290,11 +290,7 @@ EMAIL_SUBJECT_SUPPORT_EMAIL = '[support]'
 EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 
 # -------------------------------------------------------------------------------
-# Media paths, URLS and static settings
-
-# Absolute path to the directory that holds media (e.g. /home/media/media.lawrence.com/)
-MEDIA_ROOT = os.path.join(os.path.dirname(__file__), '../freesound/../media')
-MEDIA_URL = "/media/"
+# Static settings
 
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is not an installed Django app)
 STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
@@ -319,28 +315,23 @@ FREESOUND_RSS = ''
 
 # Number of things per page
 FORUM_POSTS_PER_PAGE = 20
-FORUM_THREADS_PER_PAGE = 40
-FORUM_THREADS_PER_PAGE_BW = 15
+FORUM_THREADS_PER_PAGE = 15
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 SOUNDS_PER_PAGE_COMPACT_MODE = 30
 PACKS_PER_PAGE = 15
-DOWNLOADED_SOUNDS_PACKS_PER_PAGE_BW = 12
-USERS_PER_DOWNLOADS_MODAL_PAGE_BW = 15
-COMMENTS_IN_MODAL_PER_PAGE_BW = 15 
+DOWNLOADED_SOUNDS_PACKS_PER_PAGE = 12
+USERS_PER_DOWNLOADS_MODAL_PAGE = 15
+COMMENTS_IN_MODAL_PER_PAGE = 15 
 REMIXES_PER_PAGE = 10
-MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 100
-MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_BW = 60
-MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN = 20
+MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 60
 SOUNDS_PER_DESCRIBE_ROUND = 10
 SOUNDS_PENDING_MODERATION_PER_PAGE = 9
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
 FOLLOW_ITEMS_PER_PAGE = 5  # BW only
-MESSAGES_PER_PAGE = 20
-MESSAGES_PER_PAGE_BW = 10
-BOOKMARKS_PER_PAGE = 30
-BOOKMARKS_PER_PAGE_BW = 12 
+MESSAGES_PER_PAGE = 10
+BOOKMARKS_PER_PAGE = 12 
 
 
 # Weights using to compute BW charts

@@ -108,8 +108,7 @@ def forum(request, forum_name_slug):
     paginator = paginate(request, Thread.objects.filter(forum=forum, first_post__moderation_state="OK")
                          .select_related('last_post', 'last_post__author', 'last_post__author__profile',
                                          'author', 'author__profile', 'first_post', 'forum'),
-                         settings.FORUM_THREADS_PER_PAGE if not using_beastwhoosh(request) else
-                         settings.FORUM_THREADS_PER_PAGE_BW)
+                         settings.FORUM_THREADS_PER_PAGE)
     tvars.update(paginator)
 
     return render(request, 'forum/threads.html', tvars)
@@ -151,16 +150,8 @@ def thread(request, forum_name_slug, thread_id):
 
 @last_action
 def latest_posts(request):
-    if using_beastwhoosh(request):
-        # "latest posts" is a NG only page, if on BW, redirect to "hot threads"
-        return HttpResponseRedirect(reverse('forums-hot-threads'))
-    paginator = paginate(request,
-                         Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum')
-                         .filter(moderation_state="OK").order_by('-created').all(), settings.FORUM_POSTS_PER_PAGE)
-    hide_search = True
-    tvars = {'hide_search': hide_search}
-    tvars.update(paginator)
-    return render(request, 'forum/latest_posts.html', tvars)
+    # The "latest posts" page no longet exists, we now redirect to "hot threads"
+    return HttpResponseRedirect(reverse('forums-hot-threads'))
 
 
 def get_hot_threads(n=None, days=15):
@@ -182,11 +173,7 @@ def get_hot_threads(n=None, days=15):
 
 
 def hot_threads(request):
-    if not using_beastwhoosh(request):
-        # "hot threads" is a BW only page, if on NG, redirect to "latest posts"
-        return HttpResponseRedirect(reverse('forums-latest-posts'))
-
-    paginator = paginate(request, get_hot_threads(), settings.FORUM_THREADS_PER_PAGE_BW)
+    paginator = paginate(request, get_hot_threads(), settings.FORUM_THREADS_PER_PAGE)
     tvars = {}
     tvars.update(paginator)
     return render(request, 'forum/hot_threads.html', tvars)

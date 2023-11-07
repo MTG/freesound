@@ -180,8 +180,7 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
 
 @register.inclusion_tag('molecules/maps_js_scripts.html', takes_context=True)
 def bw_maps_js_scripts(context):
-    return {'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
-            'media_url': settings.MEDIA_URL}
+    return {'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN}
 
 
 @register.filter

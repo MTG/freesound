@@ -86,7 +86,9 @@ class UserEditProfile(TestCase):
     @override_avatars_path_with_temp_directory
     def test_handle_uploaded_image(self):
         user = User.objects.create_user("testuser")
-        with open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb') as f:
+        STATIC_PUBLIC_BASE_DIR = 'freesound/static/bw-frontend/public/'
+        test_avatar_path = os.path.join(STATIC_PUBLIC_BASE_DIR, 'test_avatar.png')
+        with open(test_avatar_path, 'rb') as f:
             f = InMemoryUploadedFile(f, None, None, None, None, None)
             handle_uploaded_image(user.profile, f)
 
@@ -154,7 +156,9 @@ class UserEditProfile(TestCase):
     def test_edit_user_avatar(self):
         user = User.objects.create_user("testuser")
         self.client.force_login(user)
-        with open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb') as f:
+        STATIC_PUBLIC_BASE_DIR = 'freesound/static/bw-frontend/public/'
+        test_avatar_path = os.path.join(STATIC_PUBLIC_BASE_DIR, 'test_avatar.png')
+        with open(test_avatar_path, 'rb') as f:
             self.client.post("/home/edit/", {
                 'image-file': f,
                 'image-remove': False,

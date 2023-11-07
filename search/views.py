@@ -37,7 +37,6 @@ from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
 from clustering.interface import cluster_sound_results, get_sound_ids_from_search_engine_query
 from forum.models import Post
-from utils.frontend_handling import using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
@@ -459,7 +458,7 @@ def search_forum(request):
                 sort=sort,
                 num_posts=settings.FORUM_POSTS_PER_PAGE,
                 current_page=current_page,
-                group_by_thread=not using_beastwhoosh(request))
+                group_by_thread=False)
 
             paginator = SearchResultsPaginator(results, settings.FORUM_POSTS_PER_PAGE)
             num_results = paginator.count
@@ -498,17 +497,16 @@ def search_forum(request):
         'results': results
     }
 
-    if using_beastwhoosh(request):
-        if results:
-            posts_unsorted = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
-                .filter(id__in=[d['id'] for d in results.docs])
-            posts_map = {post.id:post for post in posts_unsorted}
-            posts = [posts_map[d['id']] for d in results.docs]            
-        else:
-            posts = []
-        tvars.update({
-            'posts': posts
-        })
+    if results:
+        posts_unsorted = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
+            .filter(id__in=[d['id'] for d in results.docs])
+        posts_map = {post.id:post for post in posts_unsorted}
+        posts = [posts_map[d['id']] for d in results.docs]            
+    else:
+        posts = []
+    tvars.update({
+        'posts': posts
+    })
 
     return render(request, 'search/search_forum.html', tvars)
 

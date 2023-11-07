@@ -1,5 +1,4 @@
 {% extends "simple_page.html" %}
-{% load display_license_form %}
 {% block page-title %}Bulk License Change{% endblock %}
 {% block title %}Bulk License Change{% endblock %}
 
@@ -14,7 +13,7 @@
 
     <p><b>Please note:</b> you will be able to change the license of any of your sounds whenever you want on the individual sounds' edit pages.</p>
     <form action="." method="post" class="v-spacing-top-5 v-spacing-4">{% csrf_token %}
-        {% display_license_form form %}
+        {% include "molecules/license_form_field.html" %}
         <button class="btn-primary v-spacing-top-4">Update licenses and continue using Freesound</button>
     </form>
     <p><b>Remember:</b> no matter what license, you are always free to give people exceptions, or license your work elsewhere under another license. If you select the strictest license, people will need to go through the motions of asking you permission to use their work for certain things, and this might be troublesome.</p>

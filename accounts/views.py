@@ -249,7 +249,7 @@ def check_username(request):
 @transaction.atomic()
 def bulk_license_change(request):
     if request.method == 'POST':
-        form = LicenseForm(request.POST)
+        form = LicenseForm(request.POST, hide_old_license_versions=True)
         if form.is_valid():
             selected_license = form.cleaned_data['license']
             Sound.objects.filter(user=request.user).update(license=selected_license, is_index_dirty=True)
@@ -259,7 +259,7 @@ def bulk_license_change(request):
             request.user.profile.save()
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
-        form = LicenseForm()
+        form = LicenseForm(hide_old_license_versions=True)
     tvars = {'form': form}
     return render(request, 'accounts/choose_new_license.html', tvars)
 

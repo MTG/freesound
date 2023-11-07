@@ -1,11 +1,10 @@
-{% extends "accounts/_section.html" %}
+{% extends "simple_page.html" %}
+
+{% block title %}Your email address should be updated{% endblock %}
+{% block page-title %}Your email address should be updated{% endblock %}
 
 
-{% block title %}edit account{% endblock %}
-
-{% block section_content %}
-
-    <h1>Your email address should be updated</h1>
+{% block page-content %}
 
     <p>Dear <b>{{ request.user.username }}</b>, we recently introduced a new policy in Freesound which does not allow
         different user accounts to share a single email address. Only a few users are affected by this change, and you
@@ -29,7 +28,8 @@
         If you take no action, this message will be shown again the next time you log in.
     </p>
 
-    <h4><a href="{{ next }}">Do this later...</a></h4>
-
+    <div class="v-spacing-top-6">
+    <a href="{{ next }}" class="btn-primary">Do this later...</a>
+    </div>
 
 {% endblock %}

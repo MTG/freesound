@@ -1,26 +1,24 @@
-{% extends "sounds/_section.html" %}
+{% extends "accounts/account_settings_base.html" %}
 
-{% load paginator %}
+{% block title %}Delete account{% endblock title %}
 
+{% block main_content %}
 
-{% block title %}Delete yourself{% endblock title %}
+    <h1>Delete account</h1>
 
-{% block section_content %}
-<h1>Delete yourself?</h1>
-
-<div>
-  <p><strong>WARNING:</strong> this is PERMANENT!</p>
-    <p>Before deleting your account, please check the <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">
-        deletion FAQ page</a> to make sure you understand the consequences of this action. Note that you can not
-        be "undeleted", not even by administrators...</p>
-
-    <p>If you are entirely sure you want to delete your account, please choose one of the following options and confirm
-        your user password (form valid for 10 seconds only):</p>
-    <form method="post">
-      {% csrf_token %}
-      {{delete_form.as_p}}
-    <button>Send</button>
-    </form>
-</div>
+    <div class="v-spacing-top-4 w-100 v-spacing-5">
+        <p class="font-weight-bold text-center v-spacing-4">Warning: You can not be “undeleted”, not even by administrators.</p>
+        <p class="v-spacing-2 text-grey">
+            Before deleting your account, please <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">read this page</a> to be
+            fully aware of what happens with your data. If you are entirely sure you want to delete your account, please choose one of the following options
+            and confirm your password:
+        </p>
+        <form method="post" class="bw-form w-100 disable-on-submit">{% csrf_token %}
+            <div class="bw-multiple-radio">
+                {{delete_form}}
+            </div>
+            <button class="btn-primary w-100 v-spacing-top-5">Delete account</button>
+        </form>
+    </div>
 
 {% endblock %}

@@ -59,7 +59,6 @@ def display_ticket(context, ticket, include_last_message=False):
     
     tvars = {
         'request': context['request'],
-        'media_url': context['media_url'],
         'ticket': ticket,
         'sound': sound,
         'num_messages': num_messages,

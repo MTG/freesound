@@ -47,7 +47,6 @@ class DisplaySoundTemplatetagTestCase(TestCase):
             Template("{% load display_sound %}{% display_sound sound %}").render(Context({
                 'sound': self.sound.id,
                 'request': request,
-                'media_url': 'http://example.org/'
             }))
             #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
@@ -62,7 +61,6 @@ class DisplaySoundTemplatetagTestCase(TestCase):
             Template("{% load display_sound %}{% display_sound sound %}").render(Context({
                 'sound': self.sound,
                 'request': request,
-                'media_url': 'http://example.org/'
             }))
             #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
@@ -79,7 +77,6 @@ class DisplaySoundTemplatetagTestCase(TestCase):
             Template("{% load display_sound %}{% display_sound sound %}").render(Context({
                 'sound': self.sound,
                 'request': request,
-                'media_url': 'http://example.org/'
             }))
             #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
@@ -94,7 +91,6 @@ class DisplaySoundTemplatetagTestCase(TestCase):
             Template("{% load display_sound %}{% display_sound sound %}").render(Context({
                 'sound': 'not_an_integer',
                 'request': request,
-                'media_url': 'http://example.org/'
             }))
             #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
@@ -109,7 +105,6 @@ class DisplaySoundTemplatetagTestCase(TestCase):
             Template("{% load display_sound %}{% display_sound sound %}").render(Context({
                 'sound': -1,
                 'request': request,
-                'media_url': 'http://example.org/'
             }))
             #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 

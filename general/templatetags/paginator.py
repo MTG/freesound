@@ -96,7 +96,6 @@ def show_paginator(
         "url_next_page": url_next_page,
         "url_first_page": url_first_page,
         "url_last_page": url_last_page,
-        "media_url": context['media_url'],
         "anchor": anchor,
         "non_grouped_number_of_results": non_grouped_number_of_results
     }

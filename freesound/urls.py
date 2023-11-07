@@ -59,13 +59,11 @@ urlpatterns = [
     path('people/<username>/sounds/<int:sound_id>/edit/', sounds.views.sound_edit, name="sound-edit"),
     path('people/<username>/sounds/<int:sound_id>/remixes/', sounds.views.remixes, name="sound-remixes"),
     path('people/<username>/sounds/<int:sound_id>/geotag/', geotags.views.for_sound, name="sound-geotag"),
-    path('people/<username>/sounds/<int:sound_id>/delete/', sounds.views.delete, name="sound-delete"),
     path('people/<username>/sounds/<int:sound_id>/similar/', sounds.views.similar, name="sound-similar"),
     path('people/<username>/sounds/<int:sound_id>/downloaders/', sounds.views.downloaders, name="sound-downloaders"),
     path('people/<username>/packs/', sounds.views.packs_for_user, name="packs-for-user"),
     path('people/<username>/packs/<int:pack_id>/', sounds.views.pack, name="pack"),
     path('people/<username>/packs/<int:pack_id>/edit/', sounds.views.pack_edit, name="pack-edit"),
-    path('people/<username>/packs/<int:pack_id>/delete/', sounds.views.pack_delete, name="pack-delete"),
     re_path(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
     path('people/<username>/packs/<int:pack_id>/downloaders/', sounds.views.pack_downloaders, name="pack-downloaders"),
     path('people/<username>/packs/<int:pack_id>/licenses/', sounds.views.pack_licenses, name="pack-licenses"),
@@ -79,7 +77,7 @@ urlpatterns = [
     path('people/<username>/followers/', follow.views.followers, name="user-followers"),
     path('people/<username>/following_tags/', follow.views.following_tags, name="user-following-tags"),
 
-    path('charts/', accounts.views.charts, name="charts"),  # BW only
+    path('charts/', accounts.views.charts, name="charts"),
 
     path('embed/sound/iframe/<int:sound_id>/simple/<player_size>/', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
     path('embed/geotags_box/iframe/', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
@@ -91,13 +89,9 @@ urlpatterns = [
     path('browse/tags/', tags.views.tags, name="tags"),
     re_path(r'^browse/tags/(?P<multiple_tags>[\w//-]+)/$', tags.views.tags, name="tags"),
     path('browse/packs/', sounds.views.packs, name="packs"),
-    path('browse/comments/', comments.views.all, name="comments"),
     path('browse/random/', sounds.views.random, name="sounds-random"),
     re_path(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
     path('browse/geotags_box/', geotags.views.geotags_box, name="geotags-box"),
-
-    path('browse/remixed/', sounds.views.remixed, name="remix-groups"),
-    path('browse/remixed/<int:group_id>/', sounds.views.remix_group, name="remix-group"),
 
     path('contact/', support.views.contact, name="contact"),
 
@@ -162,8 +156,6 @@ if settings.DEBUG:
         return serve(request, path, document_root=document_root, show_indexes=False)
 
     urlpatterns += [
-        re_path(r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), serve,
-                {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
         re_path(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve,
                 {'document_root': settings.DATA_PATH, 'show_indexes': True}),
         path('__debug__/', include(debug_toolbar.urls)),

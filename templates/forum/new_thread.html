@@ -1,42 +1,51 @@
-{% extends "forum/_section.html" %}
+{% extends "simple_page.html" %}
+{% load bw_templatetags %}
+{% load static %}
 
+{% block title %}Forums - {{forum.name}} - New Thread{% endblock %}
+{% block page-title-custom %}{% endblock %}
 
-{% block title %}forum - new thread{% endblock %}
-
-{% block breadcrumb %}&#187; <a href="{% url "forums-new-thread" forum.name_slug %}">New thread</a>{% endblock %}
-
-{% block forum_search %}{% endblock %}
-
-{% block section_content %}
-
-<form method="post" action="." class="disable-on-submit">{% csrf_token %}
-
-{% include 'forum/html_explanation.html' %}
-
-<div>
-    {{ form.non_field_errors }}
-    {{ form.title.errors }}
-<p>
-    <label for="{{ form.title.id_for_label }}">Thread title:</label><br>
-    {{ form.title }}
-</p>
-    {{ form.body.errors }}
-<p>
-    <label for="{{ form.body.id_for_label }}">Message:</label><br>
-    {{ form.body }}
-</p>
-<p>
-    {{ form.subscribe }} <label for="{{ form.subscribe.id_for_label }}">{{ form.subscribe.help_text }}</label><br>
-</p>
-</div>
-<input type="submit" value="create thread" />
-</form>
-
-<script>
-  $(function() {
-    unsecureImageCheck($('#{{ form.body.id_for_label }}'));
-  })
-</script>
-
-
+{% block page-content %}
+    <div class="row middle">
+        <div class="col-12">
+            <ul class="navbar-forums-hot navbar-breadcrumb">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url "forums-forums" %}">Freesound Forums</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link" href="{{forum.get_absolute_url}}">{{ forum.name }}</a>
+                </li>
+                <li class="nav-item text-16">
+                    New thread
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="divider-light v-spacing-top-1 v-spacing-5"></div>
+    <div class="v-spacing-top-5">
+        <form method="post" action="." class="bw-new-thread__form w-100 disable-on-submit">{% csrf_token %}
+            <div class="row">
+                <div class="col-lg-3 v-spacing-top-2">
+                    <div class="row middle">
+                        <div class="col-2 col-lg-4">
+                            {% bw_user_avatar request.user.profile.locations.avatar.L.url request.user.username 75 %}
+                        </div>
+                        <div class="col-8">
+                            <h6 class="text-16 no-margins"><a href="{% url 'account' request.user.username %}">{{ request.user.username }}</a></h6>
+                            <p class="text-grey no-margins">{{ request.user.profile.num_sounds|bw_intcomma }} sound{{ request.user.profile.num_sounds|pluralize }}</p>
+                            <p class="text-grey no-margins">{{ request.user.profile.num_posts|bw_intcomma }} post{{ request.user.profile.num_posts|pluralize }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    {{form.as_p}}
+                </div>
+            </div>
+            <div class="row v-spacing-top-5">
+                <div class="col-lg-7 offset-lg-3">
+                    <button class="btn-primary w-100">Create thread</button>
+                </div>
+            </div>
+        </form>
+    </div>
 {% endblock %}

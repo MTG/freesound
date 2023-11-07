@@ -44,7 +44,7 @@ class RssParserNode(template.Node):
                 raise template.TemplateSyntaxError(f"the variable '{self.url_var_name}' can't be found in the context")
 
         # Add custom-made summaries with a specific length of 300 chars which are slightly longer that those auto-generated
-        # by feedparser. These summaries are used in BW only.
+        # by feedparser.
         for entry in context[self.var_name]['entries']:
             soup = BeautifulSoup(entry['content'][0]['value'], features="html.parser")
             text_without_html_tags = soup.get_text()

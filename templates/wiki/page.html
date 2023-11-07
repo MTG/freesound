@@ -1,22 +1,23 @@
-{% extends "wiki/_section.html" %}
-
+{% extends "simple_page.html" %}
 {% load markup_freesound %}
+{% load bw_templatetags %}
 
-{% block title %}help - {{content.title}}{% endblock %}
+{% block title %}Help - {{content.title}}{% endblock %}
+{% block page-title-custom %}{% endblock %}{% comment %}No page title in wiki pages as is part of page content{% endcomment %}
 
-{% block head %}
-{{ block.super }}
-		<link rel="stylesheet" type="text/css" href="{{media_url}}css/code.css" />
-{% endblock %}
-
-{% block section_content %}
-    {% if content.title == "Frequently Asked Questions" %}
-        {% comment %}When showing the "Frequently Asked Questions", we load the geotag picker help tool code
-        so that it is corresctly displayed when showGeotagPickerHelpTool() is run. We can't place this code in the
-        wiki page content as script tag would be stripped.{% endcomment %}
-        {% include 'geotags/geotag_picker_help_tool.html' %}
-    {% endif %}
-    {{content.body|markdown:"wikilinks,codehilite,markdown.extensions.toc"}}
-    {% if perms.wiki.change_page %}<div id="wiki-edit"><a href="{% url "wiki-page-edit" name %}"><p>edit this page</p></a><br></div>{% endif %}
-
+{% block page-content %}
+    <div class="bw-wiki">
+        {% if content.title == "Frequently Asked Questions" %}
+            {% comment %}When showing the "Frequently Asked Questions", we load the geotag picker help tool code
+            so that it is corresctly displayed when showGeotagPickerHelpTool() is run. We can't place this code in the
+            wiki page content as script tag would be stripped.{% endcomment %}
+            {% bw_maps_js_scripts %}
+        {% endif %}
+        {{ content.body|markdown_wiki }}
+        {% if perms.wiki.change_page %}
+        <div class="v-spacing-top-5 text-right">
+            <a class="btn-primary no-hover" href="{% url "wiki-page-edit" name %}">Edit this page</a>
+        </div>
+        {% endif %}
+    </div>
 {% endblock %}

@@ -8,9 +8,13 @@ from .models import DonationCampaign
 class DonateForm(forms.Form):
     RADIO_CHOICES = []
 
-    donation_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=RADIO_CHOICES)
-    name_option = forms.CharField(required=False, max_length=255)
-    amount = forms.FloatField(initial=10.0, min_value=0.5)
+    donation_type = forms.ChoiceField(
+        widget=forms.RadioSelect(), choices=RADIO_CHOICES,
+        label=mark_safe('Please choose the <b>name</b> that will appear with the donation:'))
+    name_option = forms.CharField(
+        required=False, max_length=255, label=False)
+    amount = forms.FloatField(
+        initial=10.0, min_value=0., label=mark_safe('Donation amount (&euro;):'))
     recurring = forms.BooleanField(required=False, initial=False,
             label='I want this to be a recurring monthly donation',)
     show_amount = forms.BooleanField(
@@ -21,6 +25,7 @@ class DonateForm(forms.Form):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         default_donation_amount = kwargs.pop('default_donation_amount', None)
+        kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
         choices = [
             ('1', "Anonymous"),
@@ -41,6 +46,13 @@ class DonateForm(forms.Form):
                 self.initial['amount'] = float(default_donation_amount)
             except ValueError:
                 pass
+
+        self.fields['donation_type'].widget.attrs['class'] = 'bw-radio'
+        self.fields['name_option'].widget.attrs['class'] = 'display-none'
+        self.fields['name_option'].widget.attrs['placeholder'] = 'Write the name here'
+        self.fields['amount'].widget.attrs['class'] = 'v-spacing-top-1'
+        self.fields['recurring'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['show_amount'].widget.attrs['class'] = 'bw-checkbox'
 
     def clean(self):
         cleaned_data = super().clean()
@@ -73,21 +85,3 @@ class DonateForm(forms.Form):
         # Paypal gives only one field to add extra data so we send it as b64
         self.encoded_data = base64.b64encode(json.dumps(returned_data).encode()).decode()
         return cleaned_data
-
-
-class BwDonateForm(DonateForm):
-
-    def __init__(self, *args, **kwargs):
-        kwargs.update(dict(label_suffix=''))
-        super().__init__(*args, **kwargs)
-
-        self.fields['donation_type'].label = \
-            mark_safe('Please choose the <b>name</b> that will appear with the donation:')
-        self.fields['donation_type'].widget.attrs['class'] = 'bw-radio'
-        self.fields['name_option'].label = False
-        self.fields['name_option'].widget.attrs['class'] = 'display-none'
-        self.fields['name_option'].widget.attrs['placeholder'] = 'Write the name here'
-        self.fields['amount'].label = mark_safe('Donation amount (&euro;):')
-        self.fields['amount'].widget.attrs['class'] = 'v-spacing-top-1'
-        self.fields['recurring'].widget.attrs['class'] = 'bw-checkbox'
-        self.fields['show_amount'].widget.attrs['class'] = 'bw-checkbox'

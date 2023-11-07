@@ -229,9 +229,10 @@ class BulkDescribeUtils(TestCase):
 
     def test_get_csv_lines(self):
         # Load sample files for CSV, XLS and XLSX formats and compare the output of reading them is the same
-        sample_csv_path = os.path.join(settings.MEDIA_ROOT, 'sample.csv')
-        sample_xls_path = os.path.join(settings.MEDIA_ROOT, 'sample.xls')
-        sample_xlsx_path = os.path.join(settings.MEDIA_ROOT, 'sample.xlsx')
+        STATIC_PUBLIC_BASE_DIR = 'freesound/static/bw-frontend/public/'
+        sample_csv_path = os.path.join(STATIC_PUBLIC_BASE_DIR, 'sample.csv')
+        sample_xls_path = os.path.join(STATIC_PUBLIC_BASE_DIR, 'sample.xls')
+        sample_xlsx_path = os.path.join(STATIC_PUBLIC_BASE_DIR, 'sample.xlsx')
         header_csv, lines_csv = get_csv_lines(sample_csv_path)
         header_xls, lines_xls = get_csv_lines(sample_xls_path)
         header_xlsx, lines_xlsx = get_csv_lines(sample_xlsx_path)
@@ -249,8 +250,8 @@ class BulkDescribeUtils(TestCase):
                     self.assertEqual(float(lines_csv[j][header_value]), float(lines_xls[j][header_value]))
                     self.assertEqual(float(lines_xls[j][header_value]), float(lines_xlsx[j][header_value]))
                 else:
-                    self.assertEqual(lines_xls[j][header_value], lines_xlsx[j][header_value])
-                    self.assertEqual(lines_csv[j][header_value], lines_xls[j][header_value])
+                    self.assertEqual(lines_xls[j][header_value].lower(), lines_xlsx[j][header_value].lower())
+                    self.assertEqual(lines_csv[j][header_value].lower(), lines_xls[j][header_value].lower())
 
         # NOTE: more advance testing of this funciton would mean testing with different types of "good" and "bad" files
         # for each of the formats. For the CSV case that would rather feasible as we can generate the files

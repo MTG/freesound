@@ -10,14 +10,13 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
 
-from .forms import DonateForm, BwDonateForm
+from .forms import DonateForm
 from .models import Donation, DonationCampaign
-from utils.frontend_handling import render, using_beastwhoosh, BwCompatibleTemplateResponse
 from utils.mail import send_mail_template
 
 web_logger = logging.getLogger('web')
@@ -166,8 +165,7 @@ def donation_session_stripe(request):
     '''
     stripe.api_key = settings.STRIPE_PRIVATE_KEY
     if request.method == 'POST':
-        FormToUse = BwDonateForm if using_beastwhoosh(request) else DonateForm
-        form = FormToUse(request.POST, user=request.user)
+        form = DonateForm(request.POST, user=request.user)
         if form.is_valid():
             email_to = request.user.email if request.user.is_authenticated else None
             amount = form.cleaned_data['amount']
@@ -203,8 +201,7 @@ def donation_session_paypal(request):
     If request is post we generate the data to send to paypal.
     '''
     if request.method == 'POST':
-        FormToUse = BwDonateForm if using_beastwhoosh(request) else DonateForm
-        form = FormToUse(request.POST, user=request.user)
+        form = DonateForm(request.POST, user=request.user)
         if form.is_valid():
             amount = form.cleaned_data['amount']
             domain = f"https://{Site.objects.get_current().domain}"
@@ -249,14 +246,12 @@ def donate(request):
     data to send to paypal or stripe.
     """
     default_donation_amount = request.GET.get(settings.DONATION_AMOUNT_REQUEST_PARAM, None)
-    FormToUse = BwDonateForm if using_beastwhoosh(request) else DonateForm
-    form = FormToUse(user=request.user, default_donation_amount=default_donation_amount)
+    form = DonateForm(user=request.user, default_donation_amount=default_donation_amount)
     tvars = {'form': form, 'stripe_key': settings.STRIPE_PUBLIC_KEY}
     return render(request, 'donations/donate.html', tvars)
 
 
 class DonationsList(ListView):
-    response_class = BwCompatibleTemplateResponse
     model = Donation
     paginate_by = settings.DONATIONS_PER_PAGE
     ordering = ["-created"]

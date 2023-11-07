@@ -33,8 +33,13 @@ class BookmarkCategoryForm(forms.ModelForm):
 
 
 class BookmarkForm(forms.Form):
-    category = forms.ChoiceField(choices=[], required=False)
+    category = forms.ChoiceField(
+        label=False,
+        choices=[], 
+        required=False)
     new_category_name = forms.CharField(
+        label=False,
+        help_text=None,
         max_length=128,
         required=False)
     use_last_category = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
@@ -52,6 +57,11 @@ class BookmarkForm(forms.Form):
                                            (self.NEW_CATEGORY_CHOICE_VALUE, 'Create a new category...')] + \
                                           ([(category.id, category.name) for category in self.user_bookmark_categories]
                                            if self.user_bookmark_categories else [])
+        
+        self.fields['new_category_name'].widget.attrs['placeholder'] = "Fill in the name for the new category"
+        self.fields['category'].widget.attrs = {
+            'data-grey-items': f'{self.NO_CATEGORY_CHOICE_VALUE},{self.NEW_CATEGORY_CHOICE_VALUE}'}
+
 
     def save(self, *args, **kwargs):
         category_to_use = None
@@ -82,18 +92,5 @@ class BookmarkForm(forms.Form):
         bookmark, _ = Bookmark.objects.get_or_create(
             sound_id=self.sound_id, user=self.user_saving_bookmark, category=category_to_use)
         return bookmark
-
-
-class BwBookmarkForm(BookmarkForm):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.fields['new_category_name'].label = False
-        self.fields['new_category_name'].widget.attrs['placeholder'] = "Fill in the name for the new category"
-        self.fields['new_category_name'].help_text = None
-        self.fields['category'].label = False
-        self.fields['category'].widget.attrs = {
-            'data-grey-items': f'{self.NO_CATEGORY_CHOICE_VALUE},{self.NEW_CATEGORY_CHOICE_VALUE}'}
 
 

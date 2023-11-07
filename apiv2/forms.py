@@ -33,37 +33,28 @@ class ApiV2ClientForm(forms.Form):
     url = forms.URLField(required=False, label='URL', max_length=200, widget=forms.TextInput(attrs={'style': 'width:100%',
                          'placeholder': 'URL of your application, project, institution or other related page'}))
     redirect_uri = forms.URLField(required=False, label='Callback URL', max_length=200, widget=forms.TextInput(
-        attrs={'style': 'width:100%', 'placeholder': 'OAuth2 callback URL (see note below)'}))
-    description = forms.CharField(label='Description*', widget=forms.Textarea(
-        attrs={'style': 'width:100%', 'placeholder': 'Tell us something about what you\'re planning to do with this '
-                                                      'API credential (i.e. what kind of project or application you\'re'
-                                                      ' going to build)'}))
-    accepted_tos = forms.BooleanField(label='',
-                                      help_text='Check this box to accept the <a href="/help/tos_api/" '
-                                                'target="_blank">terms of use</a> of the Freesound API',
-                                      required=True,
-                                      error_messages={'required': 'You must accept the terms of use in order to '
-                                                                  'get access to the API.'})
-
-
-class BWApiV2ClientForm(ApiV2ClientForm):
-
-    def __init__(self, *args, **kwargs):
-        kwargs.update(dict(label_suffix=''))
-        super().__init__(*args, **kwargs)
-
-        self.fields['redirect_uri'].help_text = """<div class="text-black v-spacing-top-negative-2">The <b>Callback URL</b> is only used for the authorization process when accessing resources that require OAuth2.
+        attrs={'style': 'width:100%', 'placeholder': 'OAuth2 callback URL'}), 
+        help_text="""<div class="text-black v-spacing-top-negative-2">The <b>Callback URL</b> is only used for the authorization process when accessing resources that require OAuth2.
             At the end of the OAuth2 authorization process, Freesound will redirect the browser to the url specified in this field.
             In this way your application can be automatically notified when users have given the permissions to access their data.
             If your application does not support the use of a callback url (generally non web-based applications or non server-based), you must
             introduce the following url: <span style="font-family: 'Courier'">http://freesound.org/home/app_permissions/permission_granted/</span>.
-            <br>See the <a href="/docs/api" target="_blank">API docummentation</a> for more information.</div>"""
-        self.fields['redirect_uri'].widget.attrs['placeholder'] = 'OAuth2 callback URL'
-        self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
-        self.fields['accepted_tos'].label = mark_safe(self.fields['accepted_tos'].help_text)
-        self.fields['accepted_tos'].help_text = False
-    
+            <br>See the <a href="/docs/api" target="_blank">API docummentation</a> for more information.</div>""")
+    description = forms.CharField(label='Description*', widget=forms.Textarea(
+        attrs={'style': 'width:100%', 'placeholder': 'Tell us something about what you\'re planning to do with this '
+                                                      'API credential (i.e. what kind of project or application you\'re'
+                                                      ' going to build)'}))
+    accepted_tos = forms.BooleanField(label=mark_safe('Check this box to accept the <a href="/help/tos_api/" target="_blank">terms of use</a> of the Freesound API'),
+                                      help_text=False,
+                                      required=True,
+                                      error_messages={'required': 'You must accept the terms of use in order to '
+                                                                  'get access to the API.'})
 
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super().__init__(*args, **kwargs)
+        self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
+        
 
 SEARCH_SORT_OPTIONS_API = [
         ("score", "score desc"),

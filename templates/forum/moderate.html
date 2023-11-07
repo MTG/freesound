@@ -1,42 +1,40 @@
-{% extends "forum/_section.html" %}
-
-{% load smileys %}
+{% extends "simple_page.html" %}
+{% load static %}
+{% load util %}
 {% load filter_img %}
+{% load smileys %}
+{% load display_forum_objects %}
+{% load bw_templatetags %}
+{% block title %}Moderate forum posts{% endblock %}
+{% block page-title %}Moderate forum posts ({{ post_list|length }}){% endblock %}
 
-{% block title %}Unmoderated forum posts{% endblock %}
-
-{% block section_content %}
-<br/>
-<h3> Unmoderated posts:</h3>
-
-    <ul id="posts">
-        {% for post in post_list %}
-            <li class="post">
-                <a name="post{{post.post.id}}"></a>
-                <a href="{% url "account" post.post.author.username %}"><img src="{{post.post.author.profile.locations.avatar.S.url}}" width="32" height="32" alt="avatar" class="avatar" /></a>
-                <div class="post_author"><a href="{% url "account" post.post.author.username %}">{{post.post.author.username}}</a></div>
-                <div class="post_details">
-                    {{post.post.author.profile.num_sounds}} sound{{post.post.author.profile.num_sounds|pluralize}}<br/>
-                    {{post.post.author.profile.num_posts}} post{{post.post.author.profile.num_posts|pluralize}}<br>
-                    <!-- Joined: {{post.post.author.date_joined|date:"d M Y"}}<br/> -->
-                    <div class="post_date">{{post.post.created|timesince}} ago</div>
+{% block page-content %}
+<div>Below is a list of forum posts that require moderation. You can either approve or reject them individually. Also you have the option to
+    delete the whole corresponding user object if it is believed to be a spammer.
+</div>
+<div class="v-spacing-top-6">
+    {% for post in post_list %}
+        <div class="row">
+            <div class="col-9">
+                <div>
+                    {% display_post post.post 0 0 False False False %}
                 </div>
-                <div class="subject">
-                    <a href="{% url "forums-post" post.post.thread.forum.name_slug post.post.thread.id post.post.id %}" class="topic_subject">{{post.post.thread.title|safe}}</a><br />
+                <div class="text-grey">
+                    In thread: <a href="{% url "forums-post" post.post.thread.forum.name_slug post.post.thread.id post.post.id %}">{{post.post.thread.title|safe}}</a>
                 </div>
-                <br>
-                {{post.post.body|replace_img|smileys|safe|linebreaks}}
-
-                {% if post.post.author.profile.signature %}
-                    <div class="signature">{{post.post.author.profile.signature|replace_img|smileys|safe}}</div>
-                {% endif %}
-
-            </li>
-            <form action="." method="post">{% csrf_token %}
-                {{ post.form.as_p }}
-                <input type="submit" value="send" />
-            </form>
-        {% endfor %}
-    </ul>
-
+            </div>
+            <div class="col-3">
+                <form action="." method="post" class="bw-form bw-multiple-radio">{% csrf_token %}
+                    {{ post.form }}
+                    <button type="submit" class="btn-primary v-spacing-top-4 w-100 center">Send</button>
+                </form>
+            </div>
+        </div>
+        {% if not forloop.last %}
+            <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+        {% endif %}  
+    {% endfor %}
+</div>
 {% endblock %}
+
+

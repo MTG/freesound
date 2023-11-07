@@ -34,6 +34,7 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponseRedirect, Http404
+from django.shortcuts import render 
 from django.urls import reverse
 from oauth2_provider.models import Grant, AccessToken
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
@@ -48,7 +49,7 @@ from apiv2.authentication import OAuth2Authentication, TokenAuthentication, Sess
 from apiv2.exceptions import NotFoundException, InvalidUrlException, BadRequestException, ConflictException, \
     UnauthorizedException, ServerErrorException, OtherException, APIException
 from apiv2.forms import ApiV2ClientForm, SoundCombinedSearchFormAPI, SoundTextSearchFormAPI, \
-    SoundContentSearchFormAPI, SimilarityFormAPI, BWApiV2ClientForm
+    SoundContentSearchFormAPI, SimilarityFormAPI
 from apiv2.models import ApiV2Client
 from apiv2.serializers import SimilarityFileSerializer, UploadAndDescribeAudioFileSerializer, \
     EditSoundDescriptionSerializer, SoundDescriptionSerializer, CreateCommentSerializer, SoundCommentsSerializer, \
@@ -65,7 +66,6 @@ from similarity.client import Similarity
 from sounds.models import Sound, Pack, License, SoundAnalysis
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
-from utils.frontend_handling import render, using_beastwhoosh
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.tags import clean_and_split_tags
 
@@ -1336,10 +1336,8 @@ def invalid_url(request):
 def create_apiv2_key(request):
     """View for applying for an apikey"""
 
-    FormToUse = BWApiV2ClientForm if using_beastwhoosh(request) else ApiV2ClientForm
-
     if request.method == 'POST':
-        form = FormToUse(request.POST)
+        form = ApiV2ClientForm(request.POST)
         if form.is_valid():
             api_client = ApiV2Client()
             api_client.user = request.user
@@ -1349,11 +1347,11 @@ def create_apiv2_key(request):
             api_client.redirect_uri = form.cleaned_data['redirect_uri']
             api_client.accepted_tos = form.cleaned_data['accepted_tos']
             api_client.save()
-            form = FormToUse()
+            form = ApiV2ClientForm()
             api_logger.info('new_credential <> (ApiV2 Auth:%s Dev:%s User:%s Client:%s)' %
                             (None, request.user.username, None, api_client.client_id))
     else:
-        form = FormToUse()
+        form = ApiV2ClientForm()
 
     user_credentials = request.user.apiv2_client.all()
 
@@ -1368,10 +1366,7 @@ def create_apiv2_key(request):
         'user_credentials': user_credentials,
         'fs_callback_url': fs_callback_url,
     }
-    if using_beastwhoosh(request):
-        return render(request, 'api/credentials.html', tvars)
-    else:
-        return render(request, 'api/apply_key_apiv2.html', tvars)
+    return render(request, 'api/credentials.html', tvars)
 
 
 @login_required
@@ -1384,11 +1379,9 @@ def edit_api_credential(request, key):
 
     if not client:
         raise Http404
-    
-    FormToUse = BWApiV2ClientForm if using_beastwhoosh(request) else ApiV2ClientForm
 
     if request.method == 'POST':
-        form = FormToUse(request.POST)
+        form = ApiV2ClientForm(request.POST)
         if form.is_valid():
             client.name = form.cleaned_data['name']
             client.url = form.cleaned_data['url']
@@ -1399,7 +1392,7 @@ def edit_api_credential(request, key):
             messages.add_message(request, messages.INFO, f"Credentials with name {client.name} have been updated.")
             return HttpResponseRedirect(reverse("apiv2-apply"))
     else:
-        form = FormToUse(initial={'name': client.name,
+        form = ApiV2ClientForm(initial={'name': client.name,
                                         'url': client.url,
                                         'redirect_uri': client.redirect_uri,
                                         'description': client.description,
@@ -1508,13 +1501,12 @@ def granted_permissions(request):
                 })
                 grant_and_token_names.append(grant.application.apiv2_client.name)
 
-    return render(request, 'accounts/manage_api_permissions.html' if using_beastwhoosh(request)
-                            else 'api/manage_permissions.html', {
+    return render(request, 'accounts/manage_api_permissions.html', {
         'user': request.user,
         'tokens': tokens,
         'grants': grants,
         'show_expiration_date': False,
-        'activePage': 'api',  # BW only
+        'activePage': 'api', 
     })
 
 
@@ -1543,16 +1535,10 @@ def permission_granted(request):
         app_name = grant.application.apiv2_client.name
     except Grant.DoesNotExist:
         grant = None
-
-    if using_beastwhoosh(request):
-        template = 'oauth2_provider/app_authorized.html'
-    else:
-        template = 'api/app_authorized.html'
     logout_next = request.GET.get('original_path', None)
     if logout_next:
         logout_next = quote(logout_next)
     else:
         logout_next = reverse('api-login')
-
-    return render(request, template,
+    return render(request, 'oauth2_provider/app_authorized.html',
         {'code': code, 'app_name': app_name, 'logout_next': logout_next})

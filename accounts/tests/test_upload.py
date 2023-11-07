@@ -28,7 +28,7 @@ from django.test import TestCase
 from django.test.utils import override_settings, skipIf
 from django.urls import reverse
 
-from sounds.forms import BWPackForm
+from sounds.forms import PackForm
 from sounds.models import License, Sound, Pack, BulkUploadProgress
 from tags.models import Tag
 from utils.filesystem import File
@@ -133,7 +133,7 @@ class UserUploadAndDescribeSounds(TestCase):
             '0-lon': ['3.515625'],
             '0-zoom': ['16'],
             '0-tags': ['testtag1 testtag2 testtag3'],
-            '0-pack': [BWPackForm.NO_PACK_CHOICE_VALUE],
+            '0-pack': [PackForm.NO_PACK_CHOICE_VALUE],
             '0-license': ['3'],
             '0-description': ['a test description for the sound file'],
             '0-new_pack': [''],
@@ -141,7 +141,7 @@ class UserUploadAndDescribeSounds(TestCase):
             '1-license': ['3'],
             '1-description': ['another test description'],
             '1-lat': [''],
-            '1-pack': [BWPackForm.NO_PACK_CHOICE_VALUE],
+            '1-pack': [PackForm.NO_PACK_CHOICE_VALUE],
             '1-lon': [''],
             '1-name': [filenames[1]],
             '1-new_pack': ['Name of a new pack'],

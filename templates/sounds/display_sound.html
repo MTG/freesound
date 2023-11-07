@@ -1,145 +1,206 @@
 {% load cache %}
 {% load util %}
-{% load ratings %}
+{% load bw_templatetags %}
+
 {% if sound %}
+    {% if player_size == 'small' %}
+        {% comment %}This is the default size which includes the basic player with sound metadatata{% endcomment %}
+        {% if is_explicit %}
+            <div class="explicit-sound-blocker blocker-small">
+                <p><b>Warning</b>: this sound may be inappropriate for some users</p>
+                <button class="btn-primary">Show anyway</button>
+            </div>
+        {% endif %}
+        <div class="v-spacing-3 overfow-hidden {% if is_explicit %}blur{% endif %}" aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
+            {% include "sounds/player.html" %}
+            {% cache 43200 bw_display_sound sound.id player_size is_authenticated %}
+            {% if show_rate_widget %}<div class="display-none bw-player__rate__widget">{% bw_sound_stars sound %}</div>{% endif %}
+            <div class="between line-height-percentage-150 v-spacing-top-1">
+                <h5 class="ellipsis">
+                    <a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{ sound.original_filename }}</a>
+                </h5>
+                {% if sound.original_filename|length <= 30 %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
+            </div>
+            <div class="between">
+                <div>
+                    <a href="{% url 'account' sound.username %}" title="Username: {{ sound.username }}">{{ sound.username|truncate_string:15 }}</a>
+                </div>
+                {% if sound.original_filename|length > 30 %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
+            </div>
+            <div>
+                <span class="text-grey">{{ sound.created|timesince }} ago</span>
+            </div>
+            <div class="v-spacing-top-1 overflow-hidden" style="max-height:54px;">
+                {{ sound.description|striptags|safe|truncatechars_html:55 }}
+            </div>
+            {% endcache %}
+        </div>
+        {% if sound.show_moderation_ticket and sound.ticket_key %}
+        <div class="v-spacing-3 v-spacing-top-negative-2">
+            <a class="bw-link--black" href="{% url 'tickets-ticket' sound.ticket_key %}">{% bw_icon "file-text" %} See moderation ticket</a>
+        </div>
+        {% endif %}
+        {% if sound.show_processing_status %}
+        <div class="v-spacing-3 v-spacing-top-negative-2">
+            {% include 'sounds/sound_state_processing_indicator.html' %}
+        </div>
+        {% endif %}
+        {% if sound.show_moderation_status %}
+        <div class="v-spacing-3 v-spacing-top-negative-2">
+            {% include 'sounds/sound_state_moderation_indicator.html' %}
+        </div>
+        {% endif %}
 
-{% comment %}
-    If you change this cache index, be sure to change the invalidation in
-    ratings/views.py as well
-{% endcomment %}
-{% cache 43200 display_sound sound.id is_authenticated is_explicit %}
-
-<div class="sample_player_small" id="{{ sound.id }}" tabindex="0">
-
-    {% if is_explicit %}
-    <div class="explicit_content_text">
-        <span>Warning: this sound may be inappropriate for some users <a href="javascript:void(0);" onclick="remove_explicit_content_warning(this);">Dismiss</a></span>
-    </div>
-    {% endif %}
-
-    <div class="sample_player {% if is_explicit %}blur{% endif %}">
-        <div class="small_player">
-            {% include "sounds/player_medium.html" %}
-        </div><!-- .small_player -->
-
-        <div class="sound_title">
-            <div class="sound_filename">
-               <a class="title" href="{% url "sound" sound.username sound.id %}" title="{{sound.original_filename}}">{{sound.original_filename|truncate_string:27}}</a>
-            </div><!-- .sound_filename -->
-            <div class="sound_stars">
-               {% sound_ratings %}
-            </div><!-- .sound_stars -->
-
-            <div class="sound_description">
-                <p class="description">{{sound.description|striptags|safe|truncatewords:20}}</p>
-            </div><!-- .sound_description -->
-
-            <div class="sound_tags">
-
-                <ul class="tags">
-                    {% for tag in sound.tag_array %}
-                        <li><a href="{% url "tags" tag %}">{{tag}}</a></li>
-                    {% endfor %}
-                </ul>
-                <br style="clear: both;"/>
-
-            </div><!-- .sound_tags -->
-
-            <div id="bookmark_form_{{sound.id}}" class="bookmark_form"></div> <!-- to be filled dynamically with ajax -->
-
-            {% if sound.moderation_state != 'OK' or sound.processing_state != 'OK' %}
-                <p style="font-size:10px; color:gray">
-                {% if sound.processing_state != 'OK' %}
-                    Processing state:
-                    {% if sound.processing_state == 'PE' %}
-                        Pending
-                    {% else %}
-                        {% if sound.processing_state == 'QU' %}
-                            Queued
-                        {% else %}
-                            {% if sound.processing_state == 'FA' %}
-                                Failed
-                            {% else %}
-                                {% if sound.processing_state == 'PR' %}
-                                    Processing
-                                {% else %}
-                                    {{sound.processing_state}}
-                                {% endif %}
-                            {% endif %}
+    {% elif player_size == 'middle' %}
+        {% comment %}This is the default player shown in search results and in places where the sound takes
+        "full" width {% endcomment %}
+        {% if is_explicit %}
+            <div class="explicit-sound-blocker blocker-small blocker-force-almost-full-width">
+                <p><b>Warning</b>: this sound may be inappropriate for some users</p>
+                <button class="btn-primary">Show anyway</button>
+            </div>
+        {% endif %}
+        <div class="{% if is_explicit %}blur{% endif %}" aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
+            <div class="row no-gutters no-wrap">
+                <div class="col-4 col-lg-3">
+                    {% include "sounds/player.html" %}
+                </div>
+                {% cache 43200 bw_display_sound sound.id player_size is_authenticated %}
+                <div class="col-8 col-lg-9">
+                    <div class="padding-left-3">
+                        <div class="between">
+                            <div>
+                                <h5 class="v-spacing-1"><a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}" title="{{ sound.original_filename }}">{{ sound.original_filename|truncate_string:52 }}</a></h5>
+                            </div>
+                            <div class="text-grey text-right between stars-margin-top-middle-player">
+                                <div style="min-width:130px;" class="top right">{% bw_sound_stars sound %}<span class="bw-rating__count text-grey h-spacing-left-1">{{ sound.get_ratings_count_text_short }}</span></div>
+                            </div>
+                        </div>
+                        <div class="max-h-60px-md-50px text-black overflow-hidden v-spacing-1">{{ sound.description|striptags|safe|truncatewords_html:28 }}</div>
+                        {% for tag in sound.tag_array|slice:":5" %}
+                            {% bw_tag tag %}
+                        {% endfor %}
+                        {% if sound.moderation_state != 'OK' %}
+                        <div class="right">
+                            {% include 'sounds/sound_state_moderation_indicator.html' %}
+                        </div>
                         {% endif %}
-
+                    </div>
+                </div>
+            </div>
+            <div class="between v-spacing-top-1 v-spacing-2">
+                <div class="middle text-grey h-spacing-1">
+                    <div class="row no-gutters">
+                        <div class="col-12 col-lg-12 middle">
+                            <div class="h-spacing-1">
+                                {% bw_user_avatar user_profile_locations.avatar.S.url sound.username 32 %}
+                            </div>
+                            <a href="{% url 'account' sound.username %}">{{ sound.username | truncate_string:15 }}</a>
+                            <div class="text-light-grey h-spacing-left-1 d-none d-lg-block no-text-wrap">{{ sound.created|date:"F jS, Y" }}</div>
+                        </div>
+                        <div class="col-lg-4 d-lg-none text-light-grey">
+                            {{ sound.created|date:"F jS, Y" }}
+                        </div>
+                    </div>
+                </div>
+                <div class="middle text-light-grey bw_sound-info-extended right">
+                    {% if sound.pack_id %}
+                    <div class="h-spacing-left-2" title="Pack: {{ sound.pack_name }}">
+                        <a href="{% url 'pack' sound.username sound.pack_id %}" class="bw-link--grey-light">
+                            <span class="bw-icon-stack"></span> {{ sound.pack_name|truncatechars:20 }}
+                        </a>
+                    </div>
                     {% endif %}
-                 <br>
-                {% endif %}
-
-                {% if sound.moderation_state != 'OK' %}
-                    Moderation state:
-                    {% if sound.moderation_state == 'PE' %}
-                        Pending
-                    {% elif sound.moderation_state == 'DE' %}
-                        Deferred
-                    {% else %}
-                        {{sound.moderation_state}}
+                    {% if sound.geotag_id %}
+                    <div class="h-spacing-left-2" title="Geotag: {{ sound.get_geotag_name }}">
+                        <a href="{% url 'sound-geotag' sound.username sound.id %}" class="bw-link--grey-light">
+                            <span class="bw-icon-pin"></span> {{ sound.get_geotag_name|truncatechars:20 }}
+                        </a>
+                    </div>
                     {% endif %}
-                {% endif %}
-            {% endif %}
+                    <div class="h-spacing-left-2" title="{{ sound.num_downloads }} downloads">
+                        <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'sound-downloaders' sound.username sound.id %}?ajax=1" class="bw-link--grey-light">
+                            <span class="bw-icon-download"></span> {{ sound.num_downloads|formatnumber }}
+                        </a>
+                    </div>
+                    <div class="h-spacing-left-2" title="{{ sound.num_comments }} comments">
+                        <a href="{% url 'sound' sound.username sound.id %}#comments" class="bw-link--grey-light">
+                            <span class="bw-icon-comments"></span> {{ sound.num_comments|formatnumber }}
+                        </a>
+                    </div>
+                    <div class="h-spacing-left-2" title="License: {{ sound.license_name }}">
+                        <span class="bw-icon-{{ sound.license_bw_icon_name }}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endcache %}
 
-          </div><!-- .sound_title -->
-    </div><!-- .sample_player -->
+    {% elif player_size == 'moderation' %}
+        <div class="overfow-hidden" aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
+            {% include "sounds/player.html" %}
+            <div class="between line-height-percentage-150 v-spacing-top-1">
+                <h5 class="ellipsis">
+                    <a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{ sound.original_filename }}</a>
+                </h5>
+                {% if sound.original_filename|length <= 30 %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
+            </div>
+            <div class="between">
+                <div>
+                    <a href="{% url 'account' sound.username %}" title="Username: {{ sound.username }}">{{ sound.username|truncate_string:15 }}</a>
+                </div>
+                {% if sound.original_filename|length > 30 %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
+            </div>
+            <div>
+                <span class="text-grey">{{ sound.created|timesince }} ago</span>
+            </div>
+        </div>
+        <div id="collapsable-sound-info-{{ sound.id }}-{{ random_number }}" class="v-spacing-top-1 collapsable-block">
+            {% comment %}When showing information for moderation pages we put the full description and also the tags in a collapsable element{% endcomment %}
+            {% for tag in sound.tag_array%}
+                {% bw_tag tag %}
+            {% endfor %}
+            <div class="v-spacing-top-1">
+                {{ sound.description|safe|linebreaks }}
+            </div>
+        </div>
+        <div class="text-center v-spacing-top-1 v-spacing-2">
+            <span data-target="collapsable-sound-info-{{ sound.id }}-{{ random_number }}" data-show-text="Show more info" data-hide-text="Show less info" data-max-height-when-closed="150" data-hide-on-load class="collapsable-toggle"></span>
+        </div>
+        {% if is_explicit %}
+        <div class="v-spacing-top-1">
+            <div class="text-grey">
+                {% bw_icon "notification" %} Marked as explicit
+            </div>
+        </div>
+        {% endif %}
+        <div class="v-spacing-top-1">
+            {% include 'sounds/sound_state_processing_indicator.html' %}
+        </div>
+        <div class="v-spacing-top-1">
+            {% include 'sounds/sound_state_moderation_indicator.html' %}
+        </div>
+    {% elif player_size == 'big_no_info' %}
+        {% comment %}This size includes a placeholder for the controls of the big player but shows no sound
+        metadata{% endcomment %}
+        <div aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
+        {% include "sounds/player.html" %}
+        <div class="bw-player-big__controls"></div>
+        </div>
 
-    <div class="sample_information {% if is_explicit %}blur{% endif %}">
-        <a class="user" href="{% url "account" sound.username %}">{{sound.username}}</a><br />
-        <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
-        <span class="download_count"><a href="{% url "sound-downloaders" sound.username sound.id %}">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</a></span><br />
-        <a class="comments" href="{% url "sound" sound.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
+    {% elif player_size == 'small_no_info' %}
+        {% comment %}This size will be used inside a pack carousel. For this size we only include the basic
+        player and show no sound metadata{% endcomment %}
+        <div aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
+        {% include "sounds/player.html" %}
+        {% if show_rate_widget %}<div class="display-none bw-player__rate__widget">{% bw_sound_stars sound %}</div>{% endif %}
+        </div>
 
-        <div class="sound_attributes">
+    {% elif player_size == 'minimal' %}
+        {% comment %}This size is used in map info windows and only includes a play/stop and loop button{% endcomment %}
+        <div aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
+        {% include "sounds/player.html" %}
+        </div>
 
-            {% if request.user.is_authenticated %}
-            <a class="bookmark" href="javascript:void(0)" onclick="show_hide_bookmark_form({{sound.id}})">
-                <img src="{{media_url}}images/fugue-icons/icons/address-book-blue.png" width="16" height="16" alt="Bookmark" title="Bookmark this sound" />
-            </a>
-            {% endif %}
-
-            {% if sound.similarity_state == 'OK' %}
-            <a class="similar" rel="nofollow" href="{% url "sound-similar" sound.username sound.id %}">
-                <img src="{{media_url}}images/fugue-icons/icons/headphone--plus.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
-            </a>
-            {% endif %}
-            {% if sound.pack_id %}
-            <a class="pack" href="{% url "pack" sound.username sound.pack_id %}">
-                <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Pack" title="This sound belongs to the pack: {{ sound.pack_name }}" />
-            </a>
-            {% endif %}
-            {% if sound.remixgroup_id %}
-             <a class="remixes" href="{% url "sound-remixes" sound.username sound.id %}?ajax=1">
-                <img src="{{media_url}}images/remixes.png" width="16" height="16" alt="Remixes" title="This sound has remixes" />
-            </a>
-            {% endif %}
-            {% if sound.geotag_id %}
-            <a class="geotag" href="{% url "sound-geotag" sound.username sound.id %}">
-                <img src="{{media_url}}images/geotag.png" width="16" height="16" alt="Geotagged" title="This sound has a geotag" />
-            </a>
-            {% endif %}
-            <!-- license icons -->
-            {% if sound.license_name == 'Sampling+' %}
-                <img class="cc_license" src="{{media_url}}images/licenses/sampling.png" width="16" height="16" alt="Sampling+ license" title="This sound is licensed under the sampling+ license." />
-            {% endif %}
-            {% if sound.license_name == 'Creative Commons 0' %}
-                <img class="cc_license" src="{{media_url}}images/licenses/nolaw.png" width="16" height="16" alt="Public Domain license" title="This sound is public domain." />
-            {% endif %}
-            {% if sound.license_name == 'Attribution' %}
-                <img class="cc_license" src="{{media_url}}images/licenses/by.png" width="16" height="16" alt="Creative Commons Attribution license" title="This sound is licensed under the Creative Commons Attribution license." />
-            {% endif %}
-            {% if sound.license_name == 'Attribution NonCommercial' %}
-                <img class="cc_license" src="{{media_url}}images/licenses/bync.png" height="16" alt="Creative Commons Attribution Non-Commercial license" title="This sound is licensed under the Creative Commons Attribution Non-Commercial license." />
-            {% endif %}
-            <!-- /license icons -->
-
-        </div><!-- .sound_attributes -->
-    </div><!-- .sample_information -->
-</div><!-- .sample_player_small -->
-
-{% endcache %}
-
+    {% endif %}
 {% endif %}

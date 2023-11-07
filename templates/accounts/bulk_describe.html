@@ -1,31 +1,32 @@
-{% extends "base.html" %}
-{% load filter_img %}
-{% block title %}{{ block.super }}Describe - Bulk Describe Sounds{% endblock %}
-{% block content %}
+{% extends "simple_page.html" %}
+{% load static %}
+{% load bw_templatetags %}
 
-<h1>Bulk description of files</h1>
+{% block title %}Bulk description of sound files{% endblock %}
+{% block page-title %}Bulk description of sound files{% endblock %}
 
+{% block page-content %}
 {% if bulk.progress_type == 'N' %}
-    <h3>Validating data file "{{ bulk.original_csv_filename }}" <img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"/></h3>
+    <h3 class="text-grey">Validating data file "{{ bulk.original_csv_filename }}" <img width="24px" height="24px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"/></h3>
     <p>
         The uploaded data file has not yet been validated. If there are many sounds to be described, this process
         could take a few minutes. This page will reload automatically when data validation has finished.
     </p>
-    <script>setTimeout(function(){ window.location.reload(1); }, 3500);</script>
 
-    <form action="{% url "accounts-bulk-describe" bulk.id %}" method="POST" class="disable-on-submit">{% csrf_token %}
-        <button style="float:left;" type="submit" name="delete">Delete this data file and upload a new one</button>
-        <br style="clear:both;"/>
+    <form action="." method="POST" class="v-spacing-top-5 disable-on-submit">{% csrf_token %}
+        <div class="right">
+            <button class="btn-primary" name="delete">Delete this data file and upload a new one</button>
+        </div>
     </form>
 
 {% elif bulk.progress_type == 'V' %}
-    <h3>Validation results of the data file "{{ bulk.original_csv_filename }}"</h3>
+    <h3 class="text-grey">Validation results of the data file "{{ bulk.original_csv_filename }}"</h3>
 
     {% if global_errors %}
         <p>We have encountered some <b>major issues</b> when validating your data file:</p>
         <ul>
         {% for error in global_errors %}
-            <li>{{ error|safe }}</li>
+            <li class="text-red">{{ error|safe }}</li>
         {% endfor %}
          </ul>
         <p>Please make sure you are following <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these guidelines</a> to create your data file.</p>
@@ -33,7 +34,7 @@
 
     {% if lines_failed_validation and not global_errors %}
         <p>
-            The following <b>{{ lines_failed_validation|length }} sound{{ lines_failed_validation|pluralize }}
+            The following <b>{{ lines_failed_validation|length|bw_intcomma }} sound{{ lines_failed_validation|pluralize }}
             ha{{ lines_failed_validation|pluralize:"s,ve" }} failed validation</b> and won't be added
             to Freesound. Move your mouse over the red cells to see the errors:
         </p>
@@ -47,39 +48,39 @@
                 <tr>
                     <td {% if line.line_errors.columns %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
                         {{ line.line_no }}
-                        <span class="tooltiptext">{{ line.line_errors.columns|safe }}</span>
+                        <span class="tooltiptext">{{ line.line_errors.columns }}</span>
                     </td>
                     <td {% if line.line_errors.audio_filename %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
                         {{ line.line_original.audio_filename }}
-                        <span class="tooltiptext">{{ line.line_errors.audio_filename|safe }}</span>
+                        <span class="tooltiptext">{{ line.line_errors.audio_filename }}</span>
                     </td>
                     <td {% if line.line_errors.name %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
                         {{ line.line_original.name }}
-                        <span class="tooltiptext">{{ line.line_errors.name|safe }}</span>
+                        <span class="tooltiptext">{{ line.line_errors.name }}</span>
                     </td>
                     <td {% if line.line_errors.tags %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
                         {{ line.line_original.tags }}
-                        <span class="tooltiptext">{{ line.line_errors.tags|safe  }}</span>
+                        <span class="tooltiptext">{{ line.line_errors.tags  }}</span>
                     </td>
                     <td {% if line.line_errors.geotag %}class="csv-bulk-upload-error-cell cell_tooltip_right csv-validation-table-geotag-td"{% endif %}>
                         {{ line.line_original.geotag }}
-                        <span class="tooltiptext">{{ line.line_errors.geotag|safe  }}</span>
+                        <span class="tooltiptext">{{ line.line_errors.geotag  }}</span>
                     </td>
                     <td {% if line.line_errors.description %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
                         {{ line.line_original.description|truncatewords:20 }}
-                        <span class="tooltiptext">{{ line.line_errors.description|safe  }}</span>
+                        <span class="tooltiptext">{{ line.line_errors.description  }}</span>
                     </td>
                     <td {% if line.line_errors.license %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
                         {{ line.line_original.license }}
-                        <span class="tooltiptext">{{ line.line_errors.license|safe  }}</span>
+                        <span class="tooltiptext">{{ line.line_errors.license  }}</span>
                     </td>
                     <td {% if line.line_errors.pack_name %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
                         {{ line.line_original.pack_name }}
-                        <span class="tooltiptext">{{ line.line_errors.pack_name|safe  }}</span>
+                        <span class="tooltiptext">{{ line.line_errors.pack_name  }}</span>
                     </td>
                     <td {% if line.line_errors.is_explicit %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
                         {{ line.line_original.is_explicit }}
-                        <span class="tooltiptext">{{ line.line_errors.is_explicit|safe  }}</span>
+                        <span class="tooltiptext">{{ line.line_errors.is_explicit  }}</span>
                     </td>
                 </tr>
             {% endfor %}
@@ -89,7 +90,7 @@
 
     {% if lines_validated_ok and not global_errors %}
         <p><br>
-            The following <b>{{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }}
+            The following <b>{{ lines_validated_ok|length|bw_intcomma }} sound{{ lines_validated_ok|length|pluralize }}
             ha{{ lines_validated_ok|pluralize:"s,ve" }} validated correctly</b> and will be added to
             Freesound with the following <i>cleaned</i> metadata:
         </p>
@@ -115,41 +116,41 @@
         </table>
     {% endif %}
 
-    <form action="{% url "accounts-bulk-describe" bulk.id %}" method="POST" class="disable-on-submit">{% csrf_token %}
-        <button style="float:left;" type="submit" name="delete">Delete this data file and upload a new one</button>
-        <button style="float:right;" type="submit" name="start" {% if not lines_validated_ok|length %}disabled="disabled"{% endif %}>Continue and add the {{ lines_validated_ok|length }} valid sound{{ lines_validated_ok|length|pluralize }} to Freesound</button>
-        <br style="clear:both;"/>
+    <form action="." method="POST" class="v-spacing-top-5 disable-on-submit">{% csrf_token %}
+        <div class="between">
+            <button class="btn-secondary" name="delete">Delete this data file and upload a new one</button>
+            <button class="btn-primary" name="start" {% if not lines_validated_ok|length %}disabled{% endif %}>Continue and add the {{ lines_validated_ok|length|bw_intcomma }} valid sound{{ lines_validated_ok|length|pluralize }} to Freesound</button>
+        </div>
     </form>
 
 {% elif bulk.progress_type == 'S' or bulk.progress_type == 'F' or bulk.progress_type == 'C' %}
-
     {% if bulk.progress_type == 'S' or bulk.progress_type == 'F' %}
         {% if progress_info.progress_percentage < 100 %}
-            <h3>Your sounds are being described and processed <img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"/></h3>
+            <h3 class="text-grey">Your sounds are being described and processed <img width="24px" height="24px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"/></h3>
             <p>
-                Your {{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }} for this bulk
+                Your {{ lines_validated_ok|length|bw_intcomma }} sound{{ lines_validated_ok|length|pluralize }} for this bulk
                 description process {{ lines_validated_ok|pluralize:"is,are" }} being described and processed. This is
                 the current status of the process:
             </p>
             <script>setTimeout(function(){ window.location.reload(1); }, 3500);</script>
 
         {% else %}
-            <h3>The bulk description process has finished!</h3>
+            <h3 class="text-grey">The bulk description process has finished!</h3>
             <p>
-                Your {{ lines_validated_ok|length }} sound{{ lines_validated_ok|length|pluralize }} for this bulk
+                Your {{ lines_validated_ok|length|bw_intcomma }} sound{{ lines_validated_ok|length|pluralize }} for this bulk
                 description process {{ lines_validated_ok|pluralize:"has,have" }} been described and processed. Here
                 are the results of the process:
             </p>
 
         {% endif %}
     {% elif bulk.progress_type == 'C' %}
-        <h3>This bulk description process is closed</h3>
+        <h3 class="text-grey">This bulk description process is closed</h3>
         <p>
             The bulk description of sounds has been finished and the process closed. Here are the results of the
             process:
         </p>
     {% endif %}
-    <div class="csv-bulk-upload-progress-label">{{ progress_info.progress_percentage }}% completed</div>
+    <div class="csv-bulk-upload-progress-label font-weight-700 {% if progress_info.progress_percentage == 100 %}text-green{% else %}text-blue{% endif %}">{{ progress_info.progress_percentage }}% completed {% if progress_info.progress_percentage == 100 %}{% bw_icon 'check' %}{% endif %}</div>
     <ul>
         {% if progress_info.n_sounds_described_ok %}
             <li>Successfully described: {{ progress_info.n_sounds_described_ok }}</li>
@@ -169,7 +170,7 @@
             <ul>
             {% if progress_info.n_sounds_error %}
                 {% for line_no, error in progress_info.sound_errors %}
-                    <li>{{ error }}</li>
+                    <li class="text-red">{{ error }}</li>
                 {% endfor %}
             {% endif %}
             </ul>
@@ -182,22 +183,28 @@
         {% if progress_info.progress_percentage < 100 %}
             <br>
             <p><b>NOTE:</b> You can safely leave this page and come back at a later time. You'll find a link
-            to this page in your <a href="{% url 'accounts-home' %}">home page</a>.</p>
+            to this page in your <a href="{% url 'accounts-manage-sounds' 'pending_description' %}">manage sounds page</a>.</p>
         {% endif %}
     {% endif %}
     {% if bulk.progress_type != 'C' and progress_info.progress_percentage == 100 %}
         {% comment %}If the process has finished, give the option to close it{% endcomment %}
         <p>
-            Click on the button below to close this bulk description process and stop showing it in your home screen.
+            Click on the button below to <b>close this bulk description process</b> and stop listing it in your <a href="{% url 'accounts-manage-sounds' 'pending_description' %}">manage sounds page</a>.
         </p>
-        <form action="{% url "accounts-bulk-describe" bulk.id %}" method="POST">{% csrf_token %}
-            <button type="submit" name="close">Close this process</button>
+
+        <form action="." method="POST" class="v-spacing-top-5 disable-on-submit">{% csrf_token %}
+            <div class="right">
+                <button class="btn-primary" name="close">Close this process</button>
+            </div>
         </form>
     {% endif %}
 {% endif %}
 
 {% if auto_reload_page %}
-
+<div id="should-auto-reload" class="display-none"></div>
 {% endif %}
+{% endblock %}
 
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/bulkDescribe.js' %}"></script>
 {% endblock %}

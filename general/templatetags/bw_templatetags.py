@@ -36,7 +36,7 @@ register = template.Library()
 @register.inclusion_tag('atoms/icon.html')
 def bw_icon(name, class_name=''):
     """
-    Displays a Beast Whoosh icon with the given name
+    Displays a BW icon with the given name
     """
     return {'name': name, 'class_name': class_name}
 
@@ -44,7 +44,7 @@ def bw_icon(name, class_name=''):
 @register.inclusion_tag('atoms/tag.html')
 def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
     """
-    Displays a Beast Whoosh tag with the given name
+    Displays a BW tag with the given name
     """
     if url is None:
         url = reverse('tags', args=[tag_name])
@@ -66,7 +66,7 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
 @register.inclusion_tag('atoms/avatar.html')
 def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
     """
-    Displays a Beast Whoosh user avatar or no avatar if user has none
+    Displays a BW user avatar or no avatar if user has none
     We check if user has custom avatar by checking if the given avatar URL contains the filename of the default
     avatar for Freesound 2 UI. Once we get rid of old UI code, this function can be modified as the locations
     decorator of the Profile model might return something different if user has no avatar.
@@ -180,8 +180,7 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
 
 @register.inclusion_tag('molecules/maps_js_scripts.html', takes_context=True)
 def bw_maps_js_scripts(context):
-    return {'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
-            'media_url': settings.MEDIA_URL}
+    return {'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN}
 
 
 @register.filter

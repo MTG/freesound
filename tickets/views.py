@@ -32,16 +32,15 @@ from django.db.models.functions import JSONObject
 from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.shortcuts import render 
 from general.tasks import whitelist_user as whitelist_user_task
 
 from .models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
-from tickets.forms import AnonymousMessageForm, BWAnonymousMessageForm, UserMessageForm, BWUserMessageForm, ModeratorMessageForm, BWModeratorMessageForm, \
-    SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY, \
-    BWSoundModerationForm, BWModerationMessageForm
+from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, \
+    SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
 from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
-from utils.frontend_handling import render, using_beastwhoosh
 from utils.username import redirect_if_old_username_or_404
 from utils.pagination import paginate
 from wiki.models import Content, Page
@@ -49,14 +48,14 @@ from wiki.models import Content, Page
 
 def _get_tc_form(request, use_post=True):
     return _get_anon_or_user_form(request, 
-                                  BWAnonymousMessageForm if using_beastwhoosh(request) else AnonymousMessageForm, 
-                                  BWUserMessageForm if using_beastwhoosh(request) else UserMessageForm, 
+                                  AnonymousMessageForm, 
+                                  UserMessageForm, 
                                   use_post)
 
 
 def _get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
     if _can_view_mod_msg(request):
-        user_form = BWModeratorMessageForm if using_beastwhoosh(request) else ModeratorMessageForm
+        user_form = ModeratorMessageForm
     if len(request.POST.keys()) > 0 and use_post:
         if request.user.is_authenticated:
             return user_form(request.POST)
@@ -206,17 +205,16 @@ def ticket(request, ticket_key):
              "can_view_moderator_only_messages": can_view_moderator_only_messages,
              "num_sounds_pending": ticket.sender.profile.num_sounds_pending_moderation()
     }
-    if using_beastwhoosh(request):
-        sound_object = Sound.objects.bulk_query_id(sound_ids=[ticket.sound_id])[0] if ticket.sound_id is not None else None
-        if sound_object is not None:
-            sound_object.show_processing_status = True
-            sound_object.show_moderation_status = True
-        tvars.update({
-            'sound': sound_object
-        })
-        return render(request, 'moderation/ticket.html', tvars)
-    else:
-        return render(request, 'tickets/ticket.html', tvars)
+
+    sound_object = Sound.objects.bulk_query_id(sound_ids=[ticket.sound_id])[0] if ticket.sound_id is not None else None
+    if sound_object is not None:
+        sound_object.show_processing_status = True
+        sound_object.show_moderation_status = True
+    tvars.update({
+        'sound': sound_object
+    })
+    return render(request, 'moderation/ticket.html', tvars)
+
 
 
 # In the next 2 functions we return a queryset os the evaluation is lazy.
@@ -238,7 +236,7 @@ def _get_new_uploaders_by_ticket():
         .annotate(total=Count('sender'), older=Min('created'))\
         .order_by('older')
 
-    users = User.objects.filter(id__in=[t['sender'] for t in tickets]).select_related('profile')
+    users = User.objects.filter(id__in=[t['sender'] for t in tickets]).annotate(num_mod_annotations=Count('annotations')).select_related('profile')
     users_dict = {u.id: u for u in users}
     new_sounds_users = []
 
@@ -366,19 +364,16 @@ def assign_sounds(request):
              "tardy_user_tickets_count": tardy_user_tickets_count,
              "moderator_tickets_count": sounds_in_moderators_queue_count
             }
-
-    if using_beastwhoosh(request):
-        _add_sound_objects_to_tickets(tardy_moderator_tickets)
-        _add_sound_objects_to_tickets(tardy_user_tickets)
-        tvars.update({'section': 'assign'})
-        return render(request, 'moderation/assign_sounds.html', tvars)    
-    else:
-        return render(request, 'tickets/moderation_home.html', tvars)
-
+    _add_sound_objects_to_tickets(tardy_moderator_tickets)
+    _add_sound_objects_to_tickets(tardy_user_tickets)
+    tvars.update({'section': 'assign'})
+    return render(request, 'moderation/assign_sounds.html', tvars)    
+    
 
 @permission_required('tickets.can_moderate')
 def moderation_tardy_users_sounds(request):
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
+        # If not loaded as a modal, redirect to moderation home with parameter to open modal
         return HttpResponseRedirect(reverse('tickets-moderation-home') + '?tardy_users=1')
     
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
@@ -390,18 +385,16 @@ def moderation_tardy_users_sounds(request):
              "selected": "assigned"}
     tvars.update(paginated)
 
-    if using_beastwhoosh(request):
-        # Retrieve sound objects using bulk stuff so extra sound information is retrieved in one query
-        _add_sound_objects_to_tickets(tvars['page'].object_list)
-        tvars.update({'type': 'tardy_users'})
-        return render(request, 'moderation/modal_tardy.html', tvars)
-    else:
-        return render(request, 'tickets/moderation_tardy_users.html', tvars)
+    # Retrieve sound objects using bulk stuff so extra sound information is retrieved in one query
+    _add_sound_objects_to_tickets(tvars['page'].object_list)
+    tvars.update({'type': 'tardy_users'})
+    return render(request, 'moderation/modal_tardy.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
 def moderation_tardy_moderators_sounds(request):
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
+        # If not loaded as a modal, redirect to moderation home with parameter to open modal
         return HttpResponseRedirect(reverse('tickets-moderation-home') + '?tardy_moderators=1')
     
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
@@ -413,13 +406,10 @@ def moderation_tardy_moderators_sounds(request):
              "selected": "assigned"}
     tvars.update(paginated)
 
-    if using_beastwhoosh(request):
-        # Retrieve sound objects using bulk stuff so extra sound information is retrieved in one query
-        _add_sound_objects_to_tickets(tvars['page'].object_list)
-        tvars.update({'type': 'tardy_moderators'})
-        return render(request, 'moderation/modal_tardy.html', tvars)
-    else:
-        return render(request, 'tickets/moderation_tardy_moderators.html', tvars)
+    # Retrieve sound objects using bulk stuff so extra sound information is retrieved in one query
+    _add_sound_objects_to_tickets(tvars['page'].object_list)
+    tvars.update({'type': 'tardy_moderators'})
+    return render(request, 'moderation/modal_tardy.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
@@ -504,15 +494,12 @@ def moderation_assign_single_ticket(request, ticket_id):
 @permission_required('tickets.can_moderate')
 @transaction.atomic()
 def moderation_assigned(request, user_id):
-    # TODO: once removing NG code, this view can be simplified as the msg form is now handled in the annotations modal
     clear_forms = True
     mod_sound_form = None
     msg_form = None
-    SoundModerationFormClass = SoundModerationForm if not using_beastwhoosh(request) else BWSoundModerationForm
-    ModerationMessageFormClass = ModerationMessageForm if not using_beastwhoosh(request) else BWModerationMessageForm
     if request.method == 'POST':
-        mod_sound_form = SoundModerationFormClass(request.POST)
-        msg_form = ModerationMessageFormClass(request.POST)
+        mod_sound_form = SoundModerationForm(request.POST)
+        msg_form = ModerationMessageForm(request.POST)
 
         if mod_sound_form.is_valid() and msg_form.is_valid():
 
@@ -622,15 +609,15 @@ def moderation_assigned(request, user_id):
         else:
             clear_forms = False
     if clear_forms:
-        mod_sound_form = SoundModerationFormClass(initial={'action': 'Approve'})
-        msg_form = ModerationMessageFormClass()
+        mod_sound_form = SoundModerationForm(initial={'action': 'Approve'})
+        msg_form = ModerationMessageForm()
 
     qs = Ticket.objects.select_related('sound', 'sender') \
                        .filter(assignee=user_id) \
                        .exclude(status=TICKET_STATUS_CLOSED) \
                        .exclude(sound=None) \
                        .order_by('status', '-created')
-    page_size = settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_BW if using_beastwhoosh(request) else settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
+    page_size = settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
     pagination_response = paginate(request, qs, page_size)
     pagination_response['page'].object_list = list(pagination_response['page'].object_list)
     # Because some tickets can have related sound which has disappeared or on deletion time the ticket
@@ -664,53 +651,29 @@ def moderation_assigned(request, user_id):
         "paginator": pagination_response['paginator'],
         "current_page": pagination_response['current_page'],
         "show_pagination": show_pagination,
-        "max_selected_tickets_in_right_panel": settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN,  # Not used in BW
         "mod_sound_form": mod_sound_form,
         "msg_form": msg_form
     }
-
-    if using_beastwhoosh(request):
-        _add_sound_objects_to_tickets(tvars['page'].object_list)
-        tvars.update({'section': 'assigned'})
-        return render(request, 'moderation/assigned.html', tvars)
-    else:
-        return render(request, 'tickets/moderation_assigned.html', tvars)
+    _add_sound_objects_to_tickets(tvars['page'].object_list)
+    tvars.update({'section': 'assigned'})
+    return render(request, 'moderation/assigned.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
 @transaction.atomic()
 def user_annotations(request, user_id):
     user = get_object_or_404(User.objects.select_related('profile'), id=user_id)
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
+        # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[user.username]) + '?mod_annotations=1')
+    
     annotations = UserAnnotation.objects.filter(user=user)
-    if using_beastwhoosh(request):
-        user_recent_ticket_comments = TicketComment.objects.filter(sender=user).select_related('ticket').order_by('-created')[:15]
-        tvars = {"user": user,
-                 "recent_comments": user_recent_ticket_comments,
-                 "form": UserAnnotationForm(),
-                 "annotations": annotations}
-        return render(request, 'moderation/modal_annotations.html', tvars)
-    else:
-        num_sounds_ok = Sound.objects.filter(user=user, moderation_state="OK").count()
-        num_sounds_pending = Sound.objects.filter(user=user).exclude(moderation_state="OK").count()
-        if request.method == 'POST':
-            form = UserAnnotationForm(request.POST)
-            if form.is_valid():
-                ua = UserAnnotation(sender=request.user,
-                                    user=user,
-                                    text=form.cleaned_data['text'])
-                ua.save()
-        else:
-            form = UserAnnotationForm()
-        annotations = UserAnnotation.objects.filter(user=user)
-
-        tvars = {"user": user,
-                "num_sounds_ok": num_sounds_ok,
-                "num_sounds_pending": num_sounds_pending,
-                "form": form,
+    user_recent_ticket_comments = TicketComment.objects.filter(sender=user).select_related('ticket').order_by('-created')[:15]
+    tvars = {"user": user,
+                "recent_comments": user_recent_ticket_comments,
+                "form": UserAnnotationForm(),
                 "annotations": annotations}
-        return render(request, 'tickets/user_annotations.html', tvars)
+    return render(request, 'moderation/modal_annotations.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
@@ -731,7 +694,8 @@ def add_user_annotation(request, user_id):
 @permission_required('tickets.can_moderate')
 @redirect_if_old_username_or_404
 def pending_tickets_per_user(request, username):
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
+        # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?pending_moderation=1')
     
     user = request.parameter_user
@@ -761,11 +725,7 @@ def pending_tickets_per_user(request, username):
              "own_page": own_page,
              "no_assign_button": no_assign_button}
     tvars.update(paginated)
-
-    if using_beastwhoosh(request):
-        return render(request, 'moderation/modal_pending.html', tvars)
-    else:
-        return render(request, 'accounts/pending.html', tvars)
+    return render(request, 'moderation/modal_pending.html', tvars)
 
 
 @permission_required('tickets.can_moderate')

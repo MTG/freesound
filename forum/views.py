@@ -34,10 +34,9 @@ from django.urls import reverse
 from django.db import transaction
 
 from accounts.models import DeletedUser
-from forum.forms import PostReplyForm, BwPostReplyForm, NewThreadForm, BwNewThreadForm, PostModerationForm, BwPostModerationForm
+from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
 from utils.cache import invalidate_template_cache, invalidate_all_moderators_header_cache
-from utils.frontend_handling import render, using_beastwhoosh
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.search.search_forum import add_posts_to_search_engine
@@ -108,8 +107,7 @@ def forum(request, forum_name_slug):
     paginator = paginate(request, Thread.objects.filter(forum=forum, first_post__moderation_state="OK")
                          .select_related('last_post', 'last_post__author', 'last_post__author__profile',
                                          'author', 'author__profile', 'first_post', 'forum'),
-                         settings.FORUM_THREADS_PER_PAGE if not using_beastwhoosh(request) else
-                         settings.FORUM_THREADS_PER_PAGE_BW)
+                         settings.FORUM_THREADS_PER_PAGE)
     tvars.update(paginator)
 
     return render(request, 'forum/threads.html', tvars)
@@ -151,16 +149,8 @@ def thread(request, forum_name_slug, thread_id):
 
 @last_action
 def latest_posts(request):
-    if using_beastwhoosh(request):
-        # "latest posts" is a NG only page, if on BW, redirect to "hot threads"
-        return HttpResponseRedirect(reverse('forums-hot-threads'))
-    paginator = paginate(request,
-                         Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum')
-                         .filter(moderation_state="OK").order_by('-created').all(), settings.FORUM_POSTS_PER_PAGE)
-    hide_search = True
-    tvars = {'hide_search': hide_search}
-    tvars.update(paginator)
-    return render(request, 'forum/latest_posts.html', tvars)
+    # The "latest posts" page no longet exists, we now redirect to "hot threads"
+    return HttpResponseRedirect(reverse('forums-hot-threads'))
 
 
 def get_hot_threads(n=None, days=15):
@@ -182,11 +172,7 @@ def get_hot_threads(n=None, days=15):
 
 
 def hot_threads(request):
-    if not using_beastwhoosh(request):
-        # "hot threads" is a BW only page, if on NG, redirect to "latest posts"
-        return HttpResponseRedirect(reverse('forums-latest-posts'))
-
-    paginator = paginate(request, get_hot_threads(), settings.FORUM_THREADS_PER_PAGE_BW)
+    paginator = paginate(request, get_hot_threads(), settings.FORUM_THREADS_PER_PAGE)
     tvars = {}
     tvars.update(paginator)
     return render(request, 'forum/hot_threads.html', tvars)
@@ -221,7 +207,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                        .order_by('-created').filter(thread=thread, moderation_state="OK")[0:15]
     user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
-    FromToUse = BwPostReplyForm if using_beastwhoosh(request) else PostReplyForm
+    FromToUse = PostReplyForm
 
     if request.method == 'POST':
         form = FromToUse(request, quote, request.POST)
@@ -302,10 +288,9 @@ def new_thread(request, forum_name_slug):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
-    FormToUse = BwNewThreadForm if using_beastwhoosh(request) else NewThreadForm
 
     if request.method == 'POST':
-        form = FormToUse(request.POST)
+        form = NewThreadForm(request.POST)
         if user_can_post_in_forum and not user_is_blocked_for_spam_reports:
             if form.is_valid():
                 post_title = form.cleaned_data["title"]
@@ -343,7 +328,7 @@ def new_thread(request, forum_name_slug):
                                                                  "approved by moderators")
                     return HttpResponseRedirect(post.thread.forum.get_absolute_url())
     else:
-        form = FormToUse()
+        form = NewThreadForm()
 
     if not user_can_post_in_forum:
         messages.add_message(request, messages.INFO, user_can_post_message)
@@ -400,17 +385,6 @@ def old_topic_link_redirect(request):
 
 
 @login_required
-def post_delete(request, post_id):
-    # NOTE: this view is not used in beast whoosh because we use JS modal for confirmation of deletion
-    post = get_object_or_404(Post, id=post_id)
-    if post.author == request.user or request.user.has_perm('forum.delete_post'):
-        tvars = {'post': post}
-        return render(request, 'forum/confirm_deletion.html', tvars)
-    else:
-        raise Http404
-
-
-@login_required
 def post_delete_confirm(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if request.method == 'POST':
@@ -448,7 +422,7 @@ def post_delete_confirm(request, post_id):
 @transaction.atomic()
 def post_edit(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    FromToUse = BwPostReplyForm if using_beastwhoosh(request) else PostReplyForm
+    FromToUse = PostReplyForm
     if post.author == request.user or request.user.has_perm('forum.change_post'):
         if request.method == 'POST':
             form = FromToUse(request, '', request.POST)
@@ -492,16 +466,14 @@ def post_edit(request, post_id):
 @permission_required('forum.can_moderate_forum')
 @transaction.atomic()
 def moderate_posts(request):
-    PostModerationFormClass = PostModerationForm if not using_beastwhoosh(request) else BwPostModerationForm
     if request.method == 'POST':
-        
         # Only the form for one post will be sent at a time, but we need to get the post ID from the request so we know which form prefix to use
         post_id = -1
         for key in request.POST.keys():
             if key.endswith('-post'):
                 post_id = int(key.split('-')[0])
         
-        mod_form = PostModerationFormClass(request.POST, prefix=f'{post_id}')
+        mod_form = PostModerationForm(request.POST, prefix=f'{post_id}')
         if mod_form.is_valid():
             action = mod_form.cleaned_data.get("action")
             post_id = mod_form.cleaned_data.get("post")
@@ -533,7 +505,7 @@ def moderate_posts(request):
     pending_posts = Post.objects.filter(moderation_state='NM').select_related('author', 'author__profile')
     post_list = []
     for p in pending_posts:
-        f = PostModerationFormClass(initial={'action': 'Approve', 'post': p.id}, prefix=f'{p.id}')
+        f = PostModerationForm(initial={'action': 'Approve', 'post': p.id}, prefix=f'{p.id}')
         post_list.append({'post': p, 'form': f})
 
     tvars = {'post_list': post_list,

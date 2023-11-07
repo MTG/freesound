@@ -1,45 +1,54 @@
-{% extends "forum/_section.html" %}
+{% extends "simple_page.html" %}
+{% load bw_templatetags %}
+{% load display_forum_objects %}
+{% load cache %}
 
-{% load paginator %}
-{% load util %}
+{% block title %}Forums - {{forum.name}}{% endblock %}
+{% block page-title %}Freesound Forums{% endblock %}
 
-{% block title %}forums - {{forum.name}}{% endblock %}
+{% block page-content %}
+    <div class="divider-light v-spacing-top-4 v-spacing-2"></div>
+    <div class="row middle">
+        <div class="col-md-6">
+            <ul class="navbar-forums-hot navbar-breadcrumb">
+                <li class="nav-item">
+                      <a class="nav-link" href="{% url "forums-forums" %}">Freesound Forums</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-black" href="{{forum.get_absolute_url}}">{{ forum.name }}</a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-6 v-spacing-1 v-spacing-top-1 between middle">
+            <form method="get" action="{% url "forums-search" %}" class="w-50">
+                <input type="hidden" name="advanced_search"  value="0"/>
+                <input type="hidden" name="forum" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum.name_slug}}{% endif %}"/>
+                <div class="input-wrapper w-100">
+                    <i class="bw-icon-search input-icon"></i><input name="q" type="search" placeholder="Search in this forum..." autocomplete="off">
+                </div>
+            </form>
+            <div>
+                <a class="btn-primary no-hover" href="{% url "forums-new-thread" forum.name_slug %}"><span class="padding-right-1">+</span>New thread</a>
+            </div>
+        </div>
+    </div>
+    <div class="divider-light v-spacing-top-2"></div>
 
-{% block breadcrumb %}
-&#187; <a href="{{forum.get_absolute_url}}">{{forum.name}}</a>
-{% endblock %}
-
-{% block section_content %}
-<div class="forum_pagination">
-	<div class="forum_button"><a href="{% url "forums-new-thread" forum.name_slug %}">New Topic</a></div>
-	{% show_paginator paginator page current_page request "thread"%}
-</div>
-
-<ul id="topics">
-{% for thread in page.object_list %}
-	<li{% if thread.status == 2 %} class="highlighted"{% endif %}>
-		<div class="latest_post">
-			{% if thread.last_post.id %}
-			<a href="{% url "forums-post" forum.name_slug thread.id thread.last_post.id %}">Latest post</a> by <a href="{% url "account" thread.last_post.author.username %}">{{thread.last_post.author.username}}</a><br />
-			{{thread.last_post.created|timesince}} ago
-			{% endif %}
-		</div>
-
-		{% if thread.last_post.created > request.last_action_time and forum.last_post.author != request.user %}
-			<img src="{{media_url}}images/forum_new.png" width="20" height="20" alt="new posts">
-		{% else %}
-			<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts">
-		{% endif %}
-
-		{% comment %}use url tag here because get_absolute_url does more queries!{% endcomment %}
-		<a href="{% url "forums-thread" forum.name_slug thread.id %}" class="topic_subject">{{thread.title|safe}}</a><br />
-		{{thread.num_posts}} post{{thread.num_posts|pluralize}}
-	</li>
-{% endfor %}
-</ul>
-
-<div class="forum_pagination">
-	<div class="forum_button"><a href="{% url "forums-new-thread" forum.name_slug %}">New Topic</a></div>
-	{% show_paginator paginator page current_page request "thread" %}
-</div>
+    <div class="v-spacing-top-4">
+        {% for thread in page.object_list %}
+            {% display_thread thread %}
+            {% if not forloop.last %}
+                <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+            {% endif %}
+        {% empty %}
+            <div class="bw-threads">
+                <div class="row">
+                    This forum has no threads
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="v-spacing-top-7">
+        {% bw_paginator paginator page current_page request "thread" %}
+    </div>
 {% endblock %}

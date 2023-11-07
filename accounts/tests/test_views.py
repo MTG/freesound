@@ -131,10 +131,6 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-home'))
         self.assertRedirects(resp, reverse('account', args=[self.user.username]))
 
-        # Describe to manage sounds page
-        resp = self.client.get(reverse('accounts-describe'))
-        self.assertRedirects(resp, reverse('accounts-manage-sounds', args=['pending_description']))
-
     def test_account_response(self):
         # 200 response on account access
         resp = self.client.get(reverse('account', kwargs={'username': self.user.username}))
@@ -303,7 +299,7 @@ class SimpleUserTest(TestCase):
 
     def test_accounts_manage_pages(self):
         # In BW account registration loads as a modal
-        resp = self.client.get(reverse('accounts-register'))
+        resp = self.client.get(reverse('accounts-registration-modal'))
         self.assertEqual(resp.status_code, 200)
 
         # In BW Account resend activations redirects to "problems logging in" in front page

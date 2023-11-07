@@ -1,84 +1,59 @@
-{% extends "forum/_section.html" %}
+{% extends "simple_page.html" %}
+{% load bw_templatetags %}
+{% load display_forum_objects %}
 
+{% block title %}Forums - {{forum.name}} - {{thread.title}}{% endblock %}
+{% block page-title %}Freesound Forums{% endblock %}
 
-{% load paginator %}
-{% load smileys %}
-{% load flag_user %}
-{% load filter_img %}
+{% block page-content %}
 
-{% block title %}forums - {{forum.name}} - {{thread.title}}{% endblock %}
-
-{% block breadcrumb %}&#187; <a href="{{forum.get_absolute_url}}">{{forum.name}}</a> &#187; <a href="{% url "forums-thread" forum.name_slug thread.id %}">{{thread.title}}</a>{% endblock %}
-
-{% block section_content %}
-
-<div class="forum_pagination">
-    <div class="forum_button"><a href="{% url "forums-reply" forum.name_slug thread.id %}">Post Reply</a></div>
-    {% if user.is_authenticated %}
-        <div class="forum_button" style="right: 100px">
-          {% if has_subscription %}
-              <a href="{% url "forums-thread-unsubscribe" forum.name_slug thread.id %}">Unsubscribe</a>
-          {% else %}
-              <a title="Subscribe to receive email notifications" href="{% url "forums-thread-subscribe" forum.name_slug thread.id %}">Subscribe</a>
-          {% endif %}
+    <div class="divider-light v-spacing-top-4 v-spacing-2"></div>
+    <div class="row middle">
+        <div class="col-12">
+            <ul class="navbar-forums-hot navbar-breadcrumb v-spacing-2">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url "forums-forums" %}">Freesound Forums</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{forum.get_absolute_url}}">{{ forum.name }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-black" href="{% url "forums-thread" forum.name_slug thread.id %}">{{ thread.title }}</a>
+                </li>
+            </ul>
         </div>
+    </div>
+    <div class="divider-light v-spacing-top-2"></div>
+   
+    <div class="row between middle v-spacing-top-3">
+        <div class="col-lg-8">
+            <h3>{{ thread.title }}</h3>
+        </div>
+        <div class="col-lg-4 text-lg-right v-spacing-2 v-spacing-top-4">
+            {% if has_subscription %}
+                <a title="Unsubscribe to stop receiving email notifications" class="no-hover btn-secondary" href="{% url "forums-thread-unsubscribe" forum.name_slug thread.id %}">Unsubscribe</a>
+            {% else %}
+                <a title="Subscribe to receive email notifications" class="no-hover btn-inverse btn-profile-adapt" href="{% url "forums-thread-subscribe" forum.name_slug thread.id %}">Subscribe</a>
+            {% endif %}
+            {% comment %}<a title="Post a reply" class="btn-primary" href="{% url "forums-reply" forum.name_slug thread.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Post reply</a>{% endcomment %}
+        </div>
+    </div>
+    {% if thread.last_post.id %}
+        <p class="text-grey v-spacing-7">Started {{ thread.first_post.created|date:"F jS, Y" }}  ·  {{thread.num_posts|bw_intcomma}} repl{{thread.num_posts|pluralize:"y,ies"}}  ·  <a href="{% url "forums-post" forum.name_slug thread.id thread.last_post.id %}">Latest reply</a> by <a href="{% url "account" thread.last_post.author.username %}">{{ thread.last_post.author.username }}</a> {{ thread.last_post.created|timesince }} ago</p>
     {% endif %}
-    {% show_paginator paginator page current_page request "post" %}
-</div>
-
-<ul id="posts">
-{% for post in page.object_list %}
-    <li class="post">
-        <a name="post{{post.id}}"></a>
-        <a href="{% url "account" post.author.username %}"><img src="{{post.author.profile.locations.avatar.S.url}}" width="32" height="32" alt="avatar" class="avatar" /></a>
-        <div class="post_author"><a href="{% url "account" post.author.username %}">{{post.author.username}}</a></div>
-        <div class="post_details">
-            {{post.author.profile.num_sounds}} sound{{post.author.profile.num_sounds|pluralize}}<br/>
-            {{post.author.profile.num_posts}} post{{post.author.profile.num_posts|pluralize}}<br>
-            <div class="post_date">{{post.created|timesince}} ago</div>
-        </div>
-
-        {% if request.user.is_staff %}
-            <div class="post-admin-links">Admin:
-                <a href="{% url "admin:forum_post_change" post.id %}">post</a> |
-                <a href="{% url "admin:forum_thread_change" thread.id %}">thread</a>
-            </div>
-        {% endif %}
-
-        <div class="post_buttons">
-          <a href="{% url "forums-reply-quote" forum.name_slug thread.id post.id %}" class="post_quote post_button" title="quote and reply"></a>
-          {% if post.author == request.user or perms.forums.change_post %}
-              <a href="{% url "forums-post-edit" post.id %}" class="post_edit post_button" title="edit post"></a>
-          {% endif %}
-          {% if post.author == request.user or perms.forums.delete_post %}
-              <a href="{% url "forums-post-delete" post.id %}" class="post_delete post_button" title="delete post"></a>
-          {% endif %}
-        </div>
-
-        {% if forloop.first and not page.has_previous %}
-        <div class="subject">
-            {{thread.title}}
-        </div>
-        {% endif %}
-        <br><br>
-
-        {{post.body|replace_img|smileys|safe|linebreaks}}
-
-        {% if post.author.profile.signature %}
-        <div class="signature">{{post.author.profile.signature|replace_img|smileys|safe}}</div>
-        {% endif %}
-
-        <div style="float:right; text-align: right; font-size: 10px; margin-right:-30px">
-            {% flag_user "FP" post.author.username post.id "" post.author.profile.num_sounds %}
-        </div>
-
-    </li>
-
-{% endfor %}
-</ul>
-
-<div class="forum_pagination">
-    <div class="forum_button"><a href="{% url "forums-reply" forum.name_slug thread.id %}">Post Reply</a></div>
-    {% show_paginator paginator page current_page request "post" %}
-</div>
+    <div class="v-spacing-top-4">
+        {% for post in page.object_list %}
+            <a name="post{{ post.id }}"></a>
+            {% display_post post forloop.counter post_counter_offset False True True %}
+            {% if not forloop.last %}
+                <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <div class="v-spacing-top-7 text-center">
+        <a class="btn-primary no-hover" href="{% url "forums-reply" forum.name_slug thread.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Post reply</a>
+    </div>
+    <div class="v-spacing-top-4">
+        {% bw_paginator paginator page current_page request "thread" %}
+    </div>
 {% endblock %}

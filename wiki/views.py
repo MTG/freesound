@@ -20,11 +20,11 @@
 
 from django.http import HttpResponseRedirect, Http404
 
+from django.shortcuts import render 
 from django.urls import reverse
 
-from utils.frontend_handling import render, using_beastwhoosh
 from wiki.models import Content, Page
-from wiki.forms import ContentForm, BwContentForm
+from wiki.forms import ContentForm
 
 
 def page(request, name):
@@ -63,10 +63,8 @@ def editpage(request, name):
     if not (request.user.is_authenticated and request.user.has_perm('wiki.add_page')):
         raise Http404
 
-    FormToUse = BwContentForm if using_beastwhoosh(request) else ContentForm
-
     if request.method == 'POST':
-        form = FormToUse(request.POST)
+        form = ContentForm(request.POST)
 
         if form.is_valid():
             content = form.save(commit=False)
@@ -78,10 +76,10 @@ def editpage(request, name):
         try:
             # if the page already exists, load up the previous content
             content = Content.objects.filter(page__name__iexact=name).select_related().latest()
-            form = FormToUse(initial={'title': content.title, 'body': content.body})
+            form = ContentForm(initial={'title': content.title, 'body': content.body})
         except Content.DoesNotExist:
             content = None
-            form = FormToUse()
+            form = ContentForm()
 
     tvars = {'content': content,
              'form': form,

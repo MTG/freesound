@@ -39,9 +39,8 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
           argument is automatically added by Django when calling the templatetag inside a template.
         sound (int or Sound): sound ID or Sound object of the sound that will be shown. If no sound exists for the
           given ID, the display_sound.html will be rendered with empty HTML.
-        player_size (str, optional): size of the player to display. This parameter only applies to BW interface.
-          See functions below and template file for available sizes. Information about the contents of each
-          size is given in the display_sound.html template code.
+        player_size (str, optional): size of the player to display. See functions below and template file for 
+          available sizes. Information about the contents of each size is given in the display_sound.html template code.
         show_bookmark (bool, optional): whether or not to show the bookmark button (BW frontend only). If set to None
           it will be decided based on player size and other properties.
         show_similar_sounds (bool, optional): whether or not to show the similar sounds button (BW frontend only). If set to None
@@ -119,7 +118,6 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
         return {
             'sound': sound_obj,
             'user_profile_locations': Profile.locations_static(sound_obj.user_id, getattr(sound_obj, 'user_has_avatar', False)),
-            'media_url': context['media_url'],
             'request': request,
             'is_explicit': sound_obj.is_explicit and
                            (not request.user.is_authenticated or not request.user.profile.is_adult),

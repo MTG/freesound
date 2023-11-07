@@ -39,7 +39,7 @@ import accounts
 from accounts.models import EmailPreferenceType
 from comments.models import Comment
 from general.templatetags.filter_img import replace_img
-from sounds.forms import BWPackForm
+from sounds.forms import PackForm
 from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis, Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
 from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
@@ -65,11 +65,18 @@ class CommentSoundsTestCase(TestCase):
         commenting_user = User.objects.get(id=2)
         self.client.force_login(commenting_user)
         self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': 'Test comment'})
+        self.assertEqual(sound.comments.all().count(), 1)
 
         # Check email was sent notifying about comment
         self.assertEqual(len(mail.outbox), 1)
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_NEW_COMMENT in mail.outbox[0].subject)
+
+        # Test that when the owner of a sound makes a comment, no email notification is sent
+        self.client.force_login(sound.user)
+        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': 'A comment by the owner'})
+        self.assertEqual(sound.comments.all().count(), 2)
+        self.assertEqual(len(mail.outbox), 1)
 
         # Now update preferences of sound.user to disable comment notification emails
         # We create an email preference object for the email type (which will mean user does not want new comment
@@ -77,8 +84,10 @@ class CommentSoundsTestCase(TestCase):
         email_pref = accounts.models.EmailPreferenceType.objects.get(name="new_comment")
         accounts.models.UserEmailSetting.objects.create(user=sound.user, email_type=email_pref)
 
-        # Make the comment again and assert no new email has been sent
-        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': 'Test comment'})
+        # Make the comment again (from the commenting user) and assert no new email has been sent
+        self.client.force_login(commenting_user)
+        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': 'Another test comment'})
+        self.assertEqual(sound.comments.all().count(), 3)
         self.assertEqual(len(mail.outbox), 1)
 
     def test_unsecure_content(self):
@@ -1162,7 +1171,7 @@ class SoundEditTestCase(TestCase):
             '0-tags': ' '.join(new_tags),
             '0-license': '3',
             '0-sources': ','.join([f'{s.id}' for s in new_sound_sources]),
-            '0-pack': BWPackForm.NEW_PACK_CHOICE_VALUE,
+            '0-pack': PackForm.NEW_PACK_CHOICE_VALUE,
             '0-new_pack': new_pack_name,
             '0-lat': f'{geotag_lat}',
             '0-lon': '3.515625',

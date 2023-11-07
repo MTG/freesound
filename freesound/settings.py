@@ -38,7 +38,6 @@ MIDDLEWARE = [
     'freesound.middleware.UpdateEmailHandler',
     'freesound.middleware.OnlineUsersHandler',
     'corsheaders.middleware.CorsMiddleware',
-    'freesound.middleware.FrontendPreferenceHandler',
 ]
 
 INSTALLED_APPS = [
@@ -291,11 +290,7 @@ EMAIL_SUBJECT_SUPPORT_EMAIL = '[support]'
 EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 
 # -------------------------------------------------------------------------------
-# Media paths, URLS and static settings
-
-# Absolute path to the directory that holds media (e.g. /home/media/media.lawrence.com/)
-MEDIA_ROOT = os.path.join(os.path.dirname(__file__), '../freesound/../media')
-MEDIA_URL = "/media/"
+# Static settings
 
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is not an installed Django app)
 STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
@@ -320,31 +315,26 @@ FREESOUND_RSS = ''
 
 # Number of things per page
 FORUM_POSTS_PER_PAGE = 20
-FORUM_THREADS_PER_PAGE = 40
-FORUM_THREADS_PER_PAGE_BW = 15
+FORUM_THREADS_PER_PAGE = 15
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 SOUNDS_PER_PAGE_COMPACT_MODE = 30
 PACKS_PER_PAGE = 15
-DOWNLOADED_SOUNDS_PACKS_PER_PAGE_BW = 12
-USERS_PER_DOWNLOADS_MODAL_PAGE_BW = 15
-COMMENTS_IN_MODAL_PER_PAGE_BW = 15 
+DOWNLOADED_SOUNDS_PACKS_PER_PAGE = 12
+USERS_PER_DOWNLOADS_MODAL_PAGE = 15
+COMMENTS_IN_MODAL_PER_PAGE = 15 
 REMIXES_PER_PAGE = 10
-MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 100
-MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_BW = 60
-MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN = 20
+MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 60
 SOUNDS_PER_DESCRIBE_ROUND = 10
 SOUNDS_PENDING_MODERATION_PER_PAGE = 9
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
-FOLLOW_ITEMS_PER_PAGE = 5  # BW only
-MESSAGES_PER_PAGE = 20
-MESSAGES_PER_PAGE_BW = 10
-BOOKMARKS_PER_PAGE = 30
-BOOKMARKS_PER_PAGE_BW = 12 
+FOLLOW_ITEMS_PER_PAGE = 5
+MESSAGES_PER_PAGE = 10
+BOOKMARKS_PER_PAGE = 12 
 
 
-# Weights using to compute BW charts
+# Weights using to compute charts
 BW_CHARTS_ACTIVE_USERS_WEIGHTS = {'upload': 1, 'post': 0.8, 'comment': 0.05}
 CHARTS_DATA_CACHE_KEY = 'bw-charts-data'
 
@@ -426,7 +416,7 @@ CDN_DISPLAYS_URL = 'https://cdn.freesound.org/displays/'
 MAX_EMAILS_PER_COMMAND_RUN = 5000
 NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 
-# Some BW settings
+# Some other settings
 ENABLE_QUERY_SUGGESTIONS = False
 ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE = False
 SHOW_LINK_TO_NEW_UI_IN_OLD_FRONT_PAGE = False
@@ -808,16 +798,11 @@ APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
 # -------------------------------------------------------------------------------
 # Frontend handling
 
-FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'
-FRONTEND_SESSION_PARAM_NAME = 'frontend'
-FRONTEND_NIGHTINGALE = 'ng'  # https://freesound.org/people/reinsamba/sounds/14854/
-FRONTEND_BEASTWHOOSH = 'bw'  # https://freesound.org/people/martian/sounds/403973/
-FRONTEND_DEFAULT = FRONTEND_BEASTWHOOSH
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(os.path.dirname(__file__), '../templates_bw'),
+            os.path.join(os.path.dirname(__file__), '../templates'),
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -832,29 +817,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'freesound.context_processor.context_extra',
             ],
-        },
-        'NAME': FRONTEND_BEASTWHOOSH,
-    },
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(os.path.dirname(__file__), '../templates')
-        ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.contrib.auth.context_processors.auth',
-                'django.template.context_processors.debug',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'django.template.context_processors.tz',
-                'django.template.context_processors.request',
-                'django.contrib.messages.context_processors.messages',
-                'freesound.context_processor.context_extra',
-            ],
-        },
-        'NAME': FRONTEND_NIGHTINGALE,
+        }
     },
 ]
 

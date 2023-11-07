@@ -52,8 +52,6 @@ class Command(LoggingBaseCommand):
 
         # Generate cache for the blog news from blog's RSS feed
         # Create one for Freeesound Nightingale frontend and one for BeastWhoosh
-        rss_cache = render_to_string('rss_cache.html', {'rss_url': settings.FREESOUND_RSS})
-        cache.set("rss_cache", rss_cache, cache_time)
         rss_cache_bw = render_to_string('molecules/news_cache.html', {'rss_url': settings.FREESOUND_RSS})
         if len(rss_cache_bw.strip()):
             cache.set("rss_cache_bw", rss_cache_bw, cache_time)

@@ -32,10 +32,8 @@ import uuid
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
@@ -62,11 +60,10 @@ from oauth2_provider.models import AccessToken
 import tickets.views as TicketViews
 import utils.sound_upload
 from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
-from accounts.forms import EmailResetForm, FsPasswordResetForm, BwSetPasswordForm, BwProfileForm, BwEmailSettingsForm, \
-    BwDeleteUserForm, UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, \
-    UsernameReminderForm, BwFsAuthenticationForm, BwRegistrationForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm, TermsOfServiceFormBW, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, \
-    UsernameField, BwProblemsLoggingInForm, username_taken_by_other_user, BWPasswordChangeForm
+from accounts.forms import EmailResetForm, FsPasswordResetForm, FsSetPasswordForm, \
+    UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, \
+    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, \
+    UsernameField, ProblemsLoggingInForm, username_taken_by_other_user, FsPasswordChangeForm
 from general.templatetags.util import license_with_version
 from accounts.models import Profile, ResetEmailRequest, UserFlag, DeletedUser, UserDeletionRequest
 from bookmarks.models import Bookmark
@@ -75,14 +72,13 @@ from follow import follow_utils
 from forum.models import Post
 from general import tasks
 from messages.models import Message
-from sounds.forms import LicenseForm, PackForm, BWPackForm, SoundDescriptionForm, GeotaggingForm
+from sounds.forms import LicenseForm, PackForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
 from sounds.views import edit_and_describe_sounds_helper, clear_session_edit_and_describe_data
 from tickets.models import TicketComment, Ticket, UserAnnotation
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
 from utils.filesystem import generate_tree, remove_directory_if_empty
-from utils.frontend_handling import using_beastwhoosh
 from utils.images import extract_square
 from utils.logging_filters import get_client_ip
 from utils.mail import send_mail_template, send_mail_template_to_support
@@ -122,7 +118,7 @@ def login(request, template_name, authentication_form):
     # once all accounts are adapted
     response = LoginView.as_view(
         template_name='accounts/login.html',
-        authentication_form=authentication_form if not using_beastwhoosh(request) else BwFsAuthenticationForm)(request)
+        authentication_form=authentication_form)(request)
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful
         # Now we check if the logged in user has shared email problems
@@ -150,7 +146,7 @@ def password_reset_confirm(request, uidb64, token):
     """
     response = PasswordResetConfirmView.as_view(
         template_name='accounts/password_reset_confirm.html',
-        form_class=SetPasswordForm if not using_beastwhoosh(request) else BwSetPasswordForm,
+        form_class=FsSetPasswordForm,
         extra_context={'next_path': reverse('accounts-home')}
     )(request, uidb64=uidb64, token=token)
     return response
@@ -176,7 +172,7 @@ def password_change_form(request):
     This view is called when user requests to change the password and contains the form to do so.
     """
     response = PasswordChangeView.as_view(
-        form_class=BWPasswordChangeForm if using_beastwhoosh(request) else PasswordChangeForm,
+        form_class=FsPasswordChangeForm,
         template_name='accounts/password_change_form.html',
         extra_context={'activePage': 'password'})(request)
     return response
@@ -271,7 +267,7 @@ def bulk_license_change(request):
 @login_required
 def tos_acceptance(request):
     has_sounds_with_old_cc_licenses = request.user.profile.has_sounds_with_old_cc_licenses()
-    FormClass = TermsOfServiceFormBW if using_beastwhoosh(request) else TermsOfServiceForm
+    FormClass = TermsOfServiceForm
     if request.method == 'POST':
         form = FormClass(request.POST)
         if form.is_valid():
@@ -304,7 +300,7 @@ def update_old_cc_licenses(request):
 
 @transaction.atomic()
 def registration_modal(request):
-    form_class = RegistrationForm if not using_beastwhoosh(request) else BwRegistrationForm
+    form_class = RegistrationForm
 
     if request.method == 'POST':
         form = form_class(request.POST)
@@ -379,7 +375,7 @@ def home(request):
 
 @login_required
 def edit_email_settings(request):
-    email_settings_form_class = BwEmailSettingsForm if using_beastwhoosh(request) else EmailSettingsForm
+    email_settings_form_class = EmailSettingsForm
 
     if request.method == "POST":
         form = email_settings_form_class(request.POST)
@@ -404,7 +400,7 @@ def edit_email_settings(request):
 @transaction.atomic()
 def edit(request):
     profile = request.user.profile
-    profile_form_class = ProfileForm if not using_beastwhoosh(request) else BwProfileForm
+    profile_form_class = ProfileForm
 
     def is_selected(prefix):
         if request.method == "POST":
@@ -809,7 +805,7 @@ def describe_license(request):
 
 @login_required
 def describe_pack(request):
-    FormToUse = PackForm if not using_beastwhoosh(request) else BWPackForm
+    FormToUse = PackForm
     packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     if request.method == 'POST':
         form = FormToUse(packs, request.POST, prefix="pack")
@@ -929,7 +925,7 @@ def downloaded_sounds(request, username):
 @redirect_if_old_username_or_404
 @raise_404_if_user_is_deleted
 def downloaded_packs(request, username):
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_packs=1')
     user = request.parameter_user
@@ -1328,7 +1324,7 @@ def bulk_describe(request, bulk_id):
 @transaction.atomic()
 def delete(request):
     num_sounds = request.user.sounds.all().count()
-    delete_user_form_class = BwDeleteUserForm if using_beastwhoosh(request) else DeleteUserForm
+    delete_user_form_class = DeleteUserForm
 
     if request.method == 'POST':
         form = delete_user_form_class(request.POST, user_id=request.user.id)
@@ -1481,12 +1477,12 @@ def email_reset_complete(request, uidb36=None, token=None):
 
 
 def problems_logging_in(request):
-    """This view gets a User object from BwProblemsLoggingInForm form contents and then either sends email instructions
+    """This view gets a User object from ProblemsLoggingInForm form contents and then either sends email instructions
     to re-activate the user (if the user is not active) or sends instructions to re-set the password (if the user
     is active).
     """
     if request.method == 'POST':
-        form = BwProblemsLoggingInForm(request.POST)
+        form = ProblemsLoggingInForm(request.POST)
         if form.is_valid():
             username_or_email = form.cleaned_data['username_or_email']
             try:
@@ -1498,7 +1494,7 @@ def problems_logging_in(request):
                 else:
                     # If user is activated, send instructions to re-set the password (act as if the pre-BW password
                     # reset view was called)
-                    # NOTE: we pass the same request.POST as we did to the BwProblemsLoggingInForm. We can do that
+                    # NOTE: we pass the same request.POST as we did to the ProblemsLoggingInForm. We can do that
                     # because both forms have the same fields.
                     pwd_reset_form = FsPasswordResetForm(request.POST)
                     if pwd_reset_form.is_valid():

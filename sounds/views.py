@@ -47,20 +47,19 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from ratelimit.decorators import ratelimit
 
 from accounts.models import Profile
-from comments.forms import CommentForm, BwCommentForm
+from comments.forms import CommentForm
 from comments.models import Comment
 from donations.models import DonationsModalSettings
 from follow import follow_utils
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
-from sounds.forms import FlagForm,PackEditForm, BWSoundEditAndDescribeForm, BWFlagForm
+from sounds.forms import FlagForm,PackEditForm, SoundEditAndDescribeForm
 from sounds.models import PackDownload, PackDownloadSound
 from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, SoundOfTheDay
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_user_template_caches
 from utils.downloads import download_sounds, should_suggest_donation
-from utils.frontend_handling import using_beastwhoosh
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
@@ -227,7 +226,7 @@ def sound(request, username, sound_id):
         else:
             raise Http404
 
-    CommentFormClass = CommentForm if not using_beastwhoosh(request) else BwCommentForm
+    CommentFormClass = CommentForm
     if request.method == "POST":
         form = CommentFormClass(request, request.POST)
         if request.user.is_authenticated:
@@ -574,7 +573,7 @@ def edit_and_describe_sounds_helper(request):
                 files_data_for_players.append(None)
 
         if request.method == "POST":
-            form = BWSoundEditAndDescribeForm(
+            form = SoundEditAndDescribeForm(
                 request.POST, 
                 prefix=prefix, 
                 file_full_path=element.full_path if describing else None,
@@ -610,7 +609,7 @@ def edit_and_describe_sounds_helper(request):
                     initial['license'] = preselected_license
                 if preselected_pack:
                     initial['pack'] = preselected_pack.id
-            form = BWSoundEditAndDescribeForm(
+            form = SoundEditAndDescribeForm(
                 prefix=prefix, 
                 explicit_disable=element.is_explicit if not describing else False,
                 initial=initial,
@@ -878,7 +877,7 @@ def flag(request, username, sound_id):
     if request.user.is_authenticated:
         user = request.user
 
-    FlagFormClass = FlagForm if not using_beastwhoosh(request) else BWFlagForm
+    FlagFormClass = FlagForm
 
     if request.method == "POST":
         flag_form = FlagFormClass(request.POST)

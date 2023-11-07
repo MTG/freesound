@@ -27,6 +27,11 @@ from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
 
 
+html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
+                    <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
+                    <code>blockquote</code> and <code>code</code>."""
+
+
 class ManualUserField(forms.CharField):
     def clean(self, value):
         if not value:
@@ -40,11 +45,24 @@ class ManualUserField(forms.CharField):
 class MessageReplyForm(forms.Form):
     to = ManualUserField(widget=forms.TextInput(attrs={'size': '40'}))
     subject = forms.CharField(min_length=3, max_length=128, widget=forms.TextInput(attrs={'size': '80'}))
-    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
+    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)), help_text=html_tags_help_text)
 
     def __init__(self, request, *args, **kwargs):
         self.request = request  # This is used by MessageReplyFormWithCaptcha to be able to call is_spam function
+        kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
+
+        self.fields['to'].widget.attrs['placeholder'] = "Username of the user to send the message to"
+        self.fields['to'].widget.attrs['data-typeahead'] = 'true' 
+        self.fields['to'].widget.attrs['data-typeahead-suggestions-url'] = reverse('messages-username_lookup')
+        self.fields['to'].widget.attrs['data-check-username-url'] = reverse('check_username')
+        self.fields['to'].widget.attrs['id'] = "username-to-field"
+        self.fields['to'].widget.attrs['autocomplete'] = "off"
+        self.fields['subject'].widget.attrs['placeholder'] = "Subject of your message, don't make it too long :)"
+        self.fields['body'].widget.attrs['placeholder'] = "Write your message here"
+        self.fields['body'].widget.attrs['rows'] = False
+        self.fields['body'].widget.attrs['cols'] = False
+        self.fields['body'].widget.attrs['class'] = 'unsecure-image-check'
 
 
 class MessageReplyFormWithCaptcha(MessageReplyForm):
@@ -56,51 +74,3 @@ class MessageReplyFormWithCaptcha(MessageReplyForm):
             raise forms.ValidationError("Your message was considered spam. If your message is not spam and the "
                                         "check keeps failing, please contact the admins.")
         return body
-
-
-class BwMessageReplyForm(MessageReplyForm):
-
-    def __init__(self, *args, **kwargs):
-        kwargs.update(dict(label_suffix=''))
-        super().__init__(*args, **kwargs)
-
-        html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
-                    <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
-                    <code>blockquote</code> and <code>code</code>."""
-
-        self.fields['to'].widget.attrs['placeholder'] = "Username of the user to send the message to"
-        self.fields['to'].widget.attrs['data-typeahead'] = 'true' 
-        self.fields['to'].widget.attrs['data-typeahead-suggestions-url'] = reverse('messages-username_lookup')
-        self.fields['to'].widget.attrs['data-check-username-url'] = reverse('check_username')
-        self.fields['to'].widget.attrs['id'] = "username-to-field"
-        self.fields['to'].widget.attrs['autocomplete'] = "off"
-        self.fields['subject'].widget.attrs['placeholder'] = "Subject of your message, don't make it too long :)"
-        self.fields['body'].widget.attrs['placeholder'] = "Write your message here"
-        self.fields['body'].widget.attrs['rows'] = False
-        self.fields['body'].widget.attrs['cols'] = False
-        self.fields['body'].widget.attrs['class'] = 'unsecure-image-check'
-        self.fields['body'].help_text = html_tags_help_text
-
-
-class BwMessageReplyFormWithCaptcha(MessageReplyFormWithCaptcha):
-    
-    def __init__(self, *args, **kwargs):
-        kwargs.update(dict(label_suffix=''))
-        super().__init__(*args, **kwargs)
-
-        html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
-                    <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
-                    <code>blockquote</code> and <code>code</code>."""
-
-        self.fields['to'].widget.attrs['placeholder'] = "Username of the user to send the message to"
-        self.fields['to'].widget.attrs['data-typeahead'] = 'true' 
-        self.fields['to'].widget.attrs['data-typeahead-suggestions-url'] = reverse('messages-username_lookup')
-        self.fields['to'].widget.attrs['data-check-username-url'] = reverse('check_username')
-        self.fields['to'].widget.attrs['id'] = "username-to-field"
-        self.fields['to'].widget.attrs['autocomplete'] = "off"
-        self.fields['subject'].widget.attrs['placeholder'] = "Subject of your message, don't make it too long :)"
-        self.fields['body'].widget.attrs['placeholder'] = "Write your message here"
-        self.fields['body'].widget.attrs['rows'] = False
-        self.fields['body'].widget.attrs['cols'] = False
-        self.fields['body'].widget.attrs['class'] = 'unsecure-image-check'
-        self.fields['body'].help_text = html_tags_help_text

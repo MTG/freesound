@@ -49,7 +49,7 @@ from apiv2.authentication import OAuth2Authentication, TokenAuthentication, Sess
 from apiv2.exceptions import NotFoundException, InvalidUrlException, BadRequestException, ConflictException, \
     UnauthorizedException, ServerErrorException, OtherException, APIException
 from apiv2.forms import ApiV2ClientForm, SoundCombinedSearchFormAPI, SoundTextSearchFormAPI, \
-    SoundContentSearchFormAPI, SimilarityFormAPI, BWApiV2ClientForm
+    SoundContentSearchFormAPI, SimilarityFormAPI
 from apiv2.models import ApiV2Client
 from apiv2.serializers import SimilarityFileSerializer, UploadAndDescribeAudioFileSerializer, \
     EditSoundDescriptionSerializer, SoundDescriptionSerializer, CreateCommentSerializer, SoundCommentsSerializer, \
@@ -66,7 +66,6 @@ from similarity.client import Similarity
 from sounds.models import Sound, Pack, License, SoundAnalysis
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
-from utils.frontend_handling import using_beastwhoosh
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.tags import clean_and_split_tags
 
@@ -1337,7 +1336,7 @@ def invalid_url(request):
 def create_apiv2_key(request):
     """View for applying for an apikey"""
 
-    FormToUse = BWApiV2ClientForm if using_beastwhoosh(request) else ApiV2ClientForm
+    FormToUse = ApiV2ClientForm
 
     if request.method == 'POST':
         form = FormToUse(request.POST)
@@ -1383,7 +1382,7 @@ def edit_api_credential(request, key):
     if not client:
         raise Http404
     
-    FormToUse = BWApiV2ClientForm if using_beastwhoosh(request) else ApiV2ClientForm
+    FormToUse = ApiV2ClientForm
 
     if request.method == 'POST':
         form = FormToUse(request.POST)

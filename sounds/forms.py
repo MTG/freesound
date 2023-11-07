@@ -119,21 +119,11 @@ class PackChoiceField(forms.ModelChoiceField):
         return pack.name
 
 
-class PackForm(forms.Form):
-    pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False, empty_label="--- No pack ---")
-    new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
-                               label="Or fill in the name of a new pack:", required=False, min_length=5)
-
-    def __init__(self, pack_choices, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['pack'].queryset = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-
-
 def _pack_form_clean_pack_helper(cleaned_data):
-    if 'pack' not in cleaned_data or cleaned_data['pack'] == '' or str(cleaned_data['pack']) == BWPackForm.NO_PACK_CHOICE_VALUE:
+    if 'pack' not in cleaned_data or cleaned_data['pack'] == '' or str(cleaned_data['pack']) == PackForm.NO_PACK_CHOICE_VALUE:
         # No pack selected
         return None
-    elif str(cleaned_data['pack']) == BWPackForm.NEW_PACK_CHOICE_VALUE:
+    elif str(cleaned_data['pack']) == PackForm.NEW_PACK_CHOICE_VALUE:
         # We need to return something different than for "no pack option" so we can disambiguate in the clean method
         return False
     try:
@@ -151,7 +141,7 @@ def _pack_form_clean_helper(cleaned_data):
     return cleaned_data
 
 
-class BWPackForm(forms.Form):
+class PackForm(forms.Form):
 
     NO_PACK_CHOICE_VALUE = '-1'
     NEW_PACK_CHOICE_VALUE = '0'
@@ -256,12 +246,18 @@ class LicenseForm(forms.Form):
 
 
 class FlagForm(forms.Form):
-    email = forms.EmailField(label="Your email", required=True, help_text="Required.",
+    email = forms.EmailField(label=False, required=True, help_text=False,
                              error_messages={'required': 'Required, please enter your email address.', 'invalid': 'Your'
                                              ' email address appears to be invalid, please check if it\'s correct.'})
-    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES, required=True, label='Reason type')
-    reason = forms.CharField(widget=forms.Textarea)
+    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES, required=True, label=False)
+    reason = forms.CharField(widget=forms.Textarea, label=False)
     recaptcha = ReCaptchaField(label="")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs['placeholder'] = 'Your email'
+        self.fields['reason'].widget.attrs['placeholder'] = 'Write here comments about why this sound is being flagged'
+
 
     def save(self):
         f = Flag()
@@ -269,20 +265,6 @@ class FlagForm(forms.Form):
         f.reason = self.cleaned_data['reason']
         f.email = self.cleaned_data['email']
         return f
-
-class BWFlagForm(FlagForm):
-    email = forms.EmailField(label="Your email", required=True, help_text="Required.",
-                             error_messages={'required': 'Required, please enter your email address.', 'invalid': 'Your'
-                                             ' email address appears to be invalid, please check if it\'s correct.'})
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['email'].label = False
-        self.fields['email'].widget.attrs['placeholder'] = 'Your email'
-        self.fields['email'].help_text = False
-        self.fields['reason_type'].label = False
-        self.fields['reason'].label = False
-        self.fields['reason'].widget.attrs['placeholder'] = 'Write here comments about why this sound is being flagged'
 
 
 class DeleteSoundForm(forms.Form):
@@ -336,7 +318,7 @@ class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, LicenseForm)
         return self.cleaned_data
 
 
-class BWSoundEditAndDescribeForm(forms.Form):
+class SoundEditAndDescribeForm(forms.Form):
     license_field_size = 'small'  # Used to show the small license field UI with this form
     file_full_path = None
     name = forms.CharField(max_length=512, min_length=5,
@@ -401,12 +383,12 @@ class BWSoundEditAndDescribeForm(forms.Form):
 
         # Prepare pack field
         user_packs = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-        self.fields['pack'].choices = [(BWPackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
-                                       (BWPackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + \
+        self.fields['pack'].choices = [(PackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
+                                       (PackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + \
                                       ([(pack.id, pack.name) for pack in user_packs] if user_packs else [])
         # The attrs below are used so that some elements of the dropdown are displayed in gray and to enable
         # pre-selecting options using keyboard
-        self.fields['pack'].widget.attrs = {'data-grey-items': f'{BWPackForm.NO_PACK_CHOICE_VALUE},{BWPackForm.NEW_PACK_CHOICE_VALUE}', 
+        self.fields['pack'].widget.attrs = {'data-grey-items': f'{PackForm.NO_PACK_CHOICE_VALUE},{PackForm.NEW_PACK_CHOICE_VALUE}', 
                                             'data-select-with-keyboard': True}
 
     def clean(self):

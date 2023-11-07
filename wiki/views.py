@@ -23,9 +23,8 @@ from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render 
 from django.urls import reverse
 
-from utils.frontend_handling import using_beastwhoosh
 from wiki.models import Content, Page
-from wiki.forms import ContentForm, BwContentForm
+from wiki.forms import ContentForm
 
 
 def page(request, name):
@@ -64,7 +63,7 @@ def editpage(request, name):
     if not (request.user.is_authenticated and request.user.has_perm('wiki.add_page')):
         raise Http404
 
-    FormToUse = BwContentForm if using_beastwhoosh(request) else ContentForm
+    FormToUse = ContentForm
 
     if request.method == 'POST':
         form = FormToUse(request.POST)

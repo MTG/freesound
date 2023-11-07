@@ -15,9 +15,8 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
 
-from .forms import DonateForm, BwDonateForm
+from .forms import DonateForm
 from .models import Donation, DonationCampaign
-from utils.frontend_handling import using_beastwhoosh
 from utils.mail import send_mail_template
 
 web_logger = logging.getLogger('web')
@@ -166,7 +165,7 @@ def donation_session_stripe(request):
     '''
     stripe.api_key = settings.STRIPE_PRIVATE_KEY
     if request.method == 'POST':
-        FormToUse = BwDonateForm if using_beastwhoosh(request) else DonateForm
+        FormToUse = DonateForm
         form = FormToUse(request.POST, user=request.user)
         if form.is_valid():
             email_to = request.user.email if request.user.is_authenticated else None
@@ -203,7 +202,7 @@ def donation_session_paypal(request):
     If request is post we generate the data to send to paypal.
     '''
     if request.method == 'POST':
-        FormToUse = BwDonateForm if using_beastwhoosh(request) else DonateForm
+        FormToUse = DonateForm
         form = FormToUse(request.POST, user=request.user)
         if form.is_valid():
             amount = form.cleaned_data['amount']
@@ -249,7 +248,7 @@ def donate(request):
     data to send to paypal or stripe.
     """
     default_donation_amount = request.GET.get(settings.DONATION_AMOUNT_REQUEST_PARAM, None)
-    FormToUse = BwDonateForm if using_beastwhoosh(request) else DonateForm
+    FormToUse = DonateForm
     form = FormToUse(user=request.user, default_donation_amount=default_donation_amount)
     tvars = {'form': form, 'stripe_key': settings.STRIPE_PUBLIC_KEY}
     return render(request, 'donations/donate.html', tvars)

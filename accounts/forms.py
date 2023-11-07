@@ -114,14 +114,11 @@ class TermsOfServiceForm(forms.Form):
     )
     next = forms.CharField(widget=forms.HiddenInput(), required=False)
 
-
-class TermsOfServiceFormBW(TermsOfServiceForm):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
         self.fields['accepted_license_change'].widget.attrs['class'] = 'bw-checkbox'
-        
+
 
 class AvatarForm(forms.Form):
     file = forms.FileField(required=False, label="")
@@ -197,17 +194,31 @@ def username_taken_by_other_user(username):
 
 class RegistrationForm(forms.Form):
     username = UsernameField()
-    email1 = forms.EmailField(label="Email", help_text="We will send you a confirmation/activation email, so make "
-                                                       "sure this is correct!.", max_length=254)
-    email2 = forms.EmailField(label="Email confirmation", help_text="Confirm your email address", max_length=254)
-    password1 = forms.CharField(label="Password", widget=forms.PasswordInput)
+    email1 = forms.EmailField(label=False, help_text=False, max_length=254)
+    email2 = forms.EmailField(label=False, help_text=False, max_length=254)
+    password1 = forms.CharField(label=False, help_text=False, widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
         label=mark_safe('Check this box to accept our <a href="/help/tos_web/" target="_blank">terms of '
-                        'use</a> and the <a href="/help/privacy/" target="_blank">privacy policy</a>.'),
+                        'use</a> and the <a href="/help/privacy/" target="_blank">privacy policy</a>'),
         required=True,
         error_messages={'required': 'You must accept the terms of use in order to register to Freesound'}
     )
     recaptcha = ReCaptchaField(label="")  # Note that this field needs to be the last to appear last in the form
+
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(auto_id='id_%s_registration'))
+        kwargs.update(dict(label_suffix=''))
+        super().__init__(*args, **kwargs)
+
+        # Customize some placeholders and classes, remove labels and help texts
+        self.fields['username'].label = False
+        self.fields['username'].help_text = False
+        self.fields['username'].widget.attrs['placeholder'] = 'Username (30 characters maximum)'
+        self.fields['email1'].widget.attrs['placeholder'] = 'Email'
+        self.fields['email2'].widget.attrs['placeholder'] = 'Email confirmation'
+        self.fields['password1'].widget.attrs['placeholder'] = 'Password'
+        self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
+
 
     def clean_username(self):
         username = self.cleaned_data["username"]
@@ -252,36 +263,11 @@ class RegistrationForm(forms.Form):
         return user
 
 
-class BwRegistrationForm(RegistrationForm):
-
-    def __init__(self, *args, **kwargs):
-        kwargs.update(dict(auto_id='id_%s_registration'))
-        kwargs.update(dict(label_suffix=''))
-        super().__init__(*args, **kwargs)
-
-        # Customize some placeholders and classes, remove labels and help texts
-        self.fields['username'].label = False
-        self.fields['username'].help_text = False
-        self.fields['username'].widget.attrs['placeholder'] = 'Username (30 characters maximum)'
-        self.fields['email1'].label = False
-        self.fields['email1'].help_text = False
-        self.fields['email1'].widget.attrs['placeholder'] = 'Email'
-        self.fields['email2'].label = False
-        self.fields['email2'].help_text = False
-        self.fields['email2'].widget.attrs['placeholder'] = 'Email confirmation'
-        self.fields['password1'].label = False
-        self.fields['password1'].help_text = False
-        self.fields['password1'].widget.attrs['placeholder'] = 'Password'
-        self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
-        self.fields['accepted_tos'].label = mark_safe('Check this box to accept our <a href="/help/tos_web/" target="_blank">terms of '
-                        'use</a> and the <a href="/help/privacy/" target="_blank">privacy policy</a>')
-
-
 class ReactivationForm(forms.Form):
     user = forms.CharField(label="The username or email you signed up with", max_length=254)
 
 
-class BwProblemsLoggingInForm(forms.Form):
+class ProblemsLoggingInForm(forms.Form):
     username_or_email = forms.CharField(label="", help_text="", max_length=254)
 
     def __init__(self, *args, **kwargs):
@@ -299,15 +285,6 @@ class FsAuthenticationForm(AuthenticationForm):
             'invalid_login': "Please enter a correct username/email and password. "
                              "Note that passwords are case-sensitive.",
         })
-        self.fields['username'].label = 'Username or email'
-
-
-class BwFsAuthenticationForm(FsAuthenticationForm):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Customize form placeholders and remove labels
         self.fields['username'].label = False
         self.fields['username'].widget.attrs['placeholder'] = 'Enter your email or username'
         self.fields['password'].label = False
@@ -321,9 +298,11 @@ class UsernameReminderForm(forms.Form):
 class ProfileForm(forms.ModelForm):
 
     username = UsernameField(required=False)
-    about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
+    about = HtmlCleaningCharField(
+        widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False, help_text=html_tags_help_text)
     signature = HtmlCleaningCharField(
         label="Forum signature",
+        help_text=html_tags_help_text,
         widget=forms.Textarea(attrs=dict(rows=10, cols=70)),
         required=False,
         max_length=256,
@@ -331,27 +310,32 @@ class ProfileForm(forms.ModelForm):
     sound_signature = HtmlCleaningCharField(
         label="Sound signature",
         widget=forms.Textarea(attrs=dict(rows=10, cols=70)),
-        help_text="""Your sound signature is added to the end of the description of all of your sounds.
-                     You can use it to show a common message on all of your sounds. If you change the
-                     sound signature it will be automatically updated on all of your sounds. Use the
-                     special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed
-                     and <code>${sound_id}</code> to refer to the id of the current sound.""",
+        help_text="""Your sound signature is added to the end of each of your sound 
+            descriptions. If you change the sound signature it will be automatically updated on all of your sounds. 
+            Use the special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed 
+            and <code>${sound_id}</code> to refer to the id of the current sound. """ + html_tags_help_text,
         required=False,
         max_length=256,
     )
-    is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inappropriate content warnings",
-                                  label="", required=False)
+    is_adult = forms.BooleanField(label="I'm an adult, I don't want to see inappropriate content warnings",
+                                  help_text=False, required=False)
     not_shown_in_online_users_list = forms.BooleanField(
         help_text="Hide from \"users currently online\" list in the People page",
         label="",
         required=False
     )
 
+    allow_simultaneous_playback = forms.BooleanField(
+        label="Allow simultaneous audio playback", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
+    prefer_spectrograms = forms.BooleanField(
+        label="Show spectrograms in sound players by default", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))    
+
     def __init__(self, request, *args, **kwargs):
         self.request = request
         kwargs.update(initial={
             'username': request.user.username
         })
+        kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
 
         self.n_times_changed_username = OldUsername.objects.filter(user_id=self.request.user.id).count()
@@ -368,6 +352,24 @@ class ProfileForm(forms.ModelForm):
             help_text = "You already changed your username the maximum times allowed"
             self.fields['username'].disabled = True
         self.fields['username'].help_text += " " + help_text
+
+        # Customize some placeholders and classes, remove labels and help texts
+        self.fields['username'].widget.attrs['placeholder'] = 'Write your name here (30 characters maximum)'
+        self.fields['home_page'].widget.attrs['placeholder'] = 'Write a URL to show on your profile'
+        self.fields['about'].widget.attrs['placeholder'] = 'Write something about yourself'
+        self.fields['about'].widget.attrs['rows'] = False
+        self.fields['about'].widget.attrs['cols'] = False
+        self.fields['about'].widget.attrs['class'] = 'unsecure-image-check'
+        self.fields['signature'].widget.attrs['placeholder'] = 'Write a signature for your forum messages'
+        self.fields['signature'].widget.attrs['rows'] = False
+        self.fields['signature'].widget.attrs['cols'] = False
+        self.fields['signature'].widget.attrs['class'] = 'unsecure-image-check'
+        self.fields['sound_signature'].widget.attrs['placeholder'] = "Write a signature for your sound descriptions"
+        self.fields['sound_signature'].widget.attrs['rows'] = False
+        self.fields['sound_signature'].widget.attrs['cols'] = False
+        self.fields['sound_signature'].widget.attrs['class'] = 'unsecure-image-check'
+        self.fields['is_adult'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['not_shown_in_online_users_list'].widget = forms.HiddenInput()
 
     def clean_username(self):
         username = self.cleaned_data["username"]
@@ -420,54 +422,12 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ('home_page', 'about', 'signature', 'sound_signature', 'is_adult', 'not_shown_in_online_users_list', )
+        fields = ('username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', 
+            'allow_simultaneous_playback', 'prefer_spectrograms', 'ui_theme_preference' )
 
     def get_img_check_fields(self):
         """ Returns fields that should show JS notification for unsafe `img` sources links (http://) """
         return [self['about'], self['signature'], self['sound_signature']]
-
-
-class BwProfileForm(ProfileForm):
-
-    allow_simultaneous_playback = forms.BooleanField(
-        label="Allow simultaneous audio playback", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-    prefer_spectrograms = forms.BooleanField(
-        label="Show spectrograms in sound players by default", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
-
-    def __init__(self, *args, **kwargs):
-        kwargs.update(dict(label_suffix=''))
-        super().__init__(*args, **kwargs)
-
-        # Customize some placeholders and classes, remove labels and help texts
-        self.fields['username'].widget.attrs['placeholder'] = 'Write your name here (30 characters maximum)'
-        self.fields['home_page'].widget.attrs['placeholder'] = 'Write a URL to show on your profile'
-        self.fields['about'].widget.attrs['placeholder'] = 'Write something about yourself'
-        self.fields['about'].widget.attrs['rows'] = False
-        self.fields['about'].widget.attrs['cols'] = False
-        self.fields['about'].widget.attrs['class'] = 'unsecure-image-check'
-        self.fields['about'].help_text = html_tags_help_text
-        self.fields['signature'].widget.attrs['placeholder'] = 'Write a signature for your forum messages'
-        self.fields['signature'].widget.attrs['rows'] = False
-        self.fields['signature'].widget.attrs['cols'] = False
-        self.fields['signature'].help_text = html_tags_help_text
-        self.fields['signature'].widget.attrs['class'] = 'unsecure-image-check'
-        self.fields['sound_signature'].widget.attrs['placeholder'] = "Write a signature for your sound descriptions"
-        self.fields['sound_signature'].widget.attrs['rows'] = False
-        self.fields['sound_signature'].widget.attrs['cols'] = False
-        self.fields['sound_signature'].widget.attrs['class'] = 'unsecure-image-check'
-        self.fields['sound_signature'].help_text = """Your sound signature is added to the end of each of your sound 
-            descriptions. If you change the sound signature it will be automatically updated on all of your sounds. 
-            Use the special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed 
-            and <code>${sound_id}</code> to refer to the id of the current sound. """ + html_tags_help_text
-        self.fields['is_adult'].widget.attrs['class'] = 'bw-checkbox'
-        self.fields['is_adult'].label = self.fields['is_adult'].help_text
-        self.fields['is_adult'].help_text = False
-        self.fields['not_shown_in_online_users_list'].widget = forms.HiddenInput()
-
-    class Meta:
-        model = Profile
-        fields = ('username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', 
-            'allow_simultaneous_playback', 'prefer_spectrograms', 'ui_theme_preference' )
 
 
 class EmailResetForm(forms.Form):
@@ -491,7 +451,7 @@ DELETE_CHOICES = [('only_user', mark_safe('<span>Delete only my user account inf
 
 class DeleteUserForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())
-    delete_sounds = forms.ChoiceField(label="Do you also want your sounds and packs to be deleted?",  choices=DELETE_CHOICES, widget=forms.RadioSelect())
+    delete_sounds = forms.ChoiceField(label=False,  choices=DELETE_CHOICES, widget=forms.RadioSelect())
     password = forms.CharField(label="Confirm your password", widget=forms.PasswordInput)
 
     def clean_password(self):
@@ -525,15 +485,9 @@ class DeleteUserForm(forms.Form):
                 'delete_sounds': 'only_user',
                 'encrypted_link': encrypted_link
                 }
-        super().__init__(*args, **kwargs)
-
-
-class BwDeleteUserForm(DeleteUserForm):
-
-    def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
-        self.fields['delete_sounds'].label = False
+
         # NOTE: the line below will add 'bw-radio' to all individual radio elements of
         # forms.RadioSelect but also to the main ul element that wraps them all. This is not
         # ideal as 'bw-radio' should only be applied to the radio elements. To solve this issue, the
@@ -546,14 +500,11 @@ class EmailSettingsForm(forms.Form):
         queryset=EmailPreferenceType.objects.all(),
         widget=forms.CheckboxSelectMultiple,
         required=False,
-        label='Select the events for which you want to be notified by email:'
+        label=False
     )
-
-class BwEmailSettingsForm(EmailSettingsForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['email_types'].label = False
         # NOTE: the line below will add 'bw-checkbox' to all individual checkbox elements of
         # forms.CheckboxSelectMultiple but also to the main ul element that wraps them all. This is not
         # ideal as 'bw-checkbox' should only be applied to the checkbox elements. To solve this issue, the
@@ -627,7 +578,7 @@ class FsPasswordResetForm(forms.Form):
             )
 
 
-class BwSetPasswordForm(SetPasswordForm):
+class FsSetPasswordForm(SetPasswordForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -641,7 +592,7 @@ class BwSetPasswordForm(SetPasswordForm):
         self.fields['new_password2'].widget.attrs['placeholder'] = 'New password confirmation'
 
 
-class BWPasswordChangeForm(PasswordChangeForm):
+class FsPasswordChangeForm(PasswordChangeForm):
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))

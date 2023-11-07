@@ -34,10 +34,9 @@ from django.urls import reverse
 from django.db import transaction
 
 from accounts.models import DeletedUser
-from forum.forms import PostReplyForm, BwPostReplyForm, NewThreadForm, BwNewThreadForm, PostModerationForm, BwPostModerationForm
+from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
 from utils.cache import invalidate_template_cache, invalidate_all_moderators_header_cache
-from utils.frontend_handling import using_beastwhoosh
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.search.search_forum import add_posts_to_search_engine
@@ -208,7 +207,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                        .order_by('-created').filter(thread=thread, moderation_state="OK")[0:15]
     user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
-    FromToUse = BwPostReplyForm if using_beastwhoosh(request) else PostReplyForm
+    FromToUse = PostReplyForm
 
     if request.method == 'POST':
         form = FromToUse(request, quote, request.POST)
@@ -289,7 +288,7 @@ def new_thread(request, forum_name_slug):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     user_can_post_in_forum, user_can_post_message = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
-    FormToUse = BwNewThreadForm if using_beastwhoosh(request) else NewThreadForm
+    FormToUse = NewThreadForm
 
     if request.method == 'POST':
         form = FormToUse(request.POST)
@@ -424,7 +423,7 @@ def post_delete_confirm(request, post_id):
 @transaction.atomic()
 def post_edit(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    FromToUse = BwPostReplyForm if using_beastwhoosh(request) else PostReplyForm
+    FromToUse = PostReplyForm
     if post.author == request.user or request.user.has_perm('forum.change_post'):
         if request.method == 'POST':
             form = FromToUse(request, '', request.POST)
@@ -468,7 +467,7 @@ def post_edit(request, post_id):
 @permission_required('forum.can_moderate_forum')
 @transaction.atomic()
 def moderate_posts(request):
-    PostModerationFormClass = PostModerationForm if not using_beastwhoosh(request) else BwPostModerationForm
+    PostModerationFormClass = PostModerationForm
     if request.method == 'POST':
         
         # Only the form for one post will be sent at a time, but we need to get the post ID from the request so we know which form prefix to use

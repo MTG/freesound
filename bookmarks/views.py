@@ -27,10 +27,9 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from bookmarks.forms import BookmarkForm, BwBookmarkForm
+from bookmarks.forms import BookmarkForm
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
-from utils.frontend_handling import using_beastwhoosh
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
@@ -101,7 +100,7 @@ def add_bookmark(request, sound_id):
     msg_to_return = ''
     if request.method == 'POST':
         user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
-        FormToUse = BwBookmarkForm if using_beastwhoosh(request) else BookmarkForm
+        FormToUse = BookmarkForm
         form = FormToUse(request.POST,
                          user_bookmark_categories=user_bookmark_categories,
                          sound_id=sound_id,
@@ -146,7 +145,7 @@ def get_form_for_sound(request, sound_id):
         return render(request, 'bookmarks/modal_bookmark_sound.html', {})
 
     sound = Sound.objects.get(id=sound_id)
-    FormToUse = BwBookmarkForm if using_beastwhoosh(request) else BookmarkForm
+    FormToUse = BookmarkForm
     try:
         last_user_bookmark = \
             Bookmark.objects.filter(user=request.user).order_by('-created')[0]

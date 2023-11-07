@@ -39,7 +39,7 @@ import accounts
 from accounts.models import EmailPreferenceType
 from comments.models import Comment
 from general.templatetags.filter_img import replace_img
-from sounds.forms import BWPackForm
+from sounds.forms import PackForm
 from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis, Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
 from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
@@ -1171,7 +1171,7 @@ class SoundEditTestCase(TestCase):
             '0-tags': ' '.join(new_tags),
             '0-license': '3',
             '0-sources': ','.join([f'{s.id}' for s in new_sound_sources]),
-            '0-pack': BWPackForm.NEW_PACK_CHOICE_VALUE,
+            '0-pack': PackForm.NEW_PACK_CHOICE_VALUE,
             '0-new_pack': new_pack_name,
             '0-lat': f'{geotag_lat}',
             '0-lon': '3.515625',

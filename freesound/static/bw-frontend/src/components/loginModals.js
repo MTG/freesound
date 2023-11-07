@@ -125,7 +125,7 @@ const handleProblemsLoggingInModal = () => {
 }
 
 const handleRegistrationModal = () => {  
-  handleGenericModalWithForm('/home/register/', initRegistrationForm, undefined, (req) => {
+  handleGenericModalWithForm('/home/registration_modal/', initRegistrationForm, undefined, (req) => {
     // If registration succeeded, redirect to the registration feedback page
     const data = JSON.parse(req.responseText);
     window.location.href = data.redirectURL;

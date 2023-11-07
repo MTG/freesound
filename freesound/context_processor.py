@@ -22,7 +22,7 @@ import datetime
 
 from django.conf import settings
 
-from accounts.forms import BwFsAuthenticationForm, BwProblemsLoggingInForm
+from accounts.forms import FsAuthenticationForm, ProblemsLoggingInForm
 from forum.models import Post
 from messages.models import Message
 from tickets.views import new_sound_tickets_count
@@ -74,8 +74,8 @@ def context_extra(request):
             'num_messages': num_messages,
             'load_anniversary_content': load_anniversary_content,
             'next_path': request.GET.get('next', request.get_full_path()),
-            'login_form': BwFsAuthenticationForm(),
-            'problems_logging_in_form': BwProblemsLoggingInForm(),
+            'login_form': FsAuthenticationForm(),
+            'problems_logging_in_form': ProblemsLoggingInForm(),
             'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', 'no') == 'yes'  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
         })
     

@@ -242,9 +242,11 @@ def sound(request, username, sound_id):
                     comment_text = form.cleaned_data["comment"]
                     sound.add_comment(request.user, comment_text)
                     sound.invalidate_template_caches()
-                    send_mail_template(settings.EMAIL_SUBJECT_NEW_COMMENT, 'emails/email_new_comment.txt',
-                                       {'sound': sound, 'user': request.user, 'comment': comment_text},
-                                       user_to=sound.user, email_type_preference_check="new_comment")
+                    if request.user != sound.user:
+                        send_mail_template(
+                            settings.EMAIL_SUBJECT_NEW_COMMENT, 'emails/email_new_comment.txt',
+                            {'sound': sound, 'user': request.user, 'comment': comment_text},
+                            user_to=sound.user, email_type_preference_check="new_comment")
 
                     return HttpResponseRedirect(sound.get_absolute_url())
     else:

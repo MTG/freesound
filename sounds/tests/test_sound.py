@@ -65,11 +65,18 @@ class CommentSoundsTestCase(TestCase):
         commenting_user = User.objects.get(id=2)
         self.client.force_login(commenting_user)
         self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': 'Test comment'})
+        self.assertEqual(sound.comments.all().count(), 1)
 
         # Check email was sent notifying about comment
         self.assertEqual(len(mail.outbox), 1)
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_NEW_COMMENT in mail.outbox[0].subject)
+
+        # Test that when the owner of a sound makes a comment, no email notification is sent
+        self.client.force_login(sound.user)
+        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': 'A comment by the owner'})
+        self.assertEqual(sound.comments.all().count(), 2)
+        self.assertEqual(len(mail.outbox), 1)
 
         # Now update preferences of sound.user to disable comment notification emails
         # We create an email preference object for the email type (which will mean user does not want new comment
@@ -77,8 +84,10 @@ class CommentSoundsTestCase(TestCase):
         email_pref = accounts.models.EmailPreferenceType.objects.get(name="new_comment")
         accounts.models.UserEmailSetting.objects.create(user=sound.user, email_type=email_pref)
 
-        # Make the comment again and assert no new email has been sent
-        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': 'Test comment'})
+        # Make the comment again (from the commenting user) and assert no new email has been sent
+        self.client.force_login(commenting_user)
+        self.client.post(reverse('sound', args=[sound.user.username, sound.id]), {'comment': 'Another test comment'})
+        self.assertEqual(sound.comments.all().count(), 3)
         self.assertEqual(len(mail.outbox), 1)
 
     def test_unsecure_content(self):

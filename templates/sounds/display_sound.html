@@ -30,9 +30,11 @@
             <div>
                 <span class="text-grey">{{ sound.created|timesince }} ago</span>
             </div>
-            <div class="v-spacing-top-1 overflow-hidden" style="max-height:54px;">
-                {{ sound.description|striptags|safe|truncatechars_html:55 }}
+            {% with sound.description|striptags|safe as preprocessed_description %}
+            <div lass="v-spacing-top-1 overflow-hidden" style="max-height:54px;" {% if preprocessed_description|length >= 55 %}title="{{ preprocessed_description|truncatewords_html:200|escape }}"{% endif %}>
+                {{ preprocessed_description|truncatechars_html:55 }}
             </div>
+            {% endwith %}
             {% endcache %}
         </div>
         {% if sound.show_moderation_ticket and sound.ticket_key %}
@@ -76,7 +78,11 @@
                                 <div style="min-width:130px;" class="top right">{% bw_sound_stars sound %}<span class="bw-rating__count text-grey h-spacing-left-1">{{ sound.get_ratings_count_text_short }}</span></div>
                             </div>
                         </div>
-                        <div class="max-h-60px-md-50px text-black overflow-hidden v-spacing-1">{{ sound.description|striptags|safe|truncatewords_html:28 }}</div>
+                        {% with sound.description|striptags|safe as preprocessed_description %}
+                        <div class="max-h-60px-md-50px text-black overflow-hidden v-spacing-1" {% if preprocessed_description|wordcount > 28 %}title="{{ preprocessed_description|truncatewords_html:200|escape }}"{% endif %}>
+                            {{ preprocessed_description|truncatewords_html:28 }}
+                        </div>
+                        {% endwith %}
                         {% for tag in sound.tag_array|slice:":5" %}
                             {% bw_tag tag %}
                         {% endfor %}

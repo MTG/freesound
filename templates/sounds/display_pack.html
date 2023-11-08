@@ -39,7 +39,11 @@
         </div>
         <div class="v-spacing-top-1 overflow-hidden" style="max-height:54px;">
             {% if pack.description %}
-                {{ pack.description|striptags|safe|truncatechars_html:55 }}
+                {% with pack.description|striptags|safe as preprocessed_description %}
+                <div {% if preprocessed_description|length >= 55%}title="{{ preprocessed_description|truncatewords_html:200|escape }}"{% endif %}>
+                    {{ preprocessed_description|truncatechars_html:55 }}
+                </div>
+                {% endwith %}
             {% else %}
                 This pack has no description.
             {% endif %}
@@ -81,8 +85,15 @@
         </div>
         <div class="between">
             <div class="text-black v-spacing-top-1 padding-right-2 v-spacing-1">
-                {% if pack.description %}{{ pack.description|striptags|safe|truncatewords_html:20 }}
-                {% else %}This pack has no description.{% endif %}
+                {% if pack.description %}
+                    {% with pack.description|striptags|safe as preprocessed_description %}
+                    <div {% if preprocessed_description|wordcount >= 20%}title="{{ preprocessed_description|truncatewords_html:200|escape }}"{% endif %}>
+                        {{ preprocessed_description|truncatewords_html:20 }}
+                    </div>
+                    {% endwith %}
+                {% else %}
+                    This pack has no description.
+                {% endif %}
             </div>
             {% with pack.get_pack_tags_bw as tags %}
                 {% if tags %}

@@ -885,6 +885,32 @@ class Sound(models.Model):
         return reverse('sound', args=[self.user.username, smart_str(self.id)])
 
     @property
+    def should_display_small_icons_in_second_line(self):
+        # This is used in small sound players (grid display) to determine if the small icons for ratings,
+        # license, downloads, etc.. should be shown in the same line of the title or in the next line
+        # together with the username. If the sound title is short and also there are not many icons to show,
+        # (e.g. sound has no downloads and no geotag), then we can display in the same line, otherwise in the
+        # second line.
+        icons_count = 1
+        if self.pack_id:
+            icons_count += 1
+        if self.geotag_id:
+            icons_count += 1
+        if self.num_downloads:
+            icons_count +=2  # Counts double as it takes more width
+        if self.num_comments:
+            icons_count +=2  # Counts double as it takes more width
+        if self.num_ratings > settings.MIN_NUMBER_RATINGS:
+            icons_count +=2  # Counts double as it takes more width
+        title_num_chars = len(self.original_filename)
+        if icons_count >= 6:
+            return title_num_chars >= 15
+        elif 3 <= icons_count < 6:
+            return title_num_chars >= 23
+        else:
+            return title_num_chars >= 30
+        
+    @property
     def license_bw_icon_name(self):
         if hasattr(self, 'license_name'):
             return License.bw_cc_icon_name_from_license_name(self.license_name)

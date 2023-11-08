@@ -19,13 +19,13 @@
                 <h5 class="ellipsis">
                     <a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}">{{ sound.original_filename }}</a>
                 </h5>
-                {% if sound.original_filename|length <= 30 %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
+                {% if not sound.should_display_small_icons_in_second_line %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
             </div>
             <div class="between">
-                <div>
-                    <a href="{% url 'account' sound.username %}" title="Username: {{ sound.username }}">{{ sound.username|truncate_string:15 }}</a>
+                <div class="ellipsis">
+                    <a href="{% url 'account' sound.username %}" title="Username: {{ sound.username }}">{{ sound.username }}</a>
                 </div>
-                {% if sound.original_filename|length > 30 %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
+                {% if sound.should_display_small_icons_in_second_line %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
             </div>
             <div>
                 <span class="text-grey">{{ sound.created|timesince }} ago</span>

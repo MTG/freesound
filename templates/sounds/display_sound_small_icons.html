@@ -1,6 +1,20 @@
 {% load util %}
 {% load bw_templatetags %}
 <div class="right text-light-grey col-auto" style="max-height: 22px;overflow: hidden;padding-right:0px!important;padding-left:0px!important;">                    
+    {% if sound.num_downloads %}
+    <div class="h-spacing-left-1" title="{{ sound.num_downloads }} downloads">
+        <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'sound-downloaders' sound.username sound.id %}?ajax=1" class="bw-link--grey-light">
+            <span class="bw-icon-download" style="font-size:90%;"></span> {{ sound.num_downloads|formatnumber }}
+        </a>
+    </div>
+    {% endif %}
+    {% if sound.num_comments %}
+    <div class="h-spacing-left-1" title="{{ sound.num_comments }} comments">
+        <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'sound-comments' sound.username sound.id %}?ajax=1" class="bw-link--grey-light">
+            <span class="bw-icon-comments" style="font-size:90%;"></span> {{ sound.num_comments|formatnumber }}
+        </a>
+    </div>
+    {% endif %}
     {% if sound.pack_id %}
     <div class="h-spacing-left-1" title="Pack: {{ sound.pack_name }}">
         <a href="{% url 'pack' sound.username sound.pack_id %}" class="bw-link--grey-light">
@@ -20,7 +34,7 @@
     </div>
     {% if sound.num_ratings >= min_num_ratings %}
     <div class="h-spacing-left-1" title="{{ sound.get_ratings_count_text }}">
-        <span class="bw-icon-star {% if sound.num_ratings < min_num_ratings %}opacity-030{% endif %}"></span>{% if sound.num_ratings >= min_num_ratings %} <span class="bw-rating__avg">{{ sound.avg_rating_0_5|floatformat:1 }}</span>{% endif %}
+        <span class="bw-icon-star"></span><span class="bw-rating__avg">{{ sound.avg_rating_0_5|floatformat:1 }}</span>
     </div>
     {% endif %}
 </div>

@@ -34,7 +34,7 @@
     </div>
     {% if sound.num_ratings >= min_num_ratings %}
     <div class="h-spacing-left-1" title="{{ sound.get_ratings_count_text }}">
-        <span class="bw-icon-star"></span><span class="bw-rating__avg">{{ sound.avg_rating_0_5|floatformat:1 }}</span>
+        <span class="bw-icon-star"></span><span class="bw-rating__avg"> {{ sound.avg_rating_0_5|floatformat:1 }}</span>
     </div>
     {% endif %}
 </div>

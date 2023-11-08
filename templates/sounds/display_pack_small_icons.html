@@ -1,6 +1,11 @@
 {% load util %}
 {% load bw_templatetags %}
-<div class="right text-light-grey col-auto" style="max-height: 22px;overflow: hidden;padding-right:0px!important;padding-left:0px!important;">                    
+<div class="right text-light-grey col-auto" style="max-height: 22px;overflow: hidden;padding-right:0px!important;padding-left:0px!important;">                  
+    <div class="h-spacing-left-1" title="This pack has {{ pack.num_sounds }} sound {{ pack.num_sounds|pluralize }}">
+        <a href="{{ pack.get_pack_sounds_in_search_url }}" class="bw-link--grey">
+            <span class="bw-icon-wave"></span> {{ pack.num_sounds|formatnumber }}
+        </a>  
+    </div>
     {% if pack.num_downloads %}
     <div class="h-spacing-left-1" title="{{ sound.num_downloads }} downloads">
         <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'pack-downloaders' pack.user.username pack.id %}?ajax=1" class="bw-link--grey-light">
@@ -20,7 +25,7 @@
     </div>
     {% if pack.num_ratings %}
     <div class="h-spacing-left-1" title="Overall rating of pack's sounds ({{ pack.num_ratings|bw_intcomma }} rating{{ pack.num_ratings|pluralize }})">
-        <span class="bw-icon-star"></span>{{ pack.avg_rating_0_5|floatformat:1 }}
+        <span class="bw-icon-star"></span> {{ pack.avg_rating_0_5|floatformat:1 }}
     </div>
     {% endif %}
 </div>

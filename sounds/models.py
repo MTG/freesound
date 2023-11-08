@@ -1834,6 +1834,28 @@ class Pack(models.Model):
             return self.has_geotags_precomputed
         else:
             return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
+        
+    @property
+    def should_display_small_icons_in_second_line(self):
+        # This is used in small sound players (grid display) to determine if the small icons for ratings,
+        # license, downloads, etc.. should be shown in the same line of the title or in the next line
+        # together with the username. If the sound title is short and also there are not many icons to show,
+        # (e.g. sound has no downloads and no geotag), then we can display in the same line, otherwise in the
+        # second line.
+        icons_count = 1
+        if self.has_geotags:
+            icons_count += 1
+        if self.num_downloads:
+            icons_count +=2  # Counts double as it takes more width
+        if self.num_ratings:
+            icons_count +=2  # Counts double as it takes more width
+        title_num_chars = len(self.name)
+        if icons_count >= 6:
+            return title_num_chars >= 15
+        elif 3 <= icons_count < 6:
+            return title_num_chars >= 23
+        else:
+            return title_num_chars >= 30
 
 
 class Flag(models.Model):

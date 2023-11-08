@@ -7,16 +7,36 @@
 {% load filter_img %}
 
 {% block id %}commentsModal{% endblock %}
-{% block extra-class %}modal-width-80{% endblock %}
-{% block aria-label %}{% if mode == "for_user" %}Comments on {{ user.username }}'s sounds{% else %}Sound comments by {{ user.username }}{% endif %}{% endblock %}
+{% block extra-class %}modal-width-{% if mode == "for_sound" %}60{% else %}80{% endif %}{% endblock %}
+{% block aria-label %}{% if mode == "for_user" %}Comments on {{ user.username }}'s sounds{% elif mode == "by_user" %}Sound comments by {{ user.username }}{% else %}Comments for sound {{ sound.original_filename }}{% endif %}{% endblock %}
 
 {% block body %}
 <div class="col-12">
     <div class="text-center">
-        <h4 class="v-spacing-5">{% if mode == "for_user" %}Comments on <a href="{% url "account" user.username %}">{{ user.username }}</a>'s sounds{% else %}Sound comments by <a href="{% url "account" user.username %}">{{ user.username }}</a>{% endif %} ({{paginator.count}})</h4>
+        <h4 class="v-spacing-5">{% if mode == "for_user" %}Comments on <a href="{% url "account" user.username %}">{{ user.username }}</a>'s sounds{% elif mode == "by_user" %}Sound comments by <a href="{% url "account" user.username %}">{{ user.username }}</a>{% else %}Comments for sound <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a>{% endif %} ({{paginator.count}})</h4>
     </div>
     <div class="v-spacing-4">
         {% if paginator.count > 0 %}
+            {% if mode == "for_sound" %}
+                {% for comment in page.object_list %}   
+                <div>
+                    <div style="display: flex; justify-content: space-between;">
+                        {% display_user_comment comment.user comment.created %}
+                        <div class="text-right v-spacing-top-1">
+                            {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
+                            {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
+                                <a class="cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this comment?" data-modal-confirmation-url="{% url 'comment-delete' comment.id %}?next={{ delete_next_url }}" title="Delete comment">{% bw_icon 'trash' %} Delete</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <p class="v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks|strip_unnecessary_br }}</p>
+                    {% if not forloop.last %}
+                        <div class="divider-light v-spacing-top-2 v-spacing-2"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                    
+            {% else %}
                 {% regroup page.object_list by sound as comments_per_sound %}
                 {% for group in comments_per_sound %}
                     <div class="row">
@@ -29,7 +49,7 @@
                                     <div class="text-right v-spacing-top-1">
                                         {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
                                         {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
-                                            <a class="cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this comment?" data-modal-confirmation-url="{% url 'comment-delete' comment.id %}?next={{ delete_next_url }}" title="Delete comment">{% bw_icon 'trash' %} Delete comment</a>
+                                            <a class="cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this comment?" data-modal-confirmation-url="{% url 'comment-delete' comment.id %}?next={{ delete_next_url }}" title="Delete comment">{% bw_icon 'trash' %} Delete</a>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -45,12 +65,13 @@
                         <div class="divider-light v-spacing-3"></div>
                     {% endif %}
                 {% endfor %}
-                <div class="v-spacing-top-5">
-                    {% bw_paginator paginator page current_page request "comments" %}
-                </div>   
+            {% endif %}
+            <div class="v-spacing-top-5">
+                {% bw_paginator paginator page current_page request "comments" %}
+            </div>   
         {% else %}
             <div class="text-center">
-                <div class="text-grey v-spacing-top-1">Looks like {% if mode == "for_user" %}there are no comments for {{ user.username }}'s sounds{% else %}{{ user.username }} hasn't made any comments{% endif %} yet... &#128543</div>
+                <div class="text-grey v-spacing-top-1">Looks like {% if mode == "for_user" %}there are no comments for {{ user.username }}'s sounds{% elif mode == "by_user" %}{{ user.username }} hasn't made any comments{% else %}there are no comments for this sound{% endif %} yet... &#128543</div>
             </div>
         {% endif %}
     </div>

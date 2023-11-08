@@ -106,3 +106,28 @@ def by_user(request, username):
     tvars.update(paginator)
     return render(request, 'accounts/modal_comments.html', tvars)
 
+
+@redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
+def for_sound(request, username, sound_id):
+    if not request.GET.get('ajax'):
+        # If not loaded as a modal, redirect to account page with parameter to open modal
+        return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '#comments')
+    
+    sound = get_object_or_404(Sound, id=sound_id)
+    if sound.user.username.lower() != username.lower():
+        raise Http404
+    
+    qs = Comment.objects.filter(sound=sound).select_related("user", "user__profile",
+                                                          "sound__user", "sound__user__profile")
+    num_items_per_page = settings.SOUND_COMMENTS_PER_PAGE
+    paginator = paginate(request, qs, num_items_per_page)
+    tvars = {
+        "sound": sound,
+        "user": request.parameter_user,
+        "mode": "for_sound",
+        "delete_next_url": reverse('sound', args=[username, sound_id]) + f'?page={paginator["current_page"]}#comments'
+    }
+    tvars.update(paginator)
+    return render(request, 'accounts/modal_comments.html', tvars)
+

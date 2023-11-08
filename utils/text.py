@@ -78,7 +78,7 @@ def clean_html(input):
     # Replace html tags from user input, see utils.test for examples
 
     ok_tags = ["a", "img", "strong", "b", "em", "i", "u", "ul", "li", "p", "br",  "blockquote", "code"]
-    ok_attributes = {"a": ["href", "rel"], "img": ["src", "alt", "title"]}
+    ok_attributes = {"a": ["href", "rel"], "img": ["src", "alt", "title"], "p": ["align"]}
     # all other tags: replace with the content of the tag
 
     # If input contains link in the format: <http://> then convert it to < http:// >

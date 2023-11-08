@@ -97,18 +97,6 @@
                     </div>
                 {% endif %}
             </div>
-            {% if user.profile.about or user.profile.home_page %}
-            <div class="bw-profile__description v-spacing-3">
-                {% if user.profile.about and show_about %}
-                    {{ user.profile.about|replace_img|safe|linebreaks|strip_unnecessary_br }}
-                {% endif %}
-                {% if user.profile.home_page and user.profile.get_total_downloads > 0 %}
-                    <div class="{% if user.profile.about %}v-spacing-top-3{% endif %}">
-                        <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a>
-                    </div>
-                {% endif %}
-            </div>
-            {% endif %}
             <div class="v-spacing-2">
                 <div class="bw-profile__stats padding-left-4 padding-right-4">
                     <div class="text-grey">Has been a user for {{user.date_joined|timesince}}</div>
@@ -122,6 +110,18 @@
                     <div><a data-toggle="modal-default" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);" >{{ user.profile.num_pack_downloads }} pack{{ user.profile.num_pack_downloads|pluralize}} downloaded</a></div>
                 </div>
             </div>
+            {% if user.profile.about or user.profile.home_page %}
+            <div class="bw-profile__description v-spacing-2">
+                {% if user.profile.about and show_about %}
+                    {{ user.profile.about|replace_img|safe|linebreaks|strip_unnecessary_br }}
+                {% endif %}
+                {% if user.profile.home_page and user.profile.get_total_downloads > 0 %}
+                    <div class="{% if user.profile.about %}v-spacing-top-3{% endif %} text-center">
+                        <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a>
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
             {% endif %}
             {% endif %}
         </div>

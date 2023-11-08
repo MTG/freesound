@@ -434,14 +434,22 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     avatar = serializers.SerializerMethodField()
     def get_avatar(self, obj):
-        return {
-            'small': prepend_base(obj.profile.locations()['avatar']['S']['url'],
-                                  request_is_secure=self.context['request'].is_secure()),
-            'medium': prepend_base(obj.profile.locations()['avatar']['M']['url'],
-                                   request_is_secure=self.context['request'].is_secure()),
-            'large': prepend_base(obj.profile.locations()['avatar']['L']['url'],
-                                  request_is_secure=self.context['request'].is_secure()),
-        }
+        if obj.profile.locations()['avatar']['S']['url'] is None:
+            # User has no avatar, return None in paths
+            return {
+                'small': None,
+                'medium': None,
+                'large': None,
+            }
+        else:
+            return {
+                'small': prepend_base(obj.profile.locations()['avatar']['S']['url'],
+                                    request_is_secure=self.context['request'].is_secure()),
+                'medium': prepend_base(obj.profile.locations()['avatar']['M']['url'],
+                                    request_is_secure=self.context['request'].is_secure()),
+                'large': prepend_base(obj.profile.locations()['avatar']['L']['url'],
+                                    request_is_secure=self.context['request'].is_secure()),
+            }
 
     about = serializers.SerializerMethodField()
     def get_about(self, obj):

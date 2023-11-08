@@ -241,11 +241,10 @@ class Profile(models.Model):
             l_avatar = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, user_id)
             xl_avatar = settings.AVATARS_URL + "%s/%d_XL.jpg" % (id_folder, user_id)
         else:
-            # NOTE: this images are no longer used in the new UI, this might be refactored
-            s_avatar = static(f'bw-frontend/public/32x32_avatar.png')
-            m_avatar = static(f'bw-frontend/public/40x40_avatar.png')
-            l_avatar = static(f'bw-frontend/public/70x70_avatar.png')
-            xl_avatar = static(f'bw-frontend/public/100x100_avatar.png')
+            s_avatar = None
+            m_avatar = None
+            l_avatar = None
+            xl_avatar = None
         return dict(
             avatar=dict(
                 S=dict(

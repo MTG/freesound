@@ -1,4 +1,4 @@
-{% if has_avatar %}
+{% if avatar_url is not None %}
     <div class="avatar" style="width:{{ size }}px;height:{{ size }}px;">
         <img src="{{ avatar_url }}"  class="avatar {{ extra_class }}" style="width:{{ size }}px;height:{{ size }}px;" />
     </div>

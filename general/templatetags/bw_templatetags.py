@@ -78,7 +78,6 @@ def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
 
     return {
         'size': size,
-        'has_avatar': '_avatar.png' not in avatar_url,
         'avatar_url':avatar_url,
         'username': username,
         'font_size': int(size * 0.4),

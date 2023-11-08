@@ -1046,8 +1046,7 @@ def downloaders(request, username, sound_id):
     page = pagination["page"]
 
     # Get all users+profiles for the user ids
-    sounds = list(page)
-    userids = [s.user_id for s in sounds]
+    userids = [d.user_id for d in list(page)]
     users = User.objects.filter(pk__in=userids).select_related("profile")
     user_map = {}
     for u in users:
@@ -1073,11 +1072,26 @@ def pack_downloaders(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
 
     # Retrieve all users that downloaded a sound
-    qs = PackDownload.objects.filter(pack_id=pack_id).select_related("user", "user__profile")
+    qs = PackDownload.objects.filter(pack_id=pack_id)
+   
     num_items_per_page = settings.USERS_PER_DOWNLOADS_MODAL_PAGE
-    paginator = paginate(request, qs, num_items_per_page, object_count=pack.num_downloads)
+    pagination = paginate(request, qs, num_items_per_page, object_count=pack.num_downloads)
+    page = pagination["page"]
+
+    # Get all users+profiles for the user ids
+    userids = [d.user_id for d in list(page)]
+    users = User.objects.filter(pk__in=userids).select_related("profile")
+    user_map = {}
+    for u in users:
+        user_map[u.id] = u
+
+    download_list = []
+    for s in page:
+        download_list.append({"created": s.created, "user": user_map[s.user_id]})
+    download_list = sorted(download_list, key=itemgetter("created"), reverse=True)
 
     tvars = {'username': username,
-             'pack': pack}
-    tvars.update(paginator)
+             'pack': pack,
+             "download_list": download_list}
+    tvars.update(pagination)
     return render(request, 'sounds/modal_downloaders.html', tvars)

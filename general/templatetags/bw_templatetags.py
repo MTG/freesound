@@ -19,6 +19,7 @@
 #
 
 import math
+import urllib.request, urllib.parse, urllib.error
 
 from django import template
 from django.conf import settings
@@ -26,7 +27,6 @@ from django.contrib.humanize.templatetags.humanize import intcomma
 from django.urls import reverse
 
 from follow.follow_utils import is_user_following_tag
-from general.templatetags.paginator import show_paginator
 from general.templatetags.plausible import plausible_scripts
 from ratings.models import SoundRating
 
@@ -173,8 +173,78 @@ def bw_generic_stars(context, rating_0_10):
 
 @register.inclusion_tag('molecules/paginator.html', takes_context=True)
 def bw_paginator(context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results=-1):
-    return show_paginator(context, paginator, page, current_page, request,
-                          anchor=anchor, non_grouped_number_of_results=non_grouped_number_of_results)
+    """
+    Adds pagination context variables for use in displaying first, adjacent and
+    last page links in addition to those created by the object_list generic
+    view.
+    """
+    if paginator is None:
+        # If paginator object is None, don't go ahead as below calculations will fail. This can happen if show_paginator
+        # is called and no paginator object is present in view
+        return {}
+ 
+    adjacent_pages = 3
+    total_wanted = adjacent_pages * 2 + 1
+    min_page_num = max(current_page - adjacent_pages, 1)
+    max_page_num = min(current_page + adjacent_pages + 1, paginator.num_pages + 1)
+
+    num_items = max_page_num - min_page_num
+
+    if num_items < total_wanted and num_items < paginator.num_pages:
+        if min_page_num == 1:
+            # we're at the start, increment max_page_num
+            max_page_num += min(total_wanted - num_items, paginator.num_pages - num_items)
+        else:
+            # we're at the end, decrement
+            min_page_num -= min(total_wanted - num_items, paginator.num_pages - num_items)
+
+    # although paginator objects are 0-based, we use 1-based paging
+    page_numbers = [n for n in range(min_page_num, max_page_num) if 0 < n <= paginator.num_pages]
+    params = urllib.parse.urlencode([(key.encode('utf-8'), value.encode('utf-8')) for (key, value) in request.GET.items()
+                               if key.lower() != "page"])
+
+    if params == "":
+        url = request.path + "?page="
+    else:
+        url = request.path + "?" + params + "&page="
+
+    # The pagination could be over a queryset or over the result of a query to solr, so 'page' could be an object
+    # if it's the case a query to the DB or a dict if it's the case of a query to solr
+    if isinstance(page, dict):
+        url_prev_page = url + str(page['previous_page_number'])
+        url_next_page =  url + str(page['next_page_number'])
+        url_first_page = url + '1'
+    else:
+        url_prev_page = None
+        if page.has_previous():
+             url_prev_page = url + str(page.previous_page_number())
+        url_next_page = None
+        if page.has_next():
+             url_next_page = url + str(page.next_page_number())
+        url_first_page = url + '1'
+    url_last_page = url + str(paginator.num_pages)
+
+    if page_numbers:
+        last_is_next = paginator.num_pages - 1 == page_numbers[-1]
+    else:
+        last_is_next = False
+
+    return {
+        "page": page,
+        "paginator": paginator,
+        "current_page": current_page,
+        "page_numbers": page_numbers,
+        "show_first": 1 not in page_numbers,
+        "show_last": paginator.num_pages not in page_numbers,
+        "last_is_next": last_is_next,
+        "url" : url,
+        "url_prev_page": url_prev_page,
+        "url_next_page": url_next_page,
+        "url_first_page": url_first_page,
+        "url_last_page": url_last_page,
+        "anchor": anchor,
+        "non_grouped_number_of_results": non_grouped_number_of_results
+    }
 
 
 @register.inclusion_tag('molecules/maps_js_scripts.html', takes_context=True)

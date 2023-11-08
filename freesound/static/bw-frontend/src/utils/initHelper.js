@@ -44,10 +44,11 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
     bindFollowTagsButtons(container);
     prepareAsyncSections(container);
 
-    // Bind modals
+    bindConfirmationModalElements(container);  // Confirmation modals are also binded as they can work inside another modal
+
+    // Bind other modals
     if (bindModals === true){
         bindDefaultModals(container);
-        bindConfirmationModalElements(container);
         bindRemixGroupModals(container);
         bindBookmarkSoundModals(container);
         bindUserAnnotationsModal(container); 

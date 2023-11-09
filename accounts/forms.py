@@ -354,7 +354,9 @@ class ProfileForm(forms.ModelForm):
         # Customize some placeholders and classes, remove labels and help texts
         self.fields['username'].widget.attrs['placeholder'] = 'Write your name here (30 characters maximum)'
         self.fields['home_page'].widget.attrs['placeholder'] = 'Write a URL to show on your profile'
-        self.fields['about'].widget.attrs['placeholder'] = 'Write something about yourself'
+        self.fields['about'].widget.attrs['placeholder'] = 'Write something about yourself. ' \
+                                                           'Note that this text will only appear in the profiles ' \
+                                                           'of users who upload sounds.'
         self.fields['about'].widget.attrs['rows'] = False
         self.fields['about'].widget.attrs['cols'] = False
         self.fields['about'].widget.attrs['class'] = 'unsecure-image-check'

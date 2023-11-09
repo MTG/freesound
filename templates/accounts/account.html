@@ -113,7 +113,7 @@
             {% if user.profile.about or user.profile.home_page %}
             <div class="bw-profile__description v-spacing-top-2 v-spacing-2">
                 {% if user.profile.about and show_about %}
-                    <div class="col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+                    <div class="col-md-8 offset-md-2">
                         {{ user.profile.about|replace_img|safe|linebreaks|strip_unnecessary_br }}
                     </div>
                 {% endif %}

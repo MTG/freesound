@@ -17,7 +17,7 @@
         {% endif %}
     </div>
     <div class="col-xl-7 col-5 bw-message__info {% if active %} active {% endif %} {% if not message.is_read and list_type != 'sent' %} unread {% endif %}" data-link-url="{% url "message" message.id %}">
-        <a href="{% url 'message' message.id %}">
+        <a class="no-hover" href="{% url 'message' message.id %}">
         <h6 class="no-margins text-16" title="Message from: {{ message.user_from.username }}, to: {{ message.user_to.username }}">{% if list_type == 'sent' %}{{ message.user_to.username }}{% else %}{{ message.user_from.username }}{% endif %}<span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>{{ message.subject }}</h6>
         <p class="no-margins ellipsis text-light-grey">{{ message.body.body | truncatewords:20 }}</p>
         </a>

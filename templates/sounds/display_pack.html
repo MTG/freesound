@@ -40,7 +40,7 @@
         <div class="v-spacing-top-1 bw-player__description-height">
             {% if pack.description %}
                 {% with pack.description|striptags|safe as preprocessed_description %}
-                <div {% if preprocessed_description|length >= 55%}title="{{ preprocessed_description|truncatewords_html:200|escape }}"{% endif %}>
+                <div {% if preprocessed_description|length >= 55%}title="{{ preprocessed_description|truncatewords_html:200|force_escape }}"{% endif %}>
                     {{ preprocessed_description|truncatechars_html:55 }}
                 </div>
                 {% endwith %}
@@ -87,7 +87,7 @@
             <div class="text-black v-spacing-top-1 padding-right-2 v-spacing-1">
                 {% if pack.description %}
                     {% with pack.description|striptags|safe as preprocessed_description %}
-                    <div {% if preprocessed_description|wordcount >= 20%}title="{{ preprocessed_description|truncatewords_html:200|escape }}"{% endif %}>
+                    <div {% if preprocessed_description|wordcount >= 20%}title="{{ preprocessed_description|truncatewords_html:200|force_escape }}"{% endif %}>
                         {{ preprocessed_description|truncatewords_html:20 }}
                     </div>
                     {% endwith %}

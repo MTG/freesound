@@ -91,7 +91,7 @@
                                 <span class="h-spacing-1">Template repsonses:</span>
                                 {% for label, text in moderation_texts %}
                                     <a class="bw-link--grey cursor-pointer" href="javascript:void(0);"
-                                        data-text="{{text|escape}}" title="{{text|escape}}">{{ label }}</a>
+                                        data-text="{{text|force_escape}}" title="{{text|force_escape}}">{{ label }}</a>
                                     {% if not forloop.last %}
                                     <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
                                     {% endif%}

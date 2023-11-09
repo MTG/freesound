@@ -32,7 +32,7 @@
             </div>
             {% if player_size != 'moderation' %}
                 {% with sound.description|striptags|safe as preprocessed_description %}
-                <div class="v-spacing-top-1 bw-player__description-height" {% if preprocessed_description|length >= 55 %}title="{{ preprocessed_description|truncatewords_html:200|escape }}"{% endif %}>
+                <div class="v-spacing-top-1 bw-player__description-height" {% if preprocessed_description|length >= 55 %}title="{{ preprocessed_description|truncatewords_html:200|force_escape }}"{% endif %}>
                     {{ preprocessed_description|truncatechars_html:55 }}
                 </div>
                 {% endwith %}
@@ -101,7 +101,7 @@
                             </div>
                         </div>
                         {% with sound.description|striptags|safe as preprocessed_description %}
-                        <div class="max-h-60px-md-50px text-black overflow-hidden v-spacing-1" {% if preprocessed_description|wordcount > 28 %}title="{{ preprocessed_description|truncatewords_html:200|escape }}"{% endif %}>
+                        <div class="max-h-60px-md-50px text-black overflow-hidden v-spacing-1" {% if preprocessed_description|wordcount > 28 %}title="{{ preprocessed_description|truncatewords_html:200|force_escape }}"{% endif %}>
                             {{ preprocessed_description|truncatewords_html:28 }}
                         </div>
                         {% endwith %}

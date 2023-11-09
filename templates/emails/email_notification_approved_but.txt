@@ -11,7 +11,7 @@ approved by a Freesound moderator and is now available in Freesound.
 However, the moderator had some remarks. Please see the following link
 to see the moderator's message:
 
-{% absurl "tickets-ticket" ticket.key %}
+{% absurl 'tickets-ticket' ticket.key %}
 
 You can access the sound's page here:
 

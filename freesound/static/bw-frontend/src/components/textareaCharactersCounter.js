@@ -10,7 +10,6 @@ const makeTextareaCharacterCounter = (container) => {
             textareaInputElement.parentNode.classList.add('bw-edit-profile__textarea_block');
             const counterElement = document.createElement('div');
             counterElement.classList.add('edit-profile-textarea-counter');
-            counterElement.style.top = (textareaInputElement.offsetHeight + textareaInputElement.offsetTop - 25) + 'px';
             const leftSpan = document.createElement('span');
             leftSpan.innerHTML = textareaInputElement.value.length;
             leftSpan.id = textareaInputElement.id + '-counter-number';
@@ -20,6 +19,15 @@ const makeTextareaCharacterCounter = (container) => {
             counterElement.appendChild(rightSpan);
             textareaInputElement.parentNode.appendChild(counterElement);
             textareaInputElement.addEventListener('keyup', e => updateTextareaCounter(textareaInputElement.id, e.target.value));
+
+            // Set position depending on the height of the helptext immediately below the textarea
+            const helptextElement = textareaInputElement.parentNode.getElementsByClassName('helptext')[0];
+            if (helptextElement !== undefined){
+                counterElement.style.bottom = (helptextElement.offsetHeight + 45) + 'px';
+            } else {
+                counterElement.style.bottom = '45px';
+            }
+            
         }
     });
 }

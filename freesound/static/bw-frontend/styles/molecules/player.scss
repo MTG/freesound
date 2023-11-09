@@ -291,3 +291,13 @@
   background-color: $background-textarea;
   border-radius: 4px;
 }
+
+.bw-player__tags-list-height {
+  max-height: 40px;
+  overflow: hidden;
+}
+
+.bw-player__description-height {
+  max-height: 54px;
+  overflow: hidden;
+}

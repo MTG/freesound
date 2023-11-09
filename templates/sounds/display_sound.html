@@ -32,7 +32,7 @@
             </div>
             {% if player_size != 'moderation' %}
                 {% with sound.description|striptags|safe as preprocessed_description %}
-                <div lass="v-spacing-top-1 overflow-hidden" style="max-height:54px;" {% if preprocessed_description|length >= 55 %}title="{{ preprocessed_description|truncatewords_html:200|escape }}"{% endif %}>
+                <div class="v-spacing-top-1 bw-player__description-height" {% if preprocessed_description|length >= 55 %}title="{{ preprocessed_description|truncatewords_html:200|escape }}"{% endif %}>
                     {{ preprocessed_description|truncatechars_html:55 }}
                 </div>
                 {% endwith %}
@@ -105,9 +105,11 @@
                             {{ preprocessed_description|truncatewords_html:28 }}
                         </div>
                         {% endwith %}
+                        <div class="bw-player__tags-list-height">
                         {% for tag in sound.tag_array|slice:":5" %}
                             {% bw_tag tag %}
                         {% endfor %}
+                        </div>
                         {% if sound.moderation_state != 'OK' %}
                         <div class="right">
                             {% include 'sounds/sound_state_moderation_indicator.html' %}

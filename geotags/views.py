@@ -77,7 +77,6 @@ def geotags_barray(request, tag=None):
             return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
-
 def geotags_box_barray(request):
     box = request.GET.get("box", "-180,-90,180,90")
     is_embed = request.GET.get("embed", "0") == "1"
@@ -204,8 +203,14 @@ def for_sound(request, username, sound_id):
         'center_lon': sound.geotag.lon,
         'zoom': sound.geotag.zoom,
         'url': reverse('geotags-for-sound-barray', args=[sound.id]),
+        'modal_version': request.GET.get('ajax'),
     })
-    return render(request, 'geotags/geotags.html', tvars)
+    if request.GET.get('ajax'):
+        # If requested in ajax version, then load using the modal
+        return render(request, 'geotags/modal_geotags.html', tvars)
+    else:
+        # Otherwise load using the normal template
+        return render(request, 'geotags/geotags.html', tvars)
 
 
 @redirect_if_old_username_or_404
@@ -218,8 +223,14 @@ def for_pack(request, username, pack_id):
         'pack': pack,
         'sound': None,
         'url': reverse('geotags-for-pack-barray', args=[pack.id]),
+        'modal_version': request.GET.get('ajax'),
     })
-    return render(request, 'geotags/geotags.html', tvars)
+    if request.GET.get('ajax'):
+        # If requested in ajax version, then load using the modal
+        return render(request, 'geotags/modal_geotags.html', tvars)
+    else:
+        # Otherwise load using the normal template
+        return render(request, 'geotags/geotags.html', tvars)
 
 
 def geotags_box(request):

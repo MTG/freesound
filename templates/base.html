@@ -54,6 +54,7 @@
     {% include 'molecules/footer.html' %}
     </div>
     {% bw_plausible_scripts %}
+    {% bw_maps_js_scripts %}
     <script>
         {% if request.user.is_authenticated %}
         document.cookie = "preferSpectrogram={{request.user.profile.prefer_spectrograms|yesno}};path=/";

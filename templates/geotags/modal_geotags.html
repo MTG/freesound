@@ -1,0 +1,23 @@
+{% extends "molecules/modal_base.html" %}
+{% load util %}
+{% load bw_templatetags %}
+{% load display_sound %}
+{% load display_pack %}
+
+{% block id %}geotagsModal{% endblock %}
+{% block extra-class %}modal-width-80{% endblock %}
+{% block aria-label %}{% if sound %}Map for sound {{ sound.original_filename }}{% elif pack %}Map for pack {{ pack.name }}{% endif %}{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h4 class="v-spacing-5">
+            {% if sound %}Map for sound <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a>
+            {% elif pack %}Map for pack <a href="{% url "pack" pack.user.username pack.id %}">{{ pack.name }}</a>{% endif %}
+        </h4>
+    </div>
+    <div class="v-spacing-4">
+        {% include "geotags/geotags_content.html" %}
+    </div>
+</div>
+{% endblock %}

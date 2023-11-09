@@ -143,7 +143,7 @@
                     {% endif %}
                     {% if sound.geotag_id %}
                     <div class="h-spacing-left-2" title="Geotag: {{ sound.get_geotag_name }}">
-                        <a href="{% url 'sound-geotag' sound.username sound.id %}" class="bw-link--grey-light">
+                        <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'sound-geotag' sound.username sound.id %}?ajax=1" class="bw-link--grey-light">
                             <span class="bw-icon-pin"></span> {{ sound.get_geotag_name|truncatechars:20 }}
                         </a>
                     </div>

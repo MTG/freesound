@@ -1,7 +1,6 @@
 import {makeSoundsMap} from '../components/mapsMapbox';
 
-const loadingIndicator = document.getElementById("indicator");
-const mapCanvas = document.getElementById('mapCanvas');
+const loadingIndicator = document.getElementById("mapLoadingIndicator");
 const embedControls = document.getElementById("embedControls");
 const embedControlsLabel = document.getElementById("embedControlsLabel");
 const embedCodeElement = document.getElementById("embedCode");
@@ -18,14 +17,6 @@ let currentBoxBlLon;
 let currentBoxTrLat;
 let currentBoxTrLon;
 
-let centerLat;
-let centerLon;
-let zoom;
-const showSearch = (mapCanvas.dataset.mapShowSearch !== undefined && mapCanvas.dataset.mapShowSearch === 'true');
-const showStyleSelector = true;
-const clusterGeotags = true;
-const showMapEvenIfNoGeotags = true;
-
 const toggleEmbedControls = () => {
     if (embedControls.classList.contains('display-none')){
         embedControls.classList.remove('display-none');
@@ -35,12 +26,6 @@ const toggleEmbedControls = () => {
         embedControlsLabel.innerText = "Embed this map";
     }
 };
-
-if (embedControlsLabel !== null ){
-    embedControlsLabel.addEventListener('click', () => {
-        toggleEmbedControls();
-    });
-}
 
 const updateQueryStringParameter = (uri, key, value) => {
     var re = new RegExp("([?&])" + key + "=.*?(&|#|$)", "i");
@@ -57,7 +42,11 @@ const updateQueryStringParameter = (uri, key, value) => {
     }
 }
 
-const updateEmbedCode = (_, lat, lon, zoom, boxBlLat, boxBlLon, boxTrLat, boxTrLon) => {
+const updateEmbedCode = (mapElementId, lat, lon, zoom, boxBlLat, boxBlLon, boxTrLat, boxTrLon) => {
+    if (embedCodeElement === null){ return; }
+
+    const mapCanvas = document.getElementById(mapElementId);
+
     // Store lat, lon and zoom globally so we can use them later to call updateEmbedCode without accessing map
     currentLat = lat;
     currentLon = lon;
@@ -101,45 +90,69 @@ const changeEmbedWidthHeightCluster = () => {
     updateEmbedCode(undefined, currentLat, currentLon, currentZoom, currentBoxBlLa, currentBoxBlLon, currentBoxTrLat, currentBoxTrLon);
 }
 
-[embedWidthInputElement, embedHeightInputElement, embedClusterCheckElement].forEach(element => {
-    if (element !== null){
-        element.addEventListener('change', () => {
-           changeEmbedWidthHeightCluster();
+const initMap = (mapCanvas) => {
+
+    // Configure some event listeners
+ 
+    if (embedControlsLabel !== null ){
+        embedControlsLabel.addEventListener('click', () => {
+            toggleEmbedControls();
         });
     }
-});
 
-if (tagFilterInput !== null){
-    tagFilterInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            // Submit query filter
-            const tag = tagFilterInput.value.replace(/[^A-Za-z0-9-_]/g, '');  // Only allow alphanumeric plus - _
-            const includeLatLonZoom = false;
-            let url = `${tagFilterInput.dataset.baseUrl + tag}/`;
-            if (includeLatLonZoom){
-                url += `?c_lat=${currentLat}&c_lon=${currentLon}&z=${currentZoom}`;
-            }
-            window.location = url;
-            e.stopPropagation();
+    [embedWidthInputElement, embedHeightInputElement, embedClusterCheckElement].forEach(element => {
+        if (element !== null){
+            element.addEventListener('change', () => {
+            changeEmbedWidthHeightCluster();
+            });
         }
     });
+
+    if (tagFilterInput !== null){
+        tagFilterInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                // Submit query filter
+                const tag = tagFilterInput.value.replace(/[^A-Za-z0-9-_]/g, '');  // Only allow alphanumeric plus - _
+                const includeLatLonZoom = false;
+                let url = `${tagFilterInput.dataset.baseUrl + tag}/`;
+                if (includeLatLonZoom){
+                    url += `?c_lat=${currentLat}&c_lon=${currentLon}&z=${currentZoom}`;
+                }
+                window.location = url;
+                e.stopPropagation();
+            }
+        });
+    }
+
+    // Do proper map initialization 
+    let centerLat;
+    let centerLon;
+    let zoom;
+    if ((mapCanvas.dataset.mapCenterLat !== "None") &&
+        (mapCanvas.dataset.mapCenterLon !== "None") &&
+        (mapCanvas.dataset.mapZoom !== "None")){
+        centerLat = mapCanvas.dataset.mapCenterLat;
+        centerLon = mapCanvas.dataset.mapCenterLon;
+        zoom = mapCanvas.dataset.mapZoom;
+    }
+    let url = mapCanvas.dataset.geotagsUrl;
+    const urlBox = mapCanvas.dataset.geotagsUrlBox;
+    const box = document.location.hash.slice(5, document.location.hash.length);
+    if (box !== ''){
+        // If box is given, get the geotags only from that box
+        url = `${urlBox}?box=${box}`;
+    }
+
+    const showSearch = (mapCanvas.dataset.mapShowSearch !== undefined && mapCanvas.dataset.mapShowSearch === 'true');
+    const showStyleSelector = true;
+    const clusterGeotags = true;
+    const showMapEvenIfNoGeotags = true;
+
+    makeSoundsMap(url, mapCanvas.id, (numLoadedSounds) => {
+        if (loadingIndicator !== null){
+            loadingIndicator.innerText = `${numLoadedSounds} sound${ numLoadedSounds === 1 ? '': 's'}`;
+        }
+    }, updateEmbedCode, centerLat, centerLon, zoom, showSearch, showStyleSelector, clusterGeotags, showMapEvenIfNoGeotags);
 }
 
-if ((mapCanvas.dataset.mapCenterLat !== "None") &&
-    (mapCanvas.dataset.mapCenterLon !== "None") &&
-    (mapCanvas.dataset.mapZoom !== "None")){
-    centerLat = mapCanvas.dataset.mapCenterLat;
-    centerLon = mapCanvas.dataset.mapCenterLon;
-    zoom = mapCanvas.dataset.mapZoom;
-}
-let url = mapCanvas.dataset.geotagsUrl;
-const urlBox = mapCanvas.dataset.geotagsUrlBox;
-const box = document.location.hash.slice(5, document.location.hash.length);
-if (box !== ''){
-    // If box is given, get the geotags only from that box
-     url = `${urlBox}?box=${box}`;
-}
-
-makeSoundsMap(url, 'mapCanvas', (numLoadedSounds) => {
-  loadingIndicator.innerText = `${numLoadedSounds} sound${ numLoadedSounds === 1 ? '': 's'}`;
-}, updateEmbedCode, centerLat, centerLon, zoom, showSearch, showStyleSelector, clusterGeotags, showMapEvenIfNoGeotags);
+export { initMap };

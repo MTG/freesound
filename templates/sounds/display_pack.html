@@ -123,7 +123,7 @@
                 </div>
                 {% if pack.has_geotags %}
                     <div class="h-spacing-left-2" title="Pack has geotags">
-                        <a href="{% url 'pack-geotags' pack.user.username pack.id %}" class="bw-link--grey-light">
+                        <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'pack-geotags' pack.user.username pack.id %}?ajax=1" class="bw-link--grey-light">
                             <span class="bw-icon-pin"></span>
                         </a>
                     </div>

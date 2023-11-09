@@ -27,11 +27,6 @@ from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
 
 
-html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
-                    <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
-                    <code>blockquote</code> and <code>code</code>."""
-
-
 class ManualUserField(forms.CharField):
     def clean(self, value):
         if not value:
@@ -45,7 +40,8 @@ class ManualUserField(forms.CharField):
 class MessageReplyForm(forms.Form):
     to = ManualUserField(widget=forms.TextInput(attrs={'size': '40'}))
     subject = forms.CharField(min_length=3, max_length=128, widget=forms.TextInput(attrs={'size': '80'}))
-    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)), help_text=html_tags_help_text)
+    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)), 
+                                 help_text=HtmlCleaningCharField.make_help_text())
 
     def __init__(self, request, *args, **kwargs):
         self.request = request  # This is used by MessageReplyFormWithCaptcha to be able to call is_spam function

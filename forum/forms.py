@@ -24,13 +24,9 @@ from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
 
 
-html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
-                <code>b</code>, <code>em</code>, <code>li</code>, <code>u</code>, <code>p</code>, <code>br</code>,
-                <code>blockquote</code> and <code>code</code>."""
-
-
 class PostReplyForm(forms.Form):
-    body = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 100, 'rows': 30}), label="Message", help_text=html_tags_help_text)
+    body = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 100, 'rows': 30}), label="Message", 
+                                 help_text=HtmlCleaningCharField.make_help_text())
     subscribe = forms.BooleanField(label="Send me an email notification when new posts are added in this thread.",
                                    required=False, initial=True)
 
@@ -65,7 +61,8 @@ class PostReplyForm(forms.Form):
 class NewThreadForm(forms.Form):
     title = forms.CharField(max_length=250,
                             widget=forms.TextInput(attrs={'size': 100}))
-    body = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 100, 'rows': 30}), label="Message", help_text=html_tags_help_text)
+    body = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 100, 'rows': 30}), label="Message", 
+                                 help_text=HtmlCleaningCharField.make_help_text())
     subscribe = forms.BooleanField(label="Send me an email notification when new posts are added in this thread.", required=False, initial=True)
 
     def __init__(self, *args, **kwargs):

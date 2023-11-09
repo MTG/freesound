@@ -40,14 +40,10 @@ from django.core.signing import BadSignature, SignatureExpired
 
 from accounts.models import Profile, EmailPreferenceType, OldUsername, DeletedUser
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
-from utils.forms import HtmlCleaningCharField, filename_has_valid_extension
+from utils.forms import HtmlCleaningCharField, HtmlCleaningCharFieldWithCenterTag, filename_has_valid_extension
 from utils.spam import is_spam
 
 web_logger = logging.getLogger('web')
-
-html_tags_help_text = """Allowed HTML tags: <code>a</code>, <code>img</code>, <code>strong</code>,
-                <code>b</code>, <code>em</code>, <code>ul</code>, <code>li</code>, <code>u</code>, 
-                <code>p</code>, <code>br</code>, <code>blockquote</code> and <code>code</code>."""
 
 
 def validate_file_extension(audiofiles):
@@ -298,11 +294,13 @@ class UsernameReminderForm(forms.Form):
 class ProfileForm(forms.ModelForm):
 
     username = UsernameField(required=False)
-    about = HtmlCleaningCharField(
-        widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False, help_text=html_tags_help_text)
+    about = HtmlCleaningCharFieldWithCenterTag(
+        widget=forms.Textarea(attrs=dict(rows=20, cols=70)), 
+        required=False, 
+        help_text=HtmlCleaningCharFieldWithCenterTag.make_help_text())
     signature = HtmlCleaningCharField(
         label="Forum signature",
-        help_text=html_tags_help_text,
+        help_text=HtmlCleaningCharField.make_help_text(),
         widget=forms.Textarea(attrs=dict(rows=10, cols=70)),
         required=False,
         max_length=256,
@@ -313,7 +311,7 @@ class ProfileForm(forms.ModelForm):
         help_text="""Your sound signature is added to the end of each of your sound 
             descriptions. If you change the sound signature it will be automatically updated on all of your sounds. 
             Use the special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed 
-            and <code>${sound_id}</code> to refer to the id of the current sound. """ + html_tags_help_text,
+            and <code>${sound_id}</code> to refer to the id of the current sound. """ + HtmlCleaningCharField.make_help_text(),
         required=False,
         max_length=256,
     )

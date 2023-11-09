@@ -74,11 +74,13 @@ class EmptyLinkFilter(Filter):
             yield token
 
 
-def clean_html(input):
+def clean_html(input, ok_tags=[], ok_attributes={}):
     # Replace html tags from user input, see utils.test for examples
 
-    ok_tags = ["a", "img", "strong", "b", "em", "i", "u", "ul", "li", "p", "br",  "blockquote", "code"]
-    ok_attributes = {"a": ["href", "rel"], "img": ["src", "alt", "title"], "p": ["align"]}
+    # ok_tags and ok_attributes are used to specify which tags and attributes are allowed
+    # They should look like this:
+    #  ok_tags = ["a", "img", "strong", "b", "em", "i", "u", "ul", "li", "p", "br",  "blockquote", "code"]
+    #  ok_attributes = {"a": ["href", "rel"], "img": ["src", "alt", "title"]}
     # all other tags: replace with the content of the tag
 
     # If input contains link in the format: <http://> then convert it to < http:// >

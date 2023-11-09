@@ -29,7 +29,6 @@ from django.forms import ModelForm, Textarea, TextInput
 from django.core.signing import BadSignature, SignatureExpired
 from django.utils.timezone import now
 
-from accounts.forms import html_tags_help_text
 from sounds.models import License, Flag, Pack, Sound
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import TagField, HtmlCleaningCharField
@@ -174,7 +173,7 @@ class PackEditForm(ModelForm):
                                   widget=forms.widgets.HiddenInput(attrs={'id': 'pack_sounds', 'name': 'pack_sounds'}),
                                   required=False)
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
-                                        help_text=html_tags_help_text, required=False)
+                                        help_text=HtmlCleaningCharField.make_help_text(), required=False)
 
     def clean_pack_sounds(self):
         pack_sounds = re.sub("[^0-9,]", "", self.cleaned_data['pack_sounds'])
@@ -332,7 +331,7 @@ class SoundEditAndDescribeForm(forms.Form):
     description = HtmlCleaningCharField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 10, 'class': 'unsecure-image-check'}),
         help_text="You can add timestamps to the description using the syntax #minute:second (e.g. \"#1:07 nice bird chirp\"). "
-                  "This will be rendered with a little play button to play the sound at that timestamp. " + html_tags_help_text)
+                  "This will be rendered with a little play button to play the sound at that timestamp. " + HtmlCleaningCharField.make_help_text())
     is_explicit = forms.BooleanField(required=False, label="The sound contains explicit content")
     license_qs = License.objects.filter(Q(name__istartswith='Attribution') | Q(name__istartswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True, widget=forms.RadioSelect())

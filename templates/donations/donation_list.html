@@ -17,12 +17,12 @@
                     <div class="row middle">
                         <div class="col-md-3 col-1">
                             {% if donation.is_anonymous %}
-                                {% bw_user_avatar "_avatar.png" "anonymous"  %}
+                                {% bw_user_avatar None "anonymous"  %}
                             {% else %}
                                 {% if donation.user %}
                                     {% bw_user_avatar donation.user.profile.locations.avatar.XL.url donation.user.username %}
                                 {% else %}
-                                    {% bw_user_avatar "_avatar.png" donation.display_name %}
+                                    {% bw_user_avatar None donation.display_name %}
                                 {% endif %}
                             {% endif %}
                         </div>

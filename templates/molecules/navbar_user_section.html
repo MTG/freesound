@@ -40,6 +40,11 @@
                         <a class="bw-link--black" href="{% url 'forums-moderate' %}">Moderate forum {% if new_posts_pending_moderation %}<span class="text-red">({{ new_posts_pending_moderation }})</span>{% endif %}</a>
                     </li>
                 {% endif %}
+                {% if request.user.is_staff %}
+                    <li class="bw-nav__action dropdown-item">
+                        <a class="bw-link--black" href="{% url 'monitor-stats' %}">Monitor</a>
+                    </li>
+                {% endif %}
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--grey" href="{% url 'accounts-edit' %}">Account settings</a>
                 </li>

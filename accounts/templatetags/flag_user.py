@@ -26,7 +26,7 @@ register = template.Library()
 
 
 @register.inclusion_tag("accounts/flag_user.html", takes_context=True)
-def flag_user(context, flag_type, username, content_id, text = None, user_sounds = None):
+def flag_user(context, flag_type, username, content_id, text=None, user_sounds=None):
 
     no_show = False
     link_text = "Report spam/offensive"
@@ -43,10 +43,10 @@ def flag_user(context, flag_type, username, content_id, text = None, user_sounds
             link_text = text
 
     return {
-            'done_text': "Marked as spam/offensive",  # Not used in BW
-            'flagged': flagged,
-            'flag_type': flag_type,
-            'username': username,
-            'content_obj_id': content_id,
-            'link_text': link_text,
-            'no_show': no_show}
+        'flagged': flagged,
+        'flag_type': flag_type,
+        'username': username,
+        'content_obj_id': content_id,
+        'link_text': link_text,
+        'no_show': no_show
+    }

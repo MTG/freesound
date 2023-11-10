@@ -466,7 +466,7 @@ def edit_and_describe_sounds_helper(request):
         # Trigger processing of sounds and of affected packs
         try:
             for s in sounds_to_process:
-                s.process_and_analyze()
+                s.process_and_analyze(countdown=10)
         except Exception as e:
             sounds_logger.info(f'Sound with id {s.id} could not be sent to processing. ({str(e)})')
         for p in dirty_packs:

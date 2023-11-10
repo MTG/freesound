@@ -1256,28 +1256,30 @@ class Sound(models.Model):
         except Ticket.DoesNotExist:
             pass
 
-    def process_and_analyze(self, force=False, high_priority=False):
+    def process_and_analyze(self, force=False, high_priority=False, countdown=0):
         """
         Process and analyze a sound if the sound has a processing state different than "OK" and/or and analysis state
         other than "OK". 'force' argument can be used to trigger processing and analysis regardless of the processing
         state and analysis state of the sound.
+        The countdown parameter will add some delay before the task is executed (in seconds). 
         NOTE: high_priority is not implemented and setting it has no effect
         """
-        self.process(force=force, high_priority=high_priority)
+        self.process(force=force, high_priority=high_priority, countdown=countdown)
         self.analyze(force=force, high_priority=high_priority)
 
-    def process(self, force=False, skip_previews=False, skip_displays=False, high_priority=False):
+    def process(self, force=False, skip_previews=False, skip_displays=False, high_priority=False, countdown=0):
         """
         Trigger processing of the sound if processing_state is not "OK" or force=True.
         'skip_previews' and 'skip_displays' arguments can be used to disable the computation of either of these steps.
         Processing code generates the file previews and display images as well as fills some audio fields
         of the Sound model. This method returns "True" if sound was sent to process, None otherwise.
+        The countdown parameter will add some delay before the task is executed (in seconds).
         NOTE: high_priority is not implemented and setting it has no effect
         """
         if force or ((self.processing_state != "OK" or self.processing_ongoing_state != "FI")
                      and self.estimate_num_processing_attemps() <= 3):
             self.set_processing_ongoing_state("QU")
-            tasks.process_sound.delay(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
+            tasks.process_sound.apply_async(kwargs=dict(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays), countdown=countdown)
             sounds_logger.info(f"Send sound with id {self.id} to queue 'process'")
             return True
 

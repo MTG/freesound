@@ -267,7 +267,7 @@ def create_sound(user,
 
     if process:
         try:
-            sound.process_and_analyze(high_priority=True)
+            sound.process_and_analyze(high_priority=True, countdown=10)
 
             if sound.pack:
                 sound.pack.process()
@@ -596,7 +596,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             # Process sound and pack
             error_sending_to_process = None
             try:
-                sound.process_and_analyze(high_priority=True)
+                sound.process_and_analyze(high_priority=True, countdown=10)
             except Exception as e:
                 error_sending_to_process = str(e)
             if sound.pack:

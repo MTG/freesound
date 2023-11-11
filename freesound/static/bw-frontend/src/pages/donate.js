@@ -24,13 +24,33 @@ nameOptionRadioButtons.forEach(element => {
 
 // Disable credit card button if recurring option is checked
 recurringCheckboxElement.addEventListener('change', () => {
-    if (recurringCheckboxElement.checked) {
-        donationButtonCreditCardElement.disabled = true;
-    } else {
-        donationButtonCreditCardElement.disabled = false;
-    }
+    donationButtonCreditCardElement.disabled = !!recurringCheckboxElement.checked;
 
 });
+
+function handleErrors(errors) {
+    Object.entries(errors).forEach(([key, values]) => {
+        const liElement = document.createElement("li");
+        liElement.innerText = key;
+        const newList = document.createElement("ul");
+        newList.classList.add("errorlist", "v-spacing-3");
+        values.forEach(error => {
+            const newLi = document.createElement("li");
+            newLi.innerText = error;
+            newList.appendChild(newLi);
+        });
+        // if we can find the element with the key as id, we add the error message to it
+        const elemError = document.getElementById(`id_${key}`);
+        if (elemError) {
+            // add an error message below the input field
+            elemError.insertAdjacentElement('afterend', newList);
+        } else {
+            // otherwise, we add it to the general error list (e.g., when key is '__all__')
+            formErrorlistElement.appendChild(liElement);
+            formErrorlistElement.appendChild(newList);
+        }
+    });
+}
 
 // Add actions for donate credit card/paypal buttons
 donationButtonPaypalElement.addEventListener('click', (event) => {
@@ -43,12 +63,7 @@ donationButtonPaypalElement.addEventListener('click', (event) => {
         if (req.status >= 200 && req.status < 300) {
             const data = JSON.parse(req.responseText);
             if (data.errors != null) {
-                formErrorlistElement.innerHTML = '';
-                data.errors['__all__'].forEach(error => {
-                    const liElement = document.createElement("li");
-                    liElement.innerText = error;
-                    formErrorlistElement.appendChild(liElement);
-                });
+                handleErrors(data.errors);
             } else {
                 const hiddenFormElement = document.createElement("form");
                 hiddenFormElement.setAttribute("action", data.url);
@@ -68,7 +83,7 @@ donationButtonPaypalElement.addEventListener('click', (event) => {
         }
     }
     req.onerror = () => {
-        // Unexpected errors happened while processing request: how error in toast
+        // Unexpected errors happened while processing request: show error in toast
         showToast('Some errors occurred while processing the form. Please try again later.')
     };
     req.send(params); // Send request
@@ -87,12 +102,7 @@ donationButtonCreditCardElement.addEventListener('click', (event) => {
         if (req.status >= 200 && req.status < 300) {
             const data = JSON.parse(req.responseText);
             if (data.errors != null) {
-                formErrorlistElement.innerHTML = '';
-                data.errors['__all__'].forEach(error => {
-                    const liElement = document.createElement("li");
-                    liElement.innerText = error;
-                    formErrorlistElement.appendChild(liElement);
-                });
+                handleErrors(data.errors)
             } else {
                 const session = data.session_id;
                 stripe.redirectToCheckout({
@@ -112,4 +122,3 @@ donationButtonCreditCardElement.addEventListener('click', (event) => {
     };
     req.send(params); // Send request
 });
-

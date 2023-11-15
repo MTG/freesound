@@ -28,7 +28,7 @@
                 {% if sound.should_display_small_icons_in_second_line %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
             </div>
             <div>
-                <span class="text-grey">{{ sound.created|timesince }} ago</span>
+                <span class="text-grey timesince-target">{{ sound.created|date:"F jS, Y" }}</span>
             </div>
             {% if player_size != 'moderation' %}
                 {% with sound.description|striptags|safe as preprocessed_description %}

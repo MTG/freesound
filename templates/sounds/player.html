@@ -20,5 +20,6 @@
     data-favorite="false"
     data-num-comments="{{ sound.num_comments }}" {% comment %}currently unused{% endcomment %}
     data-num-downloads="{{ sound.num_downloads }}" {% comment %}currently unused{% endcomment %}
+    {% if show_timesince %}data-timesince="{{ sound.created|timesince }}"{% endif %}
     tabindex="0">  {% comment %}using tabindex so screen readers cycle sound lists with tab key{% endcomment %}
 </div>

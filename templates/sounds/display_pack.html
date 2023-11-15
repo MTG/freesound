@@ -35,7 +35,7 @@
             {% if pack.should_display_small_icons_in_second_line %}{% include 'sounds/display_pack_small_icons.html' %}{% endif %}
         </div>
         <div>
-            <span class="text-grey">{{ pack.created|timesince }} ago</span>
+            <span class="text-grey">{{ pack.created|date:"F jS, Y" }}</span>
         </div>
         <div class="v-spacing-top-1 bw-player__description-height">
             {% if pack.description %}

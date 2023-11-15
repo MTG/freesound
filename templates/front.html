@@ -37,7 +37,7 @@
                     {% cache 300 bw_front_page_latest_additions %}
                     <section class="v-spacing-3">
                         <h3 class="v-spacing-4">Latest additions</h3>
-                        {% sound_carousel latest_sounds %}
+                        {% sound_carousel_with_timesince latest_sounds %}
                     </section>
                     {% endcache %}
                 {% endif %}
@@ -138,7 +138,7 @@
                                 {% if sound.original_filename|length > 22 %}{% include 'sounds/display_sound_small_icons.html' %}{% endif %}
                             </div>
                             <div>
-                                <span class="text-grey">{{ sound.created|timesince }} ago</span>
+                                <span class="text-grey">{{ sound.created|date:"F jS, Y" }}</span>
                             </div>
                             <div class="v-spacing-top-1 overflow-hidden">
                                 {{ sound.description|striptags|safe|truncatechars_html:350 }}

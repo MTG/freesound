@@ -7,7 +7,7 @@
                 <div class="row no-wrap">
                 {% for element in elements %}
                     <div class="col-6 col-md-4">
-                        {% if type == "sound"%}{% display_sound_small element %}{% elif type == "pack" %}{% display_pack element %}{% endif %}
+                        {% if type == "sound"%}{% if show_timesince %}{% display_sound_small_with_timesince element %}{% else %}{% display_sound_small element %}{% endif %}{% elif type == "pack" %}{% display_pack element %}{% endif %}
                     </div>
                 {% endfor %}
                 </div>

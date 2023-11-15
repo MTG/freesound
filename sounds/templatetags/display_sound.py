@@ -30,7 +30,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound(context, sound, player_size='small', show_bookmark=None, show_similar_sounds=None, show_remix=None, show_rate_widget=False):
+def display_sound(context, sound, player_size='small', show_bookmark=None, show_similar_sounds=None, show_remix=None, show_rate_widget=False, show_timesince=False):
     """This templatetag is used to display a sound with its player. It prepares some variables that are then passed
     to the display_sound.html template to show sound information together with the player.
 
@@ -49,6 +49,9 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
           it will be decided based on player size and other properties.
         show_rate_widget (bool, optional): whether or not to show the widget for ratings sounds (BW frontend only). Note that rate
           widget can only be shown in small players.
+        show_timesince (bool, optional): whether an indicator of the time since the sound was created (i.e. "3 years ago") instead
+          of the absolute date (i.e. "November 3rd, 2023") should be used. This only applies to the "small" player size and uses
+          javascript to replace the default date with the timesince indicator.
 
     Returns:
         dict: dictionary with the variables needed for rendering the sound with the display_sound.html template
@@ -129,6 +132,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
             'request_user_is_author': request.user.is_authenticated and sound_obj.user_id == request.user.id,
             'player_size': player_size,
             'show_milliseconds': 'true' if (player_size == 'big_no_info' or sound_obj.duration < 10) else 'false',  # Only BW
+            'show_timesince': show_timesince,
             'min_num_ratings': settings.MIN_NUMBER_RATINGS,
             'random_number': randint(1, 1000000),  # Used to generate IDs for HTML elements that need to be unique per sound/player instance
         }
@@ -137,6 +141,10 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small(context, sound):
     return display_sound(context, sound, player_size='small', show_rate_widget=True)
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small_with_timesince(context, sound):
+    return display_sound(context, sound, player_size='small', show_rate_widget=True, show_timesince=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_moderation(context, sound):

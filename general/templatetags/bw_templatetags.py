@@ -271,10 +271,15 @@ def bw_intcomma(value):
 
 
 @register.inclusion_tag('molecules/carousel.html', takes_context=True)
-def sound_carousel(context, sounds):
+def sound_carousel(context, sounds, show_timesince=False):
     # Update context and pass it to templatetag so nested template tags also have it
-    context.update({'elements': sounds, 'type': 'sound'})  
+    context.update({'elements': sounds, 'type': 'sound', 'show_timesince': show_timesince})  
     return context
+
+
+@register.inclusion_tag('molecules/carousel.html', takes_context=True)
+def sound_carousel_with_timesince(context, sounds):
+    return sound_carousel(context, sounds, show_timesince=True)
 
 
 @register.inclusion_tag('molecules/carousel.html', takes_context=True)

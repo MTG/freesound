@@ -24,6 +24,18 @@ if (isTouchEnabledDevice()){
   })
 }
 
+const replaceTimesinceIndicators = (parentNode) => {
+  // Checks if timesince information has been added in the player metadata and if so, finds if there are
+  // any elements with class timesince-target and replaces their content with the timesince information
+  // NOTE: this modifies the sound display UI, not only strictly the "player" UI, but it's here because
+  // because this seems the best place to handle this logic
+  if (parentNode.dataset.timesince !== undefined){
+    parentNode.parentNode.getElementsByClassName('timesince-target').forEach(timesinceTargetElement => {
+      timesinceTargetElement.innerHTML = parentNode.dataset.timesince + ' ago';
+    });
+  }
+}
+
 const updateProgressBarIndicator = (parentNode, audioElement, progressPercentage) => {
   const progressBar = parentNode.getElementsByClassName('bw-player__progress-bar')[0]
   if (progressBar !== undefined) { // progress bar is only there in big players
@@ -604,6 +616,8 @@ const createRemixGroupButton = (parentNode, playerImgNode) => {
  * @param {HTMLDivElement} parentNode
  */
 const createPlayer = parentNode => {
+  replaceTimesinceIndicators(parentNode);
+
   const playerSize = parentNode.dataset.size
   const showBookmarkButton = parentNode.dataset.bookmark === 'true'
   const showSimilarSoundsButton = parentNode.dataset.similarSounds === 'true'

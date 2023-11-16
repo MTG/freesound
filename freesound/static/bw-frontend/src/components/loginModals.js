@@ -92,7 +92,7 @@ const initProblemsLoggingInForm = (problemsLoggingInForm) => {
 
 const initLoginAndRegistrationModalLinks = (modalContainerId) => {
   const modalContainer = document.getElementById(modalContainerId);
-  [...modalContainer.querySelectorAll('[data-link="forgottenPasswordModal"]')].forEach(link => {
+  [...modalContainer.querySelectorAll('[data-link="problemsLoggingInModal"]')].forEach(link => {
     link.addEventListener('click', () => {
       dismissModal(modalContainerId);
       handleProblemsLoggingInModal();
@@ -119,8 +119,8 @@ const handleLoginModal = () => {
 }
 
 const handleProblemsLoggingInModal = () => {
-  activateModal('forgottenPasswordModal');
-  initLoginAndRegistrationModalLinks('forgottenPasswordModal');
+  activateModal('problemsLoggingInModal');
+  initLoginAndRegistrationModalLinks('problemsLoggingInModal');
   initProblemsLoggingInForm(document.getElementById("problemsLoggingInModalForm"));
 }
 
@@ -143,6 +143,10 @@ const handleRegistrationFeedbackModal = () => {
 
 [...document.querySelectorAll('[data-toggle="registration-modal"]')].forEach(modalToggle => {
   modalToggle.addEventListener('click', () => handleRegistrationModal());
+});
+
+[...document.querySelectorAll('[data-toggle="problems-logging-in-modal"]')].forEach(modalToggle => {
+  modalToggle.addEventListener('click', () => handleProblemsLoggingInModal());
 });
 
 // Open login modals if corresponding request parameters are set

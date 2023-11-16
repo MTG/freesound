@@ -86,8 +86,8 @@ def crc32file(filename):
     return hex(crc32)[2:]
 
 
-def remove_directory(path):
-    shutil.rmtree(path)
+def remove_directory(path, ignore_errors=False):
+    shutil.rmtree(path, ignore_errors=ignore_errors)
 
 
 def remove_directory_if_empty(path):

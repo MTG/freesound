@@ -72,7 +72,14 @@ def _remove_user_uploads_folder_if_empty(user):
 def clean_processing_before_describe_files(audio_file_path):
     directory_path = get_processing_before_describe_sound_folder(audio_file_path)
     if os.path.exists(directory_path):
-        remove_directory(directory_path)
+        # Note we use ignore_errors=True below because we've found issues with remove_directory similar
+        # to those described here https://github.com/ansible/ansible/issues/34335 (sort of race confitions)
+        # We suspect these errors can happen if the user describes the sound before it has finished "processing
+        # before description" (maybe the case of long sounds?). In that case the directory will be removed while
+        # new sounds are being added to it. If this happens, the error will be ignored and the folder will not be
+        # removed at this time. Nevertheless an async job that cleans old unnecessary folders form the data volume
+        # will eventually identify this folder and remove it later.
+        remove_directory(directory_path, ignore_errors=True)
 
 
 def get_duration_from_processing_before_describe_files(audio_file_path):

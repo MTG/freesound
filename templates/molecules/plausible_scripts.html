@@ -6,7 +6,6 @@
           redactedUrl = redactedUrl.replace(/people\/(\w+)\//ig, "people/_ID_/");  // Replace usernames
           redactedUrl = redactedUrl.replace(/browse\/geotags\/(\w+)\//ig, "browse/geotags/_TAG_/");  // Replace tag frm geotags
           redactedUrl = redactedUrl.replace(/browse\/tags\/.*/ig, "browse/tags/_TAGS_/");  // Replace multiple tags form tags
-          {% if separate_frontends %}redactedUrl = redactedUrl.replace('freesound.org/', 'freesound.org/BW/'); // Alter path to indicate NG front end{% endif %}
           plausible('pageview', { u: redactedUrl });
         </script>
 {% else %}

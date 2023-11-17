@@ -71,12 +71,10 @@
                                         {% bw_icon 'similar' %}
                                     </button>
                                     {% endif %}
-                                    {% if request.user.is_authenticated %}
                                     <span class="h-spacing-left-1"></span>
                                     <button title="Bookmark this sound" aria-label="Bookmark this sound" class="btn-neutral" data-toggle="bookmark-modal" data-modal-url="{% url 'bookmarks-add-form-for-sound' sound.id %}" data-add-bookmark-url="{% url 'add-bookmark' sound.id %}">
                                         {% bw_icon 'bookmark' %}
                                     </button>
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>

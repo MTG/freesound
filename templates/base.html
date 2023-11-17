@@ -7,7 +7,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=575, initial-scale=1">
     <meta name="theme-color" content="#000000">
-    <title>Freesound - {% block title %}{% endblock %}</title>
+    <title>Freesound{% if request.resolver_match.url_name != "front-page" %} - {% block title %}{% endblock %}{% endif %}</title>
     <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?">
     <meta name="keywords" content="free, sound">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">

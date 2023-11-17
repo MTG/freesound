@@ -22,7 +22,7 @@ def copy_files(source_destination_tuples):
             except subprocess.CalledProcessError as e:            
                 web_logger.info(f'Failed copying {source_path} ({str(e)}: {e.output})')
         else:
-            # The destioantion path is a local volume
+            # The destination path is a local volume
             os.makedirs(os.path.dirname(destination_path), exist_ok=True)
             try:
                 shutil.copy2(source_path, destination_path)

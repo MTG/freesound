@@ -683,8 +683,11 @@ WORKER_TIMEOUT = 60 * 60
 # Used to configure output formats in newer FreesoundExtractor versions
 ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils/audioprocessing/essentia_profile.yaml'))
 
-# Files above this filesize after converting to 16bit mono PCM won't be analyzed (in bytes, ~5MB per minute).
-MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25
+# Sound previews quality (for mp3, quality is in bitrate, for ogg, quality is in a number from 1 to 10  )
+MP3_LQ_PREVIEW_QUALITY = 70
+MP3_HQ_PREVIEW_QUALITY = 192
+OGG_LQ_PREVIEW_QUALITY = 1
+OGG_HQ_PREVIEW_QUALITY = 6
 
 # -------------------------------------------------------------------------------
 # Search results clustering

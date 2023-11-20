@@ -118,8 +118,7 @@ def monitor_moderation(request):
     sounds_in_moderators_queue_count =\
         tickets.views._get_sounds_in_moderators_queue_count(request.user)
     new_upload_count = tickets.views.new_sound_tickets_count()
-    tardy_moderator_sounds_count =\
-        len(tickets.views._get_tardy_moderator_tickets())
+    _, tardy_moderator_sounds_count = tickets.views._get_tardy_moderator_tickets_and_count()
     _, tardy_user_sounds_count = tickets.views._get_tardy_user_tickets_and_count()
 
     time_span = datetime.datetime.now() - datetime.timedelta((6 * 365) // 12)

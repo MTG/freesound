@@ -279,18 +279,6 @@ def _add_sound_objects_to_tickets(tickets):
         ticket.sound_obj = sound_objects.get(ticket.sound_id, None)
 
 
-def _get_unsure_sound_tickets_and_count(num=None, include_mod_messages=True):
-    """Query to get tickets that were returned to the queue by moderators that
-    didn't know what to do with the sound."""
-    # NOTE: I don't think we are using this anymore as returned tickets will appear in the main unassigned queue (?)
-    tt = Ticket.objects.filter(
-        assignee=None,
-        status=TICKET_STATUS_ACCEPTED
-    ).order_by('created')
-    count = tt.count()
-    return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
-
-
 def _get_tardy_moderator_tickets_and_count(num=None, include_mod_messages=True):
     """Get tickets for moderators that haven't responded in the last day"""
     time_span = datetime.date.today() - datetime.timedelta(days=1)
@@ -478,6 +466,7 @@ def moderation_assign_single_ticket(request, ticket_id):
     # REASSIGN SINGLE TICKET
     ticket = Ticket.objects.get(id=ticket_id)
     ticket.assignee = User.objects.get(id=request.user.id)
+    ticket.status = TICKET_STATUS_ACCEPTED
 
     # update modified date, so it doesn't appear in tardy moderator's sounds
     ticket.modified = datetime.datetime.now()

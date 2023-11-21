@@ -68,7 +68,7 @@ var onFileInputChange = function onFileInputChange(event) {
     showListOfSounds();
     var percent_size = soundsQueue.reduce((acc, curr) => acc + curr.size, 0) * 100 / maxUploadSize;
     setSizeBarValue(percent_size);
-    resetForm(num > 0 ? "Upload limit of {{ max_file_size_in_MB }} MB exceeded. " + num + " file" + (num > 1 ? "s" : "") + " discarded." : " ");
+    resetForm(num > 0 ? "Upload limit of " + maxUploadSizeInMB + " MB exceeded. " + num + " file" + (num > 1 ? "s" : "") + " discarded." : " ");
 };
 
 var addErrorListElement = function addErrorListElement() {
@@ -197,6 +197,7 @@ fileInput.style.display = 'none';
 progressContainer.style.display = 'none';
 abortButton.style.display = 'none';
 var maxUploadSize = uploadForm.dataset.maxFileSize;
+var maxUploadSizeInMB = uploadForm.dataset.maxFileSizeMb;
 
 // drag and drop
 document.addEventListener('dragenter', onDrag);

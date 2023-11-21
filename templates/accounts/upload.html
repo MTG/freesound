@@ -33,7 +33,7 @@
         <div class="col-md-6 col-lg-3">
             <div class="padding-right-2">
                 <h5>Formats</h5>
-                <p>We prefer <strong>wav, aif and flac</strong>, but we support <strong>ogg</strong>, <strong>m4a</strong> and <strong>mp3</strong> too. For very large files please use some compressed format. Uploading more than 1GB at once might fail.</p>
+                <p>We prefer <strong>wav, aif and flac</strong>, but we support <strong>ogg</strong>, <strong>m4a</strong> and <strong>mp3</strong> too. For very large files please use some compressed format.</p>
             </div>
         </div>
     </div>
@@ -41,7 +41,7 @@
         {% if uploads_enabled %}
 
         <div class="col-md-6">
-            <form method="POST" enctype="multipart/form-data" class="html_upload_form" id="upload-form" data-max-file-size="{{ max_file_size }}" data-upload-url="{% url 'accounts-upload' %}">{% csrf_token %}
+            <form method="POST" enctype="multipart/form-data" class="html_upload_form" id="upload-form" data-max-file-size="{{ max_file_size }}" data-max-file-size-mb="{{ max_file_size_in_MB }}" data-upload-url="{% url 'accounts-upload' %}">{% csrf_token %}
                 {{ form.as_p }}
                 
                 <div id="drag-tip">

@@ -350,8 +350,24 @@ USER_STATS_CACHE_KEY = 'user_stats_{}'
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
 USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 
-ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
-LOSSY_FILE_EXTENSIONS = [ 'ogg', 'mp3', 'm4a']
+# Supported audio formats
+# When adding support for a new audio format you have to change the variables below and check:
+# - mime types in accounts.forms.validate_file_extension
+# - see if utils.audioprocessing.get_sound_type needs to be updated
+# - add corresponding decoder to utils.audioprocessing.processing.convert_to_pcm (and of course add it to the docker image as well)
+# - the audio analyzers will not need to be updated if the format is supported by ffmpeg
+ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a', 'wv']
+LOSSY_FILE_EXTENSIONS = ['ogg', 'mp3', 'm4a']
+# Note that some SOUND_TYPE_CHOICES below might correspond to multiple extensions (aiff/aif > aiff)
+SOUND_TYPE_CHOICES = (
+    ('wav', 'Wave'),
+    ('ogg', 'Ogg Vorbis'),
+    ('aiff', 'AIFF'),
+    ('mp3', 'Mp3'),
+    ('flac', 'Flac'),
+    ('m4a', 'M4a'),
+    ('wv', 'WavPack'),
+)
 COMMON_BITRATES = [32, 64, 96, 128, 160, 192, 224, 256, 320]
 
 # Allowed data file extensions for bulk upload
@@ -590,7 +606,7 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30},
     SEARCH_SOUNDS_FIELD_BITRATE: {},
     SEARCH_SOUNDS_FIELD_BITDEPTH: {},
-    SEARCH_SOUNDS_FIELD_TYPE: {'limit': 6},  # Set after the number of choices in sounds.models.Sound.SOUND_TYPE_CHOICES
+    SEARCH_SOUNDS_FIELD_TYPE: {'limit': len(SOUND_TYPE_CHOICES)},
     SEARCH_SOUNDS_FIELD_CHANNELS: {},
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
 }

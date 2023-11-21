@@ -471,7 +471,7 @@ def convert_to_pcm(input_filename, output_filename, use_ffmpeg_for_unknown_type=
         raise AudioProcessingException(f"file {input_filename} does not exist")
     sound_type = get_sound_type(input_filename)
 
-    if sound_type in ["mp3", "ogg", "flac", "m4a"]:
+    if sound_type in ["mp3", "ogg", "flac", "m4a", "wv"]:
         if sound_type == "mp3":
             cmd = ["lame", "--decode", input_filename, output_filename]
             error_messages = ["WAVE file contains 0 PCM samples"]
@@ -486,6 +486,9 @@ def convert_to_pcm(input_filename, output_filename, use_ffmpeg_for_unknown_type=
             error_messages = ["Unable to find correct AAC sound track in the MP4 file",
                             "Error: Bitstream value not allowed by specification",
                             "Error opening file"]
+        elif sound_type == "wv":
+            cmd = ["wvunpack", input_filename, "-o", output_filename]
+            error_messages = []
    
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = process.communicate()

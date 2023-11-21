@@ -28,6 +28,7 @@ RUN apt-get update \
 		vorbis-tools \
 		flac \
 		faad \
+		wavpack \
 		libjpeg-dev \
 		zlib1g-dev \
 		libpng-dev \

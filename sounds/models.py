@@ -623,15 +623,7 @@ class Sound(models.Model):
         BulkUploadProgress, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # file properties
-    SOUND_TYPE_CHOICES = (
-        ('wav', 'Wave'),
-        ('ogg', 'Ogg Vorbis'),
-        ('aiff', 'AIFF'),
-        ('mp3', 'Mp3'),
-        ('flac', 'Flac'),
-        ('m4a', 'M4a')
-    )
-    type = models.CharField(db_index=True, max_length=4, choices=SOUND_TYPE_CHOICES)
+    type = models.CharField(db_index=True, max_length=4, choices=settings.SOUND_TYPE_CHOICES)
     duration = models.FloatField(default=0)
     bitrate = models.IntegerField(default=0)
     bitdepth = models.IntegerField(null=True, blank=True, default=None)

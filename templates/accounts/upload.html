@@ -33,7 +33,7 @@
         <div class="col-md-6 col-lg-3">
             <div class="padding-right-2">
                 <h5>Formats</h5>
-                <p>We prefer <strong>wav, aif and flac</strong>, but we support <strong>ogg</strong>, <strong>m4a</strong> and <strong>mp3</strong> too. For very large files please use some compressed format.</p>
+                <p>We prefer {% for ext in lossless_file_extensions %}<strong>{{ ext }}</strong>{% if not forloop.last %}{% ifequal forloop.revcounter 2 %} and {% else %}, {% endifequal %}{% else %}{% endif %}{% endfor %}, but we support {% for ext in lossy_file_extensions %}<strong>{{ ext }}</strong>{% if not forloop.last %}{% ifequal forloop.revcounter 2 %} and {% else %}, {% endifequal %}{% else %}{% endif %}{% endfor %} too. For very large files please use some compressed format.</p>
             </div>
         </div>
     </div>
@@ -46,7 +46,7 @@
                 
                 <div id="drag-tip">
                     <h1 class="text-light-grey">Drag files here...</h1>
-                    <p>...or click on 'Add files' (valid file extensions: flac, wav, aif, aiff, m4a, ogg and mp3).</p>
+                    <p>...or click on 'Add files' (valid file extensions: {% for ext in all_file_extensions %}<strong>{{ ext }}</strong>{% if not forloop.last %}{% ifequal forloop.revcounter 2 %} and {% else %}, {% endifequal %}{% else %}{% endif %}{% endfor %}).</p>
                 </div>
                 <ul id="file-list" class="file-list"></ul>
                 <div class="progress-container h-spacing-2" id="progress-container"></div>

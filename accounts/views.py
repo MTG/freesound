@@ -1258,6 +1258,9 @@ def upload(request, no_flash=False):
         'no_flash': no_flash,
         'max_file_size': settings.UPLOAD_MAX_FILE_SIZE_COMBINED,
         'max_file_size_in_MB': int(round(settings.UPLOAD_MAX_FILE_SIZE_COMBINED * 1.0 / (1024 * 1024))),
+        'lossless_file_extensions': [ext for ext in settings.ALLOWED_AUDIOFILE_EXTENSIONS if ext not in settings.LOSSY_FILE_EXTENSIONS],
+        'lossy_file_extensions': settings.LOSSY_FILE_EXTENSIONS,
+        'all_file_extensions': settings.ALLOWED_AUDIOFILE_EXTENSIONS,
         'uploads_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED
     }
     return render(request, 'accounts/upload.html', tvars)

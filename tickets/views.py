@@ -84,7 +84,18 @@ def ticket(request, ticket_key):
     can_view_moderator_only_messages = _can_view_mod_msg(request)
     clean_status_forms = True
     clean_comment_form = True
-    ticket = get_object_or_404(Ticket.objects.select_related('sound__license', 'sound__user'), key=ticket_key)
+    try:
+        # First try to get the ticket matching the key, but if it fails, try also matching the id
+        ticket = Ticket.objects.select_related('sound__license', 'sound__user').get(key=ticket_key)
+    except Ticket.DoesNotExist:
+        try:
+            ticket_id = int(ticket_key)
+            ticket = Ticket.objects.select_related('sound__license', 'sound__user').get(id=ticket_id)
+            return HttpResponseRedirect(reverse('tickets-ticket', args=[ticket.key]))
+        except ValueError:
+            raise Http404
+        except Ticket.DoesNotExist:
+            raise Http404
 
     if not (ticket.sender == request.user or _can_view_mod_msg(request)):
         raise Http404
@@ -268,18 +279,6 @@ def _add_sound_objects_to_tickets(tickets):
         ticket.sound_obj = sound_objects.get(ticket.sound_id, None)
 
 
-def _get_unsure_sound_tickets_and_count(num=None, include_mod_messages=True):
-    """Query to get tickets that were returned to the queue by moderators that
-    didn't know what to do with the sound."""
-    # NOTE: I don't think we are using this anymore as returned tickets will appear in the main unassigned queue (?)
-    tt = Ticket.objects.filter(
-        assignee=None,
-        status=TICKET_STATUS_ACCEPTED
-    )
-    count = tt.count()
-    return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
-
-
 def _get_tardy_moderator_tickets_and_count(num=None, include_mod_messages=True):
     """Get tickets for moderators that haven't responded in the last day"""
     time_span = datetime.date.today() - datetime.timedelta(days=1)
@@ -288,7 +287,8 @@ def _get_tardy_moderator_tickets_and_count(num=None, include_mod_messages=True):
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
         (Q(last_commenter=F('sender')) | Q(messages__sender=None)) &
-        Q(comment_date__lt=time_span))
+        Q(comment_date__lt=time_span))\
+    .order_by('created')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 
@@ -301,7 +301,8 @@ def _get_tardy_user_tickets_and_count(num=None, include_mod_messages=True):
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
         ~Q(last_commenter=F('sender')) &
-        Q(comment_date__lt=time_span))
+        Q(comment_date__lt=time_span))\
+    .order_by('created')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 
@@ -317,7 +318,7 @@ def _get_pending_tickets_for_user_base_qs(user):
 
 def _get_pending_tickets_for_user(user, include_mod_messages=True):
     # gets all tickets from a user that have not been closed (and that have an assigned sound)
-    tt = _get_pending_tickets_for_user_base_qs(user).order_by('-assignee')
+    tt = _get_pending_tickets_for_user_base_qs(user).order_by('created')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt, include_mod_messages=include_mod_messages), count
 
@@ -326,8 +327,7 @@ def _get_sounds_in_moderators_queue_count(user):
     return Ticket.objects.select_related() \
         .filter(assignee=user.id) \
         .exclude(status='closed') \
-        .exclude(sound=None) \
-        .order_by('status', '-created').count()
+        .exclude(sound=None).count()
 
 
 @permission_required('tickets.can_moderate')
@@ -466,6 +466,7 @@ def moderation_assign_single_ticket(request, ticket_id):
     # REASSIGN SINGLE TICKET
     ticket = Ticket.objects.get(id=ticket_id)
     ticket.assignee = User.objects.get(id=request.user.id)
+    ticket.status = TICKET_STATUS_ACCEPTED
 
     # update modified date, so it doesn't appear in tardy moderator's sounds
     ticket.modified = datetime.datetime.now()

@@ -84,7 +84,18 @@ def ticket(request, ticket_key):
     can_view_moderator_only_messages = _can_view_mod_msg(request)
     clean_status_forms = True
     clean_comment_form = True
-    ticket = get_object_or_404(Ticket.objects.select_related('sound__license', 'sound__user'), key=ticket_key)
+    try:
+        # First try to get the ticket matching the key, but if it fails, try also matching the id
+        ticket = Ticket.objects.select_related('sound__license', 'sound__user').get(key=ticket_key)
+    except Ticket.DoesNotExist:
+        try:
+            ticket_id = int(ticket_key)
+            ticket = Ticket.objects.select_related('sound__license', 'sound__user').get(id=ticket_id)
+            return HttpResponseRedirect(reverse('tickets-ticket', args=[ticket.key]))
+        except ValueError:
+            raise Http404
+        except Ticket.DoesNotExist:
+            raise Http404
 
     if not (ticket.sender == request.user or _can_view_mod_msg(request)):
         raise Http404

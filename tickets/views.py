@@ -286,7 +286,7 @@ def _get_unsure_sound_tickets_and_count(num=None, include_mod_messages=True):
     tt = Ticket.objects.filter(
         assignee=None,
         status=TICKET_STATUS_ACCEPTED
-    )
+    ).order_by('created')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 
@@ -299,7 +299,8 @@ def _get_tardy_moderator_tickets_and_count(num=None, include_mod_messages=True):
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
         (Q(last_commenter=F('sender')) | Q(messages__sender=None)) &
-        Q(comment_date__lt=time_span))
+        Q(comment_date__lt=time_span))\
+    .order_by('created')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 
@@ -312,7 +313,8 @@ def _get_tardy_user_tickets_and_count(num=None, include_mod_messages=True):
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
         ~Q(last_commenter=F('sender')) &
-        Q(comment_date__lt=time_span))
+        Q(comment_date__lt=time_span))\
+    .order_by('created')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 
@@ -328,7 +330,7 @@ def _get_pending_tickets_for_user_base_qs(user):
 
 def _get_pending_tickets_for_user(user, include_mod_messages=True):
     # gets all tickets from a user that have not been closed (and that have an assigned sound)
-    tt = _get_pending_tickets_for_user_base_qs(user).order_by('-assignee')
+    tt = _get_pending_tickets_for_user_base_qs(user).order_by('created')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt, include_mod_messages=include_mod_messages), count
 
@@ -337,8 +339,7 @@ def _get_sounds_in_moderators_queue_count(user):
     return Ticket.objects.select_related() \
         .filter(assignee=user.id) \
         .exclude(status='closed') \
-        .exclude(sound=None) \
-        .order_by('status', '-created').count()
+        .exclude(sound=None).count()
 
 
 @permission_required('tickets.can_moderate')

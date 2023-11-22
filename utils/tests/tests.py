@@ -267,7 +267,7 @@ class BulkDescribeUtils(TestCase):
         user = User.objects.create_user("testuser", password="testpass")
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         os.makedirs(user_upload_path, exist_ok=True)
-        create_test_files(['file1.wav', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
+        create_test_files(['file1.wv', 'file2.wav', 'file3.wav', 'file4.wav', 'file5.wav'], user_upload_path)
 
         # Create CSV files folder with descriptions
         csv_file_base_path = settings.CSV_PATH + '/%i/' % user.id
@@ -276,7 +276,7 @@ class BulkDescribeUtils(TestCase):
         # Test CSV with all lines and metadata ok
         csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
-            'file1.wav,New name for file1.wav,"tag1 tag2 tag3","41.4065, 2.19504, 23",'
+            'file1.wv,New name for file1.wav,"tag1 tag2 tag3","41.4065, 2.19504, 23",'
             '"Description for file",Creative Commons 0,ambient,0',  # All fields valid
             'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0',  # Only mandatory fields
             'file3.wav,,"tag1 tag2 tag3",,'
@@ -300,7 +300,7 @@ class BulkDescribeUtils(TestCase):
         # Test missing/duplicated audiofile and wrong number of rows
         csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
-            'file1.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # File exists, fields ok
+            'file1.wv,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # File exists, fields ok
             'file2.wav,,"tag1 tag2 tag3",,,Creative Commons 0,,1',  # Missing description
             'file3.wav,,"tag1 tag2 tag3",,"Description for file",,1',  # Wrong number of columns
             'file6.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # Audiofile does not exist
@@ -319,7 +319,7 @@ class BulkDescribeUtils(TestCase):
         # Test validation errors in individual fields
         csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
-            'file1.wav,,"tag1 tag2",,"Description for file",Creative Commons 0,,1',  # Wrong tags (less than 3)
+            'file1.wv,,"tag1 tag2",,"Description for file",Creative Commons 0,,1',  # Wrong tags (less than 3)
             'file2.wav,,"tag1,tag2",,"Description for file",Creative Commons 0,,1',  # Wrong tags (less than 3)
             'file3.wav,,"tag1,tag2",gr87g,"Description for file2",Creative Commons 0,,1',  # Wrong geotag
             'file4.wav,,"tag1,tag2",42.34,190.45,15,"Description for file",Creative Commons 0,,1',  # Wrong geotag
@@ -373,7 +373,7 @@ class BulkDescribeUtils(TestCase):
         # Test username errors when not passing username argument to validate_input_csv_file
         csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit,username',
-            'file1.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1,new_username',  # User does not exist
+            'file1.wv,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1,new_username',  # User does not exist
             'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # Invlaid num columns
             'file3.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0,testuser',  # All fields OK
         ], csv_file_base_path)

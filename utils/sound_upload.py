@@ -38,6 +38,7 @@ from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
 from utils.cache import invalidate_user_template_caches
 from utils.filesystem import md5file, remove_directory_if_empty, remove_directory
+from utils.forms import filename_has_valid_extension
 from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
     remove_uploaded_file_from_mirror_locations
 from utils.text import remove_control_chars
@@ -416,7 +417,6 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                 if not audio_filename.strip():
                     line_errors['audio_filename'] = "Invalid audio filename."
                 else:
-                    from accounts.forms import filename_has_valid_extension
                     if not filename_has_valid_extension(audio_filename):
                         line_errors['audio_filename'] = "Invalid file extension."
                     else:

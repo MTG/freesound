@@ -306,13 +306,15 @@ class SoundEditAndDescribeForm(forms.Form):
         # Prepare pack field
         if user_packs:
             user_packs = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-            self.fields['pack'].choices = [(PackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
-                                        (PackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + \
-                                        ([(pack.id, pack.name) for pack in user_packs] if user_packs else [])
-            # The attrs below are used so that some elements of the dropdown are displayed in gray and to enable
-            # pre-selecting options using keyboard
-            self.fields['pack'].widget.attrs = {'data-grey-items': f'{PackForm.NO_PACK_CHOICE_VALUE},{PackForm.NEW_PACK_CHOICE_VALUE}', 
-                                                'data-select-with-keyboard': True}
+        else:
+            user_packs = []
+        self.fields['pack'].choices = [(PackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
+                                    (PackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + \
+                                    ([(pack.id, pack.name) for pack in user_packs] if user_packs else [])
+        # The attrs below are used so that some elements of the dropdown are displayed in gray and to enable
+        # pre-selecting options using keyboard
+        self.fields['pack'].widget.attrs = {'data-grey-items': f'{PackForm.NO_PACK_CHOICE_VALUE},{PackForm.NEW_PACK_CHOICE_VALUE}', 
+                                            'data-select-with-keyboard': True}
 
     def clean(self):
         data = self.cleaned_data

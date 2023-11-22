@@ -276,7 +276,7 @@ class BulkDescribeUtils(TestCase):
         # Test CSV with all lines and metadata ok
         csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
-            'file1.wv,New name for file1.wav,"tag1 tag2 tag3","41.4065, 2.19504, 23",'
+            'file1.wv,New name for file1.wav,"tag1 tag2 tag3","41.4065, 2.19504, 18",'
             '"Description for file",Creative Commons 0,ambient,0',  # All fields valid
             'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0',  # Only mandatory fields
             'file3.wav,,"tag1 tag2 tag3",,'
@@ -401,7 +401,7 @@ class BulkDescribeUtils(TestCase):
         # Create Test CSV with some lines ok and some wrong lines
         csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
-            'file1.wav,,"tag1 tag2 tag3","41.4065, 2.19504, 23","Description for file",Creative Commons 0,ambient,1',  # OK
+            'file1.wav,,"tag1 tag2 tag3","41.4065, 2.19504, 18","Description for file",Creative Commons 0,ambient,1',  # OK
             'file2.wav,,"tag1 tag2 tag3",,"Description for file",Invalid license,,1',  # Invalid license
             'file3.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,1',  # Wrong number of columns
             'file4.wav,,"tag1 tag2 tag3",dg,"Description for file",Creative Commons 0,,0',  # Invalid geotag

@@ -3,14 +3,17 @@
 <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
 <script>
     let redactedUrl = window.location.href.replace(/\/\d+\//g, "/_ID_/"); // Replace numberic IDs
-    redactedUrl = redactedUrl.replace(/people\/([^/]+)\//ig, "people/_USERNAME_/");  // Replace usernames          
+    redactedUrl = redactedUrl.replace(/people\/([^/]+)\//ig, "people/_USERNAME_/");  // Replace usernames
     redactedUrl = redactedUrl.replace(/browse\/geotags\/(\w+)\//ig, "browse/geotags/_TAG_/");  // Replace tag from geotags
     redactedUrl = redactedUrl.replace(/browse\/tags\/.*/ig, "browse/tags/_TAGS_/");  // Replace multiple tags from tags page
     if (redactedUrl.includes("/forum/")){  // Replace forum names, be careful with some hard coded URLs
         if (!(redactedUrl.includes("/moderate/") || redactedUrl.includes("/forums-search/") || redactedUrl.includes("/hot-treads/"))){
-            redactedUrl = redactedUrl.replace(/forum\/([^/]+)\//ig, "people/_FORUM_NAME_/");  // Replace forum name
+            redactedUrl = redactedUrl.replace(/forum\/([^/]+)\//ig, "forum/_FORUM_NAME_/");  // Replace forum name
         }
     }
+    redactedUrl = redactedUrl.replace(/activate\/([^/]+)\/([^/]+)\//ig, "activate/_USERNAME_/_CODE_/");  // Replace activation urls
+    redactedUrl = redactedUrl.replace(/reset\/([^/]+)\//ig, "reset/_CODE_/");  // Replace password reset
+    redactedUrl = redactedUrl.replace(/tickets\/([^/]+)\//ig, "tickets/_ID_/");  // Replace moderation tickets
     plausible('pageview', { u: redactedUrl });
 </script>
 {% else %}

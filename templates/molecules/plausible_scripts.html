@@ -1,13 +1,18 @@
 {% if aggregate_pageviews %}
-        <script defer data-domain="freesound.org" src="https://analytics.freesound.org/js/plausible.manual.js"></script>
-        <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
-        <script>
-          let redactedUrl = window.location.href.replace(/\/\d+\//g, "/_ID_/"); // Replace numberic IDs
-          redactedUrl = redactedUrl.replace(/people\/([^/]+)\//ig, "people/_ID_/");  // Replace usernames
-          redactedUrl = redactedUrl.replace(/browse\/geotags\/(\w+)\//ig, "browse/geotags/_TAG_/");  // Replace tag from geotags
-          redactedUrl = redactedUrl.replace(/browse\/tags\/.*/ig, "browse/tags/_TAGS_/");  // Replace multiple tags from tags page
-          plausible('pageview', { u: redactedUrl });
-        </script>
+<script defer data-domain="freesound.org" src="https://analytics.freesound.org/js/plausible.manual.js"></script>
+<script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+<script>
+    let redactedUrl = window.location.href.replace(/\/\d+\//g, "/_ID_/"); // Replace numberic IDs
+    redactedUrl = redactedUrl.replace(/people\/([^/]+)\//ig, "people/_USERNAME_/");  // Replace usernames          
+    redactedUrl = redactedUrl.replace(/browse\/geotags\/(\w+)\//ig, "browse/geotags/_TAG_/");  // Replace tag from geotags
+    redactedUrl = redactedUrl.replace(/browse\/tags\/.*/ig, "browse/tags/_TAGS_/");  // Replace multiple tags from tags page
+    if (redactedUrl.includes("/forum/")){  // Replace forum names, be careful with some hard coded URLs
+        if (!(redactedUrl.includes("/moderate/") || redactedUrl.includes("/forums-search/") || redactedUrl.includes("/hot-treads/"))){
+            redactedUrl = redactedUrl.replace(/forum\/([^/]+)\//ig, "people/_FORUM_NAME_/");  // Replace forum name
+        }
+    }
+    plausible('pageview', { u: redactedUrl });
+</script>
 {% else %}
-        <script async defer data-domain="freesound.org" src="https://analytics.freesound.org/js/plausible.js"></script>
+<script async defer data-domain="freesound.org" src="https://analytics.freesound.org/js/plausible.js"></script>
 {% endif %}

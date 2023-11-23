@@ -147,12 +147,6 @@ def thread(request, forum_name_slug, thread_id):
     return render(request, 'forum/thread.html', tvars)
 
 
-@last_action
-def latest_posts(request):
-    # The "latest posts" page no longet exists, we now redirect to "hot threads"
-    return HttpResponseRedirect(reverse('forums-hot-threads'))
-
-
 def get_hot_threads(n=None, days=15):
     if not settings.DEBUG:
         last_days_filter = datetime.datetime.today() - datetime.timedelta(days=days)

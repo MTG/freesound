@@ -156,7 +156,7 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
         if (showLoadingToast !== false) { dismissToast(); }
         
         // Call default initialization function, and also call callback if defined
-        initializeStuffInContainer(modalContainer, false, false, true);
+        initializeStuffInContainer(modalContainer, false, false);
         if (onLoadedCallback !== undefined){
           onLoadedCallback(modalContainer);
         }

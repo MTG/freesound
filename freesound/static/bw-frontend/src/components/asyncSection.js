@@ -11,7 +11,7 @@ const prepareAsyncSections = (container) => {
             if (req.status >= 200 && req.status < 300) {
                 element.innerHTML = req.responseText;
                 // Make sure we initialize sound/pack players inside the async section
-                initializeStuffInContainer(element, true, false, true);
+                initializeStuffInContainer(element, true, false);
             } else {
                 // Unexpected errors happened while processing request: show toast
                 showToast('Unexpected errors occurred while loading some of the content of this page. Please try again later...')

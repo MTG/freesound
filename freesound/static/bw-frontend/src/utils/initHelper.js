@@ -22,7 +22,7 @@ import { bindUnsecureImageCheckListeners } from '../components/unsecureImageChec
 import { initMap } from '../pages/map.js';
 
 
-const initializeStuffInContainer = (container, bindModals, activateModals, initMaps) => {
+const initializeStuffInContainer = (container, bindModals, activateModals) => {
 
     // Make UI elements
     makeSoundPlayers(container);
@@ -62,14 +62,11 @@ const initializeStuffInContainer = (container, bindModals, activateModals, initM
         activateRemixGroupModalsIfParameters();
     }
 
-    // Init map if needed (and if a map element is found). This will always be the case except when loading map sound popups, in which we don't want to reload the map
-    if (initMaps === true){
-        const mapCanvas = document.getElementById('mapCanvas');
-        if (mapCanvas !== null){
-            initMap(mapCanvas);
-        }
-    }
-
+    // Init maps (note that already initialized maps won't be re-initialized)
+    const maps = document.getElementsByClassName('map');
+    maps.forEach(map => {
+        initMap(map);
+    });
 }
 
 export { initializeStuffInContainer };

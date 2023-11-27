@@ -16,4 +16,4 @@ import './toast';
 import './uiThemeDetector';
 
 import { initializeStuffInContainer } from '../utils/initHelper';
-initializeStuffInContainer(document, true, true, true);
+initializeStuffInContainer(document, true, true);

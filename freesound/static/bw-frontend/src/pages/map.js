@@ -92,6 +92,10 @@ const changeEmbedWidthHeightCluster = () => {
 
 const initMap = (mapCanvas) => {
 
+    // Avoid initializing a map twice
+    if (mapCanvas.dataset.initialized === 'true'){ return; }
+    mapCanvas.dataset.initialized = 'true';
+
     // Configure some event listeners
  
     if (embedControlsLabel !== null ){

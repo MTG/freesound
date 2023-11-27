@@ -1,7 +1,7 @@
 {% load static %}
 {% load absurl %}
 <div class="col-12 v-spacing-top-3 no-paddings {% if sound or username %}v-spacing-2{% endif %}">
-    <div id="mapCanvas" class="map main-map"
+    <div id="mapCanvas{% if sound %}-{{ sound.id }}{% elif usernane %}-{{ username }}{% elif pack %}-{{ pack.id }}{% elif tag %}-{{ tag }}{% endif %}" class="map main-map"
          data-map-center-lat="{{ center_lat }}"
          data-map-center-lon="{{ center_lon }}"
          data-map-zoom="{{ zoom }}"

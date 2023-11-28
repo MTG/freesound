@@ -66,14 +66,14 @@ const drawWrapperContents = (inputWrapperElement, inputElement, tagsHiddenInput)
     if (someTagsRendered){
         // Add action buttons
         const buttonsWrapper = document.createElement('div');
-        buttonsWrapper.style="position:absolute;right:10px;top:8px;z-index:1;";
+        buttonsWrapper.style="position:absolute;right:10px;top:-33px;z-index:1;";
         inputWrapperElement.appendChild(buttonsWrapper);
 
         const copyTagsButton = document.createElement('a');
         copyTagsButton.title = "Copy the tags from this sound"
         copyTagsButton.ariaLabel = "Copy the tags from this sound"
         copyTagsButton.innerHTML = '<span class="bw-icon bw-icon-copy"></span>';
-        copyTagsButton.className = 'bw-link--black no-hover cursor-pointer'
+        copyTagsButton.className = 'bw-link--grey no-hover cursor-pointer'
         copyTagsButton.addEventListener('click', evt => {
             evt.preventDefault();
             navigator.clipboard.writeText(tagsHiddenInput.value);
@@ -85,7 +85,7 @@ const drawWrapperContents = (inputWrapperElement, inputElement, tagsHiddenInput)
         clearTagsButton.title = "Clear tags"
         clearTagsButton.ariaLabel = "Clear tags"
         clearTagsButton.innerHTML = '<span class="bw-icon bw-icon-close"></span>';
-        clearTagsButton.className = 'bw-link--black no-hover cursor-pointer h-spacing-left-1'
+        clearTagsButton.className = 'bw-link--grey no-hover cursor-pointer h-spacing-left-1'
         clearTagsButton.style = 'font-size: 10px;'
         clearTagsButton.addEventListener('click', evt => {
             evt.preventDefault();

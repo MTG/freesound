@@ -65,7 +65,12 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
     // Init maps (note that already initialized maps won't be re-initialized)
     const maps = document.getElementsByClassName('map');
     maps.forEach(map => {
-        initMap(map);
+        const staticMapWrapper = document.getElementById('static_map_wrapper');
+        const mapIsBehindStaticMap = staticMapWrapper !== null && staticMapWrapper.parentNode == map.parentNode;
+        if (map.id !== 'static_map_wrapper' && !mapIsBehindStaticMap){
+            // Only initialize non-static maps and maps which are not behind a static map (as those will be initialized when user clicks)
+            initMap(map);
+        }
     });
 }
 

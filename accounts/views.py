@@ -74,7 +74,7 @@ from general import tasks
 from messages.models import Message
 from sounds.forms import LicenseForm, PackForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
-from sounds.views import edit_and_describe_sounds_helper, clear_session_edit_and_describe_data
+from sounds.views import edit_and_describe_sounds_helper, clear_session_edit_data, clear_session_describe_data
 from tickets.models import TicketComment, Ticket, UserAnnotation
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
@@ -630,9 +630,9 @@ def manage_sounds(request, tab):
             if sounds:
                 if 'edit' in request.POST:
                     # Edit the selected sounds
-                    clear_session_edit_and_describe_data(request)
+                    clear_session_edit_data(request)
                     request.session['edit_sounds'] = sounds  # Add the list of sounds to edit in the session object
-                    request.session['len_original_describe_edit_sounds'] = len(sounds)
+                    request.session['len_original_edit_sounds'] = len(sounds)
                     return HttpResponseRedirect(reverse('accounts-edit-sounds') + '?next=' + request.path)
                 elif 'delete_confirm' in request.POST:
                     # Delete the selected sounds
@@ -758,9 +758,9 @@ def sounds_pending_description_helper(request, file_structure, files):
                 remove_empty_user_directory_from_mirror_locations(user_uploads_dir)
                 return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
             elif "describe" in request.POST:
-                clear_session_edit_and_describe_data(request)
+                clear_session_describe_data(request)
                 request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
-                request.session['len_original_describe_edit_sounds'] = len(request.session['describe_sounds'])
+                request.session['len_original_describe_sounds'] = len(request.session['describe_sounds'])
                 # If only one file is choosen, go straight to the last step of the describe process,
                 # otherwise go to license selection step
                 if len(request.session['describe_sounds']) > 1:
@@ -793,7 +793,7 @@ def describe_license(request):
             return HttpResponseRedirect(reverse('accounts-describe-pack'))
     else:
         form = LicenseForm(hide_old_license_versions=True)
-    tvars = {'form': form, 'num_files': request.session.get('len_original_describe_edit_sounds', 0)}
+    tvars = {'form': form, 'num_files': request.session.get('len_original_describe_sounds', 0)}
     return render(request, 'accounts/describe_license.html', tvars)
 
 
@@ -814,14 +814,14 @@ def describe_pack(request):
             return HttpResponseRedirect(reverse('accounts-describe-sounds'))
     else:
         form = PackForm(packs, prefix="pack")
-    tvars = {'form': form, 'num_files': request.session.get('len_original_describe_edit_sounds', 0)}
+    tvars = {'form': form, 'num_files': request.session.get('len_original_describe_sounds', 0)}
     return render(request, 'accounts/describe_pack.html', tvars)
 
 
 @login_required
 @transaction.atomic()
 def describe_sounds(request):
-    return edit_and_describe_sounds_helper(request)  # Note that the list of sounds to describe is stored in the session object
+    return edit_and_describe_sounds_helper(request, describing=True)  # Note that the list of sounds to describe is stored in the session object
 
     
 @login_required

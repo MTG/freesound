@@ -294,6 +294,7 @@ class PackNumSoundsTestCase(TestCase):
 
         self.client.force_login(user)
         resp = self.client.post(reverse('sound-edit', args=[sound.user.username, sound.id]), {
+            '0-sound_id': sound.id,
             '0-description': 'this is a description for the sound',
             '0-name': sound.original_filename,
             '0-tags': 'tag1 tag2 tag3',
@@ -688,6 +689,7 @@ class SoundTemplateCacheTests(TestCase):
         new_description = 'New description'
         new_name = 'New name'
         resp = self.client.post(self._get_sound_url('sound-edit'), {
+            '0-sound_id': self.sound.id,
             '0-description': new_description,
             '0-name': new_name,
             '0-tags': 'tag1 tag2 tag3',
@@ -819,6 +821,7 @@ class SoundTemplateCacheTests(TestCase):
         # Add sound to pack
         pack_name = 'New pack'
         resp = self.client.post(self._get_sound_url('sound-edit'), {
+            '0-sound_id': self.sound.id,
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -836,6 +839,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Remove sound from pack
         resp = self.client.post(self._get_sound_url('sound-edit'), {
+            '0-sound_id': self.sound.id,
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -877,6 +881,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Add a geotag to the sound
         resp = self.client.post(self._get_sound_url('sound-edit'), {
+            '0-sound_id': self.sound.id,
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -896,6 +901,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Remove geotag from the sound
         resp = self.client.post(self._get_sound_url('sound-edit'), {
+            '0-sound_id': self.sound.id,
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -937,6 +943,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Change license
         resp = self.client.post(self._get_sound_url('sound-edit'), {
+            '0-sound_id': self.sound.id,
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -979,6 +986,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Indicate another sound as source
         resp = self.client.post(self._get_sound_url('sound-edit'), {
+            '0-sound_id': self.sound.id,
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -997,6 +1005,7 @@ class SoundTemplateCacheTests(TestCase):
 
         # Remove remix from the sound
         resp = self.client.post(self._get_sound_url('sound-edit'), {
+            '0-sound_id': self.sound.id,
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -1166,6 +1175,7 @@ class SoundEditTestCase(TestCase):
         new_sound_sources = Sound.objects.exclude(id=self.sound.id)
         geotag_lat = 46.31658418182218
         resp = self.client.post(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]), {
+            '0-sound_id': self.sound.id,
             '0-description': new_description,
             '0-name': new_name,
             '0-tags': ' '.join(new_tags),

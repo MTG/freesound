@@ -52,6 +52,12 @@
                         {% endif %}
                         </div>
                     </div>
+
+                    {% if describing %}
+                    <input type="hidden" name="{{ forloop.counter0 }}-audio_filename" value="{{ form.audio_filename }}"/>
+                    {% else %}
+                    <input type="hidden" name="{{ forloop.counter0 }}-sound_id" value="{{ form.sound_id }}"/>
+                    {% endif %}
                     
                     <div>
                         {{ form.non_field_errors }}

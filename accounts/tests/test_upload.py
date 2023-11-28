@@ -82,7 +82,7 @@ class UserUploadAndDescribeSounds(TestCase):
             'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
         self.assertRedirects(resp, reverse('accounts-describe-sounds'))
-        self.assertEqual(self.client.session['len_original_describe_edit_sounds'], len(sounds_to_describe_idx))
+        self.assertEqual(self.client.session['len_original_describe_sounds'], len(sounds_to_describe_idx))
         self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session['describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
         
         # Selecting multiple file redirects to /home/describe/license/
@@ -92,7 +92,7 @@ class UserUploadAndDescribeSounds(TestCase):
             'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
         self.assertRedirects(resp, reverse('accounts-describe-license'))
-        self.assertEqual(self.client.session['len_original_describe_edit_sounds'], len(sounds_to_describe_idx))
+        self.assertEqual(self.client.session['len_original_describe_sounds'], len(sounds_to_describe_idx))
         self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session['describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
         
         # Selecting files to delete, delete the files
@@ -122,31 +122,33 @@ class UserUploadAndDescribeSounds(TestCase):
         session = self.client.session
         session['describe_license'] = License.objects.all()[0]
         session['describe_pack'] = False
-        session['len_original_describe_edit_sounds'] = 2
+        session['len_original_describe_sounds'] = 2
         session['describe_sounds'] = [File(1, filenames[0], user_upload_path + filenames[0], False),
                                       File(2, filenames[1], user_upload_path + filenames[1], False)]
         session.save()
 
         # Post description information
         resp = self.client.post('/home/describe/sounds/', {
-            '0-lat': ['46.31658418182218'],
-            '0-lon': ['3.515625'],
-            '0-zoom': ['16'],
-            '0-tags': ['testtag1 testtag2 testtag3'],
-            '0-pack': [PackForm.NO_PACK_CHOICE_VALUE],
-            '0-license': ['3'],
-            '0-description': ['a test description for the sound file'],
-            '0-new_pack': [''],
-            '0-name': [filenames[0]],
-            '1-license': ['3'],
-            '1-description': ['another test description'],
-            '1-lat': [''],
-            '1-pack': [PackForm.NO_PACK_CHOICE_VALUE],
-            '1-lon': [''],
-            '1-name': [filenames[1]],
-            '1-new_pack': ['Name of a new pack'],
-            '1-zoom': [''],
-            '1-tags': ['testtag1 testtag4 testtag5'],
+            '0-audio_filename': filenames[0],
+            '0-lat': '46.31658418182218',
+            '0-lon': '3.515625',
+            '0-zoom': '16',
+            '0-tags': 'testtag1 testtag2 testtag3',
+            '0-pack': PackForm.NO_PACK_CHOICE_VALUE,
+            '0-license': '3',
+            '0-description': 'a test description for the sound file',
+            '0-new_pack': '',
+            '0-name': filenames[0],
+            '1-audio_filename': filenames[1],
+            '1-license': '3',
+            '1-description': 'another test description',
+            '1-lat': '',
+            '1-pack': PackForm.NO_PACK_CHOICE_VALUE,
+            '1-lon': '',
+            '1-name': filenames[1],
+            '1-new_pack': 'Name of a new pack',
+            '1-zoom': '',
+            '1-tags': 'testtag1 testtag4 testtag5',
             '1-sources': ','.join([f'{s.id}' for s in sound_sources]),
         }, follow=True)
         

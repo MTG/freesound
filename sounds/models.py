@@ -1841,9 +1841,9 @@ class Pack(models.Model):
             icons_count +=2  # Counts double as it takes more width
         title_num_chars = len(self.name)
         if icons_count >= 6:
-            return title_num_chars >= 15
+            return title_num_chars >= 5
         elif 3 <= icons_count < 6:
-            return title_num_chars >= 20
+            return title_num_chars >= 18
         else:
             return title_num_chars >= 25
 

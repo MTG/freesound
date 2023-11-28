@@ -29,7 +29,7 @@
             {% if not pack.should_display_small_icons_in_second_line %}{% include 'sounds/display_pack_small_icons.html' %}{% endif %}
         </div>
         <div class="between">
-            <div>
+            <div class="ellipsis">
                 <a href="{% url "account" pack.user.username %}" title="Username: {{ pack.user.username }}">{{ pack.user.username|truncate_string:15 }}</a><span class="text-grey h-spacing-left-1 h-spacing-1">
             </div>
             {% if pack.should_display_small_icons_in_second_line %}{% include 'sounds/display_pack_small_icons.html' %}{% endif %}

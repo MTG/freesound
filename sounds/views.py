@@ -23,6 +23,7 @@ import logging
 import math
 import os
 import time
+import uuid
 from builtins import map
 from builtins import str
 from operator import itemgetter
@@ -382,26 +383,25 @@ def sound_edit(request, username, sound_id):
     if not (request.user.is_superuser or sound.user == request.user):
         raise PermissionDenied
 
-    clear_session_edit_data(request)
-    request.session['edit_sounds'] = [sound]  # Add the list of sounds to edit in the session object
-    request.session['len_original_edit_sounds'] = 1
-    return edit_and_describe_sounds_helper(request)
+    session_key_prefix = request.GET.get('session', str(uuid.uuid4())[0:8])  # Get existing session key if we are already in an edit session or create a new one
+    request.session[f'{session_key_prefix}-edit_sounds'] = [sound]  # Add the list of sounds to edit in the session object
+    request.session[f'{session_key_prefix}-len_original_edit_sounds'] = 1
+    return edit_and_describe_sounds_helper(request, session_key_prefix=session_key_prefix)
 
 
-def clear_session_edit_data(request):
+def clear_session_edit_data(request, session_key_prefix=''):
     # Clear pre-existing edit/describe sound related data in the session
     for key in ['edit_sounds', 'len_original_edit_sounds']:
-        request.session.pop(key, None)
+        request.session.pop(f'{session_key_prefix}-{key}', None)
 
 
-def clear_session_describe_data(request):
+def clear_session_describe_data(request, session_key_prefix=''):
     # Clear pre-existing edit/describe sound related data in the session
     for key in ['describe_sounds','describe_license', 'describe_pack', 'len_original_describe_sounds']:
-        request.session.pop(key, None)
+        request.session.pop(f'{session_key_prefix}-{key}', None)
 
 
-def edit_and_describe_sounds_helper(request, describing=False):
-
+def edit_and_describe_sounds_helper(request, describing=False, session_key_prefix=''):
 
     def update_sound_tickets(sound, text):
         tickets = Ticket.objects.filter(sound_id=sound.id).exclude(status=TICKET_STATUS_CLOSED)
@@ -536,8 +536,8 @@ def edit_and_describe_sounds_helper(request, describing=False):
         for packs_to_process in packs_to_process:
             packs_to_process.process()
 
-    files = request.session.get('describe_sounds', None)  # List of File objects of sounds to describe
-    sounds = request.session.get('edit_sounds', None)  # List of Sound objects to edit
+    files = request.session.get(f'{session_key_prefix}-describe_sounds', None)  # List of File objects of sounds to describe
+    sounds = request.session.get(f'{session_key_prefix}-edit_sounds', None)  # List of Sound objects to edit
     if (describing and files is None) or (not describing and sounds is None):
         # Expecting either a list of sounds or audio files to describe, got none. Redirect to main manage sounds page.
         return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['published']))
@@ -546,12 +546,12 @@ def edit_and_describe_sounds_helper(request, describing=False):
     all_forms_validated_ok = True
     all_remaining_sounds_to_edit_or_describe = files if describing else sounds
     sounds_to_edit_or_describe = all_remaining_sounds_to_edit_or_describe[:forms_per_round]
-    len_original_describe_edit_sounds = request.session.get('len_original_describe_sounds', 0) if describing else request.session.get('len_original_edit_sounds', 0)
+    len_original_describe_edit_sounds = request.session.get(f'{session_key_prefix}-len_original_describe_sounds', 0) if describing else request.session.get(f'{session_key_prefix}-len_original_edit_sounds', 0)
     num_rounds = int(math.ceil(len_original_describe_edit_sounds/forms_per_round))
     current_round = int((len_original_describe_edit_sounds - len(all_remaining_sounds_to_edit_or_describe))/forms_per_round + 1)
     files_data_for_players = []  # Used when describing sounds (not when editing) to be able to show sound players
-    preselected_license = request.session.get('describe_license', False)  # Pre-selected from the license selection page when describing mulitple sounds
-    preselected_pack = request.session.get('describe_pack', False)  # Pre-selected from the pack selection page when describing mulitple sounds
+    preselected_license = request.session.get(f'{session_key_prefix}-describe_license', False)  # Pre-selected from the license selection page when describing mulitple sounds
+    preselected_pack = request.session.get(f'{session_key_prefix}-describe_pack', False)  # Pre-selected from the pack selection page when describing mulitple sounds
     
     for count, element in enumerate(sounds_to_edit_or_describe):
         prefix = str(count)
@@ -601,7 +601,11 @@ def edit_and_describe_sounds_helper(request, describing=False):
                     form.audio_filename_from_form = audio_filename_from_form 
             else:
                 all_forms_validated_ok = False
-                form.sound_sources_ids = list(form.cleaned_data['sources'])  # Add sources ids to list so sources sound selector can be initialized
+            form.sound_sources_ids = list(form.cleaned_data['sources'])  # Add sources ids to list so sources sound selector can be initialized
+            if describing:
+                form.audio_filename = element.name
+            else:
+                form.sound_id = element.id
         else:
             if not describing:
                 sound_sources_ids = list(element.get_sound_sources_as_set())
@@ -635,6 +639,7 @@ def edit_and_describe_sounds_helper(request, describing=False):
             forms.append(form)  
 
     tvars = {
+        'session_key_prefix': session_key_prefix,
         'describing': describing,
         'num_forms': len(forms),
         'forms': forms,
@@ -645,7 +650,8 @@ def edit_and_describe_sounds_helper(request, describing=False):
         'num_rounds': num_rounds,
         'sounds_per_round': forms_per_round,
         'last_latlong': request.user.profile.get_last_latlong(),
-        'total_sounds_to_describe': len_original_describe_edit_sounds
+        'total_sounds_to_describe': len_original_describe_edit_sounds,
+        'next': request.GET.get('next', '')
     }
     
     if request.method == "POST" and all_forms_validated_ok:
@@ -654,36 +660,37 @@ def edit_and_describe_sounds_helper(request, describing=False):
             create_sounds(request, forms)
 
             # Remove sounds successfully described from session data
-            request.session['describe_sounds'] = files[forms_per_round:]
+            request.session[f'{session_key_prefix}-describe_sounds'] = files[forms_per_round:]
 
             # If no more sounds to describe, redirect to manage sound page, otherwise redirect to same page to proceed with second round
             messages.add_message(request, messages.INFO, 
                 f'Successfully finished sound description round {current_round} of {num_rounds}!')
-            if not request.session['describe_sounds']:
-                clear_session_describe_data(request)
+            if not request.session[f'{session_key_prefix}-describe_sounds']:
+                clear_session_describe_data(request, session_key_prefix=session_key_prefix)
                 return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['processing']))
             else:
-                return HttpResponseRedirect(reverse('accounts-describe-sounds'))
+                return HttpResponseRedirect(reverse('accounts-describe-sounds') + f'?session={session_key_prefix}')
         else:
             # Remove sounds successfully described from session data
-            request.session['edit_sounds'] = sounds[forms_per_round:]
+            request.session[f'{session_key_prefix}-edit_sounds'] = sounds[forms_per_round:]
 
-            # If user was only editing one sound and has finished, redirect to the sound page
+            # If user was only editing one sound and has finished, clear session and redirect to the sound page
             if len(forms) == 1 and len_original_describe_edit_sounds == 1:
+                clear_session_edit_data(request, session_key_prefix=session_key_prefix)
                 redirect_to = request.GET.get('next', sounds[0].get_absolute_url())
                 return HttpResponseRedirect(redirect_to)
 
             messages.add_message(request, messages.INFO, 
                 f'Successfully finished sound editing round {current_round} of {num_rounds}!')
-            if not request.session['edit_sounds']:
+            if not request.session[f'{session_key_prefix}-edit_sounds']:
                 # If no more sounds to edit, redirect to manage sounds page
-                clear_session_edit_data(request)
+                clear_session_edit_data(request, session_key_prefix=session_key_prefix)
                 redirect_to = request.GET.get('next', reverse('accounts-manage-sounds', args=['published']))
                 return HttpResponseRedirect(redirect_to)
             else:
                 # Otherwise, redirect to the same page to continue with next round of sounds
-                next_arg = request.GET.get('next', None)
-                return HttpResponseRedirect(reverse('accounts-edit-sounds') + '?next=' + next_arg if next_arg else '')
+                next_arg = request.GET.get('next', '')
+                return HttpResponseRedirect(reverse('accounts-edit-sounds') + f'?next={next_arg}&session={session_key_prefix}')
         
     return render(request, 'sounds/edit_and_describe.html', tvars)
 

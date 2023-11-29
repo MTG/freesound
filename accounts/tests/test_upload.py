@@ -81,8 +81,9 @@ class UserUploadAndDescribeSounds(TestCase):
             'describe': 'describe',
             'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
-        self.assertRedirects(resp, reverse('accounts-describe-sounds'))
-        self.assertEqual(self.client.session['len_original_describe_sounds'], len(sounds_to_describe_idx))
+        sesison_key_prefix = resp.url.split('session=')[1]
+        self.assertRedirects(resp, reverse('accounts-describe-sounds') + f'?session={sesison_key_prefix}')
+        self.assertEqual(self.client.session[f'{sesison_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
         self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session['describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
         
         # Selecting multiple file redirects to /home/describe/license/
@@ -91,11 +92,12 @@ class UserUploadAndDescribeSounds(TestCase):
             'describe': 'describe',
             'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
-        self.assertRedirects(resp, reverse('accounts-describe-license'))
-        self.assertEqual(self.client.session['len_original_describe_sounds'], len(sounds_to_describe_idx))
-        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session['describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
+        sesison_key_prefix = resp.url.split('session=')[1]
+        self.assertRedirects(resp, reverse('accounts-describe-license') + f'?session={sesison_key_prefix}')
+        self.assertEqual(self.client.session[f'{sesison_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
+        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{sesison_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
         
-        # Selecting files to delete, delete the files
+        # Selecting files to delete, deletes the files
         sounds_to_delete_idx = [1, 2, 3]
         resp = self.client.post(reverse('accounts-manage-sounds', args=['pending_description']), {
             'delete_confirm': 'delete_confirm',
@@ -120,15 +122,16 @@ class UserUploadAndDescribeSounds(TestCase):
 
         # Set license and pack data in session
         session = self.client.session
-        session['describe_license'] = License.objects.all()[0]
-        session['describe_pack'] = False
-        session['len_original_describe_sounds'] = 2
-        session['describe_sounds'] = [File(1, filenames[0], user_upload_path + filenames[0], False),
+        session_key_prefix = '304298eb'
+        session[f'{session_key_prefix}-describe_license'] = License.objects.all()[0]
+        session[f'{session_key_prefix}-describe_pack'] = False
+        session[f'{session_key_prefix}-len_original_describe_sounds'] = 2
+        session[f'{session_key_prefix}-describe_sounds'] = [File(1, filenames[0], user_upload_path + filenames[0], False),
                                       File(2, filenames[1], user_upload_path + filenames[1], False)]
         session.save()
 
         # Post description information
-        resp = self.client.post('/home/describe/sounds/', {
+        resp = self.client.post(f'/home/describe/sounds/?session={session_key_prefix}', {
             '0-audio_filename': filenames[0],
             '0-lat': '46.31658418182218',
             '0-lon': '3.515625',

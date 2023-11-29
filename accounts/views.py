@@ -25,7 +25,6 @@ import errno
 import json
 import logging
 import os
-import pickle
 import tempfile
 import time
 import uuid
@@ -74,7 +73,7 @@ from general import tasks
 from messages.models import Message
 from sounds.forms import LicenseForm, PackForm
 from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
-from sounds.views import edit_and_describe_sounds_helper, clear_session_edit_data, clear_session_describe_data
+from sounds.views import edit_and_describe_sounds_helper
 from tickets.models import TicketComment, Ticket, UserAnnotation
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
@@ -630,10 +629,10 @@ def manage_sounds(request, tab):
             if sounds:
                 if 'edit' in request.POST:
                     # Edit the selected sounds
-                    clear_session_edit_data(request)
-                    request.session['edit_sounds'] = sounds  # Add the list of sounds to edit in the session object
-                    request.session['len_original_edit_sounds'] = len(sounds)
-                    return HttpResponseRedirect(reverse('accounts-edit-sounds') + '?next=' + request.path)
+                    session_key_prefix = str(uuid.uuid4())[0:8]  # Use a new so we don't interfere with other active description/editing processes
+                    request.session[f'{session_key_prefix}-edit_sounds'] = sounds  # Add the list of sounds to edit in the session object
+                    request.session[f'{session_key_prefix}-len_original_edit_sounds'] = len(sounds)
+                    return HttpResponseRedirect(reverse('accounts-edit-sounds') + f'?next={request.path}&session={session_key_prefix}')
                 elif 'delete_confirm' in request.POST:
                     # Delete the selected sounds
                     n_sounds_deleted = 0
@@ -713,7 +712,8 @@ def manage_sounds(request, tab):
 @login_required
 @transaction.atomic()
 def edit_sounds(request):
-    return edit_and_describe_sounds_helper(request)  # Note that the list of sounds to describe is stored in the session object
+    session_key_prefix = request.GET.get('session', '')
+    return edit_and_describe_sounds_helper(request, session_key_prefix=session_key_prefix)  # Note that the list of sounds to describe is stored in the session object
 
 
 def sounds_pending_description_helper(request, file_structure, files):
@@ -758,15 +758,14 @@ def sounds_pending_description_helper(request, file_structure, files):
                 remove_empty_user_directory_from_mirror_locations(user_uploads_dir)
                 return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
             elif "describe" in request.POST:
-                clear_session_describe_data(request)
-                request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
-                request.session['len_original_describe_sounds'] = len(request.session['describe_sounds'])
-                # If only one file is choosen, go straight to the last step of the describe process,
-                # otherwise go to license selection step
-                if len(request.session['describe_sounds']) > 1:
-                    return HttpResponseRedirect(reverse('accounts-describe-license'))
+                session_key_prefix = str(uuid.uuid4())[0:8]  # Use a new so we don't interfere with other active description/editing processes
+                request.session[f'{session_key_prefix}-describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+                request.session[f'{session_key_prefix}-len_original_describe_sounds'] = len(request.session[f'{session_key_prefix}-describe_sounds'])
+                # If only one file is choosen, go straight to the last step of the describe process, otherwise go to license selection step
+                if len(request.session[f'{session_key_prefix}-describe_sounds']) > 1:
+                    return HttpResponseRedirect(reverse('accounts-describe-license') + f'?session={session_key_prefix}')
                 else:
-                    return HttpResponseRedirect(reverse('accounts-describe-sounds'))
+                    return HttpResponseRedirect(reverse('accounts-describe-sounds') + f'?session={session_key_prefix}')
             else:
                 form = FileChoiceForm(files)
                 tvars = {'form': form, 'file_structure': file_structure}
@@ -786,42 +785,53 @@ def sounds_pending_description_helper(request, file_structure, files):
 
 @login_required
 def describe_license(request):
+    session_key_prefix = request.GET.get('session', '')
     if request.method == 'POST':
         form = LicenseForm(request.POST, hide_old_license_versions=True)
         if form.is_valid():
-            request.session['describe_license'] = form.cleaned_data['license']
-            return HttpResponseRedirect(reverse('accounts-describe-pack'))
+            request.session[f'{session_key_prefix}-describe_license'] = form.cleaned_data['license']
+            return HttpResponseRedirect(reverse('accounts-describe-pack') + f'?session={session_key_prefix}')
     else:
         form = LicenseForm(hide_old_license_versions=True)
-    tvars = {'form': form, 'num_files': request.session.get('len_original_describe_sounds', 0)}
+    tvars = {
+        'form': form, 
+        'num_files': request.session.get(f'{session_key_prefix}-len_original_describe_sounds', 0), 
+        'session_key_prefix': session_key_prefix
+    }
     return render(request, 'accounts/describe_license.html', tvars)
 
 
 @login_required
 def describe_pack(request):
     packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
+    session_key_prefix = request.GET.get('session', '')
     if request.method == 'POST':
         form = PackForm(packs, request.POST, prefix="pack")
         if form.is_valid():
             data = form.cleaned_data
             if data['new_pack']:
                 pack, created = Pack.objects.get_or_create(user=request.user, name=data['new_pack'])
-                request.session['describe_pack'] = pack
+                request.session[f'{session_key_prefix}-describe_pack'] = pack
             elif data['pack']:
-                request.session['describe_pack'] = data['pack']
+                request.session[f'{session_key_prefix}-describe_pack'] = data['pack']
             else:
-                request.session['describe_pack'] = False
-            return HttpResponseRedirect(reverse('accounts-describe-sounds'))
+                request.session[f'{session_key_prefix}-describe_pack'] = False
+            return HttpResponseRedirect(reverse('accounts-describe-sounds') + f'?session={session_key_prefix}')
     else:
         form = PackForm(packs, prefix="pack")
-    tvars = {'form': form, 'num_files': request.session.get('len_original_describe_sounds', 0)}
+    tvars = {
+        'form': form, 
+        'num_files': request.session.get(f'{session_key_prefix}-len_original_describe_sounds', 0), 
+        'session_key_prefix': session_key_prefix
+    }
     return render(request, 'accounts/describe_pack.html', tvars)
 
 
 @login_required
 @transaction.atomic()
 def describe_sounds(request):
-    return edit_and_describe_sounds_helper(request, describing=True)  # Note that the list of sounds to describe is stored in the session object
+    session_key_prefix = request.GET.get('session', '')
+    return edit_and_describe_sounds_helper(request, describing=True, session_key_prefix=session_key_prefix)  # Note that the list of sounds to describe is stored in the session object
 
     
 @login_required

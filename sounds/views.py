@@ -839,7 +839,7 @@ def pack(request, username, pack_id):
         return render(request, 'sounds/pack_deleted.html')
 
     qs = Sound.public.only('id').filter(pack=pack).order_by('-created')
-    num_sounds_to_display = settings.SOUNDS_PER_PAGE
+    num_sounds_to_display = settings.SOUNDS_PER_PAGE_PROFILE_PACK_PAGE
     sound_ids = [sound_obj.id for sound_obj in qs[0:num_sounds_to_display]]
     pack_sounds = Sound.objects.ordered_ids(sound_ids)
 

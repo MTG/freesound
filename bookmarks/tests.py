@@ -28,132 +28,53 @@ class BookmarksTest(TestCase):
 
     fixtures = ['licenses', 'sounds']
 
-    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True)  # Need that to make test pass (and make BW behave same as old UI)
-    def test_bookmarks_context(self):
+    def test_old_bookmarks_for_user_redirect(self):
+        user = User.objects.get(username='Anton')
+        category = bookmarks.models.BookmarkCategory.objects.create(name='Category1', user=user)
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=11, category=category)
+        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category)
+
+        # User not logged in, redirect raises 404
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}))
-        context = resp.context
+        self.assertEqual(404, resp.status_code)
     
-        self.assertEqual(200, resp.status_code)
-        expected_keys = ['bookmark_categories', 'current_page', 'is_owner',
-                         'n_uncat', 'page', 'paginator', 'user']
-        context_keys = list(context.keys())
-        for k in expected_keys:
-            self.assertIn(k, context_keys)
-
-    def test_no_such_bookmark_category(self):
-        resp = self.client.get(reverse('bookmarks-for-user-for-category', kwargs={'username': 'Anton', 'category_id': 995}))
-
-        self.assertEqual(404, resp.status_code)
-
-    def test_no_user(self):
-        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'NoSuchUser'}))
-
-        self.assertEqual(404, resp.status_code)
-
-    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True)  # Need that to make test pass (and make BW behave same as old UI)
-    def test_bookmarks_oldusername(self):
-        user = User.objects.get(username='Anton')
-        user.username = "new-username"
-        user.save()
-
-        # Check that with the new-username should work, returning a 200
-        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'new-username'}))
-        self.assertEqual(200, resp.status_code)
-
-        # But with the old username the response should be a 301
+        # User logged in, redirect to home/bookmarks page
+        self.client.force_login(user)
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}))
-        self.assertEqual(301, resp.status_code)
+        self.assertRedirects(resp, reverse('bookmarks'))
 
-        # Now follow the redirect of the last case
-        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}), follow=True)
-        context = resp.context
-
-        self.assertEqual(200, resp.status_code)
-        expected_keys = ['bookmark_categories', 'current_page', 'is_owner',
-                         'n_uncat', 'page', 'paginator', 'user']
-        context_keys = list(context.keys())
-        for k in expected_keys:
-            self.assertIn(k, context_keys)
-
-    def test_your_bookmarks(self):
+        # User logged in, redirect to home/bookmarks/category page
+        resp = self.client.get(reverse('bookmarks-for-user-for-category', kwargs={'username': 'Anton', 'category_id': category.id}))
+        self.assertRedirects(resp, reverse('bookmarks-category', kwargs={'category_id': category.id}))
+           
+    def test_bookmarks(self):
         user = User.objects.get(username='Anton')
         self.client.force_login(user)
 
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=11)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12)
-
+        # Test user has no bookmarks
         response = self.client.get(reverse('bookmarks'))
-
         self.assertEqual(200, response.status_code)
-        self.assertEqual(3, len(response.context['page'].object_list))
-
-    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True)  # Need that to make test pass (and make BW behave same as old UI)
-    def test_others_bookmarks(self):
-        logged_in_user = User.objects.get(username='Bram')
-        self.client.force_login(logged_in_user)
-
-        user = User.objects.get(username='Anton')
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=11)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12)
-
-        response = self.client.get(reverse('bookmarks-for-user', kwargs={'username': user.username}))
-
-        self.assertEqual(200, response.status_code)
-        self.assertContains(response, 'Bookmarks by Anton')
-
-    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True) 
-    def test_no_bookmarks(self):
-        user = User.objects.get(username='Anton')
-
-        response = self.client.get(reverse('bookmarks-for-user', kwargs={'username': user.username}))
-
-        self.assertEqual(200, response.status_code)
-        self.assertContains(response, 'Bookmarks')
         self.assertContains(response, 'There are no uncategorized bookmarks')
-
-    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True) 
-    def test_bookmark_category(self):
-        user = User.objects.get(username='Anton')
-
+        
+        # Create bookmarks
         category = bookmarks.models.BookmarkCategory.objects.create(name='Category1', user=user)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=11, category=category)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category)
 
-        response = self.client.get(reverse('bookmarks-for-user-for-category',
-                                           kwargs={'username': user.username, 'category_id': category.id}))
-
+        # Test main bookmarks page
+        response = self.client.get(reverse('bookmarks'))
         self.assertEqual(200, response.status_code)
-        self.assertEqual(2, len(response.context['page'].object_list))
-        self.assertContains(response, 'Bookmarks')
-        self.assertContains(response, 'Category1')
+        self.assertEqual(1, len(response.context['page'].object_list))  # 1 bookmark uncategorized
+        self.assertEqual(1, len(response.context['bookmark_categories']))  # 1 bookmark cateogry
 
-    @override_settings(BW_BOOKMARK_PAGES_PUBLIC=True) 
-    def test_bookmark_category_oldusername(self):
-        user = User.objects.get(username='Anton')
-        self.client.force_login(user)
-
-        category = bookmarks.models.BookmarkCategory.objects.create(name='Category1', user=user)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=11, category=category)
-        bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category)
-
-        user.username = "new-username"
-        user.save()
-
-        response = self.client.get(reverse('bookmarks-for-user-for-category',
-                                           kwargs={'username': 'Anton', 'category_id': category.id}))
-        # The response is a 301
-        self.assertEqual(301, response.status_code)
-
-        # Now follow the redirect
-        response = self.client.get(reverse('bookmarks-for-user-for-category',
-                                kwargs={'username': 'Anton', 'category_id': category.id}), follow=True)
-        # The response is a 200
+        # Test bookmark cateogry page
+        response = self.client.get(reverse('bookmarks-category', kwargs={'category_id': category.id}))
         self.assertEqual(200, response.status_code)
+        self.assertEqual(2, len(response.context['page'].object_list))  # 2 sounds in cateogry
+        self.assertContains(response, category.name)
 
-        self.assertEqual(2, len(response.context['page'].object_list))
-        self.assertContains(response, 'Bookmarks')
-        self.assertContains(response, 'Category1')
+        # Test category does not exist
+        response = self.client.get(reverse('bookmarks-category', kwargs={'category_id': 1234}))
+        self.assertEqual(404, response.status_code)

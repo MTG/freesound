@@ -1079,7 +1079,7 @@ def charts(request):
 @redirect_if_old_username_or_404
 def account(request, username):
     user = request.parameter_user
-    latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
+    latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE_PROFILE_PACK_PAGE))
     following = follow_utils.get_users_following_qs(user)
     followers = follow_utils.get_users_followers_qs(user)
     following_tags = follow_utils.get_tags_following_qs(user)

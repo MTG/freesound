@@ -38,30 +38,6 @@ from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is
 def bookmarks(request, category_id=None):
     user = request.user
     is_owner = True
-    return bookmarks_view_helper(request, user, is_owner, category_id)
-
-
-@redirect_if_old_username_or_404
-@raise_404_if_user_is_deleted
-def bookmarks_for_user(request, username, category_id=None):
-    user = request.parameter_user
-    is_owner = request.user.is_authenticated and user == request.user
-    if not settings.BW_BOOKMARK_PAGES_PUBLIC and not is_owner:
-        # If settings.BW_BOOKMARK_PAGES_PUBLIC is not True, we only make bookmarks available to bookmark owners 
-        # (bookmarks are not public)
-        raise Http404
-    if is_owner:
-        # If accessing own bookmarks using the people/xx/bookmarks URL, redirect to the /home/bookmarks URL
-        if category_id:
-            return HttpResponseRedirect(reverse('bookmarks-category', args=[category_id]))
-        else:
-            return HttpResponseRedirect(reverse('bookmarks'))
-    return bookmarks_view_helper(request, user, is_owner, category_id)
-
-
-def bookmarks_view_helper(request, user, is_owner, category_id):
-    # NOTE: we use this helper for the bookmarks and bookmarks_for_user views so the code is reused. When fully
-    # switching to BW, the bookmarks_for_user view could be remove as bookmarks won't be public anymore
     n_uncat = Bookmark.objects.select_related("sound").filter(user=user, category=None).count()
     if not category_id:
         category = None
@@ -77,6 +53,22 @@ def bookmarks_view_helper(request, user, is_owner, category_id):
              'bookmark_categories': bookmark_categories}
     tvars.update(paginate(request, bookmarked_sounds, settings.BOOKMARKS_PER_PAGE))
     return render(request, 'bookmarks/bookmarks.html', tvars)
+
+
+@redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
+def bookmarks_for_user(request, username, category_id=None):
+    user = request.parameter_user
+    is_owner = request.user.is_authenticated and user == request.user
+    if is_owner:
+        # If accessing own bookmarks using the people/xx/bookmarks URL, redirect to the /home/bookmarks URL
+        if category_id:
+            return HttpResponseRedirect(reverse('bookmarks-category', args=[category_id]))
+        else:
+            return HttpResponseRedirect(reverse('bookmarks'))
+    else:
+        # We only make bookmarks available to bookmark owners (bookmarks are not public)
+        raise Http404
 
 
 @login_required

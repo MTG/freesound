@@ -64,6 +64,7 @@ urlpatterns = [
     path('people/<username>/sounds/<int:sound_id>/comments/', comments.views.for_sound, name="sound-comments"),
     path('people/<username>/packs/', sounds.views.packs_for_user, name="packs-for-user"),
     path('people/<username>/packs/<int:pack_id>/', sounds.views.pack, name="pack"),
+    path('people/<username>/packs/<int:pack_id>/section/stats/', sounds.views.pack_stats_section, name="pack-stats-section"),
     path('people/<username>/packs/<int:pack_id>/edit/', sounds.views.pack_edit, name="pack-edit"),
     re_path(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
     path('people/<username>/packs/<int:pack_id>/downloaders/', sounds.views.pack_downloaders, name="pack-downloaders"),

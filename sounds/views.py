@@ -858,12 +858,27 @@ def pack(request, username, pack_id):
 
     tvars = {
         'pack': pack,
-        'num_sounds_ok': num_sounds_ok,
         'pack_sounds': pack_sounds,
         'is_following': is_following,
         'geotags_in_pack_serialized': geotags_in_pack_serialized
     }
     return render(request, 'sounds/pack.html', tvars)
+
+
+@redirect_if_old_username_or_404
+def pack_stats_section(request, username, pack_id):
+    if not request.GET.get('ajax'):
+        raise Http404  # Only accessible via ajax
+    try:
+        pack = Pack.objects.bulk_query_id(pack_id)[0]
+        if pack.user.username.lower() != username.lower():
+            raise Http404
+    except (Pack.DoesNotExist, IndexError) as e:
+        raise Http404
+    tvars = {
+        'pack': pack,
+    }
+    return render(request, 'sounds/packstats_section.html', tvars)
 
 
 @redirect_if_old_username_or_404

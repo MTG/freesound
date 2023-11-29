@@ -96,33 +96,6 @@ class TestAPiViews(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
-    def test_bookmark_views_response_ok(self):
-        user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
-        for sound in sounds:
-            sound.change_processing_state("OK")
-            sound.change_moderation_state("OK")
-
-        category = BookmarkCategory.objects.create(name='Category1', user=user)
-        Bookmark.objects.create(user=user, sound_id=sounds[0].id)
-        Bookmark.objects.create(user=user, sound_id=sounds[1].id)
-        Bookmark.objects.create(user=user, sound_id=sounds[2].id, category=category)
-        Bookmark.objects.create(user=user, sound_id=sounds[3].id, category=category)
-
-        self.client.force_login(user)
-
-        # 200 response on list of bookmark categories
-        resp = self.client.get(reverse('apiv2-user-bookmark-categories', kwargs={'username': user.username}))
-        self.assertEqual(resp.status_code, 200)
-
-        # 200 response on getting sounds for bookmark category without name
-        resp = self.client.get(reverse('apiv2-user-bookmark-category-sounds', kwargs={'username': user.username, 'category_id': 0}) + '?fields=*')
-        self.assertEqual(resp.status_code, 200)
-
-        # 200 response on getting sounds for bookmark category without name
-        resp = self.client.get(reverse('apiv2-user-bookmark-category-sounds', kwargs={'username': user.username, 'category_id': category.id}) + '?fields=*')
-        self.assertEqual(resp.status_code, 200)
-
-
     def test_sound_views_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
         for sound in sounds:
@@ -429,6 +402,68 @@ class TestApiV2Client(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn('redirect_uri', resp.context['form'].errors)
         self.assertIn('url', resp.context['form'].errors)
+
+
+class TestMeResources(TestCase):
+
+    fixtures = ['licenses']
+
+    def setUp(self):
+        # Create users
+        self.end_user_password = 'endpass'
+        self.end_user = User.objects.create_user("end_user", password=self.end_user_password, email='enduser@mail.com')
+        self.dev_user = User.objects.create_user("dev_user", password='devpass', email='devuser@mail.com')
+
+        # Create clients
+        client = ApiV2Client.objects.create(
+            name='PasswordClient',
+            user=self.dev_user,
+            allow_oauth_passoword_grant=True,
+        )
+
+        # Get access token for end_user
+        resp = self.client.post(
+            reverse('oauth2_provider:access_token'),
+            {
+                'client_id': client.client_id,
+                'grant_type': 'password',
+                'username': self.end_user.username,
+                'password': self.end_user_password,
+            }, secure=True)
+        self.auth_headers = {
+            'HTTP_AUTHORIZATION': f'Bearer {resp.json()["access_token"]}',
+        }
+        
+        # Create sounds and content
+        _, _, sounds = create_user_and_sounds(user=self.end_user, num_sounds=5, num_packs=1)
+        for sound in sounds:
+            sound.change_processing_state("OK")
+            sound.change_moderation_state("OK")
+
+        self.category = BookmarkCategory.objects.create(name='Category1', user=self.end_user)
+        Bookmark.objects.create(user=self.end_user, sound_id=sounds[0].id)
+        Bookmark.objects.create(user=self.end_user, sound_id=sounds[1].id)
+        Bookmark.objects.create(user=self.end_user, sound_id=sounds[2].id, category=self.category)
+        Bookmark.objects.create(user=self.end_user, sound_id=sounds[3].id, category=self.category)
+
+    def test_me_resource(self):
+        # 200 response on me resource
+        resp = self.client.get(reverse('apiv2-me'), secure=True, **self.auth_headers)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['username'], self.end_user.username)
+    
+    def test_bookmark_resources(self):
+        # 200 response on list of bookmark categories
+        resp = self.client.get(reverse('apiv2-me-bookmark-categories'), secure=True, **self.auth_headers)
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on getting sounds for bookmark category without name
+        resp = self.client.get(reverse('apiv2-me-bookmark-category-sounds', kwargs={'category_id': 0}) + '?fields=*', secure=True, **self.auth_headers)
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on getting sounds for bookmark category without name
+        resp = self.client.get(reverse('apiv2-me-bookmark-category-sounds', kwargs={'category_id': self.category.id}) + '?fields=*', secure=True, **self.auth_headers)
+        self.assertEqual(resp.status_code, 200)
 
 
 class APIAuthenticationTestCase(TestCase):

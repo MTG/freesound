@@ -737,21 +737,6 @@ CACHED_BLOCKED_IPS_TIME = 60 * 5  # 5 minutes
 # API settings
 
 ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False
-APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download',
-                                   'apiv2-user-sound-edit',
-                                   'apiv2-user-create-bookmark',
-                                   'apiv2-user-create-rating',
-                                   'apiv2-user-create-comment',
-                                   'apiv2-uploads-upload',
-                                   'apiv2-uploads-pending',
-                                   'apiv2-uploads-describe',
-                                   'apiv2-pack-download','apiv2-me',
-                                   'apiv2-logout-oauth2-user',
-                                   'oauth2:capture',
-                                   'oauth2:authorize',
-                                   'oauth2:redirect',
-                                   'oauth2:access_token',
-                                   'api-login']
 
 APIV2 = {
     'PAGE_SIZE': 15,

@@ -41,6 +41,8 @@ urlpatterns = [
 
     # Me
     path('me/', views.Me.as_view(), name="apiv2-me"),
+    path('me/bookmark_categories/', views.MeBookmarkCategories.as_view(), name='apiv2-me-bookmark-categories'),
+    path('me/bookmark_categories/<int:category_id>/sounds/', views.MeBookmarkCategorySounds.as_view(), name='apiv2-me-bookmark-category-sounds'),
 
     # Available audio descriptors
     path('descriptors/', views.AvailableAudioDescriptors.as_view(), name="apiv2-available-descriptors"),
@@ -72,8 +74,6 @@ urlpatterns = [
     path('users/<username>/', views.UserInstance.as_view(), name="apiv2-user-instance"),
     path('users/<username>/sounds/', views.UserSounds.as_view(), name="apiv2-user-sound-list"),
     path('users/<username>/packs/', views.UserPacks.as_view(), name='apiv2-user-packs'),
-    path('users/<username>/bookmark_categories/', views.UserBookmarkCategories.as_view(), name='apiv2-user-bookmark-categories'),
-    path('users/<username>/bookmark_categories/<int:category_id>/sounds/', views.UserBookmarkCategorySounds.as_view(), name='apiv2-user-bookmark-category-sounds'),
 
     # Packs
     path('packs/<int:pk>/', views.PackInstance.as_view(), name='apiv2-pack-instance'),

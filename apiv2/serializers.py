@@ -409,7 +409,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
                   'packs',
                   'num_posts',
                   'num_comments',
-                  'bookmark_categories',
                   )
 
     url = serializers.SerializerMethodField()
@@ -425,11 +424,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     packs = serializers.SerializerMethodField()
     def get_packs(self, obj):
         return prepend_base(reverse('apiv2-user-packs', args=[obj.username]),
-                            request_is_secure=self.context['request'].is_secure())
-
-    bookmark_categories = serializers.SerializerMethodField()
-    def get_bookmark_categories(self, obj):
-        return prepend_base(reverse('apiv2-user-bookmark-categories', args=[obj.username]),
                             request_is_secure=self.context['request'].is_secure())
 
     avatar = serializers.SerializerMethodField()
@@ -552,7 +546,7 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
 
     sounds = serializers.SerializerMethodField()
     def get_sounds(self, obj):
-        return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]),
+        return prepend_base(reverse('apiv2-me-bookmark-category-sounds', args=[obj.id]),
                             request_is_secure=self.context['request'].is_secure())
 
 

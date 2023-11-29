@@ -635,72 +635,6 @@ class UserPacks(ListAPIView):
         return queryset
 
 
-class UserBookmarkCategories(ListAPIView):
-    serializer_class = BookmarkCategorySerializer
-
-    @classmethod
-    def get_description(cls):
-        return 'Bookmark categories created by a user.' \
-               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-               % (prepend_base('/docs/api'), '%s#user-bookmark-categories' % resources_doc_filename,
-                  get_formatted_examples_for_view('UserBookmarkCategories', 'apiv2-user-bookmark-categories', max=5))
-
-    def get(self, request,  *args, **kwargs):
-        api_logger.info(self.log_message(f"user:{self.kwargs['username']} bookmark_categories"))
-        return super().get(request, *args, **kwargs)
-
-    def get_queryset(self):
-        categories = BookmarkCategory.objects.filter(user__username=self.kwargs['username'])
-        try:
-            user = User.objects.get(username=self.kwargs['username'], is_active=True)
-        except User.DoesNotExist:
-            raise NotFoundException(resource=self)
-
-        if Bookmark.objects.select_related("sound")\
-                .filter(user__username=self.kwargs['username'], category=None).count():
-            uncategorized = BookmarkCategory(name='Uncategorized', user=user, id=0)
-            return [uncategorized] + list(categories)
-        else:
-            return list(categories)
-
-
-class UserBookmarkCategorySounds(ListAPIView):
-    serializer_class = SoundListSerializer
-
-    @classmethod
-    def get_description(cls):
-        return 'Sounds bookmarked by a user under a particular category.' \
-               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-               % (prepend_base('/docs/api'), '%s#user-bookmark-category-sounds' % resources_doc_filename,
-                  get_formatted_examples_for_view('UserBookmarkCategorySounds', 'apiv2-user-bookmark-category-sounds',
-                                                  max=5))
-
-    def get(self, request,  *args, **kwargs):
-        api_logger.info(self.log_message('user:%s sounds_for_bookmark_category:%s'
-                                     % (self.kwargs['username'], str(self.kwargs.get('category_id', None)))))
-        return super().get(request, *args, **kwargs)
-
-    def get_queryset(self):
-
-        kwargs = dict()
-        kwargs['user__username'] = self.kwargs['username']
-
-        if 'category_id' in self.kwargs:
-            if int(self.kwargs['category_id']) != 0:
-                kwargs['category__id'] = self.kwargs['category_id']
-            else:
-                kwargs['category'] = None
-        else:
-            kwargs['category'] = None
-        try:
-            # TODO: this line below will not add the analysis_state_essentia_exists property to the sound objects and will
-            # make the queries inneficient if the "analysis" is requested. This could be improved in the future.
-            queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
-        except:
-            raise NotFoundException(resource=self)
-        return queryset
-
-
 ############
 # PACK VIEWS
 ############
@@ -1185,11 +1119,82 @@ class Me(OauthRequiredAPIView):
             response_data.update({
                  'email': self.user.profile.get_email_for_delivery(),
                  'unique_id': self.user.id,
+                 'bookmark_categories': prepend_base(reverse('apiv2-me-bookmark-categories')),
             })
             return Response(response_data, status=status.HTTP_200_OK)
         else:
             raise ServerErrorException(resource=self)
 
+
+class MeBookmarkCategories(OauthRequiredAPIView, ListAPIView):
+    serializer_class = BookmarkCategorySerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Bookmark categories created by the logged in user.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#me-bookmark-categories' % resources_doc_filename,
+                  get_formatted_examples_for_view('MeBookmarkCategories', 'apiv2-me-bookmark-categories', max=5))
+
+    def get(self, request,  *args, **kwargs):
+        api_logger.info(self.log_message(f"user:{self.user.username} bookmark_categories"))
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        if self.user:
+            categories = BookmarkCategory.objects.filter(user__username=self.user.username)
+            try:
+                user = User.objects.get(username=self.user.username, is_active=True)
+            except User.DoesNotExist:
+                raise NotFoundException(resource=self)
+
+            if Bookmark.objects.select_related("sound")\
+                    .filter(user__username=self.user.username, category=None).count():
+                uncategorized = BookmarkCategory(name='Uncategorized', user=user, id=0)
+                return [uncategorized] + list(categories)
+            else:
+                return list(categories)
+        else:
+            raise ServerErrorException(resource=self)
+        
+
+class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
+    serializer_class = SoundListSerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Sounds bookmarked by a user under a particular category.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#me-bookmark-category-sounds' % resources_doc_filename,
+                  get_formatted_examples_for_view('MeBookmarkCategorySounds', 'apiv2-me-bookmark-category-sounds',
+                                                  max=5))
+
+    def get(self, request,  *args, **kwargs):
+        api_logger.info(self.log_message('user:%s sounds_for_bookmark_category:%s'
+                                     % (self.user.username, str(self.kwargs.get('category_id', None)))))
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        if self.user:
+            kwargs = dict()
+            kwargs['user__username'] = self.user.username
+
+            if 'category_id' in self.kwargs:
+                if int(self.kwargs['category_id']) != 0:
+                    kwargs['category__id'] = self.kwargs['category_id']
+                else:
+                    kwargs['category'] = None
+            else:
+                kwargs['category'] = None
+            try:
+                # TODO: this line below will not add the analysis_state_essentia_exists property to the sound objects and will
+                # make the queries inneficient if the "analysis" is requested. This could be improved in the future.
+                queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
+            except:
+                raise NotFoundException(resource=self)
+            return queryset
+        else:
+            raise ServerErrorException(resource=self)
 
 class AvailableAudioDescriptors(GenericAPIView):
     @classmethod
@@ -1275,13 +1280,6 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '03 User packs': prepend_base(
                         reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>'),
                         request_is_secure=request.is_secure()),
-                    '04 User bookmark categories': prepend_base(
-                        reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>'),
-                        request_is_secure=request.is_secure()),
-                    '05 User bookmark category sounds': prepend_base(
-                        reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>')
-                            .replace('uname', '<username>'),
-                        request_is_secure=request.is_secure()),
                 }.items(), key=lambda t: t[0]))},
                 {'Pack resources': OrderedDict(sorted({
                     '01 Pack instance': prepend_base(
@@ -1295,7 +1293,11 @@ class FreesoundApiV2Resources(GenericAPIView):
                 }.items(), key=lambda t: t[0]))},
                 {'Other resources': OrderedDict(sorted({
                     '01 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
-                    '02 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
+                    '02 My bookmark categories': prepend_base(reverse('apiv2-me-bookmark-categories')),
+                    '03 My bookmark category sounds': prepend_base(
+                        reverse('apiv2-me-bookmark-category-sounds', args=[0]).replace('0', '<category_id>'),
+                        request_is_secure=request.is_secure()),
+                    '04 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
                 }.items(), key=lambda t: t[0]))},
             ]
 

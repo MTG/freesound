@@ -448,15 +448,7 @@ def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=F
         dynamic_resolve = False  # don't need to dynamic resolve is request is https
 
     if dynamic_resolve:
-        try:
-            url_name = resolve(rel.replace('<sound_id>', '1')
-                               .replace('<username', 'name')
-                               .replace('<pack_id>', '1')
-                               .replace('<category_id>', '1')).url_name
-            if url_name in settings.APIV2_RESOURCES_REQUIRING_HTTPS:
-                use_https = True
-        except Exception as e:
-            pass
+        use_https = True
 
     if use_https:
         return f"https://{Site.objects.get_current().domain}{rel}"

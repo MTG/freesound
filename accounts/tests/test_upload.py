@@ -84,7 +84,7 @@ class UserUploadAndDescribeSounds(TestCase):
         sesison_key_prefix = resp.url.split('session=')[1]
         self.assertRedirects(resp, reverse('accounts-describe-sounds') + f'?session={sesison_key_prefix}')
         self.assertEqual(self.client.session[f'{sesison_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
-        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session['describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
+        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{sesison_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
         
         # Selecting multiple file redirects to /home/describe/license/
         sounds_to_describe_idx = [1, 2, 3]

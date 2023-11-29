@@ -878,7 +878,7 @@ def pack_stats_section(request, username, pack_id):
     tvars = {
         'pack': pack,
     }
-    return render(request, 'sounds/packstats_section.html', tvars)
+    return render(request, 'sounds/pack_stats_section.html', tvars)
 
 
 @redirect_if_old_username_or_404

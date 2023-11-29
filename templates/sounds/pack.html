@@ -78,12 +78,10 @@
                 <div class="col-md-4 col-extra-left-padding-large-md">
                     <div class="divider-light v-spacing-top-6 v-spacing-5 d-md-none"></div>
                     <div class="bw-sound__sidebar">
-                        {% comment %}
                         <section class="bw-profile__section_stats v-spacing-top-4 async-section"
                             data-async-section-content-url="{% url 'pack-stats-section' pack.user.username pack.id %}?ajax=1">
                             <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
                         </section>
-                        {% endcomment %}
                         {% if pack.num_sounds_unpublished %}
                             <div class="v-spacing-top-6 text-red">
                                 {% bw_icon "notification" %}This pack has {{ pack.num_sounds_unpublished}} unpublished sounds

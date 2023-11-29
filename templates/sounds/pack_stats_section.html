@@ -1,5 +1,7 @@
 {% load bw_templatetags %}
 {% load util %}
+{% load cache %}
+{% cache 3600 bw_pack_stats pack.id %}
 <div>
     <ol>
         <li class="v-spacing-3">
@@ -19,3 +21,4 @@
 <div class="text-grey v-spacing-top-1">
     {{ pack.license_summary_text|safe }} {% if pack.license_summary_deed_url %}<a href="{{ pack.license_summary_deed_url }}" target="_blank" class="bw-link--black">More...</a>{% endif %}
 </div>
+{% endcache %}

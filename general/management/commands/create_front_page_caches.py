@@ -45,6 +45,7 @@ class Command(LoggingBaseCommand):
         NUM_ITEMS_PER_SECTION = 9
 
         last_week = get_n_weeks_back_datetime(n_weeks=1)  # Use later to filter queries
+        last_two_weeks = get_n_weeks_back_datetime(n_weeks=2)  # Use later to filter queries
 
         cache_time = 24 * 60 * 60  # 1 day cache time
         # NOTE: The specific cache time is not important as long as it is bigger than the frequency with which we run
@@ -90,16 +91,17 @@ class Command(LoggingBaseCommand):
         random.shuffle(trending_new_pack_ids)  # Randomize the order of the packs
         cache.set("trending_new_pack_ids", trending_new_pack_ids[0:NUM_ITEMS_PER_SECTION], cache_time)
 
-        # Generate top rated new sounds cache (top rated sounds from those created last week)
+        # Generate top rated new sounds cache (top rated sounds from those created last two weeks)
+        # Note we use two weeks here instead of one to make sure we have enough sounds to choose from
         top_rated_new_sound_ids = Sound.public.select_related('license', 'user') \
             .annotate(greatest_date=Greatest('created', 'moderation_date')) \
-            .filter(greatest_date__gte=last_week).exclude(is_explicit=True) \
+            .filter(greatest_date__gte=last_two_weeks).exclude(is_explicit=True) \
+            .filter(num_ratings__gt=settings.MIN_NUMBER_RATINGS) \
             .order_by("-avg_rating", "-num_ratings").values_list('id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
         top_rated_new_sound_ids = list(top_rated_new_sound_ids)
         random.shuffle(top_rated_new_sound_ids)  # Randomize the order of the sounds
         cache.set("top_rated_new_sound_ids", top_rated_new_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
         
-
         # Generate latest "random sound of the day" ids
         recent_random_sound_ids = [sd.sound_id for sd in SoundOfTheDay.objects.filter(date_display__lt=datetime.datetime.today()).order_by('-date_display')[:NUM_ITEMS_PER_SECTION]]
         cache.set("recent_random_sound_ids", list(recent_random_sound_ids), cache_time)

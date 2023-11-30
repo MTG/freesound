@@ -51,7 +51,7 @@
                 {% if top_rated_new_sound_ids %}
                     {% cache 300 bw_front_page_top_rated_new_sound_ids %}
                     <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-3" title="Top rated sounds uploaded during the last week">Top rated new sounds</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-3" title="Top rated sounds uploaded during the last days">Top rated new sounds</h3>
                         {% sound_carousel top_rated_new_sound_ids %}
                     </section>
                     <hr />
@@ -61,7 +61,7 @@
                 {% if trending_new_sound_ids %}
                     {% cache 300 bw_front_page_trending_new_sounds %}
                     <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds uploaded during the last week">Most downloaded new sounds</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded sounds uploaded during the last days">Most downloaded new sounds</h3>
                         {% sound_carousel trending_new_sound_ids %}
                     </section>
                     <hr />
@@ -71,7 +71,7 @@
                 {% if trending_new_pack_ids %}
                     {% cache 300 bw_front_page_trending_new_packs %}
                     <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded packs created during the last week">Most downloaded new packs</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-3" title="Most downloaded packs created during the last days">Most downloaded new packs</h3>
                         {% pack_carousel trending_new_pack_ids %}
                     </section>
                     <hr />
@@ -81,7 +81,7 @@
                 {% if trending_sound_ids %}
                     {% cache 300 bw_front_page_trending_sounds %}
                     <section class="v-spacing-3">
-                        <h3 class="v-spacing-4 v-spacing-top-3" title="Sounds most downloaded during the last week">Most recently downloaded sounds</h3>
+                        <h3 class="v-spacing-4 v-spacing-top-3" title="Sounds most downloaded during the last days">Most recently downloaded sounds</h3>
                         {% sound_carousel trending_sound_ids %}
                     </section>
                     <hr />

@@ -12,7 +12,7 @@ const removeAllLastPlayedClasses = () => {
   });
 }
 
-export const isTouchEnabledDevice = () => {
+const isTouchEnabledDevice = () => {
   return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
 }
 
@@ -20,7 +20,9 @@ if (isTouchEnabledDevice()){
   document.addEventListener('click', (evt) => {
     /* In touch devics, make sure we remove the last-played class when user touches
     somewhere outside a player */
-    removeAllLastPlayedClasses();
+    if (evt.target.closest('.bw-player') === null){
+      removeAllLastPlayedClasses();
+    }
   })
 }
 
@@ -212,6 +214,7 @@ const createPlayButton = (audioElement, playerSize) => {
   playButton.setAttribute('title', 'Play/Pause')
   playButton.setAttribute('aria-label', 'Play/Pause')
   playButton.classList.add('bw-player__play-btn')
+  playButton.addEventListener('pointerdown', evt => {evt.stopPropagation()})
   playButton.addEventListener('click', (evt) => {
     const isPlaying = !audioElement.paused
     if (isPlaying) {
@@ -235,6 +238,7 @@ const createStopButton = (audioElement, parentNode) => {
   const stopButton = createControlButton('stop')
   stopButton.setAttribute('title', 'Stop')
   stopButton.setAttribute('aria-label', 'Stop')
+  stopButton.addEventListener('pointerdown', evt => evt.stopPropagation())
   stopButton.addEventListener('click', (e) => {
     audioElement.pause()
     audioElement.currentTime = 0
@@ -254,7 +258,8 @@ const createLoopButton = audioElement => {
   loopButton.setAttribute('aria-label', 'Loop')
   loopButton.classList.add('text-20')
   loopButton.classList.add('loop-button')
-  loopButton.addEventListener('click', (e) => {
+  loopButton.addEventListener('pointerdown', evt => evt.stopPropagation())
+  loopButton.addEventListener('click', (evt) => {
     const willLoop = !audioElement.loop
     if (willLoop) {
       loopButton.classList.add('text-red-important')
@@ -262,7 +267,7 @@ const createLoopButton = audioElement => {
       loopButton.classList.remove('text-red-important')
     }
     audioElement.loop = willLoop
-    e.stopPropagation()
+    evt.stopPropagation()
   })
   return loopButton
 }
@@ -342,8 +347,10 @@ const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWith
   if (startWithSpectrum){
     spectogramButton.classList.add('text-red-important');
   }
-  spectogramButton.addEventListener('click', () => {
+  spectogramButton.addEventListener('pointerdown', evt => evt.stopPropagation())
+  spectogramButton.addEventListener('click', evt => {
     toggleSpectrogramWaveform(playerImgNode, waveform, spectrum, playerSize)
+    evt.stopPropagation()
   })
   return spectogramButton
 }
@@ -353,7 +360,8 @@ const createRulerButton = (parentNode) => {
   rulerButton.setAttribute('title', 'Ruler')
   rulerButton.setAttribute('aria-label', 'Ruler')
   rulerButton.classList.add('text-20')
-  rulerButton.addEventListener('click', () => {
+  rulerButton.addEventListener('pointerdown', evt => evt.stopPropagation())
+  rulerButton.addEventListener('click', evt => {
     if (parentNode.dataset.rulerActive !== undefined){
       delete parentNode.dataset.rulerActive;
     } else {
@@ -367,6 +375,7 @@ const createRulerButton = (parentNode) => {
       rulerButton.classList.remove('text-red-important');
       rulerIndicator.classList.remove('opacity-090');
     }
+    evt.stopPropagation()
   })
 
   return rulerButton
@@ -411,7 +420,8 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
     imageContainer.appendChild(progressIndicator)
     const progressStatus = createProgressStatus(parentNode, audioElement, playerSize, startWithSpectrum)
     imageContainer.appendChild(progressStatus)
-    imageContainer.addEventListener('click', evt => {
+
+    imageContainer.addEventListener('pointerdown', evt => {  // We use "pointerdown" here so we can distinguish between mouse and touch events
       if (evt.altKey){
         toggleSpectrogramWaveform(playerImage, waveform, spectrum, playerSize);
       } else {
@@ -419,11 +429,13 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
         const width = evt.target.clientWidth
         let positionRatio = clickPosition / width
         if (playerSize === "small"){
-          if (isTouchEnabledDevice() && positionRatio < 0.15) {
-            // In small player and touch device, quantize touches near the start of the sound to position-0
+          if (evt.pointerType === "touch" && !parentNode.classList.contains('last-played') && audioElement.paused) {
+            // In small player, if interaction is via touch and the audio is not yet playing and the player is not "focused", we ignore 
+            // positionRatio and always start playing sound from the beggning. Then, a second touch (the audio is already playing) will 
+            // play the sound from the position of the touch
             positionRatio = 0.0
           } else if (positionRatio < 0.05){
-            // In small player but non-touch device, the quantization is less strict
+            // In small player and non-touch devices, we dome some quantization to start playing sound from the beggining when user clicks close enough to the start
             positionRatio = 0.0
           }
         }
@@ -433,8 +445,16 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
           // If paused, use playAtTime util function because it supports setting currentTime event if data is not yet loaded
           playAtTime(audioElement, time)
         } else {
-          // If already playing, just change current time and continue playing
-          audioElement.currentTime = time
+          // If already playing, using a touch event and the player is not "focused", then stop the player. Otherwise
+          // set the new player position to the touch/click position
+          if (evt.pointerType === "touch" && !parentNode.classList.contains('last-played')) {
+            audioElement.pause()
+            audioElement.currentTime = 0
+            setProgressIndicator(0, parentNode)
+            onPlayerTimeUpdate(audioElement, parentNode)
+          } else {
+            audioElement.currentTime = time
+          }
         }
         if (isTouchEnabledDevice()){
           // In touch enabled devices hide the progress indicator here because otherwise it will remain visible as no
@@ -459,6 +479,7 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
   const playerControls = document.createElement('div')
   playerControls.className = 'bw-player__controls'
   playerControls.addEventListener('click', evt => evt.stopPropagation())
+  playerControls.addEventListener('pointerdown', evt => evt.stopPropagation())
   if (playerSize === 'big') {
     playerControls.classList.add('bw-player__controls--big')
   } else if (playerSize === 'minimal') {
@@ -538,7 +559,6 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
   unfavoriteButton.setAttribute('title', 'Remove bookmark')
   unfavoriteButton.setAttribute('aria-label', 'Remove bookmark')
   favoriteButtonContainer.classList.add('bw-player__favorite')
-  favoriteButtonContainer.addEventListener('click', evt => evt.stopPropagation())
   
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
@@ -551,14 +571,16 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
   favoriteButtonContainer.appendChild(
     getIsFavorite() ? unfavoriteButton : favoriteButton
   )
-  favoriteButtonContainer.addEventListener('click', (e) => {
+
+  favoriteButtonContainer.addEventListener('pointerdown', evt => evt.stopPropagation())
+  favoriteButtonContainer.addEventListener('click', (evt) => {
     const isCurrentlyFavorite = getIsFavorite()
     favoriteButtonContainer.innerHTML = ''
     favoriteButtonContainer.appendChild(
       isCurrentlyFavorite ? unfavoriteButton : favoriteButton
     )
     parentNode.dataset.favorite = `${!isCurrentlyFavorite}`
-    e.stopPropagation()
+    evt.stopPropagation()
   })
   return favoriteButtonContainer
 }
@@ -574,6 +596,7 @@ const createSimilarSoundsButton = (parentNode, playerImgNode) => {
   similarSoundsButton.setAttribute('title', 'Find similar sounds')
   similarSoundsButton.setAttribute('aria-label', 'Find similar sounds')
   similarSoundsButtonContainer.classList.add('bw-player__similar')
+  similarSoundsButtonContainer.addEventListener('pointerdown', evt => evt.stopPropagation())
   similarSoundsButtonContainer.addEventListener('click', evt => evt.stopPropagation())
   
   if (isTouchEnabledDevice()){
@@ -598,6 +621,7 @@ const createRemixGroupButton = (parentNode, playerImgNode) => {
   remixGroupButton.setAttribute('title', 'See sound\'s remix group')
   remixGroupButton.setAttribute('aria-label', 'See sound\'s remix group')
   remixGroupButtonContainer.classList.add('bw-player__remix')
+  remixGroupButtonContainer.addEventListener('pointerdown', evt => evt.stopPropagation())
   remixGroupButtonContainer.addEventListener('click', evt => evt.stopPropagation())
   
   if (isTouchEnabledDevice()){
@@ -617,6 +641,23 @@ const createRemixGroupButton = (parentNode, playerImgNode) => {
  */
 const createPlayer = parentNode => {
   replaceTimesinceIndicators(parentNode);
+
+  if (!isTouchEnabledDevice()){
+    // If device is not touch enabled, then always enable hover interactions by adding appropriate class
+    parentNode.classList.add('bw-player--hover-interactions')
+  } else {
+    // For mixed devices which support both touch and mouse, we'll manually add or remove the hover events class when appropriate
+    parentNode.addEventListener('pointerenter', evt => {
+      if (evt.pointerType !== 'mouse'){
+        parentNode.classList.remove('bw-player--hover-interactions')
+      } else {
+        parentNode.classList.add('bw-player--hover-interactions')
+      }
+    })
+    parentNode.addEventListener('pointerleave', evt => {
+      parentNode.classList.remove('bw-player--hover-interactions')
+    })
+  }
 
   const playerSize = parentNode.dataset.size
   const showBookmarkButton = parentNode.dataset.bookmark === 'true'
@@ -647,9 +688,8 @@ const createPlayer = parentNode => {
     ratingWidget.className = 'bw-player__top_controls_left'
     rateSoundHiddenWidget.classList.remove('display-none')
     ratingWidget.append(rateSoundHiddenWidget)
-    ratingWidget.addEventListener('click', e => {
-      e.stopPropagation();  // Need to use this here to stop propagation of the click event and prevent player from start playing
-    })
+    ratingWidget.addEventListener('pointerdown', evt => evt.stopPropagation())
+    ratingWidget.addEventListener('click', evt => evt.stopPropagation())
     let startWithSpectrum = false;
     if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)
       startWithSpectrum = playerImgNode.src.indexOf(parentNode.dataset.waveform) === -1;
@@ -663,4 +703,5 @@ const createPlayer = parentNode => {
   setProgressIndicator(0, parentNode);
 }
 
-export {createPlayer};
+
+export {createPlayer, isTouchEnabledDevice};

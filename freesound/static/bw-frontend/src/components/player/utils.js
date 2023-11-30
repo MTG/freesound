@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import {createPlayer} from './player-ui'
+import {createPlayer, isTouchEnabledDevice} from './player-ui'
 
 export const simultaneousPlaybackDisallowed = () => {
   return document.cookie.indexOf('disallowSimultaneousAudioPlayback=yes') > -1;

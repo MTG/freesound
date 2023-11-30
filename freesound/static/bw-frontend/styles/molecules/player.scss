@@ -61,13 +61,6 @@
   padding-right: 3px;
   padding-left: 7px;
   font-size: 17px;
-
-  @media (hover: hover) {
-    /* Only add hover sttles if device supports it */
-    &:hover {
-      color: $red;
-    }
-  }
 }
 
 .bw-player__controls {
@@ -255,7 +248,7 @@
     display: none;
   }
 
-  @media (hover: hover) { /* if device supports hover, make extra controls visible on hover */
+  &.bw-player--hover-interactions {
     &:hover {
       .bw-player__rate__widget,
       /*.bw-player__controls, */ /* this one no longer needed as player buttons are always visible now */
@@ -268,10 +261,16 @@
         opacity: 1.0;
       } 
     }
+
+    .bw-player-control-btn {
+      &:hover {
+        color: $red;
+      }
+    } 
   }
 
-  @media (hover: none) {  /* if device does not hover, we'll make extra controls visible for the last player that was played */
-    &.last-played {
+  &.last-played {
+    &:not(.bw-player--hover-interactions){  // last-played class only affects if player does not have hover interactions enabled
       .bw-player__rate__widget,
       /*.bw-player__controls, */ /* this one no longer needed as player buttons are always visible now */
       .loop-button,  
@@ -282,7 +281,7 @@
       .bw-player__favorite {
         opacity: 1.0;
       } 
-    }
+    } 
   }
 }
 

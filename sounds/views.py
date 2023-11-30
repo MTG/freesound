@@ -155,6 +155,7 @@ def front_page(request):
     rss_cache = cache.get("rss_cache", None)
     trending_sound_ids = cache.get("trending_sound_ids", None)
     trending_new_sound_ids = cache.get("trending_new_sound_ids", None)
+    top_rated_new_sound_ids = cache.get("top_rated_new_sound_ids", None)
     trending_new_pack_ids = cache.get("trending_new_pack_ids", None)
     recent_random_sound_ids = cache.get("recent_random_sound_ids", None)
     total_num_sounds = cache.get("total_num_sounds", 0)
@@ -184,6 +185,7 @@ def front_page(request):
         'popular_searches': popular_searches,
         'trending_sound_ids': trending_sound_ids,
         'trending_new_sound_ids': trending_new_sound_ids,
+        'top_rated_new_sound_ids': top_rated_new_sound_ids,
         'trending_new_pack_ids': trending_new_pack_ids,
         'recent_random_sound_ids': recent_random_sound_ids,
         'current_forum_threads': current_forum_threads,

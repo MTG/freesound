@@ -1,12 +1,2 @@
-{% extends "messages/message_list.html" %}
-
-{% block tab_messages_archived_active %}active{% endblock %}
-
-{% block title %}messages - archived{% endblock %}
-
-{% block message_section_name %}Archived messages{% endblock %}
-
-{% block options %}
-	<option value="d">delete</option>
-	<option value="r">mark as read</option>
-{% endblock %}
+{% extends "messages/messages_list.html" %}
+{% block title %}Messages - Archived{% endblock %}

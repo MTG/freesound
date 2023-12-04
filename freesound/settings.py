@@ -38,7 +38,6 @@ MIDDLEWARE = [
     'freesound.middleware.UpdateEmailHandler',
     'freesound.middleware.OnlineUsersHandler',
     'corsheaders.middleware.CorsMiddleware',
-    'freesound.middleware.FrontendPreferenceHandler',
 ]
 
 INSTALLED_APPS = [
@@ -58,7 +57,6 @@ INSTALLED_APPS = [
     'general.apps.GeneralConfig',
     'support',
     'wiki',
-    'favorites',
     'sounds',
     'comments',
     'bookmarks',
@@ -79,6 +77,7 @@ INSTALLED_APPS = [
     'silk',
     'admin_reorder',
     'captcha',
+    'adminsortable',
 ]
 
 # Specify custom ordering of models in Django Admin index
@@ -291,11 +290,7 @@ EMAIL_SUBJECT_SUPPORT_EMAIL = '[support]'
 EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 
 # -------------------------------------------------------------------------------
-# Media paths, URLS and static settings
-
-# Absolute path to the directory that holds media (e.g. /home/media/media.lawrence.com/)
-MEDIA_ROOT = os.path.join(os.path.dirname(__file__), '../freesound/../media')
-MEDIA_URL = "/media/"
+# Static settings
 
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is not an installed Django app)
 STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
@@ -320,42 +315,57 @@ FREESOUND_RSS = ''
 
 # Number of things per page
 FORUM_POSTS_PER_PAGE = 20
-FORUM_THREADS_PER_PAGE = 40
-FORUM_THREADS_PER_PAGE_BW = 15
+FORUM_THREADS_PER_PAGE = 15
 SOUND_COMMENTS_PER_PAGE = 5
-SOUNDS_PER_PAGE = 15
-SOUNDS_PER_PAGE_COMPACT_MODE = 30
-PACKS_PER_PAGE = 15
-DOWNLOADED_SOUNDS_PACKS_PER_PAGE_BW = 12
-USERS_PER_DOWNLOADS_MODAL_PAGE_BW = 15
-COMMENTS_IN_MODAL_PER_PAGE_BW = 15 
+SOUNDS_PER_PAGE = 15  # In search page
+SOUNDS_PER_PAGE_COMPACT_MODE = 30  # In search page
+PACKS_PER_PAGE = 15  # In search page
+DOWNLOADED_SOUNDS_PACKS_PER_PAGE = 12
+USERS_PER_DOWNLOADS_MODAL_PAGE = 15
+COMMENTS_IN_MODAL_PER_PAGE = 15 
 REMIXES_PER_PAGE = 10
-MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 100
-MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE_SELECTED_COLUMN = 20
+MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 60
 SOUNDS_PER_DESCRIBE_ROUND = 10
 SOUNDS_PENDING_MODERATION_PER_PAGE = 9
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
-FOLLOW_ITEMS_PER_PAGE = 5  # BW only
-MESSAGES_PER_PAGE = 20
-MESSAGES_PER_PAGE_BW = 10
-BOOKMARKS_PER_PAGE = 30
-BOOKMARKS_PER_PAGE_BW = 12 
+FOLLOW_ITEMS_PER_PAGE = 5
+MESSAGES_PER_PAGE = 10
+BOOKMARKS_PER_PAGE = 12 
+SOUNDS_PER_PAGE_PROFILE_PACK_PAGE = 12
+NUM_SIMILAR_SOUNDS_PER_PAGE = 9
+NUM_SIMILAR_SOUNDS_PAGES = 5
 
 
-# Weights using to compute BW charts
+# Weights using to compute charts
 BW_CHARTS_ACTIVE_USERS_WEIGHTS = {'upload': 1, 'post': 0.8, 'comment': 0.05}
 CHARTS_DATA_CACHE_KEY = 'bw-charts-data'
 
-# Whether or not user bookmarks and bookmark categories should be public (visible to all other users) in BW
-BW_BOOKMARK_PAGES_PUBLIC = False
+# User profile page cache key templates
+USER_STATS_CACHE_KEY = 'user_stats_{}'
 
 # User flagging notification thresholds
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
 USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 
-ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a']
-LOSSY_FILE_EXTENSIONS = [ 'ogg', 'mp3', 'm4a']
+# Supported audio formats
+# When adding support for a new audio format you have to change the variables below and check:
+# - mime types in accounts.forms.validate_file_extension
+# - see if utils.audioprocessing.get_sound_type needs to be updated
+# - add corresponding decoder to utils.audioprocessing.processing.convert_to_pcm (and of course add it to the docker image as well)
+# - the audio analyzers will not need to be updated if the format is supported by ffmpeg
+ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a', 'wv']
+LOSSY_FILE_EXTENSIONS = ['ogg', 'mp3', 'm4a']
+# Note that some SOUND_TYPE_CHOICES below might correspond to multiple extensions (aiff/aif > aiff)
+SOUND_TYPE_CHOICES = (
+    ('wav', 'Wave'),
+    ('ogg', 'Ogg Vorbis'),
+    ('aiff', 'AIFF'),
+    ('mp3', 'Mp3'),
+    ('flac', 'Flac'),
+    ('m4a', 'M4a'),
+    ('wv', 'WavPack'),
+)
 COMMON_BITRATES = [32, 64, 96, 128, 160, 192, 224, 256, 320]
 
 # Allowed data file extensions for bulk upload
@@ -422,10 +432,9 @@ CDN_DISPLAYS_URL = 'https://cdn.freesound.org/displays/'
 MAX_EMAILS_PER_COMMAND_RUN = 5000
 NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 
-# Some BW settings
+# Some other settings
 ENABLE_QUERY_SUGGESTIONS = False
 ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE = False
-SHOW_LINK_TO_NEW_UI_IN_OLD_FRONT_PAGE = False
 ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD = True
 USER_DOWNLOADS_PUBLIC = True
 
@@ -595,7 +604,7 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30},
     SEARCH_SOUNDS_FIELD_BITRATE: {},
     SEARCH_SOUNDS_FIELD_BITDEPTH: {},
-    SEARCH_SOUNDS_FIELD_TYPE: {'limit': 6},  # Set after the number of choices in sounds.models.Sound.SOUND_TYPE_CHOICES
+    SEARCH_SOUNDS_FIELD_TYPE: {'limit': len(SOUND_TYPE_CHOICES)},
     SEARCH_SOUNDS_FIELD_CHANNELS: {},
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
 }
@@ -629,6 +638,7 @@ TAGRECOMMENDATION_TIMEOUT = 10
 # -------------------------------------------------------------------------------
 # Sentry settings
 SENTRY_DSN = None
+TRACES_SAMPLE_RATE = 0.1
 
 # -------------------------------------------------------------------------------
 # Zendesk settings
@@ -686,8 +696,11 @@ WORKER_TIMEOUT = 60 * 60
 # Used to configure output formats in newer FreesoundExtractor versions
 ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils/audioprocessing/essentia_profile.yaml'))
 
-# Files above this filesize after converting to 16bit mono PCM won't be analyzed (in bytes, ~5MB per minute).
-MAX_FILESIZE_FOR_ANALYSIS = 5 * 1024 * 1024 * 25
+# Sound previews quality (for mp3, quality is in bitrate, for ogg, quality is in a number from 1 to 10  )
+MP3_LQ_PREVIEW_QUALITY = 70
+MP3_HQ_PREVIEW_QUALITY = 192
+OGG_LQ_PREVIEW_QUALITY = 1
+OGG_HQ_PREVIEW_QUALITY = 6
 
 # -------------------------------------------------------------------------------
 # Search results clustering
@@ -723,21 +736,6 @@ CACHED_BLOCKED_IPS_TIME = 60 * 5  # 5 minutes
 # API settings
 
 ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False
-APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download',
-                                   'apiv2-user-sound-edit',
-                                   'apiv2-user-create-bookmark',
-                                   'apiv2-user-create-rating',
-                                   'apiv2-user-create-comment',
-                                   'apiv2-uploads-upload',
-                                   'apiv2-uploads-pending',
-                                   'apiv2-uploads-describe',
-                                   'apiv2-pack-download','apiv2-me',
-                                   'apiv2-logout-oauth2-user',
-                                   'oauth2:capture',
-                                   'oauth2:authorize',
-                                   'oauth2:redirect',
-                                   'oauth2:access_token',
-                                   'api-login']
 
 APIV2 = {
     'PAGE_SIZE': 15,
@@ -802,16 +800,11 @@ APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
 # -------------------------------------------------------------------------------
 # Frontend handling
 
-FRONTEND_CHOOSER_REQ_PARAM_NAME = 'fend'
-FRONTEND_SESSION_PARAM_NAME = 'frontend'
-FRONTEND_NIGHTINGALE = 'ng'  # https://freesound.org/people/reinsamba/sounds/14854/
-FRONTEND_BEASTWHOOSH = 'bw'  # https://freesound.org/people/martian/sounds/403973/
-FRONTEND_DEFAULT = FRONTEND_NIGHTINGALE
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(os.path.dirname(__file__), '../templates')
+            os.path.join(os.path.dirname(__file__), '../templates'),
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -826,31 +819,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'freesound.context_processor.context_extra',
             ],
-        },
-        'NAME': FRONTEND_NIGHTINGALE,
+        }
     },
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(os.path.dirname(__file__), '../templates_bw'),
-        ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.contrib.auth.context_processors.auth',
-                'django.template.context_processors.debug',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'django.template.context_processors.tz',
-                'django.template.context_processors.request',
-                'django.contrib.messages.context_processors.messages',
-                'freesound.context_processor.context_extra',
-            ],
-        },
-        'NAME': FRONTEND_BEASTWHOOSH,
-    },
-
 ]
 
 # We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
@@ -862,7 +832,6 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 # -------------------------------------------------------------------------------
 # Analytics
 PLAUSIBLE_AGGREGATE_PAGEVIEWS = True
-PLAUSIBLE_SEPARATE_FRONTENDS = True
 
 # -------------------------------------------------------------------------------
 # Rabbit MQ 
@@ -896,9 +865,9 @@ CELERY_SOUND_PROCESSING_QUEUE_NAME = 'sound_processing_queue'
 if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        default_integrations=False,
         integrations=[DjangoIntegration()],
-        send_default_pii=True
+        send_default_pii=True,
+        traces_sample_rate=TRACES_SAMPLE_RATE,
     )
 
 

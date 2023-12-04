@@ -49,7 +49,7 @@ class Command(BaseCommand):
         if not options['fast']:
             for user in users:
                 if user.profile.has_content():
-                    console_logger.error('User {} is not expected to have content, aborting!')
+                    console_logger.info('User {} is not expected to have content, aborting!')
                     return
 
         total, details = users.delete()

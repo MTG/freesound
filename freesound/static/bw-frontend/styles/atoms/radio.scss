@@ -27,18 +27,6 @@ input.bw-radio {
   }
 }
 
-.bw-multiple-radio {
-
-  ul {
-    padding: 0;
-  }
-
-  li {
-    list-style: none;
-    margin-bottom: nth($spacing-values-list, 2);
-  }
-}
-
 .bw-radio-label {
 
   color: $black!important;
@@ -47,6 +35,36 @@ input.bw-radio {
 
   .bw-radio-container {
     vertical-align: -6%;
-    margin-right: 16px;
+    margin-right: 10px;
   }
+}
+
+.bw-multiple-radio {
+
+  ul.bw-radio {
+    padding: 0;
+  }
+
+  ul.bw-radio li {
+    list-style: none;
+    margin-bottom: nth($spacing-values-list, 2);
+  }
+}
+
+.bw-inline-radio {
+  ul.bw-radio {
+    padding: 0;
+  }
+
+  ul.bw-radio li {
+    display: inline;
+    list-style: none;
+    margin-bottom: nth($spacing-values-list, 1);
+    margin-right: nth($spacing-values-list, 3);
+  }
+
+  .bw-radio-container {
+    margin-right: 5px; /* Reduce margin as it expects space between icon and label text */
+  }
+  
 }

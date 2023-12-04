@@ -45,6 +45,5 @@ def flag_user(context, flag_type, username, content_id, text = None, user_sounds
             'flag_type': flag_type,
             'username': username,
             'content_obj_id': content_id,
-            'media_url': context['media_url'],
             'link_text': link_text,
             'no_show': no_show}

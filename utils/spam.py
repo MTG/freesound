@@ -47,8 +47,13 @@ def is_spam(request, comment):
         return False
 
     try:
+        x_forwarded_for = request.headers.get('x-forwarded-for')
+        if x_forwarded_for:
+            user_ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            user_ip = '127.0.0.1'
         if api.comment_check(
-                user_ip=request.META.get("REMOTE_ADDR", "127.0.0.1"),
+                user_ip=user_ip,
                 user_agent=request.headers.get("user-agent", None),
                 referrer=request.headers.get("referer", None),
                 comment_type="comment",

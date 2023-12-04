@@ -27,64 +27,11 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
 from django.core.signing import BadSignature, SignatureExpired
+from django.utils.timezone import now
 
-from accounts.forms import html_tags_help_text
 from sounds.models import License, Flag, Pack, Sound
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import TagField, HtmlCleaningCharField
-
-
-class GeotaggingForm(forms.Form):
-    remove_geotag = forms.BooleanField(required=False)
-    lat = forms.FloatField(min_value=-90, max_value=90, required=False,
-                           error_messages={
-                               'min_value': 'Latitude must be between -90 and 90.',
-                               'max_value': 'Latitude must be between -90 and 90.'
-                           })
-    lon = forms.FloatField(min_value=-180, max_value=180, required=False,
-                           error_messages={
-                               'min_value': 'Longitude must be between -180 and 180.',
-                               'max_value': 'Longitude must be between -180 and 180.'
-                           })
-    zoom = forms.IntegerField(min_value=11,
-                              error_messages={'min_value': "The zoom value sould be at least 11."},
-                              required=False)
-
-    def clean(self):
-        data = self.cleaned_data
-        if not data.get('remove_geotag'):
-            lat = data.get('lat', False)
-            lon = data.get('lon', False)
-            zoom = data.get('zoom', False)
-
-            # second clause is to detect when no values were submitted.
-            # otherwise doesn't work in the describe workflow
-            if (not (lat and lon and zoom)) and (not (not lat and not lon and not zoom)):
-                raise forms.ValidationError('There are missing fields or zoom level is not enough.')
-
-        return data
-
-
-class SoundDescriptionForm(forms.Form):
-    name = forms.CharField(max_length=512, min_length=5,
-                           widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
-    is_explicit = forms.BooleanField(required=False)
-    tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
-                    help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
-                              "For example: <i>field-recording</i> is a popular tag."
-                              "<br>Only use letters a-z and numbers 0-9 with no accents or diacritics")
-    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
-
-    def __init__(self, *args, **kwargs):
-        explicit_disable = False
-        if 'explicit_disable' in kwargs:
-            explicit_disable = kwargs.get('explicit_disable')
-            del kwargs['explicit_disable']
-
-        super().__init__(*args, **kwargs)
-        # Disable is_explicit field if is already marked
-        self.initial['is_explicit'] = explicit_disable
-        self.fields['is_explicit'].disabled = explicit_disable
 
 
 def _remix_form_clean_sources_helper(cleaned_data):
@@ -118,21 +65,11 @@ class PackChoiceField(forms.ModelChoiceField):
         return pack.name
 
 
-class PackForm(forms.Form):
-    pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False, empty_label="--- No pack ---")
-    new_pack = forms.CharField(widget=forms.TextInput(attrs={'size': 45}),
-                               label="Or fill in the name of a new pack:", required=False, min_length=5)
-
-    def __init__(self, pack_choices, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['pack'].queryset = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-
-
 def _pack_form_clean_pack_helper(cleaned_data):
-    if 'pack' not in cleaned_data or cleaned_data['pack'] == '' or str(cleaned_data['pack']) == BWPackForm.NO_PACK_CHOICE_VALUE:
+    if 'pack' not in cleaned_data or cleaned_data['pack'] == '' or str(cleaned_data['pack']) == PackForm.NO_PACK_CHOICE_VALUE:
         # No pack selected
         return None
-    elif str(cleaned_data['pack']) == BWPackForm.NEW_PACK_CHOICE_VALUE:
+    elif str(cleaned_data['pack']) == PackForm.NEW_PACK_CHOICE_VALUE:
         # We need to return something different than for "no pack option" so we can disambiguate in the clean method
         return False
     try:
@@ -150,7 +87,7 @@ def _pack_form_clean_helper(cleaned_data):
     return cleaned_data
 
 
-class BWPackForm(forms.Form):
+class PackForm(forms.Form):
 
     NO_PACK_CHOICE_VALUE = '-1'
     NEW_PACK_CHOICE_VALUE = '0'
@@ -183,7 +120,7 @@ class PackEditForm(ModelForm):
                                   widget=forms.widgets.HiddenInput(attrs={'id': 'pack_sounds', 'name': 'pack_sounds'}),
                                   required=False)
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
-                                        help_text=html_tags_help_text, required=False)
+                                        help_text=HtmlCleaningCharField.make_help_text(), required=False)
 
     def clean_pack_sounds(self):
         pack_sounds = re.sub("[^0-9,]", "", self.cleaned_data['pack_sounds'])
@@ -215,6 +152,7 @@ class PackEditForm(ModelForm):
                 sound.pack = pack
                 sound.mark_index_dirty(commit=True)
         if commit:
+            pack.last_updated = now()
             pack.save()
         for affected_pack in affected_packs:
             affected_pack.process()
@@ -254,12 +192,18 @@ class LicenseForm(forms.Form):
 
 
 class FlagForm(forms.Form):
-    email = forms.EmailField(label="Your email", required=True, help_text="Required.",
+    email = forms.EmailField(label=False, required=True, help_text=False,
                              error_messages={'required': 'Required, please enter your email address.', 'invalid': 'Your'
                                              ' email address appears to be invalid, please check if it\'s correct.'})
-    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES, required=True, label='Reason type')
-    reason = forms.CharField(widget=forms.Textarea)
+    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES, required=True, label=False)
+    reason = forms.CharField(widget=forms.Textarea, label=False)
     recaptcha = ReCaptchaField(label="")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs['placeholder'] = 'Your email'
+        self.fields['reason'].widget.attrs['placeholder'] = 'Write here comments about why this sound is being flagged'
+
 
     def save(self):
         f = Flag()
@@ -267,20 +211,6 @@ class FlagForm(forms.Form):
         f.reason = self.cleaned_data['reason']
         f.email = self.cleaned_data['email']
         return f
-
-class BWFlagForm(FlagForm):
-    email = forms.EmailField(label="Your email", required=True, help_text="Required.",
-                             error_messages={'required': 'Required, please enter your email address.', 'invalid': 'Your'
-                                             ' email address appears to be invalid, please check if it\'s correct.'})
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['email'].label = False
-        self.fields['email'].widget.attrs['placeholder'] = 'Your email'
-        self.fields['email'].help_text = False
-        self.fields['reason_type'].label = False
-        self.fields['reason'].label = False
-        self.fields['reason'].widget.attrs['placeholder'] = 'Write here comments about why this sound is being flagged'
 
 
 class DeleteSoundForm(forms.Form):
@@ -310,31 +240,7 @@ class DeleteSoundForm(forms.Form):
         super().__init__(*args, **kwargs)
 
 
-class SoundCSVDescriptionForm(SoundDescriptionForm, GeotaggingForm, LicenseForm):
-    """
-    This is the form that we use to validate sound metadata provided via CSV bulk description.
-    This form inherits from other existing forms to consolidate all sound description related fields in one single form.
-    None of the forms from which SoundCSVDescriptionForm inherits are ModelForms, therefore this form is only intented
-    to validate metadata fields passed to it (i.e. does not have save() method).
-    The field "pack_name" is added manually because there is no logic that we want to replicate from PackForm.
-    NOTE: I'm not sure why the mulitple inheritance works well in this class. I think some of the individual
-    classes init methods are not called, it could be that it works because this is used for the CSV description only
-    and the potential errors due to using multiple inheritance do not manifest. This should be investigated
-    more closely.
-    """
-    pack_name = forms.CharField(min_length=5, required=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['name'].required = False  # Make sound name not required
-
-    def clean(self):
-        # Overwrite clean method from 'GeotaggingForm' as we don't need to check for all fields present here because an
-        # equivalent check is performed when parsing the geotag format "lat, lon, zoom".
-        return self.cleaned_data
-
-
-class BWSoundEditAndDescribeForm(forms.Form):
+class SoundEditAndDescribeForm(forms.Form):
     license_field_size = 'small'  # Used to show the small license field UI with this form
     file_full_path = None
     name = forms.CharField(max_length=512, min_length=5,
@@ -346,9 +252,9 @@ class BWSoundEditAndDescribeForm(forms.Form):
                   "Only use letters a-z and numbers 0-9 with no accents or diacritics. "
                   "Note that you can <b>copy</b> and <b>paste</b> between tag fields.")
     description = HtmlCleaningCharField(
-        widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
+        widget=forms.Textarea(attrs={'cols': 80, 'rows': 10, 'class': 'unsecure-image-check'}),
         help_text="You can add timestamps to the description using the syntax #minute:second (e.g. \"#1:07 nice bird chirp\"). "
-                  "This will be rendered with a little play button to play the sound at that timestamp. " + html_tags_help_text)
+                  "This will be rendered with a little play button to play the sound at that timestamp. " + HtmlCleaningCharField.make_help_text())
     is_explicit = forms.BooleanField(required=False, label="The sound contains explicit content")
     license_qs = License.objects.filter(Q(name__istartswith='Attribution') | Q(name__istartswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True, widget=forms.RadioSelect())
@@ -398,13 +304,16 @@ class BWSoundEditAndDescribeForm(forms.Form):
         self.fields['license'].error_messages.update({'invalid_choice': f'Invalid license. Should be one of {valid_licenses}'})
 
         # Prepare pack field
-        user_packs = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-        self.fields['pack'].choices = [(BWPackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
-                                       (BWPackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + \
-                                      ([(pack.id, pack.name) for pack in user_packs] if user_packs else [])
+        if user_packs:
+            user_packs = user_packs.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+        else:
+            user_packs = []
+        self.fields['pack'].choices = [(PackForm.NO_PACK_CHOICE_VALUE, '--- No pack ---'),
+                                    (PackForm.NEW_PACK_CHOICE_VALUE, 'Create a new pack...')] + \
+                                    ([(pack.id, pack.name) for pack in user_packs] if user_packs else [])
         # The attrs below are used so that some elements of the dropdown are displayed in gray and to enable
         # pre-selecting options using keyboard
-        self.fields['pack'].widget.attrs = {'data-grey-items': f'{BWPackForm.NO_PACK_CHOICE_VALUE},{BWPackForm.NEW_PACK_CHOICE_VALUE}', 
+        self.fields['pack'].widget.attrs = {'data-grey-items': f'{PackForm.NO_PACK_CHOICE_VALUE},{PackForm.NEW_PACK_CHOICE_VALUE}', 
                                             'data-select-with-keyboard': True}
 
     def clean(self):
@@ -435,3 +344,17 @@ class BWSoundEditAndDescribeForm(forms.Form):
 
     def clean_pack(self):
         return _pack_form_clean_pack_helper(self.cleaned_data)
+
+
+class SoundCSVDescriptionForm(SoundEditAndDescribeForm):
+    """
+    This is the form that we use to validate sound metadata provided via CSV bulk description.
+    This form inherits from SoundEditAndDescribeForm as it contains the same fields, except for the pack field for which we
+    use a new "pack_name" field as we can use simpler logic because we don't show existing user packs before hand.
+    """
+    pack_name = forms.CharField(min_length=5, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].required = False  # Make sound name not required
+        

@@ -1,392 +1,207 @@
-{% extends "accounts/_notab.html" %}
+{% extends "base.html" %}
 
 {% load display_sound %}
-{% load tags %}
+{% load display_pack %}
+{% load static %}
 {% load filter_img %}
-{% load maps_js_scripts %}
+{% load bw_templatetags %}
+{% load tags %}
+{% load util %}
+{% load cache %}
 
-{% block title %}{% if home %}home{% else %}{{user.username}}{% endif %}{% endblock %}
+{% block title %}{{ user.username }}{% endblock %}
 
-{% block head %}
-    {{ block.super }}
-    {% maps_js_scripts %}
-{% endblock head %}
-
-{% block tab_home_active %}{% if home %}active_tab{% endif %}{% endblock %}
-{% block tab_people_active %}{% if not home %}active_tab{% endif %}{% endblock %}
-
-{% block section_content %}
-
-    <script type="text/javascript">
-
-        function follow_user() {
-            $("#follow_button").attr("disabled", "disabled");
-            $("#follow_user_error_message").hide();
-            $.ajax({
-                type: 'POST',
-                url: '{{ follow_user_url }}',
-                success: function() {
-                    $("#follow_button").removeAttr("disabled");
-                    location.reload();
-                },
-                error: function(data) {
-                    $("#follow_button").removeAttr("disabled");
-                    $("#follow_user_error_message").show();
-                    window.setTimeout(function(){
-                        $("#follow_user_error_message").fadeOut(200);
-                    }, 3000);
-                }
-            });
-        }
-
-        function unfollow_user() {
-            $("#follow_button").attr("disabled", "disabled");
-            $("#follow_user_error_message").hide();
-            $.ajax({
-                type: 'POST',
-                url: '{{ unfollow_user_url }}',
-                success: function() {
-                    $("#follow_button").removeAttr("disabled");
-                    location.reload();
-                },
-                error: function(data) {
-                    $("#follow_button").removeAttr("disabled");
-                    $("#follow_user_error_message").show();
-                    window.setTimeout(function(){
-                        $("#follow_user_error_message").fadeOut(200);
-                    }, 3000);
-                }
-            });
-        }
-
-    </script>
-
-    {% if home %}
-
-        <h1>Home</h1>
-
-        <div id="account_info_left">
-            <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
-        </div>
-
-        <div class="account_information_and_home_options">
-        <ul>
-            <li><a href="{% url "account" user.username %}">View</a> your public profile</li>
-            <li><a href="{% url "accounts-edit" %}">Edit</a> your public profile</li>
-            <li><a href="{% url "accounts-describe" %}">Describe</a> your sounds</li>
-            <li><a href="{% url "accounts-attribution" %}">Attribution</a> - the sounds you downloaded</li>
-            {% if perms.tickets.can_moderate %}
-                <li><a href="{% url "tickets-moderation-home" %}">Moderate sounds</a> - {{ new_tickets_count }} new sound{{ new_tickets_count|pluralize}}</li>
-            {% endif %}
-            {% if perms.forum.can_moderate_forum %}
-                <li><a href="{% url "forums-moderate" %}">Moderate posts</a> - {{ new_posts }} new post{{ new_posts|pluralize}} </li>
-            {% endif %}
-            {% if user.profile.num_sounds %}
-                <li><a href="{% url "comments-for-user" user.username %}">All comments</a> on your sounds</li>
-            {% endif %}
-            <li>Your <a href="{% url "bookmarks-for-user" user.username %}">bookmarks</a></li>
-            <li>Activity <a href="{% url "stream" %}">stream</a></li>
-            {% if user.profile.has_sounds_with_old_cc_licenses %}<li><a href="{% url "update-old-cc-licenses" %}">Upgrade your sound licenses</a> to CC 4.0 equivalents</li>{% endif %}
-            {% comment %}<li>Your sound uploads <a href="{% url "accounts-pending" %}">pending moderation</a></li>{% endcomment %}
-        </ul>
-        </div>
-        <br style="clear: both;" />
-        <br>
-    {% else %}
-
-        <h1>{{user.username}}</h1>
-
-		{% if user.profile and not user.profile.is_anonymized_user %}
-
-            <div id="account_info_left">
-
-                <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
-
-                {% if request.user.is_authenticated %}
-                    {# don't allow a user to follow himself/herself #}
-                    {% if user.username != request.user.username  and not show_unfollow_button %}
-                        <a href="javascript:void(0)" id="follow_link" onclick="follow_user()"><button type="button" id="follow_button">Follow</button></a>
+{% block content %}
+    <div class="container">
+        <div class="row navbar-space-filler v-spacing-top-6 v-spacing-2 bw-profile__hero">
+            <div>
+                {% bw_user_avatar user.profile.locations.avatar.XL.url user.username 100 %}
+            </div>
+            <div class="bw-profile__username v-spacing-top-2 {% if user.profile.is_anonymized_user %}v-spacing-3{% endif %}">
+                <h1>{{ user.username }}</h1>
+            </div>
+            {% if not user.profile.is_anonymized_user %}
+            <div class="v-spacing-top-4 v-spacing-4 middle padding-left-2 padding-right-2">
+                {% if home %}
+                    {% if user.profile.num_sounds %}    
+                    <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt"  data-toggle="modal-default" data-modal-content-url="{% url "comments-for-user" user.username %}?ajax=1" data-modal-activation-param="comments" href="javascript:void(0);" title="See all comments on your sounds">Comments</a>
+                    {% else %}
+                    <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'accounts-upload' %}">Upload a sound</a>
                     {% endif %}
-
-                    {# show unfollow button instead if current page of user is being followed by logged in user already #}
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url 'accounts-edit' %}">Account settings</a>
+                {% else %}
                     {% if show_unfollow_button %}
-                        <a href="javascript:void(0)" id="follow_link" onclick="unfollow_user()"><button type="button" id="follow_button">Unfollow</button></a>
-                    {% endif %}
-                {% endif %}
-
-                <div id="follow_user_error_message">An error occurred,<br/> please try again.</div>
-
-            </div>
-            <div class="account_information_and_home_options">
-            <ul>
-                <li><a href="{% url "messages-new" user.username %}">Send a private message to this user</a></li>
-                {% if user.profile.home_page and user.profile.get_total_downloads > 0 %}
-                    <li>Home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a></li>
-                {% endif %}
-                <li>Has been a user for {{user.date_joined|timesince}}</li>
-                {% if user.profile.num_sounds %}
-                <li>Number of sounds: {{user.profile.num_sounds}}
-                {% endif %}
-                {% if user.profile.num_posts %}
-                <li>Number of forum posts: {{user.profile.num_posts}}</li>
-                {% endif %}
-                <li><a href="{% url "user-downloaded-sounds" user.username %}">Sounds downloaded</a> ({{ user.profile.num_sound_downloads}}) by {{user.username}}</li>
-                <li><a href="{% url "user-downloaded-packs" user.username %}">Packs downloaded</a> ({{ user.profile.num_pack_downloads}}) by {{user.username}}</li>
-                {% if user.profile.num_sounds %}
-                <li><a href="{% url "comments-for-user" user.username %}">All comments</a> on {{user.username}}'s sounds</li>
-                {% endif %}
-                {% if has_bookmarks %}
-                <li><a href="{% url "bookmarks-for-user" user.username %}">Bookmarks</a> by {{user.username}}</li>
-                {% endif %}
-                {% if perms.tickets.can_moderate %}
-                    <li class="separator">Moderators only links</li>
-                    <li>Uploaded sounds <a href="{% url "tickets-user-pending_sounds" user.username %}">pending moderation ({{ num_sounds_pending_count }})</a></li>
-                    <li><a href="{% url "forums-search" %}?f=post_author:%22{{ user.username }}%22">All forum posts</a> by {{ user.username }}</li>
-                    <li><a href="{% url "comments-by-user" user.username %}">All comments</a> by {{ user.username }}</li>
-                    {% if user.profile.is_whitelisted %}
-                        <li>This user is whitelisted</li>
-                    {% endif %}
-                {% endif %}
-                {% if request.user.is_staff %}
-                    <li class="separator">Admin only links</li>
-                    <li><a id="admin_link" class="icon" href="{% url "admin:auth_user_change" user.id %}">Edit user</a> or <a href="{% url "admin:accounts_profile_change" user.profile.id %}">profile</a> in the admin</a></li>
-                    <li><a href="{% url "tickets-user-pending_sounds" user.username %}">Moderation pending sounds</a> by {{ user.username }}</li>
-                {% endif %}
-
-            </ul>
-            </div>
-            <br style="clear: both;" />
-            {% if user.profile.about and show_about %}
-                <div class="about">
-                    {{user.profile.about|replace_img|safe|linebreaksbr }}
-                </div>
-            {% endif %}
-            <br>
-        {% endif %}
-    {% endif %}
-
-<div id="content">
-    {% if latest_sounds %}
-        <div id="latest_sounds" class="content_box">
-            <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest sounds</h3>
-            {% for sound in latest_sounds %}
-                    {% display_sound sound %}
-            {% endfor %}
-            <p><a href="{% url "sounds-for-user" user.username %}?page={% if home %}1{% else %}2{% endif %}">more...</a></p>
-        </div>
-    {% else %}
-        <div id="latest_sounds" class="content_box">
-            <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest sounds</h3>
-            <p>
-            {% if home %}You have not uploaded any sounds...
-            {% else %}{{ user.username }} has not uploaded any sounds...
-            {% endif %}</p>
-        </div>
-
-    {% endif %}
-    {% if home %}
-        {% if unmoderated_sounds %}
-            <br>
-            <div id="unmoderated_sounds" class="content_box">
-                <h3>Uploaded sounds awaiting moderation ({{ unmoderated_sounds_count }})</h3>
-                {% for ticket, sound in unmoderated_sounds %}
-                    <li><span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span> <span class="ticket_link"><a href="{% url "tickets-ticket" ticket.key %}">Go to ticket</a></span></li>
-                {% endfor %}
-                {% if num_more_unmoderated_sounds > 0 %}
-                    <li> And {{ num_more_unmoderated_sounds }} other uploaded sound{{ num_more_unmoderated_sounds|pluralize}}
-                {% endif %}
-
-            </div><!-- #unmoderated_sounds -->
-            <p style='margin-left:20px'><a href="{% url "accounts-pending" %}">more...</a></p>
-
-        {% endif %}
-
-
-        {% if unprocessed_sounds %}
-            <br>
-            <div id="unprocessed_sounds" class="content_box">
-                <h3>Uploaded sounds that have not been processed yet ({{ unprocessed_sounds.count }})</h3>
-
-                {% comment %}
-                <p>Sounds in this list have not been processed yet and thus can't be moderated. This might be because they are still pending to process or because processing has failed.</p>
-                {% endcomment %}
-
-                {% for sound in unprocessed_sounds %}
-                    <li>
-                        <a href="{% url 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a>. Uploaded on <span class="date">{{sound.created}}</span>
-                    {% if sound.processing_state == 'PE' %}
-                        <span class="pending">Pending processing</span>
+                        <a class="no-hover text-center btn-secondary" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}">Unfollow</a>
                     {% else %}
-                        {% if sound.processing_state == 'QU' %}
-                            <span class="queued">Queued for processing</span>
-                        {% else %}
-                            {% if sound.processing_state == 'FA' %}
-                                <span class="failed">Failed processing</span>
+                        <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'follow-user' user.username %}?next={{ next_path }}">Follow</a>
+                    {% endif %}
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url "messages-new" user.username %}">Message</a>
+                {% endif %}
+                {% if perms.tickets.can_moderate or request.user.is_staff %}
+                    <div class="dropdown display-inline-block">
+                        <a class="no-hover dropdown-toggle" id="mod-actions-menu"
+                           data-toggle="dropdown"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Mod actions</button></a>
+                        <ul class="dropdown-menu" aria-labelledby="mod-actions-menu">
+                            {% if user.profile.is_whitelisted %}
+                                <li class="bw-nav__action dropdown-item text-light-grey">
+                                    This user is whitelisted
+                                </li>
                             {% else %}
-                                {% if sound.processing_state == 'PR' %}
-                                    <span class="processing">Currently processing</span>
-                                {% else %}
-                                    Processing state: {{sound.processing_state}}
-                                {% endif %}
+                                <li class="bw-nav__action dropdown-item text-light-grey">
+                                    <a class="bw-link--black" href="{% url 'tickets-whitelist-user' user.id %}?next={{ next_path }}">
+                                        Whitelist this user
+                                    </a>
+                                </li>
                             {% endif %}
-                        {% endif %}
-                    {% endif %}
-                    <a href="{% url "sound-delete" sound.user.username sound.id %}" >x</a>
-                    </li>
-                {% endfor %}
-            </div><!-- #unprocessed_sounds -->
-        {% endif %}
-
-        {% if current_bulkdescribe %}
-            <br>
-            <div id="bulk_describe_processes_list" class="content_box">
-              <h3>Bulk Describe processes ({{ current_bulkdescribe|length }})</h3>
-                {% for bulk_describe in current_bulkdescribe %}
-                    {% with bulk_describe.get_description_progress_info as progress_info %}
-                    <li>
-                      <a href="{% url "accounts-bulk-describe" bulk_describe.id %}">{{ bulk_describe.original_csv_filename }}</a>. Created on <span class="gray_text">{{bulk_describe.created}}</span>
-                        Status:
-                        {% if bulk_describe.progress_type == 'F' and progress_info.n_sounds_processing %}
-                            <span class="orange_text">{{ bulk_describe.get_progress_type_display }} ({{ progress_info.n_sounds_processing }} sounds still processing)</span>
-                        {% elif bulk_describe.progress_type == 'F' and not progress_info.n_sounds_processing %}
-                            <span class="green_text">Finished</span>
-                        {% elif bulk_describe.progress_type == 'V' and bulk_describe.has_line_validation_errors %}
-                            <span class="red_text">Errors in validation</span>
-                        {% elif bulk_describe.progress_type == 'V' and bulk_describe.has_global_validation_errors %}
-                            <span class="red_text">Errors in validation</span>
-                        {% else %}
-                            <span class="orange_text">{{ bulk_describe.get_progress_type_display }}</span>
-                        {% endif %}
-                    </li>
-                    {% endwith %}
-                {% endfor %}
+                            <li class="bw-nav__action dropdown-item">
+                                <a class="bw-link--black" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" user.id %}?ajax=1" data-modal-activation-param="mod_annotations" href="javascript:void(0);">
+                                    Moderation annotations (<span class="annotation-counter-{{ user.id }}">{{ num_mod_annotations }}</span>)
+                                </a>
+                            </li>
+                            <li class="bw-nav__action dropdown-item">
+                                <a class="bw-link--black" data-toggle="modal-default" data-modal-content-url="{% url "tickets-user-pending_sounds" user.username %}?ajax=1" data-modal-activation-param="pending_moderation" href="javascript:void(0);">
+                                    Sounds pending moderation ({{ num_sounds_pending }})
+                                </a>
+                            </li>
+                            {% if not user_downloads_public %}
+                            <li class="bw-nav__action dropdown-item">
+                                <a class="bw-link--black" data-toggle="modal-default" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);">
+                                    See downloaded sounds ({{ user.profile.num_sound_downloads }})
+                                </a>
+                            </li>
+                            <li class="bw-nav__action dropdown-item">
+                                <a class="bw-link--black" data-toggle="modal-default" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);">
+                                    See downloaded packs ({{ user.profile.num_pack_downloads }})
+                                </a>
+                            </li>
+                            {% endif %}
+                            <li class="bw-nav__action dropdown-item">
+                                <a class="bw-link--black" href="{% url "forums-search" %}?f=post_author:%22{{ user.username }}%22">
+                                    All forum posts ({{ user.profile.num_posts }})
+                                </a>
+                            </li>
+                            <li class="bw-nav__action dropdown-item">
+                                <a class="bw-link--black" data-toggle="modal-default" data-modal-content-url="{% url "comments-by-user" user.username %}?ajax=1" data-modal-activation-param="comments_by" href="javascript:void(0);" title="See all sound comments by {{ user.username }}">
+                                    All comments ({{ user.profile.num_comments }})
+                                </a>
+                            </li>
+                            {% if request.user.is_staff %}
+                                <li class="bw-nav__action dropdown-item">
+                                    <a class="bw-link--red" href="{% url "admin:auth_user_change" user.id %}">
+                                        Edit in admin
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                {% endif %}
             </div>
-        {% endif %}
-    {% endif %}
-</div><!-- #content -->
-
-<div id="sidebar">
-    {% with user.profile.get_user_tags as tags %}
-    {% if tags %}
-        <div id="user_most_used_tags" class="content_box">
-            <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} most used tags</h3>
-            <p class="user_tagcloud">
-            {% for tag in tags|add_sizes:"name:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url "tags" tag.name %}">{{tag.name}}</a></span> {% endfor %}
-            </p>
-        </div><!-- #user_most_used_tags -->
-    {% endif %}
-    {% endwith %}
-
-    {% if following or followers or following_tags %}
-
-        <div id="social" class="content_box">
-
-            <h3>Following users and tags</h3>
-
-            {% if following %}
-                {% if home %}
-                    <h3>Users you are following ({{ following.count }})</h3>
-                {% else %}
-                    <h3>Users {{ user.username }} is following ({{ following.count }})</h3>
-                {% endif %}
-
-                <ul>
-                    {% for follow_user_item in following|slice:":21" %}
-                        <a href="{% url "account" follow_user_item.user_to.username %}" title="{{ follow_user_item.user_to.username }}"><img src="{{follow_user_item.user_to.profile.locations.avatar.M.url}}" alt="{{ follow_user_item.user_to.username }} avatar" /></a>
-                    {% endfor %}
-                </ul>
-                <p><a href="{% url "user-following-users" user %}">more...</a></p>
-            {% endif %}
-
-            {% if followers %}
-                {% if home %}
-                    <h3>Users that are following you ({{ followers.count }})</h3>
-                {% else %}
-                    <h3>Users that are following {{ user.username }} ({{ followers.count }})</h3>
-                {% endif %}
-
-                <ul>
-                    {% for follow_user_item in followers|slice:":21" %}
-                        <a href="{% url "account" follow_user_item.user_from.username %}" title="{{follow_user_item.user_from.username}}"><img src="{{follow_user_item.user_from.profile.locations.avatar.M.url}}" alt="{{follow_user_item.user_from.username}} avatar" /></a>
-                    {% endfor %}
-                </ul>
-                <p><a href="{% url "user-followers" user %}">more...</a></p>
-            {% endif %}
-
-            {% if following_tags %}
-                <div id="following_tags">
-                    {% if home %}
-                        <h3>Tags you are following ({{ following_tags.count }})</h3>
-                    {% else %}
-                        <h3>Tags {{ user.username }} is following ({{ following_tags.count }})</h3>
-                    {% endif %}
-                    <ul>
-                        {% for follow_tag_item in following_tags|slice:":5" %}
-                            <span class="tag_group" onclick="location.href='{% url "tags" follow_tag_item.get_slash_tags %}'">
-                            <ul class="tags" id="following_tags">
-                            {% for tag in follow_tag_item.get_split_tags %}
-                                {% comment %}<li><a href="{% url "tags"tag %}">{{ tag }}</a></li>{% endcomment %}
-                                <li><a>{{ tag }}</a></li>
-                                {% comment %}<li>{{ tag }}</li>{% endcomment %}
-                            {% endfor %}
-                            </ul></span>
-                        {% endfor %}
-                    </ul>
-                    <p><a href="{% url "user-following-tags" user %}">more...</a></p>
+            <div class="v-spacing-2">
+                <div class="bw-profile__stats padding-left-4 padding-right-4">
+                    <div class="text-grey">Has been a user for {{user.date_joined|timesince}}</div>
+                    <div><a id="user-followers-button" data-modal-activation-param="followers" data-modal-content-url="{% url 'user-followers' user.username %}?ajax=1&page={{ followers_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_followers_count user.id %}{% with followers.count as followers_count %}{{ followers_count|bw_intcomma }} follower{{ followers_count|pluralize }}{% endwith %}{% endcache %}</a></div>
+                    <div><a id="user-following-users-button" data-modal-activation-param="following" data-modal-content-url="{% url 'user-following-users' user.username %}?ajax=1&page={{ following_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_count user.id %}{{ following.count }}{% endcache %} following</a></div>
+                    <div><a id="user-following-tags-button" data-modal-activation-param="followingTags" data-modal-content-url="{% url 'user-following-tags' user.username %}?ajax=1&page={{ following_tags_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_tags_count user.id %}{% with following_tags.count as following_tags_count %}{{ following_tags.count|bw_intcomma }} tag{{ following_tags_count|pluralize }} following{% endwith %}{% endcache %}</a></div>
                 </div>
+                {% if user_downloads_public %}
+                <div class="bw-profile__stats v-spacing-top-1 padding-left-4 padding-right-4">
+                    <div><a data-toggle="modal-default" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);" >{{ user.profile.num_sound_downloads }} sound{{ user.profile.num_sound_downloads|pluralize}} downloaded</a></div>
+                    <div><a data-toggle="modal-default" data-modal-content-url="{% url "user-downloaded-packs" user.username %}?ajax=1" data-modal-activation-param="downloaded_packs" href="javascript:void(0);" >{{ user.profile.num_pack_downloads }} pack{{ user.profile.num_pack_downloads|pluralize}} downloaded</a></div>
+                </div>
+            </div>
+            {% if user.profile.about or user.profile.home_page %}
+            <div class="bw-profile__description v-spacing-top-2 v-spacing-2">
+                {% if user.profile.about and show_about %}
+                    <div class="col-md-8 offset-md-2">
+                        {{ user.profile.about|replace_img|safe|linebreaks|strip_unnecessary_br }}
+                    </div>
+                {% endif %}
+                {% if user.profile.home_page and user.profile.get_total_downloads > 0 %}
+                    <div class="{% if user.profile.about %}v-spacing-top-3{% endif %} text-center">
+                        <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a>
+                    </div>
+                {% endif %}
+            </div>
             {% endif %}
-
+            {% endif %}
+            {% endif %}
         </div>
-
-    {% endif %}
-
-    {% if user.profile.has_geotags %}
-    <div id="latest_geotags" class="content_box">
-        <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest geotags</h3>
-        <p id="map_load_trigger"><a href="javascript:void(0);" onclick="triggerLoadMap()">Load map...</a></p>
-        <div id="map_loading_indicator"><img width="12px" height="12px" src="{{ media_url }}images/indicator.gif" style="display: none;"></div>
-        <div id="map_wrapper" style="display: none;">
-            <div id="map_canvas"></div>
-            <script type="text/javascript">
-                function triggerLoadMap() {
-                    $('#map_loading_indicator').show();
-                    make_sounds_map('{% url "geotags-for-user-latest-barray" user.username %}', 'map_canvas', function(){
-                        $('#map_load_trigger').hide();
-                        $('#map_wrapper').show();
-                        $('#map_loading_indicator').hide(); // Once map is ready, hide the loading indicator
-                    });
-                }
-            </script>
-            <p><a href="{% url "geotags-for-user" user.username %}">more...</a></p>
+        <div class="divider-light"></div>
+        <div class="row bw-profile__taps_nav">
+            <ol>
+                <li class="active" data-toggle="tap" data-target="#sounds">Latest sounds</li>
+                <li data-toggle="tap" data-target="#packs">Latest packs</li>
+                {% comment %}<li data-toggle="tap" data-target="#tapDownloaded">Downloads</li>{% endcomment %}
+            </ol>
         </div>
-    </div><!-- #latest_geotags -->
-    {% endif %}
+        <div class="divider-light"></div>
+        <div class="row">
+            <div class="col-md-8 v-spacing-top-4">
+                <div class="bw-profile__tap_container bw-profile__tap_container__active" id="sounds">
+                    {% if latest_sounds %}
+                        <div class="row">
+                            {% for sound in latest_sounds %}
+                                <div class="col-6 col-lg-4">
+                                    {% display_sound_small sound %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="v-spacing-top-4 text-center">
+                            <a class="no-hover btn-primary" href="{{ user.profile.get_user_sounds_in_search_url }}">See all sounds by {{ user.username }}</a>
+                        </div>
+                    {% else %}
+                        <div class="text-center">
+                            <h5>No sounds... &#128543</h5>
+                            <div class="text-grey v-spacing-top-1">Looks like {{ user.username }} has not uploaded any sounds yet</div>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="bw-profile__tap_container" id="packs">
+                    <div class="async-section"
+                        data-async-section-content-url="{% url 'account-latest-packs-section' user.username %}?ajax=1">
+                        <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
+                    </div>
+                </div>
+                <div class="bw-profile__tap_container" id="tapDownloaded">
+                    downloaded
+                </div>
+            </div>
+            <aside class="col-md-4 col-extra-left-padding-middle-md bw-profile__sections">
+                <div class="divider-light v-spacing-top-6 v-spacing-5 d-md-none"></div>
+                <section class="bw-profile__section_stats v-spacing-top-4 async-section"
+                    data-async-section-content-url="{% url 'account-stats-section' user.username %}?ajax=1">
+                    <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
+                </section>
+                {% if last_geotags_serialized %}
+                <div class="divider-light"></div>
+                <section id="latest_geotags" class="v-spacing-top-4 v-spacing-4" data-map-loaded="false">
+                    <h5 class="padding-bottom-3">Latest geotags</h5>
+                    <div id="static_map_wrapper"  class="map sidebar-map w-100 middle center cursor-pointer" data-pins="{{ last_geotags_serialized }}"></div>
+                    <div id="map_canvas" class="map sidebar-map display-none w-100" data-geotags-url="{% url "geotags-for-user-latest-barray" user.username %}"></div>
+                    <div class="v-spacing-top-2 center">
+                        <a class="no-hover" href="{% url "geotags-for-user" user.username %}">See all geotags by {{ user.username }}</a>
+                    </div>
+                </section>
+                {% endif %}
+                {% cache 3600 bw_user_profile_tags user.id %}
+                {% with user.profile.get_user_tags as tags %}
+                {% if tags %}
+                <div class="divider-light"></div>
+                <section class="v-spacing-top-4 v-spacing-4">
+                    <h5 class="padding-bottom-3">Most used tags</h5>
+                    {% for tag in tags|add_sizes:"count:0.1:1.0" %}
+                        {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
+                    {% endfor %}
+                </section>
+                {% endif %}
+                {% endwith%}
+                {% endcache %}
+            </aside>
+        </div>
+    </div>
+{% endblock %}
 
-    {% if latest_packs %}
-    <div id="latest_packs" class="content_box">
-        <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest packs</h3>
-        <ul>
-        {% for pack in latest_packs %}
-            <li><a href="{% url "pack" user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
-        {% endfor %}
-        </ul>
-        <p><a href="{% url "packs-for-user" user.username %}">more...</a></p>
-    </div><!-- #latest_packs -->
-    {% endif %}
-
-    {% if home %}
-        {% if packs_without_sounds %}
-        <div id="unmoderated_packs" class="content_box">
-            <h3>Non visible packs</h3>
-            <p>This list contains packs that are empty or packs whose sounds are unmoderated or unprocessed.</p>
-            <ul>
-            {% for pack in packs_without_sounds %}
-                <li><a href="{% url "pack" user.username pack.id %}">{{pack.name}}</a>, created on <span class="date">{{pack.created}}</span></li>
-            {% endfor %}
-            <ul>
-        </div><!-- #unmoderated_packs -->
-        {% endif %}
-    {% endif %}
-</div><!-- #sidebar -->
-<br class="clear"/><!-- Need a clearing element for some reason here.. -->
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/profile.js' %}"></script>
 {% endblock %}

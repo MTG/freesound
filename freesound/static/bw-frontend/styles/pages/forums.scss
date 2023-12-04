@@ -60,7 +60,7 @@
 
     textarea {
       min-height: 250px;
-      resize: none;
+      resize: vertical;
 
       &:focus {
         background-color: $white;

@@ -1,0 +1,36 @@
+{% extends "molecules/modal_base.html" %}
+{% load display_sound %}
+{% load bw_templatetags %}
+{% load util %}
+
+{% block id %}similarSoundsModal{% endblock %}
+{% block extra-class %}modal-width-80{% endblock %}
+{% block aria-label %}Similar sounds modal{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h4 class="v-spacing-5">Sounds similar to <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a></h4>
+    </div>
+    <div class="v-spacing-4">
+        <div class="row">
+            {% if paginator.count > 0 %}
+                {% for sound in similar_sounds %}
+                    <div class="col-6 col-lg-4">
+                        {% display_sound_small_no_bookmark sound %}
+                    </div>
+                {% endfor %}
+                <div class="v-spacing-top-5 w-100">
+                    {% bw_paginator paginator page current_page request "" -1 %}
+                </div>
+            {% else %}
+                <div class="text-center">
+                    <div class="text-grey v-spacing-top-1">Looks like we can't find any similar sounds yet.
+                        It's probable this is because the query sound has been uploaded recently and we haven't
+                        updated our similarity database yet. Try again later!</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

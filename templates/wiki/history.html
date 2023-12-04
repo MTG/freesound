@@ -1,41 +1,30 @@
-{% extends "wiki/_section.html" %}
+{% extends "simple_page.html" %}
 
+{% block title %}History - {{ page.name }}{% endblock %}
+{% block page-title %}History of page - {{page.name}}{% endblock %}
 
-{% block title %}{{page.name}} - History{% endblock %}
-
-{% block head %}
-    {{ block.super }}
-    <style type="text/css">
-        table.diff {font-family:Courier; border:medium;}
-        .diff_header {background-color:#e0e0e0}
-        td.diff_header {text-align:right}
-        .diff_next {background-color:#c0c0c0}
-        .diff_add {background-color:#aaffaa}
-        .diff_chg {background-color:#ffff77}
-        .diff_sub {background-color:#ffaaaa}
-    </style>
-{% endblock %}
-
-{% block section_content %}
-
-<h1>Versions of page: {{page.name}}</h1>
-<form method="get" action=".">
-    <ul>
-    {% for version in versions %}
-        <li>
-            <input type="radio" name="version1" value="{{version.id}}"{%if version1.id == version.id %} checked="checked"{%endif%}>
-            <input type="radio" name="version2" value="{{version.id}}"{%if version2.id == version.id %} checked="checked"{%endif%}>
-            {% if version.author %}
-            by {{version.author}}
+{% block page-content %}
+    <div class="bw-wiki">
+        <form method="get" action=".">
+            <ul>
+            {% for version in versions %}
+                <li>
+                    <input type="radio" name="version1" value="{{version.id}}"{% if version1.id == version.id %} checked="checked"{% endif %}>
+                    <input type="radio" name="version2" value="{{version.id}}"{% if version2.id == version.id %} checked="checked"{% endif %}>
+                    {% if version.author %}
+                    by {{version.author}}
+                    {% endif %}
+                    <a href="{% url "wiki-page" page.name %}?version={{version.id}}">version {{version.id}}</a> ({{version.created|timesince}} ago)</li>
+            {% endfor %}
+            </ul>
+            <div class="text-left">
+                <button class="btn-primary v-spacing-top-1">Compare</button>
+            </div>
+        </form>
+        <div class="v-spacing-top-5">
+            {% if diff %}
+                {{diff|safe}}
             {% endif %}
-            <a href="{% url "wiki-page" page.name %}?version={{version.id}}">version {{version.id}}</a> ({{version.created|timesince}} ago)</li>
-    {% endfor %}
-    </ul>
-    <input type="submit" value="Compare" />
-</form>
-
-{% if diff %}
-{{diff|safe}}
-{% endif %}
-
+        </div>
+    </div>
 {% endblock %}

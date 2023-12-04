@@ -990,7 +990,7 @@ Name                  Type              Description
 Response
 --------
 
-If the bookmark is successfully created, the Comment Sound resource will return a dictionary with a single ``detail`` field indicating that the sound has been successfully commented.
+If the comment is successfully created, the Comment Sound resource will return a dictionary with a single ``detail`` field indicating that the sound has been successfully commented.
 
 Examples
 --------
@@ -1034,7 +1034,6 @@ Name                      Type              Description
 ``packs``                 URI               The URI for a list of packs by the user.
 ``num_posts``             number            The number of forum posts by the user.
 ``num_comments``          number            The number of comments that user made in other users' sounds.
-``bookmark_categories``   URI               The URI for a list of bookmark categories by the user.
 ========================  ================  ====================================================================================
 
 
@@ -1107,74 +1106,6 @@ Examples
 
 {{examples_UserPacks}}
 
-
-User Bookmark Categories
-=========================================================
-
-::
-
-  GET /apiv2/users/<username>/bookmark_categories/
-
-This resource allows the retrieval of a list of bookmark categories created by a particular Freesound user.
-
-
-Response
---------
-
-User Bookmark Categories resource returns a paginated list of the bookmark categories created by a user, with a similar structure as :ref:`sound-list-response`:
-
-::
-
-  {
-    "count": <total number of bookmark categories>,
-    "next": <link to the next page of bookmark categories (null if none)>,
-    "results": [
-        <first bookmark category>,
-        <second bookmark category>,
-        ...
-    ],
-    "previous": <link to the previous page of bookmark categories (null if none)>
-  }
-
-Parameters ``page`` and ``page_size`` can be used just like in :ref:`sound-list-response` to deal with the pagination of the response.
-
-Each bookmark category entry consists of a dictionary with the following structure:
-
-::
-
-  {
-    "url": "<URI of the bookmark category in Freesound>",
-    "name": "<name that the user has given to the bookmark category>",
-    "num_sounds": <number of sounds under the bookmark category>,
-    "sounds": "<URI to a page with the list of sounds in this bookmark category>",
-  }
-
-
-Examples
---------
-
-{{examples_UserBookmarkCategories}}
-
-
-User Bookmark Category Sounds
-=========================================================
-
-::
-
-  GET /apiv2/users/<username>/bookmark_categories/<bookmark_category_id>/sounds/
-
-This resource allows the retrieval of a list of sounds from a bookmark category created by a particular Freesound user.
-
-Response
---------
-
-User Bookmark Category Sounds resource returns a sound list just like :ref:`sound-list-response`.
-The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
-
-Examples
---------
-
-{{examples_UserBookmarkCategorySounds}}
 
 
 Pack resources
@@ -1277,6 +1208,74 @@ Response
 
 The Me resource response consists of a dictionary with all the fields present in a standard :ref:`user_instance`, plus additional ``email`` and ``unique_id`` fields that can be used by the application to uniquely identify the end user.
 
+
+My Bookmark Categories
+=========================================================
+
+::
+
+  GET /apiv2/me/bookmark_categories/
+
+This resource allows the retrieval of a list of bookmark categories created by the logged in Freesound user.
+
+
+Response
+--------
+
+User Bookmark Categories resource returns a paginated list of the bookmark categories created by a user, with a similar structure as :ref:`sound-list-response`:
+
+::
+
+  {
+    "count": <total number of bookmark categories>,
+    "next": <link to the next page of bookmark categories (null if none)>,
+    "results": [
+        <first bookmark category>,
+        <second bookmark category>,
+        ...
+    ],
+    "previous": <link to the previous page of bookmark categories (null if none)>
+  }
+
+Parameters ``page`` and ``page_size`` can be used just like in :ref:`sound-list-response` to deal with the pagination of the response.
+
+Each bookmark category entry consists of a dictionary with the following structure:
+
+::
+
+  {
+    "url": "<URI of the bookmark category in Freesound>",
+    "name": "<name that the user has given to the bookmark category>",
+    "num_sounds": <number of sounds under the bookmark category>,
+    "sounds": "<URI to a page with the list of sounds in this bookmark category>",
+  }
+
+
+Examples
+--------
+
+{{examples_MeBookmarkCategories}}
+
+
+My Bookmark Category Sounds
+=========================================================
+
+::
+
+  GET /apiv2/me/bookmark_categories/<bookmark_category_id>/sounds/
+
+This resource allows the retrieval of a list of sounds from a bookmark category created by the logged in Freesound user.
+
+Response
+--------
+
+User Bookmark Category Sounds resource returns a sound list just like :ref:`sound-list-response`.
+The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+
+Examples
+--------
+
+{{examples_MeBookmarkCategorySounds}}
 
 
 Available Audio Descriptors

@@ -38,6 +38,7 @@ from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
 from utils.cache import invalidate_user_template_caches
 from utils.filesystem import md5file, remove_directory_if_empty, remove_directory
+from utils.forms import filename_has_valid_extension
 from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
     remove_uploaded_file_from_mirror_locations
 from utils.text import remove_control_chars
@@ -72,7 +73,14 @@ def _remove_user_uploads_folder_if_empty(user):
 def clean_processing_before_describe_files(audio_file_path):
     directory_path = get_processing_before_describe_sound_folder(audio_file_path)
     if os.path.exists(directory_path):
-        remove_directory(directory_path)
+        # Note we use ignore_errors=True below because we've found issues with remove_directory similar
+        # to those described here https://github.com/ansible/ansible/issues/34335 (sort of race confitions)
+        # We suspect these errors can happen if the user describes the sound before it has finished "processing
+        # before description" (maybe the case of long sounds?). In that case the directory will be removed while
+        # new sounds are being added to it. If this happens, the error will be ignored and the folder will not be
+        # removed at this time. Nevertheless an async job that cleans old unnecessary folders form the data volume
+        # will eventually identify this folder and remove it later.
+        remove_directory(directory_path, ignore_errors=True)
 
 
 def get_duration_from_processing_before_describe_files(audio_file_path):
@@ -267,7 +275,7 @@ def create_sound(user,
 
     if process:
         try:
-            sound.process_and_analyze(high_priority=True)
+            sound.process_and_analyze(high_priority=True, countdown=10)
 
             if sound.pack:
                 sound.pack.process()
@@ -409,7 +417,6 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                 if not audio_filename.strip():
                     line_errors['audio_filename'] = "Invalid audio filename."
                 else:
-                    from accounts.forms import filename_has_valid_extension
                     if not filename_has_valid_extension(audio_filename):
                         line_errors['audio_filename'] = "Invalid file extension."
                     else:
@@ -551,7 +558,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
         try:
             bulk_upload_progress_object = BulkUploadProgress.objects.get(id=bulkupload_progress_id)
         except BulkUploadProgress.DoesNotExist:
-            console_logger.error('BulkUploadProgress object with id %i can\'t be found, wont store progress '
+            console_logger.info('BulkUploadProgress object with id %i can\'t be found, wont store progress '
                                  'information.' % bulkupload_progress_id)
 
     # Start the actual process of uploading files
@@ -596,7 +603,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             # Process sound and pack
             error_sending_to_process = None
             try:
-                sound.process_and_analyze(high_priority=True)
+                sound.process_and_analyze(high_priority=True, countdown=10)
             except Exception as e:
                 error_sending_to_process = str(e)
             if sound.pack:

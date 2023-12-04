@@ -23,13 +23,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from comments.models import Comment
 from sounds.models import Sound
-from utils.frontend_handling import render, using_beastwhoosh
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
@@ -58,83 +57,77 @@ def delete(request, comment_id):
 @raise_404_if_user_is_deleted
 def for_user(request, username):
     """ Display all comments for the sounds of the user """
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
+        # If not loading as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?comments=1')
         
     user = request.parameter_user
     sounds = Sound.objects.filter(user=user)
     qs = Comment.objects.filter(sound__in=sounds).select_related("user", "user__profile",
                                                                  "sound__user", "sound__user__profile")
-    num_items_per_page = 30 if not using_beastwhoosh(request) else settings.COMMENTS_IN_MODAL_PER_PAGE_BW
+    num_items_per_page = settings.COMMENTS_IN_MODAL_PER_PAGE
     paginator = paginate(request, qs, num_items_per_page)
-    if using_beastwhoosh(request):
-        page = paginator["page"]
-        sound_ids = [d.sound_id for d in page]
-        sounds_dict = Sound.objects.dict_ids(sound_ids)
-        for comment in page.object_list:
-            comment.sound_object = sounds_dict[comment.sound_id]
-        tvars = {
-            "user": user,
-            "mode": "for_user",
-            "delete_next_url": reverse('account', args=[username]) + f'?comments={paginator["current_page"]}'
-        }
-        tvars.update(paginator)
-        return render(request, 'accounts/modal_comments.html', tvars)
-    else:
-        comments = paginator["page"].object_list
-        tvars = {
-            "user": user,
-            "comments": comments,
-            "mode": "for_user"
-        }
-        tvars.update(paginator)
-        return render(request, 'sounds/comments.html', tvars)
+    page = paginator["page"]
+    sound_ids = [d.sound_id for d in page]
+    sounds_dict = Sound.objects.dict_ids(sound_ids)
+    for comment in page.object_list:
+        comment.sound_object = sounds_dict[comment.sound_id]
+    tvars = {
+        "user": user,
+        "mode": "for_user",
+        "delete_next_url": reverse('account', args=[username]) + f'?comments={paginator["current_page"]}'
+    }
+    tvars.update(paginator)
+    return render(request, 'accounts/modal_comments.html', tvars)
 
 
 @redirect_if_old_username_or_404
 @raise_404_if_user_is_deleted
 def by_user(request, username):
-    """ Display all comments made by the user """
-    if using_beastwhoosh(request) and not request.GET.get('ajax'):
+    if not request.GET.get('ajax'):
+        # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?comments_by=1')
     
     user = request.parameter_user
     qs = Comment.objects.filter(user=user).select_related("user", "user__profile",
                                                           "sound__user", "sound__user__profile")
-    num_items_per_page = 30 if not using_beastwhoosh(request) else settings.COMMENTS_IN_MODAL_PER_PAGE_BW
+    num_items_per_page = settings.COMMENTS_IN_MODAL_PER_PAGE
     paginator = paginate(request, qs, num_items_per_page)
-    if using_beastwhoosh(request):
-        page = paginator["page"]
-        sound_ids = [d.sound_id for d in page]
-        sounds_dict = Sound.objects.dict_ids(sound_ids)
-        for comment in page.object_list:
-            comment.sound_object = sounds_dict[comment.sound_id]
-        tvars = {
-            "user": user,
-            "mode": "by_user",
-            "delete_next_url": reverse('account', args=[username]) + f'?comments_by={paginator["current_page"]}'
-        }
-        tvars.update(paginator)
-        return render(request, 'accounts/modal_comments.html', tvars)
-    else:
-        comments = paginator["page"].object_list
-        tvars = {
-            "user": user,
-            "comments": comments,
-            "mode": "by_user"
-        }
-        tvars.update(paginator)
-        return render(request, 'sounds/comments.html', tvars)
-
-def all(request):
-    """ Display all comments """
-    qs = Comment.objects.select_related("user", "user__profile", "sound__user", "sound__user__profile")
-    paginator = paginate(request, qs, 30)
-    comments = paginator["page"].object_list
+    page = paginator["page"]
+    sound_ids = [d.sound_id for d in page]
+    sounds_dict = Sound.objects.dict_ids(sound_ids)
+    for comment in page.object_list:
+        comment.sound_object = sounds_dict[comment.sound_id]
     tvars = {
-        "comments": comments,
-        "mode": "latest"
+        "user": user,
+        "mode": "by_user",
+        "delete_next_url": reverse('account', args=[username]) + f'?comments_by={paginator["current_page"]}'
     }
     tvars.update(paginator)
-    return render(request, 'sounds/comments.html', tvars)
+    return render(request, 'accounts/modal_comments.html', tvars)
+
+
+@redirect_if_old_username_or_404
+@raise_404_if_user_is_deleted
+def for_sound(request, username, sound_id):
+    if not request.GET.get('ajax'):
+        # If not loaded as a modal, redirect to account page with parameter to open modal
+        return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '#comments')
+    
+    sound = get_object_or_404(Sound, id=sound_id)
+    if sound.user.username.lower() != username.lower():
+        raise Http404
+    
+    qs = Comment.objects.filter(sound=sound).select_related("user", "user__profile",
+                                                          "sound__user", "sound__user__profile")
+    num_items_per_page = settings.SOUND_COMMENTS_PER_PAGE
+    paginator = paginate(request, qs, num_items_per_page)
+    tvars = {
+        "sound": sound,
+        "user": request.parameter_user,
+        "mode": "for_sound",
+        "delete_next_url": reverse('sound', args=[username, sound_id]) + f'?page={paginator["current_page"]}#comments'
+    }
+    tvars.update(paginator)
+    return render(request, 'accounts/modal_comments.html', tvars)
 

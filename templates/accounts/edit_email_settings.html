@@ -1,38 +1,24 @@
-{% extends "accounts/_section.html" %}
-{% block head %}
-{{ block.super }}
-<style type="text/css">
-form ul {
-    padding-bottom: 0;
-}
-</style>
-{% endblock %} 
+{% extends "accounts/account_settings_base.html" %}
 
-{% block title %}edit account{% endblock %}
+{% load static %}
+{% load filter_img %}
+{% load bw_templatetags %}
+{% load util %}
 
-{% block section_content %}
+{% block title %}Email notifications{% endblock %}
 
-<h1>Email notification settings</h1>
+{% block main_content %}
 
-<div id="content">
-    <div id="edit_account" class="content_box">
-        <h3>Edit your account information</h3>
-        <form method="post" action=".">{% csrf_token %}
-            {{form.as_p}}
-            <input type="submit" value="Save email settings" />
+    <h1>Email notifications</h1>
+
+    <div class="v-spacing-top-4 w-100 v-spacing-5">
+        <div class="text-grey">Send me an email when:</div>
+        <form method="post" action="." class="bw-form w-100">{% csrf_token %}
+            <div class="bw-multiple-checkbox">
+                {{ form }}
+            </div>
+            <button class="btn-primary w-100 v-spacing-top-5">Update Email notifications</button>
         </form>
-    </div><!-- #edit_account -->
-</div><!-- #content -->
-
-
-<div id="sidebar">
-    <div class="content_box">
-        <h3>Back</h3>
-        <p>
-            Go back to general <a href="{% url "accounts-edit" %}">settings</a>.
-        </p>
     </div>
-</div><!-- #sidebar -->
 
-<br class="clear" /><!-- Clearing Element -->
 {% endblock %}

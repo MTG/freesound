@@ -1,160 +1,48 @@
-{% extends "sounds/_section.html" %}
+{% extends "simple_page.html" %}
+{% load static %}
+{% load util %}
+{% load bw_templatetags %}
+{% load sounds_selector %}
 
-{% load display_sound %}
-{% load paginator %}
+{% block title %}Edit pack - {{ pack.name }}{% endblock %}
+{% block page-title %}Edit pack{% endblock %}
 
-{% block title %}pack: {{pack.name}} by {{pack.user.username}}{% endblock title %}
+{% block page-content %}
+<div class="v-spacing-5 v-spacing-top-2">
+    <p>You can specify a <b>name</b> for the pack, a <b>description</b>, and the <b>sounds</b> that are part of the pack. You can only add <b>sounds uploaded by you</b>. Also, take into account that sounds can <b>only belong to one pack</b>. If adding sounds that already belog to other packs, these will be removed from the previous packs.
 
-{% block head %}
-    {{ block.super }}
-
-<script type="text/javascript">
-    var sounds = [];
-
-    function collectSounds()
-    {
-        $("#save-button").attr("disabled", "disabled");
-        $("#sound_ids").val(sources.join(","))
-    }
-
-    function addSound(element, soundId)
-    {
-        if ($.inArray(soundId, sounds) == -1)
-        {
-            sounds.push(soundId);
-            
-            var el = $(element).clone().appendTo("#current_pack_sounds");
-            addRemoveLink(el,soundId);
-            $($(el[0]).children()).children(".add_sound").remove();
-            $("#pack_sounds").val(sounds.join(","));
-        }
-    }
-    function addRemoveLink(element, soundId){
-        var title = $($(element).children(".sample_player")[0]).children(".sound_title"); 
-        var msg = "<br/><a class=\"remove_sound\" onclick=\"removeSound(this, "+soundId+")\">remove </a>"
-        title.after(msg);
-    }
-
-    function removeSound(element, soundId)
-    {
-        var index = $.inArray(soundId, sounds);
-        if (index != -1)
-        {
-            sounds.splice(index, 1);
-            $(element).parent().parent().remove();
-            $("#pack_sounds").val(sounds.join(","));
-        }
-    }
-
-    function removePackSounds(){
-        $('#search-results .sample_player_small').each( function () {
-            var element = $(this);
-            var snd_id = parseInt(element[0].id);
-            var index = $.inArray(snd_id, sounds);
-            if (index != -1)element.remove();
-        });
-    }
-
-    function appendLinks(){
-        $('#search-results .sample_player_small').each( function () {
-            var element = $(this);
-            var snd_pack = element.children(".sample_information").find(".pack");
-            var snd_id = element[0].id;
-            var link_id = "a"+snd_id;
-            var title = $($(this).children(".sample_player")[0]).children(".sound_title");            
-            var msg = "<br/><a id=\""+link_id+"\" class=\"add_sound\" >add";
-            if(snd_pack.length>0){
-                var pack_msg = snd_pack[0].children[0].title;
-                var pack_name = pack_msg.split(":")[1];
-                msg = msg + "<span style=\"font-size:11px\"> (remove from pack:"+pack_name+")</span>";
-            };
-            msg = msg+"</a>";
-            
-            var result = $(title).after(msg);
-            $("#"+link_id).click(function(){
-                addSound(element, parseInt(snd_id));
-                return false;
-            });
-        });
-    }
-
-    function searchSounds(){
-        $("#search-results").load("{% url 'sounds-search' %}",
-         $.param({
-            "q": $("#search-q").val(),
-            "f":"username:\"{{user.username}}\"",
-            "s":"Date+added+(newest+first)",
-            "ajax": 1}),
-            function(){makePlayer('.player');removePackSounds();appendLinks();}
-        );
-    }
-
-    $(function()
-    {
-        var ids = $("#pack_sounds").val().split(",");
-        if(ids)sounds = $.map(ids, function (soundId) { return parseInt(soundId) });
-        $("#save-button").click(function () {
-            collectSounds();
-            return false;
-        });
-
-        $("#search-button").click(function () {
-            searchSounds();
-            return false;
-        });
-        $('#current_pack_sounds .sample_player_small').each( function () {
-            var snd_id = $(this)[0].id;
-            addRemoveLink($(this), snd_id);
-
-        });
-        searchSounds();
-    });
-
-
-    $(function() {
-        unsecureImageCheck($('#id_description'));
-    })
-
-</script>
-
-{% endblock head %}
-
-{% block section_content %}
-<h1>Edit Pack</h1>
-<p>You can edit the name, description and sounds of this pack. Click on the "submit" button to save all your changes.</p>
-<form method="post" action="#pack_edit">{% csrf_token %}
-
-    <div id ="pack_edit_form">
-    {{form.name.errors}}
-    <p>
-       Name:<br/>{{form.name}}
     </p>
-
-    {{form.description.errors }}
-    <p>
-        Description:<br/>{{form.description }}
-    </p>
-  {{form.pack_sounds}}
-    </div>
-    <input type="submit" value="Submit"/>
-</form>
-<div style="display:flex;min-height: 200px;">
-    <div id="current_pack_sounds" class="sound_list_minimal">
-        <h4> Current sounds</h4>
-        {% for sound in current_sounds %}
-                {% display_sound sound %}
-        {% endfor %}
-    </div>
-
-    <div id="pack_edit_search" class="sound_list_minimal" >
-        <h4> Other sounds</h4>
-        <p> Use the list and search box below to add some of your sounds<br /> to the pack. Remember that sounds can only be in one pack!
-        <p>
-            <input type="text" name="q" id="search-q" size="25" /> 
-            <input type="button" name="submit" value="search" id="search-button"/>
-        </p>  
-        <div id="search-results" class="sound_list_minimal"></div>      
-    </div>
-    <div style="clear:both"></div>
 </div>
-{% endblock section_content %}
+<div class="row no-gutters">
+    <div class="col-lg-8 offset-lg-2">
+        <h2 class="v-spacing-3">{{ pack.name }}</h2>
+        <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
+            {{ form.non_field_errors }}
+            {{ form.name.errors }}
+            {{ form.name.label_tag }}
+            {{ form.name }}
+            {{ form.description.errors }}
+            {{ form.description.label_tag }}
+            {{ form.description }}
+            <span class="helptext">{{ form.description.help_text|safe }}</span>
+            <div class="select-sounds-field v-spacing-5">
+                {{ form.pack_sounds }}
+                <label>Sounds in pack ({{ form.pack_sound_objects|length }})</label>
+                {% if not form.pack_sounds.value %}
+                <div class="v-spacing-4 v-spacing-top-2">No sounds have been added to this pack yet</div>
+                {% endif %}
+                {% sounds_selector form.pack_sound_objects %}
+                <div class="between v-spacing-top-2">
+                    <button class="btn-inverse" data-toggle="add-sounds-modal" data-selected-sounds-hidden-input-id="{{ form.pack_sounds.id_for_label }}" data-modal-url="{% url 'add-sounds-modal-pack' pack.id %}">{% bw_icon 'plus' %}Add sounds</button>
+                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from pack</button>
+                </div>
+            </div>
+            <button class="btn-primary w-100">Save pack</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/packEdit.js' %}"></script>
+{% endblock %}

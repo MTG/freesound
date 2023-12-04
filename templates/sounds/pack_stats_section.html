@@ -1,0 +1,24 @@
+{% load bw_templatetags %}
+{% load util %}
+{% load cache %}
+{% cache 3600 bw_pack_stats pack.id %}
+<div>
+    <ol>
+        <li class="v-spacing-3">
+            {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black" title="This pack has {{ pack.num_sounds|bw_intcomma }} sound{{ pack.num_sounds|pluralize }}"  href="{% url "sounds-search" %}?f=grouping_pack:{{ pack.pack_filter_value }}&s=Date+added+(newest+first)&g=1" >{{ pack.num_sounds|formatnumber }} sound{{ pack.num_sounds|pluralize }}</a>
+        </li>
+        <li class="v-spacing-3">
+            {% with pack.get_total_pack_sounds_length as total_pack_sounds_length %}{% bw_icon 'clock' 'text-light-grey' %} <span class="text-19" title="The sounds of this pack together account for {{ total_pack_sounds_length|duration_hours }} hours of audio">{{ total_pack_sounds_length|duration_hours }} hours of audio</span>{% endwith %}
+        </li>
+        <li class="v-spacing-3">
+            {% bw_icon 'download' 'text-light-grey' %}<a class="text-19 bw-link--black" title="This pack has been downloaded {{ pack.num_downloads|bw_intcomma }} time{{ pack.num_downloads|pluralize }}"  href="javascript:void(0);" data-toggle="modal-default" data-modal-content-url="{% url 'pack-downloaders' pack.user.username pack.id %}?ajax=1" data-modal-activation-param="downloaders">{{ pack.num_downloads|formatnumber }} download{{ pack.num_downloads|pluralize }}</a>
+        </li>
+    </ol>
+</div>
+<div class="v-spacing-top-5 ellipsis middle">
+    {% bw_icon pack.license_bw_icon_name 'text-light-grey text-30' %} <span class="text-20 h-spacing-left-2">{{ pack.license_summary_name_and_id.0 }}</span>
+</div>
+<div class="text-grey v-spacing-top-1">
+    {{ pack.license_summary_text|safe }} {% if pack.license_summary_deed_url %}<a href="{{ pack.license_summary_deed_url }}" target="_blank" class="bw-link--black">More...</a>{% endif %}
+</div>
+{% endcache %}

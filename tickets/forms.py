@@ -26,37 +26,25 @@ from utils.forms import HtmlCleaningCharField
 
 
 class ModeratorMessageForm(forms.Form):
-    message = HtmlCleaningCharField(widget=forms.Textarea)
-    moderator_only = forms.BooleanField(required=False)
+    message = HtmlCleaningCharField(widget=forms.Textarea, label=False)
+    moderator_only = forms.BooleanField(required=False, label='Make this message only visible to other moderators')
 
-
-class BWModeratorMessageForm(ModeratorMessageForm):
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
-        self.fields['message'].label = False
-        self.fields['message'].widget.attrs['placeholder'] = 'Add a new message to the ticket'
+        self.fields['message'].widget.attrs['placeholder'] = 'Add a message to the ticket'
         self.fields['message'].widget.attrs['rows'] = '1'
-        self.fields['message'].widget.attrs['style'] = 'min-height:100px;'
+        self.fields['message'].widget.attrs['style'] = 'min-height:70px;'
         self.fields['moderator_only'].widget.attrs['class'] = 'bw-checkbox'
-        self.fields['moderator_only'].label = mark_safe('Make this message only visible to other moderators')
 
 
 class UserMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea)
 
 
-class BWUserMessageForm(UserMessageForm):
-    pass
-
-
 class AnonymousMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea)
     recaptcha = ReCaptchaField(label="")
-
-
-class BWAnonymousMessageForm(AnonymousMessageForm):
-    pass
 
 
 # Sound moderation forms
@@ -88,19 +76,36 @@ class SoundModerationForm(forms.Form):
                                     initial=IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY,
                                     required=True,
                                     label=mark_safe("<i>Is explicit</i> flag"))
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['action'].widget.attrs['class'] = 'bw-radio'
 
 
 class ModerationMessageForm(forms.Form):
-    message = HtmlCleaningCharField(widget=forms.Textarea,
-                                    required=False,
-                                    label='')
-    moderator_only = forms.BooleanField(required=False)
+    message = HtmlCleaningCharField(widget=forms.Textarea, required=False, label=False)
+    moderator_only = forms.BooleanField(
+        required=False, label='Make this message only visible to moderators')
+
+    def __init__(self, *args, **kwargs):
+        kwargs.update(dict(label_suffix=''))
+        super().__init__(*args, **kwargs)
+        self.fields['message'].widget.attrs['placeholder'] = 'Add a message to the ticket'
+        self.fields['message'].widget.attrs['style'] = 'margin-bottom: 10px;min-height:80px;'
+        self.fields['message'].widget.attrs['rows'] = '1'
+        self.fields['moderator_only'].widget.attrs['class'] = 'bw-checkbox'
 
 
 class UserAnnotationForm(forms.Form):
     text = HtmlCleaningCharField(widget=forms.Textarea,
                                  required=True,
                                  label='')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['text'].widget.attrs['placeholder'] = 'Type here a new annotation for that user'
+        self.fields['text'].widget.attrs['rows'] = '1'
+        self.fields['text'].widget.attrs['style'] = 'min-height:70px;'
 
 
 class SoundStateForm(forms.Form):

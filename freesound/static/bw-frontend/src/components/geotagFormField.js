@@ -84,9 +84,9 @@ const showGeotagFieldAndRemoveShowButton = (geotagFieldElement, buttonElement) =
     buttonElement.classList.add('display-none');
 };
 
-const prepareGeotagFormFields = () => {
+const prepareGeotagFormFields = (container) => {
     // Note that this need to run after mapbox scripts have been load (for example, after the DOMContentLoaded is fired)
-    const showGeolocationButtons = document.getElementsByClassName("show-geolocation-button");
+    const showGeolocationButtons = container.getElementsByClassName("show-geolocation-button");
     showGeolocationButtons.forEach(buttonElement => {
         const geotagFieldElement = buttonElement.parentNode;
         if (geotagFieldElement.dataset.hasGeotag){

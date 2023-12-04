@@ -20,17 +20,18 @@ const isUsingDarkTheme = () => {
     return styleLink.getAttribute('href').indexOf('dark') > -1;
 }
 
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-    const newColorScheme = event.matches ? "dark" : "light";
-    if (styleLink.dataset.forcedTheme === undefined){
-        if (newColorScheme == "dark"){
-            switchToDarkMode();
-        } else if (newColorScheme == "dark"){
-            switchToLightMode();
+if (window.matchMedia('(prefers-color-scheme: dark)').addEventListener !== undefined){  // Some old browsers don't support that
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+        const newColorScheme = event.matches ? "dark" : "light";
+        if (styleLink.dataset.forcedTheme === undefined){
+            if (newColorScheme == "dark"){
+                switchToDarkMode();
+            } else if (newColorScheme == "dark"){
+                switchToLightMode();
+            }
         }
-    }
-});
-
+    });
+}
 
 if (browserPrefersDarkTheme()){
     document.cookie = "systemPrefersDarkTheme=yes;path=/";

@@ -95,7 +95,7 @@ class Command(LoggingBaseCommand):
             tvars = {'username': username,
                      'users_sounds': users_sounds,
                      'tags_sounds': tags_sounds}
-            text_content = render_mail_template('follow/email_stream.txt', tvars)
+            text_content = render_mail_template('emails/email_stream.txt', tvars)
 
             # Send email
             try:
@@ -104,7 +104,7 @@ class Command(LoggingBaseCommand):
             except Exception as e:
                 # Do not send the email and do not update the last email sent field in the profile
                 profile.save()  # Save last_attempt_of_sending_stream_email
-                commands_logger.error("Unexpected error while sending stream notification email (%s)" % json.dumps(
+                commands_logger.info("Unexpected error while sending stream notification email (%s)" % json.dumps(
                     {'email_to': profile.get_email_for_delivery(),
                      'username': profile.user.username,
                      'error': str(e)}))

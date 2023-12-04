@@ -51,13 +51,13 @@ class Command(BaseCommand):
             sample_size = options['sample_size'] or settings.AWS_SES_BOUNCE_RATE_SAMPLE_SIZE
             n_points = options['n_datapoints'] or settings.AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS
         except AttributeError:
-            console_logger.error('AWS SES config variables not configured')
+            console_logger.info('AWS SES config variables not configured')
             return
 
         try:
             stats = get_ses_stats(sample_size, n_points)
         except (AwsCredentialsNotConfigured, EndpointConnectionError) as e:
-            console_logger.error(str(e))
+            console_logger.info(str(e))
             return
 
         commands_logger.info(f'Reporting AWS email stats ({json.dumps(stats)})')

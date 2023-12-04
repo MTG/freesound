@@ -116,7 +116,7 @@ $navbar-height-mobile: 64px;
   align-items: center;
 }
 
-.bw-nav__menu--avatar-with-notifications {
+.bw-nav__menu--avatar-with-message-notifications {
   position: relative;
 
   &:after {
@@ -130,6 +130,53 @@ $navbar-height-mobile: 64px;
     top: calc(100% + 4px);
     left: 50%;
     transform: translateX(-50%);
+  }
+}
+
+.bw-nav__menu--avatar-with-moderation-notifications {
+  position: relative;
+
+  &:after {
+    display: block;
+    position: absolute;
+    content: ' ';
+    height: 7px;
+    width: 7px;
+    border-radius: 50%;
+    background-color: $blue;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.bw-nav__menu--avatar-with-both-notifications {
+  position: relative;
+
+  &:after {
+    display: block;
+    position: absolute;
+    content: ' ';
+    height: 7px;
+    width: 7px;
+    border-radius: 50%;
+    background-color: $red;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-90%);
+  }
+
+  &:before {
+    display: block;
+    position: absolute;
+    content: ' ';
+    height: 7px;
+    width: 7px;
+    border-radius: 50%;
+    background-color: $blue;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(10%);
   }
 }
 

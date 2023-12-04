@@ -32,6 +32,7 @@ from collections import Counter
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
@@ -52,14 +53,13 @@ from apiv2.models import ApiV2Client
 from comments.models import Comment
 from freesound.celery import app as celery_app
 from general import tasks
-from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
 from tags.models import TaggedItem, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, Queue, TicketComment
-from utils.cache import invalidate_template_cache
+from utils.cache import invalidate_template_cache, invalidate_user_template_caches
 from utils.locations import locations_decorator
 from utils.mail import send_mail_template
 from utils.search import get_search_engine, SearchEngineException
@@ -71,7 +71,7 @@ web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
 
 
-class License(OrderedModel):
+class License(models.Model):
     """A creative commons license model"""
     name = models.CharField(max_length=512)
     abbreviation = models.CharField(max_length=8, db_index=True)
@@ -587,7 +587,7 @@ class PublicSoundManager(models.Manager):
         return super().get_queryset().filter(moderation_state="OK", processing_state="OK")
 
 
-class Sound(SocialModel):
+class Sound(models.Model):
     user = models.ForeignKey(User, related_name="sounds", on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
@@ -613,6 +613,7 @@ class Sound(SocialModel):
     license = models.ForeignKey(License, on_delete=models.CASCADE)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
+    tags = fields.GenericRelation(TaggedItem)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # fields for specifying if the sound was uploaded via API or via bulk upload process (or none)
@@ -622,15 +623,7 @@ class Sound(SocialModel):
         BulkUploadProgress, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # file properties
-    SOUND_TYPE_CHOICES = (
-        ('wav', 'Wave'),
-        ('ogg', 'Ogg Vorbis'),
-        ('aiff', 'AIFF'),
-        ('mp3', 'Mp3'),
-        ('flac', 'Flac'),
-        ('m4a', 'M4a')
-    )
-    type = models.CharField(db_index=True, max_length=4, choices=SOUND_TYPE_CHOICES)
+    type = models.CharField(db_index=True, max_length=4, choices=settings.SOUND_TYPE_CHOICES)
     duration = models.FloatField(default=0)
     bitrate = models.IntegerField(default=0)
     bitdepth = models.IntegerField(null=True, blank=True, default=None)
@@ -884,6 +877,32 @@ class Sound(SocialModel):
         return reverse('sound', args=[self.user.username, smart_str(self.id)])
 
     @property
+    def should_display_small_icons_in_second_line(self):
+        # This is used in small sound players (grid display) to determine if the small icons for ratings,
+        # license, downloads, etc.. should be shown in the same line of the title or in the next line
+        # together with the username. If the sound title is short and also there are not many icons to show,
+        # (e.g. sound has no downloads and no geotag), then we can display in the same line, otherwise in the
+        # second line.
+        icons_count = 1
+        if self.pack_id:
+            icons_count += 1
+        if self.geotag_id:
+            icons_count += 1
+        if self.num_downloads:
+            icons_count +=2  # Counts double as it takes more width
+        if self.num_comments:
+            icons_count +=2  # Counts double as it takes more width
+        if self.num_ratings > settings.MIN_NUMBER_RATINGS:
+            icons_count +=2  # Counts double as it takes more width
+        title_num_chars = len(self.original_filename)
+        if icons_count >= 6:
+            return title_num_chars >= 15
+        elif 3 <= icons_count < 6:
+            return title_num_chars >= 23
+        else:
+            return title_num_chars >= 30
+        
+    @property
     def license_bw_icon_name(self):
         if hasattr(self, 'license_name'):
             return License.bw_cc_icon_name_from_license_name(self.license_name)
@@ -971,7 +990,7 @@ class Sound(SocialModel):
             source.invalidate_template_caches()
             self.sources.add(source)
             send_mail_template(
-                settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX, 'sounds/email_remix_update.txt',
+                settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX, 'emails/email_remix_update.txt',
                 {'source': source, 'action': 'added', 'remix': self},
                 user_to=source.user, email_type_preference_check='new_remix')
         
@@ -1135,7 +1154,7 @@ class Sound(SocialModel):
             try:
                 os.rename(path, replace_user_id_in_path(path, self.user.id, new_owner.id))
             except OSError:
-                web_logger.error('WARNING changing owner of sound %i: Could not rename file %s because '
+                web_logger.info('WARNING changing owner of sound %i: Could not rename file %s because '
                                  'it does not exist.\n' % (self.id, path))
 
         # Deal with pack
@@ -1229,28 +1248,30 @@ class Sound(SocialModel):
         except Ticket.DoesNotExist:
             pass
 
-    def process_and_analyze(self, force=False, high_priority=False):
+    def process_and_analyze(self, force=False, high_priority=False, countdown=0):
         """
         Process and analyze a sound if the sound has a processing state different than "OK" and/or and analysis state
         other than "OK". 'force' argument can be used to trigger processing and analysis regardless of the processing
         state and analysis state of the sound.
+        The countdown parameter will add some delay before the task is executed (in seconds). 
         NOTE: high_priority is not implemented and setting it has no effect
         """
-        self.process(force=force, high_priority=high_priority)
+        self.process(force=force, high_priority=high_priority, countdown=countdown)
         self.analyze(force=force, high_priority=high_priority)
 
-    def process(self, force=False, skip_previews=False, skip_displays=False, high_priority=False):
+    def process(self, force=False, skip_previews=False, skip_displays=False, high_priority=False, countdown=0):
         """
         Trigger processing of the sound if processing_state is not "OK" or force=True.
         'skip_previews' and 'skip_displays' arguments can be used to disable the computation of either of these steps.
         Processing code generates the file previews and display images as well as fills some audio fields
         of the Sound model. This method returns "True" if sound was sent to process, None otherwise.
+        The countdown parameter will add some delay before the task is executed (in seconds).
         NOTE: high_priority is not implemented and setting it has no effect
         """
         if force or ((self.processing_state != "OK" or self.processing_ongoing_state != "FI")
                      and self.estimate_num_processing_attemps() <= 3):
             self.set_processing_ongoing_state("QU")
-            tasks.process_sound.delay(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays)
+            tasks.process_sound.apply_async(kwargs=dict(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays), countdown=countdown)
             sounds_logger.info(f"Send sound with id {self.id} to queue 'process'")
             return True
 
@@ -1330,7 +1351,7 @@ class Sound(SocialModel):
         else:
             return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
 
-    class Meta(SocialModel.Meta):
+    class Meta:
         ordering = ("-created", )
 
 
@@ -1400,7 +1421,7 @@ class SoundOfTheDay(models.Model):
             return False
 
         send_mail_template(
-            settings.EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN, 'sounds/email_random_sound.txt',
+            settings.EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN, 'emails/email_random_sound.txt',
             {'sound': self.sound, 'user': self.sound.user},
             user_to=self.sound.user, email_type_preference_check="random_sound")
         self.email_sent = True
@@ -1605,7 +1626,7 @@ class PackManager(models.Manager):
     '''
 
 
-class Pack(SocialModel):
+class Pack(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True, default=None)
@@ -1630,7 +1651,7 @@ class Pack(SocialModel):
     def get_pack_sounds_in_search_url(self):
         return f'{reverse("sounds-search")}?f=grouping_pack:{ self.pack_filter_value() }&s=Date+added+(newest+first)&g=1'
 
-    class Meta(SocialModel.Meta):
+    class Meta:
         unique_together = ('user', 'name', 'is_deleted')
         ordering = ("-created",)
 
@@ -1644,23 +1665,14 @@ class Pack(SocialModel):
         sounds = self.sounds.filter(processing_state="OK", moderation_state="OK").order_by("-created")
         self.num_sounds = sounds.count()
         if self.num_sounds:
-            self.last_updated = sounds[0].created
+            if sounds[0].created > self.last_updated:
+                # Only update last_updated if the sound that changed was created after the packs last_updated time
+                # Otherwise it could be that the pack was edited (e.g. the description was changed) ater the last
+                # sound was added and we could be setting the date of the sound here
+                self.last_updated = sounds[0].created
         self.save()
         self.invalidate_template_caches()
-
-    def get_random_sounds_from_pack(self, N=3):
-        """
-        Get N random sounds from this pack. If Pack has less than N sounds, then less than N sounds will be returned.
-
-        Args:
-            N (int): maximum number of random sounds to get
-
-        Returns:
-            List[Sound]: List of randomly selected Sound objects from the pack
-        """
-        # TODO: only used in NG, remove after we switch to BW (?)
-        sound_ids = list(Sound.public.filter(pack=self.id).order_by('?').values_list('id', flat=True)[:N])
-        return Sound.objects.ordered_ids(sound_ids=sound_ids)
+        invalidate_user_template_caches(self.user_id)
 
     def get_pack_tags(self):
         try:
@@ -1702,7 +1714,9 @@ class Pack(SocialModel):
             for sound in self.sounds.all():
                 sound.delete()  # Create DeletedSound objects and delete original objects
         else:
-            self.sounds.update(pack=None)
+            for sound in self.sounds.all():
+                sound.invalidate_template_caches()
+            self.sounds.update(pack=None, is_index_dirty=True)
         self.is_deleted = True
         self.save()
 
@@ -1814,6 +1828,24 @@ class Pack(SocialModel):
             return self.has_geotags_precomputed
         else:
             return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
+        
+    @property
+    def should_display_small_icons_in_second_line(self):
+        # See same method in Sound class more more information
+        icons_count = 2
+        if self.has_geotags:
+            icons_count += 1
+        if self.num_downloads:
+            icons_count +=2  # Counts double as it takes more width
+        if self.num_ratings:
+            icons_count +=2  # Counts double as it takes more width
+        title_num_chars = len(self.name)
+        if icons_count >= 6:
+            return title_num_chars >= 5
+        elif 3 <= icons_count < 6:
+            return title_num_chars >= 18
+        else:
+            return title_num_chars >= 25
 
 
 class Flag(models.Model):

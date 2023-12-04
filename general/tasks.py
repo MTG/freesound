@@ -23,9 +23,10 @@ import json
 import logging
 import os
 import time
+import sentry_sdk
 
 
-from celery.decorators import task
+from celery import shared_task
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -34,6 +35,7 @@ from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket
 from utils.audioprocessing.freesound_audio_processing import set_timeout_alarm, check_if_free_space, \
     FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm, FreesoundAudioProcessorBeforeDescription
+from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
 
 
 workers_logger = logging.getLogger("workers")
@@ -52,15 +54,29 @@ DELETE_USER_DELETE_SOUNDS_ACTION_NAME = 'delete_user_delete_sounds'
 DELETE_USER_KEEP_SOUNDS_ACTION_NAME = 'delete_user_keep_sounds'
 
 
-@task(name=WHITELIST_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
-def whitelist_user(ticket_ids):
+@shared_task(name=WHITELIST_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+def whitelist_user(ticket_ids=None, user_id=None):
+    # Whitelist "sender" users from the tickets with given ids
     workers_logger.info("Start whitelisting users from tickets (%s)" % json.dumps({
-        'task_name': WHITELIST_USER_TASK_NAME, 'n_tickets': len(ticket_ids)}))
+        'task_name': WHITELIST_USER_TASK_NAME, 
+        'n_tickets': len(ticket_ids) if ticket_ids is not None else 0, 
+        'user_id': user_id if user_id is not None else ''})) 
     start_time = time.time()
     count_done = 0
-    for ticket_id in ticket_ids:
-        ticket = Ticket.objects.get(id=ticket_id)
-        whitelist_user = ticket.sender
+
+    users_to_whitelist_ids = []
+
+    if ticket_ids is not None:
+        for ticket_id in ticket_ids:
+            ticket = Ticket.objects.get(id=ticket_id)
+            users_to_whitelist_ids.append(ticket.sender.id)
+
+    if user_id is not None:
+        users_to_whitelist_ids.append(user_id)
+
+    users_to_whitelist_ids = list(set(users_to_whitelist_ids))    
+    users_to_whitelist = User.objects.filter(id__in=users_to_whitelist_ids).select_related('profile')
+    for whitelist_user in users_to_whitelist:
         if not whitelist_user.profile.is_whitelisted:
             local_start_time = time.time()
             whitelist_user.profile.is_whitelisted = True
@@ -78,18 +94,27 @@ def whitelist_user(ticket_ids):
                 pending_ticket.status = TICKET_STATUS_CLOSED
                 pending_ticket.save()
 
+            # Invalidate template caches for sender user
+            invalidate_user_template_caches(whitelist_user.id)
+
             workers_logger.info("Whitelisted user (%s)" % json.dumps(
                 {'user_id': whitelist_user.id,
-                    'username': whitelist_user.username,
-                    'work_time': round(time.time() - local_start_time)}))
+                 'username': whitelist_user.username,
+                 'work_time': round(time.time() - local_start_time)}))
 
         count_done = count_done + 1
 
+    # Invalidate template caches for moderators
+    invalidate_all_moderators_header_cache()
+
     workers_logger.info("Finished whitelisting users from tickets (%s)" % json.dumps(
-        {'task_name': WHITELIST_USER_TASK_NAME, 'n_tickets': len(ticket_ids), 'work_time': round(time.time() - start_time)}))
+        {'task_name': WHITELIST_USER_TASK_NAME, 
+         'n_tickets': len(ticket_ids) if ticket_ids is not None else 0, 
+         'user_id': user_id if user_id is not None else '',
+         'work_time': round(time.time() - start_time)}))
 
 
-@task(name=DELETE_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+@shared_task(name=DELETE_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def delete_user(user_id, deletion_action, deletion_reason):
     try:
         user = User.objects.get(id=user_id)
@@ -142,12 +167,13 @@ def delete_user(user_id, deletion_action, deletion_reason):
     except Exception as e:
         # This exception is broad but we catch it so that we can log that an error happened.
         # TODO: catching more specific exceptions would be desirable
-        workers_logger.error("Unexpected error while deleting user (%s)" % json.dumps(
+        workers_logger.info("Unexpected error while deleting user (%s)" % json.dumps(
             {'task_name': deletion_action, 'user_id': user.id, 'username': user.username,
                 'deletion_reason': deletion_reason, 'error': str(e), 'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
 
-@task(name=VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+@shared_task(name=VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def validate_bulk_describe_csv(bulk_upload_progress_object_id):
     # Import BulkUploadProgress model from apps to avoid circular dependency
     BulkUploadProgress = apps.get_model('sounds.BulkUploadProgress')
@@ -163,13 +189,14 @@ def validate_bulk_describe_csv(bulk_upload_progress_object_id):
                 'work_time': round(time.time() - start_time)}))
     
     except BulkUploadProgress.DoesNotExist as e:
-        workers_logger.error("Error validating of BulkUploadProgress (%s)" % json.dumps(
+        workers_logger.info("Error validating of BulkUploadProgress (%s)" % json.dumps(
             {'task_name': VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
                 'error': str(e),
                 'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
 
-@task(name=BULK_DESCRIBE_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+@shared_task(name=BULK_DESCRIBE_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def bulk_describe(bulk_upload_progress_object_id):
     # Import BulkUploadProgress model from apps to avoid circular dependency
     BulkUploadProgress = apps.get_model('sounds.BulkUploadProgress')
@@ -188,13 +215,14 @@ def bulk_describe(bulk_upload_progress_object_id):
                 'work_time': round(time.time() - start_time)}))
     
     except BulkUploadProgress.DoesNotExist as e:
-        workers_logger.error("Error describing sounds of BulkUploadProgress (%s)" % json.dumps(
+        workers_logger.info("Error describing sounds of BulkUploadProgress (%s)" % json.dumps(
             {'task_name': BULK_DESCRIBE_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
                 'error': str(e),
                 'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
 
-@task(name=PROCESS_ANALYSIS_RESULTS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+@shared_task(name=PROCESS_ANALYSIS_RESULTS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def process_analysis_results(sound_id, analyzer, status, analysis_time, exception=None):
     """Process the results of the analysis of a file and update the SoundAnalysis object accordingly.
 
@@ -240,12 +268,13 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
                  'work_time': round(time.time() - start_time)}))
 
     except (SoundAnalysis.DoesNotExist, Exception) as e:
-        workers_logger.error("Error processing analysis results (%s)" % json.dumps(
+        workers_logger.info("Error processing analysis results (%s)" % json.dumps(
                 {'task_name': PROCESS_ANALYSIS_RESULTS_TASK_NAME, 'sound_id': sound_id, 'analyzer': analyzer, 'status': status,
                  'error': str(e), 'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
 
-@task(name=SOUND_PROCESSING_TASK_NAME, queue=settings.CELERY_SOUND_PROCESSING_QUEUE_NAME)
+@shared_task(name=SOUND_PROCESSING_TASK_NAME, queue=settings.CELERY_SOUND_PROCESSING_QUEUE_NAME)
 def process_sound(sound_id, skip_previews=False, skip_displays=False):
     """Process a sound and generate the mp3/ogg preview files and the waveform/spectrogram displays
 
@@ -281,9 +310,10 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
             sound.change_processing_state("FA", processing_log=str(e))
         except Sound.DoesNotExist:
             pass
-        workers_logger.error("WorkerException while processing sound (%s)" % json.dumps(
+        workers_logger.info("WorkerException while processing sound (%s)" % json.dumps(
             {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
     except Exception as e:
         try:
@@ -292,14 +322,15 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
             sound.change_processing_state("FA", processing_log=str(e))
         except Sound.DoesNotExist:
             pass
-        workers_logger.error("Unexpected error while processing sound (%s)" % json.dumps(
+        workers_logger.info("Unexpected error while processing sound (%s)" % json.dumps(
             {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
     cancel_timeout_alarm()
 
 
-@task(name=PROCESS_BEFORE_DESCRIPTION_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+@shared_task(name=PROCESS_BEFORE_DESCRIPTION_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def process_before_description(audio_file_path):
     """Processes an uploaed sound file before the sound is described and saves generated previews
     and wave/spectral images in a specfic directory so these can be served in the sound players
@@ -325,13 +356,15 @@ def process_before_description(audio_file_path):
                  'work_time': round(time.time() - start_time)}))
 
     except WorkerException as e:
-        workers_logger.error("WorkerException while processing-before-describe sound (%s)" % json.dumps(
+        workers_logger.info("WorkerException while processing-before-describe sound (%s)" % json.dumps(
             {'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
     except Exception as e:
-        workers_logger.error("Unexpected error while processing-before-describe sound (%s)" % json.dumps(
+        workers_logger.info("Unexpected error while processing-before-describe sound (%s)" % json.dumps(
             {'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
     cancel_timeout_alarm()

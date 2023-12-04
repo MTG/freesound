@@ -1,24 +1,22 @@
-{% extends "accounts/_section.html" %}
-{% load display_license_form %}
+{% extends "simple_page.html" %}
+{% block page-title %}Bulk License Change{% endblock %}
+{% block title %}Bulk License Change{% endblock %}
 
-{% block title %}Freesound Bulk License Change{% endblock %}
+{% block page-content %}
 
-{% block content %}
-<h1>Freesound Bulk License Change</h1>
+<div>
+    <p>Hi! It looks like you have not signed up for a very long time and you have sounds with very old Creative Commons licenses. We need you to pick a new license for your uploads!
 
-<p>Hi! It looks like this is the first time you sign into Freesound 2 and we need you to pick a new license for your uploads.
+    <p>For a while our friends at <a href="https://creativecommons.org/">Creative Commons</a> have been telling us that the <a href="https://creativecommons.org/licenses/sampling+/1.0/">Sampling+ license</a> used <i>before 2011</i> in Freesound is not a good license, and especially for sounds. The reasons are all quite technical legal arguments, but we agree with the Creative Commons guys and we are helping to rid the world of this license.</p>
 
-<p>For a while our friends at <a href="https://creativecommons.org/">Creative Commons</a> have been telling us that the <a href="https://creativecommons.org/licenses/sampling+/1.0/">Sampling+ license</a> used in Freesound 1 is not a good license, and especially for sounds. The reasons are all quite technical legal arguments, but we agree with the Creative Commons guys and we are helping to rid the world of this license.</p>
+    <p>We now only support 3 licenses and would like for you to select one of these for your old uploads before you continue. This might sound dramatic, but it isn't really. The terminology used in these new licenses is much clearer and there are fewer grey areas. It's better for you, for us, and downloaders of your sounds.</p>
 
-<p>We now only support 3 licenses and would like for you to select one of these for your old uploads before you continue. This might sound dramatic, but it isn't really. The terminology used in these new licenses is much clearer and there are fewer grey areas. It's better for you, for us, and downloaders of your sounds.</p>
+    <p><b>Please note:</b> you will be able to change the license of any of your sounds whenever you want on the individual sounds' edit pages.</p>
+    <form action="." method="post" class="v-spacing-top-5 v-spacing-4">{% csrf_token %}
+        {% include "molecules/license_form_field.html" %}
+        <button class="btn-primary v-spacing-top-4">Update licenses and continue using Freesound</button>
+    </form>
+    <p><b>Remember:</b> no matter what license, you are always free to give people exceptions, or license your work elsewhere under another license. If you select the strictest license, people will need to go through the motions of asking you permission to use their work for certain things, and this might be troublesome.</p>
 
-<p><b>Please note:</b> you will be able to change the license of any of your sounds whenever you want on the individual sounds' edit pages.</p>
-<form action="." method="post" class="license-form">{% csrf_token %}
-    {% display_license_form form %}
-    <input type="submit" name="submit" value="submit" id="submit-button"/>
-</form>
-<p><b>Remember:</b> no matter what license, you are always free to give people exceptions, or license your work elsewhere under another license. If you select the strictest license, people will need to go through the motions of asking you permission to use their work for certain things, and this might be troublesome.</p>
-
-<p>If you do not agree with this change please don't pick a license right now, log out, and contact us through the contact form.</p>
+    </div>
 {% endblock %}
-

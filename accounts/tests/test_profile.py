@@ -86,7 +86,9 @@ class UserEditProfile(TestCase):
     @override_avatars_path_with_temp_directory
     def test_handle_uploaded_image(self):
         user = User.objects.create_user("testuser")
-        with open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb') as f:
+        STATIC_PUBLIC_BASE_DIR = 'freesound/static/bw-frontend/public/'
+        test_avatar_path = os.path.join(STATIC_PUBLIC_BASE_DIR, 'test_avatar.png')
+        with open(test_avatar_path, 'rb') as f:
             f = InMemoryUploadedFile(f, None, None, None, None, None)
             handle_uploaded_image(user.profile, f)
 
@@ -98,19 +100,19 @@ class UserEditProfile(TestCase):
     def test_edit_user_profile(self):
         user = User.objects.create_user("testuser")
         self.client.force_login(user)
-        self.client.post("/home/edit/", {
+        resp = self.client.post("/home/edit/", {
             'profile-home_page': 'http://www.example.com/',
             'profile-username': 'testuser',
             'profile-about': 'About test text',
             'profile-signature': 'Signature test text',
-            'profile-not_shown_in_online_users_list': True,
+            'profile-ui_theme_preference': 'd',            
         })
 
         user = User.objects.select_related('profile').get(username="testuser")
         self.assertEqual(user.profile.home_page, 'http://www.example.com/')
         self.assertEqual(user.profile.about, 'About test text')
         self.assertEqual(user.profile.signature, 'Signature test text')
-        self.assertEqual(user.profile.not_shown_in_online_users_list, True)
+        self.assertEqual(user.profile.ui_theme_preference, 'd')
 
         # Now we change the username the maximum allowed times
         for i in range(settings.USERNAME_CHANGE_MAX_TIMES):
@@ -119,7 +121,7 @@ class UserEditProfile(TestCase):
                 'profile-username': 'testuser%d' % i,
                 'profile-about': 'About test text',
                 'profile-signature': 'Signature test text',
-                'profile-not_shown_in_online_users_list': True,
+                'profile-ui_theme_preference': 'd',
             })
 
             user.refresh_from_db()
@@ -133,7 +135,7 @@ class UserEditProfile(TestCase):
             'profile-username': 'testuser-error',
             'profile-about': 'About test text',
             'profile-signature': 'Signature test text',
-            'profile-not_shown_in_online_users_list': True,
+            'profile-ui_theme_preference': 'd',
         })
         user.refresh_from_db()
         self.assertEqual(user.old_usernames.count(), settings.USERNAME_CHANGE_MAX_TIMES)
@@ -154,7 +156,9 @@ class UserEditProfile(TestCase):
     def test_edit_user_avatar(self):
         user = User.objects.create_user("testuser")
         self.client.force_login(user)
-        with open(settings.MEDIA_ROOT + '/images/70x70_avatar.png', 'rb') as f:
+        STATIC_PUBLIC_BASE_DIR = 'freesound/static/bw-frontend/public/'
+        test_avatar_path = os.path.join(STATIC_PUBLIC_BASE_DIR, 'test_avatar.png')
+        with open(test_avatar_path, 'rb') as f:
             self.client.post("/home/edit/", {
                 'image-file': f,
                 'image-remove': False,

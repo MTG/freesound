@@ -1,0 +1,70 @@
+{% extends "molecules/modal_base.html" %}
+{% load util %}
+{% load bw_templatetags %}
+
+{% block id %}moderationAnnotationsModal{% endblock %}
+{% block extra-class %}modal-width-80{% endblock %}
+{% block aria-label %}Moderation annotations - {{ user.username }}{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h4 class="v-spacing-5">{{ user.username }}'s mod annotations</h4>
+    </div>
+    <div class="row">
+        <div class="col-lg-6 v-spacing-4">
+            <div class="v-spacing-4 row">
+                <div class="col-2">
+                    {% bw_user_avatar user.profile.locations.avatar.M.url user.username 50 %}
+                </div>
+                <div class="col-8">
+                    <a href="{% url 'account' user.username %}">{{ user.username }}</a>
+                    <div class="text-grey ellipsis">
+                        {{ user.profile.num_sounds|bw_intcomma }} sound{{ user.profile.num_sounds|pluralize }} · {{ user.profile.num_posts|bw_intcomma }} post{{ user.profile.num_posts|pluralize }} · {{ user.profile.num_comments|bw_intcomma }} comment{{ user.profile.num_comments|pluralize }}
+                    </div>
+                </div>
+            </div>
+            
+            <h4 class="text-grey">Annotations ({{ annotations|length }})</h4>
+            <div class="v-spacing-top-2 overflow-hidden">
+            {% for annotation in annotations %}
+                <div class="v-spacing-2">
+                    <div>
+                        {% if annotation.sender %} <a href="{% url "account" annotation.sender.username %}">{{ annotation.sender.username }}</a> {% else %} Anonymous {% endif %} wrote:
+                    </div>
+                    <div>{{ annotation.text|safe|linebreaksbr }}</div>
+                </div>
+            {% empty %}
+                <div class="v-spacing-2">
+                    This user has no moderator annotations.
+                </div>
+            {% endfor %}
+            </div>
+            <div>
+                <form class="bw-form">
+                    {{ form }}
+                    <button class="btn-primary v-spacing-top-2" data-add-annotation-url="{% url 'tickets-add-user-annotation' user.id %}" data-user-id="{{ user.id }}">Add annotation</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-6 v-spacing-4">
+            <h4 class="text-grey">Last user ticket responses</h4>
+            <div class="v-spacing-top-2 overflow-hidden">
+            {% for ticket_comment in recent_comments %}
+                <div class="v-spacing-2">
+                    <div>
+                        <span class="text-grey">{{ ticket_comment.created|timesince }} ago</span> <span class="h-spacing-1">·</span>
+                        <a href="{% url "tickets-ticket" ticket_comment.ticket.key %}">Ticket #{{ ticket_comment.ticket.id }}</a>
+                    </div>
+                    <div>{{ ticket_comment.text|linebreaksbr }}</div>
+                </div>
+            {% empty %}
+                <div class="v-spacing-2">
+                    This user has not responded to any moderation tickets.
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

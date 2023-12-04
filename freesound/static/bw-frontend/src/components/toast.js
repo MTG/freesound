@@ -8,21 +8,29 @@ const wrapTextInUl = (text) => {
   return text;
 }
 
-export const showToast = text => {
+export const showToast = (text, ulWrap) => {
   clearTimeout(hideToastTimeout);
   const toastElement = document.querySelector('[role="alert"]');
   toastElement.style.display = 'block';
-  toastElement.children[0].innerHTML = wrapTextInUl(text);
+  if ((ulWrap === true) || (ulWrap === undefined)) {
+    toastElement.children[0].innerHTML = wrapTextInUl(text);
+  } else {
+    toastElement.children[0].innerHTML = text;
+  }
   hideToastTimeout = setTimeout(() => {
     toastElement.style.display = 'none';
   }, 5000);
 };
 
-export const showToastNoTimeout = text => {
+export const showToastNoTimeout = (text, ulWrap) => {
   clearTimeout(hideToastTimeout);
   const toastElement = document.querySelector('[role="alert"]');
   toastElement.style.display = 'block';
-  toastElement.children[0].innerHTML = wrapTextInUl(text);
+  if ((ulWrap === true) || (ulWrap === undefined)) {
+    toastElement.children[0].innerHTML = wrapTextInUl(text);
+  } else {
+    toastElement.children[0].innerHTML = text;
+  }
 };
 
 export const dismissToast = () => {

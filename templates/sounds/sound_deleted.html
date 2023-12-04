@@ -1,15 +1,8 @@
-{% extends "sounds/_section.html" %}
+{% extends "simple_page.html" %}
 
-{% load paginator %}
-{% load util %}
-{% load ratings %}
-{% load cache %}
+{% block title %}Deleted sound{% endblock %}
+{% block page-title %}Deleted sound{% endblock %}
 
-{% block title %}Deleted Sound{% endblock title %}
-
-{% block section_content %}
-<h2>Deleted sound...</h2>
-<p>
-    This sound was deleted by the user, please update your bookmarks.
-</p>
-{% endblock section_content %}
+{% block page-content %}
+    <p class="text-grey">This sound has been deleted.</p>
+{% endblock %}

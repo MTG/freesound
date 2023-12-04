@@ -448,15 +448,7 @@ def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=F
         dynamic_resolve = False  # don't need to dynamic resolve is request is https
 
     if dynamic_resolve:
-        try:
-            url_name = resolve(rel.replace('<sound_id>', '1')
-                               .replace('<username', 'name')
-                               .replace('<pack_id>', '1')
-                               .replace('<category_id>', '1')).url_name
-            if url_name in settings.APIV2_RESOURCES_REQUIRING_HTTPS:
-                use_https = True
-        except Exception as e:
-            pass
+        use_https = True
 
     if use_https:
         return f"https://{Site.objects.get_current().domain}{rel}"
@@ -581,7 +573,7 @@ apiv1_logger = logging.getLogger("api")
 
 
 def apiv1_end_of_life_message(request):
-    apiv1_logger.error('410 API error: End of life')
+    apiv1_logger.info('410 API error: End of life')
     content = {
         "explanation": "Freesound APIv1 has reached its end of life and is no longer available."
         "Please, upgrade to Freesound APIv2. More information: https://freesound.org/docs/api/"

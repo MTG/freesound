@@ -21,6 +21,7 @@
 
 from django import template
 from django.conf import settings
+from random import randint
 
 from accounts.models import Profile
 from sounds.models import Sound
@@ -29,7 +30,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound(context, sound, player_size='small', show_bookmark=None, show_similar_sounds=None, show_remix=None, show_rate_widget=False):
+def display_sound(context, sound, player_size='small', show_bookmark=None, show_similar_sounds=None, show_remix=None, show_rate_widget=False, show_timesince=False):
     """This templatetag is used to display a sound with its player. It prepares some variables that are then passed
     to the display_sound.html template to show sound information together with the player.
 
@@ -38,9 +39,8 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
           argument is automatically added by Django when calling the templatetag inside a template.
         sound (int or Sound): sound ID or Sound object of the sound that will be shown. If no sound exists for the
           given ID, the display_sound.html will be rendered with empty HTML.
-        player_size (str, optional): size of the player to display. This parameter only applies to BW interface.
-          See functions below and template file for available sizes. Information about the contents of each
-          size is given in the display_sound.html template code.
+        player_size (str, optional): size of the player to display. See functions below and template file for 
+          available sizes. Information about the contents of each size is given in the display_sound.html template code.
         show_bookmark (bool, optional): whether or not to show the bookmark button (BW frontend only). If set to None
           it will be decided based on player size and other properties.
         show_similar_sounds (bool, optional): whether or not to show the similar sounds button (BW frontend only). If set to None
@@ -49,6 +49,9 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
           it will be decided based on player size and other properties.
         show_rate_widget (bool, optional): whether or not to show the widget for ratings sounds (BW frontend only). Note that rate
           widget can only be shown in small players.
+        show_timesince (bool, optional): whether an indicator of the time since the sound was created (i.e. "3 years ago") instead
+          of the absolute date (i.e. "November 3rd, 2023") should be used. This only applies to the "small" player size and uses
+          javascript to replace the default date with the timesince indicator.
 
     Returns:
         dict: dictionary with the variables needed for rendering the sound with the display_sound.html template
@@ -118,7 +121,6 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
         return {
             'sound': sound_obj,
             'user_profile_locations': Profile.locations_static(sound_obj.user_id, getattr(sound_obj, 'user_has_avatar', False)),
-            'media_url': context['media_url'],
             'request': request,
             'is_explicit': sound_obj.is_explicit and
                            (not request.user.is_authenticated or not request.user.profile.is_adult),
@@ -130,7 +132,9 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
             'request_user_is_author': request.user.is_authenticated and sound_obj.user_id == request.user.id,
             'player_size': player_size,
             'show_milliseconds': 'true' if (player_size == 'big_no_info' or sound_obj.duration < 10) else 'false',  # Only BW
+            'show_timesince': show_timesince,
             'min_num_ratings': settings.MIN_NUMBER_RATINGS,
+            'random_number': randint(1, 1000000),  # Used to generate IDs for HTML elements that need to be unique per sound/player instance
         }
 
 
@@ -139,8 +143,20 @@ def display_sound_small(context, sound):
     return display_sound(context, sound, player_size='small', show_rate_widget=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small_with_timesince(context, sound):
+    return display_sound(context, sound, player_size='small', show_rate_widget=True, show_timesince=True)
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_moderation(context, sound):
+    return display_sound(context, sound, player_size='moderation', show_bookmark=False, show_similar_sounds=False, show_remix=True, show_rate_widget=False)
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_bookmark(context, sound):
     return display_sound(context, sound, player_size='small', show_bookmark=False, show_similar_sounds=False, show_remix=False, show_rate_widget=True)
+
+@register.inclusion_tag('sounds/display_sound.html', takes_context=True)
+def display_sound_small_no_bookmark_no_ratings(context, sound):
+    return display_sound(context, sound, player_size='small', show_bookmark=False, show_similar_sounds=False, show_remix=False, show_rate_widget=False)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_middle(context, sound):
@@ -243,7 +259,7 @@ def display_sound_small_no_sound_object_no_bookmark(context, file_data):
 @register.inclusion_tag('sounds/display_sound_selectable.html', takes_context=True)
 def display_sound_small_selectable(context, sound, selected=False):
     context = context.get('original_context', context)  # This is to allow passing context in nested inclusion tags
-    tvars = display_sound_small_no_bookmark(context, sound)
+    tvars = display_sound_small_no_bookmark_no_ratings(context, sound)
     tvars.update({
         'selected': selected,
     })

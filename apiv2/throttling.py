@@ -179,7 +179,7 @@ class IpBasedThrottling(SimpleRateThrottle):
         if x_forwarded_for:
             self.ip = x_forwarded_for.split(',')[0].strip()
         else:
-            self.ip = '-'  # request.META.get('REMOTE_ADDR')
+            self.ip = '-'
 
         try:
             limit_rates = view.throttling_rates_per_level[client_throttle_level]

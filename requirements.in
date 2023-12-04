@@ -3,9 +3,10 @@ autopep8==1.5.7
 beautifulsoup4==4.9.3
 bleach==5.0.1
 boto3==1.26.130
-celery==4.4.7
+celery==5.3.4
 debugpy==1.5.1
 dj-database-url==0.5.0
+django-admin-sortable==2.2.4
 django-amazon-ses==4.0.1
 django-cors-headers==3.13.0
 django-debug-toolbar==3.1.1
@@ -29,13 +30,14 @@ feedparser~=6.0.10
 freezegun==1.2.2
 future~=0.18.2
 graypy==0.2.12
-gunicorn==19.9.0
-ipython==4.2.0
+gunicorn==21.2.0
+ipython==8.14.0
 mapbox==0.18.1
 markdown==3.4.1
 networkx==1.5
 numpy==1.24.3
 Pillow==9.5.0
+pip-tools==7.1.0
 psycopg2-binary==2.9.6
 PyJWT==2.6.0
 pyparsing==2.4.7
@@ -44,7 +46,7 @@ pysndfile==1.4.4
 pytz==2023.3
 PyYAML==6.0.1
 redis==3.2.0
-sentry-sdk==0.14.4
+sentry-sdk[django]~=1.31
 Sphinx==1.6.3
 stripe==2.28.1
 xlrd==2.0.1  # for reading .xls files (but not .xlsx)

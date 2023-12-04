@@ -26,8 +26,7 @@ urlpatterns = [
     path('', forum_views.forums, name='forums-forums'),
     path('moderate/', forum_views.moderate_posts, name="forums-moderate"),
     path('forums-search/', search_views.search_forum, name="forums-search"),
-    path('latest_posts/', forum_views.latest_posts, name="forums-latest-posts"),
-    path('hot_treads/', forum_views.hot_threads, name="forums-hot-threads"),
+    path('hot-treads/', forum_views.hot_threads, name="forums-hot-threads"),
     re_path(r'^(?P<forum_name_slug>[\w\-]+)/$', forum_views.forum, name="forums-forum"),
     re_path(r'^(?P<forum_name_slug>[\w\-]+)/new-thread/$', forum_views.new_thread, name="forums-new-thread"),
     re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/$', forum_views.thread, name="forums-thread"),
@@ -38,6 +37,5 @@ urlpatterns = [
     re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/reply/$', forum_views.reply, name="forums-reply-quote"),
 
     path('post/<int:post_id>/edit/', forum_views.post_edit, name="forums-post-edit"),
-    path('post/<int:post_id>/delete/', forum_views.post_delete, name="forums-post-delete"),
     path('post/<int:post_id>/delete-confirm/', forum_views.post_delete_confirm, name="forums-post-delete-confirm"),
 ]

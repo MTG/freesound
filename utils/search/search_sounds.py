@@ -202,12 +202,19 @@ def search_prepare_parameters(request):
 
     filter_query_non_facets, has_facet_filter = remove_facet_filters(parsed_filters)
 
+    if only_sounds_with_pack:
+        # When displaying results as packs, always return the same number regardless of the compact mode setting
+        # This because returning a large number of packs makes the search page very slow
+        num_sounds = settings.SOUNDS_PER_PAGE
+    else:
+        num_sounds = settings.SOUNDS_PER_PAGE if not should_use_compact_mode(request) else settings.SOUNDS_PER_PAGE_COMPACT_MODE
+
     query_params = {
         'textual_query': search_query,
         'query_filter': filter_query,
         'sort': sort,
         'current_page': current_page,
-        'num_sounds': settings.SOUNDS_PER_PAGE if not should_use_compact_mode(request) else settings.SOUNDS_PER_PAGE_COMPACT_MODE,
+        'num_sounds': num_sounds,
         'query_fields': field_weights,
         'group_by_pack': group_by_pack,
         'only_sounds_with_pack': only_sounds_with_pack
@@ -391,8 +398,8 @@ def add_sounds_to_search_engine(sound_objects):
         get_search_engine().add_sounds_to_index(sound_objects)
         return num_sounds
     except SearchEngineException as e:
-        console_logger.error(f"Failed to add sounds to search engine index: {str(e)}")
-        search_logger.error(f"Failed to add sounds to search engine index: {str(e)}")
+        console_logger.info(f"Failed to add sounds to search engine index: {str(e)}")
+        search_logger.info(f"Failed to add sounds to search engine index: {str(e)}")
         return 0
 
 
@@ -407,8 +414,8 @@ def delete_sounds_from_search_engine(sound_ids):
     try:
         get_search_engine().remove_sounds_from_index(sound_ids)
     except SearchEngineException as e:
-        console_logger.error(f"Could not delete sounds: {str(e)}")
-        search_logger.error(f"Could not delete sounds: {str(e)}")
+        console_logger.info(f"Could not delete sounds: {str(e)}")
+        search_logger.info(f"Could not delete sounds: {str(e)}")
 
 
 def delete_all_sounds_from_search_engine():
@@ -418,8 +425,8 @@ def delete_all_sounds_from_search_engine():
     try:
         get_search_engine().remove_all_sounds()
     except SearchEngineException as e:
-        console_logger.error(f"Could not delete sounds: {str(e)}")
-        search_logger.error(f"Could not delete sounds: {str(e)}")
+        console_logger.info(f"Could not delete sounds: {str(e)}")
+        search_logger.info(f"Could not delete sounds: {str(e)}")
 
 
 def get_all_sound_ids_from_search_engine(page_size=2000):
@@ -446,7 +453,7 @@ def get_all_sound_ids_from_search_engine(page_size=2000):
             solr_count = response.num_found
             current_page += 1
     except SearchEngineException as e:
-        search_logger.error(f"Could not retrieve all sound IDs from search engine: {str(e)}")
+        search_logger.info(f"Could not retrieve all sound IDs from search engine: {str(e)}")
     return sorted(solr_ids)
 
 
@@ -456,5 +463,5 @@ def get_random_sound_id_from_search_engine():
         search_logger.info("Making random sound query")
         return get_search_engine().get_random_sound_id()
     except SearchEngineException as e:
-        search_logger.error(f"Could not retrieve a random sound ID from search engine: {str(e)}")
+        search_logger.info(f"Could not retrieve a random sound ID from search engine: {str(e)}")
     return 0

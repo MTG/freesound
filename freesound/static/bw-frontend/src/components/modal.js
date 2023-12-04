@@ -1,27 +1,12 @@
-import {showToast, showToastNoTimeout, dismissToast} from "./toast";
-import {initializePlayersInContainer, stopAllPlayersInContainer} from './player/utils';
-import {initializeCarousels} from './carousel';
-import {initRatingWidgets} from './rating';
-import {bindExplicitWarningElements} from './explicit';
+import { showToast, showToastNoTimeout, dismissToast } from "./toast";
+import { stopAllPlayersInContainer } from './player/utils';
+import { initializeStuffInContainer } from "../utils/initHelper";
 import serialize from '../utils/formSerializer'
 
 const bwPageElement = document.getElementsByClassName('bw-page')[0];
 
-// Util functions to initialize/stop players and other stuff that could usually be found in modals with sound players
-const initPlayersInModal = (modalContainer) => {
-  initializePlayersInContainer(modalContainer);
-  initRatingWidgets(modalContainer);
-  initializeCarousels(modalContainer);
-  bindExplicitWarningElements(modalContainer);
-}
-
-const stopPlayersInModal = (modalContainer) => {
-  stopAllPlayersInContainer(modalContainer);
-}
-
 // Util function to bind modal activation elements
 const bindModalActivationElements = (querySelectorStr, handleModalFunction, container) => {
-  if (container === undefined){ container = document; }
   container.querySelectorAll(querySelectorStr).forEach(element => {
     if (element.dataset.alreadyBinded !== undefined){ return; }
     element.dataset.alreadyBinded = true;
@@ -62,6 +47,7 @@ const activateModal = modalContainerId => {
 const dismissModal = modalContainerId => {
   const modalContainer = document.getElementById(modalContainerId);
   if (modalContainer !== null){
+    stopAllPlayersInContainer(modalContainer);  // Stop playing sounds (if any)
     modalContainer.classList.remove('show');
     modalContainer.style.display = 'none';
     modalContainer.setAttribute('aria-hidden', 'true');
@@ -79,7 +65,6 @@ const initModalDismissButton = (modalContainerElement) => {
 
 // Confirmation modal logic
 const bindConfirmationModalElements = (container) => {
-  if (container === undefined){ container = document; }
   [...container.querySelectorAll('[data-toggle="confirmation-modal"]')].forEach(modalButton => {
     modalButton.addEventListener('click', () => {
       const confirmationModalTitle = document.getElementById('confirmationModalTitle');
@@ -97,7 +82,23 @@ const bindConfirmationModalElements = (container) => {
     });
   });
 }
-bindConfirmationModalElements();
+
+// Logic to bind default modals
+
+const handleDefaultModal = (modalUrl, modalActivationParam, atPage) => {
+  if ((atPage !== undefined) && modalUrl.indexOf('&page') == -1){
+    modalUrl += '&page=' + atPage;
+  }
+  handleGenericModal(modalUrl, undefined, undefined, true, true, modalActivationParam);
+}
+
+const bindDefaultModals = (container) => {
+  bindModalActivationElements('[data-toggle="modal-default"]', handleDefaultModal, container);
+}
+
+const activateDefaultModalsIfParameters = () => {
+  activateModalsIfParameters('[data-toggle="modal-default"]', handleDefaultModal);
+}
 
 
 // Generic modals logic
@@ -153,6 +154,9 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
         
         // Dismiss loading indicator toast and call "on loaded" call back
         if (showLoadingToast !== false) { dismissToast(); }
+        
+        // Call default initialization function, and also call callback if defined
+        initializeStuffInContainer(modalContainer, false, false);
         if (onLoadedCallback !== undefined){
           onLoadedCallback(modalContainer);
         }
@@ -268,4 +272,4 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
   }, onClosedCallback, doRequestAsync, showLoadingToast, modalActivationParam)
 }
 
-export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm, bindModalActivationElements, bindConfirmationModalElements, activateModalsIfParameters, initPlayersInModal, stopPlayersInModal};
+export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm, handleDefaultModal, bindModalActivationElements, bindConfirmationModalElements, activateModalsIfParameters, bindDefaultModals, activateDefaultModalsIfParameters};

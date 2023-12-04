@@ -67,7 +67,7 @@ def get_recommended_tags_view(request):
                     tags, community = get_recommended_tags(input_tags)
                     return HttpResponse(json.dumps([tags, community]), content_type='application/javascript')
                 except urllib.error.URLError as e:
-                    web_logger.error('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
+                    web_logger.info('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
                                      (e, traceback.format_exc()))
                     return HttpResponseUnavailabileError()
 

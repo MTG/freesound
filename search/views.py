@@ -22,13 +22,13 @@ import datetime
 import json
 import logging
 import re
+import sentry_sdk
 from collections import defaultdict, Counter
 
 from django.core.cache import cache
 from django.conf import settings
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.shortcuts import reverse
+from django.shortcuts import get_object_or_404, reverse, render
 from ratelimit.decorators import ratelimit
 
 import forum
@@ -37,7 +37,6 @@ from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
 from clustering.interface import cluster_sound_results, get_sound_ids_from_search_engine_query
 from forum.models import Post
-from utils.frontend_handling import render, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
@@ -47,13 +46,12 @@ from utils.search import get_search_engine, SearchEngineException, SearchResults
 search_logger = logging.getLogger("search")
 
 
-
 def search_view_helper(request, tags_mode=False):
     query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
     # check if there was a filter parsing error
     if extra_vars['parsing_error']:
-        search_logger.error(f"Query filter parsing error. filter: {request.GET.get('f', '')}")
+        search_logger.info(f"Query filter parsing error. filter: {request.GET.get('f', '')}")
         extra_vars.update({'error_text': 'There was an error while searching, is your query correct?'})
         return extra_vars
 
@@ -105,7 +103,12 @@ def search_view_helper(request, tags_mode=False):
                     group_counts_as_one_in_facets=False,
                 ))
                 initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
-                cache.set('initial_tagcloud', initial_tagcloud, 60 * 5)
+                cache.set('initial_tagcloud', initial_tagcloud, 60 * 60 * 12)  # cache for 12 hours
+            return {
+                'tags_mode': True,
+                'tags_in_filter': tags_in_filter,
+                'initial_tagcloud': initial_tagcloud,
+            }
 
 
     # In the tvars section we pass the original group_by_pack value to avoid it being set to false if there is a pack filter (see search_prepare_parameters)
@@ -213,10 +216,12 @@ def search_view_helper(request, tags_mode=False):
         })
 
     except SearchEngineException as e:
-        search_logger.error(f'Search error: query: {str(query_params)} error {e}')
+        search_logger.info(f'Search error: query: {str(query_params)} error {e}')
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception as e:
-        search_logger.error(f'Could probably not connect to Solr - {e}')
+        search_logger.info(f'Could probably not connect to Solr - {e}')
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
         tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
     return tvars
@@ -453,18 +458,20 @@ def search_forum(request):
                 sort=sort,
                 num_posts=settings.FORUM_POSTS_PER_PAGE,
                 current_page=current_page,
-                group_by_thread=not using_beastwhoosh(request))
+                group_by_thread=False)
 
             paginator = SearchResultsPaginator(results, settings.FORUM_POSTS_PER_PAGE)
             num_results = paginator.count
             page = paginator.page(current_page)
             error = False
         except SearchEngineException as e:
-            error.warning(f"Search error: query: {search_query} error {e}")
+            error.info(f"Search error: query: {search_query} error {e}")
+            sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:
-            search_logger.error(f"Could probably not connect to the search engine - {e}")
+            search_logger.info(f"Could probably not connect to the search engine - {e}")
+            sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
             error = True
             error_text = 'The search server could not be reached, please try again later.'
 
@@ -490,17 +497,16 @@ def search_forum(request):
         'results': results
     }
 
-    if using_beastwhoosh(request):
-        if results:
-            posts_unsorted = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
-                .filter(id__in=[d['id'] for d in results.docs])
-            posts_map = {post.id:post for post in posts_unsorted}
-            posts = [posts_map[d['id']] for d in results.docs]            
-        else:
-            posts = []
-        tvars.update({
-            'posts': posts
-        })
+    if results:
+        posts_unsorted = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
+            .filter(id__in=[d['id'] for d in results.docs])
+        posts_map = {post.id:post for post in posts_unsorted}
+        posts = [posts_map[d['id']] for d in results.docs]            
+    else:
+        posts = []
+    tvars.update({
+        'posts': posts
+    })
 
     return render(request, 'search/search_forum.html', tvars)
 

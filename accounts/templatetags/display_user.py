@@ -71,7 +71,6 @@ def display_user(context, user, size='basic', comment_created=None, donated_amou
         return {
             'user': user_obj,
             'user_profile_locations': Profile.locations_static(user_obj.id, user_obj.profile.has_avatar),
-            'media_url': context['media_url'],
             'request': request,
             'is_followed_by_request_user': is_followed_by_request_user,
             'comment_created': comment_created,

@@ -106,13 +106,6 @@ examples = {
     'UserPacks': [
         ('Getting user packs', ['apiv2/users/reinsamba/packs/', 'apiv2/users/reinsamba/packs/?page=2']),
     ],
-    'UserBookmarkCategories': [
-        ('Users bookmark categories', ['apiv2/users/frederic.font/bookmark_categories/']),
-    ],
-    'UserBookmarkCategorySounds': [
-        ('Getting uncategorized bookmarks', ['apiv2/users/frederic.font/bookmark_categories/0/sounds/']),
-        ('Getting sounds of a particular bookmark cateogry', ['apiv2/users/frederic.font/bookmark_categories/11819/sounds/', 'apiv2/users/frederic.font/bookmark_categories/11819/sounds/?fields=duration,previews']),
-    ],
 
     # Packs
     'PackInstance': [
@@ -123,6 +116,15 @@ examples = {
     ],
     'DownloadPack': [
         ('Download a pack', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/packs/9678/download/\'']),
+    ],
+
+    # Me
+    'MeBookmarkCategories': [
+        ('Users bookmark categories', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/me/bookmark_categories/\'']),
+    ],
+    'MeBookmarkCategorySounds': [
+        ('Getting uncategorized bookmarks', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/me/bookmark_categories/0/sounds/\'']),
+        ('Getting sounds of a particular bookmark cateogry', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/me/bookmark_categories/11819/sounds/\'', 'curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/me/bookmark_categories/11819/sounds/?fields=duration,previews\'']),
     ],
 
 }

@@ -25,13 +25,13 @@ input.bw-checkbox {
 
 .bw-multiple-checkbox {
 
-  ul {
+  ul.bw-checkbox {
     padding: 0;
   }
 
-  li {
+  ul.bw-checkbox li {
     list-style: none;
-    margin-bottom: nth($spacing-values-list, 2);
+    margin-bottom: nth($spacing-values-list, 1);
   }
 }
 
@@ -41,7 +41,7 @@ input.bw-checkbox {
 
   .bw-checkbox-container {
     vertical-align: -10%;
-    margin-right: 16px;
+    margin-right: 10px;
   }
 
   &:hover .bw-icon-checkbox {

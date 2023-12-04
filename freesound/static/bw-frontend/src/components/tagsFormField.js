@@ -1,6 +1,7 @@
 import { createIconElement } from '../utils/icons'
 import { getJSONFromPostRequestWithFetch } from "../utils/postRequest";
 import { addTypeAheadFeatures } from '../components/typeahead'
+import { showToast } from './toast';
 
 const fetchTagSuggestions = async inputElement => {
     const inputWrapperElement = inputElement.parentNode;
@@ -29,14 +30,16 @@ const onSuggestionSelectedFromDropdown = (suggestion, suggestionsWrapper, inputE
     }
 }
   
-const drawWrapperContents = (inputWrapperElement, inputElement) => {
+const drawWrapperContents = (inputWrapperElement, inputElement, tagsHiddenInput) => {
     const currentTags = inputWrapperElement.dataset.currentTags;
 
     const existingTagElements = inputWrapperElement.getElementsByTagName('span');
     [...existingTagElements].forEach(element => {element.remove()});
 
+    let someTagsRendered = false;
     currentTags.split(' ').forEach((tagToRender, index) => {
         if (tagToRender !== ''){
+            someTagsRendered = true;
             const tagElement = document.createElement('span');
             tagElement.innerText = tagToRender;
             tagElement.classList = 'bg-white text-black border-grey-light text-center padding-1 no-text-wrap no-letter-spacing h-spacing-1 v-spacing-1';
@@ -58,7 +61,39 @@ const drawWrapperContents = (inputWrapperElement, inputElement) => {
             tagElement.appendChild(closeIconNode);
             inputWrapperElement.insertBefore(tagElement, inputElement);
         }
-    });    
+    });
+
+    if (someTagsRendered){
+        // Add action buttons
+        const buttonsWrapper = document.createElement('div');
+        buttonsWrapper.style="position:absolute;right:10px;top:-33px;z-index:1;";
+        inputWrapperElement.appendChild(buttonsWrapper);
+
+        const copyTagsButton = document.createElement('a');
+        copyTagsButton.title = "Copy the tags from this sound"
+        copyTagsButton.ariaLabel = "Copy the tags from this sound"
+        copyTagsButton.innerHTML = '<span class="bw-icon bw-icon-copy"></span>';
+        copyTagsButton.className = 'bw-link--grey no-hover cursor-pointer'
+        copyTagsButton.addEventListener('click', evt => {
+            evt.preventDefault();
+            navigator.clipboard.writeText(tagsHiddenInput.value);
+            showToast(`Tags "${tagsHiddenInput.value}" copied to clipboard`);
+        })
+        buttonsWrapper.appendChild(copyTagsButton);
+
+        const clearTagsButton = document.createElement('a');
+        clearTagsButton.title = "Clear tags"
+        clearTagsButton.ariaLabel = "Clear tags"
+        clearTagsButton.innerHTML = '<span class="bw-icon bw-icon-close"></span>';
+        clearTagsButton.className = 'bw-link--grey no-hover cursor-pointer h-spacing-left-1'
+        clearTagsButton.style = 'font-size: 10px;'
+        clearTagsButton.addEventListener('click', evt => {
+            evt.preventDefault();
+            inputWrapperElement.dataset.currentTags = '';
+            updateTags(inputElement, '');
+        })
+        buttonsWrapper.appendChild(clearTagsButton);
+    }    
 }
 
 const allowedTagCharactersTestRegex = new RegExp('^[a-zA-Z0-9-]$');
@@ -74,11 +109,11 @@ const updateTags = (inputElement, newTagsStr)  => {
     inputWrapperElement.dataset.currentTags = inputWrapperElement.dataset.currentTags.split(' ').filter(item => !(item === '-')).join(' ');  // Remove 1 character tags which are a dash
     inputWrapperElement.dataset.currentTags = inputWrapperElement.dataset.currentTags.replace(/\s+/g, ' ').trim();  // Remove extra white spaces
     tagsHiddenInput.value = inputWrapperElement.dataset.currentTags;
-    drawWrapperContents(inputWrapperElement, inputElement);
+    drawWrapperContents(inputWrapperElement, inputElement, tagsHiddenInput);
 }
 
-const prepareTagsFormFields = () => {
-    const tagsInputFields = document.getElementsByClassName('tags-field');
+const prepareTagsFormFields = (container) => {
+    const tagsInputFields = container.getElementsByClassName('tags-field');
     tagsInputFields.forEach(tagsFieldElement => {
         const tagsHiddenInput = tagsFieldElement.querySelectorAll('input[name$="tags"]')[0];
         const inputElement = tagsFieldElement.getElementsByClassName('tags-input')[0];

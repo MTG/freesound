@@ -22,17 +22,15 @@ import datetime
 
 from django.conf import settings
 
-from accounts.forms import BwFsAuthenticationForm, BwRegistrationForm, BwProblemsLoggingInForm
+from accounts.forms import FsAuthenticationForm, ProblemsLoggingInForm
+from forum.models import Post
 from messages.models import Message
 from tickets.views import new_sound_tickets_count
-from utils.frontend_handling import using_beastwhoosh
 
 
 def context_extra(request):
-    # Get number of new messages, number of uploaded sounds pending moderation and number of sounds to moderate
-    # variables so we can use them directly in base.html without a templatetag
+    # Add extra "global" context that we can use in templates
     tvars = {
-        'media_url': settings.MEDIA_URL,
         'request': request,
     }
     
@@ -51,12 +49,14 @@ def context_extra(request):
         new_tickets_count = -1  # Initially set to -1 (to distinguish later users that can not moderate)
         num_pending_sounds = 0
         num_messages = 0
+        new_posts_pending_moderation = 0
 
         if request.user.is_authenticated:
             if request.user.has_perm('tickets.can_moderate'):
                 new_tickets_count = new_sound_tickets_count()
-            if using_beastwhoosh(request):
-                num_pending_sounds = request.user.profile.num_sounds_pending_moderation()
+            if request.user.has_perm('forum.can_moderate_forum'):
+                new_posts_pending_moderation = Post.objects.filter(moderation_state='NM').count()
+            num_pending_sounds = request.user.profile.num_sounds_pending_moderation()
             num_messages = Message.objects.filter(user_to=request.user, is_archived=False, is_sent=False, is_read=False).count()
 
         # Determine if anniversary special css and js content should be loaded
@@ -69,13 +69,14 @@ def context_extra(request):
         tvars.update({
             'last_restart_date': settings.LAST_RESTART_DATE,
             'new_tickets_count': new_tickets_count,
+            'new_posts_pending_moderation': new_posts_pending_moderation,
             'num_pending_sounds': num_pending_sounds,
             'num_messages': num_messages,
             'load_anniversary_content': load_anniversary_content,
             'next_path': request.GET.get('next', request.get_full_path()),
-            'login_form': BwFsAuthenticationForm(),  # Used for beast whoosh login modal only
-            'problems_logging_in_form': BwProblemsLoggingInForm(),  # Used for beast whoosh login modal only
-            'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', False)  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
+            'login_form': FsAuthenticationForm(),
+            'problems_logging_in_form': ProblemsLoggingInForm(),
+            'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', 'no') == 'yes'  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
         })
     
     return tvars

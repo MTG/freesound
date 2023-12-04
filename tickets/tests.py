@@ -107,6 +107,30 @@ class TicketTests(TestCase):
                                    ticket_assignee=self.test_moderator)
 
 
+class TicketAccessTest(TicketTests):
+    """Test that the expected users can view tickets"""
+
+    def test_user_can_view_own_ticket(self):
+        """Test that a ticket can be viewed by the user who created it and by admins,
+        but not by anyone else."""
+        ticket = self._create_assigned_ticket()
+        self.client.force_login(self.test_user)
+        resp = self.client.get(reverse('tickets-ticket', args=[ticket.key]))
+        self.assertEqual(resp.status_code, 200)
+
+        self.client.force_login(self.test_moderator)
+        resp = self.client.get(reverse('tickets-ticket', args=[ticket.key]))
+        self.assertEqual(resp.status_code, 200)
+
+        self.client.force_login(User.objects.get(username='second_test_user'))
+        resp = self.client.get(reverse('tickets-ticket', args=[ticket.key]))
+        self.assertEqual(resp.status_code, 404)
+
+        self.client.logout()
+        resp = self.client.get(reverse('tickets-ticket', args=[ticket.key]))
+        self.assertEqual(resp.status_code, 302)
+
+
 class MiscTicketTests(TicketTests):
 
     def test_new_sound_tickets_count(self):

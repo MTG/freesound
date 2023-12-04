@@ -1,5 +1,3 @@
-const radios = [...document.querySelectorAll('input.bw-radio')];
-
 const addVisibleRadio = radioEl => {
 
   // We expect radio elements to be wrapped inside their corresponding <label> element.
@@ -32,4 +30,9 @@ const addVisibleRadio = radioEl => {
 
 };
 
-radios.forEach(addVisibleRadio);
+const makeRadios = (container) => {
+  const radios = [...container.querySelectorAll('input.bw-radio')];
+  radios.forEach(addVisibleRadio);
+};
+
+export { makeRadios };

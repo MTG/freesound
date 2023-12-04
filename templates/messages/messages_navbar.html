@@ -1,0 +1,58 @@
+<div class="divider-light v-spacing-top-4 v-spacing-1"></div>
+<div class="row middle">
+    <div class="col-md-4 col-6 row v-spacing-1 v-spacing-top-1 d-md-flex d-none">
+        {% if list_type %}
+        <label for="selectAll" class="padding-left-2 between label-message-action padding-left-5 middle">
+            <div class="bw-search__filter-checkbox">
+                <input type="checkbox" class="bw-checkbox" id="selectAll" onchange="">
+            </div>
+            <div class="bw-search__filter-name text-grey text-16 padding-top-0">
+                Select all
+            </div>
+        </label>
+        <div class="dropdown padding-left-1 display-none actions-menu">
+            <a class="no-hover dropdown-toggle"
+               data-toggle="dropdown"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Actions...</button></a>
+            <ul class="dropdown-menu dropdown-menu-left">
+                {% if not hide_toggle_read_unread %}
+                <li class="bw-nav__action dropdown-item" data-action-value="r">
+                    <a class="bw-link--black" href="javascript:void(0);">Toggle read/unread</a>
+                </li>
+                {% endif %}
+                {% if not hide_archive_unarchive %}
+                <li class="bw-nav__action dropdown-item" data-action-value="a">
+                    <a class="bw-link--black" href="javascript:void(0);">{% if list_type == "archived" %}Unarchive{% else %}Archive{% endif %}</a>
+                </li>
+                {% endif %}
+                <li class="bw-nav__action dropdown-item" data-action-value="d">
+                    <a href="javascript:void(0);">Delete message(s)</a>
+                </li>
+            </ul>
+        </div>
+        <form method="post" action="{% url 'messages-change-state' %}" id="message-action-form">{% csrf_token %}
+            <input id="message_ids" type="hidden" name="ids" />
+            <input id="action_choice" type="hidden" name="choice" />
+            <input type="hidden" name="next" value="{{ request.path }}" />
+        </form>
+        {% endif %}
+    </div>
+    <div class="col-md-4 col-6 center v-spacing-1 v-spacing-top-1">
+        <ul class="navbar-messages">
+            <li class="nav-item">
+                <a class="nav-link {% if list_type == "inbox" %}active{% endif %}" href="{% url 'messages' %}">Inbox</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if list_type == "sent" %}active{% endif %}" href="{% url 'messages-sent' %}">Sent</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if list_type == "archived" %}active{% endif %}" href="{% url 'messages-archived' %}">Archived</a>
+            </li>
+        </ul>
+    </div>
+    <div class="col-md-4 col-6 v-spacing-1 v-spacing-top-1 right">
+        {% if list_type %}
+        <a class="btn-primary" href="{% url 'messages-new' %}"><span class="padding-right-1">+</span>New message</a>
+        {% endif %}
+    </div>
+</div>
+<div class="divider-light v-spacing-top-1"></div>

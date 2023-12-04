@@ -102,12 +102,12 @@ class Command(LoggingBaseCommand):
         try:
             sqs = init_client('sqs')
         except AwsCredentialsNotConfigured as e:
-            console_logger.error(str(e))
+            console_logger.info(str(e))
             return
 
         queue_url = settings.AWS_SQS_QUEUE_URL
         if not queue_url:
-            console_logger.error('AWS queue URL is not configured')
+            console_logger.info('AWS queue URL is not configured')
             return
 
         messages_per_call = settings.AWS_SQS_MESSAGES_PER_CALL
@@ -136,7 +136,7 @@ class Command(LoggingBaseCommand):
                     WaitTimeSeconds=0
                 )
             except EndpointConnectionError as e:
-                console_logger.error(str(e))
+                console_logger.info(str(e))
                 return
                 
             messages = response.get('Messages', [])

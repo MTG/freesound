@@ -27,13 +27,12 @@ import struct
 from django.conf import settings
 from django.core.cache import cache
 from django.http import Http404, HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 from sounds.models import Sound, Pack
-from utils.frontend_handling import render, using_beastwhoosh
 from utils.logging_filters import get_client_ip
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
@@ -76,7 +75,6 @@ def geotags_barray(request, tag=None):
         else:
             generated_bytearray, _ = generate_bytearray(Sound.objects.none())
             return HttpResponse(generated_bytearray, content_type='application/octet-stream')
-
 
 
 def geotags_box_barray(request):
@@ -193,23 +191,25 @@ def for_user(request, username):
 def for_sound(request, username, sound_id):
     sound = get_object_or_404(
         Sound.objects.select_related('geotag', 'user'), id=sound_id)
-    if sound.user.username.lower() != username.lower():
+    if sound.user.username.lower() != username.lower() or sound.geotag is None:
         raise Http404
-    if not using_beastwhoosh(request):
-        tvars = {'sound': sound}
-        return render(request, 'sounds/geotag.html', tvars)
+    tvars = _get_geotags_query_params(request)
+    tvars.update({
+        'tag': None,
+        'username': None,
+        'pack': None,
+        'sound': sound,
+        'center_lat': sound.geotag.lat,
+        'center_lon': sound.geotag.lon,
+        'zoom': sound.geotag.zoom,
+        'url': reverse('geotags-for-sound-barray', args=[sound.id]),
+        'modal_version': request.GET.get('ajax'),
+    })
+    if request.GET.get('ajax'):
+        # If requested in ajax version, then load using the modal
+        return render(request, 'geotags/modal_geotags.html', tvars)
     else:
-        tvars = _get_geotags_query_params(request)
-        tvars.update({
-            'tag': None,
-            'username': None,
-            'pack': None,
-            'sound': sound,
-            'center_lat': sound.geotag.lat,
-            'center_lon': sound.geotag.lon,
-            'zoom': sound.geotag.zoom,
-            'url': reverse('geotags-for-sound-barray', args=[sound.id]),
-        })
+        # Otherwise load using the normal template
         return render(request, 'geotags/geotags.html', tvars)
 
 
@@ -223,8 +223,14 @@ def for_pack(request, username, pack_id):
         'pack': pack,
         'sound': None,
         'url': reverse('geotags-for-pack-barray', args=[pack.id]),
+        'modal_version': request.GET.get('ajax'),
     })
-    return render(request, 'geotags/geotags.html', tvars)
+    if request.GET.get('ajax'):
+        # If requested in ajax version, then load using the modal
+        return render(request, 'geotags/modal_geotags.html', tvars)
+    else:
+        # Otherwise load using the normal template
+        return render(request, 'geotags/geotags.html', tvars)
 
 
 def geotags_box(request):
@@ -242,10 +248,10 @@ def embed_iframe(request):
     tvars.update({
         'm_width': request.GET.get('w', 942),
         'm_height': request.GET.get('h', 600),
-        'cluster': request.GET.get('c', 'on') != 'off',
-        'media_url': settings.MEDIA_URL,
+        'cluster': request.GET.get('c', 'on') != 'off'
     })
-    return render(request, 'geotags/geotags_box_iframe.html', tvars)
+    tvars.update({'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN})
+    return render(request, 'embeds/geotags_box_iframe.html', tvars)
 
 
 def infowindow(request, sound_id):
@@ -253,9 +259,11 @@ def infowindow(request, sound_id):
         sound = Sound.objects.select_related('user', 'geotag').get(id=sound_id)
     except Sound.DoesNotExist:
         raise Http404
-
     tvars = {
         'sound': sound,
         'minimal': request.GET.get('minimal', False)
     }
+    if request.GET.get('embed', False):
+        # When loading infowindow for an embed, use the template for old UI as embeds have not been updated to new UI
+        return render(request, 'embeds/geotags_infowindow.html', tvars)
     return render(request, 'geotags/infowindow.html', tvars)

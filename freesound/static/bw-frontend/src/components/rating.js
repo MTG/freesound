@@ -103,8 +103,9 @@ const handleRatingInput = ratingInput => {
 };
 
 
-const addRatingInputEventListeners = inputs => {
-  inputs.forEach(ratingInput => {
+const makeRatingWidgets = (container) => {
+  const ratingInputs = container.getElementsByClassName('bw-rating__input');
+  ratingInputs.forEach(ratingInput => {
     ratingInput.addEventListener('click', evt => {
       handleRatingInput(ratingInput);
       evt.stopPropagation();
@@ -112,17 +113,6 @@ const addRatingInputEventListeners = inputs => {
   });
 }
 
-
-const initRatingWidgets = (baseContainer) => {
-  if (baseContainer === undefined){
-    baseContainer = document;
-  }
-  const ratingInputs = baseContainer.getElementsByClassName('bw-rating__input');
-  addRatingInputEventListeners(ratingInputs)
-}
-
-initRatingWidgets();
-
-export {initRatingWidgets}
+export {makeRatingWidgets}
 
 

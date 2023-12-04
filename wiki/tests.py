@@ -50,7 +50,7 @@ class WikiTestCase(TestCase):
         # An admin user has a link to edit the page
         self.client.force_login(self.user)
         resp = self.client.get(reverse('wiki-page', kwargs={'name': 'help'}))
-        self.assertContains(resp, 'edit this page')
+        self.assertContains(resp, 'Edit this page')
 
     def test_page_version(self):
         helpurl = reverse('wiki-page', kwargs={'name': 'help'})
@@ -126,8 +126,8 @@ class EditWikiPageTest(TestCase):
         self.client.force_login(self.user1)
         resp = self.client.get(reverse('wiki-page-edit', kwargs={'name': 'notapage'}))
 
-        self.assertContains(resp, '<textarea name="body" id="id_body" rows="40" cols="100" required>\n</textarea>', html=True)
-        self.assertContains(resp, '<input type="text" name="title" required id="id_title" size="100" />', html=True)
+        self.assertContains(resp, 'placeholder="Contents of the page. You can use Markdown formatting and HTML."')
+        self.assertContains(resp, 'placeholder="Title of the page"')
 
     def test_edit_page_save(self):
         # POST to the form and a new Content for this page is created

@@ -1,467 +1,362 @@
-{% extends "sounds/_section.html" %}
+{% extends "base.html" %}
 
-{% load display_sound %}
-{% load paginator %}
-{% load search %}
-{% load util %}
 {% load static %}
+{% load util %}
+{% load search %}
+{% load bw_templatetags %}
+{% load display_sound %}
+{% load display_pack %}
+{% load tags %}
 
-{% if clustering_on %}
-    {% block extra_headers %}
-        <link rel="stylesheet" type="text/css" href="{{media_url}}css/graph-clustering.css"/>
-        <script src="//unpkg.com/force-graph"></script>
-        <script src="//unpkg.com/d3-quadtree"></script>
-        <script src="//unpkg.com/d3-force"></script>
-        <script src="{{media_url}}js/d3-graph-clustering.js" type="text/javascript"></script>
-    {% endblock %}
-{% endif %}
+{% block title %}Search{% endblock %}
 
-{% block title %}sound search{% endblock title %}
+{% block navbar %}{% if not tags_mode %}{% include 'molecules/navbar_search_page.html' %}{% else %}{% include 'molecules/navbar.html' %}{% endif %}{% endblock %}
 
-{% block section_content %}
+{% block content %}
 
-<form id="search_form" method="get" onsubmit="return addAdvancedSearchOptionsFilters()"  action="{% url "sounds-search" %}">
-    <fieldset>
-
-       <input id="query_input" type="text" name="q" value="{{search_query}}" size="30" />
-       <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" size="30" />
-       <input id="weights" type="hidden" name="w" value="{{weights}}" />
-       {% comment %}
-       <span class="advanced_search_options">Sort results by </span>
-       {% endcomment %}
-       <select name="s">
-            {% for option in sort_options %}
-            <option value="{{option.1}}"{% ifequal option.1 sort %}selected="selected"{% endifequal %}>{{option.0}}</option>
-            {% endfor %}
-       </select>
-
-       <input type="submit" value="search" id="search_submit"/>
-
-       {% include "search/advanced_search_form.html" %}
-
-        <br/>
-
-    </fieldset>
-</form>
-
-
-<p id="filter_query_display">
-
-{% for filter in filter_query_split %}
-    <a href=".?g={{group_by_pack_in_request}}&q={{search_query}}&f={{ filter.remove_url }}&s={{ sort }}&cluster_id={{ filter.cluster_id }}&w={{ weights }}" title="remove this filter">{{ filter.name }}</a>
-{% endfor %}
-
-</p>
-
-<div id="clustering-graph-modal" class="modal" style="display: none;">
-    <div id="clustering-graph" class="modal-content">
-        <div class="modal-header">
-            Clustering Visualisation
-            <span id="close-modal-button" class="close-modal">×</span>
-        </div>
-        <div id="chart-container" class="modal-body">
-            <div id="h1">Selected sounds (ctrl + click)</div>
-            <div id="h2"></div>
-            <div id="cluster-labels"></div>
-            <div id="graph"></div>
-            <div id="graph-loader" class="clustering-loader"></div>
+<div class="container">
+    {% if error_text %}
+    <div class="navbar-space-filler v-spacing-3 v-spacing-top-2">
+        <div class="v-spacing-6 v-spacing-top-4">
+            <p class="v-spacing-4">{{ error_text }}</p>
+            <p><button onclick="window.history.back();" class="btn-primary">Go back</button></p>
         </div>
     </div>
-</div>
-
-<script type="text/javascript">
-
-    $(document).ready(function(){
-
-        // Fill advanced search fields that were passen on the f parameter
-        // Duration
-
-        if (getFilterValue("duration","min") == "")
-            $("#filter_duration_min").val("0");
-        else
-            $("#filter_duration_min").val(getFilterValue("duration","min"));
-
-        if (getFilterValue("duration","max") == "")
-            $("#filter_duration_max").val("*");
-        else
-            $("#filter_duration_max").val(getFilterValue("duration","max"));
-
-        // Geotagged
-        if (getFilterValue("is_geotagged")==1)
-               $("#filter_is_geotagged").attr('checked','checked')
-
-        // Extract terms from the query search box and highlight any of their occurrences in the descriptions
-        terms = document.getElementById("query_input").value.split(" ");
-
-        for(var i=0;i<terms.length;i++)
-        {
-        	term = terms[i];
-        	re = RegExp(term,"i"); // i for case-insensative
-
-        	descriptions = document.getElementsByClassName("description");
-        	for (var j=0;j<descriptions.length;j++)
-        	{
-        		descriptions[j].innerHTML = descriptions[j].innerHTML.replace(re,"<b>"+term+"</b>");
-        	}
-        }
-
-        {% if clustering_on %}
-        // Ajax request clustering
-        request_clustering();
-        graph = undefined;
-        graphLoaded = false;
-        showCluster = undefined;
-
-        $('#show-clustering-graph-button').click(function () {
-            showGraph();
-        });
-        {% endif %}
-    });
-
-    function addAdvancedSearchOptionsFilters()
-    {
-
-        // Remove existing previously existing advanced options filters (will be replaced by current ones)
-        existing_duration_filter = "duration:[" + getFilterValue("duration","min") + " TO " + getFilterValue("duration","max") + "]"
-        removeFilter(existing_duration_filter)
-        removeFilter("is_geotagged:1")
-
-        // if advanced options is activated add all updated filters
-        if ($("#advanced_search_hidden").val() == 1)
-        {
-
-            // Create and add new filter with all the advanced options
-            filter = ""
-
-            // Duration filter
-            duration_min = parseFloat($("#filter_duration_min").val())
-            duration_max = parseFloat($("#filter_duration_max").val())
-
-            if ((duration_min >= 0.0) || (duration_max >= 0.0))
-            {
-                duration_filter = ""
-
-                if ((duration_min >= 0.0) && (duration_max >= 0.0)) // Both min and max have been set
-                {
-                    if (duration_max < duration_min)
-                    {
-                        // interchange values if duration_min > duration_max
-                        duration_aux = duration_min
-                        duration_min = duration_max
-                        duration_max = duration_aux
-                    }
-
-                    duration_filter = "duration:[" + duration_min + " TO " + duration_max + "]"
-
-                }
-                else if (duration_min >= 0.0) // Only minimum has been set
-                {
-                    duration_filter = "duration:[" + duration_min + " TO *]"
-                }
-                else if (duration_max >= 0.0) // Only maximum has been set
-                {
-                    duration_filter = "duration:[* TO " + duration_max + "]"
-                }
-
-                filter = filter + duration_filter
-            }
-
-            // Is geotagged filter
-            if ($("#filter_is_geotagged").attr('checked')){
-                if (filter != "")
-                    filter = filter + " "
-                filter = filter + "is_geotagged:1"
-            }
-
-               // Update general filter with the advanced options filter
-            value = $("#filter_query").val();
-            if (value != "")
-                $("#filter_query").val(value + " " + filter);
-            else
-                $("#filter_query").val(filter);
-
-        }
-
-        return true
-    }
-
-    // Return the value of a filter given its name
-    // If filter has a range, optional "range" parameter must be set to "min or "max"
-    function getFilterValue(name, range)
-    {
-        if (!range) { range = "min"};
-
-        var value = $("#filter_query").val();
-        position_name = value.search(name)
-        position_value = value.search(name) + (name + ":").length
-        if (value.search((name + ":")) != -1)
-        {
-            if (value[position_value] == "[") // Is range (with spaces)
-            {
-                aux_value = value.substring(position_value + 1)
-                position_end = position_value + aux_value.search("]") + 2
-
-                range_string = value.substring(position_value + 1, position_end -1) // Without [ ]
-                parts = range_string.split(" ")
-                if (range == "min")
-                    return parts[0]
-                else if (range == "max")
-                    return parts[2]
-            }
-            else if (value[position_value] == "\"") // Is string (with spaces)
-            {
-                aux_value = value.substring(position_value + 1)
-                position_end = position_value + aux_value.search("\"") + 2
-                return value.substring(position_value, position_end)
-
-            }
-            else // Is number or normal text (without spaces)
-            {
-                aux_value = value.substring(position_value + 1)
-                if (aux_value.search(" ") != -1)
-                    position_end = position_value + aux_value.search(" ") + 1
-                else
-                    position_end = value.length
-
-                return value.substring(position_value, position_end)
-            }
-        }
-        else
-        {
-            return ""
-        }
-    }
-
-    // Remove a filter given the full tag ex: type:aiff, pack:"pack name"
-    function removeFilter(tag)
-    {
-        var value = $("#filter_query").val();
-        var cleaned = $.trim(value.replace(tag + " ", "").replace(tag, ""));
-        $("#filter_query").val(cleaned);
-    }
-
-    {% if clustering_on %}
-    // toggle and show graph
-    function updateShowGraphButton() {
-        var buttonText = $("#clustering-graph").is(":visible")? "hide" : "show";
-        $("#show-clustering-graph-button").html(buttonText);
-    }
-
-    function showGraph() {
-        $("#clustering-graph-modal").show();
-        if (graph !== undefined && graphLoaded === false) {
-            activateGraph(graph);
-            graphLoaded = true;
-        }
-    }
-
-    function closeGraphModal() {
-        $("#clustering-graph-modal").hide();
-    }
-
-    // play cluster examples on mouseover & click
-    mouse_on_cluster_facet_preview = false;
-    function enableAudioClusterExamples() {
-        function playAudio(el, index) {
-            var dummySpanClusterExamples = el.children('.dummy-span-cluster-examples');
-            var cluster_idx = $('.clustering-facet').index($(el));
-            var index = (typeof index == 'number') ? index: parseInt(Math.random()*dummySpanClusterExamples.length);
-            var selectedExample = dummySpanClusterExamples.eq(index);
-            var soundId = selectedExample.attr("sound-id");
-            var soundUrl = selectedExample.attr("sound-url");
-            play_sound_from_url(soundId, soundUrl, function () {
-                index = (index + 1) % dummySpanClusterExamples.length;
-                // this condition ensures that we don't trigger more plays when not previewing the right cluster.
-                // otherwise it could happen that stopAllAudio() would not stop the recursive loop.
-                if (mouse_on_cluster_facet_preview == cluster_idx) {
-                    playAudio(el, index)
-                }
-            });
-        };
-
-        function stopAllAudio() {
-            $('audio').each(function (i, el) {el.pause();});
-        };
-        
-        $(".cluster-audio-examples")
-            .mouseenter(function() {
-                var cluster_idx = $('.clustering-facet').index($(this).parents('.clustering-facet'));
-                mouse_on_cluster_facet_preview = cluster_idx;
-                stopSound();
-                playAudio($(this).parent().parent(), false);
-            })
-            .mouseleave(function() {
-                mouse_on_cluster_facet_preview = false;
-                stopSound();
-            })
-            .click(function() {
-                stopSound();
-                playAudio($(this).parent().parent(), false);
-            });
-    }
-
-    var clustering_trial_number = 0;
-    // function for requesting clustering
-    function request_clustering()
-    {
-        $.get({% url 'clustering-facet' %} + '?{{ url_query_params_string }}', 
-                {}, 
-                function( data ) {
-                    clustering_trial_number += 1;
-                    if (data.status === 'pending') {
-                        if (clustering_trial_number < 1000) {
-                            setTimeout(() => {
-                                request_clustering();
-                            }, 500);
-                        } else {
-                            $('#facet-loader').hide();
-                            $('#cluster-fail-icon').show();
-                        }
-                    } else if (data.status === 'failed') {
-                        // clustering failed
-                        $('#facet-loader').hide();
-                        $('#cluster-fail-icon').show();
-                    } else {
-                        $('#facet-loader').hide();
-                        $('#show-clustering-graph-button').show();
-                        $('#cluster-labels').html(data);
-                        $('#clusters-div').replaceWith(data);
-                        // add cluster colors
-                        var num_clusters = Math.max(
-                            ...Array.from($('.clustering-facet').map(
-                                (e, l)=>parseInt($(l).attr('cluster-id')))
-                            )
-                        ) + 1;
-                        $('#cluster-labels').find('.clustering-facet').each((i, l) => {
-                            $(l).find('a').css("color", cluster2color($(l).attr('cluster-id'), num_clusters));
-                            $(l).find('a').css('font-weight', 'bold');
-                        });
-                        enableAudioClusterExamples();
-
-                        $('.cluster-link-button').click(function () {
-                            $("#clustering-graph-modal").show();
-                            var clusterId = $(this).attr('cluster-id');
-                            showCluster = clusterId;
-                            if (graph !== undefined && graphLoaded === false) {
-                                activateGraph(graph, clusterId);
-                                graphLoaded = true;
-                            }
-                        });
-
-                        $('#close-modal-button').click(function () {
-                            closeGraphModal();
-                        })
-
-                        // request clustered graph
-                        // set graph as a global variable
-                        $.get("{% url 'clustered-graph-json' %}"+"?{{url_query_params_string}}", {
-                            }).then(res => JSON.parse(res)).then(data => {
-                                graph = data;
-                                if ($("#clustering-graph-modal").is(":visible")) {
-                                    if (showCluster !== undefined) {
-                                        activateGraph(graph, showCluster);
-                                        graphLoaded = true;
-                                    } else {
-                                        activateGraph(graph);
-                                        graphLoaded = true;
-                                    }
-                                }
-                            });
-                    }
-        });
-    }
-    {% endif %}
-
-</script>
-
-{% if error_text %}
-    <p>{{ error_text }}</p>
-{% else %}
-    {% if facets %}
-    <div id="sidebar" style="float:right">
-
-        {% if clustering_on %}
-            <h3>clusters 
-                <div id="facet-loader" class="clustering-loader"></div>
-                <img style="display: none;" id="cluster-fail-icon" src="{{media_url}}images/fugue-icons/icons/cross.png" alt=""/>
-                <button style="display: none;" id="show-clustering-graph-button">
-                    show
-                </button>
-            </h3>
-            <div id='clusters-div'>
-                <br>
-            </div>
-        {% endif %}
-
-        {% if facets.license and facets.license|length > 1 %}
-            <h3>licenses</h3>
-            {% display_facet "license" facets.license "list" %}
-        {% endif %}
-
-        {% if facets.tag and facets.tag|length > 1 %}
-            <h3>tags</h3>
-            {% display_facet "tag" facets.tag "cloud" %}
-        {% endif %}
-
-        {% if facets.type and facets.type|length > 1 %}
-            <h3>type</h3>
-            {% display_facet "type" facets.type "list" %}
-        {% endif %}
-
-        {% if facets.samplerate and facets.samplerate|length > 1 %}
-            <h3>samplerate</h3>
-            {% display_facet "samplerate" facets.samplerate "list" %}
-        {% endif %}
-
-        {% if facets.bitdepth and facets.bitdepth|length > 1 %}
-            <h3>bitdepth</h3>
-            {% display_facet "bitdepth" facets.bitdepth "list" %}
-        {% endif %}
-
-        {% if facets.bitrate and facets.bitrate|length > 1 %}
-            <h3>bitrate</h3>
-            {% display_facet "bitrate" facets.bitrate "list" %}
-        {% endif %}
-
-
-        {% if facets.channels and facets.channels|length > 1 %}
-            <h3>channels</h3>
-            {% display_facet "channels" facets.channels "list" %}
-        {% endif %}
-
-        {% if facets.grouping_pack and facets.grouping_pack|length > 1 %}
-            <h3>packs</h3>
-            {% display_facet "grouping_pack" facets.grouping_pack "list" %}
-        {% endif %}
-
-        {% if facets.username and facets.username|length > 1 %}
-            <h3>users</h3>
-            {% display_facet "username" facets.username "cloud" %}
-        {% endif %}
-
-    </div>
-
-        {% if paginator.count > 0 %}
-            <div class="search_paginator">
-                {% show_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
-            </div>
-
-            {% for result in docs %}
-                {% display_sound result.sound %}
-                {% if result.n_more_in_group %}
-                    <div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name }}"+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.n_more_in_group}} more result{{ result.n_more_in_group|pluralize  }}</a> in the same pack "{{ result.sound.pack_name|truncate_string:35 }}"</div>
-                {% endif %}
+    {% else %}
+    <div class="navbar-space-filler v-spacing-3 v-spacing-top-2">
+        {% if initial_tagcloud %}
+        <section id="tags-mode-input-section" class="v-spacing-5">
+            <h3 class="v-spacing-5 text-light-grey center">Choose a tag to start browsing</h3>
+            {% for tag in initial_tagcloud|add_sizes:"count:0.1:1.0" %}
+            {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
             {% endfor %}
-
-            <div class="search_paginator">
-                {% show_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
-            </div>
+        </section>
         {% else %}
-            <p>Search returned no results...</p>
+        <form method="get" id="search_form" action="{% if not tags_mode %}{% url 'sounds-search' %}{% else %}{% url 'tags' %}{% endif %}">
+            
+            <div class="v-spacing-5 {% if tags_mode %}display-none{% endif %}">
+                <div class="middle center">
+                    <div class="bw-search__input_wrapper"><i class="bw-icon-search input-icon text-light-grey"></i><input id="search-input-browse" name="q" type="text" value="{{ search_query }}" placeholder="Search {% if not only_sounds_with_pack %}sounds{% else %}packs{% endif %}..." class="bw-search__input" autocomplete="off"/></div>
+                    <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" />
+                    <input id="weights" type="hidden" name="w" value="{{weights}}" />
+                    <input id="tags-mode" type="hidden" name="tm" value="{% if tags_mode %}1{% else %}0{% endif %}" />  {% comment %}This is used so that we can know from JS whether we are in tags mode or not{% endcomment %}
+                    <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
+                </div>
+            </div>
+            
+            {% if tags_mode %}
+            <div id="tags-mode-input-section" class="v-spacing-5">
+                <div class="between middle">
+                    <h3>
+                        <span class="text-light-grey h-spacing-1">Sounds tagged as</span>
+                        {% for tag in tags_in_filter %}
+                        {{ tag }}{% if not forloop.last %}<span class="h-spacing-left-1 h-spacing-1 text-light-grey">·</span>{% endif %}
+                        {% endfor %}
+                    </h3>
+                    {% bw_follow_tags_widget %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div>
+                <div class="divider-light"></div>
+                <div class="padding-3 v-padding-2 between font-weight-bold middle">
+                    {% if not only_sounds_with_pack %}
+                    <div class="col-4">{% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results|bw_intcomma }}{% else %}{{ paginator.count|bw_intcomma }}{% endif %} sound{{ non_grouped_number_of_results|pluralize }}</div>
+                    {% else %}
+                    <div class="col-4">{{ paginator.count|bw_intcomma }} pack{{ paginator.count|pluralize }}</div>
+                    {% endif %}
+                    {% comment %}
+                    <div class="bw_search-tab">Sounds</div>
+                    {% endcomment %}
+                    {% comment %}
+                    This section of the UI show allow to choose between different search modes:
+                    sounds and packs. However, this is currently not implemented in the backend so we don't
+                    enable this feature. Instead, we add here the element to toggle advanced search options.
+                    In the future we might need to redesign that.
+                    {% endcomment %}
+                    <div class="col-4 middle">
+                        <a href="#" class="bw-link--grey-light" id="toggle_advanced_search_options"></a>
+                        {% if has_advanced_search_settings_set %}<span class="text-red h-spacing-left-1 text-44 line-height-14 padding-bottom-1" title="There are active filters in the advanced search options">·</span>{% endif %}
+                    </div>
+                    <div class="browse__search-overview-sorter">
+                        <span class="font-weight-normal text-light-grey d-none d-md-inline">Sort by:</span>
+                        <select name="s" id="sort-by">
+                            {% for option in sort_options %}
+                            <option value="{{option.1}}"{% ifequal option.1 sort %}selected="selected"{% endifequal %}>{{option.0}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="divider-light"></div>
+                <div id="advanced-search-options" class="{% if not advanced == "1" or advanced_search_closed_on_load %}display-none{% endif %}">
+                    <div class="v-padding-2 between">
+                        <input id="advanced_search_hidden" type="hidden" name="advanced" value="{% if advanced == "1" and not advanced_search_closed_on_load %}1{% else %}0{% endif %}" />
+                        
+                        <div class="col-md-4 bw-search__advanced-search-filter-section">
+                            <div class="bw-search__filter-section-name caps text-light-grey between">
+                                <span>Search in</span>
+                            </div>
+                            <div class="row no-gutters v-spacing-top-2 {% if tags_mode %}opacity-020{% endif %}">
+                                <div class="col-md-5">
+                                    <ul class="bw-search__filter-value-list no-margins">
+                                        <li class="bw-search__filter-value v-padding-1">
+                                            <label class="between w-100">
+                                                <div class="bw-search__filter-checkbox">
+                                                    <input type="checkbox" class="bw-checkbox" on name="a_tag" {% if a_tag %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                </div>
+                                                <div class="bw-search__filter-name">Tags</div>
+                                            </label>
+                                        </li>
+                                        <li class="bw-search__filter-value v-padding-1">
+                                            <label class="between w-100">
+                                                <div class="bw-search__filter-checkbox">
+                                                    <input type="checkbox" class="bw-checkbox" name="a_filename" {% if a_filename %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                </div>
+                                                <div class="bw-search__filter-name">Sound name</div>
+                                            </label>
+                                        </li>
+                                        <li class="bw-search__filter-value v-padding-1">
+                                            <label class="between w-100">
+                                                <div class="bw-search__filter-checkbox">
+                                                    <input type="checkbox" class="bw-checkbox" name="a_description" {% if a_description %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                </div>
+                                                <div class="bw-search__filter-name">Description</div>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-5">
+                                    <ul class="bw-search__filter-value-list no-margins">
+                                        <li class="bw-search__filter-value v-padding-1">
+                                            <label class="between w-100">
+                                                <div class="bw-search__filter-checkbox">
+                                                    <input type="checkbox" class="bw-checkbox" name="a_packname" {% if a_packname %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                </div>
+                                                <div class="bw-search__filter-name">Pack name</div>
+                                            </label>
+                                        </li>
+                                        <li class="bw-search__filter-value v-padding-1">
+                                            <label class="between w-100">
+                                                <div class="bw-search__filter-checkbox">
+                                                    <input type="checkbox" class="bw-checkbox" name="a_soundid" {% if a_soundid %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                </div>
+                                                <div class="bw-search__filter-name">Sound ID</div>
+                                            </label>
+                                        </li>
+                                        <li class="bw-search__filter-value v-padding-1">
+                                            <label class="between w-100">
+                                                <div class="bw-search__filter-checkbox">
+                                                    <input type="checkbox" class="bw-checkbox" name="a_username" {% if a_username %}checked{% endif %} {% if tags_mode %}disabled{% endif %}/>
+                                                </div>
+                                                <div class="bw-search__filter-name">Username</div>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 bw-search__advanced-search-filter-section">
+                            <div class="bw-search__filter-section-name caps text-light-grey between">
+                                <span>Duration</span>
+                            </div>
+                            <div class="bw-search__filter-tags-list bw-search__filter-duration">
+                                <input id="filter_duration_min" class="bw-search_input-duration v-spacing-1" type="text" value="0" /> - <input id="filter_duration_max" class="bw-search_input-duration" type="text" value="*" /> <span>seconds</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 bw-search__advanced-search-filter-section">
+                            <div class="bw-search__filter-section-name caps text-light-grey between">
+                                <span>Other</span>
+                            </div>
+                            <ul class="bw-search__filter-value-list">
+                                <li class="bw-search__filter-value v-padding-1">
+                                    <label class="between w-100" title="Only find sounds that have geolocation information">
+                                        <div class="bw-search__filter-checkbox">
+                                            <input id="filter_is_geotagged" type="checkbox" class="bw-checkbox"/>
+                                        </div>
+                                        <div class="bw-search__filter-name">Only geotagged sounds</div>
+                                    </label>
+                                </li>
+                                <li class="bw-search__filter-value v-padding-1">
+                                    <label class="between w-100" title="Only find sounds that are a remix of other sounds or have been remixed">
+                                        <div class="bw-search__filter-checkbox">
+                                            <input id="filter_in_remix_group" type="checkbox" class="bw-checkbox"/>
+                                        </div>
+                                        <div class="bw-search__filter-name">Only remix sounds</div>
+                                    </label>
+                                </li>
+                                <li class="bw-search__filter-value v-padding-1">
+                                    <label class="between w-100 {% if disable_group_by_pack_option %}opacity-020{% endif %}" title="Group search results so that multiple sounds of the same pack only represent one item">
+                                        <div class="bw-search__filter-checkbox">
+                                            <input id="group_by_pack" type="checkbox" class="bw-checkbox" {% if group_by_pack_in_request == "1" %}checked{% endif %} {% if disable_group_by_pack_option %}disabled="disabled"{% endif %}/>
+                                            <input id="group_by_pack_hidden" type="hidden" name="g" {% ifequal group_by_pack_in_request "1" %}value="1"{% else %}value=""{% endifequal %} />
+                                        </div>
+                                        <div class="bw-search__filter-name">Group sounds by pack</div>
+                                    </label>
+                                </li>
+                                <li class="bw-search__filter-value v-padding-1">
+                                    <label class="between w-100 {% if disable_only_sounds_by_pack_option %}opacity-020{% endif %}" title="Display search results as packs rather than individual sounds">
+                                        <div class="bw-search__filter-checkbox">
+                                            <input id="only_sounds_with_pack" type="checkbox" class="bw-checkbox" {% if only_sounds_with_pack_in_request == "1" %}checked{% endif %} {% if disable_only_sounds_by_pack_option %}disabled="disabled"{% endif %}/>
+                                            <input id="only_sounds_with_pack_hidden" type="hidden" name="only_p" {% ifequal only_sounds_with_pack_in_request "1" %}value="1"{% else %}value=""{% endifequal %} />
+                                        </div>
+                                        <div class="bw-search__filter-name">Display results as packs</div>
+                                    </label>
+                                </li>
+                                <li class="bw-search__filter-value v-padding-1">
+                                    <label class="between w-100" title="Dipslay search results in a grid so that more sounds are visible per search results page">
+                                        <div class="bw-search__filter-checkbox">
+                                            <input id="use_compact_mode" type="checkbox" class="bw-checkbox" {% if use_compact_mode %}checked{% endif %}/>
+                                            <input id="use_compact_mode_hidden" type="hidden" name="cm" value="{{ use_compact_mode|yesno:"1,0" }}"/>
+                                        </div>
+                                        <div class="bw-search__filter-name">Display results in grid</div>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="v-spacing-4 center">
+                        <button id="avanced-search-apply-button" class="btn-primary" disabled>Apply advanced search filters</button>
+                    </div>
+                    <div class="divider-light"></div>
+                </div>
+            </div>
+        </form>
         {% endif %}
-
-
+    </div>
+    {% if not initial_tagcloud %}
+    <div class="row">
+        <div class="col-12 center v-spacing-top-negative-2 d-md-none">
+            <div data-target="collapsable-filters" data-show-text="Show filters" data-hide-text="Hide filters" data-hide-on-load class="collapsable-toggle v-spacing-top-2 font-weight-bold text-light-grey"></div>
+        </div>
+        
+        <aside class="col-md-4 col-lg-3 collapsable-block md-max-h-100" id="collapsable-filters">
+            {% if tags_mode %}
+            {% if facets.tag and facets.tag|length > 1 %}
+            {% display_facet "tag" facets.tag "cloud" "Add Related Tags" %}
+            {% endif %}
+            {% endif %}
+            
+            {% if facets.license and facets.license|length > 1 %}
+            {% display_facet "license" facets.license "list" "Licenses" %}
+            {% endif %}
+            
+            {% if not tags_mode %}
+            {% if facets.tag and facets.tag|length > 1 %}
+            {% display_facet "tag" facets.tag "cloud" "Related Tags" %}
+            {% endif %}
+            {% endif %}
+            
+            {% if facets.type and facets.type|length > 1 %}
+            {% display_facet "type" facets.type "list" "Type" %}
+            {% endif %}
+            
+            {% if facets.samplerate and facets.samplerate|length > 1 %}
+            {% display_facet "samplerate" facets.samplerate "list" "Samplerate" %}
+            {% endif %}
+            
+            {% if facets.bitdepth and facets.bitdepth|length > 1 %}
+            {% display_facet "bitdepth" facets.bitdepth "list" "Bitdepth" %}
+            {% endif %}
+            
+            {% if facets.bitrate and facets.bitrate|length > 1 %}
+            {% display_facet "bitrate" facets.bitrate "list" "Bitrate" %}
+            {% endif %}
+            
+            {% if facets.channels and facets.channels|length > 1 %}
+            {% display_facet "channels" facets.channels "list" "Channels" %}
+            {% endif %}
+            
+            {% if not only_sounds_with_pack %}
+            {% if facets.grouping_pack and facets.grouping_pack|length > 1 %}
+            {% display_facet "grouping_pack" facets.grouping_pack "list" "Packs"%}
+            {% endif %}
+            {% endif %}
+            
+            {% if facets.username and facets.username|length > 1 %}
+            {% display_facet "username" facets.username "cloud" "Related users" %}
+            {% endif %}
+        </aside>
+        
+        <div class="col-12 divider-light d-md-none v-spacing-top-3 v-spacing-3"></div>
+        
+        <main class="col-12 col-md-8 col-lg-9 col-extra-left-padding-large-md">
+            {% if filter_query_split %}
+            <div class="v-spacing-3 v-spacing-top-2 line-height-33">
+                {% for filter in filter_query_split %}
+                <a class="no-hover btn-inverse bw-search__active-filters-button" href="/search/?advanced={{ advanced }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&s={{ sort }}&cluster_id={{ filter.cluster_id }}&w={{ weights }}&q={{search_query}}&f={{ filter.remove_url }}" title="Remove this filter">
+                    {{ filter.name }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="v-spacing-6 v-spacing-top-2">
+                {% if paginator.count > 0 %}
+                {% if use_compact_mode %}
+                <div class="row">
+                    {% for result in docs %}
+                    <div class="col-6 col-lg-4">
+                        {% if not only_sounds_with_pack %}
+                        {% display_sound_small result.sound %}
+                        {% if result.n_more_in_group and result.sound.pack_id is not None %}
+                        <p class="text-grey text-right v-spacing-top-negative-2">
+                            {% bw_icon 'plus' %} <a href='/search/?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name|urlencode }}"+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group|add:1|bw_intcomma}} result{{ result.n_more_in_group|add:1|pluralize }} from pack:</a> <a class="bw-link--grey" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
+                        </p>
+                        {% endif %}
+                        {% else %}
+                        {% display_pack result.pack %}
+                        <p class="text-grey text-right v-spacing-top-negative-2">
+                            {% bw_icon 'plus' %} <a href='/search/?q={{ search_query }}&f=grouping_pack:{{ result.pack.pack_filter_value }}+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group|add:1|bw_intcomma}} result{{ result.n_more_in_group|add:1|pluralize }} from pack</a>
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}      
+                </div>
+                {% else %}
+                {% for result in docs %}
+                <div class="bw-search__result">
+                    {% if not only_sounds_with_pack %}
+                    {% display_sound_middle result.sound %}
+                    {% if result.n_more_in_group and result.sound.pack_id is not None %}
+                    <div class="text-grey text-right v-spacing-top-negative-1 v-spacing-2">
+                        {% bw_icon 'plus' %} <a href='/search/?q={{ search_query }}&f=grouping_pack:"{{ result.sound.pack_id }}_{{ result.sound.pack_name|urlencode }}"+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group|add:1|bw_intcomma}} result{{ result.n_more_in_group|add:1|pluralize }} from same pack</a>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    {% display_pack_big result.pack %}
+                    <div class="text-grey text-right v-spacing-top-negative-1 v-spacing-2 padding-right-1">
+                        {% bw_icon 'plus' %} <a href='/search/?q={{ search_query }}&f=grouping_pack:{{ result.pack.pack_filter_value }}+{{filter_query_link_more_when_grouping_packs }}&s={{ sort }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&w={{ weights }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>See {{result.n_more_in_group|add:1|bw_intcomma}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
+                    </div>
+                    {% endif %}
+                    {% if not forloop.last %}
+                    <div class="divider-light v-spacing-2"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% else %}
+                <div class="v-spacing-7 v-spacing-top-6 w-100">
+                    <h5>No results... &#128543</h5>
+                    <p class="text-grey v-spacing-2">Please try another query or change the filters</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="v-spacing-6">
+                {% bw_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
+            </div>
+        </main>
+    </div>
     {% endif %}
-{% endif %}
+    {% endif %}
+</div>
+{% endblock %}
 
+{% block extrabody %}
+{% if not error_text and not initial_tagcloud %}
+{% comment %}If there were errors reaching the search server, don't even load the
+JS bits because we only display the error message{% endcomment %}
+<script src="{% static 'bw-frontend/dist/search.js' %}"></script>
+{% endif %}
 {% endblock %}

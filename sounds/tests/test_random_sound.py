@@ -53,7 +53,7 @@ class RandomSoundViewTestCase(TestCase):
     @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
     def test_random_sound_view(self, random_sound):
         """ Get a sound from solr and redirect to it. """
-        users, packs, sounds = create_user_and_sounds(num_sounds=1)
+        _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
 
         # We only use the ID field from solr
@@ -67,7 +67,7 @@ class RandomSoundViewTestCase(TestCase):
     def test_random_sound_view_bad_solr(self, random_sound):
         """ Solr may send us a sound id which no longer exists (index hasn't been updated).
         In this case, use the database access """
-        users, packs, sounds = create_user_and_sounds(num_sounds=1)
+        _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
         # Update sound attributes to be selected by Sound.objects.random
         sound.moderation_state = sound.processing_state = 'OK'
@@ -88,7 +88,7 @@ class RandomSoundViewTestCase(TestCase):
     @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
     def test_random_sound_view_no_solr(self, random_sound):
         """ If solr is down, get a random sound from the database and redirect to it. """
-        users, packs, sounds = create_user_and_sounds(num_sounds=1)
+        _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
         # Update sound attributes to be selected by Sound.objects.random
         sound.moderation_state = sound.processing_state = 'OK'

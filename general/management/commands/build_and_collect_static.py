@@ -23,7 +23,7 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "Build Beast Whoosh static files and then run collecstatic to put files in place"
+    help = "Build Beast Whoosh UI static files and then run collecstatic to put files in place"
 
     def handle(self, **options):
 

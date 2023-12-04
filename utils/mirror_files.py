@@ -20,9 +20,9 @@ def copy_files(source_destination_tuples):
                 if settings.LOG_START_AND_END_COPYING_FILES:
                     web_logger.info(f'Finished copying file {source_path} to {destination_path}')
             except subprocess.CalledProcessError as e:            
-                web_logger.error(f'Failed copying {source_path} ({str(e)}: {e.output})')
+                web_logger.info(f'Failed copying {source_path} ({str(e)}: {e.output})')
         else:
-            # The destioantion path is a local volume
+            # The destination path is a local volume
             os.makedirs(os.path.dirname(destination_path), exist_ok=True)
             try:
                 shutil.copy2(source_path, destination_path)
@@ -30,7 +30,7 @@ def copy_files(source_destination_tuples):
                     web_logger.info(f'Finished copying file {source_path} to {destination_path}')
             except OSError as e:
                 # File does not exist, no permissions, etc.
-                web_logger.error(f'Failed copying {source_path} ({str(e)})')
+                web_logger.info(f'Failed copying {source_path} ({str(e)})')
 
 
 def copy_files_to_mirror_locations(object, source_location_keys, source_base_path, destination_base_paths):
@@ -75,7 +75,7 @@ def remove_uploaded_file_from_mirror_locations(source_file_path):
                 os.remove(destination_path)
             except OSError as e:
                 # File does not exist, no permissions, etc.
-                web_logger.error(f'Failed deleting {destination_path} ({str(e)})')
+                web_logger.info(f'Failed deleting {destination_path} ({str(e)})')
 
 
 def remove_empty_user_directory_from_mirror_locations(user_uploads_path):

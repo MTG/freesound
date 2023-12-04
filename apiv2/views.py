@@ -34,6 +34,7 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponseRedirect, Http404
+from django.shortcuts import render 
 from django.urls import reverse
 from oauth2_provider.models import Grant, AccessToken
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
@@ -48,7 +49,7 @@ from apiv2.authentication import OAuth2Authentication, TokenAuthentication, Sess
 from apiv2.exceptions import NotFoundException, InvalidUrlException, BadRequestException, ConflictException, \
     UnauthorizedException, ServerErrorException, OtherException, APIException
 from apiv2.forms import ApiV2ClientForm, SoundCombinedSearchFormAPI, SoundTextSearchFormAPI, \
-    SoundContentSearchFormAPI, SimilarityFormAPI, BWApiV2ClientForm
+    SoundContentSearchFormAPI, SimilarityFormAPI
 from apiv2.models import ApiV2Client
 from apiv2.serializers import SimilarityFileSerializer, UploadAndDescribeAudioFileSerializer, \
     EditSoundDescriptionSerializer, SoundDescriptionSerializer, CreateCommentSerializer, SoundCommentsSerializer, \
@@ -65,7 +66,6 @@ from similarity.client import Similarity
 from sounds.models import Sound, Pack, License, SoundAnalysis
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
-from utils.frontend_handling import render, using_beastwhoosh
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.tags import clean_and_split_tags
 
@@ -635,72 +635,6 @@ class UserPacks(ListAPIView):
         return queryset
 
 
-class UserBookmarkCategories(ListAPIView):
-    serializer_class = BookmarkCategorySerializer
-
-    @classmethod
-    def get_description(cls):
-        return 'Bookmark categories created by a user.' \
-               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-               % (prepend_base('/docs/api'), '%s#user-bookmark-categories' % resources_doc_filename,
-                  get_formatted_examples_for_view('UserBookmarkCategories', 'apiv2-user-bookmark-categories', max=5))
-
-    def get(self, request,  *args, **kwargs):
-        api_logger.info(self.log_message(f"user:{self.kwargs['username']} bookmark_categories"))
-        return super().get(request, *args, **kwargs)
-
-    def get_queryset(self):
-        categories = BookmarkCategory.objects.filter(user__username=self.kwargs['username'])
-        try:
-            user = User.objects.get(username=self.kwargs['username'], is_active=True)
-        except User.DoesNotExist:
-            raise NotFoundException(resource=self)
-
-        if Bookmark.objects.select_related("sound")\
-                .filter(user__username=self.kwargs['username'], category=None).count():
-            uncategorized = BookmarkCategory(name='Uncategorized', user=user, id=0)
-            return [uncategorized] + list(categories)
-        else:
-            return list(categories)
-
-
-class UserBookmarkCategorySounds(ListAPIView):
-    serializer_class = SoundListSerializer
-
-    @classmethod
-    def get_description(cls):
-        return 'Sounds bookmarked by a user under a particular category.' \
-               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-               % (prepend_base('/docs/api'), '%s#user-bookmark-category-sounds' % resources_doc_filename,
-                  get_formatted_examples_for_view('UserBookmarkCategorySounds', 'apiv2-user-bookmark-category-sounds',
-                                                  max=5))
-
-    def get(self, request,  *args, **kwargs):
-        api_logger.info(self.log_message('user:%s sounds_for_bookmark_category:%s'
-                                     % (self.kwargs['username'], str(self.kwargs.get('category_id', None)))))
-        return super().get(request, *args, **kwargs)
-
-    def get_queryset(self):
-
-        kwargs = dict()
-        kwargs['user__username'] = self.kwargs['username']
-
-        if 'category_id' in self.kwargs:
-            if int(self.kwargs['category_id']) != 0:
-                kwargs['category__id'] = self.kwargs['category_id']
-            else:
-                kwargs['category'] = None
-        else:
-            kwargs['category'] = None
-        try:
-            # TODO: this line below will not add the analysis_state_essentia_exists property to the sound objects and will
-            # make the queries inneficient if the "analysis" is requested. This could be improved in the future.
-            queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
-        except:
-            raise NotFoundException(resource=self)
-        return queryset
-
-
 ############
 # PACK VIEWS
 ############
@@ -1185,11 +1119,82 @@ class Me(OauthRequiredAPIView):
             response_data.update({
                  'email': self.user.profile.get_email_for_delivery(),
                  'unique_id': self.user.id,
+                 'bookmark_categories': prepend_base(reverse('apiv2-me-bookmark-categories')),
             })
             return Response(response_data, status=status.HTTP_200_OK)
         else:
             raise ServerErrorException(resource=self)
 
+
+class MeBookmarkCategories(OauthRequiredAPIView, ListAPIView):
+    serializer_class = BookmarkCategorySerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Bookmark categories created by the logged in user.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#me-bookmark-categories' % resources_doc_filename,
+                  get_formatted_examples_for_view('MeBookmarkCategories', 'apiv2-me-bookmark-categories', max=5))
+
+    def get(self, request,  *args, **kwargs):
+        api_logger.info(self.log_message(f"user:{self.user.username} bookmark_categories"))
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        if self.user:
+            categories = BookmarkCategory.objects.filter(user__username=self.user.username)
+            try:
+                user = User.objects.get(username=self.user.username, is_active=True)
+            except User.DoesNotExist:
+                raise NotFoundException(resource=self)
+
+            if Bookmark.objects.select_related("sound")\
+                    .filter(user__username=self.user.username, category=None).count():
+                uncategorized = BookmarkCategory(name='Uncategorized', user=user, id=0)
+                return [uncategorized] + list(categories)
+            else:
+                return list(categories)
+        else:
+            raise ServerErrorException(resource=self)
+        
+
+class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
+    serializer_class = SoundListSerializer
+
+    @classmethod
+    def get_description(cls):
+        return 'Sounds bookmarked by a user under a particular category.' \
+               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+               % (prepend_base('/docs/api'), '%s#me-bookmark-category-sounds' % resources_doc_filename,
+                  get_formatted_examples_for_view('MeBookmarkCategorySounds', 'apiv2-me-bookmark-category-sounds',
+                                                  max=5))
+
+    def get(self, request,  *args, **kwargs):
+        api_logger.info(self.log_message('user:%s sounds_for_bookmark_category:%s'
+                                     % (self.user.username, str(self.kwargs.get('category_id', None)))))
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        if self.user:
+            kwargs = dict()
+            kwargs['user__username'] = self.user.username
+
+            if 'category_id' in self.kwargs:
+                if int(self.kwargs['category_id']) != 0:
+                    kwargs['category__id'] = self.kwargs['category_id']
+                else:
+                    kwargs['category'] = None
+            else:
+                kwargs['category'] = None
+            try:
+                # TODO: this line below will not add the analysis_state_essentia_exists property to the sound objects and will
+                # make the queries inneficient if the "analysis" is requested. This could be improved in the future.
+                queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
+            except:
+                raise NotFoundException(resource=self)
+            return queryset
+        else:
+            raise ServerErrorException(resource=self)
 
 class AvailableAudioDescriptors(GenericAPIView):
     @classmethod
@@ -1275,13 +1280,6 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '03 User packs': prepend_base(
                         reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>'),
                         request_is_secure=request.is_secure()),
-                    '04 User bookmark categories': prepend_base(
-                        reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>'),
-                        request_is_secure=request.is_secure()),
-                    '05 User bookmark category sounds': prepend_base(
-                        reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>')
-                            .replace('uname', '<username>'),
-                        request_is_secure=request.is_secure()),
                 }.items(), key=lambda t: t[0]))},
                 {'Pack resources': OrderedDict(sorted({
                     '01 Pack instance': prepend_base(
@@ -1295,7 +1293,11 @@ class FreesoundApiV2Resources(GenericAPIView):
                 }.items(), key=lambda t: t[0]))},
                 {'Other resources': OrderedDict(sorted({
                     '01 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
-                    '02 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
+                    '02 My bookmark categories': prepend_base(reverse('apiv2-me-bookmark-categories')),
+                    '03 My bookmark category sounds': prepend_base(
+                        reverse('apiv2-me-bookmark-category-sounds', args=[0]).replace('0', '<category_id>'),
+                        request_is_secure=request.is_secure()),
+                    '04 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
                 }.items(), key=lambda t: t[0]))},
             ]
 
@@ -1336,10 +1338,8 @@ def invalid_url(request):
 def create_apiv2_key(request):
     """View for applying for an apikey"""
 
-    FormToUse = BWApiV2ClientForm if using_beastwhoosh(request) else ApiV2ClientForm
-
     if request.method == 'POST':
-        form = FormToUse(request.POST)
+        form = ApiV2ClientForm(request.POST)
         if form.is_valid():
             api_client = ApiV2Client()
             api_client.user = request.user
@@ -1349,11 +1349,11 @@ def create_apiv2_key(request):
             api_client.redirect_uri = form.cleaned_data['redirect_uri']
             api_client.accepted_tos = form.cleaned_data['accepted_tos']
             api_client.save()
-            form = FormToUse()
+            form = ApiV2ClientForm()
             api_logger.info('new_credential <> (ApiV2 Auth:%s Dev:%s User:%s Client:%s)' %
                             (None, request.user.username, None, api_client.client_id))
     else:
-        form = FormToUse()
+        form = ApiV2ClientForm()
 
     user_credentials = request.user.apiv2_client.all()
 
@@ -1368,10 +1368,7 @@ def create_apiv2_key(request):
         'user_credentials': user_credentials,
         'fs_callback_url': fs_callback_url,
     }
-    if using_beastwhoosh(request):
-        return render(request, 'api/credentials.html', tvars)
-    else:
-        return render(request, 'api/apply_key_apiv2.html', tvars)
+    return render(request, 'api/credentials.html', tvars)
 
 
 @login_required
@@ -1384,11 +1381,9 @@ def edit_api_credential(request, key):
 
     if not client:
         raise Http404
-    
-    FormToUse = BWApiV2ClientForm if using_beastwhoosh(request) else ApiV2ClientForm
 
     if request.method == 'POST':
-        form = FormToUse(request.POST)
+        form = ApiV2ClientForm(request.POST)
         if form.is_valid():
             client.name = form.cleaned_data['name']
             client.url = form.cleaned_data['url']
@@ -1399,7 +1394,7 @@ def edit_api_credential(request, key):
             messages.add_message(request, messages.INFO, f"Credentials with name {client.name} have been updated.")
             return HttpResponseRedirect(reverse("apiv2-apply"))
     else:
-        form = FormToUse(initial={'name': client.name,
+        form = ApiV2ClientForm(initial={'name': client.name,
                                         'url': client.url,
                                         'redirect_uri': client.redirect_uri,
                                         'description': client.description,
@@ -1508,13 +1503,12 @@ def granted_permissions(request):
                 })
                 grant_and_token_names.append(grant.application.apiv2_client.name)
 
-    return render(request, 'accounts/manage_api_permissions.html' if using_beastwhoosh(request)
-                            else 'api/manage_permissions.html', {
+    return render(request, 'accounts/manage_api_permissions.html', {
         'user': request.user,
         'tokens': tokens,
         'grants': grants,
         'show_expiration_date': False,
-        'activePage': 'api',  # BW only
+        'activePage': 'api', 
     })
 
 
@@ -1543,13 +1537,10 @@ def permission_granted(request):
         app_name = grant.application.apiv2_client.name
     except Grant.DoesNotExist:
         grant = None
-
-    template = 'api/app_authorized.html'
     logout_next = request.GET.get('original_path', None)
     if logout_next:
         logout_next = quote(logout_next)
     else:
         logout_next = reverse('api-login')
-
-    return render(request, template,
+    return render(request, 'oauth2_provider/app_authorized.html',
         {'code': code, 'app_name': app_name, 'logout_next': logout_next})

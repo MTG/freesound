@@ -27,5 +27,4 @@ register = template.Library()
 @register.inclusion_tag('templatetags/plausible_scripts.html', takes_context=False)
 def plausible_scripts():
     aggregate_pageviews = settings.PLAUSIBLE_AGGREGATE_PAGEVIEWS
-    separate_frontends = settings.PLAUSIBLE_SEPARATE_FRONTENDS
-    return {'aggregate_pageviews': aggregate_pageviews, 'separate_frontends': separate_frontends}
+    return {'aggregate_pageviews': aggregate_pageviews}

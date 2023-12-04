@@ -1,8 +1,0 @@
-<div class="moderation_text_wrapper" id="moderation_options_{{key}}">
-	{% for label, text in moderation_texts %}
-		<input type="button" 
-			   class="moderation_text" 
-			   value="{{ label }}" 
-			   onclick="$('#id_message').get(0).value = '{{text|escapejs}}\n';"/>
-	{% endfor %}
-</div>

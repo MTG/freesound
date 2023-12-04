@@ -1,12 +1,10 @@
-{% extends "accounts/_section.html" %}
+{% extends "simple_page.html" %}
+{% block page-title %}Updates to our Privacy Policy{% endblock %}
+{% block title %}Updates to our Privacy Policy{% endblock %}
 
-{% block title %}GDPR Updates to our Privacy Policy{% endblock %}
+{% block page-content %}
 
-{% block content %}
-    <h1>Hey, why am I here?</h1>
-
-    <h3>Updates to our Terms of Use and Privacy Policy</h3>
-
+<div>
     <p>Hello dear Freesound user!</p>
 
     <p>We have recently updated our terms of service and privacy policy and we need you to give us your consent 
@@ -50,28 +48,26 @@
         of the Freesound community!!!
     </p>
 
-
-
-    <form action="" method="post" enctype="multipart/form-data">
+    <form action="" method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
         {% for hidden_field in form.hidden_fields %}
-          {{ hidden_field.errors }}
-          {{ hidden_field }}
+            {{ hidden_field.errors }}
+            {{ hidden_field }}
         {% endfor %}
-
         {% with form.accepted_tos as tos %}
-            {{ tos }} <label style="display: inline;font-size:12px;" for="{{ tos.id_for_label }}">{{ tos.help_text|safe }}</label>
+            {{ tos.errors }}
+            <label for="{{ tos.id_for_label }}" class="bw-checkbox-label">{{ tos }} {{ tos.help_text|safe }}</label>
         {% endwith %}
         {% if has_sounds_with_old_cc_licenses %}
         <br>
         {% with form.accepted_license_change as alc %}
-            {{ alc }} <label style="display: inline;font-size:12px;" for="{{ alc.id_for_label }}">{{ alc.help_text|safe }}</label>
+            {{ alc.errors }}
+            <label for="{{ alc.id_for_label }}" class="bw-checkbox-label">{{ alc }} {{ alc.help_text|safe }}</label>
         {% endwith %}
         {% endif %}
     <br><br>
-        <input type="submit" name="submit" value="Continue using Freesound!" id="submit">
+        <button class="btn-primary">Continue using Freesound!</button>
     </form>
-
-
-
+</div>
+    
 {% endblock %}

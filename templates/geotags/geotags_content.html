@@ -1,0 +1,65 @@
+{% load static %}
+{% load absurl %}
+<div class="col-12 v-spacing-top-3 no-paddings {% if sound or username %}v-spacing-2{% endif %}">
+    <div id="mapCanvas{% if sound %}-{{ sound.id }}{% elif usernane %}-{{ username }}{% elif pack %}-{{ pack.id }}{% elif tag %}-{{ tag }}{% endif %}" class="map main-map"
+         data-map-center-lat="{{ center_lat }}"
+         data-map-center-lon="{{ center_lon }}"
+         data-map-zoom="{{ zoom }}"
+         data-map-show-search="{% if sound %}false{% else %}true{% endif %}"
+         data-map-username="{{ username }}"
+         data-map-pack-id="{{ pack.id }}"
+         data-map-tag="{{ tag }}"
+         data-geotags-url="{{ url }}"
+         data-geotags-url-box="{% url "geotags-box-barray" %}"
+         data-geotags-embed-base-url="{% absurl 'embed-geotags-box-iframe' %}"
+         data-access-token="pk.eyJ1IjoiZnJlZXNvdW5kIiwiYSI6ImNrd3E0Mm9lbjBqM2Qyb2wwdmwxaWI3a3oifQ.MZkgLSByRuk_Xql67CySAg"
+    ></div>
+</div>
+
+{% if not modal_version %}
+<div class="row middle">
+    <div class="col-md-10 v-spacing-top-3 v-spacing-2">
+        {% if username or sound or pack %}
+            <a class="no-hover btn-secondary btn-inverse" href="{% url "geotags" %}">View all geotags</a>
+        {% else %}
+            <div class="start">
+                <div class="input-wrapper">
+                    <input data-base-url="{% url "geotags" %}" id="tagFilter" type="search" name="t" class="bw-forums__input-search" placeholder="Filter by tag..." value="{% if tag %}{{ tag }}{% endif %}" />
+                </div>
+                <a class="no-hover" href="{% url "geotags" %}"><button class="btn-secondary btn-inverse h-spacing-left-1">Clear filter</button></a>
+            </div>
+        {% endif %}
+    </div>
+    <div class="col-md-2 v-spacing-top-2 v-spacing-2">
+        {% if not sound %}
+        <div><a id="embedControlsLabel" href="javascript:void(0);">Embed this map</a></div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if not sound and not modal_version %}
+<div class="row">
+    <div class="col-md-12 v-spacing-top-4">
+        <div id="embedControls" class="display-none w-100">
+            <form class="bw-form">
+                <div class="w-50">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="embedWidthInput">Embed width</label> <input type="number" min="100" step="1" value="900" id="embedWidthInput" style="margin-bottom:0px;"/>&nbsp;&nbsp;
+                        </div>
+                        <div class="col-md-6">
+                            <label for="embedHeightInput">Embed height</label> <input type="number" min="100" step="1" value="600" id="embedHeightInput" style="margin-bottom:0px;"/>&nbsp
+                        </div>
+                    </div>
+                </div>
+                <label for="embedClusterCheck">Show clusters in embed</label> <input class="bw-checkbox" type="checkbox" checked id="embedClusterCheck" />
+                <p>
+                    <textarea id="embedCode" readonly style="width:100%;height:60px;"></textarea>
+                </p>
+            </form>
+            
+        </div>
+    </div>
+</div>
+{% endif %}

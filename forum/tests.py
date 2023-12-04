@@ -448,26 +448,6 @@ class ForumPageResponses(TestCase):
         edited_post = Post.objects.get(id=post.id)
         self.assertEqual(edited_post.body, 'Edited post body')
 
-    def test_delete_post_response_ok(self):
-        forum = Forum.objects.first()
-        thread = forum.thread_set.first()
-        post = thread.post_set.first()
-
-        # Assert non-logged in user can't delete post
-        resp = self.client.get(reverse('forums-post-delete', args=[post.id]))
-        self.assertRedirects(resp, f"{reverse('login')}?next={reverse('forums-post-delete', args=[post.id])}")
-
-        # Assert logged in user which is not author of post can't delete post
-        user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
-        self.client.force_login(user2)
-        resp = self.client.get(reverse('forums-post-delete', args=[post.id]))
-        self.assertEqual(resp.status_code, 404)
-
-        # Assert logged in user can delete post (see delete confirmation page)
-        self.client.force_login(self.user)
-        resp = self.client.get(reverse('forums-post-delete', args=[post.id]))
-        self.assertEqual(resp.status_code, 200)
-
     def test_delete_post_confirm_response_ok(self):
         forum = Forum.objects.first()
         thread = forum.thread_set.first()
@@ -632,7 +612,7 @@ class ForumModerationTestCase(TestCase):
 
         self.client.force_login(self.admin_user)
         resp = self.client.post(reverse('forums-moderate'), data={
-            'action': ['Approve'], 'post': [str(self.post.id)],
+            f'{self.post.id}-action': ['Approve'], f'{self.post.id}-post': [f'{self.post.id}'],
         })
         self.assertEqual(resp.status_code, 200)
         self.post.refresh_from_db()
@@ -643,7 +623,7 @@ class ForumModerationTestCase(TestCase):
         self.client.force_login(self.admin_user)
 
         resp = self.client.post(reverse('forums-moderate'), data={
-            'action': ['Delete User'], 'post': [str(self.post.id)],
+            f'{self.post.id}-action': ['Delete User'], f'{self.post.id}-post': [f'{self.post.id}'],
         })
         self.assertEqual(resp.status_code, 200)
         with self.assertRaises(Post.DoesNotExist):
@@ -658,7 +638,7 @@ class ForumModerationTestCase(TestCase):
         self.client.force_login(self.admin_user)
 
         resp = self.client.post(reverse('forums-moderate'), data={
-            'action': ['Delete Post'], 'post': [str(self.post.id)],
+            f'{self.post.id}-action': ['Delete Post'], f'{self.post.id}-post': [f'{self.post.id}'],
         })
         self.assertEqual(resp.status_code, 200)
         with self.assertRaises(Post.DoesNotExist):
@@ -673,7 +653,7 @@ class ForumModerationTestCase(TestCase):
         self.client.force_login(self.admin_user)
 
         resp = self.client.post(reverse('forums-moderate'), data={
-            'action': ['Delete Post'], 'post': [str(self.post.id+1)],
+            f'1234-action': ['Delete Post'], f'1234-post': [f'1234'],
         })
         self.assertEqual(resp.status_code, 200)
 

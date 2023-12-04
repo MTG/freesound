@@ -18,13 +18,16 @@
 #     See AUTHORS file.
 #
 
+from adminsortable.admin import SortableAdmin
 from django.contrib import admin
-from forum.models import Forum, Thread, Post
+
+from forum.models import Forum, Post, Thread
+
 
 @admin.register(Forum)
-class ForumAdmin(admin.ModelAdmin):
+class ForumAdmin(SortableAdmin):
     raw_id_fields = ('last_post', )
-    list_display = ('name', 'num_threads', 'change_order')
+    list_display = ('name', 'num_threads')
 
 
 
@@ -42,4 +45,3 @@ class PostAdmin(admin.ModelAdmin):
     raw_id_fields = ('author', 'thread')
     list_display = ('thread', 'author', 'created')
     search_fields = ('=author__username', "body")
-

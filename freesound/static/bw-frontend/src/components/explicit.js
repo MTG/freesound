@@ -1,5 +1,4 @@
-const bindExplicitWarningElements = (container) => {
-    if (container === undefined){ container = document; }
+const addExplicitSoundWarnings = (container) => {
     const warningElements = container.getElementsByClassName('explicit-sound-blocker');
     warningElements.forEach(element => {
         const dismissButtonAnchor = element.getElementsByTagName('button')[0];
@@ -12,6 +11,4 @@ const bindExplicitWarningElements = (container) => {
     });
 }
 
-bindExplicitWarningElements();
-
-export {bindExplicitWarningElements};
+export {addExplicitSoundWarnings};

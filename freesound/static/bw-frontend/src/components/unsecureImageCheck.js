@@ -1,7 +1,7 @@
 import { showToast } from './toast';
 
-const addUnsecureImageCheckListeners = () => {
-    const elementsToCheckForUnsecureImages = document.getElementsByClassName('unsecure-image-check');
+const bindUnsecureImageCheckListeners = (container) => {
+    const elementsToCheckForUnsecureImages = container.getElementsByClassName('unsecure-image-check');
     elementsToCheckForUnsecureImages.forEach(element => {
         ['keydown', 'focusin'].forEach(eventName => {
             element.addEventListener(eventName, () => {
@@ -18,6 +18,4 @@ const addUnsecureImageCheckListeners = () => {
     });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    addUnsecureImageCheckListeners();
-});
+export {bindUnsecureImageCheckListeners};

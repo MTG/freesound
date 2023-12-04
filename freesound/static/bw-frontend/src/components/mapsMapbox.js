@@ -1,8 +1,5 @@
-import {initPlayersInModal} from './modal';
-import {bindSimilarSoundModals} from './similarSoundsModal';
-import {bindBookmarkSoundButtons} from './bookmarkSound';
-import {bindRemixGroupModals} from './remixGroupModal';
-import {stopAllPlayers} from '../components/player/utils'
+import { initializeStuffInContainer } from "../utils/initHelper";
+import { stopAllPlayers } from '../components/player/utils'
 
 
 var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';
@@ -234,39 +231,44 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                 }
 
                 // Add popups
+                let popupAlreadyLoading = false;
                 map.on('click', 'sounds-unclustered', function (e) {
-
-                    stopAllPlayers();
-                    var coordinates = e.features[0].geometry.coordinates.slice();
-                    var sound_id = e.features[0].properties.id;
-                    let url = '/geotags/infowindow/' + sound_id;
-                    if (document.getElementById(map_element_id).offsetWidth < 500){
-                        // If map is small, use minimal info windows
-                        url += '/?minimal=1'
-                    }
-                    ajaxLoad(url , function(data, responseCode)
-                    {
-                        // Ensure that if the map is zoomed out such that multiple
-                        // copies of the feature are visible, the popup appears
-                        // over the copy being pointed to.
-                        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                    if (!popupAlreadyLoading){3
+                        popupAlreadyLoading = true;
+                        stopAllPlayers();
+                        var coordinates = e.features[0].geometry.coordinates.slice();
+                        var sound_id = e.features[0].properties.id;
+                        let url = '/geotags/infowindow/' + sound_id;
+                        if (document.getElementById(map_element_id).offsetWidth < 500){
+                            // If map is small, use minimal info windows
+                            url += '/?minimal=1'
                         }
-                        var popup = new mapboxgl.Popup()
-                            .setLngLat(coordinates)
-                            .setHTML(data.response)
-                            .addTo(map);
+                        ajaxLoad(url , function(data, responseCode)
+                        {
+                            // Ensure that if the map is zoomed out such that multiple
+                            // copies of the feature are visible, the popup appears
+                            // over the copy being pointed to.
+                            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                            }
+                            var popup = new mapboxgl.Popup()
+                                .setLngLat(coordinates)
+                                .setHTML(data.response)
+                                .addTo(map);
 
-                        // Zoom to position on "zoom in" click
-                        const zoomLinkElement = document.getElementById('infoWindowZoomLink-' + sound_id);
-                        zoomLinkElement.onclick = () => {setMaxZoomCenter(zoomLinkElement.dataset.lat, zoomLinkElement.dataset.lon, zoomLinkElement.dataset.zoom)};
+                            // Zoom to position on "zoom in" click
+                            const zoomLinkElement = document.getElementById('infoWindowZoomLink-' + sound_id);
+                            zoomLinkElement.onclick = () => {setMaxZoomCenter(zoomLinkElement.dataset.lat, zoomLinkElement.dataset.lon, zoomLinkElement.dataset.zoom)};
 
-                        // Init sound player inside popup
-                        initPlayersInModal(document.getElementById('infoWindowPlayerWrapper-' + sound_id));
-                        bindSimilarSoundModals();
-                        bindBookmarkSoundButtons();
-                        bindRemixGroupModals();
-                    });
+                            // Init sound player inside popup
+                            initializeStuffInContainer(document.getElementById('infoWindowPlayerWrapper-' + sound_id), true, false);
+                        });
+                    }
+                    setTimeout(() => { popupAlreadyLoading = false; }, 500);  // Avoid problems loading popups two times with double clicks
+                });
+
+                map.on("dblclick", "sounds-unclustered", function(e) {
+                    e.preventDefault();  // Don't zoom in when double clicking on a sound
                 });
 
                 // Change the cursor to a pointer when the mouse is over the places layer.

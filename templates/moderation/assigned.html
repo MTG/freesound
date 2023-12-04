@@ -1,0 +1,124 @@
+{% extends "simple_page.html" %}
+{% load static %}
+{% load util %}
+{% load display_sound %}
+{% load bw_templatetags %}
+{% block title %}Moderation - Your queue{% endblock %}
+{% block page-title %}Moderation{% endblock %}
+
+{% block page-content %}
+{% include 'moderation/moderation_navbar.html' %}
+<div>
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="bw-sticky-top v-spacing-4">
+            {% if not moderator_tickets_count %}
+                <div class="v-spacing-7 v-spacing-top-5">
+                    <h5>No sound tickets in your queue... &#128522</h5>
+                    <p class="text-grey v-spacing-2">You've finished all the sounds in your queue. Maybe you want to  <a href="{% url "tickets-moderation-home" %}">assign some more?</a></p>
+                </div>
+            {% else %}
+                <div class="v-spacing-1">
+                    <div class="text-center">
+                        <a id="select-all" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select all</a>
+                        <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
+                        <a id="select-other" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select other from same user</a>
+                        <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
+                        <a id="select-none" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Select none</a>
+                        <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
+                        <a id="stop-sounds" class="bw-link--grey cursor-pointer" href="javascript:void(0);">Stop all sounds</a>
+                    </div>
+                </div>
+                <div class="v-spacing-3" style="overflow-y:auto;max-height:450px;">
+                    <table id="assigned-tickets-table" class="w-100 tickets-table">
+                    {% for ticket in page.object_list %}
+                        {% if ticket.sound %}
+                            <tr id="row_{{ ticket.id }}" class="{% if ticket.status == "deferred" %}deferred{% endif %}"
+                                data-sound-id="{{ ticket.sound.id }}"
+                                data-ticket-id="{{ ticket.id }}"
+                                data-ticket-url="{% url "tickets-ticket" ticket.key %}"
+                                data-ticket-status="{{ ticket.status }}"
+                                data-sender-id="{{ ticket.sender.id }}">
+                                <td class="w-50">
+                                    <label title="Add sound to selection"><input type="checkbox" class="bw-checkbox ticket-check"/>{{ticket.sound.original_filename}}</label> 
+                                </td>
+                                <td><a title="Open user mod annotations modal" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);">{% if ticket.num_mod_annotations %}{% bw_icon 'notification' %}{% endif %}{{ticket.sender.username}}</a></td>
+                                <td class="text-grey" title="Ticket created on {{ ticket.created|date:"d/m/Y" }}">{{ ticket.created|date:"d/m/Y" }}</td>
+                                <td class="text-grey" title="Ticket status is {{ ticket.status|capfirst }}">{{ ticket.status|capfirst }}</td>
+                                <td><a title="Open moderation ticket in new tab" href="{% url "tickets-ticket" ticket.key %}" class="bw-link--black" target="_blank">#{{ticket.id}}</a></td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </table>
+                </div>
+                {% if show_pagination %}
+                    {% bw_paginator paginator page current_page request "ticket" %}
+                {% endif %}
+                <div class="v-spacing-4">
+                    <div>
+                        <label for="include-deferred">
+                            <input type="checkbox" class="bw-checkbox" id="include-deferred" />Include deferred tickets when selecting   
+                        </label>
+                    </div>
+                    <div>
+                        <label for="autoplay-sounds">
+                            <input type="checkbox" class="bw-checkbox" id="autoplay-sounds" />Autoplay sounds when selecting   
+                        </label>
+                    </div>
+                    <div>
+                        <label for="autoscroll-sounds">
+                            <input type="checkbox" class="bw-checkbox" id="autoscroll-sounds" />Scroll to sounds when selecting 
+                        </label>
+                    </div>
+                    <div class="text-grey">
+                        You can do alt+click on a row to expand the current selection
+                        <br>You can do shift+click on a row to select all the rows since the last previously selected row
+                    </div>
+                </div>
+            {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="bw-sticky-top">
+                <div id="moderate-form-wrapper" class="display-none">
+                    <h4 id="moderate-form-title-label"></h4>
+                    <div>
+                        <form action="." method="post" class="bw-form disable-on-submit do-not-submit-on-enter">{% csrf_token %}
+                            <div class="bw-inline-radio">
+                            {{ mod_sound_form.as_p }}
+                            </div>
+                            <div id="template-responses" class="v-spacing-top-2">
+                                <span class="h-spacing-1">Template repsonses:</span>
+                                {% for label, text in moderation_texts %}
+                                    <a class="bw-link--grey cursor-pointer" href="javascript:void(0);"
+                                        data-text="{{text|force_escape}}" title="{{text|force_escape}}">{{ label }}</a>
+                                    {% if not forloop.last %}
+                                    <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
+                                    {% endif%}
+                                {% endfor %}
+                            </div>
+                            <div class="v-spacing-top-2 v-spacing-4">
+                            {{ msg_form }}
+                            </div>
+                            <button class="btn-primary w-100" type="submit">Update ticket(s)</button>
+                        </form>
+                    </div>  
+                    <div id="selected-sounds-info" class="v-spacing-top-4 v-spacing-4" style="padding-bottom:1000px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="sound-info-elements" class="col-lg-5" style="max-height:0px;overflow:hidden;">{% comment %}Need this strategy for hiding the contents so that collapsable block logic for sound descriptions work properly and does not return 0 height values{% endcomment %}
+    {% for ticket in page.object_list %}
+    <div class="sound-info-element" data-sound-id="{{ticket.sound_obj.id}}">
+        {% display_sound_moderation ticket.sound_obj %}
+        <div class="divider-light v-spacing-top-2 v-spacing-2"></div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extrabody %}
+<script src="{% static 'bw-frontend/dist/moderation.js' %}"></script>
+{% endblock %}

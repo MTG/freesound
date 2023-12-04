@@ -103,7 +103,7 @@ class FreesoundAudioProcessorBase:
         self.work_log += message + '\n'
 
     def log_error(self, message):
-        console_logger.error(f"{self.sound.id} - {message}")
+        console_logger.info(f"{self.sound.id} - {message}")
         self.work_log += message + '\n'
 
     def set_failure(self, message, error=None):
@@ -274,8 +274,8 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                     return False
 
                 # Generate MP3 previews
-                for mp3_path, quality in [(self.sound.locations("preview.LQ.mp3.path"), 70),
-                                          (self.sound.locations("preview.HQ.mp3.path"), 192)]:
+                for mp3_path, quality in [(self.sound.locations("preview.LQ.mp3.path"), settings.MP3_LQ_PREVIEW_QUALITY),
+                                          (self.sound.locations("preview.HQ.mp3.path"), settings.MP3_HQ_PREVIEW_QUALITY)]:
                     try:
                         audioprocessing.convert_to_mp3(tmp_wavefile2, mp3_path, quality)
                     except OSError as e:
@@ -292,8 +292,8 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                     self.log_info("created mp3: " + mp3_path)
 
                 # Generate OGG previews
-                for ogg_path, quality in [(self.sound.locations("preview.LQ.ogg.path"), 1),
-                                          (self.sound.locations("preview.HQ.ogg.path"), 6)]:
+                for ogg_path, quality in [(self.sound.locations("preview.LQ.ogg.path"), settings.OGG_LQ_PREVIEW_QUALITY),
+                                          (self.sound.locations("preview.HQ.ogg.path"), settings.OGG_HQ_PREVIEW_QUALITY)]:
                     try:
                         audioprocessing.convert_to_ogg(tmp_wavefile2, ogg_path, quality)
                     except OSError as e:
@@ -372,7 +372,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
         console_logger.info(f"{self.audio_file_path} - {message}")
 
     def log_error(self, message):
-        console_logger.error(f"{self.audio_file_path} - {message}")
+        console_logger.info(f"{self.audio_file_path} - {message}")
 
     def set_failure(self, message, error=None):
         logging_message = f"file with path {self.audio_file_path} failed\n"

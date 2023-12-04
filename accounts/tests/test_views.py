@@ -23,15 +23,17 @@ import datetime
 from django.contrib.auth.models import User, Permission
 from django.test import TestCase
 from django.urls import reverse
+from unittest import mock
 
 from accounts.models import OldUsername
+from geotags.models import GeoTag
 from sounds.models import SoundOfTheDay, Download, PackDownload
-from utils.test_helpers import create_user_and_sounds, test_using_bw_ui
+from utils.test_helpers import create_user_and_sounds, create_fake_perform_search_engine_query_results_tags_mode
 
 
 class SimpleUserTest(TestCase):
 
-    fixtures = ['licenses']
+    fixtures = ['licenses', 'users', 'follow']
 
     def setUp(self):
         user, packs, sounds = create_user_and_sounds(num_packs=1, num_sounds=5)
@@ -44,20 +46,94 @@ class SimpleUserTest(TestCase):
         self.sound.moderation_state = "OK"
         self.sound.processing_state = "OK"
         self.sound.similarity_state = "OK"
+        self.sound.geotag = GeoTag.objects.create(user=user, lat=45.8498, lon=-62.6879, zoom=9)
         self.sound.save()
         SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
-        Download.objects.create(user=self.user, sound=self.sound, license=self.sound.license,
+        self.download = Download.objects.create(user=self.user, sound=self.sound, license=self.sound.license,
                                 created=self.sound.created)
-        PackDownload.objects.create(user=self.user, pack=self.pack, created=self.pack.created)
+        self.pack_download = PackDownload.objects.create(user=self.user, pack=self.pack, created=self.pack.created)
+
+    def test_old_ng_redirects(self):
+        # Test that some pages which used to have its own "URL" in NG now redirect to other pages and open as a modal
+    
+        # Comments on user sounds
+        resp = self.client.get(reverse('comments-for-user', kwargs={'username': self.user.username}))
+        self.assertRedirects(resp, reverse('account', args=[self.user.username]) + '?comments=1')
+
+        # Comments from a user
+        resp = self.client.get(reverse('comments-by-user', kwargs={'username': self.user.username}))
+        self.assertRedirects(resp, reverse('account', args=[self.user.username]) + '?comments_by=1')
+
+        # User downloaded soudns
+        resp = self.client.get(reverse('user-downloaded-sounds', kwargs={'username': self.user.username}))
+        self.assertRedirects(resp, reverse('account', args=[self.user.username]) + '?downloaded_sounds=1')
+
+        # User downloaded packs
+        resp = self.client.get(reverse('user-downloaded-packs', kwargs={'username': self.user.username}))
+        self.assertRedirects(resp, reverse('account', args=[self.user.username]) + '?downloaded_packs=1')
+
+        # Users that downloaded a sound
+        resp = self.client.get(
+            reverse('sound-downloaders', kwargs={'username': self.user.username, "sound_id": self.sound.id}))
+        self.assertRedirects(resp, reverse('sound', args=[self.user.username, self.sound.id]) + '?downloaders=1')
+
+        # Users that downloaded a pack
+        resp = self.client.get(
+            reverse('pack-downloaders', kwargs={'username': self.user.username, "pack_id": self.pack.id}))
+        self.assertRedirects(resp, reverse('pack', args=[self.user.username, self.pack.id]) + '?downloaders=1')
+
+        # Users following user
+        resp = self.client.get(reverse('user-followers', args=['User2']))
+        self.assertRedirects(resp, reverse('account', args=['User2']) + '?followers=1')
+
+        # Users followed by user
+        resp = self.client.get(reverse('user-following-users', args=['User2']))
+        self.assertRedirects(resp, reverse('account', args=['User2']) + '?following=1')
+
+        # Tags followed by user
+        resp = self.client.get(reverse('user-following-tags', args=['User2']))
+        self.assertRedirects(resp, reverse('account', args=['User2']) + '?followingTags=1')
+
+        # Sound tags followed by user
+        resp = self.client.get(reverse('user-following-tags', args=['User2']))
+        self.assertRedirects(resp, reverse('account', args=['User2']) + '?followingTags=1')
+
+        # Similar sounds
+        resp = self.client.get(reverse('sound-similar', args=[self.user.username, self.sound.id]))
+        self.assertRedirects(resp, reverse('sound', args=[self.user.username, self.sound.id]) + '?similar=1')
+
+        # Sound remix group
+        resp = self.client.get(reverse('sound-remixes', args=[self.user.username, self.sound.id]))
+        self.assertRedirects(resp, reverse('sound', args=[self.user.username, self.sound.id]) + '?remixes=1')
+
+        # Packs for user
+        resp = self.client.get(reverse('packs-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(reverse('sounds-search') in resp.url and self.user.username in resp.url)
+
+        # Sounds for user
+        resp = self.client.get(reverse('sounds-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(reverse('sounds-search') in resp.url and self.user.username in resp.url)
+
+        self.client.force_login(self.user)
+        
+        # Sound edit page
+        resp = self.client.get(
+            reverse('sound-edit-sources', args=[self.user.username, self.sound.id]))
+        self.assertRedirects(resp, reverse('sound-edit', args=[self.user.username, self.sound.id]))
+
+        # Flag sound
+        resp = self.client.get(reverse('sound-flag', args=[self.user.username, self.sound.id]))
+        self.assertRedirects(resp, reverse('sound', args=[self.user.username, self.sound.id]) + '?flag=1')
+
+        # Home to account
+        resp = self.client.get(reverse('accounts-home'))
+        self.assertRedirects(resp, reverse('account', args=[self.user.username]))
 
     def test_account_response(self):
         # 200 response on account access
         resp = self.client.get(reverse('account', kwargs={'username': self.user.username}))
-        self.assertEqual(resp.status_code, 200)
-
-    def test_user_sounds_response(self):
-        # 200 response on user sounds access
-        resp = self.client.get(reverse('sounds-for-user', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 200)
 
     def test_user_flag_response(self):
@@ -68,14 +144,14 @@ class SimpleUserTest(TestCase):
         self.client.force_login(self.user)
         resp = self.client.get(reverse('flag-user', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(reverse('clear-flags-user', kwargs={'username': self.user.username}))
-        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('clear-flags-user', kwargs={'username': self.user.username}), follow=True)
+        self.assertContains(resp, f'0 flags cleared for user {self.user.username}')
 
     def test_user_comments_response(self):
-        # 200 response on user comments and comments for user access
-        resp = self.client.get(reverse('comments-for-user', kwargs={'username': self.user.username}))
+        # 200 response on user comments and comments for user modal
+        resp = self.client.get(reverse('comments-for-user', kwargs={'username': self.user.username}) + '?ajax=1')
         self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(reverse('comments-by-user', kwargs={'username': self.user.username}))
+        resp = self.client.get(reverse('comments-by-user', kwargs={'username': self.user.username}) + '?ajax=1')
         self.assertEqual(resp.status_code, 200)
 
         # If user is deleted, get 404
@@ -95,16 +171,11 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('geotags-for-user', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 404)
 
-    def test_user_packs_response(self):
-        # 200 response on user packs access
-        resp = self.client.get(reverse('packs-for-user', kwargs={'username': self.user.username}))
-        self.assertEqual(resp.status_code, 200)
-
     def test_user_downloaded_response(self):
-        # 200 response on user downloaded sounds and packs access
-        resp = self.client.get(reverse('user-downloaded-sounds', kwargs={'username': self.user.username}))
+        # 200 response on user downloaded sounds and packs modals
+        resp = self.client.get(reverse('user-downloaded-sounds', kwargs={'username': self.user.username}) + '?ajax=1')
         self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(reverse('user-downloaded-packs', kwargs={'username': self.user.username}))
+        resp = self.client.get(reverse('user-downloaded-packs', kwargs={'username': self.user.username}) + '?ajax=1')
         self.assertEqual(resp.status_code, 200)
 
         # If user is deleted, get 404
@@ -115,12 +186,12 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 404)
 
     def test_user_follow_response(self):
-        # 200 response on user user bookmarks sounds and packs access
-        resp = self.client.get(reverse('user-following-users', kwargs={'username': self.user.username}))
+        # 200 response on user following modals
+        resp = self.client.get(reverse('user-following-users', kwargs={'username': self.user.username}) + '?ajax=1')
         self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(reverse('user-followers', kwargs={'username': self.user.username}))
+        resp = self.client.get(reverse('user-followers', kwargs={'username': self.user.username}) + '?ajax=1')
         self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(reverse('user-following-tags', kwargs={'username': self.user.username}))
+        resp = self.client.get(reverse('user-following-tags', kwargs={'username': self.user.username}) + '?ajax=1')
         self.assertEqual(resp.status_code, 200)
 
     def test_download_attribution_csv(self):
@@ -130,9 +201,9 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         # response content as expected
         self.assertContains(resp,
-                            'Download Type,File Name,User,License\r\nP,{0},{1},{0}\r\nS,{2},{3},{4}\r\n'.format(
+                            'Download Type,File Name,User,License,Timestamp\r\nP,{0},{1},{0},{6}\r\nS,{2},{3},{4},{5}\r\n'.format(
                                 self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
-                                self.sound.license))
+                                self.sound.license, self.download.created, self.pack_download.created))
 
     def test_download_attribution_txt(self):
         self.client.force_login(self.user)
@@ -141,9 +212,9 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         # response content as expected
         self.assertContains(resp,
-                         'P: {0} by {1} | License: {0}\nS: {2} by {3} | License: {4}\n'.format(
+                         'P: {0} by {1} | License: {0} | Timestamp: {6}\nS: {2} by {3} | License: {4} | Timestamp: {5}\n'.format(
                              self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
-                             self.sound.license))
+                             self.sound.license, self.download.created, self.pack_download.created))
 
 
         # If user is deleted, get 404
@@ -156,53 +227,55 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 404)
 
     def test_sounds_response(self):
-        # 200 response on sounds page access
+        # 302 response on sounds page access (since BW, there is a redicrect to the search page)
         resp = self.client.get(reverse('sounds'))
-        self.assertEqual(resp.status_code, 200)
-
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(reverse('sounds-search') in resp.url)
+        
+        # Test other sound related views. Nota that since BW many of these will include redirects
         user = self.sound.user
         user.set_password('12345')
         user.is_superuser = True
         user.save()
         self.client.force_login(user)
+        
         resp = self.client.get(reverse('sound', kwargs={'username': user.username, "sound_id": self.sound.id}))
         self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(reverse('sound-flag', kwargs={'username': user.username, "sound_id": self.sound.id}))
-        self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(
-            reverse('sound-edit-sources', kwargs={'username': user.username, "sound_id": self.sound.id}))
-        self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(reverse('sound-edit', kwargs={'username': user.username, "sound_id": self.sound.id}))
-        self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(reverse('sound-geotag', kwargs={'username': user.username, "sound_id": self.sound.id}))
-        self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(reverse('sound-similar', kwargs={'username': user.username, "sound_id": self.sound.id}))
-        self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(reverse('sound-delete', kwargs={'username': user.username, "sound_id": self.sound.id}))
-        self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(
-            reverse('sound-downloaders', kwargs={'username': user.username, "sound_id": self.sound.id}))
+       
+        resp = self.client.get(reverse('sound-flag', kwargs={'username': user.username, "sound_id": self.sound.id}) + '?ajax=1')
         self.assertEqual(resp.status_code, 200)
 
-    def test_tags_response(self):
+        resp = self.client.get(reverse('sound-edit', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+
+        resp = self.client.get(reverse('sound-geotag', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+
+        resp = self.client.get(reverse('sound-similar', kwargs={'username': user.username, "sound_id": self.sound.id}) + '?ajax=1')
+        self.assertEqual(resp.status_code, 200)
+
+        resp = self.client.get(
+            reverse('sound-downloaders', kwargs={'username': user.username, "sound_id": self.sound.id}) + '?ajax=1')
+        self.assertEqual(resp.status_code, 200)
+
+        resp = self.client.get(
+            reverse('pack-downloaders', kwargs={'username': user.username, "pack_id": self.pack.id}) + '?ajax=1')
+        self.assertEqual(resp.status_code, 200)
+
+    @mock.patch('search.views.perform_search_engine_query')
+    def test_tags_response(self, perform_search_engine_query):
+        perform_search_engine_query.return_value = (create_fake_perform_search_engine_query_results_tags_mode(), None)
+
         # 200 response on tags page access
         resp = self.client.get(reverse('tags'))
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['tags_mode'], True)
 
     def test_packs_response(self):
-        # 200 response on packs page access
+        # 302 response (note that since BW, there will be a redirect to the search page in between)
         resp = self.client.get(reverse('packs'))
-        self.assertEqual(resp.status_code, 200)
-
-    def test_comments_response(self):
-        # 200 response on comments page access
-        resp = self.client.get(reverse('comments'))
-        self.assertEqual(resp.status_code, 200)
-
-    def test_remixed_response(self):
-        # 200 response on remixed sounds page access
-        resp = self.client.get(reverse('remix-groups'))
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(reverse('sounds-search') in resp.url)
 
     def test_contact_response(self):
         # 200 response on contact page access
@@ -225,17 +298,17 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_accounts_manage_pages(self):
-        # 200 response on Account registration page
-        resp = self.client.get(reverse('accounts-register'))
+        # In BW account registration loads as a modal
+        resp = self.client.get(reverse('accounts-registration-modal'))
         self.assertEqual(resp.status_code, 200)
 
-        # 200 response on Account reactivation page
+        # In BW Account resend activations redirects to "problems logging in" in front page
         resp = self.client.get(reverse('accounts-resend-activation'))
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 302)
 
-        # 200 response on Account username reminder page
+        # In BW Account resend activations redirects to "problems logging in" in front page
         resp = self.client.get(reverse('accounts-username-reminder'))
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 302)
 
         # Login user with moderation permissions
         user = User.objects.create_user("anothertestuser")
@@ -252,10 +325,11 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-email-reset'))
         self.assertEqual(resp.status_code, 200)
 
-        # 200 response on Account home page
+        # In BW, home page does not really exist
         resp = self.client.get(reverse('accounts-home'))
-        self.assertEqual(resp.status_code, 200)
-
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse('account', args=[user.username]))
+        
         # 200 response on Account edit page
         resp = self.client.get(reverse('accounts-edit'))
         self.assertEqual(resp.status_code, 200)
@@ -362,9 +436,6 @@ class SimpleUserTest(TestCase):
 
     def test_accounts_manage_sounds_pages(self):
         self.client.force_login(self.user)
-
-        # Set BW frontend in session (as these pages are BW only)
-        test_using_bw_ui(self)
 
         # 200 response on manage sounds page - published
         resp = self.client.get(reverse('accounts-manage-sounds', args=['published']))

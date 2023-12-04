@@ -29,10 +29,12 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
+from django.core.cache import cache
 from django.db import models, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.encoding import smart_str
 from django.utils.timezone import now
@@ -43,11 +45,11 @@ from bookmarks.models import Bookmark
 from comments.models import Comment
 from donations.models import Donation
 from forum.models import Post, Thread
-from general.models import SocialModel
 from geotags.models import GeoTag
 from messages.models import Message
 from ratings.models import SoundRating
 from sounds.models import DeletedSound, License, Sound, Pack, Download, PackDownload, BulkUploadProgress
+from tags.models import TaggedItem
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from utils.search import get_search_engine, SearchEngineException
@@ -96,7 +98,7 @@ class ProfileManager(models.Manager):
             return None
 
 
-class Profile(SocialModel):
+class Profile(models.Model):
     user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
@@ -221,6 +223,14 @@ class Profile(SocialModel):
 
     def get_user_sounds_in_search_url(self):
         return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=0'
+    
+    def get_user_packs_in_search_url(self):
+        return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=1&only_p=1'
+    
+    def get_latest_packs_for_profile_page(self):
+        latest_pack_ids = Pack.objects.select_related().filter(user=self.user, num_sounds__gt=0).exclude(is_deleted=True) \
+                            .order_by("-last_updated").values_list('id', flat=True)[0:15]
+        return Pack.objects.ordered_ids(pack_ids=latest_pack_ids)
 
     @staticmethod
     def locations_static(user_id, has_avatar):
@@ -231,10 +241,10 @@ class Profile(SocialModel):
             l_avatar = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, user_id)
             xl_avatar = settings.AVATARS_URL + "%s/%d_XL.jpg" % (id_folder, user_id)
         else:
-            s_avatar = settings.MEDIA_URL + "images/32x32_avatar.png"
-            m_avatar = settings.MEDIA_URL + "images/40x40_avatar.png"
-            l_avatar = settings.MEDIA_URL + "images/70x70_avatar.png"
-            xl_avatar = settings.MEDIA_URL + "images/100x100_avatar.png"
+            s_avatar = None
+            m_avatar = None
+            l_avatar = None
+            xl_avatar = None
         return dict(
             avatar=dict(
                 S=dict(
@@ -256,7 +266,6 @@ class Profile(SocialModel):
             ),
             uploads_dir=os.path.join(settings.UPLOADS_PATH, str(user_id))
         )
-
 
     @locations_decorator(cache=False)
     def locations(self):
@@ -415,15 +424,7 @@ class Profile(SocialModel):
             return True
 
     def num_sounds_pending_moderation(self):
-        # Get non closed tickets with related sound objects referring to sounds
-        # that have not been deleted
-
-        return len(tickets.models.Ticket.objects.filter(\
-                Q(sender=self.user) &\
-                Q(sound__isnull=False) &\
-                Q(sound__processing_state='OK') &\
-                ~Q(sound__moderation_state='OK') &\
-                ~Q(status='closed')))
+        return tickets.views._get_pending_tickets_for_user_base_qs(self.user).count()
 
     def get_info_before_delete_user(self, include_sounds=False, include_other_related_objects=False):
         """
@@ -609,8 +610,28 @@ class Profile(SocialModel):
     def num_packs(self):
         # Return the number of packs for which at least one sound has been published
         return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by('pack_id').distinct('pack').count()
+    
+    def get_stats_for_profile_page(self):
+        # Return a dictionary of user statistics to show on the user profile page
+        # Because some stats are expensive to compute, we cache them
+        stats_from_db = {
+                'num_sounds': self.num_sounds,
+                'num_downloads': self.num_downloads_on_sounds_and_packs,
+                'num_posts': self.num_posts
+            }
+        stats_from_cache = cache.get(settings.USER_STATS_CACHE_KEY.format(self.user_id), None)
+        if stats_from_cache is None:
+            stats_from_cache = {
+                'num_packs': self.num_packs,
+                'total_uploaded_sounds_length': self.get_total_uploaded_sounds_length(),
+                'avg_rating_0_5': self.avg_rating_0_5,
+            }
+            cache.set(settings.USER_STATS_CACHE_KEY.format(self.user_id), stats_from_cache, 60*60*24)
+        stats_from_db.update(stats_from_cache)
+        return stats_from_db
 
-    class Meta(SocialModel.Meta):
+
+    class Meta:
         ordering = ('-user__date_joined', )
 
 

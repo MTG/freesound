@@ -28,7 +28,7 @@ console_logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
-    help = "Build Beast Whoosh static files using npm while passing some required Django settings"
+    help = "Build Beast Whoosh UI static files using npm while passing some required Django settings"
 
     def handle(self, **options):
         """

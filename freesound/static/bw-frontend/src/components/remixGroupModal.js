@@ -1,4 +1,4 @@
-import {handleGenericModal, bindModalActivationElements, activateModalsIfParameters, initPlayersInModal, stopPlayersInModal} from './modal';
+import {handleGenericModal, bindModalActivationElements, activateModalsIfParameters} from './modal';
 
 const drawArrows =() => {
     const arrowsPanel = document.getElementsByClassName('remix-group-arrows-panel')[0];
@@ -45,11 +45,9 @@ const onResize = (evt) => {
 
 const handleRemixGroupsModal = (modalUrl, modalActivationParam) => {
     handleGenericModal(modalUrl, (modalContainer) => {
-        initPlayersInModal(modalContainer);
         drawArrows();
         window.addEventListener("resize", onResize);
     }, (modalContainer) => {
-        stopPlayersInModal(modalContainer);
         window.removeEventListener("resize", onResize);
     }, true, true, modalActivationParam);
 }
@@ -58,7 +56,8 @@ const bindRemixGroupModals = (container) => {
     bindModalActivationElements('[data-toggle="remix-group-modal"]', handleRemixGroupsModal, container);
 }
 
-bindRemixGroupModals();
-activateModalsIfParameters('[data-toggle="remix-group-modal"]', handleRemixGroupsModal);
+const activateRemixGroupModalsIfParameters = () => {
+    activateModalsIfParameters('[data-toggle="remix-group-modal"]', handleRemixGroupsModal);
+}
 
-export {bindRemixGroupModals};
+export {bindRemixGroupModals, activateRemixGroupModalsIfParameters};

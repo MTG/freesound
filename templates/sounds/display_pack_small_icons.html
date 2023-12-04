@@ -1,0 +1,31 @@
+{% load util %}
+{% load bw_templatetags %}
+<div class="right text-light-grey col-auto" style="max-height: 22px;overflow: hidden;padding-right:0px!important;padding-left:0px!important;">                  
+    <div class="h-spacing-left-1" title="This pack has {{ pack.num_sounds }} sound {{ pack.num_sounds|pluralize }}">
+        <a href="{{ pack.get_pack_sounds_in_search_url }}" class="bw-link--grey">
+            <span class="bw-icon-wave"></span> {{ pack.num_sounds|formatnumber }}
+        </a>  
+    </div>
+    {% if pack.num_downloads %}
+    <div class="h-spacing-left-1" title="{{ sound.num_downloads }} downloads">
+        <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'pack-downloaders' pack.user.username pack.id %}?ajax=1" class="bw-link--grey-light">
+            <span class="bw-icon-download" style="font-size:90%;"></span> {{ pack.num_downloads|formatnumber }}
+        </a>
+    </div>
+    {% endif %}
+    {% if pack.has_geotags %}
+    <div class="h-spacing-left-1" title="This pack has geotags">
+        <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'pack-geotags' pack.user.username pack.id %}?ajax=1" class="bw-link--grey-light">
+            <span class="bw-icon-pin"></span>
+        </a>
+    </div>
+    {% endif %}
+    <div class="h-spacing-left-1" title="License: {{ pack.license_summary_name_and_id.0 }}">
+        <span class="bw-icon-{{ pack.license_bw_icon_name }}"></span>
+    </div>
+    {% if pack.num_ratings %}
+    <div class="h-spacing-left-1" title="Overall rating of pack's sounds ({{ pack.num_ratings|bw_intcomma }} rating{{ pack.num_ratings|pluralize }})">
+        <span class="bw-icon-star"></span> {{ pack.avg_rating_0_5|floatformat:1 }}
+    </div>
+    {% endif %}
+</div>

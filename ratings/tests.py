@@ -130,19 +130,18 @@ class RatingsPageTestCase(TestCase):
 
     def test_rating_link_logged_in(self):
         """A logged in user viewing a sound should get links to rate the sound"""
-
         self.client.force_login(self.user1)
         resp = self.client.get(self.sound.get_absolute_url())
-        self.assertContains(resp, f'<a href="/people/Anton/sounds/{self.sound.id}/rate/1/" title="pretty bad :-(" class="one-star">')
-
+        self.assertContains(resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">')
+        
     def test_no_rating_link_logged_out(self):
         """A logged out user doesn't see links to rate a sound"""
         resp = self.client.get(self.sound.get_absolute_url())
-        self.assertNotContains(resp, f'<a href="/people/Anton/sounds/{self.sound.id}/rate/1/" title="pretty bad :-(" class="one-star">')
+        self.assertNotContains(resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">')
 
     def test_no_rating_link_own_sound(self):
         """A user doesn't see links to rate their own sound"""
         user = User.objects.get(username="Anton")
         self.client.force_login(user)
         resp = self.client.get(self.sound.get_absolute_url())
-        self.assertNotContains(resp, f'<a href="/people/Anton/sounds/{self.sound.id}/rate/1/" title="pretty bad :-(" class="one-star">')
+        self.assertNotContains(resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">')

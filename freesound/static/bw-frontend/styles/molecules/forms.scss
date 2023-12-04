@@ -40,7 +40,7 @@
     
     textarea {
       min-height: 150px;
-      resize: none;
+      resize: vertical;
 
       &:focus {
         background-color: $white;
@@ -50,7 +50,7 @@
     }
 
     button {
-      font-size: 17px;
+      font-size: 100%;
     }
 
     .checkboxNotification {

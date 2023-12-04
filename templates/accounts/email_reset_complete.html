@@ -1,11 +1,13 @@
-{% extends "accounts/_section.html" %}
+{% extends "accounts/account_settings_base.html" %}
 
 {% block title %}Email reset complete{% endblock %}
 
-{% block content %}
+{% block main_content %}
 
-<h1>Email reset complete</h1>
+    <h1>Email reset complete</h1>
 
-<p>Your new email address has been changed from {{ old_email }} to {{ user.email }}.</p>
+    <div class="text-grey v-spacing-top-6">
+        Your new email address has been changed from <span class="text-black">{{ old_email }}</span> to <span class="text-black">{{ user.email }}</span>.
+    </div>
 
 {% endblock %}

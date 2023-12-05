@@ -14,7 +14,7 @@
         <div class="v-spacing-top-4 v-spacing-2">
             <span class="text-light-grey"><b>Sort by:</b></span>
             <select id="sort-by" name="order" onchange="this.form.submit()">
-                <option value="" {% ifequal order "" %}selected{% endifequal %}>Days in queue</option>
+                <option value="days" {% ifequal order "" %}selected{% endifequal %}>Days in queue</option>
                 <option value="username" {% ifequal order "username" %}selected{% endifequal %}>Username</option>
                 <option value="new_count" {% ifequal order "new_count" %}selected{% endifequal %}>Sounds in queue</option>
                 <option value="num_uploaded_sounds" {% ifequal order "num_uploaded_sounds" %}selected{% endifequal %}>Uploaded sounds</option>

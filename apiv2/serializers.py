@@ -329,7 +329,10 @@ class SoundListSerializer(AbstractSoundSerializer):
         # Get ac analysis data form the object itself as it will have been included in the Sound
         # by SoundManager.bulk_query
         query_select_name = settings.AUDIOCOMMONS_ANALYZER_NAME.replace('-', '_')
-        return getattr(obj, query_select_name, None)
+        try:
+            return json.loads(getattr(obj, query_select_name))
+        except (AttributeError, TypeError, ValueError) as e:
+            return None
 
     def get_analyzers_output(self, obj):
         # Get the output of analyzers configured in settings.ANALYZERS_CONFIGURATION.
@@ -368,7 +371,10 @@ class SoundSerializer(AbstractSoundSerializer):
         # corresponding to the Audio Commons extractor.
         query_select_name = settings.AUDIOCOMMONS_ANALYZER_NAME.replace('-', '_')
         if hasattr(obj, query_select_name):
-            return getattr(obj, query_select_name)
+            try:
+                return json.loads(getattr(obj, query_select_name))
+            except (AttributeError, TypeError, ValueError) as e:
+                return None
         else:
             # No ac analysis data already loaded in the object, load it with an extra query
             try:

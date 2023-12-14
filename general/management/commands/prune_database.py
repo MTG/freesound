@@ -47,14 +47,11 @@ import sounds
 from sounds.models import BulkUploadProgress, DeletedSound, Flag
 import tickets
 from tickets.models import Ticket, TicketComment
+from utils.chunks import chunks
 
 console_logger = logging.getLogger('console')
 
 
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
 
 
 class Command(BaseCommand):

@@ -50,6 +50,7 @@ from messages.models import Message
 from ratings.models import SoundRating
 from sounds.models import DeletedSound, License, Sound, Pack, Download, PackDownload, BulkUploadProgress
 from tags.models import TaggedItem
+from utils.chunks import chunks
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from utils.search import get_search_engine, SearchEngineException
@@ -449,7 +450,8 @@ class Profile(models.Model):
 
     def delete_user(self, remove_sounds=False,
                     delete_user_object_from_db=False,
-                    deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN):
+                    deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN,
+                    chunk_size=500):
         """
         Custom method for deleting a user from Freesound.
 
@@ -475,9 +477,20 @@ class Profile(models.Model):
               with all related content. Defaults to False.
             deletion_reason (str): reason for the user being deleted. Should be one of the choices defined in
               DeletedUser.DELETION_REASON_CHOICES. Defaults to DeletedUser.DELETION_REASON_DELETED_BY_ADMIN.
+            chunk_size (int): size of the chunks in which sounds will be deleted inside atomic trasactions.
         """
 
-        # Run all deletion operations in a single transaction so if there is an error we don't create duplicate
+        # If required, start by deleting all user's sounds and packs 
+        if remove_sounds:
+            Pack.objects.filter(user=self.user).update(is_deleted=True)
+            # Itrate sounds in chunks
+            sound_ids = Sound.objects.filter(user=self.user).values_list('id', flat=True)
+            for chunk_ids in chunks(sound_ids, chunk_size):
+                with transaction.atomic():    
+                    Sound.objects.filter(id__in=chunk_ids).delete()
+
+        # Now run all deletion operations related to the user (except for sounds/packs).
+        # Run them in a single transaction so if there is an error we don't create duplicate
         # DeletedUser objects
         with transaction.atomic():
 
@@ -531,13 +544,8 @@ class Profile(models.Model):
                 # Remove existing OldUsername objects so there are no redirects to the anonymized/deleted user page
                 OldUsername.objects.filter(user=self.user).delete()
 
-                # Remove sounds and packs if requested
-                if remove_sounds:
-                    Sound.objects.filter(user=self.user).delete()
-                    Pack.objects.filter(user=self.user).update(is_deleted=True)
-                else:
+                if not remove_sounds:
                     Sound.objects.filter(user=self.user).update(is_index_dirty=True)
-
 
             # If UserDeletionRequest object(s) exist for that user, update the status and set deleted_user property
             # NOTE: don't use QuerySet.update method because this won't trigger the pre_save/post_save signals

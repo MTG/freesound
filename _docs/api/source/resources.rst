@@ -256,7 +256,7 @@ Examples
 
 .. _sound-content-search:
 
-Content Search
+Content Search (deprecated)
 =========================================================
 
 ::
@@ -266,6 +266,9 @@ Content Search
 
 This resource allows searching sounds in Freesound based on their content descriptors.
 
+.. warning:: As of December 2023, this resource is deprecated and will be removed in the comming months. Similar functionality
+  will be achievable using the :ref:`sound-text-search` resource. Documentation about how to do this will be added in due time
+  but in the meantime, please contact us if you need help with this.
 
 .. _sound-content-search-parameters:
 
@@ -372,7 +375,7 @@ Examples
 
 .. _sound-combined-search:
 
-Combined Search
+Combined Search (deprecated)
 =========================================================
 
 ::
@@ -382,6 +385,9 @@ Combined Search
 
 This resource is a combination of :ref:`sound-text-search` and :ref:`sound-content-search`, and allows searching sounds in Freesound based on their tags, metadata and content-based descriptors.
 
+.. warning:: As of December 2023, this resource is deprecated and will be removed in the comming months. Similar functionality
+  will be achievable using the :ref:`sound-text-search` resource. Documentation about how to do this will be added in due time
+  but in the meantime, please contact us if you need help with this.
 
 Request parameters
 ------------------

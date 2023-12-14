@@ -30,7 +30,7 @@ from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
-from django.db import models, transaction
+from django.db import models, transaction, IntegrityError
 from django.db.models import Q
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
@@ -50,7 +50,6 @@ from messages.models import Message
 from ratings.models import SoundRating
 from sounds.models import DeletedSound, License, Sound, Pack, Download, PackDownload, BulkUploadProgress
 from tags.models import TaggedItem
-from utils.chunks import chunks
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from utils.search import get_search_engine, SearchEngineException
@@ -432,7 +431,6 @@ class Profile(models.Model):
         This method can be called before delete_user to display to the user the
         elements that will be modified
         """
-
         ret = {}
         if include_sounds:
             sounds = Sound.objects.filter(user=self.user)
@@ -451,7 +449,7 @@ class Profile(models.Model):
     def delete_user(self, remove_sounds=False,
                     delete_user_object_from_db=False,
                     deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN,
-                    chunk_size=500):
+                    chunk_size=100):
         """
         Custom method for deleting a user from Freesound.
 
@@ -483,11 +481,20 @@ class Profile(models.Model):
         # If required, start by deleting all user's sounds and packs 
         if remove_sounds:
             Pack.objects.filter(user=self.user).update(is_deleted=True)
-            # Itrate sounds in chunks
-            sound_ids = Sound.objects.filter(user=self.user).values_list('id', flat=True)
-            for chunk_ids in chunks(sound_ids, chunk_size):
-                with transaction.atomic():    
-                    Sound.objects.filter(id__in=chunk_ids).delete()
+            num_sounds = Sound.objects.filter(user=self.user).count()
+            num_errors = 0
+            max_while_loop_errors = num_sounds // chunk_size + 1
+            while num_sounds > 0 and num_errors < max_while_loop_errors:
+                chunk_ids = Sound.objects.filter(user=self.user).values_list('id', flat=True)[0:chunk_size]
+                with transaction.atomic():
+                    try:
+                        Sound.objects.filter(id__in=chunk_ids).delete()
+                    except IntegrityError:
+                        num_errors += 1
+                num_sounds = Sound.objects.filter(user=self.user).count()
+            
+            if Sound.objects.filter(user=self.user).count() > 0:
+                raise Exception("Could not delete all sounds from user {0}".format(self.user.username))
 
         # Now run all deletion operations related to the user (except for sounds/packs).
         # Run them in a single transaction so if there is an error we don't create duplicate

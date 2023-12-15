@@ -13,10 +13,12 @@
     <li class="v-spacing-3">
         {% bw_icon 'star' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds have an average rating of {{ user_stats.avg_rating_0_5|floatformat:1 }}">{{ user_stats.avg_rating_0_5|floatformat:1 }} average rating</span>
     </li>
+    {% if not user.profile.is_anonymized_user %}
     <li class="v-spacing-3">
         {% bw_icon 'download' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds and packs have been downloaded {{ user_stats.num_downloads }} times">{{ user_stats.num_downloads|formatnumber }} download{{ user_stats.num_downloads|pluralize }}</span>
     </li>
     <li class="v-spacing-3">
         {% bw_icon 'comments' 'text-light-grey' %} <span class="text-19" title="{{ user.username }} has written {{ user_stats.num_posts }} forum posts">{{ user_stats.num_posts|formatnumber }} forum post{{ user_stats.num_posts|pluralize }}</span>
     </li>
+    {% endif %}
 </ol>

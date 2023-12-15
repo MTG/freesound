@@ -38,6 +38,7 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.encoding import smart_str
 from django.utils.timezone import now
+from psycopg2.errors import ForeignKeyViolation
 
 import tickets.models
 from apiv2.models import ApiV2Client
@@ -489,7 +490,7 @@ class Profile(models.Model):
                 with transaction.atomic():
                     try:
                         Sound.objects.filter(id__in=chunk_ids).delete()
-                    except IntegrityError:
+                    except (IntegrityError, ForeignKeyViolation) as e:
                         num_errors += 1
                 num_sounds = Sound.objects.filter(user=self.user).count()
             

@@ -121,12 +121,13 @@ def delete_user(user_id, deletion_action, deletion_reason):
     except User.DoesNotExist:
         workers_logger.info("Can't delete user as it does not exist (%s)" % json.dumps(
             {'task_name': deletion_action, 'user_id': user_id, 'username': '-',
-                'deletion_reason': deletion_reason}))
+             'deletion_reason': deletion_reason}))
         return
-    
+
+    username_before_deletion = user.username
     workers_logger.info("Start deleting user (%s)" % json.dumps(
-        {'task_name': deletion_action, 'user_id': user_id, 'username': user.username,
-            'deletion_reason': deletion_reason}))
+        {'task_name': deletion_action, 'user_id': user_id, 'username': username_before_deletion,
+         'deletion_reason': deletion_reason}))
     start_time = time.time()
     try:
         if deletion_action in [FULL_DELETE_USER_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
@@ -145,14 +146,14 @@ def delete_user(user_id, deletion_action, deletion_reason):
                 # publicly available. Extra user content (posts, comments, etc) will be preserved but shown as
                 # being authored by a "deleted user".
                 user.profile.delete_user(remove_sounds=True,
-                                            deletion_reason=deletion_reason)
+                                         deletion_reason=deletion_reason)
 
             elif deletion_action == DELETE_SPAMMER_USER_ACTION_NAME:
                 # This will completely remove the user object and all of its related data (including sounds)
                 # from the database. A DeletedUser object will be creaetd to keep a record of a user having been
                 # deleted.
                 user.profile.delete_user(delete_user_object_from_db=True,
-                                            deletion_reason=deletion_reason)
+                                         deletion_reason=deletion_reason)
 
             elif deletion_action == FULL_DELETE_USER_ACTION_NAME:
                 # This will fully delete the user and the sounds from the database.
@@ -161,15 +162,15 @@ def delete_user(user_id, deletion_action, deletion_reason):
                 user.delete()
 
             workers_logger.info("Finished deleting user (%s)" % json.dumps(
-                {'task_name': deletion_action, 'user_id': user.id, 'username': user.username,
-                    'deletion_reason': deletion_reason, 'work_time': round(time.time() - start_time)}))
+                {'task_name': deletion_action, 'user_id': user.id, 'username': username_before_deletion,
+                 'deletion_reason': deletion_reason, 'work_time': round(time.time() - start_time)}))
 
     except Exception as e:
         # This exception is broad but we catch it so that we can log that an error happened.
         # TODO: catching more specific exceptions would be desirable
         workers_logger.info("Unexpected error while deleting user (%s)" % json.dumps(
-            {'task_name': deletion_action, 'user_id': user.id, 'username': user.username,
-                'deletion_reason': deletion_reason, 'error': str(e), 'work_time': round(time.time() - start_time)}))
+            {'task_name': deletion_action, 'user_id': user.id, 'username': username_before_deletion,
+             'deletion_reason': deletion_reason, 'error': str(e), 'work_time': round(time.time() - start_time)}))
         sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
 
 

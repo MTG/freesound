@@ -60,7 +60,7 @@ class Command(LoggingBaseCommand):
         console_logger.info("Getting freesound db data...")
         # Get all moderated and processed sound ids
         queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK').order_by('id').only("id")
-        fs_mp = [sound.id for sound in queryset]
+        fs_mp = set([sound.id for sound in queryset])
         # Get ell moderated, processed and analysed sounds
         sound_ids_analyzed_with_analyzer_ok = \
             list(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK")

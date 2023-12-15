@@ -19,7 +19,7 @@ export const showToast = (text, ulWrap) => {
   }
   hideToastTimeout = setTimeout(() => {
     toastElement.style.display = 'none';
-  }, 5000);
+  }, 10000);
 };
 
 export const showToastNoTimeout = (text, ulWrap) => {

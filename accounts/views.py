@@ -1335,32 +1335,44 @@ def delete(request):
         if not form.is_valid():
             form.reset_encrypted_link(request.user.id)
         else:
-            delete_sounds =\
-                form.cleaned_data['delete_sounds'] == 'delete_sounds'
-            delete_action = DELETE_USER_DELETE_SOUNDS_ACTION_NAME if delete_sounds \
-                else DELETE_USER_KEEP_SOUNDS_ACTION_NAME
-            delete_reason = DeletedUser.DELETION_REASON_SELF_DELETED
-            web_logger.info(f'Requested async deletion of user {request.user.id} - {delete_action}')
+            # Check if a deletion request already exist and not allow user to continue if
+            # that is the case. In this way we avoid duplicating deletion tasks
+            cutoff_date = datetime.datetime.today() - datetime.timedelta(days=1)
+            recent_pending_deletion_requests_exist = UserDeletionRequest.objects\
+                .filter(user_to_id=request.user.id, last_updated__gt=cutoff_date)\
+                .filter(status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED).exists()                
+            if recent_pending_deletion_requests_exist:
+                messages.add_message(request, messages.INFO,
+                    f'It looks like a deletion action was already triggered for your user account and '
+                    f'your account should be deleted shortly. If you see the account not being deleted, '
+                    f'please contact us using the <a href="{reverse("contact")}">contact form</a>.')
+            else:
+                delete_sounds =\
+                    form.cleaned_data['delete_sounds'] == 'delete_sounds'
+                delete_action = DELETE_USER_DELETE_SOUNDS_ACTION_NAME if delete_sounds \
+                    else DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+                delete_reason = DeletedUser.DELETION_REASON_SELF_DELETED
+                web_logger.info(f'Requested async deletion of user {request.user.id} - {delete_action}')
 
-            # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
-            UserDeletionRequest.objects.create(user_from=request.user,
-                                               user_to=request.user,
-                                               status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
-                                               triggered_deletion_action=delete_action,
-                                               triggered_deletion_reason=delete_reason)
+                # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
+                UserDeletionRequest.objects.create(user_from=request.user,
+                                                user_to=request.user,
+                                                status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                                                triggered_deletion_action=delete_action,
+                                                triggered_deletion_reason=delete_reason)
 
-            # Trigger async task so user gets deleted asynchronously
-            tasks.delete_user.delay(user_id=request.user.id, deletion_action=delete_action, deletion_reason=delete_reason)
+                # Trigger async task so user gets deleted asynchronously
+                tasks.delete_user.delay(user_id=request.user.id, deletion_action=delete_action, deletion_reason=delete_reason)
 
-            # Show a message to the user that the account will be deleted shortly
-            messages.add_message(request, messages.INFO,
-                                 'Your user account will be deleted in a few moments. Note that this process could '
-                                 'take up to an hour for users with many uploaded sounds.')
+                # Show a message to the user that the account will be deleted shortly
+                messages.add_message(request, messages.INFO,
+                                    'Your user account will be deleted in a few moments. Note that this process could '
+                                    'take up to several hours for users with many uploaded sounds.')
 
-            # NOTE: we used to do logout here because the user account was deleted synchronously. However now we don't
-            # do this as the user is deleted asynchronously and we want to show the message that the user will be
-            # deleted soon
-            return HttpResponseRedirect(reverse("front-page"))
+                # NOTE: we used to do logout here because the user account was deleted synchronously. However now we don't
+                # do this as the user is deleted asynchronously and we want to show the message that the user will be
+                # deleted soon
+                return HttpResponseRedirect(reverse("front-page"))
     else:
         form = DeleteUserForm(user_id=request.user.id)
 

@@ -19,7 +19,7 @@
                             {% bw_user_avatar message.user_from.profile.locations.avatar.L.url message.user_from.username 70 %}
                         </div>
                         <div class="col-8">
-                            <h6><a href="{% url "account" message.user_from.username %}">{{ message.user_from.username }}</a></h6>
+                            <h6 class="ellipsis"><a href="{% url "account" message.user_from.username %}">{{ message.user_from.username }}</a></h6>
                             <p class="text-grey no-margins">{{ message.user_from.profile.num_sounds|bw_intcomma }} sound{{ message.user_from.profile.num_sounds|pluralize }}</p>
                             <p class="text-grey no-margins">{{ message.user_from.profile.num_posts|bw_intcomma }} post{{ message.user_from.profile.num_posts|pluralize }}</p>
                         </div>
@@ -31,7 +31,7 @@
                             {% bw_user_avatar message.user_to.profile.locations.avatar.L.url message.user_to.username 70 %}
                         </div>
                         <div class="col-8">
-                            <h6><a href="{% url "account" message.user_to.username %}">{{ message.user_to.username }}</a></h6>
+                            <h6 class="ellipsis"><a href="{% url "account" message.user_to.username %}">{{ message.user_to.username }}</a></h6>
                             <p class="text-grey no-margins">{{ message.user_to.profile.num_sounds|bw_intcomma }} sound{{ message.user_to.profile.num_sounds|pluralize }}</p>
                             <p class="text-grey no-margins">{{ message.user_to.profile.num_posts|bw_intcomma }} post{{ message.user_to.profile.num_posts|pluralize }}</p>
                         </div>

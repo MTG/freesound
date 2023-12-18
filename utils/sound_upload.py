@@ -492,6 +492,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                     'audio_filename': audio_filename,
                     'license': license_name,  # Overwrite license with license name as License is not JSON serializable
                     'tags': list(line_cleaned.get('tags', [])),  # Convert tags to List as Set is not JSON serializable
+                    'sources': list(line_cleaned.get('sources', [])),  # Convert sources to List as Set is not JSON serializable
                 })
 
             lines_validated.append({

@@ -31,6 +31,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import Group
@@ -1369,9 +1370,16 @@ def delete(request):
                                     'Your user account will be deleted in a few moments. Note that this process could '
                                     'take up to several hours for users with many uploaded sounds.')
 
-                # NOTE: we used to do logout here because the user account was deleted synchronously. However now we don't
-                # do this as the user is deleted asynchronously and we want to show the message that the user will be
-                # deleted soon
+                # Logout user, mark account inctive, set unusable password and change email to a dummy one so that
+                # user can't recover the account while it is being delete asynchronously
+                # Note that some of these actions are also done in the delete_user method of the Profile model, but
+                # we need to do them here as well before the async task is triggered and to make sure user can't
+                # login even if the deletion task fails.
+                request.user.set_unusable_password()
+                request.user.is_active = False
+                request.user.email = f'deleted_user_{request.user.id}@freesound.org'
+                request.user.save()
+                logout(request)
                 return HttpResponseRedirect(reverse("front-page"))
     else:
         form = DeleteUserForm(user_id=request.user.id)

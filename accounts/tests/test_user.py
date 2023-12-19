@@ -58,7 +58,7 @@ class UserRegistrationAndActivation(TestCase):
         # Try registration without accepting tos
         resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [username],
-            'password1': ['123456'],
+            'password1': ['123456!@'],
             'accepted_tos': [''],
             'email1': ['example@email.com'],
             'email2': ['example@email.com']
@@ -71,7 +71,20 @@ class UserRegistrationAndActivation(TestCase):
         # Try registration with bad email
         resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [username],
-            'password1': ['123456'],
+            'password1': ['12345678'],
+            'accepted_tos': ['on'],
+            'email1': ['example@email.com'],
+            'email2': ['example@email.com']
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'This password is entirely numeric')
+        self.assertEqual(User.objects.filter(username=username).count(), 0)
+        self.assertEqual(len(mail.outbox), 0)  # No email sent
+
+        # Try registration with bad password
+        resp = self.client.post(reverse('accounts-registration-modal'), data={
+            'username': [username],
+            'password1': ['123456!@'],
             'accepted_tos': ['on'],
             'email1': ['exampleemail.com'],
             'email2': ['exampleemail.com']
@@ -84,7 +97,7 @@ class UserRegistrationAndActivation(TestCase):
         # Try registration with no username
         resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [''],
-            'password1': ['123456'],
+            'password1': ['123456!@'],
             'accepted_tos': ['on'],
             'email1': ['example@email.com'],
             'email2': ['example@email.com']
@@ -97,7 +110,7 @@ class UserRegistrationAndActivation(TestCase):
         # Try registration with different email addresses
         resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [''],
-            'password1': ['123456'],
+            'password1': ['123456!@'],
             'accepted_tos': ['on'],
             'email1': ['example@email.com'],
             'email2': ['exampl@email.net']
@@ -110,7 +123,7 @@ class UserRegistrationAndActivation(TestCase):
         # Try successful registration
         resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [username],
-            'password1': ['123456'],
+            'password1': ['123456!@'],
             'accepted_tos': ['on'],
             'email1': ['example@email.com'],
             'email2': ['example@email.com']
@@ -125,7 +138,7 @@ class UserRegistrationAndActivation(TestCase):
         # Try register again with same username
         resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': [username],
-            'password1': ['123456'],
+            'password1': ['123456!@'],
             'accepted_tos': ['on'],
             'email1': ['example@email.com'],
             'email2': ['example@email.com']
@@ -138,7 +151,7 @@ class UserRegistrationAndActivation(TestCase):
         # Try with repeated email address
         resp = self.client.post(reverse('accounts-registration-modal'), data={
             'username': ['a_different_username'],
-            'password1': ['123456'],
+            'password1': ['123456!@'],
             'accepted_tos': ['on'],
             'email1': ['example@email.com'],
             'email2': ['example@email.com']

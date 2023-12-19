@@ -26,9 +26,11 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm, SetPasswordForm, PasswordChangeForm
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import PermissionDenied
+from django.core.signing import BadSignature, SignatureExpired
 from django.core.validators import RegexValidator
 from django.db.models import Q
 from django.urls import reverse
@@ -36,7 +38,6 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from multiupload.fields import MultiFileField
-from django.core.signing import BadSignature, SignatureExpired
 
 from accounts.models import Profile, EmailPreferenceType, OldUsername, DeletedUser
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
@@ -218,7 +219,6 @@ class RegistrationForm(forms.Form):
         self.fields['password1'].widget.attrs['placeholder'] = 'Password'
         self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
 
-
     def clean_username(self):
         username = self.cleaned_data["username"]
         if not username_taken_by_other_user(username):
@@ -241,9 +241,10 @@ class RegistrationForm(forms.Form):
             pass
         return email1
 
-    def clean(self):
-        cleaned_data = super().clean()
-        return cleaned_data
+    def clean_password1(self):
+        password = self.cleaned_data["password1"]
+        validate_password(password)
+        return password
 
     def save(self):
         username = self.cleaned_data["username"]

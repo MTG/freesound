@@ -1,4 +1,4 @@
-![Freesound](media/images/logo_bw.png)
+![Freesound](freesound/static/bw-frontend/public/logos/logo-text.svg)
 
 This repository contains the source code of the [Freesound](https://freesound.org) website.
 

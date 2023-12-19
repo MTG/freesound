@@ -144,7 +144,7 @@ If a new search engine backend class is to be implemented, it must closely follo
 utils.search.SearchEngineBase docstrings. There is a Django management command that can be used in order to test
 the implementation of a search backend. You can run it like:
 
-    docker-compose run --rm web python manage.py test_search_engine_backend -fsw --backend utils.search.backends.solr451custom.Solr451CustomSearchEngine
+    docker-compose run --rm web python manage.py test_search_engine_backend -fsw --backend utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine
 
 Please read carefully the documentation of the management command to better understand how it works and how is it
 doing the testing.

@@ -54,7 +54,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Get all indexed sound IDs and remove them
         clear_index = options['clear_index']
-        indexed_sound_ids = None
         if clear_index:
             delete_all_sounds_from_search_engine()
 
@@ -68,9 +67,8 @@ class Command(BaseCommand):
         # Delete all sounds in the search engine which are not found in the DB. This part of code is to make sure that
         # no "leftover" sounds remain in the search engine, but should normally do nothing, specially if the
         # "clear_index" option is passed
-        if indexed_sound_ids is None:
-            indexed_sound_ids = get_all_sound_ids_from_search_engine()
+        indexed_sound_ids = get_all_sound_ids_from_search_engine()
         sound_ids_to_delete = list(set(indexed_sound_ids).difference(sounds_to_index_ids))
-        console_logger.info("Deleting %d non-existing sounds form the search engine", len(sound_ids_to_delete))
+        console_logger.info("Deleting %d non-existing sounds from the search engine", len(sound_ids_to_delete))
         if sound_ids_to_delete:
             delete_sounds_from_search_engine(sound_ids_to_delete)

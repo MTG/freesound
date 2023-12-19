@@ -1,2 +1,0 @@
-- You need to change the data path in forum/conf/solrconfig.xml and fs2/conf/solrconfig.xml
-- You need to place the file jts-1.8.jar in solr-webapp/webapp/WEB-INF/lib

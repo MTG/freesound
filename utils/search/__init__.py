@@ -23,18 +23,20 @@ import math
 from django.conf import settings
 
 
-def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS):
+def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds_index_url=None, forum_index_url=None):
     """Return SearchEngine class instance to carry out search engine actions
 
     Args:
         backend_class: path to the search engine backend class (defaults to settings.SEARCH_ENGINE_BACKEND_CLASS)
+        sounds_index_url: url of the sounds index in solr. If not set, use the default URL for the backend
+        forum_index_url: url of the forum index in solr. If not set, use the default URL for the backend
 
     Returns:
         utils.search.SearchEngineBase: search engine backend class instance
     """
     module_name, class_name = backend_class.rsplit('.', 1)
     module = importlib.import_module(module_name)
-    return getattr(module, class_name)()
+    return getattr(module, class_name)(sounds_index_url, forum_index_url)
 
 
 class SearchResults:

@@ -1,0 +1,21 @@
+# Freesound development solr image
+
+# This file is needed to fix file permission issues when running solr in docker.
+# 
+# In our test_search_engine_backend command, we use the solr API to create a core from a configSet
+# In order to use this API, configSets must be available at $SOLR_HOME/configsets
+# however, the official solr Dockerfile defines $SOLR_HOME as /var/solr/data, but only creates /var/solr 
+# in the Dockerfile.
+# When mounting ./utils/search/solr9/cores:/var/solr/data/configsets as a volume in docker-compose.yml,
+# docker will create any non-existent directories with an owner of root.
+# In this case, /var/solr/data/ doesn't yet exist so it gets created as owned by root when mounting
+# configSets as /var/solr/data/configsets in the container.
+# This means that the precreate-core script (running as the solr user, uid 8983) is unable to write a new core to
+# the data directory, as it's owned by root.
+# 
+# By creating /var/solr/data ahead of time owned by the solr user, docker won't set the owner to root, allowing
+# the setup scripts to work and configSets to be used.
+
+FROM solr:9.2.1
+
+RUN mkdir /var/solr/data

@@ -449,7 +449,7 @@ def get_all_sound_ids_from_search_engine(page_size=2000):
                                                    sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
                                                    offset=(current_page - 1) * page_size,
                                                    num_sounds=page_size)
-            solr_ids += [element['id'] for element in response.docs]
+            solr_ids += [int(element['id']) for element in response.docs]
             solr_count = response.num_found
             current_page += 1
     except SearchEngineException as e:

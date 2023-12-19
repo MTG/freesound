@@ -91,7 +91,10 @@ def display_post(context, post, forloop_counter=0, post_number_offset=0, show_po
 
     """
     if results_highlighted is not None and str(post.id) in results_highlighted:
-        highlighted_content = results_highlighted[str(post.id)]['post_body'][0]
+        try:
+            highlighted_content = results_highlighted[str(post.id)]['post_body'][0]
+        except KeyError:
+            highlighted_content = False    
     else:
         highlighted_content = False
     return {

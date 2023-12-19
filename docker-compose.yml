@@ -3,7 +3,6 @@ version: "3.7"
 volumes:
     pgdata:
     m2home:
-    solr5data:
     solr9data:
     fswebhome:
 

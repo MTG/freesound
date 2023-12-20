@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 from django import template
 
 from sounds.models import Pack
@@ -76,7 +75,7 @@ def display_pack_big(context, pack):
 
 @register.inclusion_tag('sounds/display_pack_selectable.html', takes_context=True)
 def display_pack_small_selectable(context, pack, selected=False):
-    context = context.get('original_context', context)  # This is to allow passing context in nested inclusion tags
+    context = context.get('original_context', context)    # This is to allow passing context in nested inclusion tags
     tvars = display_pack(context, pack, size='small')
     tvars.update({
         'selected': selected,

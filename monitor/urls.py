@@ -22,10 +22,7 @@ from django.urls import path
 import monitor.views
 
 urlpatterns = [
-
     path('', monitor.views.monitor_home, name='monitor-home'),
-
-    
     path('stats/', monitor.views.monitor_stats, name='monitor-stats'),
     path('analysis/', monitor.views.monitor_analysis, name='monitor-analysis'),
     path('processing/', monitor.views.monitor_processing, name='monitor-processing'),
@@ -42,5 +39,4 @@ urlpatterns = [
     path('ajax_users_stats/', monitor.views.users_stats_ajax, name='monitor-users-stats-ajax'),
     path('ajax_active_users_stats/', monitor.views.active_users_stats_ajax, name='monitor-active-users-stats-ajax'),
     path('ajax_moderator_stats/', monitor.views.moderator_stats_ajax, name='monitor-moderator-stats-ajax'),
-
 ]

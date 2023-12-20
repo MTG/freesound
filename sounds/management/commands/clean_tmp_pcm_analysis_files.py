@@ -27,7 +27,6 @@ from django.conf import settings
 
 from utils.management_commands import LoggingBaseCommand
 
-
 console_logger = logging.getLogger("console")
 
 
@@ -42,11 +41,12 @@ class Command(LoggingBaseCommand):
         parser.add_argument(
             '--dry-run',
             action="store_true",
-            help="Using this files will not be deleted but only information printed on screen.")
+            help="Using this files will not be deleted but only information printed on screen."
+        )
 
     def handle(self, *args, **options):
         self.log_start()
-        
+
         data_to_log = {}
         wav_files_in_analysis_path = glob.glob(settings.ANALYSIS_PATH + '**/*.wav')
         files_to_remove = []
@@ -63,8 +63,10 @@ class Command(LoggingBaseCommand):
                 # This can happen if the wav file was a tmp file that was renamed while command runs
                 pass
         data_to_log['converted_files_to_remove'] = len(files_to_remove)
-        console_logger.info('Will remove {} converted PCM files because of them being in disk for '
-                            'too long'.format(len(files_to_remove)))
+        console_logger.info(
+            'Will remove {} converted PCM files because of them being in disk for '
+            'too long'.format(len(files_to_remove))
+        )
         if not options['dry_run']:
             for filepath in files_to_remove:
                 try:

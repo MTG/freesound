@@ -33,10 +33,10 @@ def context_extra(request):
     tvars = {
         'request': request,
     }
-    
+
     # Determine if extra context needs to be computed (this will allways be true expect for most of api calls and embeds)
     # There'll be other places in which the extra context is not needed, but this will serve as an approximation
-    should_compute_extra_context = True    
+    should_compute_extra_context = True
     if request.path.startswith('/apiv2/') and \
         'apply' not in request.path and \
         'login' not in request.path and \
@@ -46,7 +46,7 @@ def context_extra(request):
         should_compute_extra_context = False
 
     if should_compute_extra_context:
-        new_tickets_count = -1  # Initially set to -1 (to distinguish later users that can not moderate)
+        new_tickets_count = -1    # Initially set to -1 (to distinguish later users that can not moderate)
         num_pending_sounds = 0
         num_messages = 0
         new_posts_pending_moderation = 0
@@ -57,7 +57,9 @@ def context_extra(request):
             if request.user.has_perm('forum.can_moderate_forum'):
                 new_posts_pending_moderation = Post.objects.filter(moderation_state='NM').count()
             num_pending_sounds = request.user.profile.num_sounds_pending_moderation()
-            num_messages = Message.objects.filter(user_to=request.user, is_archived=False, is_sent=False, is_read=False).count()
+            num_messages = Message.objects.filter(
+                user_to=request.user, is_archived=False, is_sent=False, is_read=False
+            ).count()
 
         # Determine if anniversary special css and js content should be loaded
         # Animations will only be shown during the day of the anniversary
@@ -76,7 +78,9 @@ def context_extra(request):
             'next_path': request.GET.get('next', request.get_full_path()),
             'login_form': FsAuthenticationForm(),
             'problems_logging_in_form': ProblemsLoggingInForm(),
-            'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', 'no') == 'yes'  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
+            'system_prefers_dark_theme':
+                request.COOKIES.get('systemPrefersDarkTheme', 'no') ==
+                'yes'    # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
         })
-    
+
     return tvars

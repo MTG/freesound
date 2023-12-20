@@ -26,6 +26,7 @@ from django.shortcuts import get_object_or_404
 from ratings.models import SoundRating
 from sounds.models import Sound
 
+
 @transaction.atomic()
 def rate_sound(request, username, sound_id, rating):
 
@@ -38,7 +39,7 @@ def rate_sound(request, username, sound_id, rating):
         sound = get_object_or_404(Sound.objects.select_related("user"), id=sound_id)
         if sound.user.username.lower() != username.lower():
             raise Http404
-        
+
         if sound.user_id == request.user.id:
             return JsonResponse({
                 'success': False,
@@ -48,10 +49,10 @@ def rate_sound(request, username, sound_id, rating):
         rating = int(rating)
         if 1 <= rating <= 5:
             # in order to keep the ratings compatible with freesound 1, we multiply by two...
-            rating = rating*2
+            rating = rating * 2
             rating_obj, created = SoundRating.objects.get_or_create(
-                    user=request.user,
-                    sound_id=sound_id, defaults={'rating': rating})
+                user=request.user, sound_id=sound_id, defaults={'rating': rating}
+            )
 
             if not created:
                 rating_obj.rating = rating
@@ -59,14 +60,15 @@ def rate_sound(request, username, sound_id, rating):
 
             # make sure the rating is seen on the next page load by invalidating the cache for it.
             sound.invalidate_template_caches()
-            Sound.objects.filter(id=sound_id).update(is_index_dirty=True)  # Set index dirty to true
-            
+            Sound.objects.filter(id=sound_id).update(is_index_dirty=True)    # Set index dirty to true
+
         sound.refresh_from_db()
         return JsonResponse({
             'success': True,
             'message': 'Your rating has been recorded!',
-            'num_ratings': sound.num_ratings, 
+            'num_ratings': sound.num_ratings,
             'num_ratings_display': sound.get_ratings_count_text(),
             'num_ratings_display_short': sound.get_ratings_count_text_short(),
-            'avg_rating': sound.avg_rating, 
-            'min_num_ratings': settings.MIN_NUMBER_RATINGS})
+            'avg_rating': sound.avg_rating,
+            'min_num_ratings': settings.MIN_NUMBER_RATINGS
+        })

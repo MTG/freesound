@@ -63,7 +63,9 @@ def validate_file_extension(audiofiles):
                     # Firefox seems to set wrong mime type for ogg files to video/ogg instead of audio/ogg.
                     # Also safari seems to use 'application/octet-stream'.
                     # For these reasons we also allow extra mime types for ogg files.
-                    if not content_type.startswith("audio") and not content_type == 'video/ogg' and not content_type == 'application/octet-stream':
+                    if not content_type.startswith(
+                            "audio"
+                    ) and not content_type == 'video/ogg' and not content_type == 'application/octet-stream':
                         raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
                 elif ext == 'wv':
                     # All major browsers seem to use 'application/octet-stream' for wv (wavpack) files.
@@ -90,6 +92,7 @@ def validate_csvfile_extension(csv_file):
 class BulkDescribeForm(forms.Form):
     csv_file = forms.FileField(label='', validators=[validate_csvfile_extension])
 
+
 class UploadFileForm(forms.Form):
     files = MultiFileField(min_num=1, validators=[validate_file_extension], label="", required=False)
 
@@ -102,15 +105,16 @@ class TermsOfServiceForm(forms.Form):
     accepted_tos = forms.BooleanField(
         label='',
         help_text='Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> '
-                  'and the <a href="/help/privacy/" target="_blank">privacy policy</a> of Freesound (required)',
+        'and the <a href="/help/privacy/" target="_blank">privacy policy</a> of Freesound (required)',
         required=True,
-        error_messages={'required': 'You must accept the terms of use and the privacy poclicy in order to continue '
-                                    'using Freesound.'}
+        error_messages={
+            'required':
+                'You must accept the terms of use and the privacy poclicy in order to continue '
+                'using Freesound.'
+        }
     )
     accepted_license_change = forms.BooleanField(
-        label='',
-        help_text='Check this box to upgrade your Creative Commons 3.0 licenses to 4.0',
-        required=False
+        label='', help_text='Check this box to upgrade your Creative Commons 3.0 licenses to 4.0', required=False
     )
     next = forms.CharField(widget=forms.HiddenInput(), required=False)
 
@@ -152,16 +156,21 @@ def get_user_by_email(email):
 
 class UsernameField(forms.CharField):
     """ Username field, 3~30 characters, allows only alphanumeric chars, required by default """
+
     def __init__(self, required=True):
         super().__init__(
             label="Username",
             min_length=3,
             max_length=30,
-            validators=[RegexValidator(r'^[\w.+-]+$')],  # is the same as Django UsernameValidator except for '@' symbol
+            validators=[RegexValidator(r'^[\w.+-]+$')
+                        ],    # is the same as Django UsernameValidator except for '@' symbol
             help_text="30 characters or fewer. Can contain: letters, digits, underscores, dots, dashes and plus signs.",
-            error_messages={'invalid': "This value must contain only letters, digits, underscores, dots, dashes and "
-                                       "plus signs."},
-            required=required)
+            error_messages={
+                'invalid': "This value must contain only letters, digits, underscores, dots, dashes and "
+                           "plus signs."
+            },
+            required=required
+        )
 
 
 def username_taken_by_other_user(username):
@@ -198,12 +207,14 @@ class RegistrationForm(forms.Form):
     email2 = forms.EmailField(label=False, help_text=False, max_length=254)
     password1 = forms.CharField(label=False, help_text=False, widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
-        label=mark_safe('Check this box to accept our <a href="/help/tos_web/" target="_blank">terms of '
-                        'use</a> and the <a href="/help/privacy/" target="_blank">privacy policy</a>'),
+        label=mark_safe(
+            'Check this box to accept our <a href="/help/tos_web/" target="_blank">terms of '
+            'use</a> and the <a href="/help/privacy/" target="_blank">privacy policy</a>'
+        ),
         required=True,
         error_messages={'required': 'You must accept the terms of use in order to register to Freesound'}
     )
-    recaptcha = ReCaptchaField(label="")  # Note that this field needs to be the last to appear last in the form
+    recaptcha = ReCaptchaField(label="")    # Note that this field needs to be the last to appear last in the form
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(auto_id='id_%s_registration'))
@@ -251,13 +262,9 @@ class RegistrationForm(forms.Form):
         email = self.cleaned_data["email1"]
         password = self.cleaned_data["password1"]
 
-        # NOTE: we create user "manually" instead of using "create_user" as we don't want 
+        # NOTE: we create user "manually" instead of using "create_user" as we don't want
         # is_active to be set to True automatically
-        user = User(username=username,
-                    email=email,
-                    is_staff=False,
-                    is_active=False,
-                    is_superuser=False)
+        user = User(username=username, email=email, is_staff=False, is_active=False, is_superuser=False)
         user.set_password(password)
         user.save()
         return user
@@ -280,10 +287,14 @@ class FsAuthenticationForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.error_messages.update({
-            'inactive': mark_safe("You are trying to log in with an inactive account, please <a href=\"%s\">activate "
-                                  "your account</a> first." % reverse("accounts-resend-activation")),
-            'invalid_login': "Please enter a correct username/email and password. "
-                             "Note that passwords are case-sensitive.",
+            'inactive':
+                mark_safe(
+                    "You are trying to log in with an inactive account, please <a href=\"%s\">activate "
+                    "your account</a> first." % reverse("accounts-resend-activation")
+                ),
+            'invalid_login':
+                "Please enter a correct username/email and password. "
+                "Note that passwords are case-sensitive.",
         })
         self.fields['username'].label = False
         self.fields['username'].widget.attrs['placeholder'] = 'Enter your email or username'
@@ -299,9 +310,10 @@ class ProfileForm(forms.ModelForm):
 
     username = UsernameField(required=False)
     about = HtmlCleaningCharFieldWithCenterTag(
-        widget=forms.Textarea(attrs=dict(rows=20, cols=70)), 
-        required=False, 
-        help_text=HtmlCleaningCharFieldWithCenterTag.make_help_text())
+        widget=forms.Textarea(attrs=dict(rows=20, cols=70)),
+        required=False,
+        help_text=HtmlCleaningCharFieldWithCenterTag.make_help_text()
+    )
     signature = HtmlCleaningCharField(
         label="Forum signature",
         help_text=HtmlCleaningCharField.make_help_text(),
@@ -315,28 +327,32 @@ class ProfileForm(forms.ModelForm):
         help_text="""Your sound signature is added to the end of each of your sound 
             descriptions. If you change the sound signature it will be automatically updated on all of your sounds. 
             Use the special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed 
-            and <code>${sound_id}</code> to refer to the id of the current sound. """ + HtmlCleaningCharField.make_help_text(),
+            and <code>${sound_id}</code> to refer to the id of the current sound. """ +
+        HtmlCleaningCharField.make_help_text(),
         required=False,
         max_length=256,
     )
-    is_adult = forms.BooleanField(label="I'm an adult, I don't want to see inappropriate content warnings",
-                                  help_text=False, required=False)
+    is_adult = forms.BooleanField(
+        label="I'm an adult, I don't want to see inappropriate content warnings", help_text=False, required=False
+    )
     not_shown_in_online_users_list = forms.BooleanField(
-        help_text="Hide from \"users currently online\" list in the People page",
-        label="",
-        required=False
+        help_text="Hide from \"users currently online\" list in the People page", label="", required=False
     )
 
     allow_simultaneous_playback = forms.BooleanField(
-        label="Allow simultaneous audio playback", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
+        label="Allow simultaneous audio playback",
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'})
+    )
     prefer_spectrograms = forms.BooleanField(
-        label="Show spectrograms in sound players by default", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))    
+        label="Show spectrograms in sound players by default",
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'})
+    )
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
-        kwargs.update(initial={
-            'username': request.user.username
-        })
+        kwargs.update(initial={'username': request.user.username})
         kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
 
@@ -426,8 +442,10 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ('username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', 
-            'allow_simultaneous_playback', 'prefer_spectrograms', 'ui_theme_preference' )
+        fields = (
+            'username', 'home_page', 'about', 'signature', 'sound_signature', 'is_adult', 'allow_simultaneous_playback',
+            'prefer_spectrograms', 'ui_theme_preference'
+        )
 
     def get_img_check_fields(self):
         """ Returns fields that should show JS notification for unsafe `img` sources links (http://) """
@@ -455,7 +473,7 @@ DELETE_CHOICES = [('only_user', mark_safe('<span>Delete only my user account inf
 
 class DeleteUserForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())
-    delete_sounds = forms.ChoiceField(label=False,  choices=DELETE_CHOICES, widget=forms.RadioSelect())
+    delete_sounds = forms.ChoiceField(label=False, choices=DELETE_CHOICES, widget=forms.RadioSelect())
     password = forms.CharField(label="Confirm your password", widget=forms.PasswordInput)
 
     def clean_password(self):
@@ -485,10 +503,7 @@ class DeleteUserForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.user_id = kwargs.pop('user_id')
         encrypted_link = sign_with_timestamp(self.user_id)
-        kwargs['initial'] = {
-                'delete_sounds': 'only_user',
-                'encrypted_link': encrypted_link
-                }
+        kwargs['initial'] = {'delete_sounds': 'only_user', 'encrypted_link': encrypted_link}
         kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
 
@@ -501,10 +516,7 @@ class DeleteUserForm(forms.Form):
 
 class EmailSettingsForm(forms.Form):
     email_types = forms.ModelMultipleChoiceField(
-        queryset=EmailPreferenceType.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-        label=False
+        queryset=EmailPreferenceType.objects.all(), widget=forms.CheckboxSelectMultiple, required=False, label=False
     )
 
     def __init__(self, *args, **kwargs):
@@ -536,7 +548,8 @@ class FsPasswordResetForm(forms.Form):
             password hash that django understands)
         """
         UserModel = get_user_model()
-        active_users = UserModel._default_manager.filter(Q(**{
+        active_users = UserModel._default_manager.filter(
+            Q(**{
                 f'{UserModel.get_email_field_name()}__iexact': username_or_email,
                 'is_active': True,
             }) | Q(**{
@@ -546,12 +559,18 @@ class FsPasswordResetForm(forms.Form):
         )
         return (u for u in active_users)
 
-    def save(self, domain_override=None,
-             subject_template_name='emails/password_reset_subject.txt',
-             email_template_name='emails/password_reset_email.html',
-             use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None, html_email_template_name=None,
-             extra_email_context=None):
+    def save(
+        self,
+        domain_override=None,
+        subject_template_name='emails/password_reset_subject.txt',
+        email_template_name='emails/password_reset_email.html',
+        use_https=False,
+        token_generator=default_token_generator,
+        from_email=None,
+        request=None,
+        html_email_template_name=None,
+        extra_email_context=None
+    ):
         """
         Generates a one-use only link for resetting password and sends to the
         user.
@@ -577,8 +596,12 @@ class FsPasswordResetForm(forms.Form):
                 context.update(extra_email_context)
             dj_auth_form = PasswordResetForm()
             dj_auth_form.send_mail(
-                subject_template_name, email_template_name, context, from_email,
-                user.email, html_email_template_name=html_email_template_name,
+                subject_template_name,
+                email_template_name,
+                context,
+                from_email,
+                user.email,
+                html_email_template_name=html_email_template_name,
             )
 
 

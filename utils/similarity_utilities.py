@@ -69,9 +69,21 @@ def get_similar_sounds(sound, preset=DEFAULT_PRESET, num_results=settings.SOUNDS
     return similar_sounds[0:num_results], count
 
 
-def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, target_file=None, in_ids=None):
+def api_search(
+    target=None,
+    filter=None,
+    preset=None,
+    metric_descriptor_names=None,
+    num_results=None,
+    offset=None,
+    target_file=None,
+    in_ids=None
+):
 
-    cache_key = 'api-search-t-{}-f-{}-nr-{}-o-{}'.format(str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results, offset)
+    cache_key = 'api-search-t-{}-f-{}-nr-{}-o-{}'.format(
+        str(target).replace(" ", ""),
+        str(filter).replace(" ", ""), num_results, offset
+    )
     cache_key = hash_cache_key(cache_key)
     note = False
     if in_ids:
@@ -94,7 +106,7 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
         if target_file:
             # If there is a file attahced, set the file as the target
             target_type = 'file'
-            target = None  # If target is given as a file, we set target to None (just in case)
+            target = None    # If target is given as a file, we set target to None (just in case)
         else:
             # In case there is no file, if the string target represents an integer value, then target is a sound_id, otherwise target is descriptor_values
             if target.isdigit():
@@ -132,14 +144,18 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
     # Check if at least some sound analysis data is already on cache
     not_cached_sound_ids = sound_ids[:]
     for id in sound_ids:
-        analysis_data = cache.get(hash_cache_key(cache_key % (str(id), ",".join(sorted(descriptor_names)), str(normalization))))
+        analysis_data = cache.get(
+            hash_cache_key(cache_key % (str(id), ",".join(sorted(descriptor_names)), str(normalization)))
+        )
         if analysis_data:
             cached_data[str(id)] = analysis_data
             # remove id form list so it is not included in similarity request
             not_cached_sound_ids.remove(id)
     if not_cached_sound_ids:
         try:
-            returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors)
+            returned_data = Similarity.get_sounds_descriptors(
+                not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors
+            )
         except Exception as e:
             web_logger.info('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
                             (e, traceback.format_exc()))
@@ -149,8 +165,10 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
 
     # save sound analysis information in cache
     for key, item in returned_data.items():
-        cache.set(hash_cache_key(cache_key % (key, ",".join(sorted(descriptor_names)), str(normalization))),
-                  item, SIMILARITY_CACHE_TIME)
+        cache.set(
+            hash_cache_key(cache_key % (key, ",".join(sorted(descriptor_names)), str(normalization))), item,
+            SIMILARITY_CACHE_TIME
+        )
 
     returned_data.update(cached_data)
 
@@ -162,7 +180,7 @@ def delete_sound_from_gaia(sound_id):
     try:
         Similarity.delete(sound_id)
     except Exception as e:
-       web_logger.warning("Could not delete sound from gaia with id %d (%s)" % (sound_id, str(e)))
+        web_logger.warning("Could not delete sound from gaia with id %d (%s)" % (sound_id, str(e)))
 
 
 def hash_cache_key(key):

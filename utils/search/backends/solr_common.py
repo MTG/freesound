@@ -43,8 +43,18 @@ class SolrQuery:
     def set_query(self, query):
         self.params['q'] = query
 
-    def set_dismax_query(self, query, query_fields=None, minimum_match=None, phrase_fields=None, phrase_slop=None,
-                         query_phrase_slop=None, tie_breaker=None, boost_query=None, boost_functions=None):
+    def set_dismax_query(
+        self,
+        query,
+        query_fields=None,
+        minimum_match=None,
+        phrase_fields=None,
+        phrase_slop=None,
+        query_phrase_slop=None,
+        tie_breaker=None,
+        boost_query=None,
+        boost_functions=None
+    ):
         """Created a dismax query: http://wiki.apache.org/solr/DisMaxRequestHandler
         The DisMaxRequestHandler is designed to process simple user entered phrases (without heavy syntax) and search for the individual words
         across several fields using different weighting (boosts) based on the significance of each field. Additional options let you influence
@@ -112,8 +122,16 @@ class SolrQuery:
         self.params['facet.query'] = query
 
     # set global faceting options for regular fields
-    def set_facet_options_default(self, limit=None, offset=None, prefix=None, sort=None, mincount=None,
-                                  count_missing=None, enum_cache_mindf=None):
+    def set_facet_options_default(
+        self,
+        limit=None,
+        offset=None,
+        prefix=None,
+        sort=None,
+        mincount=None,
+        count_missing=None,
+        enum_cache_mindf=None
+    ):
         """Set default facet options: these will be applied to all facets, but overridden by particular options (see set_facet_options())
         prefix: retun only facets with this prefix
         sort: sort facets, True or False
@@ -132,8 +150,9 @@ class SolrQuery:
         self.params['facet.enum.cache.minDf'] = enum_cache_mindf
 
     # set faceting options for one particular field
-    def set_facet_options(self, field, prefix=None, sort=None, limit=None, offset=None, mincount=None,
-                          count_missing=None):
+    def set_facet_options(
+        self, field, prefix=None, sort=None, limit=None, offset=None, mincount=None, count_missing=None
+    ):
         """Set facet options for one particular field... see set_facet_options_default() for parameter explanation
         """
         try:
@@ -187,11 +206,24 @@ class SolrQuery:
         self.params[f'f.{field}.date.hardend'] = hardened
         self.params[f'f.{field}.date.other'] = count_other
 
-    def set_highlighting_options_default(self, field_list=None, snippets=None, fragment_size=None,
-                                         merge_contiguous=None, require_field_match=None, max_analyzed_chars=None,
-                                         alternate_field=None, max_alternate_field_length=None, pre=None, post=None,
-                                         fragmenter=None, use_phrase_highlighter=None, regex_slop=None,
-                                         regex_pattern=None, regex_max_analyzed_chars=None):
+    def set_highlighting_options_default(
+        self,
+        field_list=None,
+        snippets=None,
+        fragment_size=None,
+        merge_contiguous=None,
+        require_field_match=None,
+        max_analyzed_chars=None,
+        alternate_field=None,
+        max_alternate_field_length=None,
+        pre=None,
+        post=None,
+        fragmenter=None,
+        use_phrase_highlighter=None,
+        regex_slop=None,
+        regex_pattern=None,
+        regex_max_analyzed_chars=None
+    ):
         """Set default highlighting options: these will be applied to all highlighting, but overridden by particular options (see set_highlighting_options())
         field_list: list of fields to highlight space separated
         snippets: number of snippets to generate
@@ -227,8 +259,16 @@ class SolrQuery:
         self.params['hl.regex.pattern'] = regex_pattern
         self.params['hl.regex.maxAnalyzedChars'] = regex_max_analyzed_chars
 
-    def set_highlighting_options(self, field, snippets=None, fragment_size=None, merge_contiguous=None,
-                                 alternate_field=None, pre=None, post=None):
+    def set_highlighting_options(
+        self,
+        field,
+        snippets=None,
+        fragment_size=None,
+        merge_contiguous=None,
+        alternate_field=None,
+        pre=None,
+        post=None
+    ):
         """Set highlighting options for one particular field... see set_highlighting_options_default() for parameter explanation
         """
         try:
@@ -250,9 +290,22 @@ class SolrQuery:
     def set_group_field(self, group_field=None):
         self.params['group.field'] = group_field
 
-    def set_group_options(self, group_func=None, group_query=None, group_rows=10, group_start=0, group_limit=1,
-                          group_offset=0, group_sort=None, group_sort_ingroup=None, group_format='grouped',
-                          group_main=False, group_num_groups=True, group_cache_percent=0, group_truncate=False):
+    def set_group_options(
+        self,
+        group_func=None,
+        group_query=None,
+        group_rows=10,
+        group_start=0,
+        group_limit=1,
+        group_offset=0,
+        group_sort=None,
+        group_sort_ingroup=None,
+        group_format='grouped',
+        group_main=False,
+        group_num_groups=True,
+        group_cache_percent=0,
+        group_truncate=False
+    ):
         self.params['group'] = True
         self.params['group.func'] = group_func
         self.params['group.query'] = group_query
@@ -278,6 +331,7 @@ class SolrQuery:
 
 
 class SolrResponseInterpreter:
+
     def __init__(self, response, next_page_query=None):
         if "grouped" in response:
             if "thread_title_grouped" in list(response["grouped"].keys()):
@@ -308,7 +362,6 @@ class SolrResponseInterpreter:
             self.facets = response["facet_counts"]["facet_fields"]
         except KeyError:
             self.facets = {}
-
         """Facets are given in a list: [facet, number, facet, number, None, number] where the last one
         is the missing field count. Converting all of them to a dict for easier usage:
         {facet:number, facet:number, ..., None:number}

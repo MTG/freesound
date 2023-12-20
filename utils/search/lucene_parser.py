@@ -22,7 +22,6 @@ import collections
 import pyparsing as pp
 from pyparsing import pyparsing_common as ppc
 
-
 pp.ParserElement.enablePackrat()
 
 COLON, LBRACK, RBRACK, LBRACE, RBRACE, TILDE, CARAT = list(map(pp.Literal, ":[]{}~^"))
@@ -32,12 +31,8 @@ keyword = and_ | or_ | not_ | to_
 
 expression = pp.Forward()
 
-valid_word = pp.Regex(
-    r'([a-zA-Z0-9*_+.-]|\\\\|\\([+\-!(){}\[\]^"~*?:]|\|\||&&))+'
-).setName("word")
-valid_word.setParseAction(
-    lambda t: t[0].replace("\\\\", chr(127)).replace("\\", "").replace(chr(127), "\\")
-)
+valid_word = pp.Regex(r'([a-zA-Z0-9*_+.-]|\\\\|\\([+\-!(){}\[\]^"~*?:]|\|\||&&))+').setName("word")
+valid_word.setParseAction(lambda t: t[0].replace("\\\\", chr(127)).replace("\\", "").replace(chr(127), "\\"))
 
 string = pp.QuotedString('"', unquoteResults=False)
 alphanums_plus = pp.alphanums + '_'
@@ -62,9 +57,8 @@ geotag_filter = pp.Literal("'{!") + pp.Word(' ' + '=' + ',' + alphanum_float_plu
 string_expr = pp.Group(string + proximity_modifier) | string
 word_expr = pp.Group(valid_word + fuzzy_modifier) | valid_word
 term << (
-    pp.Optional(field_name("field") + COLON)
-    + (word_expr | string_expr | range_search | pp.Group(LPAR + expression + RPAR))
-    + pp.Optional(boost)
+    pp.Optional(field_name("field") + COLON) +
+    (word_expr | string_expr | range_search | pp.Group(LPAR + expression + RPAR)) + pp.Optional(boost)
 )
 term.setParseAction(lambda t: [t] if "field" in t or "boost" in t else None)
 
@@ -134,9 +128,7 @@ def parse_query_filter_string(filter_query):
         filter_list_str = flatten_sub(filter_list_str)
 
         # remove empty filter values
-        filter_list_str = [
-            filter_str for filter_str in filter_list_str if filter_str[-1] != ":"
-        ]
+        filter_list_str = [filter_str for filter_str in filter_list_str if filter_str[-1] != ":"]
         return filter_list_str
     else:
         return []

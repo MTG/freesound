@@ -42,14 +42,17 @@ from utils import loadFromJson, saveToJson
 
 def server_interface(resource):
     return {
-        'recommend_tags': resource.recommend_tags,  # input_tags (tags separated by commas), max_number_of_tags (optional)
+        'recommend_tags':
+            resource.recommend_tags,    # input_tags (tags separated by commas), max_number_of_tags (optional)
         'reload': resource.reload,
         'last_indexed_id': resource.last_indexed_id,
-        'add_to_index': resource.add_to_index,  # sound_ids (str separated by commas), sound_tagss (sets of tags separated by #)
+        'add_to_index':
+            resource.add_to_index,    # sound_ids (str separated by commas), sound_tagss (sets of tags separated by #)
     }
 
 
 class TagRecommendationServer(resource.Resource):
+
     def __init__(self):
         resource.Resource.__init__(self)
         self.methods = server_interface(self)
@@ -60,7 +63,8 @@ class TagRecommendationServer(resource.Resource):
     def load(self):
         try:
             tag_recommendation_data = loadFromJson(
-                tr_settings.RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json')
+                tr_settings.RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json'
+            )
             DATABASE = tag_recommendation_data['database']
             CLASSES = tag_recommendation_data['classes']
             self.cbtr = CommunityBasedTagRecommender(dataset=DATABASE, classes=CLASSES)
@@ -68,12 +72,13 @@ class TagRecommendationServer(resource.Resource):
 
         except:
             self.cbtr = None
-            logger.info("No computed matrices were found, recommendation system not loading for the moment ("
-                        "but service listening for data to come).")
+            logger.info(
+                "No computed matrices were found, recommendation system not loading for the moment ("
+                "but service listening for data to come)."
+            )
 
         try:
-            self.index_stats = loadFromJson(
-                tr_settings.RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
+            self.index_stats = loadFromJson(tr_settings.RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
             logger.info("Matrices computed out of information from %i sounds" % self.index_stats['n_sounds_in_matrix'])
         except Exception as e:
             print(e)
@@ -91,7 +96,7 @@ class TagRecommendationServer(resource.Resource):
             self.index_stats['n_sounds_in_index'] = 0
             self.index = dict()
 
-    def error(self,message):
+    def error(self, message):
         return json.dumps({'Error': message})
 
     def getChild(self, name, request):
@@ -107,8 +112,7 @@ class TagRecommendationServer(resource.Resource):
             input_tags = input_tags[0].split(",")
             if max_number_of_tags:
                 max_number_of_tags = int(max_number_of_tags[0])
-            recommended_tags, com_name = self.cbtr.recommend_tags(input_tags,
-                                                                  max_number_of_tags=max_number_of_tags)
+            recommended_tags, com_name = self.cbtr.recommend_tags(input_tags, max_number_of_tags=max_number_of_tags)
             result = {'error': False, 'result': {'tags': recommended_tags, 'community': com_name}}
 
         except Exception as e:
@@ -125,10 +129,12 @@ class TagRecommendationServer(resource.Resource):
 
     def last_indexed_id(self):
         result = {'error': False, 'result': self.index_stats['biggest_id_in_index']}
-        logger.info('Getting last indexed id information (%i, %i sounds in index, %i sounds in matrix)'
-                    % (self.index_stats['biggest_id_in_index'],
-                       self.index_stats['n_sounds_in_index'],
-                       self.index_stats['n_sounds_in_matrix']))
+        logger.info(
+            'Getting last indexed id information (%i, %i sounds in index, %i sounds in matrix)' % (
+                self.index_stats['biggest_id_in_index'], self.index_stats['n_sounds_in_index'],
+                self.index_stats['n_sounds_in_matrix']
+            )
+        )
         return json.dumps(result)
 
     def add_to_index(self, sound_ids, sound_tagss):
@@ -161,7 +167,10 @@ if __name__ == '__main__':
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     if tr_settings.LOG_TO_FILE:
         handler = ConcurrentRotatingFileHandler(
-            tr_settings.LOGFILE, mode="a", maxBytes=2 * 1024 * 1024, backupCount=5,
+            tr_settings.LOGFILE,
+            mode="a",
+            maxBytes=2 * 1024 * 1024,
+            backupCount=5,
         )
         handler.setLevel(logging.DEBUG)
         handler.setFormatter(formatter)

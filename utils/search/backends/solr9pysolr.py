@@ -31,6 +31,7 @@ SOLR_SOUNDS_URL = f"{settings.SOLR9_BASE_URL}/freesound"
 
 
 class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
+
     def __init__(self, sounds_index_url=None, forum_index_url=None):
         if sounds_index_url is None:
             sounds_index_url = SOLR_SOUNDS_URL
@@ -38,7 +39,6 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
             forum_index_url = SOLR_FORUM_URL
         self.sounds_index_url = sounds_index_url
         self.forum_index_url = forum_index_url
-
 
     def get_sounds_index(self):
         if self.sounds_index is None:
@@ -59,7 +59,6 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
                 always_commit=True
             )
         return self.forum_index
-
 
     def search_process_filter(self, query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
         """Process the filter to make a number of adjustments
@@ -98,7 +97,9 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
         if 'geotag:"Intersects(' in query_filter:
             # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
             #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
-            query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+            query_filter = re.sub(
+                'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter
+            )
 
         query_filter = solr555pysolr.search_filter_make_intersection(query_filter)
 

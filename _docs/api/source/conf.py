@@ -85,7 +85,6 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
-
 # -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
@@ -159,7 +158,6 @@ html_static_path = ['_static']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'FreesoundAPIdoc'
 
-
 # -- Options for LaTeX output --------------------------------------------------
 
 # The paper size ('letter' or 'a4').
@@ -171,23 +169,22 @@ htmlhelp_basename = 'FreesoundAPIdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'FreesoundAPI.tex', 'Freesound API Documentation',
-   'Frederic Font', 'manual'),
+    ('index', 'FreesoundAPI.tex', 'Freesound API Documentation', 'Frederic Font', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
 #latex_logo = None
 
-# For "manual" documents, if this is true, then toplevel headings are parts,
-# not chapters.
-#latex_use_parts = False
+    # For "manual" documents, if this is true, then toplevel headings are parts,
+    # not chapters.
+    #latex_use_parts = False
 
-# Additional stuff for the LaTeX preamble.
-#latex_preamble = ''
+    # Additional stuff for the LaTeX preamble.
+    #latex_preamble = ''
 
-# Documents to append as an appendix to all manuals.
-#latex_appendices = []
+    # Documents to append as an appendix to all manuals.
+    #latex_appendices = []
 
-# If false, no module index is generated.
-#latex_use_modindex = True
+    # If false, no module index is generated.
+    #latex_use_modindex = True

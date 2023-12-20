@@ -23,5 +23,9 @@ from django.urls import re_path
 import ratings.views
 
 urlpatterns = [
-    re_path(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/rate/(?P<rating>\d)/$', ratings.views.rate_sound, name="sound-rating-add"),
+    re_path(
+        r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/rate/(?P<rating>\d)/$',
+        ratings.views.rate_sound,
+        name="sound-rating-add"
+    ),
 ]

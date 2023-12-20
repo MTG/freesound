@@ -35,7 +35,7 @@ from time import time
 
 from . import clustering_settings as clust_settings
 
-# The following packages are only needed if the running process is configured to be a Celery worker. 
+# The following packages are only needed if the running process is configured to be a Celery worker.
 # We avoid importing them in appservers to avoid having to install unneeded dependencies.
 if settings.IS_CELERY_WORKER:
     import community as com
@@ -65,6 +65,7 @@ class ClusteringEngine(object):
     method. Moreover, a few unsued alternative methods for performing some intermediate steps are left 
     here for developement and research purpose.
     """
+
     def __init__(self):
         self.feature_store = FeaturesStore()
 
@@ -129,7 +130,7 @@ class ClusteringEngine(object):
         """
         reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(partition)
         return metrics.calinski_harabaz_score(reference_features, clusters)
-    
+
     def _davies_idx_reference_features_clusters(self, partition):
         """Computes the Davies-Bouldin score between reference features and the given clustering classes.
 
@@ -158,7 +159,9 @@ class ClusteringEngine(object):
         # we compute the evaluation metrics only if some reference features are available for evaluation
         # we return None when they are not available not to break the following part of the code
         if clust_settings.REFERENCE_FEATURES in clust_settings.AVAILABLE_FEATURES:
-            reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(partition)
+            reference_features, clusters = self._prepare_clustering_result_and_reference_features_for_evaluation(
+                partition
+            )
             ami = np.average(mutual_info_classif(reference_features, clusters, discrete_features=True))
             ss = metrics.silhouette_score(reference_features, clusters, metric='euclidean')
             ci = metrics.calinski_harabaz_score(reference_features, clusters)
@@ -183,10 +186,15 @@ class ClusteringEngine(object):
         # counts the number of edges inside a community
         intra_community_edges = [graph.subgraph(block).size() for block in communities]
         # counts the number of edges from nodes in a community to nodes inside or outside the same community
-        total_community_edges = [sum([graph.degree(node_id) for node_id in community])-intra_community_edges[i] 
-                                                            for i, community in enumerate(communities)]
+        total_community_edges = [
+            sum([graph.degree(node_id)
+                 for node_id in community]) - intra_community_edges[i]
+            for i, community in enumerate(communities)
+        ]
         # ratio (high value -> good cluster)
-        ratio_intra_community_edges = [round(a/float(b), 2) for a,b in zip(intra_community_edges, total_community_edges)]
+        ratio_intra_community_edges = [
+            round(a / float(b), 2) for a, b in zip(intra_community_edges, total_community_edges)
+        ]
 
         return ratio_intra_community_edges
 
@@ -204,17 +212,21 @@ class ClusteringEngine(object):
             Dict{Int: Float}: Dict containing the community centrality value for each sound 
                 ({<sound_id>: <community_centrality>}).
         """
-        # 
+        #
         subgraphs = [graph.subgraph(community) for community in communities]
         communities_centralities = [nx.algorithms.centrality.degree_centrality(subgraph) for subgraph in subgraphs]
 
         # merge and normalize in each community
-        node_community_centralities = {k: old_div(v,max(d.values())) for d in communities_centralities for k, v in d.items()}
+        node_community_centralities = {
+            k: old_div(v, max(d.values())) for d in communities_centralities for k, v in d.items()
+        }
 
         return node_community_centralities
-    
-    def _save_results_to_file(self, query_params, features, graph_json, sound_ids, modularity, 
-                              num_communities, ratio_intra_community_edges, ami, ss, ci, communities):
+
+    def _save_results_to_file(
+        self, query_params, features, graph_json, sound_ids, modularity, num_communities, ratio_intra_community_edges,
+        ami, ss, ci, communities
+    ):
         """Saves a json file to disk containing the clustering results information listed below.
 
         This is used when developing the clustering method. The results and the evaluation metrics are made accessible 
@@ -236,7 +248,7 @@ class ClusteringEngine(object):
         """
         if clust_settings.SAVE_RESULTS_FOLDER:
             result = {
-                'query_params' : query_params,
+                'query_params': query_params,
                 'sound_ids': sound_ids,
                 'num_clusters': num_communities,
                 'graph': graph_json,
@@ -248,10 +260,7 @@ class ClusteringEngine(object):
                 'calinski_harabaz_score': ci,
                 'communities': communities
             }
-            with open(os.path.join(
-                clust_settings.SAVE_RESULTS_FOLDER, 
-                f'{query_params}.json'
-            ), 'w') as f:
+            with open(os.path.join(clust_settings.SAVE_RESULTS_FOLDER, f'{query_params}.json'), 'w') as f:
                 json.dump(result, f)
 
     def create_knn_graph(self, sound_ids_list, features=clust_settings.DEFAULT_FEATURES):
@@ -265,10 +274,10 @@ class ClusteringEngine(object):
         Returns:
             (nx.Graph): NetworkX graph representation of sounds.
         """
-        # Create k nearest neighbors graph        
+        # Create k nearest neighbors graph
         graph = nx.Graph()
         graph.add_nodes_from(sound_ids_list)
-        # we set k to log2(N), where N is the number of elements to cluster. This allows us to reach a sufficient number of 
+        # we set k to log2(N), where N is the number of elements to cluster. This allows us to reach a sufficient number of
         # neighbors for small collections, while limiting it for larger collections, which ensures low-computational complexity.
         k = int(np.ceil(np.log2(len(sound_ids_list))))
 
@@ -305,7 +314,9 @@ class ClusteringEngine(object):
         for i, node_i in enumerate(knn_graph.nodes):
             for j, node_j in enumerate(knn_graph.nodes):
                 if j > i:
-                    num_common_neighbors = len(set(knn_graph.neighbors(node_i)).intersection(knn_graph.neighbors(node_j)))
+                    num_common_neighbors = len(
+                        set(knn_graph.neighbors(node_i)).intersection(knn_graph.neighbors(node_j))
+                    )
                     if num_common_neighbors > 0:
                         graph.add_edge(node_i, node_j, weight=num_common_neighbors)
 
@@ -339,14 +350,14 @@ class ClusteringEngine(object):
                 {<sound_id>: <class_idx>}, the number of communities (clusters), the sound ids in the communities and
                 the modularity of the graph partition.
         
-        """ 
+        """
         # Community detection in the graph
-        partition  = com.best_partition(graph)
+        partition = com.best_partition(graph)
         num_communities = max(partition.values()) + 1
-        communities = [[key for key, value in six.iteritems(partition ) if value == i] for i in range(num_communities)]
+        communities = [[key for key, value in six.iteritems(partition) if value == i] for i in range(num_communities)]
 
         # overall quality (modularity of the partition)
-        modularity = com.modularity(partition , graph)
+        modularity = com.modularity(partition, graph)
 
         return partition, num_communities, communities, modularity
 
@@ -364,13 +375,13 @@ class ClusteringEngine(object):
             Tuple(Dict{Int: Int}, int, List[List[Int]], None): 4-element tuple containing the clustering classes for each sound 
                 {<sound_id>: <class_idx>}, the number of communities (clusters), the sound ids in the communities and
                 None.
-        """ 
+        """
         communities = [list(community) for community in k_clique_communities(graph, k)]
         # communities = [list(community) for community in greedy_modularity_communities(graph)]
         num_communities = len(communities)
         partition = {sound_id: cluster_id for cluster_id, cluster in enumerate(communities) for sound_id in cluster}
 
-        return  partition, num_communities, communities, None
+        return partition, num_communities, communities, None
 
     def remove_lowest_quality_cluster(self, graph, partition, communities, ratio_intra_community_edges):
         """Removes the lowest quality cluster in the given graph.
@@ -417,12 +428,15 @@ class ClusteringEngine(object):
         """
         start_time = time()
         sound_ids = [str(s) for s in sound_ids]
-        logger.info('Request clustering of {} points: {} ... from the query "{}"'
-                .format(len(sound_ids), ', '.join(sound_ids[:20]), json.dumps(query_params)))
+        logger.info(
+            'Request clustering of {} points: {} ... from the query "{}"'.format(
+                len(sound_ids), ', '.join(sound_ids[:20]), json.dumps(query_params)
+            )
+        )
 
         graph = self.create_knn_graph(sound_ids, features=features)
 
-        if len(graph.nodes) == 0:  # the graph does not contain any node
+        if len(graph.nodes) == 0:    # the graph does not contain any node
             return {'error': False, 'result': None, 'graph': None}
 
         partition, num_communities, communities, modularity = self.cluster_graph(graph)
@@ -447,20 +461,25 @@ class ClusteringEngine(object):
         ami, ss, ci = self._evaluation_metrics(partition)
 
         end_time = time()
-        logger.info('Clustering done! It took {} seconds. '
-                    'Modularity: {}, '
-                    'Average ratio_intra_community_edges: {}, '
-                    'Average Mutual Information with reference: {}, '
-                    'Silouhette Coefficient with reference: {}, '
-                    'Calinski Index with reference: {}, '
-                    'Davies Index with reference: {}'
-                    .format(end_time-start_time, modularity, np.mean(ratio_intra_community_edges), ami, ss, ci, None))
+        logger.info(
+            'Clustering done! It took {} seconds. '
+            'Modularity: {}, '
+            'Average ratio_intra_community_edges: {}, '
+            'Average Mutual Information with reference: {}, '
+            'Silouhette Coefficient with reference: {}, '
+            'Calinski Index with reference: {}, '
+            'Davies Index with reference: {}'.format(
+                end_time - start_time, modularity, np.mean(ratio_intra_community_edges), ami, ss, ci, None
+            )
+        )
 
         # Export graph as json
         graph_json = json_graph.node_link_data(graph)
 
         # Save results to file if SAVE_RESULTS_FOLDER is configured in clustering settings
-        self._save_results_to_file(query_params, features, graph_json, sound_ids, modularity, 
-                                   num_communities, ratio_intra_community_edges, ami, ss, ci, communities)
+        self._save_results_to_file(
+            query_params, features, graph_json, sound_ids, modularity, num_communities, ratio_intra_community_edges,
+            ami, ss, ci, communities
+        )
 
         return {'error': False, 'result': communities, 'graph': graph_json}

@@ -43,8 +43,8 @@ class Command(LoggingBaseCommand):
         user_ids_not_properly_deleted = []
         for user_deletion_request in UserDeletionRequest.objects.filter(
                 status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
-                last_updated__lt=datetime.datetime.now()
-                                 - datetime.timedelta(hours=settings.CHECK_ASYNC_DELETED_USERS_HOURS_BACK)):
+                last_updated__lt=datetime.datetime.now() -
+                datetime.timedelta(hours=settings.CHECK_ASYNC_DELETED_USERS_HOURS_BACK)):
 
             if user_deletion_request.user_to is not None and \
                     not user_deletion_request.user_to.profile.is_anonymized_user:
@@ -57,16 +57,18 @@ class Command(LoggingBaseCommand):
                 user_deletion_request.status = UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED
                 user_deletion_request.save()
 
-
         user_ids_not_properly_deleted = list(set(user_ids_not_properly_deleted))
-        console_logger.info('Found {} users that should have been deleted and were not'.format(
-            len(user_ids_not_properly_deleted)))
+        console_logger.info(
+            'Found {} users that should have been deleted and were not'.format(len(user_ids_not_properly_deleted))
+        )
         for user_id in user_ids_not_properly_deleted:
             # It could be that there are several requests per user, just display info about the first one
             user_deletion_request = UserDeletionRequest.objects.filter(user_to_id=user_id).first()
-            console_logger.info('- User "{0}" with id {1} should have been deleted. Action: "{2}". Reason: "{2}".'
-                .format(user_deletion_request.user_to.username, user_deletion_request.user_to.id,
-                user_deletion_request.triggered_deletion_action, user_deletion_request.triggered_deletion_reason
-            ))
+            console_logger.info(
+                '- User "{0}" with id {1} should have been deleted. Action: "{2}". Reason: "{2}".'.format(
+                    user_deletion_request.user_to.username, user_deletion_request.user_to.id,
+                    user_deletion_request.triggered_deletion_action, user_deletion_request.triggered_deletion_reason
+                )
+            )
 
         self.log_end({'n_users_should_have_been_deleted': len(user_ids_not_properly_deleted)})

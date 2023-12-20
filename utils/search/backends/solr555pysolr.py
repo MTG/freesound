@@ -33,10 +33,8 @@ from utils.text import remove_control_chars
 from utils.search import SearchEngineBase, SearchResults, SearchEngineException
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
 
-
 SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
 SOLR_SOUNDS_URL = f"{settings.SOLR5_BASE_URL}/freesound"
-
 
 # Mapping from db sound field names to solr sound field names
 FIELD_NAMES_MAP = {
@@ -54,7 +52,6 @@ FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_CHANNELS: 'channels',
     settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: 'license'
 }
-
 
 # Map "web" sorting options to solr sorting options
 SORT_OPTIONS_MAP = {
@@ -84,13 +81,7 @@ SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
     list: '_ls',
 }
 
-
-SOLR_SOUND_FACET_DEFAULT_OPTIONS = {
-    'limit': 5,
-    'sort': True,
-    'mincount': 1,
-    'count_missing': False
-}
+SOLR_SOUND_FACET_DEFAULT_OPTIONS = {'limit': 5, 'sort': True, 'mincount': 1, 'count_missing': False}
 
 
 def convert_sound_to_search_engine_document(sound):
@@ -102,8 +93,10 @@ def convert_sound_to_search_engine_document(sound):
     document = {}
 
     # Basic sound fields
-    keep_fields = ['username', 'created', 'is_explicit', 'is_remix', 'num_ratings', 'channels', 'md5',
-                   'was_remixed', 'original_filename', 'duration', 'id', 'num_downloads', 'filesize']
+    keep_fields = [
+        'username', 'created', 'is_explicit', 'is_remix', 'num_ratings', 'channels', 'md5', 'was_remixed',
+        'original_filename', 'duration', 'id', 'num_downloads', 'filesize'
+    ]
     for key in keep_fields:
         document[key] = getattr(sound, key)
     if sound.type == '':
@@ -121,8 +114,8 @@ def convert_sound_to_search_engine_document(sound):
 
     if getattr(sound, "pack_id"):
         document["pack"] = remove_control_chars(getattr(sound, "pack_name"))
-        document["grouping_pack"] = str(getattr(sound, "pack_id")) + "_" + remove_control_chars(
-            getattr(sound, "pack_name"))
+        document["grouping_pack"] = str(getattr(sound, "pack_id")
+                                        ) + "_" + remove_control_chars(getattr(sound, "pack_name"))
     else:
         document["grouping_pack"] = str(getattr(sound, "id"))
 
@@ -176,14 +169,11 @@ def convert_post_to_search_engine_document(post):
         "thread_title": remove_control_chars(post.thread.title),
         "thread_author": post.thread.author.username,
         "thread_created": post.thread.created,
-
         "forum_name": post.thread.forum.name,
         "forum_name_slug": post.thread.forum.name_slug,
-
         "post_author": post.author.username,
         "post_created": post.created,
         "post_body": body,
-
         "num_posts": post.thread.num_posts,
         "has_posts": False if post.thread.num_posts == 0 else True
     }
@@ -201,9 +191,9 @@ def add_solr_suffix_to_dynamic_fieldname(fieldname):
             for _, db_descriptor_key, descriptor_type in descriptors_map:
                 if descriptor_type is not None:
                     dynamic_fields_map[db_descriptor_key] = '{}{}'.format(
-                        db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
+                        db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]
+                    )
     return dynamic_fields_map.get(fieldname, fieldname)
-
 
 
 def add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter):
@@ -219,8 +209,9 @@ def add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter):
             for _, db_descriptor_key, descriptor_type in descriptors_map:
                 if descriptor_type is not None:
                     query_filter = query_filter.replace(
-                        f'{db_descriptor_key}:','{}{}:'.format(
-                            db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
+                        f'{db_descriptor_key}:',
+                        '{}{}:'.format(db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
+                    )
     return query_filter
 
 
@@ -292,7 +283,9 @@ def search_process_filter(query_filter, only_sounds_within_ids=False, only_sound
     if 'geotag:"Intersects(' in query_filter:
         # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
         #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
-        query_filter = re.sub(r'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+        query_filter = re.sub(
+            r'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter
+        )
 
     query_filter = search_filter_make_intersection(query_filter)
 
@@ -309,6 +302,7 @@ def search_process_filter(query_filter, only_sounds_within_ids=False, only_sound
 
 
 class FreesoundSoundJsonEncoder(json.JSONEncoder):
+
     def default(self, value):
         if isinstance(value, datetime):
             return value.strftime('%Y-%m-%dT%H:%M:%S.000Z')
@@ -420,7 +414,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if 'geotag:"Intersects(' in query_filter:
             # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
             #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
-            query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+            query_filter = re.sub(
+                'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter
+            )
 
         query_filter = search_filter_make_intersection(query_filter)
 
@@ -435,41 +431,57 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         return query_filter
 
-    def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
-                      num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
-                      group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
-                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
+    def search_sounds(
+        self,
+        textual_query='',
+        query_fields=None,
+        query_filter='',
+        offset=0,
+        current_page=None,
+        num_sounds=settings.SOUNDS_PER_PAGE,
+        sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+        group_by_pack=False,
+        num_sounds_per_pack_group=1,
+        facets=None,
+        only_sounds_with_pack=False,
+        only_sounds_within_ids=False,
+        group_counts_as_one_in_facets=False
+    ):
 
         query = SolrQuery()
-
 
         # Process search fields: replace "db" field names by solr field names and set default weights if needed
         if query_fields is None:
             # If no fields provided, use the default
             query_fields = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
         if isinstance(query_fields, list):
-            query_fields = [add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)) for field in query_fields]
+            query_fields = [
+                add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)) for field in query_fields
+            ]
         elif isinstance(query_fields, dict):
             # Also remove fields with weight <= 0
             query_fields = [(add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)), weight)
-                for field, weight in query_fields.items() if weight > 0]
+                            for field, weight in query_fields.items()
+                            if weight > 0]
 
         # Set main query options
         query.set_dismax_query(textual_query, query_fields=query_fields)
 
         # Process filter
-        query_filter = self.search_process_filter(query_filter,
-                                                  only_sounds_within_ids=only_sounds_within_ids,
-                                                  only_sounds_with_pack=only_sounds_with_pack)
+        query_filter = self.search_process_filter(
+            query_filter, only_sounds_within_ids=only_sounds_within_ids, only_sounds_with_pack=only_sounds_with_pack
+        )
 
         # Set other query options
         if current_page is not None:
             offset = (current_page - 1) * num_sounds
-        query.set_query_options(start=offset,
-                                rows=num_sounds,
-                                field_list=["id", "score"],  # We only want the sound IDs of the results as we load data from DB
-                                filter_query=query_filter,
-                                sort=search_process_sort(sort))
+        query.set_query_options(
+            start=offset,
+            rows=num_sounds,
+            field_list=["id", "score"],    # We only want the sound IDs of the results as we load data from DB
+            filter_query=query_filter,
+            sort=search_process_sort(sort)
+        )
 
         # Configure facets
         if facets is not None:
@@ -485,9 +497,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             query.set_group_options(
                 group_func=None,
                 group_query=None,
-                group_rows=10,  # TODO: if limit is lower than rows and start=0, this should probably be equal to limit
+                group_rows=10,    # TODO: if limit is lower than rows and start=0, this should probably be equal to limit
                 group_start=0,
-                group_limit=num_sounds_per_pack_group,  # This is the number of documents that will be returned for each group.
+                group_limit=
+                num_sounds_per_pack_group,    # This is the number of documents that will be returned for each group.
                 group_offset=0,
                 group_sort=None,
                 group_sort_ingroup=None,
@@ -495,7 +508,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 group_main=False,
                 group_num_groups=True,
                 group_cache_percent=0,
-                group_truncate=group_counts_as_one_in_facets)
+                group_truncate=group_counts_as_one_in_facets
+            )
 
         # Do the query!
         # Note: we create a SearchResults with the same members as SolrResponseInterpreter (the response from .search()).
@@ -572,38 +586,42 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         response = self.search_forum_posts(query_filter=f'id:{post_id}', offset=0, num_posts=1)
         return response.num_found > 0
 
-    def search_forum_posts(self, textual_query='', query_filter='', sort=settings.SEARCH_FORUM_SORT_DEFAULT, 
-                           offset=0, current_page=None, num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
+    def search_forum_posts(
+        self,
+        textual_query='',
+        query_filter='',
+        sort=settings.SEARCH_FORUM_SORT_DEFAULT,
+        offset=0,
+        current_page=None,
+        num_posts=settings.FORUM_POSTS_PER_PAGE,
+        group_by_thread=True
+    ):
         query = SolrQuery()
-        query.set_dismax_query(textual_query, query_fields=[("thread_title", 4),
-                                                            ("post_body", 3),
-                                                            ("thread_author", 3),
-                                                            ("post_author", 3),
-                                                            ("forum_name", 2)])
-        query.set_highlighting_options_default(field_list=["post_body"],
-                                               fragment_size=200,
-                                               alternate_field="post_body",
-                                               require_field_match=False,
-                                               pre="<strong>",
-                                               post="</strong>")
+        query.set_dismax_query(
+            textual_query,
+            query_fields=[("thread_title", 4), ("post_body", 3), ("thread_author", 3), ("post_author", 3),
+                          ("forum_name", 2)]
+        )
+        query.set_highlighting_options_default(
+            field_list=["post_body"],
+            fragment_size=200,
+            alternate_field="post_body",
+            require_field_match=False,
+            pre="<strong>",
+            post="</strong>"
+        )
         if current_page is not None:
             offset = (current_page - 1) * num_posts
-        query.set_query_options(start=offset,
-                                rows=num_posts,
-                                field_list=["id",
-                                            "score",
-                                            "forum_name",
-                                            "forum_name_slug",
-                                            "thread_id",
-                                            "thread_title",
-                                            "thread_author",
-                                            "thread_created",
-                                            "post_body",
-                                            "post_author",
-                                            "post_created",
-                                            "num_posts"],
-                                filter_query=query_filter,
-                                sort=search_process_sort(sort, forum=True))
+        query.set_query_options(
+            start=offset,
+            rows=num_posts,
+            field_list=[
+                "id", "score", "forum_name", "forum_name_slug", "thread_id", "thread_title", "thread_author",
+                "thread_created", "post_body", "post_author", "post_created", "num_posts"
+            ],
+            filter_query=query_filter,
+            sort=search_process_sort(sort, forum=True)
+        )
 
         if group_by_thread:
             query.set_group_field("thread_title_grouped")

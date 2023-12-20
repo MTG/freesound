@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 from django import template
 from django.contrib.auth.models import User
 

@@ -58,18 +58,21 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id, source
     if created:
         email_to = None if user is not None else email
         send_mail_template(
-                settings.EMAIL_SUBJECT_DONATION_THANK_YOU,
-                'emails/email_donation.txt', {
-                    'user': user,
-                    'amount': amount,
-                    'display_name': display_name
-                    }, user_to=user, email_to=email_to)
+            settings.EMAIL_SUBJECT_DONATION_THANK_YOU,
+            'emails/email_donation.txt', {
+                'user': user,
+                'amount': amount,
+                'display_name': display_name
+            },
+            user_to=user,
+            email_to=email_to
+        )
 
         log_data = donation_data
         log_data.update({'user_id': user_id})
         log_data.update({'created': str(donation.created)})
-        del log_data['user']  # Don't want to serialize user
-        del log_data['campaign']  # Don't want to serialize campaign
+        del log_data['user']    # Don't want to serialize user
+        del log_data['campaign']    # Don't want to serialize campaign
         log_data['amount_float'] = float(log_data['amount'])
         web_logger.info(f'Recevied donation ({json.dumps(log_data)})')
     return True
@@ -89,9 +92,7 @@ def donation_complete_stripe(request):
         event = None
 
         try:
-            event = stripe.Webhook.construct_event(
-              payload, sig_header, endpoint_secret
-            )
+            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
         except ValueError as e:
             # Invalid payload
             return HttpResponse(status=400)
@@ -104,7 +105,7 @@ def donation_complete_stripe(request):
             session = event['data']['object']
 
             # Fulfill the purchase...
-            amount = int(session['display_items'][0]['amount'])/100.0
+            amount = int(session['display_items'][0]['amount']) / 100.0
             encoded_data = session['success_url'].split('?')[1].replace("token=", "")
             if encoded_data.startswith("b'"):
                 encoded_data = encoded_data[2:-1]
@@ -150,12 +151,10 @@ def donation_complete_paypal(request):
             return HttpResponse("FAIL")
 
         if req.text == 'VERIFIED':
-             _save_donation(params['custom'],
-                params['payer_email'],
-                params['mc_gross'],
-                params['mc_currency'],
-                params['txn_id'],
-                'p')
+            _save_donation(
+                params['custom'], params['payer_email'], params['mc_gross'], params['mc_currency'], params['txn_id'],
+                'p'
+            )
     return HttpResponse("OK")
 
 
@@ -180,14 +179,14 @@ def donation_session_stripe(request):
                     'name': 'Freesound donation',
                     'description': 'Donation for freesound.org',
                     'images': ['https://freesound.org/media/images/logo.png'],
-                    'amount': int(amount*100),
+                    'amount': int(amount * 100),
                     'currency': 'eur',
                     'quantity': 1,
                 }],
-              success_url=return_url_success,
-              cancel_url=return_url_cancel,
+                success_url=return_url_success,
+                cancel_url=return_url_cancel,
             )
-            return JsonResponse({"session_id":session.id})
+            return JsonResponse({"session_id": session.id})
         else:
             return JsonResponse({'errors': form.errors})
     # If request is GET return an error 400
@@ -206,18 +205,19 @@ def donation_session_paypal(request):
             amount = form.cleaned_data['amount']
             domain = f"https://{Site.objects.get_current().domain}"
             return_url = urllib.parse.urljoin(domain, reverse('donation-complete-paypal'))
-            data = {"url": settings.PAYPAL_VALIDATION_URL,
-                    "params": {
-                        "cmd": "_donations",
-                        "currency_code": "EUR",
-                        "business": settings.PAYPAL_EMAIL,
-                        "item_name": "Freesound donation",
-                        "custom": form.encoded_data,
-                        "notify_url": return_url,
-                        "no_shipping": 1,
-                        "lc": "en_US"
-                        }
-                    }
+            data = {
+                "url": settings.PAYPAL_VALIDATION_URL,
+                "params": {
+                    "cmd": "_donations",
+                    "currency_code": "EUR",
+                    "business": settings.PAYPAL_EMAIL,
+                    "item_name": "Freesound donation",
+                    "custom": form.encoded_data,
+                    "notify_url": return_url,
+                    "no_shipping": 1,
+                    "lc": "en_US"
+                }
+            }
 
             if form.cleaned_data['recurring']:
                 data['params']['cmd'] = '_xclick-subscriptions'

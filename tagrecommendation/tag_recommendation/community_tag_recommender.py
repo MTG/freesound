@@ -42,13 +42,15 @@ class CommunityBasedTagRecommender(object):
     recommendation_heuristic = None
     classes = None
 
-    def __init__(self,
-                 dataset="",
-                 classes=[],
-                 metric="cosine",
-                 community_detection_heuristic="ZeroInit",
-                 recommendation_heuristic="hRankPercentage015",
-                 classifier_type="bayes"):
+    def __init__(
+        self,
+        dataset="",
+        classes=[],
+        metric="cosine",
+        community_detection_heuristic="ZeroInit",
+        recommendation_heuristic="hRankPercentage015",
+        classifier_type="bayes"
+    ):
 
         self.dataset = dataset
         self.classes = classes
@@ -73,14 +75,20 @@ class CommunityBasedTagRecommender(object):
             self.recommenders[class_name].set_heuristic(self.recommendation_heuristic)
 
             data = {
-                'TAG_NAMES': load(RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % class_name + self.metric + '_SUBSET_TAG_NAMES.npy'),
-                'SIMILARITY_MATRIX': load(RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % class_name + self.metric + '_SUBSET.npy'),
+                'TAG_NAMES':
+                    load(
+                        RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % class_name + self.metric +
+                        '_SUBSET_TAG_NAMES.npy'
+                    ),
+                'SIMILARITY_MATRIX':
+                    load(
+                        RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % class_name + self.metric +
+                        '_SUBSET.npy'
+                    ),
             }
 
             self.recommenders[class_name].load_data(
-                data=data,
-                dataset="%s-%s" % (self.dataset, class_name),
-                metric=self.metric
+                data=data, dataset="%s-%s" % (self.dataset, class_name), metric=self.metric
             )
 
             print(self.recommenders[class_name])

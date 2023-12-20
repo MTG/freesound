@@ -34,7 +34,9 @@ def sound_ratings(context):
     request_user = request.user.username
     is_authenticated = request.user.is_authenticated
 
-    return {'sound_user': sound_user,
-            'request_user': request_user,
-            'is_authenticated': is_authenticated,
-            'sound': sound}
+    return {
+        'sound_user': sound_user,
+        'request_user': request_user,
+        'is_authenticated': is_authenticated,
+        'sound': sound
+    }

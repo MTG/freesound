@@ -31,15 +31,13 @@ from django.contrib.sites.models import Site
 
 class ApiV2Client(models.Model):
 
-    STATUS_CHOICES = (('OK',  'Approved'),
-                      ('REJ', 'Rejected'),
-                      ('REV', 'Revoked'),
-                      ('PEN', 'Pending'))
+    STATUS_CHOICES = (('OK', 'Approved'), ('REJ', 'Rejected'), ('REV', 'Revoked'), ('PEN', 'Pending'))
 
     DEFAULT_STATUS = 'OK'
 
     oauth_client = models.OneToOneField(
-        Application, related_name='apiv2_client', default=None, null=True, blank=True, on_delete=models.CASCADE)
+        Application, related_name='apiv2_client', default=None, null=True, blank=True, on_delete=models.CASCADE
+    )
     key = models.CharField(max_length=40, blank=True)
     user = models.ForeignKey(User, related_name='apiv2_client', on_delete=models.CASCADE)
     status = models.CharField(max_length=3, default=DEFAULT_STATUS, choices=STATUS_CHOICES)
@@ -122,7 +120,7 @@ class ApiV2Client(models.Model):
                 try:
                     number_of_requests = self.usage.get(date=date_filter).number_of_requests
                 except APIClientDailyUsageHistory.DoesNotExist:
-                    number_of_requests = 0    
+                    number_of_requests = 0
             usage.append((date_filter, number_of_requests))
         return sorted(usage, reverse=True)
 
@@ -144,8 +142,8 @@ class ApiV2Client(models.Model):
 
     @property
     def client_secret(self):
-        return self.key  # We can't use self.oauth_client.client_secret as it is hashed
-    
+        return self.key    # We can't use self.oauth_client.client_secret as it is hashed
+
     @property
     def version(self):
         return "V2"

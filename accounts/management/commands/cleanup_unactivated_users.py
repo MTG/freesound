@@ -42,8 +42,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        bounces = EmailBounce.objects.filter(type__in=EmailBounce.TYPES_INVALID, user__is_active=False,
-                                             user__last_login=None)
+        bounces = EmailBounce.objects.filter(
+            type__in=EmailBounce.TYPES_INVALID, user__is_active=False, user__last_login=None
+        )
         users = User.objects.filter(id__in=bounces.values_list('user', flat=True))
 
         if not options['fast']:

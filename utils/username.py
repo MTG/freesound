@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 from django.contrib.auth.models import User
 from accounts.models import OldUsername
 from django.http import Http404

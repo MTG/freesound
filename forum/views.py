@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 import datetime
 import re
 import functools
@@ -81,7 +80,7 @@ def last_action(view_func):
 
         reply_object = view_func(request, *args, **kwargs)
 
-        reply_object.set_cookie(key, now_as_string, 60*60*24*30)  # 30 days
+        reply_object.set_cookie(key, now_as_string, 60 * 60 * 24 * 30)    # 30 days
 
         return reply_object
 
@@ -91,7 +90,8 @@ def last_action(view_func):
 @last_action
 def forums(request):
     forums = Forum.objects.select_related(
-        'last_post', 'last_post__author', 'last_post__author__profile', 'last_post__thread').all()
+        'last_post', 'last_post__author', 'last_post__author__profile', 'last_post__thread'
+    ).all()
     tvars = {'forums': forums}
     return render(request, 'forum/index.html', tvars)
 
@@ -104,10 +104,13 @@ def forum(request, forum_name_slug):
         raise Http404
 
     tvars = {'forum': forum}
-    paginator = paginate(request, Thread.objects.filter(forum=forum, first_post__moderation_state="OK")
-                         .select_related('last_post', 'last_post__author', 'last_post__author__profile',
-                                         'author', 'author__profile', 'first_post', 'forum'),
-                         settings.FORUM_THREADS_PER_PAGE)
+    paginator = paginate(
+        request,
+        Thread.objects.filter(forum=forum, first_post__moderation_state="OK").select_related(
+            'last_post', 'last_post__author', 'last_post__author__profile', 'author', 'author__profile', 'first_post',
+            'forum'
+        ), settings.FORUM_THREADS_PER_PAGE
+    )
     tvars.update(paginator)
 
     return render(request, 'forum/threads.html', tvars)
@@ -117,13 +120,22 @@ def forum(request, forum_name_slug):
 @transaction.atomic()
 def thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
-    thread = get_object_or_404(Thread.objects.select_related('last_post', 'last_post__author'),
-                               forum=forum, id=thread_id, first_post__moderation_state="OK")
+    thread = get_object_or_404(
+        Thread.objects.select_related('last_post', 'last_post__author'),
+        forum=forum,
+        id=thread_id,
+        first_post__moderation_state="OK"
+    )
 
-    paginator = paginate(request, Post.objects.select_related(
-        'author', 'author__profile', 'thread', 'thread__forum',
-    ).filter(
-        thread=thread, moderation_state="OK"), settings.FORUM_POSTS_PER_PAGE)
+    paginator = paginate(
+        request,
+        Post.objects.select_related(
+            'author',
+            'author__profile',
+            'thread',
+            'thread__forum',
+        ).filter(thread=thread, moderation_state="OK"), settings.FORUM_POSTS_PER_PAGE
+    )
 
     has_subscription = False
     # a logged in user watching a thread can activate his subscription to that thread!
@@ -139,10 +151,12 @@ def thread(request, forum_name_slug, thread_id):
         except Subscription.DoesNotExist:
             pass
 
-    tvars = {'thread': thread,
-             'forum': forum,
-             'post_counter_offset': settings.FORUM_POSTS_PER_PAGE * (paginator['current_page'] - 1),  # Only used in BW
-             'has_subscription': has_subscription}
+    tvars = {
+        'thread': thread,
+        'forum': forum,
+        'post_counter_offset': settings.FORUM_POSTS_PER_PAGE * (paginator['current_page'] - 1),    # Only used in BW
+        'has_subscription': has_subscription
+    }
     tvars.update(paginator)
     return render(request, 'forum/thread.html', tvars)
 
@@ -174,8 +188,9 @@ def hot_threads(request):
 
 @last_action
 def post(request, forum_name_slug, thread_id, post_id):
-    post = get_object_or_404(Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug,
-                             moderation_state="OK")
+    post = get_object_or_404(
+        Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug, moderation_state="OK"
+    )
 
     posts_before = Post.objects.filter(thread=post.thread, moderation_state="OK", created__lt=post.created).count()
     page = 1 + (posts_before // settings.FORUM_POSTS_PER_PAGE)
@@ -212,7 +227,8 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                               text_may_be_spam(form.cleaned_data.get("title", ''))
                 if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
                     post = Post.objects.create(
-                        author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
+                        author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM"
+                    )
                     # DO NOT add the post to the search engine, only do it when it is moderated
                     set_to_moderation = True
                 else:
@@ -244,17 +260,23 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                     if users_to_notify and post.thread.get_status_display() != 'Sunk':
                         send_mail_template(
                             settings.EMAIL_SUBJECT_TOPIC_REPLY,
-                            "emails/email_new_post_notification.txt",
-                            {'post': post, 'thread': thread, 'forum': forum},
+                            "emails/email_new_post_notification.txt", {
+                                'post': post,
+                                'thread': thread,
+                                'forum': forum
+                            },
                             extra_subject=thread.title,
-                            user_to=users_to_notify, email_type_preference_check="new_post"
+                            user_to=users_to_notify,
+                            email_type_preference_check="new_post"
                         )
 
                 if not set_to_moderation:
                     return HttpResponseRedirect(post.get_absolute_url())
                 else:
-                    messages.add_message(request, messages.INFO, "Your post won't be shown until it is manually "
-                                                                 "approved by moderators")
+                    messages.add_message(
+                        request, messages.INFO, "Your post won't be shown until it is manually "
+                        "approved by moderators"
+                    )
                     return HttpResponseRedirect(post.thread.get_absolute_url())
     else:
         initial = {'subscribe': thread.is_user_subscribed(request.user)}
@@ -266,13 +288,12 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
         messages.add_message(request, messages.INFO, user_can_post_message)
 
     if user_is_blocked_for_spam_reports:
-        messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account "
-                                                     "has been temporaly blocked after multiple spam reports")
+        messages.add_message(
+            request, messages.INFO, "You're not allowed to post in the forums because your account "
+            "has been temporaly blocked after multiple spam reports"
+        )
 
-    tvars = {'forum': forum,
-             'thread': thread,
-             'form': form,
-             'latest_posts': latest_posts}
+    tvars = {'forum': forum, 'thread': thread, 'form': form, 'latest_posts': latest_posts}
     return render(request, 'forum/reply.html', tvars)
 
 
@@ -295,8 +316,9 @@ def new_thread(request, forum_name_slug):
 
                 post_body = remove_control_chars(post_body)
                 if not request.user.posts.filter(moderation_state="OK").count() and may_be_spam:
-                    post = Post.objects.create(author=request.user, body=post_body, thread=thread,
-                                               moderation_state="NM")
+                    post = Post.objects.create(
+                        author=request.user, body=post_body, thread=thread, moderation_state="NM"
+                    )
                     # DO NOT add the post to the search engine, only do it when it is moderated
                     set_to_moderation = True
                 else:
@@ -318,8 +340,10 @@ def new_thread(request, forum_name_slug):
                 if not set_to_moderation:
                     return HttpResponseRedirect(post.get_absolute_url())
                 else:
-                    messages.add_message(request, messages.INFO, "Your post won't be shown until it is manually "
-                                                                 "approved by moderators")
+                    messages.add_message(
+                        request, messages.INFO, "Your post won't be shown until it is manually "
+                        "approved by moderators"
+                    )
                     return HttpResponseRedirect(post.thread.forum.get_absolute_url())
     else:
         form = NewThreadForm()
@@ -328,11 +352,12 @@ def new_thread(request, forum_name_slug):
         messages.add_message(request, messages.INFO, user_can_post_message)
 
     if user_is_blocked_for_spam_reports:
-        messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account "
-                                                     "has been temporarily blocked after multiple spam reports")
+        messages.add_message(
+            request, messages.INFO, "You're not allowed to post in the forums because your account "
+            "has been temporarily blocked after multiple spam reports"
+        )
 
-    tvars = {'forum': forum,
-             'form': form}
+    tvars = {'forum': forum, 'form': form}
     return render(request, 'forum/new_thread.html', tvars)
 
 
@@ -350,8 +375,10 @@ def subscribe_to_thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
     subscription, created = Subscription.objects.get_or_create(thread=thread, subscriber=request.user)
-    messages.add_message(request, messages.INFO, "You have been subscribed to this thread. You will receive an "
-                                                 "email notification every time someone makes a reply to this thread.")
+    messages.add_message(
+        request, messages.INFO, "You have been subscribed to this thread. You will receive an "
+        "email notification every time someone makes a reply to this thread."
+    )
     return HttpResponseRedirect(reverse('forums-thread', args=[forum.name_slug, thread.id]))
 
 
@@ -364,7 +391,8 @@ def old_topic_link_redirect(request):
         except ValueError:
             raise Http404
         return HttpResponsePermanentRedirect(
-            reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
+            reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id])
+        )
 
     thread_id = request.GET.get("t", False)
     if thread_id:
@@ -426,8 +454,9 @@ def post_edit(request, post_id):
                 add_posts_to_search_engine([post])
 
                 if form.cleaned_data["subscribe"]:
-                    subscription, created = Subscription.objects.get_or_create(thread=post.thread,
-                                                                               subscriber=request.user)
+                    subscription, created = Subscription.objects.get_or_create(
+                        thread=post.thread, subscriber=request.user
+                    )
                     if not subscription.is_active:
                         subscription.is_active = True
                         subscription.save()
@@ -436,22 +465,22 @@ def post_edit(request, post_id):
                     Subscription.objects.filter(thread=post.thread, subscriber=request.user).delete()
 
                 return HttpResponseRedirect(
-                    reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
+                    reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id])
+                )
         else:
-            initial = {
-                'subscribe': post.thread.is_user_subscribed(request.user),
-                'body': post.body
-            }
+            initial = {'subscribe': post.thread.is_user_subscribed(request.user), 'body': post.body}
             form = FromToUse(request, '', initial=initial)
 
         latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum') \
                            .order_by('-created') \
                            .filter(thread=post.thread, moderation_state="OK", created__lt=post.created)[0:15]
-        tvars = {'forum': post.thread.forum,
-                 'thread': post.thread,
-                 'form': form,
-                 'latest_posts': latest_posts,
-                 'editing': True}
+        tvars = {
+            'forum': post.thread.forum,
+            'thread': post.thread,
+            'form': form,
+            'latest_posts': latest_posts,
+            'editing': True
+        }
         return render(request, 'forum/reply.html', tvars)
     else:
         raise Http404
@@ -466,7 +495,7 @@ def moderate_posts(request):
         for key in request.POST.keys():
             if key.endswith('-post'):
                 post_id = int(key.split('-')[0])
-        
+
         mod_form = PostModerationForm(request.POST, prefix=f'{post_id}')
         if mod_form.is_valid():
             action = mod_form.cleaned_data.get("action")
@@ -483,8 +512,9 @@ def moderate_posts(request):
                 elif action == "Delete User":
                     try:
                         deletion_reason = DeletedUser.DELETION_REASON_SPAMMER
-                        post.author.profile.delete_user(delete_user_object_from_db=True,
-                                                        deletion_reason=deletion_reason)
+                        post.author.profile.delete_user(
+                            delete_user_object_from_db=True, deletion_reason=deletion_reason
+                        )
                         messages.add_message(request, messages.INFO, 'The user has been successfully deleted.')
                     except User.DoesNotExist:
                         messages.add_message(request, messages.INFO, 'The user has already been deleted.')
@@ -492,7 +522,9 @@ def moderate_posts(request):
                     post.delete()
                     messages.add_message(request, messages.INFO, 'The post has been successfully deleted.')
             except Post.DoesNotExist:
-                messages.add_message(request, messages.INFO, 'This post no longer exists. It may have already been deleted.')
+                messages.add_message(
+                    request, messages.INFO, 'This post no longer exists. It may have already been deleted.'
+                )
 
             invalidate_all_moderators_header_cache()
 
@@ -502,6 +534,5 @@ def moderate_posts(request):
         f = PostModerationForm(initial={'action': 'Approve', 'post': p.id}, prefix=f'{p.id}')
         post_list.append({'post': p, 'form': f})
 
-    tvars = {'post_list': post_list,
-             'hide_search': True}
+    tvars = {'post_list': post_list, 'hide_search': True}
     return render(request, 'forum/moderate.html', tvars)

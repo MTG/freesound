@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 import datetime
 import logging
 import os
@@ -32,8 +31,8 @@ from forum.models import Post
 from sounds.models import Sound, Download
 from utils.search import get_search_engine
 
-
 console_logger = logging.getLogger("console")
+
 
 def assert_and_continue(expression, error_message):
     if not expression:
@@ -41,6 +40,7 @@ def assert_and_continue(expression, error_message):
 
 
 class TestSearchEngineBackend():
+
     def __init__(self, backend_name, write_output, sounds_index_url=None, forum_index_url=None):
         self.search_engine = get_search_engine(
             backend_class=backend_name, sounds_index_url=sounds_index_url, forum_index_url=forum_index_url
@@ -50,8 +50,9 @@ class TestSearchEngineBackend():
             if not os.path.exists(base_dir):
                 os.makedirs(base_dir)
             date_label = datetime.datetime.today().strftime('%Y%m%d_%H%M')
-            self.output_file = open(os.path.join(base_dir, '{}_test_results_{}.txt'
-                                                .format(date_label, backend_name)), 'w')
+            self.output_file = open(
+                os.path.join(base_dir, '{}_test_results_{}.txt'.format(date_label, backend_name)), 'w'
+            )
             self.output_file.write(f'TESTING SEARCH ENGINE BACKEND: {backend_name}\n')
         else:
             self.output_file = None
@@ -59,13 +60,12 @@ class TestSearchEngineBackend():
     def save_query_results(self, results, query_data, elapsed_time, query_type):
         self.output_file.write(f'\n* QUERY {query_type}: {str(query_data)} (took {elapsed_time:.2f} seconds)\n')
         self.output_file.write(
-            'num_found: {}\nnon_grouped_number_of_results: {}\nq_time: {}\nfacets: {}\nhighlighting: {}\ndocs:\n'.format(
-                results.num_found,
-                results.non_grouped_number_of_results,
-                results.q_time,
-                results.facets,
+            'num_found: {}\nnon_grouped_number_of_results: {}\nq_time: {}\nfacets: {}\nhighlighting: {}\ndocs:\n'.
+            format(
+                results.num_found, results.non_grouped_number_of_results, results.q_time, results.facets,
                 results.highlighting
-            ))
+            )
+        )
         for count, doc in enumerate(results.docs):
             self.output_file.write(f"\t{count + 1}. {doc['id']}: {doc}\n")
 
@@ -84,7 +84,9 @@ class TestSearchEngineBackend():
         end = time.time()
 
         # Assert that the result is of the expected type
-        assert_and_continue(isinstance(results, utils.search.SearchResults), 'Returned search results object of wrong type')
+        assert_and_continue(
+            isinstance(results, utils.search.SearchResults), 'Returned search results object of wrong type'
+        )
 
         # Save results to file so the later we can compare between different search engine backends
         if self.output_file:
@@ -107,7 +109,9 @@ class TestSearchEngineBackend():
         end = time.time()
 
         # Assert that the result is of the expected type
-        assert_and_continue(isinstance(results, utils.search.SearchResults), 'Returned search results object of wrong type')
+        assert_and_continue(
+            isinstance(results, utils.search.SearchResults), 'Returned search results object of wrong type'
+        )
 
         # Save results to file so the later we can compare between different search engine backends
         if self.output_file:
@@ -123,18 +127,26 @@ class TestSearchEngineBackend():
         results = self.run_sounds_query_and_save_results(dict(num_sounds=1, group_by_pack=False))
         for result in results.docs:
             for field in mandatory_fields:
-                assert_and_continue(field in result, 
-                                    'Mandatory field {} not present in result when not grouping (available fields: {})'
-                                    .format(field, ', '.join(result.keys())))
+                assert_and_continue(
+                    field in result,
+                    'Mandatory field {} not present in result when not grouping (available fields: {})'.format(
+                        field, ', '.join(result.keys())
+                    )
+                )
 
         # Check the case of grouped search results
-        mandatory_fields = ['id', 'score', 'group_name', 'n_more_in_group', 'group_docs']                        
-        results = self.run_sounds_query_and_save_results(dict(num_sounds=1, group_by_pack=True, only_sounds_with_pack=True))
+        mandatory_fields = ['id', 'score', 'group_name', 'n_more_in_group', 'group_docs']
+        results = self.run_sounds_query_and_save_results(
+            dict(num_sounds=1, group_by_pack=True, only_sounds_with_pack=True)
+        )
         for result in results.docs:
             for field in mandatory_fields:
-                assert_and_continue(field in result, 
-                                    'Mandatory field {} not present in result when grouping by pack (available fields: {})'
-                                    .format(field, ', '.join(result.keys())))
+                assert_and_continue(
+                    field in result,
+                    'Mandatory field {} not present in result when grouping by pack (available fields: {})'.format(
+                        field, ', '.join(result.keys())
+                    )
+                )
 
     def sound_check_random_sound(self):
         # Get random sound IDs and make sure these are different
@@ -143,8 +155,9 @@ class TestSearchEngineBackend():
         last_id = 0
         for i in range(0, 10):
             new_id = self.search_engine.get_random_sound_id()
-            assert_and_continue(new_id != last_id,
-                                'Repeated sound IDs in subsequent calls to "get random sound id" method')
+            assert_and_continue(
+                new_id != last_id, 'Repeated sound IDs in subsequent calls to "get random sound id" method'
+            )
             last_id = new_id
 
     def sound_check_offsets(self):
@@ -155,22 +168,23 @@ class TestSearchEngineBackend():
         offset_1_ids = [r['id'] for r in results.docs]
         assert_and_continue(len(offset_0_ids) == 10, 'Unexpected num_sounds/offset/current_page behaviour')
         assert_and_continue(len(offset_1_ids) == 10, 'Unexpected num_sounds/offset/current_page behaviour')
-        assert_and_continue(offset_0_ids[1:] == offset_1_ids[:-1],
-                            'Unexpected num_sounds/offset/current_page behaviour')
+        assert_and_continue(
+            offset_0_ids[1:] == offset_1_ids[:-1], 'Unexpected num_sounds/offset/current_page behaviour'
+        )
 
         results = self.run_sounds_query_and_save_results(dict(num_sounds=1, offset=4))
         offset_4_num_sounds_1_ids = [r['id'] for r in results.docs]
-        assert_and_continue(len(offset_4_num_sounds_1_ids) == 1,
-                            'Unexpected num_sounds/offset/current_page behaviour')
-        assert_and_continue(offset_0_ids[4] == offset_4_num_sounds_1_ids[0],
-                            'Unexpected num_sounds/offset/current_page behaviour')
+        assert_and_continue(len(offset_4_num_sounds_1_ids) == 1, 'Unexpected num_sounds/offset/current_page behaviour')
+        assert_and_continue(
+            offset_0_ids[4] == offset_4_num_sounds_1_ids[0], 'Unexpected num_sounds/offset/current_page behaviour'
+        )
 
         results = self.run_sounds_query_and_save_results(dict(num_sounds=5, current_page=2))
         page_2_num_sounds_5_ids = [r['id'] for r in results.docs]
-        assert_and_continue(len(page_2_num_sounds_5_ids) == 5,
-                            'Unexpected num_sounds/offset/current_page behaviour')
-        assert_and_continue(page_2_num_sounds_5_ids == offset_0_ids[5:],
-                            'Unexpected num_sounds/offset/current_page behaviour')
+        assert_and_continue(len(page_2_num_sounds_5_ids) == 5, 'Unexpected num_sounds/offset/current_page behaviour')
+        assert_and_continue(
+            page_2_num_sounds_5_ids == offset_0_ids[5:], 'Unexpected num_sounds/offset/current_page behaviour'
+        )
 
     def sound_check_empty_query(self):
         # Test empty query returns results
@@ -181,13 +195,12 @@ class TestSearchEngineBackend():
         # Test sort parameter (only use sounds within test_sound_ids to make sure these were indexed "correctly")
         # This also tests parameter only_sounds_within_ids
         for sort_option_web in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB:
-            results = self.run_sounds_query_and_save_results(dict(sort=sort_option_web,
-                                                                num_sounds=len(test_sound_ids),
-                                                                only_sounds_within_ids=test_sound_ids))
+            results = self.run_sounds_query_and_save_results(
+                dict(sort=sort_option_web, num_sounds=len(test_sound_ids), only_sounds_within_ids=test_sound_ids)
+            )
             result_ids = [r['id'] for r in results.docs]
             sounds = Sound.objects.ordered_ids(result_ids)
-            assert_and_continue(sorted(test_sound_ids) == sorted(result_ids),
-                                'only_sounds_within_ids not respected')
+            assert_and_continue(sorted(test_sound_ids) == sorted(result_ids), 'only_sounds_within_ids not respected')
 
             # Assert that sorting criteria is preserved
             for sound1, sound2 in zip(sounds[:-1], sounds[1:]):
@@ -195,37 +208,35 @@ class TestSearchEngineBackend():
                     # Nothing to test here as there's no expected result
                     pass
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST:
-                    assert_and_continue(Download.objects.filter(sound=sound1).count() >=
-                                        Download.objects.filter(sound=sound2).count(),
-                                        f'Wrong ordering in {sort_option_web}')
+                    assert_and_continue(
+                        Download.objects.filter(sound=sound1).count() >= Download.objects.filter(sound=sound2).count(),
+                        f'Wrong ordering in {sort_option_web}'
+                    )
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST:
-                    assert_and_continue(Download.objects.filter(sound=sound1).count() <=
-                                        Download.objects.filter(sound=sound2).count(),
-                                        f'Wrong ordering in {sort_option_web}')
+                    assert_and_continue(
+                        Download.objects.filter(sound=sound1).count() <= Download.objects.filter(sound=sound2).count(),
+                        f'Wrong ordering in {sort_option_web}'
+                    )
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST:
-                    assert_and_continue(sound1.created <= sound2.created,
-                                        f'Wrong ordering in {sort_option_web}')
+                    assert_and_continue(sound1.created <= sound2.created, f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST:
-                    assert_and_continue(sound1.created >= sound2.created,
-                                        f'Wrong ordering in {sort_option_web}')
+                    assert_and_continue(sound1.created >= sound2.created, f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST:
-                    assert_and_continue(sound1.avg_rating <= sound2.avg_rating,
-                                        f'Wrong ordering in {sort_option_web}')
+                    assert_and_continue(sound1.avg_rating <= sound2.avg_rating, f'Wrong ordering in {sort_option_web}')
                     if sound1.avg_rating == sound2.avg_rating:
-                        assert_and_continue(sound1.num_ratings >= sound2.num_ratings,
-                                        f'Wrong ordering in {sort_option_web}')
+                        assert_and_continue(
+                            sound1.num_ratings >= sound2.num_ratings, f'Wrong ordering in {sort_option_web}'
+                        )
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST:
-                    assert_and_continue(sound1.avg_rating >= sound2.avg_rating,
-                                        f'Wrong ordering in {sort_option_web}')
+                    assert_and_continue(sound1.avg_rating >= sound2.avg_rating, f'Wrong ordering in {sort_option_web}')
                     if sound1.avg_rating == sound2.avg_rating:
-                        assert_and_continue(sound1.num_ratings >= sound2.num_ratings,
-                                        f'Wrong ordering in {sort_option_web}')
+                        assert_and_continue(
+                            sound1.num_ratings >= sound2.num_ratings, f'Wrong ordering in {sort_option_web}'
+                        )
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST:
-                    assert_and_continue(sound1.duration >= sound2.duration,
-                                        f'Wrong ordering in {sort_option_web}')
+                    assert_and_continue(sound1.duration >= sound2.duration, f'Wrong ordering in {sort_option_web}')
                 elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST:
-                    assert_and_continue(sound1.duration <= sound2.duration,
-                                        f'Wrong ordering in {sort_option_web}')
+                    assert_and_continue(sound1.duration <= sound2.duration, f'Wrong ordering in {sort_option_web}')
 
     def sound_check_group_by_pack(self):
         # Test group by pack
@@ -250,8 +261,12 @@ class TestSearchEngineBackend():
     def sound_check_facets(self):
         # Test facets included in results
         test_facet_options = {
-            settings.SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 3},
-            settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: {'limit': 1},
+            settings.SEARCH_SOUNDS_FIELD_USER_NAME: {
+                'limit': 3
+            },
+            settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: {
+                'limit': 1
+            },
             settings.SEARCH_SOUNDS_FIELD_TYPE: {},
         }
         results = self.run_sounds_query_and_save_results(dict(facets=test_facet_options))
@@ -259,8 +274,10 @@ class TestSearchEngineBackend():
         for facet_field, facet_options in test_facet_options.items():
             assert_and_continue(facet_field in results.facets, f'Facet {facet_field} not found in facets')
             if 'limit' in facet_options:
-                assert_and_continue(len(results.facets[facet_field]) == facet_options['limit'],
-                                    f'Wrong number of items in facet {facet_field}')
+                assert_and_continue(
+                    len(results.facets[facet_field]) == facet_options['limit'],
+                    f'Wrong number of items in facet {facet_field}'
+                )
 
         # Test if no facets requested, no facets returned
         results = self.run_sounds_query_and_save_results(dict())
@@ -289,7 +306,9 @@ class TestSearchEngineBackend():
         assert_and_continue(len(remaining_tags) == 0, "get_user_tags returned tags which the user hasn't tagged")
 
         if self.output_file:
-            self.output_file.write(f'\n* USER "{sound.user.username}" TOP TAGS FROM SEARCH ENGINE: {search_engine_tags}\n')
+            self.output_file.write(
+                f'\n* USER "{sound.user.username}" TOP TAGS FROM SEARCH ENGINE: {search_engine_tags}\n'
+            )
 
     def sound_check_get_pack_tags(self, sounds):
         """
@@ -303,7 +322,9 @@ class TestSearchEngineBackend():
                 target_sound = sound
                 break
 
-        assert_and_continue(target_sound is not None, "Sample sounds dataset doesn't have any sounds with a pack and tags")
+        assert_and_continue(
+            target_sound is not None, "Sample sounds dataset doesn't have any sounds with a pack and tags"
+        )
         if target_sound:
             pack = target_sound.pack
             all_sound_tags = []
@@ -320,9 +341,10 @@ class TestSearchEngineBackend():
 
     def test_search_enginge_backend_sounds(self):
         # Get sounds for testing
-        test_sound_ids = list(Sound.public
-                                .filter(is_index_dirty=False, num_ratings__gt=settings.MIN_NUMBER_RATINGS)
-                                .values_list('id', flat=True)[0:20])
+        test_sound_ids = list(
+            Sound.public.filter(is_index_dirty=False,
+                                num_ratings__gt=settings.MIN_NUMBER_RATINGS).values_list('id', flat=True)[0:20]
+        )
         sounds = list(Sound.objects.bulk_query_solr(test_sound_ids))
         if len(sounds) < 20:
             raise Exception("Can't test SearchEngine backend as there are not enough sounds for testing")
@@ -330,36 +352,44 @@ class TestSearchEngineBackend():
         # Remove sounds from the search index (in case sounds are there)
         self.search_engine.remove_sounds_from_index(sounds)
         for sound in sounds:
-            assert_and_continue(not self.search_engine.sound_exists_in_index(sound),
-                                f'Sound ID {sound.id} should not be in the search index')
+            assert_and_continue(
+                not self.search_engine.sound_exists_in_index(sound),
+                f'Sound ID {sound.id} should not be in the search index'
+            )
 
         # Index the sounds again
         self.search_engine.add_sounds_to_index(sounds)
 
         # Check that sounds are indexed (test with sound object and with ID)
         for sound in sounds:
-            assert_and_continue(self.search_engine.sound_exists_in_index(sound),
-                                f'Sound ID {sound.id} should be in the search index')
-            assert_and_continue(self.search_engine.sound_exists_in_index(sound.id),
-                                f'Sound ID {sound.id} should be in the search index')
+            assert_and_continue(
+                self.search_engine.sound_exists_in_index(sound), f'Sound ID {sound.id} should be in the search index'
+            )
+            assert_and_continue(
+                self.search_engine.sound_exists_in_index(sound.id), f'Sound ID {sound.id} should be in the search index'
+            )
 
         # Remove some sounds form the ones just indexed and check they do not exist
         removed_sounds_by_sound_object = sounds[0:3]
         self.search_engine.remove_sounds_from_index(removed_sounds_by_sound_object)
         for sound in removed_sounds_by_sound_object:
-            assert_and_continue(not self.search_engine.sound_exists_in_index(sound),
-                                f'Sound ID {sound.id} should not be in the search index')
+            assert_and_continue(
+                not self.search_engine.sound_exists_in_index(sound),
+                f'Sound ID {sound.id} should not be in the search index'
+            )
         removed_sounds_by_sound_id = [s.id for s in sounds[3:6]]
         self.search_engine.remove_sounds_from_index(removed_sounds_by_sound_id)
         for sid in removed_sounds_by_sound_id:
-            assert_and_continue(not self.search_engine.sound_exists_in_index(sid),
-                                f'Sound ID {sid} should not be in the search index')
+            assert_and_continue(
+                not self.search_engine.sound_exists_in_index(sid), f'Sound ID {sid} should not be in the search index'
+            )
 
         # Check that all sounds which were not removed are still in the index
         remaining_sounds = sounds[6:]
         for sound in remaining_sounds:
-            assert_and_continue(self.search_engine.sound_exists_in_index(sound),
-                                f'Sound ID {sound.id} should be in search index')
+            assert_and_continue(
+                self.search_engine.sound_exists_in_index(sound), f'Sound ID {sound.id} should be in search index'
+            )
 
         # Re-index all sounds to leave index in "correct" state
         self.search_engine.add_sounds_to_index(sounds)
@@ -376,31 +406,38 @@ class TestSearchEngineBackend():
         self.sound_check_get_user_tags(sounds[0])
         self.sound_check_get_pack_tags(sounds)
 
-        console_logger.info('Testing of sound search methods finished. You might want to run the '
-                            'reindex_search_engine_sounds -c command to make sure the index is left in a correct '
-                            'state after having run these tests')
+        console_logger.info(
+            'Testing of sound search methods finished. You might want to run the '
+            'reindex_search_engine_sounds -c command to make sure the index is left in a correct '
+            'state after having run these tests'
+        )
 
     def forum_check_mandatory_doc_fields(self):
         # Check that returned forum posts (docs) from search engine include the mandatory fields
-         
+
         # Check the case of non-grouped search results
         mandatory_fields = ['id', 'score', 'post_body', 'thread_author', 'forum_name', 'forum_name_slug']
         results = self.run_forum_query_and_save_results(dict(num_posts=1, group_by_thread=False))
         for result in results.docs:
             for field in mandatory_fields:
-                assert_and_continue(field in result, 
-                                    'Mandatory field {} not present in result when not grouping by thread (available fields: {})'
-                                    .format(field, ', '.join(result.keys())))
+                assert_and_continue(
+                    field in result,
+                    'Mandatory field {} not present in result when not grouping by thread (available fields: {})'.
+                    format(field, ', '.join(result.keys()))
+                )
 
         # Check the case of grouped search results
-        mandatory_fields = ['id', 'score', 'group_name', 'n_more_in_group', 'group_docs']                        
+        mandatory_fields = ['id', 'score', 'group_name', 'n_more_in_group', 'group_docs']
         results = self.run_forum_query_and_save_results(dict(num_posts=1, group_by_thread=True))
         for result in results.docs:
             for field in mandatory_fields:
-                assert_and_continue(field in result, 
-                                    'Mandatory field {} not present in result when grouping by thread (available fields: {})'
-                                    .format(field, ', '.join(result.keys())))
-    
+                assert_and_continue(
+                    field in result,
+                    'Mandatory field {} not present in result when grouping by thread (available fields: {})'.format(
+                        field, ', '.join(result.keys())
+                    )
+                )
+
     def forum_check_offsets(self):
         # Test num_posts/offset/current_page parameters
         results = self.run_forum_query_and_save_results(dict(num_posts=10, offset=0))
@@ -409,32 +446,36 @@ class TestSearchEngineBackend():
         offset_1_ids = [r['id'] for r in results.docs]
         assert_and_continue(len(offset_0_ids) == 10, 'Unexpected num_posts/offset/current_page behaviour 1')
         assert_and_continue(len(offset_1_ids) == 10, 'Unexpected num_posts/offset/current_page behaviour 2')
-        assert_and_continue(offset_0_ids[1:] == offset_1_ids[:-1],
-                            'Unexpected num_posts/offset/current_page behaviour 3')
+        assert_and_continue(
+            offset_0_ids[1:] == offset_1_ids[:-1], 'Unexpected num_posts/offset/current_page behaviour 3'
+        )
 
         results = self.run_forum_query_and_save_results(dict(num_posts=1, offset=4))
         offset_4_num_sounds_1_ids = [r['id'] for r in results.docs]
-        assert_and_continue(len(offset_4_num_sounds_1_ids) == 1,
-                            'Unexpected num_posts/offset/current_page behaviour 4')
-        assert_and_continue(offset_0_ids[4] == offset_4_num_sounds_1_ids[0],
-                            'Unexpected num_posts/offset/current_page behaviour 5')
+        assert_and_continue(len(offset_4_num_sounds_1_ids) == 1, 'Unexpected num_posts/offset/current_page behaviour 4')
+        assert_and_continue(
+            offset_0_ids[4] == offset_4_num_sounds_1_ids[0], 'Unexpected num_posts/offset/current_page behaviour 5'
+        )
 
         results = self.run_forum_query_and_save_results(dict(num_posts=5, current_page=2))
         page_2_num_sounds_5_ids = [r['id'] for r in results.docs]
-        assert_and_continue(len(page_2_num_sounds_5_ids) == 5,
-                            'Unexpected num_posts/offset/current_page behaviour 6')
-        assert_and_continue(page_2_num_sounds_5_ids == offset_0_ids[5:],
-                            'Unexpected num_posts/offset/current_page behaviour 7')
+        assert_and_continue(len(page_2_num_sounds_5_ids) == 5, 'Unexpected num_posts/offset/current_page behaviour 6')
+        assert_and_continue(
+            page_2_num_sounds_5_ids == offset_0_ids[5:], 'Unexpected num_posts/offset/current_page behaviour 7'
+        )
 
         # Test that results are sorted by newest posts first. Also assess results have the required fields
-        expected_fields = ["id", "forum_name", "forum_name_slug", "thread_id", "thread_title", "thread_author",
-                            "thread_created", "post_body", "post_author", "post_created", "num_posts"]
+        expected_fields = [
+            "id", "forum_name", "forum_name_slug", "thread_id", "thread_title", "thread_author", "thread_created",
+            "post_body", "post_author", "post_created", "num_posts"
+        ]
         results = self.run_forum_query_and_save_results(dict(group_by_thread=False))
         for result1, result2 in zip(results.docs[:-1], results.docs[1:]):
             for field in expected_fields:
                 assert_and_continue(field in result1, f"{field} not present in result ID {result1['id']}")
-                assert_and_continue(result1["thread_created"] >= result2["thread_created"],
-                                    'Wrong sorting in query results')
+                assert_and_continue(
+                    result1["thread_created"] >= result2["thread_created"], 'Wrong sorting in query results'
+                )
 
     def forum_check_empty_query(self):
         # Test empty query returns results
@@ -466,7 +507,7 @@ class TestSearchEngineBackend():
         # later manually compared with results from other search backends
         self.run_forum_query_and_save_results(dict(textual_query='microphone'))
         self.run_forum_query_and_save_results(dict(textual_query='technique'))
-        self.run_forum_query_and_save_results(dict(textual_query='freesound'))    
+        self.run_forum_query_and_save_results(dict(textual_query='freesound'))
 
     def test_search_enginge_backend_forum(self):
         # Get posts for testing
@@ -478,36 +519,46 @@ class TestSearchEngineBackend():
         # Remove posts from the search index (in case posts are there)
         self.search_engine.remove_forum_posts_from_index(posts)
         for post in posts:
-            assert_and_continue(not self.search_engine.forum_post_exists_in_index(post),
-                                f'Post ID {post.id} should not be in the search index')
+            assert_and_continue(
+                not self.search_engine.forum_post_exists_in_index(post),
+                f'Post ID {post.id} should not be in the search index'
+            )
 
         # Index the posts again
         self.search_engine.add_forum_posts_to_index(posts)
 
         # Check that posts are indexed (test with sound object and with ID)
         for post in posts:
-            assert_and_continue(self.search_engine.forum_post_exists_in_index(post),
-                                f'Post ID {post.id} should be in the search index')
-            assert_and_continue(self.search_engine.forum_post_exists_in_index(post.id),
-                                f'Post ID {post.id} should be in the search index')
+            assert_and_continue(
+                self.search_engine.forum_post_exists_in_index(post), f'Post ID {post.id} should be in the search index'
+            )
+            assert_and_continue(
+                self.search_engine.forum_post_exists_in_index(post.id),
+                f'Post ID {post.id} should be in the search index'
+            )
 
         # Remove some posts form the ones just indexed and check they do not exist
         removed_posts_by_post_object = posts[0:3]
         self.search_engine.remove_forum_posts_from_index(removed_posts_by_post_object)
         for post in removed_posts_by_post_object:
-            assert_and_continue(not self.search_engine.forum_post_exists_in_index(post),
-                                f'Post ID {post.id} should not be in the search index')
+            assert_and_continue(
+                not self.search_engine.forum_post_exists_in_index(post),
+                f'Post ID {post.id} should not be in the search index'
+            )
         removed_posts_by_post_id = [s.id for s in posts[3:6]]
         self.search_engine.remove_forum_posts_from_index(removed_posts_by_post_id)
         for pid in removed_posts_by_post_id:
-            assert_and_continue(not self.search_engine.forum_post_exists_in_index(pid),
-                                f'Post ID {pid} should not be in the search index')
+            assert_and_continue(
+                not self.search_engine.forum_post_exists_in_index(pid),
+                f'Post ID {pid} should not be in the search index'
+            )
 
         # Check that all posts which were not removed are still in the index
         remaining_posts = posts[6:]
         for post in remaining_posts:
-            assert_and_continue(self.search_engine.forum_post_exists_in_index(post),
-                                f'Post ID {post.id} should be in search index')
+            assert_and_continue(
+                self.search_engine.forum_post_exists_in_index(post), f'Post ID {post.id} should be in search index'
+            )
 
         # Re-index all posts to leave index in "correct" state
         self.search_engine.add_forum_posts_to_index(posts)
@@ -519,6 +570,8 @@ class TestSearchEngineBackend():
         self.forum_check_highlighting()
         self.forum_check_extra_queries()
 
-        console_logger.info('Testing of forum search methods finished. You might want to run the '
-                            'reindex_search_engine_forum -c command to make sure the index is left in a correct '
-                            'state after having run these tests')
+        console_logger.info(
+            'Testing of forum search methods finished. You might want to run the '
+            'reindex_search_engine_forum -c command to make sure the index is left in a correct '
+            'state after having run these tests'
+        )

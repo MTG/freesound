@@ -77,7 +77,7 @@ class RandomSoundViewTestCase(TestCase):
         sound.save()
 
         # We only use the ID field from solr
-        random_sound.return_value = sound.id+100
+        random_sound.return_value = sound.id + 100
 
         # Even though solr returns sound.id+100, we find we are redirected to the db sound, because
         # we call Sound.objects.random
@@ -175,8 +175,13 @@ class RandomSoundTestCase(TestCase):
         """Doesn't select a sound if it's flagged"""
         sound = self._create_test_sound()
         sound.save()
-        Flag.objects.create(sound=sound, reporting_user=User.objects.all()[0], email="testemail@freesound.org",
-            reason_type="O", reason="Not a good sound")
+        Flag.objects.create(
+            sound=sound,
+            reporting_user=User.objects.all()[0],
+            email="testemail@freesound.org",
+            reason_type="O",
+            reason="Not a good sound"
+        )
 
         random = Sound.objects.random()
         self.assertIsNone(random)

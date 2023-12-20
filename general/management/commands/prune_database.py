@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 import datetime
 import logging
 import os
@@ -52,25 +51,21 @@ from utils.chunks import chunks
 console_logger = logging.getLogger('console')
 
 
-
-
 class Command(BaseCommand):
     help = "Delete most of the database to make it smaller for development, and anonymise it"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-d', '--keep-downloaders',
+            '-d',
+            '--keep-downloaders',
             dest='downloaders',
             default=100000,
             type=int,
-            help='The number of downloaders to keep')
+            help='The number of downloaders to keep'
+        )
 
         parser.add_argument(
-            '-s', '--keep-sounds',
-            dest='sounds',
-            default=5000,
-            type=int,
-            help='Number of sounds to keep'
+            '-s', '--keep-sounds', dest='sounds', default=5000, type=int, help='Number of sounds to keep'
         )
 
     def disconnect_signals(self):
@@ -105,7 +100,10 @@ class Command(BaseCommand):
         # table and rename.
         with connection.cursor() as cursor:
             cursor.execute("delete from sounds_download where user_id in %s", [tuple(userids)])
-            cursor.execute("delete from sounds_packdownloadsound where pack_download_id in (select id from sounds_packdownload where user_id in %s)", [tuple(userids)])
+            cursor.execute(
+                "delete from sounds_packdownloadsound where pack_download_id in (select id from sounds_packdownload where user_id in %s)",
+                [tuple(userids)]
+            )
             cursor.execute("delete from sounds_packdownload where user_id in %s", [tuple(userids)])
         console_logger.info('   - done, user objects')
         User.objects.filter(id__in=userids).delete()
@@ -139,7 +137,7 @@ class Command(BaseCommand):
                 break
 
         console_logger.info(f"Keeping {len(userids)} users with {totalsounds} sounds")
-        
+
         users_not_in_userids = list(set(all_users_with_sounds) - set(userids))
         ch = [c for c in chunks(sorted(list(users_not_in_userids)), 1000)]
         tot = len(ch)
@@ -177,13 +175,21 @@ class Command(BaseCommand):
             user.is_staff = False
             user.is_superuser = False
             users_to_update.append(user)
-        User.objects.bulk_update(users_to_update, ['email', 'first_name', 'last_name', 'password', 'is_staff', 'is_superuser'])
+        User.objects.bulk_update(
+            users_to_update, ['email', 'first_name', 'last_name', 'password', 'is_staff', 'is_superuser']
+        )
 
-        MessageBody.objects.all().update(body='(message body) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.')
-        TicketComment.objects.all().update(text='(ticket comment) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.')
+        MessageBody.objects.all().update(
+            body=
+            '(message body) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+        )
+        TicketComment.objects.all().update(
+            text=
+            '(ticket comment) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+        )
 
         GdprAcceptance.objects.all().update(date_accepted=datetime.datetime.now())
-        
+
         Profile.objects.all().update(
             is_whitelisted=False,
             not_shown_in_online_users_list=False,
@@ -234,7 +240,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if os.environ.get('FREESOUND_PRUNE_DATABASE') != '1':
-            raise Exception('Run this command with env FREESOUND_PRUNE_DATABASE=1 to confirm you want to prune the database')
+            raise Exception(
+                'Run this command with env FREESOUND_PRUNE_DATABASE=1 to confirm you want to prune the database'
+            )
 
         self.disconnect_signals()
         self.delete_unneeded_tables()

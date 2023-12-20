@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 from django import template
 from django.conf import settings
 
@@ -39,8 +38,9 @@ def sounds_selector(context, sounds, selected_sound_ids=[], show_select_all_butt
         'objects': sounds,
         'type': 'sounds',
         'show_select_all_buttons': show_select_all_buttons,
-        'original_context': context  # This will be used so a nested inclusion tag can get the original context
+        'original_context': context    # This will be used so a nested inclusion tag can get the original context
     }
+
 
 @register.inclusion_tag('molecules/object_selector.html', takes_context=True)
 def sounds_selector_with_select_buttons(context, sounds, selected_sound_ids=[]):
@@ -59,5 +59,5 @@ def packs_selector_with_select_buttons(context, packs, selected_pack_ids=[]):
         'objects': packs,
         'type': 'packs',
         'show_select_all_buttons': True,
-        'original_context': context  # This will be used so a nested inclusion tag can get the original context
+        'original_context': context    # This will be used so a nested inclusion tag can get the original context
     }

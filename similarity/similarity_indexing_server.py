@@ -17,8 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-
-
 '''
 The similarity indexing server is a simpler version of the similarity server which can only handle indexing sounds.
 This server can be used to index a new dataset in background so whent it is indexed the main similarity service
@@ -42,13 +40,15 @@ from . import similarity_settings as sim_settings
 
 def server_interface(resource):
     return {
-        'add_point': resource.add_point,  # location, sound_id
+        'add_point': resource.add_point,    # location, sound_id
         'clear_memory': resource.clear_memory,
         'reload_gaia_wrapper': resource.reload_gaia_wrapper,
-        'save': resource.save,  # filename (optional)
+        'save': resource.save,    # filename (optional)
     }
 
+
 class SimilarityServer(resource.Resource):
+
     def __init__(self):
         resource.Resource.__init__(self)
         self.methods = server_interface(self)
@@ -56,7 +56,7 @@ class SimilarityServer(resource.Resource):
         self.gaia = GaiaWrapper(indexing_only_mode=True)
         self.request = None
 
-    def error(self,message):
+    def error(self, message):
         return json.dumps({'Error': message})
 
     def getChild(self, name, request):
@@ -66,7 +66,7 @@ class SimilarityServer(resource.Resource):
         return self.methods[request.prepath[1]](request=request, **request.args)
 
     def add_point(self, request, location, sound_id):
-        return json.dumps( self.gaia.add_point(location[0],sound_id[0]))
+        return json.dumps(self.gaia.add_point(location[0], sound_id[0]))
 
     def save(self, request, filename=None):
         if not filename:
@@ -104,7 +104,9 @@ if __name__ == '__main__':
     root.putChild("similarity", SimilarityServer())
     site = server.Site(root)
     reactor.listenTCP(sim_settings.INDEXING_SERVER_LISTEN_PORT, site)
-    logger.info('Started similarity INDEXING service, listening to port ' + str(
-        sim_settings.INDEXING_SERVER_LISTEN_PORT) + "...")
+    logger.info(
+        'Started similarity INDEXING service, listening to port ' + str(sim_settings.INDEXING_SERVER_LISTEN_PORT) +
+        "..."
+    )
     reactor.run()
     logger.info('Service stopped.')

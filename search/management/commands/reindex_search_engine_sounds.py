@@ -35,21 +35,19 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-s', '--slize_size',
-            dest='size_size',
-            default=4000,
-            type=int,
-            help='How many sounds to add at once')
+            '-s', '--slize_size', dest='size_size', default=4000, type=int, help='How many sounds to add at once'
+        )
 
         parser.add_argument(
-            '-c', '--clear_index',
+            '-c',
+            '--clear_index',
             action='store_true',
             dest='clear_index',
             default=False,
             help='Clear all sounds in the existing index before re-indexing all sounds. This option is normally not '
-                 'needed as the command will clean any leftover sounds from the search index which are no longer'
-                 'in the DB.')
-
+            'needed as the command will clean any leftover sounds from the search index which are no longer'
+            'in the DB.'
+        )
 
     def handle(self, *args, **options):
         # Get all indexed sound IDs and remove them
@@ -60,7 +58,8 @@ class Command(BaseCommand):
         # Get all sounds moderated and processed ok and add them to the search engine
         # Don't delete existing sounds in each loop because we clean up in the final step
         sounds_to_index_ids = list(
-            Sound.objects.filter(processing_state="OK", moderation_state="OK").values_list('id', flat=True))
+            Sound.objects.filter(processing_state="OK", moderation_state="OK").values_list('id', flat=True)
+        )
         console_logger.info("Re-indexing %d sounds to the search engine", len(sounds_to_index_ids))
         send_sounds_to_search_engine(sounds_to_index_ids, slice_size=options['size_size'], delete_if_existing=False)
 

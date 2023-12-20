@@ -49,7 +49,7 @@ def api_request(full_url, type='GET', post_data=None, auth='token', token=None):
         data = json.dumps(post_data)
 
     if auth == 'token':
-        headers = {'Authorization': f'Token {token}' }
+        headers = {'Authorization': f'Token {token}'}
 
     if type == 'GET':
         r = requests.get(url, params=params, headers=headers)
@@ -65,25 +65,16 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--base_url',
-            action='store',
-            dest='base_url',
-            default=False,
-            help='base url where to run the tests')
+            '--base_url', action='store', dest='base_url', default=False, help='base url where to run the tests'
+        )
         parser.add_argument(
-            '--token',
-            action='store',
-            dest='token',
-            default=False,
-            help='api token (client secret) to use')
+            '--token', action='store', dest='token', default=False, help='api token (client secret) to use'
+        )
         parser.add_argument(
-            '--section',
-            action='store',
-            dest='section',
-            default=False,
-            help='section of the tests to run')
+            '--section', action='store', dest='section', default=False, help='section of the tests to run'
+        )
 
-    def handle(self,  *args, **options):
+    def handle(self, *args, **options):
         base_url = options['base_url']
         token = options['token']
         section = options['section']

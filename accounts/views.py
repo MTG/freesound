@@ -116,9 +116,7 @@ def login(request, template_name, authentication_form):
     # Freesound-specific login view to check if a user has multiple accounts
     # with the same email address. We can switch back to the regular django view
     # once all accounts are adapted
-    response = LoginView.as_view(
-        template_name='accounts/login.html',
-        authentication_form=authentication_form)(request)
+    response = LoginView.as_view(template_name='accounts/login.html', authentication_form=authentication_form)(request)
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful
         # Now we check if the logged in user has shared email problems
@@ -161,8 +159,10 @@ def password_reset_complete(request):
     instead of staying in PasswordResetCompleteView (the current path).
     """
     response = PasswordResetCompleteView.as_view(
-        template_name='accounts/password_reset_complete.html',
-        extra_context={'next_path': reverse('accounts-home')})(request)
+        template_name='accounts/password_reset_complete.html', extra_context={'next_path': reverse('accounts-home')}
+    )(
+        request
+    )
     return response
 
 
@@ -174,7 +174,10 @@ def password_change_form(request):
     response = PasswordChangeView.as_view(
         form_class=FsPasswordChangeForm,
         template_name='accounts/password_change_form.html',
-        extra_context={'activePage': 'password'})(request)
+        extra_context={'activePage': 'password'}
+    )(
+        request
+    )
     return response
 
 
@@ -184,8 +187,10 @@ def password_change_done(request):
     This view is called when user has successfully changed the password by filling in the password change form.
     """
     response = PasswordChangeDoneView.as_view(
-        template_name='accounts/password_change_done.html',
-        extra_context={'activePage': 'password'})(request)
+        template_name='accounts/password_change_done.html', extra_context={'activePage': 'password'}
+    )(
+        request
+    )
     return response
 
 
@@ -221,8 +226,12 @@ def multi_email_cleanup(request):
         return HttpResponseRedirect(request.GET.get('next', reverse('accounts-home')))
     else:
         # If email issues are still valid, then we show the email cleanup page with the instructions
-        return render(request, 'accounts/multi_email_cleanup.html', {
-            'same_user': same_user, 'next': request.GET.get('next', reverse('accounts-home'))})
+        return render(
+            request, 'accounts/multi_email_cleanup.html', {
+                'same_user': same_user,
+                'next': request.GET.get('next', reverse('accounts-home'))
+            }
+        )
 
 
 def check_username(request):
@@ -331,12 +340,15 @@ def activate_user(request, username, uid_hash):
     try:
         user = User.objects.get(username__iexact=username)
     except User.DoesNotExist:
-        return render(request, 'accounts/activate.html', {'user_does_not_exist': True,
-                                                          'next_path': reverse('accounts-home')})
+        return render(
+            request, 'accounts/activate.html', {
+                'user_does_not_exist': True,
+                'next_path': reverse('accounts-home')
+            }
+        )
 
     if not default_token_generator.check_token(user, uid_hash):
-        return render(request, 'accounts/activate.html', {'decode_error': True,
-                                                          'next_path': reverse('accounts-home')})
+        return render(request, 'accounts/activate.html', {'decode_error': True, 'next_path': reverse('accounts-home')})
 
     user.is_active = True
     user.save()
@@ -346,11 +358,7 @@ def activate_user(request, username, uid_hash):
 def send_activation(user):
     token = default_token_generator.make_token(user)
     username = user.username
-    tvars = {
-        'user': user,
-        'username': username,
-        'hash': token
-    }
+    tvars = {'user': user, 'username': username, 'hash': token}
     send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'emails/email_activation.txt', tvars, user_to=user)
 
 
@@ -360,7 +368,7 @@ def resend_activation(request):
 
 def username_reminder(request):
     return HttpResponseRedirect(reverse('front-page') + '?loginProblems=1')
-    
+
 
 @login_required
 def home(request):
@@ -383,11 +391,8 @@ def edit_email_settings(request):
         all_emails = request.user.profile.get_enabled_email_types()
         form = EmailSettingsForm(initial={
             'email_types': all_emails,
-            })
-    tvars = {
-        'form': form,
-        'activePage': 'notifications'
-    }
+        })
+    tvars = {'form': form, 'activePage': 'notifications'}
     return render(request, 'accounts/edit_email_settings.html', tvars)
 
 
@@ -457,7 +462,7 @@ def edit(request):
         'has_granted_permissions': has_granted_permissions,
         'has_old_avatar': has_old_avatar,
         'uploads_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED,
-        'activePage': 'profile', 
+        'activePage': 'profile',
     }
     return render(request, 'accounts/edit.html', tvars)
 
@@ -534,7 +539,6 @@ def manage_sounds(request, tab):
             'filter_query': filter_query,
             'sort_options': sort_options,
         }, sort_by_db, filter_db
-        
 
     # First do some stuff common to all tabs
     sounds_published_base_qs = Sound.public.filter(user=request.user)
@@ -577,13 +581,15 @@ def manage_sounds(request, tab):
             packs = Pack.objects.ordered_ids(pack_ids)
             # Just as a sanity check, filter out packs not owned by the user
             packs = [pack for pack in packs if pack.user == pack.user]
-    
+
             if packs:
                 if 'edit' in request.POST:
                     # There will be only one pack selected (otherwise the button is disabled)
                     # Redirect to the edit pack page
                     pack = packs[0]
-                    return HttpResponseRedirect(reverse('pack-edit', args=[pack.user.username, pack.id]) + '?next=' + request.path)
+                    return HttpResponseRedirect(
+                        reverse('pack-edit', args=[pack.user.username, pack.id]) + '?next=' + request.path
+                    )
                 elif 'delete_confirm' in request.POST:
                     # Delete the selected packs
                     n_packs_deleted = 0
@@ -591,9 +597,10 @@ def manage_sounds(request, tab):
                         web_logger.info(f"User {request.user.username} requested to delete pack {pack.id}")
                         pack.delete_pack(remove_sounds=False)
                         n_packs_deleted += 1
-                    messages.add_message(request, messages.INFO,
-                                        f'Successfully deleted {n_packs_deleted} '
-                                        f'pack{"s" if n_packs_deleted != 1 else ""}')
+                    messages.add_message(
+                        request, messages.INFO, f'Successfully deleted {n_packs_deleted} '
+                        f'pack{"s" if n_packs_deleted != 1 else ""}'
+                    )
                     return HttpResponseRedirect(reverse('accounts-manage-sounds', args=[tab]))
 
         sort_options = [
@@ -607,7 +614,8 @@ def manage_sounds(request, tab):
         extra_tvars, sort_by_db, filter_db = process_filter_and_sort_options(request, sort_options, tab)
         tvars.update(extra_tvars)
         if filter_db is not None:
-            packs_base_qs = packs_base_qs.annotate(search=SearchVector('name', 'id', 'description')).filter(search=filter_db).distinct()
+            packs_base_qs = packs_base_qs.annotate(search=SearchVector('name', 'id', 'description')
+                                                   ).filter(search=filter_db).distinct()
         packs = packs_base_qs.order_by(sort_by_db)
         pack_ids = list(packs.values_list('id', flat=True))
         paginator = paginate(request, pack_ids, 12)
@@ -630,10 +638,15 @@ def manage_sounds(request, tab):
             if sounds:
                 if 'edit' in request.POST:
                     # Edit the selected sounds
-                    session_key_prefix = str(uuid.uuid4())[0:8]  # Use a new so we don't interfere with other active description/editing processes
-                    request.session[f'{session_key_prefix}-edit_sounds'] = sounds  # Add the list of sounds to edit in the session object
+                    session_key_prefix = str(
+                        uuid.uuid4()
+                    )[0:8]    # Use a new so we don't interfere with other active description/editing processes
+                    request.session[f'{session_key_prefix}-edit_sounds'
+                                    ] = sounds    # Add the list of sounds to edit in the session object
                     request.session[f'{session_key_prefix}-len_original_edit_sounds'] = len(sounds)
-                    return HttpResponseRedirect(reverse('accounts-edit-sounds') + f'?next={request.path}&session={session_key_prefix}')
+                    return HttpResponseRedirect(
+                        reverse('accounts-edit-sounds') + f'?next={request.path}&session={session_key_prefix}'
+                    )
                 elif 'delete_confirm' in request.POST:
                     # Delete the selected sounds
                     n_sounds_deleted = 0
@@ -645,15 +658,17 @@ def manage_sounds(request, tab):
                                 sender=request.user,
                                 text=f"User {request.user} deleted the sound",
                                 ticket=ticket,
-                                moderator_only=False)
+                                moderator_only=False
+                            )
                             tc.save()
                         except Ticket.DoesNotExist:
                             pass
                         sound.delete()
                         n_sounds_deleted += 1
-                    messages.add_message(request, messages.INFO,
-                                         f'Successfully deleted {n_sounds_deleted} '
-                                         f'sound{"s" if n_sounds_deleted != 1 else ""}')
+                    messages.add_message(
+                        request, messages.INFO, f'Successfully deleted {n_sounds_deleted} '
+                        f'sound{"s" if n_sounds_deleted != 1 else ""}'
+                    )
                     return HttpResponseRedirect(reverse('accounts-manage-sounds', args=[tab]))
 
                 elif 'process' in request.POST:
@@ -666,12 +681,13 @@ def manage_sounds(request, tab):
                     if n_send_to_processing != len(sounds):
                         sounds_skipped_msg_part = f' {len(sounds) - n_send_to_processing} sounds were not send to ' \
                                                   f'processing due to many failed processing attempts.'
-                    messages.add_message(request, messages.INFO,
-                                         f'Sent { n_send_to_processing } '
-                                         f'sound{ "s" if n_send_to_processing != 1 else "" } '
-                                         f'to re-process.{ sounds_skipped_msg_part }')
+                    messages.add_message(
+                        request, messages.INFO, f'Sent { n_send_to_processing } '
+                        f'sound{ "s" if n_send_to_processing != 1 else "" } '
+                        f'to re-process.{ sounds_skipped_msg_part }'
+                    )
                     return HttpResponseRedirect(reverse('accounts-manage-sounds', args=[tab]))
-    
+
         # Process query and filter options
         sort_options = [
             ('created_desc', 'Date added (newest first)', '-created'),
@@ -689,7 +705,8 @@ def manage_sounds(request, tab):
         elif tab == 'processing':
             sounds = sounds_processing_base_qs
         if filter_db is not None:
-            sounds = sounds.annotate(search=SearchVector('original_filename', 'id', 'description', 'tags__tag__name')).filter(search=filter_db).distinct()
+            sounds = sounds.annotate(search=SearchVector('original_filename', 'id', 'description', 'tags__tag__name')
+                                     ).filter(search=filter_db).distinct()
         sounds = sounds.order_by(sort_by_db)
         sound_ids = list(sounds.values_list('id', flat=True))
 
@@ -705,7 +722,7 @@ def manage_sounds(request, tab):
                 sound.show_processing_status = True
         tvars['sounds_to_select'] = sounds_to_select
     else:
-        raise Http404  # Non-existing tab
+        raise Http404    # Non-existing tab
 
     return render(request, 'accounts/manage_sounds.html', tvars)
 
@@ -714,7 +731,9 @@ def manage_sounds(request, tab):
 @transaction.atomic()
 def edit_sounds(request):
     session_key_prefix = request.GET.get('session', '')
-    return edit_and_describe_sounds_helper(request, session_key_prefix=session_key_prefix)  # Note that the list of sounds to describe is stored in the session object
+    return edit_and_describe_sounds_helper(
+        request, session_key_prefix=session_key_prefix
+    )    # Note that the list of sounds to describe is stored in the session object
 
 
 def sounds_pending_description_helper(request, file_structure, files):
@@ -736,8 +755,9 @@ def sounds_pending_description_helper(request, file_structure, files):
                 destination.write(chunk)
             destination.close()
 
-            bulk = BulkUploadProgress.objects.create(user=request.user, csv_filename=new_csv_filename,
-                                                     original_csv_filename=f.name)
+            bulk = BulkUploadProgress.objects.create(
+                user=request.user, csv_filename=new_csv_filename, original_csv_filename=f.name
+            )
             tasks.validate_bulk_describe_csv.delay(bulk_upload_progress_object_id=bulk.id)
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
         elif form.is_valid():
@@ -759,9 +779,15 @@ def sounds_pending_description_helper(request, file_structure, files):
                 remove_empty_user_directory_from_mirror_locations(user_uploads_dir)
                 return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
             elif "describe" in request.POST:
-                session_key_prefix = str(uuid.uuid4())[0:8]  # Use a new so we don't interfere with other active description/editing processes
-                request.session[f'{session_key_prefix}-describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
-                request.session[f'{session_key_prefix}-len_original_describe_sounds'] = len(request.session[f'{session_key_prefix}-describe_sounds'])
+                session_key_prefix = str(
+                    uuid.uuid4()
+                )[0:8]    # Use a new so we don't interfere with other active description/editing processes
+                request.session[f'{session_key_prefix}-describe_sounds'] = [
+                    files[x] for x in form.cleaned_data["files"]
+                ]
+                request.session[f'{session_key_prefix}-len_original_describe_sounds'] = len(
+                    request.session[f'{session_key_prefix}-describe_sounds']
+                )
                 # If only one file is choosen, go straight to the last step of the describe process, otherwise go to license selection step
                 if len(request.session[f'{session_key_prefix}-describe_sounds']) > 1:
                     return HttpResponseRedirect(reverse('accounts-describe-license') + f'?session={session_key_prefix}')
@@ -795,8 +821,8 @@ def describe_license(request):
     else:
         form = LicenseForm(hide_old_license_versions=True)
     tvars = {
-        'form': form, 
-        'num_files': request.session.get(f'{session_key_prefix}-len_original_describe_sounds', 0), 
+        'form': form,
+        'num_files': request.session.get(f'{session_key_prefix}-len_original_describe_sounds', 0),
         'session_key_prefix': session_key_prefix
     }
     return render(request, 'accounts/describe_license.html', tvars)
@@ -821,8 +847,8 @@ def describe_pack(request):
     else:
         form = PackForm(packs, prefix="pack")
     tvars = {
-        'form': form, 
-        'num_files': request.session.get(f'{session_key_prefix}-len_original_describe_sounds', 0), 
+        'form': form,
+        'num_files': request.session.get(f'{session_key_prefix}-len_original_describe_sounds', 0),
         'session_key_prefix': session_key_prefix
     }
     return render(request, 'accounts/describe_pack.html', tvars)
@@ -832,9 +858,11 @@ def describe_pack(request):
 @transaction.atomic()
 def describe_sounds(request):
     session_key_prefix = request.GET.get('session', '')
-    return edit_and_describe_sounds_helper(request, describing=True, session_key_prefix=session_key_prefix)  # Note that the list of sounds to describe is stored in the session object
+    return edit_and_describe_sounds_helper(
+        request, describing=True, session_key_prefix=session_key_prefix
+    )    # Note that the list of sounds to describe is stored in the session object
 
-    
+
 @login_required
 def attribution(request):
     qs_sounds = Download.objects.annotate(download_type=Value("sound", CharField()))\
@@ -881,19 +909,24 @@ def download_attribution(request):
             output.write('Download Type,File Name,User,License,Timestamp\r\n')
             csv_writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in qs:
-                csv_writer.writerow(
-                    [row['download_type'][0].upper(), row['sound__original_filename'],
-                     row['sound__user__username'],
-                     license_with_version(row['license__name'] or row['sound__license__name'],
-                                          row['license__deed_url'] or row['sound__license__deed_url']),
-                     row['created']])
+                csv_writer.writerow([
+                    row['download_type'][0].upper(), row['sound__original_filename'], row['sound__user__username'],
+                    license_with_version(
+                        row['license__name'] or row['sound__license__name'], row['license__deed_url']
+                        or row['sound__license__deed_url']
+                    ), row['created']
+                ])
         elif download == 'txt':
             for row in qs:
-                output.write("{}: {} by {} | License: {} | Timestamp: {}\n".format(row['download_type'][0].upper(),
-                             row['sound__original_filename'], row['sound__user__username'],
-                             license_with_version(row['license__name'] or row['sound__license__name'],
-                                                  row['license__deed_url'] or row['sound__license__deed_url']),
-                             row['created']))
+                output.write(
+                    "{}: {} by {} | License: {} | Timestamp: {}\n".format(
+                        row['download_type'][0].upper(), row['sound__original_filename'], row['sound__user__username'],
+                        license_with_version(
+                            row['license__name'] or row['sound__license__name'], row['license__deed_url']
+                            or row['sound__license__deed_url']
+                        ), row['created']
+                    )
+                )
         response.writelines(output.getvalue())
         return response
     else:
@@ -918,10 +951,7 @@ def downloaded_sounds(request, username):
         sound = sounds_dict.get(d.sound_id, None)
         if sound is not None:
             download_list.append({"created": d.created, "sound": sound})
-    tvars = {"username": username,
-            "user": user,
-            "download_list": download_list,
-            "type_sounds": True}
+    tvars = {"username": username, "user": user, "download_list": download_list, "type_sounds": True}
     tvars.update(paginator)
     return render(request, 'accounts/modal_downloads.html', tvars)
 
@@ -944,9 +974,7 @@ def downloaded_packs(request, username):
         pack = packs_dict.get(d.pack_id, None)
         if pack is not None:
             download_list.append({"created": d.created, "pack": pack})
-    tvars = {"username": username,
-            "download_list": download_list,
-            "type_sounds": False}
+    tvars = {"username": username, "download_list": download_list, "type_sounds": False}
     tvars.update(paginator)
     return render(request, 'accounts/modal_downloads.html', tvars)
 
@@ -1006,16 +1034,17 @@ def compute_charts_stats():
     most_active_users = User.objects.select_related("profile")\
         .filter(id__in=[u[1] for u in sorted(sort_list, reverse=True)[:num_items]])
     most_active_users_display = [[u, user_rank[u.id]] for u in most_active_users]
-    most_active_users_display = sorted(most_active_users_display,
-                                       key=lambda usr: user_rank[usr[0].id]['score'],
-                                       reverse=True)
+    most_active_users_display = sorted(
+        most_active_users_display, key=lambda usr: user_rank[usr[0].id]['score'], reverse=True
+    )
 
     # Newest active users
     new_user_in_rank_ids = User.objects.filter(date_joined__gte=last_time, id__in=list(user_rank.keys()))\
         .values_list('id', flat=True)
-    new_user_objects = {user.id: user for user in
-                        User.objects.select_related("profile").filter(date_joined__gte=last_time)
-                            .filter(id__in=new_user_in_rank_ids)}
+    new_user_objects = {
+        user.id: user for user in User.objects.select_related("profile").filter(date_joined__gte=last_time
+                                                                                ).filter(id__in=new_user_in_rank_ids)
+    }
     new_users_display = [(new_user_objects[user_id], user_rank[user_id]) for user_id in new_user_in_rank_ids]
     new_users_display = sorted(new_users_display, key=lambda x: x[1]['score'], reverse=True)[:num_items]
 
@@ -1024,44 +1053,52 @@ def compute_charts_stats():
         .filter(created__gte=last_time) \
         .values('user_id').annotate(n_sounds=Count('user_id')) \
         .order_by('-n_sounds')[0:num_items]
-    user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_count])}
-    top_recent_uploaders_by_count_display = [
-        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
-         user_objects[item['user_id']].username,
-         item['n_sounds']) for item in top_recent_uploaders_by_count]
+    user_objects = {
+        user.id: user
+        for user in User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_count])
+    }
+    top_recent_uploaders_by_count_display = [(
+        user_objects[item['user_id']].profile.locations("avatar.M.url"), user_objects[item['user_id']].username,
+        item['n_sounds']
+    ) for item in top_recent_uploaders_by_count]
 
     top_recent_uploaders_by_length = Sound.public \
          .filter(created__gte=last_time) \
          .values('user_id').annotate(total_duration=Sum('duration')) \
          .order_by('-total_duration')[0:num_items]
-    user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_length])}
-    top_recent_uploaders_by_length_display = [
-        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
-         user_objects[item['user_id']].username,
-         item['total_duration']) for item in top_recent_uploaders_by_length]
+    user_objects = {
+        user.id: user
+        for user in User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_length])
+    }
+    top_recent_uploaders_by_length_display = [(
+        user_objects[item['user_id']].profile.locations("avatar.M.url"), user_objects[item['user_id']].username,
+        item['total_duration']
+    ) for item in top_recent_uploaders_by_length]
 
     # All time top uploaders (by count and by length)
     all_time_top_uploaders_by_count = Sound.public \
         .values('user_id').annotate(n_sounds=Count('user_id')) \
         .order_by('-n_sounds')[0:num_items]
-    user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_count])}
-    all_time_top_uploaders_by_count_display = [
-        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
-         user_objects[item['user_id']].username,
-         item['n_sounds']) for item in all_time_top_uploaders_by_count]
+    user_objects = {
+        user.id: user
+        for user in User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_count])
+    }
+    all_time_top_uploaders_by_count_display = [(
+        user_objects[item['user_id']].profile.locations("avatar.M.url"), user_objects[item['user_id']].username,
+        item['n_sounds']
+    ) for item in all_time_top_uploaders_by_count]
 
     all_time_top_uploaders_by_length = Sound.public \
          .values('user_id').annotate(total_duration=Sum('duration')) \
          .order_by('-total_duration')[0:num_items]
-    user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_length])}
-    all_time_top_uploaders_by_length_display = [
-        (user_objects[item['user_id']].profile.locations("avatar.M.url"),
-         user_objects[item['user_id']].username,
-         item['total_duration']) for item in all_time_top_uploaders_by_length]
+    user_objects = {
+        user.id: user
+        for user in User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_length])
+    }
+    all_time_top_uploaders_by_length_display = [(
+        user_objects[item['user_id']].profile.locations("avatar.M.url"), user_objects[item['user_id']].username,
+        item['total_duration']
+    ) for item in all_time_top_uploaders_by_length]
 
     return {
         'num_days': num_days,
@@ -1107,15 +1144,16 @@ def account(request, username):
         num_sounds_pending = None
         num_mod_annotations = None
 
-    show_about = ((request.user == user)  # user is looking at own page
-                  or request.user.is_superuser  # admins should always see about fields
-                  or user.is_superuser  # no reason to hide admin's about fields
-                  or user.profile.get_total_downloads > 0  # user has downloads
-                  or user.profile.num_sounds > 0)  # user has uploads
+    show_about = ((request.user == user)    # user is looking at own page
+                  or request.user.is_superuser    # admins should always see about fields
+                  or user.is_superuser    # no reason to hide admin's about fields
+                  or user.profile.get_total_downloads > 0    # user has downloads
+                  or user.profile.num_sounds > 0)    # user has uploads
 
     last_geotags_serialized = []
     if user.profile.has_geotags and settings.MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING:
-        for sound in Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)[0:10]:
+        for sound in Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None
+                                                                                                           )[0:10]:
             last_geotags_serialized.append({'lon': sound.geotag.lon, 'lat': sound.geotag.lat})
         last_geotags_serialized = json.dumps(last_geotags_serialized)
 
@@ -1136,7 +1174,7 @@ def account(request, username):
         'following_modal_page': request.GET.get('following', 1),
         'followers_modal_page': request.GET.get('followers', 1),
         'following_tags_modal_page': request.GET.get('followingTags', 1),
-        'last_geotags_serialized': last_geotags_serialized, 
+        'last_geotags_serialized': last_geotags_serialized,
         'user_downloads_public': settings.USER_DOWNLOADS_PUBLIC,
     }
     return render(request, 'accounts/account.html', tvars)
@@ -1145,7 +1183,7 @@ def account(request, username):
 @redirect_if_old_username_or_404
 def account_stats_section(request, username):
     if not request.GET.get('ajax'):
-        raise Http404  # Only accessible via ajax
+        raise Http404    # Only accessible via ajax
     user = request.parameter_user
     tvars = {
         'user': user,
@@ -1157,13 +1195,13 @@ def account_stats_section(request, username):
 @redirect_if_old_username_or_404
 def account_latest_packs_section(request, username):
     if not request.GET.get('ajax'):
-        raise Http404  # Only accessible via ajax
-    
+        raise Http404    # Only accessible via ajax
+
     user = request.parameter_user
     tvars = {
         'user': user,
-        # Note we don't pass latest packs data because it is requested from the template
-        # if there is no cache available
+    # Note we don't pass latest packs data because it is requested from the template
+    # if there is no cache available
     }
     return render(request, 'accounts/account_latest_packs_section.html', tvars)
 
@@ -1181,7 +1219,7 @@ def handle_uploaded_file(user_id, f):
         # file instead of copying it
         try:
             os.rename(f.temporary_file_path(), dest_path)
-            os.chmod(dest_path, 0o644)  # Set appropriate permissions so that file can be downloaded from nginx
+            os.chmod(dest_path, 0o644)    # Set appropriate permissions so that file can be downloaded from nginx
         except Exception as e:
             upload_logger.warning("failed moving TemporaryUploadedFile error: %s", str(e))
             return False
@@ -1213,7 +1251,7 @@ def upload_file(request):
     the user login """
 
     upload_logger.info("start uploading file")
-    engine = __import__(settings.SESSION_ENGINE, {}, {}, [''])  # get the current session engine
+    engine = __import__(settings.SESSION_ENGINE, {}, {}, [''])    # get the current session engine
     session_data = engine.SessionStore(request.POST.get('sessionid', ''))
     try:
         user_id = session_data['_auth_user_id']
@@ -1269,7 +1307,9 @@ def upload(request, no_flash=False):
         'no_flash': no_flash,
         'max_file_size': settings.UPLOAD_MAX_FILE_SIZE_COMBINED,
         'max_file_size_in_MB': int(round(settings.UPLOAD_MAX_FILE_SIZE_COMBINED * 1.0 / (1024 * 1024))),
-        'lossless_file_extensions': [ext for ext in settings.ALLOWED_AUDIOFILE_EXTENSIONS if ext not in settings.LOSSY_FILE_EXTENSIONS],
+        'lossless_file_extensions': [
+            ext for ext in settings.ALLOWED_AUDIOFILE_EXTENSIONS if ext not in settings.LOSSY_FILE_EXTENSIONS
+        ],
         'lossy_file_extensions': settings.LOSSY_FILE_EXTENSIONS,
         'all_file_extensions': settings.ALLOWED_AUDIOFILE_EXTENSIONS,
         'uploads_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED
@@ -1280,9 +1320,11 @@ def upload(request, no_flash=False):
 @login_required
 def bulk_describe(request, bulk_id):
     if not request.user.profile.can_do_bulk_upload():
-        messages.add_message(request, messages.INFO, "Your user does not have permission to use the bulk describe "
-                                                     "feature. You must upload at least %i sounds before being able"
-                                                     "to use that feature." % settings.BULK_UPLOAD_MIN_SOUNDS)
+        messages.add_message(
+            request, messages.INFO, "Your user does not have permission to use the bulk describe "
+            "feature. You must upload at least %i sounds before being able"
+            "to use that feature." % settings.BULK_UPLOAD_MIN_SOUNDS
+        )
         return HttpResponseRedirect(reverse('accounts-manage-sounds', args=['pending_description']))
 
     bulk = get_object_or_404(BulkUploadProgress, id=int(bulk_id), user=request.user)
@@ -1341,12 +1383,14 @@ def delete(request):
             cutoff_date = datetime.datetime.today() - datetime.timedelta(days=1)
             recent_pending_deletion_requests_exist = UserDeletionRequest.objects\
                 .filter(user_to_id=request.user.id, last_updated__gt=cutoff_date)\
-                .filter(status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED).exists()                
+                .filter(status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED).exists()
             if recent_pending_deletion_requests_exist:
-                messages.add_message(request, messages.INFO,
+                messages.add_message(
+                    request, messages.INFO,
                     f'It looks like a deletion action was already triggered for your user account and '
                     f'your account should be deleted shortly. If you see the account not being deleted, '
-                    f'please contact us using the <a href="{reverse("contact")}">contact form</a>.')
+                    f'please contact us using the <a href="{reverse("contact")}">contact form</a>.'
+                )
             else:
                 delete_sounds =\
                     form.cleaned_data['delete_sounds'] == 'delete_sounds'
@@ -1356,19 +1400,25 @@ def delete(request):
                 web_logger.info(f'Requested async deletion of user {request.user.id} - {delete_action}')
 
                 # Create a UserDeletionRequest with a status of 'Deletion action was triggered'
-                UserDeletionRequest.objects.create(user_from=request.user,
-                                                user_to=request.user,
-                                                status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
-                                                triggered_deletion_action=delete_action,
-                                                triggered_deletion_reason=delete_reason)
+                UserDeletionRequest.objects.create(
+                    user_from=request.user,
+                    user_to=request.user,
+                    status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
+                    triggered_deletion_action=delete_action,
+                    triggered_deletion_reason=delete_reason
+                )
 
                 # Trigger async task so user gets deleted asynchronously
-                tasks.delete_user.delay(user_id=request.user.id, deletion_action=delete_action, deletion_reason=delete_reason)
+                tasks.delete_user.delay(
+                    user_id=request.user.id, deletion_action=delete_action, deletion_reason=delete_reason
+                )
 
                 # Show a message to the user that the account will be deleted shortly
-                messages.add_message(request, messages.INFO,
-                                    'Your user account will be deleted in a few moments. Note that this process could '
-                                    'take up to several hours for users with many uploaded sounds.')
+                messages.add_message(
+                    request, messages.INFO,
+                    'Your user account will be deleted in a few moments. Note that this process could '
+                    'take up to several hours for users with many uploaded sounds.'
+                )
 
                 # Logout user, mark account inctive, set unusable password and change email to a dummy one so that
                 # user can't recover the account while it is being delete asynchronously
@@ -1385,9 +1435,9 @@ def delete(request):
         form = DeleteUserForm(user_id=request.user.id)
 
     tvars = {
-            'delete_form': form,
-            'num_sounds': num_sounds,
-            'activePage': 'account',
+        'delete_form': form,
+        'num_sounds': num_sounds,
+        'activePage': 'account',
     }
     return render(request, 'accounts/delete.html', tvars)
 
@@ -1428,30 +1478,20 @@ def email_reset(request):
                 # Send email to the new address
                 user = request.user
                 email = form.cleaned_data["email"]
-                tvars = {
-                    'uid': int_to_base36(user.id),
-                    'user': user,
-                    'token': default_token_generator.make_token(user)
-                }
-                send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
-                                   'emails/email_reset_email.txt', tvars,
-                                   email_to=email)
+                tvars = {'uid': int_to_base36(user.id), 'user': user, 'token': default_token_generator.make_token(user)}
+                send_mail_template(
+                    settings.EMAIL_SUBJECT_EMAIL_CHANGED, 'emails/email_reset_email.txt', tvars, email_to=email
+                )
 
             return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
         form = EmailResetForm(user=request.user, label_suffix='')
-    tvars = {
-        'form': form,
-        'user': request.user,
-        'activePage': 'email'
-    }
+    tvars = {'form': form, 'user': request.user, 'activePage': 'email'}
     return render(request, 'accounts/email_reset_form.html', tvars)
 
 
 def email_reset_done(request):
-    return render(request, 'accounts/email_reset_done.html', {
-        'activePage': 'email'
-    })
+    return render(request, 'accounts/email_reset_done.html', {'activePage': 'email'})
 
 
 @never_cache
@@ -1459,7 +1499,7 @@ def email_reset_done(request):
 @transaction.atomic()
 def email_reset_complete(request, uidb36=None, token=None):
     # Check that the link is valid and the base36 corresponds to a user id
-    assert uidb36 is not None and token is not None  # checked by URLconf
+    assert uidb36 is not None and token is not None    # checked by URLconf
     try:
         uid_int = base36_to_int(uidb36)
         user = User.objects.get(id=uid_int)
@@ -1488,16 +1528,15 @@ def email_reset_complete(request, uidb36=None, token=None):
     # a User deletion pre_save hook if we detect that email has changed
 
     # Send email to the old address notifying about the change
-    tvars = {
-        'old_email': old_email,
-        'user': user,
-        'activePage': 'email'
-    }
-    send_mail_template(settings.EMAIL_SUBJECT_EMAIL_CHANGED,
-                       'emails/email_reset_complete_old_address_notification.txt', tvars, email_to=old_email)
+    tvars = {'old_email': old_email, 'user': user, 'activePage': 'email'}
+    send_mail_template(
+        settings.EMAIL_SUBJECT_EMAIL_CHANGED,
+        'emails/email_reset_complete_old_address_notification.txt',
+        tvars,
+        email_to=old_email
+    )
 
     return render(request, 'accounts/email_reset_complete.html', tvars)
-
 
 
 def problems_logging_in(request):
@@ -1579,8 +1618,7 @@ def flag_user(request, username):
                     added_objects.append(key)
                     try:
                         obj = f_object.content_type.get_object_for_this_type(id=f_object.object_id)
-                        url = reverse('admin:%s_%s_change' %
-                                      (obj._meta.app_label,  obj._meta.model_name), args=[obj.id])
+                        url = reverse('admin:%s_%s_change' % (obj._meta.app_label, obj._meta.model_name), args=[obj.id])
                         if isinstance(obj, Comment):
                             content = obj.comment
                         elif isinstance(obj, Post):
@@ -1592,8 +1630,10 @@ def flag_user(request, username):
                         objects_data.append([str(f_object.content_type), request.build_absolute_uri(url), content])
                     except ObjectDoesNotExist:
                         objects_data.append([str(f_object.content_type), "url not available", ""])
-            user_url = reverse('admin:%s_%s_delete' %
-                               (flagged_user._meta.app_label, flagged_user._meta.model_name), args=[flagged_user.id])
+            user_url = reverse(
+                'admin:%s_%s_delete' % (flagged_user._meta.app_label, flagged_user._meta.model_name),
+                args=[flagged_user.id]
+            )
             user_url = request.build_absolute_uri(user_url)
             clear_url = reverse("clear-flags-user", args=[flagged_user.username])
             clear_url = request.build_absolute_uri(clear_url)
@@ -1602,12 +1642,15 @@ def flag_user(request, username):
             else:
                 template_to_use = 'emails/email_report_blocked_spammer_admins.txt'
 
-            tvars = {'flagged_user': flagged_user,
-                     'objects_data': objects_data,
-                     'user_url': user_url,
-                     'clear_url': clear_url}
+            tvars = {
+                'flagged_user': flagged_user,
+                'objects_data': objects_data,
+                'user_url': user_url,
+                'clear_url': clear_url
+            }
             send_mail_template_to_support(
-                settings.EMAIL_SUBJECT_USER_SPAM_REPORT, template_to_use, tvars, extra_subject=flagged_user.username)
+                settings.EMAIL_SUBJECT_USER_SPAM_REPORT, template_to_use, tvars, extra_subject=flagged_user.username
+            )
         return HttpResponse(json.dumps({"errors": None}), content_type='application/javascript')
     else:
         return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')
@@ -1616,7 +1659,7 @@ def flag_user(request, username):
 @login_required
 def clear_flags_user(request, username):
     if request.user.is_superuser or request.user.is_staff:
-        flags = UserFlag.objects.filter(user__username = username)
+        flags = UserFlag.objects.filter(user__username=username)
         num = len(flags)
         for flag in flags:
             flag.delete()

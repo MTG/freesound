@@ -34,23 +34,26 @@ def cNMostSimilar(input_tags, tag_names, similarity_matrix, options):
             # Find N most similar tags in the row
             idx = unicode_tag_names.index(tag)
             #where(tag_names == tag)[0][0]
-            row_idx = nonzero(similarity_matrix[idx,:])
+            row_idx = nonzero(similarity_matrix[idx, :])
             row_idx = row_idx[0]
-            row = similarity_matrix[idx,row_idx]
+            row = similarity_matrix[idx, row_idx]
             MAX = N
-            most_similar_idx = row.argsort()[-MAX-1:-1][::-1] # We pick the first N most similar tags (practically the same as no threshold but more efficient)
+            most_similar_idx = row.argsort(
+            )[-MAX - 1:-1
+              ][::-1
+                ]    # We pick the first N most similar tags (practically the same as no threshold but more efficient)
             most_similar_dist = row[most_similar_idx]
             most_similar_tags = tag_names[row_idx[most_similar_idx]]
 
             rank = N
-            for count,item in enumerate(most_similar_tags):
+            for count, item in enumerate(most_similar_tags):
                 if item not in input_tags:
-                    candidate_tags.append( {'name':item, 'rank':rank, 'dist':most_similar_dist[count], 'from':tag} )
+                    candidate_tags.append({'name': item, 'rank': rank, 'dist': most_similar_dist[count], 'from': tag})
                     rank -= 1
                 else:
-                    pass # recommended tag was already present in input tags
+                    pass    # recommended tag was already present in input tags
         else:
-            pass  # If tag does not exist we do not recommend anything. Maybe we could do something else here
+            pass    # If tag does not exist we do not recommend anything. Maybe we could do something else here
 
     return candidate_tags
 
@@ -64,20 +67,22 @@ def aNormalizedRankSum(candidate_tags, input_tags, options):
 
     aggregated_candiate_tags = {}
     for item in candidate_tags:
-        if item['name'] in aggregated_candiate_tags: # Item already there
-            aggregated_candiate_tags[item['name']] = (aggregated_candiate_tags[item['name']] + float(item['rank'])/(len(input_tags))) * factor
+        if item['name'] in aggregated_candiate_tags:    # Item already there
+            aggregated_candiate_tags[
+                item['name']
+            ] = (aggregated_candiate_tags[item['name']] + float(item['rank']) / (len(input_tags))) * factor
         else:
-            aggregated_candiate_tags[item['name']] = float(item['rank'])/(len(input_tags))
+            aggregated_candiate_tags[item['name']] = float(item['rank']) / (len(input_tags))
     aggregated_candiate_tags_list = []
     for key in aggregated_candiate_tags.keys():
-        aggregated_candiate_tags_list.append({"name":key, "rank": aggregated_candiate_tags[key]})
+        aggregated_candiate_tags_list.append({"name": key, "rank": aggregated_candiate_tags[key]})
     aggregated_candiate_tags_list.sort(key=operator.itemgetter('rank'))
     aggregated_candiate_tags_list.reverse()
 
     return aggregated_candiate_tags, aggregated_candiate_tags_list
 
 
-def sThreshold(aggregated_candiate_tags_list, aggregated_candiate_tags, input_tags, options, threshold = None):
+def sThreshold(aggregated_candiate_tags_list, aggregated_candiate_tags, input_tags, options, threshold=None):
 
     if not threshold:
         threshold = options['sThreshold_threshold']
@@ -98,5 +103,5 @@ def sPercentage(aggregated_candiate_tags_list, aggregated_candiate_tags, input_t
 
     percentage = options['sPercentage_percentage']
     max_score = aggregated_candiate_tags_list[0]['rank']
-    threshold = max_score*(1.0-percentage)
+    threshold = max_score * (1.0 - percentage)
     return sThreshold(aggregated_candiate_tags_list, aggregated_candiate_tags, input_tags, options, threshold)

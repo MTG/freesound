@@ -132,8 +132,13 @@ class EditWikiPageTest(TestCase):
     def test_edit_page_save(self):
         # POST to the form and a new Content for this page is created
         self.client.force_login(self.user1)
-        resp = self.client.post(reverse('wiki-page-edit', kwargs={'name': 'help'}), data={'title': 'Page title',
-                                                                                          'body': 'This is some body'})
+        resp = self.client.post(
+            reverse('wiki-page-edit', kwargs={'name': 'help'}),
+            data={
+                'title': 'Page title',
+                'body': 'This is some body'
+            }
+        )
         content = self.page.content()
         self.assertEqual(content.title, 'Page title')
         self.assertEqual(content.body, 'This is some body')

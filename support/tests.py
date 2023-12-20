@@ -35,12 +35,12 @@ class SupportRequestsTest(TestCase):
         # try with existing email address
         request_email = 'test.user+1@gmail.com'
         send_email_to_support(request_email, subject, message)
-        self.assertTrue(True)  # This call is not really needed, but makes sense to me
+        self.assertTrue(True)    # This call is not really needed, but makes sense to me
 
         # try with non-existing email address
         request_email = 'test.user+1234678235@gmail.com'
         send_email_to_support(request_email, subject, message)
-        self.assertTrue(True)  # This call is not really needed, but makes sense to me
+        self.assertTrue(True)    # This call is not really needed, but makes sense to me
 
     def test_create_zendesk_ticket(self):
         subject = 'test subject'
@@ -66,6 +66,6 @@ class SupportRequestsTest(TestCase):
         ticket = create_zendesk_ticket(request_email, subject, message)
         sticket = serialize(ticket)
         self.assertEqual(sticket['requester']['email'], request_email)
-        self.assertEqual(sticket['requester']['name'], 'Unknown username')  # Set unknown username
-        self.assertTrue('custom_fields' not in sticket)  # no custom fields
-        self.assertTrue(len(sticket['description']) == len(message))  # No extra description
+        self.assertEqual(sticket['requester']['name'], 'Unknown username')    # Set unknown username
+        self.assertTrue('custom_fields' not in sticket)    # no custom fields
+        self.assertTrue(len(sticket['description']) == len(message))    # No extra description

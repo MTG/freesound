@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 import hashlib
 from unittest import mock
 
@@ -78,7 +77,8 @@ class TicketTests(TestCase):
             license=sounds.models.License.objects.get(pk=1),
             user=user,
             md5=hashlib.md5(filename.encode()).hexdigest(),
-            original_filename=filename)
+            original_filename=filename
+        )
         return sound
 
     @staticmethod
@@ -103,8 +103,9 @@ class TicketTests(TestCase):
 
     def _create_assigned_ticket(self):
         """Creates ticket that is already assigned to the moderator"""
-        return self._create_ticket(self.sound, self.test_user, ticket_status=TICKET_STATUS_ACCEPTED,
-                                   ticket_assignee=self.test_moderator)
+        return self._create_ticket(
+            self.sound, self.test_user, ticket_status=TICKET_STATUS_ACCEPTED, ticket_assignee=self.test_moderator
+        )
 
 
 class TicketAccessTest(TicketTests):
@@ -159,18 +160,19 @@ class MiscTicketTests(TicketTests):
         ticket = self._create_assigned_ticket()
 
         ticket.send_notification_emails(
-                tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
-                tickets.models.Ticket.USER_ONLY)
+            tickets.models.Ticket.NOTIFICATION_APPROVED_BUT, tickets.models.Ticket.USER_ONLY
+        )
 
         local_vars = {
-                'ticket': ticket,
-                'user_to': ticket.sender,
-                }
+            'ticket': ticket,
+            'user_to': ticket.sender,
+        }
         send_mail_mock.assert_called_once_with(
-                settings.EMAIL_SUBJECT_MODERATION_HANDLED,
-                tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
-                local_vars,
-                user_to=ticket.sender)
+            settings.EMAIL_SUBJECT_MODERATION_HANDLED,
+            tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
+            local_vars,
+            user_to=ticket.sender
+        )
 
 
 class TicketTestsFromQueue(TicketTests):
@@ -181,9 +183,14 @@ class TicketTestsFromQueue(TicketTests):
         self.ticket = self._create_assigned_ticket()
 
     def _perform_action(self, action):
-        return self.client.post(reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
-            'action': action, 'message': '', 'ticket': self.ticket.id,
-            'is_explicit': IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY})
+        return self.client.post(
+            reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
+                'action': action,
+                'message': '',
+                'ticket': self.ticket.id,
+                'is_explicit': IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY
+            }
+        )
 
     @mock.patch('sounds.models.delete_sounds_from_search_engine')
     def test_delete_ticket_from_queue(self, delete_sound_solr):
@@ -229,20 +236,20 @@ class TicketTestsFromQueue(TicketTests):
 
 class TicketTestsFromTicketViewOwn(TicketTestsFromQueue):
     """Ticket state changes in a response to actions from ticket inspection page for own ticket"""
+
     def _perform_action(self, action):
-        return self.client.post(reverse('tickets-ticket', args=[self.ticket.key]), {
-            'ss-action': action})
+        return self.client.post(reverse('tickets-ticket', args=[self.ticket.key]), {'ss-action': action})
 
 
 class TicketTestsFromTicketViewNew(TicketTestsFromQueue):
     """Ticket state changes in a response to actions from ticket inspection page for new ticket"""
+
     def setUp(self):
         TicketTests.setUp(self)
         self.ticket = self._create_ticket(self.sound, self.test_user)
 
     def _perform_action(self, action):
-        return self.client.post(reverse('tickets-ticket', args=[self.ticket.key]), {
-            'ss-action': action})
+        return self.client.post(reverse('tickets-ticket', args=[self.ticket.key]), {'ss-action': action})
 
 
 class TicketTestsIsExplicitFlagFromQueue(TicketTests):
@@ -253,8 +260,14 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         self.ticket = self._create_assigned_ticket()
 
     def _perform_action(self, action, is_explicit_flag_key):
-        return self.client.post(reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
-            'action': action, 'message': '', 'ticket': self.ticket.id, 'is_explicit': is_explicit_flag_key})
+        return self.client.post(
+            reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
+                'action': action,
+                'message': '',
+                'ticket': self.ticket.id,
+                'is_explicit': is_explicit_flag_key
+            }
+        )
 
     def test_keep_is_explicit_preference_for_explicit_sound(self):
         """Test that when approving a sound marked as 'is_explicit' it continues to be marked as such the moderator

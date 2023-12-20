@@ -26,18 +26,16 @@ from forum.models import Forum, Post, Thread
 
 @admin.register(Forum)
 class ForumAdmin(SortableAdmin):
-    raw_id_fields = ('last_post', )
+    raw_id_fields = ('last_post',)
     list_display = ('name', 'num_threads')
-
 
 
 @admin.register(Thread)
 class ThreadAdmin(admin.ModelAdmin):
-    raw_id_fields = ('author', 'last_post','first_post' )
+    raw_id_fields = ('author', 'last_post', 'first_post')
     list_display = ('forum', 'author', 'title', 'status', 'num_posts', 'created')
     list_filters = ('status',)
     search_fields = ('=author__username', "title")
-
 
 
 @admin.register(Post)

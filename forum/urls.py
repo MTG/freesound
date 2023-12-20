@@ -30,12 +30,25 @@ urlpatterns = [
     re_path(r'^(?P<forum_name_slug>[\w\-]+)/$', forum_views.forum, name="forums-forum"),
     re_path(r'^(?P<forum_name_slug>[\w\-]+)/new-thread/$', forum_views.new_thread, name="forums-new-thread"),
     re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/$', forum_views.thread, name="forums-thread"),
-    re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/unsubscribe/$', forum_views.unsubscribe_from_thread, name="forums-thread-unsubscribe"),
-    re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/subscribe/$', forum_views.subscribe_to_thread, name="forums-thread-subscribe"),
-    re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/$', forum_views.post, name="forums-post"),
+    re_path(
+        r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/unsubscribe/$',
+        forum_views.unsubscribe_from_thread,
+        name="forums-thread-unsubscribe"
+    ),
+    re_path(
+        r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/subscribe/$',
+        forum_views.subscribe_to_thread,
+        name="forums-thread-subscribe"
+    ),
+    re_path(
+        r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/$', forum_views.post, name="forums-post"
+    ),
     re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/reply/$', forum_views.reply, name="forums-reply"),
-    re_path(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/reply/$', forum_views.reply, name="forums-reply-quote"),
-
+    re_path(
+        r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/reply/$',
+        forum_views.reply,
+        name="forums-reply-quote"
+    ),
     path('post/<int:post_id>/edit/', forum_views.post_edit, name="forums-post-edit"),
     path('post/<int:post_id>/delete-confirm/', forum_views.post_delete_confirm, name="forums-post-delete-confirm"),
 ]

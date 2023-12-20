@@ -71,7 +71,7 @@ def get_recommended_tags_view(request):
                                      (e, traceback.format_exc()))
                     return HttpResponseUnavailabileError()
 
-    return HttpResponse(json.dumps([[],"-"]), content_type='application/javascript')
+    return HttpResponse(json.dumps([[], "-"]), content_type='application/javascript')
 
 
 def get_id_of_last_indexed_sound():
@@ -86,13 +86,11 @@ def get_id_of_last_indexed_sound():
 def post_sounds_to_tagrecommendation_service(sound_qs):
     data_to_post = []
     N_SOUNDS_PER_CALL = 10
-    total_calls = int(ceil(float(len(sound_qs))/N_SOUNDS_PER_CALL))
+    total_calls = int(ceil(float(len(sound_qs)) / N_SOUNDS_PER_CALL))
     print("Sending recommendation data...")
     idx = 1
     for count, sound in enumerate(sound_qs):
-        data_to_post.append(
-            (sound.id, list(sound.tags.select_related("tag").values_list('tag__name', flat=True)))
-        )
+        data_to_post.append((sound.id, list(sound.tags.select_related("tag").values_list('tag__name', flat=True))))
         if (count + 1) % N_SOUNDS_PER_CALL == 0:
             ids = [element[0] for element in data_to_post]
             tagss = [element[1] for element in data_to_post]

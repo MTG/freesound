@@ -43,18 +43,18 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
         SoundRating.objects.create(sound=sound, user=user, rating=4)
-        sound.refresh_from_db()  # Refresh from db after methods that use F-expressions
+        sound.refresh_from_db()    # Refresh from db after methods that use F-expressions
         sound.add_comment(user=user, comment="testComment")
-        sound.refresh_from_db()  # Refresh from db after methods that use F-expressions
+        sound.refresh_from_db()    # Refresh from db after methods that use F-expressions
         forum = Forum.objects.create(name="testForum", name_slug="test_forum", description="test")
         thread = Thread.objects.create(forum=forum, title="testThread", author=user)
         Post.objects.create(author=user, body="testBody", thread=thread)
         Post.objects.create(author=user, body="testBody unnmoderated", thread=thread, moderation_state="NM")
-        user.profile.refresh_from_db()  # Refresh from db after methods that use F-expressions
+        user.profile.refresh_from_db()    # Refresh from db after methods that use F-expressions
 
         # Assert initial counts are ok
         self.assertEqual(user.profile.num_sounds, 1)
-        self.assertEqual(user.profile.num_posts, 1)  # Note that count is 1 because one of the posts is not moderated
+        self.assertEqual(user.profile.num_posts, 1)    # Note that count is 1 because one of the posts is not moderated
         self.assertEqual(pack.num_sounds, 1)
         self.assertEqual(pack.num_downloads, 0)
         self.assertEqual(sound.num_ratings, 1)
@@ -106,7 +106,7 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         sound.refresh_from_db()
         pack.refresh_from_db()
         self.assertEqual(user.profile.num_sounds, 1)
-        self.assertEqual(user.profile.num_posts, 1)  # Note this is still 1 as unmoderated posts do not count
+        self.assertEqual(user.profile.num_posts, 1)    # Note this is still 1 as unmoderated posts do not count
         self.assertEqual(pack.num_sounds, 1)
         self.assertNotEqual(pack.num_downloads, 0)
         self.assertEqual(sound.num_ratings, 1)
@@ -140,10 +140,12 @@ class PaginatorTestCase(TestCase):
         or values, paginator does not break.
         """
         text_with_non_ascii = '�textèé'
-        dummy_request = RequestFactory().get(reverse('sounds'), {
-            text_with_non_ascii: '1',
-            'param_name': text_with_non_ascii,
-            'param2_name': 'ok_value',
-        })
+        dummy_request = RequestFactory().get(
+            reverse('sounds'), {
+                text_with_non_ascii: '1',
+                'param_name': text_with_non_ascii,
+                'param2_name': 'ok_value',
+            }
+        )
         paginator = paginate(dummy_request, Sound.objects.all(), 10)
         bw_paginator({}, paginator['paginator'], paginator['page'], paginator['current_page'], dummy_request)

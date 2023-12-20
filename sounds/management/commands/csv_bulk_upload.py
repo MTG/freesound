@@ -32,8 +32,9 @@ class Command(BaseCommand):
         parser.add_argument('-d', help='Delete any sounds which already exist and add them again')
         parser.add_argument('-f', action='store_true', help='Force the import if any rows are bad, skipping bad rows')
         parser.add_argument('-s', '--soundsdir', type=str, default=None, help='Directory where the sounds are located')
-        parser.add_argument('-u', '--uname', type=str, default=None,
-                            help='Username of the user to assign the sounds to')
+        parser.add_argument(
+            '-u', '--uname', type=str, default=None, help='Username of the user to assign the sounds to'
+        )
 
     def handle(self, *args, **options):
         csv_file_path = options['filepath']
@@ -46,4 +47,3 @@ class Command(BaseCommand):
             sounds_base_dir = options['soundsdir']
         username = options['uname']
         bulk_describe_from_csv(csv_file_path, delete_already_existing, force_import, sounds_base_dir, username)
-

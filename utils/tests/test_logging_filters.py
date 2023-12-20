@@ -29,6 +29,7 @@ from utils.test_helpers import create_user_and_sounds
 
 class DummyRequest:
     """A dummy request to check the X-Forwarded-For header in logging_filters.get_client_ip"""
+
     def __init__(self, xforwardedfor):
         self.headers = {"x-forwarded-for": xforwardedfor}
 
@@ -38,6 +39,7 @@ class LogRecordsStoreHandler(logging.Handler):
     A logger handler class which stores LogRecord entries in a list
     Inspiration from: https://stackoverflow.com/questions/57420008/python-after-logging-debug-how-to-view-its-logrecord
     """
+
     def __init__(self, records_list):
         self.records_list = records_list
         super().__init__()
@@ -112,13 +114,11 @@ class LoggingFiltersTest(TestCase):
              '"filter": "license:%22Creative%20Commons%200%22"} #!# {"api_version": "v2", "api_auth_type": "Token", '
              '"api_client_username": "test_uname", "api_enduser_username": "None", "api_client_id": '
              '"fake_id", "api_client_name": "Test àpp", "ip": "1.1.1.1", '
-             '"api_request_protocol": "https", "api_www": "none"}', {
-                'api_resource': 'sound instance',
-                'fields': 'id,url,name,duration,download,previews',
-                'filter': 'license:"Creative Commons 0"',
-                'api_client_username': 'test_uname',
-                'api_client_name': 'Test àpp'
-            }),  # Note: I'm only testing a couple of fields as the test is complete enough with that
+             '"api_request_protocol": "https", "api_www": "none"}',
+             {'api_resource': 'sound instance', 'fields': 'id,url,name,duration,download,previews',
+              'filter': 'license:"Creative Commons 0"', 'api_client_username': 'test_uname',
+              'api_client_name': 'Test àpp'
+              }),    # Note: I'm only testing a couple of fields as the test is complete enough with that
         ]):
             logger.debug(log_message)
             log_record = logs_list[count]
@@ -146,6 +146,3 @@ class LoggingFiltersTest(TestCase):
         for prop, value in query_params.items():
             self.assertTrue(hasattr(log_record, prop))
             self.assertEqual(getattr(log_record, prop), value)
-
-
-

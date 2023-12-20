@@ -43,7 +43,7 @@ def display_ticket(context, ticket, include_last_message=False):
 
     if not hasattr(ticket, 'last_message'):
         if ticket_messages is None:
-            ticket_messages = ticket.messages.all()    
+            ticket_messages = ticket.messages.all()
         last_message = ticket_messages[0] if num_messages and include_last_message else None
         if last_message is not None:
             last_message_text = last_message.text
@@ -56,7 +56,7 @@ def display_ticket(context, ticket, include_last_message=False):
         if last_message is not None:
             last_message_text = last_message['text']
             last_message_sender_username = last_message['sender_username']
-    
+
     tvars = {
         'request': context['request'],
         'ticket': ticket,
@@ -67,6 +67,7 @@ def display_ticket(context, ticket, include_last_message=False):
         'last_message_sender_username': last_message_sender_username,
     }
     return tvars
+
 
 @register.inclusion_tag('moderation/display_ticket.html', takes_context=True)
 def display_ticket_with_message(context, ticket):

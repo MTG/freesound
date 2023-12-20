@@ -24,6 +24,7 @@ from bookmarks.models import BookmarkCategory, Bookmark
 
 
 class BookmarkCategoryForm(forms.ModelForm):
+
     class Meta:
         model = BookmarkCategory
         fields = ('name',)
@@ -33,15 +34,8 @@ class BookmarkCategoryForm(forms.ModelForm):
 
 
 class BookmarkForm(forms.Form):
-    category = forms.ChoiceField(
-        label=False,
-        choices=[], 
-        required=False)
-    new_category_name = forms.CharField(
-        label=False,
-        help_text=None,
-        max_length=128,
-        required=False)
+    category = forms.ChoiceField(label=False, choices=[], required=False)
+    new_category_name = forms.CharField(label=False, help_text=None, max_length=128, required=False)
     use_last_category = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     user_bookmark_categories = None
 
@@ -57,11 +51,11 @@ class BookmarkForm(forms.Form):
                                            (self.NEW_CATEGORY_CHOICE_VALUE, 'Create a new category...')] + \
                                           ([(category.id, category.name) for category in self.user_bookmark_categories]
                                            if self.user_bookmark_categories else [])
-        
+
         self.fields['new_category_name'].widget.attrs['placeholder'] = "Fill in the name for the new category"
         self.fields['category'].widget.attrs = {
-            'data-grey-items': f'{self.NO_CATEGORY_CHOICE_VALUE},{self.NEW_CATEGORY_CHOICE_VALUE}'}
-
+            'data-grey-items': f'{self.NO_CATEGORY_CHOICE_VALUE},{self.NEW_CATEGORY_CHOICE_VALUE}'
+        }
 
     def save(self, *args, **kwargs):
         category_to_use = None
@@ -90,7 +84,6 @@ class BookmarkForm(forms.Form):
 
         # If bookmark already exists, don't save it and return the existing one
         bookmark, _ = Bookmark.objects.get_or_create(
-            sound_id=self.sound_id, user=self.user_saving_bookmark, category=category_to_use)
+            sound_id=self.sound_id, user=self.user_saving_bookmark, category=category_to_use
+        )
         return bookmark
-
-

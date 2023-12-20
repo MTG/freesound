@@ -46,7 +46,7 @@ class Command(LoggingBaseCommand):
         sounds_to_create = number_sounds - already_created
         if sounds_to_create > 0:
             for i in range(number_sounds):
-                td = datetime.timedelta(days=i+1)
+                td = datetime.timedelta(days=i + 1)
                 SoundOfTheDay.objects.create_sound_for_date(datetime.date.today() + td)
 
         # Now delete existing cache of random sound so that it is reloaded the next time the sound is requested

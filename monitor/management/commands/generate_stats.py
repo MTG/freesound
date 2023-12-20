@@ -40,7 +40,7 @@ class Command(LoggingBaseCommand):
     def handle(self, **options):
         self.log_start()
 
-        time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
+        time_span = datetime.datetime.now() - datetime.timedelta(weeks=2)
 
         # Compute stats relatad with sounds:
 
@@ -54,10 +54,7 @@ class Command(LoggingBaseCommand):
                 .extra(select={'day': 'date(processing_date)'}).values('day')\
                 .order_by().annotate(Count('id'))
 
-        sounds_stats = {
-            "new_sounds_mod": list(new_sounds_mod),
-            "new_sounds": list(new_sounds)
-        }
+        sounds_stats = {"new_sounds_mod": list(new_sounds_mod), "new_sounds": list(new_sounds)}
         cache.set("sounds_stats", sounds_stats, 60 * 60 * 24)
 
         # Compute stats related with downloads:
@@ -85,15 +82,33 @@ class Command(LoggingBaseCommand):
 
         cache.set("users_stats", {"new_users": list(new_users)}, 60 * 60 * 24)
 
-        time_span = datetime.datetime.now()-datetime.timedelta(days=365)
+        time_span = datetime.datetime.now() - datetime.timedelta(days=365)
 
         active_users = {
-            'sounds': {'obj': sounds.models.Sound.objects, 'attr': 'user_id'},
-            'comments': {'obj': comments.models.Comment.objects, 'attr': 'user_id'},
-            'posts': {'obj': forum.models.Post.objects, 'attr': 'author_id'},
-            'sound_downloads': {'obj': sounds.models.Download.objects, 'attr': 'user_id'},
-            'pack_downloads': {'obj': sounds.models.PackDownload.objects, 'attr': 'user_id'},
-            'rate': {'obj': ratings.models.SoundRating.objects, 'attr': 'user_id'},
+            'sounds': {
+                'obj': sounds.models.Sound.objects,
+                'attr': 'user_id'
+            },
+            'comments': {
+                'obj': comments.models.Comment.objects,
+                'attr': 'user_id'
+            },
+            'posts': {
+                'obj': forum.models.Post.objects,
+                'attr': 'author_id'
+            },
+            'sound_downloads': {
+                'obj': sounds.models.Download.objects,
+                'attr': 'user_id'
+            },
+            'pack_downloads': {
+                'obj': sounds.models.PackDownload.objects,
+                'attr': 'user_id'
+            },
+            'rate': {
+                'obj': ratings.models.SoundRating.objects,
+                'attr': 'user_id'
+            },
         }
         for i in active_users.keys():
             qq = active_users[i]['obj'].filter(created__gt=time_span)\
@@ -102,8 +117,8 @@ class Command(LoggingBaseCommand):
                 .annotate(Count(active_users[i]['attr'], distinct=True))
 
             converted_weeks = [{
-                'week': str(datetime.datetime.strptime(d['week']+ '-0', "%W-%Y-%w").date()),
-                'amount__sum': d[active_users[i]['attr']+'__count']
+                'week': str(datetime.datetime.strptime(d['week'] + '-0', "%W-%Y-%w").date()),
+                'amount__sum': d[active_users[i]['attr'] + '__count']
             } for d in qq]
 
             active_users[i] = converted_weeks
@@ -115,10 +130,10 @@ class Command(LoggingBaseCommand):
             .extra({'day': 'date(created)'}).values('day').order_by()\
             .annotate(Sum('amount'))
 
-        cache.set('donations_stats', {'new_donations': list(query_donations)}, 60*60*24)
+        cache.set('donations_stats', {'new_donations': list(query_donations)}, 60 * 60 * 24)
 
         # Compute stats related with Tags:
-        time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
+        time_span = datetime.datetime.now() - datetime.timedelta(weeks=2)
 
         tags_stats = TaggedItem.objects.values('tag_id')\
             .filter(created__gt=time_span).annotate(num=Count('tag_id'))\
@@ -145,7 +160,7 @@ class Command(LoggingBaseCommand):
             "downloads_tags": list(downloads_tags)
         }
 
-        cache.set('tags_stats', tags_stats, 60*60*24)
+        cache.set('tags_stats', tags_stats, 60 * 60 * 24)
 
         # Compute stats for Totals table:
 
@@ -155,12 +170,11 @@ class Command(LoggingBaseCommand):
         num_donations = donations.models.Donation.objects\
             .aggregate(Sum('amount'))['amount__sum']
 
-        time_span = datetime.datetime.now()-datetime.timedelta(30)
+        time_span = datetime.datetime.now() - datetime.timedelta(30)
         sum_donations_month = donations.models.Donation.objects\
             .filter(created__gt=time_span).aggregate(Sum('amount'))['amount__sum']
 
-        num_sounds = sounds.models.Sound.objects.filter(processing_state="OK",
-            moderation_state="OK").count()
+        num_sounds = sounds.models.Sound.objects.filter(processing_state="OK", moderation_state="OK").count()
         packs = sounds.models.Pack.objects.all().count()
 
         downloads_sounds = sounds.models.Download.objects.count()
@@ -191,5 +205,5 @@ class Command(LoggingBaseCommand):
             "threads": threads,
         }
 
-        cache.set('totals_stats', totals_stats, 60*60*24)
+        cache.set('totals_stats', totals_stats, 60 * 60 * 24)
         self.log_end()

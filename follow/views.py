@@ -48,9 +48,7 @@ def following_users(request, username):
 
     user = request.parameter_user
     following = follow_utils.get_users_following_qs(user)
-    tvars = {
-        'user': user
-    }
+    tvars = {'user': user}
 
     # NOTE: 'next_path' tvar below is used for follow/unfollow buttons. We overwrite default value of next_path
     # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
@@ -75,9 +73,7 @@ def followers(request, username):
 
     user = request.parameter_user
     followers = follow_utils.get_users_followers_qs(user)
-    tvars = {
-        'user': user
-    }
+    tvars = {'user': user}
 
     # NOTE: 'next_path' tvar below is used for follow/unfollow buttons. We overwrite default value of next_path
     # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
@@ -112,7 +108,7 @@ def following_tags(request, username):
     tvars.update(paginator)
     tvars.update({
         'next_path': reverse('account', args=[username]) + f"?followingTags={paginator['current_page']}",
-        'follow_page': 'tags' # Used in BW
+        'follow_page': 'tags'    # Used in BW
     })
     return render(request, 'accounts/modal_follow.html', tvars)
 
@@ -196,17 +192,10 @@ def unfollow_tags(request, slash_tags):
 @transaction.atomic()
 def stream(request):
 
-    SELECT_OPTIONS = OrderedDict([
-        ("last_week", "Last week"),
-        ("last_month", "Last month"),
-        ("specific_dates", "Specific dates...")
-    ])
+    SELECT_OPTIONS = OrderedDict([("last_week", "Last week"), ("last_month", "Last month"),
+                                  ("specific_dates", "Specific dates...")])
 
-    SELECT_OPTIONS_DAYS = {
-        "last_week": 7,
-        "last_month": 30,
-        "specific_dates": 0
-    }
+    SELECT_OPTIONS_DAYS = {"last_week": 7, "last_month": 30, "specific_dates": 0}
 
     user = request.user
 
@@ -222,14 +211,16 @@ def stream(request):
             date_from = request.POST.get("date_from")
             date_to = request.POST.get("date_to")
             if not date_from or not date_to:
-                if not date_from and not date_to: # Set it to last week (default)
+                if not date_from and not date_to:    # Set it to last week (default)
                     date_to = datetime.now().strftime("%Y-%m-%d")
                     date_from = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
                 else:
                     if not date_from:
-                        date_from = (datetime.strptime(date_to,"%Y-%m-%d") - timedelta(days=7)).strftime("%Y-%m-%d") # A week before date to
+                        date_from = (datetime.strptime(date_to, "%Y-%m-%d") -
+                                     timedelta(days=7)).strftime("%Y-%m-%d")    # A week before date to
                     if not date_to:
-                        date_to = (datetime.strptime(date_from,"%Y-%m-%d") + timedelta(days=7)).strftime("%Y-%m-%d") # A week after date from
+                        date_to = (datetime.strptime(date_from, "%Y-%m-%d") +
+                                   timedelta(days=7)).strftime("%Y-%m-%d")    # A week after date from
             time_lapse = f'["{date_from}T00:00:00Z" TO "{date_to}T23:59:59.999Z"]'
 
     # if first time going into the page, the default is last week

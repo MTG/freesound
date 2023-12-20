@@ -38,10 +38,11 @@ cache_clustering = caches["clustering"]
 class ClusteringTask(Task):
     """ Task Class used  for defining the clustering engine only required in celery workers    
     """
+
     def __init__(self):
         if settings.IS_CELERY_WORKER:
             self.engine = ClusteringEngine()
-            
+
 
 @shared_task(name="cluster_sounds", base=ClusteringTask)
 def cluster_sounds(cache_key_hashed, sound_ids, features):
@@ -65,7 +66,7 @@ def cluster_sounds(cache_key_hashed, sound_ids, features):
         # store result in cache
         cache_clustering.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
 
-    except Exception as e:  
+    except Exception as e:
         # delete pending state if exception raised during clustering
         cache_clustering.set(cache_key_hashed, CLUSTERING_RESULT_STATUS_FAILED, CLUSTERING_PENDING_CACHE_TIME)
         logger.info("Exception raised while clustering sounds", exc_info=True)

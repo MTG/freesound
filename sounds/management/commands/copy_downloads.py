@@ -36,20 +36,26 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-s', '--sleep',
+            '-s',
+            '--sleep',
             dest='sleep',
             default="0",
-            help='Time in (seconds) to sleep after each day of Downlaods processed.')
+            help='Time in (seconds) to sleep after each day of Downlaods processed.'
+        )
         parser.add_argument(
-            '-sd', '--start-date',
+            '-sd',
+            '--start-date',
             dest='start_date',
             type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d'),
-            help='Only copy download objects created after this date. Use format YYYY-MM-DD.')
+            help='Only copy download objects created after this date. Use format YYYY-MM-DD.'
+        )
         parser.add_argument(
-            '-ed', '--end-date',
+            '-ed',
+            '--end-date',
             dest='end_date',
             type=lambda d: datetime.datetime.strptime(d, '%Y-%m-%d'),
-            help='Only copy download objects created before this date. Use format YYYY-MM-DD. Defaults to "today".')
+            help='Only copy download objects created before this date. Use format YYYY-MM-DD. Defaults to "today".'
+        )
 
     def handle(self, *args, **options):
 
@@ -79,19 +85,20 @@ class Command(BaseCommand):
 
         end_date = options.get('end_date')
         if end_date is None:
-            end_date = datetime.datetime.now()  # end_date defaults to "today"
+            end_date = datetime.datetime.now()    # end_date defaults to "today"
 
         while start_date < end_date:
-            downloads = Download.objects.filter(pack_id__isnull=False,
-                                                created__gte=start_date,
-                                                created__lt=start_date+td).prefetch_related('pack__sounds')
+            downloads = Download.objects.filter(
+                pack_id__isnull=False, created__gte=start_date, created__lt=start_date + td
+            ).prefetch_related('pack__sounds')
 
             with transaction.atomic():
                 for download in downloads.all():
 
                     # Create PackDownload object
-                    pd = PackDownload.objects.create(user_id=download.user_id, created=download.created,
-                                                     pack_id=download.pack_id)
+                    pd = PackDownload.objects.create(
+                        user_id=download.user_id, created=download.created, pack_id=download.pack_id
+                    )
 
                     # Create PackDownloadSound objects and bulk insert them
                     # NOTE: this needs to be created after PackDownload to fill in the foreign key
@@ -100,8 +107,9 @@ class Command(BaseCommand):
                         pds.append(PackDownloadSound(sound=sound, license_id=sound.license_id, pack_download=pd))
                     PackDownloadSound.objects.bulk_create(pds, batch_size=1000)
 
-            console_logger.info("Copy of Download for %d packs of the date: %s " % (downloads.count(),
-                                                                                    start_date.strftime("%Y-%m-%d")))
+            console_logger.info(
+                "Copy of Download for %d packs of the date: %s " % (downloads.count(), start_date.strftime("%Y-%m-%d"))
+            )
             start_date += td
             time.sleep(sleep_time)
         console_logger.info('Copy Downloads to new PackDownload finished')

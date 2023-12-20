@@ -23,6 +23,7 @@ from django.db import models
 from django.utils.encoding import smart_str
 from django.urls import reverse
 
+
 class Page(models.Model):
     name = models.CharField(max_length=256, db_index=True)
 
@@ -42,9 +43,9 @@ class Content(models.Model):
     title = models.CharField(max_length=250)
     body = models.TextField()
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    
+
     class Meta:
-        ordering = ('-created', )
+        ordering = ('-created',)
         get_latest_by = 'created'
 
     def __str__(self):

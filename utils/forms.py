@@ -35,8 +35,8 @@ def filename_has_valid_extension(filename):
 class HtmlCleaningCharField(forms.CharField):
     """ A field that removes disallowed HTML tags as implemented in utils.text.clean_html and checks for
      too many upper chase characters"""
-    
-    ok_tags = ["a", "img", "strong", "b", "em", "i", "u", "ul", "li", "p", "br",  "blockquote", "code"]
+
+    ok_tags = ["a", "img", "strong", "b", "em", "i", "u", "ul", "li", "p", "br", "blockquote", "code"]
     ok_attributes = {"a": ["href", "rel"], "img": ["src", "alt", "title"]}
 
     @classmethod
@@ -48,10 +48,10 @@ class HtmlCleaningCharField(forms.CharField):
         if is_shouting(value):
             raise forms.ValidationError('Please moderate the amount of upper case characters in your post...')
         return clean_html(value, ok_tags=self.ok_tags, ok_attributes=self.ok_attributes)
-    
+
 
 class HtmlCleaningCharFieldWithCenterTag(HtmlCleaningCharField):
-    ok_tags = ["a", "img", "strong", "b", "em", "i", "u", "ul", "li", "p", "br",  "blockquote", "code", "center"]
+    ok_tags = ["a", "img", "strong", "b", "em", "i", "u", "ul", "li", "p", "br", "blockquote", "code", "center"]
     ok_attributes = {"a": ["href", "rel"], "img": ["src", "alt", "title"], "p": ["align"]}
 
 
@@ -62,10 +62,14 @@ class TagField(forms.CharField):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.validators.append(
-            validators.MinLengthValidator(3, 'You should add at least 3 different tags. Tags must be separated by '
-                                             'spaces.'))
+            validators.MinLengthValidator(
+                3, 'You should add at least 3 different tags. Tags must be separated by '
+                'spaces.'
+            )
+        )
         self.validators.append(
-            validators.MaxLengthValidator(30, 'There can be maximum 30 tags, please select the most relevant ones!'))
+            validators.MaxLengthValidator(30, 'There can be maximum 30 tags, please select the most relevant ones!')
+        )
 
     def to_python(self, value):
         value = super().to_python(value)

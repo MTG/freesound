@@ -52,7 +52,8 @@ def should_use_compact_mode(request):
                 request.user.profile.use_compact_mode = False
                 request.user.profile.save()
             return False
-        
+
+
 def contains_active_advanced_search_filters(request, query_params, extra_vars):
     duration_filter_is_default = True
     if 'duration:' in query_params['query_filter']:
@@ -102,12 +103,12 @@ def search_prepare_parameters(request):
 
     # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
     # If the query is through AJAX (for sources remix editing), do not collapse by pack
-    group_by_pack = request.GET.get("g", "1") == "1"  # Group by default
+    group_by_pack = request.GET.get("g", "1") == "1"    # Group by default
     if "pack" in filter_query or request.GET.get("ajax", "") == "1":
         group_by_pack = False
 
     # If the query is filtered by pack, do not add the "only sounds with pack" filter (makes no sense)
-    only_sounds_with_pack = request.GET.get("only_p", "0") == "1"  # By default, do not limit to sounds with pack
+    only_sounds_with_pack = request.GET.get("only_p", "0") == "1"    # By default, do not limit to sounds with pack
     if "pack" in filter_query:
         only_sounds_with_pack = False
 
@@ -189,7 +190,7 @@ def search_prepare_parameters(request):
     custom_field_weights = parse_weights_parameter(weights_parameter)
     if custom_field_weights is not None:
         field_weights = custom_field_weights
-   
+
     # parse query filter string and remove empty value fields
     parsing_error = False
     try:
@@ -207,7 +208,9 @@ def search_prepare_parameters(request):
         # This because returning a large number of packs makes the search page very slow
         num_sounds = settings.SOUNDS_PER_PAGE
     else:
-        num_sounds = settings.SOUNDS_PER_PAGE if not should_use_compact_mode(request) else settings.SOUNDS_PER_PAGE_COMPACT_MODE
+        num_sounds = settings.SOUNDS_PER_PAGE if not should_use_compact_mode(
+            request
+        ) else settings.SOUNDS_PER_PAGE_COMPACT_MODE
 
     query_params = {
         'textual_query': search_query,
@@ -284,7 +287,7 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
         for filter_list_str in parsed_filters:
             # filter_list_str is a list of str ['<filter_name>', ':', '"', '<filter_value>', '"']
             filter_name = filter_list_str[0]
-            if filter_name != "duration" and filter_name != "is_geotagged"  and filter_name != "in_remix_group":
+            if filter_name != "duration" and filter_name != "is_geotagged" and filter_name != "in_remix_group":
                 valid_filter = True
                 filter_str = ''.join(filter_list_str)
                 filter_display = ''.join(filter_list_str)
@@ -292,10 +295,10 @@ def split_filter_query(filter_query, parsed_filters, cluster_id):
                     filter_value = filter_list_str[-1].rstrip('"')
                     # If pack does not contain "_" then it's not a valid pack filter
                     if "_" in filter_value:
-                        filter_display = "pack:"+ ''.join(filter_value.split("_")[1:])
+                        filter_display = "pack:" + ''.join(filter_value.split("_")[1:])
                     else:
                         valid_filter = False
-                
+
                 if valid_filter:
                     filter = {
                         'name': filter_display,
@@ -334,29 +337,29 @@ def remove_facet_filters(parsed_filters):
         has_facet_filter (bool): boolean indicating if there exist facet filters in the processed string.
     """
     facet_filter_strings = (
-        "samplerate", 
-        "grouping_pack", 
-        "username", 
-        "tag", 
-        "bitrate", 
-        "bitdepth", 
-        "type", 
-        "channels", 
+        "samplerate",
+        "grouping_pack",
+        "username",
+        "tag",
+        "bitrate",
+        "bitdepth",
+        "type",
+        "channels",
         "license",
     )
     has_facet_filter = False
     filter_query = ""
 
-    if parsed_filters:       
+    if parsed_filters:
         filter_query_parts = []
         for parsed_filter in parsed_filters:
             if parsed_filter[0] in facet_filter_strings:
-                has_facet_filter = True 
+                has_facet_filter = True
             else:
                 filter_query_parts.append(''.join(parsed_filter))
 
         filter_query = ' '.join(filter_query_parts)
-    
+
     return filter_query, has_facet_filter
 
 
@@ -445,10 +448,12 @@ def get_all_sound_ids_from_search_engine(page_size=2000):
     current_page = 1
     try:
         while solr_count is None or len(solr_ids) < solr_count:
-            response = search_engine.search_sounds(query_filter="*:*",
-                                                   sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
-                                                   offset=(current_page - 1) * page_size,
-                                                   num_sounds=page_size)
+            response = search_engine.search_sounds(
+                query_filter="*:*",
+                sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+                offset=(current_page - 1) * page_size,
+                num_sounds=page_size
+            )
             solr_ids += [int(element['id']) for element in response.docs]
             solr_count = response.num_found
             current_page += 1

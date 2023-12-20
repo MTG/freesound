@@ -3,7 +3,9 @@ from django.test import TestCase
 from utils.search.backends import solr_common
 from utils.search.backends import solr555pysolr
 
+
 class SolrCommonTest(TestCase):
+
     def test_search_filter_make_intersection(self):
 
         filter_query = "username:alastairp"

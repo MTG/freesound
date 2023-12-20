@@ -24,10 +24,11 @@ from bs4 import BeautifulSoup
 import feedparser
 import urllib.request, urllib.error, urllib.parse
 
-
 register = template.Library()
 
+
 class RssParserNode(template.Node):
+
     def __init__(self, var_name, url=None, url_var_name=None):
         self.url = url
         self.url_var_name = url_var_name
@@ -52,7 +53,9 @@ class RssParserNode(template.Node):
             entry['summary_custom'] = truncated_text
         return ''
 
+
 import re
+
 
 @register.tag(name="get_rss")
 def get_rss(parser, token):
@@ -62,12 +65,12 @@ def get_rss(parser, token):
         tag_name, arg = token.contents.split(None, 1)
     except ValueError:
         raise template.TemplateSyntaxError(f"{token.contents.split()[0]!r} tag requires arguments")
-    
+
     m = re.search(r'(.*?) as (\w+)', arg)
     if not m:
         raise template.TemplateSyntaxError(f"{tag_name!r} tag had invalid arguments")
     url, var_name = m.groups()
-    
+
     if url[0] == url[-1] and url[0] in ('"', "'"):
         return RssParserNode(var_name, url=url[1:-1])
     else:

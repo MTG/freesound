@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 from django import template
 from django.conf import settings
 from random import randint
@@ -30,7 +29,16 @@ register = template.Library()
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound(context, sound, player_size='small', show_bookmark=None, show_similar_sounds=None, show_remix=None, show_rate_widget=False, show_timesince=False):
+def display_sound(
+    context,
+    sound,
+    player_size='small',
+    show_bookmark=None,
+    show_similar_sounds=None,
+    show_remix=None,
+    show_rate_widget=False,
+    show_timesince=False
+):
     """This templatetag is used to display a sound with its player. It prepares some variables that are then passed
     to the display_sound.html template to show sound information together with the player.
 
@@ -93,7 +101,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
 
         """
         return hasattr(sound, 'tag_array')
-    
+
     if isinstance(sound, Sound):
         if sound_object_retrieved_using_bulk_query_id(sound):
             sound_obj = sound
@@ -119,22 +127,40 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
     else:
         request = context['request']
         return {
-            'sound': sound_obj,
-            'user_profile_locations': Profile.locations_static(sound_obj.user_id, getattr(sound_obj, 'user_has_avatar', False)),
-            'request': request,
-            'is_explicit': sound_obj.is_explicit and
-                           (not request.user.is_authenticated or not request.user.profile.is_adult),
-            'is_authenticated': request.user.is_authenticated,
-            'show_bookmark_button': show_bookmark if show_bookmark is not None else (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),  # Only BW
-            'show_similar_sounds_button': show_similar_sounds if show_similar_sounds is not None else (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),  # Only BW
-            'show_remix_group_button': show_remix if show_remix is not None else (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),  # Only BW
-            'show_rate_widget': show_rate_widget if (player_size == 'small' or player_size == 'small_no_info') else False,  # Only BW
-            'request_user_is_author': request.user.is_authenticated and sound_obj.user_id == request.user.id,
-            'player_size': player_size,
-            'show_milliseconds': 'true' if (player_size == 'big_no_info' or sound_obj.duration < 10) else 'false',  # Only BW
-            'show_timesince': show_timesince,
-            'min_num_ratings': settings.MIN_NUMBER_RATINGS,
-            'random_number': randint(1, 1000000),  # Used to generate IDs for HTML elements that need to be unique per sound/player instance
+            'sound':
+                sound_obj,
+            'user_profile_locations':
+                Profile.locations_static(sound_obj.user_id, getattr(sound_obj, 'user_has_avatar', False)),
+            'request':
+                request,
+            'is_explicit':
+                sound_obj.is_explicit and (not request.user.is_authenticated or not request.user.profile.is_adult),
+            'is_authenticated':
+                request.user.is_authenticated,
+            'show_bookmark_button':
+                show_bookmark if show_bookmark is not None else
+                (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),    # Only BW
+            'show_similar_sounds_button':
+                show_similar_sounds if show_similar_sounds is not None else
+                (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),    # Only BW
+            'show_remix_group_button':
+                show_remix if show_remix is not None else
+                (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),    # Only BW
+            'show_rate_widget':
+                show_rate_widget if (player_size == 'small' or player_size == 'small_no_info') else False,    # Only BW
+            'request_user_is_author':
+                request.user.is_authenticated and sound_obj.user_id == request.user.id,
+            'player_size':
+                player_size,
+            'show_milliseconds':
+                'true' if (player_size == 'big_no_info' or sound_obj.duration < 10) else 'false',    # Only BW
+            'show_timesince':
+                show_timesince,
+            'min_num_ratings':
+                settings.MIN_NUMBER_RATINGS,
+            'random_number':
+                randint(1, 1000000
+                        ),    # Used to generate IDs for HTML elements that need to be unique per sound/player instance
         }
 
 
@@ -142,48 +168,97 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
 def display_sound_small(context, sound):
     return display_sound(context, sound, player_size='small', show_rate_widget=True)
 
+
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_with_timesince(context, sound):
     return display_sound(context, sound, player_size='small', show_rate_widget=True, show_timesince=True)
 
+
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_moderation(context, sound):
-    return display_sound(context, sound, player_size='moderation', show_bookmark=False, show_similar_sounds=False, show_remix=True, show_rate_widget=False)
+    return display_sound(
+        context,
+        sound,
+        player_size='moderation',
+        show_bookmark=False,
+        show_similar_sounds=False,
+        show_remix=True,
+        show_rate_widget=False
+    )
+
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_bookmark(context, sound):
-    return display_sound(context, sound, player_size='small', show_bookmark=False, show_similar_sounds=False, show_remix=False, show_rate_widget=True)
+    return display_sound(
+        context,
+        sound,
+        player_size='small',
+        show_bookmark=False,
+        show_similar_sounds=False,
+        show_remix=False,
+        show_rate_widget=True
+    )
+
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_bookmark_no_ratings(context, sound):
-    return display_sound(context, sound, player_size='small', show_bookmark=False, show_similar_sounds=False, show_remix=False, show_rate_widget=False)
+    return display_sound(
+        context,
+        sound,
+        player_size='small',
+        show_bookmark=False,
+        show_similar_sounds=False,
+        show_remix=False,
+        show_rate_widget=False
+    )
+
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_middle(context, sound):
-    return display_sound(context, sound, player_size='middle', show_bookmark=True, show_similar_sounds=True, show_remix=True)
+    return display_sound(
+        context, sound, player_size='middle', show_bookmark=True, show_similar_sounds=True, show_remix=True
+    )
+
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_big_no_info(context, sound):
     return display_sound(context, sound, player_size='big_no_info')
 
+
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_big_no_info_no_bookmark(context, sound):
-    return display_sound(context, sound, player_size='big_no_info', show_bookmark=False, show_similar_sounds=False, show_remix=False)
+    return display_sound(
+        context, sound, player_size='big_no_info', show_bookmark=False, show_similar_sounds=False, show_remix=False
+    )
+
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_info(context, sound):
     return display_sound(context, sound, player_size='small_no_info', show_rate_widget=True)
 
+
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_info_no_buttons(context, sound):
-    return display_sound(context, sound, player_size='small_no_info', show_rate_widget=False, show_bookmark=False, show_similar_sounds=False, show_remix=False)
+    return display_sound(
+        context,
+        sound,
+        player_size='small_no_info',
+        show_rate_widget=False,
+        show_bookmark=False,
+        show_similar_sounds=False,
+        show_remix=False
+    )
+
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_minimal(context, sound):
     return display_sound(context, sound, player_size='minimal')
 
+
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound_no_sound_object(context, file_data, player_size, show_bookmark=True, show_similar_sounds=True, show_remix=True):
+def display_sound_no_sound_object(
+    context, file_data, player_size, show_bookmark=True, show_similar_sounds=True, show_remix=True
+):
     '''
     This player works for sounds which have no Sound object. It requires
     URLs to the sound files (mp3 and ogg)a and the wave/spectral images, and
@@ -208,7 +283,8 @@ def display_sound_no_sound_object(context, file_data, player_size, show_bookmark
     '''
     return {
         'sound': {
-            'id': file_data.get('id', file_data['preview_mp3'].split('/')[-2]),  # If no id, use a unique fake ID to avoid caching problems
+            'id': file_data.get('id', file_data['preview_mp3'].split('/')[-2]
+                                ),    # If no id, use a unique fake ID to avoid caching problems
             'username': file_data.get('username', 'nousername'),
             'similarity_state': file_data.get('similarity_state', 'FA'),
             'duration': file_data['duration'],
@@ -218,23 +294,35 @@ def display_sound_no_sound_object(context, file_data, player_size, show_bookmark
             'locations': {
                 'preview': {
                     'LQ': {
-                        'mp3': {'url': file_data['preview_mp3']},
-                        'ogg': {'url': file_data['preview_ogg']}
+                        'mp3': {
+                            'url': file_data['preview_mp3']
+                        },
+                        'ogg': {
+                            'url': file_data['preview_ogg']
+                        }
                     }
                 },
                 'display': {
                     'wave_bw': {
-                        'M': {'url': file_data['wave']},
-                        'L': {'url': file_data['wave']}
-                    }, 
+                        'M': {
+                            'url': file_data['wave']
+                        },
+                        'L': {
+                            'url': file_data['wave']
+                        }
+                    },
                     'spectral_bw': {
-                        'M': {'url': file_data['spectral']},
-                        'L': {'url': file_data['spectral']}
+                        'M': {
+                            'url': file_data['spectral']
+                        },
+                        'L': {
+                            'url': file_data['spectral']
+                        }
                     }
                 }
             }
         },
-        'show_milliseconds': 'true' if ('big' in player_size ) else 'false',
+        'show_milliseconds': 'true' if ('big' in player_size) else 'false',
         'show_bookmark_button': show_bookmark and 'id' in file_data,
         'show_similar_sounds_button': show_similar_sounds and 'similarity_state' in file_data,
         'show_remix_group_button': show_remix and 'remixgroup_id' in file_data,
@@ -242,6 +330,7 @@ def display_sound_no_sound_object(context, file_data, player_size, show_bookmark
         'player_size': player_size,
         'request': context['request']
     }
+
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_big_no_sound_object(context, file_data):
@@ -251,14 +340,23 @@ def display_sound_big_no_sound_object(context, file_data):
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_sound_object(context, file_data):
     return display_sound_no_sound_object(context, file_data, player_size='small_no_info')
-   
+
+
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_sound_object_no_bookmark(context, file_data):
-    return display_sound_no_sound_object(context, file_data, player_size='small_no_info', show_bookmark=False, show_similar_sounds=False, show_remix=False)
+    return display_sound_no_sound_object(
+        context,
+        file_data,
+        player_size='small_no_info',
+        show_bookmark=False,
+        show_similar_sounds=False,
+        show_remix=False
+    )
+
 
 @register.inclusion_tag('sounds/display_sound_selectable.html', takes_context=True)
 def display_sound_small_selectable(context, sound, selected=False):
-    context = context.get('original_context', context)  # This is to allow passing context in nested inclusion tags
+    context = context.get('original_context', context)    # This is to allow passing context in nested inclusion tags
     tvars = display_sound_small_no_bookmark_no_ratings(context, sound)
     tvars.update({
         'selected': selected,

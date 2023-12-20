@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 from django.conf import settings
 from rest_framework.throttling import SimpleRateThrottle
 
@@ -61,7 +60,7 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
         #  Apply the burst limit rate (the first of the list if there are limit rates.
         #  No limit rates means unlimited api usage)
         if limit_rates:
-            rate = limit_rates[0]  # Get burst limit
+            rate = limit_rates[0]    # Get burst limit
             self.rate = rate
             self.num_requests, self.duration = self.parse_rate(rate)
             passes_throttle = super().allow_request(request, view)
@@ -75,14 +74,10 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
 
     def get_cache_key(self, request, view):
         if self.client:
-            return self.cache_format % {
-                'identity': self.client.client_id
-            }
+            return self.cache_format % {'identity': self.client.client_id}
         else:
             # If using session based auth, we use the user id as identity for throttling cache
-            return self.cache_format % {
-                'identity': request.user.id
-            }
+            return self.cache_format % {'identity': request.user.id}
 
 
 class ClientBasedThrottlingSustained(SimpleRateThrottle):
@@ -121,7 +116,7 @@ class ClientBasedThrottlingSustained(SimpleRateThrottle):
         #  Apply the sustained limit rate (the second of the list if there are limit rates.
         #  No limit rates means unlimited api usage)
         if limit_rates:
-            rate = limit_rates[1]  # Get sustained limit
+            rate = limit_rates[1]    # Get sustained limit
             self.rate = rate
             self.num_requests, self.duration = self.parse_rate(rate)
             passes_throttle = super().allow_request(request, view)
@@ -135,14 +130,10 @@ class ClientBasedThrottlingSustained(SimpleRateThrottle):
 
     def get_cache_key(self, request, view):
         if self.client:
-            return self.cache_format % {
-                'identity': self.client.client_id
-            }
+            return self.cache_format % {'identity': self.client.client_id}
         else:
             # If using session based auth, we use the user id as identity for throttling cache
-            return self.cache_format % {
-                'identity': request.user.id
-            }
+            return self.cache_format % {'identity': request.user.id}
 
 
 class IpBasedThrottling(SimpleRateThrottle):
@@ -189,7 +180,7 @@ class IpBasedThrottling(SimpleRateThrottle):
 
         # Apply the ip limit rate (No limit rates means unlimited api usage)
         if limit_rates:
-            rate = limit_rates[2]  # Get sustained limit
+            rate = limit_rates[2]    # Get sustained limit
             self.rate = rate
             self.num_requests, self.duration = self.parse_rate(rate)
 
@@ -236,11 +227,7 @@ class IpBasedThrottling(SimpleRateThrottle):
 
     def get_cache_key(self, request, view):
         if self.client:
-            return self.cache_format % {
-                'identity': self.client.client_id
-            }
+            return self.cache_format % {'identity': self.client.client_id}
         else:
             # If using session based auth, we use the user id as identity for throttling cache
-            return self.cache_format % {
-                'identity': request.user.id
-            }
+            return self.cache_format % {'identity': request.user.id}

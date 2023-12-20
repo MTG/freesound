@@ -23,7 +23,6 @@
 #   - djangorestframework ('2.3.8')
 #   - markdown (for browseable api)
 
-
 from django.urls import include, path, re_path
 from django.contrib.auth.views import LogoutView
 from apiv2 import views
@@ -42,7 +41,11 @@ urlpatterns = [
     # Me
     path('me/', views.Me.as_view(), name="apiv2-me"),
     path('me/bookmark_categories/', views.MeBookmarkCategories.as_view(), name='apiv2-me-bookmark-categories'),
-    path('me/bookmark_categories/<int:category_id>/sounds/', views.MeBookmarkCategorySounds.as_view(), name='apiv2-me-bookmark-category-sounds'),
+    path(
+        'me/bookmark_categories/<int:category_id>/sounds/',
+        views.MeBookmarkCategorySounds.as_view(),
+        name='apiv2-me-bookmark-category-sounds'
+    ),
 
     # Available audio descriptors
     path('descriptors/', views.AvailableAudioDescriptors.as_view(), name="apiv2-available-descriptors"),
@@ -83,7 +86,6 @@ urlpatterns = [
     # Download item from link
     path('download/<token>/', views.download_from_token, name="apiv2-download_from_token"),
 
-
     #########################
     # MANAGEMENT AND OAUTH2 #
     #########################
@@ -91,14 +93,24 @@ urlpatterns = [
     # Client management
     # use apply[/]* for backwards compatibility with links to /apiv2/apply
     re_path(r'^apply[/]*$', views.create_apiv2_key, name="apiv2-apply"),
-    re_path(r'^apply/credentials/(?P<key>[^//]+)/monitor/$', views.monitor_api_credential, name="apiv2-monitor-credential"),
-    re_path(r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"),
+    re_path(
+        r'^apply/credentials/(?P<key>[^//]+)/monitor/$', views.monitor_api_credential, name="apiv2-monitor-credential"
+    ),
+    re_path(
+        r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"
+    ),
     re_path(r'^apply/credentials/(?P<key>[^//]+)/edit/$', views.edit_api_credential, name="apiv2-edit-credential"),
 
     # Oauth2
     path('oauth2/', include('apiv2.oauth2_urls', namespace='oauth2_provider')),
-    path('login/', login, {'template_name': 'oauth2_provider/oauth_login.html',
-                           'authentication_form': FsAuthenticationForm}, name="api-login"),
+    path(
+        'login/',
+        login, {
+            'template_name': 'oauth2_provider/oauth_login.html',
+            'authentication_form': FsAuthenticationForm
+        },
+        name="api-login"
+    ),
     path('logout/', LogoutView.as_view(next_page='/apiv2/'), name="api-logout"),
 
     #########

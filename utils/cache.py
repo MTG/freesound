@@ -49,4 +49,3 @@ def invalidate_all_moderators_header_cache():
     mods = Group.objects.get(name='moderators').user_set.all()
     for mod in mods:
         invalidate_user_template_caches(mod.id)
-

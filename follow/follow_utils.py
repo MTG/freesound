@@ -87,7 +87,10 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             more_count = max(0, result.num_found - num_results_per_grup)
 
             # the sorting only works if done like this!
-            more_url_params = [urllib.parse.quote(filter_str), urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
+            more_url_params = [
+                urllib.parse.quote(filter_str),
+                urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)
+            ]
 
             # this is the same link but for the email has to be "quoted"
             more_url = "?f=" + filter_str + "&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
@@ -129,7 +132,10 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             more_count = max(0, result.num_found - num_results_per_grup)
 
             # the sorting only works if done like this!
-            more_url_params = [urllib.parse.quote(tag_filter_str), urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
+            more_url_params = [
+                urllib.parse.quote(tag_filter_str),
+                urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)
+            ]
 
             # this is the same link but for the email has to be "quoted"
             more_url = "?f=" + tag_filter_str + "&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST

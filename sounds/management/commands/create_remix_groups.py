@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 import json
 import logging
 
@@ -40,7 +39,8 @@ class Command(BaseCommand):
 
         # 1) Get all the sounds that have remixes
         cursor = connection.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
                         SELECT
                             src.from_sound_id AS from,
                             src.to_sound_id AS to,
@@ -52,7 +52,8 @@ class Command(BaseCommand):
                             src.to_sound_id = snd.id
                         ORDER BY
                             snd.created ASC
-                        """)
+                        """
+        )
 
         # 2) Create directed graph
         dg = nx.DiGraph()
@@ -64,10 +65,10 @@ class Command(BaseCommand):
 
         # 4) Find weakly connected components (single direction)
         subgraphs = nx.weakly_connected_component_subgraphs(dg)
-        
+
         # 5) delete all remixgroup objects to recalculate
         RemixGroup.objects.all().delete()
-        
+
         # 6) Loop through all connected graphs in the dataset and create the groups
         n_groups_created = 0
         for sg in subgraphs:
@@ -80,16 +81,20 @@ class Command(BaseCommand):
 def _create_nodes(dg):
     for node in dg.nodes():
         sound = Sound.objects.get(id=node)
-        dg.add_node(node, {'date': sound.created,
-                           'nodeName': sound.original_filename,
-                           'username': sound.user.username,
-                           'sound_url_mp3': sound.locations()['preview']['LQ']['mp3']['url'],
-                           'sound_url_ogg': sound.locations()['preview']['LQ']['ogg']['url'],
-                           'waveform_url': sound.locations()['display']['wave']['M']['url']})
+        dg.add_node(
+            node, {
+                'date': sound.created,
+                'nodeName': sound.original_filename,
+                'username': sound.user.username,
+                'sound_url_mp3': sound.locations()['preview']['LQ']['mp3']['url'],
+                'sound_url_ogg': sound.locations()['preview']['LQ']['ogg']['url'],
+                'waveform_url': sound.locations()['display']['wave']['M']['url']
+            }
+        )
     return dg
 
 
-def _create_and_save_remixgroup(sg, remixgroup): 
+def _create_and_save_remixgroup(sg, remixgroup):
     # print ' ========================================= '
     # add to list the subgraphs(connected components) with the extra data
     node_list = sg.nodes(data=True)
@@ -97,7 +102,7 @@ def _create_and_save_remixgroup(sg, remixgroup):
 
     # sort by date (holds all subgraph nodes sorted by date)
     # we need this since we go forward in time (source older than remix)
-    node_list.sort(key=lambda x: x[1]['date']) # I think ['date'] is not necessary
+    node_list.sort(key=lambda x: x[1]['date'])    # I think ['date'] is not necessary
     # print ' ========== SORTED NODE_LIST ========= '
     # pp(node_list)
 
@@ -109,7 +114,7 @@ def _create_and_save_remixgroup(sg, remixgroup):
     # pp(container)
 
     links = []
-    remixgroup.save()   # need to save to have primary key before ManyToMany
+    remixgroup.save()    # need to save to have primary key before ManyToMany
     # FIXME: no idea why nx.weakly_connected_components(sg) return list in list...
     remixgroup.sounds.set(set(nx.weakly_connected_components(sg)[0]))
 
@@ -119,27 +124,28 @@ def _create_and_save_remixgroup(sg, remixgroup):
 
     remixgroup.group_size = len(node_list)
     # FIXME: seems like double work here, maybe convert container to list and sort?
-    nodes = [{'id': val[0],
-              'username': val[1]['username'],
-              'nodeName': val[1]['nodeName'],
-              'sound_url_mp3': val[1]['sound_url_mp3'],
-              'sound_url_ogg': val[1]['sound_url_ogg'],
-              'waveform_url': val[1]['waveform_url'],
-              'group': 1} for (idx, val) in enumerate(node_list)]
+    nodes = [{
+        'id': val[0],
+        'username': val[1]['username'],
+        'nodeName': val[1]['nodeName'],
+        'sound_url_mp3': val[1]['sound_url_mp3'],
+        'sound_url_ogg': val[1]['sound_url_ogg'],
+        'waveform_url': val[1]['waveform_url'],
+        'group': 1
+    } for (idx, val) in enumerate(node_list)]
     for line in nx.generate_adjlist(sg):
         # print line
         if len(line.split()) > 1:
             for i, l in enumerate(line.strip().split(" ")):
                 # index 0 is the source, which we already know
                 if i > 0:
-                    link = {'target': container[int(line.split(" ")[0])]['index'],
-                            'source': container[int(l)]['index']}
+                    link = {'target': container[int(line.split(" ")[0])]['index'], 'source': container[int(l)]['index']}
                     links.append(link)
 
     remixgroup.protovis_data = "{\"color\": \"#F1D9FF\"," \
                                "\"length\":" + str(len(node_list)) + "," \
                                "\"nodes\": " + json.dumps(nodes) + "," \
                                "\"links\": " + json.dumps(links) + "}"
-                               
-    remixgroup.networkx_data = json.dumps(dict(nodes=sg.nodes(), edges=sg.edges()))                         
-    remixgroup.save()   
+
+    remixgroup.networkx_data = json.dumps(dict(nodes=sg.nodes(), edges=sg.edges()))
+    remixgroup.save()

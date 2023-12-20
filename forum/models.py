@@ -50,9 +50,9 @@ class Forum(SortableMixin):
     num_threads = models.PositiveIntegerField(default=0)
     num_posts = models.PositiveIntegerField(default=0)
 
-    last_post = models.OneToOneField('Post', null=True, blank=True, default=None,
-                                     related_name="latest_in_forum",
-                                     on_delete=models.SET_NULL)
+    last_post = models.OneToOneField(
+        'Post', null=True, blank=True, default=None, related_name="latest_in_forum", on_delete=models.SET_NULL
+    )
 
     def set_last_post(self, commit=False):
         """
@@ -108,12 +108,12 @@ class Thread(models.Model):
     status = models.PositiveSmallIntegerField(choices=THREAD_STATUS_CHOICES, default=1, db_index=True)
 
     num_posts = models.PositiveIntegerField(default=0)
-    last_post = models.OneToOneField('Post', null=True, blank=True, default=None,
-                                     related_name="latest_in_thread",
-                                     on_delete=models.SET_NULL)
-    first_post = models.OneToOneField('Post', null=True, blank=True, default=None,
-                                      related_name="first_in_thread",
-                                      on_delete=models.SET_NULL)
+    last_post = models.OneToOneField(
+        'Post', null=True, blank=True, default=None, related_name="latest_in_thread", on_delete=models.SET_NULL
+    )
+    first_post = models.OneToOneField(
+        'Post', null=True, blank=True, default=None, related_name="first_in_thread", on_delete=models.SET_NULL
+    )
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
@@ -231,9 +231,7 @@ class Post(models.Model):
 
     class Meta:
         ordering = ('created',)
-        permissions = (
-            ("can_moderate_forum", "Can moderate posts."),
-        )
+        permissions = (("can_moderate_forum", "Can moderate posts."),)
 
     def __str__(self):
         return f"Post by {self.author} in {self.thread}"

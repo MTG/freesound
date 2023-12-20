@@ -66,30 +66,18 @@ def create_zendesk_ticket(request_email, subject, message, user=None):
             zendesk_api.CustomField(id=30153729, value=num_comments),
         ]
 
-        user_url = "https://{}{}".format(
-            Site.objects.get_current().domain,
-            reverse('account', args=[user.username])
-        )
+        user_url = "https://{}{}".format(Site.objects.get_current().domain, reverse('account', args=[user.username]))
 
         message += f"\n\n-- \n{user_url}"
 
         requester.name = user.username
 
-    return zendesk_api.Ticket(
-        requester=requester,
-        subject=subject,
-        description=message,
-        custom_fields=custom_fields
-    )
+    return zendesk_api.Ticket(requester=requester, subject=subject, description=message, custom_fields=custom_fields)
 
 
 def send_to_zendesk(request_email, subject, message, user=None):
     ticket = create_zendesk_ticket(request_email, subject, message, user)
-    zenpy = Zenpy(
-        email=settings.ZENDESK_EMAIL,
-        token=settings.ZENDESK_TOKEN,
-        subdomain='freesound'
-    )
+    zenpy = Zenpy(email=settings.ZENDESK_EMAIL, token=settings.ZENDESK_TOKEN, subdomain='freesound')
     try:
         zenpy.tickets.create(ticket)
     except (ZendeskAPIException, HTTPError, ZenpyException) as e:
@@ -103,8 +91,15 @@ def send_email_to_support(request_email, subject, message, user=None):
         except User.DoesNotExist:
             pass
 
-    send_mail_template_to_support(settings.EMAIL_SUBJECT_SUPPORT_EMAIL, "emails/email_support.txt",
-                                  {'message': message, 'user': user}, extra_subject=subject, reply_to=request_email)
+    send_mail_template_to_support(
+        settings.EMAIL_SUBJECT_SUPPORT_EMAIL,
+        "emails/email_support.txt", {
+            'message': message,
+            'user': user
+        },
+        extra_subject=subject,
+        reply_to=request_email
+    )
 
 
 def contact(request):

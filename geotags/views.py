@@ -40,8 +40,13 @@ web_logger = logging.getLogger('web')
 
 
 def log_map_load(map_type, num_geotags, request):
-    web_logger.info('Map load (%s)' % json.dumps({
-        'map_type': map_type, 'num_geotags': num_geotags, 'ip': get_client_ip(request)}))
+    web_logger.info(
+        'Map load (%s)' % json.dumps({
+            'map_type': map_type,
+            'num_geotags': num_geotags,
+            'ip': get_client_ip(request)
+        })
+    )
 
 
 def generate_bytearray(sound_queryset):
@@ -51,8 +56,8 @@ def generate_bytearray(sound_queryset):
     for s in sound_queryset:
         if not math.isnan(s.geotag.lat) and not math.isnan(s.geotag.lon):
             packed_sounds.write(struct.pack("i", s.id))
-            packed_sounds.write(struct.pack("i", int(s.geotag.lat*1000000)))
-            packed_sounds.write(struct.pack("i", int(s.geotag.lon*1000000)))
+            packed_sounds.write(struct.pack("i", int(s.geotag.lat * 1000000)))
+            packed_sounds.write(struct.pack("i", int(s.geotag.lon * 1000000)))
             num_sounds_in_bytearray += 1
 
     return packed_sounds.getvalue(), num_sounds_in_bytearray
@@ -82,7 +87,9 @@ def geotags_box_barray(request):
     is_embed = request.GET.get("embed", "0") == "1"
     try:
         min_lat, min_lon, max_lat, max_lon = box.split(",")
-        qs = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK")
+        qs = Sound.objects.select_related("geotag").exclude(geotag=None).filter(
+            moderation_state="OK", processing_state="OK"
+        )
         sounds = []
         if min_lat <= max_lat and min_lon <= max_lon:
             sounds = qs.filter(geotag__lat__range=(min_lat, max_lat)).filter(geotag__lon__range=(min_lon, max_lon))
@@ -189,8 +196,7 @@ def for_user(request, username):
 
 @redirect_if_old_username_or_404
 def for_sound(request, username, sound_id):
-    sound = get_object_or_404(
-        Sound.objects.select_related('geotag', 'user'), id=sound_id)
+    sound = get_object_or_404(Sound.objects.select_related('geotag', 'user'), id=sound_id)
     if sound.user.username.lower() != username.lower() or sound.geotag is None:
         raise Http404
     tvars = _get_geotags_query_params(request)
@@ -259,10 +265,7 @@ def infowindow(request, sound_id):
         sound = Sound.objects.select_related('user', 'geotag').get(id=sound_id)
     except Sound.DoesNotExist:
         raise Http404
-    tvars = {
-        'sound': sound,
-        'minimal': request.GET.get('minimal', False)
-    }
+    tvars = {'sound': sound, 'minimal': request.GET.get('minimal', False)}
     if request.GET.get('embed', False):
         # When loading infowindow for an embed, use the template for old UI as embeds have not been updated to new UI
         return render(request, 'embeds/geotags_infowindow.html', tvars)

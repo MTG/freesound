@@ -39,13 +39,7 @@ class CommunityDetector(object):
     selected_instances = None
     tag_names = None
 
-    def __init__(self,
-                 verbose=True,
-                 classifier_type="svm",
-                 PATH=None,
-                 INIT_METHOD="ZeroInit",
-                 selected_instances=None
-                 ):
+    def __init__(self, verbose=True, classifier_type="svm", PATH=None, INIT_METHOD="ZeroInit", selected_instances=None):
 
         self.verbose = verbose
         self.n_training_instances = 0
@@ -67,10 +61,9 @@ class CommunityDetector(object):
         self.tag_names = load(RECOMMENDATION_DATA_DIR + 'Classifier_TAG_NAMES.npy')
 
     def __repr__(self):
-        return "Community Detector (%s, %i classes, %i instances, %s init) " % (self.clf_type,
-                                                                                len(self.class_name_ids.keys()),
-                                                                                self.n_training_instances,
-                                                                                self.init_method)
+        return "Community Detector (%s, %i classes, %i instances, %s init) " % (
+            self.clf_type, len(self.class_name_ids.keys()), self.n_training_instances, self.init_method
+        )
 
     def load_instance_vector_from_tags(self, tags):
         tags_t = tags[:]

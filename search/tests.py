@@ -30,7 +30,7 @@ from unittest import mock
 
 def create_fake_search_engine_results():
     return SearchResults(
-        docs=[], # Actual sounds to be returned are filled dynamically in tests
+        docs=[],    # Actual sounds to be returned are filled dynamically in tests
         num_found=548,
         start=0,
         num_rows=0,
@@ -38,7 +38,8 @@ def create_fake_search_engine_results():
         facets={
             'bitdepth': [('16', 390), ('24', 221), ('0', 105), ('32', 19), ('4', 1)],
             'bitrate': [('1411', 153), ('1378', 151), ('2250', 79), ('1500', 32), ('1536', 23)],
-            'channels': [('2', 630), ('1', 91), ('6', 12), ('4', 4)]},
+            'channels': [('2', 630), ('1', 91), ('6', 12), ('4', 4)]
+        },
         highlighting={},
         q_time=17
     )
@@ -48,9 +49,7 @@ def return_successful_clustering_results(sound_id_1, sound_id_2, sound_id_3, sou
     return {
         'graph': {
             'directed': False,
-            'graph': {
-
-            },
+            'graph': {},
             'nodes': [
                 {
                     'group_centrality': 0.5,
@@ -91,17 +90,12 @@ def return_successful_clustering_results(sound_id_1, sound_id_2, sound_id_3, sou
         },
         'finished': True,
         'result': [
-            [
-                sound_id_1,
-                sound_id_2
-            ],
-            [
-                sound_id_3,
-                sound_id_4
-            ],
+            [sound_id_1, sound_id_2],
+            [sound_id_3, sound_id_4],
         ],
-        'error':False
+        'error': False
     }
+
 
 pending_clustering_results = {'finished': False, 'error': False}
 
@@ -110,18 +104,21 @@ failed_clustering_results = {'finished': False, 'error': True}
 
 def create_fake_perform_search_engine_query_response(num_results=15):
     # NOTE: this method needs Sound objects to have been created before running it (for example loading sounds_with_tags fixture)
-    sound_ids = list(Sound.objects.filter(
-        moderation_state="OK", processing_state="OK").values_list('id', 'pack_id')[:num_results])
+    sound_ids = list(
+        Sound.objects.filter(moderation_state="OK", processing_state="OK").values_list('id', 'pack_id')[:num_results]
+    )
     results = create_fake_search_engine_results()
-    results.docs = [
-        {'group_docs': [{'id': sound_id}],
-         'id': sound_id,
-         'n_more_in_group': 0,
-         'group_name': f'{pack_id}_xyz' if pack_id is not None else str(sound_id)} for sound_id, pack_id in sound_ids
-    ]
+    results.docs = [{
+        'group_docs': [{
+            'id': sound_id
+        }],
+        'id': sound_id,
+        'n_more_in_group': 0,
+        'group_name': f'{pack_id}_xyz' if pack_id is not None else str(sound_id)
+    } for sound_id, pack_id in sound_ids]
     paginator = SearchResultsPaginator(results, num_results)
     return (results, paginator)
-    
+
 
 class SearchPageTests(TestCase):
 
@@ -217,10 +214,11 @@ class SearchResultClustering(TestCase):
         # 2 sounds per clusters
         # 3 most used tags in the cluster 'tag1 tag2 tag3'
         # context variable cluster_id_num_results_tags_sound_examples: [(<cluster_id>, <num_sounds>, <tags>, <ids_preview_urls>), ...]
-        self.assertEqual(resp.context['cluster_id_num_results_tags_sound_examples'], [
-            (0, 2, 'tag1 tag2 tag3', self.sound_id_preview_urls[:2]), 
-            (1, 2, 'tag1 tag2 tag3', self.sound_id_preview_urls[2:])
-        ])
+        self.assertEqual(
+            resp.context['cluster_id_num_results_tags_sound_examples'],
+            [(0, 2, 'tag1 tag2 tag3', self.sound_id_preview_urls[:2]),
+             (1, 2, 'tag1 tag2 tag3', self.sound_id_preview_urls[2:])]
+        )
 
     @skipIf(True, "Clustering not yet enabled in BW")
     @mock.patch('search.views.cluster_sound_results')

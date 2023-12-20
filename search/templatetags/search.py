@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 from django import template
 from django.conf import settings
 from urllib.parse import quote_plus
@@ -32,7 +31,9 @@ register = template.Library()
 @register.inclusion_tag('search/facet.html', takes_context=True)
 def display_facet(context, flt, facet, facet_type, title=""):
     facet = annotate_tags([dict(name=f[0], count=f[1]) for f in facet if f[0] != "0"],
-                          sort="name", small_size=0.7, large_size=2.0)
+                          sort="name",
+                          small_size=0.7,
+                          large_size=2.0)
 
     # If the filter is grouping_pack and there are elements which do not contain the character "_" means that
     # these sounds do not belong to any pack (as grouping pack values should by "packId_packName" if there is a pack
@@ -51,18 +52,18 @@ def display_facet(context, flt, facet, facet_type, title=""):
                 only_fcw_in_facet = False
         if fcw_count and not only_fcw_in_facet:
             facet.append({
-                    'name': settings.FCW_FILTER_VALUE,
-                    'count': fcw_count,
-                    'size': 1.0,
-                })
-    
+                'name': settings.FCW_FILTER_VALUE,
+                'count': fcw_count,
+                'size': 1.0,
+            })
+
     filtered_facet = []
     filter_query = quote_plus(context['filter_query'])
     for element in facet:
         if flt == "grouping_pack":
             if element['name'].count("_") > 0:
                 # We also modify the display name to remove the id
-                element['display_name'] = element['name'][element['name'].find("_")+1:]
+                element['display_name'] = element['name'][element['name'].find("_") + 1:]
             else:
                 # If facet element belongs to "grouping pack" filter but does not have the "_" character in it, it
                 # means this corresponds to the "no pack" grouping which we don't want to show as a facet element.
@@ -70,26 +71,22 @@ def display_facet(context, flt, facet, facet_type, title=""):
         elif element['name'] == settings.FCW_FILTER_VALUE:
             element['display_name'] = "Approved for Free Cultural Works"
         elif flt == 'license':
-            # License field in solr is case insensitive and will return facet names in lowercase. 
+            # License field in solr is case insensitive and will return facet names in lowercase.
             # We need to properly capitalize them to use official CC license names.
             element['display_name'] = element['name'].title().replace('Noncommercial', 'NonCommercial')
         else:
             element['display_name'] = element['name']
-        
+
         if element['name'] == settings.FCW_FILTER_VALUE:
-            # If adding the FCW filter (which has more complex logic) don't wrap the filter in " as it breaks the syntax parsing    
+            # If adding the FCW filter (which has more complex logic) don't wrap the filter in " as it breaks the syntax parsing
             element['params'] = f"{filter_query} {flt}:{quote_plus(element['name'])}"
         else:
             element['params'] = f"{filter_query} {flt}:\"{quote_plus(element['name'])}\""
 
         element['id'] = f"{flt}--{quote_plus(element['name'])}"
         element['add_filter_url'] = '.?advanced={}&g={}&only_p={}&q={}&f={}&s={}&w={}'.format(
-            context['advanced'],
-            context['group_by_pack_in_request'],
-            context['only_sounds_with_pack'],
-            context['search_query'],
-            element['params'],
-            context['sort'] if context['sort'] is not None else '',
+            context['advanced'], context['group_by_pack_in_request'], context['only_sounds_with_pack'],
+            context['search_query'], element['params'], context['sort'] if context['sort'] is not None else '',
             context['weights'] or ''
         )
         filtered_facet.append(element)
@@ -108,10 +105,5 @@ def display_facet(context, flt, facet, facet_type, title=""):
                 element['icon'] = License.bw_cc_icon_name_from_license_name(element['display_name'])
             else:
                 element['icon'] = 'fcw'
-    context.update({
-        "facet": filtered_facet,
-        "type": facet_type,
-        "filter": flt,
-        "title": title
-    })
+    context.update({"facet": filtered_facet, "type": facet_type, "filter": flt, "title": title})
     return context

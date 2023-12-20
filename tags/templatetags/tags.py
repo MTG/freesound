@@ -25,18 +25,22 @@ from utils.tags import annotate_tags
 
 register = template.Library()
 
+
 @register.filter
 def add_sizes(tags, arguments):
     sort, small_size, large_size = arguments.split(":")
     return annotate_tags(tags, sort, float(small_size), float(large_size))
 
+
 @register.filter
 def join_tags_exclude(list, exclude):
     return "/".join(sorted([x for x in list if x != exclude])) if list else None
 
+
 @register.filter
 def join_tags_include(list, include):
     return "/".join(sorted(list + [include])) if list else include
+
 
 @register.inclusion_tag('molecules/bw_follow_tags_widget.html', takes_context=True)
 def bw_follow_tags_widget(context):
@@ -52,7 +56,7 @@ def bw_follow_tags_widget(context):
 
         if request.user.is_authenticated:
             show_unfollow_button = follow_utils.is_user_following_tag(request.user, slash_tag)
-    
+
     return {
         'follow_tags_url': follow_tags_url,
         'unfollow_tags_url': unfollow_tags_url,

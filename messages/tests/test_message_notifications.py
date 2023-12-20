@@ -42,11 +42,14 @@ class MessageReceivedEmailNotification(TestCase):
     @mock.patch("captcha.fields.ReCaptchaField.validate")
     def test_message_email_preference_enabled(self, magic_mock):
         self.client.force_login(user=self.sender)
-        resp = self.client.post(reverse('messages-new'), data={
-            'body': ['test message body'],
-            'to': ['receiver'],
-            'subject': ['test message'],
-        })
+        resp = self.client.post(
+            reverse('messages-new'),
+            data={
+                'body': ['test message body'],
+                'to': ['receiver'],
+                'subject': ['test message'],
+            }
+        )
         self.assertRedirects(resp, reverse('messages'))
         self.assertEqual(len(mail.outbox), 1)
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
@@ -60,10 +63,13 @@ class MessageReceivedEmailNotification(TestCase):
         UserEmailSetting.objects.create(user=self.receiver, email_type=email_pref)
 
         self.client.force_login(user=self.sender)
-        resp = self.client.post(reverse('messages-new'), data={
-            'body': ['test message body'],
-            'to': ['receiver'],
-            'subject': ['test message'],
-        })
+        resp = self.client.post(
+            reverse('messages-new'),
+            data={
+                'body': ['test message body'],
+                'to': ['receiver'],
+                'subject': ['test message'],
+            }
+        )
         self.assertRedirects(resp, reverse('messages'))
         self.assertEqual(len(mail.outbox), 0)

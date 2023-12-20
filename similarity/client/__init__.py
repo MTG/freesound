@@ -19,6 +19,7 @@
 #
 
 from future import standard_library
+
 standard_library.install_aliases()
 from builtins import str
 from builtins import object
@@ -26,19 +27,21 @@ from django.conf import settings
 import json
 import urllib.request, urllib.error, urllib.parse
 
-_BASE_URL                     = 'http://%s:%i/similarity/' % (settings.SIMILARITY_ADDRESS, settings.SIMILARITY_PORT)
-_BASE_INDEXING_SERVER_URL     = 'http://%s:%i/similarity/' % (settings.SIMILARITY_ADDRESS, settings.SIMILARITY_INDEXING_SERVER_PORT)
-_URL_ADD_POINT                = 'add_point/'
-_URL_DELETE_POINT             = 'delete_point/'
-_URL_GET_DESCRIPTOR_NAMES     = 'get_descriptor_names/'
-_URL_GET_ALL_SOUND_IDS        = 'get_all_point_names/'
-_URL_CONTAINS_POINT           = 'contains/'
-_URL_NNSEARCH                 = 'nnsearch/'
-_URL_API_SEARCH               = 'api_search/'
-_URL_SOUNDS_DESCRIPTORS       = 'get_sounds_descriptors/'
-_URL_SAVE                     = 'save/'
-_URL_RELOAD_GAIA_WRAPPER      = 'reload_gaia_wrapper/'
-_URL_CLEAR_MEMORY             = 'clear_memory/'
+_BASE_URL = 'http://%s:%i/similarity/' % (settings.SIMILARITY_ADDRESS, settings.SIMILARITY_PORT)
+_BASE_INDEXING_SERVER_URL = 'http://%s:%i/similarity/' % (
+    settings.SIMILARITY_ADDRESS, settings.SIMILARITY_INDEXING_SERVER_PORT
+)
+_URL_ADD_POINT = 'add_point/'
+_URL_DELETE_POINT = 'delete_point/'
+_URL_GET_DESCRIPTOR_NAMES = 'get_descriptor_names/'
+_URL_GET_ALL_SOUND_IDS = 'get_all_point_names/'
+_URL_CONTAINS_POINT = 'contains/'
+_URL_NNSEARCH = 'nnsearch/'
+_URL_API_SEARCH = 'api_search/'
+_URL_SOUNDS_DESCRIPTORS = 'get_sounds_descriptors/'
+_URL_SAVE = 'save/'
+_URL_RELOAD_GAIA_WRAPPER = 'reload_gaia_wrapper/'
+_URL_CLEAR_MEMORY = 'clear_memory/'
 
 
 class SimilarityException(Exception):
@@ -75,7 +78,7 @@ def _result_or_exception(result):
 class Similarity(object):
 
     @classmethod
-    def search(cls, sound_id, num_results = None, preset = None, offset = None):
+    def search(cls, sound_id, num_results=None, preset=None, offset=None):
         url = _BASE_URL + _URL_NNSEARCH + '?' + 'sound_id=' + str(sound_id)
         if num_results:
             url += '&num_results=' + str(num_results)
@@ -86,7 +89,18 @@ class Similarity(object):
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod
-    def api_search(cls, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, file=None, in_ids=None):
+    def api_search(
+        cls,
+        target_type=None,
+        target=None,
+        filter=None,
+        preset=None,
+        metric_descriptor_names=None,
+        num_results=None,
+        offset=None,
+        file=None,
+        in_ids=None
+    ):
         url = _BASE_URL + _URL_API_SEARCH + '?'
         if target_type:
             url += '&target_type=' + str(target_type)
@@ -117,7 +131,8 @@ class Similarity(object):
 
     @classmethod
     def add_to_indeixing_server(cls, sound_id, yaml_path):
-        url = _BASE_INDEXING_SERVER_URL + _URL_ADD_POINT + '?' + 'sound_id=' + str(sound_id) + '&location=' + str(yaml_path)
+        url = _BASE_INDEXING_SERVER_URL + _URL_ADD_POINT + '?' + 'sound_id=' + str(sound_id
+                                                                                   ) + '&location=' + str(yaml_path)
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod
@@ -141,14 +156,14 @@ class Similarity(object):
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod
-    def save(cls, filename = None):
+    def save(cls, filename=None):
         url = _BASE_URL + _URL_SAVE
         if filename:
             url += '?' + 'filename=' + str(filename)
         return _result_or_exception(_get_url_as_json(url, timeout=60 * 5))
 
     @classmethod
-    def save_indexing_server(cls, filename = None):
+    def save_indexing_server(cls, filename=None):
         url = _BASE_INDEXING_SERVER_URL + _URL_SAVE
         if filename:
             url += '?' + 'filename=' + str(filename)
@@ -166,7 +181,9 @@ class Similarity(object):
 
     @classmethod
     def get_sounds_descriptors(cls, sound_ids, descriptor_names=None, normalization=True, only_leaf_descriptors=False):
-        url = _BASE_URL + _URL_SOUNDS_DESCRIPTORS + '?' + 'sound_ids=' + ','.join([str(sound_id) for sound_id in sound_ids])
+        url = _BASE_URL + _URL_SOUNDS_DESCRIPTORS + '?' + 'sound_ids=' + ','.join([
+            str(sound_id) for sound_id in sound_ids
+        ])
         if descriptor_names:
             url += '&descriptor_names=' + ','.join(descriptor_names)
         if normalization:

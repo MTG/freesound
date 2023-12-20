@@ -52,11 +52,7 @@ def convert_using_ffmpeg_mock_fail(input_filename, output_filename, mono_out=Fal
 
 
 def stereofy_mock(stereofy_executble_path, input_filename, output_filename):
-    return dict(
-        duration=123.5,
-        channels=2,
-        samplerate=44100,
-        bitdepth=16)
+    return dict(duration=123.5, channels=2, samplerate=44100, bitdepth=16)
 
 
 def stereofy_mock_fail(stereofy_executble_path, input_filename, output_filename):
@@ -80,12 +76,14 @@ def convert_to_ogg_mock_fail(input_filename, output_filename, quality):
 
 
 def create_wave_images_mock(
-        input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size, **kwargs):
+    input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size, **kwargs
+):
     create_test_files(paths=[output_filename_w, output_filename_s])
 
 
 def create_wave_images_mock_fail(
-        input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size, **kwargs):
+    input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size, **kwargs
+):
     raise AudioProcessingException("creation of display images has failed")
 
 
@@ -98,7 +96,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertEqual(self.sound.processing_state, "PE")
         if create_sound_file:
             create_test_files(paths=[f"{self.sound.locations('path')}"], make_valid_wav_files=True, duration=2)
-    
+
     def setUp(self):
         user, _, sounds = create_user_and_sounds(num_sounds=1, type="wav")
         self.sound = sounds[0]
@@ -115,7 +113,7 @@ class AudioProcessingTestCase(TestCase):
     def test_sound_path_does_not_exist(self):
         self.pre_test(create_sound_file=False)
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)    # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -131,7 +129,7 @@ class AudioProcessingTestCase(TestCase):
         self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         # will fail because mocked version of convert_to_pcm fails
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)    # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -146,7 +144,7 @@ class AudioProcessingTestCase(TestCase):
         self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         # processing will fail because stereofy mock raises an exception
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)    # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -160,7 +158,7 @@ class AudioProcessingTestCase(TestCase):
         self.pre_test()
         FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         self.sound.refresh_from_db()
-        self.assertEqual(self.sound.duration, 2.0)  # Assert that info properties were set
+        self.assertEqual(self.sound.duration, 2.0)    # Assert that info properties were set
         self.assertEqual(self.sound.channels, 1)
         self.assertEqual(self.sound.samplerate, 44100)
         self.assertEqual(self.sound.bitrate, 0)
@@ -175,7 +173,7 @@ class AudioProcessingTestCase(TestCase):
         self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         # processing will fail because convert_to_mp3 mock raises an exception
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)    # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -191,7 +189,7 @@ class AudioProcessingTestCase(TestCase):
         self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         # processing will fail because convert_to_ogg mock raises an exception
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)    # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -208,7 +206,7 @@ class AudioProcessingTestCase(TestCase):
         self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         # processing will fail because create_wave_images mock raises an exception
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)    # Processing failed, retutned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -238,7 +236,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertTrue(os.path.exists(self.sound.locations('display.wave.L.path')))
         self.assertTrue(os.path.exists(self.sound.locations('display.wave_bw.L.path')))
 
-        self.assertTrue(result)  # Processing succeeded
+        self.assertTrue(result)    # Processing succeeded
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "OK")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -267,7 +265,7 @@ class AudioProcessingTestCase(TestCase):
         self.assertFalse(os.path.exists(self.sound.locations('display.wave.L.path')))
         self.assertFalse(os.path.exists(self.sound.locations('display.wave_bw.L.path')))
 
-        self.assertTrue(result)  # Processing succeeded
+        self.assertTrue(result)    # Processing succeeded
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "OK")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -292,5 +290,7 @@ class AudioProcessingBeforeDescriptionTestCase(TestCase):
             create_test_files(paths=[uploaded_file_path], make_valid_wav_files=True, duration=2)
             result = FreesoundAudioProcessorBeforeDescription(audio_file_path=uploaded_file_path).process()
             self.assertTrue(result)
-            self.assertListEqual(sorted(os.listdir(get_processing_before_describe_sound_folder(uploaded_file_path))), 
-                sorted(['wave.png', 'spectral.png', 'preview.ogg', 'preview.mp3', 'info.json']))
+            self.assertListEqual(
+                sorted(os.listdir(get_processing_before_describe_sound_folder(uploaded_file_path))),
+                sorted(['wave.png', 'spectral.png', 'preview.ogg', 'preview.mp3', 'info.json'])
+            )

@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 # Directory where the Gaia dataset index files are located.
 INDEX_DIR = '/freesound-data/clustering_index/'
 
@@ -46,15 +45,15 @@ REFERENCE_FEATURES = None
 MAX_RESULTS_FOR_CLUSTERING = 1000
 
 # Cache settings
-# One day timeout for keeping clustering results. The cache timer is reset when the clustering is 
+# One day timeout for keeping clustering results. The cache timer is reset when the clustering is
 # requested so that popular queries that are performed once a day minimum will always stay in cache
 # and won't be recomputed.
-CLUSTERING_CACHE_TIME = 24*60*60*1
-# One minute timeout for keeping the pending state. When a clustering is being performed async in a 
-# Celery worker, we consider the clustering as pending for only 1 minute. This may be useful if a 
-# worker task got stuck. There should be a settings in celery to stop a worker task if it is running 
+CLUSTERING_CACHE_TIME = 24 * 60 * 60 * 1
+# One minute timeout for keeping the pending state. When a clustering is being performed async in a
+# Celery worker, we consider the clustering as pending for only 1 minute. This may be useful if a
+# worker task got stuck. There should be a settings in celery to stop a worker task if it is running
 # for too long.
-CLUSTERING_PENDING_CACHE_TIME = 60*1
+CLUSTERING_PENDING_CACHE_TIME = 60 * 1
 
 # Folder for saving the clustering results with evaluation (dev/debug/research purpose)
 SAVE_RESULTS_FOLDER = None

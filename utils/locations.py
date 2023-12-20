@@ -29,7 +29,9 @@ def locations_decorator(cache=True):
                 locations("a.b.c")
             but is much easier on the typing and easier for copy-pasting
     """
+
     def decorator(locations_function):
+
         def wrapped(self, path=None):
             # cache the call to the locations function so it's only calculated once
             if not cache or not hasattr(self, '_locations_cache'):
@@ -42,23 +44,29 @@ def locations_decorator(cache=True):
                 return lookup
             else:
                 return self._locations_cache
+
         return wrapped
+
     return decorator
+
 
 def pretty_print_locations(locations, indent=0):
     for (key, value) in locations.items():
         if isinstance(value, dict):
-            print("  "*indent, "*", key)
-            pretty_print_locations(value, indent+1)
+            print("  " * indent, "*", key)
+            pretty_print_locations(value, indent + 1)
         else:
-            print("  "*indent, "*", key)
+            print("  " * indent, "*", key)
 
 
 if __name__ == "__main__":
+
     class X:
+
         @locations_decorator()
         def locations(self):
             return dict(a=5)
+
     x = X()
     print(x.locations())
     print(x.locations())

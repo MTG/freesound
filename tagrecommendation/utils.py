@@ -31,27 +31,29 @@ def loadFromJson(path, verbose=False):
             print("Loading data from '" + path + "'")
         return json.load(f)
 
+
 def saveToJson(path="", data="", verbose=True):
     with open(path, mode='w') as f:
         if verbose:
             print("Saving data to '" + path + "'")
-        json.dump(data,f,indent=4)
+        json.dump(data, f, indent=4)
 
-def mtx2npy(M, verbose = True):
+
+def mtx2npy(M, verbose=True):
     n = M.shape[0]
     m = M.shape[1]
-    npy = zeros((n, m) , 'float32')
+    npy = zeros((n, m), 'float32')
     #non_zero_index = M.keys()
     items = list(M.items())
     nItems = len(M.items())
     done = 0
     #for index in non_zero_index :
     for index, value in items:
-        npy[ index[0] ][ index[1] ] = value #M[ index[0] , index[1] ]
+        npy[index[0]][index[1]] = value    #M[ index[0] , index[1] ]
 
         done += 1
         if verbose:
-            sys.stdout.write("\rConverting to npy... " + '%.2f'%((float(done)*100)/float(nItems)) + "% ")
+            sys.stdout.write("\rConverting to npy... " + '%.2f' % ((float(done) * 100) / float(nItems)) + "% ")
             sys.stdout.flush()
 
     if verbose:

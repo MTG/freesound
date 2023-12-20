@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 from django import template
 
 from messages.models import Message

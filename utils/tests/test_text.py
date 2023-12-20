@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 from django.test import TestCase
 
 from utils.forms import HtmlCleaningCharField
@@ -77,16 +76,24 @@ class CleanHtmlTest(TestCase):
         self.assertEqual('a b c d', ret)
 
         # Also make sure links contains rel="nofollow"
-        ret = clean_html('<a href="http://www.google.com" rel="squeek">google</a>', ok_attributes=ok_attributes, ok_tags=ok_tags)
+        ret = clean_html(
+            '<a href="http://www.google.com" rel="squeek">google</a>', ok_attributes=ok_attributes, ok_tags=ok_tags
+        )
         self.assertEqual('<a href="http://www.google.com" rel="nofollow">google</a>', ret)
 
         ret = clean_html('<a href="http://www.google.com">google</a>', ok_attributes=ok_attributes, ok_tags=ok_tags)
         self.assertEqual('<a href="http://www.google.com" rel="nofollow">google</a>', ret)
 
-        ret = clean_html('<h1>this should return the <strong>substring</strong> just <b>fine</b></h1>', ok_attributes=ok_attributes, ok_tags=ok_tags)
+        ret = clean_html(
+            '<h1>this should return the <strong>substring</strong> just <b>fine</b></h1>',
+            ok_attributes=ok_attributes,
+            ok_tags=ok_tags
+        )
         self.assertEqual('this should return the <strong>substring</strong> just <b>fine</b>', ret)
 
-        ret = clean_html('<table><tr><td>amazing</td><td>grace</td></tr></table>', ok_attributes=ok_attributes, ok_tags=ok_tags)
+        ret = clean_html(
+            '<table><tr><td>amazing</td><td>grace</td></tr></table>', ok_attributes=ok_attributes, ok_tags=ok_tags
+        )
         self.assertEqual('amazinggrace', ret)
 
         ret = clean_html('<a href="javascript:void(0)">click me</a>', ok_attributes=ok_attributes, ok_tags=ok_tags)
@@ -107,27 +114,60 @@ class CleanHtmlTest(TestCase):
         ret = clean_html('<p></p>', ok_attributes=ok_attributes, ok_tags=ok_tags)
         self.assertEqual('<p></p>', ret)
 
-        ret = clean_html('<A REL="nofollow" hREF="http://www.google.com"><strong>http://www.google.com</strong></a>', ok_attributes=ok_attributes, ok_tags=ok_tags)
-        self.assertEqual('<a rel="nofollow" href="http://www.google.com"><strong>http://www.google.com</strong></a>', ret)
+        ret = clean_html(
+            '<A REL="nofollow" hREF="http://www.google.com"><strong>http://www.google.com</strong></a>',
+            ok_attributes=ok_attributes,
+            ok_tags=ok_tags
+        )
+        self.assertEqual(
+            '<a rel="nofollow" href="http://www.google.com"><strong>http://www.google.com</strong></a>', ret
+        )
 
-        ret = clean_html('<a rel="nofollow" href="http://www.google.com"><strong>http://www.google.com</strong></a>', ok_attributes=ok_attributes, ok_tags=ok_tags)
-        self.assertEqual('<a rel="nofollow" href="http://www.google.com"><strong>http://www.google.com</strong></a>', ret)
+        ret = clean_html(
+            '<a rel="nofollow" href="http://www.google.com"><strong>http://www.google.com</strong></a>',
+            ok_attributes=ok_attributes,
+            ok_tags=ok_tags
+        )
+        self.assertEqual(
+            '<a rel="nofollow" href="http://www.google.com"><strong>http://www.google.com</strong></a>', ret
+        )
 
-        ret = clean_html('http://www.google.com <a href="">http://www.google.com</a>', ok_attributes=ok_attributes, ok_tags=ok_tags)
-        self.assertEqual('<a href="http://www.google.com" rel="nofollow">http://www.google.com</a> <a href="http://www.google.com" rel="nofollow">http://www.google.com</a>', ret)
+        ret = clean_html(
+            'http://www.google.com <a href="">http://www.google.com</a>', ok_attributes=ok_attributes, ok_tags=ok_tags
+        )
+        self.assertEqual(
+            '<a href="http://www.google.com" rel="nofollow">http://www.google.com</a> <a href="http://www.google.com" rel="nofollow">http://www.google.com</a>',
+            ret
+        )
 
-        ret = clean_html('<ul><p id=5><a href="123">123</a>hello<strong class=156>there http://www.google.com</strong></p></ul>', ok_attributes=ok_attributes, ok_tags=ok_tags)
-        self.assertEqual('<ul><p>123hello<strong>there <a href="http://www.google.com" rel="nofollow">http://www.google.com</a></strong></p></ul>', ret)
+        ret = clean_html(
+            '<ul><p id=5><a href="123">123</a>hello<strong class=156>there http://www.google.com</strong></p></ul>',
+            ok_attributes=ok_attributes,
+            ok_tags=ok_tags
+        )
+        self.assertEqual(
+            '<ul><p>123hello<strong>there <a href="http://www.google.com" rel="nofollow">http://www.google.com</a></strong></p></ul>',
+            ret
+        )
 
         ret = clean_html('abc http://www.google.com abc', ok_attributes=ok_attributes, ok_tags=ok_tags)
         self.assertEqual('abc <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> abc', ret)
 
         # The links inside <> are encoded by &lt; and &gt;
         ret = clean_html('abc <http://www.google.com> abc', ok_attributes=ok_attributes, ok_tags=ok_tags)
-        self.assertEqual('abc &lt; <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> &gt; abc', ret)
+        self.assertEqual(
+            'abc &lt; <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> &gt; abc', ret
+        )
 
-        ret = clean_html('GALORE: https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092\\nFreesound Moderator', ok_attributes=ok_attributes, ok_tags=ok_tags)
-        self.assertEqual('GALORE: <a href="https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092" rel="nofollow">https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092</a>\\nFreesound Moderator', ret)
+        ret = clean_html(
+            'GALORE: https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092\\nFreesound Moderator',
+            ok_attributes=ok_attributes,
+            ok_tags=ok_tags
+        )
+        self.assertEqual(
+            'GALORE: <a href="https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092" rel="nofollow">https://freesound.iua.upf.edu/samplesViewSingle.php?id=22092</a>\\nFreesound Moderator',
+            ret
+        )
 
         # Allow custom placeholders
         ret = clean_html('<a href="${sound_id}">my sound id</a>', ok_attributes=ok_attributes, ok_tags=ok_tags)
@@ -136,7 +176,9 @@ class CleanHtmlTest(TestCase):
         ret = clean_html('<a href="${sound_url}">my sound url</a>', ok_attributes=ok_attributes, ok_tags=ok_tags)
         self.assertEqual('<a href="${sound_url}" rel="nofollow">my sound url</a>', ret)
 
-        ret = clean_html('<img src="https://freesound.org/media/images/logo.png">', ok_attributes=ok_attributes, ok_tags=ok_tags)
+        ret = clean_html(
+            '<img src="https://freesound.org/media/images/logo.png">', ok_attributes=ok_attributes, ok_tags=ok_tags
+        )
         self.assertEqual('<img src="https://freesound.org/media/images/logo.png">', ret)
 
         ret = clean_html('<ul><li>Some list</li></ul>', ok_attributes=ok_attributes, ok_tags=ok_tags)

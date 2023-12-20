@@ -73,19 +73,19 @@ Below are instructions for setting up a local Freesound installation for develop
 
 10. Update database by running Django migrations
 
-       docker-compose run --rm web python manage.py migrate
+        docker-compose run --rm web python manage.py migrate
 
 11. Create a superuser account to be able to login to the local Freesound website and to the admin site
 
-       docker-compose run --rm web python manage.py createsuperuser
+        docker-compose run --rm web python manage.py createsuperuser
 
 12. Install static build dependencies
 
-       docker-compose run --rm web npm install --force
+        docker-compose run --rm web npm install --force
 
 13. Build static files. Note that this step will need to be re-run everytime there are changes in Freesound's static code (JS, CSS and static media files).
 
-       docker-compose run --rm web npm run build
+        docker-compose run --rm web npm run build
 
 14. Run services 🎉 
 

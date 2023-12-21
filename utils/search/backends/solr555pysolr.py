@@ -248,15 +248,19 @@ def search_process_sort(sort, forum=False):
 
 
 def search_filter_make_intersection(query_filter):
-    # In solr 4, fl="a:1 b:2" will take the AND of these two filters, but in solr 5+, this will use OR
-    # fl=a:1&fl=b:2 can be used to take an OR, however we don't support this syntax
-    # The AND behaviour can be approximated by using fl="+a:1 +b:2", however, fl="+a:1 OR +b:2" will still do an AND
-    # In the Freesound API documentation, we document and support fl="a:(1 OR 2)" as a behaviour, but we
-    # never documented fl="a:1 OR b:2" as a valid syntax, and looking at search logs we cannot see anyone using
-    # this behaviour. Therefore, add a + to the beginning of each query item to force AND.
+    # In solr 4, fq="a:1 b:2" will take the AND of these two filters, but in solr 5+, this will use OR
+    # fq=a:1&fq=b:2 can be used to take an AND, however we don't support this syntax
+    # The AND behaviour can be approximated by using fq="+a:1 +b:2", therefore we add a + to the beginning of each 
+    # filter item to force AND. Because we use Dismax query parser, if we have a filter like fq="a:1 OR b:2" which will
+    # be converted to fq="+a:1 OR +b:2" by this function, this will still correctly use the OR operator (this would not
+    # be the case with standard lucene query parser).
     # NOTE: for the filter names we match "a-zA-Z_" instead of using \w as using \w would cause problems for filters
     # which have date ranges inside.
+    # NOTE: in the future filter handling should be refactored and we should use a proper filter parser
+    # that allows us to define our own filter syntax and then represent filters as some intermediate structure that can later
+    # be converted to valid lucene/dismax syntax.
     query_filter = re.sub(r'\b([a-zA-Z_]+:)', r'+\1', query_filter)
+    query_filter = re.sub(r"(\+)\1+", r"\1", query_filter)  # This is to avoid having multiple + in a row if user already has added them
     return query_filter
 
 

@@ -35,13 +35,13 @@ Below are instructions for setting up a local Freesound installation for develop
 
        mkdir freesound-data
 
-3. Download the [Freesound development data zip file](https://drive.google.com/file/d/1ih3or14n-pRVZ-oB0KThp4VVEiKhAeUK/view?usp=sharing) (~20GB) and uncompress it inside `freesound-data`. You should get permission to download this file from Freesound admins. File structure should look like this:
+3. Download the [Freesound development data zip file](https://drive.google.com/file/d/1c6w01tE4dIt8lEMMmK5aBEGV40oqe9vi/view?usp=share_link) (~7GB) and uncompress it inside `freesound-data`. You should get permission to download this file from Freesound admins. File structure should look like this:
 
        freesound/
        freesound/freesound-data/
-       freesound/freesound-data/analysis/
-       freesound/freesound-data/avatar/
-       ...
+       freesound/freesound-data/avatars/
+       freesound/freesound-data/displays/
+       freesound/freesound-data/previews/
 
 4. Download [Freesound development similarity index](https://drive.google.com/file/d/1ydJUUXbQZbHrva4UZd3C05wDcOXI7v1m/view?usp=sharing) and the [Freesound tag recommendation models](https://drive.google.com/file/d/1snaktMysCXdThWKkYuKWoGc_Hk2BElmz/view?usp=sharing) and place their contents under `freesound-data/similarity_index/` and `freesound-data/tag_recommendation_models` directories respectively (you'll need to create the directories). You should get permission to download these files from Freesound admins.
 
@@ -107,7 +107,6 @@ After following the steps you'll have a functional Freesound installation up and
 Because the `web` container mounts a named volume for the home folder of the user running the shell plus process, command history should be kept between container runs :)
 
 16. (extra step) The steps above will get Freesound running, but to save resources in your local machine some non-essential services will not be started by default. If you look at the `docker-compose.yml` file, you'l see that some services are marked with the profile `analyzers` or `all`. These services include sound similarity, search results clustering and the audio analyzers. To run these services you need to explicitely tell `docker-compose` using the `--profile` (note that some services need additional configuration steps (see *Freesound analysis pipeline* section in `DEVELOPERS.md`):
-
 
         docker-compose --profile analyzers up   # To run all basic services + sound analyzers
         docker-compose --profile all up         # To run all services

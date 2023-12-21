@@ -1,20 +1,13 @@
 # Freesound Beast Whoosh Front end development
 
-## Installation
+## Installation of static dependencies
 
-Checkout the Freesound repository and run this command from the root folder:
+See step 12 of the main README file.
 
-```
-npm install
-```
 
 ## Building static
 
-Checkout the Freesound repository and run this command from the root folder:
-
-```
-npm run build
-```
+See step 13 of the main README file. That step will need to be re-run everytime that there are changes in the static files (JS, CSS...).
 
 
 ## Icons

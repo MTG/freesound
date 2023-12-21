@@ -57,7 +57,7 @@ services:
             - solr9data:/var/solr
             - ./utils/search/solr9/docker-entrypoint:/docker-entrypoint-initdb.d
         ports:
-            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8984:8983"
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8983:8983"
 
     # Redis (caches)
     redis:

@@ -261,7 +261,7 @@ def search_filter_make_intersection(query_filter):
     # be converted to valid lucene/dismax syntax.
     query_filter = re.sub(r'\b([a-zA-Z_]+:)', r'+\1', query_filter)
     query_filter = re.sub(r"(\+)\1+", r"\1", query_filter)  # This is to avoid having multiple + in a row if user already has added them
-    if query_filter[-1] == '+':
+    if len(query_filter) > 0 and query_filter[-1] == '+':
         query_filter = query_filter[:-1]
     return query_filter
 

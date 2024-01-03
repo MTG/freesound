@@ -282,29 +282,25 @@ class ForumTestCase(TestCase):
 
         Post.objects.create(thread=thread, author=user, body="", moderation_state="NM")
 
-        res = self.client.get(reverse("forums-thread",
-                                      kwargs={"forum_name_slug": forum.name_slug, "thread_id": thread.id}))
+        res = self.client.get(
+            reverse("forums-thread", kwargs={
+                "forum_name_slug": forum.name_slug,
+                "thread_id": thread.id
+            })
+        )
         self.assertEqual(res.status_code, 404)
 
 
 def _create_forums_threads_posts(author, n_forums=1, n_threads=1, n_posts=5):
     for i in range(0, n_forums):
         forum = Forum.objects.create(
-            name='Forum %i' % i,
-            name_slug='forum_%i' % i,
-            description="Description of forum %i" % i
+            name='Forum %i' % i, name_slug='forum_%i' % i, description="Description of forum %i" % i
         )
         for j in range(0, n_threads):
-            thread = Thread.objects.create(
-                author=author,
-                title='Thread %i of forum %i' % (j, i),
-                forum=forum
-            )
+            thread = Thread.objects.create(author=author, title='Thread %i of forum %i' % (j, i), forum=forum)
             for k in range(0, n_posts):
                 post = Post.objects.create(
-                    author=author,
-                    thread=thread,
-                    body='Text of the post %i for thread %i and forum %i' % (k, j, i)
+                    author=author, thread=thread, body='Text of the post %i for thread %i and forum %i' % (k, j, i)
                 )
                 if k == 0:
                     thread.first_post = post
@@ -325,30 +321,41 @@ class ForumPageResponses(TestCase):
     def test_forums_response_ok(self):
         resp = self.client.get(reverse('forums-forums'))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(resp.context['forums']), self.N_FORUMS)  # Check that N_FORUMS are passed to context
+        self.assertEqual(len(resp.context['forums']), self.N_FORUMS)    # Check that N_FORUMS are passed to context
 
     def test_forum_response_ok(self):
         forum = Forum.objects.first()
         resp = self.client.get(reverse('forums-forum', args=[forum.name_slug]))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(resp.context['page'].object_list), self.N_THREADS)  # Check N_THREADS in context
+        self.assertEqual(len(resp.context['page'].object_list), self.N_THREADS)    # Check N_THREADS in context
 
     @override_settings(LAST_FORUM_POST_MINIMUM_TIME=0)
     def test_new_thread_response_ok(self):
         forum = Forum.objects.first()
 
         # Assert non-logged in user is redirected to login page
-        resp = self.client.post(reverse('forums-new-thread', args=[forum.name_slug]), data={
-            'body': ['New thread body (first post)'], 'subscribe': ['on'], 'title': ['New thread title']
-        })
-        self.assertRedirects(resp, '{}?next={}'.format(
-            reverse('login'), reverse('forums-new-thread', args=[forum.name_slug])))
+        resp = self.client.post(
+            reverse('forums-new-thread', args=[forum.name_slug]),
+            data={
+                'body': ['New thread body (first post)'],
+                'subscribe': ['on'],
+                'title': ['New thread title']
+            }
+        )
+        self.assertRedirects(
+            resp, '{}?next={}'.format(reverse('login'), reverse('forums-new-thread', args=[forum.name_slug]))
+        )
 
         # Assert logged in user can create new thread
         self.client.force_login(self.user)
-        resp = self.client.post(reverse('forums-new-thread', args=[forum.name_slug]), data={
-            'body': ['New thread body (first post)'], 'subscribe': ['on'], 'title': ['New thread title']
-        })
+        resp = self.client.post(
+            reverse('forums-new-thread', args=[forum.name_slug]),
+            data={
+                'body': ['New thread body (first post)'],
+                'subscribe': ['on'],
+                'title': ['New thread title']
+            }
+        )
         post = Post.objects.get(body='New thread body (first post)')
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
 
@@ -359,9 +366,14 @@ class ForumPageResponses(TestCase):
         # Assert logged in user fails creating thread
         long_title = 255 * '1'
         self.client.force_login(self.user)
-        resp = self.client.post(reverse('forums-new-thread', args=[forum.name_slug]), data={
-            'body': ['New thread body (first post)'], 'subscribe': ['on'], 'title': [long_title]
-        })
+        resp = self.client.post(
+            reverse('forums-new-thread', args=[forum.name_slug]),
+            data={
+                'body': ['New thread body (first post)'],
+                'subscribe': ['on'],
+                'title': [long_title]
+            }
+        )
         self.assertNotEqual(resp.context['form'].errors, None)
 
     def test_thread_response_ok(self):
@@ -369,7 +381,7 @@ class ForumPageResponses(TestCase):
         thread = forum.thread_set.first()
         resp = self.client.get(reverse('forums-thread', args=[forum.name_slug, thread.id]))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(resp.context['page'].object_list), self.N_POSTS)  # Check N_POSTS in context
+        self.assertEqual(len(resp.context['page'].object_list), self.N_POSTS)    # Check N_POSTS in context
 
     def test_post_response_ok(self):
         forum = Forum.objects.first()
@@ -385,17 +397,26 @@ class ForumPageResponses(TestCase):
         thread = forum.thread_set.first()
 
         # Assert non-logged in user is redirected to login page
-        resp = self.client.post(reverse('forums-reply', args=[forum.name_slug, thread.id]), data={
-            'body': ['Reply post body'], 'subscribe': ['on'],
-        })
-        self.assertRedirects(resp, '{}?next={}'.format(
-            reverse('login'), reverse('forums-reply', args=[forum.name_slug, thread.id])))
+        resp = self.client.post(
+            reverse('forums-reply', args=[forum.name_slug, thread.id]),
+            data={
+                'body': ['Reply post body'],
+                'subscribe': ['on'],
+            }
+        )
+        self.assertRedirects(
+            resp, '{}?next={}'.format(reverse('login'), reverse('forums-reply', args=[forum.name_slug, thread.id]))
+        )
 
         # Assert logged in user can reply
         self.client.force_login(self.user)
-        resp = self.client.post(reverse('forums-reply', args=[forum.name_slug, thread.id]), data={
-            'body': ['Reply post body'], 'subscribe': ['on'],
-        })
+        resp = self.client.post(
+            reverse('forums-reply', args=[forum.name_slug, thread.id]),
+            data={
+                'body': ['Reply post body'],
+                'subscribe': ['on'],
+            }
+        )
         post = Post.objects.get(body='Reply post body')
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
 
@@ -406,17 +427,28 @@ class ForumPageResponses(TestCase):
         post = thread.post_set.first()
 
         # Assert non-logged in user is redirected to login page
-        resp = self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
-            'body': ['Reply post body'], 'subscribe': ['on'],
-        })
-        self.assertRedirects(resp, '{}?next={}'.format(
-            reverse('login'), reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id])))
+        resp = self.client.post(
+            reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]),
+            data={
+                'body': ['Reply post body'],
+                'subscribe': ['on'],
+            }
+        )
+        self.assertRedirects(
+            resp, '{}?next={}'.format(
+                reverse('login'), reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id])
+            )
+        )
 
         # Assert logged in user can reply
         self.client.force_login(self.user)
-        resp = self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
-            'body': ['Reply post body'], 'subscribe': ['on'],
-        })
+        resp = self.client.post(
+            reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]),
+            data={
+                'body': ['Reply post body'],
+                'subscribe': ['on'],
+            }
+        )
         post = Post.objects.get(body='Reply post body')
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
 
@@ -426,24 +458,18 @@ class ForumPageResponses(TestCase):
         post = thread.post_set.first()
 
         # Assert non-logged in user can't edit post
-        resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={
-            'body': ['Edited post body']
-        })
+        resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={'body': ['Edited post body']})
         self.assertRedirects(resp, f"{reverse('login')}?next={reverse('forums-post-edit', args=[post.id])}")
 
         # Assert logged in user which is not author of post can't edit post
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
         self.client.force_login(user2)
-        resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={
-            'body': ['Edited post body']
-        })
+        resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={'body': ['Edited post body']})
         self.assertEqual(resp.status_code, 404)
 
         # Assert logged in user can edit post
         self.client.force_login(self.user)
-        resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={
-            'body': ['Edited post body']
-        })
+        resp = self.client.post(reverse('forums-post-edit', args=[post.id]), data={'body': ['Edited post body']})
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
         edited_post = Post.objects.get(id=post.id)
         self.assertEqual(edited_post.body, 'Edited post body')
@@ -509,7 +535,9 @@ class ForumPageResponses(TestCase):
 
         # Assert non-logged in user can't subscribe
         resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
-        self.assertRedirects(resp, f"{reverse('login')}?next={reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id])}")
+        self.assertRedirects(
+            resp, f"{reverse('login')}?next={reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id])}"
+        )
 
         # Assert logged in user can subscribe
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
@@ -547,9 +575,13 @@ class ForumPageResponses(TestCase):
         resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
         self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=user2).count(), 1)
 
-        resp = self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
-            'body': ['Reply post body'], 'subscribe': ['on'],
-        })
+        resp = self.client.post(
+            reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]),
+            data={
+                'body': ['Reply post body'],
+                'subscribe': ['on'],
+            }
+        )
         post = Post.objects.get(body='Reply post body')
         self.assertRedirects(resp, post.get_absolute_url(), target_status_code=302)
 
@@ -576,12 +608,17 @@ class ForumPageResponses(TestCase):
         # A second user replies to that thread
         user2 = User.objects.create_user(username='testuser2', email='email2@example.com', password='12345')
         self.client.force_login(user2)
-        self.client.post(reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]), data={
-            'body': ['Reply post body'], 'subscribe': ['on'],
-        })
+        self.client.post(
+            reverse('forums-reply-quote', args=[forum.name_slug, thread.id, post.id]),
+            data={
+                'body': ['Reply post body'],
+                'subscribe': ['on'],
+            }
+        )
 
         # No emails sent
         self.assertEqual(len(mail.outbox), 0)
+
 
 class ForumModerationTestCase(TestCase):
 
@@ -602,18 +639,25 @@ class ForumModerationTestCase(TestCase):
     def test_user_no_permissions(self):
         """If the user doesn't have forum.can_moderate_forum permission, they're redirected to login screen"""
         self.client.force_login(self.regular_user)
-        resp = self.client.post(reverse('forums-moderate'), data={
-            'action': ['Delete'], 'post': ['1'],
-        })
+        resp = self.client.post(
+            reverse('forums-moderate'), data={
+                'action': ['Delete'],
+                'post': ['1'],
+            }
+        )
         self.assertEqual(resp.status_code, 302)
 
     def test_approve_post(self):
         """Approve a post"""
 
         self.client.force_login(self.admin_user)
-        resp = self.client.post(reverse('forums-moderate'), data={
-            f'{self.post.id}-action': ['Approve'], f'{self.post.id}-post': [f'{self.post.id}'],
-        })
+        resp = self.client.post(
+            reverse('forums-moderate'),
+            data={
+                f'{self.post.id}-action': ['Approve'],
+                f'{self.post.id}-post': [f'{self.post.id}'],
+            }
+        )
         self.assertEqual(resp.status_code, 200)
         self.post.refresh_from_db()
         self.assertEqual(self.post.moderation_state, "OK")
@@ -622,9 +666,13 @@ class ForumModerationTestCase(TestCase):
         """The user is spammy, delete it. The post will also be deleted"""
         self.client.force_login(self.admin_user)
 
-        resp = self.client.post(reverse('forums-moderate'), data={
-            f'{self.post.id}-action': ['Delete User'], f'{self.post.id}-post': [f'{self.post.id}'],
-        })
+        resp = self.client.post(
+            reverse('forums-moderate'),
+            data={
+                f'{self.post.id}-action': ['Delete User'],
+                f'{self.post.id}-post': [f'{self.post.id}'],
+            }
+        )
         self.assertEqual(resp.status_code, 200)
         with self.assertRaises(Post.DoesNotExist):
             self.post.refresh_from_db()
@@ -637,9 +685,13 @@ class ForumModerationTestCase(TestCase):
         """The post is spammy. Delete it, but keep the user"""
         self.client.force_login(self.admin_user)
 
-        resp = self.client.post(reverse('forums-moderate'), data={
-            f'{self.post.id}-action': ['Delete Post'], f'{self.post.id}-post': [f'{self.post.id}'],
-        })
+        resp = self.client.post(
+            reverse('forums-moderate'),
+            data={
+                f'{self.post.id}-action': ['Delete Post'],
+                f'{self.post.id}-post': [f'{self.post.id}'],
+            }
+        )
         self.assertEqual(resp.status_code, 200)
         with self.assertRaises(Post.DoesNotExist):
             self.post.refresh_from_db()
@@ -652,9 +704,14 @@ class ForumModerationTestCase(TestCase):
         self.admin_user.groups.add(group)
         self.client.force_login(self.admin_user)
 
-        resp = self.client.post(reverse('forums-moderate'), data={
-            f'1234-action': ['Delete Post'], f'1234-post': [f'1234'],
-        })
+        resp = self.client.post(
+            reverse('forums-moderate'), data={
+                f'1234-action': ['Delete Post'],
+                f'1234-post': [f'1234'],
+            }
+        )
         self.assertEqual(resp.status_code, 200)
 
-        self.assertEqual(list(resp.context['messages'])[0].message, "This post no longer exists. It may have already been deleted.")
+        self.assertEqual(
+            list(resp.context['messages'])[0].message, "This post no longer exists. It may have already been deleted."
+        )

@@ -35,8 +35,14 @@ class Command(BaseCommand):
            'be saved in that file in disk.'
 
     def add_arguments(self, parser):
-        parser.add_argument('-o', '--outfile', type=str, default=None, help='File path where to store the IDs of sounds'
-                                                                            ' with missing files (if any)')
+        parser.add_argument(
+            '-o',
+            '--outfile',
+            type=str,
+            default=None,
+            help='File path where to store the IDs of sounds'
+            ' with missing files (if any)'
+        )
 
     def handle(self, *args, **options):
 

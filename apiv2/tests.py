@@ -52,15 +52,13 @@ class TestAPiViews(TestCase):
         self.assertEqual(resp.status_code, 200)
 
         # 200 response on pack instance sounds list (make it return all fields)
-        resp = self.client.get(reverse('apiv2-pack-sound-list', kwargs={'pk': packs[0].id})  + '?fields=*')
+        resp = self.client.get(reverse('apiv2-pack-sound-list', kwargs={'pk': packs[0].id}) + '?fields=*')
         self.assertEqual(resp.status_code, 200)
 
         # 200 response on pack instance download
         # This test uses a https connection.
-        resp = self.client.get(reverse('apiv2-pack-download',
-                               kwargs={'pk': packs[0].id}), secure=True)
+        resp = self.client.get(reverse('apiv2-pack-download', kwargs={'pk': packs[0].id}), secure=True)
         self.assertEqual(resp.status_code, 200)
-
 
     def test_basic_user_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
@@ -79,7 +77,6 @@ class TestAPiViews(TestCase):
         resp = self.client.get(reverse('api-logout'), secure=True)
         self.assertEqual(resp.status_code, 302)
 
-
     def test_user_views_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
         for sound in sounds:
@@ -95,7 +92,6 @@ class TestAPiViews(TestCase):
         resp = self.client.get(reverse('apiv2-user-sound-list', kwargs={'username': user.username}) + '?fields=*')
         self.assertEqual(resp.status_code, 200)
 
-
     def test_sound_views_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
         for sound in sounds:
@@ -108,7 +104,6 @@ class TestAPiViews(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
-
 class TestAPI(TestCase):
     fixtures = ['licenses']
 
@@ -116,20 +111,17 @@ class TestAPI(TestCase):
         # Create App to login using token
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
 
-        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
-                        url="https://freesound.com", name="test")
+        c = ApiV2Client(
+            user=user, status='OK', redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
+        )
         c.save()
 
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
 
-        headers = {
-            'HTTP_AUTHORIZATION': f'Token {c.key}',
-            'HTTP_ORIGIN': 'https://www.google.com'
-        }
-        resp = self.client.options(reverse('apiv2-sound-instance',
-                                   kwargs={'pk': sound.id}), secure=True, **headers)
+        headers = {'HTTP_AUTHORIZATION': f'Token {c.key}', 'HTTP_ORIGIN': 'https://www.google.com'}
+        resp = self.client.options(reverse('apiv2-sound-instance', kwargs={'pk': sound.id}), secure=True, **headers)
         self.assertEqual(resp.status_code, 200)
         # Check if header is present
         self.assertEqual(resp['ACCESS-CONTROL-ALLOW-ORIGIN'], '*')
@@ -138,8 +130,9 @@ class TestAPI(TestCase):
         # Create App to login using token
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
 
-        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
-                        url="https://freesound.com", name="test")
+        c = ApiV2Client(
+            user=user, status='OK', redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
+        )
         c.save()
 
         sound = sounds[0]
@@ -150,22 +143,29 @@ class TestAPI(TestCase):
             'HTTP_AUTHORIZATION': f'Token {c.key}',
         }
         # make query that can't be decoded
-        resp = self.client.options("/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers)
+        resp = self.client.options(
+            "/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers
+        )
         self.assertEqual(resp.status_code, 200)
 
 
 class ApiSearchPaginatorTest(TestCase):
+
     def test_page(self):
         paginator = ApiSearchPaginator([1, 2, 3, 4, 5], 5, 2)
         page = paginator.page(2)
 
-        self.assertEqual(page, {'object_list': [1, 2, 3, 4, 5],
-                                 'has_next': True,
-                                 'has_previous': True,
-                                 'has_other_pages': True,
-                                 'next_page_number': 3,
-                                 'previous_page_number': 1,
-                                 'page_num': 2})
+        self.assertEqual(
+            page, {
+                'object_list': [1, 2, 3, 4, 5],
+                'has_next': True,
+                'has_previous': True,
+                'has_other_pages': True,
+                'next_page_number': 3,
+                'previous_page_number': 1,
+                'page_num': 2
+            }
+        )
 
 
 class TestSoundCombinedSearchFormAPI(SimpleTestCase):
@@ -335,8 +335,8 @@ class TestSoundListSerializer(TestCase):
         Site.objects.get_current()
 
         field_sets = [
-            '',  # default fields
-            ','.join(SoundListSerializer.Meta.fields),  # all fields
+            '',    # default fields
+            ','.join(SoundListSerializer.Meta.fields),    # all fields
         ]
 
         # Test when serializing a single sound
@@ -388,17 +388,22 @@ class TestApiV2Client(TestCase):
         """
         user = User.objects.create_user("testuser")
         self.client.force_login(user)
-        resp = self.client.post(reverse('apiv2-apply'), data={
-            'name': 'Name for the app',
-            'url': 'http://example.com/a/super/long/paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-                   'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-                   'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaath',
-            'redirect_uri': 'http://example.com/a/super/long/paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-                            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-                            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaath',
-            'description': 'test description',
-            'accepted_tos': '1',
-        })
+        resp = self.client.post(
+            reverse('apiv2-apply'),
+            data={
+                'name': 'Name for the app',
+                'url':
+                    'http://example.com/a/super/long/paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaath',
+                'redirect_uri':
+                    'http://example.com/a/super/long/paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaath',
+                'description': 'test description',
+                'accepted_tos': '1',
+            }
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertIn('redirect_uri', resp.context['form'].errors)
         self.assertIn('url', resp.context['form'].errors)
@@ -423,17 +428,18 @@ class TestMeResources(TestCase):
 
         # Get access token for end_user
         resp = self.client.post(
-            reverse('oauth2_provider:access_token'),
-            {
+            reverse('oauth2_provider:access_token'), {
                 'client_id': client.client_id,
                 'grant_type': 'password',
                 'username': self.end_user.username,
                 'password': self.end_user_password,
-            }, secure=True)
+            },
+            secure=True
+        )
         self.auth_headers = {
             'HTTP_AUTHORIZATION': f'Bearer {resp.json()["access_token"]}',
         }
-        
+
         # Create sounds and content
         _, _, sounds = create_user_and_sounds(user=self.end_user, num_sounds=5, num_packs=1)
         for sound in sounds:
@@ -451,18 +457,26 @@ class TestMeResources(TestCase):
         resp = self.client.get(reverse('apiv2-me'), secure=True, **self.auth_headers)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['username'], self.end_user.username)
-    
+
     def test_bookmark_resources(self):
         # 200 response on list of bookmark categories
         resp = self.client.get(reverse('apiv2-me-bookmark-categories'), secure=True, **self.auth_headers)
         self.assertEqual(resp.status_code, 200)
 
         # 200 response on getting sounds for bookmark category without name
-        resp = self.client.get(reverse('apiv2-me-bookmark-category-sounds', kwargs={'category_id': 0}) + '?fields=*', secure=True, **self.auth_headers)
+        resp = self.client.get(
+            reverse('apiv2-me-bookmark-category-sounds', kwargs={'category_id': 0}) + '?fields=*',
+            secure=True,
+            **self.auth_headers
+        )
         self.assertEqual(resp.status_code, 200)
 
         # 200 response on getting sounds for bookmark category without name
-        resp = self.client.get(reverse('apiv2-me-bookmark-category-sounds', kwargs={'category_id': self.category.id}) + '?fields=*', secure=True, **self.auth_headers)
+        resp = self.client.get(
+            reverse('apiv2-me-bookmark-category-sounds', kwargs={'category_id': self.category.id}) + '?fields=*',
+            secure=True,
+            **self.auth_headers
+        )
         self.assertEqual(resp.status_code, 200)
 
 
@@ -501,12 +515,10 @@ class APIAuthenticationTestCase(TestCase):
             self.assertIn(field, dictionary)
 
     def check_access_token_response_fields(self, resp):
-        self.check_dict_has_fields(
-            resp.json(), ['expires_in', 'scope', 'refresh_token', 'access_token', 'token_type'])
+        self.check_dict_has_fields(resp.json(), ['expires_in', 'scope', 'refresh_token', 'access_token', 'token_type'])
 
     def check_redirect_uri_access_token_frag_params(self, params):
-        self.check_dict_has_fields(
-            params, ['expires_in', 'scope', 'access_token', 'token_type'])
+        self.check_dict_has_fields(params, ['expires_in', 'scope', 'access_token', 'token_type'])
 
     def test_oauth2_password_grant_flow(self):
 
@@ -514,13 +526,14 @@ class APIAuthenticationTestCase(TestCase):
         # to false
         client = ApiV2Client.objects.get(name='AuthorizationCodeClient')
         resp = self.client.post(
-            reverse('oauth2_provider:access_token'),
-            {
+            reverse('oauth2_provider:access_token'), {
                 'client_id': client.client_id,
                 'grant_type': 'password',
                 'username': self.end_user.username,
                 'password': self.end_user_password,
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()['error'], 'unauthorized_client')
 
@@ -528,13 +541,14 @@ class APIAuthenticationTestCase(TestCase):
         client.allow_oauth_passoword_grant = True
         client.save()
         resp = self.client.post(
-            reverse('oauth2_provider:access_token'),
-            {
+            reverse('oauth2_provider:access_token'), {
                 'client_id': client.client_id,
                 'grant_type': 'password',
                 'username': self.end_user.username,
                 'password': self.end_user_password,
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 200)
         self.check_access_token_response_fields(resp)
 
@@ -542,35 +556,39 @@ class APIAuthenticationTestCase(TestCase):
         resp = self.client.post(
             reverse('oauth2_provider:access_token'),
             {
-                #'client_id': client.client_id,
+        #'client_id': client.client_id,
                 'grant_type': 'password',
                 'username': self.end_user.username,
                 'password': self.end_user_password,
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 401)
         self.assertEqual(resp.json()['error'], 'invalid_client')
 
         # Return 'invalid_client' when client_id does not exist in db
         resp = self.client.post(
-            reverse('oauth2_provider:access_token'),
-            {
+            reverse('oauth2_provider:access_token'), {
                 'client_id': 'thi5i5aninv3nt3dcli3ntid',
                 'grant_type': 'password',
                 'username': self.end_user.username,
                 'password': self.end_user_password,
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 401)
         self.assertEqual(resp.json()['error'], 'invalid_client')
 
         # Return 'unsupported_grant_type' when grant type does not exist
         resp = self.client.post(
-            reverse('oauth2_provider:access_token'),
-            {
+            reverse('oauth2_provider:access_token'), {
                 'client_id': client.client_id,
                 'grant_type': 'invented_grant',
                 'username': self.end_user.username,
                 'password': self.end_user_password,
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()['error'], 'unsupported_grant_type')
 
@@ -580,9 +598,11 @@ class APIAuthenticationTestCase(TestCase):
             {
                 'client_id': client.client_id,
                 'grant_type': 'password',
-                #'username': self.end_user.username,
+        #'username': self.end_user.username,
                 'password': self.end_user_password,
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()['error'], 'invalid_request')
 
@@ -593,8 +613,10 @@ class APIAuthenticationTestCase(TestCase):
                 'client_id': client.client_id,
                 'grant_type': 'password',
                 'username': self.end_user.username,
-                #'password': self.end_user_password,
-            }, secure=True)
+        #'password': self.end_user_password,
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()['error'], 'invalid_request')
 
@@ -603,11 +625,13 @@ class APIAuthenticationTestCase(TestCase):
         # Redirect to login page when visiting authorize page with an AnonymousUser
         client = ApiV2Client.objects.get(name='AuthorizationCodeClient')
         resp = self.client.get(
-            reverse('oauth2_provider:authorize'),
-            {
+            reverse('oauth2_provider:authorize'), {
                 'client_id': client.client_id,
                 'response_type': 'code',
-            }, secure=True, follow=True)
+            },
+            secure=True,
+            follow=True
+        )
         response_path = resp.request['PATH_INFO']
         self.assertEqual(resp.status_code, 200)
         self.assertIn('/login', response_path)
@@ -615,11 +639,12 @@ class APIAuthenticationTestCase(TestCase):
         # Redirect includes 'error' param when using non-existing response type
         self.client.force_login(self.end_user)
         resp = self.client.get(
-            reverse('oauth2_provider:authorize'),
-            {
+            reverse('oauth2_provider:authorize'), {
                 'client_id': client.client_id,
                 'response_type': 'non_existing_response_type',
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 302)
         resp = self.client.get(resp.request['PATH_INFO'] + '?' + resp.request['QUERY_STRING'], secure=True)
         self.assertTrue(resp.url.startswith(client.get_default_redirect_uri()))
@@ -629,11 +654,12 @@ class APIAuthenticationTestCase(TestCase):
 
         # Redirect includes 'error' param when using non-supported response type
         resp = self.client.get(
-            reverse('oauth2_provider:authorize'),
-            {
+            reverse('oauth2_provider:authorize'), {
                 'client_id': client.client_id,
                 'response_type': 'token',
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 302)
         resp = self.client.get(resp.request['PATH_INFO'] + '?' + resp.request['QUERY_STRING'], secure=True)
         self.assertEquals(resp.url.startswith(client.get_default_redirect_uri()), True)
@@ -643,51 +669,55 @@ class APIAuthenticationTestCase(TestCase):
 
         # Authorization page is displayed with errors with non-existing client_id
         resp = self.client.get(
-            reverse('oauth2_provider:authorize'),
-            {
+            reverse('oauth2_provider:authorize'), {
                 'client_id': 'thi5i5aninv3nt3dcli3ntid',
                 'response_type': 'code',
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Invalid client_id parameter value', str(resp.content))
 
         #  Authorization page is displayed correctly when correct response_type and client_id
         resp = self.client.get(
-            reverse('oauth2_provider:authorize'),
-            {
+            reverse('oauth2_provider:authorize'), {
                 'client_id': client.client_id,
                 'response_type': 'code',
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertIn('name="allow" value="Authorize', str(resp.content))
 
         # Redirect includes 'code' and 'state' params
         resp = self.client.post(
-            reverse('oauth2_provider:authorize'),
-            {
+            reverse('oauth2_provider:authorize'), {
                 'client_id': client.client_id,
                 'response_type': 'code',
                 'redirect_uri': client.get_default_redirect_uri(),
                 'scope': 'read',
                 'state': 'an_optional_state',
                 'allow': 'Authorize',
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertTrue(resp.url.startswith(client.get_default_redirect_uri()))
         resp_params = self.get_params_from_url(resp.url)
-        self.assertEquals(resp_params['state'], 'an_optional_state')  # Check state is returned and preserved
-        self.check_dict_has_fields(resp_params, ['code'])  # Check code is there
+        self.assertEquals(resp_params['state'], 'an_optional_state')    # Check state is returned and preserved
+        self.check_dict_has_fields(resp_params, ['code'])    # Check code is there
 
         # Return 200 OK when requesting access token setting client_id and client_secret in body params
         code = resp_params['code']
         resp = self.client.post(
-            reverse('oauth2_provider:access_token'),
-            {
+            reverse('oauth2_provider:access_token'), {
                 'client_id': client.client_id,
                 'client_secret': client.client_secret,
                 'grant_type': 'authorization_code',
                 'code': code,
                 'redirect_uri': client.get_default_redirect_uri()
-            }, secure=True)
+            },
+            secure=True
+        )
         self.assertEqual(resp.status_code, 200)
         self.check_access_token_response_fields(resp)
 
@@ -696,18 +726,21 @@ class APIAuthenticationTestCase(TestCase):
             reverse('oauth2_provider:access_token'),
             {
                 'client_id': client.client_id,
-                #'client_secret': client.client_secret,
+        #'client_secret': client.client_secret,
                 'grant_type': 'authorization_code',
                 'code': code,
                 'redirect_uri': client.get_default_redirect_uri()
-            }, secure=True)
+            },
+            secure=True
+        )
 
         self.assertEqual(resp.status_code, 400)
 
     def test_token_authentication_with_header(self):
         user = User.objects.create_user("testuser")
-        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
-                        url="https://freesound.com", name="test")
+        c = ApiV2Client(
+            user=user, status='OK', redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
+        )
         c.save()
         headers = {
             'HTTP_AUTHORIZATION': f'Token {c.key}',
@@ -717,17 +750,18 @@ class APIAuthenticationTestCase(TestCase):
 
     def test_token_authentication_with_query_param(self):
         user = User.objects.create_user("testuser")
-        c = ApiV2Client(user=user, status='OK', redirect_uri="https://freesound.com",
-                        url="https://freesound.com", name="test")
+        c = ApiV2Client(
+            user=user, status='OK', redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
+        )
         c.save()
         resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 200)
 
     def test_token_authentication_disabled_client(self):
         user = User.objects.create_user("testuser")
-        c = ApiV2Client(user=user, status='REV', redirect_uri="https://freesound.com",
-                        url="https://freesound.com", name="test")
+        c = ApiV2Client(
+            user=user, status='REV', redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
+        )
         c.save()
         resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 401)
-

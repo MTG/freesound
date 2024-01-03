@@ -34,8 +34,8 @@ def remove_folder(folderpath, recursively=False):
         if not recursively:
             # First delete files inside folder
             for filename in os.listdir(folderpath):
-                os.remove(os.path.join(folderpath, filename))        
-        # Then delete the folder itself 
+                os.remove(os.path.join(folderpath, filename))
+        # Then delete the folder itself
         shutil.rmtree(folderpath)
     except Exception as e:
         console_logger.info(f'ERROR removing folder {folderpath}: {e}')
@@ -48,16 +48,12 @@ class Command(LoggingBaseCommand):
         parser.add_argument(
             '--dry-run',
             action="store_true",
-            help="Using this flag files will not be deleted but only information printed on screen.")
+            help="Using this flag files will not be deleted but only information printed on screen."
+        )
 
     def handle(self, **options):
         self.log_start()
-        cleaned_files = {
-            'tmp_uploads': 0,
-            'tmp_processing': 0,
-            'uploads': 0,
-            'processing_before_describe': 0
-        }
+        cleaned_files = {'tmp_uploads': 0, 'tmp_processing': 0, 'uploads': 0, 'processing_before_describe': 0}
 
         one_day_ago = datetime.datetime.today() - datetime.timedelta(days=1)
         one_year_ago = datetime.datetime.today() - datetime.timedelta(days=365)
@@ -81,7 +77,8 @@ class Command(LoggingBaseCommand):
                 if not files_in_folder:
                     should_delete = True
                 else:
-                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, filename))) < one_day_ago for filename in files_in_folder]):
+                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, filename)))
+                            < one_day_ago for filename in files_in_folder]):
                         should_delete = True
                 if should_delete:
                     # Delete directory and contents
@@ -99,7 +96,8 @@ class Command(LoggingBaseCommand):
                 if not files_in_folder:
                     should_delete = True
                 else:
-                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, sound_filename))) < one_year_ago for sound_filename in files_in_folder]):
+                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, sound_filename)))
+                            < one_year_ago for sound_filename in files_in_folder]):
                         should_delete = True
                 if should_delete:
                     # Delete directory and contents
@@ -118,5 +116,4 @@ class Command(LoggingBaseCommand):
                 if not options['dry_run']:
                     remove_folder(folderpath, recursively=True)
 
-                
         self.log_end(cleaned_files)

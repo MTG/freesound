@@ -55,7 +55,7 @@ class RatingsTestCase(TestCase):
         self.assertEqual(ratings.models.SoundRating.objects.count(), 2)
         r = ratings.models.SoundRating.objects.get(sound_id=self.sound.id, user_id=self.user1.id)
         # Ratings in the database are 2x the value from the web call
-        self.assertEqual(r.rating, 2*RATING_VALUE)
+        self.assertEqual(r.rating, 2 * RATING_VALUE)
 
         # Check that signal updated sound.avg_rating and sound.num_ratings
         self.sound.refresh_from_db()
@@ -133,15 +133,19 @@ class RatingsPageTestCase(TestCase):
         self.client.force_login(self.user1)
         resp = self.client.get(self.sound.get_absolute_url())
         self.assertContains(resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">')
-        
+
     def test_no_rating_link_logged_out(self):
         """A logged out user doesn't see links to rate a sound"""
         resp = self.client.get(self.sound.get_absolute_url())
-        self.assertNotContains(resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">')
+        self.assertNotContains(
+            resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">'
+        )
 
     def test_no_rating_link_own_sound(self):
         """A user doesn't see links to rate their own sound"""
         user = User.objects.get(username="Anton")
         self.client.force_login(user)
         resp = self.client.get(self.sound.get_absolute_url())
-        self.assertNotContains(resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">')
+        self.assertNotContains(
+            resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">'
+        )

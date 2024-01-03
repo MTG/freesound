@@ -48,7 +48,7 @@ def tags(request, multiple_tags=None):
         if pack_flt is not None:
             # If username is passed as a GET parameter, add it as well to the filter
             search_filter += f'+grouping_pack:{pack_flt}'
-            
+
         return HttpResponseRedirect(f"{reverse('tags')}?f={search_filter}")
     else:
         # Share same view code as for the search view, but set "tags mode" on

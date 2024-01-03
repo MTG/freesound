@@ -58,12 +58,13 @@ from utils.similarity_utilities import get_sounds_descriptors
 error_logger = logging.getLogger("api_errors")
 cache_api_monitoring = caches["api_monitoring"]
 
-
 ##########################################
 # oauth 2 provider generator for client id
 ##########################################
 
+
 class FsClientIdGenerator(BaseHashGenerator):
+
     def hash(self):
         """
         Override ClientIdGenerator from oauth_provider2 as it does not allow to change length of id with
@@ -76,6 +77,7 @@ class FsClientIdGenerator(BaseHashGenerator):
 # Rest Framework custom function for getting descriptions from function instead docstring
 #########################################################################################
 
+
 def get_view_description(cls, html=False):
     description = ''
     if getattr(cls, 'get_description', None):
@@ -85,7 +87,7 @@ def get_view_description(cls, html=False):
             description = cls.get_description()
             description = formatting.dedent(smart_str(description))
             # Cache for 1 hour (if we update description, it will take 1 hour to show)
-            cache.set(cache_key, description, 60*60)
+            cache.set(cache_key, description, 60 * 60)
         else:
             description = cached_description
     if html:
@@ -127,7 +129,7 @@ class FreesoundAPIViewMixin:
             now = datetime.datetime.now().date()
             monitoring_key = f'{now.year}-{now.month}-{now.day}_{self.client_id}'
             current_value = cache_api_monitoring.get(monitoring_key, 0)
-            cache_api_monitoring.set(monitoring_key, current_value + 1, 60 * 60 * 24 * 3)  # Expire in 3 days
+            cache_api_monitoring.set(monitoring_key, current_value + 1, 60 * 60 * 24 * 3)    # Expire in 3 days
 
     def get_request_information(self, request):
         # Get request information and store it as class variable
@@ -255,7 +257,9 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
         if 'SoundListSerializer' in str(serializer_class):
             # If we are trying to serialize sounds, check if we should and sound analysis data to them and add it
             if isinstance(args[0], collections.abc.Iterable):
-                sound_analysis_data = get_analysis_data_for_sound_ids(kwargs['context']['request'], sound_ids=[s.id for s in args[0]])
+                sound_analysis_data = get_analysis_data_for_sound_ids(
+                    kwargs['context']['request'], sound_ids=[s.id for s in args[0]]
+                )
                 if sound_analysis_data:
                     kwargs['sound_analysis_data'] = sound_analysis_data
         return serializer_class(*args, **kwargs)
@@ -287,8 +291,10 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
 # Search utilities
 ##################
 
+
 def api_search(
-        search_form, target_file=None, extra_parameters=False, merging_strategy='merge_optimized', resource=None):
+    search_form, target_file=None, extra_parameters=False, merging_strategy='merge_optimized', resource=None
+):
 
     if search_form.cleaned_data['query']  is None \
             and search_form.cleaned_data['filter'] is None \
@@ -306,7 +312,8 @@ def api_search(
                 filter=search_form.cleaned_data['descriptors_filter'],
                 num_results=search_form.cleaned_data['page_size'],
                 offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
-                target_file=target_file)
+                target_file=target_file
+            )
 
             gaia_ids = [result[0] for result in results]
             distance_to_target_data = None
@@ -328,7 +335,8 @@ def api_search(
                 raise ServerErrorException(msg=f'Similarity server error: {str(e)}', resource=resource)
         except Exception as e:
             raise ServerErrorException(
-                msg='The similarity server could not be reached or some unexpected error occurred.', resource=resource)
+                msg='The similarity server could not be reached or some unexpected error occurred.', resource=resource
+            )
 
     elif not search_form.cleaned_data['descriptors_filter'] \
             and not search_form.cleaned_data['target'] \
@@ -362,13 +370,17 @@ def api_search(
 
         except SearchEngineException as e:
             if search_form.cleaned_data['filter'] is not None:
-                raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field '
-                                              'names are correct)' % str(e), resource=resource)
+                raise BadRequestException(
+                    msg='Search server error: %s (please check that your filter syntax and field '
+                    'names are correct)' % str(e),
+                    resource=resource
+                )
             raise BadRequestException(msg=f'Search server error: {str(e)}', resource=resource)
         except Exception as e:
             print(e)
             raise ServerErrorException(
-                msg='The search server could not be reached or some unexpected error occurred.', resource=resource)
+                msg='The search server could not be reached or some unexpected error occurred.', resource=resource
+            )
 
     else:
         # Combined search (there is at least one of query/filter and one of descriptors_filter/target)
@@ -396,7 +408,7 @@ def log_message_helper(message, data_dict=None, info_dict=None, resource=None, r
         if resource is not None:
             data_dict = resource.request.query_params.copy()
             data_dict = {key: urllib.parse.quote(value, safe=",:") for key, value in data_dict.items()}
-            data_dict.pop('token', None)  # Remove token from req params if it exists (we don't need it)
+            data_dict.pop('token', None)    # Remove token from req params if it exists (we don't need it)
     if info_dict is None:
         if resource is not None:
             info_dict = build_info_dict(resource=resource)
@@ -445,7 +457,7 @@ def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=F
 
     if request_is_secure:
         use_https = True
-        dynamic_resolve = False  # don't need to dynamic resolve is request is https
+        dynamic_resolve = False    # don't need to dynamic resolve is request is https
 
     if dynamic_resolve:
         use_https = True
@@ -491,6 +503,7 @@ def request_parameters_info_for_log_message(get_parameters):
 
 
 class ApiSearchPaginator:
+
     def __init__(self, results, count, num_per_page):
         self.num_per_page = num_per_page
         self.count = count
@@ -502,17 +515,20 @@ class ApiSearchPaginator:
         has_next = page_num < self.num_pages
         has_previous = 1 < page_num <= self.num_pages
 
-        return {'object_list': self.results,
-                'has_next': has_next,
-                'has_previous': has_previous,
-                'has_other_pages': has_next or has_previous,
-                'next_page_number': page_num + 1,
-                'previous_page_number': page_num - 1,
-                'page_num': page_num}
+        return {
+            'object_list': self.results,
+            'has_next': has_next,
+            'has_previous': has_previous,
+            'has_other_pages': has_next or has_previous,
+            'next_page_number': page_num + 1,
+            'previous_page_number': page_num - 1,
+            'page_num': page_num
+        }
 
 
 # Docs examples utils
 #####################
+
 
 def get_formatted_examples_for_view(view_name, url_name, max=10):
     try:
@@ -545,8 +561,9 @@ def get_formatted_examples_for_view(view_name, url_name, max=10):
 # Similarity utils
 ##################
 
+
 def get_analysis_data_for_sound_ids(request, sound_ids=[]):
-    # Get analysis data for all requested sounds and return it as a dictionary    
+    # Get analysis data for all requested sounds and return it as a dictionary
     sound_analysis_data = {}
     analysis_data_is_requested = 'analysis' in request.query_params.get('fields', '').split(',')
     if analysis_data_is_requested:
@@ -555,7 +572,9 @@ def get_analysis_data_for_sound_ids(request, sound_ids=[]):
         ids = [int(sid) for sid in sound_ids]
         if descriptors:
             try:
-                sound_analysis_data = get_sounds_descriptors(ids, descriptors.split(','), normalized, only_leaf_descriptors=True)
+                sound_analysis_data = get_sounds_descriptors(
+                    ids, descriptors.split(','), normalized, only_leaf_descriptors=True
+                )
             except:
                 pass
         else:
@@ -563,7 +582,6 @@ def get_analysis_data_for_sound_ids(request, sound_ids=[]):
                 sound_analysis_data[str(id)] = 'No descriptors specified. You should indicate which descriptors ' \
                                                     'you want with the \'descriptors\' request parameter.'
     return sound_analysis_data
-
 
 
 # APIv1 end of life
@@ -575,7 +593,8 @@ apiv1_logger = logging.getLogger("api")
 def apiv1_end_of_life_message(request):
     apiv1_logger.info('410 API error: End of life')
     content = {
-        "explanation": "Freesound APIv1 has reached its end of life and is no longer available."
-        "Please, upgrade to Freesound APIv2. More information: https://freesound.org/docs/api/"
+        "explanation":
+            "Freesound APIv1 has reached its end of life and is no longer available."
+            "Please, upgrade to Freesound APIv2. More information: https://freesound.org/docs/api/"
     }
     return JsonResponse(content, status=410)

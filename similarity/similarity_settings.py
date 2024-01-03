@@ -23,7 +23,7 @@ import os
 
 # SERVER SETTINGS
 INDEX_DIR = '/freesound-data/similarity_index/'
-INDEX_NAME = 'gaia_index_freesound_dev'  # Don't include .db extension in the name here
+INDEX_NAME = 'gaia_index_freesound_dev'    # Don't include .db extension in the name here
 INDEXING_SERVER_INDEX_NAME = 'background_index'
 PRESET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'presets/')
 PRESETS = ['lowlevel', 'pca']
@@ -35,17 +35,12 @@ LISTEN_PORT = 8008
 INDEXING_SERVER_LISTEN_PORT = 8009
 PCA_DIMENSIONS = 100
 PCA_DESCRIPTORS = [
-   "*lowlevel*mean",
-   "*lowlevel*dmean",
-   "*lowlevel*dmean2",
-   "*lowlevel*var",
-   "*lowlevel*dvar",
-   "*lowlevel*dvar2"
+    "*lowlevel*mean", "*lowlevel*dmean", "*lowlevel*dmean2", "*lowlevel*var", "*lowlevel*dvar", "*lowlevel*dvar2"
 ]
 
 # OTHER
 SIMILAR_SOUNDS_TO_CACHE = 100
-SIMILARITY_CACHE_TIME = 60*60*1
+SIMILARITY_CACHE_TIME = 60 * 60 * 1
 DEFAULT_NUMBER_OF_RESULTS = 15
 
 BAD_REQUEST_CODE = 400

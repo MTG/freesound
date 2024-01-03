@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 from django import template
 
 register = template.Library()
@@ -39,10 +38,7 @@ def display_forum(context, forum):
         dict: dictionary with the variables needed for rendering the forum with the display_forum.html template
 
     """
-    return {
-        'forum': forum,
-        'request': context['request']
-    }
+    return {'forum': forum, 'request': context['request']}
 
 
 @register.inclusion_tag('forum/display_thread.html', takes_context=True)
@@ -61,15 +57,20 @@ def display_thread(context, thread):
         dict: dictionary with the variables needed for rendering the thread with the display_thread.html template
 
     """
-    return {
-        'thread': thread,
-        'request': context['request']
-    }
+    return {'thread': thread, 'request': context['request']}
 
 
 @register.inclusion_tag('forum/display_post.html', takes_context=True)
-def display_post(context, post, forloop_counter=0, post_number_offset=0, show_post_location=False,
-                 show_action_icons=True, show_report_actions=True, results_highlighted=None):
+def display_post(
+    context,
+    post,
+    forloop_counter=0,
+    post_number_offset=0,
+    show_post_location=False,
+    show_action_icons=True,
+    show_report_actions=True,
+    results_highlighted=None
+):
     """This templatetag is used to display a post in a list of posts. It prepares some variables that are then
     passed to the display_post.html template to show post information.
 
@@ -94,7 +95,7 @@ def display_post(context, post, forloop_counter=0, post_number_offset=0, show_po
         try:
             highlighted_content = results_highlighted[str(post.id)]['post_body'][0]
         except KeyError:
-            highlighted_content = False    
+            highlighted_content = False
     else:
         highlighted_content = False
     return {

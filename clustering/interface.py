@@ -100,11 +100,15 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
         sound_ids = get_sound_ids_from_search_engine_query(query_params)
 
         # launch clustering with celery async task
-        celery_app.send_task('cluster_sounds', kwargs={
-            'cache_key_hashed': cache_key_hashed,
-            'sound_ids': sound_ids,
-            'features': features
-        }, queue='clustering')
+        celery_app.send_task(
+            'cluster_sounds',
+            kwargs={
+                'cache_key_hashed': cache_key_hashed,
+                'sound_ids': sound_ids,
+                'features': features
+            },
+            queue='clustering'
+        )
 
         return {'finished': False, 'error': False}
 

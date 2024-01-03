@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 import hashlib
 import os
 import shutil

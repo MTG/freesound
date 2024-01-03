@@ -1,0 +1,30 @@
+[flake8]
+exclude = */migrations
+extend-ignore =
+    # "Celery tasks should have explicit names." isn't very well implemented at this time (4/19/2020)
+    PIE783
+    # False positive in flake8-pie 0.7 (2021-04-15)
+    PIE795
+    PIE798
+    PIE803
+    # Print found
+    T201
+
+    # Logging statement uses string.format()
+    G001
+    # Logging statement uses '%'
+    G002
+    # Logging statement uses '+'
+    G003
+    # Logging statement uses f-string (Same as PIE803)
+    G004
+
+# This is used by flake8-import-order
+import-order-style = pycharm
+application-import-names = accounts, apiv2, bookmarks, clustering, comments, donations, favorites, follow, forum, freesound, general, geotags, messages, monitor, ratings, search, similarity, sounds, support, tags, tickets, utils, wiki
+# This is used by flake8-requirements
+known-modules = 
+max-line-length = 170
+
+# This is used by flake8-annotations so that we don't have to explicitly type None in functions that don't use it
+suppress-none-returning = true

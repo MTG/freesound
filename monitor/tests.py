@@ -17,7 +17,9 @@ class QueryStatsAjaxTestCase(TestCase):
         resp = self.client.get(reverse('monitor-queries-stats-ajax'))
 
         self.assertEqual(resp.status_code, 500)
-        mock_get.assert_called_with('http://graylog/graylog/api/search/universal/relative/terms', auth=mock.ANY, params=mock.ANY)
+        mock_get.assert_called_with(
+            'http://graylog/graylog/api/search/universal/relative/terms', auth=mock.ANY, params=mock.ANY
+        )
 
     @override_settings(GRAYLOG_DOMAIN='http://graylog')
     @mock.patch('requests.get')
@@ -29,7 +31,9 @@ class QueryStatsAjaxTestCase(TestCase):
         resp = self.client.get(reverse('monitor-queries-stats-ajax'))
 
         self.assertEqual(resp.status_code, 500)
-        mock_get.assert_called_with('http://graylog/graylog/api/search/universal/relative/terms', auth=mock.ANY, params=mock.ANY)
+        mock_get.assert_called_with(
+            'http://graylog/graylog/api/search/universal/relative/terms', auth=mock.ANY, params=mock.ANY
+        )
 
     @override_settings(GRAYLOG_DOMAIN='http://graylog')
     @mock.patch('requests.get')
@@ -43,4 +47,6 @@ class QueryStatsAjaxTestCase(TestCase):
 
         self.assertEqual(resp.status_code, 200)
         self.assertJSONEqual(resp.content, {'response': 'ok'})
-        mock_get.assert_called_with('http://graylog/graylog/api/search/universal/relative/terms', auth=mock.ANY, params=mock.ANY)
+        mock_get.assert_called_with(
+            'http://graylog/graylog/api/search/universal/relative/terms', auth=mock.ANY, params=mock.ANY
+        )

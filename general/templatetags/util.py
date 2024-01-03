@@ -37,7 +37,7 @@ def tuple_to_time(t):
 @stringfilter
 def truncate_string(value, length):
     if len(value) > length:
-        return value[:length-3] + "..."
+        return value[:length - 3] + "..."
     else:
         return value
 
@@ -68,7 +68,7 @@ def formatnumber(number):
 
 
 @register.filter
-def in_list(value,arg):
+def in_list(value, arg):
     return value in arg
 
 

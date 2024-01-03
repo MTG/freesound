@@ -25,6 +25,7 @@ from django.db import models
 from django.utils.encoding import smart_str
 from django.urls import reverse
 
+
 class Tag(models.Model):
     name = models.SlugField(unique=True, db_index=True, max_length=100)
 
@@ -59,6 +60,7 @@ class TaggedItem(models.Model):
     class Meta:
         ordering = ("-created",)
         unique_together = (('tag', 'content_type', 'object_id'),)
+
 
 # Class to get old tags ids linked to new tag ids
 # The goal is to at some point deprecate the old tag ids completely

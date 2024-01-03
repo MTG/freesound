@@ -41,11 +41,14 @@ admin.autodiscover()
 
 urlpatterns = [
     path('', sounds.views.front_page, name='front-page'),
-
     path('people/', accounts.views.accounts, name="accounts"),
     path('people/<username>/', accounts.views.account, name="account"),
     path('people/<username>/section/stats/', accounts.views.account_stats_section, name="account-stats-section"),
-    path('people/<username>/section/latest_packs/', accounts.views.account_latest_packs_section, name="account-latest-packs-section"),
+    path(
+        'people/<username>/section/latest_packs/',
+        accounts.views.account_latest_packs_section,
+        name="account-latest-packs-section"
+    ),
     path('people/<username>/sounds/', sounds.views.for_user, name="sounds-for-user"),
     path('people/<username>/flag/', accounts.views.flag_user, name="flag-user"),
     path('people/<username>/clear_flags/', accounts.views.clear_flags_user, name="clear-flags-user"),
@@ -53,9 +56,17 @@ urlpatterns = [
     path('people/<username>/comments_by/', comments.views.by_user, name="comments-by-user"),
     path('people/<username>/geotags/', geotags.views.for_user, name="geotags-for-user"),
     path('people/<username>/sounds/<int:sound_id>/', sounds.views.sound, name="sound"),
-    re_path(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/download/.*$', sounds.views.sound_download, name="sound-download"),
+    re_path(
+        r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/download/.*$',
+        sounds.views.sound_download,
+        name="sound-download"
+    ),
     path('people/<username>/sounds/<int:sound_id>/flag/', sounds.views.flag, name="sound-flag"),
-    path('people/<username>/sounds/<int:sound_id>/edit/sources/', sounds.views.sound_edit_sources, name="sound-edit-sources"),
+    path(
+        'people/<username>/sounds/<int:sound_id>/edit/sources/',
+        sounds.views.sound_edit_sources,
+        name="sound-edit-sources"
+    ),
     path('people/<username>/sounds/<int:sound_id>/edit/', sounds.views.sound_edit, name="sound-edit"),
     path('people/<username>/sounds/<int:sound_id>/remixes/', sounds.views.remixes, name="sound-remixes"),
     path('people/<username>/sounds/<int:sound_id>/geotag/', geotags.views.for_sound, name="sound-geotag"),
@@ -64,9 +75,17 @@ urlpatterns = [
     path('people/<username>/sounds/<int:sound_id>/comments/', comments.views.for_sound, name="sound-comments"),
     path('people/<username>/packs/', sounds.views.packs_for_user, name="packs-for-user"),
     path('people/<username>/packs/<int:pack_id>/', sounds.views.pack, name="pack"),
-    path('people/<username>/packs/<int:pack_id>/section/stats/', sounds.views.pack_stats_section, name="pack-stats-section"),
+    path(
+        'people/<username>/packs/<int:pack_id>/section/stats/',
+        sounds.views.pack_stats_section,
+        name="pack-stats-section"
+    ),
     path('people/<username>/packs/<int:pack_id>/edit/', sounds.views.pack_edit, name="pack-edit"),
-    re_path(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
+    re_path(
+        r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$',
+        sounds.views.pack_download,
+        name="pack-download"
+    ),
     path('people/<username>/packs/<int:pack_id>/downloaders/', sounds.views.pack_downloaders, name="pack-downloaders"),
     path('people/<username>/packs/<int:pack_id>/licenses/', sounds.views.pack_licenses, name="pack-licenses"),
     path('people/<username>/packs/<int:pack_id>/geotags/', geotags.views.for_pack, name="pack-geotags"),
@@ -74,19 +93,23 @@ urlpatterns = [
     path('people/<username>/downloaded_sounds/', accounts.views.downloaded_sounds, name="user-downloaded-sounds"),
     path('people/<username>/downloaded_packs/', accounts.views.downloaded_packs, name="user-downloaded-packs"),
     path('people/<username>/bookmarks/', bookmarks.views.bookmarks_for_user, name="bookmarks-for-user"),
-    path('people/<username>/bookmarks/category/<int:category_id>/', bookmarks.views.bookmarks_for_user, name="bookmarks-for-user-for-category"),
+    path(
+        'people/<username>/bookmarks/category/<int:category_id>/',
+        bookmarks.views.bookmarks_for_user,
+        name="bookmarks-for-user-for-category"
+    ),
     path('people/<username>/following_users/', follow.views.following_users, name="user-following-users"),
     path('people/<username>/followers/', follow.views.followers, name="user-followers"),
     path('people/<username>/following_tags/', follow.views.following_tags, name="user-following-tags"),
-
     path('charts/', accounts.views.charts, name="charts"),
-
-    path('embed/sound/iframe/<int:sound_id>/simple/<player_size>/', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
+    path(
+        'embed/sound/iframe/<int:sound_id>/simple/<player_size>/',
+        sounds.views.embed_iframe,
+        name="embed-simple-sound-iframe"
+    ),
     path('embed/geotags_box/iframe/', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
     path('oembed/', sounds.views.oembed, name="oembed-sound"),
-
     path('after-download-modal/', sounds.views.after_download_modal, name="after-download-modal"),
-
     path('browse/', sounds.views.sounds, name="sounds"),
     path('browse/tags/', tags.views.tags, name="tags"),
     re_path(r'^browse/tags/(?P<multiple_tags>[\w//-]+)/$', tags.views.tags, name="tags"),
@@ -94,17 +117,17 @@ urlpatterns = [
     path('browse/random/', sounds.views.random, name="sounds-random"),
     re_path(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
     path('browse/geotags_box/', geotags.views.geotags_box, name="geotags-box"),
-
     path('contact/', support.views.contact, name="contact"),
-
     path('search/', search.views.search, name='sounds-search'),
     path('clustering_facet/', search.views.clustering_facet, name='clustering-facet'),
     path('clustered_graph/', search.views.clustered_graph, name='clustered-graph-json'),
     path('query_suggestions/', search.views.query_suggestions, name='query-suggestions'),
-
     path('add_sounds_modal/sources/', sounds.views.add_sounds_modal_for_edit_sources, name="add-sounds-modal-sources"),
-    path('add_sounds_modal/pack/<int:pack_id>/', sounds.views.add_sounds_modal_for_pack_edit, name="add-sounds-modal-pack"),
-    
+    path(
+        'add_sounds_modal/pack/<int:pack_id>/',
+        sounds.views.add_sounds_modal_for_pack_edit,
+        name="add-sounds-modal-pack"
+    ),
     path('', include('ratings.urls')),
     path('comments/', include('comments.urls')),
     path('help/', include('wiki.urls')),
@@ -115,7 +138,6 @@ urlpatterns = [
     path('tickets/', include('tickets.urls')),
     path('monitor/', include('monitor.urls')),
     path('follow/', include('follow.urls')),
-
     path('blog/', RedirectView.as_view(url='https://blog.freesound.org/'), name="blog"),
 
     # admin views
@@ -131,7 +153,6 @@ urlpatterns = [
 
     # 500 view
     path('crash_me/', accounts.views.crash_me, name="crash-me"),
-
     path('donate/', donations.views.donate_redirect, name="donate-redirect"),
     path('s/<int:sound_id>/', sounds.views.sound_short_link, name="short-sound-link"),
     path('p/<int:pack_id>/', sounds.views.pack_short_link, name="short-pack-link"),
@@ -158,8 +179,12 @@ if settings.DEBUG:
         return serve(request, path, document_root=document_root, show_indexes=False)
 
     urlpatterns += [
-        re_path(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve,
-                {'document_root': settings.DATA_PATH, 'show_indexes': True}),
+        re_path(
+            r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve, {
+                'document_root': settings.DATA_PATH,
+                'show_indexes': True
+            }
+        ),
         path('__debug__/', include(debug_toolbar.urls)),
         re_path(r'^.*\.map$', serve_source_map_files),
     ]

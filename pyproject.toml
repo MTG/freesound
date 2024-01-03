@@ -1,0 +1,17 @@
+[tool.yapfignore]
+ignore_patterns = [
+    "env/*",
+    "**/migrations/*",
+]
+
+[tool.yapf]
+based_on_style = "google"
+spaces_before_comment = 4
+split_before_logical_operator = true
+split_before_expression_after_opening_paren = true
+split_before_first_argument = true
+dedent_closing_brackets = true
+coalesce_brackets = true
+column_limit = 120
+align_closing_bracket_with_visual_indent = true
+

@@ -1,8 +1,11 @@
 import sys
 import urllib.request, urllib.parse, urllib.error
+
 sys.path.append("../../apiv2")
 from examples import examples
+
 base_url = 'https://freesound.org/'
+
 
 def get_formatted_examples_for_view(view_name):
     try:

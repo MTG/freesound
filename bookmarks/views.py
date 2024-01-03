@@ -46,11 +46,13 @@ def bookmarks(request, category_id=None):
         category = get_object_or_404(BookmarkCategory, id=category_id, user=user)
         bookmarked_sounds = category.bookmarks.select_related("sound", "sound__user").all()
     bookmark_categories = BookmarkCategory.objects.filter(user=user).annotate(num_bookmarks=Count('bookmarks'))
-    tvars = {'user': user,
-             'is_owner': is_owner,
-             'n_uncat': n_uncat,
-             'category': category,
-             'bookmark_categories': bookmark_categories}
+    tvars = {
+        'user': user,
+        'is_owner': is_owner,
+        'n_uncat': n_uncat,
+        'category': category,
+        'bookmark_categories': bookmark_categories
+    }
     tvars.update(paginate(request, bookmarked_sounds, settings.BOOKMARKS_PER_PAGE))
     return render(request, 'bookmarks/bookmarks.html', tvars)
 
@@ -92,10 +94,12 @@ def add_bookmark(request, sound_id):
     msg_to_return = ''
     if request.method == 'POST':
         user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
-        form = BookmarkForm(request.POST,
-                         user_bookmark_categories=user_bookmark_categories,
-                         sound_id=sound_id,
-                         user_saving_bookmark=request.user)
+        form = BookmarkForm(
+            request.POST,
+            user_bookmark_categories=user_bookmark_categories,
+            sound_id=sound_id,
+            user_saving_bookmark=request.user
+        )
         if form.is_valid():
             saved_bookmark = form.save()
             msg_to_return = f'Bookmark created with name "{saved_bookmark.sound_name}"'
@@ -145,14 +149,20 @@ def get_form_for_sound(request, sound_id):
     except IndexError:
         last_category = None
     user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
-    form = BookmarkForm(initial={'category': last_category.id if last_category else BookmarkForm.NO_CATEGORY_CHOICE_VALUE},
-                     prefix=sound.id,
-                     user_bookmark_categories=user_bookmark_categories)
-    categories_already_containing_sound = BookmarkCategory.objects.filter(user=request.user,
-                                                                          bookmarks__sound=sound).distinct()
-    sound_has_bookmark_without_category = Bookmark.objects.filter(user=request.user, sound=sound, category=None).exists()
+    form = BookmarkForm(
+        initial={'category': last_category.id if last_category else BookmarkForm.NO_CATEGORY_CHOICE_VALUE},
+        prefix=sound.id,
+        user_bookmark_categories=user_bookmark_categories
+    )
+    categories_already_containing_sound = BookmarkCategory.objects.filter(
+        user=request.user, bookmarks__sound=sound
+    ).distinct()
+    sound_has_bookmark_without_category = Bookmark.objects.filter(
+        user=request.user, sound=sound, category=None
+    ).exists()
     add_bookmark_url = '/'.join(
-        request.build_absolute_uri(reverse('add-bookmark', args=[sound_id])).split('/')[:-2]) + '/'
+        request.build_absolute_uri(reverse('add-bookmark', args=[sound_id])).split('/')[:-2]
+    ) + '/'
     tvars = {
         'bookmarks': Bookmark.objects.filter(user=request.user, sound=sound).exists(),
         'sound_id': sound.id,

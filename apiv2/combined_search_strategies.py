@@ -38,11 +38,13 @@ def merge_all(search_form, target_file=None, extra_parameters=None):
         extra_parameters = dict()
     solr_page_size = extra_parameters.get('cs_solr_page_size', 500)
     max_solr_pages = extra_parameters.get('cs_max_solr_pages', 10)
-    gaia_page_size = extra_parameters.get('cs_gaia_page_size', 9999999)  # We can get ALL gaia results at once
+    gaia_page_size = extra_parameters.get('cs_gaia_page_size', 9999999)    # We can get ALL gaia results at once
     max_gaia_pages = extra_parameters.get('cs_max_gaia_pages', 1)
 
     # Get all gaia results
-    gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=max_gaia_pages)
+    gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(
+        search_form, target_file, page_size=gaia_page_size, max_pages=max_gaia_pages
+    )
 
     # Get 'max_pages' pages of size 'page_size' from solr results
     solr_ids, solr_count = get_solr_results(search_form, page_size=solr_page_size, max_pages=max_solr_pages)
@@ -85,16 +87,28 @@ def filter_both(search_form, target_file=None, extra_parameters=None):
     gaia_filter_id_block_size = extra_parameters.get('cs_gaia_filter_id_block_size', 350)
     gaia_filter_id_max_pages = extra_parameters.get('cs_gaia_filter_id_max_pages', 7)
     gaia_max_pages = extra_parameters.get('cs_max_gaia_pages', 1)
-    gaia_page_size = extra_parameters.get('cs_gaia_page_size', 9999999)  # We can get ALL gaia results at once
+    gaia_page_size = extra_parameters.get('cs_gaia_page_size', 9999999)    # We can get ALL gaia results at once
 
     if search_form.cleaned_data['target'] or target_file:
         # First search into gaia and then into solr (get all gaia results)
-        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages)
-        valid_ids_pages = [gaia_ids[i:i+solr_filter_id_block_size] for i in range(0, len(gaia_ids), solr_filter_id_block_size) if (old_div(i,solr_filter_id_block_size)) < solr_filter_id_max_pages]
+        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(
+            search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages
+        )
+        valid_ids_pages = [
+            gaia_ids[i:i + solr_filter_id_block_size]
+            for i in range(0, len(gaia_ids), solr_filter_id_block_size)
+            if (old_div(i, solr_filter_id_block_size)) < solr_filter_id_max_pages
+        ]
         solr_ids = list()
         search_engine = get_search_engine()
         for valid_ids_page in valid_ids_pages:
-            page_solr_ids, solr_count = get_solr_results(search_form, page_size=len(valid_ids_page), max_pages=1, valid_ids=valid_ids_page, search_engine=search_engine)
+            page_solr_ids, solr_count = get_solr_results(
+                search_form,
+                page_size=len(valid_ids_page),
+                max_pages=1,
+                valid_ids=valid_ids_page,
+                search_engine=search_engine
+            )
             solr_ids += page_solr_ids
 
         if gaia_count <= solr_filter_id_block_size * solr_filter_id_max_pages:
@@ -110,7 +124,9 @@ def filter_both(search_form, target_file=None, extra_parameters=None):
         # present in the current block. However given that gaia results can be retrieved
         # all at once very quickly, we optimize this bit by retrieving them all at once and avoiding many requests
         # to similarity server.
-        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages)
+        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(
+            search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages
+        )
         '''
         # That would be the code without the optimization:
         valid_ids_pages = [solr_ids[i:i+gaia_filter_id_block_size] for i in range(0, len(solr_ids), gaia_filter_id_block_size) if (i/gaia_filter_id_block_size) < gaia_filter_id_max_pages]
@@ -125,7 +141,6 @@ def filter_both(search_form, target_file=None, extra_parameters=None):
             # Got complete results, maybe we should log that?
             #print 'COMPLETE results (starting with solr)'
             pass
-
 
     if search_form.cleaned_data['target'] or target_file:
         # Combined search, sort by gaia_ids
@@ -159,7 +174,7 @@ def merge_optimized(search_form, target_file=None, extra_parameters=None):
     solr_max_requests = extra_parameters.get('cs_max_solr_requests', 20)
     solr_page_size = extra_parameters.get('cs_solr_page_size', 200)
     gaia_max_pages = extra_parameters.get('cs_max_gaia_pages', 1)
-    gaia_page_size = extra_parameters.get('cs_gaia_page_size', 9999999)  # We can get ALL gaia results at once
+    gaia_page_size = extra_parameters.get('cs_gaia_page_size', 9999999)    # We can get ALL gaia results at once
 
     num_requested_results = search_form.cleaned_data['page_size']
     params_for_next_page = dict()
@@ -171,18 +186,32 @@ def merge_optimized(search_form, target_file=None, extra_parameters=None):
         last_checked_valid_id_position = extra_parameters.get('cs_lcvidp', 0)
         if last_checked_valid_id_position < 0:
             last_checked_valid_id_position = 0
-        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages, offset=last_checked_valid_id_position)
+        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(
+            search_form,
+            target_file,
+            page_size=gaia_page_size,
+            max_pages=gaia_max_pages,
+            offset=last_checked_valid_id_position
+        )
         if len(gaia_ids):
             # Now divide gaia results in blocks of "solr_filter_id_block_size" results and iteratively query solr limiting the
             # results to those ids in the common block to obtain common results for the search.
             # Once we get as many results as "num_requested_results" or we exceed a maximum number
             # of iterations (solr_filter_id_max_pages), return what we got and update 'cs_lcvidp' parameter for further calls.
-            valid_ids_pages = [gaia_ids[i:i+solr_filter_id_block_size] for i in range(0, len(gaia_ids), solr_filter_id_block_size)]
+            valid_ids_pages = [
+                gaia_ids[i:i + solr_filter_id_block_size] for i in range(0, len(gaia_ids), solr_filter_id_block_size)
+            ]
             solr_ids = list()
             checked_gaia_ids = list()
             search_engine = get_search_engine()
             for count, valid_ids_page in enumerate(valid_ids_pages):
-                page_solr_ids, solr_count = get_solr_results(search_form, page_size=len(valid_ids_page), max_pages=1, valid_ids=valid_ids_page, search_engine=search_engine)
+                page_solr_ids, solr_count = get_solr_results(
+                    search_form,
+                    page_size=len(valid_ids_page),
+                    max_pages=1,
+                    valid_ids=valid_ids_page,
+                    search_engine=search_engine
+                )
                 solr_ids += page_solr_ids
                 checked_gaia_ids += valid_ids_page
                 if len(solr_ids) >= num_requested_results:
@@ -214,14 +243,22 @@ def merge_optimized(search_form, target_file=None, extra_parameters=None):
 
     else:
         # First search into gaia to obtain a list of all sounds that match content-based query parameters
-        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages)
+        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(
+            search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages
+        )
         last_retrieved_solr_id_pos = extra_parameters.get('cs_lrsidp', 0)
         if last_retrieved_solr_id_pos < 0:
             last_retrieved_solr_id_pos = 0
 
         if len(gaia_ids) < solr_filter_id_block_size:
             # optimization, if there are few gaia_ids, we can get all results in one query
-            solr_ids, solr_count = get_solr_results(search_form, page_size=len(gaia_ids), max_pages=1, valid_ids=gaia_ids, offset=last_retrieved_solr_id_pos)
+            solr_ids, solr_count = get_solr_results(
+                search_form,
+                page_size=len(gaia_ids),
+                max_pages=1,
+                valid_ids=gaia_ids,
+                offset=last_retrieved_solr_id_pos
+            )
             combined_ids = solr_ids[:num_requested_results]
             params_for_next_page['cs_lrsidp'] = last_retrieved_solr_id_pos + num_requested_results
             if len(combined_ids) < num_requested_results:
@@ -239,7 +276,9 @@ def merge_optimized(search_form, target_file=None, extra_parameters=None):
                 if stop_main_for_loop:
                     continue
                 offset = last_retrieved_solr_id_pos + i * solr_page_size
-                solr_ids, solr_count = get_solr_results(search_form, page_size=solr_page_size, max_pages=1, offset=offset)
+                solr_ids, solr_count = get_solr_results(
+                    search_form, page_size=solr_page_size, max_pages=1, offset=offset
+                )
                 n_requests_made += 1
                 common_ids = list(set(solr_ids).intersection(gaia_ids))
                 for index, sid in enumerate(solr_ids):
@@ -278,12 +317,14 @@ def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=
         while (gaia_count is None or len(gaia_ids) < gaia_count) and n_page_requests <= max_pages:
             if not offset:
                 offset = (current_page - 1) * page_size
-            results, count, note = similarity_api_search(target=search_form.cleaned_data['target'],
-                                                         filter=search_form.cleaned_data['descriptors_filter'],
-                                                         num_results=page_size,
-                                                         offset=offset,
-                                                         target_file=target_file,
-                                                         in_ids=valid_ids)
+            results, count, note = similarity_api_search(
+                target=search_form.cleaned_data['target'],
+                filter=search_form.cleaned_data['descriptors_filter'],
+                num_results=page_size,
+                offset=offset,
+                target_file=target_file,
+                in_ids=valid_ids
+            )
 
             gaia_ids += [id[0] for id in results]
             gaia_count = count
@@ -342,7 +383,6 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
                 offset=(current_page - 1) * page_size,
                 num_sounds=page_size,
                 group_by_pack=False
-
             )
             solr_ids += [element['id'] for element in result.docs]
             solr_count = result.num_found

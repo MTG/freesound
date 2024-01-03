@@ -34,11 +34,8 @@ class Command(LoggingBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-l', '--limit',
-            action='store',
-            dest='limit',
-            default=5000,
-            help='Maximum number of geotags to update')
+            '-l', '--limit', action='store', dest='limit', default=5000, help='Maximum number of geotags to update'
+        )
 
     def handle(self, *args, **options):
         self.log_start()

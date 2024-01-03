@@ -35,20 +35,19 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-s', '--slize_size',
-            dest='size_size',
-            default=4000,
-            type=int,
-            help='How many posts to add at once')
+            '-s', '--slize_size', dest='size_size', default=4000, type=int, help='How many posts to add at once'
+        )
 
         parser.add_argument(
-            '-c', '--clear_index',
+            '-c',
+            '--clear_index',
             action='store_true',
             dest='clear_index',
             default=False,
             help='Clear all posts in the existing index before re-indexing all posts. This option is normally not '
-                 'needed as the command will clean any leftover posts from the search index which are no longer'
-                 'in the DB.')
+            'needed as the command will clean any leftover posts from the search index which are no longer'
+            'in the DB.'
+        )
 
     def handle(self, *args, **options):
         # If indicated, first remove all documents in the index

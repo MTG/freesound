@@ -48,7 +48,7 @@ class FollowTestCase(TestCase):
         # If we get following users for someone who exists by it's old username
         resp = self.client.get(reverse('user-following-users', args=['User2']) + '?ajax=1')
         self.assertEqual(resp.status_code, 301)
-    
+
     def test_followers_modal(self):
         # If we get following users for someone who exists, OK
         resp = self.client.get(reverse('user-followers', args=['User2']) + '?ajax=1')
@@ -99,7 +99,8 @@ class FollowTestCase(TestCase):
 
         # Check that user is actually following the other user
         self.assertEqual(
-            FollowingUserItem.objects.filter(user_from__username='testuser', user_to__username='User1').exists(), True)
+            FollowingUserItem.objects.filter(user_from__username='testuser', user_to__username='User1').exists(), True
+        )
 
         # Stop following unexisting user
         resp = self.client.get(reverse('unfollow-user', args=['nouser']))
@@ -115,7 +116,8 @@ class FollowTestCase(TestCase):
 
         # Check that user is no longer following the other user
         self.assertEqual(
-            FollowingUserItem.objects.filter(user_from__username='testuser', user_to__username='User1').exists(), False)
+            FollowingUserItem.objects.filter(user_from__username='testuser', user_to__username='User1').exists(), False
+        )
 
     def test_follow_tags(self):
         # Start following group of tags
@@ -128,7 +130,9 @@ class FollowTestCase(TestCase):
 
         # Check that user is actually following the tags
         self.assertEqual(
-            FollowingQueryItem.objects.filter(user__username='testuser', query='field-recording another_tag').exists(), True)
+            FollowingQueryItem.objects.filter(user__username='testuser', query='field-recording another_tag').exists(),
+            True
+        )
 
         # Stop following group of tags you do not already follow
         resp = self.client.get(reverse('unfollow-tags', args=['a-tag/another_tag']))
@@ -140,7 +144,9 @@ class FollowTestCase(TestCase):
 
         # Check that user is no longer following the tags
         self.assertEqual(
-            FollowingQueryItem.objects.filter(user__username='testuser', query='field-recording another_tag').exists(), False)
+            FollowingQueryItem.objects.filter(user__username='testuser', query='field-recording another_tag').exists(),
+            False
+        )
 
     def test_stream(self):
         # Stream should return OK

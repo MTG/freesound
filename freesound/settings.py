@@ -13,14 +13,14 @@ DEBUG = False
 DISPLAY_DEBUG_TOOLBAR = False
 
 DEBUGGER_HOST = "0.0.0.0"
-DEBUGGER_PORT = 3000  # This port should match the one in docker compose
+DEBUGGER_PORT = 3000    # This port should match the one in docker compose
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '___this_is_a_secret_key_that_should_not_be_used___')
 
 default_url = 'postgres://postgres@db/postgres'
 DATABASES = {'default': dj_database_url.config('DJANGO_DATABASE_URL', default=default_url)}
 
-DEFAULT_AUTO_FIELD='django.db.models.AutoField'
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -82,48 +82,69 @@ INSTALLED_APPS = [
 
 # Specify custom ordering of models in Django Admin index
 ADMIN_REORDER = (
-
-    {'app': 'accounts', 'models': (
-        'auth.User',
-        'accounts.Profile',
-        'accounts.DeletedUser',
-        'accounts.UserDeletionRequest',
-        'accounts.UserFlag',
-        'accounts.OldUsername',
-        'accounts.EmailBounce',
-        'auth.Groups',
-        'fsmessages.Message',
-        'accounts.GdprAcceptance',
-    )},
-    {'app': 'sounds', 'models': (
-        'sounds.Sound',
-        {'model': 'sounds.SoundAnalysis', 'label': 'Sound analyses'},
-        'sounds.Pack',
-        'sounds.DeletedSound',
-        'sounds.License',
-        {'model': 'sounds.Flag', 'label': 'Sound flags'},
-        'sounds.BulkUploadProgress',
-        {'model': 'sounds.SoundOfTheDay', 'label': 'Sound of the day'}
-    )},
-    {'app': 'apiv2', 'label': 'API', 'models': (
-        {'model': 'apiv2.ApiV2Client', 'label': 'API V2 Application'},
-        'oauth2_provider.AccessToken',
-        'oauth2_provider.RefreshToken',
-        'oauth2_provider.Grant',
-    )},
+    {
+        'app':
+            'accounts',
+        'models': (
+            'auth.User',
+            'accounts.Profile',
+            'accounts.DeletedUser',
+            'accounts.UserDeletionRequest',
+            'accounts.UserFlag',
+            'accounts.OldUsername',
+            'accounts.EmailBounce',
+            'auth.Groups',
+            'fsmessages.Message',
+            'accounts.GdprAcceptance',
+        )
+    },
+    {
+        'app':
+            'sounds',
+        'models': (
+            'sounds.Sound', {
+                'model': 'sounds.SoundAnalysis',
+                'label': 'Sound analyses'
+            }, 'sounds.Pack', 'sounds.DeletedSound', 'sounds.License', {
+                'model': 'sounds.Flag',
+                'label': 'Sound flags'
+            }, 'sounds.BulkUploadProgress', {
+                'model': 'sounds.SoundOfTheDay',
+                'label': 'Sound of the day'
+            }
+        )
+    },
+    {
+        'app':
+            'apiv2',
+        'label':
+            'API',
+        'models': (
+            {
+                'model': 'apiv2.ApiV2Client',
+                'label': 'API V2 Application'
+            },
+            'oauth2_provider.AccessToken',
+            'oauth2_provider.RefreshToken',
+            'oauth2_provider.Grant',
+        )
+    },
     'forum',
-    {'app': 'donations', 'models': (
-        'donations.Donation',
-        'donations.DonationsEmailSettings',
-        'donations.DonationsModalSettings',
-    )},
+    {
+        'app': 'donations',
+        'models': (
+            'donations.Donation',
+            'donations.DonationsEmailSettings',
+            'donations.DonationsModalSettings',
+        )
+    },
     'sites',
 )
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
 # It can be activated in local_settings by changing INTERCEPT_FUNC
-SILKY_AUTHENTICATION = True  # User must login
-SILKY_AUTHORISATION = True  # User must have permissions
+SILKY_AUTHENTICATION = True    # User must login
+SILKY_AUTHORISATION = True    # User must have permissions
 SILKY_PERMISSIONS = lambda user: user.is_superuser
 SILKY_INTERCEPT_FUNC = lambda request: False
 
@@ -278,11 +299,11 @@ AWS_SQS_REGION = ''
 AWS_SQS_ACCESS_KEY_ID = ''
 AWS_SQS_SECRET_ACCESS_KEY = ''
 AWS_SQS_QUEUE_URL = ''
-AWS_SQS_MESSAGES_PER_CALL = 1  # between 1 and 10, see accounts management command `process_email_bounces` for more
+AWS_SQS_MESSAGES_PER_CALL = 1    # between 1 and 10, see accounts management command `process_email_bounces` for more
 
 # Email stats retrieval parameters (see utils.aws.report_ses_stats for more details)
-AWS_SES_BOUNCE_RATE_SAMPLE_SIZE = 10500  # should be ~ 10000-11000
-AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period (15min)
+AWS_SES_BOUNCE_RATE_SAMPLE_SIZE = 10500    # should be ~ 10000-11000
+AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4    # cron period (1hr) / AWS stats period (15min)
 
 # If ALLOWED emails is not empty, only emails going to these destinations will be actually sent
 ALLOWED_EMAILS = []
@@ -310,23 +331,19 @@ EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 # Static settings
 
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is not an installed Django app)
-STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
+STATICFILES_DIRS = [
+    os.path.join(os.path.dirname(__file__), 'static'),
+]
 STATIC_URL = '/static/'
 STATIC_ROOT = 'bw_static'
 STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
-
 
 # -------------------------------------------------------------------------------
 # Freesound miscellaneous settings
 
 SUPPORT = ()
 
-IFRAME_PLAYER_SIZE = {
-    'large': [920, 245],
-    'medium': [481, 86],
-    'small': [375, 30],
-    'twitter_card': [440, 132]
-}
+IFRAME_PLAYER_SIZE = {'large': [920, 245], 'medium': [481, 86], 'small': [375, 30], 'twitter_card': [440, 132]}
 
 FREESOUND_RSS = ''
 
@@ -334,12 +351,12 @@ FREESOUND_RSS = ''
 FORUM_POSTS_PER_PAGE = 20
 FORUM_THREADS_PER_PAGE = 15
 SOUND_COMMENTS_PER_PAGE = 5
-SOUNDS_PER_PAGE = 15  # In search page
-SOUNDS_PER_PAGE_COMPACT_MODE = 30  # In search page
-PACKS_PER_PAGE = 15  # In search page
+SOUNDS_PER_PAGE = 15    # In search page
+SOUNDS_PER_PAGE_COMPACT_MODE = 30    # In search page
+PACKS_PER_PAGE = 15    # In search page
 DOWNLOADED_SOUNDS_PACKS_PER_PAGE = 12
 USERS_PER_DOWNLOADS_MODAL_PAGE = 15
-COMMENTS_IN_MODAL_PER_PAGE = 15 
+COMMENTS_IN_MODAL_PER_PAGE = 15
 REMIXES_PER_PAGE = 10
 MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 60
 SOUNDS_PER_DESCRIBE_ROUND = 10
@@ -348,11 +365,10 @@ MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
 FOLLOW_ITEMS_PER_PAGE = 5
 MESSAGES_PER_PAGE = 10
-BOOKMARKS_PER_PAGE = 12 
+BOOKMARKS_PER_PAGE = 12
 SOUNDS_PER_PAGE_PROFILE_PACK_PAGE = 12
 NUM_SIMILAR_SOUNDS_PER_PAGE = 9
 NUM_SIMILAR_SOUNDS_PAGES = 5
-
 
 # Weights using to compute charts
 BW_CHARTS_ACTIVE_USERS_WEIGHTS = {'upload': 1, 'post': 0.8, 'comment': 0.05}
@@ -416,6 +432,7 @@ USE_TEXTUAL_LOCATION_NAMES_IN_BW = True
 # Avatar background colors (only BW)
 from utils.audioprocessing.processing import interpolate_colors
 from utils.audioprocessing.color_schemes import BEASTWHOOSH_COLOR_SCHEME, COLOR_SCHEMES
+
 AVATAR_BG_COLORS = interpolate_colors(COLOR_SCHEMES[BEASTWHOOSH_COLOR_SCHEME]['wave_colors'][1:], num_colors=10)
 
 # Number of ratings of a sound to start showing average
@@ -428,7 +445,7 @@ CRC_BUFFER_SIZE = 4096
 UPLOAD_AND_DESCRIPTION_ENABLED = True
 
 # Maximum combined file size for uploading files. This is set in nginx configuration
-UPLOAD_MAX_FILE_SIZE_COMBINED = 1024 * 1024 * 1024  # 1 GB
+UPLOAD_MAX_FILE_SIZE_COMBINED = 1024 * 1024 * 1024    # 1 GB
 MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING = True
 
 # Minimum number of sounds that a user has to upload before enabling bulk upload feature for that user
@@ -471,14 +488,13 @@ PACKS_SENDFILE_URL = SENDFILE_SECRET_URL + "packs/"
 
 # Locations where sounds, previews and other "static" content will be mirrored (if specified)
 # If locations do not exist, they will be created
-MIRROR_SOUNDS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
-MIRROR_PREVIEWS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
-MIRROR_DISPLAYS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
-MIRROR_ANALYSIS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
-MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
-MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
+MIRROR_SOUNDS = None    # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_PREVIEWS = None    # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_DISPLAYS = None    # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_ANALYSIS = None    # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_AVATARS = None    # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
+MIRROR_UPLOADS = None    # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
 LOG_START_AND_END_COPYING_FILES = True
-
 
 # -------------------------------------------------------------------------------
 # Donations
@@ -498,63 +514,50 @@ PAYPAL_PASSWORD = ''
 PAYPAL_USERNAME = ''
 PAYPAL_SIGNATURE = ''
 
-
 # -------------------------------------------------------------------------------
 # New Analysis options
 ORCHESTRATE_ANALYSIS_MAX_JOBS_PER_QUEUE_DEFAULT = 500
 ORCHESTRATE_ANALYSIS_MAX_NUM_ANALYSIS_ATTEMPTS = 3
-ORCHESTRATE_ANALYSIS_MAX_TIME_IN_QUEUED_STATUS = 24 * 2 # in hours
-ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7 # in hours
+ORCHESTRATE_ANALYSIS_MAX_TIME_IN_QUEUED_STATUS = 24 * 2    # in hours
+ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7    # in hours
 
 AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v3'
 FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
 AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
 BIRDNET_ANALYZER_NAME = 'birdnet_v1'
 FSDSINET_ANALYZER_NAME = 'fsd-sinet_v1'
- 
+
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('loudness', 'ac_loudness', float),
-            ('dynamic_range', 'ac_dynamic_range', float),
-            ('temporal_centroid', 'ac_temporal_centroid', float),
-            ('log_attack_time', 'ac_log_attack_time', float),
-            ('single_event', 'ac_single_event', bool),
-            ('tonality', 'ac_tonality', str),
-            ('tonality_confidence', 'ac_tonality_confidence', float),
-            ('loop', 'ac_loop', bool),
-            ('tempo', 'ac_tempo', int),
-            ('tempo_confidence', 'ac_tempo_confidence', float),
-            ('note_midi', 'ac_note_midi', int),
-            ('note_name', 'ac_note_name', str),
-            ('note_frequency', 'ac_note_frequency', float),
-            ('note_confidence', 'ac_note_confidence', float),
-            ('brightness', 'ac_brightness', float),
-            ('depth', 'ac_depth', float),
-            ('hardness', 'ac_hardness', float),
-            ('roughness', 'ac_roughness', float),
-            ('boominess', 'ac_boominess', float),
-            ('warmth', 'ac_warmth', float),
-            ('sharpness', 'ac_sharpness', float),
-            ('reverb', 'ac_reverb', bool)
-        ]
+        'descriptors_map': [('loudness', 'ac_loudness', float), ('dynamic_range', 'ac_dynamic_range', float),
+                            ('temporal_centroid', 'ac_temporal_centroid', float),
+                            ('log_attack_time', 'ac_log_attack_time', float), ('single_event', 'ac_single_event', bool),
+                            ('tonality', 'ac_tonality', str), ('tonality_confidence', 'ac_tonality_confidence', float),
+                            ('loop', 'ac_loop', bool), ('tempo', 'ac_tempo', int),
+                            ('tempo_confidence', 'ac_tempo_confidence', float), ('note_midi', 'ac_note_midi', int),
+                            ('note_name', 'ac_note_name', str), ('note_frequency', 'ac_note_frequency', float),
+                            ('note_confidence', 'ac_note_confidence', float), ('brightness', 'ac_brightness', float),
+                            ('depth', 'ac_depth', float), ('hardness', 'ac_hardness', float),
+                            ('roughness', 'ac_roughness', float), ('boominess', 'ac_boominess', float),
+                            ('warmth', 'ac_warmth', float), ('sharpness', 'ac_sharpness', float),
+                            ('reverb', 'ac_reverb', bool)]
     },
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
     AUDIOSET_YAMNET_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('classes', 'yamnet_class', list)
-        ]
+        'descriptors_map': [('classes', 'yamnet_class', list)]
     },
     BIRDNET_ANALYZER_NAME: {
         'descriptors_map': [
-            ('detections', 'birdnet_detections', None),  # Use None so detections are not indexed in solr but stored in database
+            ('detections', 'birdnet_detections',
+             None),    # Use None so detections are not indexed in solr but stored in database
             ('detected_classes', 'birdnet_detected_class', list),
             ('num_detections', 'birdnet_detections_count', int),
         ]
     },
     FSDSINET_ANALYZER_NAME: {
         'descriptors_map': [
-            ('detections', 'fsdsinet_detections', None),  # Use None so detections are not indexed in solr but stored in database
+            ('detections', 'fsdsinet_detections',
+             None),    # Use None so detections are not indexed in solr but stored in database
             ('detected_classes', 'fsdsinet_detected_class', list),
             ('num_detections', 'fsdsinet_detections_count', int),
         ]
@@ -616,22 +619,29 @@ SEARCH_SOUNDS_SORT_DEFAULT = SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC
 
 SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_SAMPLERATE: {},
-    SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10},
-    SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 30},
-    SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30},
+    SEARCH_SOUNDS_FIELD_PACK_GROUPING: {
+        'limit': 10
+    },
+    SEARCH_SOUNDS_FIELD_USER_NAME: {
+        'limit': 30
+    },
+    SEARCH_SOUNDS_FIELD_TAGS: {
+        'limit': 30
+    },
     SEARCH_SOUNDS_FIELD_BITRATE: {},
     SEARCH_SOUNDS_FIELD_BITDEPTH: {},
-    SEARCH_SOUNDS_FIELD_TYPE: {'limit': len(SOUND_TYPE_CHOICES)},
+    SEARCH_SOUNDS_FIELD_TYPE: {
+        'limit': len(SOUND_TYPE_CHOICES)
+    },
     SEARCH_SOUNDS_FIELD_CHANNELS: {},
-    SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
+    SEARCH_SOUNDS_FIELD_LICENSE_NAME: {
+        'limit': 10
+    },
 }
 
 SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST = "Thread creation (newest first)"
 SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST = "Post creation (newest first)"
-SEARCH_FORUM_SORT_OPTIONS_WEB = [
-    SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST,
-    SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST
-]
+SEARCH_FORUM_SORT_OPTIONS_WEB = [SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST, SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST]
 SEARCH_FORUM_SORT_DEFAULT = SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST
 
 SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine'
@@ -678,7 +688,6 @@ GRAYLOG_PASSWORD = ''
 MAPBOX_ACCESS_TOKEN = ''
 MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 
-
 # -------------------------------------------------------------------------------
 # Recaptcha settings
 
@@ -692,7 +701,6 @@ MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 # SILENCED_SYSTEM_CHECKS = [..., 'captcha.recaptcha_test_key_error', ...] to your settings.
 
 SILENCED_SYSTEM_CHECKS += ['captcha.recaptcha_test_key_error']
-
 
 # -------------------------------------------------------------------------------
 # Akismet
@@ -711,7 +719,9 @@ WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.05
 WORKER_TIMEOUT = 60 * 60
 
 # Used to configure output formats in newer FreesoundExtractor versions
-ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils/audioprocessing/essentia_profile.yaml'))
+ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '../utils/audioprocessing/essentia_profile.yaml')
+)
 
 # Sound previews quality (for mp3, quality is in bitrate, for ogg, quality is in a number from 1 to 10  )
 MP3_LQ_PREVIEW_QUALITY = 70
@@ -741,13 +751,10 @@ RATELIMIT_VIEW = 'accounts.views.ratelimited_error'
 RATELIMIT_SEARCH_GROUP = 'search'
 RATELIMIT_SIMILARITY_GROUP = 'similarity'
 RATELIMIT_DEFAULT_GROUP_RATELIMIT = '2/s'
-RATELIMITS = {
-    RATELIMIT_SEARCH_GROUP: '2/s',
-    RATELIMIT_SIMILARITY_GROUP: '2/s'
-}
+RATELIMITS = {RATELIMIT_SEARCH_GROUP: '2/s', RATELIMIT_SIMILARITY_GROUP: '2/s'}
 BLOCKED_IPS = []
 CACHED_BLOCKED_IPS_KEY = 'cached_blocked_ips'
-CACHED_BLOCKED_IPS_TIME = 60 * 5  # 5 minutes
+CACHED_BLOCKED_IPS_TIME = 60 * 5    # 5 minutes
 
 # -------------------------------------------------------------------------------
 # API settings
@@ -778,12 +785,12 @@ REST_FRAMEWORK = {
     'VIEW_DESCRIPTION_FUNCTION': 'apiv2.apiv2_utils.get_view_description',
 }
 
-API_DOWNLOAD_TOKEN_LIFETIME = 60*60  # 1 hour
+API_DOWNLOAD_TOKEN_LIFETIME = 60 * 60    # 1 hour
 
 OAUTH2_PROVIDER = {
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 60*60*24,
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24,
     'CLIENT_SECRET_GENERATOR_LENGTH': 40,
-    'AUTHORIZATION_CODE_EXPIRE_SECONDS': 10*60,
+    'AUTHORIZATION_CODE_EXPIRE_SECONDS': 10 * 60,
     'OAUTH2_VALIDATOR_CLASS': 'apiv2.oauth2_validators.OAuth2Validator',
     'REQUEST_APPROVAL_PROMPT': 'auto',
     'CLIENT_ID_GENERATOR_CLASS': 'apiv2.apiv2_utils.FsClientIdGenerator',
@@ -799,20 +806,19 @@ OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 # Sustained limit sets the maximum number of requests that an api client can do in a day
 # Ip limit sets the maximum number of requests from different ips that a client can do in an hour
 APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
-    0: ['0/minute', '0/day', '0/hour'],  # Client 'disabled'
-    1: ['60/minute', '2000/day', None],  # Ip limit not yet enabled
-    2: ['300/minute', '5000/day', None],  # Ip limit not yet enabled
-    3: ['300/minute', '15000/day', None],  # Ip limit not yet enabled
-    99: [],  # No limit of requests
+    0: ['0/minute', '0/day', '0/hour'],    # Client 'disabled'
+    1: ['60/minute', '2000/day', None],    # Ip limit not yet enabled
+    2: ['300/minute', '5000/day', None],    # Ip limit not yet enabled
+    3: ['300/minute', '15000/day', None],    # Ip limit not yet enabled
+    99: [],    # No limit of requests
 }
 APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
-    0: ['0/minute', '0/day',  '0/hour'],  # Client 'disabled'
-    1: ['30/minute', '500/day', None],  # Ip limit not yet enabled
-    2: ['60/minute', '1000/day', None],  # Ip limit not yet enabled
-    3: ['60/minute', '3000/day', None],  # Ip limit not yet enabled
-    99: [],  # No limit of requests
+    0: ['0/minute', '0/day', '0/hour'],    # Client 'disabled'
+    1: ['30/minute', '500/day', None],    # Ip limit not yet enabled
+    2: ['60/minute', '1000/day', None],    # Ip limit not yet enabled
+    3: ['60/minute', '3000/day', None],    # Ip limit not yet enabled
+    99: [],    # No limit of requests
 }
-
 
 # -------------------------------------------------------------------------------
 # Frontend handling
@@ -820,9 +826,7 @@ APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(os.path.dirname(__file__), '../templates'),
-        ],
+        'DIRS': [os.path.join(os.path.dirname(__file__), '../templates'),],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -851,19 +855,17 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 PLAUSIBLE_AGGREGATE_PAGEVIEWS = True
 
 # -------------------------------------------------------------------------------
-# Rabbit MQ 
+# Rabbit MQ
 RABBITMQ_USER = "guest"
 RABBITMQ_PASS = "guest"
 RABBITMQ_HOST = 'rabbitmq'
 RABBITMQ_PORT = '5672'
 RABBITMQ_API_PORT = '5673'
 
-
 # -------------------------------------------------------------------------------
 # Import local settings
 # Important: place settings which depend on other settings potentially modified in local_settings.py BELOW the import
 from .local_settings import *
-
 
 # -------------------------------------------------------------------------------
 # Celery
@@ -875,7 +877,6 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ASYNC_TASKS_QUEUE_NAME = 'async_tasks_queue'
 CELERY_SOUND_PROCESSING_QUEUE_NAME = 'sound_processing_queue'
 
-
 # -------------------------------------------------------------------------------
 # Sentry
 
@@ -886,7 +887,6 @@ if SENTRY_DSN:
         send_default_pii=True,
         traces_sample_rate=TRACES_SAMPLE_RATE,
     )
-
 
 # -------------------------------------------------------------------------------
 # Extra Freesound settings
@@ -939,8 +939,8 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
     DEBUG_TOOLBAR_CONFIG = {
         'INTERCEPT_REDIRECTS': False,
-        # This normally checks the running host with the request url, but this doesn't
-        # work in docker. Unconditionally show the toolbar when DEBUG is True
+    # This normally checks the running host with the request url, but this doesn't
+    # work in docker. Unconditionally show the toolbar when DEBUG is True
         'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG
     }
 

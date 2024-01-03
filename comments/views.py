@@ -49,7 +49,7 @@ def delete(request, comment_id):
     next = request.GET.get("next")
     page = request.GET.get("page", None)
     if page is not None:
-        next = next+"?page="+page
+        next = next + "?page=" + page
     return HttpResponseRedirect(next + "#comments")
 
 
@@ -60,11 +60,11 @@ def for_user(request, username):
     if not request.GET.get('ajax'):
         # If not loading as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?comments=1')
-        
+
     user = request.parameter_user
     sounds = Sound.objects.filter(user=user)
-    qs = Comment.objects.filter(sound__in=sounds).select_related("user", "user__profile",
-                                                                 "sound__user", "sound__user__profile")
+    qs = Comment.objects.filter(sound__in=sounds
+                                ).select_related("user", "user__profile", "sound__user", "sound__user__profile")
     num_items_per_page = settings.COMMENTS_IN_MODAL_PER_PAGE
     paginator = paginate(request, qs, num_items_per_page)
     page = paginator["page"]
@@ -87,10 +87,10 @@ def by_user(request, username):
     if not request.GET.get('ajax'):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?comments_by=1')
-    
+
     user = request.parameter_user
-    qs = Comment.objects.filter(user=user).select_related("user", "user__profile",
-                                                          "sound__user", "sound__user__profile")
+    qs = Comment.objects.filter(user=user
+                                ).select_related("user", "user__profile", "sound__user", "sound__user__profile")
     num_items_per_page = settings.COMMENTS_IN_MODAL_PER_PAGE
     paginator = paginate(request, qs, num_items_per_page)
     page = paginator["page"]
@@ -113,13 +113,13 @@ def for_sound(request, username, sound_id):
     if not request.GET.get('ajax'):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('sound', args=[username, sound_id]) + '#comments')
-    
+
     sound = get_object_or_404(Sound, id=sound_id)
     if sound.user.username.lower() != username.lower():
         raise Http404
-    
-    qs = Comment.objects.filter(sound=sound).select_related("user", "user__profile",
-                                                          "sound__user", "sound__user__profile")
+
+    qs = Comment.objects.filter(sound=sound
+                                ).select_related("user", "user__profile", "sound__user", "sound__user__profile")
     num_items_per_page = settings.SOUND_COMMENTS_PER_PAGE
     paginator = paginate(request, qs, num_items_per_page)
     tvars = {
@@ -130,4 +130,3 @@ def for_sound(request, username, sound_id):
     }
     tvars.update(paginator)
     return render(request, 'accounts/modal_comments.html', tvars)
-

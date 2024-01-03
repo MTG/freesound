@@ -34,23 +34,33 @@ class CommentsWithHyperlinksTestCase(TestCase):
 
     def test_save_comment_with_hyperlinks(self):
         """Test that 'contains_hyperlink' boolean field is properly set when saving comments"""
-        
-        comment = Comment.objects.create(user=self.user, sound=self.sound, comment="This is a comment with no hyperlinks")
+
+        comment = Comment.objects.create(
+            user=self.user, sound=self.sound, comment="This is a comment with no hyperlinks"
+        )
         comment.refresh_from_db()
         self.assertFalse(comment.contains_hyperlink)
-        
-        comment = Comment.objects.create(user=self.user, sound=self.sound, comment="This is a comment with a link to http://www.freesound.org")
+
+        comment = Comment.objects.create(
+            user=self.user, sound=self.sound, comment="This is a comment with a link to http://www.freesound.org"
+        )
         comment.refresh_from_db()
         self.assertTrue(comment.contains_hyperlink)
 
-        comment = Comment.objects.create(user=self.user, sound=self.sound, comment="This is a comment with a https link to https://www.freesound.org")
+        comment = Comment.objects.create(
+            user=self.user,
+            sound=self.sound,
+            comment="This is a comment with a https link to https://www.freesound.org"
+        )
         comment.refresh_from_db()
         self.assertTrue(comment.contains_hyperlink)
 
     def test_update_comment_with_hyperlinks(self):
         """Test that 'contains_hyperlink' boolean field is properly set when updating comments"""
 
-        comment = Comment.objects.create(user=self.user, sound=self.sound, comment="This is a comment with no hyperlinks")
+        comment = Comment.objects.create(
+            user=self.user, sound=self.sound, comment="This is a comment with no hyperlinks"
+        )
         comment.refresh_from_db()
         self.assertFalse(comment.contains_hyperlink)
 

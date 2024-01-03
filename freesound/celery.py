@@ -22,7 +22,8 @@ app.autodiscover_tasks()
 def get_queues_task_counts():
     raw_data = requests.get(
         f'http://{settings.RABBITMQ_HOST}:{settings.RABBITMQ_API_PORT}/rabbitmq-admin/api/queues',
-        auth=(settings.RABBITMQ_USER, settings.RABBITMQ_PASS)).json()
+        auth=(settings.RABBITMQ_USER, settings.RABBITMQ_PASS)
+    ).json()
     data = []
     if 'error' not in raw_data:
         for queue_data in raw_data:
@@ -33,12 +34,10 @@ def get_queues_task_counts():
                 message_rate = queue_data['message_stats']['ack_details']['rate']
             except KeyError:
                 message_rate = -1
-            data.append((queue_name,
-                         queue_data['messages_ready'],
-                         queue_data['messages_unacknowledged'],
-                         queue_data['consumers'],
-                         message_rate
-                         ))
+            data.append((
+                queue_name, queue_data['messages_ready'], queue_data['messages_unacknowledged'],
+                queue_data['consumers'], message_rate
+            ))
 
     data = sorted(data, key=lambda x: x[0])
     return data

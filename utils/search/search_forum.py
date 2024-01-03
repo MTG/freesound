@@ -85,8 +85,9 @@ def get_all_post_ids_from_search_engine(page_size=2000):
     current_page = 1
     try:
         while solr_count is None or len(solr_ids) < solr_count:
-            response = search_engine.search_forum_posts(query_filter='*:*', group_by_thread=False,
-                                                        offset=(current_page - 1) * page_size, num_posts=page_size)
+            response = search_engine.search_forum_posts(
+                query_filter='*:*', group_by_thread=False, offset=(current_page - 1) * page_size, num_posts=page_size
+            )
             solr_ids += [element['id'] for element in response.docs]
             solr_count = response.num_found
             current_page += 1

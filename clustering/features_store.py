@@ -36,9 +36,11 @@ logger = logging.getLogger('clustering')
 
 
 class RedisStore(object):
+
     def __init__(self):
         self.r = redis.StrictRedis(
-            host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.AUDIO_FEATURES_REDIS_STORE_ID)
+            host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.AUDIO_FEATURES_REDIS_STORE_ID
+        )
 
     def set_feature(self, sound_id, feature):
         self.r.set(str(sound_id), json.dumps(feature))
@@ -58,15 +60,20 @@ class RedisStore(object):
 class FeaturesStore(object):
     """Method for storing and retrieving audio features
     """
+
     def __init__(self):
         self.redis = RedisStore()
         self.__load_features()
 
     def __load_features(self):
-        self.AS_features = json.load(open(os.path.join(
-            clust_settings.INDEX_DIR, 
-            clust_settings.AVAILABLE_FEATURES[clust_settings.DEFAULT_FEATURES]['DATASET_FILE']
-        ), 'r'))
+        self.AS_features = json.load(
+            open(
+                os.path.join(
+                    clust_settings.INDEX_DIR,
+                    clust_settings.AVAILABLE_FEATURES[clust_settings.DEFAULT_FEATURES]['DATASET_FILE']
+                ), 'r'
+            )
+        )
         self.redis.set_features(self.AS_features)
 
     def return_features(self, sound_ids):
@@ -77,5 +84,5 @@ class FeaturesStore(object):
             if feature:
                 features.append(json.loads(feature))
                 sound_ids_out.append(sound_id)
-            
+
         return np.array(features).astype('float32'), sound_ids_out

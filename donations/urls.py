@@ -29,5 +29,4 @@ urlpatterns = [
     path('donation-success/', views.donation_success, name="donation-success"),
     path('donation-complete-stripe/', views.donation_complete_stripe, name="donation-complete-stripe"),
     path('donation-complete-paypal/', views.donation_complete_paypal, name="donation-complete-paypal"),
-
 ]

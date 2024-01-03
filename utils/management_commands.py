@@ -25,7 +25,6 @@ import time
 
 from django.core.management.base import BaseCommand
 
-
 commands_logger = logging.getLogger('commands')
 
 

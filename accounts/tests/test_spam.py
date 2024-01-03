@@ -42,8 +42,7 @@ class ReportSpamOffensive(TestCase):
         # Create users reporting spam
         self.reporters = []
         for i in range(0, settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
-            reporter = User.objects.create_user(username=f'reporter_{i}',
-                                                email=f'reporter_{i}@example.com')
+            reporter = User.objects.create_user(username=f'reporter_{i}', email=f'reporter_{i}@example.com')
             self.reporters.append(reporter)
 
         # Create user posting spam
@@ -58,61 +57,75 @@ class ReportSpamOffensive(TestCase):
 
         # Flag the comment (no email to admins should be sent yet as only one reporter)
         reporter = self.get_reporter_as_logged_in_user(0)
-        resp = self.client.post(reverse('flag-user', kwargs={'username': self.spammer.username}), data={
-            'object_id': object.id,
-            'flag_type': flag_type,
-        })
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(UserFlag.objects.count(), 1)  # One flag object created
-        self.assertEqual(UserFlag.objects.first().reporting_user, reporter)  # Flag object created by reporter
-        self.assertEqual(len(mail.outbox), 0)  # No email sent
-
-        # Flag the same comment by other users so email is sent
-        for i in range(1, settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION):  # Start at 1 as first flag already done
-            reporter = self.get_reporter_as_logged_in_user(i)
-            resp = self.client.post(reverse('flag-user', kwargs={'username': self.spammer.username}), data={
+        resp = self.client.post(
+            reverse('flag-user', kwargs={'username': self.spammer.username}),
+            data={
                 'object_id': object.id,
                 'flag_type': flag_type,
-            })
+            }
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(UserFlag.objects.count(), 1)    # One flag object created
+        self.assertEqual(UserFlag.objects.first().reporting_user, reporter)    # Flag object created by reporter
+        self.assertEqual(len(mail.outbox), 0)    # No email sent
+
+        # Flag the same comment by other users so email is sent
+        for i in range(1, settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION):    # Start at 1 as first flag already done
+            reporter = self.get_reporter_as_logged_in_user(i)
+            resp = self.client.post(
+                reverse('flag-user', kwargs={'username': self.spammer.username}),
+                data={
+                    'object_id': object.id,
+                    'flag_type': flag_type,
+                }
+            )
             self.assertEqual(resp.status_code, 200)
-            self.assertEqual(UserFlag.objects.count(), i + 1)  # Now we have more flags
-            self.assertEqual(UserFlag.objects.all().order_by('id')[i].reporting_user,
-                             reporter)  # Flag object created by reporter
+            self.assertEqual(UserFlag.objects.count(), i + 1)    # Now we have more flags
+            self.assertEqual(
+                UserFlag.objects.all().order_by('id')[i].reporting_user, reporter
+            )    # Flag object created by reporter
 
         # Now check that after the new flags an email was sent
-        self.assertEqual(len(mail.outbox), 1)  # Notification email sent
+        self.assertEqual(len(mail.outbox), 1)    # Notification email sent
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_USER_SPAM_REPORT in mail.outbox[0].subject)
         self.assertTrue("has been reported" in mail.outbox[0].body)
 
         # Continue flagging object until it reaches blocked state
         for i in range(settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION,
-                       settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING):  # Start at 1 as first flag already done
+                       settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING):    # Start at 1 as first flag already done
             reporter = self.get_reporter_as_logged_in_user(i)
-            resp = self.client.post(reverse('flag-user', kwargs={'username': self.spammer.username}), data={
-                'object_id': object.id,
-                'flag_type': flag_type,
-            })
+            resp = self.client.post(
+                reverse('flag-user', kwargs={'username': self.spammer.username}),
+                data={
+                    'object_id': object.id,
+                    'flag_type': flag_type,
+                }
+            )
             self.assertEqual(resp.status_code, 200)
-            self.assertEqual(UserFlag.objects.count(), i + 1)  # Now we have more flags
-            self.assertEqual(UserFlag.objects.all().order_by('id')[i].reporting_user,
-                             reporter)  # Flag object created by reporter
+            self.assertEqual(UserFlag.objects.count(), i + 1)    # Now we have more flags
+            self.assertEqual(
+                UserFlag.objects.all().order_by('id')[i].reporting_user, reporter
+            )    # Flag object created by reporter
 
         # Now check that an extra mail was now sent (the email notifying user is blocked)
-        self.assertEqual(len(mail.outbox), 2)  # New notification email sent
+        self.assertEqual(len(mail.outbox), 2)    # New notification email sent
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[1].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_USER_SPAM_REPORT in mail.outbox[1].subject)
         self.assertTrue("has been blocked" in mail.outbox[1].body)
 
         # Flag the object again and check that no new notification emails are sent
         _ = self.get_reporter_as_logged_in_user(settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING)
-        resp = self.client.post(reverse('flag-user', kwargs={'username': self.spammer.username}), data={
-            'object_id': object.id,
-            'flag_type': flag_type,
-        })
+        resp = self.client.post(
+            reverse('flag-user', kwargs={'username': self.spammer.username}),
+            data={
+                'object_id': object.id,
+                'flag_type': flag_type,
+            }
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(UserFlag.objects.count(), settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1)
-        self.assertEqual(len(mail.outbox), 2)  # New notification email sent
+        self.assertEqual(len(mail.outbox), 2)    # New notification email sent
 
     def test_report_sound_comment(self):
         sound = Sound.objects.first()
@@ -121,15 +134,22 @@ class ReportSpamOffensive(TestCase):
         self.__test_report_object('SC', comment)
 
     def test_report_forum_post(self):
-        thread = Thread.objects.create(author=self.spammer, title="Span thread",
-                                    forum=Forum.objects.create(name="Test forum"))
+        thread = Thread.objects.create(
+            author=self.spammer, title="Span thread", forum=Forum.objects.create(name="Test forum")
+        )
         object = Post.objects.create(author=self.spammer, thread=thread, body="Spam post post body")
         self.__test_report_object('FP', object)
 
     def test_report_private_message(self):
-        object = Message.objects.create(user_from=self.spammer, user_to=self.reporters[0], subject='Spam subject',
-                                        body=MessageBody.objects.create(body='Spam body'), is_sent=True,
-                                        is_archived=False, is_read=False)
+        object = Message.objects.create(
+            user_from=self.spammer,
+            user_to=self.reporters[0],
+            subject='Spam subject',
+            body=MessageBody.objects.create(body='Spam body'),
+            is_sent=True,
+            is_archived=False,
+            is_read=False
+        )
         self.__test_report_object('PM', object)
 
     def test_report_object_same_user(self):
@@ -144,25 +164,35 @@ class ReportSpamOffensive(TestCase):
         # Flag the comment many times by the same user (no email to admins should be sent yet as only one reporter)
         reporter = self.get_reporter_as_logged_in_user(0)
         for i in range(0, settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
-            resp = self.client.post(reverse('flag-user', kwargs={'username': self.spammer.username}), data={
-                'object_id': comment.id,
-                'flag_type': 'SC',  # Sound comment
-            })
+            resp = self.client.post(
+                reverse('flag-user', kwargs={'username': self.spammer.username}),
+                data={
+                    'object_id': comment.id,
+                    'flag_type': 'SC',    # Sound comment
+                }
+            )
             self.assertEqual(resp.status_code, 200)
             self.assertEqual(UserFlag.objects.count(), i + 1)
-            self.assertEqual(len(mail.outbox), 0)  # No email sent
-    
+            self.assertEqual(len(mail.outbox), 0)    # No email sent
+
     def test_report_multiple_objects(self):
         # Make spammy objects
         sound = Sound.objects.first()
         sound.add_comment(self.spammer, 'This is a spammy comment')
         comment = self.spammer.comment_set.first()
-        thread = Thread.objects.create(author=self.spammer, title="Span thread",
-                                       forum=Forum.objects.create(name="Test forum"))
+        thread = Thread.objects.create(
+            author=self.spammer, title="Span thread", forum=Forum.objects.create(name="Test forum")
+        )
         post = Post.objects.create(author=self.spammer, thread=thread, body="Spam post post body")
-        message = Message.objects.create(user_from=self.spammer, user_to=self.reporters[0], subject='Spam subject',
-                                         body=MessageBody.objects.create(body='Spam body'), is_sent=True,
-                                         is_archived=False, is_read=False)
+        message = Message.objects.create(
+            user_from=self.spammer,
+            user_to=self.reporters[0],
+            subject='Spam subject',
+            body=MessageBody.objects.create(body='Spam body'),
+            is_sent=True,
+            is_archived=False,
+            is_read=False
+        )
         objects_flag_types = [
             (comment, 'SC'),
             (post, 'FP'),
@@ -173,22 +203,26 @@ class ReportSpamOffensive(TestCase):
         for i in range(0, settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
             reporter = self.get_reporter_as_logged_in_user(i)
             object, flag_type = objects_flag_types[i % len(objects_flag_types)]
-            resp = self.client.post(reverse('flag-user', kwargs={'username': self.spammer.username}), data={
-                'object_id': object.id,
-                'flag_type': flag_type,
-            })
+            resp = self.client.post(
+                reverse('flag-user', kwargs={'username': self.spammer.username}),
+                data={
+                    'object_id': object.id,
+                    'flag_type': flag_type,
+                }
+            )
             self.assertEqual(resp.status_code, 200)
             self.assertEqual(UserFlag.objects.count(), i + 1)
-            self.assertEqual(UserFlag.objects.all().order_by('id')[i].reporting_user,
-                             reporter)  # Flag object created by reporter
+            self.assertEqual(
+                UserFlag.objects.all().order_by('id')[i].reporting_user, reporter
+            )    # Flag object created by reporter
 
-            if i == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION - 1:  # Last iteration
-                self.assertEqual(len(mail.outbox), 1)  # New notification email sent
+            if i == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION - 1:    # Last iteration
+                self.assertEqual(len(mail.outbox), 1)    # New notification email sent
                 self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
                 self.assertTrue(settings.EMAIL_SUBJECT_USER_SPAM_REPORT in mail.outbox[0].subject)
                 self.assertTrue("has been reported" in mail.outbox[0].body)
             elif i == settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING - 1:
-                self.assertEqual(len(mail.outbox), 2)  # New notification email sent
+                self.assertEqual(len(mail.outbox), 2)    # New notification email sent
                 self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[1].subject)
                 self.assertTrue(settings.EMAIL_SUBJECT_USER_SPAM_REPORT in mail.outbox[1].subject)
                 self.assertTrue("has been blocked" in mail.outbox[1].body)

@@ -41,8 +41,17 @@ def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds
 
 class SearchResults:
 
-    def __init__(self, docs=None, num_found=-1, start=-1, num_rows=-1, non_grouped_number_of_results=-1,
-                 facets=None, highlighting=None, q_time=-1):
+    def __init__(
+        self,
+        docs=None,
+        num_found=-1,
+        start=-1,
+        num_rows=-1,
+        non_grouped_number_of_results=-1,
+        facets=None,
+        highlighting=None,
+        q_time=-1
+    ):
         """
         Class that holds the results of a search query. It must contain the fields defined below.
 
@@ -215,10 +224,22 @@ class SearchEngineBase:
         """
         raise NotImplementedError
 
-    def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
-                      num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
-                      group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
-                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
+    def search_sounds(
+        self,
+        textual_query='',
+        query_fields=None,
+        query_filter='',
+        offset=0,
+        current_page=None,
+        num_sounds=settings.SOUNDS_PER_PAGE,
+        sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+        group_by_pack=False,
+        num_sounds_per_pack_group=1,
+        facets=None,
+        only_sounds_with_pack=False,
+        only_sounds_within_ids=False,
+        group_counts_as_one_in_facets=False
+    ):
         """Search for sounds that match specific criteria and return them in a SearchResults object
 
         Args:
@@ -272,7 +293,6 @@ class SearchEngineBase:
         """
         raise NotImplementedError
 
-
     # Forum search related methods
 
     def add_forum_posts_to_index(self, forum_post_objects):
@@ -306,9 +326,16 @@ class SearchEngineBase:
         """
         raise NotImplementedError
 
-
-    def search_forum_posts(self, textual_query='', query_filter='', offset=0, sort=None, current_page=None,
-                           num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
+    def search_forum_posts(
+        self,
+        textual_query='',
+        query_filter='',
+        offset=0,
+        sort=None,
+        current_page=None,
+        num_posts=settings.FORUM_POSTS_PER_PAGE,
+        group_by_thread=True
+    ):
         """Search for forum posts that match specific criteria and return them in a SearchResults object
 
         Args:
@@ -329,7 +356,6 @@ class SearchEngineBase:
 
         """
         raise NotImplementedError
-
 
     # Tag clouds methods
 

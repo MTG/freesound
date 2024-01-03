@@ -21,9 +21,10 @@
 from django.contrib import admin
 from wiki.models import Page, Content
 
+
 @admin.register(Page)
 class PageAdmin(admin.ModelAdmin):
-    list_display = ('name', )
+    list_display = ('name',)
 
     def has_add_permission(self, request):
         return False
@@ -31,8 +32,13 @@ class PageAdmin(admin.ModelAdmin):
 
 @admin.register(Content)
 class ContentAdmin(admin.ModelAdmin):
-    raw_id_fields = ('author', )
-    list_display = ('page', 'author', 'title', 'created', )
+    raw_id_fields = ('author',)
+    list_display = (
+        'page',
+        'author',
+        'title',
+        'created',
+    )
 
     def has_add_permission(self, request):
         return False

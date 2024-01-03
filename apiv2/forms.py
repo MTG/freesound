@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 import django.forms as forms
 from django.conf import settings
 from django.utils.safestring import mark_safe
@@ -28,45 +27,76 @@ from .exceptions import BadRequestException
 
 
 class ApiV2ClientForm(forms.Form):
-    name = forms.CharField(label='Name*', max_length='60', widget=forms.TextInput(attrs={'style': 'width:100%',
-                           'placeholder': 'The name of the application or project where the credential will be used'}))
-    url = forms.URLField(required=False, label='URL', max_length=200, widget=forms.TextInput(attrs={'style': 'width:100%',
-                         'placeholder': 'URL of your application, project, institution or other related page'}))
-    redirect_uri = forms.URLField(required=False, label='Callback URL', max_length=200, widget=forms.TextInput(
-        attrs={'style': 'width:100%', 'placeholder': 'OAuth2 callback URL'}), 
-        help_text="""<div class="text-black v-spacing-top-negative-2">The <b>Callback URL</b> is only used for the authorization process when accessing resources that require OAuth2.
+    name = forms.CharField(
+        label='Name*',
+        max_length='60',
+        widget=forms.TextInput(
+            attrs={
+                'style': 'width:100%',
+                'placeholder': 'The name of the application or project where the credential will be used'
+            }
+        )
+    )
+    url = forms.URLField(
+        required=False,
+        label='URL',
+        max_length=200,
+        widget=forms.TextInput(
+            attrs={
+                'style': 'width:100%',
+                'placeholder': 'URL of your application, project, institution or other related page'
+            }
+        )
+    )
+    redirect_uri = forms.URLField(
+        required=False,
+        label='Callback URL',
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'style': 'width:100%',
+            'placeholder': 'OAuth2 callback URL'
+        }),
+        help_text=
+        """<div class="text-black v-spacing-top-negative-2">The <b>Callback URL</b> is only used for the authorization process when accessing resources that require OAuth2.
             At the end of the OAuth2 authorization process, Freesound will redirect the browser to the url specified in this field.
             In this way your application can be automatically notified when users have given the permissions to access their data.
             If your application does not support the use of a callback url (generally non web-based applications or non server-based), you must
             introduce the following url: <span style="font-family: 'Courier'">http://freesound.org/home/app_permissions/permission_granted/</span>.
-            <br>See the <a href="/docs/api" target="_blank">API docummentation</a> for more information.</div>""")
-    description = forms.CharField(label='Description*', widget=forms.Textarea(
-        attrs={'style': 'width:100%', 'placeholder': 'Tell us something about what you\'re planning to do with this '
-                                                      'API credential (i.e. what kind of project or application you\'re'
-                                                      ' going to build)'}))
-    accepted_tos = forms.BooleanField(label=mark_safe('Check this box to accept the <a href="/help/tos_api/" target="_blank">terms of use</a> of the Freesound API'),
-                                      help_text=False,
-                                      required=True,
-                                      error_messages={'required': 'You must accept the terms of use in order to '
-                                                                  'get access to the API.'})
+            <br>See the <a href="/docs/api" target="_blank">API docummentation</a> for more information.</div>"""
+    )
+    description = forms.CharField(
+        label='Description*',
+        widget=forms.Textarea(
+            attrs={
+                'style': 'width:100%',
+                'placeholder':
+                    'Tell us something about what you\'re planning to do with this '
+                    'API credential (i.e. what kind of project or application you\'re'
+                    ' going to build)'
+            }
+        )
+    )
+    accepted_tos = forms.BooleanField(
+        label=mark_safe(
+            'Check this box to accept the <a href="/help/tos_api/" target="_blank">terms of use</a> of the Freesound API'
+        ),
+        help_text=False,
+        required=True,
+        error_messages={'required': 'You must accept the terms of use in order to '
+                                    'get access to the API.'}
+    )
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
         self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
-        
 
-SEARCH_SORT_OPTIONS_API = [
-        ("score", "score desc"),
-        ("duration_desc", "duration desc"),
-        ("duration_asc", "duration asc"),
-        ("created_desc", "created desc"),
-        ("created_asc", "created asc"),
-        ("downloads_desc", "num_downloads desc"),
-        ("downloads_asc", "num_downloads asc"),
-        ("rating_desc", "avg_rating desc"),
-        ("rating_asc", "avg_rating asc")
-    ]
+
+SEARCH_SORT_OPTIONS_API = [("score", "score desc"), ("duration_desc", "duration desc"),
+                           ("duration_asc", "duration asc"), ("created_desc", "created desc"),
+                           ("created_asc", "created asc"), ("downloads_desc", "num_downloads desc"),
+                           ("downloads_asc", "num_downloads asc"), ("rating_desc", "avg_rating desc"),
+                           ("rating_asc", "avg_rating asc")]
 
 SEARCH_SOUNDS_SORT_DEFAULT_API = "score desc"
 
@@ -161,7 +191,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
         requested_paginate_by = self.cleaned_data[settings.APIV2['PAGE_SIZE_QUERY_PARAM']]
         try:
             paginate_by = min(int(requested_paginate_by), settings.APIV2['MAX_PAGE_SIZE'])
-        except (ValueError, TypeError):  # TypeError if None, ValueError if bad input
+        except (ValueError, TypeError):    # TypeError if None, ValueError if bad input
             paginate_by = settings.APIV2['PAGE_SIZE']
         return paginate_by
 
@@ -188,12 +218,13 @@ class SoundCombinedSearchFormAPI(forms.Form):
             link += f'&filter={my_quote(filt)}'
         if self.cleaned_data['weights'] is not None:
             link += f"&weights={self.cleaned_data['weights']}"
-        if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_SOUNDS_SORT_DEFAULT_API.split(' ')[0]:
+        if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_SOUNDS_SORT_DEFAULT_API.split(
+                ' ')[0]:
             link += f'&sort={self.original_url_sort_value}'
         if self.cleaned_data['descriptors_filter']:
-                link += f"&descriptors_filter={self.cleaned_data['descriptors_filter']}"
+            link += f"&descriptors_filter={self.cleaned_data['descriptors_filter']}"
         if self.cleaned_data['target']:
-                link += f"&target={self.cleaned_data['target']}"
+            link += f"&target={self.cleaned_data['target']}"
         if include_page:
             if not page:
                 if self.cleaned_data['page'] and self.cleaned_data['page'] != 1:

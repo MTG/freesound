@@ -36,11 +36,13 @@ class Command(LoggingBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-d', '--days',
+            '-d',
+            '--days',
             dest='days',
             default=1,
             type=int,
-            help='Use this option to get the donations older than 1 day.')
+            help='Use this option to get the donations older than 1 day.'
+        )
 
     def handle(self, **options):
         self.log_start()
@@ -76,7 +78,7 @@ class Command(LoggingBaseCommand):
                     if raw_rsp['L_TYPE%d' % i][0] in ['Donation', 'Payment']:
                         amount = raw_rsp['L_AMT%d' % i][0]
                         if float(amount) < 0:
-                            continue  # Don't create objects for donations with negative amounts
+                            continue    # Don't create objects for donations with negative amounts
                         created_dt = datetime.datetime.strptime(raw_rsp['L_TIMESTAMP%d' % i][0], '%Y-%m-%dT%H:%M:%SZ')
                         donation_data = {
                             'email': raw_rsp['L_EMAIL%d' % i][0],
@@ -93,16 +95,17 @@ class Command(LoggingBaseCommand):
                             user = User.objects.get(email=raw_rsp['L_EMAIL%d' % i][0])
                             donation_data['user'] = user
                         except User.DoesNotExist:
-                            pass  # Don't link donation object to user object
+                            pass    # Don't link donation object to user object
 
                         obj, created = Donation.objects.get_or_create(
-                                 transaction_id=raw_rsp['L_TRANSACTIONID%d'%i][0], defaults=donation_data)
+                            transaction_id=raw_rsp['L_TRANSACTIONID%d' % i][0], defaults=donation_data
+                        )
                         if created:
                             n_donations_created += 1
                             del donation_data['campaign']
                             donation_data['created'] = raw_rsp['L_TIMESTAMP%d' % i][0]
                             if 'user' in donation_data:
-                                donation_data['user'] = donation_data['user'].username  # Only log username in graylog
+                                donation_data['user'] = donation_data['user'].username    # Only log username in graylog
                             commands_logger.info(f'Created donation object ({json.dumps(donation_data)})')
 
             start = start + one_day

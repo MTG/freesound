@@ -71,7 +71,7 @@ def search_view_helper(request, tags_mode=False):
     query_params.update({'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS})
 
     filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], cluster_id)
-    
+
     # Get tags taht are being used in filters (this is used later to remove them from the facet and also for tags mode)
     tags_in_filter = []
     for filter_data in filter_query_split:
@@ -81,7 +81,7 @@ def search_view_helper(request, tags_mode=False):
                 # If tag name has quotes, remove them
                 tag = tag[1:-1]
             tags_in_filter.append(tag)
-    
+
     # Process tags mode stuff
     initial_tagcloud = None
     if tags_mode:
@@ -94,32 +94,37 @@ def search_view_helper(request, tags_mode=False):
             initial_tagcloud = cache.get('initial_tagcloud')
             if initial_tagcloud is None:
                 # If tagcloud is not cached, make a query to retrieve it and save it to cache
-                results, _ = perform_search_engine_query(dict(
-                    textual_query='',
-                    query_filter= "*:*",
-                    num_sounds=1,
-                    facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 100}},
-                    group_by_pack=True,
-                    group_counts_as_one_in_facets=False,
-                ))
-                initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
-                cache.set('initial_tagcloud', initial_tagcloud, 60 * 60 * 12)  # cache for 12 hours
+                results, _ = perform_search_engine_query(
+                    dict(
+                        textual_query='',
+                        query_filter="*:*",
+                        num_sounds=1,
+                        facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {
+                            'limit': 100
+                        }},
+                        group_by_pack=True,
+                        group_counts_as_one_in_facets=False,
+                    )
+                )
+                initial_tagcloud = [
+                    dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]
+                ]
+                cache.set('initial_tagcloud', initial_tagcloud, 60 * 60 * 12)    # cache for 12 hours
             return {
                 'tags_mode': True,
                 'tags_in_filter': tags_in_filter,
                 'initial_tagcloud': initial_tagcloud,
             }
 
-
     # In the tvars section we pass the original group_by_pack value to avoid it being set to false if there is a pack filter (see search_prepare_parameters)
-    # This is so that we keep track of the original setting of group_by_pack before the filter was applied, and so that if the pack filter is removed, we can 
+    # This is so that we keep track of the original setting of group_by_pack before the filter was applied, and so that if the pack filter is removed, we can
     # automatically revert to the previous group_by_pack setting. Also, we compute "disable_group_by_pack_option" so that when we have changed the real
     # group_by_pack because there is a pack filter, we can grey out the option in the search form. Similar thing we do for only_sounds_with_pack as also
     # it does not make sense when filtering by pack
     group_by_pack_in_request = request.GET.get("g", "1") == "1"
     only_sounds_with_pack_in_request = request.GET.get("only_p", "0") == "1"
     disable_group_by_pack_option = 'pack:' in query_params['query_filter'] or only_sounds_with_pack_in_request
-    disable_only_sounds_by_pack_option= 'pack:' in query_params['query_filter']
+    disable_only_sounds_by_pack_option = 'pack:' in query_params['query_filter']
     only_sounds_with_pack = "1" if query_params['only_sounds_with_pack'] else ""
     if only_sounds_with_pack:
         # If displaying seachr results as packs, include 3 sounds per pack group in the results so we can display these sounds as selected sounds in the
@@ -131,7 +136,7 @@ def search_view_helper(request, tags_mode=False):
         'filter_query': query_params['query_filter'],
         'filter_query_split': filter_query_split,
         'search_query': query_params['textual_query'],
-        'group_by_pack_in_request': "1" if group_by_pack_in_request else "", 
+        'group_by_pack_in_request': "1" if group_by_pack_in_request else "",
         'disable_group_by_pack_option': disable_group_by_pack_option,
         'only_sounds_with_pack': only_sounds_with_pack,
         'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
@@ -155,7 +160,7 @@ def search_view_helper(request, tags_mode=False):
 
     tvars.update(advanced_search_params_dict)
 
-    try:       
+    try:
         results, paginator = perform_search_engine_query(query_params)
         if not only_sounds_with_pack:
             resultids = [d.get("id") for d in results.docs]
@@ -177,7 +182,9 @@ def search_view_helper(request, tags_mode=False):
                 pack_id = int(d.get("group_name").split('_')[0])
                 resultspackids.append(pack_id)
                 sound_ids_for_pack_id[pack_id] = [int(sound['id']) for sound in d.get('group_docs', [])]
-            resultpacks = sounds.models.Pack.objects.bulk_query_id(resultspackids, sound_ids_for_pack_id=sound_ids_for_pack_id)
+            resultpacks = sounds.models.Pack.objects.bulk_query_id(
+                resultspackids, sound_ids_for_pack_id=sound_ids_for_pack_id
+            )
             allpacks = {}
             for p in resultpacks:
                 allpacks[p.id] = p
@@ -189,17 +196,19 @@ def search_view_helper(request, tags_mode=False):
             for d in docs:
                 d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
 
-        search_logger.info('Search (%s)' % json.dumps({
-            'ip': get_client_ip(request),
-            'query': query_params['textual_query'],
-            'filter': query_params['query_filter'],
-            'username': request.user.username,
-            'page': query_params['current_page'],
-            'sort': query_params['sort'],
-            'group_by_pack': query_params['group_by_pack'],
-            'advanced': json.dumps(advanced_search_params_dict) if extra_vars['advanced'] == "1" else "",
-            'query_time': results.q_time 
-        }))
+        search_logger.info(
+            'Search (%s)' % json.dumps({
+                'ip': get_client_ip(request),
+                'query': query_params['textual_query'],
+                'filter': query_params['query_filter'],
+                'username': request.user.username,
+                'page': query_params['current_page'],
+                'sort': query_params['sort'],
+                'group_by_pack': query_params['group_by_pack'],
+                'advanced': json.dumps(advanced_search_params_dict) if extra_vars['advanced'] == "1" else "",
+                'query_time': results.q_time
+            })
+        )
 
         # For the facets of fields that could have mulitple values (i.e. currently, only "tags" facet), make
         # sure to remove the filters for the corresponding facet field thar are already active (so we remove
@@ -217,11 +226,15 @@ def search_view_helper(request, tags_mode=False):
 
     except SearchEngineException as e:
         search_logger.info(f'Search error: query: {str(query_params)} error {e}')
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(
+            e
+        )    # Manually capture exception so it has mroe info and Sentry can organize it properly
         tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
     except Exception as e:
         search_logger.info(f'Could probably not connect to Solr - {e}')
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(
+            e
+        )    # Manually capture exception so it has mroe info and Sentry can organize it properly
         tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
 
     return tvars
@@ -278,7 +291,7 @@ def clustering_facet(request):
             results = result['result']
             num_clusters = len(results)
         else:
-             return JsonResponse({'status': 'failed'}, safe=False)
+            return JsonResponse({'status': 'failed'}, safe=False)
     elif result['error']:
         return JsonResponse({'status': 'failed'}, safe=False)
     else:
@@ -289,8 +302,7 @@ def clustering_facet(request):
     query_params, _, extra_vars = search_prepare_parameters(request)
     if extra_vars['has_facet_filter']:
         sound_ids_filtered = get_sound_ids_from_search_engine_query(query_params)
-        results = [[sound_id for sound_id in cluster if int(sound_id) in sound_ids_filtered]
-                   for cluster in results]
+        results = [[sound_id for sound_id in cluster if int(sound_id) in sound_ids_filtered] for cluster in results]
 
     num_sounds_per_cluster = [len(cluster) for cluster in results]
     partition = {sound_id: cluster_id for cluster_id, cluster in enumerate(results) for sound_id in cluster}
@@ -309,40 +321,41 @@ def clustering_facet(request):
     # we iterate with range(len(results)) to ensure that we get the right order when iterating through the dict
     cluster_most_occuring_tags = [
         [tag for tag, _ in Counter(cluster_tags[cluster_id]).most_common(NUM_TAGS_SHOWN_PER_CLUSTER_FACET)]
-        if cluster_tags[cluster_id] else []
-        for cluster_id in range(len(results))
+        if cluster_tags[cluster_id] else [] for cluster_id in range(len(results))
     ]
     most_occuring_tags_formatted = [
-        ' '.join(sorted(most_occuring_tags))
-        for most_occuring_tags in cluster_most_occuring_tags
+        ' '.join(sorted(most_occuring_tags)) for most_occuring_tags in cluster_most_occuring_tags
     ]
 
     # extract sound examples for each cluster
     sound_ids_examples_per_cluster = [
-        list(map(int, cluster_sound_ids[:NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET]))
-        for cluster_sound_ids in results
+        list(map(int, cluster_sound_ids[:NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET])) for cluster_sound_ids in results
     ]
     sound_ids_examples = [item for sublist in sound_ids_examples_per_cluster for item in sublist]
     sound_urls = {
         sound.id: sound.locations()['preview']['LQ']['ogg']['url']
-            for sound in sound_instances
-            if sound.id in sound_ids_examples
+        for sound in sound_instances
+        if sound.id in sound_ids_examples
     }
-    sound_url_examples_per_cluster = [
-        [(sound_id, sound_urls[sound_id]) for sound_id in cluster_sound_ids]
-            for cluster_sound_ids in sound_ids_examples_per_cluster
-    ]
+    sound_url_examples_per_cluster = [[(sound_id, sound_urls[sound_id])
+                                       for sound_id in cluster_sound_ids]
+                                      for cluster_sound_ids in sound_ids_examples_per_cluster]
 
-    return render(request, 'search/clustering_facet.html', {
-            'results': partition,
-            'url_query_params_string': url_query_params_string,
-            'cluster_id_num_results_tags_sound_examples': list(zip(
-                list(range(num_clusters)),
-                num_sounds_per_cluster,
-                most_occuring_tags_formatted,
-                sound_url_examples_per_cluster
-            )),
-    })
+    return render(
+        request, 'search/clustering_facet.html', {
+            'results':
+                partition,
+            'url_query_params_string':
+                url_query_params_string,
+            'cluster_id_num_results_tags_sound_examples':
+                list(
+                    zip(
+                        list(range(num_clusters)), num_sounds_per_cluster, most_occuring_tags_formatted,
+                        sound_url_examples_per_cluster
+                    )
+                ),
+        }
+    )
 
 
 def clustered_graph(request):
@@ -372,15 +385,15 @@ def clustered_graph(request):
     sound_metadata = {}
     for sound in results:
         sound_locations = sound.locations()
-        sound_metadata.update(
-            {sound.id: (
+        sound_metadata.update({
+            sound.id: (
                 sound_locations['preview']['LQ']['ogg']['url'],
                 sound.original_filename,
                 ' '.join(sound.tag_array),
                 reverse("sound", args=(sound.username, sound.id)),
                 sound_locations['display']['wave']['M']['url'],
-            )}
-        )
+            )
+        })
 
     for node in graph['nodes']:
         node['url'] = sound_metadata[int(node['id'])][0]
@@ -413,9 +426,11 @@ def search_forum(request):
     remove_username_filter_url = ''
     if 'post_author' in filter_query:
         username_filter = filter_query.split('post_author:"')[1].split('"')[0]
-        remove_username_filter_url = '{}?{}'.format(reverse('forums-search'), filter_query.replace('post_author:"{}"'.format(username_filter), ''))
+        remove_username_filter_url = '{}?{}'.format(
+            reverse('forums-search'), filter_query.replace('post_author:"{}"'.format(username_filter), '')
+        )
         sort = settings.SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST
-    
+
     # Parse advanced search options
     advanced_search = request.GET.get("advanced_search", "")
     date_from = request.GET.get("dt_from", "")
@@ -458,7 +473,8 @@ def search_forum(request):
                 sort=sort,
                 num_posts=settings.FORUM_POSTS_PER_PAGE,
                 current_page=current_page,
-                group_by_thread=False)
+                group_by_thread=False
+            )
 
             paginator = SearchResultsPaginator(results, settings.FORUM_POSTS_PER_PAGE)
             num_results = paginator.count
@@ -466,15 +482,18 @@ def search_forum(request):
             error = False
         except SearchEngineException as e:
             error.info(f"Search error: query: {search_query} error {e}")
-            sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+            sentry_sdk.capture_exception(
+                e
+            )    # Manually capture exception so it has mroe info and Sentry can organize it properly
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:
             search_logger.info(f"Could probably not connect to the search engine - {e}")
-            sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+            sentry_sdk.capture_exception(
+                e
+            )    # Manually capture exception so it has mroe info and Sentry can organize it properly
             error = True
             error_text = 'The search server could not be reached, please try again later.'
-
 
     tvars = {
         'advanced_search': advanced_search,
@@ -500,13 +519,11 @@ def search_forum(request):
     if results:
         posts_unsorted = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
             .filter(id__in=[d['id'] for d in results.docs])
-        posts_map = {post.id:post for post in posts_unsorted}
-        posts = [posts_map[d['id']] for d in results.docs]            
+        posts_map = {post.id: post for post in posts_unsorted}
+        posts = [posts_map[d['id']] for d in results.docs]
     else:
         posts = []
-    tvars.update({
-        'posts': posts
-    })
+    tvars.update({'posts': posts})
 
     return render(request, 'search/search_forum.html', tvars)
 
@@ -526,12 +543,6 @@ def query_suggestions(request):
     suggestions = []
     search_query = request.GET.get('q', None)
     if search_query is not None and len(search_query) > 1:
-        for count, suggestion in enumerate([
-            'wind',
-            'explosion',
-            'music',
-            'rain',
-            'swoosh'
-        ]):
+        for count, suggestion in enumerate(['wind', 'explosion', 'music', 'rain', 'swoosh']):
             suggestions.append({'id': count, 'value': suggestion})
     return JsonResponse({'suggestions': suggestions})

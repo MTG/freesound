@@ -30,19 +30,23 @@ from django.urls import reverse
 
 
 def https_required(view_func):
+
     def _wrapped_view_func(request, *args, **kwargs):
         if not request.is_secure() and not settings.DEBUG:
             return HttpResponse('{"detail": "This resource requires a secure connection (https)"}', status=403)
         return view_func(request, *args, **kwargs)
+
     return _wrapped_view_func
 
 
 def force_login(view_func):
+
     def _wrapped_view_func(request, *args, **kwargs):
         logout(request)
         path = request.build_absolute_uri()
-        path = path.replace('logout_and_', '')  # To avoid loop in this view
+        path = path.replace('logout_and_', '')    # To avoid loop in this view
         return redirect_to_login(path, reverse('api-login'), REDIRECT_FIELD_NAME)
+
     return _wrapped_view_func
 
 
@@ -50,6 +54,10 @@ app_name = 'oauth2_provider'
 
 urlpatterns = (
     re_path(r'^authorize[/]*$', https_required(AuthorizationView.as_view()), name="authorize"),
-    re_path(r'^logout_and_authorize[/]*$', https_required(force_login(AuthorizationView.as_view())), name="logout_and_authorize"),
+    re_path(
+        r'^logout_and_authorize[/]*$',
+        https_required(force_login(AuthorizationView.as_view())),
+        name="logout_and_authorize"
+    ),
     re_path(r'^access_token[/]*$', csrf_exempt(https_required(views.TokenView.as_view())), name="access_token"),
 )

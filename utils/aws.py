@@ -42,9 +42,12 @@ def init_client(service):
     if not settings.AWS_REGION or not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
         raise AwsCredentialsNotConfigured()
 
-    return client(service, region_name=settings.AWS_SQS_REGION,
-                  aws_access_key_id=settings.AWS_SQS_ACCESS_KEY_ID,
-                  aws_secret_access_key=settings.AWS_SQS_SECRET_ACCESS_KEY)
+    return client(
+        service,
+        region_name=settings.AWS_SQS_REGION,
+        aws_access_key_id=settings.AWS_SQS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SQS_SECRET_ACCESS_KEY
+    )
 
 
 class EmailStats:
@@ -91,7 +94,7 @@ def get_ses_stats(sample_size, n_points):
         raise AwsConnectionError(e)
 
     data = response['SendDataPoints']
-    data.sort(key=lambda x: x['Timestamp'], reverse=True)  # array of datapoints is not sorted originally
+    data.sort(key=lambda x: x['Timestamp'], reverse=True)    # array of datapoints is not sorted originally
 
     email_stats = EmailStats()
     count = 0

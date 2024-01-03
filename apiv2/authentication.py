@@ -57,6 +57,7 @@ class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
                 raise exceptions.AuthenticationFailed('Suspended token or token pending for approval')
         return super_response
 
+
 class TokenAuthentication(BaseAuthentication):
     """
     Simple token based authentication.

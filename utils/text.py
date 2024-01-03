@@ -56,6 +56,7 @@ def is_valid_url(url):
 
 
 class EmptyLinkFilter(Filter):
+
     def __iter__(self):
         remove_end_tag = False
         for token in Filter.__iter__(self):
@@ -88,13 +89,14 @@ def clean_html(input, ok_tags=[], ok_attributes={}):
     input = re.sub(r"\<(http\S+?)\>", r'< \1 >', input)
 
     cleaner = bleach.Cleaner(
-            filters=[
-                EmptyLinkFilter,
-                partial(bleach.linkifier.LinkifyFilter, callbacks=[nofollow]),
-                ],
-            attributes=ok_attributes,
-            tags=ok_tags,
-            strip=True)
+        filters=[
+            EmptyLinkFilter,
+            partial(bleach.linkifier.LinkifyFilter, callbacks=[nofollow]),
+        ],
+        attributes=ok_attributes,
+        tags=ok_tags,
+        strip=True
+    )
     output = cleaner.clean(input)
     return output
 
@@ -123,11 +125,11 @@ def text_may_be_spam(text):
         return True
 
     # If emails or short urls
-    if re.search(r"[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\s|$|\/|\]|\.)",  text):
+    if re.search(r"[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\s|$|\/|\]|\.)", text):
         return True
 
     # If consecutive numbers
-    if re.search(r"\(|\)|\d{7}",  text):
+    if re.search(r"\(|\)|\d{7}", text):
         return True
 
     # If non ascii characters

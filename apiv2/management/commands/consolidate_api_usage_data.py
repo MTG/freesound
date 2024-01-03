@@ -26,7 +26,6 @@ from django.core.cache import caches
 from utils.management_commands import LoggingBaseCommand
 from apiv2.models import ApiV2Client, APIClientDailyUsageHistory
 
-
 console_logger = logging.getLogger("console")
 cache_api_monitoring = caches["api_monitoring"]
 

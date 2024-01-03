@@ -33,7 +33,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         # Get default cache, as this is where sound template entries are stored
         cache = caches['default']
-        all_keys= cache.keys('*')
+        all_keys = cache.keys('*')
         keys_to_delete = [key for key in all_keys if 'template' in key and ('sound' in key or 'pack' in key)]
         total = len(keys_to_delete)
         console_logger.info(f'Will clear {total} keys from cache')

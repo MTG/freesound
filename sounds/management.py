@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 import os
 
 from django.db.models.signals import post_syncdb
@@ -28,14 +27,9 @@ from django.conf import settings
 
 @receiver(post_syncdb)
 def create_locations(sender, **kwargs):
-    for folder in [settings.SOUNDS_PATH,
-                   settings.PACKS_PATH,
-                   settings.AVATARS_PATH,
-                   settings.UPLOADS_PATH,
-                   settings.PREVIEWS_PATH,
-                   settings.DISPLAYS_PATH,
-                   settings.FILE_UPLOAD_TEMP_DIR]:
+    for folder in [settings.SOUNDS_PATH, settings.PACKS_PATH, settings.AVATARS_PATH, settings.UPLOADS_PATH,
+                   settings.PREVIEWS_PATH, settings.DISPLAYS_PATH, settings.FILE_UPLOAD_TEMP_DIR]:
         if not os.path.isdir(folder):
             os.makedirs(folder, exist_ok=True)
         else:
-            print (f"Folder: '{folder}' already exists")
+            print(f"Folder: '{folder}' already exists")

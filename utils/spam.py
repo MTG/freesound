@@ -65,5 +65,5 @@ def is_spam(request, comment):
             return True
         else:
             return False
-    except (AkismetError, HTTPError, URLError):  # failed to contact akismet...
+    except (AkismetError, HTTPError, URLError):    # failed to contact akismet...
         return False

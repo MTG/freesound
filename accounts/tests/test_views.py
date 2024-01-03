@@ -49,13 +49,14 @@ class SimpleUserTest(TestCase):
         self.sound.geotag = GeoTag.objects.create(user=user, lat=45.8498, lon=-62.6879, zoom=9)
         self.sound.save()
         SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
-        self.download = Download.objects.create(user=self.user, sound=self.sound, license=self.sound.license,
-                                created=self.sound.created)
+        self.download = Download.objects.create(
+            user=self.user, sound=self.sound, license=self.sound.license, created=self.sound.created
+        )
         self.pack_download = PackDownload.objects.create(user=self.user, pack=self.pack, created=self.pack.created)
 
     def test_old_ng_redirects(self):
         # Test that some pages which used to have its own "URL" in NG now redirect to other pages and open as a modal
-    
+
         # Comments on user sounds
         resp = self.client.get(reverse('comments-for-user', kwargs={'username': self.user.username}))
         self.assertRedirects(resp, reverse('account', args=[self.user.username]) + '?comments=1')
@@ -74,12 +75,20 @@ class SimpleUserTest(TestCase):
 
         # Users that downloaded a sound
         resp = self.client.get(
-            reverse('sound-downloaders', kwargs={'username': self.user.username, "sound_id": self.sound.id}))
+            reverse('sound-downloaders', kwargs={
+                'username': self.user.username,
+                "sound_id": self.sound.id
+            })
+        )
         self.assertRedirects(resp, reverse('sound', args=[self.user.username, self.sound.id]) + '?downloaders=1')
 
         # Users that downloaded a pack
         resp = self.client.get(
-            reverse('pack-downloaders', kwargs={'username': self.user.username, "pack_id": self.pack.id}))
+            reverse('pack-downloaders', kwargs={
+                'username': self.user.username,
+                "pack_id": self.pack.id
+            })
+        )
         self.assertRedirects(resp, reverse('pack', args=[self.user.username, self.pack.id]) + '?downloaders=1')
 
         # Users following user
@@ -117,10 +126,9 @@ class SimpleUserTest(TestCase):
         self.assertTrue(reverse('sounds-search') in resp.url and self.user.username in resp.url)
 
         self.client.force_login(self.user)
-        
+
         # Sound edit page
-        resp = self.client.get(
-            reverse('sound-edit-sources', args=[self.user.username, self.sound.id]))
+        resp = self.client.get(reverse('sound-edit-sources', args=[self.user.username, self.sound.id]))
         self.assertRedirects(resp, reverse('sound-edit', args=[self.user.username, self.sound.id]))
 
         # Flag sound
@@ -200,10 +208,12 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-download-attribution') + '?dl=csv')
         self.assertEqual(resp.status_code, 200)
         # response content as expected
-        self.assertContains(resp,
-                            'Download Type,File Name,User,License,Timestamp\r\nP,{0},{1},{0},{6}\r\nS,{2},{3},{4},{5}\r\n'.format(
-                                self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
-                                self.sound.license, self.download.created, self.pack_download.created))
+        self.assertContains(
+            resp, 'Download Type,File Name,User,License,Timestamp\r\nP,{0},{1},{0},{6}\r\nS,{2},{3},{4},{5}\r\n'.format(
+                self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
+                self.sound.license, self.download.created, self.pack_download.created
+            )
+        )
 
     def test_download_attribution_txt(self):
         self.client.force_login(self.user)
@@ -211,11 +221,13 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-download-attribution') + '?dl=txt')
         self.assertEqual(resp.status_code, 200)
         # response content as expected
-        self.assertContains(resp,
-                         'P: {0} by {1} | License: {0} | Timestamp: {6}\nS: {2} by {3} | License: {4} | Timestamp: {5}\n'.format(
-                             self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
-                             self.sound.license, self.download.created, self.pack_download.created))
-
+        self.assertContains(
+            resp,
+            'P: {0} by {1} | License: {0} | Timestamp: {6}\nS: {2} by {3} | License: {4} | Timestamp: {5}\n'.format(
+                self.pack.name, self.user.username, self.sound.original_filename, self.user.username,
+                self.sound.license, self.download.created, self.pack_download.created
+            )
+        )
 
         # If user is deleted, get 404
         self.user.profile.delete_user()
@@ -231,18 +243,23 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('sounds'))
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(reverse('sounds-search') in resp.url)
-        
+
         # Test other sound related views. Nota that since BW many of these will include redirects
         user = self.sound.user
         user.set_password('12345')
         user.is_superuser = True
         user.save()
         self.client.force_login(user)
-        
+
         resp = self.client.get(reverse('sound', kwargs={'username': user.username, "sound_id": self.sound.id}))
         self.assertEqual(resp.status_code, 200)
-       
-        resp = self.client.get(reverse('sound-flag', kwargs={'username': user.username, "sound_id": self.sound.id}) + '?ajax=1')
+
+        resp = self.client.get(
+            reverse('sound-flag', kwargs={
+                'username': user.username,
+                "sound_id": self.sound.id
+            }) + '?ajax=1'
+        )
         self.assertEqual(resp.status_code, 200)
 
         resp = self.client.get(reverse('sound-edit', kwargs={'username': user.username, "sound_id": self.sound.id}))
@@ -251,15 +268,28 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('sound-geotag', kwargs={'username': user.username, "sound_id": self.sound.id}))
         self.assertEqual(resp.status_code, 200)
 
-        resp = self.client.get(reverse('sound-similar', kwargs={'username': user.username, "sound_id": self.sound.id}) + '?ajax=1')
+        resp = self.client.get(
+            reverse('sound-similar', kwargs={
+                'username': user.username,
+                "sound_id": self.sound.id
+            }) + '?ajax=1'
+        )
         self.assertEqual(resp.status_code, 200)
 
         resp = self.client.get(
-            reverse('sound-downloaders', kwargs={'username': user.username, "sound_id": self.sound.id}) + '?ajax=1')
+            reverse('sound-downloaders', kwargs={
+                'username': user.username,
+                "sound_id": self.sound.id
+            }) + '?ajax=1'
+        )
         self.assertEqual(resp.status_code, 200)
 
         resp = self.client.get(
-            reverse('pack-downloaders', kwargs={'username': user.username, "pack_id": self.pack.id}) + '?ajax=1')
+            reverse('pack-downloaders', kwargs={
+                'username': user.username,
+                "pack_id": self.pack.id
+            }) + '?ajax=1'
+        )
         self.assertEqual(resp.status_code, 200)
 
     @mock.patch('search.views.perform_search_engine_query')
@@ -329,7 +359,7 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-home'))
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.url, reverse('account', args=[user.username]))
-        
+
         # 200 response on Account edit page
         resp = self.client.get(reverse('accounts-edit'))
         self.assertEqual(resp.status_code, 200)
@@ -380,14 +410,12 @@ class SimpleUserTest(TestCase):
 
     def test_username_check(self):
         username = 'test_user_new'
-        resp = self.client.get(reverse('check_username'),
-                               {'username': username})
+        resp = self.client.get(reverse('check_username'), {'username': username})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['result'], True)
 
         user = User.objects.create_user(username, password="testpass")
-        resp = self.client.get(reverse('check_username'),
-                               {'username': username})
+        resp = self.client.get(reverse('check_username'), {'username': username})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['result'], False)
 
@@ -399,38 +427,32 @@ class SimpleUserTest(TestCase):
         self.assertEqual(OldUsername.objects.filter(username=username, user=user).count(), 1)
 
         # Now check that check_username will return false for both old and new usernames
-        resp = self.client.get(reverse('check_username'),
-                               {'username': username})
+        resp = self.client.get(reverse('check_username'), {'username': username})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['result'], False)
 
-        resp = self.client.get(reverse('check_username'),
-                               {'username': user.username})
+        resp = self.client.get(reverse('check_username'), {'username': user.username})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['result'], False)
 
         # Now delete user and check that the username before deleting is still not available because we also
         # forbid reuse of usernames in DeletedUser objects
         user.profile.delete_user()
-        resp = self.client.get(reverse('check_username'),
-                               {'username': user.username})
+        resp = self.client.get(reverse('check_username'), {'username': user.username})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['result'], False)
 
         # Check that a username that doesn't fit the registration guidelines returns "False", even
         # if the username doesn't exist
-        resp = self.client.get(reverse('check_username'),
-                               {'username': 'username@withat'})
+        resp = self.client.get(reverse('check_username'), {'username': 'username@withat'})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['result'], False)
 
-        resp = self.client.get(reverse('check_username'),
-                               {'username': 'username^withcaret'})
+        resp = self.client.get(reverse('check_username'), {'username': 'username^withcaret'})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['result'], False)
 
-        resp = self.client.get(reverse('check_username'),
-                               {'username': 'username_withunderscore'})
+        resp = self.client.get(reverse('check_username'), {'username': 'username_withunderscore'})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['result'], True)
 

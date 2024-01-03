@@ -20,7 +20,7 @@
 
 import os
 
-from django.http import HttpResponse,Http404
+from django.http import HttpResponse, Http404
 from django.conf import settings
 from wsgiref.util import FileWrapper
 
@@ -41,7 +41,7 @@ def prepare_sendfile_arguments_for_sound_download(sound):
 def sendfile(path, attachment_name, secret_url=None):
     if not os.path.exists(path):
         raise Http404
-    
+
     if settings.DEBUG:
         response = HttpResponse(FileWrapper(open(path, "rb")))
         response['Content-Length'] = os.path.getsize(path)
@@ -51,5 +51,5 @@ def sendfile(path, attachment_name, secret_url=None):
 
     response['Content-Type'] = "application/octet-stream"
     response['Content-Disposition'] = f"attachment; filename=\"{attachment_name}\""
-    
+
     return response

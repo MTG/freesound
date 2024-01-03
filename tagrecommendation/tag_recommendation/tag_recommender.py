@@ -73,14 +73,20 @@ class TagRecommender(object):
         selectAlgorithm = self.heuristic['s']
 
         # CHOOSE candidate tags
-        candidate_tags = chooseAlgorithm(input_tags, self.data['TAG_NAMES'], self.data['SIMILARITY_MATRIX'], self.heuristic['options'])
+        candidate_tags = chooseAlgorithm(
+            input_tags, self.data['TAG_NAMES'], self.data['SIMILARITY_MATRIX'], self.heuristic['options']
+        )
 
         # AGGREGATE candidate tags
-        aggregated_candiate_tags, aggregated_candiate_tags_list = aggregateAlgorithm(candidate_tags, input_tags, self.heuristic['options'])
+        aggregated_candiate_tags, aggregated_candiate_tags_list = aggregateAlgorithm(
+            candidate_tags, input_tags, self.heuristic['options']
+        )
 
         # SELECT the number of tags to recommend
         if len(aggregated_candiate_tags_list) > 1:
-            added_tags = selectAlgorithm(aggregated_candiate_tags_list, aggregated_candiate_tags, input_tags, self.heuristic['options'])
+            added_tags = selectAlgorithm(
+                aggregated_candiate_tags_list, aggregated_candiate_tags, input_tags, self.heuristic['options']
+            )
         else:
             if len(aggregated_candiate_tags_list) == 1:
                 added_tags = list()

@@ -105,10 +105,13 @@ class GaiaWrapper(object):
                 # Compute PCA and create pca view and metric
                 # NOTE: this step may take a long time if the dataset is big, but it only needs to be performed once
                 # when the similarity server is loaded-
-                self.pca_dataset = transform(self.original_dataset, 'pca',
-                                             {'descriptorNames': sim_settings.PCA_DESCRIPTORS,
-                                              'dimension': sim_settings.PCA_DIMENSIONS,
-                                              'resultName': 'pca'})
+                self.pca_dataset = transform(
+                    self.original_dataset, 'pca', {
+                        'descriptorNames': sim_settings.PCA_DESCRIPTORS,
+                        'dimension': sim_settings.PCA_DIMENSIONS,
+                        'resultName': 'pca'
+                    }
+                )
                 self.pca_dataset.setReferenceDataSet(self.original_dataset)
                 self.view_pca = View(self.pca_dataset)
                 self.__build_pca_metric()
@@ -116,10 +119,12 @@ class GaiaWrapper(object):
             if self.original_dataset.history().size() <= 0:
                 logger.info('Dataset loaded, size: %s points' % (self.original_dataset.size()))
             else:
-                logger.info('Dataset loaded, size: %s points (%i fixed-length desc., %i variable-length desc.)' %
-                            (self.original_dataset.size(),
-                             len(self.descriptor_names['fixed-length']),
-                             len(self.descriptor_names['variable-length'])))
+                logger.info(
+                    'Dataset loaded, size: %s points (%i fixed-length desc., %i variable-length desc.)' % (
+                        self.original_dataset.size(), len(self.descriptor_names['fixed-length']
+                                                          ), len(self.descriptor_names['variable-length'])
+                    )
+                )
 
         else:
             # If there is no existing dataset we create an empty one.
@@ -136,8 +141,9 @@ class GaiaWrapper(object):
 
     def __normalize_original_dataset(self):
         logger.info('Normalizing the original dataset.')
-        self.original_dataset = self.normalize_dataset_helper(self.original_dataset,
-                                                              self.descriptor_names['fixed-length'])
+        self.original_dataset = self.normalize_dataset_helper(
+            self.original_dataset, self.descriptor_names['fixed-length']
+        )
 
     def __calculate_descriptor_names(self):
         layout = self.original_dataset.layout()
@@ -155,21 +161,23 @@ class GaiaWrapper(object):
                 try:
                     if region.dimension() > 1:
                         multidimensional_descriptor_names.append(name)
-                except:  # TODO: exception too broad here...
+                except:    # TODO: exception too broad here...
                     pass
 
-        self.descriptor_names = {'all': all_descriptor_names,
-                                 'fixed-length': fixed_length_descritpor_names,
-                                 'variable-length': variable_length_descritpor_names,
-                                 'multidimensional': multidimensional_descriptor_names}
+        self.descriptor_names = {
+            'all': all_descriptor_names,
+            'fixed-length': fixed_length_descritpor_names,
+            'variable-length': variable_length_descritpor_names,
+            'multidimensional': multidimensional_descriptor_names
+        }
 
     @staticmethod
     def prepare_original_dataset_helper(ds):
-        ds = transform(ds, 'FixLength')  # Needed to optimize use of fixed-length descriptors and save memory
-        ds = transform(ds, 'Cleaner')  # Remove descriptors that will cause problems in further transformations
+        ds = transform(ds, 'FixLength')    # Needed to optimize use of fixed-length descriptors and save memory
+        ds = transform(ds, 'Cleaner')    # Remove descriptors that will cause problems in further transformations
         try:
             ds = transform(ds, 'enumerate', {'descriptorNames': ['.tonal.chords_progression']})
-        except:  # TODO: exception too broad here...
+        except:    # TODO: exception too broad here...
             logger.info('WARNING: enumerate transformation to .tonal.chords_progression could not be performed.')
         return ds
 
@@ -177,19 +185,22 @@ class GaiaWrapper(object):
     def normalize_dataset_helper(ds, descriptor_names):
         # NOTE: The "except" list of descriptors below should be reviewed if a new extractor is used. The point is to
         # remove descriptors can potentially break normalize transform (e.g. descriptors with value = 0)
-        normalization_params = {"descriptorNames": descriptor_names,
-                                "except": [
-                                    "*.min",
-                                    "*.max",
-                                    "tonal.chords_histogram",
-                                ],
-                                "independent": True, "outliers": -1}
+        normalization_params = {
+            "descriptorNames": descriptor_names,
+            "except": [
+                "*.min",
+                "*.max",
+                "tonal.chords_histogram",
+            ],
+            "independent": True,
+            "outliers": -1
+        }
         ds = transform(ds, 'normalize', normalization_params)
         return ds
 
     def __build_metrics(self):
         for preset in sim_settings.PRESETS:
-            if preset != 'pca':  # PCA metric is built only after pca dataset is created so it should not be built here
+            if preset != 'pca':    # PCA metric is built only after pca dataset is created so it should not be built here
                 logger.info('Bulding metric for preset %s' % preset)
                 name = preset
                 path = sim_settings.PRESET_DIR + name + ".yaml"
@@ -197,7 +208,8 @@ class GaiaWrapper(object):
                 distance = preset_file['distance']['type']
                 parameters = preset_file['distance']['parameters']
                 search_metric = DistanceFunctionFactory.create(
-                    str(distance), self.original_dataset.layout(), parameters)
+                    str(distance), self.original_dataset.layout(), parameters
+                )
                 self.metrics[name] = search_metric
 
     def __build_pca_metric(self):
@@ -211,7 +223,7 @@ class GaiaWrapper(object):
     def add_point(self, point_location, point_name):
 
         if self.original_dataset.contains(str(point_name)):
-                self.original_dataset.removePoint(str(point_name))
+            self.original_dataset.removePoint(str(point_name))
 
         p = Point()
         if os.path.exists(str(point_location)):
@@ -245,9 +257,10 @@ class GaiaWrapper(object):
         if self.original_dataset.size() == sim_settings.SIMILARITY_MINIMUM_POINTS:
             # Do enumerate
             try:
-                self.original_dataset = transform(self.original_dataset, 'enumerate',
-                                                  {'descriptorNames': ['.tonal.chords_progression']})
-            except:  # TODO: exception too broad here...
+                self.original_dataset = transform(
+                    self.original_dataset, 'enumerate', {'descriptorNames': ['.tonal.chords_progression']}
+                )
+            except:    # TODO: exception too broad here...
                 logger.info('WARNING: enumerate transformation to .tonal.chords_progression could not be performed.')
 
         # If when adding a new point we reach the minimum points for similarity, do the needful so that the dataset
@@ -268,10 +281,13 @@ class GaiaWrapper(object):
             # Compute PCA and create pca view and metric
             # NOTE: this step may take a long time if the dataset is big, but it only needs to be performed once
             # when the similarity server is loaded-
-            self.pca_dataset = transform(self.original_dataset, 'pca',
-                                         {'descriptorNames': sim_settings.PCA_DESCRIPTORS,
-                                          'dimension': sim_settings.PCA_DIMENSIONS,
-                                          'resultName': 'pca'})
+            self.pca_dataset = transform(
+                self.original_dataset, 'pca', {
+                    'descriptorNames': sim_settings.PCA_DESCRIPTORS,
+                    'dimension': sim_settings.PCA_DIMENSIONS,
+                    'resultName': 'pca'
+                }
+            )
             self.pca_dataset.setReferenceDataSet(self.original_dataset)
             self.view_pca = View(self.pca_dataset)
             self.__build_pca_metric()
@@ -286,8 +302,10 @@ class GaiaWrapper(object):
             else:
                 # Remove from pca dataset (pca dataset will take care of removing from original dataset too)
                 self.pca_dataset.removePoint(str(point_name))
-            logger.info('Deleted point with name %s. Index has now %i points (pca index has %i points).' %
-                        (str(point_name), self.original_dataset.size(), self.pca_dataset.size()))
+            logger.info(
+                'Deleted point with name %s. Index has now %i points (pca index has %i points).' %
+                (str(point_name), self.original_dataset.size(), self.pca_dataset.size())
+            )
             return {'error': False, 'result': True}
         else:
             msg = 'Can\'t delete point with name %s because it does not exist.' % str(point_name)
@@ -312,16 +330,19 @@ class GaiaWrapper(object):
         logger.info('Saving index to (%s)...' % path + msg)
         self.original_dataset.save(path)
         toc = time.time()
-        logger.info('Finished saving index (done in %.2f seconds, index has now %i points).' %
-                    ((toc - tic), self.original_dataset.size()))
+        logger.info(
+            'Finished saving index (done in %.2f seconds, index has now %i points).' %
+            ((toc - tic), self.original_dataset.size())
+        )
         return {'error': False, 'result': path}
 
     def contains(self, point_name):
         logger.info('Checking if index has point with name %s' % str(point_name))
         return {'error': False, 'result': self.original_dataset.contains(point_name)}
 
-    def get_sounds_descriptors(self,
-                               point_names, descriptor_names=None, normalization=True, only_leaf_descriptors=False):
+    def get_sounds_descriptors(
+        self, point_names, descriptor_names=None, normalization=True, only_leaf_descriptors=False
+    ):
         """
         Returns a list with the descriptor values for all requested point names
         """
@@ -339,10 +360,11 @@ class GaiaWrapper(object):
             descriptor_names = descriptor_names_aux[:]
         data = dict()
         required_descriptor_names = self.__calculate_complete_required_descriptor_names(
-            descriptor_names, only_leaf_descriptors=only_leaf_descriptors)
+            descriptor_names, only_leaf_descriptors=only_leaf_descriptors
+        )
 
         if isinstance(required_descriptor_names, dict):
-            return required_descriptor_names  # There has been an error
+            return required_descriptor_names    # There has been an error
 
         for point_name in point_names:
             sound_descriptors = self.__get_point_descriptors(point_name, required_descriptor_names, normalization)
@@ -364,8 +386,8 @@ class GaiaWrapper(object):
                 else:
                     if only_leaf_descriptors:
                         # only return descriptors if nested descriptors are statistics
-                        if len(set(nested_descriptors.keys()).intersection(
-                                ['min', 'max', 'dvar2', 'dmean2', 'dmean', 'var', 'dvar', 'mean'])) > 0:
+                        if len(set(nested_descriptors.keys()).intersection(['min', 'max', 'dvar2', 'dmean2', 'dmean',
+                                                                            'var', 'dvar', 'mean'])) > 0:
                             for extra_name in nested_descriptors.keys():
                                 processed_descriptor_names.append('%s.%s' % (name, extra_name))
                     else:
@@ -377,9 +399,11 @@ class GaiaWrapper(object):
             processed_descriptor_names = list(set(processed_descriptor_names))
             return processed_descriptor_names
         except:
-            return {'error': True,
-                    'result': 'Wrong descriptor names, unable to create layout.',
-                    'status_code': sim_settings.BAD_REQUEST_CODE}
+            return {
+                'error': True,
+                'result': 'Wrong descriptor names, unable to create layout.',
+                'status_code': sim_settings.BAD_REQUEST_CODE
+            }
 
     def __get_point_descriptors(self, point_name, required_descriptor_names, normalization=True):
         """
@@ -391,14 +415,18 @@ class GaiaWrapper(object):
         if not normalization:
             trans_hist = self.transformations_history
             for i in range(0, len(trans_hist)):
-                if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
-                    normalization_coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
+                if trans_hist[-(i + 1)]['Analyzer name'] == 'normalize':
+                    normalization_coeffs = trans_hist[-(i + 1)]['Applier parameters']['coeffs']
 
         required_layout = generate_structured_dict_from_layout(required_descriptor_names)
         try:
             p = self.original_dataset.point(str(point_name))
         except:
-            return {'error': True, 'result': 'Sound does not exist in gaia index.', 'status_code': sim_settings.NOT_FOUND_CODE}
+            return {
+                'error': True,
+                'result': 'Sound does not exist in gaia index.',
+                'status_code': sim_settings.NOT_FOUND_CODE
+            }
 
         for descriptor_name in required_descriptor_names:
             try:
@@ -412,7 +440,7 @@ class GaiaWrapper(object):
                         else:
                             normalized_value = []
                             for i in range(0, len(a)):
-                                normalized_value.append(float(value[i]-b[i]) / a[i])
+                                normalized_value.append(float(value[i] - b[i]) / a[i])
                             value = normalized_value
             except:
                 try:
@@ -438,7 +466,7 @@ class GaiaWrapper(object):
             return {'error': True, 'result': msg, 'status_code': sim_settings.SERVER_ERROR_CODE}
 
         query_point = str(query_point)
-        logger.info('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
+        logger.info('NN search for point with name %s (preset = %s)' % (query_point, preset_name))
         results = []
 
         if not self.original_dataset.contains(query_point):
@@ -456,8 +484,9 @@ class GaiaWrapper(object):
 
         return {'error': False, 'result': {'results': results, 'count': count}}
 
-    def api_search(self, target_type, target, filter, preset_name, metric_descriptor_names, num_results, offset,
-                   in_ids):
+    def api_search(
+        self, target_type, target, filter, preset_name, metric_descriptor_names, num_results, offset, in_ids
+    ):
 
         # Check if index has sufficient points
         size = self.original_dataset.size()
@@ -470,10 +499,10 @@ class GaiaWrapper(object):
         trans_hist = self.transformations_history
         layout = self.original_dataset.layout()
         pca_layout = self.pca_dataset.layout()
-        coeffs = None  # Get normalization coefficients
+        coeffs = None    # Get normalization coefficients
         for i in range(0, len(trans_hist)):
-            if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
-                coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
+            if trans_hist[-(i + 1)]['Analyzer name'] == 'normalize':
+                coeffs = trans_hist[-(i + 1)]['Applier parameters']['coeffs']
 
         # Process target
         if target:
@@ -504,17 +533,20 @@ class GaiaWrapper(object):
                                 a = coeffs[param]['a']
                                 b = coeffs[param]['b']
                                 if len(a) == 1:
-                                    norm_value = a[0]*value + b[0]
+                                    norm_value = a[0] * value + b[0]
                                 else:
                                     norm_value = []
-                                    for i in range(0,len(a)):
-                                        norm_value.append(a[i]*value[i]+b[i])
+                                    for i in range(0, len(a)):
+                                        norm_value.append(a[i] * value[i] + b[i])
                                 query.setValue(str(param), norm_value)
                             else:
                                 query.setValue(str(param), value)
                 except:
-                    return {'error': True, 'result': 'Invalid target (descriptor values could not be correctly parsed)',
-                            'status_code': sim_settings.BAD_REQUEST_CODE}
+                    return {
+                        'error': True,
+                        'result': 'Invalid target (descriptor values could not be correctly parsed)',
+                        'status_code': sim_settings.BAD_REQUEST_CODE
+                    }
 
                 # Overwrite metric with present descriptors in target
                 metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
@@ -529,14 +561,16 @@ class GaiaWrapper(object):
                     p, query = Point(), Point()
                     p.loadFromString(yaml.dump(target))
                     if preset_name == 'pca':
-                        query = self.pca_dataset.history().mapPoint(p)  # map point to pca dataset
+                        query = self.pca_dataset.history().mapPoint(p)    # map point to pca dataset
                     else:
-                        query = self.original_dataset.history().mapPoint(p)  # map point to original dataset
+                        query = self.original_dataset.history().mapPoint(p)    # map point to original dataset
                     target_file_parsing_type = 'mapPoint'
 
                 except Exception as e:
-                    logger.info('Unable to create gaia point from uploaded file (%s). '
-                                 'Trying adding descriptors one by one.' % e)
+                    logger.info(
+                        'Unable to create gaia point from uploaded file (%s). '
+                        'Trying adding descriptors one by one.' % e
+                    )
 
                     # If does not work load descriptors one by one
                     try:
@@ -556,11 +590,11 @@ class GaiaWrapper(object):
                                         a = coeffs[param]['a']
                                         b = coeffs[param]['b']
                                         if len(a) == 1:
-                                            norm_value = a[0]*value + b[0]
+                                            norm_value = a[0] * value + b[0]
                                         else:
                                             norm_value = []
-                                            for i in range(0,len(a)):
-                                                norm_value.append(a[i]*value[i]+b[i])
+                                            for i in range(0, len(a)):
+                                                norm_value.append(a[i] * value[i] + b[i])
                                         query.setValue(str(param[1:]), norm_value)
                                     except:
                                         nonused_features.append(param)
@@ -570,21 +604,27 @@ class GaiaWrapper(object):
                                 nonused_features.append(param)
 
                         if preset_name == 'pca':
-                            query = self.pca_dataset.history().mapPoint(query)  # map point to pca dataset
+                            query = self.pca_dataset.history().mapPoint(query)    # map point to pca dataset
                         else:
-                            query = self.original_dataset.history().mapPoint(p)  # map point to original dataset
+                            query = self.original_dataset.history().mapPoint(p)    # map point to original dataset
 
                         target_file_parsing_type = 'walkDict'
 
                     except Exception as e:
-                        logger.info('Unable to create gaia point from uploaded file and adding descriptors one by '
-                                     'one (%s)' % e)
-                        return {'error': True, 'result': 'Unable to create gaia point from uploaded file. Probably the '
-                                                         'file does not have the required layout. Are you using the '
-                                                         'correct version of Essentia\'s Freesound extractor?',
-                                'status_code': sim_settings.SERVER_ERROR_CODE}
+                        logger.info(
+                            'Unable to create gaia point from uploaded file and adding descriptors one by '
+                            'one (%s)' % e
+                        )
+                        return {
+                            'error': True,
+                            'result':
+                                'Unable to create gaia point from uploaded file. Probably the '
+                                'file does not have the required layout. Are you using the '
+                                'correct version of Essentia\'s Freesound extractor?',
+                            'status_code': sim_settings.SERVER_ERROR_CODE
+                        }
         else:
-            query = Point()  # Empty target
+            query = Point()    # Empty target
             if preset_name == 'pca':
                 query.setLayout(pca_layout)
             else:
@@ -594,7 +634,7 @@ class GaiaWrapper(object):
         if filter:
             filter = parse_filter_list(filter, coeffs)
         else:
-            filter = ""  # Empty filter
+            filter = ""    # Empty filter
 
         # log
         log_message = 'Similarity search'
@@ -617,7 +657,7 @@ class GaiaWrapper(object):
             else:
                 filter += ' AND point.id IN ("' + '", "'.join(in_ids) + '")'
 
-         # Set query metric
+        # Set query metric
         metric = self.metrics[preset_name]
         if metric_descriptor_names:
             metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': metric_descriptor_names})

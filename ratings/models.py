@@ -49,8 +49,8 @@ def post_delete_rating(sender, instance, **kwargs):
     try:
         with transaction.atomic():
             instance.sound.num_ratings = F('num_ratings') - 1
-            avg_rating = SoundRating.objects.filter(
-                    sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0.0))
+            avg_rating = SoundRating.objects.filter(sound_id=instance.sound_id
+                                                    ).aggregate(average_rating=Coalesce(Avg('rating'), 0.0))
             rating = avg_rating['average_rating']
             instance.sound.avg_rating = rating
             instance.sound.save()
@@ -66,8 +66,8 @@ def update_num_ratings_on_post_save(sender, instance, created, **kwargs):
         if created:
             instance.sound.num_ratings = F('num_ratings') + 1
 
-        avg_rating = SoundRating.objects.filter(
-            sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0.0))
+        avg_rating = SoundRating.objects.filter(sound_id=instance.sound_id
+                                                ).aggregate(average_rating=Coalesce(Avg('rating'), 0.0))
         rating = avg_rating['average_rating']
         instance.sound.avg_rating = rating
         instance.sound.save()

@@ -38,34 +38,37 @@ class Command(LoggingBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-a', '--analyzer',
+            '-a',
+            '--analyzer',
             action='store',
             dest='analyzer',
             default=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-            help='Only index sounds analyzed with specific anayzer name/version')
+            help='Only index sounds analyzed with specific anayzer name/version'
+        )
 
         parser.add_argument(
-            '-l', '--limit',
-            action='store',
-            dest='limit',
-            default=1000,
-            help='Maximum number of sounds to index')
+            '-l', '--limit', action='store', dest='limit', default=1000, help='Maximum number of sounds to index'
+        )
 
         parser.add_argument(
-            '-f', '--force',
+            '-f',
+            '--force',
             action='store_true',
             dest='force',
             default=False,
-            help='Reindex all sounds regardless of their similarity state')
+            help='Reindex all sounds regardless of their similarity state'
+        )
 
         parser.add_argument(
-            '-i', '--indexing_server',
+            '-i',
+            '--indexing_server',
             action='store_true',
             dest='indexing_server',
             default=False,
-            help='Send files to the indexing server instead of the main similarity server')
+            help='Send files to the indexing server instead of the main similarity server'
+        )
 
-    def handle(self,  *args, **options):
+    def handle(self, *args, **options):
         self.log_start()
 
         limit = int(options['limit'])
@@ -78,8 +81,10 @@ class Command(LoggingBaseCommand):
         if options['force']:
             sound_ids_to_be_added = sound_ids_analyzed_with_analyzer_ok[:limit]
         else:
-            sound_ids_similarity_pending =  list(Sound.public.filter(similarity_state='PE').values_list('id', flat=True))
-            sound_ids_to_be_added = list(set(sound_ids_similarity_pending).intersection(sound_ids_analyzed_with_analyzer_ok))[:limit]
+            sound_ids_similarity_pending = list(Sound.public.filter(similarity_state='PE').values_list('id', flat=True))
+            sound_ids_to_be_added = list(
+                set(sound_ids_similarity_pending).intersection(sound_ids_analyzed_with_analyzer_ok)
+            )[:limit]
 
         N = len(sound_ids_to_be_added)
         to_be_added = sorted(Sound.objects.filter(id__in=sound_ids_to_be_added), key=lambda x: x.id)
@@ -94,14 +99,18 @@ class Command(LoggingBaseCommand):
                     sound.set_similarity_state('OK')
                     sound.invalidate_template_caches()
                 n_added += 1
-                console_logger.info("%s (%i of %i)" % (result, count+1, N))
+                console_logger.info("%s (%i of %i)" % (result, count + 1, N))
 
             except Exception as e:
                 if not options['indexing_server']:
                     sound.set_similarity_state('FA')
                 n_failed += 1
-                console_logger.info('Unexpected error while trying to add sound (id: %i, %i of %i): \n\t%s'
-                                     % (sound.id, count+1, N, str(e)))
-                sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+                console_logger.info(
+                    'Unexpected error while trying to add sound (id: %i, %i of %i): \n\t%s' %
+                    (sound.id, count + 1, N, str(e))
+                )
+                sentry_sdk.capture_exception(
+                    e
+                )    # Manually capture exception so it has mroe info and Sentry can organize it properly
 
         self.log_end({'n_sounds_added': n_added, 'n_sounds_failed': n_failed})

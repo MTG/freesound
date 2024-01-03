@@ -178,8 +178,10 @@ class PackManagerQueryMethods(TestCase):
 
     fixtures = ['licenses']
 
-    fields_to_check_bulk_query_id = ['id', 'user_id', 'name', 'description', 'is_dirty', 'created', 'license_crc',
-                                     'last_updated', 'num_downloads', 'num_sounds', 'is_deleted']
+    fields_to_check_bulk_query_id = [
+        'id', 'user_id', 'name', 'description', 'is_dirty', 'created', 'license_crc', 'last_updated', 'num_downloads',
+        'num_sounds', 'is_deleted'
+    ]
 
     def setUp(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=3, num_packs=3, tags="tag1 tag2 tag3")

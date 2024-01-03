@@ -57,6 +57,7 @@ class GenericDataFilter(logging.Filter):
     properties of the message so graylog can process them. If the parsing does not succeed, the
     message is sent as is.
     """
+
     def filter(self, record):
         try:
             message = record.getMessage()
@@ -65,7 +66,7 @@ class GenericDataFilter(logging.Filter):
             for key, value in fields.items():
                 setattr(record, key, value)
         except (IndexError, ValueError, AttributeError):
-            pass  # Message is not formatted for json parsing
+            pass    # Message is not formatted for json parsing
         return True
 
 

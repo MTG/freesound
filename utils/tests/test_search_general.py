@@ -69,7 +69,7 @@ class SearchUtilsTest(TestCase):
     def test_search_prepare_parameters_with_query_params(self):
         # "dog" query, search only in tags and descriptions, duration from 1-10 sec, only geotag, sort by duration, no group by pack
         url_query_str = '?q=dog&f=duration:[1+TO+10]+is_geotagged:1&s=Duration+(longest+first)&advanced=1&a_tag=1&a_description=1&g='
-        request = self.factory.get(reverse('sounds-search')+url_query_str)
+        request = self.factory.get(reverse('sounds-search') + url_query_str)
         SessionMiddleware().process_request(request)
         AuthenticationMiddleware().process_request(request)
         request.session.save()
@@ -77,14 +77,18 @@ class SearchUtilsTest(TestCase):
 
         expected_default_query_params = {
             'query_fields': {
-                settings.SEARCH_SOUNDS_FIELD_ID: 0,
+                settings.SEARCH_SOUNDS_FIELD_ID:
+                    0,
                 settings.SEARCH_SOUNDS_FIELD_TAGS:
                     settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_TAGS],
                 settings.SEARCH_SOUNDS_FIELD_DESCRIPTION:
                     settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_DESCRIPTION],
-                settings.SEARCH_SOUNDS_FIELD_USER_NAME: 0,
-                settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 0,
-                settings.SEARCH_SOUNDS_FIELD_NAME: 0
+                settings.SEARCH_SOUNDS_FIELD_USER_NAME:
+                    0,
+                settings.SEARCH_SOUNDS_FIELD_PACK_NAME:
+                    0,
+                settings.SEARCH_SOUNDS_FIELD_NAME:
+                    0
             },
             'sort': settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST,
             'num_sounds': settings.SOUNDS_PER_PAGE,
@@ -107,11 +111,11 @@ class SearchUtilsTest(TestCase):
         }
 
         expected_advanced_search_params_dict = {
-            'a_tag': '1', 
-            'a_username': '', 
-            'a_description': '1', 
-            'a_packname': '', 
-            'a_filename': '', 
+            'a_tag': '1',
+            'a_username': '',
+            'a_description': '1',
+            'a_packname': '',
+            'a_filename': '',
             'a_soundid': '',
         }
 
@@ -143,6 +147,7 @@ class SearchUtilsTest(TestCase):
     def test_remove_facet_filters_special_char2(self):
         query_filter_str = 'grouping_pack:"19265_Impacts, Hits, Friction & Tools" tag:"tools" samplerate:"44100" \
                           bitrate:"1379" duration:[0 TO 10]'
+
         parsed_filters = parse_query_filter_string(query_filter_str)
         filter_without_facet, has_facet_filter = remove_facet_filters(parsed_filters)
         self.assertTrue(has_facet_filter)
@@ -157,7 +162,7 @@ class SearchUtilsTest(TestCase):
 
     def test_search_prepare_parameters_non_ascii_query(self):
         # Simple test to check if some non ascii characters are correctly handled by search_prepare_parameters()
-        request = self.factory.get(reverse('sounds-search')+'?q=Æ æ ¿ É')
+        request = self.factory.get(reverse('sounds-search') + '?q=Æ æ ¿ É')
         SessionMiddleware().process_request(request)
         AuthenticationMiddleware().process_request(request)
         request.session.save()
@@ -172,12 +177,24 @@ class SearchUtilsTest(TestCase):
 
         # duraton filter is not a facet, but should stay present when removing a facet.
         expected_filter_query_split = [
-            {'remove_url': 'duration:[0 TO 10]', 'name': 'license:"attribution"'}, 
+            {
+                'remove_url': 'duration:[0 TO 10]',
+                'name': 'license:"attribution"'
+            },
         ]
         expected_filter_query_split = [
-            {'remove_url': quote_plus('duration:[0 TO 10] username:"XavierFav" grouping_pack:"1_best-pack-ever"'), 'name': 'license:"attribution"'}, 
-            {'remove_url': quote_plus('duration:[0 TO 10] license:"attribution" grouping_pack:"1_best-pack-ever"'), 'name': 'username:"XavierFav"'}, 
-            {'remove_url': quote_plus('duration:[0 TO 10] license:"attribution" username:"XavierFav"'), 'name': 'pack:best-pack-ever'},
+            {
+                'remove_url': quote_plus('duration:[0 TO 10] username:"XavierFav" grouping_pack:"1_best-pack-ever"'),
+                'name': 'license:"attribution"'
+            },
+            {
+                'remove_url': quote_plus('duration:[0 TO 10] license:"attribution" grouping_pack:"1_best-pack-ever"'),
+                'name': 'username:"XavierFav"'
+            },
+            {
+                'remove_url': quote_plus('duration:[0 TO 10] license:"attribution" username:"XavierFav"'),
+                'name': 'pack:best-pack-ever'
+            },
         ]
 
         # the order does not matter for the list of facet dicts.
@@ -187,28 +204,31 @@ class SearchUtilsTest(TestCase):
         username_facer_dict_idx = filter_query_names.index('username:"XavierFav"')
         grouping_pack_facet_dict_idx = filter_query_names.index('pack:best-pack-ever')
 
-        # we use assertIn because the unicode strings that split_filter_query generates can incorporate 
+        # we use assertIn because the unicode strings that split_filter_query generates can incorporate
         # additional spaces at the end of the string, which is not a problem.
         # Additonally, some additional spaces have been observed in the middle of the remove_url string. We replace double
-        # spaces with single ones in this test. However, we should probably identify where does this additional spaces 
+        # spaces with single ones in this test. However, we should probably identify where does this additional spaces
         # come from.
         # 1-Attribution
-        self.assertIn(expected_filter_query_split[0]['name'],
-                      filter_query_split[cc_attribution_facet_dict_idx]['name'])
-        self.assertIn(expected_filter_query_split[0]['remove_url'],
-                      filter_query_split[cc_attribution_facet_dict_idx]['remove_url'].replace('++', '+'))
+        self.assertIn(expected_filter_query_split[0]['name'], filter_query_split[cc_attribution_facet_dict_idx]['name'])
+        self.assertIn(
+            expected_filter_query_split[0]['remove_url'],
+            filter_query_split[cc_attribution_facet_dict_idx]['remove_url'].replace('++', '+')
+        )
 
         # 2-Username
-        self.assertIn(expected_filter_query_split[1]['name'],
-                      filter_query_split[username_facer_dict_idx]['name'])
-        self.assertIn(expected_filter_query_split[1]['remove_url'],
-                      filter_query_split[username_facer_dict_idx]['remove_url'].replace('++', '+'))
+        self.assertIn(expected_filter_query_split[1]['name'], filter_query_split[username_facer_dict_idx]['name'])
+        self.assertIn(
+            expected_filter_query_split[1]['remove_url'],
+            filter_query_split[username_facer_dict_idx]['remove_url'].replace('++', '+')
+        )
 
         # 3-Pack
-        self.assertIn(expected_filter_query_split[2]['name'],
-                      filter_query_split[grouping_pack_facet_dict_idx]['name'])
-        self.assertIn(expected_filter_query_split[2]['remove_url'],
-                      filter_query_split[grouping_pack_facet_dict_idx]['remove_url'].replace('++', '+'))
+        self.assertIn(expected_filter_query_split[2]['name'], filter_query_split[grouping_pack_facet_dict_idx]['name'])
+        self.assertIn(
+            expected_filter_query_split[2]['remove_url'],
+            filter_query_split[grouping_pack_facet_dict_idx]['remove_url'].replace('++', '+')
+        )
 
     def test_split_filter_query_special_chars(self):
         filter_query_string = 'license:"sampling+" grouping_pack:"1_example pack + @ #()*"'
@@ -217,32 +237,43 @@ class SearchUtilsTest(TestCase):
         filter_query_names = [filter_query_dict['name'] for filter_query_dict in filter_query_split]
 
         expected_filter_query_split = [
-            {'remove_url': quote_plus('grouping_pack:"1_example pack + @ #()*"'), 'name': 'license:"sampling+"'},
-            {'remove_url': quote_plus('license:"sampling+"'), 'name': 'pack:example pack + @ #()*'},
+            {
+                'remove_url': quote_plus('grouping_pack:"1_example pack + @ #()*"'),
+                'name': 'license:"sampling+"'
+            },
+            {
+                'remove_url': quote_plus('license:"sampling+"'),
+                'name': 'pack:example pack + @ #()*'
+            },
         ]
         cc_samplingplus_facet_dict_idx = filter_query_names.index('license:"sampling+"')
         grouping_pack_facet_dict_idx = filter_query_names.index('pack:example pack + @ #()*')
 
-        self.assertIn(expected_filter_query_split[0]['name'],
-                      filter_query_split[cc_samplingplus_facet_dict_idx]['name'])
-        self.assertIn(expected_filter_query_split[0]['remove_url'],
-                      filter_query_split[cc_samplingplus_facet_dict_idx]['remove_url'])
+        self.assertIn(
+            expected_filter_query_split[0]['name'], filter_query_split[cc_samplingplus_facet_dict_idx]['name']
+        )
+        self.assertIn(
+            expected_filter_query_split[0]['remove_url'],
+            filter_query_split[cc_samplingplus_facet_dict_idx]['remove_url']
+        )
 
-        self.assertIn(expected_filter_query_split[1]['name'],
-                      filter_query_split[grouping_pack_facet_dict_idx]['name'])
-        self.assertIn(expected_filter_query_split[1]['remove_url'],
-                      filter_query_split[grouping_pack_facet_dict_idx]['remove_url'])
+        self.assertIn(expected_filter_query_split[1]['name'], filter_query_split[grouping_pack_facet_dict_idx]['name'])
+        self.assertIn(
+            expected_filter_query_split[1]['remove_url'], filter_query_split[grouping_pack_facet_dict_idx]['remove_url']
+        )
 
-    # most of these tests just ensure that no exception is returned when trying to parse filter strings 
-    # that gave problems while developping the filter string parser function 
+    # most of these tests just ensure that no exception is returned when trying to parse filter strings
+    # that gave problems while developping the filter string parser function
     # utils.search.lucene_parser.parse_query_filter_string()
     def test_parse_filter_query_special_created(self):
         filter_query_string = 'created:[NOW-7DAY TO NOW] license:"Creative Commons 0"'
         filter_query_split = parse_query_filter_string(filter_query_string)
-        self.assertEqual(filter_query_split, [
-            ['created', ':', '[', 'NOW-7DAY', ' TO ', 'NOW', ']'],
-            ['license', ':', '"Creative Commons 0"'],
-        ])
+        self.assertEqual(
+            filter_query_split, [
+                ['created', ':', '[', 'NOW-7DAY', ' TO ', 'NOW', ']'],
+                ['license', ':', '"Creative Commons 0"'],
+            ]
+        )
 
     def test_parse_filter_query_special_char(self):
         filter_query_string = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'
@@ -261,18 +292,18 @@ class SearchUtilsTest(TestCase):
     def test_parse_filter_query_geofilter(self):
         filter_query_string = 'tag:"cool" \'{!geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50}\''
         filter_query_split = parse_query_filter_string(filter_query_string)
-        self.assertEqual(filter_query_split, [
-            ['tag', ':', '"cool"'],
-            ["'{!", 'geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50', "}'"]
-        ])
+        self.assertEqual(
+            filter_query_split,
+            [['tag', ':', '"cool"'], ["'{!", 'geofilt sfield=geotag pt=39.7750014,-94.2735586 d=50', "}'"]]
+        )
 
     def test_parse_filter_composed_with_OR(self):
         filter_query_string = 'tag:"cool" license:("Attribution" OR "Creative Commons 0")'
         parsed_filters = parse_query_filter_string(filter_query_string)
-        self.assertEqual(parsed_filters, [
-            ['tag', ':', '"cool"'],
-            ['license', ':', '(', '"Attribution"', "OR", '"Creative Commons 0"', ')']
-        ])
+        self.assertEqual(
+            parsed_filters,
+            [['tag', ':', '"cool"'], ['license', ':', '(', '"Attribution"', "OR", '"Creative Commons 0"', ')']]
+        )
 
     def test_parse_filter_nested_composed_with_OR(self):
         filter_query_string = '("Attribution" OR ("Attribution" OR "Creative Commons 0"))'
@@ -287,10 +318,13 @@ class SearchUtilsTest(TestCase):
         parsed_filters = parse_query_filter_string(filter_query_string)
         filter_query_split = split_filter_query(filter_query_string, parsed_filters, '1')
 
-        expected_filter_query_split = [
-            {'remove_url': quote_plus('duration:[0 TO 10]'), 'name': 'license:"attribution"'},
-            {'remove_url': quote_plus('duration:[0 TO 10] license:"attribution"'), 'name': 'Cluster #1'}
-        ]
+        expected_filter_query_split = [{
+            'remove_url': quote_plus('duration:[0 TO 10]'),
+            'name': 'license:"attribution"'
+        }, {
+            'remove_url': quote_plus('duration:[0 TO 10] license:"attribution"'),
+            'name': 'Cluster #1'
+        }]
 
         # check that the cluster facet exists
         filter_query_names = [filter_query_dict['name'] for filter_query_dict in filter_query_split]
@@ -301,12 +335,13 @@ class SearchUtilsTest(TestCase):
         cc_attribution_facet_dict_idx = filter_query_names.index('license:"attribution"')
         cluster_facet_dict_idx = filter_query_names.index('Cluster #1')
 
-        self.assertIn(expected_filter_query_split[0]['name'],
-                      filter_query_split[cc_attribution_facet_dict_idx]['name'])
-        self.assertIn(expected_filter_query_split[0]['remove_url'],
-                      filter_query_split[cc_attribution_facet_dict_idx]['remove_url'])
+        self.assertIn(expected_filter_query_split[0]['name'], filter_query_split[cc_attribution_facet_dict_idx]['name'])
+        self.assertIn(
+            expected_filter_query_split[0]['remove_url'],
+            filter_query_split[cc_attribution_facet_dict_idx]['remove_url']
+        )
 
-        self.assertIn(expected_filter_query_split[1]['name'],
-                      filter_query_split[cluster_facet_dict_idx]['name'])
-        self.assertIn(expected_filter_query_split[1]['remove_url'],
-                      filter_query_split[cluster_facet_dict_idx]['remove_url'])
+        self.assertIn(expected_filter_query_split[1]['name'], filter_query_split[cluster_facet_dict_idx]['name'])
+        self.assertIn(
+            expected_filter_query_split[1]['remove_url'], filter_query_split[cluster_facet_dict_idx]['remove_url']
+        )

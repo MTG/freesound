@@ -28,7 +28,7 @@ LOGGING = {
         },
         'django.request': {
             'handlers': ['stdout'],
-            'level': 'ERROR',   # only catches 5xx not 4xx messages
+            'level': 'ERROR',    # only catches 5xx not 4xx messages
             'propagate': True,
         },
         'sounds': {

@@ -40,7 +40,8 @@ class Command(LoggingBaseCommand):
     """
     help = 'Send stream notifications to users who have not been notified for the last ' \
            'settings.NOTIFICATION_TIMEDELTA_PERIOD period and whose stream has new sounds for that period'
-    args = True  # For backwards compatibility mode
+    args = True    # For backwards compatibility mode
+
     # See: http://stackoverflow.com/questions/30244288/django-management-command-cannot-see-arguments
 
     def handle(self, *args, **options):
@@ -55,8 +56,8 @@ class Command(LoggingBaseCommand):
         user_ids = email_type.useremailsetting_set.values_list('user_id')
 
         users_enabled_notifications = Profile.objects.filter(user_id__in=user_ids).exclude(
-            last_stream_email_sent__gt=date_today_minus_notification_timedelta).order_by(
-            "-last_attempt_of_sending_stream_email")[:settings.MAX_EMAILS_PER_COMMAND_RUN]
+            last_stream_email_sent__gt=date_today_minus_notification_timedelta
+        ).order_by("-last_attempt_of_sending_stream_email")[:settings.MAX_EMAILS_PER_COMMAND_RUN]
 
         n_emails_sent = 0
         for profile in users_enabled_notifications:
@@ -84,30 +85,32 @@ class Command(LoggingBaseCommand):
             except Exception as e:
                 # If error occur do not send the email
                 console_logger.info(f"could not get new sounds data for {username.encode('utf-8')}")
-                profile.save()  # Save last_attempt_of_sending_stream_email
+                profile.save()    # Save last_attempt_of_sending_stream_email
                 continue
 
             if not users_sounds and not tags_sounds:
                 console_logger.info(f"no news sounds for {username.encode('utf-8')}")
-                profile.save()  # Save last_attempt_of_sending_stream_email
+                profile.save()    # Save last_attempt_of_sending_stream_email
                 continue
 
-            tvars = {'username': username,
-                     'users_sounds': users_sounds,
-                     'tags_sounds': tags_sounds}
+            tvars = {'username': username, 'users_sounds': users_sounds, 'tags_sounds': tags_sounds}
             text_content = render_mail_template('emails/email_stream.txt', tvars)
 
             # Send email
             try:
-                send_mail(settings.EMAIL_SUBJECT_STREAM_EMAILS, text_content,
-                          extra_subject=extra_email_subject, user_to=user)
+                send_mail(
+                    settings.EMAIL_SUBJECT_STREAM_EMAILS, text_content, extra_subject=extra_email_subject, user_to=user
+                )
             except Exception as e:
                 # Do not send the email and do not update the last email sent field in the profile
-                profile.save()  # Save last_attempt_of_sending_stream_email
-                commands_logger.info("Unexpected error while sending stream notification email (%s)" % json.dumps(
-                    {'email_to': profile.get_email_for_delivery(),
-                     'username': profile.user.username,
-                     'error': str(e)}))
+                profile.save()    # Save last_attempt_of_sending_stream_email
+                commands_logger.info(
+                    "Unexpected error while sending stream notification email (%s)" % json.dumps({
+                        'email_to': profile.get_email_for_delivery(),
+                        'username': profile.user.username,
+                        'error': str(e)
+                    })
+                )
                 continue
             n_emails_sent += 1
 

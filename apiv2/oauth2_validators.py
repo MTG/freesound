@@ -22,7 +22,7 @@ class OAuth2Validator(ProviderOauth2Validator):
         you to define one allowed authorization grant type per client. Therefore we need to customise
         this method.
         """
-        assert (grant_type in GRANT_TYPE_MAPPING)  # mapping misconfiguration
+        assert (grant_type in GRANT_TYPE_MAPPING)    # mapping misconfiguration
         if grant_type == AbstractApplication.GRANT_PASSWORD:
             if request.client.apiv2_client.allow_oauth_passoword_grant:
                 return True

@@ -44,8 +44,7 @@ def get_queues_status(request):
         celery_task_counts = get_queues_task_counts()
     except Exception:
         celery_task_counts = []
-    return render(request, 'monitor/queues_status.html',
-                  {'celery_task_counts': celery_task_counts})
+    return render(request, 'monitor/queues_status.html', {'celery_task_counts': celery_task_counts})
 
 
 @login_required
@@ -58,19 +57,15 @@ def monitor_home(request):
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def monitor_processing(request):
     # Processing
-    sounds_queued_count = Sound.objects.filter(
-            processing_ongoing_state='QU').count()
+    sounds_queued_count = Sound.objects.filter(processing_ongoing_state='QU').count()
     sounds_pending_count = Sound.objects.\
         filter(processing_state='PE')\
         .exclude(processing_ongoing_state='PR')\
         .exclude(processing_ongoing_state='QU')\
         .count()
-    sounds_processing_count = Sound.objects.filter(
-            processing_ongoing_state='PR').count()
-    sounds_failed_count = Sound.objects.filter(
-            processing_state='FA').count()
-    sounds_ok_count = Sound.objects.filter(
-            processing_state='OK').count()
+    sounds_processing_count = Sound.objects.filter(processing_ongoing_state='PR').count()
+    sounds_failed_count = Sound.objects.filter(processing_state='FA').count()
+    sounds_ok_count = Sound.objects.filter(processing_state='OK').count()
     tvars = {
         "sounds_queued_count": sounds_queued_count,
         "sounds_pending_count": sounds_pending_count,
@@ -82,11 +77,12 @@ def monitor_processing(request):
     }
     return render(request, 'monitor/processing.html', tvars)
 
+
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def monitor_analysis(request):
     # Analysis
-    analyzers_data = {}  
+    analyzers_data = {}
     all_sound_ids = Sound.objects.all().values_list('id', flat=True).order_by('id')
     n_sounds = len(all_sound_ids)
     for analyzer_name in settings.ANALYZERS_CONFIGURATION.keys():
@@ -95,7 +91,7 @@ def monitor_analysis(request):
         fa = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="FA").count()
         qu = SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="QU").count()
         missing = n_sounds - (ok + sk + fa + qu)
-        percentage_done = (ok + sk + fa) * 100.0/n_sounds
+        percentage_done = (ok + sk + fa) * 100.0 / n_sounds
         analyzers_data[analyzer_name] = {
             'OK': ok,
             'SK': sk,
@@ -124,15 +120,14 @@ def monitor_moderation(request):
     time_span = datetime.datetime.now() - datetime.timedelta((6 * 365) // 12)
     #Maybe we should user created and not modified
     user_ids = tickets.models.Ticket.objects.filter(
-            status=TICKET_STATUS_CLOSED,
-            created__gt=time_span,
-            assignee__isnull=False
-    ).values_list("assignee_id", flat=True)
+        status=TICKET_STATUS_CLOSED, created__gt=time_span, assignee__isnull=False
+    ).values_list(
+        "assignee_id", flat=True
+    )
     counter = Counter(user_ids)
     moderators = User.objects.filter(id__in=list(counter.keys()))
     moderators = [(counter.get(m.id), m) for m in moderators.all()]
     ordered = sorted(moderators, key=lambda m: m[0], reverse=True)
-
 
     tvars = {
         "new_upload_count": new_upload_count,
@@ -157,7 +152,7 @@ def monitor_stats(request):
 def moderators_stats(request):
     return HttpResponseRedirect(reverse('monitor-moderation'))
 
-   
+
 def queries_stats_ajax(request):
     try:
         auth = (settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD)
@@ -167,8 +162,9 @@ def queries_stats_ajax(request):
             'filter': f'streams:{settings.GRAYLOG_SEARCH_STREAM_ID}',
             'field': 'query'
         }
-        req = requests.get(settings.GRAYLOG_DOMAIN + '/graylog/api/search/universal/relative/terms',
-                auth=auth, params=params)
+        req = requests.get(
+            settings.GRAYLOG_DOMAIN + '/graylog/api/search/universal/relative/terms', auth=auth, params=params
+        )
         req.raise_for_status()
         return JsonResponse(req.json())
     except requests.HTTPError:
@@ -240,9 +236,8 @@ def process_sounds(request):
         if sounds_to_process:
             for sound in sounds_to_process:
                 sound.process(force=True)
-    
+
     return HttpResponseRedirect(reverse("monitor-processing"))
-    
 
 
 def moderator_stats_ajax(request):

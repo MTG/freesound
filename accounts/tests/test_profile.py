@@ -51,18 +51,9 @@ class ProfileGetUserTags(TestCase):
         user = User.objects.get(username="Anton")
         mock_search_engine = mock.Mock()
         conf = {
-            'get_user_tags.return_value': [
-                ('conversation', 1),
-                ('dutch', 1),
-                ('glas', 1),
-                ('glass', 1),
-                ('instrument', 2),
-                ('laughter', 1),
-                ('sine-like', 1),
-                ('struck', 1),
-                ('tone', 1),
-                ('water', 1)
-            ]
+            'get_user_tags.return_value': [('conversation', 1), ('dutch', 1), ('glas', 1), ('glass', 1),
+                                           ('instrument', 2), ('laughter', 1), ('sine-like', 1), ('struck', 1),
+                                           ('tone', 1), ('water', 1)]
         }
         mock_search_engine.return_value.configure_mock(**conf)
         accounts.models.get_search_engine = mock_search_engine
@@ -100,13 +91,15 @@ class UserEditProfile(TestCase):
     def test_edit_user_profile(self):
         user = User.objects.create_user("testuser")
         self.client.force_login(user)
-        resp = self.client.post("/home/edit/", {
-            'profile-home_page': 'http://www.example.com/',
-            'profile-username': 'testuser',
-            'profile-about': 'About test text',
-            'profile-signature': 'Signature test text',
-            'profile-ui_theme_preference': 'd',            
-        })
+        resp = self.client.post(
+            "/home/edit/", {
+                'profile-home_page': 'http://www.example.com/',
+                'profile-username': 'testuser',
+                'profile-about': 'About test text',
+                'profile-signature': 'Signature test text',
+                'profile-ui_theme_preference': 'd',
+            }
+        )
 
         user = User.objects.select_related('profile').get(username="testuser")
         self.assertEqual(user.profile.home_page, 'http://www.example.com/')
@@ -116,13 +109,15 @@ class UserEditProfile(TestCase):
 
         # Now we change the username the maximum allowed times
         for i in range(settings.USERNAME_CHANGE_MAX_TIMES):
-            self.client.post("/home/edit/", {
-                'profile-home_page': 'http://www.example.com/',
-                'profile-username': 'testuser%d' % i,
-                'profile-about': 'About test text',
-                'profile-signature': 'Signature test text',
-                'profile-ui_theme_preference': 'd',
-            })
+            self.client.post(
+                "/home/edit/", {
+                    'profile-home_page': 'http://www.example.com/',
+                    'profile-username': 'testuser%d' % i,
+                    'profile-about': 'About test text',
+                    'profile-signature': 'Signature test text',
+                    'profile-ui_theme_preference': 'd',
+                }
+            )
 
             user.refresh_from_db()
             self.assertEqual(user.old_usernames.count(), i + 1)
@@ -130,13 +125,15 @@ class UserEditProfile(TestCase):
         # Now the "username" field in the form will be "disabled" because maximum number of username changes has been
         # reached. Therefore, the contents of "profile-username" in the POST request should have no effect and username
         # should not be changed any further
-        self.client.post("/home/edit/", {
-            'profile-home_page': 'http://www.example.com/',
-            'profile-username': 'testuser-error',
-            'profile-about': 'About test text',
-            'profile-signature': 'Signature test text',
-            'profile-ui_theme_preference': 'd',
-        })
+        self.client.post(
+            "/home/edit/", {
+                'profile-home_page': 'http://www.example.com/',
+                'profile-username': 'testuser-error',
+                'profile-about': 'About test text',
+                'profile-signature': 'Signature test text',
+                'profile-ui_theme_preference': 'd',
+            }
+        )
         user.refresh_from_db()
         self.assertEqual(user.old_usernames.count(), settings.USERNAME_CHANGE_MAX_TIMES)
 
@@ -290,11 +287,11 @@ class EmailBounceTest(TestCase):
     def test_request_email_change(self):
         user = User.objects.create_user('user', email='user@freesound.org')
         self.client.force_login(user)
-        cache.clear()  # Need to clear cache here to avoid 'random_sound' cache key being set
+        cache.clear()    # Need to clear cache here to avoid 'random_sound' cache key being set
         resp = self.client.get(reverse('front-page'))
         self.assertEqual(resp.status_code, 200)
         EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
-        cache.clear()  # Need to clear cache here to avoid 'random_sound' cache key being set
+        cache.clear()    # Need to clear cache here to avoid 'random_sound' cache key being set
         resp = self.client.get(reverse('front-page'))
         self.assertRedirects(resp, reverse('accounts-email-reset'))
 
@@ -302,7 +299,9 @@ class EmailBounceTest(TestCase):
         message_body = {
             "bounceType": "Permanent",
             "bounceSubType": "Suppressed",
-            "bouncedRecipients": [{"emailAddress": "user@freesound.org"}],
+            "bouncedRecipients": [{
+                "emailAddress": "user@freesound.org"
+            }],
             "timestamp": "2018-05-20T13:54:37.821Z"
         }
 
@@ -322,10 +321,12 @@ class EmailBounceTest(TestCase):
 
         # User fills in email reset form
         self.client.force_login(user)
-        resp = self.client.post(reverse('accounts-email-reset'), {
-            'email': 'new_email@freesound.org',
-            'password': '12345',
-        })
+        resp = self.client.post(
+            reverse('accounts-email-reset'), {
+                'email': 'new_email@freesound.org',
+                'password': '12345',
+            }
+        )
         self.assertRedirects(resp, reverse('accounts-email-reset-done'))
 
         # User goes to link to complete email reset (which is sent by email)
@@ -342,15 +343,19 @@ class EmailBounceTest(TestCase):
         EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
 
         # Admin changes user's email address via admin page
-        admin_user = User.objects.create_user('admin_user', email='admin_user@freesound.org',
-                                              is_staff=True, is_superuser=True)
+        admin_user = User.objects.create_user(
+            'admin_user', email='admin_user@freesound.org', is_staff=True, is_superuser=True
+        )
         self.client.force_login(admin_user)
-        resp = self.client.post(reverse('admin:auth_user_change', args=[user.id]), data={
-            'username': user.username,
-            'email': 'new_email@freesound.org',
-            'date_joined_0': "2015-10-06",
-            'date_joined_1': "16:42:00"
-        })
+        resp = self.client.post(
+            reverse('admin:auth_user_change', args=[user.id]),
+            data={
+                'username': user.username,
+                'email': 'new_email@freesound.org',
+                'date_joined_0': "2015-10-06",
+                'date_joined_1': "16:42:00"
+            }
+        )
         user.refresh_from_db()
         self.assertEqual(user.email, 'new_email@freesound.org')
 
@@ -377,7 +382,7 @@ class ProfileEmailIsValid(TestCase):
         email_bounce = EmailBounce.objects.create(user=user, type=EmailBounce.PERMANENT)
         self.assertEqual(user.profile.email_is_valid(), False)
         email_bounce.delete()
-        self.assertEqual(user.profile.email_is_valid(), True)  # Back to normal
+        self.assertEqual(user.profile.email_is_valid(), True)    # Back to normal
 
         # Test email becomes invalid when user is deleted (anonymized)
         user.profile.delete_user()
@@ -445,7 +450,7 @@ class ProfilePostInForumTest(TestCase):
         today = parse_date("2019-02-05 01:50:00")
         for i in range(9):
             post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
-            today = today + datetime.timedelta(minutes=i+10)
+            today = today + datetime.timedelta(minutes=i + 10)
             post.created = today
             post.save()
         self.user.profile.refresh_from_db()
@@ -539,8 +544,9 @@ class ProfileTestDownloadCountFields(TestCase):
     fixtures = ['licenses']
 
     def setUp(self):
-        self.user, self.packs, self.sounds = create_user_and_sounds(num_sounds=3, num_packs=3,
-                                                     processing_state="OK", moderation_state="OK")
+        self.user, self.packs, self.sounds = create_user_and_sounds(
+            num_sounds=3, num_packs=3, processing_state="OK", moderation_state="OK"
+        )
 
     @mock.patch('sounds.models.delete_sound_from_gaia')
     @mock.patch('sounds.models.delete_sounds_from_search_engine')
@@ -555,16 +561,16 @@ class ProfileTestDownloadCountFields(TestCase):
         # Test deleting downloaded sounds decreases the "num_sound_downloads" field
         # Delete 2 of the 3 downloaded sounds
         for i in range(0, len(self.sounds) - 1):
-            self.sounds[i].delete()  # This should decrease "num_sound_downloads" field
+            self.sounds[i].delete()    # This should decrease "num_sound_downloads" field
             self.user.profile.refresh_from_db()
             self.assertEqual(self.user.profile.num_sound_downloads, len(self.sounds) - 1 - i)
             self.assertEqual(self.sounds[0].user.profile.num_user_sounds_downloads, len(self.sounds) - 1 - i)
 
         # Now test that if the "num_sound_downloads" field is out of sync and deleting a sound would set it to
         # -1, we will set it to 0 instead to avoid DB check constraint error
-        self.user.profile.num_sound_downloads = 0  # Set num_sound_downloads out of sync (should be 1 instead of 0)
+        self.user.profile.num_sound_downloads = 0    # Set num_sound_downloads out of sync (should be 1 instead of 0)
         self.user.profile.save()
-        self.sounds[2].delete()  # Delete the remaining sound
+        self.sounds[2].delete()    # Delete the remaining sound
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.num_sound_downloads, 0)
         self.assertEqual(self.sounds[2].user.profile.num_user_sounds_downloads, 0)
@@ -580,16 +586,16 @@ class ProfileTestDownloadCountFields(TestCase):
         # Test deleting downloaded packs decreases the "num_pack_downloads" field
         # Delete 2 of the 3 downloaded packs
         for i in range(0, len(self.packs) - 1):
-            self.packs[i].delete()  # This should decrease "num_sound_downloads" field
+            self.packs[i].delete()    # This should decrease "num_sound_downloads" field
             self.user.profile.refresh_from_db()
             self.assertEqual(self.user.profile.num_pack_downloads, len(self.packs) - 1 - i)
             self.assertEqual(self.packs[i].user.profile.num_user_packs_downloads, len(self.packs) - 1 - i)
 
         # Now test that if the "num_pack_downloads" field is out of sync and deleting a pack would set it to
         # -1, we will set it to 0 instead to avoid DB check constraint error
-        self.user.profile.num_pack_downloads = 0  # Set num_sound_downloads out of sync (should be 1 instead of 0)
+        self.user.profile.num_pack_downloads = 0    # Set num_sound_downloads out of sync (should be 1 instead of 0)
         self.user.profile.save()
-        self.packs[2].delete()  # Delete the remaining sound
+        self.packs[2].delete()    # Delete the remaining sound
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.num_pack_downloads, 0)
         self.assertEqual(self.packs[2].user.profile.num_user_packs_downloads, 0)

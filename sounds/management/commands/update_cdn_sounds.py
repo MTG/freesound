@@ -34,7 +34,7 @@ cache_cdn_map = caches["cdn_map"]
 cdn_host = 'fsweb@cdn.freesound.org'
 cdn_sounds_dir = '/home/fsweb/sounds'
 cdn_symlinks_dir = '/home/fsweb/symlinks'
-tmp_dest_sound_dir =  '/home/fsweb/tmp/'
+tmp_dest_sound_dir = '/home/fsweb/tmp/'
 
 
 class Command(LoggingBaseCommand):
@@ -42,19 +42,39 @@ class Command(LoggingBaseCommand):
     help = 'Update the CDN map cache for sound downloads by copying new files to the remote CDN or using a JSON file with updated mapping'
 
     def add_arguments(self, parser):
-        parser.add_argument('-f', '--filepath', dest='filepath', type=str, help='Path to JSON file with sounds map. If using this option, no new sounds will be copied to the CDN but only the local map in cache will be updated')
-        parser.add_argument('-k', '--keypath', dest='keypath', default='/ssh_fsweb/cdn-ssh-key-fsweb', type=str, help='Path to the SSH private key to use for connecting to CDN')
+        parser.add_argument(
+            '-f',
+            '--filepath',
+            dest='filepath',
+            type=str,
+            help=
+            'Path to JSON file with sounds map. If using this option, no new sounds will be copied to the CDN but only the local map in cache will be updated'
+        )
+        parser.add_argument(
+            '-k',
+            '--keypath',
+            dest='keypath',
+            default='/ssh_fsweb/cdn-ssh-key-fsweb',
+            type=str,
+            help='Path to the SSH private key to use for connecting to CDN'
+        )
         parser.add_argument('-d', help='Clear the existing records in the cache (if any) and don\'t do anything else')
-        parser.add_argument('-l', action='store', dest='limit', default=500, help='Maximum number of sounds to copy to remote CDN and update cache')
-        
+        parser.add_argument(
+            '-l',
+            action='store',
+            dest='limit',
+            default=500,
+            help='Maximum number of sounds to copy to remote CDN and update cache'
+        )
+
     def handle(self, *args, **options):
 
         self.log_start()
 
         file_path = options['filepath']
         ssh_key_path = options['keypath']
-        delete_already_existing = options['d']       
-        limit = options['limit'] 
+        delete_already_existing = options['d']
+        limit = options['limit']
         num_added = 0
         num_failed = 0
 
@@ -66,7 +86,7 @@ class Command(LoggingBaseCommand):
                 console_logger.info(f'Adding cache items from file {file_path}')
                 map_data = json.load(open(file_path))
                 for sound_id, cdn_filename in map_data:
-                    cache_cdn_map.set(str(sound_id), cdn_filename, timeout=None)  # No expiration
+                    cache_cdn_map.set(str(sound_id), cdn_filename, timeout=None)    # No expiration
                     num_added = len(map_data)
             else:
                 console_logger.info('Finding new sounds to add to the cache')
@@ -83,18 +103,18 @@ class Command(LoggingBaseCommand):
                 ss = all_ss[:limit]
                 total = ss.count()
                 console_logger.info(f'Found {all_ss.count()} new sounds missing in the cache, will add first {total}')
-                
+
                 # Copy sounds if not already there, make symlinks and add them to cache
                 with Connection(host=cdn_host, connect_kwargs={'key_filename': ssh_key_path}) as c:
                     for count, sound in enumerate(ss):
                         # Define useful paths for that sound
                         sound_id = sound.id
                         src_sound_path = sound.locations('path')
-                        folder_id = str(sound.id//1000)
-                        dst_sound_path = os.path.join(cdn_sounds_dir, folder_id,  os.path.basename(src_sound_path))
+                        folder_id = str(sound.id // 1000)
+                        dst_sound_path = os.path.join(cdn_sounds_dir, folder_id, os.path.basename(src_sound_path))
                         console_logger.info(f'Adding sound to the CDN [{count + 1}/{total}] - {sound_id}')
 
-                        # Check if sound already exists in the expected remote location    
+                        # Check if sound already exists in the expected remote location
                         sound_exists = c.run(f'ls {dst_sound_path}', hide=True, warn=True).exited == 0
                         if not sound_exists:
                             # Copy file to remote, make intermediate folders if needed
@@ -105,10 +125,14 @@ class Command(LoggingBaseCommand):
                         # Before making the symlink, check again that sound exists, otherwise don't make it as there were problems copying sound
                         sound_exists = c.run(f'ls {dst_sound_path}', hide=True, warn=True).exited == 0
                         if sound_exists:
-                            c.run(f"rm {os.path.join(cdn_symlinks_dir, folder_id, f'{sound_id}-*')}", hide=True, warn=True)
+                            c.run(
+                                f"rm {os.path.join(cdn_symlinks_dir, folder_id, f'{sound_id}-*')}",
+                                hide=True,
+                                warn=True
+                            )
                             random_uuid = str(uuid.uuid4())
                             symlink_name = f'{sound_id}-{random_uuid}'
-                            dst_symlink_path = os.path.join(cdn_symlinks_dir, folder_id,  symlink_name)
+                            dst_symlink_path = os.path.join(cdn_symlinks_dir, folder_id, symlink_name)
                             c.run(f'mkdir -p {os.path.dirname(dst_symlink_path)}')
                             c.run(f'ln -s {dst_sound_path} {dst_symlink_path}')
 
@@ -117,7 +141,7 @@ class Command(LoggingBaseCommand):
                             # as there were problems creating the symlink
                             symlink_exists = c.run(f'ls {dst_symlink_path}', hide=True, warn=True).exited == 0
                             if symlink_exists:
-                                cache_cdn_map.set(str(sound_id), symlink_name, timeout=None)  # No expiration
+                                cache_cdn_map.set(str(sound_id), symlink_name, timeout=None)    # No expiration
                                 num_added += 1
                             else:
                                 num_failed += 1

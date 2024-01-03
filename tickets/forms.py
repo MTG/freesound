@@ -48,35 +48,28 @@ class AnonymousMessageForm(forms.Form):
 
 
 # Sound moderation forms
-MODERATION_CHOICES = [(x, x) for x in
-                      ['Approve',
-                       'Delete',
-                       'Defer',
-                       'Return',
-                       'Whitelist']]
+MODERATION_CHOICES = [(x, x) for x in ['Approve', 'Delete', 'Defer', 'Return', 'Whitelist']]
 
 IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY = "K"
 IS_EXPLICIT_ADD_FLAG_KEY = "A"
 IS_EXPLICIT_REMOVE_FLAG_KEY = "R"
-IS_EXPLICIT_FLAG_CHOICES = ((IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, 'Keep user preference'),
-                            (IS_EXPLICIT_ADD_FLAG_KEY, 'Add "is explicit" flag'),
+IS_EXPLICIT_FLAG_CHOICES = ((IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY,
+                             'Keep user preference'), (IS_EXPLICIT_ADD_FLAG_KEY, 'Add "is explicit" flag'),
                             (IS_EXPLICIT_REMOVE_FLAG_KEY, 'Remove "is explicit" flag'))
 
 
 class SoundModerationForm(forms.Form):
-    action = forms.ChoiceField(choices=MODERATION_CHOICES,
-                               required=True,
-                               widget=forms.RadioSelect(),
-                               label='')
+    action = forms.ChoiceField(choices=MODERATION_CHOICES, required=True, widget=forms.RadioSelect(), label='')
 
-    ticket = forms.CharField(widget=forms.widgets.HiddenInput,
-                             error_messages={'required': 'No sound selected...'})
+    ticket = forms.CharField(widget=forms.widgets.HiddenInput, error_messages={'required': 'No sound selected...'})
 
-    is_explicit = forms.ChoiceField(choices=IS_EXPLICIT_FLAG_CHOICES,
-                                    initial=IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY,
-                                    required=True,
-                                    label=mark_safe("<i>Is explicit</i> flag"))
-    
+    is_explicit = forms.ChoiceField(
+        choices=IS_EXPLICIT_FLAG_CHOICES,
+        initial=IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY,
+        required=True,
+        label=mark_safe("<i>Is explicit</i> flag")
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['action'].widget.attrs['class'] = 'bw-radio'
@@ -84,8 +77,7 @@ class SoundModerationForm(forms.Form):
 
 class ModerationMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea, required=False, label=False)
-    moderator_only = forms.BooleanField(
-        required=False, label='Make this message only visible to moderators')
+    moderator_only = forms.BooleanField(required=False, label='Make this message only visible to moderators')
 
     def __init__(self, *args, **kwargs):
         kwargs.update(dict(label_suffix=''))
@@ -97,9 +89,7 @@ class ModerationMessageForm(forms.Form):
 
 
 class UserAnnotationForm(forms.Form):
-    text = HtmlCleaningCharField(widget=forms.Textarea,
-                                 required=True,
-                                 label='')
+    text = HtmlCleaningCharField(widget=forms.Textarea, required=True, label='')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -109,6 +99,4 @@ class UserAnnotationForm(forms.Form):
 
 
 class SoundStateForm(forms.Form):
-    action = forms.ChoiceField(choices=MODERATION_CHOICES,
-                               required=False,
-                               label='Action:')
+    action = forms.ChoiceField(choices=MODERATION_CHOICES, required=False, label='Action:')

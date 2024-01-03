@@ -56,7 +56,8 @@ class UtilsTest(TestCase):
                 base_filename_slug="test_sound_%i" % i,
                 license=License.objects.all()[0],
                 pack=pack,
-                md5="fakemd5_%i" % i)
+                md5="fakemd5_%i" % i
+            )
         licenses_url = (reverse('pack-licenses', args=["testuser", pack.id]))
         ret = utils.downloads.download_sounds(licenses_url, pack)
         self.assertEqual(ret.status_code, 200)
@@ -141,24 +142,30 @@ class ShouldSuggestDonationTest(TestCase):
             original_filename="Test sound",
             base_filename_slug="test_sound_10",
             license=License.objects.all()[0],
-            md5="fakemd5_10")
+            md5="fakemd5_10"
+        )
         for i in range(0, donations_settings.downloads_in_period):
             Download.objects.create(user=user, sound=sound, license=License.objects.first())
             self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
-        Download.objects.create(user=user, sound=sound, license=License.objects.first())  # downloads > donations_settings.downloads_in_period (modal shows)
+        Download.objects.create(
+            user=user, sound=sound, license=License.objects.first()
+        )    # downloads > donations_settings.downloads_in_period (modal shows)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), True)
 
         # if the download objects are older than donations_settings.download_days, don't consider them
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now()-datetime.timedelta(days=donations_settings.download_days + 1))
+            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.download_days + 1)
+        )
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
         # if user has donations but these are older than donations_settings.days_after_donation, do not consider them
         Donation.objects.create(user=user, amount=1)
         Donation.objects.filter(user=user).update(
-            created=datetime.datetime.now()-datetime.timedelta(days=donations_settings.days_after_donation + 1))
+            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.days_after_donation + 1)
+        )
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now())  # Change downloads date again to be recent (modal show be shown)
+            created=datetime.datetime.now()
+        )    # Change downloads date again to be recent (modal show be shown)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), True)
 
     def test_should_suggest_donation_probabilty_0(self):
@@ -191,25 +198,29 @@ class ShouldSuggestDonationTest(TestCase):
             original_filename="Test sound",
             base_filename_slug="test_sound_10",
             license=License.objects.all()[0],
-            md5="fakemd5_10")
+            md5="fakemd5_10"
+        )
         for i in range(0, donations_settings.downloads_in_period):
             Download.objects.create(user=user, sound=sound, license=License.objects.first())
             self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
-        Download.objects.create(user=user, sound=sound, license=License.objects.first())  # n downloads > donations_settings.downloads_in_period
+        Download.objects.create(
+            user=user, sound=sound, license=License.objects.first()
+        )    # n downloads > donations_settings.downloads_in_period
         # In this case still not shown the modal as probability is 0.0
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
         # if the download objects are older than donations_settings.download_days, don't consider them
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.download_days + 1))
+            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.download_days + 1)
+        )
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
         # if user has donations but these are older than donations_settings.days_after_donation, do not consider them
         Donation.objects.create(user=user, amount=1)
         Donation.objects.filter(user=user).update(
-            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.days_after_donation + 1))
-        Download.objects.filter(user=user).update(
-            created=datetime.datetime.now())
+            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.days_after_donation + 1)
+        )
+        Download.objects.filter(user=user).update(created=datetime.datetime.now())
         # Change downloads date again to be recent (however modal won't show because probability is 0.0)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
@@ -274,115 +285,139 @@ class BulkDescribeUtils(TestCase):
         os.makedirs(csv_file_base_path, exist_ok=True)
 
         # Test CSV with all lines and metadata ok
-        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
-            'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
-            'file1.wv,New name for file1.wav,"tag1 tag2 tag3","41.4065, 2.19504, 18",'
-            '"Description for file",Creative Commons 0,ambient,0',  # All fields valid
-            'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0',  # Only mandatory fields
-            'file3.wav,,"tag1 tag2 tag3",,'
-            '"Description for file",Creative Commons 0,ambient,1',  # All mandatory fields and some optional fields
-        ], csv_file_base_path)
+        csv_file_path = self.create_file_with_lines(
+            'test_descriptions.csv',
+            [
+                'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
+                'file1.wv,New name for file1.wav,"tag1 tag2 tag3","41.4065, 2.19504, 18",'
+                '"Description for file",Creative Commons 0,ambient,0',    # All fields valid
+                'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0',    # Only mandatory fields
+                'file3.wav,,"tag1 tag2 tag3",,'
+                '"Description for file",Creative Commons 0,ambient,1',    # All mandatory fields and some optional fields
+            ],
+            csv_file_base_path
+        )
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path, username=user.username)
-        self.assertEqual(len(global_errors), 0)  # No global errors
-        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 0)  # No line errors
+        self.assertEqual(len(global_errors), 0)    # No global errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 0)    # No line errors
 
         # Test username does not exist
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path, username="unexisting username")
-        self.assertEqual(len(global_errors), 0)  # No global errors
-        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 3)  # Three line errors
-        self.assertTrue('username' in lines_validated[0]['line_errors'])  # User does not exist error reported
-        self.assertTrue('username' in lines_validated[1]['line_errors'])  # User does not exist error reported
-        self.assertTrue('username' in lines_validated[2]['line_errors'])  # User does not exist error reported
+        self.assertEqual(len(global_errors), 0)    # No global errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 3)    # Three line errors
+        self.assertTrue('username' in lines_validated[0]['line_errors'])    # User does not exist error reported
+        self.assertTrue('username' in lines_validated[1]['line_errors'])    # User does not exist error reported
+        self.assertTrue('username' in lines_validated[2]['line_errors'])    # User does not exist error reported
 
         # Test missing/duplicated audiofile and wrong number of rows
-        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
-            'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
-            'file1.wv,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # File exists, fields ok
-            'file2.wav,,"tag1 tag2 tag3",,,Creative Commons 0,,1',  # Missing description
-            'file3.wav,,"tag1 tag2 tag3",,"Description for file",,1',  # Wrong number of columns
-            'file6.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # Audiofile does not exist
-            'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # Audiofile already described
-        ], csv_file_base_path)
+        csv_file_path = self.create_file_with_lines(
+            'test_descriptions.csv',
+            [
+                'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
+                'file1.wv,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',    # File exists, fields ok
+                'file2.wav,,"tag1 tag2 tag3",,,Creative Commons 0,,1',    # Missing description
+                'file3.wav,,"tag1 tag2 tag3",,"Description for file",,1',    # Wrong number of columns
+                'file6.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',    # Audiofile does not exist
+                'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',    # Audiofile already described
+            ],
+            csv_file_base_path
+        )
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path, username=user.username)
-        self.assertEqual(len(global_errors), 0)  # No global errors
-        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 4)  # Four lines have errors
-        self.assertTrue('description' in lines_validated[1]['line_errors'])  # Missing description error reported
-        self.assertTrue('columns' in lines_validated[2]['line_errors'])  # Wrong number of columns reported
-        self.assertTrue('audio_filename' in lines_validated[3]['line_errors'])  # Audiofile not exist error reported
-        self.assertTrue('audio_filename' in lines_validated[4]['line_errors'])  # File already described error reported
+        self.assertEqual(len(global_errors), 0)    # No global errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 4)    # Four lines have errors
+        self.assertTrue('description' in lines_validated[1]['line_errors'])    # Missing description error reported
+        self.assertTrue('columns' in lines_validated[2]['line_errors'])    # Wrong number of columns reported
+        self.assertTrue('audio_filename' in lines_validated[3]['line_errors'])    # Audiofile not exist error reported
+        self.assertTrue(
+            'audio_filename' in lines_validated[4]['line_errors']
+        )    # File already described error reported
 
         # Test validation errors in individual fields
-        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
-            'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
-            'file1.wv,,"tag1 tag2",,"Description for file",Creative Commons 0,,1',  # Wrong tags (less than 3)
-            'file2.wav,,"tag1,tag2",,"Description for file",Creative Commons 0,,1',  # Wrong tags (less than 3)
-            'file3.wav,,"tag1,tag2",gr87g,"Description for file2",Creative Commons 0,,1',  # Wrong geotag
-            'file4.wav,,"tag1,tag2",42.34,190.45,15,"Description for file",Creative Commons 0,,1',  # Wrong geotag
-            'file5.wav,,"tag1 tag2 tag3",,"Description for file",Sampling+,,1',  # Invalid license
-            'file6.wav,,"tag1 tag2 tag3",,"Description for file",Sampling+,,rt',  # Invalid is_explicit
-        ], csv_file_base_path)
+        csv_file_path = self.create_file_with_lines(
+            'test_descriptions.csv',
+            [
+                'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
+                'file1.wv,,"tag1 tag2",,"Description for file",Creative Commons 0,,1',    # Wrong tags (less than 3)
+                'file2.wav,,"tag1,tag2",,"Description for file",Creative Commons 0,,1',    # Wrong tags (less than 3)
+                'file3.wav,,"tag1,tag2",gr87g,"Description for file2",Creative Commons 0,,1',    # Wrong geotag
+                'file4.wav,,"tag1,tag2",42.34,190.45,15,"Description for file",Creative Commons 0,,1',    # Wrong geotag
+                'file5.wav,,"tag1 tag2 tag3",,"Description for file",Sampling+,,1',    # Invalid license
+                'file6.wav,,"tag1 tag2 tag3",,"Description for file",Sampling+,,rt',    # Invalid is_explicit
+            ],
+            csv_file_base_path
+        )
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path, username=user.username)
-        self.assertEqual(len(global_errors), 0)  # No global errors
-        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 6)  # Six lines have errors
-        self.assertTrue('tags' in lines_validated[0]['line_errors'])  # Wrong tags
-        self.assertTrue('tags' in lines_validated[1]['line_errors'])  # Wrong tags
-        self.assertTrue('geotag' in lines_validated[2]['line_errors'])  # Wrong geotag
-        self.assertTrue('geotag' in lines_validated[3]['line_errors'])  # Wrong geotag
-        self.assertTrue('license' in lines_validated[4]['line_errors'])  # Wrong license
-        self.assertTrue('is_explicit' in lines_validated[5]['line_errors'])  # Wrong is_explicit
+        self.assertEqual(len(global_errors), 0)    # No global errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 6)    # Six lines have errors
+        self.assertTrue('tags' in lines_validated[0]['line_errors'])    # Wrong tags
+        self.assertTrue('tags' in lines_validated[1]['line_errors'])    # Wrong tags
+        self.assertTrue('geotag' in lines_validated[2]['line_errors'])    # Wrong geotag
+        self.assertTrue('geotag' in lines_validated[3]['line_errors'])    # Wrong geotag
+        self.assertTrue('license' in lines_validated[4]['line_errors'])    # Wrong license
+        self.assertTrue('is_explicit' in lines_validated[5]['line_errors'])    # Wrong is_explicit
 
         # Test wrong header global errors
-        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
-            'audio_filename,name,tags,geotag,description,license,unknown_field',
-        ], csv_file_base_path)
+        csv_file_path = self.create_file_with_lines(
+            'test_descriptions.csv', [
+                'audio_filename,name,tags,geotag,description,license,unknown_field',
+            ], csv_file_base_path
+        )
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path, username=user.username)
-        self.assertEqual(len(global_errors), 2)  # Two global errors
-        self.assertTrue('Invalid header' in global_errors[0])  # Invalid header error reported
-        self.assertTrue('no lines with sound' in global_errors[1])  # No sounds in csv file error reported
+        self.assertEqual(len(global_errors), 2)    # Two global errors
+        self.assertTrue('Invalid header' in global_errors[0])    # Invalid header error reported
+        self.assertTrue('no lines with sound' in global_errors[1])    # No sounds in csv file error reported
 
-        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
-            'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
-        ], csv_file_base_path)
+        csv_file_path = self.create_file_with_lines(
+            'test_descriptions.csv', [
+                'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
+            ], csv_file_base_path
+        )
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path,
                                     username=None)  # Not passing username, header should now include 'username' field
-        self.assertEqual(len(global_errors), 2)  # One global error
-        self.assertTrue('Invalid header' in global_errors[0])  # Invalid header error reported
-        self.assertTrue('no lines with sound' in global_errors[1])  # No sounds in csv file error reported
+        self.assertEqual(len(global_errors), 2)    # One global error
+        self.assertTrue('Invalid header' in global_errors[0])    # Invalid header error reported
+        self.assertTrue('no lines with sound' in global_errors[1])    # No sounds in csv file error reported
 
-        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
-            'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit,username',
-        ], csv_file_base_path)
+        csv_file_path = self.create_file_with_lines(
+            'test_descriptions.csv', [
+                'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit,username',
+            ], csv_file_base_path
+        )
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path,
                                     username=None)  # Not passing username, header should now include 'username' field
-        self.assertEqual(len(global_errors), 1)  # One global error
-        self.assertTrue('no lines with sound' in global_errors[0])  # No sounds in csv file error reported
+        self.assertEqual(len(global_errors), 1)    # One global error
+        self.assertTrue('no lines with sound' in global_errors[0])    # No sounds in csv file error reported
 
         # Test username errors when not passing username argument to validate_input_csv_file
-        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
-            'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit,username',
-            'file1.wv,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1,new_username',  # User does not exist
-            'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # Invlaid num columns
-            'file3.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0,testuser',  # All fields OK
-        ], csv_file_base_path)
+        csv_file_path = self.create_file_with_lines(
+            'test_descriptions.csv',
+            [
+                'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit,username',
+                'file1.wv,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1,new_username',    # User does not exist
+                'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',    # Invlaid num columns
+                'file3.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0,testuser',    # All fields OK
+            ],
+            csv_file_base_path
+        )
         header, lines = get_csv_lines(csv_file_path)
         lines_validated, global_errors = validate_input_csv_file(header, lines, user_upload_path, username=None)
-        self.assertEqual(len(global_errors), 0)  # No global errors
-        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 2)  # Two lines have errors
-        self.assertTrue('username' in lines_validated[0]['line_errors'])  # User does not exist
-        self.assertTrue('columns' in lines_validated[1]['line_errors'])  # Invalid number of columns
+        self.assertEqual(len(global_errors), 0)    # No global errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 2)    # Two lines have errors
+        self.assertTrue('username' in lines_validated[0]['line_errors'])    # User does not exist
+        self.assertTrue('columns' in lines_validated[1]['line_errors'])    # Invalid number of columns
 
     @override_uploads_path_with_temp_directory
     @override_csv_path_with_temp_directory
@@ -399,62 +434,74 @@ class BulkDescribeUtils(TestCase):
         os.makedirs(csv_file_base_path, exist_ok=True)
 
         # Create Test CSV with some lines ok and some wrong lines
-        csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
-            'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
-            'file1.wav,,"tag1 tag2 tag3","41.4065, 2.19504, 18","Description for file",Creative Commons 0,ambient,1',  # OK
-            'file2.wav,,"tag1 tag2 tag3",,"Description for file",Invalid license,,1',  # Invalid license
-            'file3.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,1',  # Wrong number of columns
-            'file4.wav,,"tag1 tag2 tag3",dg,"Description for file",Creative Commons 0,,0',  # Invalid geotag
-            'file5.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0',  # OK
-        ], csv_file_base_path)
+        csv_file_path = self.create_file_with_lines(
+            'test_descriptions.csv',
+            [
+                'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit',
+                'file1.wav,,"tag1 tag2 tag3","41.4065, 2.19504, 18","Description for file",Creative Commons 0,ambient,1',    # OK
+                'file2.wav,,"tag1 tag2 tag3",,"Description for file",Invalid license,,1',    # Invalid license
+                'file3.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,1',    # Wrong number of columns
+                'file4.wav,,"tag1 tag2 tag3",dg,"Description for file",Creative Commons 0,,0',    # Invalid geotag
+                'file5.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0',    # OK
+            ],
+            csv_file_base_path
+        )
 
         # Test case when no sounds are been created because CSV file has some errors and 'force_import' is set to False
-        bulk_describe_from_csv(csv_file_path,
-                               delete_already_existing=False,
-                               force_import=False,
-                               sounds_base_dir=user_upload_path,
-                               username=user.username)
-        self.assertEqual(user.sounds.count(), 0)  # User has no sounds
+        bulk_describe_from_csv(
+            csv_file_path,
+            delete_already_existing=False,
+            force_import=False,
+            sounds_base_dir=user_upload_path,
+            username=user.username
+        )
+        self.assertEqual(user.sounds.count(), 0)    # User has no sounds
 
         # Test case using 'force_import' (only sounds for lines that validate ok will be created)
-        bulk_describe_from_csv(csv_file_path,
-                               delete_already_existing=False,
-                               force_import=True,
-                               sounds_base_dir=user_upload_path,
-                               username=user.username)
-        self.assertEqual(user.sounds.count(), 2)  # The two sounds that had correct metadata have been added
-        sound1 = Sound.objects.get(user=user, original_filename='file1.wav')  # Get first correct sound
-        sound1_id = sound1.id  # This is used in a test below
-        self.assertTrue(sound1.geotag)  # Check sound has geotag object assigned
-        self.assertEqual(sound1.pack.name, 'ambient')  # Check sound has pack and name of pack is 'ambient'
-        sound2 = Sound.objects.get(user=user, original_filename='file5.wav')  # Get last correct sound
-        sound2_id = sound2.id  # This is used in a test below
-        self.assertIsNone(sound2.geotag)  # Check sound has no geotag
-        self.assertIsNone(sound2.pack)  # Check sound has no pack
+        bulk_describe_from_csv(
+            csv_file_path,
+            delete_already_existing=False,
+            force_import=True,
+            sounds_base_dir=user_upload_path,
+            username=user.username
+        )
+        self.assertEqual(user.sounds.count(), 2)    # The two sounds that had correct metadata have been added
+        sound1 = Sound.objects.get(user=user, original_filename='file1.wav')    # Get first correct sound
+        sound1_id = sound1.id    # This is used in a test below
+        self.assertTrue(sound1.geotag)    # Check sound has geotag object assigned
+        self.assertEqual(sound1.pack.name, 'ambient')    # Check sound has pack and name of pack is 'ambient'
+        sound2 = Sound.objects.get(user=user, original_filename='file5.wav')    # Get last correct sound
+        sound2_id = sound2.id    # This is used in a test below
+        self.assertIsNone(sound2.geotag)    # Check sound has no geotag
+        self.assertIsNone(sound2.pack)    # Check sound has no pack
 
         # Run again using 'force_import' and sounds won't be created because sounds already exist and md5 check fails
         # NOTE: first we copy back the files that were already successfully added because otherwise these don't exist
         shutil.copy(sound1.locations()['path'], os.path.join(user_upload_path, 'file1.wav'))
         shutil.copy(sound2.locations()['path'], os.path.join(user_upload_path, 'file5.wav'))
-        bulk_describe_from_csv(csv_file_path,
-                               delete_already_existing=False,
-                               force_import=True,
-                               sounds_base_dir=user_upload_path,
-                               username=user.username)
-        self.assertEqual(user.sounds.count(), 2)  # User still has two sounds, no new sounds added
+        bulk_describe_from_csv(
+            csv_file_path,
+            delete_already_existing=False,
+            force_import=True,
+            sounds_base_dir=user_upload_path,
+            username=user.username
+        )
+        self.assertEqual(user.sounds.count(), 2)    # User still has two sounds, no new sounds added
 
         # Run again using 'force_import' AND 'delete_already_existing' and existing sounds will be removed before
         # creating the new ones
         # NOTE: first we copy back the files that failed MD5 check as files are discarted (deleted) when MD5 fails
         shutil.copy(sound1.locations()['path'], os.path.join(user_upload_path, 'file1.wav'))
         shutil.copy(sound2.locations()['path'], os.path.join(user_upload_path, 'file5.wav'))
-        bulk_describe_from_csv(csv_file_path,
-                               delete_already_existing=True,
-                               force_import=True,
-                               sounds_base_dir=user_upload_path,
-                               username=user.username)
-        self.assertEqual(user.sounds.count(), 2)  # User still has two sounds
-        new_sound1 = Sound.objects.get(user=user, original_filename='file1.wav')  # New version of first correct sound
-        new_sound2 = Sound.objects.get(user=user, original_filename='file5.wav')  # New version of last correct sound
-        self.assertNotEqual(new_sound1.id, sound1_id)  # Check that IDs are not the same
-        self.assertNotEqual(new_sound2.id, sound2_id)  # Check that IDs are not the same
+        bulk_describe_from_csv(
+            csv_file_path,
+            delete_already_existing=True,
+            force_import=True,
+            sounds_base_dir=user_upload_path,
+            username=user.username
+        )
+        self.assertEqual(user.sounds.count(), 2)    # User still has two sounds
+        new_sound1 = Sound.objects.get(user=user, original_filename='file1.wav')    # New version of first correct sound
+        new_sound2 = Sound.objects.get(user=user, original_filename='file5.wav')    # New version of last correct sound
+        self.assertNotEqual(new_sound1.id, sound1_id)    # Check that IDs are not the same
+        self.assertNotEqual(new_sound2.id, sound2_id)    # Check that IDs are not the same

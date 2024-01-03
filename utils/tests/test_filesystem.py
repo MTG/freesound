@@ -6,6 +6,7 @@ from utils.filesystem import md5file
 
 
 class Test(TestCase):
+
     def test_md5file(self):
         with tempfile.NamedTemporaryFile() as tmp_fh:
             tmp_fh.write(b"test_content\n")

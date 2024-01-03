@@ -27,7 +27,6 @@ import requests
 from utils.search import get_search_engine
 from utils.search.backends.test_search_engine_backend import TestSearchEngineBackend
 
-
 console_logger = logging.getLogger("console")
 
 global_write_output = False
@@ -70,55 +69,66 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-b', '--backend',
+            '-b',
+            '--backend',
             action='store',
             dest='backend_class',
             default=settings.SEARCH_ENGINE_BACKEND_CLASS,
-            help='Path to the backend class to test, eg: utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine')
+            help='Path to the backend class to test, eg: utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine'
+        )
 
         parser.add_argument(
             '--force',
             action='store_true',
             dest='force_create_core',
             default=False,
-            help='Test sound-related methods of the SearchEngine')
+            help='Test sound-related methods of the SearchEngine'
+        )
 
         parser.add_argument(
-            '-s', '--sound_methods',
+            '-s',
+            '--sound_methods',
             action='store_true',
             dest='sound_methods',
             default=False,
-            help='Test sound-related methods of the SearchEngine')
+            help='Test sound-related methods of the SearchEngine'
+        )
 
         parser.add_argument(
-            '-f', '--forum_methods',
+            '-f',
+            '--forum_methods',
             action='store_true',
             dest='forum_methods',
             default=False,
-            help='Test forum post-related methods of the SearchEngine')
+            help='Test forum post-related methods of the SearchEngine'
+        )
 
         parser.add_argument(
-            '-w', '--write_output',
+            '-w',
+            '--write_output',
             action='store_true',
             dest='write_output',
             default=False,
-            help='Save the query results to a file')
+            help='Save the query results to a file'
+        )
 
     def handle(self, *args, **options):
 
         if not settings.DEBUG:
-            raise Exception('Running search engine tests in a production deployment. This should not be done as '
-                            'running these tests will modify the contents of the production search engine index '
-                            'and leave it in a "wrong" state.')
+            raise Exception(
+                'Running search engine tests in a production deployment. This should not be done as '
+                'running these tests will modify the contents of the production search engine index '
+                'and leave it in a "wrong" state.'
+            )
 
         # Instantiate search engine
         try:
-            search_engine = get_search_engine(
-                backend_class=options['backend_class']
-            )
+            search_engine = get_search_engine(backend_class=options['backend_class'])
         except ValueError:
-            raise Exception('Wrong backend name format. Should be a path like '
-                            'utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine')
+            raise Exception(
+                'Wrong backend name format. Should be a path like '
+                'utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine'
+            )
         except ImportError as e:
             raise Exception(f'Backend class to test could not be imported: {e}')
 
@@ -128,17 +138,22 @@ class Command(BaseCommand):
 
         # Create the engine above to get the base url for that engine and check that the given class exists.
         # Then create temporary cores using this base url and re-create the engine with these core urls.
-        create_core(search_engine.solr_base_url, "engine_test_freesound", "freesound", delete_core=options['force_create_core'])
+        create_core(
+            search_engine.solr_base_url, "engine_test_freesound", "freesound", delete_core=options['force_create_core']
+        )
         create_core(search_engine.solr_base_url, "engine_test_forum", "forum", delete_core=options['force_create_core'])
         sounds_index_url = f'{search_engine.solr_base_url}/engine_test_freesound'
         forum_index_url = f'{search_engine.solr_base_url}/engine_test_forum'
 
         if not options['sound_methods'] and not options['forum_methods']:
-            console_logger.info('None of sound methods or forum methods were selected, so nothing will be tested. '
-                                'Use the -s, -f or both options to test sound and/or forum methods.')
+            console_logger.info(
+                'None of sound methods or forum methods were selected, so nothing will be tested. '
+                'Use the -s, -f or both options to test sound and/or forum methods.'
+            )
 
-
-        backend_test = TestSearchEngineBackend(backend_name, write_output, sounds_index_url=sounds_index_url, forum_index_url=forum_index_url)
+        backend_test = TestSearchEngineBackend(
+            backend_name, write_output, sounds_index_url=sounds_index_url, forum_index_url=forum_index_url
+        )
         if options['sound_methods']:
             backend_test.test_search_enginge_backend_sounds()
 

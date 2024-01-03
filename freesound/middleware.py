@@ -45,6 +45,7 @@ def dont_redirect(path):
 
 
 class OnlineUsersHandler:
+
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -55,6 +56,7 @@ class OnlineUsersHandler:
 
 
 class BulkChangeLicenseHandler:
+
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -115,7 +117,7 @@ class UpdateEmailHandler:
                 and 'contact' not in request.get_full_path() \
                 and 'bulklicensechange' not in request.get_full_path() \
                 and 'resetemail' not in request.get_full_path():
-                # replace with dont_redirect() and add resetemail to it after merge with gdpr_acceptance pr
+            # replace with dont_redirect() and add resetemail to it after merge with gdpr_acceptance pr
 
             user = request.user
 
@@ -133,17 +135,12 @@ class ModelAdminReorderWithNav(ModelAdminReorder):
 
     def process_template_response(self, request, response):
 
-        if (
-            getattr(response, 'context_data', None)
-            and not response.context_data.get('app_list')
-            and response.context_data.get('available_apps')
-        ):
+        if (getattr(response, 'context_data', None) and not response.context_data.get('app_list')
+                and response.context_data.get('available_apps')):
             available_apps = response.context_data.get('available_apps')
             response.context_data['app_list'] = available_apps
             response = super().process_template_response(request, response)
-            response.context_data['available_apps'] = response.context_data[
-                'app_list'
-            ]
+            response.context_data['available_apps'] = response.context_data['app_list']
             return response
 
         return super().process_template_response(request, response)

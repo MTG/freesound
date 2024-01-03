@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-
 from past.utils import old_div
 import json
 import os
@@ -70,8 +69,9 @@ def cancel_timeout_alarm():
     signal.alarm(0)
 
 
-def check_if_free_space(directory=settings.PROCESSING_TEMP_DIR,
-                        min_disk_space_percentage=settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE):
+def check_if_free_space(
+    directory=settings.PROCESSING_TEMP_DIR, min_disk_space_percentage=settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE
+):
     """
     Checks if there is free disk space in the volume of the given 'directory'. If percentage of free disk space in this
     volume is lower than 'min_disk_space_percentage', this function raises WorkerException.
@@ -82,8 +82,10 @@ def check_if_free_space(directory=settings.PROCESSING_TEMP_DIR,
     stats = os.statvfs(directory)
     percentage_free = stats.f_bfree * 1.0 / stats.f_blocks
     if percentage_free < min_disk_space_percentage:
-        raise WorkerException("Disk is running out of space, "
-                              "aborting task as there might not be enough space for temp files")
+        raise WorkerException(
+            "Disk is running out of space, "
+            "aborting task as there might not be enough space for temp files"
+        )
 
 
 class FreesoundAudioProcessorBase:
@@ -107,7 +109,7 @@ class FreesoundAudioProcessorBase:
         self.work_log += message + '\n'
 
     def set_failure(self, message, error=None):
-        logging_message = f"sound with id {self.sound.id} failed\n" 
+        logging_message = f"sound with id {self.sound.id} failed\n"
         logging_message += f"\tmessage: {message}\n"
         if error:
             logging_message += f"\terror: {str(error)}"
@@ -150,15 +152,17 @@ class FreesoundAudioProcessorBase:
             # Close file handler as we don't use it from Python
             os.close(fh)
             if force_use_ffmpeg:
-                raise AudioProcessingException()  # Go to directly to ffmpeg conversion
+                raise AudioProcessingException()    # Go to directly to ffmpeg conversion
             if not audioprocessing.convert_to_pcm(sound_path, tmp_wavefile):
                 tmp_wavefile = sound_path
                 self.log_info("no need to convert, this file is already PCM data")
 
         except OSError as e:
             # Could not create tmp file
-            raise AudioProcessingException(f"could not create tmp_wavefile file, "
-                                           f"make sure that format conversion executables exist: {str(e)}")
+            raise AudioProcessingException(
+                f"could not create tmp_wavefile file, "
+                f"make sure that format conversion executables exist: {str(e)}"
+            )
 
         except AudioProcessingException as e:
             # Conversion with format codecs has failed (or skipped using 'force_use_ffmpeg' argument)
@@ -168,8 +172,10 @@ class FreesoundAudioProcessorBase:
             except AudioProcessingException as e:
                 raise AudioProcessingException(f"conversion to PCM failed: {e}")
             except OSError as e:
-                raise AudioProcessingException("conversion to PCM failed, "
-                                               "make sure that ffmpeg executable exists: %s" % e)
+                raise AudioProcessingException(
+                    "conversion to PCM failed, "
+                    "make sure that ffmpeg executable exists: %s" % e
+                )
         except Exception as e:
             raise AudioProcessingException(f"unhandled exception while converting to PCM: {e}")
 
@@ -186,9 +192,8 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 
     def process(self, skip_previews=False, skip_displays=False, update_sound_processing_state_in_db=True):
 
-        with TemporaryDirectory(
-                prefix=f'processing_{self.sound.id}_',
-                dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
+        with TemporaryDirectory(prefix=f'processing_{self.sound.id}_',
+                                dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
 
             # Change ongoing processing state to "processing" in Sound model
             if update_sound_processing_state_in_db:
@@ -210,8 +215,10 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
             except OSError as e:
                 # Could not create tmp file
-                self.set_failure(f"could not create tmp_wavefile2 file, "
-                                 f"make stereofy sure executable exists at {settings.SOUNDS_PATH}", e)
+                self.set_failure(
+                    f"could not create tmp_wavefile2 file, "
+                    f"make stereofy sure executable exists at {settings.SOUNDS_PATH}", e
+                )
                 return False
             except AudioProcessingException as e:
                 if "File contains data in an unknown format" in str(e):
@@ -222,8 +229,9 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                     self.log_info("stereofy failed, trying re-creating PCM file with ffmpeg and re-running stereofy")
                     try:
                         tmp_wavefile = self.convert_to_pcm(sound_path, tmp_directory, force_use_ffmpeg=True)
-                        info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH,
-                                                                      tmp_wavefile, tmp_wavefile2)
+                        info = audioprocessing.stereofy_and_find_info(
+                            settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2
+                        )
                     except AudioProcessingException as e:
                         self.set_failure("re-run of stereofy with ffmpeg conversion has failed", str(e))
                         return False
@@ -242,7 +250,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
             # Fill audio information fields in Sound object
             try:
                 if self.sound.type in settings.LOSSY_FILE_EXTENSIONS:
-                    info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth
+                    info['bitdepth'] = 0    # mp3 and ogg don't have bitdepth
                     if info['duration'] > 0:
                         raw_bitrate = int(round(old_div(old_div(self.sound.filesize * 8, info['duration']), 1000)))
                         # Here we post-process a bit the bitrate to account for small rounding errors
@@ -250,7 +258,8 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                         differences_with_common_bitrates = [abs(cbt - raw_bitrate) for cbt in settings.COMMON_BITRATES]
                         min_difference = min(differences_with_common_bitrates)
                         if min_difference <= 2:
-                            info['bitrate'] = settings.COMMON_BITRATES[differences_with_common_bitrates.index(min_difference)]
+                            info['bitrate'] = settings.COMMON_BITRATES[
+                                differences_with_common_bitrates.index(min_difference)]
                         else:
                             info['bitrate'] = raw_bitrate
                     else:
@@ -258,7 +267,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 else:
                     info['bitrate'] = 0
                 self.sound.set_audio_info_fields(**info)
-            except Exception as e:  # Could not catch a more specific exception
+            except Exception as e:    # Could not catch a more specific exception
                 self.set_failure("failed writting audio info fields to db", e)
                 return False
 
@@ -274,13 +283,17 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                     return False
 
                 # Generate MP3 previews
-                for mp3_path, quality in [(self.sound.locations("preview.LQ.mp3.path"), settings.MP3_LQ_PREVIEW_QUALITY),
-                                          (self.sound.locations("preview.HQ.mp3.path"), settings.MP3_HQ_PREVIEW_QUALITY)]:
+                for mp3_path, quality in [
+                    (self.sound.locations("preview.LQ.mp3.path"), settings.MP3_LQ_PREVIEW_QUALITY),
+                    (self.sound.locations("preview.HQ.mp3.path"), settings.MP3_HQ_PREVIEW_QUALITY)
+                ]:
                     try:
                         audioprocessing.convert_to_mp3(tmp_wavefile2, mp3_path, quality)
                     except OSError as e:
-                        self.set_failure("conversion to mp3 (preview) has failed, "
-                                         "make sure that lame executable exists: %s" % e)
+                        self.set_failure(
+                            "conversion to mp3 (preview) has failed, "
+                            "make sure that lame executable exists: %s" % e
+                        )
                         return False
 
                     except AudioProcessingException as e:
@@ -292,13 +305,17 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                     self.log_info("created mp3: " + mp3_path)
 
                 # Generate OGG previews
-                for ogg_path, quality in [(self.sound.locations("preview.LQ.ogg.path"), settings.OGG_LQ_PREVIEW_QUALITY),
-                                          (self.sound.locations("preview.HQ.ogg.path"), settings.OGG_HQ_PREVIEW_QUALITY)]:
+                for ogg_path, quality in [
+                    (self.sound.locations("preview.LQ.ogg.path"), settings.OGG_LQ_PREVIEW_QUALITY),
+                    (self.sound.locations("preview.HQ.ogg.path"), settings.OGG_HQ_PREVIEW_QUALITY)
+                ]:
                     try:
                         audioprocessing.convert_to_ogg(tmp_wavefile2, ogg_path, quality)
                     except OSError as e:
-                        self.set_failure("conversion to ogg (preview) has failed, "
-                                         "make sure that oggenc executable exists: %s" % e)
+                        self.set_failure(
+                            "conversion to ogg (preview) has failed, "
+                            "make sure that oggenc executable exists: %s" % e
+                        )
                         return False
                     except AudioProcessingException as e:
                         self.set_failure("conversion to ogg (preview) has failed", e)
@@ -321,19 +338,26 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
 
                 # Generate display images, M and L sizes for NG and BW front-ends
                 for width, height, color_scheme, waveform_path, spectral_path in [
-                    (120, 71, color_schemes.FREESOUND2_COLOR_SCHEME,
-                     self.sound.locations("display.wave.M.path"), self.sound.locations("display.spectral.M.path")),
-                    (900, 201, color_schemes.FREESOUND2_COLOR_SCHEME,
-                     self.sound.locations("display.wave.L.path"), self.sound.locations("display.spectral.L.path")),
-                    (195, 101, color_schemes.BEASTWHOOSH_COLOR_SCHEME,
-                     self.sound.locations("display.wave_bw.M.path"), self.sound.locations("display.spectral_bw.M.path")),
-                    (780, 301, color_schemes.BEASTWHOOSH_COLOR_SCHEME,
-                     self.sound.locations("display.wave_bw.L.path"), self.sound.locations("display.spectral_bw.L.path")),
+                    (120, 71, color_schemes.FREESOUND2_COLOR_SCHEME, self.sound.locations("display.wave.M.path"),
+                     self.sound.locations("display.spectral.M.path")),
+                    (900, 201, color_schemes.FREESOUND2_COLOR_SCHEME, self.sound.locations("display.wave.L.path"),
+                     self.sound.locations("display.spectral.L.path")),
+                    (195, 101, color_schemes.BEASTWHOOSH_COLOR_SCHEME, self.sound.locations("display.wave_bw.M.path"),
+                     self.sound.locations("display.spectral_bw.M.path")),
+                    (780, 301, color_schemes.BEASTWHOOSH_COLOR_SCHEME, self.sound.locations("display.wave_bw.L.path"),
+                     self.sound.locations("display.spectral_bw.L.path")),
                 ]:
                     try:
                         fft_size = 2048
-                        audioprocessing.create_wave_images(tmp_wavefile2, waveform_path, spectral_path, width, height,
-                                                           fft_size, color_scheme=color_scheme)
+                        audioprocessing.create_wave_images(
+                            tmp_wavefile2,
+                            waveform_path,
+                            spectral_path,
+                            width,
+                            height,
+                            fft_size,
+                            color_scheme=color_scheme
+                        )
                         self.log_info(f"created wave and spectrogram images: {waveform_path}, {spectral_path}")
                     except AudioProcessingException as e:
                         self.set_failure("creation of display images has failed", e)
@@ -388,9 +412,8 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
         pass
 
     def process(self):
-        with TemporaryDirectory(
-                prefix=f'processing_before_description_{os.path.basename(self.output_folder)}_',
-                dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
+        with TemporaryDirectory(prefix=f'processing_before_description_{os.path.basename(self.output_folder)}_',
+                                dir=settings.PROCESSING_TEMP_DIR) as tmp_directory:
 
             # Get the path of the original sound and convert to PCM
             try:
@@ -407,8 +430,10 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
                 info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
             except OSError as e:
                 # Could not create tmp file
-                self.set_failure(f"could not create tmp_wavefile2 file, "
-                                 f"make stereofy sure executable exists at {settings.SOUNDS_PATH}", e)
+                self.set_failure(
+                    f"could not create tmp_wavefile2 file, "
+                    f"make stereofy sure executable exists at {settings.SOUNDS_PATH}", e
+                )
                 return False
             except AudioProcessingException as e:
                 if "File contains data in an unknown format" in str(e):
@@ -419,8 +444,9 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
                     self.log_info("stereofy failed, trying re-creating PCM file with ffmpeg and re-running stereofy")
                     try:
                         tmp_wavefile = self.convert_to_pcm(self.audio_file_path, tmp_directory, force_use_ffmpeg=True)
-                        info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH,
-                                                                      tmp_wavefile, tmp_wavefile2)
+                        info = audioprocessing.stereofy_and_find_info(
+                            settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2
+                        )
                     except AudioProcessingException as e:
                         self.set_failure("re-run of stereofy with ffmpeg conversion has failed", str(e))
                         return False
@@ -440,8 +466,10 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
             try:
                 audioprocessing.convert_to_mp3(tmp_wavefile2, self.output_preview_mp3, 70)
             except OSError as e:
-                self.set_failure("conversion to mp3 (preview) has failed, "
-                                    "make sure that lame executable exists: %s" % e)
+                self.set_failure(
+                    "conversion to mp3 (preview) has failed, "
+                    "make sure that lame executable exists: %s" % e
+                )
                 return False
 
             except AudioProcessingException as e:
@@ -455,8 +483,10 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
             try:
                 audioprocessing.convert_to_ogg(tmp_wavefile2, self.output_preview_ogg, 1)
             except OSError as e:
-                self.set_failure("conversion to ogg (preview) has failed, "
-                                    "make sure that oggenc executable exists: %s" % e)
+                self.set_failure(
+                    "conversion to ogg (preview) has failed, "
+                    "make sure that oggenc executable exists: %s" % e
+                )
                 return False
             except AudioProcessingException as e:
                 self.set_failure("conversion to ogg (preview) has failed", e)
@@ -468,9 +498,18 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
 
             # Generate displays
             try:
-                audioprocessing.create_wave_images(tmp_wavefile2, self.output_wave_path, self.output_spectral_path, 780, 301,
-                                                fft_size=2048, color_scheme=color_schemes.BEASTWHOOSH_COLOR_SCHEME)
-                self.log_info(f"created wave and spectrogram images: {self.output_wave_path}, {self.output_spectral_path}")
+                audioprocessing.create_wave_images(
+                    tmp_wavefile2,
+                    self.output_wave_path,
+                    self.output_spectral_path,
+                    780,
+                    301,
+                    fft_size=2048,
+                    color_scheme=color_schemes.BEASTWHOOSH_COLOR_SCHEME
+                )
+                self.log_info(
+                    f"created wave and spectrogram images: {self.output_wave_path}, {self.output_spectral_path}"
+                )
             except AudioProcessingException as e:
                 self.set_failure("creation of display images has failed", e)
                 return False
@@ -479,7 +518,7 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
                 return False
 
             # Save info data to json file
-            info['audio_file_path'] = self.audio_file_path 
+            info['audio_file_path'] = self.audio_file_path
             with open(self.output_info_file, 'w') as f:
                 json.dump(info, f)
         return True

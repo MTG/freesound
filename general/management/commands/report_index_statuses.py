@@ -39,14 +39,16 @@ class Command(LoggingBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-n', '--no-changes',
+            '-n',
+            '--no-changes',
             action='store_true',
             dest='no-changes',
             default=False,
             help='Using the option --no-changes the is_index_dirty and similarity_state sound fields will not '
-                 'be modified.')
+            'be modified.'
+        )
 
-    def handle(self,  *args, **options):
+    def handle(self, *args, **options):
         self.log_start()
 
         # Get all solr ids
@@ -108,7 +110,7 @@ class Command(LoggingBaseCommand):
                 console_logger.info("Changing similarity_state of sounds that require it")
                 N = len(in_fs_not_in_gaia)
                 for count, sid in enumerate(in_fs_not_in_gaia):
-                    console_logger.info('\r\tChanging state of sound %i of %i         ' % (count+1, N))
+                    console_logger.info('\r\tChanging state of sound %i of %i         ' % (count + 1, N))
                     sound = Sound.objects.get(id=sid)
                     sound.set_similarity_state('PE')
 
@@ -117,7 +119,7 @@ class Command(LoggingBaseCommand):
                 console_logger.info("\nDeleting sounds that should not be in gaia")
                 N = len(in_gaia_not_in_fs)
                 for count, sid in enumerate(in_gaia_not_in_fs):
-                    console_logger.info('\r\tDeleting sound %i of %i         ' % (count+1, N))
+                    console_logger.info('\r\tDeleting sound %i of %i         ' % (count + 1, N))
                     Similarity.delete(sid)
 
         self.log_end({

@@ -20,7 +20,7 @@
 
 from django.http import HttpResponseRedirect, Http404
 
-from django.shortcuts import render 
+from django.shortcuts import render
 from django.urls import reverse
 
 from wiki.models import Content, Page
@@ -54,8 +54,7 @@ def page(request, name):
             # If there is still no content, then this page has no Content objects, return Blank
             content = Content.objects.filter(page__name__iexact="blank").select_related().latest()
 
-    tvars = {'content': content,
-             'name': name}
+    tvars = {'content': content, 'name': name}
     return render(request, 'wiki/page.html', tvars)
 
 
@@ -81,9 +80,7 @@ def editpage(request, name):
             content = None
             form = ContentForm()
 
-    tvars = {'content': content,
-             'form': form,
-             'name': name}
+    tvars = {'content': content, 'form': form, 'name': name}
     return render(request, 'wiki/edit.html', tvars)
 
 
@@ -109,11 +106,10 @@ def history(request, name):
         version1 = Content.objects.select_related().get(id=request.GET.get('version1'))
         version2 = Content.objects.select_related().get(id=request.GET.get('version2'))
 
-        diff = difflib.HtmlDiff(4, 55).make_table(version1.body.split('\n'), version2.body.split('\n'), 'version %d' % version1.id, 'version %d' % version2.id, True, 5)
+        diff = difflib.HtmlDiff(4, 55).make_table(
+            version1.body.split('\n'), version2.body.split('\n'), 'version %d' % version1.id,
+            'version %d' % version2.id, True, 5
+        )
 
-    tvars = {'page': page,
-             'versions': versions,
-             'version1': version1,
-             'version2': version2,
-             'diff': diff}
+    tvars = {'page': page, 'versions': versions, 'version1': version1, 'version2': version2, 'diff': diff}
     return render(request, 'wiki/history.html', tvars)

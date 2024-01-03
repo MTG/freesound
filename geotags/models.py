@@ -59,21 +59,24 @@ class GeoTag(models.Model):
                 self.save()
             except Exception as e:
                 pass
-                
+
         if self.information is not None:
             features = self.information.get('features', [])
             if features:
                 try:
                     # Try with "place" feature
-                    self.location_name = [feature for feature in features if 'place' in feature['place_type']][0]['place_name']
+                    self.location_name = [feature for feature in features if 'place' in feature['place_type']
+                                          ][0]['place_name']
                 except IndexError:
                     # If "place" feature is not avialable, use "locality" feature
                     try:
-                        self.location_name = [feature for feature in features if 'locality' in feature['place_type']][0]['place_name']
+                        self.location_name = [feature for feature in features if 'locality' in feature['place_type']
+                                              ][0]['place_name']
                     except IndexError:
                         # If "place" nor "locality" features are avialable, use "region"
                         try:
-                            self.location_name = [feature for feature in features if 'region' in feature['place_type']][0]['place_name']
+                            self.location_name = [feature for feature in features if 'region' in feature['place_type']
+                                                  ][0]['place_name']
                         except:
                             # It is not possible to derive a name...
                             pass

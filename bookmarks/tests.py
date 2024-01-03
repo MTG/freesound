@@ -38,16 +38,21 @@ class BookmarksTest(TestCase):
         # User not logged in, redirect raises 404
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}))
         self.assertEqual(404, resp.status_code)
-    
+
         # User logged in, redirect to home/bookmarks page
         self.client.force_login(user)
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': 'Anton'}))
         self.assertRedirects(resp, reverse('bookmarks'))
 
         # User logged in, redirect to home/bookmarks/category page
-        resp = self.client.get(reverse('bookmarks-for-user-for-category', kwargs={'username': 'Anton', 'category_id': category.id}))
+        resp = self.client.get(
+            reverse('bookmarks-for-user-for-category', kwargs={
+                'username': 'Anton',
+                'category_id': category.id
+            })
+        )
         self.assertRedirects(resp, reverse('bookmarks-category', kwargs={'category_id': category.id}))
-           
+
     def test_bookmarks(self):
         user = User.objects.get(username='Anton')
         self.client.force_login(user)
@@ -56,7 +61,7 @@ class BookmarksTest(TestCase):
         response = self.client.get(reverse('bookmarks'))
         self.assertEqual(200, response.status_code)
         self.assertContains(response, 'There are no uncategorized bookmarks')
-        
+
         # Create bookmarks
         category = bookmarks.models.BookmarkCategory.objects.create(name='Category1', user=user)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
@@ -66,13 +71,13 @@ class BookmarksTest(TestCase):
         # Test main bookmarks page
         response = self.client.get(reverse('bookmarks'))
         self.assertEqual(200, response.status_code)
-        self.assertEqual(1, len(response.context['page'].object_list))  # 1 bookmark uncategorized
-        self.assertEqual(1, len(response.context['bookmark_categories']))  # 1 bookmark cateogry
+        self.assertEqual(1, len(response.context['page'].object_list))    # 1 bookmark uncategorized
+        self.assertEqual(1, len(response.context['bookmark_categories']))    # 1 bookmark cateogry
 
         # Test bookmark cateogry page
         response = self.client.get(reverse('bookmarks-category', kwargs={'category_id': category.id}))
         self.assertEqual(200, response.status_code)
-        self.assertEqual(2, len(response.context['page'].object_list))  # 2 sounds in cateogry
+        self.assertEqual(2, len(response.context['page'].object_list))    # 2 sounds in cateogry
         self.assertContains(response, category.name)
 
         # Test category does not exist

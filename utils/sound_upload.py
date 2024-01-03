@@ -105,7 +105,7 @@ def get_processing_before_describe_sound_folder(audio_file_path):
     """
     Get the path to the folder where the sound files generated during procesing-before-describe
     should be stored.
-    """    
+    """
     user_id = os.path.basename(os.path.dirname(audio_file_path))
     hash = str(hashlib.md5(audio_file_path.encode()).hexdigest())
     return os.path.join(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, user_id, hash)
@@ -116,12 +116,7 @@ def get_processing_before_describe_sound_base_url(audio_file_path):
     return settings.PROCESSING_BEFORE_DESCRIPTION_URL + '/'.join(path.split('/')[-2:]) + '/'
 
 
-def create_sound(user,
-                 sound_fields,
-                 apiv2_client=None,
-                 bulk_upload_progress=None,
-                 process=True,
-                 remove_exists=False):
+def create_sound(user, sound_fields, apiv2_client=None, bulk_upload_progress=None, process=True, remove_exists=False):
     """
     This function is used to create sound objects uploaded via the sound describe form, the API or the bulk describe
     feature.
@@ -190,7 +185,7 @@ def create_sound(user,
     sound.set_license(license)
 
     # 3 move to new path
-    orig = os.path.splitext(os.path.basename(sound.original_filename))[0]  # WATCH OUT!
+    orig = os.path.splitext(os.path.basename(sound.original_filename))[0]    # WATCH OUT!
     sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
     new_original_path = sound.locations("path")
     if sound.original_path != new_original_path:
@@ -226,10 +221,7 @@ def create_sound(user,
         # Create geotag from lat,lon,zoom text format
         if sound_fields['geotag']:
             lat, lon, zoom = sound_fields['geotag'].split(',')
-            geotag = GeoTag(user=user,
-                            lat=float(lat),
-                            lon=float(lon),
-                            zoom=int(zoom))
+            geotag = GeoTag(user=user, lat=float(lat), lon=float(lon), zoom=int(zoom))
             geotag.save()
             sound.geotag = geotag
     else:
@@ -238,10 +230,7 @@ def create_sound(user,
         lon = sound_fields.get('lon', None)
         zoom = sound_fields.get('zoom', None)
         if lat is not None and lon is not None and zoom is not None:
-            geotag = GeoTag(user=user,
-                            lat=float(lat),
-                            lon=float(lon),
-                            zoom=int(zoom))
+            geotag = GeoTag(user=user, lat=float(lat), lon=float(lon), zoom=int(zoom))
             geotag.save()
             sound.geotag = geotag
 
@@ -289,11 +278,13 @@ def create_sound(user,
         upload_source = 'bulk'
     else:
         upload_source = 'web'
-    sounds_logger.info('Created Sound object (%s)' % json.dumps({
-        'sound_id': sound.id,
-        'username': sound.user.username,
-        'upload_source': upload_source,
-    }))
+    sounds_logger.info(
+        'Created Sound object (%s)' % json.dumps({
+            'sound_id': sound.id,
+            'username': sound.user.username,
+            'upload_source': upload_source,
+        })
+    )
 
     return sound
 
@@ -321,18 +312,19 @@ def get_csv_lines(csv_file_path):
     elif csv_file_path.endswith('.xls'):
         # Read from Excel format
         wb = xlrd.open_workbook(csv_file_path)
-        s = wb.sheet_by_index(0)  # Get first excel sheet
+        s = wb.sheet_by_index(0)    # Get first excel sheet
         header = s.row_values(0)
-        lines = [dict(zip(header, row)) for row in
-                 [[str(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
+        lines = [dict(zip(header, row)) for row in [[str(val) for val in s.row_values(i)] for i in range(1, s.nrows)]]
     elif csv_file_path.endswith('.xlsx'):
         # Read from Excel format
         wb = openpyxl.load_workbook(filename=csv_file_path)
-        s = wb[wb.sheetnames[0]]  # Get first excel sheet
+        s = wb[wb.sheetnames[0]]    # Get first excel sheet
         rows = list(s.values)
         header = list(rows[0])
-        lines = [dict(zip(header, row)) for row in
-                 [[str(val) if val is not None else '' for val in rows[i]] for i in range(1, len(rows))]]
+        lines = [
+            dict(zip(header, row))
+            for row in [[str(val) if val is not None else '' for val in rows[i]] for i in range(1, len(rows))]
+        ]
     else:
         header = []
         lines = []
@@ -374,11 +366,9 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
 
     # Check headers
     if username is not None and csv_header != EXPECTED_HEADER_NO_USERNAME:
-        global_errors.append('Invalid header. Header should be: <i>%s</i>'
-                             % ','.join(EXPECTED_HEADER_NO_USERNAME))
+        global_errors.append('Invalid header. Header should be: <i>%s</i>' % ','.join(EXPECTED_HEADER_NO_USERNAME))
     elif username is None and csv_header != EXPECTED_HEADER:
-        global_errors.append('Invalid header. Header should be: <i>%s</i>'
-                             % ','.join(EXPECTED_HEADER))
+        global_errors.append('Invalid header. Header should be: <i>%s</i>' % ','.join(EXPECTED_HEADER))
 
     # Check that there are lines for sounds
     if len(csv_lines) == 0:
@@ -496,7 +486,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                 })
 
             lines_validated.append({
-                'line_no': n + 2,  # Show line number with l1 = header, l2 = first sound, and soon
+                'line_no': n + 2,    # Show line number with l1 = header, l2 = first sound, and soon
                 'line_original': line,
                 'line_cleaned': line_cleaned,
                 'line_errors': line_errors,
@@ -505,8 +495,14 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
     return lines_validated, global_errors
 
 
-def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_import=False, sounds_base_dir=None,
-                           username=None, bulkupload_progress_id=None):
+def bulk_describe_from_csv(
+    csv_file_path,
+    delete_already_existing=False,
+    force_import=False,
+    sounds_base_dir=None,
+    username=None,
+    bulkupload_progress_id=None
+):
     """
     Reads through the lines of a CSV file containing metadata to describe (and create) new Sound objects and creates
     them if the metadata is valid.
@@ -526,15 +522,15 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
     # Read and validate CSV
     header, lines = get_csv_lines(csv_file_path)
     lines_validated, global_errors = validate_input_csv_file(
-        csv_header=header,
-        csv_lines=lines,
-        sounds_base_dir=sounds_base_dir,
-        username=username)
+        csv_header=header, csv_lines=lines, sounds_base_dir=sounds_base_dir, username=username
+    )
 
     # Print global error messages if any
     if global_errors:
-        console_logger.info('Major issues were found while validating the CSV file. '
-                            'Fix them and re-run the command.')
+        console_logger.info(
+            'Major issues were found while validating the CSV file. '
+            'Fix them and re-run the command.'
+        )
         for error in global_errors:
             console_logger.info(f'- {error}')
         return
@@ -543,8 +539,10 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
     lines_with_errors = [line for line in lines_validated if line['line_errors']]
     if lines_with_errors:
         if not force_import:
-            console_logger.info('The following %i lines contain invalid data. Fix them or re-run with -f to import '
-                                'skipping these lines:' % len(lines_with_errors))
+            console_logger.info(
+                'The following %i lines contain invalid data. Fix them or re-run with -f to import '
+                'skipping these lines:' % len(lines_with_errors)
+            )
         else:
             console_logger.info(f'Skipping the following {len(lines_with_errors)} lines due to invalid data')
         for line in lines_with_errors:
@@ -559,8 +557,10 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
         try:
             bulk_upload_progress_object = BulkUploadProgress.objects.get(id=bulkupload_progress_id)
         except BulkUploadProgress.DoesNotExist:
-            console_logger.info('BulkUploadProgress object with id %i can\'t be found, wont store progress '
-                                 'information.' % bulkupload_progress_id)
+            console_logger.info(
+                'BulkUploadProgress object with id %i can\'t be found, wont store progress '
+                'information.' % bulkupload_progress_id
+            )
 
     # Start the actual process of uploading files
     lines_ok = [line for line in lines_validated if not line['line_errors']]
@@ -581,22 +581,22 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
 
         try:
             sound = create_sound(
-                    user=user,
-                    sound_fields={
-                        'name': line_cleaned['name'],
-                        'dest_path': dest_path,
-                        'license': line_cleaned['license'],
-                        'pack': line_cleaned['pack_name'],
-                        'description': line_cleaned['description'],
-                        'tags': line_cleaned['tags'],
-                        'lat': line_cleaned['lat'],
-                        'lon': line_cleaned['lon'],
-                        'zoom': line_cleaned['zoom'],
-                        'is_explicit': line_cleaned['is_explicit'],
-                    },
-                    process=False,
-                    bulk_upload_progress=bulk_upload_progress_object,
-                    remove_exists=delete_already_existing,
+                user=user,
+                sound_fields={
+                    'name': line_cleaned['name'],
+                    'dest_path': dest_path,
+                    'license': line_cleaned['license'],
+                    'pack': line_cleaned['pack_name'],
+                    'description': line_cleaned['description'],
+                    'tags': line_cleaned['tags'],
+                    'lat': line_cleaned['lat'],
+                    'lon': line_cleaned['lon'],
+                    'zoom': line_cleaned['zoom'],
+                    'is_explicit': line_cleaned['is_explicit'],
+                },
+                process=False,
+                bulk_upload_progress=bulk_upload_progress_object,
+                remove_exists=delete_already_existing,
             )
             if bulk_upload_progress_object:
                 bulk_upload_progress_object.store_progress_for_line(line['line_no'], sound.id)
@@ -610,7 +610,10 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             if sound.pack:
                 sound.pack.process()
 
-            message = 'l%i: Successfully added sound \'%s\' to Freesound.' % (line['line_no'], sound.original_filename,)
+            message = 'l%i: Successfully added sound \'%s\' to Freesound.' % (
+                line['line_no'],
+                sound.original_filename,
+            )
             if error_sending_to_process is not None:
                 message += f' Sound could have not been sent to process ({error_sending_to_process}).'
             console_logger.info(message)
@@ -622,19 +625,28 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
             if bulk_upload_progress_object:
                 bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)
         except AlreadyExistsException:
-            message = 'l%i: The file %s is already part of Freesound, discarding it.' % (line['line_no'], dest_path,)
+            message = 'l%i: The file %s is already part of Freesound, discarding it.' % (
+                line['line_no'],
+                dest_path,
+            )
             console_logger.info(message)
             if bulk_upload_progress_object:
                 bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)
         except CantMoveException as e:
-            message = 'l%i: %s.' % (line['line_no'], str(e),)
+            message = 'l%i: %s.' % (
+                line['line_no'],
+                str(e),
+            )
             console_logger.info(message)
             if bulk_upload_progress_object:
                 bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)
         except Exception as e:
             # If another unexpected exception happens, show a message and continue with the process so that
             # other sounds can be added
-            message = 'l%i: Unexpected error %s.' % (line['line_no'], str(e),)
+            message = 'l%i: Unexpected error %s.' % (
+                line['line_no'],
+                str(e),
+            )
             console_logger.info(message, exc_info=True)
             if bulk_upload_progress_object:
                 bulk_upload_progress_object.store_progress_for_line(line['line_no'], message)

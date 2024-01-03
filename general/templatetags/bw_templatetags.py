@@ -55,12 +55,14 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
 
     line_height_class = 'line-height-38' if size < 4 else 'line-height-fs-1'
 
-    return {'tag_name': tag_name,
-            'size': size,
-            'class_name': class_name,
-            'line_height_class': line_height_class,
-            'url': url,
-            'opacity_class': opacity_class}
+    return {
+        'tag_name': tag_name,
+        'size': size,
+        'class_name': class_name,
+        'line_height_class': line_height_class,
+        'url': url,
+        'opacity_class': opacity_class
+    }
 
 
 @register.inclusion_tag('atoms/avatar.html')
@@ -72,17 +74,19 @@ def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
     decorator of the Profile model might return something different if user has no avatar.
     """
     if len(username) > 1:
-        no_avatar_bg_color = settings.AVATAR_BG_COLORS[(ord(username[0]) + ord(username[1])) % len(settings.AVATAR_BG_COLORS)]
+        no_avatar_bg_color = settings.AVATAR_BG_COLORS[(ord(username[0]) + ord(username[1])) %
+                                                       len(settings.AVATAR_BG_COLORS)]
     else:
         no_avatar_bg_color = settings.AVATAR_BG_COLORS[ord(username[0]) % len(settings.AVATAR_BG_COLORS)]
 
     return {
         'size': size,
-        'avatar_url':avatar_url,
+        'avatar_url': avatar_url,
         'username': username,
         'font_size': int(size * 0.4),
         'extra_class': extra_class,
-        'no_avatar_bg_color': no_avatar_bg_color}
+        'no_avatar_bg_color': no_avatar_bg_color
+    }
 
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
@@ -130,16 +134,18 @@ def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=Fa
         else:
             stars_5.append('half')
 
-    return {'sound_user': sound_user,
-            'allow_rating': allow_rating,
-            'sound': sound,
-            'sound_rating_0_5': sound_rating/2,
-            'user_has_rated_this_sound': user_has_rated_this_sound,
-            'has_min_ratings': has_min_ratings,
-            'show_added_rating_on_save': show_added_rating_on_save,
-            'use_request_user_rating': use_request_user_rating,
-            'fill_class': 'text-red' if not use_request_user_rating else 'text-yellow',
-            'stars_range': list(zip(stars_5, list(range(1, 6))))}
+    return {
+        'sound_user': sound_user,
+        'allow_rating': allow_rating,
+        'sound': sound,
+        'sound_rating_0_5': sound_rating / 2,
+        'user_has_rated_this_sound': user_has_rated_this_sound,
+        'has_min_ratings': has_min_ratings,
+        'show_added_rating_on_save': show_added_rating_on_save,
+        'use_request_user_rating': use_request_user_rating,
+        'fill_class': 'text-red' if not use_request_user_rating else 'text-yellow',
+        'stars_range': list(zip(stars_5, list(range(1, 6))))
+    }
 
 
 @register.inclusion_tag('atoms/stars.html', takes_context=True)
@@ -182,7 +188,7 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
         # If paginator object is None, don't go ahead as below calculations will fail. This can happen if show_paginator
         # is called and no paginator object is present in view
         return {}
- 
+
     adjacent_pages = 3
     total_wanted = adjacent_pages * 2 + 1
     min_page_num = max(current_page - adjacent_pages, 1)
@@ -200,8 +206,9 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
 
     # although paginator objects are 0-based, we use 1-based paging
     page_numbers = [n for n in range(min_page_num, max_page_num) if 0 < n <= paginator.num_pages]
-    params = urllib.parse.urlencode([(key.encode('utf-8'), value.encode('utf-8')) for (key, value) in request.GET.items()
-                               if key.lower() != "page"])
+    params = urllib.parse.urlencode([
+        (key.encode('utf-8'), value.encode('utf-8')) for (key, value) in request.GET.items() if key.lower() != "page"
+    ])
 
     if params == "":
         url = request.path + "?page="
@@ -212,15 +219,15 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
     # if it's the case a query to the DB or a dict if it's the case of a query to solr
     if isinstance(page, dict):
         url_prev_page = url + str(page['previous_page_number'])
-        url_next_page =  url + str(page['next_page_number'])
+        url_next_page = url + str(page['next_page_number'])
         url_first_page = url + '1'
     else:
         url_prev_page = None
         if page.has_previous():
-             url_prev_page = url + str(page.previous_page_number())
+            url_prev_page = url + str(page.previous_page_number())
         url_next_page = None
         if page.has_next():
-             url_next_page = url + str(page.next_page_number())
+            url_next_page = url + str(page.next_page_number())
         url_first_page = url + '1'
     url_last_page = url + str(paginator.num_pages)
 
@@ -237,7 +244,7 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
         "show_first": 1 not in page_numbers,
         "show_last": paginator.num_pages not in page_numbers,
         "last_is_next": last_is_next,
-        "url" : url,
+        "url": url,
         "url_prev_page": url_prev_page,
         "url_next_page": url_next_page,
         "url_first_page": url_first_page,
@@ -273,7 +280,7 @@ def bw_intcomma(value):
 @register.inclusion_tag('molecules/carousel.html', takes_context=True)
 def sound_carousel(context, sounds, show_timesince=False):
     # Update context and pass it to templatetag so nested template tags also have it
-    context.update({'elements': sounds, 'type': 'sound', 'show_timesince': show_timesince})  
+    context.update({'elements': sounds, 'type': 'sound', 'show_timesince': show_timesince})
     return context
 
 

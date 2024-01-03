@@ -41,10 +41,10 @@ class CommentAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
-    
+
     def has_change_permission(self, request, obj=None):
         return False
-    
+
     def get_changelist(self, request):
         # Use custom change list class to avoid ordering by '-pk' in addition to '-created'
         # That would cause a slow query as we don't have a combined db index on both fields

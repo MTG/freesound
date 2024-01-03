@@ -28,11 +28,13 @@ class Command(LoggingBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-i', '--indexing_server',
+            '-i',
+            '--indexing_server',
             action='store_true',
             dest='indexing_server',
             default=False,
-            help='Save the index of the indexing server instead of the index of the main similarity server')
+            help='Save the index of the indexing server instead of the index of the main similarity server'
+        )
 
     def handle(self, *args, **options):
         self.log_start()

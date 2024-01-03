@@ -37,10 +37,9 @@ def download_sounds(licenses_url, pack):
     """
     attribution = pack.get_attribution()
     license_crc = zlib.crc32(attribution.encode('UTF-8')) & 0xffffffff
-    filelist = "%02x %i %s %s\r\n" % (license_crc,
-                                      len(attribution.encode('UTF-8')),
-                                      licenses_url,
-                                      "_readme_and_license.txt")
+    filelist = "%02x %i %s %s\r\n" % (
+        license_crc, len(attribution.encode('UTF-8')), licenses_url, "_readme_and_license.txt"
+    )
 
     sounds_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
 

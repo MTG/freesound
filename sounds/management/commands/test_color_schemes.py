@@ -18,14 +18,15 @@
 #     See AUTHORS file.
 #
 
-from past.utils import old_div
+import os
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from sounds.models import Sound
 import utils.audioprocessing.processing as audioprocessing
+from sounds.models import Sound
 from utils.audioprocessing import color_schemes
-import os
+
 
 # docker-compose run --rm web python manage.py test_color_schemes 415154,415144,413973,402737,403343,194761
 

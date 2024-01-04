@@ -28,7 +28,6 @@ djangorestframework==3.13.1
 fabric==2.6.0
 feedparser~=6.0.10
 freezegun==1.2.2
-future~=0.18.2
 graypy==0.2.12
 gunicorn==21.2.0
 ipython==8.14.0

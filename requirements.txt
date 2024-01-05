@@ -146,6 +146,8 @@ feedparser==6.0.10
     # via -r requirements.in
 freezegun==1.2.2
     # via -r requirements.in
+future==0.18.3
+    # via -r requirements.in
 gprof2dot==2022.7.29
     # via django-silk
 graypy==0.2.12

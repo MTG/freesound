@@ -8,25 +8,27 @@ akismet==1.0.1
     # via -r requirements.in
 alabaster==0.7.13
     # via sphinx
-amqp==5.1.1
+amqp==5.2.0
     # via kombu
+appnope==0.1.3
+    # via ipython
 asgiref==3.7.2
     # via django
-asttokens==2.2.1
+asttokens==2.4.1
     # via stack-data
 autopep8==1.5.7
     # via
     #   -r requirements.in
     #   django-silk
-babel==2.12.1
+babel==2.14.0
     # via sphinx
 backcall==0.2.0
     # via ipython
-bcrypt==4.0.1
+bcrypt==4.1.2
     # via paramiko
 beautifulsoup4==4.9.3
     # via -r requirements.in
-billiard==4.1.0
+billiard==4.2.0
     # via celery
 bleach==5.0.1
     # via -r requirements.in
@@ -39,25 +41,25 @@ botocore==1.29.165
     # via
     #   boto3
     #   s3transfer
-build==0.10.0
+build==1.0.3
     # via pip-tools
 cachecontrol==0.13.1
     # via mapbox
-cachetools==5.3.1
+cachetools==5.3.2
     # via zenpy
 celery==5.3.4
     # via -r requirements.in
-certifi==2023.7.22
+certifi==2023.11.17
     # via
     #   requests
     #   sentry-sdk
-cffi==1.15.1
+cffi==1.16.0
     # via
     #   cryptography
     #   pynacl
-charset-normalizer==3.2.0
+charset-normalizer==3.3.2
     # via requests
-click==8.1.6
+click==8.1.7
     # via
     #   celery
     #   click-didyoumean
@@ -70,7 +72,7 @@ click-plugins==1.1.1
     # via celery
 click-repl==0.3.0
     # via celery
-cryptography==41.0.2
+cryptography==41.0.7
     # via
     #   jwcrypto
     #   paramiko
@@ -84,7 +86,7 @@ deprecated==1.2.14
     # via jwcrypto
 dj-database-url==0.5.0
     # via -r requirements.in
-django==3.2.17
+django==3.2.23
     # via
     #   -r requirements.in
     #   django-admin-sortable
@@ -138,11 +140,11 @@ docutils==0.20.1
     # via sphinx
 et-xmlfile==1.1.0
     # via openpyxl
-executing==1.2.0
+executing==2.0.1
     # via stack-data
 fabric==2.6.0
     # via -r requirements.in
-feedparser==6.0.10
+feedparser==6.0.11
     # via -r requirements.in
 freezegun==1.2.2
     # via -r requirements.in
@@ -154,7 +156,7 @@ graypy==0.2.12
     # via -r requirements.in
 gunicorn==21.2.0
     # via -r requirements.in
-idna==3.4
+idna==3.6
     # via requests
 imagesize==1.4.1
     # via sphinx
@@ -164,7 +166,7 @@ ipython==8.14.0
     # via -r requirements.in
 iso3166==2.1.1
     # via mapbox
-jedi==0.18.2
+jedi==0.19.1
     # via ipython
 jinja2==3.0.3
     # via
@@ -174,9 +176,9 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-jwcrypto==1.5.0
+jwcrypto==1.5.1
     # via django-oauth-toolkit
-kombu==5.3.2
+kombu==5.3.4
     # via celery
 mapbox==0.18.1
     # via -r requirements.in
@@ -186,7 +188,7 @@ markupsafe==2.1.3
     # via jinja2
 matplotlib-inline==0.1.6
     # via ipython
-msgpack==1.0.5
+msgpack==1.0.7
     # via cachecontrol
 networkx==1.5
     # via -r requirements.in
@@ -200,17 +202,17 @@ oauthlib==3.2.2
     #   django-oauth-toolkit
 openpyxl==3.1.0
     # via -r requirements.in
-packaging==23.1
+packaging==23.2
     # via
     #   build
     #   gunicorn
-paramiko==3.2.0
+paramiko==3.4.0
     # via fabric
 parso==0.8.3
     # via jedi
 pathlib2==2.3.7.post1
     # via fabric
-pexpect==4.8.0
+pexpect==4.9.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
@@ -218,9 +220,9 @@ pillow==9.5.0
     # via -r requirements.in
 pip-tools==7.1.0
     # via -r requirements.in
-polyline==2.0.0
+polyline==2.0.1
     # via mapbox
-prompt-toolkit==3.0.39
+prompt-toolkit==3.0.43
     # via
     #   click-repl
     #   ipython
@@ -230,11 +232,11 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.2
     # via stack-data
-pycodestyle==2.10.0
+pycodestyle==2.11.1
     # via autopep8
 pycparser==2.21
     # via cffi
-pygments==2.15.1
+pygments==2.17.2
     # via
     #   ipython
     #   sphinx
@@ -280,9 +282,9 @@ requests==2.31.0
     #   sphinx
     #   stripe
     #   zenpy
-s3transfer==0.6.1
+s3transfer==0.6.2
     # via boto3
-sentry-sdk[django]==1.31.0
+sentry-sdk[django]==1.39.1
     # via -r requirements.in
 sgmllib3k==1.0.0
     # via feedparser
@@ -295,7 +297,7 @@ six==1.16.0
     #   sphinx
 snowballstemmer==2.2.0
     # via sphinx
-soupsieve==2.4.1
+soupsieve==2.5
     # via beautifulsoup4
 sphinx==1.6.3
     # via -r requirements.in
@@ -308,7 +310,7 @@ sqlparse==0.4.4
     #   django
     #   django-debug-toolbar
     #   django-silk
-stack-data==0.6.2
+stack-data==0.6.3
     # via ipython
 stripe==2.28.1
     # via -r requirements.in
@@ -319,33 +321,33 @@ tomli==2.0.1
     #   build
     #   pip-tools
     #   pyproject-hooks
-traitlets==5.9.0
+traitlets==5.14.0
     # via
     #   ipython
     #   matplotlib-inline
-typing-extensions==4.7.1
+typing-extensions==4.9.0
     # via asgiref
-tzdata==2023.3
+tzdata==2023.4
     # via celery
 uritemplate==4.1.1
     # via mapbox
-urllib3==1.26.16
+urllib3==1.26.18
     # via
     #   botocore
     #   requests
     #   sentry-sdk
-vine==5.0.0
+vine==5.1.0
     # via
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.6
+wcwidth==0.2.12
     # via prompt-toolkit
 webencodings==0.5.1
     # via bleach
-wheel==0.41.0
+wheel==0.42.0
     # via pip-tools
-wrapt==1.15.0
+wrapt==1.16.0
     # via deprecated
 xlrd==2.0.1
     # via -r requirements.in

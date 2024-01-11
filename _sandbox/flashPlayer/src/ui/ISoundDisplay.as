@@ -1,1 +1,0 @@
-package ui {	/**	 * @author bram	 */	public interface ISoundDisplay {	}}

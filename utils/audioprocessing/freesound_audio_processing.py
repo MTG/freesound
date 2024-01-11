@@ -19,22 +19,22 @@
 #
 
 
-from past.utils import old_div
 import json
+import logging
 import os
 import signal
-import logging
 import tempfile
+from tempfile import TemporaryDirectory
+import sentry_sdk
 
 from django.apps import apps
 from django.conf import settings
 
-from . import color_schemes
 import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing.processing import AudioProcessingException
-from tempfile import TemporaryDirectory
 from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
 from utils.sound_upload import get_processing_before_describe_sound_folder
+from . import color_schemes
 
 console_logger = logging.getLogger("console")
 
@@ -244,7 +244,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 if self.sound.type in settings.LOSSY_FILE_EXTENSIONS:
                     info['bitdepth'] = 0  # mp3 and ogg don't have bitdepth
                     if info['duration'] > 0:
-                        raw_bitrate = int(round(old_div(old_div(self.sound.filesize * 8, info['duration']), 1000)))
+                        raw_bitrate = round((self.sound.filesize * 8 / info['duration']) / 1000)
                         # Here we post-process a bit the bitrate to account for small rounding errors
                         # If we see computed bitrate is very close to a common bitrate, we quantize to that number
                         differences_with_common_bitrates = [abs(cbt - raw_bitrate) for cbt in settings.COMMON_BITRATES]

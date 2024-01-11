@@ -21,7 +21,6 @@
 #
 
 
-from past.utils import old_div
 import math
 import os
 import re
@@ -37,31 +36,6 @@ from utils.audioprocessing import get_sound_type
 
 class AudioProcessingException(Exception):
     pass
-
-
-class TestAudioFile:
-    """A class that mimics pysndfile.PySndfile but generates noise instead of reading
-    a wave file. Additionally it can be told to have a "broken" header and thus crashing
-    in the middle of the file. Also useful for testing ultra-short files of 20 samples."""
-
-    def __init__(self, num_frames, has_broken_header=False):
-        self.seekpoint = 0
-        self.nframes = num_frames
-        self.samplerate = 44100
-        self.channels = 1
-        self.has_broken_header = has_broken_header
-
-    def seek(self, seekpoint):
-        self.seekpoint = seekpoint
-
-    def read_frames(self, frames_to_read):
-        if self.has_broken_header and self.seekpoint + frames_to_read > old_div(self.num_frames, 2):
-            raise RuntimeError()
-
-        num_frames_left = self.num_frames - self.seekpoint
-        will_read = num_frames_left if num_frames_left < frames_to_read else frames_to_read
-        self.seekpoint += will_read
-        return numpy.random.random(will_read) * 2 - 1
 
 
 def get_max_level(filename):
@@ -170,7 +144,7 @@ class AudioProcessor:
     def spectral_centroid(self, seek_point, spec_range=110.0):
         """ starting at seek_point read fft_size samples, and calculate the spectral centroid """
 
-        samples = self.read(seek_point - old_div(self.fft_size, 2), self.fft_size, True)
+        samples = self.read(seek_point - self.fft_size // 2, self.fft_size, True)
 
         samples *= self.window
         fft = numpy.fft.rfft(samples)
@@ -178,7 +152,8 @@ class AudioProcessor:
         length = numpy.float64(spectrum.shape[0])
 
         # scale the db spectrum from [- spec_range db ... 0 db] > [0..1]
-        db_spectrum = old_div(((20 * (numpy.log10(spectrum + 1e-60))).clip(-spec_range, 0.0) + spec_range), spec_range)
+        db_spectrum = ((20 * (numpy.log10(spectrum + 1e-60))).clip(-spec_range, 0.0) + spec_range)
+        db_spectrum = db_spectrum / spec_range
 
         energy = spectrum.sum()
         spectral_centroid = 0
@@ -189,11 +164,12 @@ class AudioProcessor:
             if self.spectrum_range is None:
                 self.spectrum_range = numpy.arange(length)
 
-            spectral_centroid = old_div((spectrum * self.spectrum_range).sum(), (energy * (length - 1))) * self.samplerate * 0.5
+            spectral_centroid = ((spectrum * self.spectrum_range).sum() / (
+                        energy * (length - 1))) * self.samplerate * 0.5
 
             # clip > log10 > scale between 0 and 1
-            spectral_centroid = old_div((math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log), (
-                        self.higher_log - self.lower_log))
+            spectral_centroid = (math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log) / (
+                        self.higher_log - self.lower_log)
 
         return spectral_centroid, db_spectrum
 
@@ -246,14 +222,14 @@ class AudioProcessor:
 
 def interpolate_colors(colors, flat=False, num_colors=256):
     """ given a list of colors, create a larger list of colors interpolating
-    the first one. If flatten is True a list of numers will be returned. If
+    the first one. If flatten is True, a list of numbers will be returned. If
     False, a list of (r,g,b) tuples. num_colors is the number of colors wanted
     in the final list """
 
     palette = []
 
     for i in range(num_colors):
-        index = old_div((i * (len(colors) - 1)), (num_colors - 1.0))
+        index = (i * (len(colors) - 1)) / (num_colors - 1.0)
         index_int = int(index)
         alpha = index - float(index_int)
 
@@ -330,7 +306,7 @@ class WaveformImage:
         y_max_int = int(y_max)
         alpha = y_max - y_max_int
 
-        if alpha > 0.0 and alpha < 1.0 and y_max_int + 1 < self.image_height:
+        if 0.0 < alpha < 1.0 and y_max_int + 1 < self.image_height:
             if not self.transparent_background:
                 current_pix = self.pix[x, y_max_int + 1]
                 r = int((1 - alpha) * current_pix[0] + alpha * color[0])
@@ -346,7 +322,7 @@ class WaveformImage:
         y_min_int = int(y_min)
         alpha = 1.0 - (y_min - y_min_int)
 
-        if alpha > 0.0 and alpha < 1.0 and y_min_int - 1 >= 0:
+        if 0.0 < alpha < 1.0 and y_min_int - 1 >= 0:
             if not self.transparent_background:
                 r = int((1 - alpha) * current_pix[0] + alpha * color[0])
                 g = int((1 - alpha) * current_pix[1] + alpha * color[1])
@@ -361,7 +337,8 @@ class WaveformImage:
         a = self.color_scheme_to_use.get('wave_zero_line_alpha', 0)
         if a:
             for x in range(self.image_width):
-                self.pix[x, old_div(self.image_height, 2)] = tuple([p + a for p in self.pix[x, old_div(self.image_height, 2)]])
+                center = self.image_height // 2
+                self.pix[x, center] = tuple([p + a for p in self.pix[x, center]])
 
         self.image.save(filename)
 
@@ -391,10 +368,10 @@ class SpectrogramImage:
         y_min = math.log10(f_min)
         y_max = math.log10(f_max)
         for y in range(self.image_height):
-            freq = math.pow(10.0, y_min + old_div(y, (image_height - 1.0)) * (y_max - y_min))
-            bin = freq / 22050.0 * (old_div(self.fft_size, 2) + 1)
+            freq = math.pow(10.0, y_min + y / (image_height - 1.0) * (y_max - y_min))
+            bin = freq / 22050.0 * (self.fft_size // 2 + 1)
 
-            if bin < old_div(self.fft_size, 2):
+            if bin < self.fft_size // 2:
                 alpha = bin - int(bin)
 
                 self.y_to_bin.append((int(bin), alpha * 255))
@@ -440,7 +417,7 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
 
     for x in range(image_width):
 
-        if progress_callback and x % (old_div(image_width, 100)) == 0:
+        if progress_callback and x % (image_width // 100) == 0:
             progress_callback(x, image_width)
 
         seek_point = int(x * samples_per_pixel)

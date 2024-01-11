@@ -17,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from past.utils import old_div
 from apiv2.forms import API_SORT_OPTIONS_MAP
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.search import SearchEngineException, get_search_engine
@@ -90,7 +89,7 @@ def filter_both(search_form, target_file=None, extra_parameters=None):
     if search_form.cleaned_data['target'] or target_file:
         # First search into gaia and then into solr (get all gaia results)
         gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages)
-        valid_ids_pages = [gaia_ids[i:i+solr_filter_id_block_size] for i in range(0, len(gaia_ids), solr_filter_id_block_size) if (old_div(i,solr_filter_id_block_size)) < solr_filter_id_max_pages]
+        valid_ids_pages = [gaia_ids[i:i+solr_filter_id_block_size] for i in range(0, len(gaia_ids), solr_filter_id_block_size) if (i / solr_filter_id_block_size) < solr_filter_id_max_pages]
         solr_ids = list()
         search_engine = get_search_engine()
         for valid_ids_page in valid_ids_pages:

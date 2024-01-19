@@ -214,7 +214,7 @@ const createPlayButton = (audioElement, playerSize) => {
   playButton.setAttribute('title', 'Play/Pause')
   playButton.setAttribute('aria-label', 'Play/Pause')
   playButton.classList.add('bw-player__play-btn')
-  playButton.addEventListener('pointerdown', evt => {evt.stopPropagation()})
+  playButton.addEventListener('pointerup', evt => {evt.stopPropagation()})
   playButton.addEventListener('click', (evt) => {
     const isPlaying = !audioElement.paused
     if (isPlaying) {
@@ -238,7 +238,7 @@ const createStopButton = (audioElement, parentNode) => {
   const stopButton = createControlButton('stop')
   stopButton.setAttribute('title', 'Stop')
   stopButton.setAttribute('aria-label', 'Stop')
-  stopButton.addEventListener('pointerdown', evt => evt.stopPropagation())
+  stopButton.addEventListener('pointerup', evt => evt.stopPropagation())
   stopButton.addEventListener('click', (e) => {
     audioElement.pause()
     audioElement.currentTime = 0
@@ -258,7 +258,7 @@ const createLoopButton = audioElement => {
   loopButton.setAttribute('aria-label', 'Loop')
   loopButton.classList.add('text-20')
   loopButton.classList.add('loop-button')
-  loopButton.addEventListener('pointerdown', evt => evt.stopPropagation())
+  loopButton.addEventListener('pointerup', evt => evt.stopPropagation())
   loopButton.addEventListener('click', (evt) => {
     const willLoop = !audioElement.loop
     if (willLoop) {
@@ -347,7 +347,7 @@ const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWith
   if (startWithSpectrum){
     spectogramButton.classList.add('text-red-important');
   }
-  spectogramButton.addEventListener('pointerdown', evt => evt.stopPropagation())
+  spectogramButton.addEventListener('pointerup', evt => evt.stopPropagation())
   spectogramButton.addEventListener('click', evt => {
     toggleSpectrogramWaveform(playerImgNode, waveform, spectrum, playerSize)
     evt.stopPropagation()
@@ -360,7 +360,7 @@ const createRulerButton = (parentNode) => {
   rulerButton.setAttribute('title', 'Ruler')
   rulerButton.setAttribute('aria-label', 'Ruler')
   rulerButton.classList.add('text-20')
-  rulerButton.addEventListener('pointerdown', evt => evt.stopPropagation())
+  rulerButton.addEventListener('pointerup', evt => evt.stopPropagation())
   rulerButton.addEventListener('click', evt => {
     if (parentNode.dataset.rulerActive !== undefined){
       delete parentNode.dataset.rulerActive;
@@ -421,7 +421,7 @@ const createPlayerImage = (parentNode, audioElement, playerSize) => {
     const progressStatus = createProgressStatus(parentNode, audioElement, playerSize, startWithSpectrum)
     imageContainer.appendChild(progressStatus)
 
-    imageContainer.addEventListener('pointerdown', evt => {  // We use "pointerdown" here so we can distinguish between mouse and touch events
+    imageContainer.addEventListener('pointerup', evt => {  // We use "pointerup" here so we can distinguish between mouse and touch events
       if (evt.altKey){
         toggleSpectrogramWaveform(playerImage, waveform, spectrum, playerSize);
       } else {
@@ -479,7 +479,7 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
   const playerControls = document.createElement('div')
   playerControls.className = 'bw-player__controls'
   playerControls.addEventListener('click', evt => evt.stopPropagation())
-  playerControls.addEventListener('pointerdown', evt => evt.stopPropagation())
+  playerControls.addEventListener('pointerup', evt => evt.stopPropagation())
   if (playerSize === 'big') {
     playerControls.classList.add('bw-player__controls--big')
   } else if (playerSize === 'minimal') {
@@ -572,7 +572,7 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
     getIsFavorite() ? unfavoriteButton : favoriteButton
   )
 
-  favoriteButtonContainer.addEventListener('pointerdown', evt => evt.stopPropagation())
+  favoriteButtonContainer.addEventListener('pointerup', evt => evt.stopPropagation())
   favoriteButtonContainer.addEventListener('click', (evt) => {
     const isCurrentlyFavorite = getIsFavorite()
     favoriteButtonContainer.innerHTML = ''
@@ -596,7 +596,7 @@ const createSimilarSoundsButton = (parentNode, playerImgNode) => {
   similarSoundsButton.setAttribute('title', 'Find similar sounds')
   similarSoundsButton.setAttribute('aria-label', 'Find similar sounds')
   similarSoundsButtonContainer.classList.add('bw-player__similar')
-  similarSoundsButtonContainer.addEventListener('pointerdown', evt => evt.stopPropagation())
+  similarSoundsButtonContainer.addEventListener('pointerup', evt => evt.stopPropagation())
   similarSoundsButtonContainer.addEventListener('click', evt => evt.stopPropagation())
   
   if (isTouchEnabledDevice()){
@@ -621,7 +621,7 @@ const createRemixGroupButton = (parentNode, playerImgNode) => {
   remixGroupButton.setAttribute('title', 'See sound\'s remix group')
   remixGroupButton.setAttribute('aria-label', 'See sound\'s remix group')
   remixGroupButtonContainer.classList.add('bw-player__remix')
-  remixGroupButtonContainer.addEventListener('pointerdown', evt => evt.stopPropagation())
+  remixGroupButtonContainer.addEventListener('pointerup', evt => evt.stopPropagation())
   remixGroupButtonContainer.addEventListener('click', evt => evt.stopPropagation())
   
   if (isTouchEnabledDevice()){
@@ -688,7 +688,7 @@ const createPlayer = parentNode => {
     ratingWidget.className = 'bw-player__top_controls_left'
     rateSoundHiddenWidget.classList.remove('display-none')
     ratingWidget.append(rateSoundHiddenWidget)
-    ratingWidget.addEventListener('pointerdown', evt => evt.stopPropagation())
+    ratingWidget.addEventListener('pointerup', evt => evt.stopPropagation())
     ratingWidget.addEventListener('click', evt => evt.stopPropagation())
     let startWithSpectrum = false;
     if (playerImgNode !== undefined){  // Some players don't have playerImgNode (minimal)

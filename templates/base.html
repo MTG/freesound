@@ -3,9 +3,23 @@
 
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=575, initial-scale=1">
+    <meta name="viewport" content="width=0">
+    <script>
+        function update_viewport_width_if_needed(){
+            var adjustedWidth = window.innerWidth / window.devicePixelRatio;
+            if (adjustedWidth < 580){
+                document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=580');
+            } else {
+                document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=0');
+            }
+        }
+        update_viewport_width_if_needed();
+        window.addEventListener("resize", function (event){
+            update_viewport_width_if_needed();
+        });
+    </script>
     <meta name="theme-color" content="#000000">
     <title>Freesound{% if request.resolver_match.url_name != "front-page" %} - {% block title %}{% endblock %}{% endif %}</title>
     <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?">
@@ -24,16 +38,16 @@
     {% elif request.user.profile.ui_theme_preference == 'd' %}
     <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}" data-forced-theme="yes">
     {% else %}
-      {% if system_prefers_dark_theme %}
-      <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}">
-      {% else %}
-      <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}">
-      {% endif %}
+    {% if system_prefers_dark_theme %}
+    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index-dark.css' %}">
+    {% else %}
+    <link id="style" rel="stylesheet" href="{% static 'bw-frontend/dist/index.css' %}">
     {% endif %}
-  </head>
-  <body>
+    {% endif %}
+</head>
+<body>
     <noscript>
-      You need to enable JavaScript to run this app.
+        You need to enable JavaScript to run this app.
     </noscript>
     {% include 'accounts/modal_login.html' %}
     {% include 'accounts/modal_login_problems.html' %}
@@ -43,22 +57,22 @@
     {% include 'molecules/toast.html' %}
     <div class="notifications-wrapper"></div>
     {% if messages %}
-        <div id="django-messages-content" class="display-none">
-            <ul>
-                {% for message in messages %}
-                    <li><span class="h-spacing-1">·</span>{{ message|safe }}</li>
-                {% endfor %}
-            </ul>
-        </div>
+    <div id="django-messages-content" class="display-none">
+        <ul>
+            {% for message in messages %}
+            <li><span class="h-spacing-1">·</span>{{ message|safe }}</li>
+            {% endfor %}
+        </ul>
+    </div>
     {% endif %}
     <div class="bw-page" aria-hidden="false">
-    {% block navbar %}
+        {% block navbar %}
         {% comment %}This block can be overriden by pages that use a different navbar{% endcomment %}
         {% include 'molecules/navbar.html' %}
-    {% endblock %}
-    {% block content %}
-    {% endblock %}
-    {% include 'molecules/footer.html' %}
+        {% endblock %}
+        {% block content %}
+        {% endblock %}
+        {% include 'molecules/footer.html' %}
     </div>
     {% bw_plausible_scripts %}
     {% bw_maps_js_scripts %}
@@ -70,15 +84,10 @@
         document.cookie = "preferSpectrogram=no;path=/";
         document.cookie = "disallowSimultaneousAudioPlayback=no;path=/"
         {% endif %}
-        const siteWidth = 580;  // Minimum expected width. If screen is smaller, scale website.
-        const scale = window.innerWidth / siteWidth;
-        if (scale < 1){
-            document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=' + siteWidth + ', initial-scale=' + scale);
-        }
         const userIsAuthenticated = {{ request.user.is_authenticated|yesno:'true,false' }};
     </script>
     <script src="{% static 'bw-frontend/dist/index.js' %}"></script>
     {% block extrabody %}
     {% endblock %}
-  </body>
+</body>
 </html>

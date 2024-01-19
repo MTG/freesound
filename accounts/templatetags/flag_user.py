@@ -19,31 +19,34 @@
 #
 
 from django import template
+
 from accounts.models import UserFlag
+
 register = template.Library()
 
 
 @register.inclusion_tag("accounts/flag_user.html", takes_context=True)
-def flag_user(context, flag_type, username, content_id, text = None, user_sounds = None):
+def flag_user(context, flag_type, username, content_id, text=None, user_sounds=None):
 
     no_show = False
     link_text = "Report spam/offensive"
 
-    if not context['request'].user.is_authenticated:
+    has_sounds = user_sounds is not None and user_sounds > 0
+    if not context['request'].user.is_authenticated or has_sounds:
         no_show = True
-        flagged = []
+        flagged = False
     else:
-        flagged = UserFlag.objects.filter(user__username=username,
-                                          reporting_user=context['request'].user,
-                                          object_id=content_id).values('reporting_user').distinct()
+        flagged = UserFlag.objects.filter(
+            user__username=username, reporting_user=context['request'].user, object_id=content_id
+        ).exists()
         if text:
             link_text = text
 
-    return {'user_sounds': user_sounds,
-            'done_text': "Marked as spam/offensive",  # Not used in BW
-            'flagged': len(flagged),
-            'flag_type': flag_type,
-            'username': username,
-            'content_obj_id': content_id,
-            'link_text': link_text,
-            'no_show': no_show}
+    return {
+        'flagged': flagged,
+        'flag_type': flag_type,
+        'username': username,
+        'content_obj_id': content_id,
+        'link_text': link_text,
+        'no_show': no_show
+    }

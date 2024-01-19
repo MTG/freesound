@@ -65,7 +65,13 @@ const makeCarousels = (container) => {
                     rightArrow.classList.remove('carousel-nav-hidden')
                 }
                 if (hasDots) {
-                    const dots = [...carouselContainer.getElementsByClassName('bw-icon-atom')]
+                    // Find the dot element sof this carousel and set the active one
+                    // Note thatw we can't simply use getElementsByClassName because there might be other carousels inside the main carousel
+                    // so we only want the dot elements for this carousel
+                    const dotsWrapper = [...carouselContainer.children].filter(function (element) {
+                        return element.matches('.carousel__dot-icons');
+                    })[0];
+                    const dots = [...dotsWrapper.getElementsByClassName('bw-icon-atom')]
                     dots.forEach((dot, dotIndex) => {
                         if (dotIndex === desiredPage) {
                             dot.classList.add('active-point')

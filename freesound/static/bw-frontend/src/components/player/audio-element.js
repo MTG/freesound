@@ -30,6 +30,11 @@ export const setProgressIndicator = (progressPercentage, parentNode) => {
     progressPercentage = -1.0;
   }
 
+  if (progressPercentage > 100) {
+    // Make sure for any strange reason we don't go over
+    progressPercentage = 100
+  }
+
   if (progressIndicator) {
     const progressIndicatorRightBorderSize = progressIndicator.offsetWidth - progressIndicator.clientWidth
     const width = progressIndicator.parentElement.clientWidth - progressIndicatorRightBorderSize
@@ -47,14 +52,20 @@ export const setProgressIndicator = (progressPercentage, parentNode) => {
   }
 }
 
+const getProgress = (audioElement, parentNode) => {
+    const duration = getAudioElementDurationOrDurationProperty(audioElement.currentTime, parentNode);
+    return (audioElement.currentTime / duration) * 100
+  }
+
 /**
  * @param {HTMLAudioElement} audioElement
  * @param {HTMLDivElement} parentNode
  */
 const usePlayingAnimation = (audioElement, parentNode) => {
-  const { currentTime } = audioElement
-  const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
-  const progress = (currentTime / duration) * 100
+  let progress = getProgress(audioElement, parentNode);
+  if (progress >= 100) {
+    progress = 0
+  }
   setProgressIndicator(progress, parentNode)
   if (!audioElement.paused) {
     window.requestAnimationFrame(() =>
@@ -112,6 +123,13 @@ export const onPlayerTimeUpdate = (audioElement, parentNode) => {
   }
 }
 
+const clearPlayerUpdateInterval = (parentNode) => {
+    if (parentNode.updatePlayerPositionTimer !== undefined){
+        clearInterval(parentNode.updatePlayerPositionTimer);
+    }
+}
+
+
 /**
  * @param {HTMLDivElement} parentNode
  * @returns {HTMLAudioElement}
@@ -131,35 +149,26 @@ export const createAudioElement = parentNode => {
   audioElement.appendChild(mp3Source)
   audioElement.appendChild(oggSource)
 
-  let updatePlayerPositionTimer = undefined;
-
   audioElement.addEventListener('play', () => {
-    if (audioElement.readyState === 0){
-      audioElement.addEventListener('loadeddata', () => {
-        usePlayingStatus(audioElement, parentNode);
-        updatePlayerPositionTimer = setInterval(() => {
-          onPlayerTimeUpdate(audioElement, parentNode)
-        }, 30)
-      });
-    } else {
       usePlayingStatus(audioElement, parentNode);
-      updatePlayerPositionTimer = setInterval(() => {
+      clearPlayerUpdateInterval(parentNode);
+      parentNode.updatePlayerPositionTimer = setInterval(() => {
         onPlayerTimeUpdate(audioElement, parentNode)
       }, 30)
-    }
+    
   })
 
   audioElement.addEventListener('ended', () => {
-    onPlayerTimeUpdate(audioElement, parentNode);
     audioElement.currentTime = 0.0;
+    removePlayingStatus(parentNode, audioElement)
+    clearPlayerUpdateInterval(parentNode);
+    onPlayerTimeUpdate(audioElement, parentNode);
   })
 
   audioElement.addEventListener('pause', () => {
-    onPlayerTimeUpdate(audioElement, parentNode);
     removePlayingStatus(parentNode, audioElement)
-    if (updatePlayerPositionTimer !== undefined){
-      clearInterval(updatePlayerPositionTimer);
-    }
+    clearPlayerUpdateInterval(parentNode);
+    onPlayerTimeUpdate(audioElement, parentNode);
   })
 
   return audioElement

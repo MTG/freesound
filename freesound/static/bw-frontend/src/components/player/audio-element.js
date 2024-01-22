@@ -151,6 +151,7 @@ export const createAudioElement = parentNode => {
 
   audioElement.addEventListener('ended', () => {
     onPlayerTimeUpdate(audioElement, parentNode);
+    audioElement.currentTime = 0.0;
   })
 
   audioElement.addEventListener('pause', () => {

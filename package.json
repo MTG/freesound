@@ -42,6 +42,7 @@
     "lodash.throttle": "^4.1.1",
     "normalize.css": "^8.0.1",
     "regenerator-runtime": "^0.13.3",
+    "ua-parser-js": "^1.0.37",
     "whatwg-fetch": "^3.0.0"
   }
 }

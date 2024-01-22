@@ -5,15 +5,12 @@ import { formatAudioDuration, playAtTime, getAudioElementDurationOrDurationPrope
 import { createIconElement } from '../../utils/icons'
 import { createAudioElement, setProgressIndicator, onPlayerTimeUpdate } from './audio-element'
 import { rulerFrequencyMapping } from './utils'
+import { isDesktopMacOSWithSafari, isTouchEnabledDevice } from '../../utils/browser'
 
 const removeAllLastPlayedClasses = () => {
   document.getElementsByClassName('last-played').forEach(element => {
     element.classList.remove('last-played');
   });
-}
-
-const isTouchEnabledDevice = () => {
-  return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0))
 }
 
 if (isTouchEnabledDevice()){
@@ -223,7 +220,19 @@ const createPlayButton = (audioElement, playerSize) => {
       if (simultaneousPlaybackDisallowed() || evt.altKey){
         stopAllPlayers();
       }
-      audioElement.play()
+      if (isDesktopMacOSWithSafari()){
+        // In some "oldish" macs with safari there is an issue in which re-playing a sound that has already been played results in
+        // the first few milliseconds of the sound being skipped. To avoid this, we reload the audio element before playing
+        // again. This means that the sound is loaded again from the server. This is not ideal but it's the only way to
+        // get around this issue. The check of isDesktopMacOSWithSafari() is not perfect because it also includes newer macs, but 
+        // it is useful to filter out most of the case in which this issue does not happen.
+        const previousCurrentTime = audioElement.currentTime;
+        audioElement.load()
+        audioElement.currentTime = previousCurrentTime;
+        audioElement.play()
+      } else {
+        audioElement.play()
+      }
     }
     evt.stopPropagation()
   })
@@ -704,4 +713,4 @@ const createPlayer = parentNode => {
 }
 
 
-export {createPlayer, isTouchEnabledDevice};
+export {createPlayer};

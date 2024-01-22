@@ -94,13 +94,13 @@ export const playAtTime = (audioElement, timeInSeconds) => {
 
 
 export const getAudioElementDurationOrDurationProperty = (audioElement, parentNode) => {
-  let audioDuration;
+    if (parentNode.dataset.duration !== undefined){
+      return parseFloat(parentNode.dataset.duration, 10)  // Prioritize duraiton provided from database
+    }
     if (audioElement.readyState > 0){
       audioDuration = audioElement.duration
-    } else {
-      audioDuration = parseFloat(parentNode.dataset.duration)
-    }
-    return audioDuration;
+    } 
+    return 0;
 }
 
 

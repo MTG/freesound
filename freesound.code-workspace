@@ -55,7 +55,7 @@
 			{
 				"label": "Install static",
 				"type": "shell",
-				"command": "docker-compose run --rm web npm install",
+				"command": "docker-compose run --rm web npm install --force",
 				"problemMatcher": []
 			},
 			{

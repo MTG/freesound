@@ -6,22 +6,6 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=0">
-    <script>
-        var isIpad = (/iPad/.test(navigator.userAgent))
-        var minWdth = isIpad ? 400:580;
-        function update_viewport_width_if_needed(){
-            var adjustedWidth = window.innerWidth / window.devicePixelRatio;
-            if (adjustedWidth < minWdth) {
-                document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=580');
-            } else {
-                document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=0');
-            }
-        }
-        update_viewport_width_if_needed();
-        window.addEventListener("resize", function (event){
-            update_viewport_width_if_needed();
-        });
-    </script>
     <meta name="theme-color" content="#000000">
     <title>Freesound{% if request.resolver_match.url_name != "front-page" %} - {% block title %}{% endblock %}{% endif %}</title>
     <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?">

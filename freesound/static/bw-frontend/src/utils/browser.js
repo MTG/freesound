@@ -2,8 +2,8 @@ import { UAParser } from 'ua-parser-js';
 
 const { browser, cpu, device } = UAParser(navigator.userAgent);
 
-const isIPad = () => {
-  return device.model === 'iPad';
+const isPhone = () => {
+  return device.type === 'mobile';
 }
 
 const isSafari = () => {
@@ -18,3 +18,17 @@ export const isDesktopMacOSWithSafari = () => {
     return isSafari() && !isTouchEnabledDevice();
 }
 
+function update_viewport_width_if_needed(){
+    const minWdth = isPhone() ? 1000: 600;
+    if (window.innerWidth < minWdth) {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=0, initial-scale=0.8');
+    } else {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=0');
+    }
+}
+
+update_viewport_width_if_needed();
+
+window.addEventListener("resize", function (event){
+    update_viewport_width_if_needed();
+});

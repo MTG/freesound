@@ -4,6 +4,8 @@ const shell = require('shelljs');
 const outDir = 'freesound/static/bw-frontend/dist';
 const outDirDarkMode = 'freesound/static/bw-frontend/dist-dark';
 
+// Clear dist folder
+shell.exec(`rm -rf ${outDir}/*`)
 
 // Copy public files to dist folder
 shell.exec(

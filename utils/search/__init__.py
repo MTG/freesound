@@ -184,14 +184,14 @@ class SearchEngineBase:
 
     # Sound search related methods
 
-    def add_sounds_to_index(self, sound_objects, fields_to_include=[], update_mode=False):
+    def add_sounds_to_index(self, sound_objects, fields_to_include=[], update=False):
         """Indexes the provided sound objects in the search index
 
         Args:
             sound_objects (list[sounds.models.Sound]): Sound objects of the sounds to index
             fields_to_include (list[str]): Specific sound fields that will be included in the document to
                 be indexed. If empty, all available sound fields will be included.
-            update_mode (bool): Whether to perform an update of the existing documents in the index or to 
+            update (bool): Whether to perform an update of the existing documents in the index or to 
                 completely replace them. An update is useful so that fields not included in the document are 
                 not removed from the index.
         """

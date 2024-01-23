@@ -361,7 +361,31 @@ class TestSearchEngineBackend():
             assert_and_continue(self.search_engine.sound_exists_in_index(sound),
                                 f'Sound ID {sound.id} should be in search index')
 
-        # Re-index all sounds to leave index in "correct" state
+        # Test the 'update' and 'include_fields' parameters of add_sounds_to_index. 
+        # Start by emptying the index and testing that when adding sounds with update=True, these get created if they don't already exist
+        self.search_engine.remove_all_sounds()
+        self.search_engine.add_sounds_to_index(sounds, update=True)
+        for sound in sounds:
+            assert_and_continue(self.search_engine.sound_exists_in_index(sound),
+                                f'Sound ID {sound.id} should be in the search index')
+            
+        # Make a query filtering by a field we know is in the index and check that all results are returned
+        results = self.search_engine.search_sounds(query_filter='duration:[* TO *]')
+        assert_and_continue(len(sounds) == results.num_found, "All sounds should have been returned for this query")
+        
+        # Now we index again but only with 2 fields and with update=False. This should replace existing documents and
+        # only index the selected fields. We then repeat the previous query, but because "duration" field was not included 
+        # in the new index, now the query should return no results.
+        self.search_engine.add_sounds_to_index(sounds, update=False, fields_to_include=['id', 'original_filename'])
+        results = self.search_engine.search_sounds(query_filter='duration:[* TO *]')
+        assert_and_continue(0 == results.num_found, "No soulds should have been returned in this query")
+
+        # Now we update the index with the duration field for all sounds and repeat the query, we should get all results again
+        self.search_engine.add_sounds_to_index(sounds, update=True, fields_to_include=['duration'])
+        results = self.search_engine.search_sounds(query_filter='duration:[* TO *]')
+        assert_and_continue(len(sounds) == results.num_found, "All sounds should have been returned for this query")
+
+        # Re-index all sounds to leave index in "correct" state for next tests
         self.search_engine.add_sounds_to_index(sounds)
 
         self.sound_check_mandatory_doc_fields()

@@ -224,10 +224,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                         if suffix:
                             document[f'{key}{suffix}'] = value
 
-        # Remove fields that should not be included
-        # Note that we could optimize this by never getting the data for these fields in the first place, but because
-        # the data is already retrieved in the queryset, that optimization would be negligible so we keep it simple.
-        document = {k: v for k, v in document.items() if k in fields_to_include or not fields_to_include}
+        if fields_to_include:
+            # Remove fields that should not be included
+            # Note that we could optimize this by never getting the data for these fields in the first place, but because
+            # the data is already retrieved in the queryset, that optimization would be negligible so we keep it simple.
+            document = {k: v for k, v in document.items() if k in fields_to_include}
+            document['id'] = sound.id  # Make sure we always include the ID
 
         return document
 
@@ -374,9 +376,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             return query_filter
 
     # Sound methods
-    def add_sounds_to_index(self, sound_objects, update_mode=False, fields_to_include=[]):
+    def add_sounds_to_index(self, sound_objects, update=False, fields_to_include=[]):
         documents = [self.convert_sound_to_search_engine_document(s, fields_to_include=fields_to_include) for s in sound_objects]
-        if update_mode:
+        if update:
             documents = [self.transform_document_into_update_document(d) for d in documents]
         try:
             self.get_sounds_index().add(documents)

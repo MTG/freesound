@@ -199,7 +199,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["samplerate"] = int(getattr(sound, "samplerate")) if getattr(sound, "samplerate") else 0
 
         document["comment"] = [remove_control_chars(comment_text) for comment_text in getattr(sound, "comments_array")]
-        document["comments"] = getattr(sound, "num_comments")
+        document["num_comments"] = getattr(sound, "num_comments")
  
         locations = sound.locations()
         document["waveform_path_m"] = locations["display"]["wave"]["M"]["path"]

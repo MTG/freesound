@@ -231,7 +231,7 @@
   <field name="num_ratings" type="plong" indexed="true" stored="true" required="true" /> <!-- num rating -->
 
   <field name="comment" type="freesound_text" indexed="true" stored="true" required="false" multiValued="true"/>
-  <field name="comments" type="plong" indexed="true" stored="true" required="true" /> <!-- num comments -->
+  <field name="num_comments" type="plong" indexed="true" stored="true" required="true" /> <!-- num comments -->
 
   <field name="waveform_path_m" type="string" indexed="false" stored="true" required="true" />
   <field name="waveform_path_l" type="string" indexed="false" stored="true" required="true" />

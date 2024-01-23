@@ -260,10 +260,12 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
                 {'task_name': PROCESS_ANALYSIS_RESULTS_TASK_NAME, 'sound_id': sound_id, 'analyzer': analyzer, 'status': status,
                  'exception': str(exception), 'work_time': round(time.time() - start_time)}))
         else:
-            # Load analysis output to database field (following configuration  in settings.ANALYZERS_CONFIGURATION)
+            # Load analysis output to database field (following configuration in settings.ANALYZERS_CONFIGURATION)
             a.load_analysis_data_from_file_to_db()
-            # Set sound to index dirty so that the sound gets reindexed with updated analysis fields
-            a.sound.mark_index_dirty(commit=True)
+            
+            if analyzer in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS or analyzer in settings.ANALYZERS_CONFIGURATION:
+                # If the analyzer produces data that should be indexed in the search engine, set sound index to dirty so that the sound gets reindexed soon
+                a.sound.mark_index_dirty(commit=True)
             workers_logger.info("Finished processing analysis results (%s)" % json.dumps(
                 {'task_name': PROCESS_ANALYSIS_RESULTS_TASK_NAME, 'sound_id': sound_id, 'analyzer': analyzer, 'status': status,
                  'work_time': round(time.time() - start_time)}))

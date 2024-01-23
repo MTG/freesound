@@ -638,6 +638,19 @@ SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr9pysolr.Solr9PySolrSear
 SOLR5_BASE_URL = "http://search:8983/solr"
 SOLR9_BASE_URL = "http://search:8983/solr"
 
+SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
+    FSDSINET_ANALYZER_NAME: {
+        'vector_property_name': 'embeddings', 
+        'vector_size': 100,
+    },
+    AUDIOSET_YAMNET_ANALYZER_NAME: {
+        'vector_property_name': 'embeddings', 
+        'vector_size': 100,  # Note yamnet has higher dimensionality and here we're cropping dimensions
+    },
+}
+SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = FSDSINET_ANALYZER_NAME
+USE_SEARCH_ENGINE_SIMILARITY = False  # Does not currently apply to API
+
 # -------------------------------------------------------------------------------
 # Similarity client settings
 SIMILARITY_ADDRESS = 'similarity'

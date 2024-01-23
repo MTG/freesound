@@ -268,12 +268,19 @@ class SolrQuery:
         self.params['group.truncate'] = group_truncate
         self.params['group.cache.percent'] = group_cache_percent
 
-    def as_kwargs(self):
+    def as_kwargs(self, force_sounds=False):
         """Return params in a way that can be passed to pysolr commands as kwargs"""
         params = {k: v for k, v in self.params.items() if v is not None}
         for k, v in params.items():
             if isinstance(v, bool):
                 params[k] = json.dumps(v)
+        # If 'force_sounds', we want to make sure we only include sound documents in the query and not any child documents. Add an extra fq to force that.
+        if force_sounds:
+            current_fq = params['fq']
+            if isinstance(current_fq, list):
+                params.update({'fq': current_fq + ['is_sound:1']}) 
+            else:
+                params.update({'fq': [current_fq, 'is_sound:1']}) 
         return params
 
 

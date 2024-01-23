@@ -219,6 +219,14 @@ class SearchEngineBase:
             bool: whether the sound is indexed in the search engine
         """
         raise NotImplementedError
+    
+    def get_all_sound_ids_from_index(self):
+        """Return a list of all sound IDs indexed in the search engine
+
+        Returns:
+            List[int]: list of all sound IDs indexed in the search engine
+        """
+        raise NotImplementedError
 
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
                       num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,

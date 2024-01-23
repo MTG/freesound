@@ -182,6 +182,7 @@
   <field name="_text_" type="text_general" multiValued="true" indexed="true" stored="false"/>
   <field name="_version_" type="plong" indexed="false" stored="false"/>
   <field name="id" type="string" multiValued="false" indexed="true" required="true" stored="true"/>
+  <field name="is_sound" type="boolean" indexed="true" stored="true" required="true" />
 
   <field name="username" type="alphaOnlySort" indexed="true" stored="true" required="false" />
   <field name="original_filename" type="freesound_text" indexed="true" stored="true" required="false" />
@@ -237,6 +238,14 @@
   <dynamicField name="*_b" type="boolean" indexed="true" stored="true" required="false"/>
   <dynamicField name="*_s" type="string" indexed="true" stored="true" required="false"/>
   <dynamicField name="*_ls" type="alphaOnlySort" indexed="true" stored="true" required="false" multiValued="true"/> <!-- list of string (or tags) -->
+
+  <!-- Similarity-related fields (will be stored as child documents with the fields below set) -->
+  <field name="_nest_parent_" type="string" indexed="true" stored="true" />
+  <field name="_nest_path_" type="_nest_path_"/>
+  <field name="sim_vector100" type="knn_vector100" indexed="true" stored="true" required="false"/>
+  <field name="analyzer" type="string" indexed="true" stored="true" required="false" />
+  <field name="timestamp_start" type="pdouble" indexed="true" stored="true" required="false" />
+  <field name="timestamp_end" type="pdouble" indexed="true" stored="true" required="false" />
 
   <!-- Other fields -->
   <dynamicField name="random_*" type="random" indexed="true" stored="false"/>

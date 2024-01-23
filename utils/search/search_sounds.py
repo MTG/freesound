@@ -446,21 +446,10 @@ def get_all_sound_ids_from_search_engine(page_size=2000):
     """
     console_logger.info("Getting all sound ids from search engine")
     search_engine = get_search_engine()
-    solr_ids = []
-    solr_count = None
-    current_page = 1
     try:
-        while solr_count is None or len(solr_ids) < solr_count:
-            response = search_engine.search_sounds(query_filter="*:*",
-                                                   sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
-                                                   offset=(current_page - 1) * page_size,
-                                                   num_sounds=page_size)
-            solr_ids += [int(element['id']) for element in response.docs]
-            solr_count = response.num_found
-            current_page += 1
+        return search_engine.get_all_sound_ids_from_index()
     except SearchEngineException as e:
         search_logger.info(f"Could not retrieve all sound IDs from search engine: {str(e)}")
-    return sorted(solr_ids)
 
 
 def get_random_sound_id_from_search_engine():

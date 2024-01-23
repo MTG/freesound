@@ -388,6 +388,11 @@ class TestSearchEngineBackend():
         # Re-index all sounds to leave index in "correct" state for next tests
         self.search_engine.add_sounds_to_index(sounds)
 
+        # Test that the method to get all sound IDs works as expected
+        sound_ids = self.search_engine.get_all_sound_ids_from_index()
+        sound_ids_db = sorted([s.id for s in sounds])
+        assert_and_continue(sound_ids_db == sound_ids, 'get_all_sound_ids_from_index returned wrong sound IDs')
+
         self.sound_check_mandatory_doc_fields()
         self.sound_check_random_sound()
         self.sound_check_offsets()

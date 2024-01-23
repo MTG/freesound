@@ -235,7 +235,7 @@ class TestSearchEngineBackend():
             assert_and_continue('group_name' in result, 'No group_name field in doc from results')
             assert_and_continue('group_docs' in result, 'No group_docs field in doc from results')
             assert_and_continue('n_more_in_group' in result, 'No n_more_in_group field in doc from results')
-            group_sounds = Sound.objects.bulk_query_id(sound_ids=[r['id'] for r in result['group_docs']])
+            group_sounds = Sound.objects.bulk_query_id(sound_ids=[int(r['id']) for r in result['group_docs']])
             first_sound_pack = group_sounds[0].pack
             for sound in group_sounds:
                 assert_and_continue(sound.pack == first_sound_pack, 'Different packs in pack group')
@@ -376,9 +376,7 @@ class TestSearchEngineBackend():
         self.sound_check_get_user_tags(sounds[0])
         self.sound_check_get_pack_tags(sounds)
 
-        console_logger.info('Testing of sound search methods finished. You might want to run the '
-                            'reindex_search_engine_sounds -c command to make sure the index is left in a correct '
-                            'state after having run these tests')
+        console_logger.info('Testing of sound search methods finished!')
 
     def forum_check_mandatory_doc_fields(self):
         # Check that returned forum posts (docs) from search engine include the mandatory fields
@@ -519,6 +517,4 @@ class TestSearchEngineBackend():
         self.forum_check_highlighting()
         self.forum_check_extra_queries()
 
-        console_logger.info('Testing of forum search methods finished. You might want to run the '
-                            'reindex_search_engine_forum -c command to make sure the index is left in a correct '
-                            'state after having run these tests')
+        console_logger.info('Testing of forum search methods finished!')

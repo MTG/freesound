@@ -155,6 +155,13 @@ def search_view_helper(request, tags_mode=False):
 
     tvars.update(advanced_search_params_dict)
 
+    if 'similar_to' in request.GET:
+        # If similar_to is passed as a query parameter, we add it to the query params so it is used by the search engine 
+        # to perform a similarity search query. This is just for test purposes, as search interface is not currently expected
+        # to be able to do such queries but similarity is only used in modals. However this is useful to test if the similarity
+        # search supports filters and othter parameters as expected
+        query_params.update({'similar_to': int(request.GET['similar_to'])})
+
     try:       
         results, paginator = perform_search_engine_query(query_params)
         if not only_sounds_with_pack:

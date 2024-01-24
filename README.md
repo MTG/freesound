@@ -65,35 +65,35 @@ Below are instructions for setting up a local Freesound installation for develop
 
 8. Build all Docker containers. The first time you run this command can take a while as a number of Docker images need to be downloaded and things need to be installed and compiled. 
 
-       docker-compose build
+       docker compose build
 
 9. Download the [Freesound development database dump](https://drive.google.com/file/d/11z9s8GyYkVlmWdEsLSwUuz0AjZ8cEvGy/view?usp=share_link) (~6MB), uncompress it and place the resulting `freesound-small-dev-dump-2023-09.sql` in the `freesound-data/db_dev_dump/` directory. Then run the database container and load the data into it using the commands below. You should get permission to download this file from Freesound admins.
 
-       docker-compose up -d db
-       docker-compose run --rm db psql -h db -U freesound  -d freesound -f freesound-data/db_dev_dump/freesound-small-dev-dump-2023-09.sql
+       docker compose up -d db
+       docker compose run --rm db psql -h db -U freesound  -d freesound -f freesound-data/db_dev_dump/freesound-small-dev-dump-2023-09.sql
        # or if the above command does not work, try this one 
-       docker-compose run --rm --no-TTY db psql -h db -U freesound -d freesound < freesound-data/db_dev_dump/freesound-small-dev-dump-2023-09.sql
+       docker compose run --rm --no-TTY db psql -h db -U freesound -d freesound < freesound-data/db_dev_dump/freesound-small-dev-dump-2023-09.sql
 
 10. Update database by running Django migrations
 
-        docker-compose run --rm web python manage.py migrate
+        docker compose run --rm web python manage.py migrate
 
 11. Create a superuser account to be able to log in to the local Freesound website and to the admin site
 
-        docker-compose run --rm web python manage.py createsuperuser
+        docker compose run --rm web python manage.py createsuperuser
 
 12. Install static build dependencies
 
-        docker-compose run --rm web npm install --force
+        docker compose run --rm web npm install --force
 
 13. Build static files. Note that this step will need to be re-run every time there are changes in Freesound's static code (JS, CSS and static media files).
 
-        docker-compose run --rm web npm run build
-        docker-compose run --rm web python manage.py collectstatic --noinput
+        docker compose run --rm web npm run build
+        docker compose run --rm web python manage.py collectstatic --noinput
 
 14. Run services 🎉
 
-        docker-compose up
+        docker compose up
 
     When running this command, the most important services that make Freesound work will be run locally.
     This includes the web application and database, but also the search engine, cache manager, queue manager and asynchronous workers, including audio processing. 
@@ -102,24 +102,24 @@ Below are instructions for setting up a local Freesound installation for develop
 15. Build the search index, so you can search for sounds and forum posts
 
         # Open a new terminal window so the services started in the previous step keep running
-        docker-compose run --rm web python manage.py reindex_search_engine_sounds
-        docker-compose run --rm web python manage.py reindex_search_engine_forum
+        docker compose run --rm web python manage.py reindex_search_engine_sounds
+        docker compose run --rm web python manage.py reindex_search_engine_forum
 
     After following the steps, you'll have a functional Freesound installation up and running, with the most relevant services properly configured. 
     You can run Django's shell plus command like this:
 
-        docker-compose run --rm web python manage.py shell_plus
+        docker compose run --rm web python manage.py shell_plus
 
     Because the `web` container mounts a named volume for the home folder of the user running the shell plus process, command history should be kept between container runs :)
 
-16. (extra step) The steps above will get Freesound running, but to save resources in your local machine some non-essential services will not be started by default. If you look at the `docker-compose.yml` file, you'll see that some services are marked with the profile `analyzers` or `all`. These services include sound similarity, search results clustering and the audio analyzers. To run these services you need to explicitly tell `docker-compose` using the `--profile` (note that some services need additional configuration steps (see *Freesound analysis pipeline* section in `DEVELOPERS.md`):
+16. (extra step) The steps above will get Freesound running, but to save resources in your local machine some non-essential services will not be started by default. If you look at the `docker compose.yml` file, you'll see that some services are marked with the profile `analyzers` or `all`. These services include sound similarity, search results clustering and the audio analyzers. To run these services you need to explicitly tell `docker compose` using the `--profile` (note that some services need additional configuration steps (see *Freesound analysis pipeline* section in `DEVELOPERS.md`):
 
-        docker-compose --profile analyzers up   # To run all basic services + sound analyzers
-        docker-compose --profile all up         # To run all services
+        docker compose --profile analyzers up   # To run all basic services + sound analyzers
+        docker compose --profile all up         # To run all services
 
 
 ### Running tests
 
 You can run tests using the Django test runner in the `web` container like that:
 
-    docker-compose run --rm web python manage.py test --settings=freesound.test_settings
+    docker compose run --rm web python manage.py test --settings=freesound.test_settings

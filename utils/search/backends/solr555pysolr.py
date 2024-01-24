@@ -548,7 +548,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     if sa.exists():
                         data = sa.first().get_analysis_data_from_file()
                         if data is not None:
-                            vector = data[config_options['vector_property_name']][0:config_options['vector_size']] 
+                            vector_raw = data[config_options['vector_property_name']]
+                            if vector_raw is not None:
+                                vector = vector_raw[0:config_options['vector_size']] 
+                            
                 
                 # Set query
                 if vector is not None and vector_field_name is not None:

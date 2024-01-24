@@ -65,6 +65,7 @@ from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
 from utils.pagination import paginate
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
+from utils.search import get_search_engine, SearchEngineException
 from utils.search.search_sounds import get_random_sound_id_from_search_engine, perform_search_engine_query
 from utils.similarity_utilities import get_similar_sounds
 from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsException, CantMoveException, \
@@ -820,8 +821,7 @@ def similar(request, username, sound_id):
     sound = get_object_or_404(Sound,
                               id=sound_id,
                               moderation_state="OK",
-                              processing_state="OK",
-                              similarity_state="OK")
+                              processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
 
@@ -831,10 +831,13 @@ def similar(request, username, sound_id):
             sound, request.GET.get('preset', None), settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES)
     else:
         # Get similar sounds from solr
-        from utils.search import get_search_engine
-        results = get_search_engine().search_sounds(similar_to=sound.id)
-        similarity_results = [(result['id'], result['score']) for result in results.docs]
-    
+        try:
+            results = get_search_engine().search_sounds(similar_to=sound.id)
+            similarity_results = [(result['id'], result['score']) for result in results.docs]
+        except SearchEngineException:
+            # Search engine not available, return empty list
+            similarity_results = []
+        
     paginator = paginate(request, [sound_id for sound_id, _ in similarity_results], settings.NUM_SIMILAR_SOUNDS_PER_PAGE)
     similar_sounds = Sound.objects.ordered_ids(paginator['page'].object_list)
     tvars = {'similar_sounds': similar_sounds, 'sound': sound}

@@ -200,7 +200,7 @@ def display_sound_no_sound_object(context, file_data, player_size, show_bookmark
         'spectral': sound.locations('display.spectral_bw.L.url'),
         'id': sound.id,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity buttons
         'username': sound.user.username,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
-        'similarity_state': sound.similarity_state  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
+        'ready_for_similarity': sound.ready_for_similarity  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
         'remixgroup_id': sound.remixgroup_id  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
         'num_ratings': sound.num_ratings,  # Used to display rating widget in players
         'avg_rating': sound.avg_rating,  # Used to display rating widget in players
@@ -210,7 +210,7 @@ def display_sound_no_sound_object(context, file_data, player_size, show_bookmark
         'sound': {
             'id': file_data.get('id', file_data['preview_mp3'].split('/')[-2]),  # If no id, use a unique fake ID to avoid caching problems
             'username': file_data.get('username', 'nousername'),
-            'similarity_state': file_data.get('similarity_state', 'FA'),
+            'ready_for_similarity': file_data.get('ready_for_similarity', False),
             'duration': file_data['duration'],
             'samplerate': file_data.get('samplerate', 44100),
             'num_ratings': file_data.get('num_ratings', 0),
@@ -236,7 +236,7 @@ def display_sound_no_sound_object(context, file_data, player_size, show_bookmark
         },
         'show_milliseconds': 'true' if ('big' in player_size ) else 'false',
         'show_bookmark_button': show_bookmark and 'id' in file_data,
-        'show_similar_sounds_button': show_similar_sounds and 'similarity_state' in file_data,
+        'show_similar_sounds_button': show_similar_sounds and file_data.get('ready_for_similarity', False),
         'show_remix_group_button': show_remix and 'remixgroup_id' in file_data,
         'show_rate_widget': 'avg_rating' in file_data,
         'player_size': player_size,

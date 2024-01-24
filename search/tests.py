@@ -20,7 +20,7 @@
 
 from django.core.cache import cache
 from django.test import TestCase
-from django.test.utils import skipIf
+from django.test.utils import skipIf, override_settings
 from django.urls import reverse
 from sounds.models import Sound
 from utils.search import SearchResults, SearchResultsPaginator
@@ -142,6 +142,7 @@ class SearchPageTests(TestCase):
         self.assertEqual(resp.context['error_text'], None)
         self.assertEqual(len(resp.context['docs']), self.NUM_RESULTS)
 
+
     @mock.patch('search.views.perform_search_engine_query')
     def test_search_page_num_queries(self, perform_search_engine_query):
         perform_search_engine_query.return_value = self.perform_search_engine_query_response
@@ -155,16 +156,32 @@ class SearchPageTests(TestCase):
         cache.clear()
         with self.assertNumQueries(1):
             self.client.get(reverse('sounds-search') + '?cm=1')
+       
+        with override_settings(USE_SEARCH_ENGINE_SIMILARITY=True):
+            # When using search engine similarity, there'll be one extra query performed to get the similarity status of the sounds
 
-        # Now check number of queries when displaying results as packs (i.e., searching for packs)
-        cache.clear()
-        with self.assertNumQueries(5):
-            self.client.get(reverse('sounds-search') + '?only_p=1')
+            # Now check number of queries when displaying results as packs (i.e., searching for packs)
+            cache.clear()
+            with self.assertNumQueries(6):
+                self.client.get(reverse('sounds-search') + '?only_p=1')
 
-        # Also check packs when displaying in grid mode
-        cache.clear()
-        with self.assertNumQueries(5):
-            self.client.get(reverse('sounds-search') + '?only_p=1&cm=1')
+            # Also check packs when displaying in grid mode
+            cache.clear()
+            with self.assertNumQueries(6):
+                self.client.get(reverse('sounds-search') + '?only_p=1&cm=1')
+
+        with override_settings(USE_SEARCH_ENGINE_SIMILARITY=False):
+            # When not using search engine similarity, there'll be one less query performed as similarity state is retrieved directly from sound object
+
+            # Now check number of queries when displaying results as packs (i.e., searching for packs)
+            cache.clear()
+            with self.assertNumQueries(5):
+                self.client.get(reverse('sounds-search') + '?only_p=1')
+
+            # Also check packs when displaying in grid mode
+            cache.clear()
+            with self.assertNumQueries(5):
+                self.client.get(reverse('sounds-search') + '?only_p=1&cm=1')
 
     @mock.patch('search.views.perform_search_engine_query')
     def test_search_page_with_filters(self, perform_search_engine_query):

@@ -231,7 +231,8 @@ class SearchEngineBase:
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
                       num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
                       group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
-                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
+                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False, 
+                      simialr_to=None, similar_to_analyzer=None):
         """Search for sounds that match specific criteria and return them in a SearchResults object
 
         Args:
@@ -269,6 +270,13 @@ class SearchEngineBase:
                 large groups in facets. We use it for computing the main tag cloud and avoiding a large packs of sounds
                 with the same tags to largely influence the general tag cloud (only one sound of the pack will be
                 counted)
+            similar_to (int or List[float], optional): sound ID or similarity vector to be used as target for similarity 
+                search. Note that when this parameter is passed, some of the other parameters will be ignored 
+                ('textual_query', 'facets', 'group_by_pack', 'num_sounds_per_pack_group', 'group_counts_as_one_in_facets'). 
+                'query_filter' should still be usable, although this remains to be throughly tested. 
+            similar_to_analyzer (str, optional): analyzer name from which to select similarity vectors for similarity search.
+                It defaults to settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, but it could be change to something else
+                if we want to use a different type of similarity vectors for a similarity search query.
 
         Returns:
             SearchResults: SearchResults object containing the results of the query

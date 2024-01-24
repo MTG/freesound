@@ -415,6 +415,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             for document in documents:
                 if document['id'] in similarity_data:
                     document['similarity_vectors'] = similarity_data[document['id']]
+                    for similarity_vector in similarity_data[document['id']]:
+                        if similarity_vector['analyzer'] == settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER:
+                            # Also add the first sim vector of the default analyzer to the root document so we can match root documents directly as well (albeit only with one vector)
+                            config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER]
+                            vector_solr_field_type = SOLR_VECTOR_FIELDS_DIMENSIONS_MAP.get(config_options['vector_size'], None)
+                            document[vector_solr_field_type] = similarity_data[document['id']][0][vector_solr_field_type]  
+                            break
         
         if update:
             documents = [self.transform_document_into_update_document(d) for d in documents]
@@ -529,19 +536,17 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     group_truncate=group_counts_as_one_in_facets)
         else:
             # Similarity search!
-            
+            query.set_query('')
+
             # We fist set an empty query that will return no results and will be used by default if similarity can't be performed
-            query.set_query('')  
             if similar_to_analyzer in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS:
                 # Get target vector from sound or from parameter
                 vector = None
-                extra_offset = 0
                 if isinstance(similar_to, list):
                     vector = similar_to  # we allow vectors to be passed directly
                     vector_field_name = SOLR_VECTOR_FIELDS_DIMENSIONS_MAP.get(len(vector), None)
                 else:
                     # similar_to should be a sound_id
-                    extra_offset = 1  # We add 1 to the offset so that we don't get the sound itself as a result
                     sa = SoundAnalysis.objects.filter(sound_id=similar_to, analyzer=similar_to_analyzer, analysis_status="OK")
                     config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[similar_to_analyzer]
                     vector_field_name = SOLR_VECTOR_FIELDS_DIMENSIONS_MAP.get(config_options['vector_size'], None)
@@ -552,38 +557,101 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                             if vector_raw is not None:
                                 vector = vector_raw[0:config_options['vector_size']] 
                             
-                
                 # Set query
                 if vector is not None and vector_field_name is not None:
-                    max_similar_sounds = 1000000  # TODO: evaluate the performance impact of this so we can set it as high as possible. We want this to be high so that we can get a lot of similar sounds where to apply the filters to. Ideally we'd like this to be the whole collection.
                     serialized_vector = ','.join([str(n) for n in vector])
-                    query.set_query(f'{{!knn f={vector_field_name} topK={max_similar_sounds}}}[{serialized_vector}]')
-                
-                    # Process filter
-                    query_filter = self.search_process_filter(query_filter,
-                                                            only_sounds_within_ids=only_sounds_within_ids,
-                                                            only_sounds_with_pack=only_sounds_with_pack)
+                    mode = 'get_parent'
 
-                    # Set other query options
-                    if current_page is not None:
-                        offset = (current_page - 1) * num_sounds
-                    
-                    filter_query = [f'analyzer:{settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER}']  # Add basic filter to only get similarity vectors from selected analyzer
-                    for part in query_filter.split('+'):
-                        if part:
-                            # Add extra query filters to the search query, but using the approptiate prefix to make sure they are applied to the root documents
-                            filter_query.append('{!child of=\"is_sound:1\"}' + part)
+                    if mode == 'get_parent':
+                        # "Get parent" mode matches root documents and therefore can only be matched with a single similarity
+                        # vector corresponding to a single analyzer type and a single timestamp of the sound. However, this
+                        # mode allows to do results grouping, faceing and all the fancy search options just like in other usual
+                        # search query.
 
-                    query.set_query_options(start=offset + extra_offset,
-                                            rows=num_sounds,
-                                            field_list=["id", "score"],  # We only want the sound IDs of the results as we load data from DB. In the future we might add timestamp_start/timestamp_end
-                                            filter_query=filter_query,
-                                            sort=['score desc'])
+                        # Set main query options
+                        max_similar_sounds = 500
+                        query.set_query(f'{{!knn f={vector_field_name} topK={max_similar_sounds}}}[{serialized_vector}]')
+
+                        # Process filter
+                        query_filter = self.search_process_filter(query_filter,
+                                                                only_sounds_within_ids=only_sounds_within_ids,
+                                                                only_sounds_with_pack=only_sounds_with_pack)
+                        filter_query = [query_filter, 'is_sound:1']  # Add basic filter to only get sound documents
+                        if isinstance(similar_to, int):
+                            # Also if target is specified as a sound ID, remove it from the list
+                            filter_query.append(f'-id:{similar_to}')
+
+                        # Set other query options
+                        if current_page is not None:
+                            offset = (current_page - 1) * num_sounds
+                        query.set_query_options(start=offset,
+                                                rows=num_sounds,
+                                                field_list=["id", "score"],  # We only want the sound IDs of the results as we load data from DB
+                                                filter_query=filter_query,
+                                                sort=['score desc'])
+
+                        # Configure facets
+                        if facets is not None:
+                            facet_fields = [FIELD_NAMES_MAP[field_name] for field_name, _ in facets.items()]
+                            query.add_facet_fields(*facet_fields)
+                            query.set_facet_options_default(**SOLR_SOUND_FACET_DEFAULT_OPTIONS)
+                            for field_name, extra_options in facets.items():
+                                query.set_facet_options(FIELD_NAMES_MAP[field_name], **extra_options)
+
+                        # Configure grouping
+                        if group_by_pack:
+                            query.set_group_field(group_field="grouping_pack")
+                            query.set_group_options(
+                                group_func=None,
+                                group_query=None,
+                                group_rows=10,  # TODO: if limit is lower than rows and start=0, this should probably be equal to limit
+                                group_start=0,
+                                group_limit=num_sounds_per_pack_group,  # This is the number of documents that will be returned for each group.
+                                group_offset=0,
+                                group_sort=None,
+                                group_sort_ingroup=None,
+                                group_format='grouped',
+                                group_main=False,
+                                group_num_groups=True,
+                                group_cache_percent=0,
+                                group_truncate=group_counts_as_one_in_facets)
                     
-                    # NOTE: ATM we can not add more query options (faceting, etc) to similarity search because it does not return
-                    # root documents but child documents (so that we can get multiple matches per sound if there are multiple vectors indexed).
-                    # If we manage to improve the query so that it returns root documents, we can add more query options here. Or we could also
-                    # first do the similarity search query and then do a normal search with the results of the similarity search as a filter...
+                    elif mode == 'get_child':
+                        # "Get child" mode matches child documents and allows to match a single sound with several vectors (which could correspond to different
+                        # analyzer outputs or to vectors of different timestamps of the sound). However, this mode does not allow to use extra search features like
+                        # grouping results or faceting (although it does allow to the use of filters).
+
+                        max_similar_sounds = 500  # TODO: evaluate the performance impact of this so we can set it as high as possible. We want this to be high so that we can get a lot of similar sounds where to apply the filters to. Ideally we'd like this to be the whole collection.
+                        query.set_query(f'{{!knn f={vector_field_name} topK={max_similar_sounds}}}[{serialized_vector}]')
+                    
+                        # Process filter
+                        query_filter = self.search_process_filter(query_filter,
+                                                                only_sounds_within_ids=only_sounds_within_ids,
+                                                                only_sounds_with_pack=only_sounds_with_pack)
+
+                        # Set other query options
+                        if current_page is not None:
+                            offset = (current_page - 1) * num_sounds
+                        
+                        filter_query = ['is_sound:0', f'analyzer:{settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER}']  # Add basic filter to only get similarity vectors from selected analyzer and from child documents (this is because root documents can also have sim vectors)
+                        if isinstance(similar_to, int):
+                            # Also if target is specified as a sound ID, remove it from the list
+                            filter_query.append(f'-_nest_parent_:{similar_to}')
+                        for part in query_filter.split('+'):
+                            if part:
+                                # Add extra query filters to the search query, but using the approptiate prefix to make sure they are applied to the root documents
+                                filter_query.append('{!child of=\"is_sound:1\"}' + part)
+
+                        query.set_query_options(start=offset,
+                                                rows=num_sounds,
+                                                field_list=["id", "score"],  # We only want the sound IDs of the results as we load data from DB. In the future we might add timestamp_start/timestamp_end
+                                                filter_query=filter_query,
+                                                sort=['score desc'])
+                        
+                        # NOTE: ATM we can not add more query options (faceting, etc) to similarity search because it does not return
+                        # root documents but child documents (so that we can get multiple matches per sound if there are multiple vectors indexed).
+                        # If we manage to improve the query so that it returns root documents, we can add more query options here. Or we could also
+                        # first do the similarity search query and then do a normal search with the results of the similarity search as a filter...
 
 
         # Do the query!
@@ -591,6 +659,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # We do it in this way to conform to SearchEngine.search_sounds definition which must return SearchResults
         try:
             results = self.get_sounds_index().search(**query.as_kwargs(force_sounds=similar_to is None))
+
             # Solr uses a string for the id field, but django uses an int. Convert the id in all results to int
             # before use to avoid issues
             for d in results.docs:

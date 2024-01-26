@@ -288,6 +288,8 @@ class SolrResponseInterpreter:
                 grouping_field = "thread_title_grouped"
             elif "grouping_pack" in list(response["grouped"].keys()):
                 grouping_field = "grouping_pack"
+            elif "grouping_pack_child" in list(response["grouped"].keys()):
+                grouping_field = "grouping_pack_child"
 
             self.docs = [{
                 'id': group['doclist']['docs'][0]['id'],

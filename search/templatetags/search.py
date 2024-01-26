@@ -92,6 +92,8 @@ def display_facet(context, flt, facet, facet_type, title=""):
             context['sort'] if context['sort'] is not None else '',
             context['weights'] or ''
         )
+        if context['similar_to'] is not None:
+            element['add_filter_url'] += '&similar_to={}'.format(context['similar_to'])
         filtered_facet.append(element)
 
     # We sort the facets by count. Also, we apply an opacity filter on "could" type pacets

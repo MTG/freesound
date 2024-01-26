@@ -246,6 +246,7 @@
   <field name="analyzer" type="string" indexed="true" stored="true" required="false" />
   <field name="timestamp_start" type="pdouble" indexed="true" stored="true" required="false" />
   <field name="timestamp_end" type="pdouble" indexed="true" stored="true" required="false" />
+  <field name="grouping_pack_child" type="string" indexed="true" stored="true" required="false" />
 
   <!-- Other fields -->
   <dynamicField name="random_*" type="random" indexed="true" stored="false"/>

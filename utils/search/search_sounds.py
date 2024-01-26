@@ -217,7 +217,8 @@ def search_prepare_parameters(request):
         'num_sounds': num_sounds,
         'query_fields': field_weights,
         'group_by_pack': group_by_pack,
-        'only_sounds_with_pack': only_sounds_with_pack
+        'only_sounds_with_pack': only_sounds_with_pack,
+        'similar_to': request.GET.get('similar_to', None)
     }
 
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ', '+')

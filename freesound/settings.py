@@ -649,6 +649,7 @@ SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
     },
 }
 SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = FSDSINET_ANALYZER_NAME
+SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY = 500
 USE_SEARCH_ENGINE_SIMILARITY = False  # Does not currently apply to API
 
 # -------------------------------------------------------------------------------

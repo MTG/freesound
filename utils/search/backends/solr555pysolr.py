@@ -272,10 +272,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                         # we add the grouping_pack field here as well. In the future we might be able to optimize this if we can tell solr
                         # to group results by the field value of a parent document (just like we do to compute facets)
                         if getattr(sound_objects_dict[sa.sound_id], "pack_id"):
-                            sim_vector_document_data['grouping_pack'] = str(getattr(sound_objects_dict[sa.sound_id], "pack_id")) + "_" + remove_control_chars(
+                            sim_vector_document_data['grouping_pack_child'] = str(getattr(sound_objects_dict[sa.sound_id], "pack_id")) + "_" + remove_control_chars(
                                 getattr(sound_objects_dict[sa.sound_id], "pack_name"))
                         else:
-                            sim_vector_document_data['grouping_pack'] = str(getattr(sound_objects_dict[sa.sound_id], "id"))
+                            sim_vector_document_data['grouping_pack_child'] = str(getattr(sound_objects_dict[sa.sound_id], "id"))
                         similarity_vectors_per_analyzer_per_sound.append(sim_vector_document_data)
                 if similarity_vectors_per_analyzer_per_sound:
                     similarity_data[sa.sound_id] += similarity_vectors_per_analyzer_per_sound
@@ -539,7 +539,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                                 vector = vector_raw[0:config_options['vector_size']] 
                             
                 if vector is not None and vector_field_name is not None:
-                    max_similar_sounds = 500  # Max number of results for similarity search search. Filters are applied before the similarity search, so this number will usually be the total number of results (unless filters are more restrictive)
+                    max_similar_sounds = settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY  # Max number of results for similarity search search. Filters are applied before the similarity search, so this number will usually be the total number of results (unless filters are more restrictive)
                     serialized_vector = ','.join([str(n) for n in vector])
                     query.set_query(f'{{!knn f={vector_field_name} topK={max_similar_sounds}}}[{serialized_vector}]')
         
@@ -551,14 +551,27 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         
         if similar_to is not None:
             # If doing a similarity query, the filter needs to be further processed so we perform filters based on parent documents
-            filter_query = [f'content_type:{SOLR_DOC_CONTENT_TYPES["similarity_vector"]}', f'analyzer:{settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER}']  # Add basic filter to only get similarity vectors from selected analyzer and from child documents (this is because root documents can also have sim vectors)
-            if isinstance(similar_to, int):
+            query_filter_modified = [f'content_type:{SOLR_DOC_CONTENT_TYPES["similarity_vector"]}', f'analyzer:{settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER}']  # Add basic filter to only get similarity vectors from selected analyzer and from child documents (this is because root documents can also have sim vectors)
+            top_similar_sounds_as_filter = query.as_kwargs()['q']
+            try:
                 # Also if target is specified as a sound ID, remove it from the list
-                filter_query.append(f'-_nest_parent_:{similar_to}')
+                query_filter_modified.append(f'-_nest_parent_:{int(similar_to)}')
+                # Update the top_similar_sounds_as_filter so we compensate for the fact that we are removing the target sound from the results
+                top_similar_sounds_as_filter=top_similar_sounds_as_filter.replace(f'topK={settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY}', f'topK={settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY + 1}')
+            except ValueError:
+                # Target is not a sound id, so we don't need to add the filter
+                pass
+            
+            # Also add the NN query as a filter so we don't get past the first settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY results when applying extra filters
+            query_filter_modified += [top_similar_sounds_as_filter]  
+
+            # Now add all "usual" filters
             for part in query_filter.split('+'):
                 if part:
                     # Add extra query filters to the search query, but using the approptiate prefix to make sure they are applied to the root documents
-                    filter_query.append(f'{{!child of=\"content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}\"}}' + part)
+                    modified_filter_part = f'{{!child of=\"content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}\"}}' + part
+                    query_filter_modified.append(modified_filter_part)
+            query_filter = query_filter_modified
 
         # Set query options
         if current_page is not None:
@@ -585,7 +598,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         # Configure grouping
         if group_by_pack:
-            query.set_group_field(group_field="grouping_pack")  # This works both in similarity and non-similarity queries because we index this field in both parent and child documents
+            query.set_group_field(group_field="grouping_pack" if not similar_to else "grouping_pack_child")  # We name the fields differently to avoid solr conflicts with matches of both child and parent docs
             query.set_group_options(
                 group_func=None,
                 group_query=None,

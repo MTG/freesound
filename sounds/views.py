@@ -832,7 +832,9 @@ def similar(request, username, sound_id):
     else:
         # Get similar sounds from solr
         try:
-            results = get_search_engine().search_sounds(similar_to=sound.id)
+            results = get_search_engine().search_sounds(similar_to=sound.id, 
+                                                        similar_to_max_num_sounds=settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES,
+                                                        num_sounds=settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES)
             similarity_results = [(result['id'], result['score']) for result in results.docs]
         except SearchEngineException:
             # Search engine not available, return empty list

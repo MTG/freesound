@@ -494,7 +494,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                       num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
                       group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
                       only_sounds_within_ids=False, group_counts_as_one_in_facets=False, 
-                      similar_to=None, similar_to_analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
+                      similar_to=None, similar_to_max_num_sounds=settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY ,
+                      similar_to_analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
 
         query = SolrQuery()
 
@@ -539,7 +540,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                                 vector = vector_raw[0:config_options['vector_size']] 
                             
                 if vector is not None and vector_field_name is not None:
-                    max_similar_sounds = settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY  # Max number of results for similarity search search. Filters are applied before the similarity search, so this number will usually be the total number of results (unless filters are more restrictive)
+                    max_similar_sounds = similar_to_max_num_sounds  # Max number of results for similarity search search. Filters are applied before the similarity search, so this number will usually be the total number of results (unless filters are more restrictive)
                     serialized_vector = ','.join([str(n) for n in vector])
                     query.set_query(f'{{!knn f={vector_field_name} topK={max_similar_sounds}}}[{serialized_vector}]')
         
@@ -557,20 +558,19 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 # Also if target is specified as a sound ID, remove it from the list
                 query_filter_modified.append(f'-_nest_parent_:{int(similar_to)}')
                 # Update the top_similar_sounds_as_filter so we compensate for the fact that we are removing the target sound from the results
-                top_similar_sounds_as_filter=top_similar_sounds_as_filter.replace(f'topK={settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY}', f'topK={settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY + 1}')
+                top_similar_sounds_as_filter=top_similar_sounds_as_filter.replace(f'topK={similar_to_max_num_sounds}', f'topK={similar_to_max_num_sounds + 1}')
             except ValueError:
                 # Target is not a sound id, so we don't need to add the filter
                 pass
             
-            # Also add the NN query as a filter so we don't get past the first settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY results when applying extra filters
+            # Also add the NN query as a filter so we don't get past the first similar_to_max_num_sounds results when applying extra filters
             query_filter_modified += [top_similar_sounds_as_filter]  
 
-            # Now add all "usual" filters
-            for part in query_filter.split('+'):
-                if part:
-                    # Add extra query filters to the search query, but using the approptiate prefix to make sure they are applied to the root documents
-                    modified_filter_part = f'{{!child of=\"content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}\"}}' + part
-                    query_filter_modified.append(modified_filter_part)
+            # Now add the usual filter, but wrap it in "child of" modifier so it filters on parent documents instead of child documents
+            if query_filter:
+                query_filter_modified.append(f'{{!child of=\"content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}\"}}({query_filter})')
+
+            # Replace query_filter with the modified version
             query_filter = query_filter_modified
 
         # Set query options

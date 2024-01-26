@@ -182,7 +182,7 @@
   <field name="_text_" type="text_general" multiValued="true" indexed="true" stored="false"/>
   <field name="_version_" type="plong" indexed="false" stored="false"/>
   <field name="id" type="string" multiValued="false" indexed="true" required="true" stored="true"/>
-  <field name="is_sound" type="boolean" indexed="true" stored="true" required="true" />
+  <field name="content_type" type="string" indexed="true" stored="true" required="true" />
 
   <field name="username" type="alphaOnlySort" indexed="true" stored="true" required="false" />
   <field name="original_filename" type="freesound_text" indexed="true" stored="true" required="false" />

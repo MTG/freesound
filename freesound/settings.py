@@ -643,12 +643,12 @@ SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
         'vector_property_name': 'embeddings', 
         'vector_size': 100,
     },
-    AUDIOSET_YAMNET_ANALYZER_NAME: {
-        'vector_property_name': 'embeddings', 
-        'vector_size': 100,  # Note yamnet has higher dimensionality and here we're cropping dimensions
-    },
+    FREESOUND_ESSENTIA_EXTRACTOR_NAME: {
+        'vector_property_name': 'sim_vector', 
+        'vector_size': 100,
+    }
 }
-SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = FSDSINET_ANALYZER_NAME
+SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = FREESOUND_ESSENTIA_EXTRACTOR_NAME
 SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY = 500
 USE_SEARCH_ENGINE_SIMILARITY = False  # Does not currently apply to API
 

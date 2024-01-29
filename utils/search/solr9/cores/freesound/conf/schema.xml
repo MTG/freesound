@@ -176,7 +176,7 @@
          performing any ranking -->
     <similarity class="solr.BooleanSimilarityFactory"/>
   </fieldType>
-  <fieldType name="knn_vector100" class="solr.DenseVectorField" vectorDimension="100" similarityFunction="cosine" knnAlgorithm="hnsw" hnswMaxConnections="10" hnswBeamWidth="40"/>
+  <fieldType name="knn_vector100" class="solr.DenseVectorField" vectorDimension="100" similarityFunction="euclidean" knnAlgorithm="hnsw" hnswMaxConnections="10" hnswBeamWidth="40"/>
 
   <field name="_root_" type="string" docValues="false" indexed="true" stored="false"/>
   <field name="_text_" type="text_general" multiValued="true" indexed="true" stored="false"/>

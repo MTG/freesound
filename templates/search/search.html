@@ -76,23 +76,25 @@
                     enable this feature. Instead, we add here the element to toggle advanced search options.
                     In the future we might need to redesign that.
                     {% endcomment %}
-                    <div class="col-4 middle">
+                    <div class="col-4 middle center">
                         <a href="#" class="bw-link--grey-light" id="toggle_advanced_search_options"></a>
                         {% if has_advanced_search_settings_set %}<span class="text-red h-spacing-left-1 text-44 line-height-14 padding-bottom-1" title="There are active filters in the advanced search options">·</span>{% endif %}
                     </div>
-                    <div class="browse__search-overview-sorter">
-                        <span class="font-weight-normal text-light-grey d-none d-md-inline">Sort by:</span>
-                        {% if not similar_to %}
-                            <select name="s" id="sort-by">
-                                {% for option in sort_options %}
-                                <option value="{{option.1}}"{% ifequal option.1 sort %}selected="selected"{% endifequal %}>{{option.0}}</option>
-                                {% endfor %}
-                            </select>
-                        {% else %}
-                            <select name="s" id="sort-by" disabled>
-                                <option>Similarity to target</option>
-                            </select>
-                        {% endif %}
+                    <div class="col-4 right browse__search-overview-sorter">
+                        <div class="{% if use_map_mode %}display-none{% endif %}"> 
+                            <span class="font-weight-normal text-light-grey d-none d-md-inline">Sort by:</span>
+                            {% if not similar_to %}
+                                <select name="s" id="sort-by">
+                                    {% for option in sort_options %}
+                                    <option value="{{option.1}}"{% ifequal option.1 sort %}selected="selected"{% endifequal %}>{{option.0}}</option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <select name="s" id="sort-by" disabled>
+                                    <option>Similarity to target</option>
+                                </select>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 <div class="divider-light"></div>
@@ -179,9 +181,9 @@
                             </div>
                             <ul class="bw-search__filter-value-list">
                                 <li class="bw-search__filter-value v-padding-1">
-                                    <label class="between w-100" title="Only find sounds that have geolocation information">
+                                    <label class="between w-100 {% if use_map_mode %}opacity-020{% endif %}" title="Only find sounds that have geolocation information">
                                         <div class="bw-search__filter-checkbox">
-                                            <input id="filter_is_geotagged" type="checkbox" class="bw-checkbox"/>
+                                            <input id="filter_is_geotagged" type="checkbox" class="bw-checkbox" {% if use_map_mode %}disabled="disabled"{% endif %} />
                                         </div>
                                         <div class="bw-search__filter-name">Only geotagged sounds</div>
                                     </label>
@@ -213,14 +215,25 @@
                                     </label>
                                 </li>
                                 <li class="bw-search__filter-value v-padding-1">
-                                    <label class="between w-100" title="Dipslay search results in a grid so that more sounds are visible per search results page">
+                                    <label class="between w-100 {% if disable_display_results_in_grid_option %}opacity-020{% endif %}" title="Display search results in a grid so that more sounds are visible per search results page">
                                         <div class="bw-search__filter-checkbox">
-                                            <input id="use_compact_mode" type="checkbox" class="bw-checkbox" {% if use_compact_mode %}checked{% endif %}/>
+                                            <input id="use_compact_mode" type="checkbox" class="bw-checkbox" {% if use_compact_mode %}checked{% endif %} {% if disable_display_results_in_grid_option %}disabled="disabled"{% endif %}/>
                                             <input id="use_compact_mode_hidden" type="hidden" name="cm" value="{{ use_compact_mode|yesno:"1,0" }}"/>
                                         </div>
                                         <div class="bw-search__filter-name">Display results in grid</div>
                                     </label>
                                 </li>
+                                {% if allow_map_mode %}
+                                <li class="bw-search__filter-value v-padding-1">
+                                    <label class="between w-100" title="Display search results in a map. Note that a maximum of {{ max_search_results_map_mode }} sounds will be displayed.">
+                                        <div class="bw-search__filter-checkbox">
+                                            <input id="use_map_mode" type="checkbox" class="bw-checkbox" {% if use_map_mode %}checked{% endif %} />
+                                            <input id="use_map_mode_hidden" type="hidden" name="mm" value="{{ use_map_mode|yesno:"1,0" }}"/>
+                                        </div>
+                                        <div class="bw-search__filter-name">Display results in map</div>
+                                    </label>
+                                </li>
+                                {% endif %}
                             </ul>
                         </div>
                     </div>
@@ -293,12 +306,13 @@
             {% if filter_query_split %}
             <div class="v-spacing-3 v-spacing-top-2 line-height-33">
                 {% for filter in filter_query_split %}
-                <a class="no-hover btn-inverse bw-search__active-filters-button" href="/search/?advanced={{ advanced }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&s={{ sort }}&cluster_id={{ filter.cluster_id }}&w={{ weights }}&q={{search_query}}&f={{ filter.remove_url }}{% if similar_to %}&similar_to={{ similar_to }}{% endif %}" title="Remove this filter">
+                <a class="no-hover btn-inverse bw-search__active-filters-button" href="/search/?advanced={{ advanced }}&g={{ group_by_pack_in_request }}&only_p={{ only_sounds_with_pack_in_request }}&s={{ sort }}&cluster_id={{ filter.cluster_id }}&w={{ weights }}&q={{search_query}}&f={{ filter.remove_url }}{% if similar_to %}&similar_to={{ similar_to }}{% endif %}{% if use_map_mode %}&mm=1{% endif %}" title="Remove this filter">
                     {{ filter.name }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
                 </a>
                 {% endfor %}
             </div>
             {% endif %}
+            {% if not use_map_mode %}
             <div class="v-spacing-6 v-spacing-top-2">
                 {% if paginator.count > 0 %}
                 {% if use_compact_mode %}
@@ -353,6 +367,16 @@
             <div class="v-spacing-6">
                 {% bw_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
             </div>
+            {% else %}
+            <div class="col-12 v-spacing-top-3 no-paddings">
+                <div id="mapCanvas" class="map main-map"
+                     data-map-show-search="{% if sound %}false{% else %}true{% endif %}"
+                     data-geotags-url="{{ map_bytearray_url }}"
+                     data-geotags-url-box="{% url "geotags-box-barray" %}"
+                     data-access-token="pk.eyJ1IjoiZnJlZXNvdW5kIiwiYSI6ImNrd3E0Mm9lbjBqM2Qyb2wwdmwxaWI3a3oifQ.MZkgLSByRuk_Xql67CySAg"
+                ><span id="mapLoadingIndicator">Loading map... <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"></span></div>
+            </div>
+            {% endif %}
         </main>
     </div>
     {% endif %}

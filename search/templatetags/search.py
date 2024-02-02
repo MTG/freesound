@@ -94,6 +94,8 @@ def display_facet(context, flt, facet, facet_type, title=""):
         )
         if context['similar_to'] is not None:
             element['add_filter_url'] += '&similar_to={}'.format(context['similar_to'])
+        if context['use_map_mode'] == True:
+            element['add_filter_url'] += '&mm=1'
         filtered_facet.append(element)
 
     # We sort the facets by count. Also, we apply an opacity filter on "could" type pacets

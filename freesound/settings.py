@@ -652,6 +652,9 @@ SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = FREESOUND_ESSENTIA_EXTRACTOR_NAME
 SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY = 500
 USE_SEARCH_ENGINE_SIMILARITY = False  # Does not currently apply to API
 
+SEARCH_ALLOW_DISPLAY_RESULTS_IN_MAP = True
+MAX_SEARCH_RESULTS_IN_MAP_DISPLAY = 1000  # This is the maximum number of sounds that will be shown when using "display results in map" mode
+
 # -------------------------------------------------------------------------------
 # Similarity client settings
 SIMILARITY_ADDRESS = 'similarity'

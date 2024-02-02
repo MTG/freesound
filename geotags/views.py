@@ -32,8 +32,10 @@ from django.urls import reverse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
 
+from search.views import search_prepare_parameters
 from sounds.models import Sound, Pack
 from utils.logging_filters import get_client_ip
+from utils.search.search_sounds import perform_search_engine_query
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
 web_logger = logging.getLogger('web')
@@ -42,6 +44,26 @@ web_logger = logging.getLogger('web')
 def log_map_load(map_type, num_geotags, request):
     web_logger.info('Map load (%s)' % json.dumps({
         'map_type': map_type, 'num_geotags': num_geotags, 'ip': get_client_ip(request)}))
+
+
+def update_query_params_for_map_query(query_params, preserve_facets=False):
+    # Force is_geotagged filter to be present
+    if query_params['query_filter']:
+        if 'is_geotagged' not in query_params['query_filter']:
+            query_params['query_filter'] = query_params['query_filter'] + ' +is_geotagged:1'
+    else:
+        query_params['query_filter'] = 'is_geotagged:1'
+    # Force one single page with "all" results, and don't group by pack
+    query_params.update({
+        'current_page': 1, 
+        'num_sounds': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,
+        'group_by_pack': False,
+        'only_sounds_with_pack': False,
+    })
+    if not preserve_facets:
+        # No need to compute facets for the bytearray, but it might be needed for the main query
+        if 'facets' in query_params:
+            del query_params['facets']
 
 
 def generate_bytearray(sound_queryset):
@@ -136,6 +158,17 @@ def geotag_for_sound_barray(request, sound_id):
     generated_bytearray, num_geotags = generate_bytearray(sounds)
     if num_geotags > 0:
         log_map_load('sound', num_geotags, request)
+    return HttpResponse(generated_bytearray, content_type='application/octet-stream')
+
+
+def gelotags_for_query_barray(request):
+    query_params, _, _ = search_prepare_parameters(request)
+    update_query_params_for_map_query(query_params)
+    results, _ = perform_search_engine_query(query_params)
+    resultids = [d.get("id") for d in results.docs]
+    generated_bytearray, num_geotags = generate_bytearray(Sound.objects.select_related('geotag').filter(id__in=resultids))
+    if num_geotags > 0:
+        log_map_load('query', num_geotags, request)
     return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 

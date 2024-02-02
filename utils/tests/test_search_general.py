@@ -39,7 +39,7 @@ class SearchUtilsTest(TestCase):
         AuthenticationMiddleware().process_request(request)
         request.session.save()
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
-
+        
         expected_default_query_params = {
             'query_fields': settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS,
             'sort': settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
@@ -50,6 +50,17 @@ class SearchUtilsTest(TestCase):
             'textual_query': '',
             'similar_to': None,
             'only_sounds_with_pack': False,
+            'only_sounds_within_ids': [],
+            'facets': {'bitdepth': {},
+                'bitrate': {},
+                'channels': {},
+                'license': {'limit': 10},
+                'pack_grouping': {'limit': 10},
+                'samplerate': {},
+                'tags': {'limit': 30},
+                'type': {'limit': 7},
+                'username': {'limit': 30}
+            },
         }
 
         expected_extra_vars = {
@@ -75,7 +86,6 @@ class SearchUtilsTest(TestCase):
         AuthenticationMiddleware().process_request(request)
         request.session.save()
         query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
-
         expected_default_query_params = {
             'query_fields': {
                 settings.SEARCH_SOUNDS_FIELD_ID: 0,
@@ -95,6 +105,17 @@ class SearchUtilsTest(TestCase):
             'textual_query': 'dog',
             'similar_to': None,
             'only_sounds_with_pack': False,
+            'only_sounds_within_ids': [],
+            'facets': {'bitdepth': {},
+                'bitrate': {},
+                'channels': {},
+                'license': {'limit': 10},
+                'pack_grouping': {'limit': 10},
+                'samplerate': {},
+                'tags': {'limit': 30},
+                'type': {'limit': 7},
+                'username': {'limit': 30}
+            },
         }
 
         expected_extra_vars = {
@@ -105,7 +126,7 @@ class SearchUtilsTest(TestCase):
             'has_facet_filter': False,
             'parsed_filters': [['duration', ':', '[', '1', ' TO ', '10', ']'], ['is_geotagged', ':', '1']],
             'parsing_error': False,
-            'raw_weights_parameter': ''
+            'raw_weights_parameter': '',
         }
 
         expected_advanced_search_params_dict = {

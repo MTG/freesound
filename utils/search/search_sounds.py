@@ -226,7 +226,7 @@ def search_prepare_parameters(request):
         'only_sounds_with_pack': only_sounds_with_pack,
         'only_sounds_within_ids': [],
         'similar_to': request.GET.get('similar_to', None),
-        'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS,
+        'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS.copy(),
     }
 
     # These variables are not used for querying the sound collection

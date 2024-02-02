@@ -51,16 +51,7 @@ class SearchUtilsTest(TestCase):
             'similar_to': None,
             'only_sounds_with_pack': False,
             'only_sounds_within_ids': [],
-            'facets': {'bitdepth': {},
-                'bitrate': {},
-                'channels': {},
-                'license': {'limit': 10},
-                'pack_grouping': {'limit': 10},
-                'samplerate': {},
-                'tags': {'limit': 30},
-                'type': {'limit': 7},
-                'username': {'limit': 30}
-            },
+            'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS
         }
 
         expected_extra_vars = {
@@ -106,16 +97,7 @@ class SearchUtilsTest(TestCase):
             'similar_to': None,
             'only_sounds_with_pack': False,
             'only_sounds_within_ids': [],
-            'facets': {'bitdepth': {},
-                'bitrate': {},
-                'channels': {},
-                'license': {'limit': 10},
-                'pack_grouping': {'limit': 10},
-                'samplerate': {},
-                'tags': {'limit': 30},
-                'type': {'limit': 7},
-                'username': {'limit': 30}
-            },
+            'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS
         }
 
         expected_extra_vars = {

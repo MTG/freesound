@@ -22,6 +22,7 @@ import datetime
 import json
 import logging
 import re
+import uuid
 import sentry_sdk
 from collections import defaultdict, Counter
 
@@ -118,12 +119,14 @@ def search_view_helper(request, tags_mode=False):
     disable_display_results_in_grid_option = False
     map_bytearray_url = ''
     use_map_mode = settings.SEARCH_ALLOW_DISPLAY_RESULTS_IN_MAP and request.GET.get("mm", "0") == "1"
+    map_mode_query_results_cache_key = None
     if use_map_mode:
         disable_group_by_pack_option = True
         disable_only_sounds_by_pack_option = True
         disable_display_results_in_grid_option = True
         geotags.views.update_query_params_for_map_query(query_params, preserve_facets=True)
-        map_bytearray_url = reverse('geotags-for-query-barray') + '?' + request.get_full_path().split('?')[-1]
+        map_mode_query_results_cache_key = f'map-query-results-{str(uuid.uuid4())[0:10]}'
+        map_bytearray_url = reverse('geotags-for-query-barray') + f'?key={map_mode_query_results_cache_key}'
 
     tvars = {
         'error_text': None,
@@ -194,8 +197,13 @@ def search_view_helper(request, tags_mode=False):
                 for d in docs:
                     d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
         else:
-            # In map mode we don't need to retrieve any information about sounds as we'll make another query
-            # to generate the geotags bytearray
+            # In map we configure the search query to already return geotags data. Here we collect all this data
+            # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares
+            # data points for the map of sounds. 
+            cache.set(map_mode_query_results_cache_key, results.docs, 60)  # cache for 1 minute
+
+            # Nevertheless we set docs to empty list as we won't displat anything in the search results page (the map
+            # will make an extra request that will load the cached data and display it in the map)
             docs = []
 
         search_logger.info('Search (%s)' % json.dumps({

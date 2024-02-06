@@ -225,7 +225,7 @@
                                 </li>
                                 {% if allow_map_mode %}
                                 <li class="bw-search__filter-value v-padding-1">
-                                    <label class="between w-100" title="Display search results in a map. Note that a maximum of {{ max_search_results_map_mode }} sounds will be displayed.">
+                                    <label class="between w-100" title="Display search results in a map">
                                         <div class="bw-search__filter-checkbox">
                                             <input id="use_map_mode" type="checkbox" class="bw-checkbox" {% if use_map_mode %}checked{% endif %} />
                                             <input id="use_map_mode_hidden" type="hidden" name="mm" value="{{ use_map_mode|yesno:"1,0" }}"/>
@@ -376,6 +376,11 @@
                      data-access-token="pk.eyJ1IjoiZnJlZXNvdW5kIiwiYSI6ImNrd3E0Mm9lbjBqM2Qyb2wwdmwxaWI3a3oifQ.MZkgLSByRuk_Xql67CySAg"
                 ><span id="mapLoadingIndicator">Loading map... <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"></span></div>
             </div>
+            {% if paginator.count > max_search_results_map_mode %}
+            <div class="right">
+                <p class="text-grey">{% bw_icon 'notification' %} Note that only the first {{ max_search_results_map_mode|bw_intcomma }} search results are shown on the map</p>
+            </div>
+            {% endif %}
             {% endif %}
         </main>
     </div>

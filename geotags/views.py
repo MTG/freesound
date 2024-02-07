@@ -176,7 +176,16 @@ def geotag_for_sound_barray(request, sound_id):
 
 def geotags_for_query_barray(request):
     results_cache_key = request.GET.get('key', None)
-    results_docs = cache.get(results_cache_key)
+    if results_cache_key is not None:
+        # If cache key is present, use it to get the results
+        results_docs = cache.get(results_cache_key)
+    else:
+        # Otherwise, perform a search query to get the results
+        query_params, _, _ = search_prepare_parameters(request)
+        update_query_params_for_map_query(query_params)
+        results, _ = perform_search_engine_query(query_params)
+        results_docs = results.docs
+    
     generated_bytearray, num_geotags = generate_bytearray(results_docs)
     if num_geotags > 0:
         log_map_load('query', num_geotags, request)

@@ -23,6 +23,7 @@ import json
 import logging
 import math
 import struct
+import urllib.parse
 
 from django.conf import settings
 from django.core.cache import cache
@@ -199,7 +200,8 @@ def _get_geotags_query_params(request):
         'zoom': request.GET.get('z', None),
         'username': request.GET.get('username', None),
         'pack': request.GET.get('pack', None),
-        'tag': request.GET.get('tag', None)
+        'tag': request.GET.get('tag', None),
+        'query_params': urllib.parse.unquote(request.GET['qp']) if 'qp' in request.GET else None  # This is used for map embeds based on general queries
     }
 
 

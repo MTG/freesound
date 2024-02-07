@@ -25,7 +25,9 @@
     var center_lon;
     var zoom;
 
-    {% if username %}
+    {% if query_params %}
+        url = '{% url "geotags-for-query-barray" %}?{{ query_params|safe }}';
+    {% elif username %}
         url = '{% url "geotags-for-user-barray" username %}?embed=1';
     {% elif pack %}
         url = '{% url "geotags-for-pack-barray" pack %}?embed=1';

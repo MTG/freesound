@@ -39,6 +39,7 @@ from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
 from clustering.interface import cluster_sound_results, get_sound_ids_from_search_engine_query
 from forum.models import Post
+from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
@@ -120,13 +121,19 @@ def search_view_helper(request, tags_mode=False):
     map_bytearray_url = ''
     use_map_mode = settings.SEARCH_ALLOW_DISPLAY_RESULTS_IN_MAP and request.GET.get("mm", "0") == "1"
     map_mode_query_results_cache_key = None
+    open_in_map_url = None
     if use_map_mode:
+        # Prepare some URLs for loading sounds and providing links to map
+        current_query_params = request.get_full_path().split("?")[-1]
+        open_in_map_url = reverse('geotags-query') + f'?{current_query_params}'
+        map_mode_query_results_cache_key = f'map-query-results-{create_hash(current_query_params, 10)}'
+        map_bytearray_url = reverse('geotags-for-query-barray') + f'?key={map_mode_query_results_cache_key}'
+        # Update some query parameters and options to adapt to map mode
         disable_group_by_pack_option = True
         disable_only_sounds_by_pack_option = True
         disable_display_results_in_grid_option = True
         geotags.views.update_query_params_for_map_query(query_params, preserve_facets=True)
-        map_mode_query_results_cache_key = f'map-query-results-{str(uuid.uuid4())[0:10]}'
-        map_bytearray_url = reverse('geotags-for-query-barray') + f'?key={map_mode_query_results_cache_key}'
+        
 
     tvars = {
         'error_text': None,
@@ -140,6 +147,7 @@ def search_view_helper(request, tags_mode=False):
         'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
         'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
         'use_compact_mode': should_use_compact_mode(request),
+        'disable_display_results_in_grid_option': disable_display_results_in_grid_option,
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
         'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
@@ -157,7 +165,7 @@ def search_view_helper(request, tags_mode=False):
         'allow_map_mode': settings.SEARCH_ALLOW_DISPLAY_RESULTS_IN_MAP,
         'use_map_mode': use_map_mode,
         'map_bytearray_url': map_bytearray_url,
-        'disable_display_results_in_grid_option': disable_display_results_in_grid_option,
+        'open_in_map_url': open_in_map_url,
         'max_search_results_map_mode': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY
     }
     tvars.update(advanced_search_params_dict)
@@ -200,7 +208,7 @@ def search_view_helper(request, tags_mode=False):
             # In map we configure the search query to already return geotags data. Here we collect all this data
             # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares
             # data points for the map of sounds. 
-            cache.set(map_mode_query_results_cache_key, results.docs, 60)  # cache for 1 minute
+            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 5 minutes
 
             # Nevertheless we set docs to empty list as we won't displat anything in the search results page (the map
             # will make an extra request that will load the cached data and display it in the map)

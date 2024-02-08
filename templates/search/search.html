@@ -372,15 +372,21 @@
                 <div id="mapCanvas" class="map main-map"
                      data-map-show-search="{% if sound %}false{% else %}true{% endif %}"
                      data-geotags-url="{{ map_bytearray_url }}"
-                     data-geotags-url-box="{% url "geotags-box-barray" %}"
                      data-access-token="pk.eyJ1IjoiZnJlZXNvdW5kIiwiYSI6ImNrd3E0Mm9lbjBqM2Qyb2wwdmwxaWI3a3oifQ.MZkgLSByRuk_Xql67CySAg"
                 ><span id="mapLoadingIndicator">Loading map... <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"></span></div>
             </div>
-            {% if paginator.count > max_search_results_map_mode %}
-            <div class="right">
-                <p class="text-grey">{% bw_icon 'notification' %} Note that only the first {{ max_search_results_map_mode|bw_intcomma }} search results are shown on the map</p>
+            <div class="row middle">
+                <div class="col-lg-4 v-spacing-top-4">
+                    <a class="no-hover btn-secondary btn-inverse" href="{{ open_in_map_url }}">See results in full map</a>
+                </div>
+                <div class="col-lg-8 v-spacing-top-2">
+                    {% if paginator.count < max_search_results_map_mode %}
+                    <div class="text-lg-right">
+                        <p class="text-grey">{% bw_icon 'notification' %} Note that only the first {{ max_search_results_map_mode|bw_intcomma }} search results are shown on the map</p>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            {% endif %}
             {% endif %}
         </main>
     </div>

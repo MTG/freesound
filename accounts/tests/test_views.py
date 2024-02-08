@@ -287,14 +287,9 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('sounds-search'))
         self.assertEqual(resp.status_code, 200)
 
-    def test_geotags_box_response(self):
-        # 200 response on geotag box page access
-        resp = self.client.get(reverse('geotags-box'))
-        self.assertEqual(resp.status_code, 200)
-
-    def test_geotags_box_iframe_response(self):
+    def test_geotags_embed_response(self):
         # 200 response on geotag box iframe
-        resp = self.client.get(reverse('embed-geotags-box-iframe'))
+        resp = self.client.get(reverse('embed-geotags'))
         self.assertEqual(resp.status_code, 200)
 
     def test_accounts_manage_pages(self):

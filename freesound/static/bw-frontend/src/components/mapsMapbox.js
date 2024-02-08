@@ -292,7 +292,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                     if (nSounds > 1){
                         // The padding and offset "manual" adjustments of bounds below are to make the boudns more similar to
                         // those created in the mapbox static maps
-                        map.fitBounds(bounds, {duration:0, offset:[-10, 0],  padding: {top:60, right:60, left:0, bottom:50}});
+                        map.fitBounds(bounds, {duration:0, offset:[0, 0],  padding: {top:60, right:60, left:60, bottom:60}});
                     } else {
                         map.setZoom(3);
                         if (nSounds > 0){

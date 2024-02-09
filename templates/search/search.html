@@ -380,7 +380,7 @@
                     <a class="no-hover btn-secondary btn-inverse" href="{{ open_in_map_url }}">See results in full map</a>
                 </div>
                 <div class="col-lg-8 v-spacing-top-2">
-                    {% if paginator.count < max_search_results_map_mode %}
+                    {% if paginator.count > max_search_results_map_mode %}
                     <div class="text-lg-right">
                         <p class="text-grey">{% bw_icon 'notification' %} Note that only the first {{ max_search_results_map_mode|bw_intcomma }} search results are shown on the map</p>
                     </div>

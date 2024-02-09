@@ -82,7 +82,7 @@ urlpatterns = [
     path('charts/', accounts.views.charts, name="charts"),
 
     path('embed/sound/iframe/<int:sound_id>/simple/<player_size>/', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
-    path('embed/geotags_box/iframe/', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
+    path('embed/geotags_box/iframe/', geotags.views.embed_iframe, name="embed-geotags"),
     path('oembed/', sounds.views.oembed, name="oembed-sound"),
 
     path('after-download-modal/', sounds.views.after_download_modal, name="after-download-modal"),
@@ -93,7 +93,7 @@ urlpatterns = [
     path('browse/packs/', sounds.views.packs, name="packs"),
     path('browse/random/', sounds.views.random, name="sounds-random"),
     re_path(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
-    path('browse/geotags_box/', geotags.views.geotags_box, name="geotags-box"),
+    path('browse/query/', geotags.views.for_query, name="geotags-query"),
 
     path('contact/', support.views.contact, name="contact"),
 

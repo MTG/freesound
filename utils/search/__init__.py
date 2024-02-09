@@ -228,8 +228,9 @@ class SearchEngineBase:
         """
         raise NotImplementedError
 
-    def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
-                      num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+    def search_sounds(self, textual_query='', query_fields=None, query_filter='', field_list=['id', 'score'], 
+                      offset=0, current_page=None, num_sounds=settings.SOUNDS_PER_PAGE, 
+                      sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
                       group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
                       only_sounds_within_ids=False, group_counts_as_one_in_facets=False, 
                       simialr_to=None, similar_to_max_num_sounds=settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY, 
@@ -244,6 +245,9 @@ class SearchEngineBase:
                     query_fields = [settings.SEARCH_SOUNDS_FIELD_ID, settings.SEARCH_SOUNDS_FIELD_USER_NAME]
                     query_fields = {settings.SEARCH_SOUNDS_FIELD_ID:1 , settings.SEARCH_SOUNDS_FIELD_USER_NAME: 4}
             query_filter (str, optional): filter expression following lucene filter syntax
+            field_list (List[str], optional): list of fields to return by the search engine. Typically we're only interested
+                in sound IDs because we don't use data form the search engine to display sounds, but in some cases it can 
+                be necessary to return further data.
             offset (int, optional): offset for the returned results
             current_page (int, optional): alternative way to set offset using page numbers. Using current_page will
                 set offset like offset=current_page*num_sounds

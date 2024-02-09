@@ -22,6 +22,7 @@ import datetime
 import json
 import logging
 import re
+import uuid
 import sentry_sdk
 from collections import defaultdict, Counter
 
@@ -33,10 +34,12 @@ from ratelimit.decorators import ratelimit
 
 import forum
 import sounds
+import geotags
 from clustering.clustering_settings import DEFAULT_FEATURES, NUM_SOUND_EXAMPLES_PER_CLUSTER_FACET, \
     NUM_TAGS_SHOWN_PER_CLUSTER_FACET
 from clustering.interface import cluster_sound_results, get_sound_ids_from_search_engine_query
 from forum.models import Post
+from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
@@ -49,28 +52,17 @@ search_logger = logging.getLogger("search")
 def search_view_helper(request, tags_mode=False):
     query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
 
-    # check if there was a filter parsing error
+    # Check if there was a filter parsing error
     if extra_vars['parsing_error']:
         search_logger.info(f"Query filter parsing error. filter: {request.GET.get('f', '')}")
         extra_vars.update({'error_text': 'There was an error while searching, is your query correct?'})
         return extra_vars
 
-    # get the url query params for later sending it to the clustering engine
+    # Get the url query params for later sending it to the clustering engine (this is only used with the clustering feature)
     url_query_params_string = request.META['QUERY_STRING']
 
-    # get sound ids of the requested cluster when applying a clustering facet
-    # the list of ids is used later on to create a Solr query with filter by ids in
-    cluster_id = request.GET.get('cluster_id')
-
-    if settings.ENABLE_SEARCH_RESULTS_CLUSTERING and cluster_id:
-        in_ids = _get_ids_in_cluster(request, cluster_id)
-    else:
-        in_ids = []
-    query_params.update({'only_sounds_within_ids': in_ids})
-
-    query_params.update({'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS})
-
-    filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], cluster_id)
+    # Get a "split" version of the filter which is used to display filters in UI and for some other checks (see below)
+    filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], extra_vars['cluster_id'])
     
     # Get tags taht are being used in filters (this is used later to remove them from the facet and also for tags mode)
     tags_in_filter = []
@@ -85,7 +77,6 @@ def search_view_helper(request, tags_mode=False):
     # Process tags mode stuff
     initial_tagcloud = None
     if tags_mode:
-
         # In tags mode, we increase the size of the tags facet so we include more related tags
         query_params['facets'][settings.SEARCH_SOUNDS_FIELD_TAGS]['limit'] = 50
 
@@ -110,7 +101,6 @@ def search_view_helper(request, tags_mode=False):
                 'initial_tagcloud': initial_tagcloud,
             }
 
-
     # In the tvars section we pass the original group_by_pack value to avoid it being set to false if there is a pack filter (see search_prepare_parameters)
     # This is so that we keep track of the original setting of group_by_pack before the filter was applied, and so that if the pack filter is removed, we can 
     # automatically revert to the previous group_by_pack setting. Also, we compute "disable_group_by_pack_option" so that when we have changed the real
@@ -122,9 +112,28 @@ def search_view_helper(request, tags_mode=False):
     disable_only_sounds_by_pack_option= 'pack:' in query_params['query_filter']
     only_sounds_with_pack = "1" if query_params['only_sounds_with_pack'] else ""
     if only_sounds_with_pack:
-        # If displaying seachr results as packs, include 3 sounds per pack group in the results so we can display these sounds as selected sounds in the
+        # If displaying search results as packs, include 3 sounds per pack group in the results so we can display these sounds as selected sounds in the
         # display_pack templatetag
         query_params['num_sounds_per_pack_group'] = 3
+
+    # Parpare variables for map view
+    disable_display_results_in_grid_option = False
+    map_bytearray_url = ''
+    use_map_mode = settings.SEARCH_ALLOW_DISPLAY_RESULTS_IN_MAP and request.GET.get("mm", "0") == "1"
+    map_mode_query_results_cache_key = None
+    open_in_map_url = None
+    if use_map_mode:
+        # Prepare some URLs for loading sounds and providing links to map
+        current_query_params = request.get_full_path().split("?")[-1]
+        open_in_map_url = reverse('geotags-query') + f'?{current_query_params}'
+        map_mode_query_results_cache_key = f'map-query-results-{create_hash(current_query_params, 10)}'
+        map_bytearray_url = reverse('geotags-for-query-barray') + f'?key={map_mode_query_results_cache_key}'
+        # Update some query parameters and options to adapt to map mode
+        disable_group_by_pack_option = True
+        disable_only_sounds_by_pack_option = True
+        disable_display_results_in_grid_option = True
+        geotags.views.update_query_params_for_map_query(query_params, preserve_facets=True)
+        
 
     tvars = {
         'error_text': None,
@@ -138,6 +147,7 @@ def search_view_helper(request, tags_mode=False):
         'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
         'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
         'use_compact_mode': should_use_compact_mode(request),
+        'disable_display_results_in_grid_option': disable_display_results_in_grid_option,
         'advanced': extra_vars['advanced'],
         'sort': query_params['sort'],
         'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
@@ -151,43 +161,58 @@ def search_view_helper(request, tags_mode=False):
         'tags_mode': tags_mode,
         'tags_in_filter': tags_in_filter,
         'has_advanced_search_settings_set': contains_active_advanced_search_filters(request, query_params, extra_vars),
-        'advanced_search_closed_on_load': settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD
+        'advanced_search_closed_on_load': settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD,
+        'allow_map_mode': settings.SEARCH_ALLOW_DISPLAY_RESULTS_IN_MAP,
+        'use_map_mode': use_map_mode,
+        'map_bytearray_url': map_bytearray_url,
+        'open_in_map_url': open_in_map_url,
+        'max_search_results_map_mode': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY
     }
     tvars.update(advanced_search_params_dict)
 
     try:       
         results, paginator = perform_search_engine_query(query_params)
-        if not only_sounds_with_pack:
-            resultids = [d.get("id") for d in results.docs]
-            resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
-            allsounds = {}
-            for s in resultsounds:
-                allsounds[s.id] = s
-            # allsounds will contain info from all the sounds returned by bulk_query_id. This should
-            # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
-            # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
-            # in docs that have not been loaded in allsounds.
-            docs = [doc for doc in results.docs if doc["id"] in allsounds]
-            for d in docs:
-                d["sound"] = allsounds[d["id"]]
+        if not use_map_mode:
+            if not only_sounds_with_pack:
+                resultids = [d.get("id") for d in results.docs]
+                resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
+                allsounds = {}
+                for s in resultsounds:
+                    allsounds[s.id] = s
+                # allsounds will contain info from all the sounds returned by bulk_query_id. This should
+                # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
+                # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
+                # in docs that have not been loaded in allsounds.
+                docs = [doc for doc in results.docs if doc["id"] in allsounds]
+                for d in docs:
+                    d["sound"] = allsounds[d["id"]]
+            else:
+                resultspackids = []
+                sound_ids_for_pack_id = {}
+                for d in results.docs:
+                    pack_id = int(d.get("group_name").split('_')[0])
+                    resultspackids.append(pack_id)
+                    sound_ids_for_pack_id[pack_id] = [int(sound['id']) for sound in d.get('group_docs', [])]
+                resultpacks = sounds.models.Pack.objects.bulk_query_id(resultspackids, sound_ids_for_pack_id=sound_ids_for_pack_id)
+                allpacks = {}
+                for p in resultpacks:
+                    allpacks[p.id] = p
+                # allpacks will contain info from all the packs returned by bulk_query_id. This should
+                # be all packs in docs, but if solr and db are not synchronised, it might happen that there
+                # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
+                # in docs that have not been loaded in allsounds.
+                docs = [d for d in results.docs if int(d.get("group_name").split('_')[0]) in allpacks]
+                for d in docs:
+                    d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
         else:
-            resultspackids = []
-            sound_ids_for_pack_id = {}
-            for d in results.docs:
-                pack_id = int(d.get("group_name").split('_')[0])
-                resultspackids.append(pack_id)
-                sound_ids_for_pack_id[pack_id] = [int(sound['id']) for sound in d.get('group_docs', [])]
-            resultpacks = sounds.models.Pack.objects.bulk_query_id(resultspackids, sound_ids_for_pack_id=sound_ids_for_pack_id)
-            allpacks = {}
-            for p in resultpacks:
-                allpacks[p.id] = p
-            # allpacks will contain info from all the packs returned by bulk_query_id. This should
-            # be all packs in docs, but if solr and db are not synchronised, it might happen that there
-            # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
-            # in docs that have not been loaded in allsounds.
-            docs = [d for d in results.docs if int(d.get("group_name").split('_')[0]) in allpacks]
-            for d in docs:
-                d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
+            # In map we configure the search query to already return geotags data. Here we collect all this data
+            # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares
+            # data points for the map of sounds. 
+            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 5 minutes
+
+            # Nevertheless we set docs to empty list as we won't displat anything in the search results page (the map
+            # will make an extra request that will load the cached data and display it in the map)
+            docs = []
 
         search_logger.info('Search (%s)' % json.dumps({
             'ip': get_client_ip(request),
@@ -233,33 +258,6 @@ def search(request):
     tvars = search_view_helper(request, tags_mode=False)
     template = 'search/search.html' if request.GET.get("ajax", "") != "1" else 'search/search_ajax.html'
     return render(request, template, tvars)
-
-
-def _get_ids_in_cluster(request, requested_cluster_id):
-    """Get the sound ids in the requested cluster. Used for applying a filter by id when using a cluster facet.
-    """
-    try:
-        requested_cluster_id = int(requested_cluster_id) - 1
-
-        # results are cached in clustering_utilities, available features are defined in the clustering settings file.
-        result = cluster_sound_results(request, features=DEFAULT_FEATURES)
-        results = result['result']
-
-        sounds_from_requested_cluster = results[int(requested_cluster_id)]
-
-    except ValueError:
-        return []
-    except IndexError:
-        return []
-    except KeyError:
-        # If the clustering is not in cache the 'result' key won't exist
-        # This means that the clustering computation will be triggered asynchronously.
-        # Moreover, the applied clustering filter will have no effect.
-        # Somehow, we should inform the user that the clustering results were not available yet, and that
-        # he should try again later to use a clustering facet.
-        return []
-
-    return sounds_from_requested_cluster
 
 
 def clustering_facet(request):

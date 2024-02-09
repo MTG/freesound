@@ -25,24 +25,19 @@
     var center_lon;
     var zoom;
 
-    {% if username %}
+    {% if query_params %}
+        url = '{% url "geotags-for-query-barray" %}?{{ query_params|safe }}';
+    {% elif username %}
         url = '{% url "geotags-for-user-barray" username %}?embed=1';
     {% elif pack %}
         url = '{% url "geotags-for-pack-barray" pack %}?embed=1';
+    {% elif tag %}
+        url = '{% url "geotags-barray" tag %}?embed=1';
     {% else %}
-        {% if tag %}
-            url = '{% url "geotags-barray" tag %}?embed=1';
-        {% else %}
-            url = '{% url "geotags-barray" %}?embed=1';
-            center_lat = 24;
-            center_lon = 20;
-            zoom = 2;
-            var box = document.location.hash.slice(5,document.location.hash.length);
-            if (box !== ''){
-                // If box is given, get the geotags only from that box
-                 url = '{% url "geotags-box-barray" %}?embed=1&box=' + box;
-            }
-        {% endif %}
+        url = '{% url "geotags-barray" %}?embed=1';
+        center_lat = 24;
+        center_lon = 20;
+        zoom = 2;
     {% endif %}
 
     {% if center_lat and center_lon and zoom %}

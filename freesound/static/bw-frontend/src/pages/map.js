@@ -12,10 +12,6 @@ const tagFilterInput = document.getElementById("tagFilter");
 let currentLat;
 let currentLon;
 let currentZoom;
-let currentBoxBlLa;
-let currentBoxBlLon;
-let currentBoxTrLat;
-let currentBoxTrLon;
 
 const toggleEmbedControls = () => {
     if (embedControls.classList.contains('display-none')){
@@ -42,22 +38,21 @@ const updateQueryStringParameter = (uri, key, value) => {
     }
 }
 
-const updateEmbedCode = (mapElementId, lat, lon, zoom, boxBlLat, boxBlLon, boxTrLat, boxTrLon) => {
+const updateEmbedCode = (mapElementId, lat, lon, zoom) => {
     if (embedCodeElement === null){ return; }
-
-    const mapCanvas = document.getElementById(mapElementId);
+    let mapCanvas;
+    if (mapElementId === undefined){
+        mapCanvas = document.getElementsByClassName('main-map')[0];
+    } else {
+        mapCanvas = document.getElementById(mapElementId);
+    }
 
     // Store lat, lon and zoom globally so we can use them later to call updateEmbedCode without accessing map
     currentLat = lat;
     currentLon = lon;
     currentZoom = zoom;
-    currentBoxBlLa = boxBlLat;
-    currentBoxBlLon = boxBlLon;
-    currentBoxTrLat = boxTrLat;
-    currentBoxTrLon = boxTrLon;
 
     // Generate embed code
-    const box = "#box=" + boxBlLat + "," + boxBlLon+"," + boxTrLat+"," + boxTrLon;
     const width = parseInt(embedWidthInputElement.value, 10);
     const height = parseInt(embedHeightInputElement.value, 10);
     let cluster = 'on';
@@ -66,16 +61,19 @@ const updateEmbedCode = (mapElementId, lat, lon, zoom, boxBlLat, boxBlLon, boxTr
     }
     let embedCode = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"" + mapCanvas.dataset.geotagsEmbedBaseUrl
         + "?c_lat=" + lat + "&c_lon=" + lon + "&z=" + zoom + "&c=" + cluster + "&w=" + width + "&h=" + height;
-    if (mapCanvas.dataset.mapUsername !== "None"){
+    if (mapCanvas.dataset.mapUsername !== ""){
         embedCode += "&username=" + mapCanvas.dataset.mapUsername;
     }
-    if (mapCanvas.dataset.mapTag !== "None"){
+    if (mapCanvas.dataset.mapTag !== ""){
         embedCode += "&tag=" + mapCanvas.dataset.mapTag;
     }
-    if (mapCanvas.dataset.mapPackId !== "None"){
+    if (mapCanvas.dataset.mapPackId !== ""){
         embedCode += "&pack=" + mapCanvas.dataset.mapPackId;
     }
-    embedCode += box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
+    if (mapCanvas.dataset.mapQp !== ""){
+        embedCode += "&qp=" + mapCanvas.dataset.mapQp;
+    }
+    embedCode += "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>";
     embedCodeElement.innerText = embedCode;
 
     // Update page URL so it can directly be used to share the map
@@ -87,7 +85,7 @@ const updateEmbedCode = (mapElementId, lat, lon, zoom, boxBlLat, boxBlLon, boxTr
 }
 
 const changeEmbedWidthHeightCluster = () => {
-    updateEmbedCode(undefined, currentLat, currentLon, currentZoom, currentBoxBlLa, currentBoxBlLon, currentBoxTrLat, currentBoxTrLon);
+    updateEmbedCode(undefined, currentLat, currentLon, currentZoom);
 }
 
 const initMap = (mapCanvas) => {
@@ -107,7 +105,7 @@ const initMap = (mapCanvas) => {
     [embedWidthInputElement, embedHeightInputElement, embedClusterCheckElement].forEach(element => {
         if (element !== null){
             element.addEventListener('change', () => {
-            changeEmbedWidthHeightCluster();
+                changeEmbedWidthHeightCluster();
             });
         }
     });
@@ -140,13 +138,6 @@ const initMap = (mapCanvas) => {
         zoom = mapCanvas.dataset.mapZoom;
     }
     let url = mapCanvas.dataset.geotagsUrl;
-    const urlBox = mapCanvas.dataset.geotagsUrlBox;
-    const box = document.location.hash.slice(5, document.location.hash.length);
-    if (box !== ''){
-        // If box is given, get the geotags only from that box
-        url = `${urlBox}?box=${box}`;
-    }
-
     const showSearch = (mapCanvas.dataset.mapShowSearch !== undefined && mapCanvas.dataset.mapShowSearch === 'true');
     const showStyleSelector = true;
     const clusterGeotags = true;
@@ -156,7 +147,11 @@ const initMap = (mapCanvas) => {
         if (loadingIndicator !== null){
             loadingIndicator.innerText = `${numLoadedSounds} sound${ numLoadedSounds === 1 ? '': 's'}`;
         }
+        embedWidthInputElement.value = mapCanvas.offsetWidth;
+        embedHeightInputElement.value = mapCanvas.offsetHeight;
     }, updateEmbedCode, centerLat, centerLon, zoom, showSearch, showStyleSelector, clusterGeotags, showMapEvenIfNoGeotags);
+
+    
 }
 
 export { initMap };

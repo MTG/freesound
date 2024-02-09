@@ -11,6 +11,8 @@
         Map of sounds for pack {{ pack.name }}
     {% elif sound %}
         Map for sound {{ sound.original_filename }}
+    {% elif query_params %}
+        Map for query {{ query_description}}
     {% else %}
         Map of sounds
     {% endif %}
@@ -26,6 +28,8 @@
                 Map of sounds for pack <a href="{% url "pack" pack.user.username pack.id %}">{{ pack.name }}</a>
             {% elif sound %}
                 Map for sound <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a>
+            {% elif query_params %}
+                Map for query <a href="{{ query_search_page_url }}">{{ query_description}}</a
             {% else %}
                 Map of sounds
             {% endif %}

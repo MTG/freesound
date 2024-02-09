@@ -25,6 +25,7 @@ from django.db.models.query import RawQuerySet
 from urllib.parse import quote_plus
 from pyparsing import ParseException
 
+import clustering
 from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
 from utils.search.lucene_parser import parse_query_filter_string
 
@@ -199,7 +200,6 @@ def search_prepare_parameters(request):
         parsing_error = True
 
     filter_query = ' '.join([''.join(filter_str) for filter_str in parsed_filters])
-
     filter_query_non_facets, has_facet_filter = remove_facet_filters(parsed_filters)
 
     if only_sounds_with_pack:
@@ -208,6 +208,12 @@ def search_prepare_parameters(request):
         num_sounds = settings.SOUNDS_PER_PAGE
     else:
         num_sounds = settings.SOUNDS_PER_PAGE if not should_use_compact_mode(request) else settings.SOUNDS_PER_PAGE_COMPACT_MODE
+
+    if settings.ENABLE_SEARCH_RESULTS_CLUSTERING:
+        cluster_id = request.GET.get('cluster_id')
+        if cluster_id:
+            in_ids = clustering.interface.get_ids_in_cluster(request, cluster_id)
+            query_params.update({'only_sounds_within_ids': in_ids})
 
     query_params = {
         'textual_query': search_query,
@@ -218,14 +224,15 @@ def search_prepare_parameters(request):
         'query_fields': field_weights,
         'group_by_pack': group_by_pack,
         'only_sounds_with_pack': only_sounds_with_pack,
-        'similar_to': request.GET.get('similar_to', None)
+        'only_sounds_within_ids': [],
+        'similar_to': request.GET.get('similar_to', None),
+        'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS.copy(),
     }
-
-    filter_query_link_more_when_grouping_packs = filter_query.replace(' ', '+')
 
     # These variables are not used for querying the sound collection
     # We keep them separated in order to facilitate the distinction between variables used for performing
     # the Solr query and these extra ones needed for rendering the search template page
+    filter_query_link_more_when_grouping_packs = filter_query.replace(' ', '+')
     extra_vars = {
         'filter_query_link_more_when_grouping_packs': filter_query_link_more_when_grouping_packs,
         'advanced': advanced,
@@ -234,7 +241,7 @@ def search_prepare_parameters(request):
         'has_facet_filter': has_facet_filter,
         'parsed_filters': parsed_filters,
         'parsing_error': parsing_error,
-        'raw_weights_parameter': weights_parameter
+        'raw_weights_parameter': weights_parameter,
     }
 
     return query_params, advanced_search_params_dict, extra_vars

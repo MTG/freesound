@@ -491,8 +491,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             current_page += 1
         return sorted(solr_ids)
 
-    def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
-                      num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+    def search_sounds(self, textual_query='', query_fields=None, query_filter='', field_list=['id', 'score'], 
+                      offset=0, current_page=None, num_sounds=settings.SOUNDS_PER_PAGE, 
+                      sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
                       group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
                       only_sounds_within_ids=False, group_counts_as_one_in_facets=False, 
                       similar_to=None, similar_to_max_num_sounds=settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY ,
@@ -575,7 +576,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             offset = (current_page - 1) * num_sounds
         query.set_query_options(start=offset,
                                 rows=num_sounds,
-                                field_list=["id", "score"],  # We only want the sound IDs of the results as we load data from DB
+                                field_list=field_list,  # We generally only want the sound IDs of the results as we load data from DB
                                 filter_query=query_filter,
                                 sort=self.search_process_sort(sort) if not similar_to else ['score desc'])  # In similarity queries, we always sort by distance to target
 

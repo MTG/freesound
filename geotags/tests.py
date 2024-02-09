@@ -40,13 +40,8 @@ class GeoTagsTests(TestCase):
         check_values = {'tag': 'soundscape', 'username': None}
         self.check_context(resp.context, check_values)
 
-    def test_browse_geotags_box(self):
-        resp = self.client.get(reverse('geotags-box'))
-        check_values = {'center_lat': None, 'center_lon': None, 'zoom': None, 'username': None}
-        self.check_context(resp.context, check_values)
-
-    def test_geotags_box_iframe(self):
-        resp = self.client.get(reverse('embed-geotags-box-iframe'))
+    def test_geotags_embed(self):
+        resp = self.client.get(reverse('embed-geotags'))
         check_values = {'m_width': 942, 'm_height': 600, 'cluster': True, 'center_lat': None, 'center_lon': None,
                         'zoom': None, 'username': None}
         self.check_context(resp.context, check_values)
@@ -96,3 +91,8 @@ class GeoTagsTests(TestCase):
         # Response contains 3 int32 objects per sound: id, lat and lng. Total size = 3 * 4 bytes = 12 bytes
         n_sounds = len(resp.content) // 12
         self.assertEqual(n_sounds, 2)
+
+    def test_browse_geotags_for_query(self):
+        resp = self.client.get(reverse('geotags-query') + f'?q=barcelona')
+        check_values = {'query_description': 'barcelona'}
+        self.check_context(resp.context, check_values)

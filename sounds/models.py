@@ -64,7 +64,7 @@ from utils.locations import locations_decorator
 from utils.mail import send_mail_template
 from utils.search import get_search_engine, SearchEngineException
 from utils.search.search_sounds import delete_sounds_from_search_engine
-from utils.similarity_utilities import delete_sound_from_gaia
+from utils.similarity_utilities import delete_sound_from_gaia, get_similarity_search_target_vector
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
 
 web_logger = logging.getLogger('web')
@@ -1372,6 +1372,10 @@ class Sound(models.Model):
         else:
             # If not using search engine based similarity, then use the old similarity_state DB field
             return self.similarity_state == "OK"
+        
+    def get_similarity_search_target_vector(self, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
+        # If the sound has been analyzed for similarity, returns the vector to be used for similarity search
+        return get_similarity_search_target_vector(self.id, analyzer=analyzer)
 
     class Meta:
         ordering = ("-created", )

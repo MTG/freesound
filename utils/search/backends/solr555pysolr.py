@@ -33,6 +33,7 @@ from sounds.models import Sound, SoundAnalysis
 from utils.text import remove_control_chars
 from utils.search import SearchEngineBase, SearchResults, SearchEngineException
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
+from utils.similarity_utilities import get_similarity_search_target_vector
 
 
 SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
@@ -518,9 +519,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         else:
             # Similarity search!
-            query.set_query('')
 
             # We fist set an empty query that will return no results and will be used by default if similarity can't be performed
+            query.set_query('')
             if similar_to_analyzer in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS:
                 # Similarity search will find documents close to a target vector. This will match "child" sound documents (of content_type "similarity vectpor")
                 vector = None
@@ -529,22 +530,18 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     vector_field_name = SOLR_VECTOR_FIELDS_DIMENSIONS_MAP.get(len(vector), None)
                 else:
                     # similar_to should be a sound_id
-                    sa = SoundAnalysis.objects.filter(sound_id=similar_to, analyzer=similar_to_analyzer, analysis_status="OK")
+                    sound = Sound.objects.get(id=similar_to)
                     config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[similar_to_analyzer]
                     vector_field_name = SOLR_VECTOR_FIELDS_DIMENSIONS_MAP.get(config_options['vector_size'], None)
-                    if sa.exists():
-                        data = sa.first().get_analysis_data_from_file()
-                        if data is not None:
-                            vector_raw = data[config_options['vector_property_name']]
-                            if vector_raw is not None:
-                                vector = vector_raw[0:config_options['vector_size']] 
+                    vector = get_similarity_search_target_vector(sound.id, analyzer=similar_to_analyzer)
+                    if vector is not None:
+                        vector = vector[0:config_options['vector_size']] # Make sure the vector has the right size (just in case)
                             
                 if vector is not None and vector_field_name is not None:
                     max_similar_sounds = similar_to_max_num_sounds  # Max number of results for similarity search search. Filters are applied before the similarity search, so this number will usually be the total number of results (unless filters are more restrictive)
                     serialized_vector = ','.join([str(n) for n in vector])
                     query.set_query(f'{{!knn f={vector_field_name} topK={max_similar_sounds}}}[{serialized_vector}]')
         
-
         # Process filter
         query_filter = self.search_process_filter(query_filter,
                                                 only_sounds_within_ids=only_sounds_within_ids,
@@ -559,7 +556,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 query_filter_modified.append(f'-_nest_parent_:{int(similar_to)}')
                 # Update the top_similar_sounds_as_filter so we compensate for the fact that we are removing the target sound from the results
                 top_similar_sounds_as_filter=top_similar_sounds_as_filter.replace(f'topK={similar_to_max_num_sounds}', f'topK={similar_to_max_num_sounds + 1}')
-            except ValueError:
+            except TypeError:
                 # Target is not a sound id, so we don't need to add the filter
                 pass
             

@@ -25,11 +25,12 @@ import os
 import time
 
 from django.conf import settings
-from tags.models import TaggedItem
+from unittest import mock
 
 import utils.search
 from forum.models import Post
 from sounds.models import Sound, Download
+from tags.models import TaggedItem
 from utils.search import get_search_engine
 
 
@@ -318,7 +319,58 @@ class TestSearchEngineBackend():
             if self.output_file:
                 self.output_file.write(f'\n* PACK "{pack.id}" TOP TAGS FROM SEARCH ENGINE: {search_engine_tags}\n')
 
+    @mock.patch('utils.search.backends.solr555pysolr.get_similarity_search_target_vector')
+    def sound_check_similarity_search(self, sounds, get_similarity_search_target_vector):
+        get_similarity_search_target_vector.return_value = [sounds[0].id for _ in range(100)]
+        # Make sure sounds are sorted by ID so that in similarity search the closest sound is either the next or the previous one
+        sounds = sorted(sounds, key=lambda x: x.id)
+        
+        # Make a query for target sound 0 and check that results are sorted by ID (as expected because we set sound similarity vectors to their ID)
+        # We have to take into account that the target sounds is removed from results
+        results = self.run_sounds_query_and_save_results(dict(similar_to=sounds[0].id, similar_to_max_num_sounds=10, similar_to_analyzer='test_analyzer'))
+        results_ids = [r['id'] for r in results.docs]
+        sounds_ids = [s.id for s in sounds][1:11]  # target sound is not expected to be in results
+        assert_and_continue(results_ids == sounds_ids, 'Similarity search did not return sounds sorted as expected when searching with a target sound ID')
+        
+
+        # Now make the same query but passing an arbitrary vector (which happens to be the same as for the first sound). Now the first sound should also be
+        # included in the results as the closest one
+        target_sound_vector = [sounds[0].id for _ in range(100)]  # Use sound 0 as target sound so we know the other sounds should be sorted by distance)
+        results = self.run_sounds_query_and_save_results(dict(similar_to=target_sound_vector, similar_to_max_num_sounds=10, similar_to_analyzer='test_analyzer'))
+        results_ids = [r['id'] for r in results.docs]
+        sounds_ids = [s.id for s in sounds][0:10] # target sound is expected to be in results
+        assert_and_continue(results_ids == sounds_ids, 'Similarity search did not return sounds sorted as expected when searching with a target vector')
+        
+        # Check requesting sounds for an unexisting analyzer, should return 0 results    
+        results = self.run_sounds_query_and_save_results(dict(similar_to=target_sound_vector, similar_to_max_num_sounds=10, similar_to_analyzer='test_analyzer2'))
+        assert_and_continue(len(results.docs) == 0, 'Similarity search returned results for an unexsiting analyzer')
+
+        # Check similar_to_max_num_sounds parmeter 
+        results = self.run_sounds_query_and_save_results(dict(similar_to=target_sound_vector, similar_to_max_num_sounds=5, similar_to_analyzer='test_analyzer'))
+        assert_and_continue(len(results.docs) == 5, 'Similarity search returned unexpected number of results')
+
+    
     def test_search_enginge_backend_sounds(self):
+        # Monkey patch 'add_similarity_vectors_to_documents' from search engine so we add fake similarity vectors
+        # to our testing core. Also override some settings to similarity search works in test environment.
+        def patched_add_similarity_vectors_to_documents(sound_objects, documents):
+            for document in documents:
+                document['similarity_vectors'] = [{
+                        'content_type': 'v',  # Content type for similarity vectors
+                        'analyzer': 'test_analyzer',
+                        'timestamp_start': 0,
+                        'timestamp_end': -1,
+                        'sim_vector100': [document['id'] for _ in range(100)],  # Use fake vectors using sound ID so we can do some easy checks later
+                }]
+        self.search_engine.add_similarity_vectors_to_documents = patched_add_similarity_vectors_to_documents
+        settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
+            'test_analyzer': {
+                'vector_property_name': 'embeddings', 
+                'vector_size': 100,
+            }
+        }
+        settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = 'test_analyzer'
+
         # Get sounds for testing
         test_sound_ids = list(Sound.public
                                 .filter(is_index_dirty=False, num_ratings__gt=settings.MIN_NUMBER_RATINGS)
@@ -404,6 +456,7 @@ class TestSearchEngineBackend():
         self.sound_check_extra_queries()
         self.sound_check_get_user_tags(sounds[0])
         self.sound_check_get_pack_tags(sounds)
+        self.sound_check_similarity_search(sounds)
 
         console_logger.info('Testing of sound search methods finished!')
 

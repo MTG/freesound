@@ -261,7 +261,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 similarity_vectors_per_analyzer_per_sound=[]
                 data = sa.get_analysis_data_from_file()
                 if data is not None:
-                    if config_options['vector_property_name'] in data:
+                    if data.get(config_options['vector_property_name'], None) is not None:
                         sim_vector_document_data = {
                             'content_type': SOLR_DOC_CONTENT_TYPES['similarity_vector'],
                             'analyzer': sa.analyzer,

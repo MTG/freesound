@@ -149,6 +149,10 @@ class SolrQuery:
         self.params[f'f.{field}.facet.mincount'] = mincount
         self.params[f'f.{field}.facet.missing'] = count_missing
 
+    def set_facet_json_api(self, json_facets):
+        # See https://solr.apache.org/guide/solr/9_0/query-guide/json-facet-api.html
+        self.params['json.facet'] = json.dumps(json_facets)
+
     def add_date_facet_fields(self, *args):
         """Add date facet fields
         """
@@ -284,6 +288,8 @@ class SolrResponseInterpreter:
                 grouping_field = "thread_title_grouped"
             elif "grouping_pack" in list(response["grouped"].keys()):
                 grouping_field = "grouping_pack"
+            elif "grouping_pack_child" in list(response["grouped"].keys()):
+                grouping_field = "grouping_pack_child"
 
             self.docs = [{
                 'id': group['doclist']['docs'][0]['id'],
@@ -304,17 +310,21 @@ class SolrResponseInterpreter:
             self.non_grouped_number_of_results = -1
 
         self.q_time = response["responseHeader"]["QTime"]
-        try:
-            self.facets = response["facet_counts"]["facet_fields"]
-        except KeyError:
-            self.facets = {}
 
-        """Facets are given in a list: [facet, number, facet, number, None, number] where the last one
-        is the missing field count. Converting all of them to a dict for easier usage:
-        {facet:number, facet:number, ..., None:number}
-        """
-        for facet, fields in list(self.facets.items()):
-            self.facets[facet] = [(fields[index], fields[index + 1]) for index in range(0, len(fields), 2)]
+        self.facets = {}
+        if 'facet_counts' in response:
+            # "old" Solr faceting format
+            # Facets are given in a list: [facet, number, facet, number, None, number] where the last one
+            # is the missing field count. Converting all of them to a dict for easier usage:
+            # {facet:number, facet:number, ..., None:number}
+            self.facets = response["facet_counts"]["facet_fields"]
+            for facet, fields in list(self.facets.items()):
+                self.facets[facet] = [(fields[index], fields[index + 1]) for index in range(0, len(fields), 2)]
+        if 'facets' in response:
+            # New faceting format, https://solr.apache.org/guide/solr/9_2/query-guide/json-facet-api.html
+            for facet_name, data in response['facets'].items():
+                if facet_name != 'count':
+                    self.facets[facet_name] = [(str(b['val']), b['count']) for b in data['buckets']]
 
         try:
             self.highlighting = response["highlighting"]

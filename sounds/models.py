@@ -64,7 +64,7 @@ from utils.locations import locations_decorator
 from utils.mail import send_mail_template
 from utils.search import get_search_engine, SearchEngineException
 from utils.search.search_sounds import delete_sounds_from_search_engine
-from utils.similarity_utilities import delete_sound_from_gaia
+from utils.similarity_utilities import delete_sound_from_gaia, get_similarity_search_target_vector
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
 
 web_logger = logging.getLogger('web')
@@ -412,8 +412,14 @@ class SoundManager(models.Manager):
 
     def get_analysis_state_essentia_exists_sql(self):
         """Returns the SQL bits to add analysis_state_essentia_exists to the returned data indicating if thers is a
-        SoundAnalysis objects existing for th given sound_id for the essentia analyzer and with status OK"""
+        SoundAnalysis objects existing for the given sound_id for the essentia analyzer and with status OK"""
         return f"          exists(select 1 from sounds_soundanalysis where sounds_soundanalysis.sound_id = sound.id AND sounds_soundanalysis.analyzer = '{settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME}' AND sounds_soundanalysis.analysis_status = 'OK') as analysis_state_essentia_exists,"
+
+    def get_search_engine_similarity_state_sql(self):
+        """Returns the SQL bits to add search_engine_similarity_state to the returned data indicating if thers is a
+        SoundAnalysis object existing for the default similarity analyzer (settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER)
+        given sound_id and with status OK"""
+        return f"          exists(select 1 from sounds_soundanalysis where sounds_soundanalysis.sound_id = sound.id AND sounds_soundanalysis.analyzer = '{settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER}' AND sounds_soundanalysis.analysis_status = 'OK') as search_engine_similarity_state,"
 
     def bulk_query_solr(self, sound_ids):
         """For each sound, get all fields needed to index the sound in Solr. Using this custom query to avoid the need
@@ -514,6 +520,7 @@ class SoundManager(models.Manager):
           accounts_profile.has_avatar as user_has_avatar,
           %s
           %s
+          %s
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
@@ -530,7 +537,8 @@ class SoundManager(models.Manager):
           LEFT JOIN tickets_ticket ON tickets_ticket.sound_id = sound.id
           %s
           LEFT OUTER JOIN sounds_remixgroup_sounds ON sounds_remixgroup_sounds.sound_id = sound.id
-        WHERE %s """ % (self.get_analysis_state_essentia_exists_sql(),
+        WHERE %s """ % (self.get_search_engine_similarity_state_sql(),
+                        self.get_analysis_state_essentia_exists_sql(),
                         self.get_analyzers_data_select_sql() if include_analyzers_output else '',
                         ContentType.objects.get_for_model(Sound).id,
                         self.get_analyzers_data_left_join_sql() if include_analyzers_output else '',
@@ -1350,6 +1358,24 @@ class Sound(models.Model):
             return f'{self.geotag_lat:.2f}, {self.geotag_lon:.3f}'
         else:
             return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
+        
+    @property
+    def ready_for_similarity(self):
+        # Retruns True is the sound has been analyzed for similarity and should be available for simialrity queries
+        if settings.USE_SEARCH_ENGINE_SIMILARITY:
+            if hasattr(self, 'search_engine_similarity_state'):
+                # If attribute is precomputed from query (because Sound was retrieved using bulk_query), no need to perform extra queries
+                return self.search_engine_similarity_state
+            else:
+                # Otherwise, check if there is a SoundAnalysis object for this sound with the correct analyzer and status
+                return SoundAnalysis.objects.filter(sound_id=self.id, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, analysis_status='OK').exists()
+        else:
+            # If not using search engine based similarity, then use the old similarity_state DB field
+            return self.similarity_state == "OK"
+        
+    def get_similarity_search_target_vector(self, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
+        # If the sound has been analyzed for similarity, returns the vector to be used for similarity search
+        return get_similarity_search_target_vector(self.id, analyzer=analyzer)
 
     class Meta:
         ordering = ("-created", )
@@ -1577,7 +1603,7 @@ class PackManager(models.Manager):
                     selected_sounds_data.append({
                             'id': s.id,
                             'username': p.user.username,  # Packs have same username as sounds inside pack
-                            'similarity_state': s.similarity_state,
+                            'ready_for_similarity': s.similarity_state == "OK" if not settings.USE_SEARCH_ENGINE_SIMILARITY else None,  # If using search engine similarity, this needs to be retrieved later (see below)
                             'duration': s.duration,
                             'preview_mp3': s.locations('preview.LQ.mp3.url'),
                             'preview_ogg': s.locations('preview.LQ.ogg.url'),
@@ -1585,7 +1611,7 @@ class PackManager(models.Manager):
                             'spectral': s.locations('display.spectral_bw.L.url'),
                             'num_ratings': s.num_ratings,
                             'avg_rating': s.avg_rating
-                        })
+                        })            
             p.num_sounds_unpublished_precomputed = p.sounds.count() - p.num_sounds
             p.licenses_data_precomputed = ([lid for _, lid in licenses], [lname for lname, _ in licenses])
             p.pack_tags = [{'name': tag, 'count': count, 'browse_url': p.browse_pack_tag_url(tag)}
@@ -1595,6 +1621,16 @@ class PackManager(models.Manager):
             p.has_geotags_precomputed = has_geotags
             p.num_ratings_precomputed = len(ratings)
             p.avg_rating_precomputed = sum(ratings) / len(ratings) if len(ratings) else 0.0
+
+        if settings.USE_SEARCH_ENGINE_SIMILARITY:
+            # To save an individual query for each selected sound, we get the similarity state of all selected sounds per pack in one single extra query
+            selected_sounds_ids = []
+            for p in packs:
+                selected_sounds_ids += [s['id'] for s in p.selected_sounds_data]
+            sound_ids_ready_for_similarity = SoundAnalysis.objects.filter(sound_id__in=selected_sounds_ids, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, analysis_status="OK").values_list('sound_id', flat=True)
+            for p in packs:
+                for s in p.selected_sounds_data:
+                    s['ready_for_similarity'] = s['id'] in sound_ids_ready_for_similarity
 
         return packs
 

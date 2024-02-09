@@ -26,6 +26,7 @@ from django.core.cache import cache
 
 from similarity.client import Similarity
 from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILARITY_CACHE_TIME
+import sounds
 from utils.encryption import create_hash
 
 web_logger = logging.getLogger('web')
@@ -167,3 +168,17 @@ def delete_sound_from_gaia(sound_id):
 
 def hash_cache_key(key):
     return create_hash(key, limit=32)
+
+
+def get_similarity_search_target_vector(sound_id, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
+    # If the sound has been analyzed for similarity, returns the vector to be used for similarity search
+    sa = sounds.models.SoundAnalysis.objects.filter(sound_id=sound_id, analyzer=analyzer, analysis_status="OK")
+    if sa.exists():
+        config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[analyzer]
+        if sa.exists():
+            data = sa.first().get_analysis_data_from_file()
+            if data is not None:
+                vector_raw = data[config_options['vector_property_name']]
+                if vector_raw is not None:
+                    return vector_raw
+    return None

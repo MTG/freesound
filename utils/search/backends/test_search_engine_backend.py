@@ -25,11 +25,12 @@ import os
 import time
 
 from django.conf import settings
-from tags.models import TaggedItem
+from unittest import mock
 
 import utils.search
 from forum.models import Post
 from sounds.models import Sound, Download
+from tags.models import TaggedItem
 from utils.search import get_search_engine
 
 
@@ -235,7 +236,7 @@ class TestSearchEngineBackend():
             assert_and_continue('group_name' in result, 'No group_name field in doc from results')
             assert_and_continue('group_docs' in result, 'No group_docs field in doc from results')
             assert_and_continue('n_more_in_group' in result, 'No n_more_in_group field in doc from results')
-            group_sounds = Sound.objects.bulk_query_id(sound_ids=[r['id'] for r in result['group_docs']])
+            group_sounds = Sound.objects.bulk_query_id(sound_ids=[int(r['id']) for r in result['group_docs']])
             first_sound_pack = group_sounds[0].pack
             for sound in group_sounds:
                 assert_and_continue(sound.pack == first_sound_pack, 'Different packs in pack group')
@@ -318,7 +319,58 @@ class TestSearchEngineBackend():
             if self.output_file:
                 self.output_file.write(f'\n* PACK "{pack.id}" TOP TAGS FROM SEARCH ENGINE: {search_engine_tags}\n')
 
+    @mock.patch('utils.search.backends.solr555pysolr.get_similarity_search_target_vector')
+    def sound_check_similarity_search(self, sounds, get_similarity_search_target_vector):
+        get_similarity_search_target_vector.return_value = [sounds[0].id for _ in range(100)]
+        # Make sure sounds are sorted by ID so that in similarity search the closest sound is either the next or the previous one
+        sounds = sorted(sounds, key=lambda x: x.id)
+        
+        # Make a query for target sound 0 and check that results are sorted by ID (as expected because we set sound similarity vectors to their ID)
+        # We have to take into account that the target sounds is removed from results
+        results = self.run_sounds_query_and_save_results(dict(similar_to=sounds[0].id, similar_to_max_num_sounds=10, similar_to_analyzer='test_analyzer'))
+        results_ids = [r['id'] for r in results.docs]
+        sounds_ids = [s.id for s in sounds][1:11]  # target sound is not expected to be in results
+        assert_and_continue(results_ids == sounds_ids, 'Similarity search did not return sounds sorted as expected when searching with a target sound ID')
+        
+
+        # Now make the same query but passing an arbitrary vector (which happens to be the same as for the first sound). Now the first sound should also be
+        # included in the results as the closest one
+        target_sound_vector = [sounds[0].id for _ in range(100)]  # Use sound 0 as target sound so we know the other sounds should be sorted by distance)
+        results = self.run_sounds_query_and_save_results(dict(similar_to=target_sound_vector, similar_to_max_num_sounds=10, similar_to_analyzer='test_analyzer'))
+        results_ids = [r['id'] for r in results.docs]
+        sounds_ids = [s.id for s in sounds][0:10] # target sound is expected to be in results
+        assert_and_continue(results_ids == sounds_ids, 'Similarity search did not return sounds sorted as expected when searching with a target vector')
+        
+        # Check requesting sounds for an unexisting analyzer, should return 0 results    
+        results = self.run_sounds_query_and_save_results(dict(similar_to=target_sound_vector, similar_to_max_num_sounds=10, similar_to_analyzer='test_analyzer2'))
+        assert_and_continue(len(results.docs) == 0, 'Similarity search returned results for an unexsiting analyzer')
+
+        # Check similar_to_max_num_sounds parmeter 
+        results = self.run_sounds_query_and_save_results(dict(similar_to=target_sound_vector, similar_to_max_num_sounds=5, similar_to_analyzer='test_analyzer'))
+        assert_and_continue(len(results.docs) == 5, 'Similarity search returned unexpected number of results')
+
+    
     def test_search_enginge_backend_sounds(self):
+        # Monkey patch 'add_similarity_vectors_to_documents' from search engine so we add fake similarity vectors
+        # to our testing core. Also override some settings to similarity search works in test environment.
+        def patched_add_similarity_vectors_to_documents(sound_objects, documents):
+            for document in documents:
+                document['similarity_vectors'] = [{
+                        'content_type': 'v',  # Content type for similarity vectors
+                        'analyzer': 'test_analyzer',
+                        'timestamp_start': 0,
+                        'timestamp_end': -1,
+                        'sim_vector100': [document['id'] for _ in range(100)],  # Use fake vectors using sound ID so we can do some easy checks later
+                }]
+        self.search_engine.add_similarity_vectors_to_documents = patched_add_similarity_vectors_to_documents
+        settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
+            'test_analyzer': {
+                'vector_property_name': 'embeddings', 
+                'vector_size': 100,
+            }
+        }
+        settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = 'test_analyzer'
+
         # Get sounds for testing
         test_sound_ids = list(Sound.public
                                 .filter(is_index_dirty=False, num_ratings__gt=settings.MIN_NUMBER_RATINGS)
@@ -361,8 +413,37 @@ class TestSearchEngineBackend():
             assert_and_continue(self.search_engine.sound_exists_in_index(sound),
                                 f'Sound ID {sound.id} should be in search index')
 
-        # Re-index all sounds to leave index in "correct" state
+        # Test the 'update' and 'include_fields' parameters of add_sounds_to_index. 
+        # Start by emptying the index and testing that when adding sounds with update=True, these get created if they don't already exist
+        self.search_engine.remove_all_sounds()
+        self.search_engine.add_sounds_to_index(sounds, update=True)
+        for sound in sounds:
+            assert_and_continue(self.search_engine.sound_exists_in_index(sound),
+                                f'Sound ID {sound.id} should be in the search index')
+            
+        # Make a query filtering by a field we know is in the index and check that all results are returned
+        results = self.search_engine.search_sounds(query_filter='duration:[* TO *]')
+        assert_and_continue(len(sounds) == results.num_found, "All sounds should have been returned for this query")
+        
+        # Now we index again but only with 2 fields and with update=False. This should replace existing documents and
+        # only index the selected fields. We then repeat the previous query, but because "duration" field was not included 
+        # in the new index, now the query should return no results.
+        self.search_engine.add_sounds_to_index(sounds, update=False, fields_to_include=['id', 'original_filename'])
+        results = self.search_engine.search_sounds(query_filter='duration:[* TO *]')
+        assert_and_continue(0 == results.num_found, "No soulds should have been returned in this query")
+
+        # Now we update the index with the duration field for all sounds and repeat the query, we should get all results again
+        self.search_engine.add_sounds_to_index(sounds, update=True, fields_to_include=['duration'])
+        results = self.search_engine.search_sounds(query_filter='duration:[* TO *]')
+        assert_and_continue(len(sounds) == results.num_found, "All sounds should have been returned for this query")
+
+        # Re-index all sounds to leave index in "correct" state for next tests
         self.search_engine.add_sounds_to_index(sounds)
+
+        # Test that the method to get all sound IDs works as expected
+        sound_ids = self.search_engine.get_all_sound_ids_from_index()
+        sound_ids_db = sorted([s.id for s in sounds])
+        assert_and_continue(sound_ids_db == sound_ids, 'get_all_sound_ids_from_index returned wrong sound IDs')
 
         self.sound_check_mandatory_doc_fields()
         self.sound_check_random_sound()
@@ -375,10 +456,9 @@ class TestSearchEngineBackend():
         self.sound_check_extra_queries()
         self.sound_check_get_user_tags(sounds[0])
         self.sound_check_get_pack_tags(sounds)
+        self.sound_check_similarity_search(sounds)
 
-        console_logger.info('Testing of sound search methods finished. You might want to run the '
-                            'reindex_search_engine_sounds -c command to make sure the index is left in a correct '
-                            'state after having run these tests')
+        console_logger.info('Testing of sound search methods finished!')
 
     def forum_check_mandatory_doc_fields(self):
         # Check that returned forum posts (docs) from search engine include the mandatory fields
@@ -519,6 +599,4 @@ class TestSearchEngineBackend():
         self.forum_check_highlighting()
         self.forum_check_extra_queries()
 
-        console_logger.info('Testing of forum search methods finished. You might want to run the '
-                            'reindex_search_engine_forum -c command to make sure the index is left in a correct '
-                            'state after having run these tests')
+        console_logger.info('Testing of forum search methods finished!')

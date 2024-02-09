@@ -48,6 +48,7 @@ class SearchUtilsTest(TestCase):
             'group_by_pack': True,
             'query_filter': '',
             'textual_query': '',
+            'similar_to': None,
             'only_sounds_with_pack': False,
         }
 
@@ -92,6 +93,7 @@ class SearchUtilsTest(TestCase):
             'group_by_pack': False,
             'query_filter': 'duration:[1 TO 10] is_geotagged:1',
             'textual_query': 'dog',
+            'similar_to': None,
             'only_sounds_with_pack': False,
         }
 

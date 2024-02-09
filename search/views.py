@@ -131,6 +131,7 @@ def search_view_helper(request, tags_mode=False):
         'filter_query': query_params['query_filter'],
         'filter_query_split': filter_query_split,
         'search_query': query_params['textual_query'],
+        'similar_to': query_params['similar_to'],
         'group_by_pack_in_request': "1" if group_by_pack_in_request else "", 
         'disable_group_by_pack_option': disable_group_by_pack_option,
         'only_sounds_with_pack': only_sounds_with_pack,
@@ -152,7 +153,6 @@ def search_view_helper(request, tags_mode=False):
         'has_advanced_search_settings_set': contains_active_advanced_search_filters(request, query_params, extra_vars),
         'advanced_search_closed_on_load': settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD
     }
-
     tvars.update(advanced_search_params_dict)
 
     try:       
@@ -205,7 +205,8 @@ def search_view_helper(request, tags_mode=False):
         # sure to remove the filters for the corresponding facet field thar are already active (so we remove
         # redundant information)
         if tags_in_filter:
-            results.facets['tag'] = [(tag, count) for tag, count in results.facets['tag'] if tag not in tags_in_filter]
+            if 'tag' in results.facets:
+                results.facets['tag'] = [(tag, count) for tag, count in results.facets['tag'] if tag not in tags_in_filter]
 
         tvars.update({
             'paginator': paginator,

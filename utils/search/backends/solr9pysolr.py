@@ -84,7 +84,7 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
             str: processed filter query string.
         """
         # Add type suffix to human-readable audio analyzer descriptor names which is needed for solr dynamic fields
-        query_filter = solr555pysolr.add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
+        query_filter = self.add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
 
         # When filtering by the created field, use the `created_range` DateRangeType field instead
         # which include the ability to filter on exact values and ranges of values.
@@ -100,7 +100,7 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
             #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
             query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
 
-        query_filter = solr555pysolr.search_filter_make_intersection(query_filter)
+        query_filter = self.search_filter_make_intersection(query_filter)
 
         # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
         # our query to the sounds in that list of IDs.

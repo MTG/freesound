@@ -144,7 +144,7 @@ If a new search engine backend class is to be implemented, it must closely follo
 utils.search.SearchEngineBase docstrings. There is a Django management command that can be used in order to test
 the implementation of a search backend. You can run it like:
 
-    docker-compose run --rm web python manage.py test_search_engine_backend -fsw --backend utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine
+    docker compose run --rm web python manage.py test_search_engine_backend -fsw --backend utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine
 
 Please read carefully the documentation of the management command to better understand how it works and how is it
 doing the testing.
@@ -217,7 +217,7 @@ https://github.com/mtg/freesound-audio-analyzers. The docker compose of the main
 services for the external analyzers which depend on docker images having been previously built from the 
 `freesound-audio-analyzers` repository. To build these images you simply need to checkout the code repository and run 
 `make`. Once the images are built, Freesound can be run including the external analyzer services by of the docker compose 
-file by running `docker-compose --profile analyzers up`
+file by running `docker compose --profile analyzers up`
 
 The new analysis pipeline uses a job queue based on Celery/RabbitMQ. RabbitMQ console can be accessed at port `5673`
 (e.g. `http://localhost:5673/rabbitmq-admin`) and using `guest` as both username and password. Also, accessing 
@@ -231,7 +231,7 @@ for Freesound async tasks other than analysis).
 
 - Make sure that there are no outstanding deprecation warnings for the version of django that we are upgrading to.
 
-      docker-compose run --rm web python -Wd manage.py test
+      docker compose run --rm web python -Wd manage.py test
 
 Check for warnings of the form `RemovedInDjango110Warning` (TODO: Make tests fail if a warning occurs)
 

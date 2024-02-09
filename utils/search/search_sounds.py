@@ -217,7 +217,8 @@ def search_prepare_parameters(request):
         'num_sounds': num_sounds,
         'query_fields': field_weights,
         'group_by_pack': group_by_pack,
-        'only_sounds_with_pack': only_sounds_with_pack
+        'only_sounds_with_pack': only_sounds_with_pack,
+        'similar_to': request.GET.get('similar_to', None)
     }
 
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ', '+')
@@ -379,11 +380,17 @@ def perform_search_engine_query(query_params):
     return results, paginator
 
 
-def add_sounds_to_search_engine(sound_objects):
+def add_sounds_to_search_engine(sound_objects, fields_to_include=[], update=False):
     """Add the Sounds from the queryset to the search engine
 
     Args:
         sound_objects (list[sounds.models.Sound]): list (or queryset) of Sound objects to index
+        fields_to_include (list[str]): use this list to indicate the specific field names of the sounds 
+            that need to be included in the documents that will be indexed. If no fields are specified 
+            (fields_to_update=[]), then all available fields will be included.
+        update (bool): if True, the sounds' data will be updated in the index, otherwise it will be 
+            replaced by the new generated documents. This is specially useful in combination with
+            fields_to_include so that different fields of the indexed can be updated separately. 
 
     Returns:
         int: number of sounds added to the index
@@ -395,7 +402,7 @@ def add_sounds_to_search_engine(sound_objects):
     try:
         console_logger.info("Adding %d sounds to the search engine" % num_sounds)
         search_logger.info("Adding %d sounds to the search engine" % num_sounds)
-        get_search_engine().add_sounds_to_index(sound_objects)
+        get_search_engine().add_sounds_to_index(sound_objects, fields_to_include=fields_to_include, update=update)
         return num_sounds
     except SearchEngineException as e:
         console_logger.info(f"Failed to add sounds to search engine index: {str(e)}")
@@ -440,21 +447,10 @@ def get_all_sound_ids_from_search_engine(page_size=2000):
     """
     console_logger.info("Getting all sound ids from search engine")
     search_engine = get_search_engine()
-    solr_ids = []
-    solr_count = None
-    current_page = 1
     try:
-        while solr_count is None or len(solr_ids) < solr_count:
-            response = search_engine.search_sounds(query_filter="*:*",
-                                                   sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
-                                                   offset=(current_page - 1) * page_size,
-                                                   num_sounds=page_size)
-            solr_ids += [int(element['id']) for element in response.docs]
-            solr_count = response.num_found
-            current_page += 1
+        return search_engine.get_all_sound_ids_from_index()
     except SearchEngineException as e:
         search_logger.info(f"Could not retrieve all sound IDs from search engine: {str(e)}")
-    return sorted(solr_ids)
 
 
 def get_random_sound_id_from_search_engine():

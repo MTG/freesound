@@ -638,6 +638,16 @@ SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr9pysolr.Solr9PySolrSear
 SOLR5_BASE_URL = "http://search:8983/solr"
 SOLR9_BASE_URL = "http://search:8983/solr"
 
+SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
+    FSDSINET_ANALYZER_NAME: {
+        'vector_property_name': 'embeddings', 
+        'vector_size': 100,
+    }
+}
+SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = FREESOUND_ESSENTIA_EXTRACTOR_NAME
+SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY = 500
+USE_SEARCH_ENGINE_SIMILARITY = False
+
 # -------------------------------------------------------------------------------
 # Similarity client settings
 SIMILARITY_ADDRESS = 'similarity'

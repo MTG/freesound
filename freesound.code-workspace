@@ -34,28 +34,23 @@
 	"tasks": {
 		"version": "2.0.0",
 		"tasks": [
-			{
-				"label": "Run web and search",
-				"type": "shell",
-				"command": "docker-compose up web search",
-				"problemMatcher": []
-			},
+	
 			{
 				"label": "Docker compose build",
 				"type": "shell",
-				"command": "docker-compose build",
+				"command": "docker compose build",
 				"problemMatcher": []
 			},
 			{
 				"label": "Build static",
 				"type": "shell",
-				"command": "docker-compose run --rm web npm run build && docker-compose run --rm web python manage.py collectstatic --clear --noinput",
+				"command": "docker compose run --rm web npm run build && docker compose run --rm web python manage.py collectstatic --clear --noinput",
 				"problemMatcher": []
 			},
 			{
 				"label": "Install static",
 				"type": "shell",
-				"command": "docker-compose run --rm web npm install --force",
+				"command": "docker compose run --rm web npm install --force",
 				"problemMatcher": []
 			},
 			{
@@ -67,37 +62,55 @@
 			{
 				"label": "Create caches",
 				"type": "shell",
-				"command": "docker-compose run --rm web python manage.py create_front_page_caches && docker-compose run --rm web python manage.py create_random_sounds && docker-compose run --rm web python manage.py generate_geotags_bytearray",
+				"command": "docker compose run --rm web python manage.py create_front_page_caches && docker compose run --rm web python manage.py create_random_sounds && docker compose run --rm web python manage.py generate_geotags_bytearray",
 				"problemMatcher": []
 			},
 			{
 				"label": "Run tests",
 				"type": "shell",
-				"command": "docker-compose run --rm web python manage.py test --settings=freesound.test_settings",
+				"command": "docker compose run --rm web python manage.py test --settings=freesound.test_settings",
 				"problemMatcher": []
 			},
 			{
 				"label": "Run tests verbose with warnings",
 				"type": "shell",
-				"command": "docker-compose run --rm web python -Wa manage.py test -v3 --settings=freesound.test_settings",
+				"command": "docker compose run --rm web python -Wa manage.py test -v3 --settings=freesound.test_settings",
 				"problemMatcher": []
 			},
 			{
 				"label": "Migrate",
 				"type": "shell",
-				"command": "docker-compose run --rm web python manage.py migrate",
+				"command": "docker compose run --rm web python manage.py migrate",
 				"problemMatcher": []
 			},
 			{
 				"label": "Make migrations",
 				"type": "shell",
-				"command": "docker-compose run --rm web python manage.py makemigrations",
+				"command": "docker compose run --rm web python manage.py makemigrations",
 				"problemMatcher": []
 			},
 			{
 				"label": "Shell plus",
 				"type": "shell",
-				"command": "docker-compose run --rm web python manage.py shell_plus",
+				"command": "docker compose run --rm web python manage.py shell_plus",
+				"problemMatcher": []
+			},
+			{
+				"label": "Reindex search engine",
+				"type": "shell",
+				"command": "docker compose run --rm web python manage.py reindex_search_engine_sounds && docker compose run --rm web python manage.py reindex_search_engine_forum",
+				"problemMatcher": []
+			},
+			{
+				"label": "Post dirty sounds to search engine",
+				"type": "shell",
+				"command": "docker compose run --rm web python manage.py post_dirty_sounds_to_search_engine",
+				"problemMatcher": []
+			},
+			{
+				"label": "Orchestrate analysis",
+				"type": "shell",
+				"command": "docker compose run --rm web python manage.py orchestrate_analysis",
 				"problemMatcher": []
 			}
 		]

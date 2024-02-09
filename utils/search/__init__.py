@@ -184,11 +184,16 @@ class SearchEngineBase:
 
     # Sound search related methods
 
-    def add_sounds_to_index(self, sound_objects):
+    def add_sounds_to_index(self, sound_objects, fields_to_include=[], update=False):
         """Indexes the provided sound objects in the search index
 
         Args:
             sound_objects (list[sounds.models.Sound]): Sound objects of the sounds to index
+            fields_to_include (list[str]): Specific sound fields that will be included in the document to
+                be indexed. If empty, all available sound fields will be included.
+            update (bool): Whether to perform an update of the existing documents in the index or to 
+                completely replace them. An update is useful so that fields not included in the document are 
+                not removed from the index.
         """
         raise NotImplementedError
 
@@ -214,11 +219,21 @@ class SearchEngineBase:
             bool: whether the sound is indexed in the search engine
         """
         raise NotImplementedError
+    
+    def get_all_sound_ids_from_index(self):
+        """Return a list of all sound IDs indexed in the search engine
+
+        Returns:
+            List[int]: list of all sound IDs indexed in the search engine
+        """
+        raise NotImplementedError
 
     def search_sounds(self, textual_query='', query_fields=None, query_filter='', offset=0, current_page=None,
                       num_sounds=settings.SOUNDS_PER_PAGE, sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
                       group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
-                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False):
+                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False, 
+                      simialr_to=None, similar_to_max_num_sounds=settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY, 
+                      similar_to_analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
         """Search for sounds that match specific criteria and return them in a SearchResults object
 
         Args:
@@ -256,6 +271,14 @@ class SearchEngineBase:
                 large groups in facets. We use it for computing the main tag cloud and avoiding a large packs of sounds
                 with the same tags to largely influence the general tag cloud (only one sound of the pack will be
                 counted)
+            similar_to (int or List[float], optional): sound ID or similarity vector to be used as target for similarity 
+                search. Note that when this parameter is passed, some of the other parameters will be ignored 
+                ('textual_query', 'facets', 'group_by_pack', 'num_sounds_per_pack_group', 'group_counts_as_one_in_facets'). 
+                'query_filter' should still be usable, although this remains to be throughly tested. 
+            similar_to_max_num_sounds (int, optional): max number of sounds to return in a similarity search query.
+            similar_to_analyzer (str, optional): analyzer name from which to select similarity vectors for similarity search.
+                It defaults to settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, but it could be change to something else
+                if we want to use a different type of similarity vectors for a similarity search query.
 
         Returns:
             SearchResults: SearchResults object containing the results of the query

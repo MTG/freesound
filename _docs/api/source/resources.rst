@@ -80,7 +80,7 @@ Filter name             Type           Description
 ``avg_rating``          numerical      Average rating for the sound in the range [0, 5].
 ``num_ratings``         integer        Number of times the sound has been rated.
 ``comment``             string         Textual content of the comments of a sound  (tokenized). The filter is satisfied if sound contains the filter value in at least one of its comments.
-``comments``            integer        Number of times the sound has been commented.
+``num_comments``            integer        Number of times the sound has been commented.
 ======================  =============  ====================================================
 
 

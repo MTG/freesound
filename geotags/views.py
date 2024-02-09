@@ -284,6 +284,8 @@ def for_query(request):
     tvars = _get_geotags_query_params(request)
     request_parameters_string = request.get_full_path().split('?')[-1]
     q = request.GET.get('q', None)
+    if q == '':
+        q = None
     f = request.GET.get('f', None)
     query_description = ''
     if q is None and f is None:

@@ -92,6 +92,16 @@ function clipLatLonRanges(lat, lon){
     return [lat, lon];
 }
 
+function closeAllMapPopups(map){
+    stopAllPlayers();
+    Object.keys(map.popups).forEach(function(key) {
+        if (map.popups[key] !== undefined){
+            map.popups[key].remove();
+        }
+        delete map.popups[key];
+    })
+}
+
 function ajaxLoad(url, callback, postData, plain) {
     var http_request = false;
 
@@ -235,17 +245,9 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                 map.on('click', 'sounds-unclustered', function (e) {
                     var sound_id = e.features[0].properties.id;
                     if (map.popups.hasOwnProperty(sound_id) === false){
-                        // Close all other popups
-                        Object.keys(map.popups).forEach(function(key) {
-                            if (map.popups[key] !== undefined){
-                                map.popups[key].remove();
-                            }
-                            delete map.popups[key];
-                        })
-                        // Set new popup as loading
+                        // Close all other popups and set new popup as loading
+                        closeAllMapPopups(map);
                         map.popups[sound_id] = undefined;
-                        
-                        stopAllPlayers();
 
                         var coordinates = e.features[0].geometry.coordinates.slice();
                         let url = '/geotags/infowindow/' + sound_id;
@@ -291,6 +293,11 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                     }
                 });
 
+                map.on("dblclick", function(e) {
+                    // On double click, close popups and zoom (zoom will be done by mapbox by default)
+                    closeAllMapPopups(map);
+                });
+
                 map.on("dblclick", "sounds-unclustered", function(e) {
                     e.preventDefault();  // Don't zoom in when double clicking on a sound
                 });
@@ -307,7 +314,18 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
 
                 // Zoom-in when clicking on clusters
                 map.on('click', 'sounds-clusters', function (e) {
+                    closeAllMapPopups(map);
                     map.flyTo({'center': e.lngLat, 'zoom': map.getZoom() + 4});
+                });
+
+                // Change the cursor to a pointer when the mouse is over clusters.
+                map.on('mouseenter', 'sounds-clusters', function () {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+
+                // Change it back to a pointer when it leaves.
+                map.on('mouseleave', 'sounds-clusters', function () {
+                    map.getCanvas().style.cursor = '';
                 });
 
                 // Adjust map boundaries

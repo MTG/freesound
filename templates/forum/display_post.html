@@ -8,10 +8,10 @@
     <div class="row">
         <div class="col-9 col-lg-3 v-spacing-3">
             <div class="row middle">
-                <div class="col-3 col-lg-4">
+                <div class="col-3 col-lg-5 col-xl-4">
                     {% bw_user_avatar post.author.profile.locations.avatar.L.url post.author.username 70 %}
                 </div>
-                <div class="col-8">
+                <div class="col-8 col-lg-7 col-xl-8">
                     <h6 class="ellipsis"><a href="{% url "account" post.author.username %}">{{ post.author.username }}</a></h6>
                     <p class="text-grey no-margins">{{ post.author.profile.num_sounds|bw_intcomma }} sound{{ post.author.profile.num_sounds|pluralize }}</p>
                     <p class="text-grey no-margins">{{ post.author.profile.num_posts|bw_intcomma }} post{{ post.author.profile.num_posts|pluralize }}</p>

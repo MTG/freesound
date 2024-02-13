@@ -494,8 +494,9 @@ def moderation_assign_single_ticket(request, ticket_id):
 
 
 @permission_required('tickets.can_moderate')
-@transaction.atomic()
 def moderation_assigned(request, user_id):
+    # NOTE: don't wrap this method under @transaction.atomic() as otherwise the first transaction for updating ticket status is not 
+    # applied when calling the async task for post-processing tickets
     clear_forms = True
     mod_sound_form = None
     msg_form = None
@@ -586,8 +587,9 @@ def moderation_assigned(request, user_id):
                 users_to_update=list(users_to_update), 
                 packs_to_update=list(packs_to_update)
             )
-    
+
             messages.add_message(request, messages.INFO, f"{len(tickets)} ticket(s) successfully updated")
+            return HttpResponseRedirect(reverse('tickets-moderation-assigned', args=[request.user.id]))
         else:
             clear_forms = False
     if clear_forms:

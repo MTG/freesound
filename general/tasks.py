@@ -113,7 +113,7 @@ def whitelist_user(ticket_ids=None, user_id=None):
 
 
 @shared_task(name=POST_MODERATION_ASSIGNED_TICKETS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
-def post_moderation_assigned_tickets(ticket_ids=[], notification=None, msg=None, moderator_only=False, users_to_update=None, packs_to_update=None):
+def post_moderation_assigned_tickets(ticket_ids=[], notification=None, msg=False, moderator_only=False, users_to_update=None, packs_to_update=None):
     # Carry out post-processing tasks for the approved sounds like invlaidating caches, sending packs to process, etc...
     # We do that in an async task to avoid moderation requests taking too long when approving sounds
     workers_logger.info("Start post moderation assigned tickets (%s)" % json.dumps({
@@ -142,7 +142,7 @@ def post_moderation_assigned_tickets(ticket_ids=[], notification=None, msg=None,
         invalidate_all_moderators_header_cache()
 
         # Add new comments to the ticket
-        if msg is not None:
+        if msg:
             tc = TicketComment(sender=ticket.assignee,
                                text=msg,
                                ticket=ticket,

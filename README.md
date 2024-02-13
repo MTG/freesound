@@ -112,7 +112,7 @@ Below are instructions for setting up a local Freesound installation for develop
 
     Because the `web` container mounts a named volume for the home folder of the user running the shell plus process, command history should be kept between container runs :)
 
-16. (extra step) The steps above will get Freesound running, but to save resources in your local machine some non-essential services will not be started by default. If you look at the `docker compose.yml` file, you'll see that some services are marked with the profile `analyzers` or `all`. These services include sound similarity, search results clustering and the audio analyzers. To run these services you need to explicitly tell `docker compose` using the `--profile` (note that some services need additional configuration steps (see *Freesound analysis pipeline* section in `DEVELOPERS.md`):
+16. (extra step) The steps above will get Freesound running, but to save resources in your local machine some non-essential services will not be started by default. If you look at the `docker-compose.yml` file, you'll see that some services are marked with the profile `analyzers` or `all`. These services include sound similarity, search results clustering and the audio analyzers. To run these services you need to explicitly tell `docker compose` using the `--profile` (note that some services need additional configuration steps (see *Freesound analysis pipeline* section in `DEVELOPERS.md`):
 
         docker compose --profile analyzers up   # To run all basic services + sound analyzers
         docker compose --profile all up         # To run all services

@@ -825,16 +825,17 @@ def similar(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
+    num_similar_sounds = settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES
     if not settings.USE_SEARCH_ENGINE_SIMILARITY:
         # Get similar sounds from similarity service (gaia)
         similarity_results, _ = get_similar_sounds(
-            sound, request.GET.get('preset', None), settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES)
+            sound, request.GET.get('preset', None), num_similar_sounds)
     else:
         # Get similar sounds from solr
         try:
             results = get_search_engine().search_sounds(similar_to=sound.id, 
-                                                        similar_to_max_num_sounds=settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES,
-                                                        num_sounds=settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES)
+                                                        similar_to_max_num_sounds=num_similar_sounds,
+                                                        num_sounds=num_similar_sounds)
             similarity_results = [(result['id'], result['score']) for result in results.docs]
         except SearchEngineException:
             # Search engine not available, return empty list

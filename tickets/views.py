@@ -577,7 +577,7 @@ def moderation_assigned(request, user_id):
                     page in a few seconds to see the updated list of pending
                     tickets""" % ", ".join(users))
 
-            # Tirgger some async tasks to update user and pack counts, clear caches, send email notifications, etc.        
+            # Trigger some async tasks to update user and pack counts, clear caches, send email notifications, etc.        
             post_moderation_assigned_tickets_task.delay(
                 ticket_ids=ticket_ids, 
                 notification=notification,

@@ -185,8 +185,9 @@ class TicketTestsFromQueue(TicketTests):
             'action': action, 'message': '', 'ticket': self.ticket.id,
             'is_explicit': IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY})
 
+    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
     @mock.patch('sounds.models.delete_sounds_from_search_engine')
-    def test_delete_ticket_from_queue(self, delete_sound_solr):
+    def test_delete_ticket_from_queue(self, delete_sound_solr, post_moderation_assigned_tickets_task):
         resp = self._perform_action('Delete')
 
         self.assertEqual(resp.status_code, 200)
@@ -196,8 +197,9 @@ class TicketTestsFromQueue(TicketTests):
         self.assertEqual(self.ticket.status, TICKET_STATUS_CLOSED)
         self.assertIsNone(self.ticket.sound)
 
+    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
     @mock.patch('general.tasks.whitelist_user.delay')
-    def test_whitelist_from_queue(self, whitelist_task):
+    def test_whitelist_from_queue(self, whitelist_task, post_moderation_assigned_tickets_task):
         self._perform_action('Whitelist')
         whitelist_task.assert_called_once_with(ticket_ids=[self.ticket.id])
 
@@ -211,17 +213,20 @@ class TicketTestsFromQueue(TicketTests):
         else:
             self.assertEqual(self.ticket.assignee, assignee)
 
-    def test_approve_ticket_from_queue(self):
+    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
+    def test_approve_ticket_from_queue(self, post_moderation_assigned_tickets_task):
         resp = self._perform_action('Approve')
         self.assertEqual(resp.status_code, 200)
         self._assert_ticket_and_sound_fields(TICKET_STATUS_CLOSED, self.test_moderator, 'OK')
 
-    def test_return_ticket_from_queue(self):
+    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
+    def test_return_ticket_from_queue(self, post_moderation_assigned_tickets_task):
         resp = self._perform_action('Return')
         self.assertEqual(resp.status_code, 200)
         self._assert_ticket_and_sound_fields(TICKET_STATUS_NEW, None, 'PE')
 
-    def test_defer_ticket_from_queue(self):
+    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
+    def test_defer_ticket_from_queue(self, post_moderation_assigned_tickets_task):
         resp = self._perform_action('Defer')
         self.assertEqual(resp.status_code, 200)
         self._assert_ticket_and_sound_fields(TICKET_STATUS_DEFERRED, self.test_moderator, 'PE')

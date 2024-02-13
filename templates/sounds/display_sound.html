@@ -42,7 +42,7 @@
                     {% for tag in sound.tag_array%}
                         {% bw_tag tag %}
                     {% endfor %}
-                    <div class="v-spacing-top-1">
+                    <div class="v-spacing-top-1" title="{{ sound.description|striptags|safe|force_escape }}">
                         {{ sound.description|safe|linebreaks }}
                     </div>
                 </div>

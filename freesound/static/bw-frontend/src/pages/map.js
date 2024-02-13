@@ -147,8 +147,10 @@ const initMap = (mapCanvas) => {
         if (loadingIndicator !== null){
             loadingIndicator.innerText = `${numLoadedSounds} sound${ numLoadedSounds === 1 ? '': 's'}`;
         }
-        embedWidthInputElement.value = mapCanvas.offsetWidth;
-        embedHeightInputElement.value = mapCanvas.offsetHeight;
+        if (embedWidthInputElement !== null){
+            embedWidthInputElement.value = mapCanvas.offsetWidth;
+            embedHeightInputElement.value = mapCanvas.offsetHeight;
+        }
     }, updateEmbedCode, centerLat, centerLon, zoom, showSearch, showStyleSelector, clusterGeotags, showMapEvenIfNoGeotags);
 
     

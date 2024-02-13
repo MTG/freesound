@@ -5,8 +5,8 @@ import { stopAllPlayers } from '../components/player/utils'
 var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';
 var FREESOUND_STREETS_STYLE_ID = 'cjkmk0h7p79z32spe9j735hrd';
 var MIN_INPUT_CHARACTERS_FOR_GEOCODER =  3; // From mapbox docs: "Minimum number of characters to enter before [geocoder] results are shown"
-var MAP_MARKER_URL = '/static/bw-frontend/dist/map_marker.png'; 
-var MAP_MARKER_2X_URL = '/static/bw-frontend/dist/map_marker_2x.png';
+var MAP_MARKER_URL = '/static/bw-frontend/dist/map_marker_v2.png'; 
+var MAP_MARKER_2X_URL = '/static/bw-frontend/dist/map_marker_v2_2x.png';
 
 function setMaxZoomCenter(lat, lng, zoom) {
     window.map.flyTo({'center': [lng, lat], 'zoom': zoom - 1});  // Subtract 1 for compatibility with gmaps zoom levels
@@ -231,13 +231,23 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                 }
 
                 // Add popups
-                let popupAlreadyLoading = false;
+                map.popups = {};
                 map.on('click', 'sounds-unclustered', function (e) {
-                    if (!popupAlreadyLoading){3
-                        popupAlreadyLoading = true;
+                    var sound_id = e.features[0].properties.id;
+                    if (map.popups.hasOwnProperty(sound_id) === false){
+                        // Close all other popups
+                        Object.keys(map.popups).forEach(function(key) {
+                            if (map.popups[key] !== undefined){
+                                map.popups[key].remove();
+                            }
+                            delete map.popups[key];
+                        })
+                        // Set new popup as loading
+                        map.popups[sound_id] = undefined;
+                        
                         stopAllPlayers();
+
                         var coordinates = e.features[0].geometry.coordinates.slice();
-                        var sound_id = e.features[0].properties.id;
                         let url = '/geotags/infowindow/' + sound_id;
                         if (document.getElementById(map_element_id).offsetWidth < 500){
                             // If map is small, use minimal info windows
@@ -245,17 +255,26 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                         }
                         ajaxLoad(url , function(data, responseCode)
                         {
+                            // Check if the popup should still be shown (it might have been cancelled if another one is loading)
+                            if (map.popups.hasOwnProperty(sound_id) === false){
+                                return;
+                            }
+                            
                             // Ensure that if the map is zoomed out such that multiple
                             // copies of the feature are visible, the popup appears
                             // over the copy being pointed to.
                             while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
                                 coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
                             }
-                            var popup = new mapboxgl.Popup()
+                            var popup = new mapboxgl.Popup({ closeOnClick: false })
                                 .setLngLat(coordinates)
                                 .setHTML(data.response)
                                 .addTo(map);
-
+                            popup.on('close', function(e) {
+                                delete map.popups[sound_id];
+                            })
+                            map.popups[sound_id] = popup;
+                            
                             // Zoom to position on "zoom in" click
                             const zoomLinkElement = document.getElementById('infoWindowZoomLink-' + sound_id);
                             zoomLinkElement.onclick = () => {setMaxZoomCenter(zoomLinkElement.dataset.lat, zoomLinkElement.dataset.lon, zoomLinkElement.dataset.zoom)};
@@ -263,8 +282,13 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                             // Init sound player inside popup
                             initializeStuffInContainer(document.getElementById('infoWindowPlayerWrapper-' + sound_id), true, false);
                         });
+                    } else {
+                        // If popup already open, close it
+                        if (map.popups[sound_id] !== undefined){
+                            map.popups[sound_id].remove();
+                            delete map.popups[sound_id];
+                        }
                     }
-                    setTimeout(() => { popupAlreadyLoading = false; }, 500);  // Avoid problems loading popups two times with double clicks
                 });
 
                 map.on("dblclick", "sounds-unclustered", function(e) {
@@ -394,6 +418,8 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                         layout: {
                             "icon-image": "custom-marker",
                             "icon-allow-overlap": true,
+                            //"icon-anchor": "center",
+                            //"icon-offset": [0, -40],
                         }
                     });
                 });

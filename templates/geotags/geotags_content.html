@@ -19,11 +19,14 @@
 {% if not modal_version %}
 <div class="row middle">
     <div class="col-md-8 v-spacing-top-4 v-spacing-2">
-        {% if query_search_page_url %}
-            <a class="no-hover btn-secondary btn-inverse" href="{{ query_search_page_url }}">See results in search page</a>
-        {% endif %}
         {% if username or sound or pack or query_params %}
+            {% if query_search_page_url %}
+                <a class="no-hover btn-secondary btn-inverse" href="{{ query_search_page_url }}">See results in search page</a>
+            {% endif %}
             <a class="no-hover btn-secondary btn-inverse" href="{% url "geotags" %}">View all geotags</a>
+        {% else %}
+        {% comment %} all sounds map {% endcomment %}
+        <a class="no-hover btn-secondary btn-inverse" href="{% url 'sounds-search' %}?mm=1">See results in search page</a>
         {% endif %}
     </div>
     <div class="col-md-4 v-spacing-top-2 v-spacing-2">

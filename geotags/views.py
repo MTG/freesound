@@ -296,7 +296,7 @@ def for_query(request):
         if q is not None:
             query_description = q
         if f is not None:
-            query_description = f'Empty query with some filtes applied'
+            query_description = f'Empty query with some filters applied'
     tvars.update({
         'tag': None,
         'username': None,

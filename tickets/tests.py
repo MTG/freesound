@@ -190,7 +190,7 @@ class TicketTestsFromQueue(TicketTests):
     def test_delete_ticket_from_queue(self, delete_sound_solr, post_moderation_assigned_tickets_task):
         resp = self._perform_action('Delete')
 
-        self.assertEqual(resp.status_code, 200)
+        self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
         delete_sound_solr.assert_called_once_with([self.sound.id])
 
         self.ticket.refresh_from_db()
@@ -216,19 +216,19 @@ class TicketTestsFromQueue(TicketTests):
     @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
     def test_approve_ticket_from_queue(self, post_moderation_assigned_tickets_task):
         resp = self._perform_action('Approve')
-        self.assertEqual(resp.status_code, 200)
+        self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
         self._assert_ticket_and_sound_fields(TICKET_STATUS_CLOSED, self.test_moderator, 'OK')
 
     @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
     def test_return_ticket_from_queue(self, post_moderation_assigned_tickets_task):
         resp = self._perform_action('Return')
-        self.assertEqual(resp.status_code, 200)
+        self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
         self._assert_ticket_and_sound_fields(TICKET_STATUS_NEW, None, 'PE')
 
     @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
     def test_defer_ticket_from_queue(self, post_moderation_assigned_tickets_task):
         resp = self._perform_action('Defer')
-        self.assertEqual(resp.status_code, 200)
+        self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
         self._assert_ticket_and_sound_fields(TICKET_STATUS_DEFERRED, self.test_moderator, 'PE')
 
 

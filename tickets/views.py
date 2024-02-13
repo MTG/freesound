@@ -20,7 +20,6 @@
 
 
 import datetime
-import json
 
 from django.conf import settings
 from django.contrib import messages
@@ -33,7 +32,7 @@ from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.shortcuts import render 
-from general.tasks import whitelist_user as whitelist_user_task
+from general.tasks import whitelist_user as whitelist_user_task, post_moderation_assigned_tickets as post_moderation_assigned_tickets_task
 
 from .models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
@@ -556,9 +555,9 @@ def moderation_assigned(request, user_id):
                 # and sounds_to_update before we delete the sounds and they dissapear
                 # from the ticket (thus losing reference)
                 for ticket in tickets:
-                    users_to_update.add(ticket.sound.user.profile)
+                    users_to_update.add(ticket.sound.user_id)
                     if ticket.sound.pack:
-                        packs_to_update.add(ticket.sound.pack)
+                        packs_to_update.add(ticket.sound.pack_id)
                 Sound.objects.filter(ticket__in=tickets).delete()
                 # After we delete sounds that these tickets are associated with,
                 # we refresh the ticket list so that sound_id is null and this does
@@ -578,36 +577,16 @@ def moderation_assigned(request, user_id):
                     page in a few seconds to see the updated list of pending
                     tickets""" % ", ".join(users))
 
-            for ticket in tickets:
-                if action != "Delete":
-                    # We only fill here users_to_update and packs_to_update if action is not
-                    # "Delete". See comment in "Delete" action case some lines above
-                    users_to_update.add(ticket.sound.user.profile)
-                    if ticket.sound.pack:
-                        packs_to_update.add(ticket.sound.pack)
-                invalidate_user_template_caches(ticket.sender.id)
-                invalidate_all_moderators_header_cache()
-                moderator_only = msg_form.cleaned_data.get("moderator_only", False)
-
-                if msg:
-                    tc = TicketComment(sender=ticket.assignee,
-                                       text=msg,
-                                       ticket=ticket,
-                                       moderator_only=moderator_only)
-                    tc.save()
-
-                # Send emails
-                if notification:
-                    ticket.send_notification_emails(notification, Ticket.USER_ONLY)
-
-            # Update number of sounds for each user
-            for profile in users_to_update:
-                profile.update_num_sounds()
-
-            # Process packs
-            for pack in packs_to_update:
-                pack.process()
-
+            # Tirgger some async tasks to update user and pack counts, clear caches, send email notifications, etc.        
+            post_moderation_assigned_tickets_task.delay(
+                ticket_ids=ticket_ids, 
+                notification=notification,
+                msg=msg, 
+                moderator_only=msg_form.cleaned_data.get("moderator_only", False), 
+                users_to_update=list(users_to_update), 
+                packs_to_update=list(packs_to_update)
+            )
+    
             messages.add_message(request, messages.INFO, f"{len(tickets)} ticket(s) successfully updated")
         else:
             clear_forms = False

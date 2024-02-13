@@ -18,13 +18,10 @@
 #     See AUTHORS file.
 #
 import datetime
-import hashlib
 import json
 import logging
-import os
 import time
 import sentry_sdk
-
 
 from celery import shared_task
 from django.apps import apps
@@ -32,7 +29,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 
 from tickets import TICKET_STATUS_CLOSED
-from tickets.models import Ticket
+from tickets.models import Ticket, TicketComment
 from utils.audioprocessing.freesound_audio_processing import set_timeout_alarm, check_if_free_space, \
     FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm, FreesoundAudioProcessorBeforeDescription
 from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
@@ -41,6 +38,7 @@ from utils.cache import invalidate_user_template_caches, invalidate_all_moderato
 workers_logger = logging.getLogger("workers")
 
 WHITELIST_USER_TASK_NAME = 'whitelist_user'
+POST_MODERATION_ASSIGNED_TICKETS_TASK_NAME = "post_moderation_assigned_tickets"
 DELETE_USER_TASK_NAME = 'delete_user'
 VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME = "validate_bulk_describe_csv"
 BULK_DESCRIBE_TASK_NAME = "bulk_describe"
@@ -111,6 +109,63 @@ def whitelist_user(ticket_ids=None, user_id=None):
         {'task_name': WHITELIST_USER_TASK_NAME, 
          'n_tickets': len(ticket_ids) if ticket_ids is not None else 0, 
          'user_id': user_id if user_id is not None else '',
+         'work_time': round(time.time() - start_time)}))
+
+
+@shared_task(name=POST_MODERATION_ASSIGNED_TICKETS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
+def post_moderation_assigned_tickets(ticket_ids=[], notification=None, msg=None, moderator_only=False, users_to_update=None, packs_to_update=None):
+    # Carry out post-processing tasks for the approved sounds like invlaidating caches, sending packs to process, etc...
+    # We do that in an async task to avoid moderation requests taking too long when approving sounds
+    workers_logger.info("Start post moderation assigned tickets (%s)" % json.dumps({
+        'task_name': POST_MODERATION_ASSIGNED_TICKETS_TASK_NAME, 
+        'n_tickets': len(ticket_ids)})) 
+    start_time = time.time()
+    tickets = Ticket.objects.filter(id__in=ticket_ids)
+
+    collect_users_and_packs = False
+    if not users_to_update and not packs_to_update:
+        collect_users_and_packs = True
+        users_to_update = set()
+        packs_to_update = set()
+
+    for ticket in tickets:
+        if collect_users_and_packs:
+            # Collect list of users and packls to update
+            # We only fill here users_to_update and packs_to_update if action is not
+            # "Delete". See comment in "Delete" action case some lines above
+            users_to_update.add(ticket.sound.user_id)
+            if ticket.sound.pack:
+                packs_to_update.add(ticket.sound.pack_id)
+        
+        # Invalidate caches of related objects
+        invalidate_user_template_caches(ticket.sender.id)
+        invalidate_all_moderators_header_cache()
+
+        # Add new comments to the ticket
+        if msg is not None:
+            tc = TicketComment(sender=ticket.assignee,
+                               text=msg,
+                               ticket=ticket,
+                               moderator_only=moderator_only)
+            tc.save()
+
+        # Send notification email to users
+        if notification is not None:
+            ticket.send_notification_emails(notification, Ticket.USER_ONLY)
+
+    # Update number of sounds for each user
+    Profile = apps.get_model('accounts.Profile')
+    for profile in Profile.objects.filter(user_id__in=list(users_to_update)):
+        profile.update_num_sounds()
+
+    # Process packs
+    Pack = apps.get_model('sounds.Pack')
+    for pack in Pack.objects.filter(id__in=list(packs_to_update)):
+        pack.process()
+
+    workers_logger.info("Finished post moderation assigned tickets (%s)" % json.dumps(
+        {'task_name': POST_MODERATION_ASSIGNED_TICKETS_TASK_NAME, 
+         'n_tickets': len(ticket_ids), 
          'work_time': round(time.time() - start_time)}))
 
 

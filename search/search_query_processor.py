@@ -192,13 +192,14 @@ class SearchOptionMapMode(SearchOptionBool):
 
 
 class SearchOptionSearchIn(SearchOption):
+    name='search_in'
     value_default = []
     options = [
         ('a_tag', 'Tags'),
         ('a_filename', 'Sound name'),
         ('a_description', 'Description'),
         ('a_packname', 'Pack name'),
-        ('a_packname', 'Sound ID'),
+        ('a_soundid', 'Sound ID'),
         ('a_username', 'username')
     ]
     
@@ -206,8 +207,8 @@ class SearchOptionSearchIn(SearchOption):
         value = []
         for option in self.options:
             if option[0] in request.GET:
-                if request.GET.get(option[0]) == '1':
-                    value.append(option[0])
+                value.append(option[0])
+        return value
 
     def should_be_disabled(self):
         return self.search_query_processor.get_option_value('tags_mode') or self.search_query_processor.get_option_value('similar_to')

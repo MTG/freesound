@@ -304,4 +304,4 @@ class SearchQueryProcessorTests(TestCase):
         user.profile.use_compact_mode=True
         self.run_fake_search_query_processor(url='/search/?advanced=&g=1&only_p=&q=&f=license%3A%28%22attribution%22OR%22creative+commons+0%22%29%20tag:%22percussion%22&s=Date%20added%20(newest%20first)&w=', user=user)
 
-        
+        self.run_fake_search_query_processor(url='/search/?q=&f=license%3A%28%22attribution%22OR%22creative+commons+0%22%29+tag%3A%22percussion%22+duration%3A%5B0+TO+*%5D&w=&tm=0&s=Date+added+%28newest+first%29&advanced=1&a_tag=on&a_description=on&a_soundid=on&g=1&only_p=&cm=1&mm=0#')

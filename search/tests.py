@@ -276,6 +276,8 @@ class SearchQueryProcessorTests(TestCase):
         request.user = user
         sqp = SearchQueryProcessor(request)
         sqp.print()
+        import pprint
+        pprint.pprint(sqp.as_query_params())
 
     def test_search_query_processor_query_parsing(self):
         # TODO: check that all these queries generate the expected query params object

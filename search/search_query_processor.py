@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.safestring import mark_safe
 import luqum.tree
 from luqum.parser import parser
@@ -47,6 +48,9 @@ class SearchOption(object):
     def render(self):
         return mark_safe(self.html())
     
+    def render_as_filter(self):
+        return None
+    
 
 class SearchOptionRange(SearchOption):
     search_enginee_field_name = ''
@@ -57,6 +61,9 @@ class SearchOptionRange(SearchOption):
                 if node.name == self.search_enginee_field_name:
                     # node.expr is expected to be of type luqum.tree.Range
                     return [str(node.expr.low), str(node.expr.high)]
+                
+    def render_as_filter(self):
+        return f'{self.search_enginee_field_name}:[{self.value[0]} TO {self.value[1]}]'
 
     def html(self):
         return \
@@ -113,6 +120,10 @@ class SearchOptionBool(SearchOption):
                 if type(node) == luqum.tree.SearchField:
                     if node.name == self.name:
                         return str(node.expr) == '1'
+                    
+    def render_as_filter(self):
+        if self.search_enginee_field_name is not None:
+            return f'{self.search_enginee_field_name}:{1 if self.value else 0}'
 
     def html(self):
         return \
@@ -240,9 +251,6 @@ class SearchOptionTagsMode(SearchOptionBool):
 
 class SearchQueryProcessor(object):
     request = None
-    textual_query = ''
-    parsed_filter = []
-    facet_filters = []
     options = {}
     avaialable_options = [
         SearchOptionSearchIn,
@@ -259,13 +267,29 @@ class SearchQueryProcessor(object):
 
     def __init__(self, request):
         self.request = request
+
+        # Textual query
         self.q = request.GET.get('q', '')
+        
+        # Filter
         self.f = request.GET.get('f', '')
         if self.f:
             self.f_parsed = parser.parse(self.f)
         else:
             self.f_parsed = None
-        self.s = request.GET.get('s', '')
+        
+        # Sort
+        self.s = request.GET.get('s', None)
+        if self.q =='' and self.s is None:
+            # When making empty queries and no sorting is specified, automatically set sort to "created desc" as
+            # relevance score based sorting makes no sense
+            self.s = settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
+
+        # Page
+        try:
+            self.page = int(request.GET.get("page", 1))
+        except ValueError:
+            self.page = 1
         
         # Create option objects and load values
         for optionClass in self.avaialable_options:
@@ -315,3 +339,36 @@ class SearchQueryProcessor(object):
         print('non_option_filters:')
         for filter in self.non_option_filters:
             print('-', f'{filter[0]}={filter[1]}')
+
+
+    def render_filter(self):
+        # Returns properly formatetd filter string from all options and non-option filters
+        ff = []
+        for option in self.options.values():
+            fit = option.render_as_filter()
+            if fit is not None:
+                ff.append(fit)
+
+        for non_option_filter in self.non_option_filters:
+            ff.append(f'{non_option_filter[0]}:{non_option_filter[1]}')
+
+        return ' '.join(ff)  # TODO: return filters as a list of different filters to send to SOLR in multiple fq parameters (?)
+
+    def as_query_params(self):
+        return dict(
+            textual_query=self.q, 
+            query_fields=None, 
+            query_filter=self.render_filter(),
+            current_page=self.page, 
+            num_sounds=settings.SOUNDS_PER_PAGE, 
+            sort=self.s,
+            group_by_pack=self.get_option_value('group_by_pack'), 
+            num_sounds_per_pack_group=1, 
+            facets=None, 
+            only_sounds_with_pack=self.get_option_value('display_as_packs'), 
+            only_sounds_within_ids=False, 
+            group_counts_as_one_in_facets=False, 
+            similar_to=self.get_option_value('similar_to'), 
+            similar_to_max_num_sounds=settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY,
+            similar_to_analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER
+        )

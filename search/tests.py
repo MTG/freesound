@@ -274,36 +274,46 @@ class SearchQueryProcessorTests(TestCase):
         else:
             request = self.factory.get(url)
         request.user = user
-        sqp = SearchQueryProcessor(request)
-        sqp.print()
+        return SearchQueryProcessor(request)
+
+    def test_search_query_processor_as_query_params(self):
+        # TODO: check that all these queries generate the expected query params object
+
+        sqp = self.run_fake_search_query_processor(params={
+            'f': 'duration:[0.25 TO 20] is_geotagged:1 (id:1 OR id:2 OR id:3)',
+            'g': '0',
+        })
         import pprint
         pprint.pprint(sqp.as_query_params())
 
-    def test_search_query_processor_query_parsing(self):
-        # TODO: check that all these queries generate the expected query params object
-
-        self.run_fake_search_query_processor(params={
+        sqp = self.run_fake_search_query_processor(params={
             'f': 'duration:[0.25 TO 20] is_geotagged:1 (id:1 OR id:2 OR id:3)',
             'g': '0',
         })
 
-        self.run_fake_search_query_processor(params={
-            'f': 'duration:[0.25 TO 20] is_geotagged:1 (id:1 OR id:2 OR id:3)',
-            'g': '0',
-        })
-
-        self.run_fake_search_query_processor(params={
+        sqp = self.run_fake_search_query_processor(params={
             'f': 'duration:[1 TO *] id:(1 OR 2 OR 3)',
         })
-
-        self.run_fake_search_query_processor(params={
+    
+        sqp = self.run_fake_search_query_processor(params={
             'mm': '1',
         })
 
-        self.run_fake_search_query_processor(url='/search/?advanced=&g=1&only_p=&q=&f=%20license:%28%22attribution%22+OR+%22creative+commons+0%22%29&s=Date%20added%20(newest%20first)&w=')
+        sqp = self.run_fake_search_query_processor(url='/search/?advanced=&g=1&only_p=&q=&f=%20license:%28%22attribution%22+OR+%22creative+commons+0%22%29&s=Date%20added%20(newest%20first)&w=')
         
         user = User.objects.create_user("testuser")
         user.profile.use_compact_mode=True
-        self.run_fake_search_query_processor(url='/search/?advanced=&g=1&only_p=&q=&f=license%3A%28%22attribution%22OR%22creative+commons+0%22%29%20tag:%22percussion%22&s=Date%20added%20(newest%20first)&w=', user=user)
+        sqp = self.run_fake_search_query_processor(url='/search/?advanced=&g=1&only_p=&q=&f=license%3A%28%22attribution%22OR%22creative+commons+0%22%29%20tag:%22percussion%22&s=Date%20added%20(newest%20first)&w=', user=user)
 
-        self.run_fake_search_query_processor(url='/search/?q=&f=license%3A%28%22attribution%22OR%22creative+commons+0%22%29+tag%3A%22percussion%22+duration%3A%5B0+TO+*%5D&w=&tm=0&s=Date+added+%28newest+first%29&advanced=1&a_tag=on&a_description=on&a_soundid=on&g=1&only_p=&cm=1&mm=0#')
+        sqp = self.run_fake_search_query_processor(url='/search/?q=&f=license%3A%28%22attribution%22OR%22creative+commons+0%22%29+tag%3A%22percussion%22+duration%3A%5B0+TO+*%5D&w=&tm=0&s=Date+added+%28newest+first%29&advanced=1&a_tag=on&a_description=on&a_soundid=on&g=1&only_p=&cm=1&mm=0#')
+
+    def test_search_query_processor_tags_in_filter(self):
+        sqp = self.run_fake_search_query_processor(params={
+            'f': 'duration:[0.25 TO 20] tag:"tag1" is_geotagged:1 (id:1 OR id:2 OR id:3) tag:"tag2" (tag:"tag3" OR tag:"tag4")',
+        })
+        self.assertEqual(sorted(sqp.get_tags_in_filter()), sorted(['tag1', 'tag2']))
+
+        sqp = self.run_fake_search_query_processor(params={
+            'f': 'duration:[0.25 TO 20] is_geotagged:1 (id:1 OR id:2 OR id:3)',
+        })
+        self.assertEqual(sqp.get_tags_in_filter(), [])

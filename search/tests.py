@@ -18,14 +18,17 @@
 #     See AUTHORS file.
 #
 
+from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from django.test.utils import skipIf, override_settings
 from django.urls import reverse
+from search.search_query_processor import SearchQueryProcessor
 from sounds.models import Sound
 from utils.search import SearchResults, SearchResultsPaginator
 from utils.test_helpers import create_user_and_sounds
 from unittest import mock
+from django.contrib.auth.models import AnonymousUser
 
 
 def create_fake_search_engine_results():
@@ -258,3 +261,47 @@ class SearchResultClustering(TestCase):
         # 200 status code & JSON response content
         self.assertEqual(resp.status_code, 200)
         self.assertJSONEqual(resp.content, {'status': 'failed'})
+
+
+class SearchQueryProcessorTests(TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def run_fake_search_query_processor(self, url=None, params={}, user=AnonymousUser()):
+        if url is None:
+            request = self.factory.get(reverse('sounds-search'), params)
+        else:
+            request = self.factory.get(url)
+        request.user = user
+        sqp = SearchQueryProcessor(request)
+        sqp.print()
+
+    def test_search_query_processor_query_parsing(self):
+        # TODO: check that all these queries generate the expected query params object
+
+        self.run_fake_search_query_processor(params={
+            'f': 'duration:[0.25 TO 20] is_geotagged:1 (id:1 OR id:2 OR id:3)',
+            'g': '0',
+        })
+
+        self.run_fake_search_query_processor(params={
+            'f': 'duration:[0.25 TO 20] is_geotagged:1 (id:1 OR id:2 OR id:3)',
+            'g': '0',
+        })
+
+        self.run_fake_search_query_processor(params={
+            'f': 'duration:[1 TO *] id:(1 OR 2 OR 3)',
+        })
+
+        self.run_fake_search_query_processor(params={
+            'mm': '1',
+        })
+
+        self.run_fake_search_query_processor(url='/search/?advanced=&g=1&only_p=&q=&f=%20license:%28%22attribution%22+OR+%22creative+commons+0%22%29&s=Date%20added%20(newest%20first)&w=')
+        
+        user = User.objects.create_user("testuser")
+        user.profile.use_compact_mode=True
+        self.run_fake_search_query_processor(url='/search/?advanced=&g=1&only_p=&q=&f=license%3A%28%22attribution%22OR%22creative+commons+0%22%29%20tag:%22percussion%22&s=Date%20added%20(newest%20first)&w=', user=user)
+
+        

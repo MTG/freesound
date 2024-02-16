@@ -32,6 +32,7 @@ future~=0.18.2
 graypy==0.2.12
 gunicorn==21.2.0
 ipython==8.14.0
+luqum==0.13.0
 mapbox==0.18.1
 markdown==3.4.1
 networkx==1.5

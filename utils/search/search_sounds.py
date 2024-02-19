@@ -108,7 +108,7 @@ def search_prepare_parameters(request):
         group_by_pack = False
 
     # If the query is filtered by pack, do not add the "only sounds with pack" filter (makes no sense)
-    only_sounds_with_pack = request.GET.get("only_p", "0") == "1"  # By default, do not limit to sounds with pack
+    only_sounds_with_pack = request.GET.get("dp", "0") == "1"  # By default, do not limit to sounds with pack
     if "pack" in filter_query:
         only_sounds_with_pack = False
 

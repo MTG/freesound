@@ -107,7 +107,7 @@ def search_view_helper(request, tags_mode=False):
     # group_by_pack because there is a pack filter, we can grey out the option in the search form. Similar thing we do for only_sounds_with_pack as also
     # it does not make sense when filtering by pack
     group_by_pack_in_request = request.GET.get("g", "1") == "1"
-    only_sounds_with_pack_in_request = request.GET.get("only_p", "0") == "1"
+    only_sounds_with_pack_in_request = request.GET.get("dp", "0") == "1"
     disable_group_by_pack_option = 'pack:' in query_params['query_filter'] or only_sounds_with_pack_in_request
     disable_only_sounds_by_pack_option= 'pack:' in query_params['query_filter']
     only_sounds_with_pack = "1" if query_params['only_sounds_with_pack'] else ""

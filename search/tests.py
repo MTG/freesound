@@ -20,10 +20,11 @@
 
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.conf import settings
 from django.test import TestCase, RequestFactory
 from django.test.utils import skipIf, override_settings
 from django.urls import reverse
-from search.search_query_processor import SearchQueryProcessor
+from utils.search import search_query_processor
 from sounds.models import Sound
 from utils.search import SearchResults, SearchResultsPaginator
 from utils.test_helpers import create_user_and_sounds
@@ -166,12 +167,12 @@ class SearchPageTests(TestCase):
             # Now check number of queries when displaying results as packs (i.e., searching for packs)
             cache.clear()
             with self.assertNumQueries(6):
-                self.client.get(reverse('sounds-search') + '?only_p=1')
+                self.client.get(reverse('sounds-search') + '?dp=1')
 
             # Also check packs when displaying in grid mode
             cache.clear()
             with self.assertNumQueries(6):
-                self.client.get(reverse('sounds-search') + '?only_p=1&cm=1')
+                self.client.get(reverse('sounds-search') + '?dp=1&cm=1')
 
         with override_settings(USE_SEARCH_ENGINE_SIMILARITY=False):
             # When not using search engine similarity, there'll be one less query performed as similarity state is retrieved directly from sound object
@@ -179,12 +180,12 @@ class SearchPageTests(TestCase):
             # Now check number of queries when displaying results as packs (i.e., searching for packs)
             cache.clear()
             with self.assertNumQueries(5):
-                self.client.get(reverse('sounds-search') + '?only_p=1')
+                self.client.get(reverse('sounds-search') + '?dp=1')
 
             # Also check packs when displaying in grid mode
             cache.clear()
             with self.assertNumQueries(5):
-                self.client.get(reverse('sounds-search') + '?only_p=1&cm=1')
+                self.client.get(reverse('sounds-search') + '?dp=1&cm=1')
 
     @mock.patch('search.views.perform_search_engine_query')
     def test_search_page_with_filters(self, perform_search_engine_query):
@@ -265,8 +266,29 @@ class SearchResultClustering(TestCase):
 
 class SearchQueryProcessorTests(TestCase):
 
+    default_expected_params = {
+        'current_page': 1,
+        'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS,
+        'field_list': ['id', 'score'],
+        'group_by_pack': True,
+        'num_sounds': settings.SOUNDS_PER_PAGE,
+        'num_sounds_per_pack_group': 1,
+        'only_sounds_with_pack': False,
+        'only_sounds_within_ids': [],
+        'query_fields': settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS,
+        'query_filter': '',
+        'similar_to': None,
+        'sort': settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,  # Empty query should sort by date added, so use this as expected default
+        'textual_query': ''}
+
     def setUp(self):
         self.factory = RequestFactory()
+        self.maxDiff = None
+
+    def assertExpectedParams(self, returned_query_params, specific_expected_params={}):    
+        dict_to_compare = self.default_expected_params.copy()
+        dict_to_compare.update(specific_expected_params)
+        self.assertDictEqual(returned_query_params, dict_to_compare)
 
     def run_fake_search_query_processor(self, url=None, params={}, user=AnonymousUser()):
         if url is None:
@@ -274,39 +296,157 @@ class SearchQueryProcessorTests(TestCase):
         else:
             request = self.factory.get(url)
         request.user = user
-        return SearchQueryProcessor(request)
+        return search_query_processor.SearchQueryProcessor(request)
 
-    def test_search_query_processor_as_query_params(self):
-        # TODO: check that all these queries generate the expected query params object
 
-        sqp = self.run_fake_search_query_processor(params={
-            'f': 'duration:[0.25 TO 20] is_geotagged:1 (id:1 OR id:2 OR id:3)',
-            'g': '0',
-        })
-        import pprint
-        pprint.pprint(sqp.as_query_params())
-
-        sqp = self.run_fake_search_query_processor(params={
-            'f': 'duration:[0.25 TO 20] is_geotagged:1 (id:1 OR id:2 OR id:3)',
-            'g': '0',
-        })
-
-        sqp = self.run_fake_search_query_processor(params={
-            'f': 'duration:[1 TO *] id:(1 OR 2 OR 3)',
-        })
-    
-        sqp = self.run_fake_search_query_processor(params={
-            'mm': '1',
-        })
-
-        sqp = self.run_fake_search_query_processor(url='/search/?advanced=&g=1&only_p=&q=&f=%20license:%28%22attribution%22+OR+%22creative+commons+0%22%29&s=Date%20added%20(newest%20first)&w=')
+    @mock.patch('utils.search.search_query_processor.get_ids_in_cluster')
+    def test_search_query_processor_as_query_params(self, fake_get_ids_in_cluster):        
         
-        user = User.objects.create_user("testuser")
-        user.profile.use_compact_mode=True
-        sqp = self.run_fake_search_query_processor(url='/search/?advanced=&g=1&only_p=&q=&f=license%3A%28%22attribution%22OR%22creative+commons+0%22%29%20tag:%22percussion%22&s=Date%20added%20(newest%20first)&w=', user=user)
+        # Query with no params, all should be default behaviour (sorting by date added)
+        sqp = self.run_fake_search_query_processor()
+        self.assertExpectedParams(sqp.as_query_params())
 
-        sqp = self.run_fake_search_query_processor(url='/search/?q=&f=license%3A%28%22attribution%22OR%22creative+commons+0%22%29+tag%3A%22percussion%22+duration%3A%5B0+TO+*%5D&w=&tm=0&s=Date+added+%28newest+first%29&advanced=1&a_tag=on&a_description=on&a_soundid=on&g=1&only_p=&cm=1&mm=0#')
+        # Empty query with sorting specifyied, will sort as indicated
+        sqp = self.run_fake_search_query_processor(params={'s': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
+        self.assertExpectedParams(sqp.as_query_params(), {'sort': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
 
+        # Basic query with only text, results should be sorted by score
+        sqp = self.run_fake_search_query_processor(params={'q':'test'})
+        self.assertExpectedParams(sqp.as_query_params(), {'textual_query': 'test',
+                                                          'sort': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
+        
+        # With page number specified
+        sqp = self.run_fake_search_query_processor(params={'p': '3'})
+        self.assertExpectedParams(sqp.as_query_params(), {'current_page': 3})
+
+        # With "search in" options specified
+        # Note that the value of the "a_*" parameters is not important, only the presence of the parameter is checked
+        sqp = self.run_fake_search_query_processor(params={'a_tag': '1', 'a_description': '1', 'a_soundid': '0'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_fields': {
+            settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_DESCRIPTION], 
+            settings.SEARCH_SOUNDS_FIELD_ID: settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_ID], 
+            settings.SEARCH_SOUNDS_FIELD_TAGS: settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_TAGS]
+        }})
+
+        # With custom field weights specified
+        sqp = self.run_fake_search_query_processor(params={'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_fields': {
+            settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 2, 
+            settings.SEARCH_SOUNDS_FIELD_ID: 1
+        }})
+
+        # With custom field weights specified AND search in
+        sqp = self.run_fake_search_query_processor(params={'a_soundid': '1', 'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_fields': {
+            settings.SEARCH_SOUNDS_FIELD_ID: 1
+        }})
+
+        # With duration filter
+        sqp = self.run_fake_search_query_processor(params={'d0': '0.25', 'd1': '2.05'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'duration:[0.25 TO 2.05]'})
+        sqp = self.run_fake_search_query_processor(params={'d0': '0.25'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'duration:[0.25 TO *]'})
+        sqp = self.run_fake_search_query_processor(params={'d1': '0.25'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'duration:[0 TO 0.25]'})
+
+        # With geotag filter
+        sqp = self.run_fake_search_query_processor(params={'ig': '1'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'is_geotagged:1'})
+        sqp = self.run_fake_search_query_processor(params={'ig': '0'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'is_geotagged:0'})
+
+        # With remix filter
+        sqp = self.run_fake_search_query_processor(params={'r': '1'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'in_remix_group:1'})
+        sqp = self.run_fake_search_query_processor(params={'r': '0'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'in_remix_group:0'})
+
+        # With group by pack option (defaults to True)
+        sqp = self.run_fake_search_query_processor(params={'g': '1'})
+        self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': True})
+        sqp = self.run_fake_search_query_processor(params={'g': '0'})
+        self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': False})
+        sqp = self.run_fake_search_query_processor()
+        self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': True})
+
+         # With display results as packs option
+        sqp = self.run_fake_search_query_processor(params={'dp': '1'})
+        self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': True, 'only_sounds_with_pack': True, 'num_sounds_per_pack_group': 3})
+        sqp = self.run_fake_search_query_processor(params={'dp': '1', 'g': '0'}) # When display packs is enabled, always group by pack
+        self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': True, 'only_sounds_with_pack': True, 'num_sounds_per_pack_group': 3})
+
+        # With compact mode option
+        sqp = self.run_fake_search_query_processor(params={'cm': '1'})
+        self.assertExpectedParams(sqp.as_query_params(), {'num_sounds': settings.SOUNDS_PER_PAGE_COMPACT_MODE })
+        sqp = self.run_fake_search_query_processor(params={'cm': '1', 'dp': '1'})  # In display pack mode, number of sounds stays the same
+        self.assertExpectedParams(sqp.as_query_params(), {'num_sounds': settings.SOUNDS_PER_PAGE, 
+                                                          'only_sounds_with_pack': True, 
+                                                          'num_sounds_per_pack_group': 3})
+
+        # With map mode option
+        sqp = self.run_fake_search_query_processor(params={'mm': '1'})
+        self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': False, 
+                                                          'num_sounds': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,
+                                                          'query_filter': 'is_geotagged:1',
+                                                          'field_list': ['id', 'score', 'geotag']})
+        sqp = self.run_fake_search_query_processor(params={'mm': '1', 'p': '3'})  # Page number in map mode is always 1
+        self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': False, 
+                                                          'num_sounds': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,
+                                                          'query_filter': 'is_geotagged:1',
+                                                          'field_list': ['id', 'score', 'geotag']})
+        
+        # With tags mode
+        sqp = self.run_fake_search_query_processor(params={'tm': '1'})
+        expected_facets = settings.SEARCH_SOUNDS_DEFAULT_FACETS.copy()
+        expected_facets['tags']['limit'] = 50
+        self.assertExpectedParams(sqp.as_query_params(), {'facets': expected_facets})
+
+        # With cluster id option
+        with override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True):
+            fake_get_ids_in_cluster.return_value = [1, 2 ,3, 4]  # Mock the response of get_ids_in_cluster
+            sqp = self.run_fake_search_query_processor(params={'cid': '31'})
+            self.assertExpectedParams(sqp.as_query_params(), {'only_sounds_within_ids': [1, 2 ,3, 4]})
+
+        # With similar to option
+        sqp = self.run_fake_search_query_processor(params={'similar_to': '1234'})  # Passing similarity target as sound ID
+        self.assertExpectedParams(sqp.as_query_params(), {'similar_to': 1234})
+        sqp = self.run_fake_search_query_processor(params={'similar_to': '[1.34,3.56,5.78]'})  # Passing similarity target as sound ID
+        self.assertExpectedParams(sqp.as_query_params(), {'similar_to': [1.34, 3.56, 5.78]})
+         
+
+    def test_search_query_processor_disabled_options(self):
+        # Test that some search options are marked as disabled depending on the state of some other options
+        # NOTE: disabled state is used when displaying the options in the UI, but has no other effects
+        
+        # sort if similarity on
+        sqp = self.run_fake_search_query_processor(params={'similar_to': '1234'})
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionSort.name].disabled)
+
+        # group_by_pack if display_as_packs or map_mode
+        sqp = self.run_fake_search_query_processor(params={'dp': '1'})
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionGroupByPack.name].disabled)
+        sqp = self.run_fake_search_query_processor(params={'mm': '1'})
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionGroupByPack.name].disabled)
+
+        # display as packs if map_mode
+        sqp = self.run_fake_search_query_processor(params={'mm': '1'})
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionDisplayResultsAsPacks.name].disabled)
+
+        # grid_mode if map_mode
+        sqp = self.run_fake_search_query_processor(params={'mm': '1'})
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionGridMode.name].disabled)
+
+        # is_geotagged if map_mode
+        sqp = self.run_fake_search_query_processor(params={'mm': '1'})
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionIsGeotagged.name].disabled)
+
+        # search_in if tags_mode or similar_to_mode
+        sqp = self.run_fake_search_query_processor(params={'similar_to': '1'})
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled)
+        sqp = self.run_fake_search_query_processor(params={'tm': '1'})
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled)
+        
+        
     def test_search_query_processor_tags_in_filter(self):
         sqp = self.run_fake_search_query_processor(params={
             'f': 'duration:[0.25 TO 20] tag:"tag1" is_geotagged:1 (id:1 OR id:2 OR id:3) tag:"tag2" (tag:"tag3" OR tag:"tag4")',

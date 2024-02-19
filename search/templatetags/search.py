@@ -83,7 +83,7 @@ def display_facet(context, flt, facet, facet_type, title=""):
             element['params'] = f"{filter_query} {flt}:\"{quote_plus(element['name'])}\""
 
         element['id'] = f"{flt}--{quote_plus(element['name'])}"
-        element['add_filter_url'] = '.?advanced={}&g={}&only_p={}&q={}&f={}&s={}&w={}'.format(
+        element['add_filter_url'] = '.?advanced={}&g={}&dp={}&q={}&f={}&s={}&w={}'.format(
             context['advanced'],
             context['group_by_pack_in_request'],
             context['only_sounds_with_pack'],

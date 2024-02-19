@@ -226,7 +226,7 @@ class Profile(models.Model):
         return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=0'
     
     def get_user_packs_in_search_url(self):
-        return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=1&only_p=1'
+        return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=1&dp=1'
     
     def get_latest_packs_for_profile_page(self):
         latest_pack_ids = Pack.objects.select_related().filter(user=self.user, num_sounds__gt=0).exclude(is_deleted=True) \

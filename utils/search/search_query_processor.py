@@ -628,6 +628,18 @@ class SearchQueryProcessor(object):
             return f'{reverse("sounds-search")}?{encoded_params}'
         else:
             return f'{reverse("sounds-search")}'
+        
+    def contains_active_advanced_search_options(self):
+        # Returns true if query has any active options which belong to the "advanced search" panel
+        # Also returns true if the query has active undocumented options which are not hidden in the advanced search panel but that
+        # are allowed as "power user" options
+        non_advanced_search_option_names = [SearchOptionQuery.name, SearchOptionSort.name, SearchOptionPage.name, SearchOptionClusterId.name]
+        for option in self.options.values():
+            if option.name not in non_advanced_search_option_names:
+                if option.set_in_request:
+                    if option.get_value() != option.value_default:
+                        return True
+        return False                    
     
     def print(self):
         # Prints the SearchQueryProcessor object in a somewhat human readable format

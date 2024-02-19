@@ -504,3 +504,6 @@ class SearchQueryProcessorTests(TestCase):
         # Test remove_filters removes them from the URL
         sqp, _ = self.run_fake_search_query_processor(params={'f': 'filter1:"aaa" filter2:123'})
         self.assertEqual(sqp.get_url(remove_filters=['filter1:"aaa"', 'filter2:123']), '/search/')
+
+    def test_earch_query_processor_contains_active_advanced_search_options(self):
+        pass # TODO

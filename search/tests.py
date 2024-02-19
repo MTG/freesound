@@ -28,6 +28,7 @@ from utils.search import search_query_processor
 from sounds.models import Sound
 from utils.search import SearchResults, SearchResultsPaginator
 from utils.test_helpers import create_user_and_sounds
+from utils.url import ComparableUrl
 from unittest import mock
 from django.contrib.auth.models import AnonymousUser
 
@@ -290,128 +291,166 @@ class SearchQueryProcessorTests(TestCase):
         dict_to_compare.update(specific_expected_params)
         self.assertDictEqual(returned_query_params, dict_to_compare)
 
+    def assertGetUrlAsExpected(self, sqp, expected_url):
+        sqp_url = sqp.get_url()
+        self.assertEqual(ComparableUrl(sqp_url), ComparableUrl(expected_url))
+
     def run_fake_search_query_processor(self, url=None, params={}, user=AnonymousUser()):
         if url is None:
             request = self.factory.get(reverse('sounds-search'), params)
         else:
             request = self.factory.get(url)
         request.user = user
-        return search_query_processor.SearchQueryProcessor(request)
-
+        return search_query_processor.SearchQueryProcessor(request), request.get_full_path()
 
     @mock.patch('utils.search.search_query_processor.get_ids_in_cluster')
-    def test_search_query_processor_as_query_params(self, fake_get_ids_in_cluster):        
+    def test_search_query_processor_as_query_params_and_make_url(self, fake_get_ids_in_cluster):
+        # This will test that the SearchQueryProcessor correctly processes the request parameters and generates the
+        # expected query_params object to be sent to a SearchEngine object. Also it tests that once SearchQueryProcessor
+        # has loaded parameters from the request, it is able to generate URLs which are equivalent to the original request.
         
         # Query with no params, all should be default behaviour (sorting by date added)
-        sqp = self.run_fake_search_query_processor()
+        sqp, url = self.run_fake_search_query_processor()
         self.assertExpectedParams(sqp.as_query_params())
+        self.assertGetUrlAsExpected(sqp, url)
+
+        # Empty query with no sorting specified, will sort by date added just like query with no params at all
+        sqp, url = self.run_fake_search_query_processor(params={'q': ''})
+        self.assertExpectedParams(sqp.as_query_params())
+        self.assertGetUrlAsExpected(sqp, url)
 
         # Empty query with sorting specifyied, will sort as indicated
-        sqp = self.run_fake_search_query_processor(params={'s': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
+        sqp, url = self.run_fake_search_query_processor(params={'s': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
         self.assertExpectedParams(sqp.as_query_params(), {'sort': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
+        self.assertGetUrlAsExpected(sqp, url)
 
         # Basic query with only text, results should be sorted by score
-        sqp = self.run_fake_search_query_processor(params={'q':'test'})
+        sqp, url = self.run_fake_search_query_processor(params={'q':'test'})
         self.assertExpectedParams(sqp.as_query_params(), {'textual_query': 'test',
                                                           'sort': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
+        self.assertGetUrlAsExpected(sqp, url)
         
         # With page number specified
-        sqp = self.run_fake_search_query_processor(params={'p': '3'})
+        sqp, url = self.run_fake_search_query_processor(params={'p': '3'})
         self.assertExpectedParams(sqp.as_query_params(), {'current_page': 3})
+        self.assertGetUrlAsExpected(sqp, url)
 
         # With "search in" options specified
         # Note that the value of the "a_*" parameters is not important, only the presence of the parameter is checked
-        sqp = self.run_fake_search_query_processor(params={'a_tag': '1', 'a_description': '1', 'a_soundid': '0'})
+        sqp, url = self.run_fake_search_query_processor(params={'a_tag': '1', 'a_description': '1', 'a_soundid': '0'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_fields': {
             settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_DESCRIPTION], 
             settings.SEARCH_SOUNDS_FIELD_ID: settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_ID], 
             settings.SEARCH_SOUNDS_FIELD_TAGS: settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_TAGS]
         }})
+        self.assertGetUrlAsExpected(sqp, url.replace('a_soundid=0', 'a_soundid=1'))  # Here we modify the expected URL because sqp.get_url() will set '1' for all present "search in" fields
 
         # With custom field weights specified
-        sqp = self.run_fake_search_query_processor(params={'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
+        sqp, url = self.run_fake_search_query_processor(params={'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_fields': {
             settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 2, 
             settings.SEARCH_SOUNDS_FIELD_ID: 1
         }})
+        self.assertGetUrlAsExpected(sqp, url)
 
         # With custom field weights specified AND search in
-        sqp = self.run_fake_search_query_processor(params={'a_soundid': '1', 'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
+        sqp, url = self.run_fake_search_query_processor(params={'a_soundid': '1', 'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_fields': {
             settings.SEARCH_SOUNDS_FIELD_ID: 1
         }})
+        self.assertGetUrlAsExpected(sqp, url)
 
         # With duration filter
-        sqp = self.run_fake_search_query_processor(params={'d0': '0.25', 'd1': '2.05'})
+        sqp, url = self.run_fake_search_query_processor(params={'d0': '0.25', 'd1': '2.05'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'duration:[0.25 TO 2.05]'})
-        sqp = self.run_fake_search_query_processor(params={'d0': '0.25'})
+        self.assertGetUrlAsExpected(sqp, url)
+        sqp, url = self.run_fake_search_query_processor(params={'d0': '0.25'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'duration:[0.25 TO *]'})
-        sqp = self.run_fake_search_query_processor(params={'d1': '0.25'})
+        self.assertGetUrlAsExpected(sqp, url + '&d1=*')  # Add d1 to the expected url as sqp will add it
+        sqp, url = self.run_fake_search_query_processor(params={'d1': '0.25'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'duration:[0 TO 0.25]'})
+        self.assertGetUrlAsExpected(sqp, url + '&d0=0')  # Add d0 to the expected url as sqp will add it
 
         # With geotag filter
-        sqp = self.run_fake_search_query_processor(params={'ig': '1'})
+        sqp, url = self.run_fake_search_query_processor(params={'ig': '1'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'is_geotagged:1'})
-        sqp = self.run_fake_search_query_processor(params={'ig': '0'})
+        self.assertGetUrlAsExpected(sqp, url)
+        sqp, url = self.run_fake_search_query_processor(params={'ig': '0'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'is_geotagged:0'})
+        self.assertGetUrlAsExpected(sqp, url)
 
         # With remix filter
-        sqp = self.run_fake_search_query_processor(params={'r': '1'})
+        sqp, url = self.run_fake_search_query_processor(params={'r': '1'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'in_remix_group:1'})
-        sqp = self.run_fake_search_query_processor(params={'r': '0'})
+        self.assertGetUrlAsExpected(sqp, url)
+        sqp, url = self.run_fake_search_query_processor(params={'r': '0'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'in_remix_group:0'})
+        self.assertGetUrlAsExpected(sqp, url)
 
         # With group by pack option (defaults to True)
-        sqp = self.run_fake_search_query_processor(params={'g': '1'})
+        sqp, url = self.run_fake_search_query_processor(params={'g': '1'})
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': True})
-        sqp = self.run_fake_search_query_processor(params={'g': '0'})
+        self.assertGetUrlAsExpected(sqp, url)
+        sqp, url = self.run_fake_search_query_processor(params={'g': '0'})
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': False})
-        sqp = self.run_fake_search_query_processor()
+        self.assertGetUrlAsExpected(sqp, url)
+        sqp, url = self.run_fake_search_query_processor()
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': True})
+        self.assertGetUrlAsExpected(sqp, url)
 
          # With display results as packs option
-        sqp = self.run_fake_search_query_processor(params={'dp': '1'})
+        sqp, url = self.run_fake_search_query_processor(params={'dp': '1'})
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': True, 'only_sounds_with_pack': True, 'num_sounds_per_pack_group': 3})
-        sqp = self.run_fake_search_query_processor(params={'dp': '1', 'g': '0'}) # When display packs is enabled, always group by pack
+        self.assertGetUrlAsExpected(sqp, url)
+        sqp, url = self.run_fake_search_query_processor(params={'dp': '1', 'g': '0'}) # When display packs is enabled, always group by pack
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': True, 'only_sounds_with_pack': True, 'num_sounds_per_pack_group': 3})
+        self.assertGetUrlAsExpected(sqp, url.replace('g=0', 'g=1'))  # Replace 'g' option as 'dp' will force 'g' to be 1
 
         # With compact mode option
-        sqp = self.run_fake_search_query_processor(params={'cm': '1'})
+        sqp, url = self.run_fake_search_query_processor(params={'cm': '1'})
         self.assertExpectedParams(sqp.as_query_params(), {'num_sounds': settings.SOUNDS_PER_PAGE_COMPACT_MODE })
-        sqp = self.run_fake_search_query_processor(params={'cm': '1', 'dp': '1'})  # In display pack mode, number of sounds stays the same
+        self.assertGetUrlAsExpected(sqp, url)
+        sqp, url = self.run_fake_search_query_processor(params={'cm': '1', 'dp': '1'})  # In display pack mode, number of sounds stays the same
         self.assertExpectedParams(sqp.as_query_params(), {'num_sounds': settings.SOUNDS_PER_PAGE, 
                                                           'only_sounds_with_pack': True, 
                                                           'num_sounds_per_pack_group': 3})
+        self.assertGetUrlAsExpected(sqp, url)
 
         # With map mode option
-        sqp = self.run_fake_search_query_processor(params={'mm': '1'})
+        sqp, url = self.run_fake_search_query_processor(params={'mm': '1'})
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': False, 
                                                           'num_sounds': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,
                                                           'query_filter': 'is_geotagged:1',
                                                           'field_list': ['id', 'score', 'geotag']})
-        sqp = self.run_fake_search_query_processor(params={'mm': '1', 'p': '3'})  # Page number in map mode is always 1
+        self.assertGetUrlAsExpected(sqp, url)
+        sqp, url = self.run_fake_search_query_processor(params={'mm': '1', 'p': '3'})  # Page number in map mode is always 1
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': False, 
                                                           'num_sounds': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,
                                                           'query_filter': 'is_geotagged:1',
                                                           'field_list': ['id', 'score', 'geotag']})
+        self.assertGetUrlAsExpected(sqp, url.replace('p=3', 'p=1'))  # Replace 'p' option as 'mm' will force 'p' to be 1
         
         # With tags mode
-        sqp = self.run_fake_search_query_processor(params={'tm': '1'})
+        sqp, url = self.run_fake_search_query_processor(params={'tm': '1'})
         expected_facets = settings.SEARCH_SOUNDS_DEFAULT_FACETS.copy()
         expected_facets['tags']['limit'] = 50
         self.assertExpectedParams(sqp.as_query_params(), {'facets': expected_facets})
+        self.assertGetUrlAsExpected(sqp, url)
 
         # With cluster id option
         with override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True):
             fake_get_ids_in_cluster.return_value = [1, 2 ,3, 4]  # Mock the response of get_ids_in_cluster
-            sqp = self.run_fake_search_query_processor(params={'cid': '31'})
+            sqp, url = self.run_fake_search_query_processor(params={'cid': '31'})
             self.assertExpectedParams(sqp.as_query_params(), {'only_sounds_within_ids': [1, 2 ,3, 4]})
+            self.assertGetUrlAsExpected(sqp, url)
 
         # With similar to option
-        sqp = self.run_fake_search_query_processor(params={'similar_to': '1234'})  # Passing similarity target as sound ID
+        sqp, url = self.run_fake_search_query_processor(params={'similar_to': '1234'})  # Passing similarity target as sound ID
         self.assertExpectedParams(sqp.as_query_params(), {'similar_to': 1234})
-        sqp = self.run_fake_search_query_processor(params={'similar_to': '[1.34,3.56,5.78]'})  # Passing similarity target as sound ID
+        self.assertGetUrlAsExpected(sqp, url)
+        sqp, url = self.run_fake_search_query_processor(params={'similar_to': '[1.34,3.56,5.78]'})  # Passing similarity target as sound ID
         self.assertExpectedParams(sqp.as_query_params(), {'similar_to': [1.34, 3.56, 5.78]})
+        self.assertGetUrlAsExpected(sqp, url)
          
 
     def test_search_query_processor_disabled_options(self):
@@ -419,41 +458,49 @@ class SearchQueryProcessorTests(TestCase):
         # NOTE: disabled state is used when displaying the options in the UI, but has no other effects
         
         # sort if similarity on
-        sqp = self.run_fake_search_query_processor(params={'similar_to': '1234'})
+        sqp, _ = self.run_fake_search_query_processor(params={'similar_to': '1234'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionSort.name].disabled)
 
         # group_by_pack if display_as_packs or map_mode
-        sqp = self.run_fake_search_query_processor(params={'dp': '1'})
+        sqp, _ = self.run_fake_search_query_processor(params={'dp': '1'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionGroupByPack.name].disabled)
-        sqp = self.run_fake_search_query_processor(params={'mm': '1'})
+        sqp, _ = self.run_fake_search_query_processor(params={'mm': '1'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionGroupByPack.name].disabled)
 
         # display as packs if map_mode
-        sqp = self.run_fake_search_query_processor(params={'mm': '1'})
+        sqp, _ = self.run_fake_search_query_processor(params={'mm': '1'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionDisplayResultsAsPacks.name].disabled)
 
         # grid_mode if map_mode
-        sqp = self.run_fake_search_query_processor(params={'mm': '1'})
+        sqp, _ = self.run_fake_search_query_processor(params={'mm': '1'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionGridMode.name].disabled)
 
         # is_geotagged if map_mode
-        sqp = self.run_fake_search_query_processor(params={'mm': '1'})
+        sqp, _ = self.run_fake_search_query_processor(params={'mm': '1'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionIsGeotagged.name].disabled)
 
         # search_in if tags_mode or similar_to_mode
-        sqp = self.run_fake_search_query_processor(params={'similar_to': '1'})
+        sqp, _ = self.run_fake_search_query_processor(params={'similar_to': '1'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled)
-        sqp = self.run_fake_search_query_processor(params={'tm': '1'})
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled)
-        
+        sqp, _ = self.run_fake_search_query_processor(params={'tm': '1'})
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled)  
         
     def test_search_query_processor_tags_in_filter(self):
-        sqp = self.run_fake_search_query_processor(params={
+        sqp, _ = self.run_fake_search_query_processor(params={
             'f': 'duration:[0.25 TO 20] tag:"tag1" is_geotagged:1 (id:1 OR id:2 OR id:3) tag:"tag2" (tag:"tag3" OR tag:"tag4")',
         })
         self.assertEqual(sorted(sqp.get_tags_in_filter()), sorted(['tag1', 'tag2']))
 
-        sqp = self.run_fake_search_query_processor(params={
+        sqp, _ = self.run_fake_search_query_processor(params={
             'f': 'duration:[0.25 TO 20] is_geotagged:1 (id:1 OR id:2 OR id:3)',
         })
         self.assertEqual(sqp.get_tags_in_filter(), [])
+
+    def test_search_query_processor_make_url_add_remove_filters(self):
+        # Test add_filters adds them to the URL
+        sqp, _ = self.run_fake_search_query_processor()
+        self.assertEqual(sqp.get_url(add_filters=['tag:"tag1"']), '/search/?f=tag%3A%22tag1%22')
+
+        # Test remove_filters removes them from the URL
+        sqp, _ = self.run_fake_search_query_processor(params={'f': 'filter1:"aaa" filter2:123'})
+        self.assertEqual(sqp.get_url(remove_filters=['filter1:"aaa"', 'filter2:123']), '/search/')

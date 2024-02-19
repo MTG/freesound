@@ -1,10 +1,14 @@
+import json
+
 from django.conf import settings
+from django.urls import reverse
+from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 import luqum.tree
 from luqum.parser import parser
 from luqum.pretty import prettify
+
 from clustering.interface import get_ids_in_cluster
-import json
 
 
 class SearchOption(object):
@@ -60,6 +64,12 @@ class SearchOption(object):
     
     def get_value(self):
         return self.value
+    
+    def get_param_for_url(self):
+        return {self.query_param_name: self.get_value_for_url_param()}
+    
+    def get_value_for_url_param(self):
+        return self.get_value_for_filter()
     
 
 class SearchOptionBool(SearchOption):
@@ -154,6 +164,12 @@ class SearchOptionMultipleSelect(SearchOption):
             if option[0] in request.GET:
                 value.append(option[2])
         return value
+    
+    def get_param_for_url(self):
+        # Multiple-select are implemented using several URL params
+        value = self.get_value()
+        params = {query_option_name: '1' for query_option_name, _, option_name in self.options if option_name in value}
+        return params
 
     def html(self):
         html = '<ul class="bw-search__filter-value-list no-margins">'
@@ -184,6 +200,11 @@ class SearchOptionRange(SearchOption):
                 if self.query_param_max in request.GET:
                     value[1] = str(request.GET[self.query_param_max])
                 return value
+            
+    def get_param_for_url(self):
+        # Range is implemented using 2 URL params
+        value = self.get_value()
+        return {self.query_param_min: value[0], self.query_param_max: value[1]}
 
     def get_value_for_filter(self):
         return f'[{self.get_value()[0]} TO {self.get_value()[1]}]'
@@ -380,6 +401,14 @@ class SearchOptionFieldWeights(SearchOptionStr):
             return parsed_field_weights
         else:
             return None
+        
+    def get_value_for_url_param(self):
+        value_for_url = ''
+        for field, weight in self.get_value().items():
+            value_for_url += f'{field}:{weight},'
+        if value_for_url.endswith(','):
+            value_for_url = value_for_url[:-1]
+        return value_for_url
     
 
 # --- Search options for Freesound search page
@@ -480,18 +509,31 @@ class SearchQueryProcessor(object):
     def get_option_value(self, option_name):
         return self.options[option_name].get_value()
     
-    def render_filter(self):
-        # Returns properly formatetd filter string from all options and non-option filters
+    def render_filter_for_search_engine(self, include_filters_from_options=True, extra_filters=None, ignore_filters=None):
+        # Returns properly formatetd filter string from all options and non-option filters to be used in the search engine
         ff = []
-        for option in self.options.values():
-            fit = option.render_as_filter()
-            if fit is not None:
-                ff.append(fit)
-
+        if include_filters_from_options:
+            for option in self.options.values():
+                fit = option.render_as_filter()
+                if fit is not None:
+                    ff.append(fit)
         for non_option_filter in self.non_option_filters:
             ff.append(f'{non_option_filter[0]}:{non_option_filter[1]}')
 
+        # Remove ignored filters (filters to skip need to be properly formatted, e.g. ignore_filters=["tag:tagname"])
+        if ignore_filters is not None:
+            ff = [f for f in ff if f not in ignore_filters]
+
+        # Add extra filter (filters to add need to be properly formatted, e.g.  extra_filters=["tag:tagname"])
+        if extra_filters is not None:
+            ff += extra_filters
+
         return ' '.join(ff)  # TODO: return filters as a list of different filters to send to SOLR in multiple fq parameters (?)
+    
+    def render_filter_for_url(self, extra_filters=None, ignore_filters=None):
+        # Returns properly formatetd filter string for search URLs (e.g. pagintion) which does NOT include filters already represented
+        # by search options (it only includes facet filters and other filters that uers might have manually hacked into the URL)
+        return self.render_filter_for_search_engine(include_filters_from_options=False, extra_filters=extra_filters, ignore_filters=ignore_filters)
     
     def get_tags_in_filter(self):
         # Get tags taht are being used in filters (this is used later to remove them from the facet and also for tags mode)
@@ -554,7 +596,7 @@ class SearchQueryProcessor(object):
         return dict(
             textual_query=self.get_option_value(SearchOptionQuery.name), 
             query_fields=field_weights, 
-            query_filter=self.render_filter(),
+            query_filter=self.render_filter_for_search_engine(),
             field_list=['id', 'score'] if not self.get_option_value(SearchOptionMapMode.name) else ['id', 'score', 'geotag'],
             current_page=self.get_option_value(SearchOptionPage.name),
             num_sounds=num_sounds if not self.get_option_value(SearchOptionMapMode.name) else settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,  
@@ -566,6 +608,26 @@ class SearchQueryProcessor(object):
             only_sounds_within_ids=only_sounds_within_ids, 
             similar_to=similar_to
         )
+    
+    def get_url(self, add_filters=None, remove_filters=None):
+        parameters_to_add = {}
+        
+        # Add parameters from search options
+        for option in self.options.values():
+            if option.set_in_request:
+                parameters_to_add.update(option.get_param_for_url())
+        
+        # Add filter parameter
+        # Also pass extra filters to be added and/or filters to be removed when making the URL
+        filter_for_url = self.render_filter_for_url(extra_filters=add_filters, ignore_filters=remove_filters)
+        if filter_for_url:
+            parameters_to_add['f'] = filter_for_url
+        
+        encoded_params = urlencode(parameters_to_add)
+        if encoded_params:
+            return f'{reverse("sounds-search")}?{encoded_params}'
+        else:
+            return f'{reverse("sounds-search")}'
     
     def print(self):
         # Prints the SearchQueryProcessor object in a somewhat human readable format
@@ -583,3 +645,4 @@ class SearchQueryProcessor(object):
             print('non_option_filters:')
             for filter in self.non_option_filters:
                 print('-', f'{filter[0]}={filter[1]}')
+

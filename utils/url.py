@@ -19,6 +19,8 @@
 #
 
 from functools import wraps
+from urllib.parse import urlparse, parse_qsl, unquote_plus
+
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
@@ -41,3 +43,23 @@ def redirect_inline(function=None, redirect_url_name='front-page', kwarg_keys=No
             return HttpResponseRedirect(url)
         return _wrapped_view
     return decorator(function)
+
+
+class ComparableUrl(object):
+    '''A url object that can be compared with other url orbjects
+    without regard to the vagaries of encoding, escaping, and ordering
+    of parameters in query strings.'''
+    # NOTE: from https://stackoverflow.com/questions/5371992/comparing-two-urls-in-python
+
+    def __init__(self, url):
+        parts = urlparse(url)
+        _query = frozenset(parse_qsl(parts.query))
+        _path = unquote_plus(parts.path)
+        parts = parts._replace(query=_query, path=_path)
+        self.parts = parts
+
+    def __eq__(self, other):
+        return self.parts == other.parts
+
+    def __hash__(self):
+        return hash(self.parts)

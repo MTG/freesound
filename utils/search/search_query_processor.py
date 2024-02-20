@@ -75,6 +75,7 @@ class SearchOption(object):
 class SearchOptionBool(SearchOption):
     value_default = False
     query_param_name = None
+    only_active_if_not_default = True
     
     def value_from_request(self, request):
         if self.query_param_name is not None:
@@ -83,6 +84,15 @@ class SearchOptionBool(SearchOption):
             
     def get_value_for_filter(self):
         return '1' if self.get_value() else '0'
+    
+    def render_as_filter(self):
+        if self.only_active_if_not_default:
+            # If only_active_if_not_default is set, only render filter if value is different from the default
+            # Otherwise return None and the filter won't be added
+            if self.get_value() != self.value_default:
+                return super().render_as_filter()
+        else:
+            return super().render_as_filter()
 
     def html(self):
         return \

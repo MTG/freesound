@@ -376,7 +376,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'is_geotagged:1'})
         self.assertGetUrlAsExpected(sqp, url)
         sqp, url = self.run_fake_search_query_processor(params={'ig': '0'})
-        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'is_geotagged:0'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': ''})  # If geotagged option is 0, no filter should be added
         self.assertGetUrlAsExpected(sqp, url)
 
         # With remix filter
@@ -384,7 +384,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'in_remix_group:1'})
         self.assertGetUrlAsExpected(sqp, url)
         sqp, url = self.run_fake_search_query_processor(params={'r': '0'})
-        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'in_remix_group:0'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': ''})  # If remix option is 0, no filter should be added
         self.assertGetUrlAsExpected(sqp, url)
 
         # With group by pack option (defaults to True)

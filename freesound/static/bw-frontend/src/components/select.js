@@ -121,6 +121,10 @@ function makeSelect(container) {
     buttonElement.className = 'select-dropdown__button select-dropdown__button--' + i;
     buttonElement.setAttribute('data-value', '');
     buttonElement.setAttribute('type', 'button');
+    if (el.getAttribute('disabled') !== null){
+      buttonElement.setAttribute('disabled', 'disabled');
+      buttonElement.classList.add('opacity-020');
+    }
     spanElement.className = 'select-dropdown select-dropdown--' + i;
     iElement.className = 'zmdi bw-icon-chevron-up bw-select__chevron';
     ulElement.className = 'select-dropdown__list select-dropdown__list--' + i;

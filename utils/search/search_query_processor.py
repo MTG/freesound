@@ -633,7 +633,15 @@ class SearchQueryProcessor(object):
         # Returns true if query has any active options which belong to the "advanced search" panel
         # Also returns true if the query has active undocumented options which are not hidden in the advanced search panel but that
         # are allowed as "power user" options
-        non_advanced_search_option_names = [SearchOptionQuery.name, SearchOptionSort.name, SearchOptionPage.name, SearchOptionClusterId.name]
+        non_advanced_search_option_names = [
+            SearchOptionQuery.name, 
+            SearchOptionSort.name, 
+            SearchOptionPage.name, 
+            SearchOptionClusterId.name,
+            SearchOptionTagsMode.name,
+            SearchOptionDisplayResultsAsPacks.name,
+            SearchOptionMapMode.name,
+            SearchOptionGridMode.name]
         for option in self.options.values():
             if option.name not in non_advanced_search_option_names:
                 if option.set_in_request:

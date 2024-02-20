@@ -506,4 +506,83 @@ class SearchQueryProcessorTests(TestCase):
         self.assertEqual(sqp.get_url(remove_filters=['filter1:"aaa"', 'filter2:123']), '/search/')
 
     def test_earch_query_processor_contains_active_advanced_search_options(self):
-        pass # TODO
+         # Query with no params
+        sqp, _ = self.run_fake_search_query_processor()
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)
+        
+        # Empty query
+        sqp, _ = self.run_fake_search_query_processor(params={'q': ''})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)
+        
+        # Empty query with sorting specifyied
+        sqp, _ = self.run_fake_search_query_processor(params={'s': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)
+        
+        # Basic query with only text
+        sqp, _ = self.run_fake_search_query_processor(params={'q':'test'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)
+        
+        # With page number specified
+        sqp, _ = self.run_fake_search_query_processor(params={'p': '3'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)
+        
+        # With "search in" options specified
+        sqp, _ = self.run_fake_search_query_processor(params={'a_tag': '1', 'a_description': '1', 'a_soundid': '0'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), True)
+        
+        # With custom field weights specified
+        sqp, _ = self.run_fake_search_query_processor(params={'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), True)
+        
+        # With custom field weights specified AND search in
+        sqp, _ = self.run_fake_search_query_processor(params={'a_soundid': '1', 'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), True)
+
+        # With duration filter
+        sqp, _ = self.run_fake_search_query_processor(params={'d0': '0.25', 'd1': '2.05'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), True)
+        sqp, _ = self.run_fake_search_query_processor(params={'d0': '0', 'd1': '*'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # False if parameters are default
+        
+        # With geotag filter
+        sqp, _ = self.run_fake_search_query_processor(params={'ig': '1'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), True)
+        sqp, _ = self.run_fake_search_query_processor(params={'ig': '0'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # False if parameters are default
+        
+        # With remix filter
+        sqp, _ = self.run_fake_search_query_processor(params={'r': '1'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), True)
+        sqp, _ = self.run_fake_search_query_processor(params={'r': '0'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # False if parameters are default
+        
+        # With group by pack option (defaults to True)
+        sqp, _ = self.run_fake_search_query_processor(params={'g': '0'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), True)
+        sqp, _ = self.run_fake_search_query_processor(params={'g': '1'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # False if parameters are default
+
+         # With display results as packs option
+        sqp, _ = self.run_fake_search_query_processor(params={'dp': '1'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # Not considered an active filter
+        
+        # With compact mode option
+        sqp, _ = self.run_fake_search_query_processor(params={'cm': '1'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # Not considered an active filter
+        
+        # With map mode option
+        sqp, _ = self.run_fake_search_query_processor(params={'mm': '1'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # Not considered an active filter
+        
+        # With tags mode
+        sqp, _ = self.run_fake_search_query_processor(params={'tm': '1'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # Not considered an active filter
+        
+        # With cluster id
+        sqp, _ = self.run_fake_search_query_processor(params={'cid': '31'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # Clustering not an advanced search option
+        
+        # With similar to option
+        sqp, _ = self.run_fake_search_query_processor(params={'similar_to': '1234'})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), True)
+        

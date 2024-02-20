@@ -22,7 +22,6 @@ import datetime
 import json
 import logging
 import re
-import uuid
 import sentry_sdk
 from collections import defaultdict, Counter
 
@@ -44,9 +43,156 @@ from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
     split_filter_query, should_use_compact_mode, contains_active_advanced_search_filters
-from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator
+from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator, search_query_processor
 
 search_logger = logging.getLogger("search")
+
+
+def search_view_helper2(request):
+    sqp = search_query_processor.SearchQueryProcessor(request)
+    tvars = {'sqp': sqp}
+
+    # Check if there was a filter parsing error
+    if sqp.errors:
+        search_logger.info(f"Errors in SearchQueryProcessor: {sqp.errors}")
+        tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
+        return tvars
+
+    # Process tags mode stuff
+    initial_tagcloud = None
+    tags_in_filter = []
+    if sqp.tags_mode:
+        tags_in_filter = sqp.get_tags_in_filter()
+        if  not tags_in_filter:
+            # If no tags are in filter, we are "starting" tag-based browsing so display the initial tagcloud
+            initial_tagcloud = cache.get('initial_tagcloud')
+            if initial_tagcloud is None:
+                # If tagcloud is not cached, make a query to retrieve it and save it to cache
+                results, _ = perform_search_engine_query(dict(
+                    textual_query='',
+                    query_filter= "*:*",
+                    num_sounds=1,
+                    facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 100}},
+                    group_by_pack=True,
+                    group_counts_as_one_in_facets=False,
+                ))
+                initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
+                cache.set('initial_tagcloud', initial_tagcloud, 60 * 60 * 12)  # cache for 12 hours
+            return {
+                'tags_mode': True,
+                'tags_in_filter': tags_in_filter,
+                'initial_tagcloud': initial_tagcloud,
+            }
+
+    # Parpare variables for map view
+    open_in_map_url = None
+    map_mode_query_results_cache_key = None
+    map_bytearray_url = ''
+    if sqp.map_mode:
+        # Prepare some URLs for loading sounds and providing links to map
+        current_query_params = request.get_full_path().split("?")[-1]
+        open_in_map_url = reverse('geotags-query') + f'?{current_query_params}'
+        map_mode_query_results_cache_key = f'map-query-results-{create_hash(current_query_params, 10)}'
+        map_bytearray_url = reverse('geotags-for-query-barray') + f'?key={map_mode_query_results_cache_key}'
+
+    query_params = sqp.as_query_params()
+    tvars.update({
+        'error_text': None,        
+        'current_page': query_params['current_page'],
+        'initial_tagcloud': initial_tagcloud,
+        'tags_in_filter': tags_in_filter,
+        'has_advanced_search_settings_set': sqp.contains_active_advanced_search_options(),
+        'advanced_search_closed_on_load': settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD,
+        'compact_mode': sqp.grid_mode,  # TODO: when is grid mode preference updated?
+        'tags_mode': sqp.tags_mode,
+        'map_mode': sqp.map_mode,
+        'map_bytearray_url': map_bytearray_url,
+        'open_in_map_url': open_in_map_url,
+        'max_search_results_map_mode': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY
+    })
+    
+    try:    
+        results, paginator = perform_search_engine_query(query_params)
+        if not sqp.map_mode:
+            if not sqp.display_as_packs:
+                resultids = [d.get("id") for d in results.docs]
+                resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
+                allsounds = {}
+                for s in resultsounds:
+                    allsounds[s.id] = s
+                # allsounds will contain info from all the sounds returned by bulk_query_id. This should
+                # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
+                # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
+                # in docs that have not been loaded in allsounds.
+                docs = [doc for doc in results.docs if doc["id"] in allsounds]
+                for d in docs:
+                    d["sound"] = allsounds[d["id"]]
+            else:
+                resultspackids = []
+                sound_ids_for_pack_id = {}
+                for d in results.docs:
+                    pack_id = int(d.get("group_name").split('_')[0])
+                    resultspackids.append(pack_id)
+                    sound_ids_for_pack_id[pack_id] = [int(sound['id']) for sound in d.get('group_docs', [])]
+                resultpacks = sounds.models.Pack.objects.bulk_query_id(resultspackids, sound_ids_for_pack_id=sound_ids_for_pack_id)
+                allpacks = {}
+                for p in resultpacks:
+                    allpacks[p.id] = p
+                # allpacks will contain info from all the packs returned by bulk_query_id. This should
+                # be all packs in docs, but if solr and db are not synchronised, it might happen that there
+                # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
+                # in docs that have not been loaded in allsounds.
+                docs = [d for d in results.docs if int(d.get("group_name").split('_')[0]) in allpacks]
+                for d in docs:
+                    d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
+        else:
+            # In map we configure the search query to already return geotags data. Here we collect all this data
+            # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares
+            # data points for the map of sounds. 
+            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 5 minutes
+
+            # Nevertheless we set docs to empty list as we won't displat anything in the search results page (the map
+            # will make an extra request that will load the cached data and display it in the map)
+            docs = []
+
+        # TODO: improve logging to add relevant stuff
+        search_logger.info('Search (%s)' % json.dumps({
+            'ip': get_client_ip(request),
+            'query': query_params['textual_query'],
+            'filter': query_params['query_filter'],
+            'username': request.user.username,
+            'page': query_params['current_page'],
+            'sort': query_params['sort'],
+            'group_by_pack': query_params['group_by_pack'],
+            'advanced': sqp.contains_active_advanced_search_options(),
+            'query_time': results.q_time 
+        }))
+
+        # For the facets of fields that could have mulitple values (i.e. currently, only "tags" facet), make
+        # sure to remove the filters for the corresponding facet field that are already active (so we remove
+        # redundant information)
+        if tags_in_filter:
+            if 'tag' in results.facets:
+                results.facets['tag'] = [(tag, count) for tag, count in results.facets['tag'] if tag not in tags_in_filter]
+
+        tvars.update({
+            'paginator': paginator,
+            'page': paginator.page(query_params['current_page']),
+            'docs': docs,
+            'facets': results.facets,
+            'non_grouped_number_of_results': results.non_grouped_number_of_results,
+        })
+
+    except SearchEngineException as e:
+        search_logger.info(f'Search error: query: {str(query_params)} error {e}')
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
+    except Exception as e:
+        search_logger.info(f'Could probably not connect to Solr - {e}')
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
+
+    return tvars
 
 
 def search_view_helper(request, tags_mode=False):
@@ -119,7 +265,7 @@ def search_view_helper(request, tags_mode=False):
     # Parpare variables for map view
     disable_display_results_in_grid_option = False
     map_bytearray_url = ''
-    use_map_mode = settings.SEARCH_ALLOW_DISPLAY_RESULTS_IN_MAP and request.GET.get("mm", "0") == "1"
+    use_map_mode = request.GET.get("mm", "0") == "1"
     map_mode_query_results_cache_key = None
     open_in_map_url = None
     if use_map_mode:
@@ -162,7 +308,6 @@ def search_view_helper(request, tags_mode=False):
         'tags_in_filter': tags_in_filter,
         'has_advanced_search_settings_set': contains_active_advanced_search_filters(request, query_params, extra_vars),
         'advanced_search_closed_on_load': settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD,
-        'allow_map_mode': settings.SEARCH_ALLOW_DISPLAY_RESULTS_IN_MAP,
         'use_map_mode': use_map_mode,
         'map_bytearray_url': map_bytearray_url,
         'open_in_map_url': open_in_map_url,
@@ -255,9 +400,11 @@ def search_view_helper(request, tags_mode=False):
 
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
 def search(request):
-    tvars = search_view_helper(request, tags_mode=False)
-    template = 'search/search.html' if request.GET.get("ajax", "") != "1" else 'search/search_ajax.html'
-    return render(request, template, tvars)
+    #tvars = search_view_helper2(request, tags_mode=False)
+    #return render(request, 'search/search2.html', tvars)
+
+    tvars = search_view_helper2(request)
+    return render(request, 'search/search2.html', tvars)
 
 
 def clustering_facet(request):

@@ -14,7 +14,7 @@ from clustering.interface import get_ids_in_cluster
 class SearchOption(object):
     request = None
     name = 'option'
-    label_name = 'Option'
+    label = 'Option'
     help_text = ''
     set_in_request = None
     disabled = False
@@ -48,12 +48,6 @@ class SearchOption(object):
     def get_default_value(self, request):
         return self.value_default
     
-    def html(self):
-        raise NotImplementedError 
-    
-    def render(self):
-        return mark_safe(self.html())
-    
     def get_value_for_filter(self):
         return f'{self.get_value()}'
     
@@ -71,6 +65,9 @@ class SearchOption(object):
     def get_value_for_url_param(self):
         return self.get_value_for_filter()
     
+    def is_default_value(self):
+        return self.get_value() == self.value_default
+    
 
 class SearchOptionBool(SearchOption):
     value_default = False
@@ -80,7 +77,7 @@ class SearchOptionBool(SearchOption):
     def value_from_request(self, request):
         if self.query_param_name is not None:
             if self.query_param_name in request.GET:
-                return request.GET.get(self.query_param_name) == '1'
+                return request.GET.get(self.query_param_name) == '1' or request.GET.get(self.query_param_name) == 'on'
             
     def get_value_for_filter(self):
         return '1' if self.get_value() else '0'
@@ -89,19 +86,10 @@ class SearchOptionBool(SearchOption):
         if self.only_active_if_not_default:
             # If only_active_if_not_default is set, only render filter if value is different from the default
             # Otherwise return None and the filter won't be added
-            if self.get_value() != self.value_default:
+            if not self.is_default_value():
                 return super().render_as_filter()
         else:
             return super().render_as_filter()
-
-    def html(self):
-        return \
-        f'''<label class="between w-100 {'opacity-020' if self.disabled else ''}" title="{self.help_text}">
-            <div class="bw-search__filter-checkbox bw-checkbox-label">
-                <input id="filter_{self.name}" type="checkbox" class="bw-checkbox" {'checked' if self.get_value() else ''} {'disabled' if self.disabled else ''}>
-            </div>
-            <div class="bw-search__filter-name">{self.label}</div>
-        </label>'''
 
 
 class SearchOptionInt(SearchOption):
@@ -113,17 +101,6 @@ class SearchOptionInt(SearchOption):
             if self.query_param_name in request.GET:
                 return int(request.GET.get(self.query_param_name))
 
-    def html(self):
-        return \
-        f'''<div>
-            <div class="bw-search__filter-section-name caps text-light-grey between">
-                <span>{self.label_name}</span>
-            </div>
-            <div class="bw-search__filter-tags-list bw-search__filter-range">
-                <input id="filter_{self.name}" class="bw-search_input-range v-spacing-1" type="text" value="{self.get_value()}">
-            </div>
-        </div>'''
-    
 
 class SearchOptionStr(SearchOption):
     value_default = ''
@@ -133,17 +110,6 @@ class SearchOptionStr(SearchOption):
         if self.query_param_name is not None:
             if self.query_param_name in request.GET:
                 return request.GET.get(self.query_param_name)
-
-    def html(self):
-        return \
-        f'''<div>
-            <div class="bw-search__filter-section-name caps text-light-grey between">
-                <span>{self.label_name}</span>
-            </div>
-            <div class="bw-search__filter-tags-list">
-                <input id="filter_{self.name}" class="v-spacing-1" type="text" value="{self.get_value()}">
-            </div>
-        </div>'''
 
 
 class SearchOptionSelect(SearchOption):
@@ -156,13 +122,6 @@ class SearchOptionSelect(SearchOption):
             if self.query_param_name in request.GET:
                 return request.GET.get(self.query_param_name)
 
-    def html(self):
-        html = f'<select name="{self.name}" id="{self.name}">'
-        for option in self.options:
-            html += f'<option value="{option[1]}" {"selected" if option[1] == self.get_value() else ""}>{option[0]}</option>'
-        html += '</select>'
-        return html
-
 
 class SearchOptionMultipleSelect(SearchOption):
     value_default = []
@@ -172,7 +131,8 @@ class SearchOptionMultipleSelect(SearchOption):
         value = []
         for option in self.options:
             if option[0] in request.GET:
-                value.append(option[2])
+                if request.GET.get(option[0]) == '1' or request.GET.get(option[0]) == 'on':
+                    value.append(option[2])
         return value
     
     def get_param_for_url(self):
@@ -180,21 +140,13 @@ class SearchOptionMultipleSelect(SearchOption):
         value = self.get_value()
         params = {query_option_name: '1' for query_option_name, _, option_name in self.options if option_name in value}
         return params
-
-    def html(self):
-        html = '<ul class="bw-search__filter-value-list no-margins">'
+    
+    def get_options_annotated_with_selection(self):
+        options = []
         for option in self.options:
-            html += f'''<li class="bw-search__filter-value v-padding-1">
-                            <label class="between w-100">
-                                <div class="bw-search__filter-checkbox">
-                                    <input type="checkbox" class="bw-checkbox" name="{option[0]}  {'checked' if self.get_value() else ''}  {'disabled' if self.disabled else ''}/>
-                                </div>
-                                <div class="bw-search__filter-name">{option[1]}</div>
-                            </label>
-                        </li>'''
-        html += '</ul>'
-        return html
-
+            options.append((option[0], option[1], option[2], option[2] in self.get_value()))
+        return options
+    
 
 class SearchOptionRange(SearchOption):
     value_default = ['*', '*']
@@ -219,17 +171,6 @@ class SearchOptionRange(SearchOption):
     def get_value_for_filter(self):
         return f'[{self.get_value()[0]} TO {self.get_value()[1]}]'
 
-    def html(self):
-        return \
-        f'''<div>
-            <div class="bw-search__filter-section-name caps text-light-grey between">
-                <span>{self.label_name}</span>
-            </div>
-            <div class="bw-search__filter-tags-list bw-search__filter-range">
-                <input id="filter_{self.name}_min" class="bw-search_input-range v-spacing-1" type="text" value="{self.get_value()[0]}"> - <input id="filter_{self.name}_max" class="bw-search_input-range" type="text" value="{self.get_value()[1]}"> <span>seconds</span>
-            </div>
-        </div>'''
-    
 
 # --- Search options for Freesound search page
 
@@ -237,10 +178,13 @@ class SearchOptionQuery(SearchOptionStr):
     name = 'query'
     query_param_name = 'q'
 
+    def should_be_disabled(self):
+        return bool(self.search_query_processor.get_option_value(SearchOptionSimilarTo.name))
+
 
 class SearchOptionSort(SearchOptionSelect):
     name = 'sort_by'
-    label_name = 'Sort by'
+    label = 'Sort by'
     value_default = settings.SEARCH_SOUNDS_SORT_DEFAULT
     options = [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB]
     query_param_name = 's'
@@ -270,7 +214,7 @@ class SearchOptionPage(SearchOptionInt):
 
 class SearchOptionDuration(SearchOptionRange):
     name = 'duration'
-    label_name = 'Duration'
+    label = 'Duration'
     search_engine_field_name = 'duration'
     query_param_min = 'd0'
     query_param_max = 'd1'
@@ -354,7 +298,7 @@ class SearchOptionIsGeotagged(SearchOptionBool):
 class SearchOptionSimilarTo(SearchOptionStr):
     # NOTE: implement this as SearchOptionStr instead of SearchOptionInt so it supports using vectors in format [x0,x1,x2,...,xn]
     name= 'similar_to'
-    query_param_name = 'similar_to'
+    query_param_name = 'st'
 
 
 class SearchOptionTagsMode(SearchOptionBool):
@@ -369,6 +313,7 @@ class SearchOptionClusterId(SearchOptionInt):
 
 class SearchOptionSearchIn(SearchOptionMultipleSelect):
     name = 'search_in'
+    label = 'Search in'
     value_default = []
     options = [
         ('a_tag', 'Tags', settings.SEARCH_SOUNDS_FIELD_TAGS),
@@ -376,7 +321,7 @@ class SearchOptionSearchIn(SearchOptionMultipleSelect):
         ('a_description', 'Description', settings.SEARCH_SOUNDS_FIELD_DESCRIPTION),
         ('a_packname', 'Pack name', settings.SEARCH_SOUNDS_FIELD_PACK_NAME),
         ('a_soundid', 'Sound ID', settings.SEARCH_SOUNDS_FIELD_ID),
-        ('a_username', 'username', settings.SEARCH_SOUNDS_FIELD_USER_NAME)
+        ('a_username', 'Username', settings.SEARCH_SOUNDS_FIELD_USER_NAME)
     ]
     
     def should_be_disabled(self):
@@ -443,7 +388,7 @@ class SearchQueryProcessor(object):
         SearchOptionFieldWeights,
         SearchOptionClusterId
     ]
-    filter_parsing_error = ''
+    errors = ''
 
     def __init__(self, request):
         self.request = request
@@ -458,7 +403,7 @@ class SearchQueryProcessor(object):
                 else:
                     self.f_parsed = f_parsed.children
             except luqum.exceptions.ParseError as e:
-                self.filter_parsing_error = str(e)
+                self.errors = f"Filter parsing error: {e}"
                 self.f_parsed = []
         else:
             self.f_parsed = []
@@ -624,7 +569,7 @@ class SearchQueryProcessor(object):
         
         # Add parameters from search options
         for option in self.options.values():
-            if option.set_in_request:
+            if option.set_in_request and not option.is_default_value():
                 parameters_to_add.update(option.get_param_for_url())
         
         # Add filter parameter
@@ -655,19 +600,34 @@ class SearchQueryProcessor(object):
         for option in self.options.values():
             if option.name not in non_advanced_search_option_names:
                 if option.set_in_request:
-                    if option.get_value() != option.value_default:
+                    if not option.is_default_value():
                         return True
-        return False                    
+        return False
+
+    @property
+    def tags_mode(self):
+        return self.get_option_value(SearchOptionTagsMode.name)
+
+    @property
+    def map_mode(self):
+        return self.get_option_value(SearchOptionMapMode.name)
+
+    @property
+    def grid_mode(self):
+        return self.get_option_value(SearchOptionGridMode.name)
+
+    @property
+    def display_as_packs(self):
+        return self.get_option_value(SearchOptionDisplayResultsAsPacks.name)     
     
     def print(self):
         # Prints the SearchQueryProcessor object in a somewhat human readable format
         print('\nSEARCH QUERY')
-        if not self.filter_parsing_error:
-            print('f_parsed:')
-            print(prettify(self.f_parsed))
-        else:
-            print('f_parsed error:')
-            print(self.filter_parsing_error)
+        print('f_parsed:')
+        print(prettify(self.f_parsed))
+        if self.errors:
+            print('errors:')
+            print(self.errors)
         print('options:')
         for option in self.options.values():
             print('-', option)

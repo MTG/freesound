@@ -102,7 +102,7 @@
                     <div class="v-padding-2 between">
                         <input id="advanced_search_hidden" type="hidden" name="advanced" value="{% if advanced == "1" and not advanced_search_closed_on_load %}1{% else %}0{% endif %}" />
                         
-                        <div class="col-md-4 bw-search__advanced-search-filter-section">
+                        <div class="col-md-4">
                             <div class="bw-search__filter-section-name caps text-light-grey between">
                                 <span>Search in</span>
                             </div>
@@ -166,7 +166,7 @@
                             </div>
                         </div>
                         
-                        <div class="col-md-4 bw-search__advanced-search-filter-section">
+                        <div class="col-md-4">
                             <div class="bw-search__filter-section-name caps text-light-grey between">
                                 <span>Duration</span>
                             </div>
@@ -175,7 +175,7 @@
                             </div>
                         </div>
                         
-                        <div class="col-md-4 bw-search__advanced-search-filter-section">
+                        <div class="col-md-4">
                             <div class="bw-search__filter-section-name caps text-light-grey between">
                                 <span>Other</span>
                             </div>
@@ -223,7 +223,6 @@
                                         <div class="bw-search__filter-name">Display results in grid</div>
                                     </label>
                                 </li>
-                                {% if allow_map_mode %}
                                 <li class="bw-search__filter-value v-padding-1">
                                     <label class="between w-100" title="Display search results in a map">
                                         <div class="bw-search__filter-checkbox">
@@ -233,7 +232,6 @@
                                         <div class="bw-search__filter-name">Display results in map</div>
                                     </label>
                                 </li>
-                                {% endif %}
                             </ul>
                         </div>
                     </div>

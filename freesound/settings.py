@@ -648,7 +648,6 @@ SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = FSDSINET_ANALYZER_NAME
 SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY = 500
 USE_SEARCH_ENGINE_SIMILARITY = False
 
-SEARCH_ALLOW_DISPLAY_RESULTS_IN_MAP = True
 MAX_SEARCH_RESULTS_IN_MAP_DISPLAY = 10000  # This is the maximum number of sounds that will be shown when using "display results in map" mode
 
 # -------------------------------------------------------------------------------

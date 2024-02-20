@@ -56,15 +56,6 @@
   }
 }
 
-.bw-search__advanced-search-filter-section {
-
-  padding-top: $small-spacing;
-
-  .bw-search__filter-section-name > span {
-    font-size: 18px;
-  }
-}
-
 .bw-search__player-small {
   flex: 0 0 120px;
 }
@@ -159,7 +150,7 @@
     background-color: $background-input;
     border-radius: 5px;
     font-size: 14px;
-    max-width: 85px;
+    max-width: 65px;
 
     &::-webkit-calendar-picker-indicator {
       display: none;

@@ -319,10 +319,10 @@ class SearchQueryProcessorTests(TestCase):
         self.assertExpectedParams(sqp.as_query_params())
         self.assertGetUrlAsExpected(sqp, url)
 
-        # Empty query with sorting specifyied, will sort as indicated
-        sqp, url = self.run_fake_search_query_processor(params={'s': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
+        # Empty query with sorting specified, will sort as indicated
+        sqp, _ = self.run_fake_search_query_processor(params={'s': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
         self.assertExpectedParams(sqp.as_query_params(), {'sort': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
-        self.assertGetUrlAsExpected(sqp, url)
+        self.assertGetUrlAsExpected(sqp, '/search/')
 
         # Basic query with only text, results should be sorted by score
         sqp, url = self.run_fake_search_query_processor(params={'q':'test'})
@@ -336,14 +336,12 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
 
         # With "search in" options specified
-        # Note that the value of the "a_*" parameters is not important, only the presence of the parameter is checked
         sqp, url = self.run_fake_search_query_processor(params={'a_tag': '1', 'a_description': '1', 'a_soundid': '0'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_fields': {
             settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_DESCRIPTION], 
-            settings.SEARCH_SOUNDS_FIELD_ID: settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_ID], 
             settings.SEARCH_SOUNDS_FIELD_TAGS: settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_TAGS]
         }})
-        self.assertGetUrlAsExpected(sqp, url.replace('a_soundid=0', 'a_soundid=1'))  # Here we modify the expected URL because sqp.get_url() will set '1' for all present "search in" fields
+        self.assertGetUrlAsExpected(sqp, url.replace('a_soundid=0', ''))  # Here we remove a_soundid from the expected URL because sqp.get_url() will exclude it as value is not '1'
 
         # With custom field weights specified
         sqp, url = self.run_fake_search_query_processor(params={'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
@@ -377,7 +375,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
         sqp, url = self.run_fake_search_query_processor(params={'ig': '0'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_filter': ''})  # If geotagged option is 0, no filter should be added
-        self.assertGetUrlAsExpected(sqp, url)
+        self.assertGetUrlAsExpected(sqp, '/search/')  # URL should not include ig=0 as this is the default value
 
         # With remix filter
         sqp, url = self.run_fake_search_query_processor(params={'r': '1'})
@@ -385,12 +383,12 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
         sqp, url = self.run_fake_search_query_processor(params={'r': '0'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_filter': ''})  # If remix option is 0, no filter should be added
-        self.assertGetUrlAsExpected(sqp, url)
+        self.assertGetUrlAsExpected(sqp, '/search/')  # URL should not include r=0 as this is the default value
 
         # With group by pack option (defaults to True)
         sqp, url = self.run_fake_search_query_processor(params={'g': '1'})
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': True})
-        self.assertGetUrlAsExpected(sqp, url)
+        self.assertGetUrlAsExpected(sqp, '/search/')  # URL should not include g=1 as this is the default value
         sqp, url = self.run_fake_search_query_processor(params={'g': '0'})
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': False})
         self.assertGetUrlAsExpected(sqp, url)
@@ -404,7 +402,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
         sqp, url = self.run_fake_search_query_processor(params={'dp': '1', 'g': '0'}) # When display packs is enabled, always group by pack
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': True, 'only_sounds_with_pack': True, 'num_sounds_per_pack_group': 3})
-        self.assertGetUrlAsExpected(sqp, url.replace('g=0', 'g=1'))  # Replace 'g' option as 'dp' will force 'g' to be 1
+        self.assertGetUrlAsExpected(sqp, url.replace('&g=0', ''))  # Remove 'g' option as 'dp' will force it to be default and it will not be included in URL
 
         # With compact mode option
         sqp, url = self.run_fake_search_query_processor(params={'cm': '1'})
@@ -428,7 +426,7 @@ class SearchQueryProcessorTests(TestCase):
                                                           'num_sounds': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,
                                                           'query_filter': 'is_geotagged:1',
                                                           'field_list': ['id', 'score', 'geotag']})
-        self.assertGetUrlAsExpected(sqp, url.replace('p=3', 'p=1'))  # Replace 'p' option as 'mm' will force 'p' to be 1
+        self.assertGetUrlAsExpected(sqp, url.replace('p=3', ''))  # Remove 'p' option as 'mm' will force 'p' to be a default value and it will not be included in URL
         
         # With tags mode
         sqp, url = self.run_fake_search_query_processor(params={'tm': '1'})
@@ -445,10 +443,10 @@ class SearchQueryProcessorTests(TestCase):
             self.assertGetUrlAsExpected(sqp, url)
 
         # With similar to option
-        sqp, url = self.run_fake_search_query_processor(params={'similar_to': '1234'})  # Passing similarity target as sound ID
+        sqp, url = self.run_fake_search_query_processor(params={'st': '1234'})  # Passing similarity target as sound ID
         self.assertExpectedParams(sqp.as_query_params(), {'similar_to': 1234})
         self.assertGetUrlAsExpected(sqp, url)
-        sqp, url = self.run_fake_search_query_processor(params={'similar_to': '[1.34,3.56,5.78]'})  # Passing similarity target as sound ID
+        sqp, url = self.run_fake_search_query_processor(params={'st': '[1.34,3.56,5.78]'})  # Passing similarity target as sound ID
         self.assertExpectedParams(sqp.as_query_params(), {'similar_to': [1.34, 3.56, 5.78]})
         self.assertGetUrlAsExpected(sqp, url)
          
@@ -457,8 +455,12 @@ class SearchQueryProcessorTests(TestCase):
         # Test that some search options are marked as disabled depending on the state of some other options
         # NOTE: disabled state is used when displaying the options in the UI, but has no other effects
         
+        # query if similarity on
+        sqp, _ = self.run_fake_search_query_processor(params={'st': '1234'})
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionQuery.name].disabled)
+        
         # sort if similarity on
-        sqp, _ = self.run_fake_search_query_processor(params={'similar_to': '1234'})
+        sqp, _ = self.run_fake_search_query_processor(params={'st': '1234'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionSort.name].disabled)
 
         # group_by_pack if display_as_packs or map_mode
@@ -480,7 +482,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertTrue(sqp.options[search_query_processor.SearchOptionIsGeotagged.name].disabled)
 
         # search_in if tags_mode or similar_to_mode
-        sqp, _ = self.run_fake_search_query_processor(params={'similar_to': '1'})
+        sqp, _ = self.run_fake_search_query_processor(params={'st': '1'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled)
         sqp, _ = self.run_fake_search_query_processor(params={'tm': '1'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled)  
@@ -583,6 +585,6 @@ class SearchQueryProcessorTests(TestCase):
         self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # Clustering not an advanced search option
         
         # With similar to option
-        sqp, _ = self.run_fake_search_query_processor(params={'similar_to': '1234'})
+        sqp, _ = self.run_fake_search_query_processor(params={'st': '1234'})
         self.assertEqual(sqp.contains_active_advanced_search_options(), True)
         

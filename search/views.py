@@ -127,6 +127,12 @@ def search_view_helper2(request):
                 docs = [doc for doc in results.docs if doc["id"] in allsounds]
                 for d in docs:
                     d["sound"] = allsounds[d["id"]]
+
+                # Add URLs to "more from this pack" in the result object so these are easily accessible in the template
+                for d in docs:
+                    if d.get("n_more_in_group") and d["sound"].pack_id is not None:
+                        d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'grouping_pack:"{d["sound"].pack_id}_{d["sound"].pack_name}"'])
+
             else:
                 resultspackids = []
                 sound_ids_for_pack_id = {}
@@ -145,6 +151,7 @@ def search_view_helper2(request):
                 docs = [d for d in results.docs if int(d.get("group_name").split('_')[0]) in allpacks]
                 for d in docs:
                     d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
+                    d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'grouping_pack:"{d["pack"].id}_{d["pack"].name}"'])
         else:
             # In map we configure the search query to already return geotags data. Here we collect all this data
             # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares

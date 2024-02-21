@@ -50,6 +50,9 @@ class SearchOption(object):
     
     def get_value_for_filter(self):
         return f'{self.get_value()}'
+
+    def get_value_for_url_param(self):
+        return f'{self.value}'
     
     def render_as_filter(self):
         if self.search_engine_field_name is not None:
@@ -62,11 +65,8 @@ class SearchOption(object):
     def get_param_for_url(self):
         return {self.query_param_name: self.get_value_for_url_param()}
     
-    def get_value_for_url_param(self):
-        return self.get_value_for_filter()
-    
     def is_default_value(self):
-        return self.get_value() == self.value_default
+        return self.value == self.value_default
     
 
 class SearchOptionBool(SearchOption):
@@ -81,6 +81,9 @@ class SearchOptionBool(SearchOption):
             
     def get_value_for_filter(self):
         return '1' if self.get_value() else '0'
+    
+    def get_value_for_url_param(self):
+        return '1' if self.value else '0'
     
     def render_as_filter(self):
         if self.only_active_if_not_default:
@@ -171,6 +174,9 @@ class SearchOptionRange(SearchOption):
     def get_value_for_filter(self):
         return f'[{self.get_value()[0]} TO {self.get_value()[1]}]'
 
+    def get_value_for_url_param(self):
+        return f'[{self.value[0]} TO {self.value[1]}]'
+
 
 # --- Search options for Freesound search page
 
@@ -202,7 +208,7 @@ class SearchOptionSort(SearchOptionSelect):
 
 class SearchOptionPage(SearchOptionInt):
     name= 'page'
-    query_param_name = 'p'
+    query_param_name = 'page'
     value_default = 1
 
     def get_value(self):
@@ -238,14 +244,18 @@ class SearchOptionGroupByPack(SearchOptionBool):
 
     def get_value(self):
         # Force return True if display_as_packs is enabled, and False if map_mode is enabled
-        if self.search_query_processor.get_option_value(SearchOptionDisplayResultsAsPacks.name):
+        if self.search_query_processor.has_filter_with_name('grouping_pack'):
+            return False
+        elif self.search_query_processor.get_option_value(SearchOptionDisplayResultsAsPacks.name):
             return True
         elif self.search_query_processor.get_option_value(SearchOptionMapMode.name):
             return False
         return super().get_value()
 
     def should_be_disabled(self):
-        return self.search_query_processor.get_option_value(SearchOptionDisplayResultsAsPacks.name) or self.search_query_processor.get_option_value(SearchOptionMapMode.name)
+        return self.search_query_processor.has_filter_with_name('grouping_pack') or \
+            self.search_query_processor.get_option_value(SearchOptionDisplayResultsAsPacks.name) or \
+            self.search_query_processor.get_option_value(SearchOptionMapMode.name)
 
 
 class SearchOptionDisplayResultsAsPacks(SearchOptionBool):
@@ -254,8 +264,14 @@ class SearchOptionDisplayResultsAsPacks(SearchOptionBool):
     query_param_name = 'dp'
     help_text= 'Display search results as packs rather than individual sounds'
 
+    def get_value(self):
+        # Force return False if a pack filter is active
+        if self.search_query_processor.has_filter_with_name('grouping_pack'):
+            return False
+        return super().get_value()
+
     def should_be_disabled(self):
-        return self.search_query_processor.get_option_value(SearchOptionMapMode.name)
+        return self.search_query_processor.has_filter_with_name('grouping_pack') or self.search_query_processor.get_option_value(SearchOptionMapMode.name)
 
 
 class SearchOptionGridMode(SearchOptionBool):
@@ -407,6 +423,15 @@ class SearchQueryProcessor(object):
                 self.f_parsed = []
         else:
             self.f_parsed = []
+       
+        # Remove duplicate filters if any
+        nodes_in_filter = []
+        f_parsed_no_duplicates = []
+        for node in self.f_parsed:
+            if node not in nodes_in_filter:
+                nodes_in_filter.append(node)
+                f_parsed_no_duplicates.append(node)
+        self.f_parsed = f_parsed_no_duplicates
 
         # Compatibilty with old URLs in which duration/is remix/is geotagged were passed as raw filters
         # If any of these filters are present, we parse them to get their values and modify the request to simulate 
@@ -499,6 +524,28 @@ class SearchQueryProcessor(object):
                     value = value[1:-1]  # Remove quotes
                 tags_in_filter.append(value)
         return tags_in_filter
+
+    def has_filter_with_name(self, filter_name):
+        for node in self.f_parsed:
+            if type(node) == luqum.tree.SearchField:
+                if node.name == filter_name:
+                    return True
+        return False
+    
+    def get_non_option_filters_for_search_results_page(self):
+        filters_data = []
+        for name, value in self.non_option_filters:
+            filter_data = [name, value, self.get_url(remove_filters=[f'{name}:{value}'])]
+            if name == 'grouping_pack':
+                # There is a special case for the grouping_pack filter in which we only want to display the name of the pack and not the ID
+                filter_data[0] = 'pack'
+                if value.startswith('"'):
+                    filter_data[1] = '"'+ value.split('_')[1]
+                else:
+                    filter_data[1] = value.split('_')[1]
+
+            filters_data.append(filter_data)
+        return filters_data
  
     def as_query_params(self):
 
@@ -577,12 +624,11 @@ class SearchQueryProcessor(object):
         filter_for_url = self.render_filter_for_url(extra_filters=add_filters, ignore_filters=remove_filters)
         if filter_for_url:
             parameters_to_add['f'] = filter_for_url
-        
         encoded_params = urlencode(parameters_to_add)
         if encoded_params:
             return f'{reverse("sounds-search")}?{encoded_params}'
         else:
-            return f'{reverse("sounds-search")}'
+            return f'{reverse("sounds-search")}'    
         
     def contains_active_advanced_search_options(self):
         # Returns true if query has any active options which belong to the "advanced search" panel

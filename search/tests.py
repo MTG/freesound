@@ -331,7 +331,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
         
         # With page number specified
-        sqp, url = self.run_fake_search_query_processor(params={'p': '3'})
+        sqp, url = self.run_fake_search_query_processor(params={'page': '3'})
         self.assertExpectedParams(sqp.as_query_params(), {'current_page': 3})
         self.assertGetUrlAsExpected(sqp, url)
 
@@ -402,7 +402,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
         sqp, url = self.run_fake_search_query_processor(params={'dp': '1', 'g': '0'}) # When display packs is enabled, always group by pack
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': True, 'only_sounds_with_pack': True, 'num_sounds_per_pack_group': 3})
-        self.assertGetUrlAsExpected(sqp, url.replace('&g=0', ''))  # Remove 'g' option as 'dp' will force it to be default and it will not be included in URL
+        self.assertGetUrlAsExpected(sqp, url)
 
         # With compact mode option
         sqp, url = self.run_fake_search_query_processor(params={'cm': '1'})
@@ -421,12 +421,12 @@ class SearchQueryProcessorTests(TestCase):
                                                           'query_filter': 'is_geotagged:1',
                                                           'field_list': ['id', 'score', 'geotag']})
         self.assertGetUrlAsExpected(sqp, url)
-        sqp, url = self.run_fake_search_query_processor(params={'mm': '1', 'p': '3'})  # Page number in map mode is always 1
+        sqp, url = self.run_fake_search_query_processor(params={'mm': '1', 'page': '3'})  # Page number in map mode is always 1
         self.assertExpectedParams(sqp.as_query_params(), {'group_by_pack': False, 
                                                           'num_sounds': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,
                                                           'query_filter': 'is_geotagged:1',
                                                           'field_list': ['id', 'score', 'geotag']})
-        self.assertGetUrlAsExpected(sqp, url.replace('p=3', ''))  # Remove 'p' option as 'mm' will force 'p' to be a default value and it will not be included in URL
+        self.assertGetUrlAsExpected(sqp, url)
         
         # With tags mode
         sqp, url = self.run_fake_search_query_processor(params={'tm': '1'})
@@ -448,6 +448,11 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
         sqp, url = self.run_fake_search_query_processor(params={'st': '[1.34,3.56,5.78]'})  # Passing similarity target as sound ID
         self.assertExpectedParams(sqp.as_query_params(), {'similar_to': [1.34, 3.56, 5.78]})
+        self.assertGetUrlAsExpected(sqp, url)
+
+        # Using a pack filter, sounds should not be grouped by pack
+        sqp, url = self.run_fake_search_query_processor(params={'f': 'grouping_pack:"19894_Clutter"'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'grouping_pack:"19894_Clutter"', 'group_by_pack': False})
         self.assertGetUrlAsExpected(sqp, url)
          
 
@@ -485,7 +490,12 @@ class SearchQueryProcessorTests(TestCase):
         sqp, _ = self.run_fake_search_query_processor(params={'st': '1'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled)
         sqp, _ = self.run_fake_search_query_processor(params={'tm': '1'})
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled)  
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled) 
+
+        # group_by_pack and display_as_packs if filter contains a pack
+        sqp, _ = self.run_fake_search_query_processor(params={'f': 'grouping_pack:"19894_Clutter"'})
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionGroupByPack.name].disabled) 
+        self.assertTrue(sqp.options[search_query_processor.SearchOptionDisplayResultsAsPacks.name].disabled) 
         
     def test_search_query_processor_tags_in_filter(self):
         sqp, _ = self.run_fake_search_query_processor(params={
@@ -525,7 +535,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertEqual(sqp.contains_active_advanced_search_options(), False)
         
         # With page number specified
-        sqp, _ = self.run_fake_search_query_processor(params={'p': '3'})
+        sqp, _ = self.run_fake_search_query_processor(params={'page': '3'})
         self.assertEqual(sqp.contains_active_advanced_search_options(), False)
         
         # With "search in" options specified

@@ -224,53 +224,22 @@
         </div>
         {% comment %}facets{% endcomment%}
         <aside class="col-md-4 col-lg-3 collapsable-block md-max-h-100" id="collapsable-filters">
-            {% comment %}
             {% if tags_mode %}
-            {% if facets.tag and facets.tag|length > 1 %}
-            {% display_facet "tag" facets.tag "cloud" "Add Related Tags" %}
+            {% display_facet2 "tag" %}
             {% endif %}
-            {% endif %}
-            
-            {% if facets.license and facets.license|length > 1 %}
-            {% display_facet "license" facets.license "list" "Licenses" %}
-            {% endif %}
-            
+            {% display_facet2 "license" %}
             {% if not tags_mode %}
-            {% if facets.tag and facets.tag|length > 1 %}
-            {% display_facet "tag" facets.tag "cloud" "Related Tags" %}
+            {% display_facet2 "tag" %}
             {% endif %}
-            {% endif %}
-            
-            {% if facets.type and facets.type|length > 1 %}
-            {% display_facet "type" facets.type "list" "Type" %}
-            {% endif %}
-            
-            {% if facets.samplerate and facets.samplerate|length > 1 %}
-            {% display_facet "samplerate" facets.samplerate "list" "Samplerate" %}
-            {% endif %}
-            
-            {% if facets.bitdepth and facets.bitdepth|length > 1 %}
-            {% display_facet "bitdepth" facets.bitdepth "list" "Bitdepth" %}
-            {% endif %}
-            
-            {% if facets.bitrate and facets.bitrate|length > 1 %}
-            {% display_facet "bitrate" facets.bitrate "list" "Bitrate" %}
-            {% endif %}
-            
-            {% if facets.channels and facets.channels|length > 1 %}
-            {% display_facet "channels" facets.channels "list" "Channels" %}
-            {% endif %}
-            
+            {% display_facet2 "type" %}
+            {% display_facet2 "samplerate" %}
+            {% display_facet2 "channels" %}
             {% if not sqp.display_as_packs %}
-            {% if facets.grouping_pack and facets.grouping_pack|length > 1 %}
-            {% display_facet "grouping_pack" facets.grouping_pack "list" "Packs"%}
+            {% display_facet2 "grouping_pack" %}
             {% endif %}
-            {% endif %}
-            
-            {% if facets.username and facets.username|length > 1 %}
-            {% display_facet "username" facets.username "cloud" "Related users" %}
-            {% endif %}
-            {% endcomment %}
+            {% display_facet2 "username" %}
+            {% display_facet2 "bitdepth" %}
+            {% display_facet2 "bitrate" %}
         </aside>
         <div class="col-12 divider-light d-md-none v-spacing-top-3 v-spacing-3"></div>
         {% comment %}search results{% endcomment %}

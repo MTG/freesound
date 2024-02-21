@@ -262,14 +262,14 @@ class SimpleUserTest(TestCase):
             reverse('pack-downloaders', kwargs={'username': user.username, "pack_id": self.pack.id}) + '?ajax=1')
         self.assertEqual(resp.status_code, 200)
 
-    @mock.patch('search.views.perform_search_engine_query')
+    @mock.patch('tags.views.perform_search_engine_query')
     def test_tags_response(self, perform_search_engine_query):
         perform_search_engine_query.return_value = (create_fake_perform_search_engine_query_results_tags_mode(), None)
 
         # 200 response on tags page access
         resp = self.client.get(reverse('tags'))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['tags_mode'], True)
+        self.assertEqual(resp.context['sqp'].tags_mode, True)
 
     def test_packs_response(self):
         # 302 response (note that since BW, there will be a redirect to the search page in between)

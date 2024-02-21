@@ -39,8 +39,11 @@ def display_facet(context, facet_name):
         'grouping_pack': 'Packs',
         'license': 'Licenses'
     }.get(facet_name, facet_name.capitalize())
-    facet = annotate_tags([dict(value=f[0], count=f[1]) for f in facets[facet_name] if f[0] != "0"],
-                          sort="value", small_size=0.7, large_size=2.0)
+    if facet_name in facets:
+        facet = annotate_tags([dict(value=f[0], count=f[1]) for f in facets[facet_name] if f[0] != "0"],
+                            sort="value", small_size=0.7, large_size=2.0)
+    else:
+        facet = []
     
     # If the filter is grouping_pack and there are elements which do not contain the character "_" means that
     # these sounds do not belong to any pack (as grouping pack values should by "packId_packName" if there is a pack

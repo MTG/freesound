@@ -702,7 +702,7 @@ class SearchQueryProcessor(object):
             query_description = f'"{textual_query}"'
         else:
             query_description = 'Empty query'
-        num_filters = self.get_num_active_filters() - 1  # Subtract 1 to remove the "is geotagged" filter which is always added in map mode
+        num_filters = self.get_num_active_filters()
         if num_filters:
             query_description += f' with {num_filters} filter{"" if num_filters == 1 else "s"}'
         return query_description

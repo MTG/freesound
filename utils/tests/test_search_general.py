@@ -24,7 +24,7 @@ from django.test.client import RequestFactory
 from django.urls import reverse
 from django.conf import settings
 from urllib.parse import quote_plus
-from utils.search.search_sounds import search_prepare_parameters, split_filter_query, remove_facet_filters
+from utils.search.search_sounds import remove_facet_filters
 from utils.search.lucene_parser import parse_query_filter_string
 
 
@@ -32,97 +32,6 @@ class SearchUtilsTest(TestCase):
 
     def setUp(self):
         self.factory = RequestFactory()
-
-    def test_search_prepare_parameters_without_query_params(self):
-        request = self.factory.get(reverse('sounds-search'))
-        SessionMiddleware().process_request(request)
-        AuthenticationMiddleware().process_request(request)
-        request.session.save()
-        query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
-        
-        expected_default_query_params = {
-            'query_fields': settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS,
-            'sort': settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
-            'num_sounds': settings.SOUNDS_PER_PAGE,
-            'current_page': 1,
-            'group_by_pack': True,
-            'query_filter': '',
-            'textual_query': '',
-            'similar_to': None,
-            'only_sounds_with_pack': False,
-            'only_sounds_within_ids': [],
-            'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS
-        }
-
-        expected_extra_vars = {
-            'advanced': '',
-            'filter_query_link_more_when_grouping_packs': '',
-            'cluster_id': '',
-            'filter_query_non_facets': '',
-            'has_facet_filter': False,
-            'parsed_filters': [],
-            'parsing_error': False,
-            'raw_weights_parameter': '',
-        }
-
-        self.assertDictEqual(query_params, expected_default_query_params)
-        self.assertDictEqual(advanced_search_params_dict, {})
-        self.assertDictEqual(extra_vars, expected_extra_vars)
-
-    def test_search_prepare_parameters_with_query_params(self):
-        # "dog" query, search only in tags and descriptions, duration from 1-10 sec, only geotag, sort by duration, no group by pack
-        url_query_str = '?q=dog&f=duration:[1+TO+10]+is_geotagged:1&s=Duration+(longest+first)&advanced=1&a_tag=1&a_description=1&g='
-        request = self.factory.get(reverse('sounds-search')+url_query_str)
-        SessionMiddleware().process_request(request)
-        AuthenticationMiddleware().process_request(request)
-        request.session.save()
-        query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
-        expected_default_query_params = {
-            'query_fields': {
-                settings.SEARCH_SOUNDS_FIELD_ID: 0,
-                settings.SEARCH_SOUNDS_FIELD_TAGS:
-                    settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_TAGS],
-                settings.SEARCH_SOUNDS_FIELD_DESCRIPTION:
-                    settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_DESCRIPTION],
-                settings.SEARCH_SOUNDS_FIELD_USER_NAME: 0,
-                settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 0,
-                settings.SEARCH_SOUNDS_FIELD_NAME: 0
-            },
-            'sort': settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST,
-            'num_sounds': settings.SOUNDS_PER_PAGE,
-            'current_page': 1,
-            'group_by_pack': False,
-            'query_filter': 'duration:[1 TO 10] is_geotagged:1',
-            'textual_query': 'dog',
-            'similar_to': None,
-            'only_sounds_with_pack': False,
-            'only_sounds_within_ids': [],
-            'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS
-        }
-
-        expected_extra_vars = {
-            'advanced': '1',
-            'filter_query_link_more_when_grouping_packs': 'duration:[1+TO+10]+is_geotagged:1',
-            'cluster_id': '',
-            'filter_query_non_facets': 'duration:[1 TO 10] is_geotagged:1',
-            'has_facet_filter': False,
-            'parsed_filters': [['duration', ':', '[', '1', ' TO ', '10', ']'], ['is_geotagged', ':', '1']],
-            'parsing_error': False,
-            'raw_weights_parameter': '',
-        }
-
-        expected_advanced_search_params_dict = {
-            'a_tag': '1', 
-            'a_username': '', 
-            'a_description': '1', 
-            'a_packname': '', 
-            'a_filename': '', 
-            'a_soundid': '',
-        }
-
-        self.assertDictEqual(query_params, expected_default_query_params)
-        self.assertDictEqual(advanced_search_params_dict, expected_advanced_search_params_dict)
-        self.assertDictEqual(extra_vars, expected_extra_vars)
 
     def test_remove_facet_filters(self):
         query_filter_str = 'is_geotagged:1 tag:"dog"'
@@ -160,6 +69,7 @@ class SearchUtilsTest(TestCase):
         self.assertTrue(has_facet_filter)
         self.assertEqual(filter_without_facet, 'duration:[0 TO 1.1]')
 
+    '''
     def test_search_prepare_parameters_non_ascii_query(self):
         # Simple test to check if some non ascii characters are correctly handled by search_prepare_parameters()
         request = self.factory.get(reverse('sounds-search')+'?q=Æ æ ¿ É')
@@ -315,3 +225,4 @@ class SearchUtilsTest(TestCase):
                       filter_query_split[cluster_facet_dict_idx]['name'])
         self.assertIn(expected_filter_query_split[1]['remove_url'],
                       filter_query_split[cluster_facet_dict_idx]['remove_url'])
+    '''

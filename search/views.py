@@ -41,77 +41,49 @@ from forum.models import Post
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
-from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters, \
-    split_filter_query, should_use_compact_mode, contains_active_advanced_search_filters
+from utils.search.search_sounds import perform_search_engine_query
 from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator, search_query_processor
 
 search_logger = logging.getLogger("search")
 
 
-def search_view_helper2(request):
+def search_view_helper(request):
+    # Process request data with the SearchQueryProcessor
     sqp = search_query_processor.SearchQueryProcessor(request)
-    tvars = {'sqp': sqp}
-
-    # Check if there was a filter parsing error
+    
+    # Check if there was a filter parsing error and return error if so
     if sqp.errors:
         search_logger.info(f"Errors in SearchQueryProcessor: {sqp.errors}")
-        tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
-        return tvars
+        return {'error_text': 'There was an error while searching, is your query correct?'}
 
-    # Process tags mode stuff
-    initial_tagcloud = None
-    tags_in_filter = []
-    if sqp.tags_mode:
-        tags_in_filter = sqp.get_tags_in_filter()
-        if  not tags_in_filter:
-            # If no tags are in filter, we are "starting" tag-based browsing so display the initial tagcloud
-            initial_tagcloud = cache.get('initial_tagcloud')
-            if initial_tagcloud is None:
-                # If tagcloud is not cached, make a query to retrieve it and save it to cache
-                results, _ = perform_search_engine_query(dict(
-                    textual_query='',
-                    query_filter= "*:*",
-                    num_sounds=1,
-                    facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 100}},
-                    group_by_pack=True,
-                    group_counts_as_one_in_facets=False,
-                ))
-                initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
-                cache.set('initial_tagcloud', initial_tagcloud, 60 * 60 * 12)  # cache for 12 hours
-            return {
-                'tags_mode': True,
-                'tags_in_filter': tags_in_filter,
-                'initial_tagcloud': initial_tagcloud,
-            }
+    # Update compact mode prefernece if user has explicitely specified a different value than the preference
+    if request.user.is_authenticated:
+        option = sqp.options[search_query_processor.SearchOptionGridMode.name]
+        if option.set_in_request:
+            request_preference = option.value
+            user_preference = request.user.profile.use_compact_mode
+            if request_preference != user_preference:
+                request.user.profile.use_compact_mode = request_preference
+                request.user.profile.save()
 
-    # Parpare variables for map view
+    # Parpare variables for map view (prepare some URLs for loading sounds and providing links to map)
     open_in_map_url = None
     map_mode_query_results_cache_key = None
     map_bytearray_url = ''
     if sqp.map_mode:
-        # Prepare some URLs for loading sounds and providing links to map
         current_query_params = request.get_full_path().split("?")[-1]
         open_in_map_url = reverse('geotags-query') + f'?{current_query_params}'
         map_mode_query_results_cache_key = f'map-query-results-{create_hash(current_query_params, 10)}'
         map_bytearray_url = reverse('geotags-for-query-barray') + f'?key={map_mode_query_results_cache_key}'
 
-    query_params = sqp.as_query_params()
-    tvars.update({
-        'error_text': None,        
-        'current_page': query_params['current_page'],
-        'initial_tagcloud': initial_tagcloud,
-        'tags_in_filter': tags_in_filter,
-        'has_advanced_search_settings_set': sqp.contains_active_advanced_search_options(),
-        'advanced_search_closed_on_load': settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD,
-        'compact_mode': sqp.grid_mode,  # TODO: when is grid mode preference updated?
-        'tags_mode': sqp.tags_mode,
-        'map_mode': sqp.map_mode,
-        'map_bytearray_url': map_bytearray_url,
-        'open_in_map_url': open_in_map_url,
-        'max_search_results_map_mode': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY
-    })
-    
+    # If in tags mode and no tags in filter, return before making the query as we'll make
+    # the initial tagcloud in tags.views.tags view and no need to make any further query here
+    if sqp.tags_mode and not sqp.get_tags_in_filter():
+        return {'sqp': sqp}  # sqp will be needed in tags.views.tags view
+
+    # Run the query and post-process the results
     try:    
+        query_params = sqp.as_query_params()    
         results, paginator = perform_search_engine_query(query_params)
         if not sqp.map_mode:
             if not sqp.display_as_packs:
@@ -132,7 +104,6 @@ def search_view_helper2(request):
                 for d in docs:
                     if d.get("n_more_in_group") and d["sound"].pack_id is not None:
                         d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'grouping_pack:"{d["sound"].pack_id}_{d["sound"].pack_name}"'])
-
             else:
                 resultspackids = []
                 sound_ids_for_pack_id = {}
@@ -162,7 +133,6 @@ def search_view_helper2(request):
             # will make an extra request that will load the cached data and display it in the map)
             docs = []
 
-        # TODO: improve logging to add relevant stuff
         search_logger.info('Search (%s)' % json.dumps({
             'ip': get_client_ip(request),
             'query': query_params['textual_query'],
@@ -170,248 +140,48 @@ def search_view_helper2(request):
             'username': request.user.username,
             'page': query_params['current_page'],
             'sort': query_params['sort'],
-            'group_by_pack': query_params['group_by_pack'],
-            'advanced': sqp.contains_active_advanced_search_options(),
+            'url': sqp.get_url(),
+            'tags_mode': sqp.tags_mode,
             'query_time': results.q_time 
         }))
 
         # For the facets of fields that could have mulitple values (i.e. currently, only "tags" facet), make
         # sure to remove the filters for the corresponding facet field that are already active (so we remove
         # redundant information)
-        if tags_in_filter:
-            if 'tag' in results.facets:
-                results.facets['tag'] = [(tag, count) for tag, count in results.facets['tag'] if tag not in tags_in_filter]
+        if 'tag' in results.facets:
+            results.facets['tag'] = [(tag, count) for tag, count in results.facets['tag'] if tag not in sqp.get_tags_in_filter()]
 
-        tvars.update({
+        # Compile template variables
+        return {
+            'sqp': sqp,
+            'error_text': None,
+            'current_page': query_params['current_page'],
+            'has_advanced_search_settings_set': sqp.contains_active_advanced_search_options(),
+            'advanced_search_closed_on_load': settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD,
+            'map_bytearray_url': map_bytearray_url,
+            'open_in_map_url': open_in_map_url,
+            'max_search_results_map_mode': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,
             'paginator': paginator,
             'page': paginator.page(query_params['current_page']),
             'docs': docs,
             'facets': results.facets,
             'non_grouped_number_of_results': results.non_grouped_number_of_results,
-        })
+        }
 
     except SearchEngineException as e:
         search_logger.info(f'Search error: query: {str(query_params)} error {e}')
         sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
-        tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
+        return {'error_text': 'There was an error while searching, is your query correct?'}
     except Exception as e:
         search_logger.info(f'Could probably not connect to Solr - {e}')
         sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
-        tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
-
-    return tvars
-
-
-def search_view_helper(request, tags_mode=False):
-    query_params, advanced_search_params_dict, extra_vars = search_prepare_parameters(request)
-
-    # Check if there was a filter parsing error
-    if extra_vars['parsing_error']:
-        search_logger.info(f"Query filter parsing error. filter: {request.GET.get('f', '')}")
-        extra_vars.update({'error_text': 'There was an error while searching, is your query correct?'})
-        return extra_vars
-
-    # Get the url query params for later sending it to the clustering engine (this is only used with the clustering feature)
-    url_query_params_string = request.META['QUERY_STRING']
-
-    # Get a "split" version of the filter which is used to display filters in UI and for some other checks (see below)
-    filter_query_split = split_filter_query(query_params['query_filter'], extra_vars['parsed_filters'], extra_vars['cluster_id'])
-    
-    # Get tags taht are being used in filters (this is used later to remove them from the facet and also for tags mode)
-    tags_in_filter = []
-    for filter_data in filter_query_split:
-        if filter_data['name'].startswith('tag:'):
-            tag = filter_data['name'].replace('tag:', '')
-            if tag.startswith('"'):
-                # If tag name has quotes, remove them
-                tag = tag[1:-1]
-            tags_in_filter.append(tag)
-    
-    # Process tags mode stuff
-    initial_tagcloud = None
-    if tags_mode:
-        # In tags mode, we increase the size of the tags facet so we include more related tags
-        query_params['facets'][settings.SEARCH_SOUNDS_FIELD_TAGS]['limit'] = 50
-
-        # If no tags are in filter, we are "starting" tag-based browsing so display the initial tagcloud
-        if not tags_in_filter:
-            initial_tagcloud = cache.get('initial_tagcloud')
-            if initial_tagcloud is None:
-                # If tagcloud is not cached, make a query to retrieve it and save it to cache
-                results, _ = perform_search_engine_query(dict(
-                    textual_query='',
-                    query_filter= "*:*",
-                    num_sounds=1,
-                    facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 100}},
-                    group_by_pack=True,
-                    group_counts_as_one_in_facets=False,
-                ))
-                initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
-                cache.set('initial_tagcloud', initial_tagcloud, 60 * 60 * 12)  # cache for 12 hours
-            return {
-                'tags_mode': True,
-                'tags_in_filter': tags_in_filter,
-                'initial_tagcloud': initial_tagcloud,
-            }
-
-    # In the tvars section we pass the original group_by_pack value to avoid it being set to false if there is a pack filter (see search_prepare_parameters)
-    # This is so that we keep track of the original setting of group_by_pack before the filter was applied, and so that if the pack filter is removed, we can 
-    # automatically revert to the previous group_by_pack setting. Also, we compute "disable_group_by_pack_option" so that when we have changed the real
-    # group_by_pack because there is a pack filter, we can grey out the option in the search form. Similar thing we do for only_sounds_with_pack as also
-    # it does not make sense when filtering by pack
-    group_by_pack_in_request = request.GET.get("g", "1") == "1"
-    only_sounds_with_pack_in_request = request.GET.get("dp", "0") == "1"
-    disable_group_by_pack_option = 'pack:' in query_params['query_filter'] or only_sounds_with_pack_in_request
-    disable_only_sounds_by_pack_option= 'pack:' in query_params['query_filter']
-    only_sounds_with_pack = "1" if query_params['only_sounds_with_pack'] else ""
-    if only_sounds_with_pack:
-        # If displaying search results as packs, include 3 sounds per pack group in the results so we can display these sounds as selected sounds in the
-        # display_pack templatetag
-        query_params['num_sounds_per_pack_group'] = 3
-
-    # Parpare variables for map view
-    disable_display_results_in_grid_option = False
-    map_bytearray_url = ''
-    use_map_mode = request.GET.get("mm", "0") == "1"
-    map_mode_query_results_cache_key = None
-    open_in_map_url = None
-    if use_map_mode:
-        # Prepare some URLs for loading sounds and providing links to map
-        current_query_params = request.get_full_path().split("?")[-1]
-        open_in_map_url = reverse('geotags-query') + f'?{current_query_params}'
-        map_mode_query_results_cache_key = f'map-query-results-{create_hash(current_query_params, 10)}'
-        map_bytearray_url = reverse('geotags-for-query-barray') + f'?key={map_mode_query_results_cache_key}'
-        # Update some query parameters and options to adapt to map mode
-        disable_group_by_pack_option = True
-        disable_only_sounds_by_pack_option = True
-        disable_display_results_in_grid_option = True
-        geotags.views.update_query_params_for_map_query(query_params, preserve_facets=True)
-        
-
-    tvars = {
-        'error_text': None,
-        'filter_query': query_params['query_filter'],
-        'filter_query_split': filter_query_split,
-        'search_query': query_params['textual_query'],
-        'similar_to': query_params['similar_to'],
-        'group_by_pack_in_request': "1" if group_by_pack_in_request else "", 
-        'disable_group_by_pack_option': disable_group_by_pack_option,
-        'only_sounds_with_pack': only_sounds_with_pack,
-        'only_sounds_with_pack_in_request': "1" if only_sounds_with_pack_in_request else "",
-        'disable_only_sounds_by_pack_option': disable_only_sounds_by_pack_option,
-        'use_compact_mode': should_use_compact_mode(request),
-        'disable_display_results_in_grid_option': disable_display_results_in_grid_option,
-        'advanced': extra_vars['advanced'],
-        'sort': query_params['sort'],
-        'sort_options': [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
-        'filter_query_link_more_when_grouping_packs': extra_vars['filter_query_link_more_when_grouping_packs'],
-        'current_page': query_params['current_page'],
-        'url_query_params_string': url_query_params_string,
-        'cluster_id': extra_vars['cluster_id'],
-        'clustering_on': settings.ENABLE_SEARCH_RESULTS_CLUSTERING,
-        'weights': extra_vars['raw_weights_parameter'],
-        'initial_tagcloud': initial_tagcloud,
-        'tags_mode': tags_mode,
-        'tags_in_filter': tags_in_filter,
-        'has_advanced_search_settings_set': contains_active_advanced_search_filters(request, query_params, extra_vars),
-        'advanced_search_closed_on_load': settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD,
-        'use_map_mode': use_map_mode,
-        'map_bytearray_url': map_bytearray_url,
-        'open_in_map_url': open_in_map_url,
-        'max_search_results_map_mode': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY
-    }
-    tvars.update(advanced_search_params_dict)
-
-    try:       
-        results, paginator = perform_search_engine_query(query_params)
-        if not use_map_mode:
-            if not only_sounds_with_pack:
-                resultids = [d.get("id") for d in results.docs]
-                resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
-                allsounds = {}
-                for s in resultsounds:
-                    allsounds[s.id] = s
-                # allsounds will contain info from all the sounds returned by bulk_query_id. This should
-                # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
-                # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
-                # in docs that have not been loaded in allsounds.
-                docs = [doc for doc in results.docs if doc["id"] in allsounds]
-                for d in docs:
-                    d["sound"] = allsounds[d["id"]]
-            else:
-                resultspackids = []
-                sound_ids_for_pack_id = {}
-                for d in results.docs:
-                    pack_id = int(d.get("group_name").split('_')[0])
-                    resultspackids.append(pack_id)
-                    sound_ids_for_pack_id[pack_id] = [int(sound['id']) for sound in d.get('group_docs', [])]
-                resultpacks = sounds.models.Pack.objects.bulk_query_id(resultspackids, sound_ids_for_pack_id=sound_ids_for_pack_id)
-                allpacks = {}
-                for p in resultpacks:
-                    allpacks[p.id] = p
-                # allpacks will contain info from all the packs returned by bulk_query_id. This should
-                # be all packs in docs, but if solr and db are not synchronised, it might happen that there
-                # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
-                # in docs that have not been loaded in allsounds.
-                docs = [d for d in results.docs if int(d.get("group_name").split('_')[0]) in allpacks]
-                for d in docs:
-                    d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
-        else:
-            # In map we configure the search query to already return geotags data. Here we collect all this data
-            # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares
-            # data points for the map of sounds. 
-            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 5 minutes
-
-            # Nevertheless we set docs to empty list as we won't displat anything in the search results page (the map
-            # will make an extra request that will load the cached data and display it in the map)
-            docs = []
-
-        search_logger.info('Search (%s)' % json.dumps({
-            'ip': get_client_ip(request),
-            'query': query_params['textual_query'],
-            'filter': query_params['query_filter'],
-            'username': request.user.username,
-            'page': query_params['current_page'],
-            'sort': query_params['sort'],
-            'group_by_pack': query_params['group_by_pack'],
-            'advanced': json.dumps(advanced_search_params_dict) if extra_vars['advanced'] == "1" else "",
-            'query_time': results.q_time 
-        }))
-
-        # For the facets of fields that could have mulitple values (i.e. currently, only "tags" facet), make
-        # sure to remove the filters for the corresponding facet field thar are already active (so we remove
-        # redundant information)
-        if tags_in_filter:
-            if 'tag' in results.facets:
-                results.facets['tag'] = [(tag, count) for tag, count in results.facets['tag'] if tag not in tags_in_filter]
-
-        tvars.update({
-            'paginator': paginator,
-            'page': paginator.page(query_params['current_page']),
-            'docs': docs,
-            'facets': results.facets,
-            'non_grouped_number_of_results': results.non_grouped_number_of_results,
-        })
-
-    except SearchEngineException as e:
-        search_logger.info(f'Search error: query: {str(query_params)} error {e}')
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
-        tvars.update({'error_text': 'There was an error while searching, is your query correct?'})
-    except Exception as e:
-        search_logger.info(f'Could probably not connect to Solr - {e}')
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
-        tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
-
-    return tvars
+        return {'error_text': 'The search server could not be reached, please try again later.'}
 
 
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
 def search(request):
-    #tvars = search_view_helper2(request, tags_mode=False)
-    #return render(request, 'search/search2.html', tvars)
-
-    tvars = search_view_helper2(request)
-    return render(request, 'search/search2.html', tvars)
+    tvars = search_view_helper(request)
+    return render(request, 'search/search.html', tvars)
 
 
 def clustering_facet(request):
@@ -439,8 +209,9 @@ def clustering_facet(request):
 
     # check if facet filters are present in the search query
     # if yes, filter sounds from clusters
-    query_params, _, extra_vars = search_prepare_parameters(request)
-    if extra_vars['has_facet_filter']:
+    sqp = search_query_processor.SearchQueryProcessor(request)
+    query_params = sqp.as_query_params()
+    if len(sqp.non_option_filters):
         sound_ids_filtered = get_sound_ids_from_search_engine_query(query_params)
         results = [[sound_id for sound_id in cluster if int(sound_id) in sound_ids_filtered]
                    for cluster in results]
@@ -506,8 +277,9 @@ def clustered_graph(request):
 
     # check if facet filters are present in the search query
     # if yes, filter nodes and links from the graph
-    query_params, _, extra_vars = search_prepare_parameters(request)
-    if extra_vars['has_facet_filter']:
+    sqp = search_query_processor.SearchQueryProcessor(request)
+    query_params = sqp.as_query_params()
+    if len(sqp.non_option_filters):
         nodes = graph['nodes']
         links = graph['links']
         graph['nodes'] = []

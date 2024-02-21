@@ -25,7 +25,8 @@ from django.core.cache import caches
 from .clustering_settings import DEFAULT_FEATURES, MAX_RESULTS_FOR_CLUSTERING
 from freesound.celery import app as celery_app
 from utils.encryption import create_hash
-from utils.search.search_sounds import perform_search_engine_query, search_prepare_parameters
+from utils.search.search_sounds import perform_search_engine_query
+from utils.search import search_query_processor
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
 cache_clustering = caches["clustering"]
@@ -71,11 +72,13 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
         Dict: contains either the state of the clustering ('pending' or 'failed') or the resulting clustering classes 
             and the graph in node-link format suitable for JSON serialization.
     """
-    query_params, _, extra_vars = search_prepare_parameters(request)
+    sqp = search_query_processor.SearchQueryProcessor(request)
+    query_params = sqp.as_query_params()
     # We change filter_query to filter_query_non_facets in order to ensure that the clustering is always
     # done on the non faceted filtered results. Without that, people directly requesting a facet filtered
     # page would have a clustering performed on filtered results.
-    query_params['query_filter'] = extra_vars['filter_query_non_facets']
+    # TODO: reimplement filter_query_non_facets after change to SearchQueryProcessor
+    query_params['query_filter'] = '' #extra_vars['filter_query_non_facets']
     cache_key = 'cluster-results-{textual_query}-{query_filter}-{sort}-{group_by_pack}'\
         .format(**query_params).replace(' ', '')
     cache_key += f"-{str(query_params['query_fields'])}"

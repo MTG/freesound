@@ -63,7 +63,8 @@ class SearchOption(object):
         return self.value
     
     def get_param_for_url(self):
-        return {self.query_param_name: self.get_value_for_url_param()}
+        if self.query_param_name is not None:
+            return {self.query_param_name: self.get_value_for_url_param()}
     
     def is_default_value(self):
         return self.value == self.value_default
@@ -155,6 +156,7 @@ class SearchOptionRange(SearchOption):
     value_default = ['*', '*']
     query_param_min = None
     query_param_max = None
+    only_active_if_not_default = True
     
     def value_from_request(self, request):
         if self.query_param_min is not None and self.query_param_max is not None:
@@ -176,6 +178,15 @@ class SearchOptionRange(SearchOption):
 
     def get_value_for_url_param(self):
         return f'[{self.value[0]} TO {self.value[1]}]'
+    
+    def render_as_filter(self):
+        if self.only_active_if_not_default:
+            # If only_active_if_not_default is set, only render filter if value is different from the default
+            # Otherwise return None and the filter won't be added
+            if not self.is_default_value():
+                return super().render_as_filter()
+        else:
+            return super().render_as_filter()
 
 
 # --- Search options for Freesound search page
@@ -319,7 +330,10 @@ class SearchOptionSimilarTo(SearchOptionStr):
 
 class SearchOptionTagsMode(SearchOptionBool):
     name= 'tags_mode'
-    query_param_name = 'tm'
+
+    def value_from_request(self, request):
+        # Tags mode is a special option which is not passed as a query parameter but is inferred from the URL
+        return reverse('tags') in request.path
 
 
 class SearchOptionClusterId(SearchOptionInt):
@@ -489,8 +503,8 @@ class SearchQueryProcessor(object):
     def get_option_value(self, option_name):
         return self.options[option_name].get_value()
     
-    def render_filter_for_search_engine(self, include_filters_from_options=True, extra_filters=None, ignore_filters=None):
-        # Returns properly formatetd filter string from all options and non-option filters to be used in the search engine
+    def get_active_filters(self, include_filters_from_options=True, extra_filters=None, ignore_filters=None):
+        # Returns a list of all active filters (in proper name:value format)
         ff = []
         if include_filters_from_options:
             for option in self.options.values():
@@ -507,7 +521,14 @@ class SearchQueryProcessor(object):
         # Add extra filter (filters to add need to be properly formatted, e.g.  extra_filters=["tag:tagname"])
         if extra_filters is not None:
             ff += extra_filters
+        return ff
 
+    def get_num_active_filters(self, include_filters_from_options=True, extra_filters=None, ignore_filters=None):
+        return len(self.get_active_filters(include_filters_from_options=include_filters_from_options, extra_filters=extra_filters, ignore_filters=ignore_filters))
+    
+    def render_filter_for_search_engine(self, include_filters_from_options=True, extra_filters=None, ignore_filters=None):
+        # Returns properly formatetd filter string from all options and non-option filters to be used in the search engine
+        ff = self.get_active_filters(include_filters_from_options=include_filters_from_options, extra_filters=extra_filters, ignore_filters=ignore_filters)
         return ' '.join(ff)  # TODO: return filters as a list of different filters to send to SOLR in multiple fq parameters (?)
     
     def render_filter_for_url(self, extra_filters=None, ignore_filters=None):
@@ -612,12 +633,19 @@ class SearchQueryProcessor(object):
         )
     
     def get_url(self, add_filters=None, remove_filters=None):
-        parameters_to_add = {}
+        # Base URL
+        if self.tags_mode:
+            base_url = reverse("tags")
+        else:
+            base_url = reverse("sounds-search")
         
         # Add parameters from search options
+        parameters_to_add = {}
         for option in self.options.values():
             if option.set_in_request and not option.is_default_value():
-                parameters_to_add.update(option.get_param_for_url())
+                param_for_url = option.get_param_for_url()
+                if param_for_url is not None:
+                    parameters_to_add.update(param_for_url)
         
         # Add filter parameter
         # Also pass extra filters to be added and/or filters to be removed when making the URL
@@ -626,9 +654,9 @@ class SearchQueryProcessor(object):
             parameters_to_add['f'] = filter_for_url
         encoded_params = urlencode(parameters_to_add)
         if encoded_params:
-            return f'{reverse("sounds-search")}?{encoded_params}'
+            return f'{base_url}?{encoded_params}'
         else:
-            return f'{reverse("sounds-search")}'    
+            return base_url
         
     def contains_active_advanced_search_options(self):
         # Returns true if query has any active options which belong to the "advanced search" panel
@@ -664,7 +692,20 @@ class SearchQueryProcessor(object):
 
     @property
     def display_as_packs(self):
-        return self.get_option_value(SearchOptionDisplayResultsAsPacks.name)     
+        return self.get_option_value(SearchOptionDisplayResultsAsPacks.name)   
+
+    def get_query_textual_description(self):
+        # Returns a textual description of the query
+        query_description = ''
+        textual_query = self.get_option_value(SearchOptionQuery.name)
+        if textual_query:
+            query_description = f'"{textual_query}"'
+        else:
+            query_description = 'Empty query'
+        num_filters = self.get_num_active_filters() - 1  # Subtract 1 to remove the "is geotagged" filter which is always added in map mode
+        if num_filters:
+            query_description += f' with {num_filters} filter{"" if num_filters == 1 else "s"}'
+        return query_description
     
     def print(self):
         # Prints the SearchQueryProcessor object in a somewhat human readable format

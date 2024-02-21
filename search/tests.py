@@ -295,9 +295,9 @@ class SearchQueryProcessorTests(TestCase):
         sqp_url = sqp.get_url()
         self.assertEqual(ComparableUrl(sqp_url), ComparableUrl(expected_url))
 
-    def run_fake_search_query_processor(self, url=None, params={}, user=AnonymousUser()):
+    def run_fake_search_query_processor(self, base_url=reverse('sounds-search'), url=None, params={}, user=AnonymousUser()):
         if url is None:
-            request = self.factory.get(reverse('sounds-search'), params)
+            request = self.factory.get(base_url, params)
         else:
             request = self.factory.get(url)
         request.user = user
@@ -429,7 +429,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
         
         # With tags mode
-        sqp, url = self.run_fake_search_query_processor(params={'tm': '1'})
+        sqp, url = self.run_fake_search_query_processor(base_url=reverse('tags'))
         expected_facets = settings.SEARCH_SOUNDS_DEFAULT_FACETS.copy()
         expected_facets['tags']['limit'] = 50
         self.assertExpectedParams(sqp.as_query_params(), {'facets': expected_facets})
@@ -489,7 +489,7 @@ class SearchQueryProcessorTests(TestCase):
         # search_in if tags_mode or similar_to_mode
         sqp, _ = self.run_fake_search_query_processor(params={'st': '1'})
         self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled)
-        sqp, _ = self.run_fake_search_query_processor(params={'tm': '1'})
+        sqp, _ = self.run_fake_search_query_processor(base_url=reverse('tags'))
         self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled) 
 
         # group_by_pack and display_as_packs if filter contains a pack
@@ -587,7 +587,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # Not considered an active filter
         
         # With tags mode
-        sqp, _ = self.run_fake_search_query_processor(params={'tm': '1'})
+        sqp, _ = self.run_fake_search_query_processor(base_url=reverse('tags'))
         self.assertEqual(sqp.contains_active_advanced_search_options(), False)  # Not considered an active filter
         
         # With cluster id

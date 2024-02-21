@@ -34,9 +34,9 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
 from accounts.models import Profile
 
-from search.views import search_prepare_parameters
 from sounds.models import Sound, Pack
 from utils.logging_filters import get_client_ip
+from utils.search.search_query_processor import SearchQueryProcessor
 from utils.search.search_sounds import perform_search_engine_query
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
@@ -46,27 +46,6 @@ web_logger = logging.getLogger('web')
 def log_map_load(map_type, num_geotags, request):
     web_logger.info('Map load (%s)' % json.dumps({
         'map_type': map_type, 'num_geotags': num_geotags, 'ip': get_client_ip(request)}))
-
-
-def update_query_params_for_map_query(query_params, preserve_facets=False):
-    # Force is_geotagged filter to be present
-    if query_params['query_filter']:
-        if 'is_geotagged' not in query_params['query_filter']:
-            query_params['query_filter'] = query_params['query_filter'] + ' is_geotagged:1'
-    else:
-        query_params['query_filter'] = 'is_geotagged:1'
-    # Force one single page with "all" results, and don't group by pack
-    query_params.update({
-        'current_page': 1, 
-        'num_sounds': settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,
-        'group_by_pack': False,
-        'only_sounds_with_pack': False,
-        'field_list': ['id', 'score', 'geotag']
-    })
-    if not preserve_facets:
-        # No need to compute facets for the bytearray, but it might be needed for the main query
-        if 'facets' in query_params:
-            del query_params['facets']
 
 
 def generate_bytearray(sound_queryset_or_list):
@@ -169,8 +148,11 @@ def geotags_for_query_barray(request):
         results_docs = cache.get(results_cache_key)
     else:
         # Otherwise, perform a search query to get the results
-        query_params, _, _ = search_prepare_parameters(request)
-        update_query_params_for_map_query(query_params)
+        sqp = SearchQueryProcessor(request)
+        query_params = sqp.as_query_params()
+        if 'facets' in query_params:
+            # No need to compute facets for bytearray query
+            del query_params['facets']
         results, _ = perform_search_engine_query(query_params)
         results_docs = results.docs
     
@@ -283,20 +265,6 @@ def for_pack(request, username, pack_id):
 def for_query(request):
     tvars = _get_geotags_query_params(request)
     request_parameters_string = request.get_full_path().split('?')[-1]
-    q = request.GET.get('q', None)
-    if q == '':
-        q = None
-    f = request.GET.get('f', None)
-    query_description = ''
-    if q is None and f is None:
-        query_description = 'Empty query'
-    elif q is not None and f is not None:
-        query_description = f'{q} (some filters applied)'
-    else:
-        if q is not None:
-            query_description = q
-        if f is not None:
-            query_description = f'Empty query with some filters applied'
     tvars.update({
         'tag': None,
         'username': None,
@@ -305,7 +273,7 @@ def for_query(request):
         'query_params': request_parameters_string,
         'query_params_encoded': urllib.parse.quote(request_parameters_string),
         'query_search_page_url': reverse('sounds-search') + f'?{request_parameters_string}',
-        'query_description': query_description,
+        'query_description': SearchQueryProcessor(request).get_query_textual_description(),
         'url': reverse('geotags-for-query-barray') + f'?{request_parameters_string}',
     })
     return render(request, 'geotags/geotags.html', tvars)

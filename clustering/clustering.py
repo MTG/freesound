@@ -47,8 +47,6 @@ if settings.IS_CELERY_WORKER:
     from sklearn.feature_selection import mutual_info_classif
     from sklearn.neighbors import kneighbors_graph
 
-    from .features_store import FeaturesStore
-
 logger = logging.getLogger('clustering')
 
 
@@ -65,8 +63,6 @@ class ClusteringEngine(object):
     method. Moreover, a few unsued alternative methods for performing some intermediate steps are left 
     here for developement and research purpose.
     """
-    def __init__(self):
-        self.feature_store = FeaturesStore()
 
     def _prepare_clustering_result_and_reference_features_for_evaluation(self, partition):
         """Formats the clustering classes and some reference features in order to then estimate how good is the 
@@ -254,13 +250,12 @@ class ClusteringEngine(object):
             ), 'w') as f:
                 json.dump(result, f)
 
-    def create_knn_graph(self, sound_ids_list, features=clust_settings.DEFAULT_FEATURES):
+    def create_knn_graph(self, sound_ids_list, similarity_vectors_map):
         """Creates a K-Nearest Neighbors Graph representation of the given sounds.
 
         Args:
             sound_ids_list (List[str]): list of sound ids.
-            features (str): name of the features to be used for nearest neighbors computation. 
-                Available features are listed in the clustering settings file.
+            similarity_vectors_map (Dict{int:List[float]}): dictionary with the similarity feature vectors for each sound.
 
         Returns:
             (nx.Graph): NetworkX graph representation of sounds.
@@ -272,7 +267,13 @@ class ClusteringEngine(object):
         # neighbors for small collections, while limiting it for larger collections, which ensures low-computational complexity.
         k = int(np.ceil(np.log2(len(sound_ids_list))))
 
-        sound_features, sound_ids_out = self.feature_store.return_features(sound_ids_list)
+        features = []
+        sound_ids_out = []
+        for sound_id, feature_vector in similarity_vectors_map.items():
+            features.append(feature_vector)
+            sound_ids_out.append(sound_id)            
+        sound_features = np.array(features).astype('float32')
+
         A = kneighbors_graph(sound_features, k)
         for idx_from, (idx_to, distance) in enumerate(zip(A.indices, A.data)):
             idx_from = int(idx_from / k)
@@ -404,13 +405,13 @@ class ClusteringEngine(object):
                 partition[snd] -= 1
         return graph, partition, communities, ratio_intra_community_edges
 
-    def cluster_points(self, query_params, features, sound_ids):
+    def cluster_points(self, query_params, sound_ids, similarity_vectors_map):
         """Applies clustering on the requested sounds using the given features name.
 
         Args:
             query_params (str): string representing the query parameters submited by the user to the search engine.
-            features (str): name of the features used for clustering the sounds.
             sound_ids (List[int]): list containing the ids of the sound to cluster.
+            similarity_vectors_map (Dict{int:List[float]}): dictionary with the similarity feature vectors for each sound.
         
         Returns:
             Dict: contains the resulting clustering classes and the graph in node-link format suitable for JSON serialization.
@@ -420,7 +421,7 @@ class ClusteringEngine(object):
         logger.info('Request clustering of {} points: {} ... from the query "{}"'
                 .format(len(sound_ids), ', '.join(sound_ids[:20]), json.dumps(query_params)))
 
-        graph = self.create_knn_graph(sound_ids, features=features)
+        graph = self.create_knn_graph(sound_ids, similarity_vectors_map=similarity_vectors_map)
 
         if len(graph.nodes) == 0:  # the graph does not contain any node
             return {'error': False, 'result': None, 'graph': None}
@@ -460,7 +461,7 @@ class ClusteringEngine(object):
         graph_json = json_graph.node_link_data(graph)
 
         # Save results to file if SAVE_RESULTS_FOLDER is configured in clustering settings
-        self._save_results_to_file(query_params, features, graph_json, sound_ids, modularity, 
-                                   num_communities, ratio_intra_community_edges, ami, ss, ci, communities)
+        #self._save_results_to_file(query_params, features, graph_json, sound_ids, modularity, 
+        #                           num_communities, ratio_intra_community_edges, ami, ss, ci, communities)
 
         return {'error': False, 'result': communities, 'graph': graph_json}

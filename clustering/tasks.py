@@ -44,7 +44,7 @@ class ClusteringTask(Task):
             
 
 @shared_task(name="cluster_sounds", base=ClusteringTask)
-def cluster_sounds(cache_key_hashed, sound_ids, features):
+def cluster_sounds(cache_key_hashed, sound_ids, similarity_vectors_map=None):
     """ Triggers the clustering of the sounds given as argument with the specified features.
 
     This is the task that is used for clustering the sounds of a search result asynchronously with Celery.
@@ -53,14 +53,14 @@ def cluster_sounds(cache_key_hashed, sound_ids, features):
     Args:
         cache_key_hashed (str): hashed key for storing/retrieving the results in cache.
         sound_ids (List[int]): list containing the ids of the sound to cluster.
-        features (str): name of the features used for clustering the sounds (defined in the clustering settings file).
+        similarity_vectors_map (Dict{int:List[float]}): dictionary with the similarity feature vectors for each sound.
     """
     # store pending state in cache
     cache_clustering.set(cache_key_hashed, CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_PENDING_CACHE_TIME)
 
     try:
         # perform clustering
-        result = cluster_sounds.engine.cluster_points(cache_key_hashed, features, sound_ids)
+        result = cluster_sounds.engine.cluster_points(cache_key_hashed, sound_ids, similarity_vectors_map=similarity_vectors_map)
 
         # store result in cache
         cache_clustering.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)

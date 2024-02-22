@@ -503,7 +503,7 @@ class SearchQueryProcessor(object):
     def get_option_value(self, option_name):
         return self.options[option_name].get_value()
     
-    def get_active_filters(self, include_filters_from_options=True, extra_filters=None, ignore_filters=None):
+    def get_active_filters(self, include_filters_from_options=True, include_filters_from_facets=True, extra_filters=None, ignore_filters=None):
         # Returns a list of all active filters (in proper name:value format)
         ff = []
         if include_filters_from_options:
@@ -512,8 +512,12 @@ class SearchQueryProcessor(object):
                 if fit is not None:
                     ff.append(fit)
         for non_option_filter in self.non_option_filters:
-            ff.append(f'{non_option_filter[0]}:{non_option_filter[1]}')
-
+            should_be_included = True
+            if not include_filters_from_facets and non_option_filter[0] in settings.SEARCH_SOUNDS_DEFAULT_FACETS.keys():
+                should_be_included = False
+            if should_be_included:
+                ff.append(f'{non_option_filter[0]}:{non_option_filter[1]}')
+            
         # Remove ignored filters (filters to skip need to be properly formatted, e.g. ignore_filters=["tag:tagname"])
         if ignore_filters is not None:
             ff = [f for f in ff if f not in ignore_filters]
@@ -523,12 +527,12 @@ class SearchQueryProcessor(object):
             ff += extra_filters
         return ff
 
-    def get_num_active_filters(self, include_filters_from_options=True, extra_filters=None, ignore_filters=None):
-        return len(self.get_active_filters(include_filters_from_options=include_filters_from_options, extra_filters=extra_filters, ignore_filters=ignore_filters))
+    def get_num_active_filters(self):
+        return len(self.get_active_filters())
     
-    def render_filter_for_search_engine(self, include_filters_from_options=True, extra_filters=None, ignore_filters=None):
+    def render_filter_for_search_engine(self, include_filters_from_options=True, include_filters_from_facets=True, extra_filters=None, ignore_filters=None):
         # Returns properly formatetd filter string from all options and non-option filters to be used in the search engine
-        ff = self.get_active_filters(include_filters_from_options=include_filters_from_options, extra_filters=extra_filters, ignore_filters=ignore_filters)
+        ff = self.get_active_filters(include_filters_from_options=include_filters_from_options, include_filters_from_facets=include_filters_from_facets, extra_filters=extra_filters, ignore_filters=ignore_filters)
         return ' '.join(ff)  # TODO: return filters as a list of different filters to send to SOLR in multiple fq parameters (?)
     
     def render_filter_for_url(self, extra_filters=None, ignore_filters=None):
@@ -568,7 +572,7 @@ class SearchQueryProcessor(object):
             filters_data.append(filter_data)
         return filters_data
  
-    def as_query_params(self):
+    def as_query_params(self, exclude_facet_filters=False):
 
         # Filter field weights by "search in" options
         field_weights = self.get_option_value(SearchOptionFieldWeights.name)
@@ -619,7 +623,7 @@ class SearchQueryProcessor(object):
         return dict(
             textual_query=self.get_option_value(SearchOptionQuery.name), 
             query_fields=field_weights, 
-            query_filter=self.render_filter_for_search_engine(),
+            query_filter=self.render_filter_for_search_engine(include_filters_from_facets=not exclude_facet_filters),
             field_list=['id', 'score'] if not self.get_option_value(SearchOptionMapMode.name) else ['id', 'score', 'geotag'],
             current_page=self.get_option_value(SearchOptionPage.name),
             num_sounds=num_sounds if not self.get_option_value(SearchOptionMapMode.name) else settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,  

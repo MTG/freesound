@@ -345,5 +345,24 @@
 {% comment %}If there were errors reaching the search server, don't even load the
 JS bits because we only display the error message{% endcomment %}
 <script src="{% static 'bw-frontend/dist/search.js' %}"></script>
+
+<script>
+    let getClusterTimer = undefined;
+
+    function getCluster() {
+        // Make get request to get cluster
+        const req = new XMLHttpRequest();
+        req.open('GET', '{{ get_cluster_url }}', true);
+        req.onreadystatechange = function() {
+            if (req.readyState === 4 && req.status === 200) {
+                console.log(req.responseText);
+            }
+        };
+        req.send();
+    }
+    getCluster()
+
+</script>
+
 {% endif %}
 {% endblock %}

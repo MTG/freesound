@@ -25,11 +25,15 @@ from django.core.cache import caches
 from .clustering_settings import DEFAULT_FEATURES, MAX_RESULTS_FOR_CLUSTERING
 from freesound.celery import app as celery_app
 from utils.encryption import create_hash
+from utils.search.backends.solr555pysolr import SOLR_VECTOR_FIELDS_DIMENSIONS_MAP
 from utils.search.search_sounds import perform_search_engine_query
 from utils.search import search_query_processor
 from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
 
 cache_clustering = caches["clustering"]
+
+def hash_cache_key(key):
+    return create_hash(key, limit=32)
 
 
 def get_sound_ids_from_search_engine_query(query_params):
@@ -56,7 +60,7 @@ def get_sound_ids_from_search_engine_query(query_params):
     return resultids
 
 
-def cluster_sound_results(request, features=DEFAULT_FEATURES):
+def cluster_sound_results(request):
     """Performs clustering on the search results of the given search request with the requested features.
 
     This is the main entry to the clustering method. It will either get the clustering results from cache, 
@@ -65,24 +69,17 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
 
     Args:
         request (HttpRequest): request associated with the search query submitted by the user.
-        features (str): name of the features to be used for clustering. The available features are defined in the 
-            clustering settings file.
 
     Returns:
         Dict: contains either the state of the clustering ('pending' or 'failed') or the resulting clustering classes 
             and the graph in node-link format suitable for JSON serialization.
     """
     sqp = search_query_processor.SearchQueryProcessor(request)
-    query_params = sqp.as_query_params()
-    # We change filter_query to filter_query_non_facets in order to ensure that the clustering is always
-    # done on the non faceted filtered results. Without that, people directly requesting a facet filtered
-    # page would have a clustering performed on filtered results.
-    # TODO: reimplement filter_query_non_facets after change to SearchQueryProcessor
-    query_params['query_filter'] = '' #extra_vars['filter_query_non_facets']
+    query_params = sqp.as_query_params(exclude_facet_filters=True)  # Note we don't include facet filters in the generated params because we want to apply clustering "before" the rest of the facets (so clustering only depends on the search options specified in the form, but not the facet filters)
+    
     cache_key = 'cluster-results-{textual_query}-{query_filter}-{sort}-{group_by_pack}'\
         .format(**query_params).replace(' ', '')
     cache_key += f"-{str(query_params['query_fields'])}"
-    cache_key += f'-{features}'
     cache_key_hashed = hash_cache_key(cache_key)
 
     # check if result is in cache
@@ -100,13 +97,33 @@ def cluster_sound_results(request, features=DEFAULT_FEATURES):
 
     else:
         # if not in cache, query solr and perform clustering
-        sound_ids = get_sound_ids_from_search_engine_query(query_params)
+        analyzer_name = settings.CLUSTERING_SIMILARITY_ANALYZER   
+        config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[analyzer_name]
+        vector_field_name = SOLR_VECTOR_FIELDS_DIMENSIONS_MAP.get(config_options['vector_size'])
+        query_params.update({
+            'facets': None,
+            'current_page': 1,
+            'num_sounds': MAX_RESULTS_FOR_CLUSTERING,
+            'field_list': ['id', 'score', 'similarity_vectors', 'sim_vector100', f'[child childFilter="content_type:v AND analyzer:{analyzer_name}" limit=1]']
+        })
+        results, _ = perform_search_engine_query(query_params)
+
+        # Collect sound IDs and similarity vectors from query results
+        similarity_vectors_map = {}
+        for d in results.docs:
+            if 'group_docs' in d:
+                d0 = d['group_docs'][0]
+            else:
+                d0 = d
+            if len(d0.get("similarity_vectors", [])) > 0:
+                similarity_vectors_map[d0['id']] = d0["similarity_vectors"][0][vector_field_name]
+        sound_ids = list(similarity_vectors_map.keys())
 
         # launch clustering with celery async task
         celery_app.send_task('cluster_sounds', kwargs={
             'cache_key_hashed': cache_key_hashed,
             'sound_ids': sound_ids,
-            'features': features
+            'similarity_vectors_map': similarity_vectors_map
         }, queue='clustering')
 
         return {'finished': False, 'error': False}
@@ -139,5 +156,3 @@ def get_ids_in_cluster(request, requested_cluster_id):
     return sounds_from_requested_cluster
 
 
-def hash_cache_key(key):
-    return create_hash(key, limit=32)

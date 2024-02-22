@@ -98,7 +98,7 @@ urlpatterns = [
     path('contact/', support.views.contact, name="contact"),
 
     path('search/', search.views.search, name='sounds-search'),
-    path('clustering_facet/', search.views.clustering_facet, name='clustering-facet'),
+    path('search/clustering_section/', search.views.clustering_section, name='clustering-section'),
     path('clustered_graph/', search.views.clustered_graph, name='clustered-graph-json'),
     path('query_suggestions/', search.views.query_suggestions, name='query-suggestions'),
 

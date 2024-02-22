@@ -746,6 +746,8 @@ IS_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None) == "1"
 # When activated, Enables to do js calls & html clustering facets rendering
 ENABLE_SEARCH_RESULTS_CLUSTERING = False
 
+CLUSTERING_SIMILARITY_ANALYZER = FSDSINET_ANALYZER_NAME
+
 # -------------------------------------------------------------------------------
 # Rate limiting
 

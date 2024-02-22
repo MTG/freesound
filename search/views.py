@@ -181,19 +181,20 @@ def search_view_helper(request):
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
 def search(request):
     tvars = search_view_helper(request)
+
+    current_query_params = request.get_full_path().split("?")[-1]
+    get_cluster_url = reverse('clustering-section') + f'?{current_query_params}'
+
+    tvars.update({'get_cluster_url': get_cluster_url})
+
     return render(request, 'search/search.html', tvars)
 
 
-def clustering_facet(request):
+def clustering_section(request):
     """Triggers the computation of the clustering, returns the state of processing or the clustering facet.
     """
-    # pass the url query params for later sending it to the clustering engine
-    url_query_params_string = request.META['QUERY_STRING']
-    # remove existing cluster facet filter from the params since the returned cluster facets will include
-    # their correspondinng cluster_id query parameter (done in the template)
-    url_query_params_string = re.sub(r"(&cluster_id=[0-9]*)", "", url_query_params_string)
 
-    result = cluster_sound_results(request, features=DEFAULT_FEATURES)
+    result = cluster_sound_results(request)
 
     # check if computation is finished. If not, send computation state.
     if result['finished']:
@@ -257,9 +258,12 @@ def clustering_facet(request):
             for cluster_sound_ids in sound_ids_examples_per_cluster
     ]
 
-    return render(request, 'search/clustering_facet.html', {
+    current_query_params = request.get_full_path().split("?")[-1]
+    get_cluster_url = reverse('geotags-query') + f'?{current_query_params}'
+
+    return render(request, 'search/clustering_results.html', {
             'results': partition,
-            'url_query_params_string': url_query_params_string,
+            'get_cluster_url': get_cluster_url,
             'cluster_id_num_results_tags_sound_examples': list(zip(
                 list(range(num_clusters)),
                 num_sounds_per_cluster,

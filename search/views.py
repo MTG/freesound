@@ -22,9 +22,8 @@ import datetime
 import json
 import logging
 import sentry_sdk
-from collections import defaultdict, Counter
 
-from django.core.cache import cache, caches
+from django.core.cache import cache
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, reverse, render
@@ -39,11 +38,10 @@ from utils.clustering_utilities import get_clusters_for_query, get_num_sounds_pe
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator, search_query_processor
-from utils.search.search_sounds import perform_search_engine_query, get_sound_ids_from_search_engine_query
+from utils.search.search_sounds import perform_search_engine_query, allow_beta_search_features
 
 
 search_logger = logging.getLogger("search")
-cache_clustering = caches["clustering"]
 
 
 def search_view_helper(request):
@@ -78,7 +76,7 @@ def search_view_helper(request):
     # Prepare variables for clustering
     get_clusters_url = None
     clusters_data = None
-    if sqp.compute_clusters:
+    if sqp.compute_clusters and allow_beta_search_features(request):
         if cluster_data_is_fully_available(sqp):
             # If clustering data for the current query is fully available, we can get it directly
             clusters_data = _get_clusters_data_helper(sqp)
@@ -178,7 +176,7 @@ def search_view_helper(request):
             'docs': docs,
             'facets': results.facets,
             'non_grouped_number_of_results': results.non_grouped_number_of_results,
-            'show_beta_search_options': True,
+            'show_beta_search_options': allow_beta_search_features(request),
         }
 
     except SearchEngineException as e:

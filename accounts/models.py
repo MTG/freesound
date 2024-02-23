@@ -649,6 +649,9 @@ class Profile(models.Model):
 
     class Meta:
         ordering = ('-user__date_joined', )
+        permissions = (
+            ("can_beta_test", "Show beta features to that user."),
+        )
 
 
 class GdprAcceptance(models.Model):

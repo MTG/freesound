@@ -11,6 +11,7 @@ from luqum.pretty import prettify
 from utils.clustering_utilities import get_ids_in_cluster
 from utils.encryption import create_hash
 from utils.search.backends.solr555pysolr import FIELD_NAMES_MAP
+from utils.search.search_sounds import allow_beta_search_features
 
 
 class SearchOption(object):
@@ -602,7 +603,7 @@ class SearchQueryProcessor(object):
 
         # Clustering
         only_sounds_within_ids = []
-        if not exclude_cluster_id:
+        if not exclude_cluster_id and allow_beta_search_features(self.request):
             cluster_id = self.get_option_value(SearchOptionClusterId.name)
             if cluster_id > -1:
                 only_sounds_within_ids = get_ids_in_cluster(self.get_clustering_data_cache_key(), cluster_id)

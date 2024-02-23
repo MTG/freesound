@@ -87,12 +87,15 @@ def display_facet(context, facet_name):
             element['display_value'] = element['value']
         
         # Set the URL to add facet values as filters
-        if element["value"] == settings.FCW_FILTER_VALUE:
+        if element["value"].startswith('('):
+            # If the filter value is a "complex" operation , don't wrap it in quotes
             filter_str = f'{facet_name}:{element["value"]}'
-        elif ' ' in element["value"]:
-            filter_str = f'{facet_name}:"{element["value"]}"'
+        elif element["value"].isdigit():
+            # If the filter value is a digit, also don't wrap it in quotes
+            filter_str = f'{facet_name}:{element["value"]}'
         else:
-            filter_str = f'{facet_name}:{element["value"]}'
+            # Otherwise wrap in quotes
+            filter_str = f'{facet_name}:"{element["value"]}"'
         element['add_filter_url'] = sqp.get_url(add_filters=[filter_str])
         
     # We sort the facets by count. Also, we apply an opacity filter on "could" type facets

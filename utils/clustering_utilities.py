@@ -19,6 +19,7 @@
 #
 
 from collections import defaultdict, Counter
+import random
 
 import celery
 from django.conf import settings
@@ -105,6 +106,10 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
         example_sounds_data = range(len(sound_ids_examples))
         results['example_sounds_data'] = example_sounds_data
 
+        # Generate random IDs for the clusters that will be used to identify them
+        cluster_ids = [random.randint(0, 99999) for _ in range(len(clusters))]
+        results['cluster_ids'] = cluster_ids
+
         # Save results in cache
         cache_clustering.set(cache_key, results, settings.CLUSTERING_CACHE_TIME)
     return results
@@ -189,7 +194,8 @@ def get_ids_in_cluster(cache_key, cluster_id):
     results = cache_clustering.get(cache_key, None)
     if results is not None:
         try:
-            return results['clusters'][cluster_id]
-        except IndexError:
+            cluster_index = results['cluster_ids'].index(cluster_id)
+            return results['clusters'][cluster_index]
+        except (IndexError, ValueError) as e:
             pass
     return []

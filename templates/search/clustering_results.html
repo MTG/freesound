@@ -4,7 +4,7 @@
     <select name="{{ sqp.options.cluster_id.query_param_name }}" onchange="this.form.submit()">
         <option value="-1">No cluster {{cluster_id}}</option>
         {% for cluster_id, num_sounds, cluster_name, sound_examples in clusters_data %}
-            <option value="{{ cluster_id }}" {% if forloop.counter0 == sqp.options.cluster_id.value %}selected="selected"{% endif %}>{{ cluster_name }} ({{ num_sounds }} sound{{ num_sounds|pluralize }})</option>
+            <option value="{{ cluster_id }}" {% if cluster_id == sqp.options.cluster_id.value %}selected="selected"{% endif %}>{{ cluster_name }} ({{ num_sounds }} sound{{ num_sounds|pluralize }})</option>
         {% endfor %}    
     </select>
     {% else %}

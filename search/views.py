@@ -34,12 +34,12 @@ import forum
 import sounds
 from forum.models import Post
 from utils.encryption import create_hash
-from utils.clustering_utilities import get_clusters_for_query, get_num_sounds_per_cluster, cluster_data_is_fully_available
+from utils.clustering_utilities import get_clusters_for_query, get_num_sounds_per_cluster, \
+    cluster_data_is_fully_available, get_clustering_data_for_graph_display
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator, search_query_processor
-from utils.search.search_sounds import perform_search_engine_query, get_sound_similarity_from_search_engine_query, \
-    get_sound_ids_from_search_engine_query
+from utils.search.search_sounds import perform_search_engine_query, get_sound_ids_from_search_engine_query
 
 
 search_logger = logging.getLogger("search")
@@ -81,7 +81,7 @@ def search_view_helper(request):
     if sqp.compute_clusters:
         if cluster_data_is_fully_available(sqp):
             # If clustering data for the current query is fully available, we can get it directly
-            clusters_data = _get_full_clusters_data_helper(sqp)
+            clusters_data = _get_clusters_data_helper(sqp)
         else:
             # Otherwise pass the url where the cluster data fill be fetched asyncronously from
             get_clusters_url = reverse('clusters-section') + f'?{request.get_full_path().split("?")[-1]}'
@@ -197,7 +197,7 @@ def search(request):
     return render(request, 'search/search.html', tvars)
 
 
-def _get_full_clusters_data_helper(sqp):
+def _get_clusters_data_helper(sqp):
     # Get main cluster data
     results = get_clusters_for_query(sqp)
     if results is None:
@@ -207,7 +207,7 @@ def _get_full_clusters_data_helper(sqp):
     # This number depends on the facet filters which are applied AFTER the main clustering. 
     # See get_num_sounds_per_cluster for more details.
     num_sounds_per_cluster = get_num_sounds_per_cluster(sqp, results['clusters'])
-    
+
     # Resurn a list with information for each cluster
     # Note that this information DOES NOT include the actual sound IDs per cluster.
     return list(zip(
@@ -220,7 +220,7 @@ def _get_full_clusters_data_helper(sqp):
 
 def clusters_section(request):
     sqp = search_query_processor.SearchQueryProcessor(request)
-    clusters_data = _get_full_clusters_data_helper(sqp)
+    clusters_data = _get_clusters_data_helper(sqp)
     if clusters_data is None:
         return render(request, 'search/clustering_results.html', {'clusters': None})
     return render(request, 'search/clustering_results.html', {'sqp': sqp, 'clusters_data': clusters_data})
@@ -229,49 +229,13 @@ def clusters_section(request):
 def clustered_graph(request):
     """Returns the clustered sound graph representation of the search results.
     """
-    # Get clusters for the search query
+    # TODO: this view is currently not used in the new UI, but we could add a modal in the
+    # clustering section to show results in a graph.
     sqp = search_query_processor.SearchQueryProcessor(request)
-    results = get_clusters_for_query(sqp) 
-    graph = results['graph']
-
-    # check if facet filters are present in the search query
-    # if yes, filter nodes and links from the graph
-    query_params = sqp.as_query_params()
-    if len(sqp.non_option_filters):
-        nodes = graph['nodes']
-        links = graph['links']
-        graph['nodes'] = []
-        graph['links'] = []
-        sound_ids_filtered = get_sound_ids_from_search_engine_query(query_params)
-        for node in nodes:
-            if int(node['id']) in sound_ids_filtered:
-                graph['nodes'].append(node)
-        for link in links:
-            if int(link['source']) in sound_ids_filtered and int(link['target']) in sound_ids_filtered:
-                graph['links'].append(link)
-
-    results = sounds.models.Sound.objects.bulk_query_id([int(node['id']) for node in graph['nodes']])
-
-    sound_metadata = {}
-    for sound in results:
-        sound_locations = sound.locations()
-        sound_metadata.update(
-            {sound.id: (
-                sound_locations['preview']['LQ']['ogg']['url'],
-                sound.original_filename,
-                ' '.join(sound.tag_array),
-                reverse("sound", args=(sound.username, sound.id)),
-                sound_locations['display']['wave']['M']['url'],
-            )}
-        )
-
-    for node in graph['nodes']:
-        node['url'] = sound_metadata[int(node['id'])][0]
-        node['name'] = sound_metadata[int(node['id'])][1]
-        node['tags'] = sound_metadata[int(node['id'])][2]
-        node['sound_page_url'] = sound_metadata[int(node['id'])][3]
-        node['image_url'] = sound_metadata[int(node['id'])][4]
-
+    results = get_clusters_for_query(sqp)
+    if results is None:
+        JsonResponse(json.dumps({'error': True}), safe=False)
+    graph = get_clustering_data_for_graph_display(sqp, results['graph'])
     return JsonResponse(json.dumps(graph), safe=False)
 
 

@@ -23,6 +23,7 @@ from collections import defaultdict, Counter
 import celery
 from django.conf import settings
 from django.core.cache import caches
+from django.urls import reverse
 
 from clustering.tasks import cluster_sounds
 import sounds
@@ -107,6 +108,55 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
         # Save results in cache
         cache_clustering.set(cache_key, results, settings.CLUSTERING_CACHE_TIME)
     return results
+
+
+def get_clustering_data_for_graph_display(sqp, initial_graph):
+    cache_key = sqp.get_clustering_data_cache_key(include_filters_from_facets=True) + '-graph_display'
+    graph = cache_clustering.get(cache_key, None)
+    if graph is None:
+        # If graph data is not in cache, we need to generate it
+        # To compute the graph we need to know which sounds are still part of the set of results AFTER the
+        # facet filters have been applied. To get this information we need to make a query to the search engine.
+    
+        # check if facet filters are present in the search query
+        # if yes, filter nodes and links from the graph
+        graph = initial_graph
+        query_params = sqp.as_query_params()
+        if len(sqp.non_option_filters):
+            nodes = graph['nodes']
+            links = graph['links']
+            graph['nodes'] = []
+            graph['links'] = []
+            sound_ids_filtered = get_sound_ids_from_search_engine_query(query_params, num_sounds=settings.MAX_RESULTS_FOR_CLUSTERING, current_page=1)
+            for node in nodes:
+                if int(node['id']) in sound_ids_filtered:
+                    graph['nodes'].append(node)
+            for link in links:
+                if int(link['source']) in sound_ids_filtered and int(link['target']) in sound_ids_filtered:
+                    graph['links'].append(link)
+
+        results = sounds.models.Sound.objects.bulk_query_id([int(node['id']) for node in graph['nodes']])
+        sound_metadata = {}
+        for sound in results:
+            sound_locations = sound.locations()
+            sound_metadata.update(
+                {sound.id: (
+                    sound_locations['preview']['LQ']['ogg']['url'],
+                    sound.original_filename,
+                    ' '.join(sound.tag_array),
+                    reverse("sound", args=(sound.username, sound.id)),
+                    sound_locations['display']['wave']['M']['url'],
+                )}
+            )
+
+        for node in graph['nodes']:
+            node['url'] = sound_metadata[int(node['id'])][0]
+            node['name'] = sound_metadata[int(node['id'])][1]
+            node['tags'] = sound_metadata[int(node['id'])][2]
+            node['sound_page_url'] = sound_metadata[int(node['id'])][3]
+            node['image_url'] = sound_metadata[int(node['id'])][4]
+        cache_clustering.set(cache_key, graph, settings.CLUSTERING_CACHE_TIME)
+    return graph
 
 
 def get_num_sounds_per_cluster(sqp, clusters):

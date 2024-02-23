@@ -1,14 +1,16 @@
 import json
+import urllib
 
 from django.conf import settings
 from django.urls import reverse
 from django.utils.http import urlencode
-from django.utils.safestring import mark_safe
 import luqum.tree
 from luqum.parser import parser
 from luqum.pretty import prettify
 
-from clustering.interface import get_ids_in_cluster
+from utils.clustering_utilities import get_ids_in_cluster
+from utils.encryption import create_hash
+from utils.search.backends.solr555pysolr import FIELD_NAMES_MAP
 
 
 class SearchOption(object):
@@ -336,6 +338,12 @@ class SearchOptionTagsMode(SearchOptionBool):
         return reverse('tags') in request.path
 
 
+class SearchOptionComputeClusters(SearchOptionBool):
+    name= 'compute_clusters'
+    label = 'Cluster results by similarity'
+    query_param_name = 'cc'
+
+
 class SearchOptionClusterId(SearchOptionInt):
     name= 'cluster_id'
     query_param_name = 'cid'
@@ -416,6 +424,7 @@ class SearchQueryProcessor(object):
         SearchOptionTagsMode,
         SearchOptionSimilarTo,
         SearchOptionFieldWeights,
+        SearchOptionComputeClusters,
         SearchOptionClusterId
     ]
     errors = ''
@@ -424,7 +433,8 @@ class SearchQueryProcessor(object):
         self.request = request
         
         # Get filter and parse it. Make sure it is iterable (even if it only has one element)
-        self.f = request.GET.get('f', '').strip().lstrip()
+        self.f = urllib.parse.unquote(request.GET.get('f', '')).strip().lstrip()
+        
         if self.f:
             try:
                 f_parsed = parser.parse(self.f)
@@ -513,7 +523,8 @@ class SearchQueryProcessor(object):
                     ff.append(fit)
         for non_option_filter in self.non_option_filters:
             should_be_included = True
-            if not include_filters_from_facets and non_option_filter[0] in settings.SEARCH_SOUNDS_DEFAULT_FACETS.keys():
+            facet_search_engine_field_names = [FIELD_NAMES_MAP[f] for f in settings.SEARCH_SOUNDS_DEFAULT_FACETS.keys()]
+            if not include_filters_from_facets and non_option_filter[0] in facet_search_engine_field_names:
                 should_be_included = False
             if should_be_included:
                 ff.append(f'{non_option_filter[0]}:{non_option_filter[1]}')
@@ -565,14 +576,14 @@ class SearchQueryProcessor(object):
                 # There is a special case for the grouping_pack filter in which we only want to display the name of the pack and not the ID
                 filter_data[0] = 'pack'
                 if value.startswith('"'):
-                    filter_data[1] = '"'+ value.split('_')[1]
+                    filter_data[1] = '"'+ value[value.find("_")+1:]
                 else:
-                    filter_data[1] = value.split('_')[1]
+                    filter_data[1] = value[value.find("_")+1:]
 
             filters_data.append(filter_data)
         return filters_data
  
-    def as_query_params(self, exclude_facet_filters=False):
+    def as_query_params(self, exclude_facet_filters=False, exclude_cluster_id=False):
 
         # Filter field weights by "search in" options
         field_weights = self.get_option_value(SearchOptionFieldWeights.name)
@@ -591,10 +602,10 @@ class SearchQueryProcessor(object):
 
         # Clustering
         only_sounds_within_ids = []
-        if settings.ENABLE_SEARCH_RESULTS_CLUSTERING:
+        if not exclude_cluster_id:
             cluster_id = self.get_option_value(SearchOptionClusterId.name)
-            if cluster_id:
-                only_sounds_within_ids = get_ids_in_cluster(self.request, cluster_id)
+            if cluster_id > -1:
+                only_sounds_within_ids = get_ids_in_cluster(self.get_clustering_data_cache_key(), cluster_id)
 
         # Facets
         facets = settings.SEARCH_SOUNDS_DEFAULT_FACETS.copy()  # TODO: Is copy needed here to avoid modiying the default setting?
@@ -696,7 +707,23 @@ class SearchQueryProcessor(object):
 
     @property
     def display_as_packs(self):
-        return self.get_option_value(SearchOptionDisplayResultsAsPacks.name)   
+        return self.get_option_value(SearchOptionDisplayResultsAsPacks.name)
+    
+    @property
+    def compute_clusters(self):
+        return self.get_option_value(SearchOptionComputeClusters.name)
+    
+    def get_clustering_data_cache_key(self, include_filters_from_facets=False):
+        # Generates a cache key used to store clustering results in the cache. Note that the key excludes facet filters
+        # by default because clusters are computed on the subset of results BEFORE applying the facet filters (this is by
+        # design to avoid recomputing clusters when changing facets). However, the key can be generated including facets as
+        # well because in some occasions we want to store clustering-related data which does depend on the facet filters which
+        # are applied after the main clustaering computation.
+        query_filter = self.render_filter_for_search_engine(include_filters_from_facets=include_filters_from_facets)
+        key = f'cluster-results-{self.get_option_value(SearchOptionQuery.name)}-' + \
+              f'{query_filter}-{self.get_option_value(SearchOptionSort.name)}-' + \
+              f'{self.get_option_value(SearchOptionGroupByPack.name)}'
+        return create_hash(key, limit=32)
 
     def get_query_textual_description(self):
         # Returns a textual description of the query

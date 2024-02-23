@@ -156,11 +156,10 @@ services:
             context: ./
             dockerfile: ./docker/Dockerfile.clustering
         init: true
-        command: celery -A freesound worker -l info -Q clustering
+        command: celery -A freesound worker -l info -Q clustering_queue
         volumes:
             - .:/code
             - ./freesound-data/:/freesound-data
-            - ./freesound-data/clustering_index:/freesound-data/clustering_index
         depends_on:
             - rabbitmq
             - redis

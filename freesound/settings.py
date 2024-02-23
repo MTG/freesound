@@ -735,16 +735,32 @@ OGG_HQ_PREVIEW_QUALITY = 6
 # Search results clustering
 # NOTE: celery configuration is set after the local settings import
 
-# Environment variables
+MAX_RESULTS_FOR_CLUSTERING = 1000
+
+# One day timeout for keeping clustering results. The cache timer is reset when the clustering is 
+# requested so that popular queries that are performed once a day minimum will always stay in cache
+# and won't be recomputed.
+CLUSTERING_CACHE_TIME = 24*60*60*1
+
+# Limit of distance when creating Nearest Neighbors graph
+CLUSTERING_MAX_NEIGHBORS_DISTANCE = 20
+
+# Number of sound examples extracted per cluster for cluster facet sound preview
+NUM_SOUND_EXAMPLES_PER_CLUSTER = 7
+
+# Number of most common tags extracted per cluster for clustering facet name
+NUM_TAGS_SHOWN_PER_CLUSTER = 3
+
+# Number of maximum clusters to show to the user
+CLUSTERING_NUM_MAX_CLUSTERS = 8
+
+# Timeout for returning clustering results to the user
+CLUSTERING_TASK_TIMEOUT = 30
+
 # '1' indicates that a process is running as a celery worker.
 # We get it from environment variable to avoid the need of a specific settings file for celery workers.
 # We enable the imports of clustering dependencies only in celery workers.
 IS_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None) == "1"
-
-# Determines whether to use or not the clustering feature.
-# Set to False by default (to be overwritten in local_settings.py)
-# When activated, Enables to do js calls & html clustering facets rendering
-ENABLE_SEARCH_RESULTS_CLUSTERING = False
 
 CLUSTERING_SIMILARITY_ANALYZER = FSDSINET_ANALYZER_NAME
 
@@ -888,6 +904,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ASYNC_TASKS_QUEUE_NAME = 'async_tasks_queue'
 CELERY_SOUND_PROCESSING_QUEUE_NAME = 'sound_processing_queue'
+CELERY_CLUSTERING_TASK_QUEUE_NAME = 'clustering_queue'
 
 
 # -------------------------------------------------------------------------------

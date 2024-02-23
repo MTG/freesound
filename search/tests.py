@@ -95,7 +95,7 @@ def return_successful_clustering_results(sound_id_1, sound_id_2, sound_id_3, sou
             'multigraph': False
         },
         'finished': True,
-        'result': [
+        'clusters': [
             [
                 sound_id_1,
                 sound_id_2
@@ -104,8 +104,7 @@ def return_successful_clustering_results(sound_id_1, sound_id_2, sound_id_3, sou
                 sound_id_3,
                 sound_id_4
             ],
-        ],
-        'error':False
+        ]
     }
 
 pending_clustering_results = {'finished': False, 'error': False}
@@ -417,11 +416,10 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
 
         # With cluster id option
-        with override_settings(ENABLE_SEARCH_RESULTS_CLUSTERING=True):
-            fake_get_ids_in_cluster.return_value = [1, 2 ,3, 4]  # Mock the response of get_ids_in_cluster
-            sqp, url = self.run_fake_search_query_processor(params={'cid': '31'})
-            self.assertExpectedParams(sqp.as_query_params(), {'only_sounds_within_ids': [1, 2 ,3, 4]})
-            self.assertGetUrlAsExpected(sqp, url)
+        fake_get_ids_in_cluster.return_value = [1, 2 ,3, 4]  # Mock the response of get_ids_in_cluster
+        sqp, url = self.run_fake_search_query_processor(params={'cid': '31'})
+        self.assertExpectedParams(sqp.as_query_params(), {'only_sounds_within_ids': [1, 2 ,3, 4]})
+        self.assertGetUrlAsExpected(sqp, url)
 
         # With similar to option
         sqp, url = self.run_fake_search_query_processor(params={'st': '1234'})  # Passing similarity target as sound ID

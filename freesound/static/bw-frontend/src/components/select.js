@@ -21,7 +21,7 @@ function makeSelect(container) {
 
       selectElement.style.display = 'none';
       const wrapper = wrapElement(
-        document.getElementById(selectElement.id),
+        selectElement,
         document.createElement('div'),
         select_i,
         selected_index_text

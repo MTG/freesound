@@ -18,22 +18,11 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
-
 from django.conf import settings
-from django.core.cache import caches
 from celery import shared_task
 from celery import Task
-import logging
 
 from .clustering import ClusteringEngine
-from .clustering_settings import CLUSTERING_CACHE_TIME, CLUSTERING_PENDING_CACHE_TIME
-from . import CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_RESULT_STATUS_FAILED
-
-logger = logging.getLogger('clustering')
-
-cache_clustering = caches["clustering"]
-
 
 class ClusteringTask(Task):
     """ Task Class used  for defining the clustering engine only required in celery workers    
@@ -43,29 +32,14 @@ class ClusteringTask(Task):
             self.engine = ClusteringEngine()
             
 
-@shared_task(name="cluster_sounds", base=ClusteringTask)
-def cluster_sounds(cache_key_hashed, sound_ids, similarity_vectors_map=None):
-    """ Triggers the clustering of the sounds given as argument with the specified features.
-
-    This is the task that is used for clustering the sounds of a search result asynchronously with Celery.
+@shared_task(name="cluster_sounds", base=ClusteringTask, queue=settings.CELERY_CLUSTERING_TASK_QUEUE_NAME)
+def cluster_sounds(cache_key, sound_ids, similarity_vectors_map=None):
+    """ Triggers the clustering of the sounds given as argument with the provided similarity vectors.
     The clustering result is stored in cache using the hashed cache key built with the query parameters.
 
     Args:
-        cache_key_hashed (str): hashed key for storing/retrieving the results in cache.
+        cache_key (str): hashed key for storing/retrieving the results in cache.
         sound_ids (List[int]): list containing the ids of the sound to cluster.
         similarity_vectors_map (Dict{int:List[float]}): dictionary with the similarity feature vectors for each sound.
     """
-    # store pending state in cache
-    cache_clustering.set(cache_key_hashed, CLUSTERING_RESULT_STATUS_PENDING, CLUSTERING_PENDING_CACHE_TIME)
-
-    try:
-        # perform clustering
-        result = cluster_sounds.engine.cluster_points(cache_key_hashed, sound_ids, similarity_vectors_map=similarity_vectors_map)
-
-        # store result in cache
-        cache_clustering.set(cache_key_hashed, result, CLUSTERING_CACHE_TIME)
-
-    except Exception as e:  
-        # delete pending state if exception raised during clustering
-        cache_clustering.set(cache_key_hashed, CLUSTERING_RESULT_STATUS_FAILED, CLUSTERING_PENDING_CACHE_TIME)
-        logger.info("Exception raised while clustering sounds", exc_info=True)
+    return cluster_sounds.engine.cluster_points(cache_key, sound_ids, similarity_vectors_map=similarity_vectors_map)

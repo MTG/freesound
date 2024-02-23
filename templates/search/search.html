@@ -51,7 +51,6 @@
                 <input type="hidden" name="f" value="{{ sqp.render_filter_for_url|urlencode }}" />
                 {% if not sqp.options.field_weights.is_default_value %}<input type="hidden" name="{{ sqp.options.field_weights.query_param_name }}" value="{{ sqp.options.field_weights.get_value_for_url_param }}" />{% endif %}
                 {% if not sqp.options.similar_to.is_default_value %}<input type="hidden" name="{{ sqp.options.similar_to.query_param_name }}" value="{{ sqp.options.similar_to.get_value_for_url_param }}" />{% endif %}
-                {% if not sqp.options.cluster_id.is_default_value %}<input type="hidden" name="{{ sqp.options.cluster_id.query_param_name }}" value="{{ sqp.options.cluster_id.get_value_for_url_param }}" />{% endif %}
             </div>
             {% if sqp.tags_mode %}
             {% comment %}"sounds tagged as" label with follow/unfollow buttons{% endcomment %}
@@ -103,13 +102,13 @@
                 <div class="divider-light"></div>
                 {% comment %}advanced search options{% endcomment %}
                 <div id="advanced-search-options" data-visible="{% if not has_advanced_search_settings_set or advanced_search_closed_on_load %}0{% else %}1{% endif %}" class="{% if not has_advanced_search_settings_set or advanced_search_closed_on_load %}display-none{% endif %}">
-                    <div class="v-padding-2 between">
+                    <div class="padding-2">
                         {% comment %}first row of advanced search options{% endcomment %}
-                        <div class="row col-12">
+                        <div class="row">
                             {% comment %}left section{% endcomment %}
                             <div class="col-md-4 bw-search__advanced-search-filter-section v-spacing-2">
-                                <div class="bw-search__filter-section-name caps text-light-grey between text-18">
-                                    <span>{{ sqp.options.search_in.label }}</span>
+                                <div class="bw-search__filter-section-name caps text-light-grey text-18">
+                                    {{ sqp.options.search_in.label }}
                                 </div>
                                 <div class="row no-gutters v-spacing-top-1 {% if sqp.options.search_in.disabled %}opacity-020{% endif %}">
                                     {% for option in sqp.options.search_in.get_options_annotated_with_selection %}
@@ -126,8 +125,8 @@
                             </div>
                             {% comment %}middle section{% endcomment %}
                             <div class="col-md-3 bw-search__advanced-search-filter-section v-spacing-2">
-                                <div class="bw-search__filter-section-name caps text-light-grey between text-18">
-                                    <span>{{ sqp.options.duration.label }}</span>
+                                <div class="bw-search__filter-section-name caps text-light-grey text-18">
+                                    {{ sqp.options.duration.label }}
                                 </div>
                                 <div class="bw-search__filter-range v-spacing-top-2">
                                     <input name="{{ sqp.options.duration.query_param_min }}" class="bw-search_input-range v-spacing-1" type="text" value="{{ sqp.options.duration.value.0 }}" /> - <input name="{{ sqp.options.duration.query_param_max }}" class="bw-search_input-range" type="text" value="{{ sqp.options.duration.value.1 }}" /> <span>seconds</span>
@@ -135,8 +134,8 @@
                             </div>
                             {% comment %}right section{% endcomment %}
                             <div class="col-md-5 bw-search__advanced-search-filter-section v-spacing-2">
-                                <div class="bw-search__filter-section-name caps text-light-grey between text-18">
-                                    <span>Other</span>
+                                <div class="bw-search__filter-section-name caps text-light-grey text-18">
+                                    Other
                                 </div>
                                 <div class="row no-gutters v-spacing-top-1">
                                 {% with sqp.options.is_geotagged as option %}
@@ -202,9 +201,27 @@
                                 </div>
                             </div>
                         </div>
-                        {% comment %}second row of advanced search options{% endcomment %}
-                        <div class="row col-12">
+                        {% if show_beta_search_options %}
+                        <div class="row v-spacing-top-1">
+                            <div class="col-12"> 
+                                <div class="bw-search__filter-section-name caps text-light-grey text-18">
+                                    <i>Beta</i> Search Options
+                                </div>
+                            </div>
                         </div>
+                        <div class="row v-spacing-top-1">
+                            {% with sqp.options.compute_clusters as option %}
+                            <div class="col-6 v-padding-1">    
+                                <label class="between w-100 cursor-pointer {% if option.disabled %}opacity-020{% endif %}">
+                                    <div class="bw-search__filter-checkbox">
+                                        <input name="{{ option.query_param_name }}" type="checkbox" class="bw-checkbox" {% if option.value %}checked{% endif %} {% if option.disabled %}disabled{% endif %}/>
+                                    </div>
+                                    <div class="bw-search__filter-name">{{ option.label }}</div>
+                                </label>
+                            </div>
+                            {% endwith %}
+                        </div>
+                    {% endif %}
                     </div>
                     {% comment %}apply button{% endcomment %}
                     <div class="v-spacing-4 center">
@@ -212,6 +229,21 @@
                     </div>
                     <div class="divider-light"></div>
                 </div>
+                {% comment %}clusters section{% endcomment %}
+                {% if sqp.compute_clusters %}
+                    {% if clusters_data %}
+                    {% include 'search/clustering_results.html' %}
+                    {% else %}
+                    <div class="async-section"
+                        data-async-section-content-url="{{ get_clusters_url }}">
+                        <div class="h-padding-2 v-spacing-top-2">
+                            <div class="center v-spacing-top-2">
+                                <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endif %}
             </div>
         </form>
         {% endif %}
@@ -345,24 +377,5 @@
 {% comment %}If there were errors reaching the search server, don't even load the
 JS bits because we only display the error message{% endcomment %}
 <script src="{% static 'bw-frontend/dist/search.js' %}"></script>
-
-<script>
-    let getClusterTimer = undefined;
-
-    function getCluster() {
-        // Make get request to get cluster
-        const req = new XMLHttpRequest();
-        req.open('GET', '{{ get_cluster_url }}', true);
-        req.onreadystatechange = function() {
-            if (req.readyState === 4 && req.status === 200) {
-                console.log(req.responseText);
-            }
-        };
-        req.send();
-    }
-    getCluster()
-
-</script>
-
 {% endif %}
 {% endblock %}

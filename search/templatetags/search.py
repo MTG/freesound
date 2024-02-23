@@ -44,7 +44,7 @@ def display_facet(context, facet_name):
                             sort="value", small_size=0.7, large_size=2.0)
     else:
         facet = []
-    
+
     # If the filter is grouping_pack and there are elements which do not contain the character "_" means that
     # these sounds do not belong to any pack (as grouping pack values should by "packId_packName" if there is a pack
     # or "soundId" if there is no pack assigned. We did this to be able to filter properly in the facets, as pack names
@@ -67,16 +67,15 @@ def display_facet(context, facet_name):
                     'size': 1.0,
                 })
 
+    # Remove "no pack" elements form pack facet (no pack elements are those in which "grouping pack" only has the sound id and not any pack id/name)
+    if facet_name == "grouping_pack":
+        facet = [element for element in facet if '_' in element['value']]
+
     for element in facet:
         # Set display values (the values how they'll be shown in the UI)
         if facet_name == "grouping_pack":
-            if element['value'].count("_") > 0:
-                # We also modify the display name to remove the id
-                element['display_value'] = element['value'][element['value'].find("_")+1:]
-            else:
-                # If facet element belongs to "grouping pack" filter but does not have the "_" character in it, it
-                # means this corresponds to the "no pack" grouping which we don't want to show as a facet element.
-                continue
+            # Modify the display name to remove the pack id
+            element['display_value'] = element['value'][element['value'].find("_")+1:]
         elif element['value'] == settings.FCW_FILTER_VALUE:
             element['display_value'] = "Approved for Free Cultural Works"
         elif facet_name == 'license':

@@ -65,7 +65,8 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
         try:
             results = async_task_result.get(timeout=settings.CLUSTERING_TASK_TIMEOUT)  # Will raise exception if task takes too long
         except celery.exceptions.TimeoutError as e:
-            return None
+            # Cancel the task so it stops running (or it never starts)
+            async_task_result.revoke(terminate=True)
         if results['clusters'] is None:
             return None
         

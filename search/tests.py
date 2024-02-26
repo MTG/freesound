@@ -265,6 +265,9 @@ class SearchQueryProcessorTests(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.maxDiff = None
+        self.user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
+        self.user.is_superuser = True
+        self.user.save()
 
     def assertExpectedParams(self, returned_query_params, specific_expected_params={}):    
         dict_to_compare = self.default_expected_params.copy()
@@ -275,12 +278,12 @@ class SearchQueryProcessorTests(TestCase):
         sqp_url = sqp.get_url()
         self.assertEqual(ComparableUrl(sqp_url), ComparableUrl(expected_url))
 
-    def run_fake_search_query_processor(self, base_url=reverse('sounds-search'), url=None, params={}, user=AnonymousUser()):
+    def run_fake_search_query_processor(self, base_url=reverse('sounds-search'), url=None, params={}, user=None):
         if url is None:
             request = self.factory.get(base_url, params)
         else:
             request = self.factory.get(url)
-        request.user = user
+        request.user = user if user is not None else self.user
         return search_query_processor.SearchQueryProcessor(request), request.get_full_path()
 
     @mock.patch('utils.search.search_query_processor.get_ids_in_cluster')
@@ -417,7 +420,7 @@ class SearchQueryProcessorTests(TestCase):
 
         # With cluster id option
         fake_get_ids_in_cluster.return_value = [1, 2 ,3, 4]  # Mock the response of get_ids_in_cluster
-        sqp, url = self.run_fake_search_query_processor(params={'cid': '31'})
+        sqp, url = self.run_fake_search_query_processor(params={'cid': '31', 'cc': '1'})
         self.assertExpectedParams(sqp.as_query_params(), {'only_sounds_within_ids': [1, 2 ,3, 4]})
         self.assertGetUrlAsExpected(sqp, url)
 

@@ -190,7 +190,7 @@ matplotlib-inline==0.1.6
     # via ipython
 msgpack==1.0.7
     # via cachecontrol
-networkx==1.5
+networkx==3.2.1
     # via -r requirements.in
 numpy==1.24.3
     # via

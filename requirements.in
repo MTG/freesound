@@ -35,7 +35,7 @@ ipython==8.14.0
 luqum==0.13.0
 mapbox==0.18.1
 markdown==3.4.1
-networkx==1.5
+networkx==3.2.1
 numpy==1.24.3
 Pillow==9.5.0
 pip-tools==7.1.0

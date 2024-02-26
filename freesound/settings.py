@@ -757,11 +757,6 @@ CLUSTERING_NUM_MAX_CLUSTERS = 8
 # Timeout for returning clustering results to the user
 CLUSTERING_TASK_TIMEOUT = 30
 
-# '1' indicates that a process is running as a celery worker.
-# We get it from environment variable to avoid the need of a specific settings file for celery workers.
-# We enable the imports of clustering dependencies only in celery workers.
-IS_CELERY_WORKER = os.getenv('ENV_CELERY_WORKER', None) == "1"
-
 CLUSTERING_SIMILARITY_ANALYZER = FSDSINET_ANALYZER_NAME
 
 # -------------------------------------------------------------------------------

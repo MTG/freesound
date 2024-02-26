@@ -33,17 +33,15 @@ from django.conf import settings
 import six
 from time import time
 
-# The following packages are only needed if the running process is configured to be a Celery worker. 
-# We avoid importing them in appservers to avoid having to install unneeded dependencies.
-if settings.IS_CELERY_WORKER:
-    import community as com
-    import numpy as np
-    import networkx as nx
-    from networkx.readwrite import json_graph
-    from networkx.algorithms.community import k_clique_communities, greedy_modularity_communities
-    from sklearn import metrics
-    from sklearn.feature_selection import mutual_info_classif
-    from sklearn.neighbors import kneighbors_graph
+import community as com
+import numpy as np
+import networkx as nx
+from networkx.readwrite import json_graph
+from networkx.algorithms.community import k_clique_communities, greedy_modularity_communities
+from sklearn import metrics
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.neighbors import kneighbors_graph
+
 
 logger = logging.getLogger('clustering')
 

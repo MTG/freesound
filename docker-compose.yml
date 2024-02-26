@@ -80,7 +80,7 @@ services:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
         init: true
-        command: celery -A freesound worker --concurrency=2 -l info -Q async_tasks_queue,sound_processing_queue,sound_analysis_old_queue
+        command: celery -A freesound worker --concurrency=2 -l info -Q async_tasks_queue,sound_processing_queue,sound_analysis_old_queue,clustering_queue
         volumes:
             - .:/code
             - ./freesound-data/:/freesound-data
@@ -148,24 +148,6 @@ services:
         command: celery -A main worker --pool=threads --concurrency=1 -l info -Q fsd-sinet_v1
         depends_on:
             - rabbitmq
-
-    # Clustering worker (not using the previous one as this has some specific requirements)
-    worker_clustering:
-        profiles: ["all"]
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.clustering
-        init: true
-        command: celery -A freesound worker -l info -Q clustering_queue
-        volumes:
-            - .:/code
-            - ./freesound-data/:/freesound-data
-        depends_on:
-            - rabbitmq
-            - redis
-        environment:
-            - ENV_CELERY_WORKER=1
-            - FS_USER_ID
 
     # Similarity http server
     similarity:

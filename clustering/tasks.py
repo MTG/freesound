@@ -28,8 +28,7 @@ class ClusteringTask(Task):
     """ Task Class used  for defining the clustering engine only required in celery workers    
     """
     def __init__(self):
-        if settings.IS_CELERY_WORKER:
-            self.engine = ClusteringEngine()
+        self.engine = ClusteringEngine()
             
 
 @shared_task(name="cluster_sounds", base=ClusteringTask, queue=settings.CELERY_CLUSTERING_TASK_QUEUE_NAME)

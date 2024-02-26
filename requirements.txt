@@ -174,6 +174,8 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
+joblib==1.3.2
+    # via scikit-learn
 jwcrypto==1.5.1
     # via django-oauth-toolkit
 kombu==5.3.4
@@ -191,11 +193,16 @@ matplotlib-inline==0.1.6
 msgpack==1.0.7
     # via cachecontrol
 networkx==3.2.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   python-louvain
 numpy==1.24.3
     # via
     #   -r requirements.in
     #   pysndfile
+    #   python-louvain
+    #   scikit-learn
+    #   scipy
 oauthlib==3.2.2
     # via
     #   -r requirements.in
@@ -261,6 +268,8 @@ python-dateutil==2.8.2
     #   freezegun
     #   mapbox
     #   zenpy
+python-louvain==0.16
+    # via -r requirements.in
 pytz==2023.3
     # via
     #   -r requirements.in
@@ -286,6 +295,12 @@ requests==2.31.0
     #   zenpy
 s3transfer==0.6.2
     # via boto3
+scikit-learn==1.4.1.post1
+    # via -r requirements.in
+scipy==1.12.0
+    # via
+    #   -r requirements.in
+    #   scikit-learn
 sentry-sdk[django]==1.39.1
     # via -r requirements.in
 sgmllib3k==1.0.0
@@ -316,6 +331,8 @@ stack-data==0.6.3
     # via ipython
 stripe==2.28.1
     # via -r requirements.in
+threadpoolctl==3.3.0
+    # via scikit-learn
 toml==0.10.2
     # via autopep8
 tomli==2.0.1

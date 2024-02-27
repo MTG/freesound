@@ -172,7 +172,64 @@
                             </div>
                         </div>
                         {% endcache %}
-                    </div>                    
+                    </div>
+                    <div class="v-spacing-top-6">
+                        <div>
+                            <h6 class="text-26 no-margins ">Comments</h6>
+                            <a name="comments"></a>
+                            {% if request.user.is_authenticated %}
+                                <form method="POST" action=".#comments" class="bw-form disable-on-submit">{% csrf_token %}
+                                    <div class="row">
+                                        <div class="col-md-9">
+                                            {{form.as_p}}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button id="sound_comment_submit" class="v-spacing-top-5 btn-inverse text-14">Post comment</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            {% else %}
+                                {% if not request.user.is_authenticated and page.object_list %}
+                                    <div class="v-spacing-top-4">
+                                        Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                            <div id="soundCommentsSection" class="v-spacing-top-5">
+                                {% if page.object_list %}
+                                    {% for comment in page.object_list %}
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between;">
+                                                {% display_user_comment comment.user comment.created %}
+                                                <div class="text-right v-spacing-top-1">
+                                                    {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
+                                                    {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
+                                                        <a class="cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this comment?" data-modal-confirmation-url="{% url 'comment-delete' comment.id %}?next={{request.path}}&page={{current_page}}" title="Delete comment">{% bw_icon 'trash' %} Delete</a>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <p class="v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks|strip_unnecessary_br }}</p>
+                                            {% if not forloop.last %}
+                                                <div class="divider-light v-spacing-top-3 v-spacing-2"></div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+
+                                    <div>
+                                        {% bw_paginator paginator page current_page request "comments" %}
+                                    </div>
+
+                                {% else %}
+                                    <div class="text-grey">This sound has not been commented on yet, be the first to comment!</div>
+                                    {% if not request.user.is_authenticated %}
+                                        <div class="v-spacing-top-1">
+                                            Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>                 
                 </div>
 
                 <div class="col-md-4 col-extra-left-padding-large-md">
@@ -284,66 +341,6 @@
 
                         </div>
 
-                    </div>
-                </div>
-
-                <div class="col-md-8">
-                    <div class="v-spacing-top-6">
-                        <div>
-                            <h6 class="text-26 no-margins ">Comments</h6>
-                            <a name="comments"></a>
-                            {% if request.user.is_authenticated %}
-                                <form method="POST" action=".#comments" class="bw-form disable-on-submit">{% csrf_token %}
-                                    <div class="row">
-                                        <div class="col-md-9">
-                                            {{form.as_p}}
-                                        </div>
-                                        <div class="col-md-3">
-                                            <button id="sound_comment_submit" class="v-spacing-top-5 btn-inverse text-14">Post comment</button>
-                                        </div>
-                                    </div>
-                                </form>
-                            {% else %}
-                                {% if not request.user.is_authenticated and page.object_list %}
-                                    <div class="v-spacing-top-4">
-                                        Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
-                                    </div>
-                                {% endif %}
-                            {% endif %}
-                            <div id="soundCommentsSection" class="v-spacing-top-5">
-                                {% if page.object_list %}
-                                    {% for comment in page.object_list %}
-                                        <div>
-                                            <div style="display: flex; justify-content: space-between;">
-                                                {% display_user_comment comment.user comment.created %}
-                                                <div class="text-right v-spacing-top-1">
-                                                    {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
-                                                    {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
-                                                        <a class="cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this comment?" data-modal-confirmation-url="{% url 'comment-delete' comment.id %}?next={{request.path}}&page={{current_page}}" title="Delete comment">{% bw_icon 'trash' %} Delete</a>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                            <p class="v-spacing-top-1">{{ comment.comment|replace_img|safe|linebreaks|strip_unnecessary_br }}</p>
-                                            {% if not forloop.last %}
-                                                <div class="divider-light v-spacing-top-3 v-spacing-2"></div>
-                                            {% endif %}
-                                        </div>
-                                    {% endfor %}
-
-                                    <div>
-                                        {% bw_paginator paginator page current_page request "comments" %}
-                                    </div>
-
-                                {% else %}
-                                    <div class="text-grey">This sound has not been commented on yet, be the first to comment!</div>
-                                    {% if not request.user.is_authenticated %}
-                                        <div class="v-spacing-top-1">
-                                            Please <a href="{% url 'login' %}?next={% url 'sound' sound.user.username sound.id %}">log in</a> to comment
-                                        </div>
-                                    {% endif %}
-                                {% endif %}
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

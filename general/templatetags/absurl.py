@@ -40,3 +40,9 @@ def absurl(parser, token, node_cls=AbsoluteURLNode):
         asvar=node_instance.asvar)
 
 absurl = register.tag(absurl)
+
+
+@register.filter
+def url2absurl(path):
+    domain = f"https://{Site.objects.get_current().domain}"
+    return urllib.parse.urljoin(domain, path)

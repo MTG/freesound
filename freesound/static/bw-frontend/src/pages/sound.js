@@ -17,8 +17,15 @@ const urlParams = new URLSearchParams(window.location.search);
 
 prepareAfterDownloadSoundModals();
 
-const copyShareUrlToClipboard = () => {
+const copyShareUrlToClipboard = (useFileURL) => {
     var shareLinkInputElement = shareLinkElement.getElementsByTagName("input")[0];
+    console.log(shareLinkElement.dataset.staticFileUrl
+            , shareLinkElement.dataset.soundPageUrl)
+    if (useFileURL) {
+        shareLinkInputElement.value = shareLinkElement.dataset.staticFileUrl;
+    } else {
+        shareLinkInputElement.value = shareLinkElement.dataset.soundPageUrl;
+    }
     shareLinkInputElement.select();
     shareLinkInputElement.setSelectionRange(0, 99999);
     document.execCommand("copy");
@@ -38,10 +45,11 @@ const toggleEmbedCode = () => {
     }
 }
 
-const toggleShareLink = () => {
+const toggleShareLink = (evt) => {
     if (shareLinkElement.style.display === "none") {
         shareLinkElement.style.display = "block";
-        copyShareUrlToClipboard();
+        const useFileURL = evt.altKey;
+        copyShareUrlToClipboard(useFileURL);
     } else {
         shareLinkElement.style.display = "none";
     }
@@ -52,7 +60,7 @@ const toggleShareLink = () => {
 }
 
 toggleEmbedCodeElement.addEventListener('click',  toggleEmbedCode);
-toggleShareLinkElement.addEventListener('click',  toggleShareLink);
+toggleShareLinkElement.addEventListener('click',  evt => toggleShareLink(evt));
 
 
 const generateEmbedCode = (size) => {

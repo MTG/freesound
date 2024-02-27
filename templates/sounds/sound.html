@@ -311,8 +311,8 @@
                             </ol>
                         </div>
 
-                        <div id="share-link" class="v-spacing-top-5">
-                             <span class="text-grey">Share url: </span><br><input class="w-100" type="text" readonly value="{% absurl 'short-sound-link' sound.id %}" />
+                        <div id="share-link" class="v-spacing-top-5" data-static-file-url="{{ sound.locations.preview.HQ.mp3.url|url2absurl }}" data-sound-page-url="{% absurl 'short-sound-link' sound.id %}">
+                             <span class="text-grey">Share url: </span><br><input class="w-100" type="text" readonly />
                         </div>
 
                         <div id="embed-links" class="v-spacing-top-5 bw-form">

@@ -201,7 +201,6 @@ def _get_clusters_data_helper(sqp):
     if results is None:
         return None
     
-    print(results)
     # Get the number of sounds per cluster
     # This number depends on the facet filters which are applied AFTER the main clustering. 
     # See get_num_sounds_per_cluster for more details.

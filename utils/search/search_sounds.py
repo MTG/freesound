@@ -55,50 +55,6 @@ def parse_weights_parameter(weights_param):
         return None
 
 
-def remove_facet_filters(parsed_filters):
-    """Process query filter string to keep only non facet filters
-
-    Fact filters correspond to the filters that can be applied using one of the displayed facet in
-    the search interface. This method is useful for being able to combine classic facet filters and clustering
-    because clustering has to be done on the results of a search without applying facet filters (we want
-    to have the clustering facet behaving as a traditional facet, meaning that the clustering should not 
-    be re-triggered when applying new facet filters on the results).
-    Additionally, it returns a boolean that indicates if a facet filter was present in the query.
-
-    Args:
-        parsed_filters (List[List[str]]): parsed query filter.
-    
-    Returns: 
-        filter_query (str): query filter string with only non facet filters.
-        has_facet_filter (bool): boolean indicating if there exist facet filters in the processed string.
-    """
-    facet_filter_strings = (
-        "samplerate", 
-        "grouping_pack", 
-        "username", 
-        "tag", 
-        "bitrate", 
-        "bitdepth", 
-        "type", 
-        "channels", 
-        "license",
-    )
-    has_facet_filter = False
-    filter_query = ""
-
-    if parsed_filters:       
-        filter_query_parts = []
-        for parsed_filter in parsed_filters:
-            if parsed_filter[0] in facet_filter_strings:
-                has_facet_filter = True 
-            else:
-                filter_query_parts.append(''.join(parsed_filter))
-
-        filter_query = ' '.join(filter_query_parts)
-    
-    return filter_query, has_facet_filter
-
-
 def perform_search_engine_query(query_params):
     """Perform a query in the search engine given some query parameters and get the paginated results
 

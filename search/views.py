@@ -201,6 +201,7 @@ def _get_clusters_data_helper(sqp):
     if results is None:
         return None
     
+    print(results)
     # Get the number of sounds per cluster
     # This number depends on the facet filters which are applied AFTER the main clustering. 
     # See get_num_sounds_per_cluster for more details.
@@ -220,7 +221,7 @@ def clusters_section(request):
     sqp = search_query_processor.SearchQueryProcessor(request)
     clusters_data = _get_clusters_data_helper(sqp)
     if clusters_data is None:
-        return render(request, 'search/clustering_results.html', {'clusters': None})
+        return render(request, 'search/clustering_results.html', {'clusters_data': None})
     return render(request, 'search/clustering_results.html', {'sqp': sqp, 'clusters_data': clusters_data})
 
 

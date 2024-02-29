@@ -37,6 +37,7 @@ def parse_weights_parameter(weights_param):
     ideally, field names should any of those specified in settings.SEARCH_SOUNDS_FIELD_*
     so the search engine can implement ways to translate the "web names" to "search engine"
     names if needed.
+    NOTE: this function is only used in the API
     """
     parsed_field_weights = {}
     if weights_param:

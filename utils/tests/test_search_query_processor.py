@@ -264,12 +264,12 @@ class SearchQueryProcessorTests(TestCase):
         sqp, _ = self.run_fake_search_query_processor(params={
             'f': 'duration:[0.25 TO 20] tag:"tag1" is_geotagged:1 (id:1 OR id:2 OR id:3) tag:"tag2" (tag:"tag3" OR tag:"tag4")',
         })
-        self.assertEqual(sorted(sqp.get_tags_in_filter()), sorted(['tag1', 'tag2']))
+        self.assertEqual(sorted(sqp.get_tags_in_filters()), sorted(['tag1', 'tag2']))
 
         sqp, _ = self.run_fake_search_query_processor(params={
             'f': 'duration:[0.25 TO 20] is_geotagged:1 (id:1 OR id:2 OR id:3)',
         })
-        self.assertEqual(sqp.get_tags_in_filter(), [])
+        self.assertEqual(sqp.get_tags_in_filters(), [])
 
     def test_search_query_processor_make_url_add_remove_filters(self):
         # Test add_filters adds them to the URL

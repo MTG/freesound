@@ -86,7 +86,7 @@ def search_view_helper(request):
 
     # If in tags mode and no tags in filter, return before making the query as we'll make
     # the initial tagcloud in tags.views.tags view and no need to make any further query here
-    if sqp.tags_mode and not sqp.get_tags_in_filter():
+    if sqp.tags_mode and not sqp.get_tags_in_filters():
         return {'sqp': sqp}  # sqp will be needed in tags.views.tags view
 
     # Run the query and post-process the results
@@ -157,7 +157,7 @@ def search_view_helper(request):
         # sure to remove the filters for the corresponding facet field that are already active (so we remove
         # redundant information)
         if 'tag' in results.facets:
-            results.facets['tag'] = [(tag, count) for tag, count in results.facets['tag'] if tag not in sqp.get_tags_in_filter()]
+            results.facets['tag'] = [(tag, count) for tag, count in results.facets['tag'] if tag not in sqp.get_tags_in_filters()]
 
         # Compile template variables
         return {

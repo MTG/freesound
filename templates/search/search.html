@@ -58,7 +58,7 @@
                 <div class="between middle">
                     <h3>
                         <span class="text-light-grey h-spacing-1">Sounds tagged as</span>
-                        {% for tag in sqp.get_tags_in_filter %}
+                        {% for tag in sqp.get_tags_in_filters %}
                         {{ tag }}{% if not forloop.last %}<span class="h-spacing-left-1 h-spacing-1 text-light-grey">·</span>{% endif %}
                         {% endfor %}
                     </h3>
@@ -276,7 +276,7 @@
         {% comment %}search results{% endcomment %}
         <main class="col-12 col-md-8 col-lg-9 col-extra-left-padding-large-md">
             {% comment %}filters{% endcomment %}
-            {% with sqp.get_non_option_filters_for_search_results_page as filters_data %}
+            {% with sqp.get_filters_data_to_display_in_search_results_page as filters_data %}
             {% if filters_data %}
             <div class="v-spacing-3 v-spacing-top-2 line-height-33">
                 {% for name, value, remove_url in filters_data %}

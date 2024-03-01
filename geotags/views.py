@@ -273,7 +273,7 @@ def for_query(request):
         'query_params': request_parameters_string,
         'query_params_encoded': urllib.parse.quote(request_parameters_string),
         'query_search_page_url': reverse('sounds-search') + f'?{request_parameters_string}',
-        'query_description': SearchQueryProcessor(request).get_query_textual_description(),
+        'query_description': SearchQueryProcessor(request).get_textual_description(),
         'url': reverse('geotags-for-query-barray') + f'?{request_parameters_string}',
     })
     return render(request, 'geotags/geotags.html', tvars)

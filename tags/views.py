@@ -58,7 +58,7 @@ def tags(request, multiple_tags=None):
         tvars = search_view_helper(request)
 
         # If there are no tags in filter, get initial tagcloud and add it to tvars
-        if 'sqp' in tvars and not tvars['sqp'].get_tags_in_filter():
+        if 'sqp' in tvars and not tvars['sqp'].get_tags_in_filters():
             initial_tagcloud = cache.get('initial_tagcloud')
             if initial_tagcloud is None:
                 # If tagcloud is not cached, make a query to retrieve it and save it to cache

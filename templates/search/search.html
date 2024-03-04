@@ -91,8 +91,8 @@
                                 {% if sqp.options.similar_to.get_value %}
                                     <option>Similarity to target</option>    
                                 {% else %}    
-                                    {% for option in sqp.options.sort_by.options %}
-                                    <option value="{{option.1}}"{% ifequal option.1 sqp.options.sort_by.get_value %}selected="selected"{% endifequal %}>{{option.0}}</option>
+                                    {% for option in sqp.options.sort_by.get_choices_annotated_with_selection %}
+                                    <option value="{{option.0}}"{% if option.2 %}selected="selected"{% endif %}>{{option.1}}</option>
                                     {% endfor %}    
                                 {% endif %}
                             </select>
@@ -111,11 +111,11 @@
                                     {{ sqp.options.search_in.label }}
                                 </div>
                                 <div class="row no-gutters v-spacing-top-1 {% if sqp.options.search_in.disabled %}opacity-020{% endif %}">
-                                    {% for option in sqp.options.search_in.get_options_annotated_with_selection %}
+                                    {% for option in sqp.options.search_in.get_choices_annotated_with_selection %}
                                     <div class="col-6 v-padding-1">    
                                         <label class="between w-100 cursor-pointer">
                                             <div class="bw-search__filter-checkbox">
-                                                <input name="{{ option.0 }}" type="checkbox" class="bw-checkbox" {% if option.3 %}checked{% endif %} {% if sqp.options.search_in.disabled %}disabled{% endif %}/>
+                                                <input name="{{ option.0 }}" type="checkbox" class="bw-checkbox" {% if option.2 %}checked{% endif %} {% if sqp.options.search_in.disabled %}disabled{% endif %}/>
                                             </div>
                                             <div class="bw-search__filter-name">{{ option.1 }}</div>
                                         </label>

@@ -101,12 +101,12 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
 
         # With "search in" options specified
-        sqp, url = self.run_fake_search_query_processor(params={'a_tag': '1', 'a_description': '1', 'a_soundid': '0'})
+        sqp, url = self.run_fake_search_query_processor(params={'si_tags': '1', 'si_description': '1', 'si_sound_id': '0'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_fields': {
             settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_DESCRIPTION], 
             settings.SEARCH_SOUNDS_FIELD_TAGS: settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[settings.SEARCH_SOUNDS_FIELD_TAGS]
         }})
-        self.assertGetUrlAsExpected(sqp, url.replace('a_soundid=0', ''))  # Here we remove a_soundid from the expected URL because sqp.get_url() will exclude it as value is not '1'
+        self.assertGetUrlAsExpected(sqp, url.replace('si_sound_id=0', ''))  # Here we remove a_soundid from the expected URL because sqp.get_url() will exclude it as value is not '1'
 
         # With custom field weights specified
         sqp, url = self.run_fake_search_query_processor(params={'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
@@ -117,7 +117,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
 
         # With custom field weights specified AND search in
-        sqp, url = self.run_fake_search_query_processor(params={'a_soundid': '1', 'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
+        sqp, url = self.run_fake_search_query_processor(params={'si_sound_id': '1', 'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
         self.assertExpectedParams(sqp.as_query_params(), {'query_fields': {
             settings.SEARCH_SOUNDS_FIELD_ID: 1
         }})
@@ -302,7 +302,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertEqual(sqp.contains_active_advanced_search_options(), False)
         
         # With "search in" options specified
-        sqp, _ = self.run_fake_search_query_processor(params={'a_tag': '1', 'a_description': '1', 'a_soundid': '0'})
+        sqp, _ = self.run_fake_search_query_processor(params={'si_tags': '1', 'si_description': '1', 'si_sound_id': '0'})
         self.assertEqual(sqp.contains_active_advanced_search_options(), True)
         
         # With custom field weights specified
@@ -310,7 +310,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertEqual(sqp.contains_active_advanced_search_options(), True)
         
         # With custom field weights specified AND search in
-        sqp, _ = self.run_fake_search_query_processor(params={'a_soundid': '1', 'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
+        sqp, _ = self.run_fake_search_query_processor(params={'si_sound_id': '1', 'w': f'{settings.SEARCH_SOUNDS_FIELD_DESCRIPTION}:2,{settings.SEARCH_SOUNDS_FIELD_ID}:1'})
         self.assertEqual(sqp.contains_active_advanced_search_options(), True)
 
         # With duration filter

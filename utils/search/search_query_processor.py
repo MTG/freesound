@@ -33,8 +33,8 @@ from utils.clustering_utilities import get_ids_in_cluster
 from utils.encryption import create_hash
 from utils.search.backends.solr555pysolr import FIELD_NAMES_MAP
 from utils.search.search_sounds import allow_beta_search_features
-from .search_query_processor_options_base import SearchOptionStr, SearchOptionSelect, \
-    SearchOptionInt, SearchOptionBool, SearchOptionRange, SearchOptionMultipleSelect
+from .search_query_processor_options_base import SearchOptionStr, SearchOptionChoice, \
+    SearchOptionInt, SearchOptionBool, SearchOptionRange, SearchOptionMultipleChoice
 
 
 # --- Search options objects for Freesound search
@@ -47,17 +47,17 @@ class SearchOptionQuery(SearchOptionStr):
         return bool(self.search_query_processor.get_option_value(SearchOptionSimilarTo))
 
 
-class SearchOptionSort(SearchOptionSelect):
+class SearchOptionSort(SearchOptionChoice):
     name = 'sort_by'
     label = 'Sort by'
     value_default = settings.SEARCH_SOUNDS_SORT_DEFAULT
-    options = [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB]
+    choices = [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB]
     query_param_name = 's'
 
     def should_be_disabled(self):
         return bool(self.search_query_processor.get_option_value(SearchOptionSimilarTo))
     
-    def get_default_value(self, request):
+    def get_default_value(self):
         if self.search_query_processor.get_option_value(SearchOptionQuery) == '':
             # When making empty queries and no sorting is specified, automatically set sort to "created desc" as
             # relevance score based sorting makes no sense
@@ -70,11 +70,11 @@ class SearchOptionPage(SearchOptionInt):
     query_param_name = 'page'
     value_default = 1
 
-    def get_value(self):
+    def get_value_to_apply(self):
         # Force return 1 in map mode
         if self.search_query_processor.get_option_value(SearchOptionMapMode):
             return 1
-        return super().get_value()
+        return super().get_value_to_apply()
 
 
 class SearchOptionDuration(SearchOptionRange):
@@ -101,7 +101,7 @@ class SearchOptionGroupByPack(SearchOptionBool):
     help_text= 'Group search results so that multiple sounds of the same pack only represent one item'
     value_default = True
 
-    def get_value(self):
+    def get_value_to_apply(self):
         # Force return True if display_as_packs is enabled, and False if map_mode is enabled
         if self.search_query_processor.has_filter_with_name('grouping_pack'):
             return False
@@ -109,7 +109,7 @@ class SearchOptionGroupByPack(SearchOptionBool):
             return True
         elif self.search_query_processor.get_option_value(SearchOptionMapMode):
             return False
-        return super().get_value()
+        return super().get_value_to_apply()
 
     def should_be_disabled(self):
         return self.search_query_processor.has_filter_with_name('grouping_pack') or \
@@ -123,11 +123,11 @@ class SearchOptionDisplayResultsAsPacks(SearchOptionBool):
     query_param_name = 'dp'
     help_text= 'Display search results as packs rather than individual sounds'
 
-    def get_value(self):
+    def get_value_to_apply(self):
         # Force return False if a pack filter is active
         if self.search_query_processor.has_filter_with_name('grouping_pack'):
             return False
-        return super().get_value()
+        return super().get_value_to_apply()
 
     def should_be_disabled(self):
         return self.search_query_processor.has_filter_with_name('grouping_pack') or self.search_query_processor.get_option_value(SearchOptionMapMode)
@@ -139,9 +139,9 @@ class SearchOptionGridMode(SearchOptionBool):
     query_param_name = 'cm'
     help_text= 'Display search results in a grid so that more sounds are visible per search results page'
 
-    def get_default_value(self, request):
-        if request.user.is_authenticated:
-            return request.user.profile.use_compact_mode
+    def get_default_value(self):
+        if self.search_query_processor.request.user.is_authenticated:
+            return self.search_query_processor.request.user.profile.use_compact_mode
         return False
     
     def should_be_disabled(self):
@@ -162,9 +162,9 @@ class SearchOptionIsGeotagged(SearchOptionBool):
     search_engine_field_name = 'is_geotagged'
     help_text= 'Only find sounds that have geolocation information'
     
-    def render_as_filter(self):
+    def as_filter(self):
         # Force render filter True if map_mode is enabled
-        return super().render_as_filter() if not self.search_query_processor.get_option_value(SearchOptionMapMode) else f'{self.search_engine_field_name}:1'
+        return super().as_filter() if not self.search_query_processor.get_option_value(SearchOptionMapMode) else f'{self.search_engine_field_name}:1'
     
     def should_be_disabled(self):
         return self.search_query_processor.get_option_value(SearchOptionMapMode)
@@ -179,9 +179,9 @@ class SearchOptionSimilarTo(SearchOptionStr):
 class SearchOptionTagsMode(SearchOptionBool):
     name= 'tags_mode'
 
-    def value_from_request(self, request):
+    def get_value_from_request(self):
         # Tags mode is a special option which is not passed as a query parameter but is inferred from the URL
-        return reverse('tags') in request.path
+        return reverse('tags') in self.request.path
 
 
 class SearchOptionComputeClusters(SearchOptionBool):
@@ -195,17 +195,18 @@ class SearchOptionClusterId(SearchOptionInt):
     query_param_name = 'cid'
 
 
-class SearchOptionSearchIn(SearchOptionMultipleSelect):
+class SearchOptionSearchIn(SearchOptionMultipleChoice):
     name = 'search_in'
     label = 'Search in'
     value_default = []
-    options = [
-        ('a_tag', 'Tags', settings.SEARCH_SOUNDS_FIELD_TAGS),
-        ('a_filename', 'Sound name', settings.SEARCH_SOUNDS_FIELD_NAME),
-        ('a_description', 'Description', settings.SEARCH_SOUNDS_FIELD_DESCRIPTION),
-        ('a_packname', 'Pack name', settings.SEARCH_SOUNDS_FIELD_PACK_NAME),
-        ('a_soundid', 'Sound ID', settings.SEARCH_SOUNDS_FIELD_ID),
-        ('a_username', 'Username', settings.SEARCH_SOUNDS_FIELD_USER_NAME)
+    query_param_name_prefix = 'si'
+    choices = [
+        (settings.SEARCH_SOUNDS_FIELD_TAGS, 'Tags'),
+        (settings.SEARCH_SOUNDS_FIELD_NAME, 'Sound name'),
+        (settings.SEARCH_SOUNDS_FIELD_DESCRIPTION, 'Description'),
+        (settings.SEARCH_SOUNDS_FIELD_PACK_NAME, 'Pack name'),
+        (settings.SEARCH_SOUNDS_FIELD_ID, 'Sound ID'),
+        (settings.SEARCH_SOUNDS_FIELD_USER_NAME, 'Username')
     ]
     
     def should_be_disabled(self):
@@ -217,14 +218,14 @@ class SearchOptionFieldWeights(SearchOptionStr):
     query_param_name = 'w'
     value_default = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
 
-    def value_from_request(self, request):
+    def get_value_from_request(self):
         """param weights can be used to specify custom field weights with this format 
         w=field_name1:integer_weight1,field_name2:integrer_weight2, eg: w=name:4,tags:1
         ideally, field names should any of those specified in settings.SEARCH_SOUNDS_FIELD_*
         so the search engine can implement ways to translate the "web names" to "search engine"
         names if needed.
         """
-        weights_param = request.GET.get(self.query_param_name, None)
+        weights_param = self.request.GET.get(self.query_param_name, None)
         parsed_field_weights = {}
         if weights_param:
             for part in weights_param.split(','):
@@ -241,18 +242,22 @@ class SearchOptionFieldWeights(SearchOptionStr):
         else:
             return None
         
-    def get_value_for_url_param(self):
+    def as_URL_params(self):
         value_for_url = ''
-        for field, weight in self.get_value().items():
+        for field, weight in self.value.items():
             value_for_url += f'{field}:{weight},'
         if value_for_url.endswith(','):
             value_for_url = value_for_url[:-1]
-        return value_for_url
+        return {self.query_param_name : value_for_url}
     
 
 # --- Search query processor class
 
 class SearchQueryProcessor(object):
+    """The SearchQueryProcessor class is used to parse and process search query information from a request object and
+    compute a number of useful items for displaying search information in templates, constructing search URLs, and 
+    preparing search options to be passed to the backend search engine.
+    """
     request = None
     options = {}
     avaialable_options = [
@@ -359,11 +364,6 @@ class SearchQueryProcessor(object):
             option = optionClass(self)
             self.options[option.name] = option
 
-        # Set the "disabled" flag in SearchOption objects. This needs to be done after all objects have been initialized because rules for disabling some options
-        # might depend on the value of other options.
-        for option in self.options.values():
-            option.disabled = option.should_be_disabled()
-
         # Some of the filters included in the search query (in f_parsed) might belog to filters which are added by SearchOption objects, but some others might
         # be filters added by search facets or "raw filters" directly added to the URL by the user. Some methods of the SearchQueryProcessor need to know which
         # filters belong to search options, so we pre-compute the list of non-option filters here as a list of (field,value) tuples. For example, if
@@ -381,8 +381,11 @@ class SearchQueryProcessor(object):
 
     # Filter-related methods
 
-    def get_active_filters(self, include_filters_from_options=True, include_non_option_filters=True, include_filters_from_facets=True, 
-                           extra_filters=None, ignore_filters=None):
+    def get_active_filters(self, include_filters_from_options=True, 
+                           include_non_option_filters=True, 
+                           include_filters_from_facets=True, 
+                           extra_filters=None, 
+                           ignore_filters=None):
         """Returns a list of all filters which are active in the query in a ["field:value", "field:value", ...] format. This method
         also allows to add extra filters to the list or ignore some of the existing filters.
 
@@ -401,7 +404,7 @@ class SearchQueryProcessor(object):
         ff = []
         if include_filters_from_options:
             for option in self.options.values():
-                fit = option.render_as_filter()
+                fit = option.as_filter()
                 if fit is not None:
                     ff.append(fit)
         if include_non_option_filters:
@@ -422,8 +425,11 @@ class SearchQueryProcessor(object):
             ff += extra_filters
         return ff
 
-    def get_num_active_filters(self, include_filters_from_options=True, include_non_option_filters=True, include_filters_from_facets=True, 
-                               extra_filters=None, ignore_filters=None):
+    def get_num_active_filters(self, include_filters_from_options=True, 
+                               include_non_option_filters=True, 
+                               include_filters_from_facets=True, 
+                               extra_filters=None, 
+                               ignore_filters=None):
         """Returns the number of active filters in the query. This method has the same parameters of self.get_active_filters.
         """
         return len(self.get_active_filters(include_filters_from_options=include_filters_from_options, include_non_option_filters=include_non_option_filters,
@@ -467,8 +473,12 @@ class SearchQueryProcessor(object):
                 tags_in_filter.append(value)
         return tags_in_filter
     
-    def get_filter_string_for_search_engine(self, include_filters_from_options=True, include_non_option_filters=True, include_filters_from_facets=True, 
-                                            extra_filters=None, ignore_filters=None):
+    def get_filter_string_for_search_engine(self, 
+                                            include_filters_from_options=True, 
+                                            include_non_option_filters=True, 
+                                            include_filters_from_facets=True, 
+                                            extra_filters=None, 
+                                            ignore_filters=None):
         """Returns a filter string with the proper format to be used by the search engine. This method has the same parameters of self.get_active_filters
         to indicate which filters should or should not be included. By default all filters are included. En example of a filter string returned by that
         method could be something like: 'duration:[0.25 TO 20] tag:"tag1" is_geotagged:1 (id:1 OR id:2 OR id:3) tag:"tag2"'
@@ -493,7 +503,7 @@ class SearchQueryProcessor(object):
         for option in self.options.values():
             if option.name not in [opt.name for opt in self.non_advanced_options]:
                 if option.set_in_request:
-                    if not option.is_default_value():
+                    if not option.is_default_value:
                         return True
         return False
 
@@ -645,10 +655,10 @@ class SearchQueryProcessor(object):
         # Add query parameters from search options
         parameters_to_add = {}
         for option in self.options.values():
-            if option.set_in_request and not option.is_default_value():
-                param_for_url = option.get_param_for_url()
-                if param_for_url is not None:
-                    parameters_to_add.update(param_for_url)
+            if option.set_in_request and not option.is_default_value:
+                params_for_url = option.as_URL_params()
+                if params_for_url is not None:
+                    parameters_to_add.update(params_for_url)
         
         # Add filter parameter
         # Also pass extra filters to be added and/or filters to be removed when making the URL
@@ -664,7 +674,7 @@ class SearchQueryProcessor(object):
     # Some util methods and properties to access option values more easily
 
     def get_option_value(self, option_class):
-        return self.options[option_class.name].get_value()
+        return self.options[option_class.name].get_value_to_apply()
                 
     @property
     def tags_mode(self):

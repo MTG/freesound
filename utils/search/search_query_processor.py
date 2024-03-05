@@ -397,6 +397,7 @@ class SearchQueryProcessor(object):
         query_filter = self.get_filter_string_for_search_engine(include_filters_from_facets=include_filters_from_facets)
         key = f'cluster-results-{self.get_option_value_to_apply("query")}-' + \
               f'{query_filter}-{self.get_option_value_to_apply("sort_by")}-' + \
+              f'{self.get_option_value_to_apply("similar_to")}-' + \
               f'{self.get_option_value_to_apply("group_by_pack")}'
         return create_hash(key, limit=32)
 

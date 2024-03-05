@@ -1,5 +1,5 @@
+{% if clusters_data and clusters_data|length > 0 %}
 <div class="h-padding-2 v-spacing-top-1">
-    {% if clusters_data %}
     <div class="row">
         {% for cluster_id, num_sounds, cluster_name, sound_examples in clusters_data %}
         <div class="col-3 col-lg-2 v-spacing-top-2">
@@ -8,7 +8,5 @@
         </div>
         {% endfor %}
     </div>
-    {% else %}
-    <span class="text-grey">No clusters could be loaded...</span>
-    {% endif %}
-</div>
+</div>    
+{% endif %}

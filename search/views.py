@@ -209,10 +209,10 @@ def _get_clusters_data_helper(sqp):
     # Resurn a list with information for each cluster
     # Note that this information DOES NOT include the actual sound IDs per cluster.
     return list(zip(
-        results['cluster_ids'],  # cluster ID
+        results.get('cluster_ids', []),  # cluster ID
         num_sounds_per_cluster,  # Num sounds
-        results['cluster_names'],  # Cluster name
-        results['example_sounds_data']  # Example sounds
+        results.get('cluster_names', []),  # Cluster name
+        results.get('example_sounds_data', [])  # Example sounds
     ))
     
 

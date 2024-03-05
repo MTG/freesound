@@ -29,7 +29,7 @@ import luqum.tree
 from luqum.parser import parser
 from luqum.pretty import prettify
 
-from utils.clustering_utilities import get_ids_in_cluster
+from utils.clustering_utilities import get_ids_in_cluster, get_clusters_for_query
 from utils.encryption import create_hash
 from utils.search.backends.solr555pysolr import FIELD_NAMES_MAP
 from utils.search.search_sounds import allow_beta_search_features
@@ -139,7 +139,8 @@ class SearchQueryProcessor(object):
         label='Cluster results by similarity')
     cluster_id = SearchOptionInt(
         advanced=False,
-        query_param_name='cid')
+        query_param_name='cid',
+        get_value_to_apply = lambda option: -1 if not option.sqp.get_option_value_to_apply('compute_clusters') else option.value)
     field_weights = SearchOptionFieldWeights(
         query_param_name = 'w'
     )
@@ -312,8 +313,16 @@ class SearchQueryProcessor(object):
                     filter_data[1] = '"'+ value[value.find("_")+1:]
                 else:
                     filter_data[1] = value[value.find("_")+1:]
-
             filters_data.append(filter_data)
+
+        cluster_id = self.get_option_value_to_apply('cluster_id')
+        if cluster_id > -1:
+            # If a cluster ID filer is present, we also add it to the list of removable filters
+            cluster_results = get_clusters_for_query(self)
+            if cluster_results is not None and cluster_id in cluster_results['cluster_ids']:
+                cluster_number = cluster_results['cluster_ids'].index(cluster_id) + 1
+                filters_data.append(['cluster', f'#{cluster_number}', self.get_url().replace(f'cid={cluster_id}', 'cid=-1')])
+
         return filters_data
     
     def has_filter_with_name(self, filter_name):

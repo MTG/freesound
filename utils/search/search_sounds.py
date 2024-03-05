@@ -207,7 +207,7 @@ def get_sound_ids_from_search_engine_query(query_params, current_page=None, num_
             in the query_params will be used.
     
     Returns
-        List[int]: list containing the ids of the retrieved sounds.
+        List[int]: list containing the ids of the retrieved sounds (for the current_page or num_sounds).
     """
     # We set include_facets to False in order to reduce the amount of data that search engine will return.
     query_params.update({

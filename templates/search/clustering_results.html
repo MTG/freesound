@@ -3,7 +3,7 @@
     <div class="row">
         {% for cluster_id, num_sounds, cluster_name, sound_examples in clusters_data %}
         <div class="col-3 col-lg-2 v-spacing-top-2">
-            <label><input onchange="this.form.submit()" class="bw-radio" type="radio" value="{{ cluster_id }}" name="{{ sqp.options.cluster_id.query_param_name }}" {% if cluster_id == sqp.options.cluster_id.value %}checked="checked"{% endif %}>Cluster #{{ forloop.counter }}: {{ cluster_name }}</label>
+            <label><input class="bw-radio" type="radio" value="{{ cluster_id }}" name="{{ sqp.options.cluster_id.query_param_name }}" {% if cluster_id == sqp.options.cluster_id.value %}checked="checked"{% endif %}>Cluster #{{ forloop.counter }}: {{ cluster_name }}</label>
             <div class="text-grey">{{ num_sounds }} sound{{ num_sounds|pluralize }}</div>
         </div>
         {% endfor %}

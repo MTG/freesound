@@ -168,12 +168,22 @@ searchFormElement.getElementsByClassName('bw-checkbox').forEach(checkbox => {
   checkbox.parentNode.appendChild(hiddenCheckbox);
 });
 
+// Make the search select element submit the form when changed
 var sortByElement = document.getElementById('id_sort_by');
 if (sortByElement !== null){
   sortByElement.addEventListener('change', function() {
     searchFormElement.submit();
   })
 }
+
+// Make radio cluster elements submit the form when changed
+document.getElementsByName('cid').forEach(radio => { 
+  radio.addEventListener('change', (evt) => {
+    setTimeout(() => {
+      searchFormElement.submit();
+    }, 100);  // Give it a little time to update the radio widget before submitting
+  });
+})
 
 document.body.addEventListener('keydown',  evt => {
   const ENTER_KEY = 13

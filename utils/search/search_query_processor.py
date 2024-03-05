@@ -58,23 +58,25 @@ class SearchQueryProcessor(object):
     errors = ''
 
     query = SearchOptionStr(
+        advanced=False,
         query_param_name='q',
         should_be_disabled=lambda option: bool(option.sqp.get_option_value_to_apply('similar_to')))
     sort_by = SearchOptionChoice(
+        advanced=False,
         query_param_name='s',
         label='Sort',
         choices = [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
         should_be_disabled = lambda option: bool(option.sqp.get_option_value_to_apply('similar_to')),
-        default_value_or_func = lambda option: settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST if option.sqp.get_option_value_to_apply('query') == '' else settings.SEARCH_SOUNDS_SORT_DEFAULT)
+        get_default_value = lambda option: settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST if option.sqp.get_option_value_to_apply('query') == '' else settings.SEARCH_SOUNDS_SORT_DEFAULT)
     page = SearchOptionInt(
+        advanced=False,
         query_param_name='page',
-        default_value_or_func=1,
+        value_default=1,
         get_value_to_apply = lambda option: 1 if option.sqp.get_option_value_to_apply('map_mode') else option.value)
     search_in = SearchOptionMultipleChoice(
-        advanced=True,
         query_param_name_prefix='si',
         label='Search in',
-        default_value_or_func=[],
+        value_default=[],
         choices = [
             (settings.SEARCH_SOUNDS_FIELD_TAGS, 'Tags'),
             (settings.SEARCH_SOUNDS_FIELD_NAME, 'Sound name'),
@@ -84,14 +86,12 @@ class SearchQueryProcessor(object):
             (settings.SEARCH_SOUNDS_FIELD_USER_NAME, 'Username')],
         should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('tags_mode') or bool(option.sqp.get_option_value_to_apply('similar_to')))
     duration = SearchOptionRange(
-        advanced=True,
         query_param_min='d0',
         query_param_max='d1',
         search_engine_field_name = 'duration',
         label = 'Duration',
-        default_value_or_func=['0', '*'])
+        value_default=['0', '*'])
     is_geotagged = SearchOptionBool(
-        advanced=True,
         query_param_name='ig',
         search_engine_field_name='is_geotagged',
         label='Only geotagged sounds',
@@ -99,49 +99,48 @@ class SearchQueryProcessor(object):
         should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('map_mode'),
         get_value_to_apply = lambda option: True if option.sqp.get_option_value_to_apply('map_mode') else option.value)
     is_remix = SearchOptionBool(
-        advanced=True,
         query_param_name='r',
         search_engine_field_name='in_remix_group',
         label='Only remix sounds',
         help_text='Only find sounds that are a remix of other sounds or have been remixed')
     group_by_pack = SearchOptionBool(
-        advanced=True,
         query_param_name='g',
         label='Group sounds by pack',
         help_text='Group search results so that multiple sounds of the same pack only represent one item',
-        default_value_or_func=True,
+        value_default=True,
         get_value_to_apply = _get_value_to_apply_group_by_pack,
         should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('display_as_packs') or option.sqp.get_option_value_to_apply('map_mode'))
     display_as_packs = SearchOptionBool(
+        advanced=False,
         query_param_name='dp',
         label='Display results as packs',
         help_text='Display search results as packs rather than individual sounds',
         get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('grouping_pack') else option.value,
         should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode'))
     grid_mode = SearchOptionBool(
+        advanced=False,
         query_param_name='cm',
         label='Display results in grid',
         help_text='Display search results in a grid so that more sounds are visible per search results page',
-        default_value_or_func = lambda option: option.request.user.profile.use_compact_mode if option.request.user.is_authenticated else False,
+        get_default_value = lambda option: option.request.user.profile.use_compact_mode if option.request.user.is_authenticated else False,
         should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('map_mode'))
     map_mode = SearchOptionBool(
+        advanced=False,
         query_param_name='mm',
         label='Display results in map',
         help_text='Display search results in a map')
     tags_mode = SearchOptionBoolElementInPath(
+        advanced=False,
         element_in_path='/browse/tags/')
     similar_to = SearchOptionStr(
-        advanced=True,
         query_param_name='st')
     compute_clusters = SearchOptionBool(
-        advanced=True,
-        beta=True,
         query_param_name='cc',
         label='Cluster results by similarity')
     cluster_id = SearchOptionInt(
+        advanced=False,
         query_param_name='cid')
     field_weights = SearchOptionFieldWeights(
-        advanced=True,
         query_param_name = 'w'
     )
 

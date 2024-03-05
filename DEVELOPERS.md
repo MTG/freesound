@@ -71,6 +71,7 @@ Currently, we only use the following custom permissions:
 * `tickets.can_moderate` (in `Ticket` model, used to allow sound moderation)
 * `forum.can_moderate_forum` (in `Post` model, used to allow forum moderation)
 * `sounds.can_describe_in_bulk` (in `BulkUploadProgress` model, used to allow bulk upload for users who don't meet the other common requirements)
+* `profile.show_beta_search_options` (in `Profile` model, used to allow using beta search features)
 
 
 ### URLs that include a username
@@ -131,6 +132,32 @@ creating `DeletedSound` objects in the `sounds-models.on_delete_sound` function 
 signal of the `Sound` model.
 
 
+### Adding new search options in the search page
+
+The available options for searching and filtering sounds in the search page ara managed using a `SearchQueryProcessor`
+object (implemented in `/utils/search/search_query_processor.py`). The `SearchQueryProcessor` class is used to parse and 
+process search query information from a Django `request` object, and compute a number of useful items for displaying search 
+information in templates, constructing search URLs, and preparing search options to be passed to the backend search engine.
+
+To add a new option to the search page, a new member of a specific `SearchOption` class should be added to the `SearchQueryProcessor` 
+class (see `SearchQueryProcessor` definion for examples). There are a number of already existing types of `SearchOption`s 
+as you can see by looking at the search options which are already implemented in `SearchQueryProcessor`. If the newly added search
+option implies doing some calcualtions for determining the `query_params` to be sent to the `search_sounds` function of the search 
+engine backend, this should be done in the `SearchQueryProcessor.as_query_params` method.
+
+Adding a new search option to `SearchQueryProcessor` will make the option work with the search engine backend and with search URLs, 
+but it will NOT automatically add the option to the form in the search page. This will need to be done manually by adding the 
+search option in the desired place in `templates/search/search.html` (see how other search options are implemented for inspiration).
+
+All this will add the search option to the user interface and send corresponding information to the search backend. For example,
+if the new search option should apply a filter in the search backend of some `new_property`, this will be handled by the `SearchQueryProcessor`.
+However, it is expected that this `new_property` has been added to the search engine schema and indexed properly, otherwise there
+will be errors when running the queries.
+
+Please have a look at the documentation of `SearchQueryProcessor` and the various `SearchOption` classes to get a better
+understanding of how all this works.
+
+
 ### Search Engine Backends
 
 The way in which Freesound communicates with a search engine to search for sounds and forum posts is abstracted through
@@ -148,7 +175,6 @@ the implementation of a search backend. You can run it like:
 
 Please read carefully the documentation of the management command to better understand how it works and how is it
 doing the testing.
-
 
 ### Freesound analysis pipeline
 

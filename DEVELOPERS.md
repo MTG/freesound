@@ -147,7 +147,8 @@ engine backend, this should be done in the `SearchQueryProcessor.as_query_params
 
 Adding a new search option to `SearchQueryProcessor` will make the option work with the search engine backend and with search URLs, 
 but it will NOT automatically add the option to the form in the search page. This will need to be done manually by adding the 
-search option in the desired place in `templates/search/search.html` (see how other search options are implemented for inspiration).
+search option in the desired place in `templates/search/search.html` (see how other search options are implemented for inspiration,
+there is a `display_search_option` templatetag which will facilitate things in most cases).
 
 All this will add the search option to the user interface and send corresponding information to the search backend. For example,
 if the new search option should apply a filter in the search backend of some `new_property`, this will be handled by the `SearchQueryProcessor`.

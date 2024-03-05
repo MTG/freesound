@@ -136,7 +136,7 @@ class SearchQueryProcessor(object):
         query_param_name='st')
     compute_clusters = SearchOptionBool(
         query_param_name='cc',
-        label='Cluster results by similarity')
+        label='Cluster results by sound similarity')
     cluster_id = SearchOptionInt(
         advanced=False,
         query_param_name='cid',

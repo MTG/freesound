@@ -163,6 +163,23 @@
   }
 }
 
+.bw-search_input {
+  border: 1px solid $border-input;
+  color: $black;
+  background-color: $background-input;
+  padding: 10px 20px;
+  border-radius: 5px;
+
+  &::placeholder {
+    color: $navy-light-grey;
+  }
+
+  &:focus {
+    background-color: $white;
+    border: 1px solid $black;
+  }
+}
+
 .browse__search-overview-sorter {
   display: flex;
   align-items: center;

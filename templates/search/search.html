@@ -49,8 +49,8 @@
                     <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
                 </div>
                 <input type="hidden" name="f" value="{{ sqp.render_filter_for_url|urlencode }}" />
-                {% if not sqp.options.field_weights.is_default_value %}<input type="hidden" name="{{ sqp.options.field_weights.query_param_name }}" value="{{ sqp.options.field_weights.value_formatted }}" />{% endif %}
-                {% if not sqp.options.similar_to.is_default_value %}<input type="hidden" name="{{ sqp.options.similar_to.query_param_name }}" value="{{ sqp.options.similar_to.value_formatted }}" />{% endif %}
+                {% if not sqp.options.field_weights.is_default_value %}{% display_search_option "field_weights" "hidden" %}{% endif %}
+                {% if not sqp.options.similar_to.is_default_value %}{% display_search_option "similar_to" "hidden" %}{% endif %}
             </div>
             {% if sqp.tags_mode_active %}
             {% comment %}"sounds tagged as" label with follow/unfollow buttons{% endcomment %}
@@ -86,16 +86,12 @@
                     {% comment %}sorting options{% endcomment %}
                     <div class="col-4 right browse__search-overview-sorter">
                         <div class="{% if sqp.map_mode_active %}display-none{% endif %}"> 
-                            <span class="font-weight-normal text-light-grey d-none d-md-inline">{{ sqp.options.sort_by.label }}:</span>
-                            <select id="sort-by" name="{{ sqp.options.sort_by.query_param_name }}" {% if sqp.options.sort_by.disabled %}disabled{% endif %}>
-                                {% if sqp.similar_to_active %}
-                                    <option>Similarity to target</option>    
-                                {% else %}    
-                                    {% for option in sqp.options.sort_by.get_choices_annotated_with_selection %}
-                                    <option value="{{option.0}}"{% if option.2 %}selected="selected"{% endif %}>{{option.1}}</option>
-                                    {% endfor %}    
-                                {% endif %}
-                            </select>
+                            {% if not sqp.similar_to_active %}
+                                {% display_search_option "sort_by" %}
+                            {% else %}
+                                <span class="font-weight-normal text-light-grey d-none d-md-inline">{{ sqp.options.sort_by.label }}:</span>
+                                <span><b>Similarity to target</b></span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -138,66 +134,24 @@
                                     Other
                                 </div>
                                 <div class="row no-gutters v-spacing-top-1">
-                                {% with sqp.options.is_geotagged as option %}
-                                    <div class="col-6 v-padding-1">    
-                                        <label class="between w-100 cursor-pointer {% if option.disabled %}opacity-020{% endif %}">
-                                            <div class="bw-search__filter-checkbox">
-                                                <input name="{{ option.query_param_name }}" type="checkbox" class="bw-checkbox" {% if option.value %}checked{% endif %} {% if option.disabled %}disabled{% endif %}/>
-                                            </div>
-                                            <div class="bw-search__filter-name">{{ option.label }}</div>
-                                        </label>
+                                    <div class="col-6 v-padding-1">
+                                        {% display_search_option "is_geotagged" %}
                                     </div>
-                                {% endwith %}
-                                {% with sqp.options.is_remix as option %}
-                                    <div class="col-6 v-padding-1">    
-                                        <label class="between w-100 cursor-pointer {% if option.disabled %}opacity-020{% endif %}">
-                                            <div class="bw-search__filter-checkbox">
-                                                <input name="{{ option.query_param_name }}" type="checkbox" class="bw-checkbox" {% if option.value %}checked{% endif %} {% if option.disabled %}disabled{% endif %}/>
-                                            </div>
-                                            <div class="bw-search__filter-name">{{ option.label }}</div>
-                                        </label>
+                                    <div class="col-6 v-padding-1">
+                                        {% display_search_option "is_remix" %}
                                     </div>
-                                {% endwith %}
-                                {% with sqp.options.group_by_pack as option %}
-                                    <div class="col-6 v-padding-1">    
-                                        <label class="between w-100 cursor-pointer {% if option.disabled %}opacity-020{% endif %}">
-                                            <div class="bw-search__filter-checkbox">
-                                                <input name="{{ option.query_param_name }}" type="checkbox" class="bw-checkbox" {% if option.value %}checked{% endif %} {% if option.disabled %}disabled{% endif %}/>
-                                            </div>
-                                            <div class="bw-search__filter-name">{{ option.label }}</div>
-                                        </label>
+                                    <div class="col-6 v-padding-1">
+                                        {% display_search_option "group_by_pack" %}
                                     </div>
-                                {% endwith %}
-                                {% with sqp.options.display_as_packs as option %}
-                                    <div class="col-6 v-padding-1">    
-                                        <label class="between w-100 cursor-pointer {% if option.disabled %}opacity-020{% endif %}">
-                                            <div class="bw-search__filter-checkbox">
-                                                <input name="{{ option.query_param_name }}" type="checkbox" class="bw-checkbox" {% if option.value %}checked{% endif %} {% if option.disabled %}disabled{% endif %}/>
-                                            </div>
-                                            <div class="bw-search__filter-name">{{ option.label }}</div>
-                                        </label>
+                                    <div class="col-6 v-padding-1">
+                                        {% display_search_option "display_as_packs" %}
                                     </div>
-                                {% endwith %}
-                                {% with sqp.options.grid_mode as option %}
-                                    <div class="col-6 v-padding-1">    
-                                        <label class="between w-100 cursor-pointer {% if option.disabled %}opacity-020{% endif %}">
-                                            <div class="bw-search__filter-checkbox">
-                                                <input name="{{ option.query_param_name }}" type="checkbox" class="bw-checkbox" {% if option.value %}checked{% endif %} {% if option.disabled %}disabled{% endif %}/>
-                                            </div>
-                                            <div class="bw-search__filter-name">{{ option.label }}</div>
-                                        </label>
+                                    <div class="col-6 v-padding-1">
+                                        {% display_search_option "grid_mode" %}
                                     </div>
-                                {% endwith %}
-                                {% with sqp.options.map_mode as option %}
-                                    <div class="col-6 v-padding-1">    
-                                        <label class="between w-100 cursor-pointer {% if option.disabled %}opacity-020{% endif %}">
-                                            <div class="bw-search__filter-checkbox">
-                                                <input name="{{ option.query_param_name }}" type="checkbox" class="bw-checkbox" {% if option.value %}checked{% endif %} {% if option.disabled %}disabled{% endif %}/>
-                                            </div>
-                                            <div class="bw-search__filter-name">{{ option.label }}</div>
-                                        </label>
+                                    <div class="col-6 v-padding-1">
+                                        {% display_search_option "map_mode" %}
                                     </div>
-                                {% endwith %}
                                 </div>
                             </div>
                         </div>
@@ -209,17 +163,12 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row v-spacing-top-1">
-                            {% with sqp.options.compute_clusters as option %}
-                            <div class="col-6 v-padding-1">    
-                                <label class="between w-100 cursor-pointer {% if option.disabled %}opacity-020{% endif %}">
-                                    <div class="bw-search__filter-checkbox">
-                                        <input name="{{ option.query_param_name }}" type="checkbox" class="bw-checkbox" {% if option.value %}checked{% endif %} {% if option.disabled %}disabled{% endif %}/>
-                                    </div>
-                                    <div class="bw-search__filter-name">{{ option.label }}</div>
-                                </label>
+                        <div class="row">    
+                            <div class="col-6 v-padding-1">
+                                <div class="v-spacing-top-1">{% display_search_option "compute_clusters" %}</div>
+                                <div class="v-spacing-top-1">{% display_search_option "similar_to" %}</div>
                             </div>
-                            {% endwith %}
+                            
                         </div>
                     {% endif %}
                     </div>
@@ -234,6 +183,7 @@
                     {% if clusters_data %}
                     {% include 'search/clustering_results.html' %}
                     {% else %}
+                    {% if get_clusters_url %}
                     <div class="async-section"
                         data-async-section-content-url="{{ get_clusters_url }}">
                         <div class="h-padding-2 v-spacing-top-2">
@@ -242,6 +192,7 @@
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                     {% endif %}
                 {% endif %}
             </div>

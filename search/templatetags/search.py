@@ -23,6 +23,7 @@ from django import template
 from django.conf import settings
 
 from sounds.models import License
+from utils.search import search_query_processor_options
 from utils.tags import annotate_tags
 
 register = template.Library()
@@ -114,3 +115,18 @@ def display_facet(context, facet_name):
                 element['icon'] = 'fcw'
 
     return {'type': facet_type, 'title': facet_title, 'facet': facet}
+
+
+@register.inclusion_tag('search/search_option.html', takes_context=True)
+def display_search_option(context, option_name, widget=None):
+    sqp = context['sqp']
+    option = sqp.options[option_name]
+    if widget is None:
+        # If a widget is not provided as a parameter, use a sensible default
+        widget = {
+            search_query_processor_options.SearchOptionBool: 'checkbox',
+            search_query_processor_options.SearchOptionStr: 'text',
+            search_query_processor_options.SearchOptionChoice: 'select',
+        }.get(type(option), 'text')
+    label = option.label if option.label else option_name.capitalize().replace('_', ' ')
+    return {'option': option, 'option_name': option_name, 'label': label, 'widget': widget}

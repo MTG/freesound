@@ -7,7 +7,7 @@ const searchInputBrowse = document.getElementById('search-input-browse');
 const searchInputBrowsePlaceholder = searchInputBrowse.getAttribute("placeholder");
 const removeSearchInputValueBrowse = document.getElementById('remove-content-search');
 const advancedSearchOptionsDiv = document.getElementById('advanced-search-options');
-const tagsMode = document.getElementsByName('tm')[0] !== undefined;
+const tagsMode = location.pathname.indexOf('/browse/tags/') > -1;
 
 const updateRemoveSearchInputButtonVisibility = (searchInputElement) => {
   if (searchInputElement.value.length) {
@@ -168,11 +168,12 @@ searchFormElement.getElementsByClassName('bw-checkbox').forEach(checkbox => {
   checkbox.parentNode.appendChild(hiddenCheckbox);
 });
 
-
-var sortByElement = document.getElementById('sort-by');
-sortByElement.addEventListener('change', function() {
-  searchFormElement.submit();
-})
+var sortByElement = document.getElementById('id_sort_by');
+if (sortByElement !== null){
+  sortByElement.addEventListener('change', function() {
+    searchFormElement.submit();
+  })
+}
 
 document.body.addEventListener('keydown',  evt => {
   const ENTER_KEY = 13

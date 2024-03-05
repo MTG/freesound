@@ -312,9 +312,13 @@ class SearchOptionRange(SearchOption):
             if self.query_param_min in self.request.GET or self.query_param_max in self.request.GET:
                 value = self.default_value_or_func.copy()
                 if self.query_param_min in self.request.GET:
-                    value[0] = str(self.request.GET[self.query_param_min])
+                    value_from_param = str(self.request.GET[self.query_param_min])
+                    if value_from_param:
+                        value[0] = value_from_param
                 if self.query_param_max in self.request.GET:
-                    value[1] = str(self.request.GET[self.query_param_max])
+                    value_from_param = str(self.request.GET[self.query_param_max])
+                    if value_from_param:
+                        value[1] = value_from_param
                 return value
             
     def format_value(self, value):

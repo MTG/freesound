@@ -42,9 +42,9 @@ def _get_value_to_apply_group_by_pack(self):
     # Force return True if display_as_packs is enabled, and False if map_mode is enabled
     if self.sqp.has_filter_with_name('grouping_pack'):
         return False
-    elif self.sqp.get_option_value('display_as_packs'):
+    elif self.sqp.get_option_value_to_apply('display_as_packs'):
         return True
-    elif self.sqp.get_option_value('map_mode'):
+    elif self.sqp.get_option_value_to_apply('map_mode'):
         return False
     return self.value
 
@@ -59,17 +59,17 @@ class SearchQueryProcessor(object):
 
     query = SearchOptionStr(
         query_param_name='q',
-        should_be_disabled=lambda self: bool(self.sqp.get_option_value('similar_to')))
+        should_be_disabled=lambda option: bool(option.sqp.get_option_value_to_apply('similar_to')))
     sort_by = SearchOptionChoice(
         query_param_name='s',
         label='Sort',
         choices = [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
-        should_be_disabled = lambda self: bool(self.sqp.get_option_value('similar_to')),
-        default_value_or_func = lambda self: settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST if self.sqp.get_option_value('query') == '' else settings.SEARCH_SOUNDS_SORT_DEFAULT)
+        should_be_disabled = lambda option: bool(option.sqp.get_option_value_to_apply('similar_to')),
+        default_value_or_func = lambda option: settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST if option.sqp.get_option_value_to_apply('query') == '' else settings.SEARCH_SOUNDS_SORT_DEFAULT)
     page = SearchOptionInt(
         query_param_name='page',
         default_value_or_func=1,
-        get_value_to_apply = lambda self: 1 if self.sqp.get_option_value('map_mode') else self.value)
+        get_value_to_apply = lambda option: 1 if option.sqp.get_option_value_to_apply('map_mode') else option.value)
     search_in = SearchOptionMultipleChoice(
         advanced=True,
         query_param_name_prefix='si',
@@ -82,7 +82,7 @@ class SearchQueryProcessor(object):
             (settings.SEARCH_SOUNDS_FIELD_PACK_NAME, 'Pack name'),
             (settings.SEARCH_SOUNDS_FIELD_ID, 'Sound ID'),
             (settings.SEARCH_SOUNDS_FIELD_USER_NAME, 'Username')],
-        should_be_disabled = lambda self: self.sqp.get_option_value('tags_mode') or bool(self.sqp.get_option_value('similar_to')))
+        should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('tags_mode') or bool(option.sqp.get_option_value_to_apply('similar_to')))
     duration = SearchOptionRange(
         advanced=True,
         query_param_min='d0',
@@ -96,9 +96,8 @@ class SearchQueryProcessor(object):
         search_engine_field_name='is_geotagged',
         label='Only geotagged sounds',
         help_text='Only find sounds that have geolocation information',
-        should_be_disabled = lambda self: self.sqp.get_option_value('map_mode'),
-        get_value_to_apply = lambda self: True if self.sqp.get_option_value('map_mode') else self.value)
-        #as_filter = lambda self: f'{self.search_engine_field_name}:1' if self.sqp.get_option_value('map_mode') else super(SearchOptionBool).as_filter())
+        should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('map_mode'),
+        get_value_to_apply = lambda option: True if option.sqp.get_option_value_to_apply('map_mode') else option.value)
     is_remix = SearchOptionBool(
         advanced=True,
         query_param_name='r',
@@ -112,19 +111,19 @@ class SearchQueryProcessor(object):
         help_text='Group search results so that multiple sounds of the same pack only represent one item',
         default_value_or_func=True,
         get_value_to_apply = _get_value_to_apply_group_by_pack,
-        should_be_disabled = lambda self: self.sqp.has_filter_with_name('grouping_pack') or self.sqp.get_option_value('display_as_packs') or self.sqp.get_option_value('map_mode'))
+        should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('display_as_packs') or option.sqp.get_option_value_to_apply('map_mode'))
     display_as_packs = SearchOptionBool(
         query_param_name='dp',
         label='Display results as packs',
         help_text='Display search results as packs rather than individual sounds',
-        get_value_to_apply = lambda self: False if self.sqp.has_filter_with_name('grouping_pack') else self.value,
-        should_be_disabled = lambda self: self.sqp.has_filter_with_name('grouping_pack') or self.sqp.get_option_value('map_mode'))
+        get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('grouping_pack') else option.value,
+        should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode'))
     grid_mode = SearchOptionBool(
         query_param_name='cm',
         label='Display results in grid',
         help_text='Display search results in a grid so that more sounds are visible per search results page',
-        default_value_or_func = lambda self: self.request.user.profile.use_compact_mode if self.request.user.is_authenticated else False,
-        should_be_disabled = lambda self: self.sqp.get_option_value('map_mode'))
+        default_value_or_func = lambda option: option.request.user.profile.use_compact_mode if option.request.user.is_authenticated else False,
+        should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('map_mode'))
     map_mode = SearchOptionBool(
         query_param_name='mm',
         label='Display results in map',
@@ -388,16 +387,16 @@ class SearchQueryProcessor(object):
             str: Cache key for the clustering data
         """
         query_filter = self.get_filter_string_for_search_engine(include_filters_from_facets=include_filters_from_facets)
-        key = f'cluster-results-{self.get_option_value("query")}-' + \
-              f'{query_filter}-{self.get_option_value("sort_by")}-' + \
-              f'{self.get_option_value("group_by_pack")}'
+        key = f'cluster-results-{self.get_option_value_to_apply("query")}-' + \
+              f'{query_filter}-{self.get_option_value_to_apply("sort_by")}-' + \
+              f'{self.get_option_value_to_apply("group_by_pack")}'
         return create_hash(key, limit=32)
 
     def get_textual_description(self):
         """Returns a textual description of the search query, e.g.: "cat (some filters applied)"'
         """
         query_description = ''
-        textual_query = self.get_option_value('query')
+        textual_query = self.get_option_value_to_apply('query')
         if textual_query:
             query_description = f'"{textual_query}"'
         else:
@@ -439,41 +438,41 @@ class SearchQueryProcessor(object):
         """
 
         # Filter field weights by "search in" options
-        field_weights = self.get_option_value('field_weights')
-        search_in_value = self.get_option_value('search_in')
+        field_weights = self.get_option_value_to_apply('field_weights')
+        search_in_value = self.get_option_value_to_apply('search_in')
         if search_in_value:
             field_weights = {field: weight for field, weight in field_weights.items() if field in search_in_value}
         
         # Number of sounds
-        if self.get_option_value('display_as_packs'):
+        if self.get_option_value_to_apply('display_as_packs'):
             # When displaying results as packs, always return the same number regardless of the compact mode setting
             # This because returning a large number of packs makes the search page very slow
             # If we optimize pack search, this should be removed
             num_sounds = settings.SOUNDS_PER_PAGE
         else:
-            num_sounds = settings.SOUNDS_PER_PAGE if not self.get_option_value('grid_mode') else settings.SOUNDS_PER_PAGE_COMPACT_MODE
+            num_sounds = settings.SOUNDS_PER_PAGE if not self.get_option_value_to_apply('grid_mode') else settings.SOUNDS_PER_PAGE_COMPACT_MODE
 
         # Clustering
         only_sounds_within_ids = []
         if allow_beta_search_features(self.request):
-            cluster_id = self.get_option_value('cluster_id')
+            cluster_id = self.get_option_value_to_apply('cluster_id')
             if cluster_id > -1:
                 only_sounds_within_ids = get_ids_in_cluster(self.get_clustering_data_cache_key(), cluster_id)
 
         # Facets
         facets = self.facets
-        if self.get_option_value('tags_mode'):
+        if self.get_option_value_to_apply('tags_mode'):
             facets[settings.SEARCH_SOUNDS_FIELD_TAGS]['limit'] = 50
 
         # Number of sounds per pack group
         num_sounds_per_pack_group = 1
-        if self.get_option_value('display_as_packs'):
+        if self.get_option_value_to_apply('display_as_packs'):
             # If displaying search results as packs, include 3 sounds per pack group in the results so we can display these sounds as selected sounds in the
             # display_pack templatetag
             num_sounds_per_pack_group = 3
 
         # Process similar_to parameter to convert it to a list if a vector is passed instead of a sound ID
-        similar_to = self.get_option_value('similar_to')
+        similar_to = self.get_option_value_to_apply('similar_to')
         if similar_to != '':
             # If it stars with '[', then we assume this is a serialized vector passed as target for similarity
             if similar_to.startswith('['):
@@ -485,17 +484,17 @@ class SearchQueryProcessor(object):
             similar_to = None
 
         return dict(
-            textual_query=self.get_option_value('query'), 
+            textual_query=self.get_option_value_to_apply('query'), 
             query_fields=field_weights, 
             query_filter=self.get_filter_string_for_search_engine(include_filters_from_facets=not exclude_facet_filters),
-            field_list=['id', 'score'] if not self.get_option_value('map_mode') else ['id', 'score', 'geotag'],
-            current_page=self.get_option_value('page'),
-            num_sounds=num_sounds if not self.get_option_value('map_mode') else settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,  
-            sort=self.get_option_value('sort_by'),
-            group_by_pack=self.get_option_value('group_by_pack') or self.get_option_value('display_as_packs'), 
+            field_list=['id', 'score'] if not self.get_option_value_to_apply('map_mode') else ['id', 'score', 'geotag'],
+            current_page=self.get_option_value_to_apply('page'),
+            num_sounds=num_sounds if not self.get_option_value_to_apply('map_mode') else settings.MAX_SEARCH_RESULTS_IN_MAP_DISPLAY,  
+            sort=self.get_option_value_to_apply('sort_by'),
+            group_by_pack=self.get_option_value_to_apply('group_by_pack') or self.get_option_value_to_apply('display_as_packs'), 
             num_sounds_per_pack_group=num_sounds_per_pack_group,
             facets=facets, 
-            only_sounds_with_pack=self.get_option_value('display_as_packs'), 
+            only_sounds_with_pack=self.get_option_value_to_apply('display_as_packs'), 
             only_sounds_within_ids=only_sounds_within_ids, 
             similar_to=similar_to
         )
@@ -512,7 +511,7 @@ class SearchQueryProcessor(object):
               e.g.: remove_filters=["tag:tagname"]. Default is None.
         """
         # Decide the base url (if in the tags page, we'll use the base URL for tags, otherwise we use the one for the normal search page)
-        if self.get_option_value('tags_mode'):
+        if self.get_option_value_to_apply('tags_mode'):
             base_url = reverse("tags")
         else:
             base_url = reverse("sounds-search")
@@ -536,8 +535,28 @@ class SearchQueryProcessor(object):
         else:
             return base_url
 
-    # Some util methods and properties to access option values more easily
+    # Some util methods to access option values more easily
 
-    def get_option_value(self, option_name):
-        option = self.options[option_name] #getattr(self, option_name)
+    def get_option_value_to_apply(self, option_name):
+        option = self.options[option_name]
         return option.value_to_apply
+
+    def tags_mode_active(self):
+        return self.options['tags_mode'].value_to_apply
+    
+    def similar_to_active(self):
+        return self.options['similar_to'].value_to_apply
+
+    def compute_clusters_active(self):
+        return self.options['compute_clusters'].value_to_apply
+    
+    def display_as_packs_active(self):
+        return self.options['display_as_packs'].value_to_apply
+    
+    def grid_mode_active(self):
+        return self.options['grid_mode'].value_to_apply
+    
+    def map_mode_active(self):
+        return self.options['map_mode'].value_to_apply
+    
+    

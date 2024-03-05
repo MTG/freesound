@@ -76,7 +76,7 @@ def search_view_helper(request):
     # Prepare variables for clustering
     get_clusters_url = None
     clusters_data = None
-    if sqp.options['compute_clusters'].value_to_apply and allow_beta_search_features(request):
+    if sqp.compute_clusters_active() and allow_beta_search_features(request):
         if cluster_data_is_fully_available(sqp):
             # If clustering data for the current query is fully available, we can get it directly
             clusters_data = _get_clusters_data_helper(sqp)
@@ -86,15 +86,15 @@ def search_view_helper(request):
 
     # If in tags mode and no tags in filter, return before making the query as we'll make
     # the initial tagcloud in tags.views.tags view and no need to make any further query here
-    if sqp.options['tags_mode'].value_to_apply and not sqp.get_tags_in_filters():
+    if sqp.tags_mode_active() and not sqp.get_tags_in_filters():
         return {'sqp': sqp}  # sqp will be needed in tags.views.tags view
 
     # Run the query and post-process the results
     try:    
         query_params = sqp.as_query_params()    
         results, paginator = perform_search_engine_query(query_params)
-        if not sqp.options['map_mode'].value_to_apply:
-            if not sqp.options['display_as_packs'].value_to_apply:
+        if not sqp.map_mode_active():
+            if not sqp.display_as_packs_active():
                 resultids = [d.get("id") for d in results.docs]
                 resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
                 allsounds = {}
@@ -149,7 +149,7 @@ def search_view_helper(request):
             'page': query_params['current_page'],
             'sort': query_params['sort'],
             'url': sqp.get_url(),
-            'tags_mode': sqp.options['tags_mode'].value_to_apply,
+            'tags_mode': sqp.tags_mode_active(),
             'query_time': results.q_time 
         }))
 

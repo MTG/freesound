@@ -269,7 +269,7 @@ class SimpleUserTest(TestCase):
         # 200 response on tags page access
         resp = self.client.get(reverse('tags'))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['sqp'].tags_mode, True)
+        self.assertEqual(resp.context['sqp'].tags_mode_active(), True)
 
     def test_packs_response(self):
         # 302 response (note that since BW, there will be a redirect to the search page in between)

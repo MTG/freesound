@@ -33,50 +33,11 @@ from utils.clustering_utilities import get_ids_in_cluster
 from utils.encryption import create_hash
 from utils.search.backends.solr555pysolr import FIELD_NAMES_MAP
 from utils.search.search_sounds import allow_beta_search_features
-from .search_query_processor_options_base import SearchOptionStr, SearchOptionChoice, \
+from .search_query_processor_options import SearchOptionStr, SearchOptionChoice, \
     SearchOptionInt, SearchOptionBool, SearchOptionRange, SearchOptionMultipleChoice, \
-    SearchOption, SearchOptionBoolElementInPath
+    SearchOption, SearchOptionBoolElementInPath, SearchOptionFieldWeights
 
 
-class SearchOptionFieldWeights(SearchOptionStr):
-    name= 'field_weights'
-    query_param_name = 'w'
-    value_default = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
-    advanced = True
-
-    def get_value_from_request(self):
-        """param weights can be used to specify custom field weights with this format 
-        w=field_name1:integer_weight1,field_name2:integrer_weight2, eg: w=name:4,tags:1
-        ideally, field names should any of those specified in settings.SEARCH_SOUNDS_FIELD_*
-        so the search engine can implement ways to translate the "web names" to "search engine"
-        names if needed.
-        """
-        weights_param = self.request.GET.get(self.query_param_name, None)
-        parsed_field_weights = {}
-        if weights_param:
-            for part in weights_param.split(','):
-                if ':' in part:
-                    try:
-                        field_name = part.split(':')[0]
-                        weight = int(part.split(':')[1])
-                        parsed_field_weights[field_name] = weight
-                    except Exception:
-                        # If format is wrong, ignore parameter
-                        pass
-        if len(parsed_field_weights):
-            return parsed_field_weights
-        else:
-            return None
-        
-    def as_URL_params(self):
-        value_for_url = ''
-        for field, weight in self.value.items():
-            value_for_url += f'{field}:{weight},'
-        if value_for_url.endswith(','):
-            value_for_url = value_for_url[:-1]
-        return {self.query_param_name : value_for_url}
-    
-  
 def _get_value_to_apply_group_by_pack(self):
     # Force return True if display_as_packs is enabled, and False if map_mode is enabled
     if self.sqp.has_filter_with_name('grouping_pack'):
@@ -98,17 +59,17 @@ class SearchQueryProcessor(object):
 
     query = SearchOptionStr(
         query_param_name='q',
-        should_be_disabled=lambda self: bool(self.get_option_value('similar_to')))
+        should_be_disabled=lambda self: bool(self.sqp.get_option_value('similar_to')))
     sort_by = SearchOptionChoice(
         query_param_name='s',
         label='Sort',
         choices = [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
-        should_be_disabled = lambda self: bool(self.get_option_value('similar_to')),
+        should_be_disabled = lambda self: bool(self.sqp.get_option_value('similar_to')),
         default_value_or_func = lambda self: settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST if self.sqp.get_option_value('query') == '' else settings.SEARCH_SOUNDS_SORT_DEFAULT)
     page = SearchOptionInt(
         query_param_name='page',
         default_value_or_func=1,
-        get_value_to_apply = lambda self: 1 if self.get_option_value('map_mode') else self.value)
+        get_value_to_apply = lambda self: 1 if self.sqp.get_option_value('map_mode') else self.value)
     search_in = SearchOptionMultipleChoice(
         advanced=True,
         query_param_name_prefix='si',
@@ -121,7 +82,7 @@ class SearchQueryProcessor(object):
             (settings.SEARCH_SOUNDS_FIELD_PACK_NAME, 'Pack name'),
             (settings.SEARCH_SOUNDS_FIELD_ID, 'Sound ID'),
             (settings.SEARCH_SOUNDS_FIELD_USER_NAME, 'Username')],
-        should_be_disabled = lambda self: self.get_option_value('tags_mode') or bool(self.get_option_value('similar_to')))
+        should_be_disabled = lambda self: self.sqp.get_option_value('tags_mode') or bool(self.sqp.get_option_value('similar_to')))
     duration = SearchOptionRange(
         advanced=True,
         query_param_min='d0',
@@ -135,7 +96,7 @@ class SearchQueryProcessor(object):
         search_engine_field_name='is_geotagged',
         label='Only geotagged sounds',
         help_text='Only find sounds that have geolocation information',
-        should_be_disabled = lambda self: self.get_option_value('map_mode'),
+        should_be_disabled = lambda self: self.sqp.get_option_value('map_mode'),
         get_value_to_apply = lambda self: True if self.sqp.get_option_value('map_mode') else self.value)
         #as_filter = lambda self: f'{self.search_engine_field_name}:1' if self.sqp.get_option_value('map_mode') else super(SearchOptionBool).as_filter())
     is_remix = SearchOptionBool(
@@ -151,19 +112,19 @@ class SearchQueryProcessor(object):
         help_text='Group search results so that multiple sounds of the same pack only represent one item',
         default_value_or_func=True,
         get_value_to_apply = _get_value_to_apply_group_by_pack,
-        should_be_disabled = lambda self: self.has_filter_with_name('grouping_pack') or self.get_option_value('display_as_packs') or self.get_option_value('map_mode'))
+        should_be_disabled = lambda self: self.sqp.has_filter_with_name('grouping_pack') or self.sqp.get_option_value('display_as_packs') or self.sqp.get_option_value('map_mode'))
     display_as_packs = SearchOptionBool(
         query_param_name='dp',
         label='Display results as packs',
         help_text='Display search results as packs rather than individual sounds',
-        get_value_to_apply = lambda self: False if self.has_filter_with_name('grouping_pack') else self.value,
-        should_be_disabled = lambda self: self.has_filter_with_name('grouping_pack') or self.get_option_value('map_mode'))
+        get_value_to_apply = lambda self: False if self.sqp.has_filter_with_name('grouping_pack') else self.value,
+        should_be_disabled = lambda self: self.sqp.has_filter_with_name('grouping_pack') or self.sqp.get_option_value('map_mode'))
     grid_mode = SearchOptionBool(
         query_param_name='cm',
         label='Display results in grid',
         help_text='Display search results in a grid so that more sounds are visible per search results page',
         default_value_or_func = lambda self: self.request.user.profile.use_compact_mode if self.request.user.is_authenticated else False,
-        should_be_disabled = lambda self: self.get_option_value('map_mode'))
+        should_be_disabled = lambda self: self.sqp.get_option_value('map_mode'))
     map_mode = SearchOptionBool(
         query_param_name='mm',
         label='Display results in map',
@@ -180,8 +141,10 @@ class SearchQueryProcessor(object):
         label='Cluster results by similarity')
     cluster_id = SearchOptionInt(
         query_param_name='cid')
-    field_weights = SearchOptionFieldWeights()
-
+    field_weights = SearchOptionFieldWeights(
+        advanced=True,
+        query_param_name = 'w'
+    )
 
     def __init__(self, request, facets=None):
         """Initializes the SearchQueryProcessor object by parsing data from the request and setting up search options.
@@ -198,6 +161,15 @@ class SearchQueryProcessor(object):
             self.facets = settings.SEARCH_SOUNDS_DEFAULT_FACETS.copy()  # NOTE: not sure if .copy() is needed here to avoid mutating original setting
         else:
             self.facets = facets
+
+        # Put all SearchOption objects in a self.options dictionary so we can easily iterate them and we can access them through self.options attribute
+        # In this was SearchOption objects are accessible in a similar way as Django form fields are accessible in form objects
+        # NOTE: even though we add references to the SearchOption objects in the self.options dictionary, we don't actually remove these references from
+        # the SearchQueryProcessor "root". Ideally we should remove these references from the root object to avoid confusion.
+        self.options = {}
+        for member in dir(self):
+            if isinstance(getattr(self, member), SearchOption):
+                self.options[member] = getattr(self, member)
         
         # Get filter and parse it. Make sure it is iterable (even if it only has one element)
         self.f = urllib.parse.unquote(request.GET.get('f', '')).strip().lstrip()
@@ -227,14 +199,14 @@ class SearchQueryProcessor(object):
         # If any of these filters are present, we parse them to get their values and modify the request to simulate the data being 
         # passed in the new expected way (through request parameters). If present, we also remove these filters from the f_parsed object.
         values_to_update = {}
-        for field_name in [self.is_remix.search_engine_field_name, self.is_geotagged.search_engine_field_name]:        
+        for field_name in [self.options['is_remix'].search_engine_field_name, self.options['is_geotagged'].search_engine_field_name]:        
             for node in self.f_parsed:
                 if type(node) == luqum.tree.SearchField:
                     if node.name == field_name:
                         values_to_update[field_name] = str(node.expr) == '1'
                         self.f_parsed = [f for f in self.f_parsed if f != node]
 
-        field_name = self.duration.search_engine_field_name
+        field_name = self.options['duration'].search_engine_field_name
         for node in self.f_parsed:
             if type(node) == luqum.tree.SearchField:
                 if node.name == field_name:
@@ -245,21 +217,15 @@ class SearchQueryProcessor(object):
         if values_to_update:
             self.request.GET = self.request.GET.copy()
             if self.is_remix.search_engine_field_name in values_to_update:
-                self.request.GET[self.is_remix.query_param_name] = '1' if values_to_update[self.is_remix.search_engine_field_name] else '0'
+                self.request.GET[self.options['is_remix'].query_param_name] = '1' if values_to_update[self.options['is_remix'].search_engine_field_name] else '0'
             if self.is_geotagged.search_engine_field_name in values_to_update:
-                self.request.GET[self.is_geotagged.query_param_name] = '1' if values_to_update[self.is_geotagged.search_engine_field_name] else '0'
+                self.request.GET[self.options['is_geotagged'].query_param_name] = '1' if values_to_update[self.options['is_geotagged'].search_engine_field_name] else '0'
             if self.duration.search_engine_field_name in values_to_update:
-                self.request.GET[self.duration.query_param_min] = values_to_update[self.duration.search_engine_field_name][0]
-                self.request.GET[self.duration.query_param_max] = values_to_update[self.duration.search_engine_field_name][1]
-
-        # Compute the list of available options based on the members of the SearchQueryProcessor which are instances of SearchOption
-        self.options = []
-        for member in dir(self):
-            if isinstance(getattr(self, member), SearchOption):
-                self.options.append(getattr(self, member))
+                self.request.GET[self.options['duration'].query_param_min] = values_to_update[self.options['duration'].search_engine_field_name][0]
+                self.request.GET[self.options['duration'].query_param_max] = values_to_update[self.options['duration'].search_engine_field_name][1]
 
         # Pass the reference to the SearchQueryProcessor object to all search options, and load the search option values from the request
-        for option in self.options:
+        for option in self.options.values():
             option.set_search_query_processor(self)
             option.load_value()
 
@@ -269,7 +235,7 @@ class SearchQueryProcessor(object):
         # a query has the filter "f=is_geotagged:1 samplerate:44100", self.non_option_filters will be [('samplerate', '44100')] as "is_geotagged" is a filter managed
         # by the SearchOptionIsGeotagged option, but "samplerate" is a facet filter and not managed by a search option.
         self.non_option_filters = []
-        search_engine_field_names_used_in_options = [option.search_engine_field_name for option in self.options if hasattr(option, 'search_engine_field_name')]
+        search_engine_field_names_used_in_options = [option.search_engine_field_name for option in self.options.values() if hasattr(option, 'search_engine_field_name')]
         for node in self.f_parsed:
             if type(node) == luqum.tree.SearchField:
                 if node.name not in search_engine_field_names_used_in_options:
@@ -302,7 +268,7 @@ class SearchQueryProcessor(object):
         # Create initial list of the active filters according to the types of filters that are requested to be included
         ff = []
         if include_filters_from_options:
-            for option in self.options:
+            for option in self.options.values():
                 fit = option.as_filter()
                 if fit is not None:
                     ff.append(fit)
@@ -399,7 +365,7 @@ class SearchQueryProcessor(object):
         Also returns true if the query has active undocumented options which are hidden in the advanced 
         search panel but that are allowed as "power user" options
         """
-        for option in self.options:
+        for option in self.options.values():
             if option.advanced:
                 if option.set_in_request:
                     if not option.is_default_value:
@@ -451,8 +417,8 @@ class SearchQueryProcessor(object):
             print('errors:')
             print(self.errors)
         print('options:')
-        for option in self.options:
-            print('-', option)
+        for name, option in self.options.items():
+            print('-', name, option)
         if self.non_option_filters:
             print('non_option_filters:')
             for filter in self.non_option_filters:
@@ -473,7 +439,7 @@ class SearchQueryProcessor(object):
         """
 
         # Filter field weights by "search in" options
-        field_weights = self.get_option_value('field_weigths')
+        field_weights = self.get_option_value('field_weights')
         search_in_value = self.get_option_value('search_in')
         if search_in_value:
             field_weights = {field: weight for field, weight in field_weights.items() if field in search_in_value}
@@ -553,7 +519,7 @@ class SearchQueryProcessor(object):
         
         # Add query parameters from search options
         parameters_to_add = {}
-        for option in self.options:
+        for option in self.options.values():
             if option.set_in_request and not option.is_default_value:
                 params_for_url = option.as_URL_params()
                 if params_for_url is not None:
@@ -573,24 +539,5 @@ class SearchQueryProcessor(object):
     # Some util methods and properties to access option values more easily
 
     def get_option_value(self, option_name):
-        option = getattr(self, option_name)
+        option = self.options[option_name] #getattr(self, option_name)
         return option.value_to_apply
-                
-    '''
-    # TODO: change the use of this methods in templates to something like sqp.options.map_mode.value_to_apply
-    @property
-    def map_mode(self):
-        return self.get_option_value('map_mode')
-
-    @property
-    def grid_mode(self):
-        return self.get_option_value('grid_mode')
-
-    @property
-    def display_as_packs(self):
-        return self.get_option_value('display_as_packs')
-    
-    @property
-    def compute_clusters(self):
-        return self.get_option_value('compute_clusters')
-    '''

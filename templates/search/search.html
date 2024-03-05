@@ -10,7 +10,7 @@
 
 {% block title %}Search{% endblock %}
 
-{% block navbar %}{% if not sqp.tags_mode %}{% include 'molecules/navbar_search_page.html' %}{% else %}{% include 'molecules/navbar.html' %}{% endif %}{% endblock %}
+{% block navbar %}{% if not sqp.options.tags_mode.value_to_apply %}{% include 'molecules/navbar_search_page.html' %}{% else %}{% include 'molecules/navbar.html' %}{% endif %}{% endblock %}
 
 {% block content %}
 
@@ -32,27 +32,27 @@
             {% endfor %}
         </section>
         {% else %}
-        <form method="get" id="search_form" action="{% if not sqp.tags_mode %}{% url 'sounds-search' %}{% else %}{% url 'tags' %}{% endif %}">
+        <form method="get" id="search_form" action="{% if not sqp.options.tags_mode.value_to_apply %}{% url 'sounds-search' %}{% else %}{% url 'tags' %}{% endif %}">
             {% comment %}main search input section and hidden fields{% endcomment %}
-            <div class="v-spacing-5 {% if sqp.tags_mode %}display-none{% endif %}">
+            <div class="v-spacing-5 {% if sqp.options.tags_mode.value_to_apply %}display-none{% endif %}">
                 <div class="middle center">
                     <div class="bw-search__input_wrapper"><i class="bw-icon-search input-icon text-light-grey"></i>
                         <input id="search-input-browse" 
                         class="bw-search__input" 
                         name="{{ sqp.options.query.query_param_name }}" 
                         type="text" 
-                        value="{% if not sqp.options.similar_to.get_value %}{{ sqp.options.query.get_value }}{% endif %}" 
-                        placeholder="{% if not sqp.options.similar_to.get_value %}Search {% if not sqp.display_as_packs %}sounds{% else %}packs{% endif %}...{% else %}Similar to {{ sqp.options.similar_to.get_value }}{% endif %}" 
+                        value="{% if not sqp.options.similar_to.value_to_apply %}{{ sqp.options.query.value_to_apply }}{% endif %}" 
+                        placeholder="{% if not sqp.options.similar_to.value_to_apply %}Search {% if not sqp.options.display_as_packs.value_to_apply %}sounds{% else %}packs{% endif %}...{% else %}Similar to {{ sqp.options.similar_to.value_to_apply }}{% endif %}" 
                         autocomplete="off"
                         {% if sqp.options.query.disabled %}disabled{% endif %} />
                     </div>
                     <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
                 </div>
                 <input type="hidden" name="f" value="{{ sqp.render_filter_for_url|urlencode }}" />
-                {% if not sqp.options.field_weights.is_default_value %}<input type="hidden" name="{{ sqp.options.field_weights.query_param_name }}" value="{{ sqp.options.field_weights.get_value_for_url_param }}" />{% endif %}
-                {% if not sqp.options.similar_to.is_default_value %}<input type="hidden" name="{{ sqp.options.similar_to.query_param_name }}" value="{{ sqp.options.similar_to.get_value_for_url_param }}" />{% endif %}
+                {% if not sqp.options.field_weights.is_default_value %}<input type="hidden" name="{{ sqp.options.field_weights.query_param_name }}" value="{{ sqp.options.field_weights.value_formatted }}" />{% endif %}
+                {% if not sqp.options.similar_to.is_default_value %}<input type="hidden" name="{{ sqp.options.similar_to.query_param_name }}" value="{{ sqp.options.similar_to.value_formatted }}" />{% endif %}
             </div>
-            {% if sqp.tags_mode %}
+            {% if sqp.options.tags_mode.value_to_apply %}
             {% comment %}"sounds tagged as" label with follow/unfollow buttons{% endcomment %}
             <div id="tags-mode-input-section" class="v-spacing-5">
                 <div class="between middle">
@@ -72,7 +72,7 @@
                 <div class="padding-3 v-padding-2 between font-weight-bold middle">
                     {% comment %}number of results{% endcomment %}
                     <div class="col-4">
-                    {% if not sqp.display_as_packs %}
+                    {% if not sqp.options.display_as_packs.value_to_apply %}
                         {% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results|bw_intcomma }}{% else %}{{ paginator.count|bw_intcomma }}{% endif %} sound{{ non_grouped_number_of_results|pluralize }}
                     {% else %}
                         {{ paginator.count|bw_intcomma }} pack{{ paginator.count|pluralize }}
@@ -85,10 +85,10 @@
                     </div>
                     {% comment %}sorting options{% endcomment %}
                     <div class="col-4 right browse__search-overview-sorter">
-                        <div class="{% if sqp.map_mode %}display-none{% endif %}"> 
+                        <div class="{% if sqp.options.map_mode.value_to_apply %}display-none{% endif %}"> 
                             <span class="font-weight-normal text-light-grey d-none d-md-inline">{{ sqp.options.sort_by.label }}:</span>
                             <select id="sort-by" name="{{ sqp.options.sort_by.query_param_name }}" {% if sqp.options.sort_by.disabled %}disabled{% endif %}>
-                                {% if sqp.options.similar_to.get_value %}
+                                {% if sqp.options.similar_to.value_to_apply %}
                                     <option>Similarity to target</option>    
                                 {% else %}    
                                     {% for option in sqp.options.sort_by.get_choices_annotated_with_selection %}
@@ -230,7 +230,7 @@
                     <div class="divider-light"></div>
                 </div>
                 {% comment %}clusters section{% endcomment %}
-                {% if sqp.compute_clusters %}
+                {% if sqp.options.compute_clusters.value_to_apply %}
                     {% if clusters_data %}
                     {% include 'search/clustering_results.html' %}
                     {% else %}
@@ -255,17 +255,17 @@
         </div>
         {% comment %}facets{% endcomment%}
         <aside class="col-md-4 col-lg-3 collapsable-block md-max-h-100" id="collapsable-filters">
-            {% if sqp.tags_mode %}
+            {% if sqp.options.tags_mode.value_to_apply %}
             {% display_facet "tag" %}
             {% endif %}
             {% display_facet "license" %}
-            {% if not sqp.tags_mode %}
+            {% if not sqp.options.tags_mode.value_to_apply %}
             {% display_facet "tag" %}
             {% endif %}
             {% display_facet "type" %}
             {% display_facet "samplerate" %}
             {% display_facet "channels" %}
-            {% if not sqp.display_as_packs %}
+            {% if not sqp.options.display_as_packs.value_to_apply %}
             {% display_facet "grouping_pack" %}
             {% endif %}
             {% display_facet "username" %}
@@ -288,7 +288,7 @@
             {% endif %}
             {% endwith %}
             {% comment %}map{% endcomment %}
-            {% if sqp.map_mode %}
+            {% if sqp.options.map_mode.value_to_apply %}
             <div class="col-12 v-spacing-top-3 no-paddings">
                 <div id="mapCanvas" class="map main-map"
                      data-map-show-search="{% if sound %}false{% else %}true{% endif %}"
@@ -312,11 +312,11 @@
             {% comment %}list/grid of sounds{% endcomment %}
             <div class="v-spacing-6 v-spacing-top-2">
                 {% if paginator.count > 0 %}
-                {% if sqp.grid_mode %}
+                {% if sqp.options.grid_mode.value_to_apply %}
                 <div class="row">
                     {% for result in docs %}
                     <div class="col-6 col-lg-4">
-                        {% if sqp.display_as_packs %}
+                        {% if sqp.options.display_as_packs.value_to_apply %}
                             {% display_pack result.pack %}
                             <p class="text-grey text-right v-spacing-top-negative-2">
                                 {% bw_icon 'plus' %} <a href="{{ result.more_from_this_pack_url }}">See {{result.n_more_in_group|add:1|bw_intcomma}} result{{ result.n_more_in_group|add:1|pluralize }} from pack</a>
@@ -335,7 +335,7 @@
                 {% else %}
                 {% for result in docs %}
                 <div class="bw-search__result">
-                    {% if sqp.display_as_packs %}
+                    {% if sqp.options.display_as_packs.value_to_apply %}
                         {% display_pack_big result.pack %}
                         <div class="text-grey text-right v-spacing-top-negative-1 v-spacing-2 padding-right-1">
                             {% bw_icon 'plus' %} <a href="{{ result.more_from_this_pack_url }}">See {{result.n_more_in_group|add:1|bw_intcomma}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>

@@ -85,9 +85,9 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
 
         # Empty query with sorting specified, will sort as indicated
-        sqp, _ = self.run_fake_search_query_processor(params={'s': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
+        sqp, url = self.run_fake_search_query_processor(params={'s': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
         self.assertExpectedParams(sqp.as_query_params(), {'sort': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
-        self.assertGetUrlAsExpected(sqp, '/search/')
+        self.assertGetUrlAsExpected(sqp, url)
 
         # Basic query with only text, results should be sorted by score
         sqp, url = self.run_fake_search_query_processor(params={'q':'test'})
@@ -225,40 +225,40 @@ class SearchQueryProcessorTests(TestCase):
         
         # query if similarity on
         sqp, _ = self.run_fake_search_query_processor(params={'st': '1234'})
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionQuery.name].disabled)
+        self.assertTrue(sqp.options['query'].disabled)
         
         # sort if similarity on
         sqp, _ = self.run_fake_search_query_processor(params={'st': '1234'})
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionSort.name].disabled)
+        self.assertTrue(sqp.options['sort_by'].disabled)
 
         # group_by_pack if display_as_packs or map_mode
         sqp, _ = self.run_fake_search_query_processor(params={'dp': '1'})
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionGroupByPack.name].disabled)
+        self.assertTrue(sqp.options['group_by_pack'].disabled)
         sqp, _ = self.run_fake_search_query_processor(params={'mm': '1'})
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionGroupByPack.name].disabled)
+        self.assertTrue(sqp.options['group_by_pack'].disabled)
 
         # display as packs if map_mode
         sqp, _ = self.run_fake_search_query_processor(params={'mm': '1'})
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionDisplayResultsAsPacks.name].disabled)
+        self.assertTrue(sqp.options['display_as_packs'].disabled)
 
         # grid_mode if map_mode
         sqp, _ = self.run_fake_search_query_processor(params={'mm': '1'})
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionGridMode.name].disabled)
+        self.assertTrue(sqp.options['grid_mode'].disabled)
 
         # is_geotagged if map_mode
         sqp, _ = self.run_fake_search_query_processor(params={'mm': '1'})
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionIsGeotagged.name].disabled)
+        self.assertTrue(sqp.options['is_geotagged'].disabled)
 
         # search_in if tags_mode or similar_to_mode
         sqp, _ = self.run_fake_search_query_processor(params={'st': '1'})
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled)
+        self.assertTrue(sqp.options['search_in'].disabled)
         sqp, _ = self.run_fake_search_query_processor(base_url=reverse('tags'))
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionSearchIn.name].disabled) 
+        self.assertTrue(sqp.options['search_in'].disabled) 
 
         # group_by_pack and display_as_packs if filter contains a pack
         sqp, _ = self.run_fake_search_query_processor(params={'f': 'grouping_pack:"19894_Clutter"'})
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionGroupByPack.name].disabled) 
-        self.assertTrue(sqp.options[search_query_processor.SearchOptionDisplayResultsAsPacks.name].disabled) 
+        self.assertTrue(sqp.options['group_by_pack'].disabled) 
+        self.assertTrue(sqp.options['display_as_packs'].disabled) 
         
     def test_search_query_processor_tags_in_filter(self):
         sqp, _ = self.run_fake_search_query_processor(params={

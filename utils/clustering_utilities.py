@@ -28,7 +28,6 @@ from django.urls import reverse
 
 from clustering.tasks import cluster_sounds
 import sounds
-from utils.search import search_query_processor
 from utils.search.search_sounds import get_sound_similarity_from_search_engine_query, get_sound_ids_from_search_engine_query
 
 
@@ -80,7 +79,7 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
         cluster_tags = defaultdict(list)
 
         # extract tags for each clusters and do not use query terms for labeling clusters
-        query_terms = {t.lower() for t in sqp.options[search_query_processor.SearchOptionQuery.name].value.split(' ')}
+        query_terms = {t.lower() for t in sqp.options['query'].value.split(' ')}
         for sound_id, tags in sound_tags.items():
             cluster_tags[partition[str(sound_id)]] += [t.lower() for t in tags if t.lower() not in query_terms]
 

@@ -11,7 +11,7 @@ actions to include advance search options (and other fields) before submission.{
                 <a href="/" class="no-hover"></a>
             </div>
             <div class="input-wrapper">
-                <input id="search-input-browse-navbar" name="q" type="search" value="{{ search_query }}" class="bw-nav__search" placeholder="Search sounds..." autocomplete="off" />
+                <input id="search-input-browse-navbar" name="q" type="search" value="{% if not sqp.options.similar_to.value_to_apply %}{{ sqp.options.query.value_to_apply }}{% endif %}" class="bw-nav__search" placeholder="Search sounds..." autocomplete="off" />
             </div>
         </div>
         </form>

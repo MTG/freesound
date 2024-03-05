@@ -47,7 +47,7 @@ search_logger = logging.getLogger("search")
 def search_view_helper(request):
     # Process request data with the SearchQueryProcessor
     sqp = search_query_processor.SearchQueryProcessor(request)
-    
+
     # Check if there was a filter parsing error and return error if so
     if sqp.errors:
         search_logger.info(f"Errors in SearchQueryProcessor: {sqp.errors}")
@@ -55,7 +55,7 @@ def search_view_helper(request):
 
     # Update compact mode prefernece if user has explicitely specified a different value than the preference
     if request.user.is_authenticated:
-        option = sqp.options[search_query_processor.SearchOptionGridMode.name]
+        option = sqp.options['grid_mode']
         if option.set_in_request:
             request_preference = option.value
             user_preference = request.user.profile.use_compact_mode
@@ -76,7 +76,7 @@ def search_view_helper(request):
     # Prepare variables for clustering
     get_clusters_url = None
     clusters_data = None
-    if sqp.compute_clusters and allow_beta_search_features(request):
+    if sqp.options['compute_clusters'].value_to_apply and allow_beta_search_features(request):
         if cluster_data_is_fully_available(sqp):
             # If clustering data for the current query is fully available, we can get it directly
             clusters_data = _get_clusters_data_helper(sqp)
@@ -86,15 +86,15 @@ def search_view_helper(request):
 
     # If in tags mode and no tags in filter, return before making the query as we'll make
     # the initial tagcloud in tags.views.tags view and no need to make any further query here
-    if sqp.tags_mode and not sqp.get_tags_in_filters():
+    if sqp.options['tags_mode'].value_to_apply and not sqp.get_tags_in_filters():
         return {'sqp': sqp}  # sqp will be needed in tags.views.tags view
 
     # Run the query and post-process the results
     try:    
         query_params = sqp.as_query_params()    
         results, paginator = perform_search_engine_query(query_params)
-        if not sqp.map_mode:
-            if not sqp.display_as_packs:
+        if not sqp.options['map_mode'].value_to_apply:
+            if not sqp.options['display_as_packs'].value_to_apply:
                 resultids = [d.get("id") for d in results.docs]
                 resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
                 allsounds = {}
@@ -149,7 +149,7 @@ def search_view_helper(request):
             'page': query_params['current_page'],
             'sort': query_params['sort'],
             'url': sqp.get_url(),
-            'tags_mode': sqp.tags_mode,
+            'tags_mode': sqp.options['tags_mode'].value_to_apply,
             'query_time': results.q_time 
         }))
 

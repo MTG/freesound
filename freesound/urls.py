@@ -62,6 +62,7 @@ urlpatterns = [
     path('people/<username>/sounds/<int:sound_id>/similar/', sounds.views.similar, name="sound-similar"),
     path('people/<username>/sounds/<int:sound_id>/downloaders/', sounds.views.downloaders, name="sound-downloaders"),
     path('people/<username>/sounds/<int:sound_id>/comments/', comments.views.for_sound, name="sound-comments"),
+    path('people/<username>/sounds/<int:sound_id>/attribution/', sounds.views.attribution_modal, name="sound-attribution"),
     path('people/<username>/packs/', sounds.views.packs_for_user, name="packs-for-user"),
     path('people/<username>/packs/<int:pack_id>/', sounds.views.pack, name="pack"),
     path('people/<username>/packs/<int:pack_id>/section/stats/', sounds.views.pack_stats_section, name="pack-stats-section"),

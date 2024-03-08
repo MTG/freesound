@@ -1,0 +1,20 @@
+{% extends "molecules/modal_base.html" %}
+{% load util %}
+
+{% block id %}soundAttributionModal{% endblock %}
+{% block extra-class %}{% endblock %}
+{% block aria-label %}Get attribution text{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h4 class="v-spacing-5">Get attribution text</h4>
+    </div>
+    <div class="v-spacing-4">
+        <div class="bw-form">
+            <textarea>The person who associated a work with this deed has dedicated the work to the public domain by waiving al</textarea>
+        </div>
+        <button class="btn-primary v-spacing-top-3">Copy text</button>
+    </div>
+</div>
+{% endblock %}

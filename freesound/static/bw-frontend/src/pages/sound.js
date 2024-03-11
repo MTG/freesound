@@ -1,8 +1,8 @@
 import './page-polyfills';
-import {showToast} from '../components/toast';
-import {playAtTime} from '../components/player/utils';
-import {handleGenericModalWithForm} from '../components/modal';
-import {addRecaptchaScriptTagToMainHead} from '../utils/recaptchaDynamicReload'
+import { showToast } from '../components/toast';
+import { playAtTime } from '../components/player/utils';
+import { handleGenericModalWithForm, dismissModal } from '../components/modal';
+import { addRecaptchaScriptTagToMainHead } from '../utils/recaptchaDynamicReload'
 import { prepareAfterDownloadSoundModals } from '../components/afterDownloadModal.js';
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
@@ -17,20 +17,23 @@ const urlParams = new URLSearchParams(window.location.search);
 
 prepareAfterDownloadSoundModals();
 
+const copyFromInputElement = (inputElement) => {
+    inputElement.select();
+    inputElement.setSelectionRange(0, 99999);
+    inputElement.execCommand("copy");
+    inputElement.getSelection().removeAllRanges();
+}
+
+
 const copyShareUrlToClipboard = (useFileURL) => {
     var shareLinkInputElement = shareLinkElement.getElementsByTagName("input")[0];
-    console.log(shareLinkElement.dataset.staticFileUrl
-            , shareLinkElement.dataset.soundPageUrl)
     if (useFileURL) {
         shareLinkInputElement.value = shareLinkElement.dataset.staticFileUrl;
     } else {
         shareLinkInputElement.value = shareLinkElement.dataset.soundPageUrl;
     }
-    shareLinkInputElement.select();
-    shareLinkInputElement.setSelectionRange(0, 99999);
-    document.execCommand("copy");
-    showToast('Sound URL copied in the clipboard');
-    document.getSelection().removeAllRanges();
+    copyFromInputElement(shareLinkInputElement);
+    showToast('Sound URL copied to the clipboard');
 }
 
 const toggleEmbedCode = () => {
@@ -143,3 +146,28 @@ if (flagSoundModalParamValue) {
 flagSoundButton.addEventListener('click', (evt) => {
     handleFlagSoundModal();
 })
+
+
+// Attribution modal
+const handleAttributionModal = (modalContainer) => {
+    const selectElement = modalContainer.getElementsByTagName('select')[0];
+    const textArea = modalContainer.getElementsByTagName('textarea')[0];
+    textArea.value = selectElement.value;
+    selectElement.addEventListener('change', () => {
+        textArea.value = selectElement.value;
+    });
+
+    const buttons =  modalContainer.getElementsByTagName('button');
+    const copyButton = buttons[buttons.length - 1];
+    copyButton.addEventListener('click', () => {
+        copyFromInputElement(textArea);
+        showToast('Attribution text copied to the clipboard');
+        dismissModal(modalContainer.id);
+    });
+}
+
+document.addEventListener('modalLoaded', (evt) => {
+    if (evt.detail.modalContainer.id === 'soundAttributionModal') {
+        handleAttributionModal(evt.detail.modalContainer);
+    }
+});

@@ -12,9 +12,17 @@
     </div>
     <div class="v-spacing-4">
         <div class="bw-form">
-            <textarea>The person who associated a work with this deed has dedicated the work to the public domain by waiving al</textarea>
+            <div>
+                Format:
+                <select>
+                    <option value="{{ sound.attribution_texts.plain_text|safe|force_escape }}">Plain text</option>
+                    <option value="{{ sound.attribution_texts.html|safe|force_escape }}">HTML</option>
+                    <option value="{{ sound.attribution_texts.json|safe|force_escape }}">JSON</option>
+                </select>
+            </div>
+            <textarea></textarea>
         </div>
-        <button class="btn-primary v-spacing-top-3">Copy text</button>
+        <button class="btn-primary v-spacing-top-1 w-100">Copy text</button>
     </div>
 </div>
 {% endblock %}

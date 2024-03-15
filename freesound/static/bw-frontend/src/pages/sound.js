@@ -20,8 +20,8 @@ prepareAfterDownloadSoundModals();
 const copyFromInputElement = (inputElement) => {
     inputElement.select();
     inputElement.setSelectionRange(0, 99999);
-    inputElement.execCommand("copy");
-    inputElement.getSelection().removeAllRanges();
+    document.execCommand("copy");
+    document.getSelection().removeAllRanges();
 }
 
 

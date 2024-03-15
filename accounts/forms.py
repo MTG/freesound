@@ -159,7 +159,7 @@ class UsernameField(forms.CharField):
             max_length=30,
             validators=[RegexValidator(r'^[\w.+-]+$')],  # is the same as Django UsernameValidator except for '@' symbol
             help_text="30 characters or fewer. Can contain: letters, digits, underscores, dots, dashes and plus signs.",
-            error_messages={'invalid': "This value must contain only letters, digits, underscores, dots, dashes and "
+            error_messages={'invalid': "The username field must contain only letters, digits, underscores, dots, dashes and "
                                        "plus signs."},
             required=required)
 

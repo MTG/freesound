@@ -11,7 +11,7 @@
 	This is the list of files you have downloaded. When you use freesound samples under the Attribution or Attribution NonCommercial license, you have to <a href="{% url "wiki-page" "faq" %}#how-do-i-creditattribute">credit the original creator of the sound</a> in your work. 
     This list makes it easy to do so. "S" means sound, "P" means pack. 
     There are 3 flavors of this list: <a href="?format=regular">regular</a>, <a href="?format=html">html</a> or <a href="?format=plaintext">plain text</a>.
-    Alternatively, you can download the <b>complete record of your downloaded sounds</b> in <a href="{% url "accounts-download-attribution" %}?dl=csv">csv</a> or <a href="{% url "accounts-download-attribution" %}?dl=txt">plain text</a> formats.
+    Alternatively, you can download the <b>complete record of your downloaded sounds</b> in <a href="{% url "accounts-download-attribution" %}?dl=csv">csv</a>, <a href="{% url "accounts-download-attribution" %}?dl=txt">plain text</a>, or <a href="{% url "accounts-download-attribution" %}?dl=json">json</a> formats.
 </p><p>
     
 </p>
@@ -26,7 +26,7 @@
 		<ul>
         {% for download_item in group.list %}
             {% if download_item.download_type == 'sound' %}
-                <li>S: <a href="{% absurl 'sound' download_item.sound__user__username download_item.sound_id %}">{{download_item.sound__original_filename }}</a> by <a href="{% absurl 'account' download_item.sound__user__username  %}">{{download_item.sound__user__username }}</a> | <span class="text-grey">License: </span>{% if download_item.license__name %}{{ download_item.license__name|license_with_version:download_item.license__deed_url}}{% else %}{{ download_item.sound__license__name|license_with_version:download_item.sound__license__deed_url }}{% endif %}</li>
+                <li>S: <a href="{% absurl 'sound' download_item.sound__user__username download_item.sound_id %}">{{download_item.sound__original_filename }}</a> by <a href="{% absurl 'account' download_item.sound__user__username  %}">{{download_item.sound__user__username }}</a> | <span class="text-grey">License: </span>{% if download_item.license__name %}<a class="bw-link--black" href="{{ download_item.license__deed_url }}">{{ download_item.license__name|license_with_version:download_item.license__deed_url}}{% else %}<a class="bw-link--black" href="{{ download_item.sound__license__deed_url }}">{{ download_item.sound__license__name|license_with_version:download_item.sound__license__deed_url }}</a>{% endif %}</li>
             {% else %}
                 {% comment %}NOTE: in the line below, even though we're displaying information about a pack download, we use download_item.X where X takes the same names as in the line above when we were displaying
                 information about sound download. This is beacuse after doing the uninon of the two QuerySets (see accounts.views.attribution) the names of the columns are "unified" and taken from the main QuerySet{% endcomment %}
@@ -45,7 +45,7 @@
 			{% for download_item in group.list %}
 				&nbsp;&nbsp;&nbsp;&nbsp;{% filter force_escape %}
 				{% if download_item.download_type == 'sound' %}
-                    <li>S: <a href="{% absurl 'sound' download_item.sound__user__username download_item.sound_id %}">{{download_item.sound__original_filename }}</a> by <a href="{% absurl 'account' download_item.sound__user__username  %}">{{download_item.sound__user__username }}</a> | License: {% if download_item.license__name %}{{ download_item.license__name|license_with_version:download_item.license__deed_url}}{% else %}{{ download_item.sound__license__name|license_with_version:download_item.sound__license__deed_url }}{% endif %}</li>
+                    <li>S: <a href="{% absurl 'sound' download_item.sound__user__username download_item.sound_id %}">{{download_item.sound__original_filename }}</a> by <a href="{% absurl 'account' download_item.sound__user__username  %}">{{download_item.sound__user__username }}</a> | License: {% if download_item.license__name %}<a href="{{ download_item.license__deed_url }}">{{ download_item.license__name|license_with_version:download_item.license__deed_url}}{% else %}<a href="{{ download_item.sound__license__deed_url }}">{{ download_item.sound__license__name|license_with_version:download_item.sound__license__deed_url }}</a>{% endif %}</li>
 				{% else %}
                     {% comment %}NOTE: in the line below, even though we're displaying information about a pack download, we use download_item.X where X takes the same names as in the line above when we were displaying
                     information about sound download. This is beacuse after doing the uninon of the two QuerySets (see accounts.views.attribution) the names of the columns are "unified" and taken from the main QuerySet{% endcomment %}

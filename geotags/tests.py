@@ -94,5 +94,5 @@ class GeoTagsTests(TestCase):
 
     def test_browse_geotags_for_query(self):
         resp = self.client.get(reverse('geotags-query') + f'?q=barcelona')
-        check_values = {'query_description': 'barcelona'}
+        check_values = {'query_description': '"barcelona"'}
         self.check_context(resp.context, check_values)

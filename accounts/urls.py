@@ -27,7 +27,7 @@ from accounts.forms import FsAuthenticationForm, FsPasswordResetForm
 import bookmarks.views as bookmarks
 import follow.views as follow
 import apiv2.views as api
-from utils.urlpatterns import redirect_inline
+from utils.url import redirect_inline
 
 
 

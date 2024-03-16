@@ -20,12 +20,15 @@
 
 import logging
 
+from django.conf import settings
+from django.core.cache import cache
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
 from search.views import search_view_helper
 from tags.models import Tag, FS1Tag
+from utils.search.search_sounds import perform_search_engine_query
 
 search_logger = logging.getLogger("search")
 
@@ -51,8 +54,26 @@ def tags(request, multiple_tags=None):
             
         return HttpResponseRedirect(f"{reverse('tags')}?f={search_filter}")
     else:
-        # Share same view code as for the search view, but set "tags mode" on
-        tvars = search_view_helper(request, tags_mode=True)
+        # Share same view code as for the search view, but "tags mode" will be on
+        tvars = search_view_helper(request)
+
+        # If there are no tags in filter, get initial tagcloud and add it to tvars
+        if 'sqp' in tvars and not tvars['sqp'].get_tags_in_filters():
+            initial_tagcloud = cache.get('initial_tagcloud')
+            if initial_tagcloud is None:
+                # If tagcloud is not cached, make a query to retrieve it and save it to cache
+                results, _ = perform_search_engine_query(dict(
+                    textual_query='',
+                    query_filter= "*:*",
+                    num_sounds=1,
+                    facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 200}},
+                    group_by_pack=True,
+                    group_counts_as_one_in_facets=False,
+                ))
+                initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
+                cache.set('initial_tagcloud', initial_tagcloud, 60 * 60 * 12)  # cache for 12 hours
+            tvars.update({'initial_tagcloud': initial_tagcloud})
+            
         return render(request, 'search/search.html', tvars)
 
 

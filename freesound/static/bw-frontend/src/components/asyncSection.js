@@ -15,11 +15,13 @@ const prepareAsyncSections = (container) => {
             } else {
                 // Unexpected errors happened while processing request: show toast
                 showToast('Unexpected errors occurred while loading some of the content of this page. Please try again later...')
+                element.innerHTML = '';
             }
         };
         req.onerror = () => {
-            // Unexpected errors happened while processing request: show toast
+            // Unexpected errors happened while processing request: show toast and clear async element
             showToast('Unexpected errors occurred while loading some of the content of this page. Please try again later...')
+            element.innerHTML = '';
         };
         
         // Send the form

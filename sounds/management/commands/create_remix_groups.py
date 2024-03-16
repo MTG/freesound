@@ -24,7 +24,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 from django.db import connection
-from networkx import nx
+import networkx as nx
 
 from sounds.models import Sound, RemixGroup
 
@@ -63,14 +63,15 @@ class Command(BaseCommand):
         dg = _create_nodes(dg)
 
         # 4) Find weakly connected components (single direction)
-        subgraphs = nx.weakly_connected_component_subgraphs(dg)
+        subgraphs = nx.weakly_connected_components(dg)
         
         # 5) delete all remixgroup objects to recalculate
         RemixGroup.objects.all().delete()
         
         # 6) Loop through all connected graphs in the dataset and create the groups
         n_groups_created = 0
-        for sg in subgraphs:
+        for sg_nodes in subgraphs:
+            sg = dg.subgraph(sg_nodes).copy()
             _create_and_save_remixgroup(sg, RemixGroup())
             n_groups_created += 1
 
@@ -80,19 +81,19 @@ class Command(BaseCommand):
 def _create_nodes(dg):
     for node in dg.nodes():
         sound = Sound.objects.get(id=node)
-        dg.add_node(node, {'date': sound.created,
-                           'nodeName': sound.original_filename,
-                           'username': sound.user.username,
-                           'sound_url_mp3': sound.locations()['preview']['LQ']['mp3']['url'],
-                           'sound_url_ogg': sound.locations()['preview']['LQ']['ogg']['url'],
-                           'waveform_url': sound.locations()['display']['wave']['M']['url']})
+        dg.add_node(node, **{'date': sound.created,
+                             'nodeName': sound.original_filename,
+                             'username': sound.user.username,
+                             'sound_url_mp3': sound.locations()['preview']['LQ']['mp3']['url'],
+                             'sound_url_ogg': sound.locations()['preview']['LQ']['ogg']['url'],
+                             'waveform_url': sound.locations()['display']['wave']['M']['url']})
     return dg
 
 
 def _create_and_save_remixgroup(sg, remixgroup): 
     # print ' ========================================= '
     # add to list the subgraphs(connected components) with the extra data
-    node_list = sg.nodes(data=True)
+    node_list = list(sg.nodes(data=True))
     # pp(node_list)
 
     # sort by date (holds all subgraph nodes sorted by date)
@@ -111,7 +112,7 @@ def _create_and_save_remixgroup(sg, remixgroup):
     links = []
     remixgroup.save()   # need to save to have primary key before ManyToMany
     # FIXME: no idea why nx.weakly_connected_components(sg) return list in list...
-    remixgroup.sounds.set(set(nx.weakly_connected_components(sg)[0]))
+    remixgroup.sounds.set(max(nx.weakly_connected_components(sg), key=len))
 
     for sound in remixgroup.sounds.all():
         sound.invalidate_template_caches()
@@ -141,5 +142,5 @@ def _create_and_save_remixgroup(sg, remixgroup):
                                "\"nodes\": " + json.dumps(nodes) + "," \
                                "\"links\": " + json.dumps(links) + "}"
                                
-    remixgroup.networkx_data = json.dumps(dict(nodes=sg.nodes(), edges=sg.edges()))                         
+    remixgroup.networkx_data = json.dumps(dict(nodes=list(sg.nodes()), edges=list(sg.edges())))
     remixgroup.save()   

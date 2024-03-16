@@ -149,7 +149,7 @@ def random(request):
 
 
 def packs(request):
-    return HttpResponseRedirect(reverse('sounds-search') + '?s=Date+added+(newest+first)&g=1&only_p=1')
+    return HttpResponseRedirect(reverse('sounds-search') + '?s=Date+added+(newest+first)&g=1&dp=1')
 
 
 def front_page(request):

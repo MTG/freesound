@@ -176,14 +176,19 @@ if (sortByElement !== null){
   })
 }
 
-// Make radio cluster elements submit the form when changed
-document.getElementsByName('cid').forEach(radio => { 
-  radio.addEventListener('change', (evt) => {
-    setTimeout(() => {
-      searchFormElement.submit();
-    }, 100);  // Give it a little time to update the radio widget before submitting
-  });
-})
+// Make radio cluster elements submit the form when changed (also when cluster section is loaded asynchronously)
+export const bindClusteringRadioButtonsSubmit = () => {
+  document.getElementsByName('cid').forEach(radio => { 
+    radio.addEventListener('change', (evt) => {
+      setTimeout(() => {
+        searchFormElement.submit();
+      }, 100);  // Give it a little time to update the radio widget before submitting
+    });
+  })
+}
+bindClusteringRadioButtonsSubmit();
+document.addEventListener('async_section_loaded', () => bindClusteringRadioButtonsSubmit());
+
 
 document.body.addEventListener('keydown',  evt => {
   const ENTER_KEY = 13

@@ -12,6 +12,9 @@ const prepareAsyncSections = (container) => {
                 element.innerHTML = req.responseText;
                 // Make sure we initialize sound/pack players inside the async section
                 initializeStuffInContainer(element, true, false);
+
+                // Also trigger event to notify that async section has been loaded (this is currently used in search page to perform some actions)
+                document.dispatchEvent(new Event('async_section_loaded'));
             } else {
                 // Unexpected errors happened while processing request: show toast
                 showToast('Unexpected errors occurred while loading some of the content of this page. Please try again later...')

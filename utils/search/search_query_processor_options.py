@@ -181,6 +181,8 @@ class SearchOption(object):
     
 
 class SearchOptionBool(SearchOption):
+    """SearchOption class to represent bool options.
+    """
     value_default = False
     
     def get_value_from_request(self):
@@ -198,6 +200,16 @@ class SearchOptionBool(SearchOption):
         updating this class to support a different behavior."""
         if self.value_to_apply == True:
             return super().as_filter()
+        
+
+class SearchOptionBoolFilterInverted(SearchOptionBool):
+    """SearchOption class to represent bool options which should have the filter value inverted.
+    For example, an "exclude some sounds" option which, when set to "on", the filter in the search 
+    engine should be inverted, e.g. "sound_has_property:0".
+    """
+    
+    def format_value(self, value):
+        return '0' if value else '1'    
 
 
 class SearchOptionInt(SearchOption):

@@ -160,6 +160,12 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
         if (onLoadedCallback !== undefined){
           onLoadedCallback(modalContainer);
         }
+
+        // Trigger modal loaded event in case it should be used by other components
+        const event = new CustomEvent("modalLoaded", {
+          detail: {fetchContentUrl, modalContainer},
+        });
+        document.dispatchEvent(event);
         
         // If modal is activated with a param, add the param to the URL when opening the modal
         if (modalActivationParam !== undefined){

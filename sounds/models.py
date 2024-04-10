@@ -53,6 +53,7 @@ from apiv2.models import ApiV2Client
 from comments.models import Comment
 from freesound.celery import app as celery_app
 from general import tasks
+from general.templatetags.absurl import url2absurl
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
@@ -928,6 +929,30 @@ class Sound(models.Model):
         """
         return [(slh.created, slh.license) for slh in
                 self.soundlicensehistory_set.select_related('license').order_by('-created')]
+    
+    @cached_property
+    def attribution_texts(self):
+        attribution_texts = {
+                'plain_text': f'{self.original_filename} by {self.user.username} -- {url2absurl(reverse("short-sound-link", args=[self.id]))} -- License: {self.license.name_with_version}',
+                'html': f'<a href="{url2absurl(self.get_absolute_url())}">{self.original_filename}</a> by <a href="{url2absurl(reverse("account", args=[self.user.username]))}">{self.user.username}</a> | License: <a href="{ self.license.deed_url }">{self.license.name_with_version}</a>',
+                'json': json.dumps({
+                    'sound_url': url2absurl(self.get_absolute_url()),
+                    'sound_name': self.original_filename,
+                    'author_url': url2absurl(reverse("account", args=[self.user.username])),
+                    'author_name': self.user.username,
+                    'license_url': self.license.deed_url,
+                    'license_name': self.license.name_with_version,
+                })
+            }
+        if not self.sources.exists():
+            return attribution_texts
+        else:
+            sources_attribution_texts = [s.attribution_texts for s in self.sources.all()]
+            attribution_texts['plain_text'] = "\n\n".join([attribution_texts['plain_text']] + [st['plain_text'] for st in sources_attribution_texts])
+            attribution_texts['html'] = "<br>\n".join([attribution_texts['html']] + [st['html'] for st in sources_attribution_texts])
+            attribution_texts['json'] = json.dumps([json.loads(attribution_texts['json'])] + [json.loads(st['json']) for st in sources_attribution_texts])
+            return attribution_texts
+            
 
     def get_sound_tags(self, limit=None):
         """

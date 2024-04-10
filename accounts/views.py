@@ -55,6 +55,7 @@ from django.utils.http import base36_to_int
 from django.utils.http import int_to_base36
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
+from general.templatetags.absurl import url2absurl
 from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
@@ -858,7 +859,9 @@ def attribution(request):
 
 @login_required
 def download_attribution(request):
-    content = {'csv': 'csv', 'txt': 'plain'}
+    content = {'csv': 'csv', 
+               'txt': 'plain',
+               'json': 'json'}
 
     qs_sounds = Download.objects.annotate(download_type=Value('sound', CharField()))\
         .values('download_type', 'sound_id', 'sound__user__username', 'sound__original_filename',
@@ -871,9 +874,9 @@ def download_attribution(request):
     qs = qs_sounds.union(qs_packs).order_by('-created')
 
     download = request.GET.get('dl', '')
+    now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    filename = f'{request.user}_{now}_attribution.{download}'
     if download in ['csv', 'txt']:
-        now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        filename = f'{request.user}_{now}_attribution.{download}'
         response = HttpResponse(content_type=f'text/{content[download]}')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         output = io.StringIO()
@@ -896,6 +899,32 @@ def download_attribution(request):
                              row['created']))
         response.writelines(output.getvalue())
         return response
+    elif download == 'json':
+        output = []
+        for row in qs:
+            if row['download_type'][0].upper() == 'S':
+                output.append({
+                    'sound_url': url2absurl(reverse("sound", args=[row['sound__user__username'], row['sound_id']])),
+                    'sound_name': row['sound__original_filename'],
+                    'author_url': url2absurl(reverse("account", args=[row['sound__user__username']])),
+                    'author_name': row['sound__user__username'],
+                    'license_url': row['license__deed_url'] or row['sound__license__deed_url'],
+                    'license_name': license_with_version(row['license__name'] or row['sound__license__name'],
+                                    row['license__deed_url'] or row['sound__license__deed_url']),
+                    'timestamp': str(row['created'])
+                })
+            elif row['download_type'][0].upper() == 'P':
+                output.append({
+                    'pack_url': url2absurl(reverse("pack", args=[row['sound__user__username'], row['sound_id']])),
+                    'pack_name': row['sound__original_filename'],
+                    'author_url': url2absurl(reverse("account", args=[row['sound__user__username']])),
+                    'author_name': row['sound__user__username'],
+                    'license_url': row['license__deed_url'] or row['sound__license__deed_url'],
+                    'license_name': license_with_version(row['license__name'] or row['sound__license__name'],
+                                    row['license__deed_url'] or row['sound__license__deed_url']),
+                    'timestamp': str(row['created'])
+                })
+        return JsonResponse(output, safe=False)
     else:
         return HttpResponseRedirect(reverse('accounts-attribution'))
 

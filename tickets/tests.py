@@ -180,14 +180,14 @@ class TicketTestsFromQueue(TicketTests):
         TicketTests.setUp(self)
         self.ticket = self._create_assigned_ticket()
 
-    def _perform_action(self, action):
+    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
+    def _perform_action(self, action, post_moderation_assigned_tickets_task):
         return self.client.post(reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
             'action': action, 'message': '', 'ticket': self.ticket.id,
             'is_explicit': IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY})
 
-    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
     @mock.patch('sounds.models.delete_sounds_from_search_engine')
-    def test_delete_ticket_from_queue(self, delete_sound_solr, post_moderation_assigned_tickets_task):
+    def test_delete_ticket_from_queue(self, delete_sound_solr):
         resp = self._perform_action('Delete')
 
         self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
@@ -197,9 +197,8 @@ class TicketTestsFromQueue(TicketTests):
         self.assertEqual(self.ticket.status, TICKET_STATUS_CLOSED)
         self.assertIsNone(self.ticket.sound)
 
-    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
     @mock.patch('general.tasks.whitelist_user.delay')
-    def test_whitelist_from_queue(self, whitelist_task, post_moderation_assigned_tickets_task):
+    def test_whitelist_from_queue(self, whitelist_task):
         self._perform_action('Whitelist')
         whitelist_task.assert_called_once_with(ticket_ids=[self.ticket.id])
 
@@ -213,20 +212,17 @@ class TicketTestsFromQueue(TicketTests):
         else:
             self.assertEqual(self.ticket.assignee, assignee)
 
-    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
-    def test_approve_ticket_from_queue(self, post_moderation_assigned_tickets_task):
+    def test_approve_ticket_from_queue(self):
         resp = self._perform_action('Approve')
         self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
         self._assert_ticket_and_sound_fields(TICKET_STATUS_CLOSED, self.test_moderator, 'OK')
 
-    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
-    def test_return_ticket_from_queue(self, post_moderation_assigned_tickets_task):
+    def test_return_ticket_from_queue(self):
         resp = self._perform_action('Return')
         self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
         self._assert_ticket_and_sound_fields(TICKET_STATUS_NEW, None, 'PE')
 
-    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
-    def test_defer_ticket_from_queue(self, post_moderation_assigned_tickets_task):
+    def test_defer_ticket_from_queue(self):
         resp = self._perform_action('Defer')
         self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
         self._assert_ticket_and_sound_fields(TICKET_STATUS_DEFERRED, self.test_moderator, 'PE')
@@ -234,7 +230,9 @@ class TicketTestsFromQueue(TicketTests):
 
 class TicketTestsFromTicketViewOwn(TicketTestsFromQueue):
     """Ticket state changes in a response to actions from ticket inspection page for own ticket"""
-    def _perform_action(self, action):
+    
+    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
+    def _perform_action(self, action, post_moderation_assigned_tickets):
         return self.client.post(reverse('tickets-ticket', args=[self.ticket.key]), {
             'ss-action': action})
 
@@ -245,7 +243,8 @@ class TicketTestsFromTicketViewNew(TicketTestsFromQueue):
         TicketTests.setUp(self)
         self.ticket = self._create_ticket(self.sound, self.test_user)
 
-    def _perform_action(self, action):
+    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
+    def _perform_action(self, action, post_moderation_assigned_tickets):
         return self.client.post(reverse('tickets-ticket', args=[self.ticket.key]), {
             'ss-action': action})
 
@@ -257,10 +256,12 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         TicketTests.setUp(self)
         self.ticket = self._create_assigned_ticket()
 
-    def _perform_action(self, action, is_explicit_flag_key):
+    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
+    def _perform_action(self, action, is_explicit_flag_key, post_moderation_assigned_tickets):
         return self.client.post(reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
             'action': action, 'message': '', 'ticket': self.ticket.id, 'is_explicit': is_explicit_flag_key})
 
+    
     def test_keep_is_explicit_preference_for_explicit_sound(self):
         """Test that when approving a sound marked as 'is_explicit' it continues to be marked as such the moderator
         chooses to preserve author's preference on the flag

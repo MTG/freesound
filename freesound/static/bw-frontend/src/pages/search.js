@@ -4,10 +4,10 @@ import navbar from "../components/navbar";
 
 // Main search input box behaviour
 const searchInputBrowse = document.getElementById('search-input-browse');
-const tagsModeInput = document.getElementById('tags-mode');
-const tagsMode = tagsModeInput.value == '1';
 const searchInputBrowsePlaceholder = searchInputBrowse.getAttribute("placeholder");
 const removeSearchInputValueBrowse = document.getElementById('remove-content-search');
+const advancedSearchOptionsDiv = document.getElementById('advanced-search-options');
+const tagsMode = location.pathname.indexOf('/browse/tags/') > -1;
 
 const updateRemoveSearchInputButtonVisibility = (searchInputElement) => {
   if (searchInputElement.value.length) {
@@ -47,7 +47,7 @@ const searchFormIsVisible = () => {
   let heroRect;
   if (advancedSearchOptionsIsVisible()){
     // If advanced search options is expanded, use that as heroRect to check if search form is visible
-    heroRect = advanced_search_options_div.getBoundingClientRect()
+    heroRect = advancedSearchOptionsDiv.getBoundingClientRect()
   } else {
     if (!tagsMode){
       heroRect = searchInputBrowse.getBoundingClientRect()
@@ -74,84 +74,35 @@ const checkShouldShowSearchInNavbar = throttle(() => {
 
 window.addEventListener('scroll', checkShouldShowSearchInNavbar)
 
-/*
-  ADVANCED SEARCH STUFF
-  The functions below correspond to the javascript bits for handling the advanced search options
-  The JS code is old and probably doing things in wrong ways (and more complex that it should)
-  This should be completely refactored, but to avoid changes in backend and for compatibility between
-  BeastWhoosh and Nightingale interfaces, we leave everything as is for now (just with small updates to
-  avoid using JQuery).
-*/
+// Advanced search options behaviour
 
-var search_form_element = document.getElementById('search_form');
-var search_page_navbar_form = document.getElementById('search-page-navbar-form');
-var advanced_search_options_div = document.getElementById('advanced-search-options');
-var advanced_search_hidden_field = document.getElementById('advanced_search_hidden');
-var toggle_advanced_search_options_element = document.getElementById('toggle_advanced_search_options');
-var filter_query_element = document.getElementById('filter_query');
-var filter_duration_min_element = document.getElementById('filter_duration_min');
-var filter_duration_max_element = document.getElementById('filter_duration_max');
-var filter_is_geotagged_element = document.getElementById('filter_is_geotagged');
-var filter_in_remix_group_element = document.getElementById('filter_in_remix_group');
-var sort_by_element = document.getElementById('sort-by');
-var group_by_pack_element  = document.getElementById('group_by_pack');
-var only_sounds_with_pack_element  = document.getElementById('only_sounds_with_pack');
-var use_compact_mode_element = document.getElementById('use_compact_mode');
-var use_map_mode_element = document.getElementById('use_map_mode');
-
-function update_hidden_compact_mode_element() {
-  var hiddenElement = document.getElementById('use_compact_mode_hidden');
-  if (use_compact_mode_element.checked) {
-    hiddenElement.value = "1";
-  } else {
-    hiddenElement.value = "0";
-  }
-}
-
-update_hidden_compact_mode_element()
-use_compact_mode_element.addEventListener('change', function() {
-  update_hidden_compact_mode_element()
-})
-
-function update_hidden_map_mode_element() {
-  var hiddenElement = document.getElementById('use_map_mode_hidden');
-  if (use_map_mode_element.checked) {
-    hiddenElement.value = "1";
-  } else {
-    hiddenElement.value = "0";
-  }
-}
-
-update_hidden_map_mode_element()
-use_map_mode_element.addEventListener('change', function() {
-  update_hidden_map_mode_element()
-})
+const toggleAdvancedSearchOptionsElement = document.getElementById('toggle_advanced_search_options');
 
 function advancedSearchOptionsIsVisible()
 {
-  return advanced_search_hidden_field.value === "1";
+  return advancedSearchOptionsDiv.dataset.visible === "1";
 }
 
 function updateToggleAdvancedSearchOptionsText()
 {
   if (advancedSearchOptionsIsVisible()){
-    toggle_advanced_search_options_element.innerHTML = 'Hide advanced search options';
+    toggleAdvancedSearchOptionsElement.innerHTML = 'Hide advanced search options';
   } else {
-    toggle_advanced_search_options_element.innerHTML = 'Show advanced search options';
+    toggleAdvancedSearchOptionsElement.innerHTML = 'Show advanced search options';
   }
 }
 
 function showAdvancedSearchOptions()
 {
-  advanced_search_hidden_field.value = "1";
-  advanced_search_options_div.style.display = 'block';
+  advancedSearchOptionsDiv.dataset.visible = "1";
+  advancedSearchOptionsDiv.style.display = 'block';
   updateToggleAdvancedSearchOptionsText();
 }
 
 function hideAdvancedSearchOptions()
 {
-  advanced_search_hidden_field.value = "0";
-  advanced_search_options_div.style.display = 'none';
+  advancedSearchOptionsDiv.dataset.visible = "0";
+  advancedSearchOptionsDiv.style.display = 'none';
   updateToggleAdvancedSearchOptionsText();
 }
 
@@ -163,230 +114,15 @@ function toggleAdvancedSearchOptions(){
   }
 }
 
-toggle_advanced_search_options_element.addEventListener('click', toggleAdvancedSearchOptions);
+toggleAdvancedSearchOptionsElement.addEventListener('click', toggleAdvancedSearchOptions);
 
-function set_hidden_grouping_value(){
+// Track changes in advanced search options
 
-  var hiddenElement = document.getElementById('group_by_pack_hidden');
-  if (group_by_pack_element.checked) {
-    hiddenElement.value = "1";
-  } else {
-    hiddenElement.value = "";
-  }
-}
-
-function set_hidden_only_sounds_with_pack_value(){
-  var element = document.getElementById('only_sounds_with_pack');
-  var hiddenElement = document.getElementById('only_sounds_with_pack_hidden');
-  if (element.checked) {
-    hiddenElement.value = "1";
-  } else {
-    hiddenElement.value = "";
-  }
-}
-
-// Return the value of a filter given its name
-// If filter has a range, optional "range" parameter must be set to "min or "max"
-function getFilterValue(name, range)
-{
-  if (!range) { range = "min"}
-
-  var filter_query_element = document.getElementById('filter_query');
-  var value = filter_query_element.value;
-  var position_value = value.search(name) + (name + ":").length
-  if (value.search((name + ":")) !== -1)
-  {
-    if (value[position_value] === "[") // Is range (with spaces)
-    {
-      var aux_value = value.substring(position_value + 1)
-      var position_end = position_value + aux_value.search("]") + 2
-
-      var range_string = value.substring(position_value + 1, position_end -1) // Without [ ]
-      var parts = range_string.split(" ")
-      if (range === "min"){
-        return parts[0]
-      } else if (range === "max") {
-        return parts[2]
-      }
-    }
-    else if (value[position_value] === "\"") // Is string (with spaces)
-    {
-      aux_value = value.substring(position_value + 1)
-      position_end = position_value + aux_value.search("\"") + 2
-      return value.substring(position_value, position_end)
-
-    }
-    else // Is number or normal text (without spaces)
-    {
-      aux_value = value.substring(position_value + 1)
-      if (aux_value.search(" ") !== -1){
-        position_end = position_value + aux_value.search(" ") + 1
-      } else {
-        position_end = value.length
-      }
-      return value.substring(position_value, position_end)
-    }
-  } else {
-    return ""
-  }
-}
-
-// Remove a filter given the full tag ex: type:aiff, pack:"pack name"
-function removeFilter(tag)
-{
-  var filter_query_element = document.getElementById('filter_query');
-  var value = filter_query_element.value;
-  var cleaned = value.replace(tag + " ", "").replace(tag, "").trim();
-  filter_query_element.value = cleaned;
-}
-
-function onDocumentReady(){
-  // Fill advanced search fields that were passed through the f parameter
-  // Duration
-
-  if (getFilterValue("duration","min") === ""){
-    filter_duration_min_element.value = "0";
-  } else {
-    filter_duration_min_element.value = getFilterValue("duration","min");
-  }
-
-  if (getFilterValue("duration","max") === ""){
-    filter_duration_max_element.value = "*";
-  } else {
-    filter_duration_max_element.value = getFilterValue("duration","max");
-  }
-
-  // Geotagged
-  if (getFilterValue("is_geotagged") === "1"){
-    filter_is_geotagged_element.checked = true;
-  }
-
-  // Remix filter
-  if (getFilterValue("in_remix_group") === "1"){
-    // NOTE we only check "is_remix" and don't check "was_remixed" because these will go together
-    filter_in_remix_group_element.checked = true;
-  }
-
-  // Update the text of the button to toggle advanced search options panel
-  updateToggleAdvancedSearchOptionsText();
-
-  // Store values of advanced search filters so later we can check if they were modified
-  initialAdvancedSearchInputValues = serializeAdvanceSearchOptionsInputsData();
-}
-
-document.addEventListener('DOMContentLoaded', onDocumentReady);
-
-function addAdvancedSearchOptionsFilters()
-{
-  // Remove previously existing advanced options filters (will be replaced by current ones)
-  var existing_duration_filter = "duration:[" + getFilterValue("duration","min") + " TO " + getFilterValue("duration","max") + "]";
-  removeFilter(existing_duration_filter);
-  removeFilter("is_geotagged:1");
-  removeFilter("in_remix_group:1");
-
-  // if advanced options is activated add all updated filters
-  if (advanced_search_hidden_field.value === "1")
-  {
-    // Create and add new filter with all the advanced options
-    var filter = "";
-
-    // Duration filter
-    var duration_min = parseFloat(filter_duration_min_element.value);
-    var duration_max = parseFloat(filter_duration_max_element.value);
-
-    if ((duration_min >= 0.0) || (duration_max >= 0.0)) {
-      var duration_filter = "";
-      if ((duration_min >= 0.0) && (duration_max >= 0.0)) {  // Both min and max have been set
-        if (duration_max < duration_min) {
-          // interchange values if duration_min > duration_max
-          var duration_aux = duration_min;
-          duration_min = duration_max;
-          duration_max = duration_aux;
-        }
-        duration_filter = "duration:[" + duration_min + " TO " + duration_max + "]";
-      } else if (duration_min >= 0.0) {  // Only minimum has been set
-        duration_filter = "duration:[" + duration_min + " TO *]";
-      } else if (duration_max >= 0.0) {  // Only maximum has been set
-        duration_filter = "duration:[* TO " + duration_max + "]";
-      }
-      filter = filter + duration_filter;
-    }
-
-    // Is geotagged filter
-    if (filter_is_geotagged_element.checked){
-      if (filter !== ""){
-        filter = filter + " ";
-      }
-      filter = filter + "is_geotagged:1";
-    }
-
-    // Is remix filter
-    if (filter_in_remix_group_element.checked){
-      if (filter !== ""){
-        filter = filter + " ";
-      }
-      filter = filter + "in_remix_group:1";
-    }
-
-    // Update general filter with the advanced options filter
-    var value = filter_query_element.value;
-    if (value !== ""){
-      filter_query_element.value = value + " " + filter;
-    } else {
-      filter_query_element.value = filter;
-    }
-  }
-}
-
-search_form_element.addEventListener('submit', function() {
-  addAdvancedSearchOptionsFilters();
-})
-
-sort_by_element.addEventListener('change', function() {
-  addAdvancedSearchOptionsFilters();
-  search_form_element.submit();
-})
-
-group_by_pack_element.addEventListener('change', function() {
-  set_hidden_grouping_value();
-})
-
-only_sounds_with_pack_element.addEventListener('change', function() {
-  set_hidden_only_sounds_with_pack_value();
-})
-
-document.body.addEventListener('keydown',  evt => {
-  const ENTER_KEY = 13
-  if(evt.keyCode === ENTER_KEY){
-    // If ENTER key is pressed and search form is visible, trigger form submission
-    if (searchFormIsVisible()){
-      addAdvancedSearchOptionsFilters();
-      search_form_element.submit();
-    }
-  }
-})
-
-if (search_page_navbar_form !== null){
-  search_page_navbar_form.addEventListener('submit', function(evt){
-    // Prevent default form submission
-    if (evt.preventDefault) evt.preventDefault();
-  
-    // Copy input element contents to the main input element and do submission of the main form instead of the navbar one
-    const searchInputBrowseNavbar = document.getElementById('search-input-browse-navbar');
-    searchInputBrowse.value = searchInputBrowseNavbar.value;
-    addAdvancedSearchOptionsFilters();
-    search_form_element.submit();
-  
-    // It is also needed to return false to prevent default form submission
-    return false;
-  })
-}
-
-// Enable/disable "apply adbanced search filters" when filters are modified
+let initialAdvancedSearchInputValues = undefined;  // NOTE: this is filled out in onDocumentReady function
 
 const serializeAdvanceSearchOptionsInputsData = () => {
   const values = [];
-  advanced_search_options_div.getElementsByTagName("input").forEach(inputElement => {
+  advancedSearchOptionsDiv.getElementsByTagName("input").forEach(inputElement => {
     if (inputElement.type == "hidden"){
       // Don't include hidden elements as only the visible items are necessary
     } else if (inputElement.type == "checkbox"){
@@ -398,8 +134,6 @@ const serializeAdvanceSearchOptionsInputsData = () => {
   return values.join(",");
 }
 
-let initialAdvancedSearchInputValues = undefined;  // NOTE: this is filled out in onDocumentReady function
-
 const advancedSearchOptionsHaveChangedSinceLastQuery = () => {
   const currentAdvancedSearchInputValues = serializeAdvanceSearchOptionsInputsData();
   return initialAdvancedSearchInputValues != currentAdvancedSearchInputValues;
@@ -409,7 +143,7 @@ const onAdvancedSearchOptionsInputsChange = () => {
   document.getElementById('avanced-search-apply-button').disabled = !advancedSearchOptionsHaveChangedSinceLastQuery();
 }
 
-advanced_search_options_div.getElementsByTagName("input").forEach(inputElement => {
+advancedSearchOptionsDiv.getElementsByTagName("input").forEach(inputElement => {
   inputElement.addEventListener('change', evt => {
     onAdvancedSearchOptionsInputsChange();
   });
@@ -417,3 +151,70 @@ advanced_search_options_div.getElementsByTagName("input").forEach(inputElement =
     onAdvancedSearchOptionsInputsChange();
   });
 });
+
+// Other sutff: form submission, navbar search form, hidden checkboxes etc.
+
+var searchFormElement = document.getElementById('search_form');
+
+searchFormElement.getElementsByClassName('bw-checkbox').forEach(checkbox => {
+  const hiddenCheckbox = document.createElement('input');
+  hiddenCheckbox.type = 'hidden';
+  hiddenCheckbox.name = checkbox.name;
+  checkbox.name = '';  // remove name attribute so checkbox is not submitted (the hidden input will be submitted instead)
+  hiddenCheckbox.value = checkbox.checked ? '1' : '0';
+  checkbox.addEventListener('change', evt => {  // Update hidden checkbox value when checkbox is changed
+    hiddenCheckbox.value = checkbox.checked ? '1' : '0';
+  });
+  checkbox.parentNode.appendChild(hiddenCheckbox);
+});
+
+// Make the search select element submit the form when changed
+var sortByElement = document.getElementById('id_sort_by');
+if (sortByElement !== null){
+  sortByElement.addEventListener('change', function() {
+    searchFormElement.submit();
+  })
+}
+
+// Make radio cluster elements submit the form when changed
+document.getElementsByName('cid').forEach(radio => { 
+  radio.addEventListener('change', (evt) => {
+    setTimeout(() => {
+      searchFormElement.submit();
+    }, 100);  // Give it a little time to update the radio widget before submitting
+  });
+})
+
+document.body.addEventListener('keydown',  evt => {
+  const ENTER_KEY = 13
+  if(evt.keyCode === ENTER_KEY){
+    // If ENTER key is pressed and search form is visible, trigger form submission
+    if (searchFormIsVisible()){
+      searchFormElement.submit();
+    }
+  }
+})
+
+var searchPageNavbarForm = document.getElementById('search-page-navbar-form');
+if (searchPageNavbarForm !== null){
+  searchPageNavbarForm.addEventListener('submit', function(evt){
+    // Prevent default form submission
+    if (evt.preventDefault) evt.preventDefault();
+  
+    // Copy input element contents to the main input element and do submission of the main form instead of the navbar one
+    const searchInputBrowseNavbar = document.getElementById('search-input-browse-navbar');
+    searchInputBrowse.value = searchInputBrowseNavbar.value;
+    searchFormElement.submit();
+  
+    // It is also needed to return false to prevent default form submission
+    return false;
+  })
+}
+
+function onDocumentReady(){
+  // Update the text of the button to toggle advanced search options panel
+  updateToggleAdvancedSearchOptionsText();
+  // Store values of advanced search filters so later we can check if they were modified
+  initialAdvancedSearchInputValues = serializeAdvanceSearchOptionsInputsData();
+}
+document.addEventListener('DOMContentLoaded', onDocumentReady);

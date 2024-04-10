@@ -18,14 +18,19 @@
 #     See AUTHORS file.
 #
 
+from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.test import TestCase
+from django.conf import settings
+from django.test import TestCase, RequestFactory
 from django.test.utils import skipIf, override_settings
 from django.urls import reverse
+from utils.search import search_query_processor
 from sounds.models import Sound
 from utils.search import SearchResults, SearchResultsPaginator
 from utils.test_helpers import create_user_and_sounds
+from utils.url import ComparableUrl
 from unittest import mock
+from django.contrib.auth.models import AnonymousUser
 
 
 def create_fake_search_engine_results():
@@ -90,7 +95,7 @@ def return_successful_clustering_results(sound_id_1, sound_id_2, sound_id_3, sou
             'multigraph': False
         },
         'finished': True,
-        'result': [
+        'clusters': [
             [
                 sound_id_1,
                 sound_id_2
@@ -100,12 +105,12 @@ def return_successful_clustering_results(sound_id_1, sound_id_2, sound_id_3, sou
                 sound_id_4
             ],
         ],
-        'error':False
+        'cluster_ids': [23, 24],
+        'cluster_names': ['tag1 tag2 tag3', 'tag1 tag2 tag3'],
+        'example_sounds_data': [['a'], ['b', 'c']],
     }
 
-pending_clustering_results = {'finished': False, 'error': False}
-
-failed_clustering_results = {'finished': False, 'error': True}
+failed_clustering_results = None
 
 
 def create_fake_perform_search_engine_query_response(num_results=15):
@@ -163,12 +168,12 @@ class SearchPageTests(TestCase):
             # Now check number of queries when displaying results as packs (i.e., searching for packs)
             cache.clear()
             with self.assertNumQueries(6):
-                self.client.get(reverse('sounds-search') + '?only_p=1')
+                self.client.get(reverse('sounds-search') + '?dp=1')
 
             # Also check packs when displaying in grid mode
             cache.clear()
             with self.assertNumQueries(6):
-                self.client.get(reverse('sounds-search') + '?only_p=1&cm=1')
+                self.client.get(reverse('sounds-search') + '?dp=1&cm=1')
 
         with override_settings(USE_SEARCH_ENGINE_SIMILARITY=False):
             # When not using search engine similarity, there'll be one less query performed as similarity state is retrieved directly from sound object
@@ -176,31 +181,12 @@ class SearchPageTests(TestCase):
             # Now check number of queries when displaying results as packs (i.e., searching for packs)
             cache.clear()
             with self.assertNumQueries(5):
-                self.client.get(reverse('sounds-search') + '?only_p=1')
+                self.client.get(reverse('sounds-search') + '?dp=1')
 
             # Also check packs when displaying in grid mode
             cache.clear()
             with self.assertNumQueries(5):
-                self.client.get(reverse('sounds-search') + '?only_p=1&cm=1')
-
-    @mock.patch('search.views.perform_search_engine_query')
-    def test_search_page_with_filters(self, perform_search_engine_query):
-        perform_search_engine_query.return_value = self.perform_search_engine_query_response
-
-        # 200 response on sound search page access
-        resp = self.client.get(reverse('sounds-search'), {"f": 'grouping_pack:"Clutter" tag:"acoustic-guitar"'})
-        self.assertEqual(resp.status_code, 200)
-
-        # In this case we check if a non valid filter is applied it should be ignored.
-        # grouping_pack it shouldn't be in filter_query_split, since is a not valid filter
-        self.assertEqual(resp.context['filter_query_split'][0]['name'], 'tag:"acoustic-guitar"')
-        self.assertEqual(len(resp.context['filter_query_split']), 1)
-
-        resp = self.client.get(reverse('sounds-search'), {"f": 'grouping_pack:"19894_Clutter" tag:"acoustic-guitar"'})
-        # Now we check if two valid filters are applied, then they are present in filter_query_split
-        # Which means they are going to be displayed
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(resp.context['filter_query_split']), 2)
+                self.client.get(reverse('sounds-search') + '?dp=1&cm=1')
 
 
 class SearchResultClustering(TestCase):
@@ -217,44 +203,34 @@ class SearchResultClustering(TestCase):
 
         self.sound_id_preview_urls = sound_id_preview_urls
         self.successful_clustering_results = return_successful_clustering_results(*sound_ids)
-        self.pending_clustering_results = pending_clustering_results
+        self.num_sounds_clustering_results = [2, 2]
         self.failed_clustering_results = failed_clustering_results
 
-    @skipIf(True, "Clustering not yet enabled in BW")
-    @mock.patch('search.views.cluster_sound_results')
-    def test_successful_search_result_clustering_view(self, cluster_sound_results):
-        cluster_sound_results.return_value = self.successful_clustering_results
-        resp = self.client.get(reverse('clustering-facet'))
+    @mock.patch('search.views.get_num_sounds_per_cluster')
+    @mock.patch('search.views.get_clusters_for_query')
+    def test_successful_search_result_clustering_view(self, get_clusters_for_query, get_num_sounds_per_cluster):
+        get_clusters_for_query.return_value = self.successful_clustering_results
+        get_num_sounds_per_cluster.return_value = self.num_sounds_clustering_results
+        resp = self.client.get(reverse('clusters-section'))
 
         # 200 status code & use of clustering facets template
         self.assertEqual(resp.status_code, 200)
-        self.assertTemplateUsed(resp, 'search/clustering_facet.html')
+        self.assertTemplateUsed(resp, 'search/clustering_results.html')
 
         # check cluster's content
-        # 2 sounds per clusters
-        # 3 most used tags in the cluster 'tag1 tag2 tag3'
-        # context variable cluster_id_num_results_tags_sound_examples: [(<cluster_id>, <num_sounds>, <tags>, <ids_preview_urls>), ...]
-        self.assertEqual(resp.context['cluster_id_num_results_tags_sound_examples'], [
-            (0, 2, 'tag1 tag2 tag3', self.sound_id_preview_urls[:2]), 
-            (1, 2, 'tag1 tag2 tag3', self.sound_id_preview_urls[2:])
+        self.assertEqual(resp.context['clusters_data'], [
+            (23, 2, 'tag1 tag2 tag3', ['a']), 
+            (24, 2, 'tag1 tag2 tag3', ['b', 'c'])
         ])
 
-    @skipIf(True, "Clustering not yet enabled in BW")
-    @mock.patch('search.views.cluster_sound_results')
-    def test_pending_search_result_clustering_view(self, cluster_sound_results):
-        cluster_sound_results.return_value = self.pending_clustering_results
-        resp = self.client.get(reverse('clustering-facet'))
+    @mock.patch('search.views.get_num_sounds_per_cluster')
+    @mock.patch('search.views.get_clusters_for_query')
+    def test_failed_search_result_clustering_view(self, get_clusters_for_query, get_num_sounds_per_cluster):
+        get_clusters_for_query.return_value = self.failed_clustering_results
+        get_num_sounds_per_cluster.return_value = self.num_sounds_clustering_results
+        resp = self.client.get(reverse('clusters-section'))
 
         # 200 status code & JSON response content
         self.assertEqual(resp.status_code, 200)
-        self.assertJSONEqual(resp.content, {'status': 'pending'})
-
-    @skipIf(True, "Clustering not yet enabled in BW")
-    @mock.patch('search.views.cluster_sound_results')
-    def test_failed_search_result_clustering_view(self, cluster_sound_results):
-        cluster_sound_results.return_value = self.failed_clustering_results
-        resp = self.client.get(reverse('clustering-facet'))
-
-        # 200 status code & JSON response content
-        self.assertEqual(resp.status_code, 200)
-        self.assertJSONEqual(resp.content, {'status': 'failed'})
+        self.assertTemplateUsed(resp, 'search/clustering_results.html')
+        self.assertEqual(resp.context['clusters_data'], None)

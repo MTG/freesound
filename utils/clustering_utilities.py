@@ -200,6 +200,6 @@ def get_ids_in_cluster(cache_key, cluster_id):
         try:
             cluster_index = results['cluster_ids'].index(cluster_id)
             return results['clusters'][cluster_index]
-        except (IndexError, ValueError) as e:
+        except (IndexError, ValueError, KeyError) as e:
             pass
     return []

@@ -319,7 +319,7 @@ class SearchQueryProcessor(object):
         if cluster_id > -1:
             # If a cluster ID filer is present, we also add it to the list of removable filters
             cluster_results = get_clusters_for_query(self)
-            if cluster_results is not None and cluster_id in cluster_results['cluster_ids']:
+            if cluster_results is not None and cluster_results['clusters'] is not None and cluster_id in cluster_results['cluster_ids']:
                 cluster_number = cluster_results['cluster_ids'].index(cluster_id) + 1
                 filters_data.append(['cluster', f'#{cluster_number}', self.get_url().replace(f'cid={cluster_id}', 'cid=-1')])
 

@@ -35,7 +35,8 @@ from utils.search.backends.solr555pysolr import FIELD_NAMES_MAP
 from utils.search.search_sounds import allow_beta_search_features
 from .search_query_processor_options import SearchOptionStr, SearchOptionChoice, \
     SearchOptionInt, SearchOptionBool, SearchOptionRange, SearchOptionMultipleChoice, \
-    SearchOption, SearchOptionBoolElementInPath, SearchOptionFieldWeights
+    SearchOption, SearchOptionBoolElementInPath, SearchOptionFieldWeights, \
+    SearchOptionBoolFilterInverted
 
 
 def _get_value_to_apply_group_by_pack(self):
@@ -143,6 +144,11 @@ class SearchQueryProcessor(object):
         get_value_to_apply = lambda option: -1 if not option.sqp.get_option_value_to_apply('compute_clusters') else option.value)
     field_weights = SearchOptionFieldWeights(
         query_param_name = 'w'
+    )
+    include_audio_problems = SearchOptionBoolFilterInverted(
+        query_param_name='eap',
+        search_engine_field_name= 'has_audio_problems',
+        label='Exclude sounds with potential audio problems'
     )
 
     def __init__(self, request, facets=None):

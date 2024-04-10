@@ -125,6 +125,7 @@ def display_search_option(context, option_name, widget=None):
         # If a widget is not provided as a parameter, use a sensible default
         widget = {
             search_query_processor_options.SearchOptionBool: 'checkbox',
+            search_query_processor_options.SearchOptionBoolFilterInverted: 'checkbox',
             search_query_processor_options.SearchOptionStr: 'text',
             search_query_processor_options.SearchOptionChoice: 'select',
         }.get(type(option), 'text')

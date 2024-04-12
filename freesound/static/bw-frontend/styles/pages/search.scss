@@ -41,13 +41,6 @@
 
 .bw-search__filter-section {
 
-  margin-left: $small-spacing;
-  margin-right: $small-spacing;
-
-  @include md-and-above {
-    margin-right: 0px;
-  }
-
   padding-top: $tiny-spacing;
   padding-bottom: $small-spacing;
 

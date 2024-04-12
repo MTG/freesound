@@ -14,6 +14,18 @@
         {% endfor %}
     </ul>
     {% endifequal %}
+    {% ifequal type "range" %}
+    <ul class="bw-search__filter-value-list">
+        {% for f in facet %}
+            <li class="bw-search__filter-value v-padding-1">
+                <div class="bw-search__filter-name">
+                    <a href="{{ f.add_filter_url }}" class="bw-link--black">{% if f.icon %}{% bw_icon f.icon %}{% endif %}{{ f.display_value }}</a>
+                    <div class="bw-search__filter-count padding-left-1">({{ f.count|bw_intcomma }})</div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+    {% endifequal %}
     {% ifequal type "cloud" %}
     <div class="bw-search__filter-tags-list">
         {% for f in facet %}

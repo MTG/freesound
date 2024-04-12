@@ -49,9 +49,12 @@ def display_facet(context, facet_name, facet_title=None, facet_type='list'):
         if facet_values_to_skip:
             facets[facet_name] = [f for f in facets[facet_name] if f[0] not in facet_values_to_skip]
         
-        # Annotate facet elements with size values used in the tag cloud (this is not useulf for all facets)
-        facet = annotate_tags([dict(value=f[0], count=f[1]) for f in facets[facet_name] if f[0] != "0"],
-                            sort="value", small_size=0.7, large_size=2.0)
+        # Annotate facet elements with size values used in the tag cloud
+        if facet_type == 'cloud':
+            facet = annotate_tags([dict(value=f[0], count=f[1]) for f in facets[facet_name] if f[0] != "0"],
+                                sort="value", small_size=0.7, large_size=2.0)
+        else:
+            facet = [{'value': value, 'count': count, 'size': -1} for value, count in facets[facet_name]]
     else:
         facet = []
 
@@ -92,20 +95,29 @@ def display_facet(context, facet_name, facet_title=None, facet_type='list'):
             # License field in solr is case insensitive and will return facet names in lowercase. 
             # We need to properly capitalize them to use official CC license names.
             element['display_value'] = element['value'].title().replace('Noncommercial', 'NonCommercial')
+        elif facet_type == 'range':
+            # Update display value for range facets
+            gap = sqp.facets[facet_name]['gap']
+            element['display_value'] = f'{float(element["value"]):.1f} - {float(element["value"]) + gap:.1f}'
         else:
             # In all other cases, use the value as is for display purposes
             element['display_value'] = element['value']
         
         # Set the URL to add facet values as filters
-        if element["value"].startswith('('):
-            # If the filter value is a "complex" operation , don't wrap it in quotes
-            filter_str = f'{solr_fieldname}:{element["value"]}'
-        elif element["value"].isdigit():
-            # If the filter value is a digit, also don't wrap it in quotes
-            filter_str = f'{solr_fieldname}:{element["value"]}'
+        if facet_type != 'range':
+            if element["value"].startswith('('):
+                # If the filter value is a "complex" operation , don't wrap it in quotes
+                filter_str = f'{solr_fieldname}:{element["value"]}'
+            elif element["value"].isdigit():
+                # If the filter value is a digit, also don't wrap it in quotes
+                filter_str = f'{solr_fieldname}:{element["value"]}'
+            else:
+                # Otherwise wrap in quotes
+                filter_str = f'{solr_fieldname}:"{element["value"]}"'
         else:
-            # Otherwise wrap in quotes
-            filter_str = f'{solr_fieldname}:"{element["value"]}"'
+            # For facets of type range, the filter must be constructed as a range
+            gap = sqp.facets[facet_name]['gap']
+            filter_str = f'{solr_fieldname}:[{element["value"]} TO {float(element["value"]) + gap}]'
         element['add_filter_url'] = sqp.get_url(add_filters=[filter_str])
         
     # We sort the facets by count. Also, we apply an opacity filter on "could" type facets

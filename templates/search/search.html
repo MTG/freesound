@@ -169,9 +169,13 @@
                                 <div class="v-spacing-top-1">{% display_search_option "compute_clusters" %}</div>
                                 <div class="v-spacing-top-1">{% display_search_option "similar_to" %}</div>
                             </div>
-                            <div class="col-8 v-padding-1">
+                            <div class="col-6 v-padding-1">
                                 <div class="v-spacing-top-1 v-spacing-negative-1 text-grey">FSDSINET class:</div>
                                 {% display_facet "fsdsinet_detected_class" "" "cloud" %}
+                            </div>
+                            <div class="col-2 v-padding-1">
+                                <div class="v-spacing-top-1 v-spacing-negative-1 text-grey">Brightness:</div>
+                                {% display_facet "ac_brightness" "" "range" %}
                             </div>
                         </div>
                     {% endif %}

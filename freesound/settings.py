@@ -628,6 +628,7 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
 
 SEARCH_SOUNDS_BETA_FACETS = {
     'fsdsinet_detected_class': {'limit': 30},
+    'ac_brightness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20},
 }
 
 SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST = "Thread creation (newest first)"

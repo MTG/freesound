@@ -626,6 +626,10 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
 }
 
+SEARCH_SOUNDS_BETA_FACETS = {
+    'fsdsinet_detected_class': {'limit': 30},
+}
+
 SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST = "Thread creation (newest first)"
 SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST = "Post creation (newest first)"
 SEARCH_FORUM_SORT_OPTIONS_WEB = [

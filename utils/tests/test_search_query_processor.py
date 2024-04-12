@@ -31,7 +31,7 @@ class SearchQueryProcessorTests(TestCase):
 
     default_expected_params = {
         'current_page': 1,
-        'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS,
+        'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS | settings.SEARCH_SOUNDS_BETA_FACETS,  # Combine all facets because we normally test with superuser
         'field_list': ['id', 'score'],
         'group_by_pack': True,
         'num_sounds': settings.SOUNDS_PER_PAGE,
@@ -195,7 +195,7 @@ class SearchQueryProcessorTests(TestCase):
         
         # With tags mode
         sqp, url = self.run_fake_search_query_processor(base_url=reverse('tags'))
-        expected_facets = settings.SEARCH_SOUNDS_DEFAULT_FACETS.copy()
+        expected_facets = settings.SEARCH_SOUNDS_DEFAULT_FACETS | settings.SEARCH_SOUNDS_BETA_FACETS
         expected_facets['tags']['limit'] = 50
         self.assertExpectedParams(sqp.as_query_params(), {'facets': expected_facets})
         self.assertGetUrlAsExpected(sqp, url)
@@ -364,9 +364,9 @@ class SearchQueryProcessorTests(TestCase):
     def test_search_query_processor_as_query_params_exclude_facet_filters(self):
         for filter_name, is_facet in [
             ('samplerate', True),
-            ('grouping_pack', True),
+            ('pack_grouping', True),
             ('username', True),
-            ('tag', True),
+            ('tags', True),
             ('bitrate', True),
             ('bitdepth', True),
             ('type', True),

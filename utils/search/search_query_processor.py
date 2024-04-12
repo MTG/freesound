@@ -31,7 +31,7 @@ from luqum.pretty import prettify
 
 from utils.clustering_utilities import get_ids_in_cluster, get_clusters_for_query
 from utils.encryption import create_hash
-from utils.search.backends.solr555pysolr import FIELD_NAMES_MAP
+from utils.search.backends.solr555pysolr import Solr555PySolrSearchEngine
 from utils.search.search_sounds import allow_beta_search_features
 from .search_query_processor_options import SearchOptionStr, SearchOptionChoice, \
     SearchOptionInt, SearchOptionBool, SearchOptionRange, SearchOptionMultipleChoice, \
@@ -167,6 +167,10 @@ class SearchQueryProcessor(object):
         else:
             self.facets = facets
 
+        # Add extra facets if in beta mode
+        if allow_beta_search_features(request):
+            self.facets.update(settings.SEARCH_SOUNDS_BETA_FACETS)
+
         # Put all SearchOption objects in a self.options dictionary so we can easily iterate them and we can access them through self.options attribute
         # In this was SearchOption objects are accessible in a similar way as Django form fields are accessible in form objects
         # NOTE: even though we add references to the SearchOption objects in the self.options dictionary, we don't actually remove these references from
@@ -278,9 +282,9 @@ class SearchQueryProcessor(object):
                 if fit is not None:
                     ff.append(fit)
         if include_non_option_filters:
+            facet_search_engine_field_names = list(self.facets.keys())
             for non_option_filter in self.non_option_filters:
                 should_be_included = True
-                facet_search_engine_field_names = [FIELD_NAMES_MAP[f] for f in self.facets.keys()]
                 if not include_filters_from_facets and non_option_filter[0] in facet_search_engine_field_names:
                     should_be_included = False
                 if should_be_included:
@@ -331,12 +335,12 @@ class SearchQueryProcessor(object):
 
         return filters_data
     
-    def has_filter_with_name(self, filter_name):
+    def has_filter_with_name(self, field_name):
         """Returns True if the parsed filter has a filter with the given name.
         """
         for node in self.f_parsed:
             if type(node) == luqum.tree.SearchField:
-                if node.name == filter_name:
+                if node.name == field_name:
                     return True
         return False
     

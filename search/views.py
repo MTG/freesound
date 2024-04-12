@@ -153,12 +153,6 @@ def search_view_helper(request):
             'query_time': results.q_time 
         }))
 
-        # For the facets of fields that could have mulitple values (i.e. currently, only "tags" facet), make
-        # sure to remove the filters for the corresponding facet field that are already active (so we remove
-        # redundant information)
-        if 'tag' in results.facets:
-            results.facets['tag'] = [(tag, count) for tag, count in results.facets['tag'] if tag not in sqp.get_tags_in_filters()]
-
         # Compile template variables
         return {
             'sqp': sqp,

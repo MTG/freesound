@@ -24,23 +24,32 @@ from django.conf import settings
 
 from sounds.models import License
 from utils.search import search_query_processor_options
+from utils.search.backends.solr555pysolr import FIELD_NAMES_MAP
 from utils.tags import annotate_tags
 
 register = template.Library()
 
 
 @register.inclusion_tag('search/facet.html', takes_context=True)
-def display_facet(context, facet_name):
+def display_facet(context, facet_name, facet_title=None, facet_type='list'):
     sqp = context['sqp']
     facets = context['facets']
-    facet_type = {'tag': 'cloud', 'username': 'cloud'}.get(facet_name, 'list')
-    facet_title = {
-        'tag': 'Related tags',
-        'username': 'Related users',
-        'grouping_pack': 'Packs',
-        'license': 'Licenses'
-    }.get(facet_name, facet_name.capitalize())
+    if facet_title is None:
+        facet_title = facet_name.capitalize()
+
+    solr_fieldname = FIELD_NAMES_MAP.get(facet_name, facet_name)
+
     if facet_name in facets:
+        # If a facet contains a value which is already used in a filter (this can hapen with facets with multiple values like
+        # tags), then we remove it from the list of options so we don't show redundant information
+        facet_values_to_skip = []
+        for field_name_value in sqp.get_active_filters():
+            if field_name_value.startswith(solr_fieldname + ':'):
+                facet_values_to_skip.append(field_name_value.split(':')[1].replace('"', ''))
+        if facet_values_to_skip:
+            facets[facet_name] = [f for f in facets[facet_name] if f[0] not in facet_values_to_skip]
+        
+        # Annotate facet elements with size values used in the tag cloud (this is not useulf for all facets)
         facet = annotate_tags([dict(value=f[0], count=f[1]) for f in facets[facet_name] if f[0] != "0"],
                             sort="value", small_size=0.7, large_size=2.0)
     else:
@@ -90,13 +99,13 @@ def display_facet(context, facet_name):
         # Set the URL to add facet values as filters
         if element["value"].startswith('('):
             # If the filter value is a "complex" operation , don't wrap it in quotes
-            filter_str = f'{facet_name}:{element["value"]}'
+            filter_str = f'{solr_fieldname}:{element["value"]}'
         elif element["value"].isdigit():
             # If the filter value is a digit, also don't wrap it in quotes
-            filter_str = f'{facet_name}:{element["value"]}'
+            filter_str = f'{solr_fieldname}:{element["value"]}'
         else:
             # Otherwise wrap in quotes
-            filter_str = f'{facet_name}:"{element["value"]}"'
+            filter_str = f'{solr_fieldname}:"{element["value"]}"'
         element['add_filter_url'] = sqp.get_url(add_filters=[filter_str])
         
     # We sort the facets by count. Also, we apply an opacity filter on "could" type facets

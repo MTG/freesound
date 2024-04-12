@@ -165,13 +165,14 @@
                         </div>
                         <div class="row">    
                             <div class="col-4 v-padding-1">
+                                <div class="v-spacing-top-1">{% display_search_option "include_audio_problems" %}</div>
                                 <div class="v-spacing-top-1">{% display_search_option "compute_clusters" %}</div>
                                 <div class="v-spacing-top-1">{% display_search_option "similar_to" %}</div>
                             </div>
-                            <div class="col-4 v-padding-1">
-                                <div class="v-spacing-top-1">{% display_search_option "include_audio_problems" %}</div>
+                            <div class="col-8 v-padding-1">
+                                <div class="v-spacing-top-1 v-spacing-negative-1 text-grey">FSDSINET class:</div>
+                                {% display_facet "fsdsinet_detected_class" "" "cloud" %}
                             </div>
-                            
                         </div>
                     {% endif %}
                     </div>
@@ -210,19 +211,19 @@
         {% comment %}facets{% endcomment%}
         <aside class="col-md-4 col-lg-3 collapsable-block md-max-h-100" id="collapsable-filters">
             {% if sqp.tags_mode_active %}
-            {% display_facet "tag" %}
+            {% display_facet "tags" "Tags" "cloud" %}
             {% endif %}
-            {% display_facet "license" %}
+            {% display_facet "license" "Licenses" %}
             {% if not sqp.tags_mode_active %}
-            {% display_facet "tag" %}
+            {% display_facet "tags" "Tags" "cloud" %}
             {% endif %}
             {% display_facet "type" %}
             {% display_facet "samplerate" %}
             {% display_facet "channels" %}
             {% if not sqp.display_as_packs_active %}
-            {% display_facet "grouping_pack" %}
+            {% display_facet "pack_grouping" "Packs" %}
             {% endif %}
-            {% display_facet "username" %}
+            {% display_facet "username" "Users" "cloud" %}
             {% display_facet "bitdepth" %}
             {% display_facet "bitrate" %}
         </aside>

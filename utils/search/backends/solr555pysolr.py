@@ -57,6 +57,8 @@ FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: 'license'
 }
 
+REVERSE_FIELD_NAMES_MAP = {value: key for key, value in FIELD_NAMES_MAP.items()}
+
 
 # Map "web" sorting options to solr sorting options
 SORT_OPTIONS_MAP = {
@@ -309,11 +311,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             "has_posts": False if post.thread.num_posts == 0 else True
         }
         return document
-
-    def add_solr_suffix_to_dynamic_fieldname(self, fieldname):
-        """Add the corresponding SOLR dynamic field suffix to the given fieldname. If the fieldname does not correspond
-        to a dynamic field, leave it unchanged. See docstring in 'add_solr_suffix_to_dynamic_fieldnames_in_filter' for
-        more information"""
+    
+    def get_dynamic_fields_map(self):
+        if hasattr(self, '_dynamic_fields_map'):
+            return self._dynamic_fields_map
         dynamic_fields_map = {}
         for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
             if 'descriptors_map' in analyzer_data:
@@ -322,7 +323,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     if descriptor_type is not None:
                         dynamic_fields_map[db_descriptor_key] = '{}{}'.format(
                             db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
-        return dynamic_fields_map.get(fieldname, fieldname)
+        self._dynamic_fields_map = dynamic_fields_map
+        return dynamic_fields_map
+
+    def add_solr_suffix_to_dynamic_fieldname(self, fieldname):
+        """Add the corresponding SOLR dynamic field suffix to the given fieldname. If the fieldname does not correspond
+        to a dynamic field, leave it unchanged.  E.g. 'ac_tonality' -> 'ac_tonality_s'. See docstring in 
+        'add_solr_suffix_to_dynamic_fieldnames_in_filter' for more information"""
+        return self.get_dynamic_fields_map().get(fieldname, fieldname)
 
     def add_solr_suffix_to_dynamic_fieldnames_in_filter(self, query_filter):
         """Processes a filter string containing field names and replaces the occurrences of fieldnames that match with
@@ -331,16 +339,25 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         fields which need to end with a specific suffi that SOLR uses to learn about the type of the field and how it
         should treat it.
         """
-        for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_data:
-                descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
-                for _, db_descriptor_key, descriptor_type in descriptors_map:
-                    if descriptor_type is not None:
-                        query_filter = query_filter.replace(
-                            f'{db_descriptor_key}:','{}{}:'.format(
-                                db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]))
+        for raw_fieldname, solr_fieldname in self.get_dynamic_fields_map().items():
+            query_filter = query_filter.replace(
+                f'{raw_fieldname}:', f'{solr_fieldname}:')
         return query_filter
-
+    
+    def remove_solr_suffix_from_dynamic_fieldname(self, fieldname):
+        """Removes the solr dynamic field suffix from the given fieldname (if any). E.g. 'ac_tonality_s' -> 'ac_tonality'"""
+        for suffix in SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.values():
+            if fieldname.endswith(suffix):
+                return fieldname[:-len(suffix)]
+        return fieldname
+    
+    def get_solr_fieldname(self, fieldname):
+        return self.add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(fieldname, fieldname))
+    
+    def get_original_fieldname(self, solr_fieldname):
+        solr_fieldname_no_suffix = self.remove_solr_suffix_from_dynamic_fieldname(solr_fieldname)
+        return REVERSE_FIELD_NAMES_MAP.get(solr_fieldname_no_suffix, solr_fieldname_no_suffix)
+        
     def search_process_sort(self, sort, forum=False):
         """Translates sorting criteria to solr sort criteria and add extra criteria if sorting by ratings.
 
@@ -382,51 +399,51 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         return query_filter
 
     def search_process_filter(self, query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
-            """Process the filter to make a number of adjustments
+        """Process the filter to make a number of adjustments
 
-                1) Add type suffix to human-readable audio analyzer descriptor names (needed for dynamic solr field names).
-                2) If only sounds with pack should be returned, add such a filter.
-                3) Add filter for sound IDs if only_sounds_within_ids is passed.
-                4) Rewrite geotag bounding box queries to use solr 5+ syntax
+            1) Add type suffix to human-readable audio analyzer descriptor names (needed for dynamic solr field names).
+            2) If only sounds with pack should be returned, add such a filter.
+            3) Add filter for sound IDs if only_sounds_within_ids is passed.
+            4) Rewrite geotag bounding box queries to use solr 5+ syntax
 
-            Step 1) is used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo ->
-            ac_tempo_i). The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float),
-            '*_i' (for integer) and '*_s' (for string). At indexing time, we append these suffixes to the analyzer
-            descriptor names that need to be indexed so Solr can treat the types properly. Now we automatically append the
-            suffices to the filter names so users do not need to deal with that and Solr understands recognizes the field name.
+        Step 1) is used for the dynamic field names used in Solr (e.g. ac_tonality -> ac_tonality_s, ac_tempo ->
+        ac_tempo_i). The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float),
+        '*_i' (for integer) and '*_s' (for string). At indexing time, we append these suffixes to the analyzer
+        descriptor names that need to be indexed so Solr can treat the types properly. Now we automatically append the
+        suffices to the filter names so users do not need to deal with that and Solr understands recognizes the field name.
 
-            Args:
-                query_filter (str): query filter string.
-                only_sounds_with_pack (bool, optional): whether to only include sounds that belong to a pack
-                only_sounds_within_ids (List[int], optional): restrict search results to sounds with these IDs
+        Args:
+            query_filter (str): query filter string.
+            only_sounds_with_pack (bool, optional): whether to only include sounds that belong to a pack
+            only_sounds_within_ids (List[int], optional): restrict search results to sounds with these IDs
 
-            Returns:
-                str: processed filter query string.
-            """
-            # Add type suffix to human-readable audio analyzer descriptor names which is needed for solr dynamic fields
-            query_filter = self.add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
+        Returns:
+            str: processed filter query string.
+        """
+        # Add type suffix to human-readable audio analyzer descriptor names which is needed for solr dynamic fields
+        query_filter = self.add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
 
-            # If we only want sounds with packs and there is no pack filter, add one
-            if only_sounds_with_pack and not 'pack:' in query_filter:
-                query_filter += ' pack:*'
+        # If we only want sounds with packs and there is no pack filter, add one
+        if only_sounds_with_pack and not 'pack:' in query_filter:
+            query_filter += ' pack:*'
 
-            if 'geotag:"Intersects(' in query_filter:
-                # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
-                #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
-                query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+        if 'geotag:"Intersects(' in query_filter:
+            # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
+            #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
+            query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
 
-            query_filter = self.search_filter_make_intersection(query_filter)
+        query_filter = self.search_filter_make_intersection(query_filter)
 
-            # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
-            # our query to the sounds in that list of IDs.
-            if only_sounds_within_ids:
-                sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
-                if query_filter:
-                    query_filter += ' AND ({})'.format(sounds_within_ids_filter)
-                else:
-                    query_filter = '({})'.format(sounds_within_ids_filter)
+        # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
+        # our query to the sounds in that list of IDs.
+        if only_sounds_within_ids:
+            sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
+            if query_filter:
+                query_filter += ' AND ({})'.format(sounds_within_ids_filter)
+            else:
+                query_filter = '({})'.format(sounds_within_ids_filter)
 
-            return query_filter
+        return query_filter
 
     def force_sounds(self, query_dict):
         # Add an extra filter to the query parameters to make sure these return sound documents only
@@ -509,11 +526,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 # If no fields provided, use the default
                 query_fields = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
             if isinstance(query_fields, list):
-                query_fields = [self.add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)) for field in query_fields]
+                query_fields = [self.get_solr_fieldname(field_name) for field_name in query_fields]
             elif isinstance(query_fields, dict):
                 # Also remove fields with weight <= 0
-                query_fields = [(self.add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(field, field)), weight)
-                    for field, weight in query_fields.items() if weight > 0]
+                query_fields = [(self.get_solr_fieldname(field_name), weight)
+                    for field_name, weight in query_fields.items() if weight > 0]
 
             # Set main query options
             query.set_dismax_query(textual_query, query_fields=query_fields)
@@ -583,7 +600,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # Configure facets
         if facets is not None:
             json_facets = {}
-            facet_fields = [FIELD_NAMES_MAP[field_name] for field_name, _ in facets.items()]
+            facet_fields = [self.get_solr_fieldname(field_name) for field_name, _ in facets.items()]
             for field in facet_fields:
                 json_facets[field] = SOLR_SOUND_FACET_DEFAULT_OPTIONS.copy()
                 json_facets[field]['field'] = field
@@ -591,7 +608,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     # In similarity search we need to set the "domain" facet option to apply them to the parent documents of the child documents we will match
                     json_facets[field]['domain'] = {'blockParent': f'content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}'}
             for field_name, extra_options in facets.items():
-                json_facets[FIELD_NAMES_MAP[field_name]].update(extra_options)
+                json_facets[self.get_solr_fieldname(field_name)].update(extra_options)
             query.set_facet_json_api(json_facets)
 
         # Configure grouping
@@ -619,6 +636,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             # In non-similarity queries, we force the content_type to be sound so no child documents are returned
             results = self.get_sounds_index().search(
                 **(self.force_sounds(query.as_kwargs()) if similar_to is None else query.as_kwargs()))
+
+            # Facets returned in results use the corresponding solr fieldnames as keys. We want to convert them to the
+            # original fieldnames so that the rest of the code can use them without knowing about the solr fieldnames.
+            results.facets = {self.get_original_fieldname(facet_name): data for facet_name, data in results.facets.items()}
 
             # Solr uses a string for the id field, but django uses an int. Convert the id in all results to int
             # before use to avoid issues

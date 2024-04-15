@@ -158,8 +158,8 @@
                         {% if show_beta_search_options %}
                         <div class="row v-spacing-top-1">
                             <div class="col-12"> 
-                                <div class="bw-search__filter-section-name caps text-light-grey text-18">
-                                    <i>Beta</i> Search Options
+                                <div class="bw-search__filter-section-name caps text-light-grey text-18 text-center">
+                                    Experimental Search Options
                                 </div>
                             </div>
                         </div>
@@ -169,13 +169,34 @@
                                 <div class="v-spacing-top-1">{% display_search_option "compute_clusters" %}</div>
                                 <div class="v-spacing-top-1">{% display_search_option "similar_to" %}</div>
                             </div>
-                            <div class="col-6 v-padding-1">
+                            <div class="col-8 v-padding-1">
                                 <div class="v-spacing-top-1 v-spacing-negative-1 text-grey">FSDSINET class:</div>
                                 {% display_facet "fsdsinet_detected_class" "" "cloud" %}
                             </div>
-                            <div class="col-2 v-padding-1">
+                        </div>
+                        <div class="row">
+                            <div class="col-4 col-lg-2 v-padding-1 padding-right-3">
                                 <div class="v-spacing-top-1 v-spacing-negative-1 text-grey">Brightness:</div>
                                 {% display_facet "ac_brightness" "" "range" %}
+                            </div>
+                            <div class="col-4 col-lg-2 v-padding-1 padding-right-3">
+                                <div class="v-spacing-top-1 v-spacing-negative-1 text-grey">Hardness:</div>
+                                {% display_facet "ac_hardness" "" "range" %}
+                            </div>
+                            <div class="col-4 col-lg-2 v-padding-1 padding-right-3">
+                                <div class="v-spacing-top-1 v-spacing-negative-1 text-grey">Depth:</div>
+                                {% display_facet "ac_depth" "" "range" %}
+                            </div>
+                            <div class="col-4 col-lg-2 v-padding-1 padding-right-3">
+                                <div class="v-spacing-top-1 v-spacing-negative-1 text-grey">Warmth:</div>
+                                {% display_facet "ac_warmth" "" "range" %}
+                            </div>
+                            <div class="col-4 col-lg-2 v-padding-1 padding-right-3">
+                                <div class="v-spacing-top-1 v-spacing-negative-1 text-grey">Boominess:</div>
+                                {% display_facet "ac_boominess" "" "range" %}
+                            </div>
+                            <div class="col-4 col-lg-2 v-padding-1 padding-right-3">
+                                
                             </div>
                         </div>
                     {% endif %}
@@ -216,19 +237,28 @@
         <aside class="col-md-4 col-lg-3 collapsable-block md-max-h-100" id="collapsable-filters">
             {% if sqp.tags_mode_active %}
             {% display_facet "tags" "Tags" "cloud" %}
+            <div class="divider-light padding-top-1"></div>
             {% endif %}
             {% display_facet "license" "Licenses" %}
+            <div class="divider-light padding-top-1"></div>
             {% if not sqp.tags_mode_active %}
             {% display_facet "tags" "Tags" "cloud" %}
+            <div class="divider-light padding-top-1"></div>
             {% endif %}
             {% display_facet "type" %}
+            <div class="divider-light padding-top-1"></div>
             {% display_facet "samplerate" %}
+            <div class="divider-light padding-top-1"></div>
             {% display_facet "channels" %}
+            <div class="divider-light padding-top-1"></div>
             {% if not sqp.display_as_packs_active %}
             {% display_facet "pack_grouping" "Packs" %}
+            <div class="divider-light padding-top-1"></div>
             {% endif %}
             {% display_facet "username" "Users" "cloud" %}
+            <div class="divider-light padding-top-1"></div>
             {% display_facet "bitdepth" %}
+            <div class="divider-light padding-top-1"></div>
             {% display_facet "bitrate" %}
         </aside>
         <div class="col-12 divider-light d-md-none v-spacing-top-3 v-spacing-3"></div>

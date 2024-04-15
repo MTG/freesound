@@ -51,8 +51,7 @@ def display_facet(context, facet_name, facet_title=None, facet_type='list'):
         
         # Annotate facet elements with size values used in the tag cloud
         if facet_type == 'cloud':
-            facet = annotate_tags([dict(value=f[0], count=f[1]) for f in facets[facet_name] if f[0] != "0"],
-                                sort="value", small_size=0.7, large_size=2.0)
+            facet = annotate_tags([dict(value=f[0], count=f[1]) for f in facets[facet_name] if f[0] != "0"], small_size=0.7, large_size=2.0)
         else:
             facet = [{'value': value, 'count': count, 'size': -1} for value, count in facets[facet_name]]
     else:
@@ -74,11 +73,11 @@ def display_facet(context, facet_name, facet_title=None, facet_type='list'):
             else:
                 only_fcw_in_facet = False
         if fcw_count and not only_fcw_in_facet:
-            facet.append({
+            facet = [{
                     'value': settings.FCW_FILTER_VALUE,
                     'count': fcw_count,
                     'size': 1.0,
-                })
+                }] + facet
 
     # Remove "no pack" elements form pack facet (no pack elements are those in which "grouping pack" only has the sound id and not any pack id/name)
     if facet_name == "grouping_pack":
@@ -122,7 +121,6 @@ def display_facet(context, facet_name, facet_title=None, facet_type='list'):
         
     # We sort the facets by count. Also, we apply an opacity filter on "could" type facets
     if facet:
-        facet = sorted(facet, key=lambda x: x['count'], reverse=True)
         max_count = max([element['count'] for element in facet])
         for element in facet:
             element['weight'] = element['count'] / max_count

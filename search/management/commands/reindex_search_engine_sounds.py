@@ -37,7 +37,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '-s', '--slize_size',
             dest='size_size',
-            default=4000,
+            default=500,
             type=int,
             help='How many sounds to add at once')
 

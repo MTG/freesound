@@ -284,16 +284,10 @@ class SolrQuery:
 class SolrResponseInterpreter:
     def __init__(self, response, next_page_query=None):
         if "grouped" in response:
-            if "thread_title_grouped" in list(response["grouped"].keys()):
-                grouping_field = "thread_title_grouped"
-            elif "grouping_pack" in list(response["grouped"].keys()):
-                grouping_field = "grouping_pack"
-            elif "grouping_pack_child" in list(response["grouped"].keys()):
-                grouping_field = "grouping_pack_child"
-
+            grouping_field = list(response["grouped"].keys())[0]            
             self.docs = [{
                 'id': group['doclist']['docs'][0]['id'],
-                'score': group['doclist']['docs'][0]['score'],
+                'score': group['doclist']['docs'][0].get('score', 0),
                 'n_more_in_group': group['doclist']['numFound'] - 1,
                 'group_docs': group['doclist']['docs'],
                 'group_name': group['groupValue']

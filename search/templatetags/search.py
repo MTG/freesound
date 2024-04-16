@@ -120,7 +120,7 @@ def display_facet(context, facet_name, facet_title=None):
         element['add_filter_url'] = sqp.get_url(add_filters=[filter_str])
         
     # We compute weight for the opacity filter on "could" type facets
-    if facet_type == 'cloud':
+    if facet and facet_type == 'cloud':
         max_count = max([element['count'] for element in facet])
         for element in facet:
             element['weight'] = element['count'] / max_count

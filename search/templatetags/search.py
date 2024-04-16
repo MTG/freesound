@@ -31,15 +31,14 @@ register = template.Library()
 
 
 @register.inclusion_tag('search/facet.html', takes_context=True)
-def display_facet(context, facet_name, facet_title=None, facet_type='list'):
+def display_facet(context, facet_name, facet_title=None):
     sqp = context['sqp']
     facets = context['facets']
-    if facet_title is None:
-        facet_title = facet_name.capitalize()
-
     solr_fieldname = FIELD_NAMES_MAP.get(facet_name, facet_name)
-
     if facet_name in facets:
+        facet_title = sqp.facets[facet_name].get('title', facet_name.capitalize())
+        facet_type = sqp.facets[facet_name].get('widget', 'list')
+
         # If a facet contains a value which is already used in a filter (this can hapen with facets with multiple values like
         # tags), then we remove it from the list of options so we don't show redundant information
         facet_values_to_skip = []
@@ -55,7 +54,8 @@ def display_facet(context, facet_name, facet_title=None, facet_type='list'):
         else:
             facet = [{'value': value, 'count': count, 'size': -1} for value, count in facets[facet_name]]
     else:
-        facet = []
+        # Return "empty" data (facet will not be displayed)
+        return {'type': 'list', 'title': facet_name, 'facet': []}
 
     # If the filter is grouping_pack and there are elements which do not contain the character "_" means that
     # these sounds do not belong to any pack (as grouping pack values should by "packId_packName" if there is a pack

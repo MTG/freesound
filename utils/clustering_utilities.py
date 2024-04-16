@@ -46,7 +46,7 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
         # First get the similarity vectors for the first settings.MAX_RESULTS_FOR_CLUSTERING results from the query
         similarity_vectors_map = get_sound_similarity_from_search_engine_query(
             query_params, 
-            analyzer_name=settings.CLUSTERING_SIMILARITY_ANALYZER,
+            analyzer_name=query_params['similar_to_analyzer'],  # This is the similarity_space param in sqp
             num_sounds=settings.MAX_RESULTS_FOR_CLUSTERING,
             current_page=1)        
         sound_ids = list(similarity_vectors_map.keys())

@@ -134,7 +134,9 @@ class SearchQueryProcessor(object):
         advanced=False,
         element_in_path='/browse/tags/')
     similar_to = SearchOptionStr(
-        query_param_name='st')
+        query_param_name='st',
+        label='Similarity target',
+        placeholder='Sound ID')
     compute_clusters = SearchOptionBool(
         query_param_name='cc',
         label='Cluster results by sound similarity')
@@ -142,6 +144,11 @@ class SearchQueryProcessor(object):
         advanced=False,
         query_param_name='cid',
         get_value_to_apply = lambda option: -1 if not option.sqp.get_option_value_to_apply('compute_clusters') else option.value)
+    similarity_space = SearchOptionChoice(
+        query_param_name='ss',
+        label='Similarity space',
+        choices = [(option, option) for option in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS.keys()],
+        get_default_value = lambda option: settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER)
     field_weights = SearchOptionFieldWeights(
         query_param_name = 'w'
     )
@@ -149,6 +156,11 @@ class SearchQueryProcessor(object):
         query_param_name='eap',
         search_engine_field_name= 'has_audio_problems',
         label='Exclude sounds with potential audio problems'
+    )
+    single_event = SearchOptionBool(
+        query_param_name='se',
+        search_engine_field_name= 'ac_single_event',
+        label='Only include "single event" sounds',
     )
 
     def __init__(self, request, facets=None):
@@ -408,6 +420,7 @@ class SearchQueryProcessor(object):
         key = f'cluster-results-{self.get_option_value_to_apply("query")}-' + \
               f'{query_filter}-{self.get_option_value_to_apply("sort_by")}-' + \
               f'{self.get_option_value_to_apply("similar_to")}-' + \
+              f'{self.get_option_value_to_apply("similarity_space")}-' + \
               f'{self.get_option_value_to_apply("group_by_pack")}'
         return create_hash(key, limit=32)
 
@@ -515,7 +528,8 @@ class SearchQueryProcessor(object):
             facets=facets, 
             only_sounds_with_pack=self.get_option_value_to_apply('display_as_packs'), 
             only_sounds_within_ids=only_sounds_within_ids, 
-            similar_to=similar_to
+            similar_to=similar_to,
+            similar_to_analyzer=self.get_option_value_to_apply('similarity_space')
         )
     
     def get_url(self, add_filters=None, remove_filters=None):

@@ -615,24 +615,24 @@ SEARCH_SOUNDS_SORT_OPTIONS_WEB = [
 SEARCH_SOUNDS_SORT_DEFAULT = SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC
 
 SEARCH_SOUNDS_DEFAULT_FACETS = {
-    SEARCH_SOUNDS_FIELD_SAMPLERATE: {},
-    SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10},
-    SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 30},
-    SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30},
-    SEARCH_SOUNDS_FIELD_BITRATE: {},
-    SEARCH_SOUNDS_FIELD_BITDEPTH: {},
+    SEARCH_SOUNDS_FIELD_SAMPLERATE: {'sort': 'index asc'},
+    SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10, 'title': 'Packs'},
+    SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 10, 'widget': 'cloud', 'title': 'Users'},
+    SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30, 'widget': 'cloud'},
+    SEARCH_SOUNDS_FIELD_BITRATE: {'sort': 'index asc'},
+    SEARCH_SOUNDS_FIELD_BITDEPTH: {'sort': 'index asc'},
     SEARCH_SOUNDS_FIELD_TYPE: {'limit': len(SOUND_TYPE_CHOICES)},
-    SEARCH_SOUNDS_FIELD_CHANNELS: {},
+    SEARCH_SOUNDS_FIELD_CHANNELS: {'sort': 'index asc'},
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
 }
 
 SEARCH_SOUNDS_BETA_FACETS = {
-    'fsdsinet_detected_class': {'limit': 30},
-    'ac_brightness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20},
-    'ac_depth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20},
-    'ac_warmth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20},
-    'ac_hardness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20},
-    'ac_boominess': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20},
+    'fsdsinet_detected_class': {'limit': 30, 'title': 'FSD-SINet class'},
+    'ac_brightness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Brightness'},
+    'ac_depth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Depth'},
+    'ac_warmth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Warmth'},
+    'ac_hardness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Hardness'},
+    'ac_boominess': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Boominess'},
 }
 
 SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST = "Thread creation (newest first)"
@@ -765,8 +765,6 @@ CLUSTERING_NUM_MAX_CLUSTERS = 8
 
 # Timeout for returning clustering results to the user
 CLUSTERING_TASK_TIMEOUT = 30
-
-CLUSTERING_SIMILARITY_ANALYZER = FSDSINET_ANALYZER_NAME
 
 # -------------------------------------------------------------------------------
 # Rate limiting

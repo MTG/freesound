@@ -5,7 +5,8 @@
 }
 
 .bw-search__filter-tags-list {
-  margin: 13px 0;
+  margin-top: $tiny-spacing;
+  margin-bottom: $small-spacing;
 }
 
 .bw-search__filter-value {
@@ -45,6 +46,13 @@
 
   .bw-search__filter-section-name > span {
     font-size: 18px;
+  }
+}
+
+#collapsable-filters {
+  .bw-search__filter-section {
+    margin-bottom: $tiny-spacing;
+    border-bottom: 1px solid $dividers-color;
   }
 }
 

@@ -6,10 +6,10 @@
     <div class="bw-search__filter-name">{{ label }}</div>
 </label>
 {% elif widget == 'text' %}
-<label for="id_{{ option_name }}" class="{% if option.disabled %}opacity-020{% endif %}">{{ label }}</label>:
-<input id="id_{{ option_name }}" name="{{ option.query_param_name }}" class="bw-search_input" type="text" value="{{ option.value_formatted }}" {% if option.disabled %}disabled{% endif %}/>
+<label for="id_{{ option_name }}" class="{% if option.disabled %}opacity-020{% endif %} text-light-grey">{{ label }}:</label>
+<input id="id_{{ option_name }}" name="{{ option.query_param_name }}" class="bw-search_input" type="text" value="{{ option.value_formatted }}" {% if option.placeholder %}placeholder="{{ option.placeholder }}"{% endif %} {% if option.disabled %}disabled{% endif %}/>
 {% elif widget == 'select' %}
-<span class="font-weight-normal text-light-grey d-none d-md-inline">{{ label }}:</span>
+<label class="text-light-grey d-none d-md-inline">{{ label }}:</label>
 <select id="id_{{ option_name }}" name="{{ option.query_param_name }}" {% if option.disabled %}disabled{% endif %}>
 {% for choice in option.get_choices_annotated_with_selection %}
     <option value="{{choice.0}}"{% if choice.2 %}selected="selected"{% endif %}>{{choice.1}}</option>

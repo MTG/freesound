@@ -91,7 +91,7 @@ def search_view_helper(request):
 
     # Run the query and post-process the results
     try:    
-        query_params = sqp.as_query_params()    
+        query_params = sqp.as_query_params()
         results, paginator = perform_search_engine_query(query_params)
         if not sqp.map_mode_active():
             if not sqp.display_as_packs_active():
@@ -171,6 +171,7 @@ def search_view_helper(request):
             'facets': results.facets,
             'non_grouped_number_of_results': results.non_grouped_number_of_results,
             'show_beta_search_options': allow_beta_search_features(request),
+            'experimental_facets': settings.SEARCH_SOUNDS_BETA_FACETS,
         }
 
     except SearchEngineException as e:
@@ -179,7 +180,7 @@ def search_view_helper(request):
         return {'error_text': 'There was an error while searching, is your query correct?'}
     except Exception as e:
         search_logger.info(f'Could probably not connect to Solr - {e}')
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)  # Manually capture exception so it has more info and Sentry can organize it properly
         return {'error_text': 'The search server could not be reached, please try again later.'}
 
 

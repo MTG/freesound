@@ -131,6 +131,9 @@ const serializeAdvanceSearchOptionsInputsData = () => {
       values.push(inputElement.value);
     }
   });
+  advancedSearchOptionsDiv.getElementsByTagName("select").forEach(selectElement => {
+    values.push(selectElement.value);
+  });
   return values.join(",");
 }
 
@@ -148,6 +151,12 @@ advancedSearchOptionsDiv.getElementsByTagName("input").forEach(inputElement => {
     onAdvancedSearchOptionsInputsChange();
   });
   inputElement.addEventListener('input', evt => {
+    onAdvancedSearchOptionsInputsChange();
+  });
+});
+
+advancedSearchOptionsDiv.getElementsByTagName("select").forEach(selectElement => {
+  selectElement.addEventListener('change', evt => {
     onAdvancedSearchOptionsInputsChange();
   });
 });

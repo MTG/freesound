@@ -48,7 +48,7 @@
                     </div>
                     <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
                 </div>
-                <input type="hidden" name="f" value="{{ sqp.render_filter_for_url|urlencode }}" />
+                <input type="hidden" name="f" value="{{ sqp.get_filter_string_for_url|urlencode }}" />
                 {% if not sqp.options.field_weights.is_default_value %}{% display_search_option "field_weights" "hidden" %}{% endif %}
                 {% if not sqp.options.similar_to.is_default_value %}{% display_search_option "similar_to" "hidden" %}{% endif %}
             </div>

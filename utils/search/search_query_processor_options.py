@@ -36,7 +36,8 @@ class SearchOption(object):
     def __init__(self, 
                  advanced=True, 
                  label='',
-                 help_text='',  
+                 help_text='',
+                 placeholder='',
                  search_engine_field_name=None, 
                  query_param_name=None,
                  value_default=None,
@@ -49,6 +50,7 @@ class SearchOption(object):
             advanced (bool, optional): Whether this option is part of the advanced search options (defaults to True).
             label (str, optional): Label to be used in the frontend template when displaying the option.
             help_text (str, optional): Help text to be used in the frontend template when displaying the option.
+            placeholder (str, optional): Placeholder text to be used in input elements of the frontend template when displaying the option.
             search_engine_field_name (str, optional): Field name of the search engine index correspoding to this option (can be None).
             query_param_name (str, optional): Name to represent this option in the URL query parameters (can be None).
             value_default (any, optional): Value of the option to be used when not set in the request (as valid Python type). Note that
@@ -61,7 +63,8 @@ class SearchOption(object):
               The function will be passed the SearchOption itself as an argument.
         """
         self.advanced = advanced
-        self.label = label  
+        self.label = label
+        self.placeholder = placeholder
         self.help_text = help_text
         self.search_engine_field_name = search_engine_field_name
         self.query_param_name = query_param_name

@@ -1757,7 +1757,7 @@ class Pack(models.Model):
                 return self.pack_tags  # If precomputed from PackManager.bulk_query_id method
             else:
                 pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
-                return [{'name': tag, 'count': count, 'browse_url': browse_pack_tag_url(tag)}
+                return [{'name': tag, 'count': count, 'browse_url': self.browse_pack_tag_url(tag)}
                         for tag, count in pack_tags_counts]
         except SearchEngineException as e:
             return []

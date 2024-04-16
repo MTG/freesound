@@ -298,6 +298,18 @@ class SearchEngineBase:
             int: the ID of the selected random sound (or 0 if there were errors)
         """
         raise NotImplementedError
+    
+    def get_num_sim_vectors_indexed_per_analyzer(self):
+        """Returns the number of similarity vectors indexed in the search engine for each 
+        analyzer. Because there might be several similarity vectors per sound, we distinguish 
+        between the total number of similarity vectors and the total number of sounds per analyzer.
+
+        Returns:
+            dict: dictionary with the number of similarity vectors and number of soudns indexed per analyzer.
+                E.g.: {'fsd-sinet_v1': {'num_sounds': 0, 'num_vectors': 0}, 
+                       'fs-essentia-extractor_legacy': {'num_sounds': 15876, 'num_vectors': 25448}}
+        """
+        raise NotImplementedError
 
 
     # Forum search related methods

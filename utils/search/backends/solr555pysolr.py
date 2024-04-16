@@ -554,7 +554,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     vector = get_similarity_search_target_vector(sound.id, analyzer=similar_to_analyzer)
                     if vector is not None:
                         vector = vector[0:config_options['vector_size']] # Make sure the vector has the right size (just in case)
-                            
+
                 if vector is not None and vector_field_name is not None:
                     max_similar_sounds = similar_to_max_num_sounds  # Max number of results for similarity search search. Filters are applied before the similarity search, so this number will usually be the total number of results (unless filters are more restrictive)
                     serialized_vector = ','.join([str(n) for n in vector])
@@ -562,12 +562,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         
         # Process filter
         query_filter = self.search_process_filter(query_filter,
-                                                only_sounds_within_ids=only_sounds_within_ids,
-                                                only_sounds_with_pack=only_sounds_with_pack)
+                                                  only_sounds_within_ids=only_sounds_within_ids,
+                                                  only_sounds_with_pack=only_sounds_with_pack)
         
         if similar_to is not None:
             # If doing a similarity query, the filter needs to be further processed so we perform filters based on parent documents
-            query_filter_modified = [f'content_type:{SOLR_DOC_CONTENT_TYPES["similarity_vector"]}', f'analyzer:{settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER}']  # Add basic filter to only get similarity vectors from selected analyzer and from child documents (this is because root documents can also have sim vectors)
+            query_filter_modified = [f'content_type:{SOLR_DOC_CONTENT_TYPES["similarity_vector"]}', f'analyzer:{similar_to_analyzer}']  # Add basic filter to only get similarity vectors from selected analyzer and from child documents (this is because root documents can also have sim vectors)
             top_similar_sounds_as_filter = query.as_kwargs()['q']
             try:
                 # Also if target is specified as a sound ID, remove it from the list
@@ -674,6 +674,25 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             return 0
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
+        
+    def get_num_sim_vectors_indexed_per_analyzer(self):
+        results = {}
+        for analyzer_name in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS.keys():
+            query = SolrQuery()
+            filter_query = 'analyzer:"{}" content_type:"v"'.format(analyzer_name)
+            query.set_query("*:*")
+            query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query)
+            query.set_group_field("_nest_parent_")
+            query.set_group_options()
+            try:
+                response = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
+                results[analyzer_name] = {
+                    'num_sounds': response.num_found,
+                    'num_vectors': response.non_grouped_number_of_results
+                }
+            except pysolr.SolrError as e:
+                raise SearchEngineException(e)
+        return results
 
     # Forum posts methods
     def add_forum_posts_to_index(self, forum_post_objects):

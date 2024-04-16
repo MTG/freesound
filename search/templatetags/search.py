@@ -119,11 +119,19 @@ def display_facet(context, facet_name, facet_title=None):
             filter_str = f'{solr_fieldname}:[{element["value"]} TO {float(element["value"]) + gap}]'
         element['add_filter_url'] = sqp.get_url(add_filters=[filter_str])
         
-    # We sort the facets by count. Also, we apply an opacity filter on "could" type facets
-    if facet:
+    # We compute weight for the opacity filter on "could" type facets
+    if facet_type == 'cloud':
         max_count = max([element['count'] for element in facet])
         for element in facet:
             element['weight'] = element['count'] / max_count
+
+    # For facets with "resort" option, carry out the sorting based on the value
+    if sqp.facets[facet_name].get('resort_by_value_as_int', False):
+        facet = sorted(facet, key=lambda x: int(x['value']))
+
+    # Skip value of "0" if indicated
+    if sqp.facets[facet_name].get('skip_value_0', False):
+        facet = [f for f in facet if int(f['value']) != 0]
 
     # We also add icons to license facets
     if facet_name == 'license':

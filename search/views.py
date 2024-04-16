@@ -91,7 +91,7 @@ def search_view_helper(request):
 
     # Run the query and post-process the results
     try:    
-        query_params = sqp.as_query_params()
+        query_params = sqp.as_query_params()    
         results, paginator = perform_search_engine_query(query_params)
         if not sqp.map_mode_active():
             if not sqp.display_as_packs_active():

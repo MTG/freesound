@@ -618,7 +618,7 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_SAMPLERATE: {'resort_by_value_as_int': True, 'skip_value_0': True},
     SEARCH_SOUNDS_FIELD_BITRATE: {'resort_by_value_as_int': True, 'skip_value_0': True},
     SEARCH_SOUNDS_FIELD_BITDEPTH: {'resort_by_value_as_int': True, 'skip_value_0': True},
-    SEARCH_SOUNDS_FIELD_CHANNELS: {'resort_by_value_as_int': True, 'skip_value_0': True},
+    SEARCH_SOUNDS_FIELD_CHANNELS: {'resort_by_value_as_int': True, 'skip_value_0': True, 'limit': 10},
     SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10, 'title': 'Packs'},
     SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 10, 'widget': 'cloud', 'title': 'Users'},
     SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30, 'widget': 'cloud'},

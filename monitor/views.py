@@ -35,6 +35,7 @@ import tickets
 from freesound.celery import get_queues_task_counts
 from sounds.models import Sound, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
+from utils.search import get_search_engine, SearchEngineException
 
 
 @login_required
@@ -104,8 +105,16 @@ def monitor_analysis(request):
             'Missing': missing,
             'Percentage': percentage_done,
         }
+
+    # Get stats about similarity vectors indexed in Solr
+    try:
+        sim_vector_stats = get_search_engine().get_num_sim_vectors_indexed_per_analyzer()
+    except SearchEngineException: 
+        sim_vector_stats = {}
+
     tvars = {
         "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
+        "sim_vector_stats": sim_vector_stats,
         "queues_stats_url": reverse('queues-stats'),
         "activePage": "analysis"
     }

@@ -324,7 +324,6 @@ class SearchOptionRange(SearchOption):
         self.query_param_min = query_param_min
         self.query_param_max = query_param_max
         super().__init__(**kwargs)
-
     
     def get_value_from_request(self):
         if self.query_param_min is not None and self.query_param_max is not None:
@@ -333,10 +332,16 @@ class SearchOptionRange(SearchOption):
                 if self.query_param_min in self.request.GET:
                     value_from_param = str(self.request.GET[self.query_param_min])
                     if value_from_param:
+                        if value_from_param != '*':
+                            # A common user mistake is to write the number next to the * character, so we remove if it is not the only character
+                            value_from_param = value_from_param.replace('*', '')
                         value[0] = value_from_param
                 if self.query_param_max in self.request.GET:
                     value_from_param = str(self.request.GET[self.query_param_max])
                     if value_from_param:
+                        if value_from_param != '*':
+                            # A common user mistake is to write the number next to the * character, so we remove if it is not the only character
+                            value_from_param = value_from_param.replace('*', '')
                         value[1] = value_from_param
                 return value
             

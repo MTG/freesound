@@ -70,7 +70,7 @@ def tags(request, multiple_tags=None):
                     group_by_pack=True,
                     group_counts_as_one_in_facets=False,
                 ))
-                initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets["tag"]]
+                initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets[settings.SEARCH_SOUNDS_FIELD_TAGS]]
                 cache.set('initial_tagcloud', initial_tagcloud, 60 * 60 * 12)  # cache for 12 hours
             tvars.update({'initial_tagcloud': initial_tagcloud})
             

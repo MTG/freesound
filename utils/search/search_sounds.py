@@ -223,5 +223,5 @@ def get_sound_ids_from_search_engine_query(query_params, current_page=None, num_
 def allow_beta_search_features(request):
      if not request.user.is_authenticated:
         return False
-     if request.user.has_perm('profile.show_beta_search_options'):
+     if request.user.has_perm('profile.can_beta_test'):
         return True

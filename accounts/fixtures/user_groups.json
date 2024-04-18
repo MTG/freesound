@@ -128,5 +128,19 @@
             ]
         ]
     }
+},
+{
+    "model": "auth.group",
+    "pk": 10,
+    "fields": {
+        "name": "beta_testers",
+        "permissions": [
+            [
+                "can_beta_test",
+                "accounts",
+                "profile"
+            ]
+        ]
+    }
 }
 ]

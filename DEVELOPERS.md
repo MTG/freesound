@@ -71,7 +71,7 @@ Currently, we only use the following custom permissions:
 * `tickets.can_moderate` (in `Ticket` model, used to allow sound moderation)
 * `forum.can_moderate_forum` (in `Post` model, used to allow forum moderation)
 * `sounds.can_describe_in_bulk` (in `BulkUploadProgress` model, used to allow bulk upload for users who don't meet the other common requirements)
-* `profile.show_beta_search_options` (in `Profile` model, used to allow using beta search features)
+* `profile.can_beta_test` (in `Profile` model, used to allow using beta search features)
 
 
 ### URLs that include a username

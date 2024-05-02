@@ -90,10 +90,6 @@ def display_facet(context, facet_name, facet_title=None):
             element['display_value'] = element['value'][element['value'].find("_")+1:]
         elif element['value'] == settings.FCW_FILTER_VALUE:
             element['display_value'] = "Approved for Free Cultural Works"
-        elif facet_name == 'license':
-            # License field in solr is case insensitive and will return facet names in lowercase. 
-            # We need to properly capitalize them to use official CC license names.
-            element['display_value'] = element['value'].title().replace('Noncommercial', 'NonCommercial')
         elif facet_type == 'range':
             # Update display value for range facets
             gap = sqp.facets[facet_name]['gap']

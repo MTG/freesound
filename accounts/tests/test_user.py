@@ -41,6 +41,7 @@ from forum.models import Thread, Post, Forum
 from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from sounds.models import License, Sound, Pack, DeletedSound, Download, PackDownload
 from utils.mail import transform_unique_email
+from utils.test_helpers import create_user_and_sounds
 
 
 class UserRegistrationAndActivation(TestCase):
@@ -883,6 +884,8 @@ class ReSendActivationTestCase(TestCase):
 
 class ChangeUsernameTest(TestCase):
 
+    fixtures = ['licenses']
+
     def test_change_username_creates_old_username(self):
         # Create user and check no OldUsername objects exist
         userA = User.objects.create_user('userA', email='userA@freesound.org')
@@ -971,6 +974,19 @@ class ChangeUsernameTest(TestCase):
         userA.refresh_from_db()
         self.assertEqual(userA.username, 'userANewNewName')  # ...username has not changed...
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)  # ...and no new OldUsername objects created
+
+    def test_change_username_mark_sounds_dirty(self):
+        # Thest that changing username of a user that has sounds marks her sounds as dirty
+        user, _, _ = create_user_and_sounds(num_sounds=3, num_packs=0)
+        Sound.objects.filter(user=user).update(is_index_dirty=False)
+        self.client.force_login(user)
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewNewName'], 'profile-ui_theme_preference': 'f'})
+        self.assertRedirects(resp, reverse('accounts-edit'))
+        user.refresh_from_db()
+        self.assertEqual(user.username, 'userANewNewName')
+        self.assertEqual(OldUsername.objects.filter(user=user).count(), 1)
+        ss = Sound.objects.filter(user=user, is_index_dirty=True)
+        self.assertEqual(ss.count(), 3)
 
     @override_settings(USERNAME_CHANGE_MAX_TIMES=2)
     def test_change_username_form_admin(self):

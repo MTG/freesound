@@ -727,6 +727,9 @@ def presave_user(sender, instance, **kwargs):
             # We use .get_or_create below to avoid having 2 OldUsername objects with the same user/username pair
             OldUsername.objects.get_or_create(user=instance, username=old_username)
 
+            # Also mark all sounds as index dirty because they'll need to be reindexed with the new username
+            Sound.objects.filter(user=instance).update(is_index_dirty=True)
+
         # Check if email has change and, if so, remove existing EmailBounce objects associated to the user (if any)
         old_email = old_user_object.email
         if old_email != instance.email:

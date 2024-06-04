@@ -28,7 +28,7 @@
                 <div>
                     {% bw_user_avatar item.user.profile.locations.avatar.L.url item.user.username 70 %}
                 </div>
-                <div class="padding-left-3">
+                <div class="padding-left-3 ellipsis">
                     <a href="{% url "account" item.username %}">{{ item.username }}</a>
                     <br><a class="bw-link--black" data-toggle="modal-default" data-modal-content-url="{% url "tickets-user-pending_sounds" item.username %}?ajax=1" href="javascript:void(0);">
                         {{ item.new_count }} unassigned sound{{ item.new_count|pluralize }}

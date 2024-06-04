@@ -20,7 +20,7 @@
             </div>
             <div class="col-md-2 text-center d-none d-md-block">
                 <div class="inline-block padding-bottom-1">{% bw_user_avatar forum.last_post.author.profile.locations.avatar.M.url forum.last_post.author.username 30 %}</div>
-                <p>by <a href="{% url "account" forum.last_post.author.username %}">{{ forum.last_post.author.username }}</a></p>
+                <p class="ellipsis">by <a href="{% url "account" forum.last_post.author.username %}">{{ forum.last_post.author.username }}</a></p>
             </div>
         {% endif %}
     </div>

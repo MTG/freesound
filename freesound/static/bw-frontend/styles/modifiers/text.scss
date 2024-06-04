@@ -90,6 +90,10 @@
   letter-spacing: 0;
 }
 
+.word-wrap-break-word{
+  word-wrap: break-word;
+}
+
 @for $i from 14 through 50 {
   .text-#{$i} {
     font-size: #{$i}px;

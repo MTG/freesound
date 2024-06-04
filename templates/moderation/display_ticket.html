@@ -7,7 +7,7 @@
         <div class="bw-player-small-thumbnail-empty-space center middle text-grey">No sound available for this ticket</div>
     {% endif %}
 </div>
-<div class="v-spacing-top-2 text-grey">
+<div class="v-spacing-top-2 text-grey word-wrap-break-word">
     <div>
         <a href="{% url 'tickets-ticket' ticket.key %}"><span class="text-grey">{% bw_icon "file-text" %} Ticket #{{ ticket.id }}:</span> {{ sound.original_filename }}</a> by <a class="bw-link--black" href="{% url "account" ticket.sender.username %}">{{ ticket.sender.username }}</a>
     </div>

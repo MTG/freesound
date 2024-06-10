@@ -123,3 +123,9 @@ Below are instructions for setting up a local Freesound installation for develop
 You can run tests using the Django test runner in the `web` container like that:
 
     docker compose run --rm web python manage.py test --settings=freesound.test_settings
+
+### Infrastructure model
+![Infrastructure main model](.infragenie/infrastructure_main_model.svg)
+- [web component model](.infragenie/web_component_model.svg)
+
+---

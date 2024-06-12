@@ -15,22 +15,10 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
       with:
         install: true
         driver: docker
-
-    - name: Notify workflow starting
-      uses: voxmedia/github-action-slack-notify-build@v1
-      continue-on-error: true
-      if: success()
-      id: slack
-      with:
-        channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
-        status: STARTING
-        color: warning
-      env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
 
     - name: Setup
       run: bash -c 'mkdir -p ./freesound-data/{packs,uploads,avatars} && echo FS_USER_ID_FROM_ENV=$(id -u) > .env && cp freesound/local_settings.example.py freesound/local_settings.py'
@@ -42,17 +30,32 @@ jobs:
       run: echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
       continue-on-error: true
 
+    - name: Build base image
+      uses: docker/build-push-action@v5
+      with:
+        file: docker/Dockerfile.base
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        push: false
+        load: true
+
+    - name: check images
+      run: docker image ls
+
+    - name: Build cached image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: docker/Dockerfile.workers_web
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        load: true
+
     - name: Pull docker images
       run: docker-compose -f docker-compose.test.yml pull
 
-    - uses: jpribyl/action-docker-layer-caching@v0.1.1
-      continue-on-error: true
-
-    - name: Build base image
-      run: make -C docker
-
     - name: Build images
-      run: docker-compose -f docker-compose.test.yml build db test_runner
+      run: docker-compose -f docker-compose.test.yml build test_runner
 
     - name: Run tests
       run: docker-compose -f docker-compose.test.yml run --rm test_runner python manage.py test --noinput --settings=freesound.test_settings

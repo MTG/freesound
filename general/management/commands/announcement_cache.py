@@ -19,20 +19,29 @@ class Command(BaseCommand):
     help = 'Set/clear "announcement_cache" for front page announcements banner'
 
     def add_arguments(self, parser):
-        parser.add_argument("action", type=str, help="Indicates whether to set or clear the cache")
-        parser.add_argument("title", type=str, nargs="?", help="Title of the announcement")
-        parser.add_argument("text", type=str, nargs="?", help="Text of the announcement")
+        subparsers = parser.add_subparsers(title="action", dest="action", required=True)
+        set_parser = subparsers.add_parser("set", help="Set the announcement_cache")
+        set_parser.set_defaults(action="set")
+        set_parser.add_argument("title", type=str, help="Title of the announcement")
+        set_parser.add_argument("text", type=str, help="Text of the announcement")
+        set_parser.add_argument("--timeout", type=int, help="Timeout for the cache in seconds")
+
+        clear_parser = subparsers.add_parser("clear", help="Clear the announcement_cache")
+        clear_parser.set_defaults(action="clear")
+
+        show_parser = subparsers.add_parser("show", help="Show the current value of the announcement_cache")
+        show_parser.set_defaults(action="show")
 
     def handle(self, *args, **kwargs):
         action = kwargs["action"]
-        title = kwargs["title"]
-        text = kwargs["text"]
 
         announcement_cache_key = "announcement_cache"
         if action == "set":
-            one_day = 60 * 60 * 24
+            title = kwargs["title"]
+            text = kwargs["text"]
+            timeout = kwargs.get("timeout")
             value = render_to_string("molecules/announcement_banner.html", {"title": title, "text": text})
-            cache.set(announcement_cache_key, value, one_day)
+            cache.set(announcement_cache_key, value, timeout)
             self.stdout.write(self.style.SUCCESS("Successfully set announcement_cache"))
         elif action == "clear":
             cache.delete(announcement_cache_key)

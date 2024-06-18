@@ -19,7 +19,7 @@ MODERATION_TEXTS = [
                 "Thanks!"),
     ('Music', "Hey there. Thanks for contributing to Freesound.\n"
               "Unfortunately, you've uploaded some music which doesn't fit with the content we allow onto the site. "  
-              "We do however genrally allow music samples that are under 1 minute long, not songs.\n"
+              "We do however generally allow music samples that are under 1 minute long, not songs.\n"
               "\n"
               "Some recommended sites for sharing produced music/songs: "
               "Soundcloud, Bandcamp, CCMixter and The Free Music Archive\n"

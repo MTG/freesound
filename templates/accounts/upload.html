@@ -33,7 +33,7 @@
         <div class="col-md-6 col-lg-3">
             <div class="padding-right-2">
                 <h5>Formats</h5>
-                <p>We prefer {% for ext in lossless_file_extensions %}<strong>{{ ext }}</strong>{% if not forloop.last %}{% ifequal forloop.revcounter 2 %} and {% else %}, {% endifequal %}{% else %}{% endif %}{% endfor %}, but we support {% for ext in lossy_file_extensions %}<strong>{{ ext }}</strong>{% if not forloop.last %}{% ifequal forloop.revcounter 2 %} and {% else %}, {% endifequal %}{% else %}{% endif %}{% endfor %} too. For very large files please use some compressed format.</p>
+                <p>We prefer {% for ext in lossless_file_extensions %}<strong>{{ ext }}</strong>{% if not forloop.last %}{% ifequal forloop.revcounter 2 %} and {% else %}, {% endifequal %}{% else %}{% endif %}{% endfor %}, but we support {% for ext in lossy_file_extensions %}<strong>{{ ext }}</strong>{% if not forloop.last %}{% ifequal forloop.revcounter 2 %} and {% else %}, {% endifequal %}{% else %}{% endif %}{% endfor %} too. For very large files, please use some compressed format.</p>
             </div>
         </div>
     </div>
@@ -74,7 +74,7 @@
         <div class="col-md-6 middle">
             <div class="text-center">
                 <div class="text-grey v-spacing-4 h-padding-7">
-                    Once sounds are uploaded, you'll have to describe them before they can show up in the web site.
+                    Once sounds are uploaded, you'll have to describe them before they can show up in the website.
                 </div>
                 <div>
                     <a class="btn-blue no-hover" href="{% url 'accounts-manage-sounds' 'pending_description' %}" title="Describe Your Sounds Link">Describe sounds</a>
@@ -84,7 +84,7 @@
         {% else %}
         <div class="v-spacing-3 v-spacing-top-6 w-100 text-center">
             <h5>Uploads disabled... &#128543</h5>
-            <p class="text-grey v-spacing-2">We're deeply sorry but uploading and describing sounds is <b>temporarily disabled</b>.
+            <p class="text-grey v-spacing-2">We're deeply sorry: uploading and describing sounds is <b>temporarily disabled</b>.
                 We'll enable it again as soon as possible.</p>
         </div>
         {% endif %}

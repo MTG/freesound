@@ -41,6 +41,10 @@
                     </section>
                     {% endcache %}
                 {% endif %}
+            
+                {%  if announcement_cache %}
+                    {{ announcement_cache }}
+                {% endif %}
 
                 {% if rss_cache %}
                     {{ rss_cache }}

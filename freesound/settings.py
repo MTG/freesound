@@ -455,6 +455,8 @@ ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE = False
 ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD = True
 USER_DOWNLOADS_PUBLIC = True
 
+ANNOUNCEMENT_CACHE_KEY = 'announcement_cache'
+
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls
 

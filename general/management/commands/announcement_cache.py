@@ -10,6 +10,7 @@ Example usage:
     python manage.py announcement_cache show
 
 """
+from django.conf import settings
 from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
@@ -35,19 +36,18 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         action = kwargs["action"]
 
-        announcement_cache_key = "announcement_cache"
         if action == "set":
             title = kwargs["title"]
             text = kwargs["text"]
             timeout = kwargs.get("timeout")
             value = render_to_string("molecules/announcement_banner.html", {"title": title, "text": text})
-            cache.set(announcement_cache_key, value, timeout)
+            cache.set(settings.ANNOUNCEMENT_CACHE_KEY, value, timeout)
             self.stdout.write(self.style.SUCCESS("Successfully set announcement_cache"))
         elif action == "clear":
-            cache.delete(announcement_cache_key)
+            cache.delete(settings.ANNOUNCEMENT_CACHE_KEY)
             self.stdout.write(self.style.SUCCESS("Successfully cleared announcement_cache"))
         elif action == "show":
-            current_value = cache.get(announcement_cache_key, "<<Cache is empty>>")
+            current_value = cache.get(settings.ANNOUNCEMENT_CACHE_KEY, "<<Cache is empty>>")
             self.stdout.write(self.style.SUCCESS("Current value of announcement_cache:"))
             self.stdout.write(current_value)
         else:

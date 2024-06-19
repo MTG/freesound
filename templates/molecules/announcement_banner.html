@@ -1,8 +1,14 @@
-<div class="v-spacing-6">
-    <section class="border-grey-light">
-        <h3 class="text-center v-spacing-2 ellipsis">{{ title }}</h3>
-        <div class="center">
-            {{ text | safe }}
+{% load bw_templatetags %}
+<div class="v-spacing-3">
+    <section class="bw-announcement_banner">
+        <div class="padding-right-2 middle">
+            <div class="text-30">{% bw_icon 'notification' %}</div>
+        </div>
+        <div class="w-100">
+            {% if title %}<h3 class="text-center v-spacing-2 ellipsis">{{ title }}</h3>{% endif %}
+            <div>
+                {{ text | safe }}
+            </div>
         </div>
     </section>
 </div>

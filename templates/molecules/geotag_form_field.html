@@ -3,7 +3,7 @@
 <div class="geotag-field" {%if form.lat.value %}data-has-geotag="true"{% endif %}>
     <button class="show-geolocation-button btn-inverse v-spacing-top-2">{% bw_icon 'plus' %}Add geolocation</button>
     <div class="display-none geotag-field-wrapper row">
-        <div class="padding-2 text-grey"><b>Note:</b> only add geolocation information if it is of relevance for the sound. For example, geolocation is relevant for <b>field recordings</b>, but ptobably not relevant for synthesized sounds.</div>
+        <div class="padding-2 text-grey"><b>Note:</b> only add geolocation information if it is of relevance for the sound. For example, geolocation is relevant for <b>field recordings</b>, but probably not relevant for synthesized sounds.</div>
         <div class="col-md-8 v-spacing-top-2">
             <div id="map-{{ forloop.counter0 }}" class="geotag-picker-map" data-map-idx="{{ forloop.counter0 }}" {% if last_latlong %}data-last-lat={{ last_latlong.0 }} data-last-lon={{ last_latlong.1 }} data-last-zoom={{ last_latlong.2 }}{% endif %}></div>
         </div>

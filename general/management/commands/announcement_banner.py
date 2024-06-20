@@ -5,11 +5,11 @@ that are passed as arguments to the command. The command can be used to set the 
 value of the cache.
 
 Example usage:
-    python manage.py announcement_cache set "New feature!" "Now you can do this and that. <a href='/forum'>Learn more</a>"
-    python manage.py announcement_cache set "" "This banner will have no title. Now you can do this and that. <a href='/forum'>Learn more</a>"
-    python manage.py announcement_cache set "" "short text with a 60 seconds timeout" --timeout 60
-    python manage.py announcement_cache clear
-    python manage.py announcement_cache show
+    python manage.py announcement_banner set "New feature!" "Now you can do this and that. <a href='/forum'>Learn more</a>"
+    python manage.py announcement_banner set "" "This banner will have no title. Now you can do this and that. <a href='/forum'>Learn more</a>"
+    python manage.py announcement_banner set "" "short text with a 60 seconds timeout" --timeout 60
+    python manage.py announcement_banner clear
+    python manage.py announcement_banner show
 
 """
 from django.conf import settings

@@ -1,0 +1,14 @@
+.bw-announcement_banner {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+
+    padding: $small-spacing;
+    background-color: $red;
+    border-radius: 2px;
+    color: #ffffff;
+
+    a {
+        color: #000000;
+    }
+}

@@ -200,6 +200,7 @@ def front_page(request):
         'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,
         'query_suggestions_url': reverse('query-suggestions'),
         'enable_popular_searches': settings.ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE,
+        'announcement_cache': cache.get(settings.ANNOUNCEMENT_CACHE_KEY, None),
     }
     return render(request, 'front.html', tvars)
 
@@ -833,7 +834,7 @@ def similar(request, username, sound_id):
     else:
         # Get similar sounds from solr
         try:
-            results = get_search_engine().search_sounds(similar_to=sound.id, 
+            results = get_search_engine().search_sounds(similar_to=sound.id,
                                                         similar_to_max_num_sounds=num_similar_sounds,
                                                         num_sounds=num_similar_sounds)
             similarity_results = [(result['id'], result['score']) for result in results.docs]

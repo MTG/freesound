@@ -18,9 +18,9 @@ To update icons:
 * Open iconmoon app in web browser
 * Import `bw-icons/selection.json` file
 * Add/modify icons using the online editor
-* Go to "generate font", it will complain that "Strokes get ignored when generating fonts. You can convert them to fills to prevent this.", say "Continue"
+* Go to "generate font". It will complain that "Strokes get ignored when generating fonts. You can convert them to fills to prevent this.", say "Continue"
 * Click "download". A compressed folder will be downloaded which wou use to replace whole bw-icons folder from this directory.
-* Check the differences in `bw-icons/style.css` after you replaced folder contents, and make sure you copy code bits from old `style.css` that were added manually to the new version (the diff editor will make thos changes very clear).
+* Check the differences in `bw-icons/style.css` after you replaced folder contents, and make sure you copy code bits from old `style.css` that were added manually to the new version (the diff editor will make those changes very clear).
 
 ## Running the new frontend in Django
 

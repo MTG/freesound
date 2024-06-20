@@ -9,6 +9,15 @@
     color: #ffffff;
 
     a {
-        color: #000000;
+        color: #ffffff;
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 3px;
+        text-decoration-color: currentColor;
+        text-decoration-skip-ink: none;
+
+        &:hover {
+            color: black;
+        }
     }
 }

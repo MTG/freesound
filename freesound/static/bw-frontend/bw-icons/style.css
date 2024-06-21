@@ -84,9 +84,6 @@
 .bw-radio:checked + .bw-radio-container .bw-icon-radio-unchecked:before { /* NOTE: this was added manually */
   content: '\e936';
 }
-.bw-icon-checkbox:before {
-  content: "\e912";
-}
 .bw-icon-chevron-up:before {
   content: "\e913";
 }

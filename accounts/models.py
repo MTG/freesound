@@ -20,9 +20,9 @@
 
 import datetime
 import os
+import pytz
 import random
 
-import pytz
 from django.conf import settings
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth.models import User
@@ -37,6 +37,7 @@ from django.dispatch import receiver
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.encoding import smart_str
+from django.utils.http import urlquote
 from django.utils.timezone import now
 from psycopg2.errors import ForeignKeyViolation
 
@@ -223,10 +224,10 @@ class Profile(models.Model):
         return reverse('account', args=[smart_str(self.user.username)])
 
     def get_user_sounds_in_search_url(self):
-        return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=0'
+        return f'{reverse("sounds-search")}?f=username:"{ urlquote(self.user.username) }"&s=Date+added+(newest+first)&g=0'
     
     def get_user_packs_in_search_url(self):
-        return f'{reverse("sounds-search")}?f=username:"{ self.user.username }"&s=Date+added+(newest+first)&g=1&dp=1'
+        return f'{reverse("sounds-search")}?f=username:"{ urlquote(self.user.username) }"&s=Date+added+(newest+first)&g=1&dp=1'
     
     def get_latest_packs_for_profile_page(self):
         latest_pack_ids = Pack.objects.select_related().filter(user=self.user, num_sounds__gt=0).exclude(is_deleted=True) \

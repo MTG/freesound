@@ -1364,7 +1364,7 @@ class Sound(models.Model):
             for is_explicit in [True, False]:
                 invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
 
-        for player_size in ['small', 'middle', 'big_no_info', 'small_no_info', 'minimal']:
+        for player_size in ['small', 'middle', 'big_no_info', 'small_no_info', 'minimal', 'moderation']:
              for is_authenticated in [True, False]:
                 invalidate_template_cache("bw_display_sound", self.id, player_size, is_authenticated)
 

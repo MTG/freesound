@@ -247,10 +247,10 @@ class SoundEditAndDescribeForm(forms.Form):
                            widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
     tags = TagField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
-        help_text="Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
-                  "For example: <i>field-recording</i> is a popular tag. "
-                  "Only use letters a-z and numbers 0-9 with no accents or diacritics. "
-                  "Note that you can <b>copy</b> and <b>paste</b> between tag fields.")
+        help_text="At least 3 tags, separated by spaces or commas. "
+                  "Join words with dashes (example: <i>field-recording</i>). "
+                  "Only letters (a-z) and numbers (0-9), no accents/diacritics. "
+                  "You can <b>copy</b>/<b>paste</b> between tag fields.")
     description = HtmlCleaningCharField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 10, 'class': 'unsecure-image-check'}),
         help_text="You can add timestamps to the description using the syntax #minute:second (e.g. \"#1:07 nice bird chirp\"). "

@@ -51,7 +51,7 @@ LOG_TO_FILE = False
 # all tag assingment information from freesound. Once this file exists and has some data, the
 # "update_tagrecommendation_data.py" script can be run and will generate the following files:
 # (if running in Docker environment, you can run the script like:
-# docker-compose run tagrecommendation  bash -c "cd /code; python update_tagrecommendation_data.py"
+# docker compose run tagrecommendation  bash -c "cd /code; python update_tagrecommendation_data.py"
 #
 # For every class used:
 #   [[DATABASE]]_[[CLASSNAME]]_SIMILARITY_MATRIX_cosine_SUBSET.npy

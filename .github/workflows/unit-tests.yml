@@ -43,7 +43,7 @@ jobs:
       continue-on-error: true
 
     - name: Pull docker images
-      run: docker-compose -f docker-compose.test.yml pull
+      run: docker compose -f docker-compose.test.yml pull
 
     - uses: jpribyl/action-docker-layer-caching@v0.1.1
       continue-on-error: true
@@ -52,10 +52,10 @@ jobs:
       run: make -C docker
 
     - name: Build images
-      run: docker-compose -f docker-compose.test.yml build db test_runner
+      run: docker compose -f docker-compose.test.yml build db test_runner
 
     - name: Run tests
-      run: docker-compose -f docker-compose.test.yml run --rm test_runner python manage.py test --noinput --settings=freesound.test_settings
+      run: docker compose -f docker-compose.test.yml run --rm test_runner python manage.py test --noinput --settings=freesound.test_settings
 
     - name: Notify success
       uses: voxmedia/github-action-slack-notify-build@v1

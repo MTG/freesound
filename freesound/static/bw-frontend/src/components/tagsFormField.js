@@ -126,13 +126,11 @@ const prepareTagsFormFields = (container) => {
         
         addTypeAheadFeatures(inputElement, fetchTagSuggestions, onSuggestionSelectedFromDropdown);
 
+        const tagSeparatorKeys = ["Enter", " ", ","];
+
         inputElement.addEventListener('keypress', evt => {
-            if (evt.key == "Enter"){
-                evt.preventDefault();  // Do not submit form
-                const newTagsStr = inputElement.value;
-                inputElement.value = '';
-                updateTags(inputElement, newTagsStr);
-            } else if (evt.key == " "){
+            if (tagSeparatorKeys.includes(evt.key)){
+                evt.preventDefault(); // Do not submit form is key is enter, and also do not add " " or "," chars to the input field
                 const newTagsStr = inputElement.value;
                 inputElement.value = '';
                 updateTags(inputElement, newTagsStr);

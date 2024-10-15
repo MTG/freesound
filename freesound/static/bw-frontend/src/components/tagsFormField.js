@@ -181,4 +181,4 @@ const prepareTagsFormFields = (container) => {
     });
 }
 
-export {prepareTagsFormFields}
+export {prepareTagsFormFields, updateTags}

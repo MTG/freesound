@@ -106,9 +106,19 @@
                     {% endif %}
                 {% endif %}
             {% else %}
-            <div class="v-spacing-top-2 text-grey">
-                You do not have permissions to perform any actions.
-            </div>
+                {% if sound %}    
+                    {% if perms.sound.can_edit or sound == request.user %}
+                        {% if ticket.sound.processing_state == 'OK' %}
+                            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'sound-edit' sound.user.username sound.id %}">Edit sound description</a>
+                        {% else %}
+                            <div class="v-spacing-top-3 text-grey text-center">{% include 'sounds/sound_state_processing_indicator.html' %} (cannot edit)</div>
+                        {% endif %}   
+                    {% else %}
+                        <div class="v-spacing-top-2 text-grey">
+                            You do not have permissions to perform any actions.
+                        </div>
+                    {% endif %}
+                {% endif %}
             {% endif %}
         </div>
     </div>

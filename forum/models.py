@@ -156,6 +156,10 @@ class Thread(models.Model):
         }
         return info_to_return
 
+    @property
+    def num_replies(self):
+        return self.num_posts - 1
+
     class Meta:
         ordering = ('-status', '-last_post__created')
 

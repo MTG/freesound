@@ -166,12 +166,16 @@ def new_message(request, username=None, message_id=None):
 
                 if message.user_from != request.user and message.user_to != request.user:
                     raise Http404
-                
+                elif message.user_from == request.user:
+                    to = message.user_to.username
+                else:
+                    to = message.user_from.username
+
                 body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
                 body = quote_message_for_reply(body, message.user_from.username)
 
                 subject = "re: " + message.subject
-                to = message.user_from.username
+
 
                 form = form_class(request, initial={"to": to, "subject": subject, "body": body})
             except Message.DoesNotExist:

@@ -83,6 +83,31 @@ const bindConfirmationModalElements = (container) => {
   });
 }
 
+// Edit modal logic
+const bindEditModalElements = (container) => {
+  [...container.querySelectorAll('[data-toggle="edit-modal"]')].forEach(modalButton => {
+    modalButton.addEventListener('click', () => {
+      const editModalTitle = document.getElementById('editModalTitle');
+      editModalTitle.innerText = modalButton.dataset.modalEditTitle;
+
+      const editModalHelpText = document.getElementById('editModalHelpText');
+      const helpText = modalButton.dataset.modalEditHelpText;
+
+      const editModalInput = document.getElementById('editModalInput');
+      editModalInput.value = modalButton.dataset.modalEditInput;
+
+      if (helpText !== undefined){
+        editModalHelpText.innerText = helpText;
+      } else {
+        editModalHelpText.innerText = '';
+      }
+      const editModalAcceptForm = document.getElementById('editModalAcceptSubmitForm');
+      editModalAcceptForm.action = modalButton.dataset.modalEditUrl;
+      activateModal('editModal');
+    });
+  });
+}
+
 // Logic to bind default modals
 
 const handleDefaultModal = (modalUrl, modalActivationParam, atPage) => {
@@ -278,4 +303,4 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
   }, onClosedCallback, doRequestAsync, showLoadingToast, modalActivationParam)
 }
 
-export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm, handleDefaultModal, bindModalActivationElements, bindConfirmationModalElements, activateModalsIfParameters, bindDefaultModals, activateDefaultModalsIfParameters};
+export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm, handleDefaultModal, bindModalActivationElements, bindConfirmationModalElements, bindEditModalElements, activateModalsIfParameters, bindDefaultModals, activateDefaultModalsIfParameters};

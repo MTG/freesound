@@ -1,0 +1,24 @@
+{% extends "molecules/modal_base.html" %}
+
+{% block id %}editModal{% endblock %}
+{% block aria-label %}Edit modal{% endblock %}
+{% block extra-class %}zindex2000{% endblock %}
+
+{% block body %}
+    <div class="text-center">
+        <h4 id="editModalTitle">Default title</h4>
+        <div id="editModalHelpText" class="v-spacing-top-2"></div>
+
+        <div class="row v-spacing-top-4 v-spacing-3">
+            <div class="col-8 offset-2">
+                <form id="editModalAcceptSubmitForm" method="post" action="">{% csrf_token %}
+                    <input type="text" id="editModalInput" class="form-control mb-3" style="width:100%" value="">
+                    <div class = "d-flex justify-content-center gap-2">
+                        <button type="submit" class="btn btn-primary w-50">Change</button>
+                        <button type="button" class="btn btn-secondary w-50" data-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

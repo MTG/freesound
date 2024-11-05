@@ -11,7 +11,7 @@ import { bindFollowTagsButtons } from '../components/followUnfollowTags.js';
 import { bindDisableOnSubmitForms } from '../components/formDisableOnSubmit.js';
 import { bindDoNotSubmitOnEnterForms } from '../components/formDoNotSubmitOnEnter.js';
 import { addSearchIconToInputs } from '../components/input.js';
-import { bindConfirmationModalElements, bindDefaultModals, activateDefaultModalsIfParameters } from '../components/modal.js';
+import { bindConfirmationModalElements, bindEditModalElements, bindDefaultModals, activateDefaultModalsIfParameters } from '../components/modal.js';
 import { bindUserAnnotationsModal, activateUserAnnotationsModalIfParameters} from '../components/userAnnotationsModal.js';
 import { makeRadios } from '../components/radio.js';
 import { makeRatingWidgets } from '../components/rating.js';
@@ -46,6 +46,7 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
     prepareAsyncSections(container);
 
     bindConfirmationModalElements(container);  // Confirmation modals are also binded as they can work inside another modal
+    bindEditModalElements(container); // Edit modals are also binded as they can work inside another modal
 
     // Bind other modals
     if (bindModals === true){

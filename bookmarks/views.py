@@ -17,6 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
+from operator import truediv
 
 from django.conf import settings
 from django.contrib import messages
@@ -27,8 +28,9 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from bookmarks.forms import BookmarkForm
+from bookmarks.forms import BookmarkForm, BookmarkCategoryForm
 from bookmarks.models import Bookmark, BookmarkCategory
+from comments.models import update_hyperlink_field
 from sounds.models import Sound
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
@@ -84,6 +86,26 @@ def delete_bookmark_category(request, category_id):
     else:
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
+@login_required
+@transaction.atomic()
+def change_bookmark_category(request, category_id):
+    category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
+    next = request.GET.get("next", "")
+
+    if request.method =="POST":
+        form = BookmarkCategoryForm(instance=category)
+        if form.is_valid():
+            form.save()
+            if next:
+                return HttpResponseRedirect(next)
+            else:
+                return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
+        else:
+            #raise Exception()
+            print(form.errors)
+    else:
+        form = BookmarkCategoryForm(instance=category)
+    return HttpResponseRedirect(reverse('bookmarks-category', args=[category_id]))
 
 @login_required
 @transaction.atomic()

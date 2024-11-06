@@ -90,22 +90,19 @@ def delete_bookmark_category(request, category_id):
 @transaction.atomic()
 def change_bookmark_category(request, category_id):
     category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
-    next = request.GET.get("next", "")
 
     if request.method =="POST":
-        form = BookmarkCategoryForm(instance=category)
+        form = BookmarkCategoryForm(data=request.POST, instance=category)
         if form.is_valid():
             form.save()
-            if next:
-                return HttpResponseRedirect(next)
-            else:
-                return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
+            return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
         else:
-            #raise Exception()
-            print(form.errors)
+            messages.add_message(request, messages.WARNING, "Form not valid. Check if provided category name already exists.")
+            return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
+
     else:
         form = BookmarkCategoryForm(instance=category)
-    return HttpResponseRedirect(reverse('bookmarks-category', args=[category_id]))
+    return render(request,"/molecules/edit_modal.html", {'form': form})
 
 @login_required
 @transaction.atomic()

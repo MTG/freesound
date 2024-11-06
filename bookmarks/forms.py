@@ -30,7 +30,11 @@ class BookmarkCategoryForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'category_name_widget'}),
         }
-
+    def clean_name(self):
+        name = self.cleaned_data.get("name")
+        if BookmarkCategory.objects.filter(user=self.instance.user, name=name).exists():
+            raise forms.ValidationError("This name already exists for a bookmark category of yours")
+        return name
 
 class BookmarkForm(forms.Form):
     category = forms.ChoiceField(

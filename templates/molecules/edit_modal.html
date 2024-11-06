@@ -12,7 +12,7 @@
         <div class="row v-spacing-top-4 v-spacing-3">
             <div class="col-8 offset-2">
                 <form id="editModalAcceptSubmitForm" method="post" action="">{% csrf_token %}
-                    <input type="text" id="editModalInput" class="form-control mb-3" style="width:100%" value="">
+                    <input type="text" id="editModalInput" name="name" class="form-control mb-3" style="width:100%" value="{{category.name}}">
                     <div class = "d-flex justify-content-center gap-2">
                         <button type="submit" class="btn btn-primary w-50">Change</button>
                         <button type="button" class="btn btn-secondary w-50" data-dismiss="modal">Cancel</button>

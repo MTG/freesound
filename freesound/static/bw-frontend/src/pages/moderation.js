@@ -19,6 +19,7 @@ const messageTextArea = document.getElementsByName('message')[0];
 const ticketIdsInput = document.getElementsByName('ticket')[0];
 const soundInfoElementsPool = document.getElementById('sound-info-elements');
 const selectedSoundsInfoPanel = document.getElementById('selected-sounds-info');
+const ticketCommentsSection = document.getElementById('ticket-comments-section');
 
 
 const closeCollapsableBlocks = (soundElement) => {
@@ -69,6 +70,15 @@ const postTicketsSelected = () => {
             moderateFormTitle.innerText = `Moderate ${selectedTicketsData.length} selected sounds`;
         }
     }
+
+    // Make ticket comments visible if only one ticket is selected
+    ticketCommentsSection.children.forEach(commentElement => {
+        commentElement.classList.add('display-none');
+    });
+    if (selectedTicketsData.length === 1) {
+        const commentElement = ticketCommentsSection.querySelector(`.ticket-comments[data-ticket-id="${selectedTicketsData[0]['ticketId']}"]`);
+        commentElement.classList.remove('display-none');
+    } 
 
     // Set "ticket" field in moderation form with the ticket ids of the selected tickets
     const ticketIdsSerialized = selectedTicketsData.map(ticketData => ticketData['ticketId']).join('|');

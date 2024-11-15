@@ -75,6 +75,28 @@
                         <br>You can do shift+click on a row to select all the rows since the last previously selected row
                     </div>
                 </div>
+                <div id="ticket-comments-section">
+                    {% for ticket in page.object_list %}
+                    <div class="ticket-comments" data-ticket-id="{{ ticket.id }}" class="v-spacing-4 display-none">
+                        {% with ticket.messages.all as ticket_messages %}
+                        {% if ticket_messages.count > 0 %}
+                            <h4 class="v-spacing-2 text-grey">Messages for ticket #{{ ticket.id }}</h4>
+                            {% for message in ticket_messages reversed %}
+                                {% if not message.moderator_only or can_view_moderator_only_messages %}
+                                <div class="v-spacing-2">
+                                    <div>
+                                        {% if message.sender %} <a href="{% url "account" message.sender.username %}">{{ message.sender.username }}</a> {% else %} Anonymous {% endif %}<span class="h-spacing-left-1 h-spacing-1 text-grey">·</span><span class="text-grey">{{ message.created }}</span>
+                                        {% if message.moderator_only %}<span title="This message is only visible to other moderators" class="text-blue">{% bw_icon 'notification' 'rotate180' %}</span>{% endif %}
+                                    </div>
+                                    <div class="{% if message.moderator_only %}text-blue{%endif%} overflow-hidden">{{ message.text|safe|linebreaksbr }}</div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                    {%endfor%}
+                </div>
             {% endif %}
             </div>
         </div>

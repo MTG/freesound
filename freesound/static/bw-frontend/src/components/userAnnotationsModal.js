@@ -1,4 +1,4 @@
-import {handleGenericModal, bindModalActivationElements, activateModalsIfParameters, dismissModal, handleDefaultModal} from './modal';
+import {handleGenericModal, bindModalActivationElements, activateModalsIfParameters, dismissModal} from './modal';
 import {makePostRequest} from "../utils/postRequest";
 import {showToast} from "./toast";
 

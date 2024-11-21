@@ -12,7 +12,7 @@ const bindModalActivationElements = (querySelectorStr, handleModalFunction, cont
     element.dataset.alreadyBinded = true;
     element.addEventListener('click', (evt) => {
       evt.preventDefault();
-      handleModalFunction(element.dataset.modalContentUrl, element.dataset.modalActivationParam);
+      handleModalFunction(element.dataset.modalContentUrl, element.dataset.modalActivationParam, element);
     });
   });
 }
@@ -83,21 +83,24 @@ const bindConfirmationModalElements = (container) => {
   });
 }
 
-// Logic to bind default modals
+// Logic to bind default modals (including default modals with form)
 
-const handleDefaultModal = (modalUrl, modalActivationParam, atPage) => {
-  if ((atPage !== undefined) && modalUrl.indexOf('&page') == -1){
-    modalUrl += '&page=' + atPage;
-  }
+const handleDefaultModal = (modalUrl, modalActivationParam) => {
   handleGenericModal(modalUrl, undefined, undefined, true, true, modalActivationParam);
+}
+
+const handleDefaultModalWithForm = (modalUrl, modalActivationParam, element) => {
+  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast(element.dataset.successMessage || "Form submitted!")}, (req) => {showToast(element.dataset.errorMessage || "There were errors processing the form...")}, true, true, modalActivationParam);  
 }
 
 const bindDefaultModals = (container) => {
   bindModalActivationElements('[data-toggle="modal-default"]', handleDefaultModal, container);
+  bindModalActivationElements('[data-toggle="modal-default-with-form"]', handleDefaultModalWithForm, container);
 }
 
 const activateDefaultModalsIfParameters = () => {
   activateModalsIfParameters('[data-toggle="modal-default"]', handleDefaultModal);
+  activateModalsIfParameters('[data-toggle="modal-default-with-form"]', handleDefaultModalWithForm);
 }
 
 

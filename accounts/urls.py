@@ -94,6 +94,7 @@ urlpatterns = [
     path('bookmarks/add/<int:sound_id>/', bookmarks.add_bookmark, name="add-bookmark"),
     path('bookmarks/get_form_for_sound/<int:sound_id>/', bookmarks.get_form_for_sound, name="bookmarks-add-form-for-sound"),
     path('bookmarks/category/<int:category_id>/delete/', bookmarks.delete_bookmark_category, name="delete-bookmark-category"),
+    path('bookmarks/category/<int:category_id>/edit_modal/', bookmarks.edit_bookmark_category_modal, name="edit-bookmark-category-modal"),
     path('bookmarks/<int:bookmark_id>/delete/', bookmarks.delete_bookmark, name="delete-bookmark"),
 
     path('messages/', messages.inbox, name='messages'),

@@ -1,5 +1,5 @@
 Twisted==20.3.0
-graypy==2.1.0
+pygelf==0.4.2
 concurrent-log-handler==0.9.20
 scipy==1.2.3
 numpy==1.9.0  # Needs to be this version for csc-pysparse to work

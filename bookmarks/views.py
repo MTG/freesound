@@ -84,7 +84,19 @@ def delete_bookmark_category(request, category_id):
     else:
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
+@login_required
+@transaction.atomic()
+def edit_bookmark_category(request, category_id):
+    print(request.GET)
+    if not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
+    
+    category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
+    
+    tvars = {"category": category}
 
+    return render(request, 'bookmarks/modal_edit_bookmark_category.html', tvars)
+    
 @login_required
 @transaction.atomic()
 def add_bookmark(request, sound_id):

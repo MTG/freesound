@@ -85,19 +85,25 @@ const bindConfirmationModalElements = (container) => {
 
 // Logic to bind default modals
 
-const handleDefaultModal = (modalUrl, modalActivationParam, atPage) => {
-  if ((atPage !== undefined) && modalUrl.indexOf('&page') == -1){
-    modalUrl += '&page=' + atPage;
-  }
+const handleDefaultModal = (modalUrl, modalActivationParam) => {
   handleGenericModal(modalUrl, undefined, undefined, true, true, modalActivationParam);
 }
 
+const handleDefaultModalWithForm = (modalUrl, modalActivationParam) => {
+  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast('Form submitted succesfully!')}, undefined, true, true, modalActivationParam);
+  //handleGenericModalWithForm(flagSoundButton.dataset.modalContentUrl, initSoundFlagForm, undefined, (req) => {showToast('Sound flagged successfully!')}, undefined);
+  //handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast, modalActivationParam) => {
+}
+
 const bindDefaultModals = (container) => {
+  console.log("Modal Binded Successfully")
   bindModalActivationElements('[data-toggle="modal-default"]', handleDefaultModal, container);
+  bindModalActivationElements('[data-toggle="modal-default-with-form]', handleDefaultModalWithForm, container);
 }
 
 const activateDefaultModalsIfParameters = () => {
   activateModalsIfParameters('[data-toggle="modal-default"]', handleDefaultModal);
+  activateModalsIfParameters('[data-toggle="modal-default-with-form"]', handleDefaultModalWithForm);
 }
 
 
@@ -278,4 +284,4 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
   }, onClosedCallback, doRequestAsync, showLoadingToast, modalActivationParam)
 }
 
-export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm, handleDefaultModal, bindModalActivationElements, bindConfirmationModalElements, activateModalsIfParameters, bindDefaultModals, activateDefaultModalsIfParameters};
+export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm, handleDefaultModal, handleDefaultModalWithForm, bindModalActivationElements, bindConfirmationModalElements, activateModalsIfParameters, bindDefaultModals, activateDefaultModalsIfParameters};

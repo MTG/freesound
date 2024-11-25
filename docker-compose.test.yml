@@ -1,13 +1,17 @@
 version: "3.7"
 
+volumes:
+    pgdata:
+
 services:
     db:
         image: postgres:12.1
         env_file:
             - environment
         volumes:
-            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
             - pgdata:/var/lib/postgresql/data
+            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
+            
         ports:
             - "5432:5432"
         environment:

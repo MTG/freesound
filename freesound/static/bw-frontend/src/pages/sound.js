@@ -137,7 +137,7 @@ const initSoundFlagForm = (modalContainer) => {
 }
 
 const handleFlagSoundModal = () => {
-    handleGenericModalWithForm(flagSoundButton.dataset.modalContentUrl, initSoundFlagForm, undefined, (req) => {showToast('Sound flagged successfully!')}, undefined);  
+    handleGenericModalWithForm(flagSoundButton.dataset.modalContentUrl, initSoundFlagForm, undefined, (req) => {showToast('Sound flagged successfully!')}, undefined, undefined);  
 }
 
 if (flagSoundModalParamValue) {

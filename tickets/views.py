@@ -636,7 +636,8 @@ def moderation_assigned(request, user_id):
         "current_page": pagination_response['current_page'],
         "show_pagination": show_pagination,
         "mod_sound_form": mod_sound_form,
-        "msg_form": msg_form
+        "msg_form": msg_form,
+        "can_view_moderator_only_messages": _can_view_mod_msg(request)
     }
     _add_sound_objects_to_tickets(tvars['page'].object_list)
     tvars.update({'section': 'assigned'})

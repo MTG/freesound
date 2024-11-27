@@ -129,7 +129,7 @@ const handleRegistrationModal = () => {
     // If registration succeeded, redirect to the registration feedback page
     const data = JSON.parse(req.responseText);
     window.location.href = data.redirectURL;
-  }, undefined);
+  }, undefined, undefined);
 }
 
 const handleRegistrationFeedbackModal = () => {

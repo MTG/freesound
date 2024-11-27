@@ -90,15 +90,12 @@ const handleDefaultModal = (modalUrl, modalActivationParam) => {
 }
 
 const handleDefaultModalWithForm = (modalUrl, modalActivationParam) => {
-  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast('Form submitted succesfully!')}, undefined, true, true, modalActivationParam);
-  //handleGenericModalWithForm(flagSoundButton.dataset.modalContentUrl, initSoundFlagForm, undefined, (req) => {showToast('Sound flagged successfully!')}, undefined);
-  //handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast, modalActivationParam) => {
+  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast('Form submitted succesfully!')}, undefined, true, true, modalActivationParam, true);
 }
 
 const bindDefaultModals = (container) => {
-  console.log("Modal Binded Successfully")
   bindModalActivationElements('[data-toggle="modal-default"]', handleDefaultModal, container);
-  bindModalActivationElements('[data-toggle="modal-default-with-form]', handleDefaultModalWithForm, container);
+  bindModalActivationElements('[data-toggle="modal-default-with-form"]', handleDefaultModalWithForm, container);
 }
 
 const activateDefaultModalsIfParameters = () => {
@@ -201,7 +198,7 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
 };
 
 
-const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast, modalActivationParam) => {
+const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast, modalActivationParam, dataReloadOnSuccess) => {
   // This version of the generic modal is useful for modal contents that contain forms which, upon submission, will return HTML content if there were form errors
   // which should be used to replace the current contents of the form, and will return a JSON response if the form validated correctly in the backend. That JSON
   // response could include some relevant data or no data at all, but is used to differentiate from the HTML response
@@ -223,6 +220,9 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
           dismissModal(modalContainerId);
           if (onFormSubmissionSucceeded !== undefined){
             onFormSubmissionSucceeded(req);
+          }
+          if(dataReloadOnSuccess == true){
+            location.reload()
           }
         }  else {
           // If the response is not JSON, that means the response are the HTML elements of the

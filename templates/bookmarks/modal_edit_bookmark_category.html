@@ -9,12 +9,13 @@
 <div class="col-12">
     <div class="text-center">
         <h4 class="v-spacing-5">Edit bookmark Category</h4>
+        <form method="post" action="{% url 'edit-bookmark-category' category.id %}?ajax=1." class = "disable-on-submit">{% csrf_token %}
+            {{form}}
+            <button class="btn-primary v-spacing-top-3">Change bookmark category name</button>
+        </form>
     </div>
     <div class="v-spacing-4">
-        <!--<form method="post" action="{% url 'sound-flag' sound.user.username sound.id %}?ajax=1." class="disable-on-submit bw-form form-flag-sound" novalidate>{% csrf_token %}
-            {{ flag_form }}
-            <button class="btn-primary v-spacing-top-3">Flag this sound</button>
-        </form>-->
+        
     </div>
 </div>
 {% endblock %}

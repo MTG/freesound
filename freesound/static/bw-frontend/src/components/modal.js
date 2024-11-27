@@ -85,19 +85,22 @@ const bindConfirmationModalElements = (container) => {
 
 // Logic to bind default modals
 
-const handleDefaultModal = (modalUrl, modalActivationParam, atPage) => {
-  if ((atPage !== undefined) && modalUrl.indexOf('&page') == -1){
-    modalUrl += '&page=' + atPage;
-  }
+const handleDefaultModal = (modalUrl, modalActivationParam) => {
   handleGenericModal(modalUrl, undefined, undefined, true, true, modalActivationParam);
+}
+
+const handleDefaultModalWithForm = (modalUrl, modalActivationParam) => {
+  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast('Form submitted succesfully!')}, undefined, true, true, modalActivationParam, true);
 }
 
 const bindDefaultModals = (container) => {
   bindModalActivationElements('[data-toggle="modal-default"]', handleDefaultModal, container);
+  bindModalActivationElements('[data-toggle="modal-default-with-form"]', handleDefaultModalWithForm, container);
 }
 
 const activateDefaultModalsIfParameters = () => {
   activateModalsIfParameters('[data-toggle="modal-default"]', handleDefaultModal);
+  activateModalsIfParameters('[data-toggle="modal-default-with-form"]', handleDefaultModalWithForm);
 }
 
 
@@ -195,7 +198,7 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
 };
 
 
-const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast, modalActivationParam) => {
+const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast, modalActivationParam, dataReloadOnSuccess) => {
   // This version of the generic modal is useful for modal contents that contain forms which, upon submission, will return HTML content if there were form errors
   // which should be used to replace the current contents of the form, and will return a JSON response if the form validated correctly in the backend. That JSON
   // response could include some relevant data or no data at all, but is used to differentiate from the HTML response
@@ -217,6 +220,9 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
           dismissModal(modalContainerId);
           if (onFormSubmissionSucceeded !== undefined){
             onFormSubmissionSucceeded(req);
+          }
+          if(dataReloadOnSuccess == true){
+            location.reload()
           }
         }  else {
           // If the response is not JSON, that means the response are the HTML elements of the
@@ -278,4 +284,4 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
   }, onClosedCallback, doRequestAsync, showLoadingToast, modalActivationParam)
 }
 
-export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm, handleDefaultModal, bindModalActivationElements, bindConfirmationModalElements, activateModalsIfParameters, bindDefaultModals, activateDefaultModalsIfParameters};
+export {activateModal, dismissModal, handleGenericModal, handleGenericModalWithForm, handleDefaultModal, handleDefaultModalWithForm, bindModalActivationElements, bindConfirmationModalElements, activateModalsIfParameters, bindDefaultModals, activateDefaultModalsIfParameters};

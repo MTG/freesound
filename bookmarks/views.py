@@ -27,7 +27,7 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from bookmarks.forms import BookmarkForm
+from bookmarks.forms import BookmarkForm, BookmarkCategoryForm
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
 from utils.pagination import paginate
@@ -85,6 +85,33 @@ def delete_bookmark_category(request, category_id):
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
 
+@transaction.atomic()
+def edit_bookmark_category(request, category_id):
+
+    if not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
+    
+    category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
+
+    if request.method == "POST":
+        edit_form = BookmarkCategoryForm(request.POST, instance=category)
+        print(edit_form.is_bound)
+        if edit_form.is_valid():      
+            category.name = edit_form.cleaned_data["name"]
+            category.save()
+            return JsonResponse({"success":True})
+        if not edit_form.is_valid():
+            print(edit_form.errors.as_json())
+    else:
+        initial = {"name":category.name}
+        edit_form = BookmarkCategoryForm(initial=initial)
+    
+    tvars = {"category": category,
+            "form": edit_form}
+    return render(request, 'bookmarks/modal_edit_bookmark_category.html', tvars)
+            
+
+    
 @login_required
 @transaction.atomic()
 def add_bookmark(request, sound_id):

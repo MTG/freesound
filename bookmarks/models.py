@@ -21,7 +21,8 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from sounds.models import Sound
+from sounds.models import Sound, License
+from django.template.loader import render_to_string
 
 
 class BookmarkCategory(models.Model):
@@ -30,6 +31,19 @@ class BookmarkCategory(models.Model):
     
     def __str__(self):
         return f"{self.name}"
+    
+    def get_attribution(self):
+        bookmarked_sounds = Bookmark.objects.filter(category_id=self.id).values("sound_id")
+        sounds_list = Sound.objects.filter(id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
+        users = User.objects.filter(sounds__in=sounds_list).distinct()
+        # Generate text file with license info
+        licenses = License.objects.filter(sound__id__in = sounds_list).distinct()
+        attribution = render_to_string("bookmarks/bookmark_category_attribution.txt",
+            dict(users=users,
+                category=self,
+                licenses=licenses,
+                sound_list=sounds_list))
+        return attribution
 
 
 class Bookmark(models.Model):

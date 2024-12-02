@@ -20,7 +20,8 @@
                             <li><a href="{% url "bookmarks-for-user-for-category" user.username cat.id %}" {% if category.id == cat.id %}style="font-weight:bold"{% endif %} aria-label="Category: {{cat.name}}">{{cat.name}}</a> <span class="text-grey"> · {{cat.num_bookmarks|bw_intcomma}} bookmark{{ cat.num_bookmarks|pluralize }}</span>
                             {% if is_owner %}
                             <a class="cursor-pointer h-spacing-left-1" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove this bookmark category?" data-modal-confirmation-help-text="Note that all the bookmarks inside this category will also be removed" data-modal-confirmation-url="{% url "delete-bookmark-category" cat.id %}{% if cat.id != category.id %}?next={{request.path}}&page={{current_page}}{% endif %}" title="Remove bookmark category" aria-label="Remove bookmark category">{% bw_icon 'trash' %}</a>
-                            <a class="cursor-pointer h-spacing-left-1" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'edit-bookmark-category' cat.id %}?ajax=1" title="Edit bookmark category" aria-label="Edit bookmark category">{% bw_icon 'edit' %}</a>
+                            <a class="cursor-pointer" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'edit-bookmark-category' cat.id %}?ajax=1" title="Edit bookmark category" aria-label="Edit bookmark category">{% bw_icon 'edit' %}</a>
+                            <a class="cursor-pointer" href="{% url 'download-bookmark-category' cat.id %}" title="Download bookmark category" aria-label="Download bookmark category">{% bw_icon 'download' %}</a>
                             {% endif %}</li>
                         {% endfor %}
                     </ul>

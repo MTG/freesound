@@ -1,0 +1,21 @@
+{% load absurl %}Bookmark Category downloaded from Freesound
+----------------------------------------
+
+"{{ category.name }}"
+
+This category of bookmarked sounds contains sounds by the following user{{ users|pluralize }}:
+{% for user in users %} - {{user.username}} ( {% absurl 'account' user.username %} ){% endfor %}
+
+Licenses in this pack (see below for individual sound licenses)
+---------------------------------------------------------------
+
+{% for license in licenses %}{{license}}: {{license.deed_url}}
+{% endfor %}
+
+Sounds in this bookmark category
+-------------------
+
+{% for sound in sound_list %}  * {{sound.base_filename_slug}}.{{sound.type}}
+    * url: {% absurl 'short-sound-link' sound.id %}
+    * license: {{sound.license}}
+{% endfor %}

@@ -24,26 +24,32 @@ import zlib
 
 from django.http import HttpResponse
 
+from bookmarks.models import Bookmark, BookmarkCategory
 from donations.models import DonationsModalSettings
-from sounds.models import Download, PackDownload
+from sounds.models import Download, Pack, PackDownload, Sound
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download
 
 
-def download_sounds(licenses_url, pack):
+def download_sounds(licenses_url, batch):
     """
     From a list of sounds generates the HttpResponse with the information of
     the wav files of the sonds and a text file with the license. This response
     is handled by mod_zipfile of nginx to generate a zip file with the content.
     """
-    attribution = pack.get_attribution()
+    attribution = batch.get_attribution()
     license_crc = zlib.crc32(attribution.encode('UTF-8')) & 0xffffffff
     filelist = "%02x %i %s %s\r\n" % (license_crc,
                                       len(attribution.encode('UTF-8')),
                                       licenses_url,
                                       "_readme_and_license.txt")
-
-    sounds_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
-
+    if isinstance(batch, Pack)==True:
+        sounds_list = batch.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
+    elif isinstance(batch, BookmarkCategory)==True:
+        bookmarked_sounds = Bookmark.objects.filter(category_id=batch.id).values("sound_id")
+        sounds_list = Sound.objects.filter(id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
+    else:
+        raise Exception("Batch download only valid for Packs or Bookmark Categories")
+    
     for sound in sounds_list:
         if sound.crc == '':
             continue

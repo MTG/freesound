@@ -24,32 +24,29 @@ import zlib
 
 from django.http import HttpResponse
 
-from bookmarks.models import Bookmark, BookmarkCategory
 from donations.models import DonationsModalSettings
-from sounds.models import Download, Pack, PackDownload, Sound
+from sounds.models import Download, PackDownload
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download
 
 
-def download_sounds(licenses_url, batch):
-    """
-    From a list of sounds generates the HttpResponse with the information of
-    the wav files of the sonds and a text file with the license. This response
+def download_sounds(licenses_file_url, licenses_file_content, sounds_list):
+    """From a list of sounds generates the HttpResponse with the information of
+    the wav files of the sounds and a text file with the license. This response
     is handled by mod_zipfile of nginx to generate a zip file with the content.
+
+    Args:
+        licenses_file_url (str): url to the sound Pack or BookmarkCategory licenses
+        licenses_file_content (django SafeString): attributions for the different sounds in the Pack or BookmarkCategory 
+        sounds_list (django QuerySet): list of sounds forming the Pack or BookmarkCategory 
+
+    Returns:
+        HttpResponse: information of the wav files of the sounds and a text file with the license
     """
-    attribution = batch.get_attribution()
-    license_crc = zlib.crc32(attribution.encode('UTF-8')) & 0xffffffff
+    license_crc = zlib.crc32(licenses_file_content.encode('UTF-8')) & 0xffffffff
     filelist = "%02x %i %s %s\r\n" % (license_crc,
-                                      len(attribution.encode('UTF-8')),
-                                      licenses_url,
+                                      len(licenses_file_content.encode('UTF-8')),
+                                      licenses_file_url,
                                       "_readme_and_license.txt")
-    if isinstance(batch, Pack)==True:
-        sounds_list = batch.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
-    elif isinstance(batch, BookmarkCategory)==True:
-        bookmarked_sounds = Bookmark.objects.filter(category_id=batch.id).values("sound_id")
-        sounds_list = Sound.objects.filter(id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
-    else:
-        raise Exception("Batch download only valid for Packs or Bookmark Categories")
-    
     for sound in sounds_list:
         if sound.crc == '':
             continue

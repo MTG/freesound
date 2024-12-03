@@ -1796,7 +1796,8 @@ class Pack(models.Model):
         # Generate text file with license info
         licenses = License.objects.filter(sound__pack=self).distinct()
         attribution = render_to_string("sounds/pack_attribution.txt",
-            dict(users=users,
+            dict(type=self.__class__.__name__,
+                users=users,
                 pack=self,
                 licenses=licenses,
                 sound_list=sounds_list))

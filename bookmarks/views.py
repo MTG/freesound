@@ -84,20 +84,25 @@ def delete_bookmark_category(request, category_id):
         return HttpResponseRedirect(next)
     else:
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
-    
+
+@login_required    
 @transaction.atomic()
-def download_bookmark_category(request, category_id):
+def download_bookmark_category(category_id):
     category = get_object_or_404(BookmarkCategory, id=category_id)
-    licenses_url = (reverse('bookmark-category-licenses', args=[category_id]))
-    #missing: cache checking done in packdownload
-    return download_sounds(licenses_url, category)
+    licenses_content = category.get_attribution()
+    licenses_url = (reverse('category-licenses', args=[category_id]))
+    
+    bookmarked_sounds = Bookmark.objects.filter(category_id=category.id).values("sound_id")
+    sounds_list = Sound.objects.filter(id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
+    # NOTE: unlike pack downloads, here we are not doing any cache check to avoid consecutive downloads
+    return download_sounds(licenses_file_url=licenses_url, licenses_file_content=licenses_content, sounds_list=sounds_list)
 
 def bookmark_category_licenses(category_id):
     category = get_object_or_404(BookmarkCategory, id=category_id)
     attribution = category.get_attribution()
     return HttpResponse(attribution, content_type="text/plain")
 
-
+@login_required
 @transaction.atomic()
 def edit_bookmark_category(request, category_id):
 

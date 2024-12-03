@@ -38,9 +38,10 @@ class BookmarkCategory(models.Model):
         users = User.objects.filter(sounds__in=sounds_list).distinct()
         # Generate text file with license info
         licenses = License.objects.filter(sound__id__in = sounds_list).distinct()
-        attribution = render_to_string("bookmarks/bookmark_category_attribution.txt",
-            dict(users=users,
-                category=self,
+        attribution = render_to_string(("sounds/pack_attribution.txt"),
+            dict(type=self.__class__.__name__,
+                users=users,
+                pack=self,
                 licenses=licenses,
                 sound_list=sounds_list))
         return attribution

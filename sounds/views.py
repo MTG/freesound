@@ -368,7 +368,10 @@ def pack_download(request, username, pack_id):
             PackDownloadSound.objects.bulk_create(pds)
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/pack in the next 5 minutes
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
-    return download_sounds(licenses_url, pack)
+    licenses_content = pack.get_attribution()
+    sound_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
+    print(licenses_content)
+    return download_sounds(licenses_url, licenses_content, sound_list)
 
 
 def pack_licenses(request, username, pack_id):

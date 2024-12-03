@@ -12,7 +12,7 @@ const bindModalActivationElements = (querySelectorStr, handleModalFunction, cont
     element.dataset.alreadyBinded = true;
     element.addEventListener('click', (evt) => {
       evt.preventDefault();
-      handleModalFunction(element.dataset.modalContentUrl, element.dataset.modalActivationParam);
+      handleModalFunction(element.dataset.modalContentUrl, element.dataset.modalActivationParam, element);
     });
   });
 }
@@ -85,12 +85,14 @@ const bindConfirmationModalElements = (container) => {
 
 // Logic to bind default modals
 
-const handleDefaultModal = (modalUrl, modalActivationParam) => {
+const handleDefaultModal = (modalUrl, modalActivationParam, element) => {
   handleGenericModal(modalUrl, undefined, undefined, true, true, modalActivationParam);
 }
 
-const handleDefaultModalWithForm = (modalUrl, modalActivationParam) => {
-  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast('Form submitted succesfully!')}, undefined, true, true, modalActivationParam, true);
+const handleDefaultModalWithForm = (modalUrl, modalActivationParam, element) => {
+  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast(element.dataset.successMessage || 'Form submitted succesfully!')}, 
+  (req) => {showToast(element.dataset.errorMessage || "There were errors processing the form...")}, true, true, modalActivationParam, 
+  element.dataset.reloadOnSuccess || false);
 }
 
 const bindDefaultModals = (container) => {
@@ -198,7 +200,7 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
 };
 
 
-const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast, modalActivationParam, dataReloadOnSuccess) => {
+const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast, modalActivationParam, triggerPageReloadOnSuccess=false) => {
   // This version of the generic modal is useful for modal contents that contain forms which, upon submission, will return HTML content if there were form errors
   // which should be used to replace the current contents of the form, and will return a JSON response if the form validated correctly in the backend. That JSON
   // response could include some relevant data or no data at all, but is used to differentiate from the HTML response
@@ -221,7 +223,7 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
           if (onFormSubmissionSucceeded !== undefined){
             onFormSubmissionSucceeded(req);
           }
-          if(dataReloadOnSuccess == true){
+          if(triggerPageReloadOnSuccess == true){
             location.reload()
           }
         }  else {

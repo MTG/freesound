@@ -370,7 +370,6 @@ def pack_download(request, username, pack_id):
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
     licenses_content = pack.get_attribution()
     sound_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
-    print(licenses_content)
     return download_sounds(licenses_url, licenses_content, sound_list)
 
 

@@ -1,18 +1,18 @@
 {% load absurl %}{{type}} downloaded from Freesound
 ----------------------------------------
-
-"{{ pack.name }}"
+{# NOTE: an object can either be a pack of sounds or a bookmark category#}
+"{{ object.name }}"
 
 This {{ type }} of sounds contains sounds by the following user{{ users|pluralize }}:
 {% for user in users %} - {{user.username}} ( {% absurl 'account' user.username %} ){% endfor %}
 
-{% if type == "Pack" %}You can find this pack online at: {% absurl 'pack' pack.user.username pack.id %}{% endif %}
+{% if type == "Pack" %}You can find this pack online at: {% absurl 'pack' object.user.username object.id %}{% endif %}
 
-{%if pack.description %}
-Pack description
+{%if object.description %}
+{{ type }} description
 ----------------
 
-{{ pack.description }}
+{{ object.description }}
 
 {% endif %}
 Licenses in this {{type}} (see below for individual sound licenses)

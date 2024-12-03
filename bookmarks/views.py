@@ -87,7 +87,7 @@ def delete_bookmark_category(request, category_id):
 
 @login_required    
 @transaction.atomic()
-def download_bookmark_category(category_id):
+def download_bookmark_category(request, category_id):
     category = get_object_or_404(BookmarkCategory, id=category_id)
     licenses_content = category.get_attribution()
     licenses_url = (reverse('category-licenses', args=[category_id]))

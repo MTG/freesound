@@ -702,7 +702,9 @@ class DownloadPack(DownloadAPIView):
                 msg='Sounds in pack %i have not yet been described or moderated' % int(pack_id), resource=self)
 
         licenses_url = (reverse('pack-licenses', args=[pack.user.username, pack.id]))
-        return download_sounds(licenses_url, pack)
+        licenses_content = pack.get_attribution()
+        sound_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
+        return download_sounds(licenses_url, licenses_content, sound_list)
 
 
 ##################

@@ -9,6 +9,8 @@ const bwPageElement = document.getElementsByClassName('bw-page')[0];
 const bindModalActivationElements = (querySelectorStr, handleModalFunction, container) => {
   container.querySelectorAll(querySelectorStr).forEach(element => {
     if (element.dataset.alreadyBinded !== undefined){ return; }
+    if (element.dataset.reloadOnSuccess === undefined){element.dataset.reloadOnSuccess=false}
+    else{element.dataset.reloadOnSuccess = JSON.parse(element.dataset.reloadOnSuccess)}
     element.dataset.alreadyBinded = true;
     element.addEventListener('click', (evt) => {
       evt.preventDefault();
@@ -90,9 +92,7 @@ const handleDefaultModal = (modalUrl, modalActivationParam, element) => {
 }
 
 const handleDefaultModalWithForm = (modalUrl, modalActivationParam, element) => {
-  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast(element.dataset.successMessage || 'Form submitted succesfully!')}, 
-  (req) => {showToast(element.dataset.errorMessage || "There were errors processing the form...")}, true, true, modalActivationParam, 
-  element.dataset.reloadOnSuccess || false);
+  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast(element.dataset.successMessage || 'Form submitted succesfully!')}, (req) => {showToast(element.dataset.errorMessage || "There were errors processing the form...")}, true, true, modalActivationParam, element.dataset.reloadOnSuccess);
 }
 
 const bindDefaultModals = (container) => {
@@ -200,7 +200,7 @@ const handleGenericModal = (fetchContentUrl, onLoadedCallback, onClosedCallback,
 };
 
 
-const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast, modalActivationParam, triggerPageReloadOnSuccess=false) => {
+const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedCallback, onFormSubmissionSucceeded, onFormSubmissionError, doRequestAsync, showLoadingToast, modalActivationParam, triggerPageReloadOnSuccess) => {
   // This version of the generic modal is useful for modal contents that contain forms which, upon submission, will return HTML content if there were form errors
   // which should be used to replace the current contents of the form, and will return a JSON response if the form validated correctly in the backend. That JSON
   // response could include some relevant data or no data at all, but is used to differentiate from the HTML response
@@ -223,7 +223,8 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
           if (onFormSubmissionSucceeded !== undefined){
             onFormSubmissionSucceeded(req);
           }
-          if(triggerPageReloadOnSuccess == true){
+          if(triggerPageReloadOnSuccess == "true"){
+            console.log(triggerPageReloadOnSuccess)
             location.reload()
           }
         }  else {

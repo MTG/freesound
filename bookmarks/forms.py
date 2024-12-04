@@ -36,7 +36,7 @@ class BookmarkCategoryForm(forms.ModelForm):
         name = self.cleaned_data.get("name", )
 
         if BookmarkCategory.objects.filter(user=self.instance.user, name=name).exists():
-            raise forms.ValidationError("This name already exists for a bookmark category")
+            raise forms.ValidationError("You have already created a Bookmark Category with this name")
         
         return cleaned_data
 

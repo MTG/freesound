@@ -32,7 +32,7 @@ import json
 import logging
 from logging.handlers import RotatingFileHandler
 
-import graypy
+import pygelf
 from twisted.internet import reactor
 from twisted.web import server, resource
 
@@ -95,8 +95,8 @@ if __name__ == '__main__':
     logger.addHandler(handler)
     std_handler.setFormatter(formatter)
     logger.addHandler(std_handler)
-    handler_graypy = graypy.GELFHandler('10.55.0.48', 12201)
-    logger.addHandler(handler_graypy)
+    handler_gelf = pygelf.GelfHttpsHandler(sim_settings.LOGSERVER_HOST, sim_settings.LOGSERVER_PORT)
+    logger.addHandler(handler_gelf)
 
     # Start service
     logger.info('Configuring similarity INDEXING service...')

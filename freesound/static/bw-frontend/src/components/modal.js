@@ -9,8 +9,6 @@ const bwPageElement = document.getElementsByClassName('bw-page')[0];
 const bindModalActivationElements = (querySelectorStr, handleModalFunction, container) => {
   container.querySelectorAll(querySelectorStr).forEach(element => {
     if (element.dataset.alreadyBinded !== undefined){ return; }
-    if (element.dataset.reloadOnSuccess === undefined){element.dataset.reloadOnSuccess=false}
-    else{element.dataset.reloadOnSuccess = JSON.parse(element.dataset.reloadOnSuccess)}
     element.dataset.alreadyBinded = true;
     element.addEventListener('click', (evt) => {
       evt.preventDefault();
@@ -92,7 +90,7 @@ const handleDefaultModal = (modalUrl, modalActivationParam, element) => {
 }
 
 const handleDefaultModalWithForm = (modalUrl, modalActivationParam, element) => {
-  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast(element.dataset.successMessage || 'Form submitted succesfully!')}, (req) => {showToast(element.dataset.errorMessage || "There were errors processing the form...")}, true, true, modalActivationParam, element.dataset.reloadOnSuccess);
+  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast(element.dataset.successMessage || 'Form submitted succesfully!')}, (req) => {showToast(element.dataset.errorMessage || "There were errors processing the form...")}, true, true, modalActivationParam, element.dataset.reloadOnSuccess==="true");
 }
 
 const bindDefaultModals = (container) => {
@@ -223,8 +221,7 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
           if (onFormSubmissionSucceeded !== undefined){
             onFormSubmissionSucceeded(req);
           }
-          if(triggerPageReloadOnSuccess == "true"){
-            console.log(triggerPageReloadOnSuccess)
+          if(triggerPageReloadOnSuccess){
             location.reload()
           }
         }  else {

@@ -127,10 +127,14 @@ in the `accounts.Profile.delete_user` method (which anonymizes a user account).
 
 ### Adding new fields to the user Sound model
 
-When adding new fields to the `sounds.Sound` mode, we should make sure that we handle this fields correctly when 
+When adding new fields to the `sounds.Sound` model, we should make sure that we handle this fields correctly when 
 creating `DeletedSound` objects in the `sounds-models.on_delete_sound` function triggered by the `pre_delete` 
 signal of the `Sound` model.
 
+### Working with new modals for UX
+
+Upon creating a new modal for any UX, please consider using `handleGenericModal` or `handleGenericModalWithForm` in `modal.js`.
+These functions ease the logic behind modals: initialization, error handling, toast messages, and URL handles.
 
 ### Adding new search options in the search page
 

@@ -90,9 +90,9 @@
                         {% if pack.num_sounds %}
                         <div class="v-spacing-top-6">
                             {% if request.user.is_authenticated %}
-                                <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" title="Download pack">Download pack</a>
+                                <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'pack-download' pack.user.username pack.id %}" title="Download pack">Download pack</a>
                             {% else %}
-                                <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" title="Login to download">Login to download</a>
+                                <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'pack-download' pack.user.username pack.id %}" title="Login to download">Login to download</a>
                             {% endif %}
                         </div>
                         {% endif %}

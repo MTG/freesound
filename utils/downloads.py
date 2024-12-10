@@ -29,7 +29,7 @@ from sounds.models import Download, PackDownload
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download
 
 
-def download_sounds(licenses_file_url, licenses_file_content, sounds_list):
+def download_sounds(licenses_file_url, licenses_file_content, sounds_list, download_filename):
     """From a list of sounds generates the HttpResponse with the information of
     the wav files of the sounds and a text file with the license. This response
     is handled by mod_zipfile of nginx to generate a zip file with the content.
@@ -38,6 +38,7 @@ def download_sounds(licenses_file_url, licenses_file_content, sounds_list):
         licenses_file_url (str): url to the sound Pack or BookmarkCategory licenses
         licenses_file_content (str): attributions for the different sounds in the Pack or BookmarkCategory 
         sounds_list (django.db.models.query.QuerySet): list of sounds forming the Pack or BookmarkCategory 
+        download_filename (str): name of the zip file to be downloaded
 
     Returns:
         HttpResponse: information of the wav files of the sounds and a text file with the license
@@ -54,6 +55,7 @@ def download_sounds(licenses_file_url, licenses_file_content, sounds_list):
         filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
     response = HttpResponse(filelist, content_type="text/plain")
     response['X-Archive-Files'] = 'zip'
+    response['Content-Disposition'] = f"attachment; filename=\"{download_filename}\""
     return response
 
 

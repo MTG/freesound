@@ -97,7 +97,7 @@ def download_bookmark_category(request, category_id):
     licenses_url = (reverse('category-licenses', args=[category_id]))
     licenses_content = category.get_attribution(sound_qs=sounds_list)
     # NOTE: unlike pack downloads, here we are not doing any cache check to avoid consecutive downloads
-    return download_sounds(licenses_file_url=licenses_url, licenses_file_content=licenses_content, sounds_list=sounds_list)
+    return download_sounds(licenses_url, licenses_content, sounds_list, category.download_filename)
 
 
 def bookmark_category_licenses(request, category_id):

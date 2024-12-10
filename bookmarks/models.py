@@ -20,6 +20,7 @@
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils.text import slugify
 
 from sounds.models import Sound, License
 from django.template.loader import render_to_string
@@ -48,6 +49,12 @@ class BookmarkCategory(models.Model):
                 licenses=licenses,
                 sound_list=sound_qs))
         return attribution
+    
+    @property
+    def download_filename(self):
+        name_slug = slugify(self.name)
+        username_slug = slugify(self.user.username)
+        return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
 
 
 class Bookmark(models.Model):

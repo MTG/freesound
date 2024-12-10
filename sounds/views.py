@@ -371,7 +371,7 @@ def pack_download(request, username, pack_id):
     sounds_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
     licenses_content = pack.get_attribution(sound_qs=sounds_list)
-    return download_sounds(licenses_url, licenses_content, sounds_list)
+    return download_sounds(licenses_url, licenses_content, sounds_list, pack.friendly_filename())
 
 
 def pack_licenses(request, username, pack_id):

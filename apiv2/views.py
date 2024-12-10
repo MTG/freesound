@@ -704,7 +704,7 @@ class DownloadPack(DownloadAPIView):
         sounds_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
         licenses_url = (reverse('pack-licenses', args=[pack.user.username, pack.id]))
         licenses_content = pack.get_attribution(sound_qs=sounds_list)
-        return download_sounds(licenses_url, licenses_content, sounds_list)
+        return download_sounds(licenses_url, licenses_content, sounds_list, pack.friendly_filename())
 
 
 ##################

@@ -100,7 +100,7 @@ def download_bookmark_category(request, category_id):
     return download_sounds(licenses_file_url=licenses_url, licenses_file_content=licenses_content, sounds_list=sounds_list)
 
 
-def bookmark_category_licenses(category_id):
+def bookmark_category_licenses(request, category_id):
     category = get_object_or_404(BookmarkCategory, id=category_id)
     attribution = category.get_attribution()
     return HttpResponse(attribution, content_type="text/plain")

@@ -36,8 +36,8 @@ def download_sounds(licenses_file_url, licenses_file_content, sounds_list):
 
     Args:
         licenses_file_url (str): url to the sound Pack or BookmarkCategory licenses
-        licenses_file_content (django SafeString): attributions for the different sounds in the Pack or BookmarkCategory 
-        sounds_list (django QuerySet): list of sounds forming the Pack or BookmarkCategory 
+        licenses_file_content (str): attributions for the different sounds in the Pack or BookmarkCategory 
+        sounds_list (django.db.models.query.QuerySet): list of sounds forming the Pack or BookmarkCategory 
 
     Returns:
         HttpResponse: information of the wav files of the sounds and a text file with the license
@@ -52,7 +52,7 @@ def download_sounds(licenses_file_url, licenses_file_content, sounds_list):
             continue
         _, name, url = prepare_sendfile_arguments_for_sound_download(sound)
         filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
-
+    print(type(licenses_file_content))
     response = HttpResponse(filelist, content_type="text/plain")
     response['X-Archive-Files'] = 'zip'
     return response

@@ -57,10 +57,10 @@ class UtilsTest(TestCase):
                 license=License.objects.all()[0],
                 pack=pack,
                 md5="fakemd5_%i" % i)
+        sounds_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
         licenses_url = (reverse('pack-licenses', args=["testuser", pack.id]))
-        licenses_content = pack.get_attribution()
-        sound_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
-        ret = utils.downloads.download_sounds(licenses_url, licenses_content, sound_list)
+        licenses_content = pack.get_attribution(sound_qs=sounds_list)
+        ret = utils.downloads.download_sounds(licenses_url, licenses_content, sounds_list)
         self.assertEqual(ret.status_code, 200)
 
     @override_uploads_path_with_temp_directory

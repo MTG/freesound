@@ -89,11 +89,12 @@ def delete_bookmark_category(request, category_id):
 @transaction.atomic()
 def download_bookmark_category(request, category_id):
     category = get_object_or_404(BookmarkCategory, id=category_id)
-    licenses_content = category.get_attribution()
-    licenses_url = (reverse('category-licenses', args=[category_id]))
     
     bookmarked_sounds = Bookmark.objects.filter(category_id=category.id).values("sound_id")
     sounds_list = Sound.objects.filter(id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
+    
+    licenses_url = (reverse('category-licenses', args=[category_id]))
+    licenses_content = category.get_attribution(sound_qs=sounds_list)
     # NOTE: unlike pack downloads, here we are not doing any cache check to avoid consecutive downloads
     return download_sounds(licenses_file_url=licenses_url, licenses_file_content=licenses_content, sounds_list=sounds_list)
 

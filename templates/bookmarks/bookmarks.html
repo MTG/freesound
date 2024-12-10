@@ -35,11 +35,11 @@
             <div class="col-lg-8">
                 <h4><span class="text-light-grey">Category:</span> {% if category %}{{category.name}}{% else %}Uncategorized{% endif %} </h4>
                 <div class="v-spacing-top-3">
-                {% if page.object_list %}
+                {% if page_bookmarks_and_sound_objects %}
                     <div class="row">
-                        {% for bookmark in page.object_list %}
+                        {% for bookmark, sound in page_bookmarks_and_sound_objects %}
                             <div class="col-6 col-md-4">
-                                {% display_sound_small bookmark.sound %}                     
+                                {% display_sound_small sound %}                     
                                 {% if is_owner %}
                                     <div class="right v-spacing-4 v-spacing-top-negative-2"><a class="cursor-pointer bw-link--grey" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove this bookmark from '{{bookmark.category_name_or_uncategorized}}'?" data-modal-confirmation-url="{% url "delete-bookmark" bookmark.id %}?next={{request.path}}&page={{current_page}}" title="Remove from bookmarks" aria-label="Remove from bookmarks">{% bw_icon 'trash' %} Remove bookmark</a></div>                                        
                                 {% endif %}

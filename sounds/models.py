@@ -1788,15 +1788,13 @@ class Pack(models.Model):
             invalidate_template_cache("bw_display_pack", self.id, player_size)
         invalidate_template_cache("bw_pack_stats", self.id)
 
-    def get_attribution(self, sound_qs):
+    def get_attribution(self, sound_qs=None):
         #If no queryset of sounds is provided, take it from the pack
-        if(sound_qs):
-            sounds_list = sound_qs
-        else:
-            sounds_list = self.sounds.filter(processing_state="OK",
+        if sound_qs is None:
+            sound_qs = self.sounds.filter(processing_state="OK",
                 moderation_state="OK").select_related('user', 'license')
 
-        users = User.objects.filter(sounds__in=sounds_list).distinct()
+        users = User.objects.filter(sounds__in=sound_qs).distinct()
         # Generate text file with license info
         licenses = License.objects.filter(sound__pack=self).distinct()
         attribution = render_to_string("sounds/multiple_sounds_attribution.txt",
@@ -1804,7 +1802,7 @@ class Pack(models.Model):
                 users=users,
                 object=self,
                 licenses=licenses,
-                sound_list=sounds_list))
+                sound_list=sound_qs))
         return attribution
 
     @property

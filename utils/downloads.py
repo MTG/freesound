@@ -52,7 +52,6 @@ def download_sounds(licenses_file_url, licenses_file_content, sounds_list):
             continue
         _, name, url = prepare_sendfile_arguments_for_sound_download(sound)
         filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
-    print(type(licenses_file_content))
     response = HttpResponse(filelist, content_type="text/plain")
     response['X-Archive-Files'] = 'zip'
     return response

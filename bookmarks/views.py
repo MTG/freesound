@@ -23,13 +23,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Count
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from bookmarks.forms import BookmarkForm, BookmarkCategoryForm
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
+from utils.downloads import download_sounds
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
@@ -41,19 +42,22 @@ def bookmarks(request, category_id=None):
     n_uncat = Bookmark.objects.select_related("sound").filter(user=user, category=None).count()
     if not category_id:
         category = None
-        bookmarked_sounds = Bookmark.objects.select_related("sound", "sound__user").filter(user=user, category=None)
+        bookmarked_sounds = Bookmark.objects.filter(user=user, category=None)
     else:
         category = get_object_or_404(BookmarkCategory, id=category_id, user=user)
-        bookmarked_sounds = category.bookmarks.select_related("sound", "sound__user").all()
+        bookmarked_sounds = category.bookmarks.all()
     bookmark_categories = BookmarkCategory.objects.filter(user=user).annotate(num_bookmarks=Count('bookmarks'))
     tvars = {'user': user,
              'is_owner': is_owner,
              'n_uncat': n_uncat,
              'category': category,
              'bookmark_categories': bookmark_categories}
-    tvars.update(paginate(request, bookmarked_sounds, settings.BOOKMARKS_PER_PAGE))
+    
+    paginator = paginate(request, bookmarked_sounds, settings.BOOKMARKS_PER_PAGE)
+    page_sounds = Sound.objects.ordered_ids([bookmark.sound_id for bookmark in paginator['page'].object_list])
+    tvars.update(paginator)
+    tvars['page_bookmarks_and_sound_objects'] = zip(paginator['page'].object_list, page_sounds)
     return render(request, 'bookmarks/bookmarks.html', tvars)
-
 
 @redirect_if_old_username_or_404
 @raise_404_if_user_is_deleted
@@ -84,7 +88,25 @@ def delete_bookmark_category(request, category_id):
     else:
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
+@login_required    
+@transaction.atomic()
+def download_bookmark_category(request, category_id):
+    category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
+    bookmarked_sounds = Bookmark.objects.filter(category_id=category.id).values("sound_id")
+    sounds_list = Sound.objects.filter(id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
+    licenses_url = (reverse('category-licenses', args=[category_id]))
+    licenses_content = category.get_attribution(sound_qs=sounds_list)
+    # NOTE: unlike pack downloads, here we are not doing any cache check to avoid consecutive downloads
+    return download_sounds(licenses_file_url=licenses_url, licenses_file_content=licenses_content, sounds_list=sounds_list)
 
+
+def bookmark_category_licenses(category_id):
+    category = get_object_or_404(BookmarkCategory, id=category_id)
+    attribution = category.get_attribution()
+    return HttpResponse(attribution, content_type="text/plain")
+
+
+@login_required
 @transaction.atomic()
 def edit_bookmark_category(request, category_id):
 

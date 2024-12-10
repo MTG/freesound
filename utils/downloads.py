@@ -29,27 +29,29 @@ from sounds.models import Download, PackDownload
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download
 
 
-def download_sounds(licenses_url, pack):
-    """
-    From a list of sounds generates the HttpResponse with the information of
-    the wav files of the sonds and a text file with the license. This response
+def download_sounds(licenses_file_url, licenses_file_content, sounds_list):
+    """From a list of sounds generates the HttpResponse with the information of
+    the wav files of the sounds and a text file with the license. This response
     is handled by mod_zipfile of nginx to generate a zip file with the content.
+
+    Args:
+        licenses_file_url (str): url to the sound Pack or BookmarkCategory licenses
+        licenses_file_content (str): attributions for the different sounds in the Pack or BookmarkCategory 
+        sounds_list (django.db.models.query.QuerySet): list of sounds forming the Pack or BookmarkCategory 
+
+    Returns:
+        HttpResponse: information of the wav files of the sounds and a text file with the license
     """
-    attribution = pack.get_attribution()
-    license_crc = zlib.crc32(attribution.encode('UTF-8')) & 0xffffffff
+    license_crc = zlib.crc32(licenses_file_content.encode('UTF-8')) & 0xffffffff
     filelist = "%02x %i %s %s\r\n" % (license_crc,
-                                      len(attribution.encode('UTF-8')),
-                                      licenses_url,
+                                      len(licenses_file_content.encode('UTF-8')),
+                                      licenses_file_url,
                                       "_readme_and_license.txt")
-
-    sounds_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user', 'license')
-
     for sound in sounds_list:
         if sound.crc == '':
             continue
         _, name, url = prepare_sendfile_arguments_for_sound_download(sound)
         filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
-
     response = HttpResponse(filelist, content_type="text/plain")
     response['X-Archive-Files'] = 'zip'
     return response

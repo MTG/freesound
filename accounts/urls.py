@@ -96,8 +96,8 @@ urlpatterns = [
     path('bookmarks/category/<int:category_id>/delete/', bookmarks.delete_bookmark_category, name="delete-bookmark-category"),
     path('bookmarks/<int:bookmark_id>/delete/', bookmarks.delete_bookmark, name="delete-bookmark"),
     path('bookmarks/category/<int:category_id>/edit_modal/', bookmarks.edit_bookmark_category, name="edit-bookmark-category"),
-    path('bookmarks/<int:category_id>/download/', bookmarks.download_bookmark_category, name="download-bookmark-category"),
-    path('bookmarks/<int:category_id>/licenses/', bookmarks.bookmark_category_licenses, name="category-licenses"),
+    path('bookmarks/category/<int:category_id>/download/', bookmarks.download_bookmark_category, name="download-bookmark-category"),
+    path('bookmarks/category/<int:category_id>/licenses/', bookmarks.bookmark_category_licenses, name="category-licenses"),
 
     path('messages/', messages.inbox, name='messages'),
     path('messages/sent/', messages.sent_messages, name='messages-sent'),

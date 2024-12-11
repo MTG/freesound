@@ -15,7 +15,8 @@
                 <div class="v-spacing-top-3">
                 {% if bookmark_categories %}
                     <ul class="list-style-type-none">
-                        <li><a href="{% url "bookmarks-for-user" user.username %}" {% if not category %}style="font-weight:bold"{% endif %} aria-label="Category: Uncategorized">Uncategorized</a> <span class="text-grey"> · {{n_uncat|bw_intcomma}} bookmark{{ n_uncat|pluralize }}</span></li>
+                        <li><a href="{% url "bookmarks-for-user" user.username %}" {% if not category %}style="font-weight:bold"{% endif %} aria-label="Category: Uncategorized">Uncategorized</a> <span class="text-grey"> · {{n_uncat|bw_intcomma}} bookmark{{ n_uncat|pluralize }}</span>
+                        <a class="cursor-pointer h-spacing-left-1" href="{% url 'download-bookmark-category' 0 %}" title="Download bookmark category" aria-label="Download bookmark category">{% bw_icon 'download' %}</a></li>
                         {% for cat in bookmark_categories %}
                             <li><a href="{% url "bookmarks-for-user-for-category" user.username cat.id %}" {% if category.id == cat.id %}style="font-weight:bold"{% endif %} aria-label="Category: {{cat.name}}">{{cat.name}}</a> <span class="text-grey"> · {{cat.num_bookmarks|bw_intcomma}} bookmark{{ cat.num_bookmarks|pluralize }}</span>
                             {% if is_owner %}

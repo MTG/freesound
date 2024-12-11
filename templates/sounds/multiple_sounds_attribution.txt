@@ -1,14 +1,16 @@
 {% load absurl %}{{type}} downloaded from Freesound
 ----------------------------------------
 {# NOTE: an object can either be a pack of sounds or a bookmark category#}
-"{{ object.name }}"
+{%if object.name%}"{{ object.name }}"
+{%else%}"Uncategorized bookmarks category"
+{%endif%}
 
 This {{ type }} of sounds contains sounds by the following user{{ users|pluralize }}:
 {% for user in users %} - {{user.username}} ( {% absurl 'account' user.username %} ){% endfor %}
 
 {% if type == "Pack" %}You can find this pack online at: {% absurl 'pack' object.user.username object.id %}{% endif %}
 
-{%if object.description %}
+{%if object and object.description %}
 {{ type }} description
 ----------------
 

@@ -26,10 +26,13 @@ from django.db.models import Count
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.contrib.auth.models import User
+from django.template.loader import render_to_string
+from django.utils.text import slugify
 
 from bookmarks.forms import BookmarkForm, BookmarkCategoryForm
 from bookmarks.models import Bookmark, BookmarkCategory
-from sounds.models import Sound
+from sounds.models import Sound, License
 from utils.downloads import download_sounds
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
@@ -88,21 +91,58 @@ def delete_bookmark_category(request, category_id):
     else:
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
+
 @login_required    
 @transaction.atomic()
 def download_bookmark_category(request, category_id):
-    category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
-    bookmarked_sounds = Bookmark.objects.filter(category_id=category.id).values("sound_id")
-    sounds_list = Sound.objects.filter(id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
-    licenses_url = (reverse('category-licenses', args=[category_id]))
-    licenses_content = category.get_attribution(sound_qs=sounds_list)
+    if category_id==0:
+        licenses_content, sounds_list, download_filename = uncat_bookmark_data(request=request)
+        licenses_url = (reverse('category-licenses', args=[category_id]))
+    else:
+        category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
+        bookmarked_sounds = Bookmark.objects.filter(category_id=category.id).values("sound_id")
+        sounds_list = Sound.objects.filter(id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
+        licenses_url = (reverse('category-licenses', args=[category_id]))
+        licenses_content = category.get_attribution(sound_qs=sounds_list)
+        download_filename = category.download_filename
     # NOTE: unlike pack downloads, here we are not doing any cache check to avoid consecutive downloads
-    return download_sounds(licenses_url, licenses_content, sounds_list, category.download_filename)
+    return download_sounds(licenses_url, licenses_content, sounds_list, download_filename)
+
+
+def uncat_bookmark_data(request):
+    """Get all the necessary information to download the uncategorized bookmarked sounds of a user.
+    These sounds do not correspond to a BookmarkCategory object so they need special handling. 
+
+    Args:
+        request (django.core.handlers.wsgi.WSGIRequest): the server request. Used to extract user's information regarding its uncategorized bookmarked sounds.
+
+    Returns:
+        attribution (str): attributions for the different sounds
+        sounds_qs (django.db.models.query.QuerySet): list of uncategorized bookmarked sounds
+        download_filename (str): name of the zip file to be downloaded 
+    """
+    bookmarked_sounds = Bookmark.objects.filter(category=None, user=request.user).values("sound_id")
+    sound_qs = Sound.objects.filter(id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
+    users = User.objects.filter(sounds__in=sound_qs).distinct()
+    # Generate text file with license info
+    licenses = License.objects.filter(sound__id__in=sound_qs).distinct()
+    attribution = render_to_string(("sounds/multiple_sounds_attribution.txt"),
+        dict(type="Bookmark Category",
+            users=users,
+            object=None,
+            licenses=licenses,
+            sound_list=sound_qs))
+    username_slug = slugify(request.user.username)
+    download_filename = "%d__%s__%s.zip" % (0, username_slug, "uncategorized")
+    return attribution, sound_qs, download_filename 
 
 
 def bookmark_category_licenses(request, category_id):
-    category = get_object_or_404(BookmarkCategory, id=category_id)
-    attribution = category.get_attribution()
+    if category_id==0:
+        attribution = uncat_bookmark_data(request)
+    else:
+        category = get_object_or_404(BookmarkCategory, id=category_id)
+        attribution = category.get_attribution()
     return HttpResponse(attribution, content_type="text/plain")
 
 

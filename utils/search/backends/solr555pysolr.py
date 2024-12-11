@@ -33,7 +33,7 @@ from sounds.models import Sound, SoundAnalysis
 from utils.text import remove_control_chars
 from utils.search import SearchEngineBase, SearchResults, SearchEngineException
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
-from utils.similarity_utilities import get_similarity_search_target_vector
+from utils.similarity_utilities import get_similarity_search_target_vector, get_l2_normalized_vector
 
 
 SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
@@ -278,9 +278,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                         
                         if config_options.get('l2_norm', False):
                             # Normalize the vector to have unit length
-                            norm = math.sqrt(sum([v*v for v in vector_data]))
-                            if norm > 0:
-                                vector_data = [v/norm for v in vector_data]
+                            vector_data = get_l2_normalized_vector(vector_data)
 
                         sim_vector_document_data = {
                             'content_type': SOLR_DOC_CONTENT_TYPES['similarity_vector'],

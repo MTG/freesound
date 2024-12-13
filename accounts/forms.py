@@ -153,11 +153,17 @@ def get_user_by_email(email):
 class UsernameField(forms.CharField):
     """ Username field, 3~30 characters, allows only alphanumeric chars, required by default """
     def __init__(self, required=True):
+        #NOTE: this allows space characters for both pre-existing usernames (OK)
+        # but also for modified new ones (not OK). It does not allow them for brand new ones (OK)
+        if required:
+            validators = [RegexValidator(r'^[\w.+-]+$')]  # is the same as Django UsernameValidator except for '@' symbol
+        else:
+            validators = [RegexValidator(r'^[\w .+-]+$')]  #same as the last one but with space characters included   
         super().__init__(
             label="Username",
             min_length=3,
             max_length=30,
-            validators=[RegexValidator(r'^[\w.+-]+$')],  # is the same as Django UsernameValidator except for '@' symbol
+            validators=validators,
             help_text="30 characters or fewer. Can contain: letters, digits, underscores, dots, dashes and plus signs.",
             error_messages={'invalid': "The username field must contain only letters, digits, underscores, dots, dashes and "
                                        "plus signs."},
@@ -391,6 +397,7 @@ class ProfileForm(forms.ModelForm):
 
         # If username was not changed, consider it valid
         if username.lower() == self.request.user.username.lower():
+            #self.fields["username"] = UsernameField(validation=False)
             return username
 
         # Check that username is not used by another user. Note that because when the maximum number of username

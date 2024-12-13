@@ -63,6 +63,9 @@ class UtilsTest(TestCase):
         ret = utils.downloads.download_sounds(licenses_url, licenses_content, sounds_list, pack.friendly_filename())
         self.assertEqual(ret.status_code, 200)
 
+        ret = self.client.get(reverse('pack-licenses', args=["testuser", pack.id]))
+        self.assertEqual(ret.status_code, 200)
+
     @override_uploads_path_with_temp_directory
     def test_upload_sounds(self):
         # create new sound files

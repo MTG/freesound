@@ -69,7 +69,7 @@ class BookmarksTest(TestCase):
         self.assertEqual(1, len(response.context['page'].object_list))  # 1 bookmark uncategorized
         self.assertEqual(1, len(response.context['bookmark_categories']))  # 1 bookmark cateogry
 
-        # Test bookmark cateogry page
+        # Test bookmark category page
         response = self.client.get(reverse('bookmarks-category', kwargs={'category_id': category.id}))
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, len(response.context['page'].object_list))  # 2 sounds in cateogry
@@ -78,3 +78,7 @@ class BookmarksTest(TestCase):
         # Test category does not exist
         response = self.client.get(reverse('bookmarks-category', kwargs={'category_id': 1234}))
         self.assertEqual(404, response.status_code)
+
+        # Test category licenses for downloading    
+        response = self.client.get(reverse('category-licenses', kwargs={'category_id': category.id}))
+        self.assertEqual(200, response.status_code)

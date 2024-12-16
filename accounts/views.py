@@ -1284,7 +1284,18 @@ def upload(request, no_flash=False):
             form = UploadFileForm(request.POST, request.FILES)
             if form.is_valid():
                 submitted_files = request.FILES.getlist('files')
+                files_names = list()
                 for file_ in submitted_files:
+                    #check for duplicated names and add an identifier, otherwise, different files with the same
+                    #name will be overwritten in the description queue
+                    if file_.name in files_names:                        
+                        name_counter = files_names.count(file_.name) 
+                        files_names.append(file_.name) 
+                        name, extension = os.path.splitext(file_.name)
+                        file_.name = "%s(%d)%s" % (name, name_counter, extension) 
+                    else:
+                        files_names.append(file_.name)
+                    
                     if handle_uploaded_file(request.user.id, file_):
                         uploaded_file = file_
                         successes += 1

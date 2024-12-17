@@ -63,7 +63,7 @@ def search_view_helper(request):
                 request.user.profile.use_compact_mode = request_preference
                 request.user.profile.save()
 
-    # Parpare variables for map view (prepare some URLs for loading sounds and providing links to map)
+    # Prepare variables for map view (prepare some URLs for loading sounds and providing links to map)
     open_in_map_url = None
     map_mode_query_results_cache_key = None
     map_bytearray_url = ''
@@ -152,7 +152,7 @@ def search_view_helper(request):
             'tags_mode': sqp.tags_mode_active(),
             'query_time': results.q_time 
         }))
-
+        
         # Compile template variables
         return {
             'sqp': sqp,

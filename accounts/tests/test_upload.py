@@ -141,6 +141,7 @@ class UserUploadAndDescribeSounds(TestCase):
             '0-license': '3',
             '0-description': 'a test description for the sound file',
             '0-new_pack': '',
+            '0-bst_category': 'ss',
             '0-name': filenames[0],
             '1-audio_filename': filenames[1],
             '1-license': '3',
@@ -167,6 +168,8 @@ class UserUploadAndDescribeSounds(TestCase):
         self.assertEqual(Pack.objects.filter(name='Name of a new pack').exists(), True)
         self.assertEqual(Tag.objects.filter(name__contains="testtag").count(), 5)
         self.assertNotEqual(user.sounds.get(original_filename=filenames[0]).geotag, None)
+        self.assertEqual(user.sounds.get(original_filename=filenames[0]).bst_category, 'ss')
+        self.assertEqual(user.sounds.get(original_filename=filenames[1]).bst_category, '')
         sound_with_sources = user.sounds.get(original_filename=filenames[1])
         self.assertEqual(sound_with_sources.sources.all().count(), len(sound_sources))
 

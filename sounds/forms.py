@@ -247,6 +247,7 @@ class SoundEditAndDescribeForm(forms.Form):
                            widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
     bst_category = forms.ChoiceField(
         choices=Sound.BST_CATEGORY_CHOICES,
+        required=False
     )
     tags = TagField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),

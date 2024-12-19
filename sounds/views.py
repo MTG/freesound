@@ -431,6 +431,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                 continue  # Double check that we are not writing to the wrong file
             sound_fields = {
                 'name': form.cleaned_data['name'],
+                'bst_category': form.cleaned_data['bst_category'],
                 'dest_path': file_full_path,
                 'license': form.cleaned_data['license'],
                 'description': form.cleaned_data.get('description', ''),
@@ -492,6 +493,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
         sound.set_tags(data["tags"])
         sound.description = remove_control_chars(data["description"])
         sound.original_filename = data["name"]
+        sound.bst_category = data["bst_category"]
         
         new_license = data["license"]
         if new_license != sound.license:
@@ -619,6 +621,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                 initial = dict(tags=element.get_sound_tags_string(),
                             description=element.description,
                             name=element.original_filename,
+                            bst_category=element.bst_category,
                             license=element.license,
                             pack=element.pack.id if element.pack else None,
                             lat=element.geotag.lat if element.geotag else None,

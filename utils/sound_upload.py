@@ -153,6 +153,7 @@ def create_sound(user,
     sound.user = user
     sound.original_filename = sound_fields['name']
     sound.original_path = sound_fields['dest_path']
+    sound.bst_category = sound_fields['bst_category']
     try:
         sound.filesize = os.path.getsize(sound.original_path)
     except OSError:

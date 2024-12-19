@@ -245,6 +245,9 @@ class SoundEditAndDescribeForm(forms.Form):
     file_full_path = None
     name = forms.CharField(max_length=512, min_length=5,
                            widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
+    bst_category = forms.ChoiceField(
+        choices=Sound.BST_CATEGORY_CHOICES,
+    )
     tags = TagField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
         help_text="At least 3 tags, separated by spaces or commas. "

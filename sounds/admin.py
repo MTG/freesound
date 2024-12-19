@@ -46,7 +46,7 @@ class LicenseAdmin(admin.ModelAdmin):
 class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     fieldsets = ((None, {'fields': ('user', 'num_downloads' )}),
                  ('Filenames', {'fields': ('base_filename_slug',)}),
-                 ('User defined fields', {'fields': ('description', 'license', 'original_filename', 'sources', 'pack')}),
+                 ('User defined fields', {'fields': ('description', 'license', 'original_filename', 'bst_category', 'sources', 'pack')}),
                  ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate',
                                                  'filesize', 'channels', 'date_recorded')}),
                  ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'has_bad_description', 'is_explicit')}),

@@ -1174,12 +1174,14 @@ class SoundEditTestCase(TestCase):
         new_name = 'New name'
         new_tags = ['tag1', 'tag2', 'tag3']
         new_pack_name = 'Name of a new pack'
+        new_bst_category = 'ss'
         new_sound_sources = Sound.objects.exclude(id=self.sound.id)
         geotag_lat = 46.31658418182218
         resp = self.client.post(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]), {
             '0-sound_id': self.sound.id,
             '0-description': new_description,
             '0-name': new_name,
+            '0-bst_category': new_bst_category,
             '0-tags': ' '.join(new_tags),
             '0-license': '3',
             '0-sources': ','.join([f'{s.id}' for s in new_sound_sources]),
@@ -1194,6 +1196,7 @@ class SoundEditTestCase(TestCase):
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.description, new_description)
         self.assertEqual(self.sound.original_filename, new_name)
+        self.assertEqual(self.sound.bst_category, new_bst_category)
         self.assertListEqual(sorted(self.sound.get_sound_tags()), sorted(new_tags))
         self.assertEqual(self.sound.sources.all().count(), len(new_sound_sources))
         self.assertTrue(Pack.objects.filter(name='Name of a new pack').exists())

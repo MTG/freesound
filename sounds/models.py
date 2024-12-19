@@ -432,6 +432,7 @@ class SoundManager(models.Manager):
           sound.id,
           sound.type,
           sound.original_filename,
+          sound.bst_category,
           sound.is_explicit,
           sound.filesize,
           sound.md5,
@@ -490,6 +491,7 @@ class SoundManager(models.Manager):
           sound.type,
           sound.user_id,
           sound.original_filename,
+          sound.bst_category,
           sound.is_explicit,
           sound.avg_rating,
           sound.channels,
@@ -617,6 +619,16 @@ class Sound(models.Model):
     # user defined fields
     description = models.TextField()
     date_recorded = models.DateField(null=True, blank=True, default=None)
+
+    # Broad Sound Taxonomy (BST) category
+    BST_CATEGORY_CHOICES = [
+        ('m', 'Music'),
+        ('is', 'Instrument samples'),
+        ('sp', 'Speech'),
+        ('fx', 'Sound Effects'),
+        ('ss', 'Soundscapes'),
+    ]
+    bst_category = models.CharField(max_length=8, null=True, blank=True, default=None, choices=BST_CATEGORY_CHOICES)
 
     # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one
     license = models.ForeignKey(License, on_delete=models.CASCADE)

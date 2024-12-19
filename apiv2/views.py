@@ -928,6 +928,9 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 if 'name' in serializer.data:
                     if serializer.data['name']:
                         sound.original_filename = serializer.data['name']
+                if 'bst_category' in serializer.data:
+                    if serializer.data['bst_category']:
+                        sound.bst_category = serializer.data['bst_category']
                 if 'description' in serializer.data:
                     if serializer.data['description']:
                         sound.description = serializer.data['description']

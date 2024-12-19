@@ -632,6 +632,12 @@ def validate_name(value):
     return value
 
 
+def validate_bst_category(value):
+    if value not in [key for key, name in Sound.BST_CATEGORY_CHOICES]:
+        raise serializers.ValidationError('Invalid BST category, should be a valid Broad Sound Taxonomy code.')
+    return value
+
+
 def validate_tags(value):
     tags = clean_and_split_tags(value)
     if len(tags) < 3:
@@ -694,6 +700,8 @@ class SoundDescriptionSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=512, required=False,
                                  help_text='Not required. Name you want to give to the sound (by default it will be '
                                            'the original filename).')
+    bst_category = serializers.ChoiceField(required=False, allow_blank=True, choices=Sound.BST_CATEGORY_CHOICES,
+                                           help_text='Not required. Must be a valid Broad Sound Taxonomy category code.')
     tags = serializers.CharField(max_length=512,
                                  help_text='Separate tags with spaces. Join multi-word tags with dashes.')
     description = serializers.CharField(help_text='Textual description of the sound.')
@@ -721,6 +729,9 @@ class SoundDescriptionSerializer(serializers.Serializer):
 
     def validate_name(self, value):
         return validate_name(value)
+    
+    def validate_bst_category(self, value):
+        return validate_bst_category(value)
 
     def validate_description(self, value):
         return validate_description(value)
@@ -732,6 +743,8 @@ class SoundDescriptionSerializer(serializers.Serializer):
 class EditSoundDescriptionSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=512, required=False,
                                  help_text='Not required. New name you want to give to the sound.')
+    bst_category = serializers.ChoiceField(required=False, allow_blank=True, choices=Sound.BST_CATEGORY_CHOICES,
+                                           help_text='Not required. Must be a valid Broad Sound Taxonomy category code.')
     tags = serializers.CharField(max_length=512, required=False,
                                  help_text='Not required. Tags that should be assigned to the sound (note that '
                                            'existing ones will be deleted). Separate tags with spaces. Join multi-word '
@@ -756,6 +769,9 @@ class EditSoundDescriptionSerializer(serializers.Serializer):
 
     def validate_name(self, value):
         return validate_name(value)
+    
+    def validate_bst_category(self, value):
+        return validate_bst_category(value)
 
     def validate_description(self, value):
         return validate_description(value)
@@ -770,6 +786,8 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=512, required=False,
                                  help_text='Not required. Name you want to give to the sound (by default it will be '
                                            'the original filename).')
+    bst_category = serializers.ChoiceField(required=False, allow_blank=True, choices=Sound.BST_CATEGORY_CHOICES,
+                                           help_text='Not required. Must be a valid Broad Sound Taxonomy category code.')
     tags = serializers.CharField(max_length=512, required=False,
                                  help_text='Only required if providing file description. Separate tags with spaces. '
                                            'Join multi-word tags with dashes.')
@@ -809,15 +827,22 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
             data['description'] = validate_description(self.initial_data.get('description', ''))
         except serializers.ValidationError as e:
             errors['description'] = e.detail
+
         try:
             data['name'] = validate_name(self.initial_data.get('name', ''))
         except serializers.ValidationError as e:
             errors['name'] = e.detail
 
         try:
+            data['bst_category'] = validate_bst_category(self.initial_data.get('bst_category', ''))
+        except serializers.ValidationError as e:
+            errors['bst_category'] = e.detail
+
+        try:
             data['tags'] = validate_tags(self.initial_data.get('tags', ''))
         except serializers.ValidationError as e:
             errors['tags'] = e.detail
+
         try:
             data['geotag'] = validate_geotag(self.initial_data.get('geotag', ''))
         except serializers.ValidationError as e:

@@ -621,13 +621,7 @@ class Sound(models.Model):
     date_recorded = models.DateField(null=True, blank=True, default=None)
 
     # Broad Sound Taxonomy (BST) category
-    BST_CATEGORY_CHOICES = [
-        ('m', 'Music'),
-        ('is', 'Instrument samples'),
-        ('sp', 'Speech'),
-        ('fx', 'Sound Effects'),
-        ('ss', 'Soundscapes'),
-    ]
+    BST_CATEGORY_CHOICES = [(item['category_code'], item['name']) for item in settings.BROAD_SOUND_TAXONOMY]
     bst_category = models.CharField(max_length=8, null=True, blank=True, default=None, choices=BST_CATEGORY_CHOICES)
 
     # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one

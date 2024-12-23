@@ -458,6 +458,45 @@ USER_DOWNLOADS_PUBLIC = True
 ANNOUNCEMENT_CACHE_KEY = 'announcement_cache'
 
 # -------------------------------------------------------------------------------
+# Broad Sound Taxonomy definition
+
+BROAD_SOUND_TAXONOMY = [
+    {'category_code': 'm', 'level': 1, 'name': 'Music', 'description': 'Music excerpts, melodies, loops, fillers, drones and short musical snippets.'},
+    {'category_code': 'm-sp', 'level': 2, 'name': 'Solo percussion', 'description': 'Music excerpts with solo percussive instruments.'},
+    {'category_code': 'm-si', 'level': 2, 'name': 'Solo instrument', 'description': 'Music excerpts with only one instrument, excluding percussion.'},
+    {'category_code': 'm-m', 'level': 2, 'name': 'Multiple instruments', 'description': 'Music excerpts with more than one instrument.'},
+    {'category_code': 'm-other', 'level': 2, 'name': 'Other (music)', 'description': 'Music that doesn\'t belong to any of the above categories.'},
+    {'category_code': 'is', 'level': 1, 'name': 'Instrument samples', 'description': 'Single notes from musical instruments, various versions of the same note, and scales.'},
+    {'category_code': 'is-p', 'level': 2, 'name': 'Percussion', 'description': 'Instrument samples that are percussive (idiophones or membraphones).'},
+    {'category_code': 'is-s', 'level': 2, 'name': 'String', 'description': 'Instrument samples that belong to the string instrument family.'},
+    {'category_code': 'is-w', 'level': 2, 'name': 'Wind', 'description': 'Instrument samples that belong to the wind instrument family (aerophones).'},
+    {'category_code': 'is-k', 'level': 2, 'name': 'Piano / Keyboard instruments', 'description': 'Instrument samples of piano or other keyboard instruments, not synthesized.'},
+    {'category_code': 'is-e', 'level': 2, 'name': 'Synths / Electronic', 'description': 'Instrument samples synthesized or produced by electronic means.'},
+    {'category_code': 'is-other', 'level': 2, 'name': 'Instrument samples (other)', 'description': 'Instrument samples that don\'t belong to any of the above categories.'},
+    {'category_code': 'sp', 'level': 1, 'name': 'Speech', 'description': 'Sounds where human voice is prominent.'},
+    {'category_code': 'sp-s', 'level': 2, 'name': 'Solo speech', 'description': 'Recording of a single voice speaking, excluding singing.'},
+    {'category_code': 'sp-c', 'level': 2, 'name': 'Conversation / Crowd', 'description': 'Several people talking, having a conversation or dialogue.'},
+    {'category_code': 'sp-p', 'level': 2, 'name': 'Processed / Synthetic', 'description': 'Voice(s) from an indirect source (e.g. radio), processed or synthesized.'},
+    {'category_code': 'sp-other', 'level': 2, 'name': 'Other (speech)', 'description': 'Voice-predominant recordings that don\'t belong to any of the above categories.'},
+    {'category_code': 'fx', 'level': 1, 'name': 'Sound effects', 'description': 'Isolated sound effects or sound events, each happening one at a time.'},
+    {'category_code': 'fx-o', 'level': 2, 'name': 'Objects / House appliances', 'description': 'Everyday objects, inside the home or smaller in size.'},
+    {'category_code': 'fx-v', 'level': 2, 'name': 'Vehicles', 'description': 'Sounds produced from a vehicle.'},
+    {'category_code': 'fx-m', 'level': 2, 'name': 'Other mechanisms, engines, machines', 'description': 'Machine-like sounds, except vehicles and small house electric devices.'},
+    {'category_code': 'fx-h', 'level': 2, 'name': 'Human sounds and actions', 'description': 'Sounds from the human body, excluding speech.'},
+    {'category_code': 'fx-a', 'level': 2, 'name': 'Animals', 'description': 'Animal vocalizations or sounds.'},
+    {'category_code': 'fx-n', 'level': 2, 'name': 'Natural elements and explosions', 'description': 'Sound events occuring by natural processes.'},
+    {'category_code': 'fx-ex', 'level': 2, 'name': 'Experimental', 'description': 'Experimental sounds or heavily processed audio recordings.'},
+    {'category_code': 'fx-el', 'level': 2, 'name': 'Electronic / Design', 'description': 'Sound effects that are computer-made or designed for user interfaces or animations.'},
+    {'category_code': 'fx-other', 'level': 2, 'name': 'Other (sound effects)', 'description': 'Sound effects that don\'t belong to any of the above categories.'},
+    {'category_code': 'ss', 'level': 1, 'name': 'Soundscapes', 'description': 'Ambiances, field-recordings with multiple events and sound environments.'},
+    {'category_code': 'ss-n', 'level': 2, 'name': 'Nature', 'description': 'Soundscapes from natural habitats.'},
+    {'category_code': 'ss-i', 'level': 2, 'name': 'Indoors', 'description': 'Soundscapes from closed or indoor spaces.'},
+    {'category_code': 'ss-u', 'level': 2, 'name': 'Urban', 'description': 'Soundscapes from cityscapes or outdoor places with human intervention.'},
+    {'category_code': 'ss-s', 'level': 2, 'name': 'Synthetic / Artificial', 'description': 'Soundscapes that are synthesized or computer-made ambiences.'},
+    {'category_code': 'ss-other', 'level': 2, 'name': 'Other (soundscapes)', 'description': 'Soundscapes that don\'t belong to any of the above categories.'},
+]
+
+# -------------------------------------------------------------------------------
 # Freesound data paths and urls
 
 # Base data path. Note that further data subdirectories are defined after the local_settings import

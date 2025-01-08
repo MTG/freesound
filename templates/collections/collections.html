@@ -1,0 +1,11 @@
+{% extends "simple_page.html" %}
+{% load static %}
+{% load bw_templatetags %}
+{% load display_sound %}
+{% load util %}
+
+{% block title%}Collections{%endblock title%}
+{% block page-title%}Collections{%endblock page-title%}
+{%block page-content%}
+Collection Name: {{collection.name}}
+{%endblock page-content%}

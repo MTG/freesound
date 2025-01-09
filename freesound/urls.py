@@ -117,7 +117,7 @@ urlpatterns = [
     path('tickets/', include('tickets.urls')),
     path('monitor/', include('monitor.urls')),
     path('follow/', include('follow.urls')),
-    path('fscollections/', include('fscollections.urls')),
+    path('collections/', include('fscollections.urls')),
 
     path('blog/', RedirectView.as_view(url='https://blog.freesound.org/'), name="blog"),
 

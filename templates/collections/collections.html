@@ -6,6 +6,32 @@
 
 {% block title%}Collections{%endblock title%}
 {% block page-title%}Collections{%endblock page-title%}
-{%block page-content%}
-Collection Name: {{collection.name}}
-{%endblock page-content%}
+{% block page-content %}
+<div class="v-spacing-top-5">
+    <div class="row no-gutters">
+        <div class="col-lg-3 offset-lg-1 order-lg-last v-spacing-3">
+            <h4>Your collections</h4>
+            <div class="v-spacing-top-3">
+                <ul class="list-style-type-none">
+                    {% for col in collections_for_user %}
+                        <li><a href="{% url "collections" col.id %}" {% if collection.id == col.id %}style="font-weight:bold"{% endif %}>{{col.name}}</a>
+                        <span class=text-light-grey> · {{col.sounds.count}} sound{{col.sounds.count|pluralize}}</span></li>
+                    {% endfor %}
+                </ul>    
+            </div>
+        </div>    
+        <div class="col-lg-8">
+            <h3>{{collection.name}}</h3>
+            <div class = "row">
+                {% if collection.sounds.count > 0 %}
+                    {% for sound in collection.sounds.all %}
+                        <div class="col-6 col-md-4">
+                            {% display_sound_small sound %}
+                        </div>
+                    {% endfor %}
+                {% else %} There aren't any sounds in this collection yet {% endif %}
+            </div>
+        </div>
+    </div>
+</div>         
+{% endblock page-content %}

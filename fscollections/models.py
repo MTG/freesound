@@ -26,12 +26,17 @@ from sounds.models import Sound, License
 class Collection(models.Model):
 
     author = models.ForeignKey(User, on_delete=models.CASCADE) 
-    name = models.CharField(max_length=128, default="") #prob not default to ""
-    sounds = models.ManyToManyField(Sound, related_name="collections") #this will affect the following migration [related_name, sound(s)]
+    name = models.CharField(max_length=128, default="") #add restrictions
+    sounds = models.ManyToManyField(Sound, related_name="collections") #NOTE: before next migration pluralize sound(s) - check consequences in views
     created = models.DateTimeField(db_index=True, auto_now_add=True)
+    description = models.TextField(max_length=500, default="")
+    #NOTE: before next migration add a num_sounds attribute
     #contributors = delicate stuff
-    #subcolletion_path = 
+    #subcolletion_path = sth with tagsn and routing folders for downloads
 
     def __str__(self):
         return f"{self.name}"
-    
+
+'''    
+class CollectionSound(models.Model):
+   ''' 

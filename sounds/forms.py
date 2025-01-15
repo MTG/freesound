@@ -23,7 +23,7 @@ import re
 
 from captcha.fields import ReCaptchaField
 from django import forms
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
 from django.core.signing import BadSignature, SignatureExpired
@@ -247,7 +247,8 @@ class SoundEditAndDescribeForm(forms.Form):
                            widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
     bst_category = forms.ChoiceField(
         choices=Sound.BST_CATEGORY_CHOICES,
-        required=False
+        help_text="Choose the most appropriate catgeory and subcatgoery (you can only choose one). This category will be displayed as a filtering option in the Freesound side bar.",
+        required=True,
     )
     tags = TagField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
@@ -348,6 +349,12 @@ class SoundEditAndDescribeForm(forms.Form):
 
     def clean_pack(self):
         return _pack_form_clean_pack_helper(self.cleaned_data)
+    
+    def clean_bst_category(self):
+        value = self.cleaned_data['bst_category']
+        if not '-' in value:
+            raise ValidationError("Please choose a subcategory.")
+        return value
 
 
 class SoundCSVDescriptionForm(SoundEditAndDescribeForm):

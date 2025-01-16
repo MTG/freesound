@@ -75,6 +75,11 @@
                                     <button title="Bookmark this sound" aria-label="Bookmark this sound" class="btn-neutral" data-toggle="bookmark-modal" data-modal-url="{% url 'bookmarks-add-form-for-sound' sound.id %}" data-add-bookmark-url="{% url 'add-bookmark' sound.id %}">
                                         {% bw_icon 'bookmark' %}
                                     </button>
+                                    <span class="h-spacing-left-1"></span>
+                                    <button title="Collect this sound" aria-label="Collect this sound" class="btn-neutral" data-toggle="bookmark-modal" data-modal-url="{% url 'collection-add-form-for-sound' sound.id %}" >
+                                        {% bw_icon 'bookmark' %}
+                                    </button>
+                                    <!--<a class = "btn-neutral" href="{% url 'add-sound-to-collection' sound.id %}">{% bw_icon 'plus' %}</a>-->
                                 </div>
                             </div>
                         </div>

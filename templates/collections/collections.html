@@ -13,23 +13,35 @@
             <h4>Your collections</h4>
             <div class="v-spacing-top-3">
                 <ul class="list-style-type-none">
+                    {% if collections_for_user %}
                     {% for col in collections_for_user %}
                         <li><a href="{% url "collections" col.id %}" {% if collection.id == col.id %}style="font-weight:bold"{% endif %}>{{col.name}}</a>
                         <span class=text-light-grey> · {{col.sounds.count}} sound{{col.sounds.count|pluralize}}</span></li>
                     {% endfor %}
+                    {% else %}
+                    <span class=text-light-grey> You don't have any collection yet... </span>
+                    {% endif %}
                 </ul>    
             </div>
         </div>    
         <div class="col-lg-8">
-            <h3>{{collection.name}}</h3>
+            <h3>{{collection.name}} </h3> 
+            by <a href="{% url "account" collection.author.id %}">{{collection.author.username}}</a>
+            <div>Description: {% if collection.description %}{{collection.description}} {% endif %}</div>
+
             <div class = "row">
                 {% if collection.sounds.count > 0 %}
                     {% for sound in collection.sounds.all %}
                         <div class="col-6 col-md-4">
                             {% display_sound_small sound %}
+                            {% if is_owner %}
+                                <div class="right v-spacing-4 v-spacing-top-negative-2"><a class="cursor-pointer bw-link--grey" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove '{{sound.name}}' from '{{collection.name}}'?" data-modal-confirmation-url="{% url "delete-sound-from-collection" collection.id sound.id %}?next={{request.path}}&page={{current_page}}" title="Remove from collection" aria-label="Remove from collection">{% bw_icon 'trash' %} Remove sound</a></div>                                        
+                            {% endif %}
                         </div>
                     {% endfor %}
-                {% else %} There aren't any sounds in this collection yet {% endif %}
+                {% else %} 
+                There aren't any sounds in this collection yet 
+                {% endif %}
             </div>
         </div>
     </div>

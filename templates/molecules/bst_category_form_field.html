@@ -1,0 +1,124 @@
+{% load bst_category %}
+
+<div class="bst-category-field">
+
+    {{ form.bst_category.errors }}
+    <div><label>Category</label></div>
+    {{ form.bst_category.as_hidden }}
+
+    <div class="top-buttons v-spacing-top-2">
+        {% for value, label in form.fields.bst_category.choices %}
+            {% if "-" not in value %}
+                <button type="button" class="btn no-hover {% if value == form.bst_category.value|get_top_level_bst_category %}btn-primary{% else %}btn-inverse{% endif %} cell_tooltip_left" data_value="{{ value }}">
+                    {{ label }}
+                    {% for item in bst_taxonomy %}
+                        {% if item.category_code == value %}
+                            <span class="tooltiptext">{{ item.description }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </button>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="subcategory-buttons v-spacing-top-2 display-none">
+        <div><label>Subcategory</label></div>
+        <div class="row v-spacing-top-2">
+            {% for value, label in form.fields.bst_category.choices %}
+                {% if "-" in value %}
+                    <button type="button" class="btn no-hover {% if value == form.bst_category.value %}btn-secondary{% else %}btn-inverse{% endif %} btn-subcategory cell_tooltip_left" top_level="{{ value|get_top_level_bst_category }}" data_value="{{ value }}">
+                        {{ label }}
+                        {% for item in bst_taxonomy %}
+                            {% if item.category_code == value %}
+                                <span class="tooltiptext">{{ item.description }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </button>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="v-spacing-top-4">
+        <span class="helptext">{{ form.bst_category.help_text|safe }}</span>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const categoryFieldContainers = document.querySelectorAll(".bst-category-field");
+        categoryFieldContainers.forEach(container => {
+            const hiddenField = container.querySelectorAll("input[type=hidden]")[0];
+            const topButtons = container.querySelectorAll(".top-buttons .btn");
+            const subcategoryButtons = container.querySelectorAll(".btn-subcategory");
+            const subcategoryContainer = container.querySelector(".subcategory-buttons");
+
+            const updateSubcategoriesList = () => {
+                if (hiddenField.value === "") {
+                    subcategoryContainer.classList.add("display-none");
+                    return;
+                } else {
+                    // Display subcategories that match the selected top-level category
+                    // Triggered when a selection is made or updated.
+                    const correspondingTopLevelValue = hiddenField.value.split("-")[0]; // Extract top-level value, if not already.
+                    console.log(correspondingTopLevelValue);
+                    if(correspondingTopLevelValue) {
+                        subcategoryContainer.classList.remove("display-none");
+                 
+                        subcategoryButtons.forEach(subBtn => {
+                            const topLevelValue = subBtn.getAttribute("top_level");
+                            const isTrue = topLevelValue === correspondingTopLevelValue;
+                            // console.log("Is condition true?", isTrue);
+                            subBtn.style.display = topLevelValue === correspondingTopLevelValue ? "inline-block" : "none";
+                        });
+                    }
+                }
+            }
+
+            // Event listener for top-level category buttons
+            topButtons.forEach(topBtn => {
+                topBtn.addEventListener("click", function () {
+                    const selectedValue = this.getAttribute("data_value");
+    
+                    // Update hidden input value
+                    hiddenField.value = selectedValue;
+                    
+                    // Highlight the selected top-level category button
+                    topButtons.forEach(btn => {
+                        btn.classList.remove("btn-primary")
+                        btn.classList.add("btn-inverse")
+                        btn.setAttribute("aria-selected", "false")
+                    })       
+                    this.classList.remove("btn-inverse")
+                    this.classList.add("btn-primary")
+                    this.setAttribute("aria-selected", "true")
+    
+                    updateSubcategoriesList();
+                });
+            });
+    
+            // Event listener for subcategory buttons
+            subcategoryButtons.forEach(subBtn => {
+                subBtn.addEventListener("click", function () {
+                    const subcategoryValue = this.getAttribute("data_value");
+    
+                    // Update hidden input value if subcategory is clicked
+                    hiddenField.value = subcategoryValue;
+    
+                    // Highlight the selected subcategory button
+                    subcategoryButtons.forEach(btn => {
+                        btn.classList.remove("btn-secondary")
+                        btn.classList.add("btn-inverse")
+                        btn.setAttribute("aria-selected", "false")
+                    })
+                    this.classList.remove("btn-inverse")
+                    this.classList.add("btn-secondary")
+                    btn.setAttribute("aria-selected", "true");
+                });
+            });
+
+            updateSubcategoriesList();
+        });
+
+    });
+</script>

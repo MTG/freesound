@@ -29,3 +29,5 @@ inputTypeSubmitElements.forEach(button => {
         });
     });
 });
+
+// Move json for BST category field in description form here

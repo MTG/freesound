@@ -71,9 +71,7 @@
                             {{ form.name }}
                         </div>
                         <div>
-                            {{ form.bst_category.errors }}
-                            {{ form.bst_category.label_tag }}
-                            {{ form.bst_category }}
+                            {% include "molecules/bst_category_form_field.html" %}
                         </div>
                         <div class="v-spacing-top-3">
                             {% include "molecules/tags_form_field.html" %}

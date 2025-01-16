@@ -42,7 +42,7 @@ DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by c
 DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,bst_category,geotag,created,license,type,channels,filesize,bitrate,' + \
 'bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,' + \
 'num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,' +  \
-'analysis,analysis_frames,analysis_stats,is_explicit'  # All except for analyzers
+'analysis,analysis_frames,analysis_stats,is_explicit,is_gen_ai'  # All except for analyzers
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
 
@@ -132,6 +132,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'ac_analysis',  # Kept for legacy reasons only as it is also contained in 'analyzers_output'
                   'analyzers_output',
                   'is_explicit',
+                  'is_gen_ai',
                   'score',
                   )
 
@@ -312,6 +313,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     is_explicit = serializers.SerializerMethodField()
     def get_is_explicit(self, obj):
         return obj.is_explicit
+    
+    is_gen_ai = serializers.SerializerMethodField()
+    def get_is_gen_ai(self, obj):
+        return obj.is_gen_ai
 
 
 class SoundListSerializer(AbstractSoundSerializer):

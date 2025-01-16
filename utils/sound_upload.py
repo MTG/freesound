@@ -254,6 +254,9 @@ def create_sound(user,
     if 'is_explicit' in sound_fields:
         sound.is_explicit = sound_fields['is_explicit']
 
+    if 'is_gen_ai' in sound_fields:
+            sound.is_gen_ai = sound_fields['is_gen_ai']
+
     # 6.5 set uploaded apiv2 client or bulk progress object (if any)
     sound.uploaded_with_apiv2_client = apiv2_client
     sound.uploaded_with_bulk_upload_progress = bulk_upload_progress

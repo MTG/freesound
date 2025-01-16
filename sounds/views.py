@@ -437,6 +437,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                 'description': form.cleaned_data.get('description', ''),
                 'tags': form.cleaned_data.get('tags', ''),
                 'is_explicit': form.cleaned_data['is_explicit'],
+                'is_gen_ai': form.cleaned_data['is_gen_ai'],
             }
 
             pack = form.cleaned_data.get('pack', False)
@@ -490,6 +491,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
 
     def update_edited_sound(sound, data):
         sound.is_explicit = data["is_explicit"]
+        sound.is_gen_ai = data["is_gen_ai"]
         sound.set_tags(data["tags"])
         sound.description = remove_control_chars(data["description"])
         sound.original_filename = data["name"]

@@ -49,7 +49,7 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
                  ('User defined fields', {'fields': ('description', 'license', 'original_filename', 'bst_category', 'sources', 'pack')}),
                  ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate',
                                                  'filesize', 'channels', 'date_recorded')}),
-                 ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'has_bad_description', 'is_explicit')}),
+                 ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'has_bad_description', 'is_explicit', 'is_gen_ai')}),
                  ('Processing', {'fields': ('processing_state', 'processing_date', 'processing_ongoing_state', 'processing_log', 'similarity_state')}),
                  )
     raw_id_fields = ('user', 'pack', 'sources')

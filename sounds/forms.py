@@ -260,6 +260,7 @@ class SoundEditAndDescribeForm(forms.Form):
         help_text="You can add timestamps to the description using the syntax #minute:second (e.g. \"#1:07 nice bird chirp\"). "
                   "This will be rendered with a little play button to play the sound at that timestamp. " + HtmlCleaningCharField.make_help_text())
     is_explicit = forms.BooleanField(required=False, label="The sound contains explicit content")
+    is_gen_ai = forms.BooleanField(required=False, label="The sound involves generative AI")
     license_qs = License.objects.filter(Q(name__istartswith='Attribution') | Q(name__istartswith='Creative'))
     license = forms.ModelChoiceField(queryset=license_qs, required=True, widget=forms.RadioSelect())
     pack = forms.ChoiceField(label="Select a pack for this sound:", choices=[], required=False)
@@ -292,6 +293,7 @@ class SoundEditAndDescribeForm(forms.Form):
         user_packs = kwargs.pop('user_packs', False)
         super().__init__(*args, **kwargs)
         self.fields['is_explicit'].widget.attrs['class'] = 'bw-checkbox'
+        self.fields['is_gen_ai'].widget.attrs['class'] = 'bw-checkbox'
         self.fields['remove_geotag'].widget.attrs['class'] = 'bw-checkbox'
         self.fields['license'].widget.attrs['class'] = 'bw-radio'
         

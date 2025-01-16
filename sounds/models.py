@@ -434,6 +434,7 @@ class SoundManager(models.Manager):
           sound.original_filename,
           sound.bst_category,
           sound.is_explicit,
+          sound.is_gen_ai,
           sound.filesize,
           sound.md5,
           sound.channels,
@@ -493,6 +494,7 @@ class SoundManager(models.Manager):
           sound.original_filename,
           sound.bst_category,
           sound.is_explicit,
+          sound.is_gen_ai,
           sound.avg_rating,
           sound.channels,
           sound.filesize,
@@ -659,6 +661,7 @@ class Sound(models.Model):
     moderation_note = models.TextField(null=True, blank=True, default=None)
     has_bad_description = models.BooleanField(default=False)
     is_explicit = models.BooleanField(default=False)
+    is_gen_ai = models.BooleanField(default=False)
 
     # processing
     PROCESSING_STATE_CHOICES = (

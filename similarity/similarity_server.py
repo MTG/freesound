@@ -248,7 +248,7 @@ if __name__ == '__main__':
         std_handler.setFormatter(formatter)
         logger.addHandler(std_handler)
     if LOG_TO_GRAYLOG:
-        handler_gelf = pygelf.GelfHttpsHandler(LOGSERVER_HOST, LOGSERVER_PORT)
+        handler_gelf = pygelf.GelfUdpHandler(LOGSERVER_HOST, LOGSERVER_PORT)
         logger.addHandler(handler_gelf)
 
     # Start service

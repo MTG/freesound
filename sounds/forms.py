@@ -247,7 +247,9 @@ class SoundEditAndDescribeForm(forms.Form):
                            widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
     bst_category = forms.ChoiceField(
         choices=Sound.BST_CATEGORY_CHOICES,
-        help_text="Choose the most appropriate catgeory and subcatgoery (you can only choose one). This category will be displayed as a filtering option in the Freesound side bar.",
+        help_text="Choose the most appropriate <i>Category</i> and <i>Subcategory</i> for the sound. "\
+                  "These categories are drawn from the <a class=\"bw-link--grey\" href=\"/help/faq/#the-broad-sound-taxonomy\">Broad Sound Taxonomy</a>, "\
+                  "and are used to improve Freesound search capabilities.",
         required=True,
     )
     tags = TagField(
@@ -355,7 +357,7 @@ class SoundEditAndDescribeForm(forms.Form):
     def clean_bst_category(self):
         value = self.cleaned_data['bst_category']
         if not '-' in value:
-            raise ValidationError("Please choose a subcategory.")
+            raise ValidationError("Please choose both a category and a subcategory.")
         return value
 
 

@@ -35,7 +35,6 @@
 .dot-separated-divs {
   div:not(:last-child):after {
     content: "·";
-    color: $navy-grey;
     margin-left: $tiny-spacing;
     margin-right: $tiny-spacing;
   }

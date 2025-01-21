@@ -10,6 +10,8 @@ def bst_taxonomy_category_key_to_category_names(category_key):
     This includes both the top level and the sub level category names.
     E.g.: "m-sp" -> ("Music", "Solo percussion"), "m" -> ("Music", None)
     """
+    if category_key is None:
+        return (None, None)
     if '-' in category_key:
         # Sub level category key
         top_level_key = category_key.split('-')[0]

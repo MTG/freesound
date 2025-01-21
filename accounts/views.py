@@ -1284,6 +1284,9 @@ def upload(request, no_flash=False):
             form = UploadFileForm(request.POST, request.FILES)
             if form.is_valid():
                 submitted_files = request.FILES.getlist('files')
+                if not submitted_files: 
+                    #this allows upload_tests to work, requests use the dict key in singular
+                    submitted_files = request.FILES.getlist('file') 
                 duplicated_filenames = list()
                 for file_ in submitted_files:
                     #check for duplicated names and add an identifier, otherwise, different files with the same
@@ -1314,6 +1317,7 @@ def upload(request, no_flash=False):
         'all_file_extensions': settings.ALLOWED_AUDIOFILE_EXTENSIONS,
         'uploads_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED
     }
+    #print(tvars)
     return render(request, 'accounts/upload.html', tvars)
 
 

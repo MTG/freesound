@@ -45,7 +45,7 @@
                     {% with sound.get_category_names as cat_names %}
                         {% if cat_names.0 is not None %} 
                             <div class="ellipsis text-grey v-spacing-top-1">
-                                {% bw_icon 'box-add' %}
+                                {% bw_icon 'tree' %}
                                 {{ cat_names.0 }}{% if cat_names.1 %} > {{ cat_names.1}}{% endif %}
                             </div>
                         {% endif %}

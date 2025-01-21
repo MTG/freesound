@@ -103,7 +103,7 @@
                             {% with sound.get_category_names as cat_names %}
                             {% if cat_names.0 is not None %} 
                                 <div class="ellipsis">
-                                    {% bw_icon 'box-add' %}
+                                    {% bw_icon 'tree' %}
                                     <a href="{{ sound.get_top_level_category_search_url }}" title="Category: {{ cat_names.0}}">{{ cat_names.0 }}</a>{% if cat_names.1 %} > <a href="{{ sound.get_second_level_category_search_url }}" title="Subcategory: {{ cat_names.1}}">{{ cat_names.1}}</a>{% endif %}
                                 </div>
                             {% endif %}

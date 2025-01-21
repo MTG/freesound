@@ -201,6 +201,7 @@ def get_form_for_sound(request, sound_id):
     sound_has_bookmark_without_category = Bookmark.objects.filter(user=request.user, sound=sound, category=None).exists()
     add_bookmark_url = '/'.join(
         request.build_absolute_uri(reverse('add-bookmark', args=[sound_id])).split('/')[:-2]) + '/'
+    print(add_bookmark_url)
     tvars = {
         'bookmarks': Bookmark.objects.filter(user=request.user, sound=sound).exists(),
         'sound_id': sound.id,

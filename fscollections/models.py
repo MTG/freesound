@@ -25,22 +25,34 @@ from sounds.models import Sound, License
 
 class Collection(models.Model):
 
-    author = models.ForeignKey(User, on_delete=models.CASCADE) 
-    name = models.CharField(max_length=128, default="BookmarkCollection") #add restrictions
-    sounds = models.ManyToManyField(Sound, related_name="collections") 
+    user = models.ForeignKey(User, on_delete=models.CASCADE) 
+    name = models.CharField(max_length=255) #max_length as in Packs (128 for Bookmarks)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    description = models.TextField(max_length=500, default="")
-    #NOTE: before next migration add a num_sounds attribute
-    #bookmarks = True or False depending on it being the BookmarkCollection for a user (the one created for the first sound without collection assigned)
-    #contributors = delicate stuff
-    #subcolletion_path = sth with tagsn and routing folders for downloads
+    description = models.TextField()
+    maintainers = models.ManyToManyField(User, related_name="collection_maintainer")
+    num_sounds = models.PositiveIntegerField(default=0)
+    public = models.BooleanField(default=False)
+    #NOTE: Don't fear migrations, you're just testing
+    #sounds are related to collections through CollectionSound model (bookmark-wise)
+    #contributors = delicate stuff 
+    #subcolletion_path = sth with tagn and routing folders for downloads
     #follow relation for users and collections (intersted but not owner nor contributor)
-    #sooner or later you'll need to start using forms for adding sounds to collections xd
-
 
     def __str__(self):
         return f"{self.name}"
 
-'''    
+
 class CollectionSound(models.Model):
-   ''' 
+   #this model relates collections and sounds
+   user = models.ForeignKey(User, on_delete=models.CASCADE) #not sure bout this
+   sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
+   collection = models.ForeignKey(Collection, related_name='collectionsound', on_delete=models.CASCADE)
+   created = models.DateTimeField(db_index=True, auto_now_add=True)
+   
+   STATUS_CHOICES = (
+        ("PE", 'Pending'),
+        ("OK", 'OK'),
+        ("DE", 'Deferred'),
+    )
+   status = models.CharField(db_index=True, max_length=2, choices=STATUS_CHOICES, default="PE")
+   #sound won't be added to collection until maintainers approve the sound

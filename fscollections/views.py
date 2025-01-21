@@ -19,85 +19,110 @@
 #
 
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.db import transaction
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from fscollections.models import Collection
+from fscollections.models import Collection, CollectionSound
 from fscollections.forms import CollectionSoundForm
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
 
 @login_required
-def collections(request, collection_id=None):
+def collections_for_user(request, collection_id=None):
     user = request.user
-    user_collections = Collection.objects.filter(author=user).order_by('-created') #first user collection should be on top - this would affect the if block
+    user_collections = Collection.objects.filter(user=user).order_by('-created') 
     is_owner = False
-    #if no collection id is provided for this URL, render the oldest collection in the webpage
+    #if no collection id is provided for this URL, render the oldest collection
     #be careful when loading this url without having any collection for a user
-    #rn the relation user-collection only exists when you own the collection
-
+    #only show the collections for which you're the user(owner)
+    
     if not collection_id:
         collection = user_collections.last()    
     else:
         collection = get_object_or_404(Collection, id=collection_id)
 
-    if user == collection.author:
+    if user == collection.user:
         is_owner = True
 
     tvars = {'collection': collection,
              'collections_for_user': user_collections,
              'is_owner': is_owner}
-    
+
     return render(request, 'collections/collections.html', tvars)
 
 #NOTE: tbd - when a user wants to save a sound without having any collection, create a personal bookmarks collection
 
 def add_sound_to_collection(request, sound_id, collection_id=None):
+    #this view from now on should create a new CollectionSound object instead of adding
+    #a sound to collection.sounds
     sound = get_object_or_404(Sound, id=sound_id)
+    msg_to_return = ''
+    if request.method == 'POST':
+        print('good job')
+        #by now work with direct additions (only user-wise, not maintainer-wise)
+        user_collections = Collection.objects.filter(user=request.user)
+        # NOTE: aquí ens hem quedat de moment xd
+        # form = CollectionSoundForm()
+    if request.is_ajax():
+        return msg_to_return
+    else:
+        messages.add_message(request, messages.WARNING, msg_to_return)
+        next = request.GET.get("next", "")
+        print("NEXT VALUE",next)
+        if next:
+            return HttpResponseRedirect(next)
+        else:
+            return HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))
+    """
     if collection_id is None:
-        collection = Collection.objects.filter(author=request.user).order_by("created")[0]
+        collection = Collection.objects.filter(user=request.user).order_by("created")[0]
     else:    
-        collection = get_object_or_404(Collection, id=collection_id, author=request.user)
-    
+        collection = get_object_or_404(Collection, id=collection_id, user=request.user)
+    """
+    #the creation of the SoundCollection object should be done through a form
+
     if sound.moderation_state=='OK':
         collection.sounds.add(sound) 
         collection.save()
         return HttpResponseRedirect(reverse("collections", args=[collection.id]))
     else:
-        return "sound not moderated or not collection owner"
+        return HttpResponseRedirect(reverse("sound", args=[sound_id]))
     
 
 def delete_sound_from_collection(request, collection_id, sound_id):
     #this should work as in Packs - select several sounds and remove them all at once from the collection
     #by now it works as in Bookmarks in terms of UI
     sound = get_object_or_404(Sound, id=sound_id)
-    collection = get_object_or_404(Collection, id=collection_id, author=request.user)
+    collection = get_object_or_404(Collection, id=collection_id, user=request.user)
     collection.sounds.remove(sound)
     collection.save()
     return HttpResponseRedirect(reverse("collections", args=[collection.id]))
 
 @login_required
 def get_form_for_collecting_sound(request, sound_id):
-    user = request.user
+
     sound = Sound.objects.get(id=sound_id)
     
     try:
         last_collection = \
-            Collection.objects.filter(author=request.user).order_by('-created')[0]
+            Collection.objects.filter(user=request.user).order_by('-created')[0]
         # If user has a previous bookmark, use the same category by default (or use none if no category used in last
         # bookmark)
     except IndexError:
         last_collection = None
     
-    user_collections = Collection.objects.filter(author=user).order_by('-created')
+    user_collections = Collection.objects.filter(user=request.user).order_by('-created')
     form = CollectionSoundForm(initial={'collection': last_collection.id if last_collection else CollectionSoundForm.NO_COLLECTION_CHOICE_VALUE},
                                prefix=sound.id,
                                user_collections=user_collections)
     
-    collections_already_containing_sound = Collection.objects.filter(author=user, collection__sounds=sound).distinct()
-    tvars = {'user': user,
+    collections_already_containing_sound = Collection.objects.filter(user=request.  user, collection__sounds=sound).distinct()
+    # add_bookmark_url = '/'.join(
+        # request.build_absolute_uri(reverse('add-bookmark', args=[sound_id])).split('/')[:-2]) + '/'
+    tvars = {'user': request.user,
              'sound': sound,
              'last_collection': last_collection,
              'collections': user_collections,
@@ -116,7 +141,7 @@ def get_form_for_collecting_sound(request, sound_id):
 @login_required
 def add_sounds_modal_for_collection(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
-    tvars = add_sounds_modal_helper(request, username=collection.author.username)
+    tvars = add_sounds_modal_helper(request, username=collection.user.username)
     tvars.update({
         'modal_title': 'Add sounds to Collection',
         'help_text': 'Collections are great!',

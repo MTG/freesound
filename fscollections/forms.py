@@ -69,7 +69,7 @@ class CollectionSoundForm(forms.Form):
             elif self.cleaned_data['collection'] == self.NEW_COLLECTION_CHOICE_VALUE:
                 if self.cleaned_data['new_collection_name'] != "":
                     collection = \
-                        Collection(author=self.user_saving_bookmark, name=self.cleaned_data['new_collection_name'])
+                        Collection(user=self.user_saving_bookmark, name=self.cleaned_data['new_collection_name'])
                     collection.save()
                     collection_to_use = collection
             else:
@@ -90,5 +90,5 @@ class CollectionSoundForm(forms.Form):
 
         # If collection already exists, don't save it and return the existing one
         collection, _ = Collection.objects.get_or_create(
-            name = collection_to_use.name, author=self.user_saving_bookmark)
+            name = collection_to_use.name, user=self.user_saving_bookmark)
         return collection

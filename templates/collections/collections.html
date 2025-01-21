@@ -26,7 +26,7 @@
         </div>    
         <div class="col-lg-8">
             <h3>{{collection.name}} </h3> 
-            by <a href="{% url "account" collection.author.id %}">{{collection.author.username}}</a>
+            by <a href="{% url "account" collection.user.id %}">{{collection.user.username}}</a>
             <div>Description: {% if collection.description %}{{collection.description}} {% endif %}</div>
 
             <div class = "row">

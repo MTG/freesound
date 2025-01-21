@@ -9,10 +9,10 @@
     <div class="top-buttons v-spacing-top-2 line-height-50">
         {% for value, label in form.fields.bst_category.choices %}
             {% if "-" not in value %}
-                <button type="button" class="btn no-hover {% if value == form.bst_category.value|get_top_level_bst_category %}btn-primary{% else %}btn-inverse{% endif %} tooltip_top" data_value="{{ value }}">
+                <button type="button" class="btn no-hover {% if value == form.bst_category.value|get_bst_taxonomy_top_level_category_key %}btn-primary{% else %}btn-inverse{% endif %} tooltip_top" data_value="{{ value }}">
                     {{ label }}
                     {% for item in bst_taxonomy %}
-                        {% if item.category_code == value %}
+                        {% if item.key == value %}
                             <span class="tooltiptext">{{ item.description }}</span>
                         {% endif %}
                     {% endfor %}
@@ -29,7 +29,7 @@
                     <button type="button" class="btn no-hover {% if value == form.bst_category.value %}btn-primary{% else %}btn-inverse{% endif %} btn-subcategory tooltip_top" top_level="{{ value|get_top_level_bst_category }}" data_value="{{ value }}">
                         {{ label }}
                         {% for item in bst_taxonomy %}
-                            {% if item.category_code == value %}
+                            {% if item.key == value %}
                                 <span class="tooltiptext">{{ item.description }}</span>
                             {% endif %}
                         {% endfor %}

@@ -30,7 +30,7 @@ from builtins import str
 import json
 import logging
 
-import pygelf
+import graypy
 import tagrecommendation_settings as tr_settings
 from tag_recommendation.community_tag_recommender import CommunityBasedTagRecommender
 from concurrent_log_handler import ConcurrentRotatingFileHandler
@@ -172,7 +172,7 @@ if __name__ == '__main__':
         std_handler.setFormatter(formatter)
         logger.addHandler(std_handler)
     if tr_settings.LOG_TO_GRAYLOG:
-        handler_gelf = pygelf.GelfUdpHandler(tr_settings.LOGSERVER_HOST, tr_settings.LOGSERVER_PORT)
+        handler_gelf = graypy.GELFUDPHandler(tr_settings.LOGSERVER_HOST, tr_settings.LOGSERVER_PORT)
         logger.addHandler(handler_gelf)
 
     # Start service

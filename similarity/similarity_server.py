@@ -25,7 +25,7 @@ from builtins import str
 import json
 import logging
 
-import pygelf
+import graypy
 import yaml
 from concurrent_log_handler import ConcurrentRotatingFileHandler
 from gaia_wrapper import GaiaWrapper
@@ -248,7 +248,7 @@ if __name__ == '__main__':
         std_handler.setFormatter(formatter)
         logger.addHandler(std_handler)
     if LOG_TO_GRAYLOG:
-        handler_gelf = pygelf.GelfUdpHandler(LOGSERVER_HOST, LOGSERVER_PORT)
+        handler_gelf = graypy.GELFUDPHandler(LOGSERVER_HOST, LOGSERVER_PORT)
         logger.addHandler(handler_gelf)
 
     # Start service

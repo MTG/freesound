@@ -32,7 +32,7 @@ import json
 import logging
 from logging.handlers import RotatingFileHandler
 
-import pygelf
+import graypy
 from twisted.internet import reactor
 from twisted.web import server, resource
 
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     logger.addHandler(handler)
     std_handler.setFormatter(formatter)
     logger.addHandler(std_handler)
-    handler_gelf = pygelf.GelfUdpHandler(sim_settings.LOGSERVER_HOST, sim_settings.LOGSERVER_PORT)
+    handler_gelf = graypy.GELFUDPHandler(sim_settings.LOGSERVER_HOST, sim_settings.LOGSERVER_PORT)
     logger.addHandler(handler_gelf)
 
     # Start service

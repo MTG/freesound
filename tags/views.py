@@ -40,7 +40,7 @@ def tags(request, multiple_tags=None):
     else:
         multiple_tags = []
     #Make all tags lower-cased and unique to get a case-insensitive search filter and shortened browse url
-    multiple_tags = sorted(set([x.lower() for x in multiple_tags if x]))
+    multiple_tags = sorted({x.lower() for x in multiple_tags if x})
     if multiple_tags:
         # We re-write tags as query filter and redirect
         search_filter = "+".join('tag:"' + tag + '"' for tag in multiple_tags)

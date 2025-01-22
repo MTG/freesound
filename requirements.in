@@ -28,7 +28,7 @@ fabric==2.6.0
 feedparser~=6.0.10
 freezegun==1.2.2
 future~=0.18.2
-graypy==0.2.12
+graypy==2.1.0
 gunicorn==21.2.0
 ipython==8.14.0
 jinja2==3.0.3  # This version needed for sphinx to not raise errors

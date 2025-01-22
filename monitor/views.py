@@ -176,7 +176,7 @@ def queries_stats_ajax(request):
             'filter': f'streams:{settings.GRAYLOG_SEARCH_STREAM_ID}',
             'field': 'query'
         }
-        req = requests.get(settings.GRAYLOG_DOMAIN + '/graylog/api/search/universal/relative/terms',
+        req = requests.get(settings.GRAYLOG_DOMAIN + '/api/search/universal/relative/terms',
                 auth=auth, params=params)
         req.raise_for_status()
         return JsonResponse(req.json())

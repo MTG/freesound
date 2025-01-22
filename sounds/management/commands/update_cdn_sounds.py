@@ -90,9 +90,13 @@ class Command(LoggingBaseCommand):
                         # Define useful paths for that sound
                         sound_id = sound.id
                         src_sound_path = sound.locations('path')
+                        if not os.path.exists(src_sound_path):
+                            console_logger.error(f'[{count + 1}/{total}] Sound with id {sound_id} does not exist, skipping')
+                            num_failed += 1
+                            continue
                         folder_id = str(sound.id//1000)
                         dst_sound_path = os.path.join(cdn_sounds_dir, folder_id,  os.path.basename(src_sound_path))
-                        console_logger.info(f'Adding sound to the CDN [{count + 1}/{total}] - {sound_id}')
+                        console_logger.info(f'[{count + 1}/{total}] Adding sound to the CDN - {sound_id}')
 
                         # Check if sound already exists in the expected remote location    
                         sound_exists = c.run(f'ls {dst_sound_path}', hide=True, warn=True).exited == 0

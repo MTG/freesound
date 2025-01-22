@@ -1,1 +1,1 @@
-DJANGO_DATABASE_URL=postgres://freesound@db/freesound
+DJANGO_DATABASE_URL=postgres://freesound:localfreesoundpgpassword@db/freesound

@@ -74,6 +74,8 @@ Below are instructions for setting up a local Freesound installation for develop
        # or if the above command does not work, try this one 
        docker compose run --rm --no-TTY db psql -h db -U freesound -d freesound < freesound-data/db_dev_dump/freesound-small-dev-dump-2023-09.sql
 
+If you a prompted for a password, use `localfreesoundpgpassword`, this is defined in the `docker-compose.yml` file.
+
 10. Update database by running Django migrations
 
         docker compose run --rm web python manage.py migrate

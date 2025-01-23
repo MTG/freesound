@@ -43,14 +43,16 @@ const toggleNewCollectionNameDiv = (select, newCollectionNameDiv) => {
 const initCollectSoundFormModal = (soundId, collectSoundUrl) => {
     
     // Modify the form structure to add a "Category" label inline with the select dropdown
-    const modalContainer = document.getElementById(`collectSoundModal`);
+    const modalContainer = document.getElementById('collectSoundModal');
     const selectElement = modalContainer.getElementsByTagName('select')[0];
     const wrapper = document.createElement('div');
     wrapper.style = 'display:inline-block;';
     if (selectElement === undefined){
         // If no select element, the modal has probably loaded for an unauthenticated user
+        console.log("select element is undefined")
         return;
     }
+    console.log("SELECT ELEMENT", selectElement);
     selectElement.parentNode.insertBefore(wrapper, selectElement.parentNode.firstChild);
     const label = document.createElement('div');
     label.innerHTML = "Select a collection:"
@@ -63,6 +65,8 @@ const initCollectSoundFormModal = (soundId, collectSoundUrl) => {
     const saveButtonElement = buttonsInModalForm[buttonsInModalForm.length - 1];
     const categorySelectElement = document.getElementById(`id_${  soundId.toString()  }-collection`);
     const newCategoryNameElement = document.getElementById(`id_${  soundId.toString()  }-new_collection_name`);
+    console.log("CATEGORY SELECT ELEMENT: ", categorySelectElement);
+    console.log("NEW CATEGORY NAME ELEMENT: ", newCategoryNameElement);
     toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
     categorySelectElement.addEventListener('change', (event) => {
         toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
@@ -80,18 +84,19 @@ const initCollectSoundFormModal = (soundId, collectSoundUrl) => {
 
 const bindCollectSoundModals = (container) => {
     const collectSoundButtons = [...container.querySelectorAll('[data-toggle="collect-modal"]')];
-    console.log("Collect Modal Button properly selected");
     collectSoundButtons.forEach(element => {
         if (element.dataset.alreadyBinded !== undefined){
             return;
         }
         element.dataset.alreadyBinded = true;
         element.addEventListener('click', (evt) => {
-            console.log("click detected")
             evt.preventDefault();   
             const modalUrlSplitted = element.dataset.modalUrl.split('/');
             const soundId = parseInt(modalUrlSplitted[modalUrlSplitted.length - 2], 10);
             if (!evt.altKey) {
+                console.log("MODAL URL", element.dataset.modalUrl);
+                console.log("COLLECT SOUND URL", element.dataset.collectSoundUrl);
+                console.log("SOUND ID ", soundId);
                 handleGenericModal(element.dataset.modalUrl, () => {
                     initCollectSoundFormModal(soundId, element.dataset.collectSoundUrl);
                 }, undefined, true, true);

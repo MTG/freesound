@@ -56,9 +56,8 @@ class CollectionSoundForm(forms.Form):
                                             if self.user_collections else[])
         
         self.fields['new_collection_name'].widget.attrs['placeholder'] = "Fill in the name for the new collection"
-        self.fields['category'].widget.attrs = {
-            'data-grey-items': f'{self.NO_CATEGORY_CHOICE_VALUE},{self.NEW_CATEGORY_CHOICE_VALUE}'}
-        #i don't fully understand what this last line of code does
+        self.fields['collection'].widget.attrs = {
+            'data-grey-items': f'{self.NO_COLLECTION_CHOICE_VALUE},{self.NEW_COLLECTION_CHOICE_VALUE}'}
     
     def save(self, *args, **kwargs):
         collection_to_use = None

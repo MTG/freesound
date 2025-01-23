@@ -6,6 +6,7 @@
 {% block extra-class %}{% if request.user.is_authenticated %}modal-width-60{% endif %}{% endblock %}
 {% block aria-label %}Collect sound modal{% endblock %}
 
+{% block body %}
 <div class="col-12">
     {% if not request.user.is_authenticated %}
         <div class="text-center">
@@ -25,10 +26,10 @@
         </div>
     {% else %}
     <div class="center">
-        <h4 class="v-spacing-5">Collect Sound</h4>
+        <h4 class="v-spacing-5">Add sound to collection</h4>
     </div>
     <div class="v-spacing-4">
-        {% if collections%}
+        {% if collections_with_sound%}
             <div class="v-spacing-4">
             {% bw_icon 'bookmark-filled' %}This sound is already in your collections under
             {% for col in collections_with_sound %}
@@ -43,5 +44,5 @@
     </div>
     {% endif %}
 </div>
-{% endblock%}
+{% endblock %}
 

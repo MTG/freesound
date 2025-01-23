@@ -60,6 +60,7 @@ def add_sound_to_collection(request, sound_id, collection_id=None):
     #a sound to collection.sounds
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ''
+    print("enter add sound")
     if request.method == 'POST':
         print('good job')
         #by now work with direct additions (only user-wise, not maintainer-wise)
@@ -67,6 +68,7 @@ def add_sound_to_collection(request, sound_id, collection_id=None):
         # NOTE: aquí ens hem quedat de moment xd
         # form = CollectionSoundForm()
     if request.is_ajax():
+        print("SECOND CASE")
         return msg_to_return
     else:
         messages.add_message(request, messages.WARNING, msg_to_return)
@@ -76,20 +78,6 @@ def add_sound_to_collection(request, sound_id, collection_id=None):
             return HttpResponseRedirect(next)
         else:
             return HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))
-    """
-    if collection_id is None:
-        collection = Collection.objects.filter(user=request.user).order_by("created")[0]
-    else:    
-        collection = get_object_or_404(Collection, id=collection_id, user=request.user)
-    """
-    #the creation of the SoundCollection object should be done through a form
-
-    if sound.moderation_state=='OK':
-        collection.sounds.add(sound) 
-        collection.save()
-        return HttpResponseRedirect(reverse("collections", args=[collection.id]))
-    else:
-        return HttpResponseRedirect(reverse("sound", args=[sound_id]))
     
 
 def delete_sound_from_collection(request, collection_id, sound_id):
@@ -119,19 +107,21 @@ def get_form_for_collecting_sound(request, sound_id):
                                prefix=sound.id,
                                user_collections=user_collections)
     
-    collections_already_containing_sound = Collection.objects.filter(user=request.  user, collection__sounds=sound).distinct()
-    # add_bookmark_url = '/'.join(
-        # request.build_absolute_uri(reverse('add-bookmark', args=[sound_id])).split('/')[:-2]) + '/'
+    collections_already_containing_sound = Collection.objects.filter(user=request.user, collectionsound__sound__id=sound.id).distinct()
+    # collect_sound_url = '/'.join(
+       # request.build_absolute_uri(reverse('add-sound-to-collection', args=[sound_id])).split('/')[:-2]) + '/'
     tvars = {'user': request.user,
              'sound': sound,
+             'sound_is_moderated_and_processed_ok': sound.moderated_and_processed_ok,
              'last_collection': last_collection,
              'collections': user_collections,
              'form': form,
-             'collections_with_sound': collections_already_containing_sound}
+             'collections_with_sound': collections_already_containing_sound
+             }
     print("NICE CHECKPOINT")
     print(tvars)
     
-    return render(request, 'modal_collect_sound.html', tvars)
+    return render(request, 'collections/modal_collect_sound.html', tvars)
 
 
 #NOTE: there should be two methods to add a sound into a collection

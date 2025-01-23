@@ -34,9 +34,10 @@ class CollectionSoundForm(forms.Form):
         choices=[], 
         required=True)
     
-    new_collection_name = forms.ChoiceField(
+    new_collection_name = forms.CharField(
         label = False,
         help_text=None,
+        max_length = 128,
         required = False)
     
     use_last_collection = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)

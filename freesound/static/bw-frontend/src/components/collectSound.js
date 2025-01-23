@@ -94,9 +94,6 @@ const bindCollectSoundModals = (container) => {
             const modalUrlSplitted = element.dataset.modalUrl.split('/');
             const soundId = parseInt(modalUrlSplitted[modalUrlSplitted.length - 2], 10);
             if (!evt.altKey) {
-                console.log("MODAL URL", element.dataset.modalUrl);
-                console.log("COLLECT SOUND URL", element.dataset.collectSoundUrl);
-                console.log("SOUND ID ", soundId);
                 handleGenericModal(element.dataset.modalUrl, () => {
                     initCollectSoundFormModal(soundId, element.dataset.collectSoundUrl);
                 }, undefined, true, true);

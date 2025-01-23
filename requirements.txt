@@ -150,7 +150,7 @@ future==0.18.3
     # via -r requirements.in
 gprof2dot==2022.7.29
     # via django-silk
-graypy==0.2.12
+graypy==2.1.0
     # via -r requirements.in
 gunicorn==21.2.0
     # via -r requirements.in

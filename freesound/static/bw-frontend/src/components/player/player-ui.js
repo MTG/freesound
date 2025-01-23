@@ -99,14 +99,13 @@ const createProgressIndicator = (parentNode, audioElement, playerImgNode, player
         }
         const rulerIndicator = playerImgNode.parentNode.getElementsByClassName('bw-player__ruler-indicator')[0];
         rulerIndicator.innerText = readout;
-      } else {
-        // Update playhead
-        const progressPercentage = evt.offsetX / progressIndicatorContainer.clientWidth
-        setProgressIndicator(progressPercentage * 100, parentNode)
-
-        // Update selected time indicator (only in big players)
-        updateProgressBarIndicator(parentNode, audioElement, progressPercentage)
       }
+      // Update playhead
+      const progressPercentage = evt.offsetX / progressIndicatorContainer.clientWidth
+      setProgressIndicator(progressPercentage * 100, parentNode)
+
+      // Update selected time indicator (only in big players)
+      updateProgressBarIndicator(parentNode, audioElement, progressPercentage)
     }),
     50
   )

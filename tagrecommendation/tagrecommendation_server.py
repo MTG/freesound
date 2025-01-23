@@ -172,8 +172,8 @@ if __name__ == '__main__':
         std_handler.setFormatter(formatter)
         logger.addHandler(std_handler)
     if tr_settings.LOG_TO_GRAYLOG:
-        handler_graypy = graypy.GELFHandler(tr_settings.LOGSERVER_IP_ADDRESS, tr_settings.LOGSERVER_PORT)
-        logger.addHandler(handler_graypy)
+        handler_gelf = graypy.GELFUDPHandler(tr_settings.LOGSERVER_HOST, tr_settings.LOGSERVER_PORT)
+        logger.addHandler(handler_gelf)
 
     # Start service
     logger.info('Configuring tag recommendation service...')

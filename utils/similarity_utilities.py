@@ -19,6 +19,7 @@
 #
 
 import logging
+import math
 import traceback
 
 from django.conf import settings
@@ -170,6 +171,13 @@ def hash_cache_key(key):
     return create_hash(key, limit=32)
 
 
+def get_l2_normalized_vector(vector):
+    norm = math.sqrt(sum([v*v for v in vector]))
+    if norm > 0:
+        vector = [v/norm for v in vector]
+    return vector
+
+
 def get_similarity_search_target_vector(sound_id, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
     # If the sound has been analyzed for similarity, returns the vector to be used for similarity search
     sa = sounds.models.SoundAnalysis.objects.filter(sound_id=sound_id, analyzer=analyzer, analysis_status="OK")
@@ -180,5 +188,7 @@ def get_similarity_search_target_vector(sound_id, analyzer=settings.SEARCH_ENGIN
             if data is not None:
                 vector_raw = data[config_options['vector_property_name']]
                 if vector_raw is not None:
+                    if config_options['l2_norm']:
+                        vector_raw = get_l2_normalized_vector(vector_raw)
                     return vector_raw
     return None

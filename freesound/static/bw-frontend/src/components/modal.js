@@ -85,7 +85,10 @@ const bindConfirmationModalElements = (container) => {
 
 // Logic to bind default modals
 
-const handleDefaultModal = (modalUrl, modalActivationParam, element) => {
+const handleDefaultModal = (modalUrl, modalActivationParam, atPage) => {
+  if ((atPage !== undefined) && modalUrl.indexOf('&page') == -1){
+    modalUrl += '&page=' + atPage;
+  }
   handleGenericModal(modalUrl, undefined, undefined, true, true, modalActivationParam);
 }
 

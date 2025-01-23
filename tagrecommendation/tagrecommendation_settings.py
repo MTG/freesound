@@ -28,7 +28,7 @@ RECOMMENDATION_DATA_DIR = '/freesound-data/tag_recommendation_models/'
 RECOMMENDATION_TMP_DATA_DIR = os.path.join(RECOMMENDATION_DATA_DIR, 'tmp')
 
 # Graylog GELF endpoint
-LOGSERVER_IP_ADDRESS = 'IP_ADDRESS'
+LOGSERVER_HOST = 'IP_ADDRESS'
 LOGSERVER_PORT = 0000
 
 # Set to true to log to stdout in addition to files and graylog

@@ -20,17 +20,17 @@ jobs:
         install: true
         driver: docker
 
-    - name: Notify workflow starting
-      uses: voxmedia/github-action-slack-notify-build@v1
-      continue-on-error: true
-      if: success()
-      id: slack
-      with:
-        channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
-        status: STARTING
-        color: warning
-      env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
+    #- name: Notify workflow starting
+    #  uses: voxmedia/github-action-slack-notify-build@v1
+    #  continue-on-error: true
+    #  if: success()
+    #  id: slack
+    #  with:
+    #    channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
+    #    status: STARTING
+    #    color: warning
+    #  env:
+    #    SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
 
     - name: Setup
       run: bash -c 'mkdir -p ./freesound-data/{packs,uploads,avatars} && echo FS_USER_ID_FROM_ENV=$(id -u) > .env && cp freesound/local_settings.example.py freesound/local_settings.py'
@@ -57,25 +57,25 @@ jobs:
     - name: Run tests
       run: docker compose -f docker-compose.test.yml run --rm test_runner python manage.py test --noinput --settings=freesound.test_settings
 
-    - name: Notify success
-      uses: voxmedia/github-action-slack-notify-build@v1
-      continue-on-error: true
-      if: success()
-      with:
-        message_id: ${{ steps.slack.outputs.message_id }}
-        channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
-        status: SUCCESS
-        color: good
-      env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
+    #- name: Notify success
+    #  uses: voxmedia/github-action-slack-notify-build@v1
+    #  continue-on-error: true
+    #  if: success()
+    #  with:
+    #    message_id: ${{ steps.slack.outputs.message_id }}
+    #    channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
+    #    status: SUCCESS
+    #    color: good
+    #  env:
+    #    SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
 
-    - name: Notify failure
-      uses: voxmedia/github-action-slack-notify-build@v1
-      if: failure()
-      with:
-        message_id: ${{ steps.slack.outputs.message_id }}
-        channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
-        status: FAILED
-        color: danger
-      env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
+    #- name: Notify failure
+    #  uses: voxmedia/github-action-slack-notify-build@v1
+    #  if: failure()
+    #  with:
+    #    message_id: ${{ steps.slack.outputs.message_id }}
+    #    channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
+    #    status: FAILED
+    #    color: danger
+    #  env:
+    #    SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}

@@ -176,7 +176,12 @@
          performing any ranking -->
     <similarity class="solr.BooleanSimilarityFactory"/>
   </fieldType>
+
+  <!-- Define different types of dense vector fields, including "dot product" versions that expect l^2 normalized vectors -->
   <fieldType name="knn_vector100" class="solr.DenseVectorField" vectorDimension="100" similarityFunction="euclidean" knnAlgorithm="hnsw" hnswMaxConnections="10" hnswBeamWidth="40"/>
+  <fieldType name="knn_vector100_l2" class="solr.DenseVectorField" vectorDimension="100" similarityFunction="dot_product" knnAlgorithm="hnsw" hnswMaxConnections="10" hnswBeamWidth="40"/>
+  <fieldType name="knn_vector512" class="solr.DenseVectorField" vectorDimension="512" similarityFunction="euclidean" knnAlgorithm="hnsw" hnswMaxConnections="10" hnswBeamWidth="40"/>
+  <fieldType name="knn_vector512_l2" class="solr.DenseVectorField" vectorDimension="512" similarityFunction="dot_product" knnAlgorithm="hnsw" hnswMaxConnections="10" hnswBeamWidth="40"/>
 
   <field name="_root_" type="string" docValues="false" indexed="true" stored="false"/>
   <field name="_text_" type="text_general" multiValued="true" indexed="true" stored="false"/>
@@ -243,6 +248,8 @@
   <field name="_nest_parent_" type="string" indexed="true" stored="true" />
   <field name="_nest_path_" type="_nest_path_"/>
   <field name="sim_vector100" type="knn_vector100" indexed="true" stored="true" required="false"/>
+  <field name="sim_vector100_l2" type="knn_vector100_l2" indexed="true" stored="true" required="false"/>
+  <field name="sim_vector512_l2" type="knn_vector512_l2" indexed="true" stored="true" required="false"/>
   <field name="analyzer" type="string" indexed="true" stored="true" required="false" />
   <field name="timestamp_start" type="pdouble" indexed="true" stored="true" required="false" />
   <field name="timestamp_end" type="pdouble" indexed="true" stored="true" required="false" />

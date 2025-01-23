@@ -60,7 +60,6 @@ def collections_for_user(request, collection_id=None):
     page_sounds = Sound.objects.ordered_ids([col_sound.sound_id for col_sound in paginator['page'].object_list])
     tvars.update(paginator)
     tvars['page_collection_and_sound_objects'] = zip(paginator['page'].object_list, page_sounds)
-
     return render(request, 'collections/collections.html', tvars)
 
 #NOTE: tbd - when a user wants to save a sound without having any collection, create a personal bookmarks collection
@@ -96,9 +95,11 @@ def delete_sound_from_collection(request, collection_id, sound_id):
     #this should work as in Packs - select several sounds and remove them all at once from the collection
     #by now it works as in Bookmarks in terms of UI
     sound = get_object_or_404(Sound, id=sound_id)
+    print(collection_id)
+    print(request.user.username)
     collection = get_object_or_404(Collection, id=collection_id, user=request.user)
-    collection.sounds.remove(sound)
-    collection.save()
+    collection_sound = CollectionSound.objects.get(sound=sound, collection=collection)
+    collection_sound.delete()
     return HttpResponseRedirect(reverse("collections", args=[collection.id]))
 
 @login_required

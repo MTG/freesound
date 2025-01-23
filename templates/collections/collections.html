@@ -16,7 +16,7 @@
                     {% if collections_for_user %}
                     {% for col in collections_for_user %}
                         <li><a href="{% url "collections" col.id %}" {% if collection.id == col.id %}style="font-weight:bold"{% endif %}>{{col.name}}</a>
-                        <span class=text-light-grey> · {{col.sounds.count}} sound{{col.sounds.count|pluralize}}</span></li>
+                        <span class=text-light-grey> · {{col.num_sounds}} sound{{col.num_sounds|pluralize}}</span></li>
                     {% endfor %}
                     {% else %}
                     <span class=text-light-grey> You don't have any collection yet... </span>
@@ -28,10 +28,10 @@
             <h3>{{collection.name}} </h3> 
             by <a href="{% url "account" collection.user.id %}">{{collection.user.username}}</a>
             <div>Description: {% if collection.description %}{{collection.description}} {% endif %}</div>
-
-            <div class = "row">
-                {% if collection.sounds.count > 0 %}
-                    {% for sound in collection.sounds.all %}
+            <div class="v-spacing-top-3">
+            {% if page.object_list %}    
+                <div class = "row">
+                    {% for collection, sound in page_collection_and_sound_objects  %}
                         <div class="col-6 col-md-4">
                             {% display_sound_small sound %}
                             {% if is_owner %}
@@ -39,9 +39,11 @@
                             {% endif %}
                         </div>
                     {% endfor %}
-                {% else %} 
-                There aren't any sounds in this collection yet 
-                {% endif %}
+                </div>
+            {% else %} 
+            There aren't any sounds in this collection yet 
+            {% endif %}
+            {% bw_paginator paginator page current_page request "bookmark" %}
             </div>
         </div>
     </div>

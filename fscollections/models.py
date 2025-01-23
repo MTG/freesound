@@ -44,6 +44,8 @@ class Collection(models.Model):
 
 class CollectionSound(models.Model):
    #this model relates collections and sounds
+   #it might be worth adding a name field composed of the sound ID and the collection name for
+   # for the sake of queries understanding
    user = models.ForeignKey(User, on_delete=models.CASCADE) #not sure bout this
    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
    collection = models.ForeignKey(Collection, related_name='collectionsound', on_delete=models.CASCADE)

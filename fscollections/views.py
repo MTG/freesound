@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
@@ -29,6 +30,8 @@ from fscollections.models import Collection, CollectionSound
 from fscollections.forms import CollectionSoundForm
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
+from utils.pagination import paginate
+
 
 @login_required
 def collections_for_user(request, collection_id=None):
@@ -47,9 +50,16 @@ def collections_for_user(request, collection_id=None):
     if user == collection.user:
         is_owner = True
 
+
     tvars = {'collection': collection,
              'collections_for_user': user_collections,
              'is_owner': is_owner}
+    
+    collection_sounds = CollectionSound.objects.filter(collection=collection)
+    paginator = paginate(request, collection_sounds, settings.BOOKMARKS_PER_PAGE)
+    page_sounds = Sound.objects.ordered_ids([col_sound.sound_id for col_sound in paginator['page'].object_list])
+    tvars.update(paginator)
+    tvars['page_collection_and_sound_objects'] = zip(paginator['page'].object_list, page_sounds)
 
     return render(request, 'collections/collections.html', tvars)
 
@@ -60,20 +70,22 @@ def add_sound_to_collection(request, sound_id, collection_id=None):
     #a sound to collection.sounds
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ''
-    print("enter add sound")
     if request.method == 'POST':
-        print('good job')
         #by now work with direct additions (only user-wise, not maintainer-wise)
         user_collections = Collection.objects.filter(user=request.user)
-        # NOTE: aquí ens hem quedat de moment xd
-        # form = CollectionSoundForm()
+        form = CollectionSoundForm(request.POST, sound_id=sound_id, user_collections=user_collections, user_saving_sound=request.user)
+        if form.is_valid():
+            saved_collection = form.save()
+            CollectionSound(user=request.user, collection=saved_collection, sound=sound, status="OK").save()
+            saved_collection.num_sounds =+ 1 #this should be done with a signal/method in Collection models
+            saved_collection.save()
+            msg_to_return = f'Sound {sound.original_filename} saved under collection {saved_collection.name}'
+
     if request.is_ajax():
-        print("SECOND CASE")
-        return msg_to_return
+        return JsonResponse({'message': msg_to_return})
     else:
         messages.add_message(request, messages.WARNING, msg_to_return)
         next = request.GET.get("next", "")
-        print("NEXT VALUE",next)
         if next:
             return HttpResponseRedirect(next)
         else:
@@ -118,8 +130,6 @@ def get_form_for_collecting_sound(request, sound_id):
              'form': form,
              'collections_with_sound': collections_already_containing_sound
              }
-    print("NICE CHECKPOINT")
-    print(tvars)
     
     return render(request, 'collections/modal_collect_sound.html', tvars)
 

@@ -19,7 +19,7 @@
 #
 
 from django import forms
-from fscollections.models import Collection
+from fscollections.models import Collection, CollectionSound
 
 #this class was aimed to perform similarly to BookmarkSound, however, at first the method to add a sound to a collection
 #will be opening the search engine in a modal, looking for a sound in there and adding it to the actual collection page
@@ -69,7 +69,7 @@ class CollectionSoundForm(forms.Form):
             elif self.cleaned_data['collection'] == self.NEW_COLLECTION_CHOICE_VALUE:
                 if self.cleaned_data['new_collection_name'] != "":
                     collection = \
-                        Collection(user=self.user_saving_bookmark, name=self.cleaned_data['new_collection_name'])
+                        Collection(user=self.user_saving_sound, name=self.cleaned_data['new_collection_name'])
                     collection.save()
                     collection_to_use = collection
             else:
@@ -80,7 +80,7 @@ class CollectionSoundForm(forms.Form):
             # SI -> per defecte es posa a BookmarksCollection
             try:
                 last_user_collection = \
-                    Collection.objects.filter(user=self.user_saving_bookmark).order_by('-created')[0]
+                    Collection.objects.filter(user=self.user_saving_sound).order_by('-created')[0]
                 # If user has a previous bookmark, use the same category (or use none if no category used in last
                 # bookmark)
                 collection_to_use = last_user_collection
@@ -90,5 +90,5 @@ class CollectionSoundForm(forms.Form):
 
         # If collection already exists, don't save it and return the existing one
         collection, _ = Collection.objects.get_or_create(
-            name = collection_to_use.name, user=self.user_saving_bookmark)
+            name = collection_to_use.name, user=self.user_saving_sound)
         return collection

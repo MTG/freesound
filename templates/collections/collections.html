@@ -35,7 +35,7 @@
                         <div class="col-6 col-md-4">
                             {% display_sound_small sound %}
                             {% if is_owner %}
-                                <div class="right v-spacing-4 v-spacing-top-negative-2"><a class="cursor-pointer bw-link--grey" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove '{{sound.original_filename}}' from '{{collection.name}}'?" data-modal-confirmation-url="{% url "delete-sound-from-collection" collection.id sound.id %}" title="Remove from collection" aria-label="Remove from collection">{% bw_icon 'trash' %} Remove sound</a></div>                                        
+                                <div class="right v-spacing-4 v-spacing-top-negative-2"><a class="cursor-pointer bw-link--grey" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove '{{sound.original_filename}}' from '{{collection.name}}'?" data-modal-confirmation-url="{% url "delete-sound-from-collection" collectionsound.id %}" title="Remove from collection" aria-label="Remove from collection">{% bw_icon 'trash' %} Remove sound</a></div>                                        
                             {% endif %}
                         </div>
                     {% endfor %}

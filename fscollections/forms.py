@@ -42,6 +42,7 @@ class CollectionSoundForm(forms.Form):
     
     use_last_collection = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     user_collections = None
+    user_available_collections = None
 
     NO_COLLECTION_CHOICE_VALUE = '-1'
     NEW_COLLECTION_CHOICE_VALUE = '0'
@@ -50,10 +51,15 @@ class CollectionSoundForm(forms.Form):
         self.user_collections = kwargs.pop('user_collections', False)
         self.user_saving_sound = kwargs.pop('user_saving_sound', False)
         self.sound_id = kwargs.pop('sound_id', False)
+        if self.user_collections:
+            self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(collectionsound__sound__id=self.sound_id)
+        print(self.user_available_collections)
+        print(self.sound_id)
+        print(self.user_collections)
         super().__init__(*args, **kwargs)
         self.fields['collection'].choices = [(self.NO_COLLECTION_CHOICE_VALUE, '--- No collection ---'),#in this case this goes to bookmarks collection (might have to be created)
                                            (self.NEW_COLLECTION_CHOICE_VALUE, 'Create a new collection...')] + \
-                                           ([(collection.id, collection.name) for collection in self.user_collections]
+                                           ([(collection.id, collection.name) for collection in self.user_available_collections ]
                                             if self.user_collections else[])
         
         self.fields['new_collection_name'].widget.attrs['placeholder'] = "Fill in the name for the new collection"
@@ -86,9 +92,17 @@ class CollectionSoundForm(forms.Form):
                 collection_to_use = last_user_collection
             except IndexError:
                 # This is first bookmark of the user
-                pass
-
+                pass 
         # If collection already exists, don't save it and return the existing one
         collection, _ = Collection.objects.get_or_create(
             name = collection_to_use.name, user=self.user_saving_sound)
         return collection
+    
+    def clean(self):
+        collection = self.cleaned_data['collection']
+        sound = self.sound_id
+        if CollectionSound.objects.filter(collection=collection,sound=sound).exists():
+            raise forms.ValidationError("This sound already exists in the collection")
+        
+        return super().clean()
+        

@@ -64,41 +64,41 @@ def collections_for_user(request, collection_id=None):
 
 #NOTE: tbd - when a user wants to save a sound without having any collection, create a personal bookmarks collection
 
-def add_sound_to_collection(request, sound_id, collection_id=None):
+def add_sound_to_collection(request, sound_id):
     #this view from now on should create a new CollectionSound object instead of adding
     #a sound to collection.sounds
+    # TODO: add restrictions for sound repetition and for user being owner/maintainer
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ''
+
+    if not request.GET.get('ajax'):
+        HttpResponseRedirect(reverse("sound", args=[sound.user.username,sound.id]))
+
     if request.method == 'POST':
         #by now work with direct additions (only user-wise, not maintainer-wise)
         user_collections = Collection.objects.filter(user=request.user)
         form = CollectionSoundForm(request.POST, sound_id=sound_id, user_collections=user_collections, user_saving_sound=request.user)
+
         if form.is_valid():
             saved_collection = form.save()
+            # TODO: moderation of CollectionSounds to be accounted for users who are neither maintainers nor owners
             CollectionSound(user=request.user, collection=saved_collection, sound=sound, status="OK").save()
             saved_collection.num_sounds =+ 1 #this should be done with a signal/method in Collection models
             saved_collection.save()
-            msg_to_return = f'Sound {sound.original_filename} saved under collection {saved_collection.name}'
-
-    if request.is_ajax():
-        return JsonResponse({'message': msg_to_return})
-    else:
-        messages.add_message(request, messages.WARNING, msg_to_return)
-        next = request.GET.get("next", "")
-        if next:
-            return HttpResponseRedirect(next)
+            msg_to_return = f'Sound "{sound.original_filename}" saved under collection {saved_collection.name}'
+            return JsonResponse('message', msg_to_return)
         else:
-            return HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))
-    
+            msg_to_return = 'This sound already exists in this category'
+            return JsonResponse('message', msg_to_return)
+        
 
-def delete_sound_from_collection(request, collection_id, sound_id):
+def delete_sound_from_collection(request, collectionsound_id):
     #this should work as in Packs - select several sounds and remove them all at once from the collection
     #by now it works as in Bookmarks in terms of UI
-    sound = get_object_or_404(Sound, id=sound_id)
-    print(collection_id)
-    print(request.user.username)
-    collection = get_object_or_404(Collection, id=collection_id, user=request.user)
-    collection_sound = CollectionSound.objects.get(sound=sound, collection=collection)
+    #TODO: this should be done through a POST request method, would be easier to send CollectionSound ID and delete it directly
+    # this would save up a query
+    collection_sound = get_object_or_404(CollectionSound, id=collectionsound_id)
+    collection = collection_sound.collection
     collection_sound.delete()
     return HttpResponseRedirect(reverse("collections", args=[collection.id]))
 
@@ -117,6 +117,7 @@ def get_form_for_collecting_sound(request, sound_id):
     
     user_collections = Collection.objects.filter(user=request.user).order_by('-created')
     form = CollectionSoundForm(initial={'collection': last_collection.id if last_collection else CollectionSoundForm.NO_COLLECTION_CHOICE_VALUE},
+                               sound_id=sound.id,
                                prefix=sound.id,
                                user_collections=user_collections)
     

@@ -38,9 +38,9 @@ def collections_for_user(request, collection_id=None):
     user = request.user
     user_collections = Collection.objects.filter(user=user).order_by('-created') 
     is_owner = False
-    #if no collection id is provided for this URL, render the oldest collection
-    #be careful when loading this url without having any collection for a user
-    #only show the collections for which you're the user(owner)
+    # if no collection id is provided for this URL, render the oldest collection
+    # be careful when loading this url without having any collection for a user
+    # only show the collections for which you're the user(owner)
     
     if not collection_id:
         collection = user_collections.last()    
@@ -65,8 +65,8 @@ def collections_for_user(request, collection_id=None):
 #NOTE: tbd - when a user wants to save a sound without having any collection, create a personal bookmarks collection
 
 def add_sound_to_collection(request, sound_id):
-    #this view from now on should create a new CollectionSound object instead of adding
-    #a sound to collection.sounds
+    # this view from now on should create a new CollectionSound object instead of adding
+    # a sound to collection.sounds
     # TODO: add restrictions for sound repetition and for user being owner/maintainer
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ''
@@ -95,8 +95,7 @@ def add_sound_to_collection(request, sound_id):
 def delete_sound_from_collection(request, collectionsound_id):
     #this should work as in Packs - select several sounds and remove them all at once from the collection
     #by now it works as in Bookmarks in terms of UI
-    #TODO: this should be done through a POST request method, would be easier to send CollectionSound ID and delete it directly
-    # this would save up a query
+    #TODO: this should be done through a POST request method
     collection_sound = get_object_or_404(CollectionSound, id=collectionsound_id)
     collection = collection_sound.collection
     collection_sound.delete()
@@ -122,8 +121,6 @@ def get_form_for_collecting_sound(request, sound_id):
                                user_collections=user_collections)
     
     collections_already_containing_sound = Collection.objects.filter(user=request.user, collectionsound__sound__id=sound.id).distinct()
-    # collect_sound_url = '/'.join(
-       # request.build_absolute_uri(reverse('add-sound-to-collection', args=[sound_id])).split('/')[:-2]) + '/'
     tvars = {'user': request.user,
              'sound': sound,
              'sound_is_moderated_and_processed_ok': sound.moderated_and_processed_ok,

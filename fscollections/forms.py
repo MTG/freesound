@@ -51,16 +51,15 @@ class CollectionSoundForm(forms.Form):
         self.user_collections = kwargs.pop('user_collections', False)
         self.user_saving_sound = kwargs.pop('user_saving_sound', False)
         self.sound_id = kwargs.pop('sound_id', False)
+
         if self.user_collections:
             self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(collectionsound__sound__id=self.sound_id)
-        print(self.user_available_collections)
-        print(self.sound_id)
-        print(self.user_collections)
+        
         super().__init__(*args, **kwargs)
         self.fields['collection'].choices = [(self.NO_COLLECTION_CHOICE_VALUE, '--- No collection ---'),#in this case this goes to bookmarks collection (might have to be created)
                                            (self.NEW_COLLECTION_CHOICE_VALUE, 'Create a new collection...')] + \
                                            ([(collection.id, collection.name) for collection in self.user_available_collections ]
-                                            if self.user_collections else[])
+                                            if self.user_available_collections else[])
         
         self.fields['new_collection_name'].widget.attrs['placeholder'] = "Fill in the name for the new collection"
         self.fields['collection'].widget.attrs = {
@@ -80,18 +79,12 @@ class CollectionSoundForm(forms.Form):
                     collection_to_use = collection
             else:
                 collection_to_use = Collection.objects.get(id=self.cleaned_data['collection'])
-        else: #en aquest cas - SÍ estem fent servir l'última coleccio, NO estem creant una nova coleccio, NO estem agafant una coleccio existent i 
-            # per tant ens trobem en un cas de NO COLLECTION CHOICE VALUE (no s'ha triat cap coleccio)
-            # si no es tria cap coleccio: l'usuari té alguna colecció? NO -> creem BookmarksCollection pels seus sons privats
-            # SI -> per defecte es posa a BookmarksCollection
+        else:
             try:
                 last_user_collection = \
                     Collection.objects.filter(user=self.user_saving_sound).order_by('-created')[0]
-                # If user has a previous bookmark, use the same category (or use none if no category used in last
-                # bookmark)
                 collection_to_use = last_user_collection
             except IndexError:
-                # This is first bookmark of the user
                 pass 
         # If collection already exists, don't save it and return the existing one
         collection, _ = Collection.objects.get_or_create(

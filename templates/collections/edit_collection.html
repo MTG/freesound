@@ -1,0 +1,48 @@
+{% extends "simple_page.html" %}
+{% load static %}
+{% load util %}
+{% load bw_templatetags %}
+{% load sounds_selector %}
+
+{% block title %}Edit collection - {{ collection.name }}{% endblock %}
+{% block page-title %}Edit collection{% endblock %}
+
+{% block page-content %}
+<div class="v-spacing-5 v-spacing-top-2">
+    <p>You can specify a <b>name</b> for the collection, a <b>description</b>, and the <b>sounds</b> that are part of the it. You can add <b>any moderated sound in Freesound</b>.
+
+    </p>
+</div>
+<div class="row no-gutters">
+    <div class="col-lg-8 offset-lg-2">
+        <h2 class="v-spacing-3">{{ collection.name }}</h2>
+        <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
+            {{ form.non_field_errors }}
+            {{ form.name.errors }}
+            {{ form.name.label_tag }}
+            {{ form.name }}
+            {{ form.description.errors }}
+            {{ form.description.label_tag }}
+            {{ form.description }}
+            <!--<span class="helptext">{{ form.description.help_text|safe }}</span>-->
+            <!--<div class="select-sounds-field v-spacing-5">
+                {{ form.pack_sounds }}
+                <label>Sounds in collection ({{ form.pack_sound_objects|length }})</label>
+                {% if not form.pack_sounds.value %}
+                <div class="v-spacing-4 v-spacing-top-2">No sounds have been added to this collection yet</div>
+                {% endif %}
+                {% sounds_selector form.pack_sound_objects %}
+                <div class="between v-spacing-top-2">
+                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from pack</button>
+                </div>
+            </div>-->
+            <button class="btn-primary w-100">Save collection</button>
+        </form>
+        <button class="btn-secondary w-100 v-spacing-top-3" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{% url "delete-collection" collection.id %}">Delete Collection</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/packEdit.js' %}"></script>
+{% endblock %}

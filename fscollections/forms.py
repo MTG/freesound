@@ -19,7 +19,9 @@
 #
 
 from django import forms
+from django.forms import ModelForm, Textarea, TextInput
 from fscollections.models import Collection, CollectionSound
+from utils.forms import HtmlCleaningCharField
 
 #this class was aimed to perform similarly to BookmarkSound, however, at first the method to add a sound to a collection
 #will be opening the search engine in a modal, looking for a sound in there and adding it to the actual collection page
@@ -55,6 +57,7 @@ class CollectionSoundForm(forms.Form):
         if self.user_collections:
             self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(collectionsound__sound__id=self.sound_id)
         
+        # NOTE: as a provisional solution to avoid duplicate sounds in a collection, Collections already containing the sound are not selectable
         super().__init__(*args, **kwargs)
         self.fields['collection'].choices = [(self.NO_COLLECTION_CHOICE_VALUE, '--- No collection ---'),#in this case this goes to bookmarks collection (might have to be created)
                                            (self.NEW_COLLECTION_CHOICE_VALUE, 'Create a new collection...')] + \
@@ -98,4 +101,16 @@ class CollectionSoundForm(forms.Form):
             raise forms.ValidationError("This sound already exists in the collection")
         
         return super().clean()
-        
+    
+class CollectionEditForm(forms.ModelForm):
+
+    # description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
+      #                                  help_text=HtmlCleaningCharField.make_help_text(), required=False)
+    
+    class Meta():
+        model = Collection
+        fields = ('name', 'description',)
+        widgets = {
+            'name': TextInput(),
+            'description': Textarea(attrs={'rows': 5, 'cols': 50})
+        }

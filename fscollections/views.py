@@ -27,7 +27,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from fscollections.models import Collection, CollectionSound
-from fscollections.forms import CollectionSoundForm
+from fscollections.forms import CollectionSoundForm, CollectionEditForm
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
 from utils.pagination import paginate
@@ -132,10 +132,26 @@ def get_form_for_collecting_sound(request, sound_id):
     
     return render(request, 'collections/modal_collect_sound.html', tvars)
 
+def delete_collection(request, collection_id):
+    collection = get_object_or_404(Collection, id=collection_id)
 
-#NOTE: there should be two methods to add a sound into a collection
-#1: adding from the sound.html page through a "bookmark-like" button and opening a Collections modal
-#2: from the collection.html page through a search-engine modal as done in Packs
+    if request.user==collection.user:
+        collection.delete()
+        return HttpResponseRedirect(reverse('collections'))
+
+def edit_collection(request, collection_id):
+    collection = get_object_or_404(Collection, id=collection_id)
+    form = CollectionEditForm(instance=collection)
+    tvars = {
+        "form": form,
+        "collection": collection
+    }
+    if request.user.username == collection.user.username:
+        return render(request, 'collections/edit_collection.html', tvars)
+
+# NOTE: there should be two methods to add a sound into a collection
+# 1: adding from the sound.html page through a "bookmark-like" button and opening a Collections modal
+# 2: from the collection.html page through a search-engine modal as done in Packs
 """
 @login_required
 def add_sounds_modal_for_collection(request, collection_id):

@@ -33,7 +33,7 @@
             <div class="v-spacing-4">
             {% bw_icon 'bookmark-filled' %}This sound is already in your collections under
             {% for col in collections_with_sound %}
-            <span class="text-black">{{col.name}}</span>{% if not forloop.last%},{% endif %}
+            <span class="text-black font-weight-bold">{{col.name}}</span>{% if not forloop.last%},{% endif %}
             {% endfor %}
             </div>
         {% endif %}

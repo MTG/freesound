@@ -84,7 +84,7 @@ Below are instructions for setting up a local Freesound installation for develop
 
 12. Install static build dependencies
 
-        docker compose run --rm web npm install --force
+        docker compose run --rm web npm install
 
 13. Build static files. Note that this step will need to be re-run every time there are changes in Freesound's static code (JS, CSS and static media files).
 

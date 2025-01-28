@@ -928,6 +928,8 @@ if SENTRY_DSN:
 # -------------------------------------------------------------------------------
 # Extra Freesound settings
 
+COLLECTIONS = True
+
 # Paths (depend on DATA_PATH potentially re-defined in local_settings.py)
 # If new paths are added here, remember to add a line for them at general.apps.GeneralConfig. This will ensure
 # directories are created if not existing

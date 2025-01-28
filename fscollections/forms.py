@@ -114,3 +114,11 @@ class CollectionEditForm(forms.ModelForm):
             'name': TextInput(),
             'description': Textarea(attrs={'rows': 5, 'cols': 50})
         }
+
+    def __init__(self, *args, **kwargs):
+        is_owner = kwargs.pop('is_owner', True)
+        super().__init__(*args, **kwargs)
+        if not is_owner:
+            for field in self.fields:
+                self.fields[field].widget.attrs['readonly'] = 'readonly'
+          

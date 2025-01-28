@@ -140,14 +140,27 @@ def delete_collection(request, collection_id):
         return HttpResponseRedirect(reverse('collections'))
 
 def edit_collection(request, collection_id):
+    
     collection = get_object_or_404(Collection, id=collection_id)
-    form = CollectionEditForm(instance=collection)
+
+    if request.method=="POST":
+        form = CollectionEditForm(request.POST, instance=collection)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('collections', args=[collection.id]))
+    else:
+        is_owner = False
+        if request.user == collection.user:
+            is_owner = True
+        form = CollectionEditForm(instance=collection, is_owner=is_owner)
+
     tvars = {
         "form": form,
-        "collection": collection
+        "collection": collection,
+        "is_owner": is_owner
     }
-    if request.user.username == collection.user.username:
-        return render(request, 'collections/edit_collection.html', tvars)
+    
+    return render(request, 'collections/edit_collection.html', tvars)
 
 # NOTE: there should be two methods to add a sound into a collection
 # 1: adding from the sound.html page through a "bookmark-like" button and opening a Collections modal

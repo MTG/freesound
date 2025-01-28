@@ -16,6 +16,9 @@
 <div class="row no-gutters">
     <div class="col-lg-8 offset-lg-2">
         <h2 class="v-spacing-3">{{ collection.name }}</h2>
+        {% if not is_owner %}
+        <span class="help-block text-grey">You don't have permissions to edit collection's name nor description</span>
+        {% endif %}
         <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
             {{ form.non_field_errors }}
             {{ form.name.errors }}

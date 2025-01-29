@@ -20,6 +20,7 @@
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import transaction
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -27,7 +28,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from fscollections.models import Collection, CollectionSound
-from fscollections.forms import CollectionSoundForm, CollectionEditForm
+from fscollections.forms import CollectionSoundForm, CollectionEditForm, CollectionMaintainerForm
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
 from utils.pagination import paginate
@@ -50,10 +51,11 @@ def collections_for_user(request, collection_id=None):
     if user == collection.user:
         is_owner = True
 
-
+    maintainers = User.objects.filter(collection_maintainer=collection.id)
     tvars = {'collection': collection,
              'collections_for_user': user_collections,
-             'is_owner': is_owner}
+             'is_owner': is_owner,
+             'maintainers': maintainers}
     
     collection_sounds = CollectionSound.objects.filter(collection=collection)
     paginator = paginate(request, collection_sounds, settings.BOOKMARKS_PER_PAGE)
@@ -65,8 +67,6 @@ def collections_for_user(request, collection_id=None):
 #NOTE: tbd - when a user wants to save a sound without having any collection, create a personal bookmarks collection
 
 def add_sound_to_collection(request, sound_id):
-    # this view from now on should create a new CollectionSound object instead of adding
-    # a sound to collection.sounds
     # TODO: add restrictions for sound repetition and for user being owner/maintainer
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ''
@@ -161,6 +161,50 @@ def edit_collection(request, collection_id):
     }
     
     return render(request, 'collections/edit_collection.html', tvars)
+
+def get_form_for_maintainer(request, user_id):
+    maintainer = get_object_or_404(User, id=user_id)
+
+    user_collections = Collection.objects.filter(user=request.user).order_by('-created')
+    last_collection = user_collections[0]
+    form = CollectionMaintainerForm(initial={'collection': last_collection.id},
+                               maintainer_id=maintainer.id,
+                               user_collections=user_collections)
+    
+    collections_already_containing_maintainer = Collection.objects.filter(user=request.user, maintainers__id=maintainer.id).distinct()
+    tvars = {'user': request.user,
+             'maintainer_id': maintainer.id,
+             'last_collection': last_collection,
+             'collections': user_collections,
+             'form': form,
+             'collections_with_maintainer': collections_already_containing_maintainer
+             }
+    return render(request, 'collections/modal_add_maintainer.html', tvars)
+# def add_maintainer(request, maintainer_id):
+
+def add_maintainer_to_collection(request, maintainer_id):
+    maintainer = get_object_or_404(User, id=maintainer_id)
+    msg_to_return = ''
+
+    if not request.GET.get('ajax'):
+        HttpResponseRedirect(reverse("accounts", args=[maintainer.username]))
+
+    if request.method == 'POST':
+        #by now work with direct additions (only user-wise, not maintainer-wise)
+        user_collections = Collection.objects.filter(user=request.user)
+        form = CollectionMaintainerForm(request.POST, maintainer_id=maintainer_id, user_collections=user_collections, user_adding_maintainer=request.user)
+        if form.is_valid():
+            saved_collection = form.save()
+            # TODO: moderation of CollectionSounds to be accounted for users who are neither maintainers nor owners
+            saved_collection.maintainers.add(maintainer)
+            saved_collection.save()
+            msg_to_return = f'User "{maintainer.username}" added as a maintainer to collection {saved_collection.name}'
+            return JsonResponse('message', msg_to_return)
+        else:
+            msg_to_return = 'Something is wrong view-wise'
+            return JsonResponse('message', msg_to_return)
+
+
 
 # NOTE: there should be two methods to add a sound into a collection
 # 1: adding from the sound.html page through a "bookmark-like" button and opening a Collections modal

@@ -29,8 +29,11 @@
         </div>    
         <div class="col-lg-8">
             <h3>{{collection.name}} </h3> 
-            by <a href="{% url "account" collection.user.id %}">{{collection.user.username}}</a>
+            by <a href="{% url "account" collection.user.username %}">{{collection.user.username}}</a>
             <div>Description: {% if collection.description %}{{collection.description}} {% endif %}</div>
+            <span>Maintainers: {% if maintainers %}{% for u in maintainers %}<a href="{% url 'account' u.username%}">{{u.username}}</a>{% endfor %}
+                {% else %}There are no maintainers in this collection yet{% endif %}
+            </span>
             <div class="v-spacing-top-3">
             {% if page.object_list %}    
                 <div class = "row">

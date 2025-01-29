@@ -121,4 +121,32 @@ class CollectionEditForm(forms.ModelForm):
         if not is_owner:
             for field in self.fields:
                 self.fields[field].widget.attrs['readonly'] = 'readonly'
-          
+
+class CollectionMaintainerForm(forms.Form):
+    collection = forms.ChoiceField(
+        label=False,
+        choices=[], 
+        required=True)
+    
+    use_last_collection = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
+    user_collections = None
+    user_available_collections = None
+
+    def __init__(self, *args, **kwargs):
+        self.user_collections = kwargs.pop('user_collections', False)
+        self.user_adding_maintainer = kwargs.pop('user_adding_maintainer', False)
+        self.maintainer_id = kwargs.pop('maintainer_id', False)
+        
+        if self.user_collections:
+            # the available collections are: from the user's collections, the ones in which the maintainer is not a maintaner still
+            self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(maintainers__id=self.maintainer_id)
+
+        super().__init__(*args, **kwargs)
+        self.fields['collection'].choices = ([(collection.id, collection.name) for collection in self.user_available_collections]
+                                              if self.user_available_collections else [])
+        
+    
+    def save(self, *args, **kwargs):
+        # this function returns de selected collection
+        collection_to_use = Collection.objects.get(id=self.cleaned_data['collection'])
+        return collection_to_use

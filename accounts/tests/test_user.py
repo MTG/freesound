@@ -921,8 +921,8 @@ class ChangeUsernameTest(TestCase):
     @override_settings(USERNAME_CHANGE_MAX_TIMES=2)
     def test_change_username_form_profile_page(self):
         # Create user and login
-        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
-        self.client.login(username='userA', password='testpass')
+        userA = User.objects.create_user('userA', email='userA@freesound.org')
+        self.client.force_login(userA)
 
         # Test save profile without changing username (note we set all mandatory fields)
         resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userA'], 'profile-ui_theme_preference': 'f'})
@@ -990,11 +990,11 @@ class ChangeUsernameTest(TestCase):
 
     @override_settings(USERNAME_CHANGE_MAX_TIMES=2)
     def test_change_username_form_admin(self):
-        User.objects.create_user('superuser', password='testpass', is_superuser=True, is_staff=True)
-        self.client.login(username='superuser', password='testpass')
+        superuser = User.objects.create_user('superuser', is_superuser=True, is_staff=True)
+        self.client.force_login(superuser)
 
         # Create user and get admin change url
-        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
+        userA = User.objects.create_user('userA', email='userA@freesound.org')
         admin_change_url = reverse('admin:auth_user_change', args=[userA.id])
 
         post_data = {'username': 'userA',
@@ -1068,8 +1068,8 @@ class ChangeUsernameTest(TestCase):
         OldUsername entry because usernames should be treated as case insensitive.
         """
         # Create user and login
-        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
-        self.client.login(username='userA', password='testpass')
+        userA = User.objects.create_user('userA', email='userA@freesound.org')
+        self.client.force_login(userA)
 
         # Rename "userA" to "UserA", should not create OldUsername object
         resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['UserA'], 'profile-ui_theme_preference': 'f'})
@@ -1090,8 +1090,8 @@ class ChangeUsernameTest(TestCase):
 class ChangeEmailViaAdminTestCase(TestCase):
 
     def test_change_email_form_admin(self):
-        User.objects.create_user('superuser', password='testpass', is_superuser=True, is_staff=True)
-        self.client.login(username='superuser', password='testpass')
+        superuser = User.objects.create_user('superuser', is_superuser=True, is_staff=True)
+        self.client.force_login(superuser)
 
         # Create user and get admin change url
         userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')

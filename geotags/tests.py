@@ -67,7 +67,7 @@ class GeoTagsTests(TestCase):
 
     def test_geotags_infowindow(self):
         sound = Sound.objects.first()
-        gt = GeoTag.objects.create(user=sound.user, lat=45.8498, lon=-62.6879, zoom=9)
+        gt = GeoTag.objects.create(lat=45.8498, lon=-62.6879, zoom=9)
         sound.geotag = gt
         sound.save()
         resp = self.client.get(reverse('geotags-infowindow', kwargs={'sound_id': sound.id}))
@@ -82,7 +82,7 @@ class GeoTagsTests(TestCase):
         sounds[1].set_tags([tag])
         sounds[0].set_tags([tag.upper()])
 
-        gt = GeoTag.objects.create(user=user, lat=45.8498, lon=-62.6879, zoom=9)
+        gt = GeoTag.objects.create(lat=45.8498, lon=-62.6879, zoom=9)
         for sound in sounds:
             sound.geotag = gt
             sound.save()

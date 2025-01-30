@@ -2,7 +2,7 @@ import {dismissModal, handleGenericModal} from "./modal";
 import {showToast} from "./toast";
 import {makePostRequest} from "../utils/postRequest";
 
-const saveCollectionSound = (collectSoundUrl, data, modalType) => {
+const saveCollectionAttr = (collectionAttrUrl, data, modalType) => {
 
     let formData = {};
     if (data === undefined){
@@ -13,19 +13,19 @@ const saveCollectionSound = (collectSoundUrl, data, modalType) => {
     } else {
         formData = data;
     }
-    makePostRequest(collectSoundUrl, formData, (responseText) => {
-        // CollectionSound saved successfully. Close model and show feedback
+    makePostRequest(collectionAttrUrl, formData, (responseText) => {
+        // Collection attribute saved successfully. Close model and show feedback
         dismissModal(modalType); // TBC
         try {
             showToast(JSON.parse(responseText).message);
         } catch (error) {
             // If not logged in, the url will respond with a redirect and JSON parsing will fail
-            showToast("You need to be logged in before collecting sounds.")
+            showToast("You need to be logged in before using collections.")
         }
     }, () => {
         // Unexpected errors happened while processing request: close modal and show error in toast
         dismissModal(modalType);
-        showToast('Some errors occurred while collecting the sound.');
+        showToast('Some errors occurred while editing the collection.');
     });
 }
 
@@ -40,7 +40,7 @@ const toggleNewCollectionNameDiv = (select, newCollectionNameDiv) => {
 }
 
 
-const initCollectSoundFormModal = (soundId, collectSoundUrl, modalType) => {
+const initCollectionFormModal = (objId, collectionAttrUrl, modalType) => {
     
     // Modify the form structure to add a "Category" label inline with the select dropdown
     const modalContainer = document.getElementById(modalType);
@@ -61,10 +61,10 @@ const initCollectSoundFormModal = (soundId, collectSoundUrl, modalType) => {
     const formElement = modalContainer.getElementsByTagName('form')[0];
     const buttonsInModalForm = formElement.getElementsByTagName('button');
     const saveButtonElement = buttonsInModalForm[buttonsInModalForm.length - 1];
-    const categorySelectElement = document.getElementById(`id_${  soundId.toString()  }-collection`);
+    const categorySelectElement = document.getElementById(`id_${  objId.toString()  }-collection`);
     // New collection is not allowed for addMaintainerModal
     if (modalType=='collectSoundModal'){
-        const newCategoryNameElement = document.getElementById(`id_${  soundId.toString()  }-new_collection_name`);
+        const newCategoryNameElement = document.getElementById(`id_${  objId.toString()  }-new_collection_name`);
         toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
         categorySelectElement.addEventListener('change', (event) => {
             toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
@@ -72,21 +72,21 @@ const initCollectSoundFormModal = (soundId, collectSoundUrl, modalType) => {
     }
     
 
-    // Bind action to save collectionSound in "add sound to collection button" (and prevent default form submit)
+    // Bind action to save collection attribute and prevent default submit
     saveButtonElement.addEventListener('click', (e) => {
         e.preventDefault();
         const data = {};
-        data.collection = document.getElementById(`id_${  soundId.toString()  }-collection`).value;
+        data.collection = document.getElementById(`id_${  objId.toString()  }-collection`).value;
         if(modalType=='collectSoundModal'){
-            data.new_collection_name = document.getElementById(`id_${  soundId.toString()  }-new_collection_name`).value;
+            data.new_collection_name = document.getElementById(`id_${  objId.toString()  }-new_collection_name`).value;
         }
-        saveCollectionSound(collectSoundUrl, data, modalType);
+        saveCollectionAttr(collectionAttrUrl, data, modalType);
     });
 };
 
-const bindCollectSoundModals = (container) => {
-    const collectSoundButtons = [...container.querySelectorAll('[data-toggle="collect-modal"]')];
-    collectSoundButtons.forEach(element => {
+const bindCollectionModals = (container) => {
+    const collectionButtons = [...container.querySelectorAll('[data-toggle="collect-modal"]')];
+    collectionButtons.forEach(element => {
         if (element.dataset.alreadyBinded !== undefined){
             return;
         }
@@ -94,17 +94,17 @@ const bindCollectSoundModals = (container) => {
         element.addEventListener('click', (evt) => {
             evt.preventDefault();   
             const modalUrlSplitted = element.dataset.modalUrl.split('/');
-            const soundId = parseInt(modalUrlSplitted[modalUrlSplitted.length - 2], 10);
+            const objId = parseInt(modalUrlSplitted[modalUrlSplitted.length - 2], 10);
             const modalType = element.dataset.modalType;
             if (!evt.altKey) {
                 handleGenericModal(element.dataset.modalUrl, () => {
-                    initCollectSoundFormModal(soundId, element.dataset.collectSoundUrl, modalType);
+                    initCollectionFormModal(objId, element.dataset.collectionAttrUrl, modalType);
                 }, undefined, true, true);
             } else {
-                saveCollectionSound(element.dataset.collectSoundUrl);
+                saveCollectionAttr(element.dataset.collectionAttrUrl);
             }
         });
     });
 }
 
-export { bindCollectSoundModals };
+export { bindCollectionModals };

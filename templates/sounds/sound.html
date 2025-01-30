@@ -73,7 +73,7 @@
                                     {% endif %}
                                     {% if COLLECTIONS%}
                                     <span class="h-spacing-left-1"></span>
-                                    <button title="Collect this sound" aria-label="Collect this sound" class="btn-neutral" data-toggle="collect-modal" data-modal-type="collectSoundModal" data-modal-url="{% url 'collection-add-form-for-sound' sound.id %}" data-collect-sound-url="{% url 'add-sound-to-collection' sound.id %}">
+                                    <button title="Collect this sound" aria-label="Collect this sound" class="btn-neutral" data-toggle="collect-modal" data-modal-type="collectSoundModal" data-modal-url="{% url 'collection-add-form-for-sound' sound.id %}" data-collection-attr-url="{% url 'add-sound-to-collection' sound.id %}">
                                         {% bw_icon 'bookmark' %}
                                     </button>
                                     {% else %}

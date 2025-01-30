@@ -225,11 +225,10 @@ def create_sound(user,
         # Create geotag from lat,lon,zoom text format
         if sound_fields['geotag']:
             lat, lon, zoom = sound_fields['geotag'].split(',')
-            geotag = GeoTag(user=user,
-                            lat=float(lat),
-                            lon=float(lon),
-                            zoom=int(zoom))
-            geotag.save()
+            geotag = GeoTag.objects.create(
+                lat=float(lat),
+                lon=float(lon),
+                zoom=int(zoom))
             sound.geotag = geotag
     else:
         # Create geotag from lat, lon, zoom separated fields (if available)
@@ -237,11 +236,10 @@ def create_sound(user,
         lon = sound_fields.get('lon', None)
         zoom = sound_fields.get('zoom', None)
         if lat is not None and lon is not None and zoom is not None:
-            geotag = GeoTag(user=user,
-                            lat=float(lat),
-                            lon=float(lon),
-                            zoom=int(zoom))
-            geotag.save()
+            geotag = GeoTag.objects.create(
+                lat=float(lat),
+                lon=float(lon),
+                zoom=int(zoom))
             sound.geotag = geotag
 
     # 6 set description, tags

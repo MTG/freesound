@@ -529,7 +529,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                     sound.geotag.save()
                 else:
                     sound.geotag = GeoTag.objects.create(
-                        lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
+                        lat=data["lat"], lon=data["lon"], zoom=data["zoom"])
 
         sound_sources = data["sources"]
         if sound_sources != sound.get_sound_sources_as_set():

@@ -30,7 +30,6 @@ web_logger = logging.getLogger("web")
 
 
 class GeoTag(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
     lat = models.FloatField(db_index=True)
     lon = models.FloatField(db_index=True)
     zoom = models.IntegerField()
@@ -40,14 +39,14 @@ class GeoTag(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user} ({self.lat:f},{self.lon:f})"
+        return f"({self.lat:f},{self.lon:f})"
 
     def get_absolute_url(self):
         return reverse('geotag', args=[smart_str(self.id)])
 
     def retrieve_location_information(self):
         """Use the mapbox API to retrieve information about the latitude and longitude of this geotag.
-        If no iformation has been retrieved from mapbox and a mapbox access token is available, retrieve and
+        If no information has been retrieved from mapbox and a mapbox access token is available, retrieve and
         store that information. Then, pre-process that information to save a place name for display purposes.
         """
         if settings.MAPBOX_ACCESS_TOKEN and (self.information is None or self.should_update_information):
@@ -67,11 +66,11 @@ class GeoTag(models.Model):
                     # Try with "place" feature
                     self.location_name = [feature for feature in features if 'place' in feature['place_type']][0]['place_name']
                 except IndexError:
-                    # If "place" feature is not avialable, use "locality" feature
+                    # If "place" feature is not available, use "locality" feature
                     try:
                         self.location_name = [feature for feature in features if 'locality' in feature['place_type']][0]['place_name']
                     except IndexError:
-                        # If "place" nor "locality" features are avialable, use "region"
+                        # If "place" nor "locality" features are available, use "region"
                         try:
                             self.location_name = [feature for feature in features if 'region' in feature['place_type']][0]['place_name']
                         except:

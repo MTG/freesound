@@ -169,6 +169,7 @@ def get_form_for_maintainer(request, user_id):
     last_collection = user_collections[0]
     form = CollectionMaintainerForm(initial={'collection': last_collection.id},
                                maintainer_id=maintainer.id,
+                               prefix=maintainer.id,
                                user_collections=user_collections)
     
     collections_already_containing_maintainer = Collection.objects.filter(user=request.user, maintainers__id=maintainer.id).distinct()
@@ -180,17 +181,12 @@ def get_form_for_maintainer(request, user_id):
              'collections_with_maintainer': collections_already_containing_maintainer
              }
     return render(request, 'collections/modal_add_maintainer.html', tvars)
-# def add_maintainer(request, maintainer_id):
 
 def add_maintainer_to_collection(request, maintainer_id):
     maintainer = get_object_or_404(User, id=maintainer_id)
     msg_to_return = ''
 
-    if not request.GET.get('ajax'):
-        HttpResponseRedirect(reverse("accounts", args=[maintainer.username]))
-
     if request.method == 'POST':
-        #by now work with direct additions (only user-wise, not maintainer-wise)
         user_collections = Collection.objects.filter(user=request.user)
         form = CollectionMaintainerForm(request.POST, maintainer_id=maintainer_id, user_collections=user_collections, user_adding_maintainer=request.user)
         if form.is_valid():
@@ -199,10 +195,18 @@ def add_maintainer_to_collection(request, maintainer_id):
             saved_collection.maintainers.add(maintainer)
             saved_collection.save()
             msg_to_return = f'User "{maintainer.username}" added as a maintainer to collection {saved_collection.name}'
-            return JsonResponse('message', msg_to_return)
         else:
-            msg_to_return = 'Something is wrong view-wise'
-            return JsonResponse('message', msg_to_return)
+            msg_to_return = form.errors
+    
+    if request.is_ajax():
+        return JsonResponse({'message': msg_to_return})
+    else:
+        messages.add_message(request, messages.WARNING, msg_to_return)
+        next = request.GET.get("next", "")
+        if next:
+            return HttpResponseRedirect(next)
+        else:
+            return HttpResponseRedirect(reverse("account", args=[maintainer.username]))
 
 
 

@@ -10,5 +10,5 @@ urlpatterns = [
     path('<int:collection_id>/edit', views.edit_collection, name="collection-edit"),
     path('<int:collection_id>/delete', views.delete_collection, name="delete-collection"),
     path('get_form_for_maintainer/<int:user_id>/', views.get_form_for_maintainer, name="add-maintainer-form"),
-    path('<int:user_id>/add/', views.add_maintainer_to_collection, name="add-maintainer-to-collection")
+    path('addmaintainer/<int:maintainer_id>/', views.add_maintainer_to_collection, name="add-maintainer-to-collection")
 ]

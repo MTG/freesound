@@ -226,7 +226,7 @@ def delete_user(user_id, deletion_action, deletion_reason):
         workers_logger.info("Unexpected error while deleting user (%s)" % json.dumps(
             {'task_name': deletion_action, 'user_id': user.id, 'username': username_before_deletion,
              'deletion_reason': deletion_reason, 'error': str(e), 'work_time': round(time.time() - start_time)}))
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
 
 
 @shared_task(name=VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
@@ -249,7 +249,7 @@ def validate_bulk_describe_csv(bulk_upload_progress_object_id):
             {'task_name': VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
                 'error': str(e),
                 'work_time': round(time.time() - start_time)}))
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
 
 
 @shared_task(name=BULK_DESCRIBE_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
@@ -275,7 +275,7 @@ def bulk_describe(bulk_upload_progress_object_id):
             {'task_name': BULK_DESCRIBE_TASK_NAME, 'bulk_upload_progress_id': bulk_upload_progress_object_id,
                 'error': str(e),
                 'work_time': round(time.time() - start_time)}))
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
 
 
 @shared_task(name=PROCESS_ANALYSIS_RESULTS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
@@ -329,7 +329,7 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
         workers_logger.info("Error processing analysis results (%s)" % json.dumps(
                 {'task_name': PROCESS_ANALYSIS_RESULTS_TASK_NAME, 'sound_id': sound_id, 'analyzer': analyzer, 'status': status,
                  'error': str(e), 'work_time': round(time.time() - start_time)}))
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
 
 
 @shared_task(name=SOUND_PROCESSING_TASK_NAME, queue=settings.CELERY_SOUND_PROCESSING_QUEUE_NAME)
@@ -371,7 +371,7 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
         workers_logger.info("WorkerException while processing sound (%s)" % json.dumps(
             {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
 
     except Exception as e:
         try:
@@ -383,7 +383,7 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
         workers_logger.info("Unexpected error while processing sound (%s)" % json.dumps(
             {'task_name': SOUND_PROCESSING_TASK_NAME, 'sound_id': sound_id, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
 
     cancel_timeout_alarm()
 
@@ -417,12 +417,12 @@ def process_before_description(audio_file_path):
         workers_logger.info("WorkerException while processing-before-describe sound (%s)" % json.dumps(
             {'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
 
     except Exception as e:
         workers_logger.info("Unexpected error while processing-before-describe sound (%s)" % json.dumps(
             {'task_name': PROCESS_BEFORE_DESCRIPTION_TASK_NAME, 'audio_file_path': audio_file_path, 'error': str(e),
              'work_time': round(time.time() - start_time)}))
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
 
     cancel_timeout_alarm()

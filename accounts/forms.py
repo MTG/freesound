@@ -351,7 +351,7 @@ class ProfileForm(forms.ModelForm):
                         % (settings.USERNAME_CHANGE_MAX_TIMES - self.n_times_changed_username,
                            's' if (settings.USERNAME_CHANGE_MAX_TIMES - self.n_times_changed_username) != 1 else '')
         else:
-            help_text = "You already changed your username the maximum times allowed"
+            help_text = "You have already changed your username the maximum number of times allowed"
             self.fields['username'].disabled = True
         self.fields['username'].help_text += " " + help_text
 

@@ -16,6 +16,8 @@ asgiref==3.7.2
     #   django-cors-headers
 asttokens==2.4.1
     # via stack-data
+async-timeout==5.0.1
+    # via redis
 autopep8==1.5.7
     # via
     #   -r requirements.in
@@ -276,7 +278,7 @@ pyyaml==6.0.1
     # via
     #   -r requirements.in
     #   djangorestframework-yaml
-redis==3.2.0
+redis==5.2.1
     # via
     #   -r requirements.in
     #   django-redis

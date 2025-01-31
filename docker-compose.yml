@@ -61,7 +61,7 @@ services:
 
     # Redis (caches)
     redis:
-        image: redis:alpine
+        image: redis:7.4.2
         command: redis-server --port 6379
 
     # Celery broker (queue manager)

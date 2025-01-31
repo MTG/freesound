@@ -78,13 +78,16 @@ def bookmarks_for_user(request, username, category_id=None):
 @login_required
 @transaction.atomic()
 def delete_bookmark_category(request, category_id):
-    category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
-    msg = "Removed bookmark category \"" + category.name + "\"."
-    category.delete()
-    messages.add_message(request, messages.WARNING, msg)
-    next = request.GET.get("next", "")
-    if next:
-        return HttpResponseRedirect(next)
+    if request.method == "POST":
+        category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
+        msg = f"""Removed bookmark category "{category.name}"."""
+        category.delete()
+        messages.add_message(request, messages.WARNING, msg)
+        next = request.POST.get("next", "")
+        if next:
+            return HttpResponseRedirect(next)
+        else:
+            return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
     else:
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
@@ -167,16 +170,19 @@ def add_bookmark(request, sound_id):
 
 @login_required
 def delete_bookmark(request, bookmark_id):
-    bookmark = get_object_or_404(Bookmark, id=bookmark_id, user=request.user)
-    msg = "Removed bookmark for sound \"" + bookmark.sound.original_filename + "\"."
-    bookmark.delete()
-    messages.add_message(request, messages.WARNING, msg)
-    next = request.GET.get("next", "")
-    page = request.GET.get("page", "1")
-    if next:
-        return HttpResponseRedirect(next + "?page=" + str(page))
+    if request.method == "POST":
+        bookmark = get_object_or_404(Bookmark, id=bookmark_id, user=request.user)
+        msg = f"""Removed bookmark for sound "{bookmark.sound.original_filename}"."""
+        bookmark.delete()
+        messages.add_message(request, messages.WARNING, msg)
+        next = request.POST.get("next", "")
+        page = request.POST.get("page", "1")
+        if next:
+            return HttpResponseRedirect(next + "?page=" + str(page))
+        else:
+            return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]) + "?page=" + str(page))
     else:
-        return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]) + "?page=" + str(page))
+        return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
 
 def get_form_for_sound(request, sound_id):

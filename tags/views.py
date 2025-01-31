@@ -25,9 +25,11 @@ from django.core.cache import cache
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+import sentry_sdk
 
 from search.views import search_view_helper
 from tags.models import Tag, FS1Tag
+from utils.search import SearchEngineException
 from utils.search.search_sounds import perform_search_engine_query
 
 search_logger = logging.getLogger("search")
@@ -61,18 +63,26 @@ def tags(request, multiple_tags=None):
         if 'sqp' in tvars and not tvars['sqp'].get_tags_in_filters():
             initial_tagcloud = cache.get('initial_tagcloud')
             if initial_tagcloud is None:
-                # If tagcloud is not cached, make a query to retrieve it and save it to cache
-                results, _ = perform_search_engine_query(dict(
-                    textual_query='',
-                    query_filter= "*:*",
-                    num_sounds=1,
-                    facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 200}},
-                    group_by_pack=True,
-                    group_counts_as_one_in_facets=False,
-                ))
-                initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets[settings.SEARCH_SOUNDS_FIELD_TAGS]]
-                cache.set('initial_tagcloud', initial_tagcloud, 60 * 60 * 12)  # cache for 12 hours
-            tvars.update({'initial_tagcloud': initial_tagcloud})
+                try:
+                    # If tagcloud is not cached, make a query to retrieve it and save it to cache
+                    results, _ = perform_search_engine_query(dict(
+                        textual_query='',
+                        query_filter= "*:*",
+                        num_sounds=1,
+                        facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {'limit': 200}},
+                        group_by_pack=True,
+                        group_counts_as_one_in_facets=False,
+                    ))
+                    if settings.SEARCH_SOUNDS_FIELD_TAGS in results.facets:
+                        initial_tagcloud = [dict(name=f[0], count=f[1], browse_url=reverse('tags', args=[f[0]])) for f in results.facets.get(settings.SEARCH_SOUNDS_FIELD_TAGS, [])]
+                        cache.set('initial_tagcloud', initial_tagcloud, 60 * 60 * 12)  # cache for 12 hours
+                        tvars.update({'initial_tagcloud': initial_tagcloud})
+                    else:
+                        tvars.update({'error_text': 'There was an error while loading results, please try again later.'})
+                except SearchEngineException as e:
+                    search_logger.info(f'Tag browse error: Could probably not connect to Solr - {e}')
+                    sentry_sdk.capture_exception(e)  # Manually capture exception so it has more info and Sentry can organize it properly
+                    tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
             
         return render(request, 'search/search.html', tvars)
 

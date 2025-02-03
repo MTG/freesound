@@ -27,6 +27,14 @@
             {{ form.description.errors }}
             {{ form.description.label_tag }}
             {{ form.description }}
+            {% for maintainer in form.maintainers%}
+                <div class="checkbox-item">
+                    <label class="username" style="display: flex;align-items: center;">
+                        {{ maintainer.choice_label }}
+                        {{ maintainer.tag }}
+                    </label>
+                </div>
+            {% endfor %}
             <!--<span class="helptext">{{ form.description.help_text|safe }}</span>-->
             <!--<div class="select-sounds-field v-spacing-5">
                 {{ form.pack_sounds }}

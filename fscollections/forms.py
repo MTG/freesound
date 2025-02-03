@@ -19,7 +19,7 @@
 #
 
 from django import forms
-from django.forms import ModelForm, Textarea, TextInput
+from django.forms import ModelForm, Textarea, TextInput, SelectMultiple
 from fscollections.models import Collection, CollectionSound
 from utils.forms import HtmlCleaningCharField
 
@@ -104,23 +104,24 @@ class CollectionSoundForm(forms.Form):
     
 class CollectionEditForm(forms.ModelForm):
 
-    # description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
-      #                                  help_text=HtmlCleaningCharField.make_help_text(), required=False)
-    
     class Meta():
         model = Collection
-        fields = ('name', 'description',)
+        fields = ('name', 'description','maintainers')
         widgets = {
             'name': TextInput(),
-            'description': Textarea(attrs={'rows': 5, 'cols': 50})
+            'description': Textarea(attrs={'rows': 5, 'cols': 50}),
+            'maintainers': forms.CheckboxSelectMultiple()
         }
 
     def __init__(self, *args, **kwargs):
         is_owner = kwargs.pop('is_owner', True)
         super().__init__(*args, **kwargs)
+        self.fields['maintainers'].queryset = self.instance.maintainers.all().values_list('username', flat=True)
+        
         if not is_owner:
             for field in self.fields:
                 self.fields[field].widget.attrs['readonly'] = 'readonly'
+
 
 class CollectionMaintainerForm(forms.Form):
     collection = forms.ChoiceField(

@@ -62,7 +62,7 @@ class UserUploadAndDescribeSounds(TestCase):
 
     @override_uploads_path_with_temp_directory
     @mock.patch('general.tasks.process_before_description.delay')
-    def test_handle_uploaded_duplicate_filenames_html(self):
+    def test_handle_uploaded_duplicate_filenames_html(self, patched_method):
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
 

@@ -138,21 +138,24 @@ def delete_collection(request, collection_id):
     if request.user==collection.user:
         collection.delete()
         return HttpResponseRedirect(reverse('collections'))
+    else:
+        return HttpResponseRedirect(reverse('edit-collection', args=[collection.id]))
 
 def edit_collection(request, collection_id):
     
     collection = get_object_or_404(Collection, id=collection_id)
-
+    print("REQUEST METHOD:  ",request.method)
     if request.method=="POST":
         form = CollectionEditForm(request.POST, instance=collection)
         if form.is_valid():
             form.save()
             return HttpResponseRedirect(reverse('collections', args=[collection.id]))
+
+    if request.user == collection.user:
+        is_owner = True
     else:
         is_owner = False
-        if request.user == collection.user:
-            is_owner = True
-        form = CollectionEditForm(instance=collection, is_owner=is_owner)
+    form = CollectionEditForm(instance=collection, is_owner=is_owner)
 
     tvars = {
         "form": form,

@@ -28,6 +28,7 @@ class Collection(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE) 
     name = models.CharField(max_length=255) #max_length as in Packs (128 for Bookmarks)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
+    modified = models.DateTimeField(db_index=True, auto_now=True)
     description = models.TextField()
     maintainers = models.ManyToManyField(User, related_name="collection_maintainer")
     num_sounds = models.PositiveIntegerField(default=0)
@@ -46,15 +47,15 @@ class CollectionSound(models.Model):
    #this model relates collections and sounds
    #it might be worth adding a name field composed of the sound ID and the collection name for
    # for the sake of queries understanding
-   user = models.ForeignKey(User, on_delete=models.CASCADE) #not sure bout this
+   user = models.ForeignKey(User, on_delete=models.CASCADE) 
    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
    collection = models.ForeignKey(Collection, related_name='collectionsound', on_delete=models.CASCADE)
    created = models.DateTimeField(db_index=True, auto_now_add=True)
    
    STATUS_CHOICES = (
         ("PE", 'Pending'),
-        ("OK", 'OK'),
-        ("DE", 'Deferred'),
+        ("OK", 'Accepted'),
+        ("RE", 'Refused'),
     )
    status = models.CharField(db_index=True, max_length=2, choices=STATUS_CHOICES, default="PE")
    #sound won't be added to collection until maintainers approve the sound

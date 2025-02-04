@@ -37,7 +37,9 @@
                         <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'follow-user' user.username %}?next={{ next_path }}">Follow</a>
                     {% endif %}
                     <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url "messages-new" user.username %}">Message</a>
+                    {% if enable_collections %}
                     <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt" data-toggle="collect-modal" data-modal-url="{% url 'add-maintainer-form' user.id %}" data-modal-type = "addMaintainerModal" data-collection-attr-url="{% url 'add-maintainer-to-collection' user.id%}">Add maintainer</a>
+                    {% endif %}
                 {% endif %}
                 {% if perms.tickets.can_moderate or request.user.is_staff %}
                     <div class="dropdown display-inline-block">

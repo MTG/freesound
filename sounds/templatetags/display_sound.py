@@ -30,7 +30,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound(context, sound, player_size='small', show_collection=None, show_bookmark=None, show_similar_sounds=None, show_remix=None, show_rate_widget=False, show_timesince=False):
+def display_sound(context, sound, player_size='small', show_collections=None, show_bookmark=None, show_similar_sounds=None, show_remix=None, show_rate_widget=False, show_timesince=False):
     """This templatetag is used to display a sound with its player. It prepares some variables that are then passed
     to the display_sound.html template to show sound information together with the player.
 
@@ -118,6 +118,8 @@ def display_sound(context, sound, player_size='small', show_collection=None, sho
         }
     else:
         request = context['request']
+        print("SHOW BOOKMAKRS:",show_bookmark if (show_bookmark is not None and not settings.ENABLE_COLLECTIONS) else ((player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info')and not settings.ENABLE_COLLECTIONS))
+        print("SHOW COLLECTIONS: ", show_collections if (show_collections is not None and settings.ENABLE_COLLECTIONS) else ((player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info') and settings.ENABLE_COLLECTIONS))
         return {
             'sound': sound_obj,
             'user_profile_locations': Profile.locations_static(sound_obj.user_id, getattr(sound_obj, 'user_has_avatar', False)),
@@ -125,8 +127,8 @@ def display_sound(context, sound, player_size='small', show_collection=None, sho
             'is_explicit': sound_obj.is_explicit and
                            (not request.user.is_authenticated or not request.user.profile.is_adult),
             'is_authenticated': request.user.is_authenticated,
-            'show_bookmark_button': show_bookmark if show_bookmark is not None else ((player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info')and not settings.ENABLE_COLLECTIONS),  # Only BW
-            'show_collection_button': show_collection if show_collection is not None else ((player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info') and settings.ENABLE_COLLECTIONS),  # Only BW
+            'show_bookmark_button': show_bookmark if (show_bookmark is not None and not settings.ENABLE_COLLECTIONS) else ((player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info')and not settings.ENABLE_COLLECTIONS),  # Only BW
+            'show_collection_button': show_collections if (show_collections is not None and settings.ENABLE_COLLECTIONS) else ((player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info') and settings.ENABLE_COLLECTIONS),  # Only BW
             'show_similar_sounds_button': show_similar_sounds if show_similar_sounds is not None else (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),  # Only BW
             'show_remix_group_button': show_remix if show_remix is not None else (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),  # Only BW
             'show_rate_widget': show_rate_widget if (player_size == 'small' or player_size == 'small_no_info') else False,  # Only BW
@@ -149,19 +151,19 @@ def display_sound_small_with_timesince(context, sound):
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_moderation(context, sound):
-    return display_sound(context, sound, player_size='moderation', show_bookmark=False, show_similar_sounds=False, show_remix=True, show_rate_widget=False)
+    return display_sound(context, sound, player_size='moderation', show_collections=False, show_bookmark=False, show_similar_sounds=False, show_remix=True, show_rate_widget=False)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_bookmark(context, sound):
-    return display_sound(context, sound, player_size='small', show_bookmark=False, show_similar_sounds=False, show_remix=False, show_rate_widget=True)
+    return display_sound(context, sound, player_size='small', show_collections=False, show_bookmark=False, show_similar_sounds=False, show_remix=False, show_rate_widget=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_bookmark_no_ratings(context, sound):
-    return display_sound(context, sound, player_size='small', show_bookmark=False, show_similar_sounds=False, show_remix=False, show_rate_widget=False)
+    return display_sound(context, sound, player_size='small', show_collections=False, show_bookmark=False, show_similar_sounds=False, show_remix=False, show_rate_widget=False)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_middle(context, sound):
-    return display_sound(context, sound, player_size='middle', show_bookmark=True, show_similar_sounds=True, show_remix=True)
+    return display_sound(context, sound, player_size='middle', show_collections=True, show_bookmark=True, show_similar_sounds=True, show_remix=True)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_big_no_info(context, sound):
@@ -169,7 +171,7 @@ def display_sound_big_no_info(context, sound):
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_big_no_info_no_bookmark(context, sound):
-    return display_sound(context, sound, player_size='big_no_info', show_bookmark=False, show_similar_sounds=False, show_remix=False)
+    return display_sound(context, sound, player_size='big_no_info', show_collections=False, show_bookmark=False, show_similar_sounds=False, show_remix=False)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_info(context, sound):
@@ -177,7 +179,7 @@ def display_sound_small_no_info(context, sound):
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_small_no_info_no_buttons(context, sound):
-    return display_sound(context, sound, player_size='small_no_info', show_rate_widget=False, show_bookmark=False, show_similar_sounds=False, show_remix=False)
+    return display_sound(context, sound, player_size='small_no_info', show_rate_widget=False, show_collections=False, show_bookmark=False, show_similar_sounds=False, show_remix=False)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound_minimal(context, sound):

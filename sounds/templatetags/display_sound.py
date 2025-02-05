@@ -30,7 +30,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
-def display_sound(context, sound, player_size='small', show_bookmark=None, show_similar_sounds=None, show_remix=None, show_rate_widget=False, show_timesince=False):
+def display_sound(context, sound, player_size='small', show_collection=None, show_bookmark=None, show_similar_sounds=None, show_remix=None, show_rate_widget=False, show_timesince=False):
     """This templatetag is used to display a sound with its player. It prepares some variables that are then passed
     to the display_sound.html template to show sound information together with the player.
 
@@ -125,7 +125,8 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
             'is_explicit': sound_obj.is_explicit and
                            (not request.user.is_authenticated or not request.user.profile.is_adult),
             'is_authenticated': request.user.is_authenticated,
-            'show_bookmark_button': show_bookmark if show_bookmark is not None else (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),  # Only BW
+            'show_bookmark_button': show_bookmark if show_bookmark is not None else ((player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info')and not settings.ENABLE_COLLECTIONS),  # Only BW
+            'show_collection_button': show_collection if show_collection is not None else ((player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info') and settings.ENABLE_COLLECTIONS),  # Only BW
             'show_similar_sounds_button': show_similar_sounds if show_similar_sounds is not None else (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),  # Only BW
             'show_remix_group_button': show_remix if show_remix is not None else (player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info'),  # Only BW
             'show_rate_widget': show_rate_widget if (player_size == 'small' or player_size == 'small_no_info') else False,  # Only BW

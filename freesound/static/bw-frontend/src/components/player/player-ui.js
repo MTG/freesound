@@ -521,7 +521,7 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
   return playerControls
 }
 
-const createPlayerTopControls = (parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton, showRemixGroupButton) => {
+const createPlayerTopControls = (parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton, showRemixGroupButton, showCollectionButton) => {
   const topControls = document.createElement('div')
   topControls.className = 'bw-player__top_controls right'
   if (showRemixGroupButton){
@@ -535,6 +535,10 @@ const createPlayerTopControls = (parentNode, playerImgNode, playerSize, showSimi
   if (showBookmarkButton){
     const bookmarkButton = createSetFavoriteButton(parentNode, playerImgNode)
     topControls.appendChild(bookmarkButton)
+  }
+  if (showCollectionButton){
+    const collectionButton = createCollectionButton(parentNode, playerImgNode)
+    topControls.appendChild(collectionButton)
   }
   if (playerSize == 'big'){
     const rulerIndicator = createRulerIndicator(playerImgNode);
@@ -557,6 +561,28 @@ const createPlayerTopControls = (parentNode, playerImgNode, playerSize, showSimi
  * @param {HTMLDivElement} parentNode
  * @param {HTMLImgElement} playerImgNode
  */
+
+const createCollectionButton = (parentNode, playerImgNode) => {
+  const collectionButtonContainer = document.createElement('div');
+  const collectionButton = createControlButton('bookmark');
+  collectionButton.setAttribute('title', 'Add to collection');
+  collectionButton.setAttribute('aria-label', 'Add to collection');
+  collectionButtonContainer.classList.add('bw-player__favorite');
+  collectionButtonContainer.addEventListener('pointerup', evt => evt.stopPropagation());
+  collectionButtonContainer.addEventListener('click', (evt) => evt.stopPropagation());
+
+  if (isTouchEnabledDevice()){
+    // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
+    // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
+    //favoriteButtonContainer.classList.add('opacity-050')
+  }
+  collectionButton.setAttribute('data-toggle', 'collection-modal');
+  collectionButton.setAttribute('data-modal-url', parentNode.dataset.collectionModalUrl);
+  collectionButton.setAttribute('data-add-collection-url', parentNode.dataset.collectionSoundUrl); 
+  collectionButtonContainer.appendChild(collectionButton);
+  return collectionButtonContainer;
+}
+
 const createSetFavoriteButton = (parentNode, playerImgNode) => {
   const getIsFavorite = () => false // parentNode.dataset.favorite === 'true' // We always show the same button even if sound already bookmarked
   const favoriteButtonContainer = document.createElement('div')
@@ -564,8 +590,6 @@ const createSetFavoriteButton = (parentNode, playerImgNode) => {
   const unfavoriteButton = createControlButton('bookmark-filled')
   favoriteButton.setAttribute('title', 'Bookmark this sound')
   favoriteButton.setAttribute('aria-label', 'Bookmark this sound')
-  unfavoriteButton.setAttribute('title', 'Remove bookmark')
-  unfavoriteButton.setAttribute('aria-label', 'Remove bookmark')
   favoriteButtonContainer.classList.add('bw-player__favorite')
   
   if (isTouchEnabledDevice()){
@@ -671,6 +695,7 @@ const createPlayer = parentNode => {
   const showBookmarkButton = parentNode.dataset.bookmark === 'true'
   const showSimilarSoundsButton = parentNode.dataset.similarSounds === 'true'
   const showRemixGroupButton = parentNode.dataset.remixGroup === 'true'
+  const showCollectionButton = parentNode.dataset.collection === 'true'
   const audioElement = createAudioElement(parentNode)
   audioElement.addEventListener('play', () => {
     // When a player is played, add the last-played class to it and remove it from other players that might have it
@@ -687,7 +712,7 @@ const createPlayer = parentNode => {
   parentNode.appendChild(audioElement)
   const controls = createPlayerControls(parentNode, playerImgNode, audioElement, playerSize)
   playerImage.appendChild(controls)
-  const topControls = createPlayerTopControls(parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton, showRemixGroupButton)
+  const topControls = createPlayerTopControls(parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton, showRemixGroupButton, showCollectionButton)
   playerImage.appendChild(topControls)
 
   const rateSoundHiddenWidget = parentNode.parentNode.getElementsByClassName('bw-player__rate__widget')[0]

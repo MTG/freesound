@@ -20,7 +20,7 @@ import { makeSelect } from '../components/select.js';
 import { makeTextareaCharacterCounter } from '../components/textareaCharactersCounter.js';
 import { bindUnsecureImageCheckListeners } from '../components/unsecureImageCheck.js';
 import { initMap } from '../pages/map.js';
-import { bindCollectSoundModals } from '../components/collectSound.js';
+import { bindCollectionModals } from '../components/collections.js';
 
 
 const initializeStuffInContainer = (container, bindModals, activateModals) => {
@@ -54,7 +54,7 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
         bindRemixGroupModals(container);
         bindBookmarkSoundModals(container);
         bindUserAnnotationsModal(container); 
-        bindCollectSoundModals(container);
+        bindCollectionModals(container);
     }
     
     // Activate modals if needed (this should only be used the first time initializeStuffInContainer is called)

@@ -2,7 +2,7 @@ import {dismissModal, handleGenericModal} from "./modal";
 import {showToast} from "./toast";
 import {makePostRequest} from "../utils/postRequest";
 
-const saveCollectionAttr = (collectionAttrUrl, data, modalType) => {
+const saveCollectionSound = (collectionSoundUrl, data) => {
 
     let formData = {};
     if (data === undefined){
@@ -13,9 +13,9 @@ const saveCollectionAttr = (collectionAttrUrl, data, modalType) => {
     } else {
         formData = data;
     }
-    makePostRequest(collectionAttrUrl, formData, (responseText) => {
+    makePostRequest(collectionSoundUrl, formData, (responseText) => {
         // Collection attribute saved successfully. Close model and show feedback
-        dismissModal(modalType); // TBC
+        dismissModal('collectSoundModal'); // TBC
         try {
             showToast(JSON.parse(responseText).message);
         } catch (error) {
@@ -24,8 +24,8 @@ const saveCollectionAttr = (collectionAttrUrl, data, modalType) => {
         }
     }, () => {
         // Unexpected errors happened while processing request: close modal and show error in toast
-        dismissModal(modalType);
-        showToast('Some errors occurred while editing the collection.');
+        dismissModal('collectSoundModal');
+        showToast('Some errors occurred while adding the sound to the collection.');
     });
 }
 
@@ -40,10 +40,10 @@ const toggleNewCollectionNameDiv = (select, newCollectionNameDiv) => {
 }
 
 
-const initCollectionFormModal = (objId, collectionAttrUrl, modalType) => {
+const initCollectionFormModal = (soundId, collectionSoundUrl) => {
     
     // Modify the form structure to add a "Category" label inline with the select dropdown
-    const modalContainer = document.getElementById(modalType);
+    const modalContainer = document.getElementById('collectSoundModal');
     const selectElement = modalContainer.getElementsByTagName('select')[0];
     const wrapper = document.createElement('div');
     wrapper.style = 'display:inline-block;';
@@ -61,31 +61,26 @@ const initCollectionFormModal = (objId, collectionAttrUrl, modalType) => {
     const formElement = modalContainer.getElementsByTagName('form')[0];
     const buttonsInModalForm = formElement.getElementsByTagName('button');
     const saveButtonElement = buttonsInModalForm[buttonsInModalForm.length - 1];
-    const categorySelectElement = document.getElementById(`id_${  objId.toString()  }-collection`);
-    // New collection is not allowed for addMaintainerModal
-    if (modalType=='collectSoundModal'){
-        const newCategoryNameElement = document.getElementById(`id_${  objId.toString()  }-new_collection_name`);
-        toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
-        categorySelectElement.addEventListener('change', (event) => {
-            toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
-        });
-    }
-    
+    const categorySelectElement = document.getElementById(`id_${  soundId.toString()  }-collection`);
+
+    const newCategoryNameElement = document.getElementById(`id_${  soundId.toString()  }-new_collection_name`);
+    toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
+    categorySelectElement.addEventListener('change', (event) => {
+    toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
+    });
 
     // Bind action to save collection attribute and prevent default submit
     saveButtonElement.addEventListener('click', (e) => {
         e.preventDefault();
         const data = {};
-        data.collection = document.getElementById(`id_${  objId.toString()  }-collection`).value;
-        if(modalType=='collectSoundModal'){
-            data.new_collection_name = document.getElementById(`id_${  objId.toString()  }-new_collection_name`).value;
-        }
-        saveCollectionAttr(collectionAttrUrl, data, modalType);
+        data.collection = document.getElementById(`id_${  soundId.toString()  }-collection`).value;
+        data.new_collection_name = document.getElementById(`id_${  soundId.toString()  }-new_collection_name`).value;
+        saveCollectionSound(collectionSoundUrl, data);
     });
 };
 
 const bindCollectionModals = (container) => {
-    const collectionButtons = [...container.querySelectorAll('[data-toggle="collect-modal"]')];
+    const collectionButtons = [...container.querySelectorAll('[data-toggle="collection-modal"]')];
     collectionButtons.forEach(element => {
         if (element.dataset.alreadyBinded !== undefined){
             return;
@@ -94,14 +89,13 @@ const bindCollectionModals = (container) => {
         element.addEventListener('click', (evt) => {
             evt.preventDefault();   
             const modalUrlSplitted = element.dataset.modalUrl.split('/');
-            const objId = parseInt(modalUrlSplitted[modalUrlSplitted.length - 2], 10);
-            const modalType = element.dataset.modalType;
+            const soundId = parseInt(modalUrlSplitted[modalUrlSplitted.length - 2], 10);
             if (!evt.altKey) {
                 handleGenericModal(element.dataset.modalUrl, () => {
-                    initCollectionFormModal(objId, element.dataset.collectionAttrUrl, modalType);
+                    initCollectionFormModal(soundId, element.dataset.collectionSoundUrl);
                 }, undefined, true, true);
             } else {
-                saveCollectionAttr(element.dataset.collectionAttrUrl);
+                saveCollectionSound(element.dataset.collectionSoundUrl);
             }
         });
     });

@@ -150,6 +150,8 @@ def edit_collection(request, collection_id):
         if form.is_valid():
             form.save()
             return HttpResponseRedirect(reverse('collections', args=[collection.id]))
+        else:
+            return JsonResponse({'errors': form.errors})
 
     if request.user == collection.user:
         is_owner = True

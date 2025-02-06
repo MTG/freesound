@@ -118,8 +118,6 @@ def display_sound(context, sound, player_size='small', show_collections=None, sh
         }
     else:
         request = context['request']
-        print("SHOW BOOKMAKRS:",show_bookmark if (show_bookmark is not None and not settings.ENABLE_COLLECTIONS) else ((player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info')and not settings.ENABLE_COLLECTIONS))
-        print("SHOW COLLECTIONS: ", show_collections if (show_collections is not None and settings.ENABLE_COLLECTIONS) else ((player_size == 'small' or player_size == 'small_no_info' or player_size == 'big_no_info') and settings.ENABLE_COLLECTIONS))
         return {
             'sound': sound_obj,
             'user_profile_locations': Profile.locations_static(sound_obj.user_id, getattr(sound_obj, 'user_has_avatar', False)),

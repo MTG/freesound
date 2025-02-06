@@ -110,19 +110,20 @@ class CollectionEditForm(forms.ModelForm):
         widgets = {
             'name': TextInput(),
             'description': Textarea(attrs={'rows': 5, 'cols': 50}),
-            'maintainers': forms.CheckboxSelectMultiple()
+            'maintainers': forms.CheckboxSelectMultiple(attrs={'class': 'bw-checkbox'})
         }
 
     def __init__(self, *args, **kwargs):
         is_owner = kwargs.pop('is_owner', True)
         super().__init__(*args, **kwargs)
-        self.fields['maintainers'].queryset = self.instance.maintainers.all().values_list('username', flat=True)
+        self.fields['maintainers'].queryset = self.instance.maintainers.all()
         
         if not is_owner:
             for field in self.fields:
                 self.fields[field].widget.attrs['readonly'] = 'readonly'
 
-
+# NOTE: adding maintainers will be done frome edit collection page using a modal to introduce
+# username
 class CollectionMaintainerForm(forms.Form):
     collection = forms.ChoiceField(
         label=False,

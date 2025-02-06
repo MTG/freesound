@@ -35,6 +35,7 @@
             </div>-->
             <button class="btn-primary w-100">Save collection</button>
         </form>
+        <button class="btn-primary w-100 v-spacing-top-3" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'add-maintainers-to-collection' collection.id %}?ajax=1" data-reload-on-success="true" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
         <button class="btn-secondary w-100 v-spacing-top-3" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{% url "delete-collection" collection.id %}">Delete Collection</button>
     </div>
 </div>

@@ -28,7 +28,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from fscollections.models import Collection, CollectionSound
-from fscollections.forms import CollectionSoundForm, CollectionEditForm, CollectionMaintainerForm
+from fscollections.forms import CollectionSoundForm, CollectionEditForm, MaintainerForm
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
 from utils.pagination import paginate
@@ -144,7 +144,6 @@ def delete_collection(request, collection_id):
 def edit_collection(request, collection_id):
     
     collection = get_object_or_404(Collection, id=collection_id)
-    print("REQUEST METHOD:  ",request.method)
     if request.method=="POST":
         form = CollectionEditForm(request.POST, instance=collection)
         if form.is_valid():
@@ -167,53 +166,26 @@ def edit_collection(request, collection_id):
     
     return render(request, 'collections/edit_collection.html', tvars)
 
-def get_form_for_maintainer(request, user_id):
-    maintainer = get_object_or_404(User, id=user_id)
 
-    user_collections = Collection.objects.filter(user=request.user).order_by('-created')
-    last_collection = user_collections[0]
-    form = CollectionMaintainerForm(initial={'collection': last_collection.id},
-                               maintainer_id=maintainer.id,
-                               prefix=maintainer.id,
-                               user_collections=user_collections)
+def add_maintainer_to_collection(request, collection_id):
+    #TODO: store maintainers inside modal to further add them at once
+    if not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse("collections-for-user", args=[collection_id]))
     
-    collections_already_containing_maintainer = Collection.objects.filter(user=request.user, maintainers__id=maintainer.id).distinct()
-    tvars = {'user': request.user,
-             'maintainer_id': maintainer.id,
-             'last_collection': last_collection,
-             'collections': user_collections,
-             'form': form,
-             'collections_with_maintainer': collections_already_containing_maintainer
-             }
-    return render(request, 'collections/modal_add_maintainer.html', tvars)
-
-def add_maintainer_to_collection(request, maintainer_id):
-    maintainer = get_object_or_404(User, id=maintainer_id)
-    msg_to_return = ''
-
-    if request.method == 'POST':
-        user_collections = Collection.objects.filter(user=request.user)
-        form = CollectionMaintainerForm(request.POST, maintainer_id=maintainer_id, user_collections=user_collections, user_adding_maintainer=request.user)
+    collection = get_object_or_404(Collection, id=collection_id, user=request.user)
+    
+    if request.method == "POST":
+        form = MaintainerForm(request.POST, collection=collection)
         if form.is_valid():
-            saved_collection = form.save()
-            # TODO: moderation of CollectionSounds to be accounted for users who are neither maintainers nor owners
-            saved_collection.maintainers.add(maintainer)
-            saved_collection.save()
-            msg_to_return = f'User "{maintainer.username}" added as a maintainer to collection {saved_collection.name}'
-        else:
-            msg_to_return = form.errors
-    
-    if request.is_ajax():
-        return JsonResponse({'message': msg_to_return})
+            new_maintainer = User.objects.get(username=form.cleaned_data['maintainer'])
+            collection.maintainers.add(new_maintainer)
+            collection.save()
+            return JsonResponse({'success': True})
     else:
-        messages.add_message(request, messages.WARNING, msg_to_return)
-        next = request.GET.get("next", "")
-        if next:
-            return HttpResponseRedirect(next)
-        else:
-            return HttpResponseRedirect(reverse("account", args=[maintainer.username]))
-
-
+        form = MaintainerForm()
+    tvars = {"collection": collection,
+             "form": form}
+    return render(request, 'collections/modal_add_maintainer.html', tvars)
 
 # NOTE: there should be two methods to add a sound into a collection
 # 1: adding from the sound.html page through a "bookmark-like" button and opening a Collections modal

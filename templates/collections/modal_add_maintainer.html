@@ -8,32 +8,15 @@
 
 {% block body %}
 <div class="col-12">
-    {% if not request.user.is_authenticated %}
-        <div class="text-center">
-            <h4 class="v-spacing-5">Can't add maintainer</h4>
-        </div>
-        <div class="v-spacing-4 text-center">
-            <div class="v-spacing-4">For this action, you need to be logged in with your Freesound account.</div>
-            <button class="btn-primary" data-dismiss="modal">Ok</button>
-        </div>
-    {% else %}
-    <div class="center">
+    <div class="text-center">
         <h4 class="v-spacing-5">Add maintainer to collection</h4>
-    </div>
-    <div class="v-spacing-4">
-        {% if collections_with_maintainer%}
-            <div class="v-spacing-4">
-            {% bw_icon 'bookmark-filled' %}This user is already a maintainer for: 
-            {% for col in collections_with_maintainer %}
-            <span class="text-black font-weight-bold">{{col.name}}</span>{% if not forloop.last%},{% endif %}
-            {% endfor %}
-            </div>
-        {% endif %}
-        <form>
-            {{ form }}
-            <button class = "btn-primary v-spacing-top-2">Add maintainer</button>
+        <form method="post" action="{% url 'add-maintainers-to-collection' collection.id %}?ajax=1." class = "disable-on-submit">{% csrf_token %}
+            {{form}}
+            <button class="btn-primary v-spacing-top-3">Add maintainer</button>
         </form>
     </div>
-    {% endif %}
+    <div class="v-spacing-4">
+        
+    </div>
 </div>
 {% endblock %}

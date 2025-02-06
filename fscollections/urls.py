@@ -9,6 +9,5 @@ urlpatterns = [
     path('get_form_for_collection_sound/<int:sound_id>/', views.get_form_for_collecting_sound, name="collection-add-form-for-sound"),
     path('<int:collection_id>/edit', views.edit_collection, name="edit-collection"),
     path('<int:collection_id>/delete', views.delete_collection, name="delete-collection"),
-    path('get_form_for_maintainer/<int:user_id>/', views.get_form_for_maintainer, name="add-maintainer-form"),
-    path('addmaintainer/<int:maintainer_id>/', views.add_maintainer_to_collection, name="add-maintainer-to-collection")
+    path('addmaintainer/<int:collection_id>/', views.add_maintainer_to_collection, name="add-maintainers-to-collection")
 ]

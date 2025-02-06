@@ -20,6 +20,7 @@
 
 from django import forms
 from django.forms import ModelForm, Textarea, TextInput, SelectMultiple
+from django.contrib.auth.models import User
 from fscollections.models import Collection, CollectionSound
 from utils.forms import HtmlCleaningCharField
 
@@ -122,6 +123,31 @@ class CollectionEditForm(forms.ModelForm):
             for field in self.fields:
                 self.fields[field].widget.attrs['readonly'] = 'readonly'
 
+class MaintainerForm(forms.Form):
+    maintainer = forms.CharField(
+        label=False, 
+        help_text=None, 
+        max_length=128, 
+        required=True)
+    
+    collection = None
+    
+    def __init__(self, *args, **kwargs):
+        self.collection = kwargs.pop('collection', False)
+        super().__init__(*args, **kwargs)
+        self.fields['maintainer'].widget.attrs['placeholder'] = "Fill in the username of the maintainer"
+
+    def clean(self):
+        try:
+            new_maintainer = User.objects.get(username=self.cleaned_data['maintainer'])
+            if new_maintainer in self.collection.maintainers.all():
+                raise forms.ValidationError("The user is already a maintainer")
+            return super().clean()
+        except User.DoesNotExist:
+            raise forms.ValidationError("The user does not exist")
+
+        return super().clean()
+    
 # NOTE: adding maintainers will be done frome edit collection page using a modal to introduce
 # username
 class CollectionMaintainerForm(forms.Form):

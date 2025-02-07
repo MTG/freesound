@@ -21,6 +21,7 @@
                     {% else %}
                     <span class=text-light-grey> You don't have any collection yet... </span>
                     {% endif %}
+                   <li><a class="cursor-pointer" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'create-collection' %}?ajax=1" data-reload-on-success= "true" title="Create new collection" aria-label="Create new collection">... Create a new collection {% bw_icon 'plus' %}</a></li>
                 </ul>    
             </div>
             <div class="v-spacing-top-4">

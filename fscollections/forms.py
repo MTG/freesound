@@ -123,6 +123,28 @@ class CollectionEditForm(forms.ModelForm):
             for field in self.fields:
                 self.fields[field].widget.attrs['readonly'] = 'readonly'
 
+class CreateCollectionForm(forms.ModelForm):
+    
+    user = None   
+    class Meta():
+        model = Collection
+        fields = ('name', 'description')
+        widgets = {
+            'name': TextInput(),
+            'description': Textarea(attrs={'rows': 5, 'cols': 50}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs['placeholder'] = "Fill in the name for the new collection"
+        self.fields['description'].widget.attrs['placeholder'] = "Fill in the description for the new collection"
+
+    def clean(self):
+        if Collection.objects.filter(user=self.user, name=self.cleaned_data['name']).exists():
+            raise forms.ValidationError("You already have a collection with this name")
+        return super().clean()
+
 class MaintainerForm(forms.Form):
     maintainer = forms.CharField(
         label=False, 

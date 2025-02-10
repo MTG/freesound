@@ -34,7 +34,7 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render 
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 from oauth2_provider.models import Grant, AccessToken
@@ -951,10 +951,10 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                     if serializer.data['geotag']:
                         lat, lon, zoom = serializer.data['geotag'].split(',')
                         geotag = GeoTag.objects.create(
+                            sound=sound,
                             lat=float(lat),
                             lon=float(lon),
                             zoom=int(zoom))
-                        sound.geotag = geotag
                 if 'pack' in serializer.data:
                     if serializer.data['pack']:
                         if Pack.objects.filter(name=serializer.data['pack'], user=self.user)\
@@ -1164,7 +1164,7 @@ class MeBookmarkCategories(OauthRequiredAPIView, ListAPIView):
                 return list(categories)
         else:
             raise ServerErrorException(resource=self)
-        
+
 
 class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
     serializer_class = SoundListSerializer
@@ -1516,7 +1516,7 @@ def granted_permissions(request):
         'tokens': tokens,
         'grants': grants,
         'show_expiration_date': False,
-        'activePage': 'api', 
+        'activePage': 'api',
     })
 
 

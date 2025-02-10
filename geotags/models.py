@@ -30,6 +30,7 @@ web_logger = logging.getLogger("web")
 
 
 class GeoTag(models.Model):
+    sound = models.OneToOneField("sounds.Sound", on_delete=models.CASCADE, related_name="geotag")
     lat = models.FloatField(db_index=True)
     lon = models.FloatField(db_index=True)
     zoom = models.IntegerField()

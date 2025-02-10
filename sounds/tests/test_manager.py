@@ -30,12 +30,11 @@ class SoundManagerQueryMethods(TestCase):
 
     fixtures = ['licenses']
 
-    fields_to_check_bulk_query_id = ['username', 'id', 'type', 'user_id', 'original_filename', 'is_explicit',
-                                     'avg_rating', 'num_ratings', 'description', 'moderation_state', 'processing_state',
-                                     'processing_ongoing_state', 'similarity_state', 'created', 'num_downloads',
-                                     'num_comments', 'pack_id', 'duration', 'pack_name', 'license_id',
-                                     'geotag_id', 'remixgroup_id', 'tag_array']
-    fields_to_check_related = ['user', 'pack', 'license', 'ticket', 'geotag']
+    fields_to_check_bulk_query_id = ['username', 'id', 'type', 'user_id', 'original_filename', 'is_explicit', 'avg_rating',
+                                     'num_ratings', 'description', 'moderation_state', 'processing_state', 'processing_ongoing_state',
+                                     'similarity_state', 'created', 'num_downloads', 'num_comments', 'pack_id',
+                                     'duration', 'pack_name', 'license_id', 'remixgroup_id', 'tag_array']
+    fields_to_check_related = ['user', 'pack', 'license', 'ticket']
     fields_to_check_lists = ['analyses']
 
     def setUp(self):
@@ -51,14 +50,20 @@ class SoundManagerQueryMethods(TestCase):
 
         # Check that all fields for each sound are retrieved with one query + one for the analyzers
         with self.assertNumQueries(2):
+            has_at_least_one_geotag = False
             for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_analyzers_output=True):
+                if hasattr(sound, 'geotag'):
+                    # We do this separately, because a OneToOneField needs to be checked by "getattr", and it'll
+                    # raise an AttributeError if the field is not present. Therefore we just check that at least one
+                    # sound has a geotag.
+                    has_at_least_one_geotag = True
                 for field in self.fields_to_check_bulk_query_id:
                     self.assertTrue(hasattr(sound, field), f"Missing field {field} in sound {sound.id}")
                 for field in self.fields_to_check_related:
-                    _ = getattr(sound, field)
+                    self.assertTrue(hasattr(sound, field), f"Missing field {field} in sound {sound.id}")
                 for field in self.fields_to_check_lists:
                     _ = list(getattr(sound, field).all())
-
+            self.assertTrue(has_at_least_one_geotag, "No geotag found in any of the sounds")
     def test_bulk_query_id_field_contents(self):
 
         # Check the contents of some fields are correct

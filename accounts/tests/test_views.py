@@ -47,7 +47,12 @@ class SimpleUserTest(TestCase):
         self.sound.moderation_state = "OK"
         self.sound.processing_state = "OK"
         self.sound.similarity_state = "OK"
-        self.sound.geotag = GeoTag.objects.create(lat=45.8498, lon=-62.6879, zoom=9)
+        GeoTag.objects.create(
+            sound=self.sound,
+            lat=45.8498,
+            lon=-62.6879,
+            zoom=9
+        )
         self.sound.save()
         SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
         self.download = Download.objects.create(user=self.user, sound=self.sound, license=self.sound.license,

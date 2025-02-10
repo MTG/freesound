@@ -17,7 +17,10 @@ services:
         environment:
             - POSTGRES_USER=freesound
             - POSTGRES_DB=freesound
+            # Used to set up the initial database
             - POSTGRES_PASSWORD=localfreesoundpgpassword
+            # Used to connect to the database if we run psql in this container
+            - PGPASSWORD=localfreesoundpgpassword
             - FS_USER_ID
 
     # Web worker

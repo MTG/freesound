@@ -47,6 +47,8 @@ pysndfile==1.4.4
 pysolr==3.10.0b1
 python-louvain==0.16  # community detection in clustering
 pytz==2023.3
+pytest~=8.0.2
+pytest-django~=4.8.0
 PyYAML==6.0.1
 redis==5.2.1
 scikit-learn==1.4.1.post1  # clustering

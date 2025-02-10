@@ -398,7 +398,7 @@ class SoundInstance(RetrieveAPIView):
                   get_formatted_examples_for_view('SoundInstance', 'apiv2-sound-instance', max=5))
 
     serializer_class = SoundSerializer
-    queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK").annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
+    queryset = Sound.public.select_related('geotag').annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))
@@ -945,10 +945,10 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                     if serializer.data['geotag']:
                         lat, lon, zoom = serializer.data['geotag'].split(',')
                         geotag = GeoTag.objects.create(
+                            sound=sound,
                             lat=float(lat),
                             lon=float(lon),
                             zoom=int(zoom))
-                        sound.geotag = geotag
                 if 'pack' in serializer.data:
                     if serializer.data['pack']:
                         if Pack.objects.filter(name=serializer.data['pack'], user=self.user)\

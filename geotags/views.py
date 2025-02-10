@@ -78,7 +78,7 @@ def generate_bytearray(sound_queryset_or_list):
 def geotags_barray(request, tag=None):
     is_embed = request.GET.get("embed", "0") == "1"
     if tag is not None:
-        sounds = Sound.objects.select_related('geotag').filter(tags__tag__name__iexact=tag)
+        sounds = Sound.objects.select_related('geotag').filter(tags__name__iexact=tag)
         generated_bytearray, num_geotags = generate_bytearray(sounds.exclude(geotag=None).all())
         if num_geotags > 0:
             log_map_load('tag-embed' if is_embed else 'tag', num_geotags, request)

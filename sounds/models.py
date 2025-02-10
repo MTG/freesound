@@ -58,7 +58,7 @@ from general.templatetags.absurl import url2absurl
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
-from tags.models import TaggedItem, Tag
+from tags.models import SoundTag, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, Queue, TicketComment
 from utils.cache import invalidate_template_cache, invalidate_user_template_caches
@@ -460,9 +460,8 @@ class SoundManager(models.Manager):
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
-            LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
-          WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=%s) AS tag_array,
+            LEFT JOIN tags_soundtag ON tags_soundtag.sound_id = sound.id
+          WHERE tags_tag.id = tags_soundtag.tag_id) AS tag_array,
           ARRAY(
             SELECT comments_comment.comment
             FROM comments_comment
@@ -475,7 +474,6 @@ class SoundManager(models.Manager):
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
           %s
         """ % (self.get_analyzers_data_select_sql(),
-               ContentType.objects.get_for_model(Sound).id,
                self.get_analyzers_data_left_join_sql())
         query += "WHERE sound.id = ANY(%s)"
         return self.raw(query, [sound_ids])
@@ -526,9 +524,8 @@ class SoundManager(models.Manager):
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
-            LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
-          WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=%s) AS tag_array
+            LEFT JOIN tags_soundtag ON tags_soundtag.sound_id = sound.id
+          WHERE tags_tag.id = tags_soundtag.tag_id) AS tag_array
         FROM
           sounds_sound sound
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
@@ -542,7 +539,6 @@ class SoundManager(models.Manager):
         WHERE %s """ % (self.get_search_engine_similarity_state_sql(),
                         self.get_analysis_state_essentia_exists_sql(),
                         self.get_analyzers_data_select_sql() if include_analyzers_output else '',
-                        ContentType.objects.get_for_model(Sound).id,
                         self.get_analyzers_data_left_join_sql() if include_analyzers_output else '',
                         where, )
         if order_by:
@@ -623,7 +619,7 @@ class Sound(models.Model):
     license = models.ForeignKey(License, on_delete=models.CASCADE)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
-    tags = fields.GenericRelation(TaggedItem)
+    tags = models.ManyToManyField(Tag, through=SoundTag)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # fields for specifying if the sound was uploaded via API or via bulk upload process (or none)
@@ -960,7 +956,7 @@ class Sound(models.Model):
         Returns the tags assigned to the sound as a list of strings, e.g. ["tag1", "tag2", "tag3"]
         :param limit: The maximum number of tags to return
         """
-        return [ti.tag.name for ti in self.tags.select_related("tag").all().order_by('tag__name')[0:limit]]
+        return [t.name for t in self.tags.all().order_by('name')[0:limit]]
 
     def get_sound_tags_string(self, limit=None):
         """
@@ -971,20 +967,20 @@ class Sound(models.Model):
 
     def set_tags(self, tags):
         """
-        Updates the tags of the Sound object. To do that it first removes all TaggedItem objects which relate the sound
+        Updates the tags of the Sound object. To do that it first removes all SoundTag objects which relate the sound
         with tags which are not in the provided list of tags, and then adds the new tags.
         :param list tags: list of strings representing the new tags that the Sound object should be assigned
         """
         # remove tags that are not in the list
-        for tagged_item in self.tags.all():
+        for tagged_item in self.soundtag_set.select_related('tag').all():
             if tagged_item.tag.name not in tags:
                 tagged_item.delete()
 
         # add tags that are not there yet
         for tag in tags:
-            if self.tags.filter(tag__name=tag).count() == 0:
+            if self.tags.filter(name=tag).count() == 0:
                 (tag_object, created) = Tag.objects.get_or_create(name=tag)
-                tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
+                tagged_object = SoundTag.objects.create(user=self.user, tag=tag_object, sound=self)
                 tagged_object.save()
 
     def set_license(self, new_license):
@@ -1201,7 +1197,7 @@ class Sound(models.Model):
             self.pack = new_pack
 
         # Change tags ownership too (otherwise they might get deleted if original user is deleted)
-        self.tags.all().update(user=new_owner)
+        self.soundtag_set.all().update(user=new_owner)
 
         # Change user field
         old_owner = self.user
@@ -1387,7 +1383,7 @@ class Sound(models.Model):
         
     @property
     def ready_for_similarity(self):
-        # Retruns True is the sound has been analyzed for similarity and should be available for simialrity queries
+        # Returns True if the sound has been analyzed for similarity and should be available for similarity queries
         if settings.USE_SEARCH_ENGINE_SIMILARITY:
             if hasattr(self, 'search_engine_similarity_state'):
                 # If attribute is precomputed from query (because Sound was retrieved using bulk_query), no need to perform extra queries
@@ -1533,7 +1529,7 @@ def on_delete_sound(sender, instance, **kwargs):
     data['license'] = license
 
     data['comments'] = list(instance.comments.values())
-    data['tags'] = list(instance.tags.values())
+    data['tags'] = list(instance.soundtag_set.values())
     data['sources'] = list(instance.sources.values('id'))
 
     # Alter datetime objects in data to avoid serialization problems
@@ -1597,9 +1593,8 @@ class PackManager(models.Manager):
         if not isinstance(pack_ids, list):
             pack_ids = [pack_ids]
         packs = Pack.objects.prefetch_related(
-            Prefetch('sounds', queryset=Sound.public.order_by('-created')),
-            Prefetch('sounds__tags__tag'),
-            Prefetch('sounds__license'),
+            Prefetch('sounds', queryset=Sound.public.select_related('license').order_by('-created')),
+            Prefetch('sounds__tags'),
         ).select_related('user').select_related('user__profile').filter(id__in=pack_ids)
         if exclude_deleted:
             packs = packs.exclude(is_deleted=True)
@@ -1612,7 +1607,7 @@ class PackManager(models.Manager):
             sound_ids_pre_selected = sound_ids_for_pack_id.get(p.id, None)
             ratings = []
             for s in p.sounds.all():
-                tags += [ti.tag.name for ti in s.tags.all()]
+                tags += [ti.name for ti in s.tags.all()]
                 licenses.append((s.license.name, s.license.id))
                 if s.num_ratings >= settings.MIN_NUMBER_RATINGS:
                     ratings.append(s.avg_rating)

@@ -695,7 +695,7 @@ def manage_sounds(request, tab):
         elif tab == 'processing':
             sounds = sounds_processing_base_qs
         if filter_db is not None:
-            sounds = sounds.annotate(search=SearchVector('original_filename', 'id', 'description', 'tags__tag__name')).filter(search=filter_db).distinct()
+            sounds = sounds.annotate(search=SearchVector('original_filename', 'id', 'description', 'tags__name')).filter(search=filter_db).distinct()
         sounds = sounds.order_by(sort_by_db)
         sound_ids = list(sounds.values_list('id', flat=True))
 

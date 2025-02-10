@@ -2301,14 +2301,10 @@
                 "Bram"
             ], 
             "tag": 24373, 
-            "object_id": 11, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 11, 
             "created": "2005-04-01T10:52:25Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 20
     }, 
     {
@@ -2317,14 +2313,10 @@
                 "Bram"
             ], 
             "tag": 11756, 
-            "object_id": 11, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 11, 
             "created": "2005-04-01T10:52:25Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 19
     }, 
     {
@@ -2333,14 +2325,10 @@
                 "Bram"
             ], 
             "tag": 6147, 
-            "object_id": 11, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 11, 
             "created": "2005-04-01T10:52:25Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 22
     }, 
     {
@@ -2349,14 +2337,10 @@
                 "Bram"
             ], 
             "tag": 26599, 
-            "object_id": 11, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 11, 
             "created": "2005-04-01T10:52:25Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 21
     }, 
     {
@@ -2365,14 +2349,10 @@
                 "TwistedLemon"
             ], 
             "tag": 17682, 
-            "object_id": 6, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 6, 
             "created": "2005-04-01T13:57:47Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 161
     }, 
     {
@@ -2381,14 +2361,10 @@
                 "TwistedLemon"
             ], 
             "tag": 17682, 
-            "object_id": 7, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 7, 
             "created": "2005-04-01T13:58:08Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 162
     }, 
     {
@@ -2397,14 +2373,10 @@
                 "TwistedLemon"
             ], 
             "tag": 5344, 
-            "object_id": 8, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 8, 
             "created": "2005-04-01T13:58:32Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 164
     }, 
     {
@@ -2413,14 +2385,10 @@
                 "TwistedLemon"
             ], 
             "tag": 17682, 
-            "object_id": 8, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 8, 
             "created": "2005-04-01T13:58:32Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 163
     }, 
     {
@@ -2429,14 +2397,10 @@
                 "TwistedLemon"
             ], 
             "tag": 17682, 
-            "object_id": 9, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 9, 
             "created": "2005-04-01T13:58:51Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 165
     }, 
     {
@@ -2445,14 +2409,10 @@
                 "Anton"
             ], 
             "tag": 6825, 
-            "object_id": 14, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 14, 
             "created": "2005-04-02T10:21:00Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 216
     }, 
     {
@@ -2461,14 +2421,10 @@
                 "Anton"
             ], 
             "tag": 19959, 
-            "object_id": 14, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 14, 
             "created": "2005-04-02T10:21:00Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 215
     }, 
     {
@@ -2477,14 +2433,10 @@
                 "Anton"
             ], 
             "tag": 15465, 
-            "object_id": 14, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 14, 
             "created": "2005-04-02T10:21:00Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 217
     }, 
     {
@@ -2493,14 +2445,10 @@
                 "Anton"
             ], 
             "tag": 9013, 
-            "object_id": 14, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 14, 
             "created": "2005-04-02T10:21:00Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 214
     }, 
     {
@@ -2509,14 +2457,10 @@
                 "Bram"
             ], 
             "tag": 12068, 
-            "object_id": 9, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 9, 
             "created": "2005-04-02T14:33:46Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 219
     }, 
     {
@@ -2525,14 +2469,10 @@
                 "Bram"
             ], 
             "tag": 29385, 
-            "object_id": 9, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 9, 
             "created": "2005-04-02T14:33:46Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 220
     }, 
     {
@@ -2541,14 +2481,10 @@
                 "Anton"
             ], 
             "tag": 11, 
-            "object_id": 23, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 23, 
             "created": "2005-04-10T00:40:37Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 936
     }, 
     {
@@ -2557,14 +2493,10 @@
                 "Anton"
             ], 
             "tag": 24318, 
-            "object_id": 23, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 23, 
             "created": "2005-04-10T00:40:37Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 938
     }, 
     {
@@ -2573,14 +2505,10 @@
                 "Anton"
             ], 
             "tag": 27814, 
-            "object_id": 23, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 23, 
             "created": "2005-04-10T00:40:37Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 937
     }, 
     {
@@ -2589,14 +2517,10 @@
                 "Anton"
             ], 
             "tag": 11901, 
-            "object_id": 23, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 23, 
             "created": "2005-04-10T00:40:37Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 934
     }, 
     {
@@ -2605,14 +2529,10 @@
                 "Anton"
             ], 
             "tag": 21, 
-            "object_id": 23, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 23, 
             "created": "2005-04-10T00:40:37Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 935
     }, 
     {
@@ -2621,14 +2541,10 @@
                 "Bram"
             ], 
             "tag": 29385, 
-            "object_id": 10, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 10, 
             "created": "2005-04-21T12:11:17Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 4134
     }, 
     {
@@ -2637,14 +2553,10 @@
                 "Bram"
             ], 
             "tag": 20444, 
-            "object_id": 10, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 10, 
             "created": "2005-04-21T12:11:17Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 4135
     }, 
     {
@@ -2653,14 +2565,10 @@
                 "Bram"
             ], 
             "tag": 17682, 
-            "object_id": 10, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 10, 
             "created": "2005-04-21T12:11:17Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 4136
     }, 
     {
@@ -2669,14 +2577,10 @@
                 "totebag"
             ], 
             "tag": 29385, 
-            "object_id": 8, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 8, 
             "created": "2005-04-25T20:45:01Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 5013
     }, 
     {
@@ -2685,14 +2589,10 @@
                 "TwistedLemon"
             ], 
             "tag": 11491, 
-            "object_id": 12, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 12, 
             "created": "2005-05-13T01:45:40Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 6259
     }, 
     {
@@ -2701,14 +2601,10 @@
                 "TwistedLemon"
             ], 
             "tag": 8168, 
-            "object_id": 12, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 12, 
             "created": "2005-05-13T01:46:33Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 6261
     }, 
     {
@@ -2717,14 +2613,10 @@
                 "TwistedLemon"
             ], 
             "tag": 25688, 
-            "object_id": 12, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 12, 
             "created": "2005-05-13T01:46:33Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 6260
     }, 
     {
@@ -2733,14 +2625,10 @@
                 "Anton"
             ], 
             "tag": 1179, 
-            "object_id": 17, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 17, 
             "created": "2005-08-17T01:39:36Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 27336
     }, 
     {
@@ -2749,14 +2637,10 @@
                 "Anton"
             ], 
             "tag": 11903, 
-            "object_id": 17, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 17, 
             "created": "2005-08-17T01:39:36Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 27333
     }, 
     {
@@ -2765,14 +2649,10 @@
                 "Anton"
             ], 
             "tag": 26268, 
-            "object_id": 17, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 17, 
             "created": "2005-08-17T01:39:36Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 27335
     }, 
     {
@@ -2781,14 +2661,10 @@
                 "Anton"
             ], 
             "tag": 11, 
-            "object_id": 17, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 17, 
             "created": "2005-08-17T01:39:36Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 27334
     }, 
     {
@@ -2797,14 +2673,10 @@
                 "Anton"
             ], 
             "tag": 20180, 
-            "object_id": 17, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 17, 
             "created": "2005-08-17T01:39:36Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 27337
     }, 
     {
@@ -2813,14 +2685,10 @@
                 "Anton"
             ], 
             "tag": 13002, 
-            "object_id": 13, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 13, 
             "created": "2005-08-21T10:17:43Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 27942
     }, 
     {
@@ -2829,14 +2697,10 @@
                 "Anton"
             ], 
             "tag": 18553, 
-            "object_id": 13, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 13, 
             "created": "2005-08-21T10:17:43Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 27944
     }, 
     {
@@ -2845,14 +2709,10 @@
                 "Anton"
             ], 
             "tag": 21061, 
-            "object_id": 13, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 13, 
             "created": "2005-08-21T10:17:43Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 27943
     }, 
     {
@@ -2861,14 +2721,10 @@
                 "Anton"
             ], 
             "tag": 11832, 
-            "object_id": 13, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 13, 
             "created": "2005-08-21T10:17:43Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 27941
     }, 
     {
@@ -2877,14 +2733,10 @@
                 "jerenveren"
             ], 
             "tag": 17012, 
-            "object_id": 8, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 8, 
             "created": "2008-01-28T13:59:50Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 257741
     }, 
     {
@@ -2893,14 +2745,10 @@
                 "xserra"
             ], 
             "tag": 29385, 
-            "object_id": 6, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 6, 
             "created": "2011-09-11T20:00:18.438Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 842421
     }, 
     {
@@ -2909,14 +2757,10 @@
                 "xserra"
             ], 
             "tag": 5478, 
-            "object_id": 6, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 6, 
             "created": "2011-09-11T20:00:18.464Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 842422
     }, 
     {
@@ -2925,14 +2769,10 @@
                 "xserra"
             ], 
             "tag": 29385, 
-            "object_id": 7, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 7, 
             "created": "2011-09-11T20:03:41.527Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 842423
     }, 
     {
@@ -2941,14 +2781,10 @@
                 "xserra"
             ], 
             "tag": 7124, 
-            "object_id": 7, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 7, 
             "created": "2011-09-11T20:03:41.578Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 842424
     }, 
     {
@@ -2957,14 +2793,10 @@
                 "xserra"
             ], 
             "tag": 3970, 
-            "object_id": 7, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 7, 
             "created": "2011-09-11T20:03:41.631Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 842425
     }, 
     {
@@ -2973,14 +2805,10 @@
                 "xserra"
             ], 
             "tag": 25420, 
-            "object_id": 8, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 8, 
             "created": "2011-09-11T20:05:35.102Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 842426
     }, 
     {
@@ -2989,14 +2817,10 @@
                 "xserra"
             ], 
             "tag": 28103, 
-            "object_id": 8, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 8, 
             "created": "2011-09-11T20:05:35.124Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 842427
     }, 
     {
@@ -3005,14 +2829,10 @@
                 "xserra"
             ], 
             "tag": 25420, 
-            "object_id": 9, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 9, 
             "created": "2011-09-11T20:06:23.705Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 842428
     }, 
     {
@@ -3021,14 +2841,10 @@
                 "xserra"
             ], 
             "tag": 28103, 
-            "object_id": 9, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 9, 
             "created": "2011-09-11T20:06:23.725Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 842429
     }, 
     {
@@ -3037,14 +2853,10 @@
                 "xserra"
             ], 
             "tag": 25420, 
-            "object_id": 10, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 10, 
             "created": "2011-09-11T20:07:19.376Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 842430
     }, 
     {
@@ -3053,14 +2865,10 @@
                 "xserra"
             ], 
             "tag": 28103, 
-            "object_id": 10, 
-            "content_type": [
-                "sounds", 
-                "sound"
-            ], 
+            "sound_id": 10, 
             "created": "2011-09-11T20:07:19.390Z"
         }, 
-        "model": "tags.taggeditem", 
+        "model": "tags.soundtag", 
         "pk": 842431
     }
 ]

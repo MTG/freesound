@@ -106,7 +106,7 @@ def get_sound_of_the_day_id():
         try:
             today = datetime.date.today()
             now = timezone.now()
-            tomorrow = datetime.datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
+            tomorrow = datetime.datetime(today.year, today.month, today.day, tzinfo=datetime.timezone.utc)
             time_until_tomorrow = tomorrow - now
 
             rnd = SoundOfTheDay.objects.get(date_display=today)
@@ -209,7 +209,7 @@ def front_page(request):
 @redirect_if_old_username_or_404
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.prefetch_related("tags__tag")\
+        sound = Sound.objects.prefetch_related("tags")\
             .select_related("license", "user", "user__profile", "pack")\
             .get(id=sound_id, user__username=username)
 

@@ -31,7 +31,7 @@ from unittest import mock
 import utils.search
 from forum.models import Post
 from sounds.models import Sound, Download
-from tags.models import TaggedItem
+from tags.models import SoundTag
 from utils.search import get_search_engine
 
 
@@ -282,7 +282,7 @@ class TestSearchEngineBackend():
         so this could by chance not coincide with any of the tags on this sound.
         Instead, get all tags by the user and check that the ones from solr are a subset of them.
         """
-        user_tagged_items = TaggedItem.objects.filter(user=sound.user).select_related('tag').all()
+        user_tagged_items = SoundTag.objects.filter(user=sound.user).select_related('tag').all()
         all_user_tags = [ti.tag.name for ti in user_tagged_items]
         tags_and_counts = self.search_engine.get_user_tags(sound.user.username)
         search_engine_tags = [t[0] for t in tags_and_counts]

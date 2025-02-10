@@ -57,7 +57,7 @@ from general.templatetags.absurl import url2absurl
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
-from tags.models import TaggedItem, Tag
+from tags.models import SoundTag, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, Queue, TicketComment
 from utils.cache import invalidate_template_cache, invalidate_user_template_caches
@@ -459,9 +459,8 @@ class SoundManager(models.Manager):
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
-            LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
-          WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=%s) AS tag_array,
+            LEFT JOIN tags_soundtag ON tags_soundtag.sound_id = sound.id
+          WHERE tags_tag.id = tags_soundtag.tag_id) AS tag_array,
           ARRAY(
             SELECT comments_comment.comment
             FROM comments_comment
@@ -474,7 +473,6 @@ class SoundManager(models.Manager):
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
           %s
         """ % (self.get_analyzers_data_select_sql(),
-               ContentType.objects.get_for_model(Sound).id,
                self.get_analyzers_data_left_join_sql())
         query += "WHERE sound.id IN %s"
         return self.raw(query, [tuple(sound_ids)])
@@ -525,9 +523,8 @@ class SoundManager(models.Manager):
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
-            LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
-          WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=%s) AS tag_array
+            LEFT JOIN tags_soundtag ON tags_soundtag.sound_id = sound.id
+          WHERE tags_tag.id = tags_soundtag.tag_id) AS tag_array
         FROM
           sounds_sound sound
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
@@ -541,7 +538,6 @@ class SoundManager(models.Manager):
         WHERE %s """ % (self.get_search_engine_similarity_state_sql(),
                         self.get_analysis_state_essentia_exists_sql(),
                         self.get_analyzers_data_select_sql() if include_analyzers_output else '',
-                        ContentType.objects.get_for_model(Sound).id,
                         self.get_analyzers_data_left_join_sql() if include_analyzers_output else '',
                         where, )
         if order_by:
@@ -622,7 +618,7 @@ class Sound(models.Model):
     license = models.ForeignKey(License, on_delete=models.CASCADE)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
-    tags = fields.GenericRelation(TaggedItem)
+    tags = models.ManyToManyField(Tag, through=SoundTag)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # fields for specifying if the sound was uploaded via API or via bulk upload process (or none)
@@ -970,7 +966,7 @@ class Sound(models.Model):
 
     def set_tags(self, tags):
         """
-        Updates the tags of the Sound object. To do that it first removes all TaggedItem objects which relate the sound
+        Updates the tags of the Sound object. To do that it first removes all SoundTag objects which relate the sound
         with tags which are not in the provided list of tags, and then adds the new tags.
         :param list tags: list of strings representing the new tags that the Sound object should be assigned
         """
@@ -983,7 +979,7 @@ class Sound(models.Model):
         for tag in tags:
             if self.tags.filter(tag__name=tag).count() == 0:
                 (tag_object, created) = Tag.objects.get_or_create(name=tag)
-                tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
+                tagged_object = SoundTag.objects.create(user=self.user, tag=tag_object, sound=self)
                 tagged_object.save()
 
     def set_license(self, new_license):

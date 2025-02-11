@@ -1090,7 +1090,7 @@ class ChangeUsernameTest(TestCase):
         """Test that for usernames created before stronger validation was applied, whitespaces are a valid character
         but for new edited ones they are not."""
         userA = User.objects.create_user('user A', email='userA@freesound.org', password='testpass')
-        self.client.login(username='user A', password='testpass')
+        self.client.force_login(userA)
 
         # Test save profile without changing username with whitespaces
         resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['user A'], 'profile-ui_theme_preference': 'f'})

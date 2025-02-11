@@ -39,7 +39,7 @@ from accounts.models import EmailPreferenceType, EmailBounce, UserEmailSetting
 from accounts.views import handle_uploaded_image
 from forum.models import Forum, Thread, Post
 from sounds.models import Pack, Download, PackDownload
-from tags.models import TaggedItem
+from tags.models import SoundTag
 from utils.mail import send_mail
 from utils.test_helpers import override_avatars_path_with_temp_directory, create_user_and_sounds
 
@@ -67,8 +67,8 @@ class ProfileGetUserTags(TestCase):
         mock_search_engine.return_value.configure_mock(**conf)
         accounts.models.get_search_engine = mock_search_engine
         tag_names = [item['name'] for item in user.profile.get_user_tags()]
-        used_tag_names = list({item.tag.name for item in TaggedItem.objects.filter(user=user)})
-        non_used_tag_names = list({item.tag.name for item in TaggedItem.objects.exclude(user=user)})
+        used_tag_names = list({item.tag.name for item in SoundTag.objects.filter(user=user)})
+        non_used_tag_names = list({item.tag.name for item in SoundTag.objects.exclude(user=user)})
 
         # Test that tags retrieved with get_user_tags are those found in db
         self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))

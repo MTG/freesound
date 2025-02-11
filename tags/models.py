@@ -38,27 +38,22 @@ class Tag(models.Model):
         ordering = ("name",)
 
 
-class TaggedItem(models.Model):
+class SoundTag(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
-
-    #content_type = models.ForeignKey(ContentType, related_name='tags')
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField(db_index=True)
-    content_object = fields.GenericForeignKey()
+    sound = models.ForeignKey("sounds.Sound", on_delete=models.CASCADE)
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user} tagged {self.content_type} - {self.content_type}: {self.tag}"
+        return f"{self.user} tagged {self.sound} - {self.tag}"
 
     def get_absolute_url(self):
         return reverse('tag', args=[smart_str(self.tag.id)])
 
     class Meta:
         ordering = ("-created",)
-        unique_together = (('tag', 'content_type', 'object_id'),)
+        unique_together = (('tag', 'sound_id'),)
 
 # Class to get old tags ids linked to new tag ids
 # The goal is to at some point deprecate the old tag ids completely

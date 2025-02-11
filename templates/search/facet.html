@@ -2,7 +2,7 @@
 {% if facet and facet|length > 1%}
 <div class="bw-search__filter-section">
     <div class="bw-search__filter-section-name caps text-light-grey between"><span>{{ title }}</span></div>
-    {% ifequal type "list" %}
+    {% if type == "list" %}
     <ul class="bw-search__filter-value-list">
         {% for f in facet %}
             <li class="bw-search__filter-value padding-bottom-1">
@@ -13,8 +13,8 @@
             </li>
         {% endfor %}
     </ul>
-    {% endifequal %}
-    {% ifequal type "range" %}
+    {% endif %}
+    {% if type == "range" %}
     <ul class="bw-search__filter-value-list">
         {% for f in facet %}
             <li class="bw-search__filter-value padding-bottom-1">
@@ -25,13 +25,13 @@
             </li>
         {% endfor %}
     </ul>
-    {% endifequal %}
-    {% ifequal type "cloud" %}
+    {% endif %}
+    {% if type == "cloud" %}
     <div class="bw-search__filter-tags-list">
         {% for f in facet %}
             {% bw_tag f.display_value 1 '' f.add_filter_url f.weight %}
         {% endfor %}
     </div>
-    {% endifequal %}
+    {% endif %}
 </div>
 {% endif %}

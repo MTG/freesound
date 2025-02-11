@@ -1085,7 +1085,30 @@ class ChangeUsernameTest(TestCase):
         OldUsername.objects.create(user=userA, username='newUserAUsername')
         with self.assertRaises(IntegrityError):
             OldUsername.objects.create(user=userA, username='NewUserAUsername')
+    
+    def test_username_whitespace(self):
+        """Test that for usernames created before stronger validation was applied, whitespaces are a valid character
+        but for new edited ones they are not."""
+        userA = User.objects.create_user('user A', email='userA@freesound.org', password='testpass')
+        self.client.force_login(userA)
 
+        # Test save profile without changing username with whitespaces
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['user A'], 'profile-ui_theme_preference': 'f'})
+        self.assertRedirects(resp, reverse('accounts-edit'))
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
+
+        # Test save profile changing username (no whitespaces)
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewName'], 'profile-ui_theme_preference': 'f'})
+        self.assertRedirects(resp, reverse('accounts-edit'))
+        userA.refresh_from_db()
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
+
+        # Test save profile changing username (whitespaces -> fail)
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userA SpaceName'], 'profile-ui_theme_preference': 'f'})
+        self.assertEqual(resp.status_code, 200)
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewName')
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
 
 class ChangeEmailViaAdminTestCase(TestCase):
 

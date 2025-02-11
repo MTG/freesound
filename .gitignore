@@ -1,36 +1,14 @@
 freesound-data
-*.project
-*.pydevproject
 *.pyc
 *~
 *.DS_Store
-*settings_local.py
-\#*\#
-*.settings*
-utils/search/config*/data
-.amateras
 freesound/local_settings.py
-logger.ini
 _docs/api/build/
-*.initial_data.json
-*.settings.py
-*beta_release_mails.json
-*usernames_passwords.csv
-*jmeter.log
-*jmeter.jtl
-_sandbox/load_testing/results/
-_docs/freesound_logo/white background - red - black/freesound_logo_tshirt.ai
-freesound.komodoproject
 .idea/
 .env
-see_last_email
-build_static.sh
-create_caches.sh
-run_tests.sh
-clear_cache.sh
 .venv
 
-# BW fornt end
+# BW frontend
 .cache
 node_modules
 freesound/static/bw-frontend/dist/
@@ -38,4 +16,3 @@ bw_static/
 npm-debug.log
 color-theme.scss
 dist-dark
-

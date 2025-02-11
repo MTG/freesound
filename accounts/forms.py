@@ -231,6 +231,16 @@ class RegistrationForm(forms.Form):
         self.fields['password1'].widget.attrs['placeholder'] = 'Password'
         self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
 
+    def clean(self):
+        # In the case that clean_email1 fails, the check for clean_email2 will report as "the email addresses are not the same"
+        # Therefore, in this specific case we remove the email2 error message because it doesn't make sense to 
+        # have email1 say "you cannot use this email to create an account" and email2 say "the email addresses are not the same"
+        cleaned_data = super().clean()
+        if self.has_error("email1") and "email2" in self.errors:
+            del self.errors["email2"]
+        return cleaned_data
+
+
     def clean_username(self):
         username = self.cleaned_data["username"]
         if not username_taken_by_other_user(username):

@@ -176,11 +176,11 @@ def search_view_helper(request):
 
     except SearchEngineException as e:
         search_logger.info(f'Search error: query: {str(query_params)} error {e}')
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
         return {'error_text': 'There was an error while searching, is your query correct?'}
     except Exception as e:
         search_logger.info(f'Could probably not connect to Solr - {e}')
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has more info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
         return {'error_text': 'The search server could not be reached, please try again later.'}
 
 
@@ -306,12 +306,12 @@ def search_forum(request):
             error = False
         except SearchEngineException as e:
             error.info(f"Search error: query: {search_query} error {e}")
-            sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+            sentry_sdk.capture_exception(e)
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:
             search_logger.info(f"Could probably not connect to the search engine - {e}")
-            sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+            sentry_sdk.capture_exception(e)
             error = True
             error_text = 'The search server could not be reached, please try again later.'
 

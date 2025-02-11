@@ -140,7 +140,10 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         ('Personal info', {'fields': ('email', )}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
-     )
+    )
+    add_fieldsets = (
+        (None, {'fields': ('username', 'email', 'password1', 'password2')}),
+    )
 
     paginator = LargeTablePaginator
 

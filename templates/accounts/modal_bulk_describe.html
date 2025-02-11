@@ -17,10 +17,10 @@
                 <a href="{% url 'wiki-page' 'faq' %}#csv-file-instructions">these instructions</a>.
                 Upload your data file using the form below:
             </p>
-            <form method="POST" enctype="multipart/form-data" action="">
+            <form method="POST" enctype="multipart/form-data" action="" class="bw-form bw-form-less-spacing">
                 {% csrf_token %}
-                {{ csv_form }}
-                <button class="btn-primary" type="submit" name="Submit">Upload data file</button>
+                {{ csv_form.as_p }}
+                <button class="btn-primary v-spacing-top-2" type="submit" name="Submit">Upload data file</button>
             </form>
         </div>
     </div>

@@ -34,12 +34,13 @@ search_logger = logging.getLogger("search")
 
 
 def tags(request, multiple_tags=None):
-
+    
     if multiple_tags:
         multiple_tags = multiple_tags.split('/')
     else:
         multiple_tags = []
-    multiple_tags = sorted([x for x in multiple_tags if x])
+    #Make all tags lower-cased and unique to get a case-insensitive search filter and shortened browse url
+    multiple_tags = sorted({x.lower() for x in multiple_tags if x})
     if multiple_tags:
         # We re-write tags as query filter and redirect
         search_filter = "+".join('tag:"' + tag + '"' for tag in multiple_tags)
@@ -51,7 +52,7 @@ def tags(request, multiple_tags=None):
         if pack_flt is not None:
             # If username is passed as a GET parameter, add it as well to the filter
             search_filter += f'+grouping_pack:{pack_flt}'
-            
+
         return HttpResponseRedirect(f"{reverse('tags')}?f={search_filter}")
     else:
         # Share same view code as for the search view, but "tags mode" will be on

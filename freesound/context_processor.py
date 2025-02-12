@@ -68,7 +68,6 @@ def context_extra(request):
             request.GET.get('anniversary', '0') == '1'
 
         tvars.update({
-            'last_restart_date': settings.LAST_RESTART_DATE,
             'new_tickets_count': new_tickets_count,
             'new_posts_pending_moderation': new_posts_pending_moderation,
             'num_pending_sounds': num_pending_sounds,

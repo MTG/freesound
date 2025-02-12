@@ -872,12 +872,6 @@ TEMPLATES = [
     },
 ]
 
-# We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
-# settings were loaded). We add this variable to the context processor and use it in base.html as a
-# parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
-# files when we do a deploy (the url changes)
-LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
-
 # -------------------------------------------------------------------------------
 # Analytics
 PLAUSIBLE_AGGREGATE_PAGEVIEWS = True

@@ -37,18 +37,13 @@ from utils.pagination import paginate
 @login_required
 def collections_for_user(request, collection_id=None):
     user = request.user
-    user_collections = Collection.objects.filter(user=user).order_by('-created') 
+    user_collections = Collection.objects.filter(user=user).order_by('-modified') 
     is_owner = False
     # if no collection id is provided for this URL, render the oldest collection
-    # be careful when loading this url without having any collection for a user
     # only show the collections for which you're the user(owner)
     
     if not collection_id:
         collection = user_collections.last()
-        if not collection:
-            # this is only for the purpose of test passing
-            # TODO: if user has no collections, collections html needs to be rendered somehow
-            return HttpResponse('No collections for this user')    
     else:
         collection = get_object_or_404(Collection, id=collection_id)
 
@@ -72,6 +67,7 @@ def collections_for_user(request, collection_id=None):
 
 def add_sound_to_collection(request, sound_id):
     # TODO: add restrictions for sound repetition and for user being owner/maintainer
+    # this does not work when adding sounds from search results
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ''
 
@@ -87,14 +83,10 @@ def add_sound_to_collection(request, sound_id):
             saved_collection = form.save()
             # TODO: moderation of CollectionSounds to be accounted for users who are neither maintainers nor owners
             CollectionSound(user=request.user, collection=saved_collection, sound=sound, status="OK").save()
-            saved_collection.num_sounds =+ 1 #this should be done with a signal/method in Collection models
+            saved_collection.num_sounds += 1 #this should be done with a signal/method in Collection models
             saved_collection.save()
             msg_to_return = f'Sound "{sound.original_filename}" saved under collection {saved_collection.name}'
             return JsonResponse('message', msg_to_return)
-        else:
-            msg_to_return = 'This sound already exists in this category'
-            return JsonResponse('message', msg_to_return)
-        
 
 def delete_sound_from_collection(request, collectionsound_id):
     #this should work as in Packs - select several sounds and remove them all at once from the collection
@@ -112,18 +104,18 @@ def get_form_for_collecting_sound(request, sound_id):
     
     try:
         last_collection = \
-            Collection.objects.filter(user=request.user).order_by('-created')[0]
+            Collection.objects.filter(user=request.user).order_by('-modified')[0]
         # If user has a previous bookmark, use the same category by default (or use none if no category used in last
         # bookmark)
     except IndexError:
         last_collection = None
     
     user_collections = Collection.objects.filter(user=request.user).order_by('-created')
-    form = CollectionSoundForm(initial={'collection': last_collection.id if last_collection else CollectionSoundForm.NO_COLLECTION_CHOICE_VALUE},
+    form = CollectionSoundForm(initial={'collection': last_collection.id if last_collection else CollectionSoundForm.BOOKMARK_COLLECTION_CHOICE_VALUE},
                                sound_id=sound.id,
                                prefix=sound.id,
-                               user_collections=user_collections)
-    
+                               user_collections=user_collections,
+                               user_saving_sound=request.user)
     collections_already_containing_sound = Collection.objects.filter(user=request.user, collectionsound__sound__id=sound.id).distinct()
     tvars = {'user': request.user,
              'sound': sound,
@@ -163,19 +155,20 @@ def delete_collection(request, collection_id):
 def edit_collection(request, collection_id):
     
     collection = get_object_or_404(Collection, id=collection_id)
-    if request.method=="POST":
-        form = CollectionEditForm(request.POST, instance=collection)
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect(reverse('collections', args=[collection.id]))
-        else:
-            return JsonResponse({'errors': form.errors})
 
     if request.user == collection.user:
         is_owner = True
     else:
         is_owner = False
-    form = CollectionEditForm(instance=collection, is_owner=is_owner)
+
+    if request.method=="POST":
+        form = CollectionEditForm(request.POST, instance=collection)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('collections', args=[collection.id]))
+        
+    else:
+        form = CollectionEditForm(instance=collection, is_owner=is_owner)
 
     tvars = {
         "form": form,

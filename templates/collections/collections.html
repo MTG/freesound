@@ -29,7 +29,13 @@
             </div>
         </div>    
         <div class="col-lg-8">
-            <h3>{{collection.name}} </h3> 
+            {% if collection %}
+            <h3>{{collection.name}}
+                <span class="h-spacing-left-3">
+                    <!-- this should be displayed in a section containing relevant collection data pack-wise -->
+                    {% if collection.public %}{% bw_icon 'eye' %}{% else %}{%bw_icon 'eye-blocked'%}{% endif %}
+                </span>
+            </h3> 
             by <a href="{% url "account" collection.user.username %}">{{collection.user.username}}</a>
             <div>Description: {% if collection.description %}{{collection.description}} {% endif %}</div>
             <span>Maintainers: 
@@ -61,6 +67,11 @@
             {% endif %}
             {% bw_paginator paginator page current_page request "collection" %}
             </div>
+            {% else %}
+            <div class="v-spacing-top-3">
+                <span class=text-light-grey> You don't have any collection yet...</span>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>         

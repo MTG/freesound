@@ -47,8 +47,9 @@ class CollectionSoundForm(forms.Form):
     user_collections = None
     user_available_collections = None
 
-    NO_COLLECTION_CHOICE_VALUE = '-1'
+    BOOKMARK_COLLECTION_CHOICE_VALUE = '-1'
     NEW_COLLECTION_CHOICE_VALUE = '0'
+
 
     def __init__(self, *args, **kwargs):
         self.user_collections = kwargs.pop('user_collections', False)
@@ -56,25 +57,37 @@ class CollectionSoundForm(forms.Form):
         self.sound_id = kwargs.pop('sound_id', False)
 
         if self.user_collections:
-            self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(collectionsound__sound__id=self.sound_id)
+            # NOTE: as a provisional solution to avoid duplicate sounds in a collection, Collections already containing the sound are not selectable
+            self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(collectionsound__sound__id=self.sound_id).exclude(is_default_collection=True)   
         
-        # NOTE: as a provisional solution to avoid duplicate sounds in a collection, Collections already containing the sound are not selectable
+        display_bookmark_collection = True
+        try:
+            # if the user already has a Bookmarks Collection, the default BOOKMARK COLLECTION CHOICE VALUE must be the ID of this collection
+            default_collection = Collection.objects.get(user=self.user_saving_sound, is_default_collection=True)
+            self.BOOKMARK_COLLECTION_CHOICE_VALUE = default_collection.id
+            if CollectionSound.objects.filter(sound=self.sound_id, collection=default_collection).exists():
+                # if the Bookmarks Collection already contains the sound, don't display it as an option
+                display_bookmark_collection = False
+        except Collection.DoesNotExist:
+            pass
+
         super().__init__(*args, **kwargs)
-        self.fields['collection'].choices = [(self.NO_COLLECTION_CHOICE_VALUE, '--- No collection ---'),#in this case this goes to bookmarks collection (might have to be created)
-                                           (self.NEW_COLLECTION_CHOICE_VALUE, 'Create a new collection...')] + \
+        self.fields['collection'].choices = ([(self.BOOKMARK_COLLECTION_CHOICE_VALUE, 'Bookmarks')] if display_bookmark_collection else []) + \
+                                           [(self.NEW_COLLECTION_CHOICE_VALUE, 'Create a new collection...')] + \
                                            ([(collection.id, collection.name) for collection in self.user_available_collections ]
                                             if self.user_available_collections else[])
         
         self.fields['new_collection_name'].widget.attrs['placeholder'] = "Fill in the name for the new collection"
         self.fields['collection'].widget.attrs = {
-            'data-grey-items': f'{self.NO_COLLECTION_CHOICE_VALUE},{self.NEW_COLLECTION_CHOICE_VALUE}'}
+            'data-grey-items': f'{self.BOOKMARK_COLLECTION_CHOICE_VALUE},{self.NEW_COLLECTION_CHOICE_VALUE}'}
     
     def save(self, *args, **kwargs):
         collection_to_use = None
 
         if not self.cleaned_data['use_last_collection']:
-            if self.cleaned_data['collection'] == self.NO_COLLECTION_CHOICE_VALUE:
-                pass
+            if self.cleaned_data['collection'] == self.BOOKMARK_COLLECTION_CHOICE_VALUE:
+                collection_to_use, _ = Collection.objects.get_or_create(name="Bookmarks", user=self.user_saving_sound, is_default_collection=True)
+                # TODO: what happens if user has more than one is_default_collection? Shouldn't happen but this needs a RESTRICTION
             elif self.cleaned_data['collection'] == self.NEW_COLLECTION_CHOICE_VALUE:
                 if self.cleaned_data['new_collection_name'] != "":
                     collection = \
@@ -97,31 +110,50 @@ class CollectionSoundForm(forms.Form):
     
     def clean(self):
         collection = self.cleaned_data['collection']
-        sound = self.sound_id
-        if CollectionSound.objects.filter(collection=collection,sound=sound).exists():
-            raise forms.ValidationError("This sound already exists in the collection")
-        
+        if CollectionSound.objects.filter(collection=collection,sound=self.sound_id).exists():
+            self.add_error('collection', forms.ValidationError("This sound already exists in the collection"))
         return super().clean()
     
 class CollectionEditForm(forms.ModelForm):
 
     class Meta():
         model = Collection
-        fields = ('name', 'description','maintainers')
+        fields = ('name', 'description','maintainers', 'public')
         widgets = {
             'name': TextInput(),
             'description': Textarea(attrs={'rows': 5, 'cols': 50}),
-            'maintainers': forms.CheckboxSelectMultiple(attrs={'class': 'bw-checkbox'})
+            'maintainers': forms.CheckboxSelectMultiple(attrs={'class': 'bw-checkbox'}),
+            'public': forms.RadioSelect(choices=[(True, 'Public'), (False, 'Private')], attrs={'class': 'bw-radio'})
         }
 
     def __init__(self, *args, **kwargs):
         is_owner = kwargs.pop('is_owner', True)
         super().__init__(*args, **kwargs)
         self.fields['maintainers'].queryset = self.instance.maintainers.all()
+        self.fields['public'].label = "Visibility"
+
+        # this block below is not necessarily true but it eases making restrictions for default collection 'bookmarks'
+        if self.instance.is_default_collection:
+            self.fields['name'].widget.attrs.update({'readonly': 'readonly'})
+            self.fields['name'].help_text = "<i>Your personal bookmarks collection's name can't be edited.</i>"
+            self.fields['public'].widget.attrs.update({'disabled':'disabled'})
+            self.fields['public'].help_text = "<i>Your personal bookmarks collection is private</i>"
+
+        if not self.fields['maintainers'].queryset:
+            self.fields['maintainers'].help_text = "This collection doesn't have any maintainers"
         
         if not is_owner:
             for field in self.fields:
                 self.fields[field].widget.attrs['readonly'] = 'readonly'
+
+    def clean(self):
+        clean_data = super().clean()
+
+        if clean_data['name'] != self.instance.name:
+            if Collection.objects.filter(user=self.instance.user, name=clean_data['name']).exists():
+                self.add_error('name', forms.ValidationError("You already have a collection with this name"))
+        
+        return super().clean()  
 
 class CreateCollectionForm(forms.ModelForm):
     

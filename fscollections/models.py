@@ -29,10 +29,12 @@ class Collection(models.Model):
     name = models.CharField(max_length=255) #max_length as in Packs (128 for Bookmarks)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     modified = models.DateTimeField(db_index=True, auto_now=True)
-    description = models.TextField()
-    maintainers = models.ManyToManyField(User, related_name="collection_maintainer")
+    # NOTE: double-check if description should be required (and how to display it)
+    description = models.TextField(blank=True)
+    maintainers = models.ManyToManyField(User, related_name="collection_maintainer", blank=True)
     num_sounds = models.PositiveIntegerField(default=0)
     public = models.BooleanField(default=False)
+    is_default_collection = models.BooleanField(default=False)
     #NOTE: Don't fear migrations, you're just testing
     #sounds are related to collections through CollectionSound model (bookmark-wise)
     #contributors = delicate stuff 

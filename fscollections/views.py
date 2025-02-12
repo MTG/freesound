@@ -86,7 +86,7 @@ def add_sound_to_collection(request, sound_id):
             saved_collection.num_sounds += 1 #this should be done with a signal/method in Collection models
             saved_collection.save()
             msg_to_return = f'Sound "{sound.original_filename}" saved under collection {saved_collection.name}'
-            return JsonResponse('message', msg_to_return)
+            return JsonResponse({'success': True, 'message': msg_to_return})
 
 def delete_sound_from_collection(request, collectionsound_id):
     #this should work as in Packs - select several sounds and remove them all at once from the collection

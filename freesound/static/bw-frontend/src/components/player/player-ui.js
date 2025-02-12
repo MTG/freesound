@@ -578,7 +578,7 @@ const createCollectionButton = (parentNode, playerImgNode) => {
   }
   collectionButton.setAttribute('data-toggle', 'collection-modal');
   collectionButton.setAttribute('data-modal-url', parentNode.dataset.collectionModalUrl);
-  collectionButton.setAttribute('data-add-collection-url', parentNode.dataset.collectionSoundUrl); 
+  collectionButton.setAttribute('data-collection-sound-url', parentNode.dataset.collectionSoundUrl); 
   collectionButtonContainer.appendChild(collectionButton);
   return collectionButtonContainer;
 }

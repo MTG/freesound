@@ -15,7 +15,7 @@
         </p>
         <form method="post" class="bw-form w-100 disable-on-submit">{% csrf_token %}
             <div class="bw-multiple-radio">
-                {{delete_form}}
+                {{ delete_form.as_p }}
             </div>
             <button class="btn-primary w-100 v-spacing-top-5">Delete account</button>
         </form>

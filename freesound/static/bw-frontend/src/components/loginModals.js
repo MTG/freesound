@@ -1,7 +1,8 @@
 import { showToast } from './toast';
 import serialize from '../utils/formSerializer'
-import { activateModal, dismissModal, handleGenericModalWithForm } from "../components/modal";
+import { activateModal, dismissModal, handleGenericModalWithForm } from "./modal";
 import { addRecaptchaScriptTagToMainHead } from '../utils/recaptchaDynamicReload'
+import { initializeStuffInContainer } from '../utils/initHelper';
 
 const checkUsernameAvailability = (username, baseURL, callback) => {
   const req = new XMLHttpRequest();
@@ -42,6 +43,9 @@ const customProblemsLoggingInSubmit = (event) => {
 };
 
 const initRegistrationForm = (registrationForm) => {
+
+  // Initialize UI elements
+  initializeStuffInContainer(registrationForm, false, false);
   
   // Bind click actions on links to move to other login modals
   initLoginAndRegistrationModalLinks('registerModal');

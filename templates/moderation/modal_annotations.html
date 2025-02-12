@@ -44,8 +44,8 @@
             {% endfor %}
             </div>
             <div>
-                <form class="bw-form">
-                    {{ form }}
+                <form class="bw-form bw-form-less-spacing">
+                    {{ form.as_p }}
                     <button class="btn-primary v-spacing-top-2" data-add-annotation-url="{% url 'tickets-add-user-annotation' user.id %}" data-user-id="{{ user.id }}">Add annotation</button>
                 </form>
             </div>

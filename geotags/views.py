@@ -30,9 +30,9 @@ from django.core.cache import cache
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-from django.utils.http import urlquote
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
+from urllib.parse import quote
 from accounts.models import Profile
 
 from sounds.models import Sound, Pack
@@ -211,7 +211,7 @@ def for_user(request, username):
         'pack': None,
         'sound': None,
         'url': reverse('geotags-for-user-barray', args=[username]),
-        'query_search_page_url': reverse('sounds-search') + f'?f=username:{urlquote(username)}&mm=1'
+        'query_search_page_url': reverse('sounds-search') + f'?f=username:{quote(username)}&mm=1'
     })
     return render(request, 'geotags/geotags.html', tvars)
 

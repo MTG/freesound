@@ -46,7 +46,7 @@ from django.template import loader
 from django.urls import reverse, resolve
 from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_exempt
-from ratelimit.decorators import ratelimit
+from django_ratelimit.decorators import ratelimit
 
 from accounts.models import Profile
 from comments.forms import CommentForm

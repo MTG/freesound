@@ -27,7 +27,7 @@ from django.core.cache import cache
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, reverse, render
-from ratelimit.decorators import ratelimit
+from django_ratelimit.decorators import ratelimit
 
 import forum
 import sounds

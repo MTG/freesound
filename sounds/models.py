@@ -44,10 +44,10 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import smart_str
-from django.utils.http import urlquote
 from django.utils.functional import cached_property
 from django.utils.text import Truncator, slugify
 from django.utils import timezone
+from urllib.parse import quote
 
 import accounts.models
 from apiv2.models import ApiV2Client
@@ -1747,7 +1747,7 @@ class Pack(models.Model):
             return False
 
     def pack_filter_value(self):
-        return f"\"{self.id}_{urlquote(self.name)}\""
+        return f"\"{self.id}_{quote(self.name)}\""
 
     def browse_pack_tag_url(self, tag):
         return reverse('tags', args=[tag]) + f'?pack_flt={self.pack_filter_value()}'

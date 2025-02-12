@@ -36,9 +36,9 @@ from django.dispatch import receiver
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.encoding import smart_str
-from django.utils.http import urlquote
 from django.utils import timezone
 from psycopg2.errors import ForeignKeyViolation
+from urllib.parse import quote
 
 import tickets.models
 from apiv2.models import ApiV2Client
@@ -223,10 +223,10 @@ class Profile(models.Model):
         return reverse('account', args=[smart_str(self.user.username)])
 
     def get_user_sounds_in_search_url(self):
-        return f'{reverse("sounds-search")}?f=username:"{ urlquote(self.user.username) }"&s=Date+added+(newest+first)&g=0'
+        return f'{reverse("sounds-search")}?f=username:"{ quote(self.user.username) }"&s=Date+added+(newest+first)&g=0'
     
     def get_user_packs_in_search_url(self):
-        return f'{reverse("sounds-search")}?f=username:"{ urlquote(self.user.username) }"&s=Date+added+(newest+first)&g=1&dp=1'
+        return f'{reverse("sounds-search")}?f=username:"{ quote(self.user.username) }"&s=Date+added+(newest+first)&g=1&dp=1'
     
     def get_latest_packs_for_profile_page(self):
         latest_pack_ids = Pack.objects.select_related().filter(user=self.user, num_sounds__gt=0).exclude(is_deleted=True) \

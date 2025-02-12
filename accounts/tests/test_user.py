@@ -52,7 +52,7 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(Profile.objects.filter(user=u).exists(), True)
         u.save()  # Check saving user again (with existing profile) does not fail
 
-    @mock.patch("captcha.fields.ReCaptchaField.validate")
+    @mock.patch("django_recaptcha.fields.ReCaptchaField.validate")
     def test_user_registration(self, magic_mock_function):
         username = 'new_user'
 

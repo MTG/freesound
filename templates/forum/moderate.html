@@ -24,9 +24,9 @@
                 </div>
             </div>
             <div class="col-3">
-                <form action="." method="post" class="bw-form bw-multiple-radio">{% csrf_token %}
-                    {{ post.form }}
-                    <button type="submit" class="btn-primary v-spacing-top-4 w-100 center">Send</button>
+                <form action="." method="post" class="bw-form bw-form-less-spacing bw-multiple-radio">{% csrf_token %}
+                    {{ post.form.as_p }}
+                    <button type="submit" class="btn-primary v-spacing-top-2 w-100 center">Send</button>
                 </form>
             </div>
         </div>

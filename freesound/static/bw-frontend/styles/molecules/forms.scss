@@ -109,3 +109,19 @@
       color: $navy-grey;
     }
 }
+
+.bw-form-less-spacing {
+  
+  p {
+    margin-top: 0!important;
+  }
+
+  input,
+  textarea {
+    &:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
+      margin-top: 10px!important;
+      margin-bottom: 15px!important;
+    }
+  }
+  
+}

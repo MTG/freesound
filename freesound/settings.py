@@ -31,8 +31,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
-    #'freesound.middleware.ModelAdminReorderWithNav',
-    'ratelimit.middleware.RatelimitMiddleware',
+    'django_ratelimit.middleware.RatelimitMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.UpdateEmailHandler',
@@ -75,50 +74,9 @@ INSTALLED_APPS = [
     'monitor',
     'django_object_actions',
     'silk',
-    'admin_reorder',
-    'captcha',
+    'django_recaptcha',
     'adminsortable',
 ]
-
-# Specify custom ordering of models in Django Admin index
-ADMIN_REORDER = (
-
-    {'app': 'accounts', 'models': (
-        'auth.User',
-        'accounts.Profile',
-        'accounts.DeletedUser',
-        'accounts.UserDeletionRequest',
-        'accounts.UserFlag',
-        'accounts.OldUsername',
-        'accounts.EmailBounce',
-        'auth.Groups',
-        'fsmessages.Message',
-        'accounts.GdprAcceptance',
-    )},
-    {'app': 'sounds', 'models': (
-        'sounds.Sound',
-        {'model': 'sounds.SoundAnalysis', 'label': 'Sound analyses'},
-        'sounds.Pack',
-        'sounds.DeletedSound',
-        'sounds.License',
-        {'model': 'sounds.Flag', 'label': 'Sound flags'},
-        'sounds.BulkUploadProgress',
-        {'model': 'sounds.SoundOfTheDay', 'label': 'Sound of the day'}
-    )},
-    {'app': 'apiv2', 'label': 'API', 'models': (
-        {'model': 'apiv2.ApiV2Client', 'label': 'API V2 Application'},
-        'oauth2_provider.AccessToken',
-        'oauth2_provider.RefreshToken',
-        'oauth2_provider.Grant',
-    )},
-    'forum',
-    {'app': 'donations', 'models': (
-        'donations.Donation',
-        'donations.DonationsEmailSettings',
-        'donations.DonationsModalSettings',
-    )},
-    'sites',
-)
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
 # It can be activated in local_settings by changing INTERCEPT_FUNC
@@ -127,7 +85,7 @@ SILKY_AUTHORISATION = True  # User must have permissions
 SILKY_PERMISSIONS = lambda user: user.is_superuser
 SILKY_INTERCEPT_FUNC = lambda request: False
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
@@ -715,7 +673,7 @@ MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 # To bypass the security check that prevents the test keys from being used unknowingly add
 # SILENCED_SYSTEM_CHECKS = [..., 'captcha.recaptcha_test_key_error', ...] to your settings.
 
-SILENCED_SYSTEM_CHECKS += ['captcha.recaptcha_test_key_error']
+SILENCED_SYSTEM_CHECKS += ['django_recaptcha.recaptcha_test_key_error']
 
 
 # -------------------------------------------------------------------------------

@@ -39,7 +39,7 @@ class MessageReceivedEmailNotification(TestCase):
         self.sender = User.objects.create_user(username='sender', email='sender@example.com')
         self.receiver = User.objects.create_user(username='receiver', email='receiver@example.com')
 
-    @mock.patch("captcha.fields.ReCaptchaField.validate")
+    @mock.patch("django_recaptcha.fields.ReCaptchaField.validate")
     def test_message_email_preference_enabled(self, magic_mock):
         self.client.force_login(user=self.sender)
         resp = self.client.post(reverse('messages-new'), data={
@@ -52,7 +52,7 @@ class MessageReceivedEmailNotification(TestCase):
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_PRIVATE_MESSAGE in mail.outbox[0].subject)
 
-    @mock.patch("captcha.fields.ReCaptchaField.validate")
+    @mock.patch("django_recaptcha.fields.ReCaptchaField.validate")
     def test_message_email_preference_disabled(self, magic_mock):
         # Create email preference object for the email type (which will mean user does not want message emails as
         # it is enabled by default and the preference indicates user does not want it).

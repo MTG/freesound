@@ -11,7 +11,9 @@ alabaster==0.7.13
 amqp==5.2.0
     # via kombu
 asgiref==3.7.2
-    # via django
+    # via
+    #   django
+    #   django-cors-headers
 asttokens==2.4.1
     # via stack-data
 autopep8==1.5.7
@@ -82,51 +84,49 @@ defusedxml==0.7.1
     # via djangorestframework-xml
 deprecated==1.2.14
     # via jwcrypto
-dj-database-url==0.5.0
+dj-database-url==2.3.0
     # via -r requirements.in
-django==3.2.23
+django==4.2.19
     # via
     #   -r requirements.in
+    #   dj-database-url
     #   django-admin-sortable
     #   django-amazon-ses
     #   django-cors-headers
     #   django-debug-toolbar
     #   django-extensions
-    #   django-modeladmin-reorder
-    #   django-multiupload
+    #   django-multiupload-plus
     #   django-oauth-toolkit
     #   django-recaptcha
     #   django-redis
     #   django-silk
     #   djangorestframework
     #   sentry-sdk
-django-admin-sortable==2.2.4
+django-admin-sortable==2.3
     # via -r requirements.in
 django-amazon-ses==4.0.1
     # via -r requirements.in
-django-cors-headers==3.13.0
+django-cors-headers==4.7.0
     # via -r requirements.in
-django-debug-toolbar==3.1.1
+django-debug-toolbar==5.0.1
     # via -r requirements.in
-django-extensions==3.1.5
+django-extensions==3.2.3
     # via -r requirements.in
-django-modeladmin-reorder==0.3.1
+django-multiupload-plus==0.1.0
     # via -r requirements.in
-django-multiupload==0.6.1
+django-oauth-toolkit==3.0.1
     # via -r requirements.in
-django-oauth-toolkit==2.2.0
+django-object-actions==4.3.0
     # via -r requirements.in
-django-object-actions==4.1.0
+django-ratelimit==4.1.0
     # via -r requirements.in
-django-ratelimit==3.0.1
+django-recaptcha==4.0.0
     # via -r requirements.in
-django-recaptcha==3.0.0
+django-redis==5.4.0
     # via -r requirements.in
-django-redis==5.2.0
+django-silk==5.3.2
     # via -r requirements.in
-django-silk==5.0.3
-    # via -r requirements.in
-djangorestframework==3.13.1
+djangorestframework==3.15.2
     # via -r requirements.in
 djangorestframework-jsonp==1.0.2
     # via -r requirements.in
@@ -271,10 +271,7 @@ python-dateutil==2.8.2
 python-louvain==0.16
     # via -r requirements.in
 pytz==2023.3
-    # via
-    #   -r requirements.in
-    #   django
-    #   djangorestframework
+    # via -r requirements.in
 pyyaml==6.0.1
     # via
     #   -r requirements.in
@@ -301,7 +298,7 @@ scipy==1.12.0
     # via
     #   -r requirements.in
     #   scikit-learn
-sentry-sdk[django]==1.39.1
+sentry-sdk[django]==2.21.0
     # via -r requirements.in
 sgmllib3k==1.0.0
     # via feedparser
@@ -345,7 +342,9 @@ traitlets==5.14.0
     #   ipython
     #   matplotlib-inline
 typing-extensions==4.9.0
-    # via asgiref
+    # via
+    #   asgiref
+    #   dj-database-url
 tzdata==2023.4
     # via celery
 uritemplate==4.1.1

@@ -298,7 +298,7 @@ scipy==1.12.0
     #   scikit-learn
 sentry-sdk==2.21.0
     # via -r requirements.in
-setuptools==75.8.0
+setuptools==76.0.0
     # via sphinx
 sgmllib3k==1.0.0
     # via feedparser
@@ -361,6 +361,8 @@ wcwidth==0.2.12
     # via prompt-toolkit
 webencodings==0.5.1
     # via bleach
+whitenoise==6.9.0
+    # via -r requirements.in
 wrapt==1.16.0
     # via deprecated
 xlrd==2.0.1

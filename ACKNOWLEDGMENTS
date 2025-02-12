@@ -115,6 +115,7 @@
                                              THE SOFTWARE.                                                                                    
                                                                                                                                               
  prompt-toolkit                 3.0.43       BSD License                                                                                      
+ psutil                         7.0.0        BSD License                                                                                      
  psycopg                        3.2.4        GNU Lesser General Public License v3 (LGPLv3)                                                    
  ptyprocess                     0.7.0        ISC License (ISCL)                                                                               
  pure-eval                      0.2.2        MIT License                                                                                      

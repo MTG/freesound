@@ -133,7 +133,6 @@ def edit_bookmark_category(request, category_id):
     tvars = {"category": category,
             "form": edit_form}
     return render(request, 'bookmarks/modal_edit_bookmark_category.html', tvars)
-            
 
     
 @login_required
@@ -157,15 +156,7 @@ def add_bookmark(request, sound_id):
         else:
             raise Exception()
 
-    if request.is_ajax():
-        return JsonResponse({'message': msg_to_return})
-    else:
-        messages.add_message(request, messages.WARNING, msg_to_return)
-        next = request.GET.get("next", "")
-        if next:
-            return HttpResponseRedirect(next)
-        else:
-            return HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))
+    return JsonResponse({'message': msg_to_return})
 
 
 @login_required

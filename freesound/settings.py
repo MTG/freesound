@@ -36,7 +36,6 @@ MIDDLEWARE = [
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.UpdateEmailHandler',
-    'freesound.middleware.OnlineUsersHandler',
     'corsheaders.middleware.CorsMiddleware',
 ]
 
@@ -144,9 +143,7 @@ SITE_ID = 1
 
 USE_X_FORWARDED_HOST = True
 
-# Not using django timezones as project originally with Django 1.3. We might fix this in the future:
-# https://docs.djangoproject.com/en/1.5/topics/i18n/timezones/#time-zones-migration-guide
-USE_TZ = False
+USE_TZ = True
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
@@ -874,12 +871,6 @@ TEMPLATES = [
         }
     },
 ]
-
-# We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
-# settings were loaded). We add this variable to the context processor and use it in base.html as a
-# parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
-# files when we do a deploy (the url changes)
-LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
 # -------------------------------------------------------------------------------
 # Analytics

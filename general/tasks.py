@@ -17,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-import datetime
 import json
 import logging
 import time
@@ -27,6 +26,7 @@ from celery import shared_task
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
@@ -308,7 +308,7 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
         # Update status and queued fields. No need to update "created" as it is done automatically by Django
         a.analysis_status = status
         a.analysis_time = analysis_time
-        a.last_analyzer_finished = datetime.datetime.now()
+        a.last_analyzer_finished = timezone.now()
         a.save(update_fields=['analysis_status', 'last_analyzer_finished', 'analysis_time'])
         if exception:
             workers_logger.info("Finished processing analysis results (%s)" % json.dumps(

@@ -21,6 +21,7 @@
 import datetime
 
 from django.conf import settings
+from django.utils import timezone
 
 from accounts.forms import FsAuthenticationForm, ProblemsLoggingInForm
 from forum.models import Post
@@ -63,11 +64,10 @@ def context_extra(request):
         # Animations will only be shown during the day of the anniversary
         # Special logo will be shown during 2 weeks after the anniversary
         load_anniversary_content = \
-            datetime.datetime(2020, 4, 5, 0, 0) <= datetime.datetime.today() <= datetime.datetime(2020, 4, 20) or \
+            datetime.datetime(2020, 4, 5, 0, 0, tzinfo=datetime.timezone.utc) <= timezone.now() <= datetime.datetime(2020, 4, 20, tzinfo=datetime.timezone.utc) or \
             request.GET.get('anniversary', '0') == '1'
 
         tvars.update({
-            'last_restart_date': settings.LAST_RESTART_DATE,
             'new_tickets_count': new_tickets_count,
             'new_posts_pending_moderation': new_posts_pending_moderation,
             'num_pending_sounds': num_pending_sounds,

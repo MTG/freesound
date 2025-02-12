@@ -25,6 +25,7 @@ import json
 from urllib.parse import parse_qs
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.utils import timezone
 from donations.models import Donation, DonationCampaign
 from utils.management_commands import LoggingBaseCommand
 
@@ -49,10 +50,10 @@ class Command(LoggingBaseCommand):
         n_donations_created = 0
 
         td = datetime.timedelta(days=days)
-        start = datetime.datetime.now() - td
+        start = timezone.now() - td
 
         one_day = datetime.timedelta(days=1)
-        stop_date = datetime.datetime.now() - one_day
+        stop_date = timezone.now() - one_day
         params = {
             'METHOD': 'TransactionSearch',
             'STARTDATE': start,

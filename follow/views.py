@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 from collections import OrderedDict
-from datetime import datetime, timedelta
+import datetime
 from socket import error as socket_error
 
 from django.conf import settings
@@ -28,7 +28,7 @@ from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-
+from django.utils import timezone
 from follow import follow_utils
 from follow.models import FollowingQueryItem
 from follow.models import FollowingUserItem
@@ -213,8 +213,8 @@ def stream(request):
     if request.method == "POST":
         select_value = request.POST.get("time_lapse")
         if select_value != "specific_dates":
-            date_from = datetime.now() - timedelta(days=SELECT_OPTIONS_DAYS[select_value])
-            date_to = datetime.now()
+            date_from = timezone.now() - datetime.timedelta(days=SELECT_OPTIONS_DAYS[select_value])
+            date_to = timezone.now()
             time_lapse = follow_utils.build_time_lapse(date_from, date_to)
             date_to = date_to.strftime("%Y-%m-%d")
             date_from = date_from.strftime("%Y-%m-%d")
@@ -223,20 +223,20 @@ def stream(request):
             date_to = request.POST.get("date_to")
             if not date_from or not date_to:
                 if not date_from and not date_to: # Set it to last week (default)
-                    date_to = datetime.now().strftime("%Y-%m-%d")
-                    date_from = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+                    date_to = timezone.now().strftime("%Y-%m-%d")
+                    date_from = (timezone.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
                 else:
                     if not date_from:
-                        date_from = (datetime.strptime(date_to,"%Y-%m-%d") - timedelta(days=7)).strftime("%Y-%m-%d") # A week before date to
+                        date_from = (datetime.strptime(date_to,"%Y-%m-%d") - datetime.timedelta(days=7)).strftime("%Y-%m-%d") # A week before date to
                     if not date_to:
-                        date_to = (datetime.strptime(date_from,"%Y-%m-%d") + timedelta(days=7)).strftime("%Y-%m-%d") # A week after date from
+                        date_to = (datetime.strptime(date_from,"%Y-%m-%d") + datetime.timedelta(days=7)).strftime("%Y-%m-%d") # A week after date from
             time_lapse = f'["{date_from}T00:00:00Z" TO "{date_to}T23:59:59.999Z"]'
 
     # if first time going into the page, the default is last week
     else:
         select_value = ''
-        date_from = datetime.now() - timedelta(days=SELECT_OPTIONS_DAYS["last_week"])
-        date_to = datetime.now()
+        date_from = timezone.now() - datetime.timedelta(days=SELECT_OPTIONS_DAYS["last_week"])
+        date_to = timezone.now()
         time_lapse = follow_utils.build_time_lapse(date_from, date_to)
         date_to = date_to.strftime("%Y-%m-%d")
         date_from = date_from.strftime("%Y-%m-%d")

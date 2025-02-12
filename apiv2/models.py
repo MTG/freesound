@@ -26,6 +26,7 @@ from django.contrib.auth.models import User
 from oauth2_provider.models import Application
 from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 from django.contrib.sites.models import Site
 
 
@@ -113,7 +114,7 @@ class ApiV2Client(models.Model):
             end_date = datetime.datetime(year, 12, 31).date()
             n_days_back = 365
         else:
-            end_date = datetime.datetime.now().date()
+            end_date = timezone.now().date()
         for i in range(0, n_days_back):
             date_filter = end_date - datetime.timedelta(days=i)
             if settings.DEBUG:

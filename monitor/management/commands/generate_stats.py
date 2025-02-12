@@ -24,6 +24,7 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import Count, Sum
+from django.utils import timezone
 
 import comments.models
 import donations.views
@@ -40,7 +41,7 @@ class Command(LoggingBaseCommand):
     def handle(self, **options):
         self.log_start()
 
-        time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
+        time_span = timezone.now()-datetime.timedelta(weeks=2)
 
         # Compute stats relatad with sounds:
 
@@ -85,7 +86,7 @@ class Command(LoggingBaseCommand):
 
         cache.set("users_stats", {"new_users": list(new_users)}, 60 * 60 * 24)
 
-        time_span = datetime.datetime.now()-datetime.timedelta(days=365)
+        time_span = timezone.now()-datetime.timedelta(days=365)
 
         active_users = {
             'sounds': {'obj': sounds.models.Sound.objects, 'attr': 'user_id'},
@@ -118,7 +119,7 @@ class Command(LoggingBaseCommand):
         cache.set('donations_stats', {'new_donations': list(query_donations)}, 60*60*24)
 
         # Compute stats related with Tags:
-        time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
+        time_span = timezone.now()-datetime.timedelta(weeks=2)
 
         tags_stats = TaggedItem.objects.values('tag_id')\
             .filter(created__gt=time_span).annotate(num=Count('tag_id'))\
@@ -155,7 +156,7 @@ class Command(LoggingBaseCommand):
         num_donations = donations.models.Donation.objects\
             .aggregate(Sum('amount'))['amount__sum']
 
-        time_span = datetime.datetime.now()-datetime.timedelta(30)
+        time_span = timezone.now()-datetime.timedelta(30)
         sum_donations_month = donations.models.Donation.objects\
             .filter(created__gt=time_span).aggregate(Sum('amount'))['amount__sum']
 

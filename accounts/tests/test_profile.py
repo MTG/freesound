@@ -404,30 +404,30 @@ class ProfilePostInForumTest(TestCase):
 
     def test_can_post_in_forum_time(self):
         """If you have no sounds, you can't post within 5 minutes of the last one"""
-        created = parse_date("2019-02-03 10:50:00")
+        created = parse_date("2019-02-03 10:50:00 UTC")
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
         self.user.profile.refresh_from_db()
-        with freezegun.freeze_time("2019-02-03 10:52:30"):
+        with freezegun.freeze_time("2019-02-03 10:52:30", tz_offset=0):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertFalse(can_post)
             self.assertIn("was less than 5", reason)
 
-        with freezegun.freeze_time("2019-02-03 11:03:30"):
+        with freezegun.freeze_time("2019-02-03 11:03:30", tz_offset=0):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertTrue(can_post)
 
     def test_can_post_in_forum_has_sounds(self):
         """If you have sounds you can post even within 5 minutes of the last one"""
-        created = parse_date("2019-02-03 10:50:00")
+        created = parse_date("2019-02-03 10:50:00 UTC")
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
         self.user.profile.num_sounds = 3
         self.user.profile.save()
         self.user.profile.refresh_from_db()
-        with freezegun.freeze_time("2019-02-03 10:52:30"):
+        with freezegun.freeze_time("2019-02-03 10:52:30", tz_offset=0):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertTrue(can_post)
 
@@ -435,14 +435,14 @@ class ProfilePostInForumTest(TestCase):
         """If you have no sounds, you can't post more than x posts per day.
         this is 5 + d^2 posts, where d is the number of days between your first post and now"""
         # our first post, 2 days ago
-        created = parse_date("2019-02-03 10:50:00")
+        created = parse_date("2019-02-03 10:50:00 UTC")
 
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
 
         # 2 days later, the maximum number of posts we can make today will be 5 + 4 = 9
-        today = parse_date("2019-02-05 01:50:00")
+        today = parse_date("2019-02-05 01:50:00 UTC")
         for i in range(9):
             post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
             today = today + datetime.timedelta(minutes=i+10)
@@ -451,7 +451,7 @@ class ProfilePostInForumTest(TestCase):
         self.user.profile.refresh_from_db()
 
         # After making 9 posts, we can't make any more
-        with freezegun.freeze_time("2019-02-05 14:52:30"):
+        with freezegun.freeze_time("2019-02-05 14:52:30", tz_offset=0):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertFalse(can_post)
             self.assertIn("you exceeded your maximum", reason)
@@ -459,14 +459,14 @@ class ProfilePostInForumTest(TestCase):
     def test_can_post_in_forum_admin(self):
         """If you're a forum admin, you can post even if you have no sounds, you're within
         5 minutes of the last one, and you've gone over the limit of posts for the day"""
-        created = parse_date("2019-02-03 10:50:00")
+        created = parse_date("2019-02-03 10:50:00 UTC")
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
         perm = Permission.objects.get_by_natural_key('can_moderate_forum', 'forum', 'post')
         self.user.user_permissions.add(perm)
 
-        with freezegun.freeze_time("2019-02-04 10:00:30"):
+        with freezegun.freeze_time("2019-02-04 10:00:30", tz_offset=0):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertTrue(can_post)
 

@@ -27,6 +27,7 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 import utils.downloads
 from donations.models import Donation, DonationsModalSettings
@@ -152,15 +153,15 @@ class ShouldSuggestDonationTest(TestCase):
 
         # if the download objects are older than donations_settings.download_days, don't consider them
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now()-datetime.timedelta(days=donations_settings.download_days + 1))
+            created=timezone.now()-datetime.timedelta(days=donations_settings.download_days + 1))
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
         # if user has donations but these are older than donations_settings.days_after_donation, do not consider them
         Donation.objects.create(user=user, amount=1)
         Donation.objects.filter(user=user).update(
-            created=datetime.datetime.now()-datetime.timedelta(days=donations_settings.days_after_donation + 1))
+            created=timezone.now()-datetime.timedelta(days=donations_settings.days_after_donation + 1))
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now())  # Change downloads date again to be recent (modal show be shown)
+            created=timezone.now())  # Change downloads date again to be recent (modal show be shown)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), True)
 
     def test_should_suggest_donation_probabilty_0(self):
@@ -203,15 +204,15 @@ class ShouldSuggestDonationTest(TestCase):
 
         # if the download objects are older than donations_settings.download_days, don't consider them
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.download_days + 1))
+            created=timezone.now() - datetime.timedelta(days=donations_settings.download_days + 1))
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
         # if user has donations but these are older than donations_settings.days_after_donation, do not consider them
         Donation.objects.create(user=user, amount=1)
         Donation.objects.filter(user=user).update(
-            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.days_after_donation + 1))
+            created=timezone.now() - datetime.timedelta(days=donations_settings.days_after_donation + 1))
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now())
+            created=timezone.now())
         # Change downloads date again to be recent (however modal won't show because probability is 0.0)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 

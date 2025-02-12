@@ -26,7 +26,6 @@ from django.urls import reverse
 from django.contrib import messages
 
 from accounts.models import GdprAcceptance
-from utils.onlineusers import cache_online_users
 
 web_logger = logging.getLogger('web')
 
@@ -41,16 +40,6 @@ def dont_redirect(path):
         and 'privacy' not in path \
         and 'cookies' not in path \
         and 'contact' not in path
-
-
-class OnlineUsersHandler:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        cache_online_users(request)
-        response = self.get_response(request)
-        return response
 
 
 class BulkChangeLicenseHandler:

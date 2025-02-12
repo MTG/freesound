@@ -35,7 +35,7 @@ from numpy import save, load, where, in1d
 from math import sqrt
 from pysparse import spmatrix
 from .community_tag_recommender import CommunityDetector
-from datetime import datetime
+import datetime
 
 
 class RecommendationDataProcessor(object):
@@ -184,7 +184,8 @@ class RecommendationDataProcessor(object):
         if self.verbose:
             print("Saving association matrix, resource ids, tag ids and tag names")
 
-        filename = "FS%.4i%.2i%.2i" % (datetime.today().year, datetime.today().month, datetime.today().day)
+        now = datetime.datetime.now(datetime.timezone.utc)
+        filename = "FS%.4i%.2i%.2i" % (now.year, now.month, now.day)
         M.export_mtx(RECOMMENDATION_TMP_DATA_DIR + filename + '_ASSOCIATION_MATRIX.mtx')
         save(RECOMMENDATION_TMP_DATA_DIR + filename + '_RESOURCE_IDS.npy',resources)
         save(RECOMMENDATION_TMP_DATA_DIR + filename + '_TAG_IDS.npy',tags_ids)

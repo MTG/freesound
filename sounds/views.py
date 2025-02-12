@@ -44,6 +44,7 @@ from django.http import HttpResponseRedirect, Http404, \
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, resolve
+from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django_ratelimit.decorators import ratelimit
 
@@ -89,7 +90,7 @@ def get_n_weeks_back_datetime(n_weeks):
     date is calculated with respect to the date of the most recent sound stored in database. In this way it is
     more likely that the selected time range will include activity in database.
     """
-    now = datetime.datetime.now()
+    now = timezone.now()
     if settings.DEBUG:
         now = Sound.objects.last().created
     return now - datetime.timedelta(weeks=n_weeks)
@@ -104,8 +105,8 @@ def get_sound_of_the_day_id():
     if not random_sound:
         try:
             today = datetime.date.today()
-            now = datetime.datetime.now()
-            tomorrow = datetime.datetime(today.year, today.month, today.day)
+            now = timezone.now()
+            tomorrow = datetime.datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
             time_until_tomorrow = tomorrow - now
 
             rnd = SoundOfTheDay.objects.get(date_display=today)

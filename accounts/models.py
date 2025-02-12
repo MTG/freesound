@@ -20,7 +20,6 @@
 
 import datetime
 import os
-import pytz
 import random
 
 from django.conf import settings
@@ -37,7 +36,7 @@ from django.dispatch import receiver
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.encoding import smart_str
-from django.utils.timezone import now
+from django.utils import timezone
 from psycopg2.errors import ForeignKeyViolation
 from urllib.parse import quote
 
@@ -349,7 +348,7 @@ class Profile(models.Model):
         # If we have just enabled stream emails, we should set last_stream_email_sent to now
         enabled_stream_emails = self.email_type_enabled(stream_emails_type)
         if not had_enabled_stream_emails and enabled_stream_emails:
-            self.last_stream_email_sent = datetime.datetime.now()
+            self.last_stream_email_sent = timezone.now()
             self.save()
 
     def get_user_tags(self):
@@ -384,18 +383,18 @@ class Profile(models.Model):
                           "pending to moderate"
 
         if self.num_posts >= 1 and self.num_sounds == 0:
-            today = datetime.datetime.today()
+            now = timezone.now()
             reference_date = self.user.posts.all()[0].created
 
             # Do not allow posts if last post is not older than 5 minutes
             seconds_per_post = settings.LAST_FORUM_POST_MINIMUM_TIME
-            if (today - self.user.posts.all().reverse()[0].created).total_seconds() < seconds_per_post:
+            if (now - self.user.posts.all().reverse()[0].created).total_seconds() < seconds_per_post:
                 return False, "We're sorry but you can't post to the forum because your last post was less than 5 " \
                               "minutes ago"
 
             # Do not allow posts if user has already posted N posts that day
-            max_posts_per_day = settings.BASE_MAX_POSTS_PER_DAY + pow((today - reference_date).days, 2)
-            if self.user.posts.filter(created__range=(today-datetime.timedelta(days=1), today)).count() >= \
+            max_posts_per_day = settings.BASE_MAX_POSTS_PER_DAY + pow((now - reference_date).days, 2)
+            if self.user.posts.filter(created__range=(now-datetime.timedelta(days=1), now)).count() >= \
                     max_posts_per_day:
                 return False, "We're sorry but you can't post to the forum because you exceeded your maximum number " \
                               "of posts per day"
@@ -785,7 +784,7 @@ class EmailBounce(models.Model):
     type = models.CharField(db_index=True, max_length=2, choices=TYPE_CHOICES, default=UNDETERMINED)
     type_map = {t[1]: t[0] for t in TYPE_CHOICES}
 
-    timestamp = models.DateTimeField(default=now)
+    timestamp = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ("-timestamp",)
@@ -869,7 +868,7 @@ def update_status_history(sender, instance, **kwargs):
         should_update_status_history = True
 
     if should_update_status_history:
-        instance.status_history += ['{}: {} ({})'.format(pytz.utc.localize(datetime.datetime.utcnow()),
+        instance.status_history += ['{}: {} ({})'.format(timezone.now(),
                                                             instance.get_status_display(),
                                                             instance.status)]
 

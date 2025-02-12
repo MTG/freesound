@@ -22,6 +22,7 @@ import datetime
 import logging
 
 from django.core.cache import caches
+from django.utils import timezone
 
 from utils.management_commands import LoggingBaseCommand
 from apiv2.models import ApiV2Client, APIClientDailyUsageHistory
@@ -42,7 +43,7 @@ class Command(LoggingBaseCommand):
         self.log_start()
 
         n_days_back = 2
-        now = datetime.datetime.now().date()
+        now = timezone.now().date()
         for i in range(0, n_days_back):
             date_filter = now - datetime.timedelta(days=i)
             monitoring_key_pattern = f'{date_filter.year}-{date_filter.month}-{date_filter.day}_*'

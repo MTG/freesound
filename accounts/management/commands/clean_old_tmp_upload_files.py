@@ -21,6 +21,7 @@
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.utils import timezone
 import os
 import datetime
 
@@ -31,7 +32,7 @@ class Command(BaseCommand):
     def handle(self,  *args, **options):
         for f in os.listdir(settings.FILE_UPLOAD_TEMP_DIR):
             f_mod_date = datetime.datetime.fromtimestamp(os.path.getmtime(settings.FILE_UPLOAD_TEMP_DIR + f))
-            now = datetime.datetime.now()
+            now = timezone.now()
             if (now - f_mod_date).total_seconds() > 3600*24:
                 print(f"Deleting {f}")
                 os.remove(settings.FILE_UPLOAD_TEMP_DIR + f)

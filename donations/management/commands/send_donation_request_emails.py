@@ -25,6 +25,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Count
+from django.utils import timezone
 
 from donations.models import Donation
 from donations.models import DonationsEmailSettings
@@ -48,10 +49,10 @@ class Command(LoggingBaseCommand):
 
         # 0) Define some variables and do some common queries that will be reused later
 
-        donation_timespan = datetime.datetime.now()-datetime.timedelta(  # donation_timestamp is today - X days (12 mo)
+        donation_timespan = timezone.now()-datetime.timedelta(  # donation_timestamp is today - X days (12 mo)
             days=donation_settings.minimum_days_since_last_donation)
 
-        email_timespan = datetime.datetime.now() - datetime.timedelta(  # email_timestap is today - Y days (3 mo)
+        email_timespan = timezone.now() - datetime.timedelta(  # email_timestap is today - Y days (3 mo)
             days=donation_settings.minimum_days_since_last_donation_email)
 
         user_received_donation_email_within_email_timespan = User.objects.filter(
@@ -84,7 +85,7 @@ class Command(LoggingBaseCommand):
                 'emails/email_donation_reminder.txt', {'user': user},
                 user_to=user, email_type_preference_check='donation_request')
             if email_sent_successfully:
-                user.profile.last_donation_email_sent = datetime.datetime.now()
+                user.profile.last_donation_email_sent = timezone.now()
                 user.profile.donations_reminder_email_sent = True
                 user.profile.save()
                 commands_logger.info("Sent donation email (%s)" %
@@ -150,7 +151,7 @@ class Command(LoggingBaseCommand):
                             }, user_to=user, email_type_preference_check='donation_request')
 
                     if email_sent_successfully:
-                        user.profile.last_donation_email_sent = datetime.datetime.now()
+                        user.profile.last_donation_email_sent = timezone.now()
                         user.profile.save()
                         commands_logger.info("Sent donation email (%s)" %
                                              json.dumps({'user_id': user.id, 'donation_email_type': 'request'}))

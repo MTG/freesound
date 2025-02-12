@@ -24,6 +24,7 @@ import time
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 
 from sounds.models import Download, PackDownload, PackDownloadSound
 
@@ -79,7 +80,7 @@ class Command(BaseCommand):
 
         end_date = options.get('end_date')
         if end_date is None:
-            end_date = datetime.datetime.now()  # end_date defaults to "today"
+            end_date = timezone.now()  # end_date defaults to "today"
 
         while start_date < end_date:
             downloads = Download.objects.filter(pack_id__isnull=False,

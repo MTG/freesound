@@ -24,6 +24,7 @@ import os
 import shutil
 
 from django.conf import settings
+from django.utils import timezone
 from utils.management_commands import LoggingBaseCommand
 
 console_logger = logging.getLogger("console")
@@ -59,8 +60,8 @@ class Command(LoggingBaseCommand):
             'processing_before_describe': 0
         }
 
-        one_day_ago = datetime.datetime.today() - datetime.timedelta(days=1)
-        one_year_ago = datetime.datetime.today() - datetime.timedelta(days=365)
+        one_day_ago = timezone.now() - datetime.timedelta(days=1)
+        one_year_ago = timezone.now() - datetime.timedelta(days=365)
 
         # Clean files from tmp_uploads which are olden than a day
         for filename in os.listdir(settings.FILE_UPLOAD_TEMP_DIR):

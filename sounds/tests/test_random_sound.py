@@ -201,7 +201,7 @@ class SoundOfTheDayTestCase(TestCase):
         random_sound = get_sound_of_the_day_id()
         self.assertEqual(isinstance(random_sound, int), True)
 
-    @freeze_time("2017-06-20")
+    @freeze_time("2017-06-20", tz_offset=0)
     def test_create_enough_new_sounds(self):
         """ If we have some random sounds selected for the future, make sure
         that we always have at least settings.NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE sounds
@@ -257,7 +257,7 @@ class SoundOfTheDayTestCase(TestCase):
 
         self.assertEqual(len(mail.outbox), 0)
 
-    @freeze_time("2017-06-20 10:30:00")
+    @freeze_time("2017-06-20 10:30:00", tz_offset=0)
     @mock.patch('django.core.cache.cache.set')
     def test_expire_cache_at_end_of_day(self, cache_set):
         """When we cache today's random sound, expire the cache at midnight today"""

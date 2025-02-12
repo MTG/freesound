@@ -47,6 +47,7 @@ from django.utils.encoding import smart_str
 from django.utils.http import urlquote
 from django.utils.functional import cached_property
 from django.utils.text import Truncator, slugify
+from django.utils import timezone
 
 import accounts.models
 from apiv2.models import ApiV2Client
@@ -336,7 +337,7 @@ class SoundManager(models.Manager):
             latest_sound = Sound.public.order_by('-created').first()
             date_threshold = latest_sound.created
         else:
-            date_threshold = datetime.datetime.now()
+            date_threshold = timezone.now()
 
         date_threshold = date_threshold - datetime.timedelta(days=period_days)
 
@@ -1092,7 +1093,7 @@ class Sound(models.Model):
         if current_state != new_state:
             self.mark_index_dirty(commit=False)
             self.moderation_state = new_state
-            self.moderation_date = datetime.datetime.now()
+            self.moderation_date = timezone.now()
             self.save()
 
             if new_state != 'OK':
@@ -1107,7 +1108,7 @@ class Sound(models.Model):
                     self.pack.process()
         else:
             # If the moderation state has not changed, only update moderation date
-            self.moderation_date = datetime.datetime.now()
+            self.moderation_date = timezone.now()
             self.save()
 
         self.invalidate_template_caches()
@@ -1125,10 +1126,10 @@ class Sound(models.Model):
             # Sound either went from PE to OK, from PE to FA, from OK to FA, or from FA to OK (never from OK/FA to PE)
             self.mark_index_dirty(commit=False)
             self.processing_state = new_state
-            self.processing_date = datetime.datetime.now()
+            self.processing_date = timezone.now()
             if self.processing_log is None:
                 self.processing_log = ''
-            self.processing_log += f'----Processed sound {datetime.datetime.today()} - {self.id}\n{processing_log}'
+            self.processing_log += f'----Processed sound {timezone.now()} - {self.id}\n{processing_log}'
             self.save(update_fields=['processing_state', 'processing_date', 'processing_log', 'is_index_dirty'])
 
             if new_state == 'FA':
@@ -1142,10 +1143,10 @@ class Sound(models.Model):
 
         else:
             # If processing state has not changed, only update the processing date and log
-            self.processing_date = datetime.datetime.now()
+            self.processing_date = timezone.now()
             if self.processing_log is None:
                 self.processing_log = ''
-            self.processing_log += f'----Processed sound {datetime.datetime.today()} - {self.id}\n{processing_log}'
+            self.processing_log += f'----Processed sound {timezone.now()} - {self.id}\n{processing_log}'
             self.save(update_fields=['processing_date', 'processing_log'])
 
         self.invalidate_template_caches()
@@ -1329,7 +1330,7 @@ class Sound(models.Model):
             sa.num_analysis_attempts += 1
             sa.analysis_status = "QU"
             sa.analysis_time = 0
-            sa.last_sent_to_queue = datetime.datetime.now()
+            sa.last_sent_to_queue = timezone.now()
             sa.save(update_fields=['num_analysis_attempts', 'analysis_status', 'last_sent_to_queue', 'analysis_time'])
             sound_path = self.locations('path')
             if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):

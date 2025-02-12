@@ -22,6 +22,7 @@ import logging
 import json
 
 from django.conf import settings
+from django.utils import timezone
 
 from freesound.celery import get_queues_task_counts
 from sounds.models import Sound, SoundAnalysis
@@ -187,7 +188,7 @@ class Command(LoggingBaseCommand):
         # communicates back to freesound (by calling the process_analysis_results celery task) to update the
         # corresponding SoundAnalysis object.
         date_cutoff = \
-            datetime.datetime.now() - datetime.timedelta(hours=settings.ORCHESTRATE_ANALYSIS_MAX_TIME_IN_QUEUED_STATUS)
+            timezone.now() - datetime.timedelta(hours=settings.ORCHESTRATE_ANALYSIS_MAX_TIME_IN_QUEUED_STATUS)
         ssaa = SoundAnalysis.objects.filter(analysis_status="QU", last_sent_to_queue__lt=date_cutoff)
         data_to_log['jobs_moved_from_qu_to_fa'] = ssaa.count()
         console_logger.info('Will move {} SoundAnalysis objects from QU to FA state because of them being queued for '

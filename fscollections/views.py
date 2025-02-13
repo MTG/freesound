@@ -32,6 +32,7 @@ from fscollections.forms import CollectionSoundForm, CollectionEditForm, Maintai
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
 from utils.pagination import paginate
+from utils.downloads import download_sounds
 
 
 @login_required
@@ -39,6 +40,7 @@ def collections_for_user(request, collection_id=None):
     user = request.user
     user_collections = Collection.objects.filter(user=user).order_by('-modified') 
     is_owner = False
+    is_maintainer = False
     # if no collection id is provided for this URL, render the oldest collection
     # only show the collections for which you're the user(owner)
     
@@ -47,13 +49,17 @@ def collections_for_user(request, collection_id=None):
     else:
         collection = get_object_or_404(Collection, id=collection_id)
 
+    maintainers = User.objects.filter(collection_maintainer=collection.id)
+
     if user == collection.user:
         is_owner = True
+    elif user in maintainers:
+        is_maintainer = True
 
-    maintainers = User.objects.filter(collection_maintainer=collection.id)
     tvars = {'collection': collection,
              'collections_for_user': user_collections,
              'is_owner': is_owner,
+             'is_maintainer': is_maintainer,
              'maintainers': maintainers}
     
     collection_sounds = CollectionSound.objects.filter(collection=collection)
@@ -62,8 +68,6 @@ def collections_for_user(request, collection_id=None):
     tvars.update(paginator)
     tvars['page_collection_and_sound_objects'] = zip(paginator['page'].object_list, page_sounds)
     return render(request, 'collections/collections.html', tvars)
-
-#NOTE: tbd - when a user wants to save a sound without having any collection, create a personal bookmarks collection
 
 def add_sound_to_collection(request, sound_id):
     # TODO: add restrictions for sound repetition and for user being owner/maintainer
@@ -198,6 +202,19 @@ def add_maintainer_to_collection(request, collection_id):
     tvars = {"collection": collection,
              "form": form}
     return render(request, 'collections/modal_add_maintainer.html', tvars)
+
+def download_collection(request, collection_id):
+    collection = get_object_or_404(Collection, id=collection_id)
+    collection_sounds = CollectionSound.objects.filter(collection=collection).values('sound_id')
+    sounds_list = Sound.objects.filter(id__in=collection_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
+    licenses_url = (reverse('collection-licenses', args=[collection_id]))
+    licenses_content = collection.get_attribution(sound_qs=sounds_list)
+    return download_sounds(licenses_url, licenses_content, sounds_list, collection.download_filename)
+
+def collection_licenses(request, collection_id):
+    collection = get_object_or_404(Collection, id=collection_id)
+    attribution = collection.get_attribution()
+    return HttpResponse(attribution, content_type="text/plain")
 
 # NOTE: there should be two methods to add a sound into a collection
 # 1: adding from the sound.html page through a "bookmark-like" button and opening a Collections modal

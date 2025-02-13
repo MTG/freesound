@@ -20,6 +20,8 @@
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.template.loader import render_to_string
+from django.utils.text import slugify
 
 from sounds.models import Sound, License
 
@@ -43,6 +45,29 @@ class Collection(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+    
+    def get_attribution(self, sound_qs=None):
+        #If no queryset of sounds is provided, take it from the bookmark category
+        if sound_qs is None:
+            collection_sounds = CollectionSound.objects.filter(collection=self).values("sound_id")
+            sound_qs = Sound.objects.filter(id__in=collection_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
+        
+        users = User.objects.filter(sounds__in=sound_qs).distinct()
+        # Generate text file with license info
+        licenses = License.objects.filter(sound__id__in=sound_qs).distinct()
+        attribution = render_to_string(("sounds/multiple_sounds_attribution.txt"),
+            dict(type="Collection",
+                users=users,
+                object=self,
+                licenses=licenses,
+                sound_list=sound_qs))
+        return attribution
+
+    @property
+    def download_filename(self):
+        name_slug = slugify(self.name)
+        username_slug = slugify(self.user.username)
+        return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
 
 
 class CollectionSound(models.Model):

@@ -25,7 +25,10 @@
                 </ul>    
             </div>
             <div class="v-spacing-top-4">
+                {% if is_owner or is_maintainer%}
                 <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'edit-collection' collection.id %}" title="Edit collection">Edit collection</a>
+                {% endif %}
+                <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'download-collection' collection.id %}" title="Download collection">Download Collection</a> 
             </div>
         </div>    
         <div class="col-lg-8">

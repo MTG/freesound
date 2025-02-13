@@ -45,7 +45,7 @@ def redirect_inline(function=None, redirect_url_name='front-page', kwarg_keys=No
     return decorator(function)
 
 
-class ComparableUrl(object):
+class ComparableUrl:
     '''A url object that can be compared with other url orbjects
     without regard to the vagaries of encoding, escaping, and ordering
     of parameters in query strings.'''

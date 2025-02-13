@@ -50,7 +50,7 @@ def _get_value_to_apply_group_by_pack(self):
     return self.value
 
 
-class SearchQueryProcessor(object):
+class SearchQueryProcessor:
     """The SearchQueryProcessor class is used to parse and process search query information from a request object and
     compute a number of useful items for displaying search information in templates, constructing search URLs, and 
     preparing search options to be passed to the backend search engine.

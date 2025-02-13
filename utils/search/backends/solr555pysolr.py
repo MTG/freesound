@@ -195,7 +195,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             document["type"] = sound.type
         document["original_filename"] = remove_control_chars(getattr(sound, "original_filename"))
         document["description"] = remove_control_chars(getattr(sound, "description"))
-        document["tag"] = list(set([t.lower() for t in getattr(sound, "tag_array")]))
+        document["tag"] = list({t.lower() for t in getattr(sound, "tag_array")})
         document["license"] = getattr(sound, "license_name")
         
         if document["num_ratings"] >= settings.MIN_NUMBER_RATINGS:
@@ -440,24 +440,24 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query_filter = self.add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
 
         # If we only want sounds with packs and there is no pack filter, add one
-        if only_sounds_with_pack and not 'pack:' in query_filter:
+        if only_sounds_with_pack and 'pack:' not in query_filter:
             query_filter += ' pack:*'
 
         if 'geotag:"Intersects(' in query_filter:
             # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
             #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
-            query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+            query_filter = re.sub(r'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
 
         query_filter = self.search_filter_make_intersection(query_filter)
 
         # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
         # our query to the sounds in that list of IDs.
         if only_sounds_within_ids:
-            sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
+            sounds_within_ids_filter = ' OR '.join([f'id:{sound_id}' for sound_id in only_sounds_within_ids])
             if query_filter:
-                query_filter += ' AND ({})'.format(sounds_within_ids_filter)
+                query_filter += f' AND ({sounds_within_ids_filter})'
             else:
-                query_filter = '({})'.format(sounds_within_ids_filter)
+                query_filter = f'({sounds_within_ids_filter})'
 
         return query_filter
 
@@ -691,7 +691,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         results = {}
         for analyzer_name in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS.keys():
             query = SolrQuery()
-            filter_query = 'analyzer:"{}" content_type:"v"'.format(analyzer_name)
+            filter_query = f'analyzer:"{analyzer_name}" content_type:"v"'
             query.set_query("*:*")
             query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query)
             query.set_group_field("_nest_parent_")
@@ -813,7 +813,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def get_pack_tags(self, username, pack_name):
         query = SolrQuery()
         query.set_dismax_query('*:*')
-        filter_query = 'username:\"%s\" pack:\"%s\"' % (username, pack_name)
+        filter_query = f'username:\"{username}\" pack:\"{pack_name}\"'
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=20, mincount=1)

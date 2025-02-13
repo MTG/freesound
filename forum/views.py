@@ -69,8 +69,12 @@ def last_action(view_func):
 
         if key not in request.COOKIES or not request.session.get(key, False):
             request.session[key] = now_as_string
-        elif now - datetime.datetime.fromisoformat(request.COOKIES[key]) > datetime.timedelta(minutes=30):
-            request.session[key] = request.COOKIES[key]
+        else:
+            cookie_value = datetime.datetime.fromisoformat(request.COOKIES[key])
+            if cookie_value.tzinfo is None:
+                cookie_value = cookie_value.replace(tzinfo=timezone.utc)
+            if now - cookie_value > datetime.timedelta(minutes=30):
+                request.session[key] = request.COOKIES[key]
 
         request.last_action_time = datetime.datetime.fromisoformat(request.session.get(key, now_as_string))
 

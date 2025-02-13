@@ -114,7 +114,7 @@ class DonationTest(TestCase):
         }
         with mock.patch('stripe.Webhook.construct_event') as mock_create:
             mock_create.return_value = params
-            resp = self.client.post(reverse('donation-complete-stripe'), params, HTTP_STRIPE_SIGNATURE="1")
+            resp = self.client.post(reverse('donation-complete-stripe'), params, headers={"stripe-signature": "1"})
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
@@ -144,7 +144,7 @@ class DonationTest(TestCase):
         }
         with mock.patch('stripe.Webhook.construct_event') as mock_create:
             mock_create.return_value = params
-            resp = self.client.post(reverse('donation-complete-stripe'), params, HTTP_STRIPE_SIGNATURE="1")
+            resp = self.client.post(reverse('donation-complete-stripe'), params, headers={"stripe-signature": "1"})
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
@@ -171,7 +171,7 @@ class DonationTest(TestCase):
         }
         with mock.patch('stripe.Webhook.construct_event') as mock_create:
             mock_create.return_value = params
-            resp = self.client.post(reverse('donation-complete-stripe'), params, HTTP_STRIPE_SIGNATURE="1")
+            resp = self.client.post(reverse('donation-complete-stripe'), params, headers={"stripe-signature": "1"})
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)

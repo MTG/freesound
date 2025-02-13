@@ -253,7 +253,7 @@ def search_forum(request):
     remove_username_filter_url = ''
     if 'post_author' in filter_query:
         username_filter = filter_query.split('post_author:"')[1].split('"')[0]
-        remove_username_filter_url = '{}?{}'.format(reverse('forums-search'), filter_query.replace('post_author:"{}"'.format(username_filter), ''))
+        remove_username_filter_url = '{}?{}'.format(reverse('forums-search'), filter_query.replace(f'post_author:"{username_filter}"', ''))
         sort = settings.SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST
     
     # Parse advanced search options

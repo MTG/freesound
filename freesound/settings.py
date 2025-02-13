@@ -268,7 +268,14 @@ EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
 STATIC_URL = '/static/'
 STATIC_ROOT = 'bw_static'
-STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
+STORAGES = {
+    "default": {
+       "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": 'freesound.storage.NoStrictManifestStaticFilesStorage',
+    },
+}
 
 
 # -------------------------------------------------------------------------------

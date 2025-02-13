@@ -84,7 +84,8 @@ def tags(request, multiple_tags=None):
                     search_logger.info(f'Tag browse error: Could probably not connect to Solr - {e}')
                     sentry_sdk.capture_exception(e)  # Manually capture exception so it has more info and Sentry can organize it properly
                     tvars.update({'error_text': 'The search server could not be reached, please try again later.'})
-            
+            tvars.update({'initial_tagcloud': initial_tagcloud})
+
         return render(request, 'search/search.html', tvars)
 
 

@@ -179,6 +179,7 @@ class CreateCollectionForm(forms.ModelForm):
 
 class MaintainerForm(forms.Form):
     maintainer = forms.CharField(
+        widget=TextInput(attrs={'placeholder': "Fill in the username of the maintainer"}),
         label=False, 
         help_text=None, 
         max_length=128, 
@@ -189,7 +190,6 @@ class MaintainerForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.collection = kwargs.pop('collection', False)
         super().__init__(*args, **kwargs)
-        self.fields['maintainer'].widget.attrs['placeholder'] = "Fill in the username of the maintainer"
 
     def clean(self):
         try:
@@ -199,8 +199,6 @@ class MaintainerForm(forms.Form):
             return super().clean()
         except User.DoesNotExist:
             raise forms.ValidationError("The user does not exist")
-
-        return super().clean()
     
 # NOTE: adding maintainers will be done frome edit collection page using a modal to introduce
 # username

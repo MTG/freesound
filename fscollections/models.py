@@ -35,6 +35,7 @@ class Collection(models.Model):
     description = models.TextField(blank=True)
     maintainers = models.ManyToManyField(User, related_name="collection_maintainer", blank=True)
     num_sounds = models.PositiveIntegerField(default=0)
+    num_downloads = models.PositiveIntegerField(default=0)
     public = models.BooleanField(default=False)
     is_default_collection = models.BooleanField(default=False)
     #NOTE: Don't fear migrations, you're just testing
@@ -68,7 +69,6 @@ class Collection(models.Model):
         name_slug = slugify(self.name)
         username_slug = slugify(self.user.username)
         return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
-
 
 class CollectionSound(models.Model):
    #this model relates collections and sounds

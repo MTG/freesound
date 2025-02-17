@@ -41,20 +41,20 @@ def collections_for_user(request, collection_id=None):
     user_collections = Collection.objects.filter(user=user).order_by('-modified') 
     is_owner = False
     is_maintainer = False
+    maintainers = []
     # if no collection id is provided for this URL, render the oldest collection
     # only show the collections for which you're the user(owner)
-    
     if not collection_id:
         collection = user_collections.last()
     else:
         collection = get_object_or_404(Collection, id=collection_id)
-
-    maintainers = User.objects.filter(collection_maintainer=collection.id)
-
-    if user == collection.user:
-        is_owner = True
-    elif user in maintainers:
-        is_maintainer = True
+    
+    if collection:
+        maintainers = User.objects.filter(collection_maintainer=collection.id)
+        if user == collection.user:
+            is_owner = True
+        elif user in maintainers:
+            is_maintainer = True
 
     tvars = {'collection': collection,
              'collections_for_user': user_collections,
@@ -82,7 +82,7 @@ def add_sound_to_collection(request, sound_id):
         #by now work with direct additions (only user-wise, not maintainer-wise)
         user_collections = Collection.objects.filter(user=request.user)
         form = CollectionSoundForm(request.POST, sound_id=sound_id, user_collections=user_collections, user_saving_sound=request.user)
-
+    
         if form.is_valid():
             saved_collection = form.save()
             # TODO: moderation of CollectionSounds to be accounted for users who are neither maintainers nor owners
@@ -94,11 +94,12 @@ def add_sound_to_collection(request, sound_id):
 
 def delete_sound_from_collection(request, collectionsound_id):
     #this should work as in Packs - select several sounds and remove them all at once from the collection
-    #by now it works as in Bookmarks in terms of UI
     #TODO: this should be done through a POST request method
     collection_sound = get_object_or_404(CollectionSound, id=collectionsound_id)
     collection = collection_sound.collection
     collection_sound.delete()
+    collection.num_sounds -= 1 #this shouldn't be done like this but it is for the sake of tests
+    collection.save()
     return HttpResponseRedirect(reverse("collections", args=[collection.id]))
 
 @login_required
@@ -133,14 +134,14 @@ def get_form_for_collecting_sound(request, sound_id):
     return render(request, 'collections/modal_collect_sound.html', tvars)
 
 def create_collection(request):
-    if not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse("collections-for-user"))
+    # if not request.GET.get('ajax'):
+      #  return HttpResponseRedirect(reverse("collections"))
     if request.method == "POST":
         form = CreateCollectionForm(request.POST, user=request.user)
         if form.is_valid():
             Collection(user = request.user, 
                     name = form.cleaned_data['name'], 
-                    description=form.cleaned_data['description']).save()
+                    description = form.cleaned_data['description']).save()
             return JsonResponse({'success': True})
     else:
         form = CreateCollectionForm(user=request.user)
@@ -185,11 +186,11 @@ def edit_collection(request, collection_id):
 
 def add_maintainer_to_collection(request, collection_id):
     #TODO: store maintainers inside modal to further add them at once
-    if not request.GET.get('ajax'):
-        return HttpResponseRedirect(reverse("collections-for-user", args=[collection_id]))
+    # if not request.GET.get('ajax'):
+      #  return HttpResponseRedirect(reverse("collections", args=[collection_id]))
     
     collection = get_object_or_404(Collection, id=collection_id, user=request.user)
-    
+
     if request.method == "POST":
         form = MaintainerForm(request.POST, collection=collection)
         if form.is_valid():
@@ -209,6 +210,7 @@ def download_collection(request, collection_id):
     sounds_list = Sound.objects.filter(id__in=collection_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
     licenses_url = (reverse('collection-licenses', args=[collection_id]))
     licenses_content = collection.get_attribution(sound_qs=sounds_list)
+    collection.num_downloads += 1
     return download_sounds(licenses_url, licenses_content, sounds_list, collection.download_filename)
 
 def collection_licenses(request, collection_id):

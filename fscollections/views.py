@@ -62,7 +62,7 @@ def collections_for_user(request, collection_id=None):
              'is_maintainer': is_maintainer,
              'maintainers': maintainers}
     
-    collection_sounds = CollectionSound.objects.filter(collection=collection)
+    collection_sounds = CollectionSound.objects.filter(collection=collection).order_by('created')
     paginator = paginate(request, collection_sounds, settings.BOOKMARKS_PER_PAGE)
     page_sounds = Sound.objects.ordered_ids([col_sound.sound_id for col_sound in paginator['page'].object_list])
     tvars.update(paginator)

@@ -223,7 +223,10 @@ class SearchOptionInt(SearchOption):
     def get_value_from_request(self):
         if self.query_param_name is not None:
             if self.query_param_name in self.request.GET:
-                return int(self.request.GET.get(self.query_param_name))
+                try:
+                    return int(self.request.GET.get(self.query_param_name))
+                except ValueError:
+                    return None
             
     def format_value(self, value):
         return str(value)

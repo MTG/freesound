@@ -262,7 +262,7 @@ for Freesound async tasks other than analysis).
 
 - Make sure that there are no outstanding deprecation warnings for the version of django that we are upgrading to.
 
-      docker compose run --rm web python -Wd manage.py test
+      docker compose run --rm web pytest
 
 Check for warnings of the form `RemovedInDjango110Warning` (TODO: Make tests fail if a warning occurs)
 

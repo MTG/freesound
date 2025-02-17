@@ -40,6 +40,8 @@ from apiv2.apiv2_utils import apiv1_end_of_life_message
 admin.autodiscover()
 
 urlpatterns = [
+    path('robots.txt', TemplateView.as_view(template_name="webroot/robots.txt", content_type='text/plain')),
+    path('favicon.ico', TemplateView.as_view(template_name="webroot/favicon.ico", content_type='image/x-icon')),
     path('', sounds.views.front_page, name='front-page'),
 
     path('people/', accounts.views.accounts, name="accounts"),

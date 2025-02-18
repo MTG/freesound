@@ -305,7 +305,7 @@ def search_forum(request):
             page = paginator.page(current_page)
             error = False
         except SearchEngineException as e:
-            error.info(f"Search error: query: {search_query} error {e}")
+            search_logger.info(f"Search error: query: {search_query} error {e}")
             sentry_sdk.capture_exception(e)
             error = True
             error_text = 'There was an error while searching, is your query correct?'

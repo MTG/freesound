@@ -66,7 +66,7 @@ class Command(LoggingBaseCommand):
         # Clean files from tmp_uploads which are olden than a day
         for filename in os.listdir(settings.FILE_UPLOAD_TEMP_DIR):
             filepath = os.path.join(settings.FILE_UPLOAD_TEMP_DIR, filename)
-            if datetime.datetime.fromtimestamp(os.path.getmtime(filepath), tz=timezone.utc) < one_day_ago:
+            if datetime.datetime.fromtimestamp(os.path.getmtime(filepath), tz=datetime.timezone.utc) < one_day_ago:
                 # Delete sound
                 console_logger.info(f'Deleting file {filepath}')
                 cleaned_files['tmp_uploads'] += 1
@@ -82,7 +82,7 @@ class Command(LoggingBaseCommand):
                 if not files_in_folder:
                     should_delete = True
                 else:
-                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, filename)), tz=timezone.utc) < one_day_ago for filename in files_in_folder]):
+                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, filename)), tz=datetime.timezone.utc) < one_day_ago for filename in files_in_folder]):
                         should_delete = True
                 if should_delete:
                     # Delete directory and contents
@@ -100,7 +100,7 @@ class Command(LoggingBaseCommand):
                 if not files_in_folder:
                     should_delete = True
                 else:
-                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, sound_filename)), tz=timezone.utc) < one_year_ago for sound_filename in files_in_folder]):
+                    if all([datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folderpath, sound_filename)), tz=datetime.timezone.utc) < one_year_ago for sound_filename in files_in_folder]):
                         should_delete = True
                 if should_delete:
                     # Delete directory and contents

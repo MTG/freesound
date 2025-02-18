@@ -14,328 +14,317 @@
 
 {% block content %}
 
-<div class="container">
-    {% if error_text %}
-    <div class="navbar-space-filler v-spacing-3 v-spacing-top-2">
-        <div class="v-spacing-6 v-spacing-top-4">
-            <p class="v-spacing-4">{{ error_text }}</p>
-            <p><button onclick="window.history.back();" class="btn-primary">Go back</button></p>
-        </div>
-    </div>
-    {% else %}
-    <div class="navbar-space-filler v-spacing-3 v-spacing-top-2">
-        {% if initial_tagcloud %}
-        <section id="tags-mode-input-section" class="v-spacing-5">
-            <h3 class="v-spacing-5 text-light-grey center">Choose a tag to start browsing</h3>
-            {% for tag in initial_tagcloud|add_sizes:"count:0.1:1.0" %}
-            {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
-            {% endfor %}
-        </section>
+    <div class="container">
+        {% if error_text %}
+            <div class="navbar-space-filler v-spacing-3 v-spacing-top-2">
+                <div class="v-spacing-6 v-spacing-top-4">
+                    <p class="v-spacing-4">{{ error_text }}</p>
+                    <p><button onclick="window.history.back();" class="btn-primary">Go back</button></p>
+                </div>
+            </div>
         {% else %}
-        <form method="get" id="search_form" action="{% if not sqp.tags_mode_active %}{% url 'sounds-search' %}{% else %}{% url 'tags' %}{% endif %}">
-            {% comment %}main search input section and hidden fields{% endcomment %}
-            <div class="v-spacing-5 {% if sqp.tags_mode_active %}display-none{% endif %}">
-                <div class="middle center">
-                    <div class="bw-search__input_wrapper"><i class="bw-icon-search input-icon text-light-grey"></i>
-                        <input id="search-input-browse" 
-                        class="bw-search__input" 
-                        name="{{ sqp.options.query.query_param_name }}" 
-                        type="text" 
-                        value="{% if not sqp.similar_to_active %}{{ sqp.options.query.value_to_apply }}{% endif %}" 
-                        placeholder="{% if not sqp.similar_to_active %}Search {% if not sqp.display_as_packs_active %}sounds{% else %}packs{% endif %}...{% else %}Similar to {{ sqp.similar_to_active }}{% endif %}" 
-                        autocomplete="off"
-                        {% if sqp.options.query.disabled %}disabled{% endif %} />
+            <div class="navbar-space-filler v-spacing-3 v-spacing-top-2">
+                <form method="get" id="search_form" action="{% if not sqp.tags_mode_active %}{% url 'sounds-search' %}{% else %}{% url 'tags' %}{% endif %}">
+                    {% comment %}main search input section and hidden fields{% endcomment %}
+                    <div class="v-spacing-5 {% if sqp.tags_mode_active %}display-none{% endif %}">
+                        <div class="middle center">
+                            <div class="bw-search__input_wrapper"><i class="bw-icon-search input-icon text-light-grey"></i>
+                                <input id="search-input-browse"
+                                       class="bw-search__input"
+                                       name="{{ sqp.options.query.query_param_name }}"
+                                       type="text"
+                                       value="{% if not sqp.similar_to_active %}{{ sqp.options.query.value_to_apply }}{% endif %}"
+                                       placeholder="{% if not sqp.similar_to_active %}Search {% if not sqp.display_as_packs_active %}sounds{% else %}packs{% endif %}...{% else %}Similar to {{ sqp.similar_to_active }}{% endif %}"
+                                       autocomplete="off"
+                                       {% if sqp.options.query.disabled %}disabled{% endif %}/>
+                            </div>
+                            <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
+                        </div>
+                        <input type="hidden" name="f" value="{{ sqp.get_filter_string_for_url|urlencode }}"/>
+                        {% if not sqp.options.field_weights.is_default_value %} {% display_search_option "field_weights" "hidden" %}{% endif %}
+                        {% if not sqp.options.similar_to.is_default_value %} {% display_search_option "similar_to" "hidden" %}{% endif %}
                     </div>
-                    <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
-                </div>
-                <input type="hidden" name="f" value="{{ sqp.get_filter_string_for_url|urlencode }}" />
-                {% if not sqp.options.field_weights.is_default_value %}{% display_search_option "field_weights" "hidden" %}{% endif %}
-                {% if not sqp.options.similar_to.is_default_value %}{% display_search_option "similar_to" "hidden" %}{% endif %}
-            </div>
-            {% if sqp.tags_mode_active %}
-            {% comment %}"sounds tagged as" label with follow/unfollow buttons{% endcomment %}
-            <div id="tags-mode-input-section" class="v-spacing-5">
-                <div class="between middle">
-                    <h3>
-                        <span class="text-light-grey h-spacing-1">Sounds tagged as</span>
-                        {% for tag in sqp.get_tags_in_filters %}
-                        {{ tag }}{% if not forloop.last %}<span class="h-spacing-left-1 h-spacing-1 text-light-grey">·</span>{% endif %}
-                        {% endfor %}
-                    </h3>
-                    {% bw_follow_tags_widget %}
-                </div>
-            </div>
-            {% endif %}
-            <div>
-                {% comment %}search navbar{% endcomment %}
-                <div class="divider-light"></div>
-                <div class="padding-3 v-padding-2 between font-weight-bold middle">
-                    {% comment %}number of results{% endcomment %}
-                    <div class="col-4">
-                    {% if not sqp.display_as_packs_active %}
-                        {% if non_grouped_number_of_results > 0 %}{{ non_grouped_number_of_results|bw_intcomma }}{% else %}{{ paginator.count|bw_intcomma }}{% endif %} sound{{ non_grouped_number_of_results|pluralize }}
-                    {% else %}
-                        {{ paginator.count|bw_intcomma }} pack{{ paginator.count|pluralize }}
+                    {% if sqp.tags_mode_active %}
+                        {% comment %}"sounds tagged as" label with follow/unfollow buttons{% endcomment %}
+                        <div id="tags-mode-input-section" class="v-spacing-5">
+                            <div class="between middle">
+                                <h3>
+                                    <span class="text-light-grey h-spacing-1">Sounds tagged as</span>
+                                    {% for tag in sqp.get_tags_in_filters %}
+                                        {{ tag }}{% if not forloop.last %} <span class="h-spacing-left-1 h-spacing-1 text-light-grey">·</span> {% endif %}
+                                    {% endfor %}
+                                </h3>
+                                {% bw_follow_tags_widget %}
+                            </div>
+                        </div>
                     {% endif %}
-                    </div>
-                    {% comment %}advanced search toggle{% endcomment %}
-                    <div class="col-4 middle center">
-                        <a href="#" class="bw-link--grey-light" id="toggle_advanced_search_options"></a>
-                        {% if has_advanced_search_settings_set %}<span class="text-red h-spacing-left-1 text-44 line-height-14 padding-bottom-1" title="There are active filters in the advanced search options">·</span>{% endif %}
-                    </div>
-                    {% comment %}sorting options{% endcomment %}
-                    <div class="col-4 right browse__search-overview-sorter">
-                        <div class="{% if sqp.map_mode_active %}display-none{% endif %}"> 
-                            {% if not sqp.similar_to_active %}
-                                {% display_search_option "sort_by" %}
+                    <div>
+                        {% comment %}search navbar{% endcomment %}
+                        <div class="divider-light"></div>
+                        <div class="padding-3 v-padding-2 between font-weight-bold middle">
+                            {% comment %}number of results{% endcomment %}
+                            <div class="col-4">
+                                {% if not sqp.display_as_packs_active %}
+                                    {% if non_grouped_number_of_results > 0 %} {{ non_grouped_number_of_results|bw_intcomma }}{% else %} {{ paginator.count|bw_intcomma }}{% endif %} sound {{ non_grouped_number_of_results|pluralize }}
+                                {% else %}
+                                    {{ paginator.count|bw_intcomma }} pack{{ paginator.count|pluralize }}
+                                {% endif %}
+                            </div>
+                            {% comment %}advanced search toggle{% endcomment %}
+                            <div class="col-4 middle center">
+                                <a href="#" class="bw-link--grey-light" id="toggle_advanced_search_options"></a>
+                                {% if has_advanced_search_settings_set %} <span class="text-red h-spacing-left-1 text-44 line-height-14 padding-bottom-1" title="There are active filters in the advanced search options">·</span>{% endif %}
+                            </div>
+                            {% comment %}sorting options{% endcomment %}
+                            <div class="col-4 right browse__search-overview-sorter">
+                                <div class="{% if sqp.map_mode_active %}display-none{% endif %}">
+                                    {% if not sqp.similar_to_active %}
+                                        {% display_search_option "sort_by" %}
+                                    {% else %}
+                                        <span class="font-weight-normal text-light-grey d-none d-md-inline">{{ sqp.options.sort_by.label }}:</span>
+                                        <span><b>Similarity to target</b></span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="divider-light"></div>
+                        {% comment %}advanced search options{% endcomment %}
+                        <div id="advanced-search-options" data-visible="{% if not has_advanced_search_settings_set or advanced_search_closed_on_load %}0{% else %}1{% endif %}" class="{% if not has_advanced_search_settings_set or advanced_search_closed_on_load %}display-none{% endif %}">
+                            <div class="padding-2">
+                                {% comment %}first row of advanced search options{% endcomment %}
+                                <div class="row">
+                                    {% comment %}left section{% endcomment %}
+                                    <div class="col-md-4 bw-search__advanced-search-filter-section v-spacing-2">
+                                        <div class="bw-search__filter-section-name caps text-light-grey text-18">
+                                            {{ sqp.options.search_in.label }}
+                                        </div>
+                                        <div class="row no-gutters v-spacing-top-1 {% if sqp.options.search_in.disabled %}opacity-020{% endif %}">
+                                            {% for option in sqp.options.search_in.get_choices_annotated_with_selection %}
+                                                <div class="col-6 v-padding-1">
+                                                    <label class="between w-100 cursor-pointer">
+                                                        <div class="bw-search__filter-checkbox">
+                                                            <input name="{{ option.0 }}" type="checkbox" class="bw-checkbox" {% if option.2 %}checked{% endif %} {% if sqp.options.search_in.disabled %}disabled{% endif %}/>
+                                                        </div>
+                                                        <div class="bw-search__filter-name">{{ option.1 }}</div>
+                                                    </label>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% comment %}middle section{% endcomment %}
+                                    <div class="col-md-3 bw-search__advanced-search-filter-section v-spacing-2">
+                                        <div class="bw-search__filter-section-name caps text-light-grey text-18">
+                                            {{ sqp.options.duration.label }}
+                                        </div>
+                                        <div class="bw-search__filter-range v-spacing-top-2">
+                                            <input name="{{ sqp.options.duration.query_param_min }}" class="bw-search_input-range v-spacing-1" type="text" value="{{ sqp.options.duration.value.0 }}"/> - <input name="{{ sqp.options.duration.query_param_max }}" class="bw-search_input-range" type="text" value="{{ sqp.options.duration.value.1 }}"/> <span>seconds</span>
+                                        </div>
+                                    </div>
+                                    {% comment %}right section{% endcomment %}
+                                    <div class="col-md-5 bw-search__advanced-search-filter-section v-spacing-2">
+                                        <div class="bw-search__filter-section-name caps text-light-grey text-18">
+                                            Other
+                                        </div>
+                                        <div class="row no-gutters v-spacing-top-1">
+                                            <div class="col-6 v-padding-1">
+                                                {% display_search_option "is_geotagged" %}
+                                            </div>
+                                            <div class="col-6 v-padding-1">
+                                                {% display_search_option "is_remix" %}
+                                            </div>
+                                            <div class="col-6 v-padding-1">
+                                                {% display_search_option "group_by_pack" %}
+                                            </div>
+                                            <div class="col-6 v-padding-1">
+                                                {% display_search_option "display_as_packs" %}
+                                            </div>
+                                            <div class="col-6 v-padding-1">
+                                                {% display_search_option "grid_mode" %}
+                                            </div>
+                                            <div class="col-6 v-padding-1">
+                                                {% display_search_option "map_mode" %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if show_beta_search_options %}
+                                    <div class="row v-spacing-top-1">
+                                        <div class="col-12">
+                                            <div class="bw-search__filter-section-name caps text-light-grey text-18">
+                                                Experimental Search Options
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-4 v-padding-1">
+                                            <div class="v-spacing-top-1">{% display_search_option "similarity_space" %}</div>
+                                            <div class="v-spacing-top-1">{% display_search_option "similar_to" %}</div>
+                                            <div class="v-spacing-top-1">{% display_search_option "compute_clusters" %}</div>
+                                        </div>
+                                        <div class="col-8 v-padding-1">
+                                            <div class="v-spacing-top-1">{% display_search_option "include_audio_problems" %}</div>
+                                            <div class="v-spacing-top-1">{% display_search_option "single_event" %}</div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% comment %}apply button{% endcomment %}
+                            <div class="v-spacing-4 center">
+                                <button id="avanced-search-apply-button" class="btn-primary" disabled>Apply advanced search filters</button>
+                            </div>
+                            <div class="divider-light"></div>
+                        </div>
+                        {% comment %}cluster results section{% endcomment %}
+                        {% if sqp.compute_clusters_active %}
+                            {% if clusters_data %}
+                                {% include 'search/clustering_results.html' %}
                             {% else %}
-                                <span class="font-weight-normal text-light-grey d-none d-md-inline">{{ sqp.options.sort_by.label }}:</span>
-                                <span><b>Similarity to target</b></span>
+                                {% if get_clusters_url %}
+                                    <div class="async-section"
+                                         data-async-section-content-url="{{ get_clusters_url }}">
+                                        <div class="h-padding-2 v-spacing-top-2">
+                                            <div class="center v-spacing-top-2">
+                                                <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+            <div class="row">
+                <div class="col-12 center v-spacing-top-negative-2 d-md-none">
+                    <div data-target="collapsable-filters" data-show-text="Show filters" data-hide-text="Hide filters" data-hide-on-load class="collapsable-toggle v-spacing-top-2 font-weight-bold text-light-grey"></div>
+                </div>
+                {% comment %}facets{% endcomment%}
+                <aside class="col-md-4 col-lg-3 collapsable-block md-max-h-100" id="collapsable-filters">
+                    {% if sqp.tags_mode_active %}
+                        {% display_facet "tags" %}
+                    {% endif %}
+                    {% display_facet "license" %}
+                    {% if not sqp.tags_mode_active %}
+                        {% display_facet "tags" %}
+                    {% endif %}
+                    {% display_facet "type" %}
+                    {% display_facet "channels" %}
+                    {% display_facet "samplerate" %}
+                    {% if not sqp.display_as_packs_active %}
+                        {% display_facet "pack_grouping" %}
+                    {% endif %}
+                    {% display_facet "username" %}
+                    {% display_facet "bitdepth" %}
+                    {% display_facet "bitrate" %}
+                    {% if show_beta_search_options %}
+                        {% for experimental_facet in experimental_facets %}
+                            {% display_facet experimental_facet %}
+                        {% endfor %}
+                    {% endif %}
+                </aside>
+                <div class="col-12 divider-light d-md-none v-spacing-top-3 v-spacing-3"></div>
+                {% comment %}search results{% endcomment %}
+                <main class="col-12 col-md-8 col-lg-9 col-extra-left-padding-large-md">
+                    {% comment %}filters{% endcomment %}
+                    {% with sqp.get_filters_data_to_display_in_search_results_page as filters_data %}
+                        {% if filters_data %}
+                            <div class="v-spacing-3 v-spacing-top-2 line-height-33">
+                                {% for name, value, remove_url in filters_data %}
+                                    <a class="no-hover btn-inverse bw-search__active-filters-button" href="{{ remove_url }}" title="Remove this filter">
+                                        {{ name }}:{{ value }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                    {% comment %}map{% endcomment %}
+                    {% if sqp.map_mode_active %}
+                        <div class="col-12 v-spacing-top-3 no-paddings">
+                            <div id="mapCanvas" class="map main-map"
+                                 data-map-show-search="{% if sound %}false{% else %}true{% endif %}"
+                                 data-geotags-url="{{ map_bytearray_url }}"
+                                 data-access-token="pk.eyJ1IjoiZnJlZXNvdW5kIiwiYSI6ImNrd3E0Mm9lbjBqM2Qyb2wwdmwxaWI3a3oifQ.MZkgLSByRuk_Xql67CySAg"
+                            ><span id="mapLoadingIndicator">Loading map... <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"></span> </div>
+                        </div>
+                        <div class="row middle">
+                            <div class="col-lg-4 v-spacing-top-4">
+                                <a class="no-hover btn-secondary btn-inverse" href="{{ open_in_map_url }}">See results in full map</a>
+                            </div>
+                            <div class="col-lg-8 v-spacing-top-2">
+                                {% if paginator.count > max_search_results_map_mode %}
+                                    <div class="text-lg-right">
+                                        <p class="text-grey">{% bw_icon 'notification' %} Note that only the first {{ max_search_results_map_mode|bw_intcomma }} search results are shown on the map</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        {% comment %}list/grid of sounds{% endcomment %}
+                        <div class="v-spacing-6 v-spacing-top-2">
+                            {% if paginator.count > 0 %}
+                                {% if sqp.grid_mode_active %}
+                                    <div class="row">
+                                        {% for result in docs %}
+                                            <div class="col-6 col-lg-4">
+                                                {% if sqp.display_as_packs_active %}
+                                                    {% display_pack result.pack %}
+                                                    <p class="text-grey text-right v-spacing-top-negative-2">
+                                                        {% bw_icon 'plus' %} <a href="{{ result.more_from_this_pack_url }}">See {{ result.n_more_in_group|add:1|bw_intcomma }} result{{ result.n_more_in_group|add:1|pluralize }} from pack</a>
+                                                    </p>
+                                                {% else %}
+                                                    {% display_sound_small result.sound %}
+                                                    {% if result.more_from_this_pack_url %}
+                                                        <p class="text-grey text-right v-spacing-top-negative-2">
+                                                            {% bw_icon 'plus' %} <a href="{{ result.more_from_this_pack_url }}">See {{ result.n_more_in_group|add:1|bw_intcomma }} result{{ result.n_more_in_group|add:1|pluralize }} from pack:</a> <a class="bw-link--grey" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
+                                                        </p>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {% for result in docs %}
+                                        <div class="bw-search__result">
+                                            {% if sqp.display_as_packs_active %}
+                                                {% display_pack_big result.pack %}
+                                                <div class="text-grey text-right v-spacing-top-negative-1 v-spacing-2 padding-right-1">
+                                                    {% bw_icon 'plus' %} <a href="{{ result.more_from_this_pack_url }}">See {{ result.n_more_in_group|add:1|bw_intcomma }} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
+                                                </div>
+                                            {% else %}
+                                                {% display_sound_middle result.sound %}
+                                                {% if result.more_from_this_pack_url %}
+                                                    <div class="text-grey text-right v-spacing-top-negative-1 v-spacing-2">
+                                                        {% bw_icon 'plus' %} <a href="{{ result.more_from_this_pack_url }}">See {{ result.n_more_in_group|add:1|bw_intcomma }} result{{ result.n_more_in_group|add:1|pluralize }} from same pack</a>
+                                                    </div>
+                                                {% endif %}
+                                            {% endif %}
+                                            {% if not forloop.last %}
+                                                <div class="divider-light v-spacing-2"></div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% else %}
+                                <div class="v-spacing-7 v-spacing-top-6 w-100">
+                                    <h5>No results... &#128543</h5>
+                                    <p class="text-grey v-spacing-2">Please try another query or change the filters</p>
+                                </div>
                             {% endif %}
                         </div>
-                    </div>
-                </div>
-                <div class="divider-light"></div>
-                {% comment %}advanced search options{% endcomment %}
-                <div id="advanced-search-options" data-visible="{% if not has_advanced_search_settings_set or advanced_search_closed_on_load %}0{% else %}1{% endif %}" class="{% if not has_advanced_search_settings_set or advanced_search_closed_on_load %}display-none{% endif %}">
-                    <div class="padding-2">
-                        {% comment %}first row of advanced search options{% endcomment %}
-                        <div class="row">
-                            {% comment %}left section{% endcomment %}
-                            <div class="col-md-4 bw-search__advanced-search-filter-section v-spacing-2">
-                                <div class="bw-search__filter-section-name caps text-light-grey text-18">
-                                    {{ sqp.options.search_in.label }}
-                                </div>
-                                <div class="row no-gutters v-spacing-top-1 {% if sqp.options.search_in.disabled %}opacity-020{% endif %}">
-                                    {% for option in sqp.options.search_in.get_choices_annotated_with_selection %}
-                                    <div class="col-6 v-padding-1">    
-                                        <label class="between w-100 cursor-pointer">
-                                            <div class="bw-search__filter-checkbox">
-                                                <input name="{{ option.0 }}" type="checkbox" class="bw-checkbox" {% if option.2 %}checked{% endif %} {% if sqp.options.search_in.disabled %}disabled{% endif %}/>
-                                            </div>
-                                            <div class="bw-search__filter-name">{{ option.1 }}</div>
-                                        </label>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            {% comment %}middle section{% endcomment %}
-                            <div class="col-md-3 bw-search__advanced-search-filter-section v-spacing-2">
-                                <div class="bw-search__filter-section-name caps text-light-grey text-18">
-                                    {{ sqp.options.duration.label }}
-                                </div>
-                                <div class="bw-search__filter-range v-spacing-top-2">
-                                    <input name="{{ sqp.options.duration.query_param_min }}" class="bw-search_input-range v-spacing-1" type="text" value="{{ sqp.options.duration.value.0 }}" /> - <input name="{{ sqp.options.duration.query_param_max }}" class="bw-search_input-range" type="text" value="{{ sqp.options.duration.value.1 }}" /> <span>seconds</span>
-                                </div>
-                            </div>
-                            {% comment %}right section{% endcomment %}
-                            <div class="col-md-5 bw-search__advanced-search-filter-section v-spacing-2">
-                                <div class="bw-search__filter-section-name caps text-light-grey text-18">
-                                    Other
-                                </div>
-                                <div class="row no-gutters v-spacing-top-1">
-                                    <div class="col-6 v-padding-1">
-                                        {% display_search_option "is_geotagged" %}
-                                    </div>
-                                    <div class="col-6 v-padding-1">
-                                        {% display_search_option "is_remix" %}
-                                    </div>
-                                    <div class="col-6 v-padding-1">
-                                        {% display_search_option "group_by_pack" %}
-                                    </div>
-                                    <div class="col-6 v-padding-1">
-                                        {% display_search_option "display_as_packs" %}
-                                    </div>
-                                    <div class="col-6 v-padding-1">
-                                        {% display_search_option "grid_mode" %}
-                                    </div>
-                                    <div class="col-6 v-padding-1">
-                                        {% display_search_option "map_mode" %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% if show_beta_search_options %}
-                        <div class="row v-spacing-top-1">
-                            <div class="col-12"> 
-                                <div class="bw-search__filter-section-name caps text-light-grey text-18">
-                                    Experimental Search Options
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">    
-                            <div class="col-4 v-padding-1">
-                                <div class="v-spacing-top-1">{% display_search_option "similarity_space" %}</div>
-                                <div class="v-spacing-top-1">{% display_search_option "similar_to" %}</div>
-                                <div class="v-spacing-top-1">{% display_search_option "compute_clusters" %}</div>
-                            </div>
-                            <div class="col-8 v-padding-1">
-                                <div class="v-spacing-top-1">{% display_search_option "include_audio_problems" %}</div>
-                                <div class="v-spacing-top-1">{% display_search_option "single_event" %}</div>
-                            </div>
+                        <div class="v-spacing-6">
+                            {% bw_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
                         </div>
                     {% endif %}
-                    </div>
-                    {% comment %}apply button{% endcomment %}
-                    <div class="v-spacing-4 center">
-                        <button id="avanced-search-apply-button" class="btn-primary" disabled>Apply advanced search filters</button>
-                    </div>
-                    <div class="divider-light"></div>
-                </div>
-                {% comment %}cluster results section{% endcomment %}
-                {% if sqp.compute_clusters_active %}
-                    {% if clusters_data %}
-                    {% include 'search/clustering_results.html' %}
-                    {% else %}
-                    {% if get_clusters_url %}
-                    <div class="async-section"
-                        data-async-section-content-url="{{ get_clusters_url }}">
-                        <div class="h-padding-2 v-spacing-top-2">
-                            <div class="center v-spacing-top-2">
-                                <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% endif %}
-                {% endif %}
+                </main>
             </div>
-        </form>
         {% endif %}
     </div>
-    {% if not initial_tagcloud %}
-    <div class="row">
-        <div class="col-12 center v-spacing-top-negative-2 d-md-none">
-            <div data-target="collapsable-filters" data-show-text="Show filters" data-hide-text="Hide filters" data-hide-on-load class="collapsable-toggle v-spacing-top-2 font-weight-bold text-light-grey"></div>
-        </div>
-        {% comment %}facets{% endcomment%}
-        <aside class="col-md-4 col-lg-3 collapsable-block md-max-h-100" id="collapsable-filters">
-            {% if sqp.tags_mode_active %}
-            {% display_facet "tags" %}
-            {% endif %}
-            {% display_facet "license" %}
-            {% if not sqp.tags_mode_active %}
-            {% display_facet "tags"%}
-            {% endif %}
-            {% display_facet "type" %}
-            {% display_facet "channels" %}
-            {% display_facet "samplerate" %}
-            {% if not sqp.display_as_packs_active %}
-            {% display_facet "pack_grouping" %}
-            {% endif %}
-            {% display_facet "username" %}
-            {% display_facet "bitdepth" %}
-            {% display_facet "bitrate" %}
-            {% if show_beta_search_options %}
-                {% for experimental_facet in experimental_facets %}
-                    {% display_facet experimental_facet %}
-                {% endfor %}
-            {% endif %}
-        </aside>
-        <div class="col-12 divider-light d-md-none v-spacing-top-3 v-spacing-3"></div>
-        {% comment %}search results{% endcomment %}
-        <main class="col-12 col-md-8 col-lg-9 col-extra-left-padding-large-md">
-            {% comment %}filters{% endcomment %}
-            {% with sqp.get_filters_data_to_display_in_search_results_page as filters_data %}
-            {% if filters_data %}
-            <div class="v-spacing-3 v-spacing-top-2 line-height-33">
-                {% for name, value, remove_url in filters_data %}
-                <a class="no-hover btn-inverse bw-search__active-filters-button" href="{{ remove_url }}" title="Remove this filter">
-                    {{ name }}:{{ value }}<span class="h-spacing-left-1">{% bw_icon 'close' %} </span>
-                </a>
-                {% endfor %}
-            </div>
-            {% endif %}
-            {% endwith %}
-            {% comment %}map{% endcomment %}
-            {% if sqp.map_mode_active %}
-            <div class="col-12 v-spacing-top-3 no-paddings">
-                <div id="mapCanvas" class="map main-map"
-                     data-map-show-search="{% if sound %}false{% else %}true{% endif %}"
-                     data-geotags-url="{{ map_bytearray_url }}"
-                     data-access-token="pk.eyJ1IjoiZnJlZXNvdW5kIiwiYSI6ImNrd3E0Mm9lbjBqM2Qyb2wwdmwxaWI3a3oifQ.MZkgLSByRuk_Xql67CySAg"
-                ><span id="mapLoadingIndicator">Loading map... <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"></span></div>
-            </div>
-            <div class="row middle">
-                <div class="col-lg-4 v-spacing-top-4">
-                    <a class="no-hover btn-secondary btn-inverse" href="{{ open_in_map_url }}">See results in full map</a>
-                </div>
-                <div class="col-lg-8 v-spacing-top-2">
-                    {% if paginator.count > max_search_results_map_mode %}
-                    <div class="text-lg-right">
-                        <p class="text-grey">{% bw_icon 'notification' %} Note that only the first {{ max_search_results_map_mode|bw_intcomma }} search results are shown on the map</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% else %}
-            {% comment %}list/grid of sounds{% endcomment %}
-            <div class="v-spacing-6 v-spacing-top-2">
-                {% if paginator.count > 0 %}
-                {% if sqp.grid_mode_active %}
-                <div class="row">
-                    {% for result in docs %}
-                    <div class="col-6 col-lg-4">
-                        {% if sqp.display_as_packs_active %}
-                            {% display_pack result.pack %}
-                            <p class="text-grey text-right v-spacing-top-negative-2">
-                                {% bw_icon 'plus' %} <a href="{{ result.more_from_this_pack_url }}">See {{result.n_more_in_group|add:1|bw_intcomma}} result{{ result.n_more_in_group|add:1|pluralize }} from pack</a>
-                            </p>
-                        {% else %}
-                            {% display_sound_small result.sound %}
-                            {% if result.more_from_this_pack_url %}
-                            <p class="text-grey text-right v-spacing-top-negative-2">
-                                {% bw_icon 'plus' %} <a href="{{ result.more_from_this_pack_url }}">See {{result.n_more_in_group|add:1|bw_intcomma}} result{{ result.n_more_in_group|add:1|pluralize }} from pack:</a> <a class="bw-link--grey" href="{% url 'pack' result.sound.username result.sound.pack_id %}">{{ result.sound.pack_name|truncate_string:35 }}</a>
-                            </p>
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    {% endfor %}      
-                </div>
-                {% else %}
-                {% for result in docs %}
-                <div class="bw-search__result">
-                    {% if sqp.display_as_packs_active %}
-                        {% display_pack_big result.pack %}
-                        <div class="text-grey text-right v-spacing-top-negative-1 v-spacing-2 padding-right-1">
-                            {% bw_icon 'plus' %} <a href="{{ result.more_from_this_pack_url }}">See {{result.n_more_in_group|add:1|bw_intcomma}} result{{ result.n_more_in_group|add:1|pluralize }} from this pack</a>
-                        </div>
-                    {% else %}
-                        {% display_sound_middle result.sound %}
-                        {% if result.more_from_this_pack_url %}
-                        <div class="text-grey text-right v-spacing-top-negative-1 v-spacing-2">
-                            {% bw_icon 'plus' %} <a href="{{ result.more_from_this_pack_url }}">See {{result.n_more_in_group|add:1|bw_intcomma}} result{{ result.n_more_in_group|add:1|pluralize }} from same pack</a>
-                        </div>
-                        {% endif %}
-                    {% endif %}
-                    {% if not forloop.last %}
-                    <div class="divider-light v-spacing-2"></div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-                {% endif %}
-                {% else %}
-                <div class="v-spacing-7 v-spacing-top-6 w-100">
-                    <h5>No results... &#128543</h5>
-                    <p class="text-grey v-spacing-2">Please try another query or change the filters</p>
-                </div>
-                {% endif %}
-            </div>
-            <div class="v-spacing-6">
-                {% bw_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
-            </div>
-            {% endif %}
-        </main>
-    </div>
-    {% endif %}
-    {% endif %}
-</div>
 {% endblock %}
 
 {% block extrabody %}
-{% if not error_text and not initial_tagcloud %}
-{% comment %}If there were errors reaching the search server, don't even load the
+    {% if not error_text %}
+        {% comment %}If there were errors reaching the search server, don't even load the
 JS bits because we only display the error message{% endcomment %}
-<script src="{% static 'bw-frontend/dist/search.js' %}"></script>
-{% endif %}
+        <script src="{% static 'bw-frontend/dist/search.js' %}"></script>
+    {% endif %}
 {% endblock %}

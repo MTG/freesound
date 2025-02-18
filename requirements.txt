@@ -285,8 +285,6 @@ python-dateutil==2.8.2
     #   zenpy
 python-louvain==0.16
     # via -r requirements.in
-pytz==2023.3
-    # via -r requirements.in
 pyyaml==6.0.1
     # via
     #   -r requirements.in

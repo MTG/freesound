@@ -24,6 +24,7 @@ DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -39,6 +40,7 @@ MIDDLEWARE = [
 ]
 
 INSTALLED_APPS = [
+    'whitenoise.runserver_nostatic',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -265,7 +267,7 @@ EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 # Static settings
 
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is not an installed Django app)
-STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
+STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), 'webroot']
 STATIC_URL = '/static/'
 STATIC_ROOT = 'bw_static'
 STORAGES = {
@@ -277,6 +279,14 @@ STORAGES = {
     },
 }
 
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # -------------------------------------------------------------------------------
 # Freesound miscellaneous settings

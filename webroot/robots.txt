@@ -14,5 +14,3 @@ Disallow: /tickets/
 Disallow: /embed/
 Disallow: /*similar/
 Disallow: /contact/
-
-Sitemap: https://freesound.org/sitemap.xml

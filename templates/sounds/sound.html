@@ -99,22 +99,30 @@
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="middle v-spacing-top-3">
+                        <div class="middle v-spacing-top-3 dot-separated-divs text-grey">
+                            {% with sound.get_category_names as cat_names %}
+                            {% if cat_names.0 is not None %} 
+                                <div class="ellipsis">
+                                    {% bw_icon 'tree' %}
+                                    <a href="{{ sound.get_top_level_category_search_url }}" title="Category: {{ cat_names.0}}">{{ cat_names.0 }}</a>{% if cat_names.1 %} > <a href="{{ sound.get_second_level_category_search_url }}" title="Subcategory: {{ cat_names.1}}">{{ cat_names.1}}</a>{% endif %}
+                                </div>
+                            {% endif %}
+                            {% endwith %}
                             {% if sound.geotag_id %}
                                 <div>
-                                    <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'sound-geotag' sound.user.username sound.id %}?ajax=1">
-                                        {% bw_icon 'pin' %} {{ sound.get_geotag_name }}
+                                    {% bw_icon 'pin' %} 
+                                    <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'sound-geotag' sound.user.username sound.id %}?ajax=1" title="Geotag: {{ sound.get_geotag_name }}">
+                                        {{ sound.get_geotag_name }}
                                     </a>
                                 </div>
-                                {% if sound.pack_id %}
-                                    <div class="text-grey h-spacing-left-2 h-spacing-2">·</div>
-                                {% endif %}
                             {% endif %}
                             {% if sound.pack_id %}
-                                <div class="text-grey ellipsis">
-                                   This sound is part of the pack <a href="{% url 'pack' username sound.pack.id %}">{{ sound.pack.name}}</a>
+                                <div class="ellipsis">
+                                    {% bw_icon 'stack' %} 
+                                    <a href="{% url 'pack' username sound.pack.id %}" title="This sound is part of the pack '{{ sound.pack.name }}'">
+                                        {{ sound.pack.name}}
+                                    </a>
                                 </div>
-                                
                             {% endif %}
                         </div>
                         <div class="v-spacing-top-1">

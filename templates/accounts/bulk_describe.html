@@ -46,39 +46,39 @@
             {% for line in lines_failed_validation %}
 
                 <tr>
-                    <td {% if line.line_errors.columns %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
+                    <td {% if line.line_errors.columns %}class="csv-bulk-upload-error-cell tooltip_right"{% endif %}>
                         {{ line.line_no }}
                         <span class="tooltiptext">{{ line.line_errors.columns }}</span>
                     </td>
-                    <td {% if line.line_errors.audio_filename %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
+                    <td {% if line.line_errors.audio_filename %}class="csv-bulk-upload-error-cell tooltip_right"{% endif %}>
                         {{ line.line_original.audio_filename }}
                         <span class="tooltiptext">{{ line.line_errors.audio_filename }}</span>
                     </td>
-                    <td {% if line.line_errors.name %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
+                    <td {% if line.line_errors.name %}class="csv-bulk-upload-error-cell tooltip_right"{% endif %}>
                         {{ line.line_original.name }}
                         <span class="tooltiptext">{{ line.line_errors.name }}</span>
                     </td>
-                    <td {% if line.line_errors.tags %}class="csv-bulk-upload-error-cell cell_tooltip_right"{% endif %}>
+                    <td {% if line.line_errors.tags %}class="csv-bulk-upload-error-cell tooltip_right"{% endif %}>
                         {{ line.line_original.tags }}
                         <span class="tooltiptext">{{ line.line_errors.tags  }}</span>
                     </td>
-                    <td {% if line.line_errors.geotag %}class="csv-bulk-upload-error-cell cell_tooltip_right csv-validation-table-geotag-td"{% endif %}>
+                    <td {% if line.line_errors.geotag %}class="csv-bulk-upload-error-cell tooltip_right csv-validation-table-geotag-td"{% endif %}>
                         {{ line.line_original.geotag }}
                         <span class="tooltiptext">{{ line.line_errors.geotag  }}</span>
                     </td>
-                    <td {% if line.line_errors.description %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
+                    <td {% if line.line_errors.description %}class="csv-bulk-upload-error-cell tooltip_left"{% endif %}>
                         {{ line.line_original.description|truncatewords:20 }}
                         <span class="tooltiptext">{{ line.line_errors.description  }}</span>
                     </td>
-                    <td {% if line.line_errors.license %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
+                    <td {% if line.line_errors.license %}class="csv-bulk-upload-error-cell tooltip_left"{% endif %}>
                         {{ line.line_original.license }}
                         <span class="tooltiptext">{{ line.line_errors.license  }}</span>
                     </td>
-                    <td {% if line.line_errors.pack_name %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
+                    <td {% if line.line_errors.pack_name %}class="csv-bulk-upload-error-cell tooltip_left"{% endif %}>
                         {{ line.line_original.pack_name }}
                         <span class="tooltiptext">{{ line.line_errors.pack_name  }}</span>
                     </td>
-                    <td {% if line.line_errors.is_explicit %}class="csv-bulk-upload-error-cell cell_tooltip_left"{% endif %}>
+                    <td {% if line.line_errors.is_explicit %}class="csv-bulk-upload-error-cell tooltip_left"{% endif %}>
                         {{ line.line_original.is_explicit }}
                         <span class="tooltiptext">{{ line.line_errors.is_explicit  }}</span>
                     </td>

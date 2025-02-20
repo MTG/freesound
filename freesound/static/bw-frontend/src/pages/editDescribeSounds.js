@@ -2,10 +2,12 @@ import {prepareTagsFormFields, updateTags} from "../components/tagsFormField"
 import {prepareGeotagFormFields} from "../components/geotagFormField"
 import {preparePackFormFields} from "../components/packFormField"
 import {prepareAddSoundsModalAndFields} from "../components/addSoundsModal"
+import {prepareCategoryFormFields} from "../components/bstCategoryFormField";
 
 prepareAddSoundsModalAndFields(document);
 prepareTagsFormFields(document);
 preparePackFormFields(document);
+prepareCategoryFormFields(document);
 document.addEventListener("DOMContentLoaded", () => {
     // Running this inside DOMContentLoaded to make sure mapbox gl scripts are loaded
     prepareGeotagFormFields(document);
@@ -29,3 +31,5 @@ inputTypeSubmitElements.forEach(button => {
         });
     });
 });
+
+// Move json for BST category field in description form here

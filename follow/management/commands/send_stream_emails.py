@@ -23,6 +23,7 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from accounts.models import Profile, EmailPreferenceType
 from follow import follow_utils
@@ -46,7 +47,7 @@ class Command(LoggingBaseCommand):
     def handle(self, *args, **options):
         self.log_start()
 
-        date_today_minus_notification_timedelta = datetime.datetime.now() - settings.NOTIFICATION_TIMEDELTA_PERIOD
+        date_today_minus_notification_timedelta = timezone.now() - settings.NOTIFICATION_TIMEDELTA_PERIOD
 
         # Get all the users that have notifications active
         # and exclude the ones that have the last email sent for less than settings.NOTIFICATION_TIMEDELTA_PERIOD
@@ -62,12 +63,12 @@ class Command(LoggingBaseCommand):
         for profile in users_enabled_notifications:
 
             username = profile.user.username
-            profile.last_attempt_of_sending_stream_email = datetime.datetime.now()
+            profile.last_attempt_of_sending_stream_email = timezone.now()
 
             # Variable names use the terminology "week" because settings.NOTIFICATION_TIMEDELTA_PERIOD defaults to a
             # week, but a more generic terminology could be used
             week_first_day = profile.last_stream_email_sent
-            week_last_day = datetime.datetime.now()
+            week_last_day = timezone.now()
 
             week_first_day_str = week_first_day.strftime("%d %b").lstrip("0")
             week_last_day_str = week_last_day.strftime("%d %b").lstrip("0")
@@ -112,7 +113,7 @@ class Command(LoggingBaseCommand):
             n_emails_sent += 1
 
             # update last stream email sent date
-            profile.last_stream_email_sent = datetime.datetime.now()
+            profile.last_stream_email_sent = timezone.now()
             profile.save()
 
         self.log_end({'n_users_notified': n_emails_sent})

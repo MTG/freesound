@@ -31,12 +31,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
-    #'freesound.middleware.ModelAdminReorderWithNav',
-    'ratelimit.middleware.RatelimitMiddleware',
+    'django_ratelimit.middleware.RatelimitMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.UpdateEmailHandler',
-    'freesound.middleware.OnlineUsersHandler',
     'corsheaders.middleware.CorsMiddleware',
 ]
 
@@ -75,50 +73,9 @@ INSTALLED_APPS = [
     'monitor',
     'django_object_actions',
     'silk',
-    'admin_reorder',
-    'captcha',
+    'django_recaptcha',
     'adminsortable',
 ]
-
-# Specify custom ordering of models in Django Admin index
-ADMIN_REORDER = (
-
-    {'app': 'accounts', 'models': (
-        'auth.User',
-        'accounts.Profile',
-        'accounts.DeletedUser',
-        'accounts.UserDeletionRequest',
-        'accounts.UserFlag',
-        'accounts.OldUsername',
-        'accounts.EmailBounce',
-        'auth.Groups',
-        'fsmessages.Message',
-        'accounts.GdprAcceptance',
-    )},
-    {'app': 'sounds', 'models': (
-        'sounds.Sound',
-        {'model': 'sounds.SoundAnalysis', 'label': 'Sound analyses'},
-        'sounds.Pack',
-        'sounds.DeletedSound',
-        'sounds.License',
-        {'model': 'sounds.Flag', 'label': 'Sound flags'},
-        'sounds.BulkUploadProgress',
-        {'model': 'sounds.SoundOfTheDay', 'label': 'Sound of the day'}
-    )},
-    {'app': 'apiv2', 'label': 'API', 'models': (
-        {'model': 'apiv2.ApiV2Client', 'label': 'API V2 Application'},
-        'oauth2_provider.AccessToken',
-        'oauth2_provider.RefreshToken',
-        'oauth2_provider.Grant',
-    )},
-    'forum',
-    {'app': 'donations', 'models': (
-        'donations.Donation',
-        'donations.DonationsEmailSettings',
-        'donations.DonationsModalSettings',
-    )},
-    'sites',
-)
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
 # It can be activated in local_settings by changing INTERCEPT_FUNC
@@ -127,7 +84,7 @@ SILKY_AUTHORISATION = True  # User must have permissions
 SILKY_PERMISSIONS = lambda user: user.is_superuser
 SILKY_INTERCEPT_FUNC = lambda request: False
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
@@ -144,9 +101,7 @@ SITE_ID = 1
 
 USE_X_FORWARDED_HOST = True
 
-# Not using django timezones as project originally with Django 1.3. We might fix this in the future:
-# https://docs.djangoproject.com/en/1.5/topics/i18n/timezones/#time-zones-migration-guide
-USE_TZ = False
+USE_TZ = True
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
@@ -313,7 +268,14 @@ EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
 STATIC_URL = '/static/'
 STATIC_ROOT = 'bw_static'
-STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
+STORAGES = {
+    "default": {
+       "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": 'freesound.storage.NoStrictManifestStaticFilesStorage',
+    },
+}
 
 
 # -------------------------------------------------------------------------------
@@ -754,7 +716,7 @@ MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 # To bypass the security check that prevents the test keys from being used unknowingly add
 # SILENCED_SYSTEM_CHECKS = [..., 'captcha.recaptcha_test_key_error', ...] to your settings.
 
-SILENCED_SYSTEM_CHECKS += ['captcha.recaptcha_test_key_error']
+SILENCED_SYSTEM_CHECKS += ['django_recaptcha.recaptcha_test_key_error']
 
 
 # -------------------------------------------------------------------------------
@@ -913,12 +875,6 @@ TEMPLATES = [
         }
     },
 ]
-
-# We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
-# settings were loaded). We add this variable to the context processor and use it in base.html as a
-# parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
-# files when we do a deploy (the url changes)
-LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
 # -------------------------------------------------------------------------------
 # Analytics

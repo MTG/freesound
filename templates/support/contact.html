@@ -9,9 +9,9 @@
     <p>Thank you for contacting support, we will reply as soon as possible.</p>
     {% else %}
     <p>Use the form below to submit a support request. Please read the <a href="{% url "wiki" %}faq">Frequently Asked Questions</a> page before you send a support request.</p>
-    <form method="post" action="." class="bw-form">{% csrf_token %}
-        {{form}}
-        <button class="btn-primary w-100 v-spacing-top-5">Send</button>
+    <form method="post" action="." class="bw-form bw-form-less-spacing">{% csrf_token %}
+        {{form.as_p}}
+        <button class="btn-primary w-100 v-spacing-top-4">Send</button>
     </form>
     {% endif %}
 </div>

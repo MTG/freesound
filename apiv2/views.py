@@ -36,6 +36,7 @@ from django.db.models import Exists, OuterRef
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render 
 from django.urls import reverse
+from django.utils import timezone
 from oauth2_provider.models import Grant, AccessToken
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from rest_framework import status
@@ -1430,7 +1431,7 @@ def monitor_api_credential(request, key):
             day_limit = 0
         n_days = int(request.GET.get('n_days', 30))
         usage_history = client.get_usage_history(n_days_back=n_days)
-        last_year = datetime.datetime.now().year - 1
+        last_year = timezone.now().year - 1
         tvars = {
             'n_days': n_days,
             'n_days_options': [
@@ -1479,7 +1480,7 @@ def granted_permissions(request):
 
     for token in tokens_raw:
         if token.application.apiv2_client.name not in token_names:
-            td = (token.expires - datetime.datetime.today())
+            td = (token.expires - timezone.now())
             seconds_to_expiration_date = td.total_seconds()
             tokens.append({
                 'client_name': token.application.apiv2_client.name,
@@ -1496,7 +1497,7 @@ def granted_permissions(request):
     grant_and_token_names = token_names[:]
     for grant in grants_pending_access_token_request_raw:
         if grant.application.apiv2_client.name not in grant_and_token_names:
-            td = (grant.expires - datetime.datetime.today())
+            td = (grant.expires - timezone.now())
             seconds_to_expiration_date = td.total_seconds()
             if seconds_to_expiration_date > 0:
                 grants.append({

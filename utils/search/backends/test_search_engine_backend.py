@@ -25,6 +25,7 @@ import os
 import time
 
 from django.conf import settings
+from django.utils import timezone
 from unittest import mock
 
 import utils.search
@@ -50,7 +51,7 @@ class TestSearchEngineBackend():
             base_dir = os.path.join(settings.DATA_PATH, 'search_backend_tests')
             if not os.path.exists(base_dir):
                 os.makedirs(base_dir)
-            date_label = datetime.datetime.today().strftime('%Y%m%d_%H%M')
+            date_label = timezone.now().strftime('%Y%m%d_%H%M')
             self.output_file = open(os.path.join(base_dir, '{}_test_results_{}.txt'
                                                 .format(date_label, backend_name)), 'w')
             self.output_file.write(f'TESTING SEARCH ENGINE BACKEND: {backend_name}\n')

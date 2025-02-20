@@ -53,6 +53,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.http import base36_to_int
 from django.utils.http import int_to_base36
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from general.templatetags.absurl import url2absurl
@@ -86,7 +87,6 @@ from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.mirror_files import copy_avatar_to_mirror_locations, \
     copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations, \
     remove_empty_user_directory_from_mirror_locations
-from utils.onlineusers import get_online_users
 from utils.pagination import paginate
 from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
 
@@ -318,6 +318,11 @@ def registration_modal(request):
             # If the form is NOT valid we return the Django rendered HTML version of the
             # registration modal (which includes the form and error messages) so the browser can show the updated
             # modal contents to the user
+            if form.has_error("email1") and "email2" in form.data:
+                # If email1 has an error, remove the value of email2
+                post_data = request.POST.copy()
+                post_data["email2"] = ""
+                form = RegistrationForm(post_data)
             return render(request, 'accounts/modal_registration.html', {'registration_form': form})
     else:
         form = RegistrationForm()
@@ -874,7 +879,7 @@ def download_attribution(request):
     qs = qs_sounds.union(qs_packs).order_by('-created')
 
     download = request.GET.get('dl', '')
-    now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    now = timezone.now().strftime('%Y-%m-%d_%H-%M-%S_UTC')
     filename = f'{request.user}_{now}_attribution.{download}'
     if download in ['csv', 'txt']:
         response = HttpResponse(content_type=f'text/{content[download]}')
@@ -1367,7 +1372,7 @@ def delete(request):
         else:
             # Check if a deletion request already exist and not allow user to continue if
             # that is the case. In this way we avoid duplicating deletion tasks
-            cutoff_date = datetime.datetime.today() - datetime.timedelta(days=1)
+            cutoff_date = timezone.now() - datetime.timedelta(days=1)
             recent_pending_deletion_requests_exist = UserDeletionRequest.objects\
                 .filter(user_to_id=request.user.id, last_updated__gt=cutoff_date)\
                 .filter(status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED).exists()                

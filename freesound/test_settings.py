@@ -17,7 +17,12 @@ if use_django_nose is not None:
 AKISMET_KEY = ''  # Avoid making requests to "real" Akismet server if running
 SECRET_KEY = "testsecretwhichhastobeatleast16characterslong"
 SUPPORT = (('Name Surname', 'support@freesound.org'),)
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+STORAGES = {
+    **STORAGES,
+    "staticfiles": {
+        "BACKEND": 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',

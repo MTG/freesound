@@ -74,6 +74,8 @@ Below are instructions for setting up a local Freesound installation for develop
        # or if the above command does not work, try this one 
        docker compose run --rm --no-TTY db psql -h db -U freesound -d freesound < freesound-data/db_dev_dump/freesound-small-dev-dump-2023-09.sql
 
+If you a prompted for a password, use `localfreesoundpgpassword`, this is defined in the `docker-compose.yml` file.
+
 10. Update database by running Django migrations
 
         docker compose run --rm web python manage.py migrate
@@ -84,7 +86,7 @@ Below are instructions for setting up a local Freesound installation for develop
 
 12. Install static build dependencies
 
-        docker compose run --rm web npm install --force
+        docker compose run --rm web npm install
 
 13. Build static files. Note that this step will need to be re-run every time there are changes in Freesound's static code (JS, CSS and static media files).
 
@@ -122,4 +124,4 @@ Below are instructions for setting up a local Freesound installation for develop
 
 You can run tests using the Django test runner in the `web` container like that:
 
-    docker compose run --rm web python manage.py test --settings=freesound.test_settings
+    docker compose run --rm web pytest

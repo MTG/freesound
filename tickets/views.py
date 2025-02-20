@@ -31,6 +31,7 @@ from django.db.models.functions import JSONObject
 from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.shortcuts import render 
 from general.tasks import whitelist_user as whitelist_user_task, post_moderation_assigned_tickets as post_moderation_assigned_tickets_task
 
@@ -255,7 +256,7 @@ def _get_new_uploaders_by_ticket():
                                  "username": users_dict[t['sender']].username,
                                  "new_count": t['total'],
                                  "num_uploaded_sounds": users_dict[t['sender']].profile.num_sounds,
-                                 "time": (datetime.datetime.now() - t['older']).days})
+                                 "time": (timezone.now() - t['older']).days})
     return new_sounds_users
 
 
@@ -286,7 +287,7 @@ def _get_tardy_moderator_tickets_and_count(num=None, include_mod_messages=True):
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
         (Q(last_commenter=F('sender')) | Q(messages__sender=None)) &
-        Q(comment_date__lt=time_span))\
+        Q(comment_date__date__lt=time_span))\
     .order_by('created')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
@@ -300,7 +301,7 @@ def _get_tardy_user_tickets_and_count(num=None, include_mod_messages=True):
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
         ~Q(last_commenter=F('sender')) &
-        Q(comment_date__lt=time_span))\
+        Q(comment_date__date__lt=time_span))\
     .order_by('created')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
@@ -424,7 +425,7 @@ def moderation_assign_all_new(request):
                                     sound__moderation_state='PE',
                                     status=TICKET_STATUS_NEW)
 
-    tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=datetime.datetime.now())
+    tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=timezone.now())
 
     msg = f'You have been assigned all new sounds ({tickets.count()}) from the queue.'
     messages.add_message(request, messages.INFO, msg)
@@ -447,7 +448,7 @@ def moderation_assign_user(request, user_id, only_unassigned=True):
     if only_unassigned:
         tickets = tickets.filter(assignee=None, status=TICKET_STATUS_NEW)
 
-    tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=datetime.datetime.now())
+    tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=timezone.now())
 
     msg = f'You have been assigned all new sounds from {sender.username}.'
     messages.add_message(request, messages.INFO, msg)
@@ -470,7 +471,7 @@ def moderation_assign_single_ticket(request, ticket_id):
     ticket.status = TICKET_STATUS_ACCEPTED
 
     # update modified date, so it doesn't appear in tardy moderator's sounds
-    ticket.modified = datetime.datetime.now()
+    ticket.modified = timezone.now()
     ticket.save()
     invalidate_all_moderators_header_cache()
 
@@ -520,7 +521,7 @@ def moderation_assigned(request, user_id):
                 sounds_update_params = {
                     'is_index_dirty': True,
                     'moderation_state': 'OK',
-                    'moderation_date': datetime.datetime.now()
+                    'moderation_date': timezone.now()
                 }
                 is_explicit_choice_key = mod_sound_form.cleaned_data.get("is_explicit")
                 if is_explicit_choice_key == IS_EXPLICIT_ADD_FLAG_KEY:

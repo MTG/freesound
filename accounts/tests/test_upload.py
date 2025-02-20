@@ -237,8 +237,8 @@ class BulkDescribe(TestCase):
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertEqual(resp.status_code, 200)  # After login, page loads normally (200 OK)
 
-        User.objects.create_user("testuser2", password="testpass", email='another_email@example.com')
-        self.client.login(username='testuser2', password='testpass')
+        user = User.objects.create_user("testuser2", email='another_email@example.com')
+        self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertEqual(resp.status_code, 404)  # User without permission (not owner of object) gets 404
 

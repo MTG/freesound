@@ -21,7 +21,7 @@
 
 import re
 
-from captcha.fields import ReCaptchaField
+from django_recaptcha.fields import ReCaptchaField
 from django import forms
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q

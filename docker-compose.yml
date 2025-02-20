@@ -8,17 +8,19 @@ services:
 
     # Database server
     db:
-        image: postgres:12.1
+        image: postgres:16.6
         volumes:
             - pgdata:/var/lib/postgresql/data
             - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
-        env_file:
-            - environment
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5432:5432"
         environment:
             - POSTGRES_USER=freesound
             - POSTGRES_DB=freesound
+            # Used to set up the initial database
+            - POSTGRES_PASSWORD=localfreesoundpgpassword
+            # Used to connect to the database if we run psql in this container
+            - PGPASSWORD=localfreesoundpgpassword
             - FS_USER_ID
 
     # Web worker
@@ -59,7 +61,7 @@ services:
 
     # Redis (caches)
     redis:
-        image: redis:alpine
+        image: redis:7.4.2
         command: redis-server --port 6379
 
     # Celery broker (queue manager)

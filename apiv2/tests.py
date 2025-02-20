@@ -636,7 +636,7 @@ class APIAuthenticationTestCase(TestCase):
             }, secure=True)
         self.assertEqual(resp.status_code, 302)
         resp = self.client.get(resp.request['PATH_INFO'] + '?' + resp.request['QUERY_STRING'], secure=True)
-        self.assertEquals(resp.url.startswith(client.get_default_redirect_uri()), True)
+        self.assertEqual(resp.url.startswith(client.get_default_redirect_uri()), True)
         resp_params = self.get_params_from_url(resp.url)
         self.check_dict_has_fields(resp_params, ['error'])
         self.assertEqual(resp_params['error'], 'unauthorized_client')
@@ -674,7 +674,7 @@ class APIAuthenticationTestCase(TestCase):
             }, secure=True)
         self.assertTrue(resp.url.startswith(client.get_default_redirect_uri()))
         resp_params = self.get_params_from_url(resp.url)
-        self.assertEquals(resp_params['state'], 'an_optional_state')  # Check state is returned and preserved
+        self.assertEqual(resp_params['state'], 'an_optional_state')  # Check state is returned and preserved
         self.check_dict_has_fields(resp_params, ['code'])  # Check code is there
 
         # Return 200 OK when requesting access token setting client_id and client_secret in body params

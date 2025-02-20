@@ -15,7 +15,7 @@
         <div class="text-grey">Send me an email when:</div>
         <form method="post" action="." class="bw-form w-100">{% csrf_token %}
             <div class="bw-multiple-checkbox">
-                {{ form }}
+                {{ form.as_p }}
             </div>
             <button class="btn-primary w-100 v-spacing-top-5">Update Email notifications</button>
         </form>

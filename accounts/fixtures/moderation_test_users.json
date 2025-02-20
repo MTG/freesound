@@ -9,7 +9,7 @@
       "is_active": true,
       "is_superuser": false,
       "is_staff": false,
-      "last_login": "2011-03-01 15:43:05",
+      "last_login": "2011-03-01 15:43:05Z",
       "groups": [
 
       ],
@@ -18,7 +18,7 @@
       ],
       "password": "pbkdf2_sha256$24000$aiyPNxcYNtkU$bU2xoxfjFH6/Mkfx+D5tXLshXsybPmRITi0ZjRWFIwI=",
       "email": "test.user+1@gmail.com",
-      "date_joined": "2011-03-01 15:43:05"
+      "date_joined": "2011-03-01 15:43:05Z"
     }
   },
   {
@@ -31,7 +31,7 @@
       "is_active": true,
       "is_superuser": false,
       "is_staff": false,
-      "last_login": "2011-03-01 15:43:05",
+      "last_login": "2011-03-01 15:43:05Z",
       "groups": [
 
       ],
@@ -40,7 +40,7 @@
       ],
       "password": "pbkdf2_sha256$24000$aiyPNxcYNtkU$bU2xoxfjFH6/Mkfx+D5tXLshXsybPmRITi0ZjRWFIwI=",
       "email": "test.user+4@gmail.com",
-      "date_joined": "2011-03-01 15:43:05"
+      "date_joined": "2011-03-01 15:43:05Z"
     }
   },
   {
@@ -53,7 +53,7 @@
       "is_active": true,
       "is_superuser": true,
       "is_staff": true,
-      "last_login": "2011-03-01 15:43:05",
+      "last_login": "2011-03-01 15:43:05Z",
       "groups": [
 
       ],
@@ -62,7 +62,7 @@
       ],
       "password": "pbkdf2_sha256$24000$aiyPNxcYNtkU$bU2xoxfjFH6/Mkfx+D5tXLshXsybPmRITi0ZjRWFIwI=",
       "email": "test.user+2@gmail.com",
-      "date_joined": "2011-03-01 15:43:05"
+      "date_joined": "2011-03-01 15:43:05Z"
     }
   },
   {
@@ -75,7 +75,7 @@
       "is_active": true,
       "is_superuser": true,
       "is_staff": true,
-      "last_login": "2011-03-01 15:43:05",
+      "last_login": "2011-03-01 15:43:05Z",
       "groups": [
 
       ],
@@ -84,7 +84,7 @@
       ],
       "password": "pbkdf2_sha256$24000$aiyPNxcYNtkU$bU2xoxfjFH6/Mkfx+D5tXLshXsybPmRITi0ZjRWFIwI=",
       "email": "test.user+3@gmail.com",
-      "date_joined": "2011-03-01 15:43:05"
+      "date_joined": "2011-03-01 15:43:05Z"
     }
   }
 ]

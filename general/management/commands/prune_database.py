@@ -19,7 +19,6 @@
 #
 
 
-import datetime
 import logging
 import os
 import random
@@ -31,6 +30,7 @@ from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from django.db import connection
 from django.db.models.signals import post_delete, pre_delete, pre_save, post_save
+from django.utils import timezone
 from silk.models import Request
 from accounts.models import DeletedUser, EmailBounce, GdprAcceptance, OldUsername, Profile, ResetEmailRequest, SameUser, UserDeletionRequest, UserEmailSetting, UserFlag
 from apiv2.models import ApiV2Client
@@ -182,7 +182,7 @@ class Command(BaseCommand):
         MessageBody.objects.all().update(body='(message body) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.')
         TicketComment.objects.all().update(text='(ticket comment) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.')
 
-        GdprAcceptance.objects.all().update(date_accepted=datetime.datetime.now())
+        GdprAcceptance.objects.all().update(date_accepted=timezone.now())
         
         Profile.objects.all().update(
             is_whitelisted=False,
@@ -197,7 +197,7 @@ class Command(BaseCommand):
         # Bookmarks? Possibly set created to now()
         # Messages (link between 2 users)
 
-        User.objects.all().update(last_login=datetime.datetime.now(), date_joined=datetime.datetime.now())
+        User.objects.all().update(last_login=timezone.now(), date_joined=timezone.now())
         for group in Group.objects.all():
             group.user_set.clear()
 

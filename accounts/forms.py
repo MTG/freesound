@@ -20,7 +20,7 @@
 
 import logging
 
-from captcha.fields import ReCaptchaField
+from django_recaptcha.fields import ReCaptchaField
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -37,7 +37,7 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
-from multiupload.fields import MultiFileField
+from multiupload_plus.fields import MultiFileField
 
 from accounts.models import Profile, EmailPreferenceType, OldUsername, DeletedUser
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
@@ -101,8 +101,8 @@ class FlashUploadFileForm(forms.Form):
 class TermsOfServiceForm(forms.Form):
     accepted_tos = forms.BooleanField(
         label='',
-        help_text='Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> '
-                  'and the <a href="/help/privacy/" target="_blank">privacy policy</a> of Freesound (required)',
+        help_text='Check this box to accept the <a href="/help/tos_web/" target="_blank" class="bw-link--grey">terms of use</a> '
+                  'and the <a href="/help/privacy/" target="_blank" class="bw-link--grey">privacy policy</a> of Freesound (required)',
         required=True,
         error_messages={'required': 'You must accept the terms of use and the privacy poclicy in order to continue '
                                     'using Freesound.'}
@@ -152,12 +152,24 @@ def get_user_by_email(email):
 
 class UsernameField(forms.CharField):
     """ Username field, 3~30 characters, allows only alphanumeric chars, required by default """
+
     def __init__(self, required=True):
+        """Validates the username field for a form. Validation for brand new usernames must have strong validation (see Regex).
+        For profile modifications, the username validation is done in ProfileForm cleaning methods, as antique usernames can
+        contain spaces but new modified ones cannot. 
+
+        Args:
+            required (bool, optional): True for RegistrationForms, false for ProfileForms
+        """
+        if required:
+            validators = [RegexValidator(r'^[\w.+-]+$')]  # is the same as Django UsernameValidator except for '@' symbol
+        else:
+            validators = []  
         super().__init__(
             label="Username",
             min_length=3,
             max_length=30,
-            validators=[RegexValidator(r'^[\w.+-]+$')],  # is the same as Django UsernameValidator except for '@' symbol
+            validators=validators,
             help_text="30 characters or fewer. Can contain: letters, digits, underscores, dots, dashes and plus signs.",
             error_messages={'invalid': "The username field must contain only letters, digits, underscores, dots, dashes and "
                                        "plus signs."},
@@ -198,8 +210,8 @@ class RegistrationForm(forms.Form):
     email2 = forms.EmailField(label=False, help_text=False, max_length=254)
     password1 = forms.CharField(label=False, help_text=False, widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
-        label=mark_safe('Check this box to accept our <a href="/help/tos_web/" target="_blank">terms of '
-                        'use</a> and the <a href="/help/privacy/" target="_blank">privacy policy</a>'),
+        label=mark_safe('Check this box to accept our <a href="/help/tos_web/" target="_blank" class="bw-link--grey">terms of '
+                        'use</a> and the <a href="/help/privacy/" target="_blank" class="bw-link--grey">privacy policy</a>'),
         required=True,
         error_messages={'required': 'You must accept the terms of use in order to register to Freesound'}
     )
@@ -218,6 +230,16 @@ class RegistrationForm(forms.Form):
         self.fields['email2'].widget.attrs['placeholder'] = 'Email confirmation'
         self.fields['password1'].widget.attrs['placeholder'] = 'Password'
         self.fields['accepted_tos'].widget.attrs['class'] = 'bw-checkbox'
+
+    def clean(self):
+        # In the case that clean_email1 fails, the check for clean_email2 will report as "the email addresses are not the same"
+        # Therefore, in this specific case we remove the email2 error message because it doesn't make sense to 
+        # have email1 say "you cannot use this email to create an account" and email2 say "the email addresses are not the same"
+        cleaned_data = super().clean()
+        if self.has_error("email1") and "email2" in self.errors:
+            del self.errors["email2"]
+        return cleaned_data
+
 
     def clean_username(self):
         username = self.cleaned_data["username"]
@@ -351,7 +373,7 @@ class ProfileForm(forms.ModelForm):
                         % (settings.USERNAME_CHANGE_MAX_TIMES - self.n_times_changed_username,
                            's' if (settings.USERNAME_CHANGE_MAX_TIMES - self.n_times_changed_username) != 1 else '')
         else:
-            help_text = "You already changed your username the maximum times allowed"
+            help_text = "You have already changed your username the maximum number of times allowed"
             self.fields['username'].disabled = True
         self.fields['username'].help_text += " " + help_text
 
@@ -389,9 +411,16 @@ class ProfileForm(forms.ModelForm):
         if not username:
             username = self.request.user.username
 
-        # If username was not changed, consider it valid
+        # If username was not changed, consider it valid. If it has, validate it to check it does not contain space characters.
         if username.lower() == self.request.user.username.lower():
             return username
+        else:
+            validator = RegexValidator(regex=r'^[\w.+-]+$',
+                                       message="The username field must contain only letters, digits, underscores, dots, dashes and plus signs.",
+                                       code='invalid')
+            if validator(username):
+                return username 
+
 
         # Check that username is not used by another user. Note that because when the maximum number of username
         # changes is reached, the "username" field of the ProfileForm is disabled and its contents won't change.

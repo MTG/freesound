@@ -8,6 +8,7 @@ from django.core import mail
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 import donations.models
 import sounds.models
@@ -22,7 +23,7 @@ class DonationTest(TestCase):
 
     def test_non_annon_donation_with_name_paypal(self):
         donations.models.DonationCampaign.objects.create(
-                goal=200, date_start=datetime.datetime.now(), id=1)
+                goal=200, date_start=timezone.now(), id=1)
         self.user = User.objects.create_user(
                 username='jacob', email='j@test.com', password='top', id='46280')
         custom = base64.b64encode(json.dumps({'display_amount': True, 'user_id': 46280, 'campaign_id': 1, 'name': 'test'}).encode()).decode()
@@ -48,7 +49,7 @@ class DonationTest(TestCase):
 
     def test_non_annon_donation_paypal(self):
         donations.models.DonationCampaign.objects.create(
-                goal=200, date_start=datetime.datetime.now(), id=1)
+                goal=200, date_start=timezone.now(), id=1)
         self.user = User.objects.create_user(
                 username='jacob', email='j@test.com', password='top', id='46280')
         custom = base64.b64encode(json.dumps({'campaign_id': 1, 'user_id': 46280, 'display_amount': True}).encode()).decode()
@@ -74,7 +75,7 @@ class DonationTest(TestCase):
 
     def test_annon_donation_paypal(self):
         donations.models.DonationCampaign.objects.create(
-                goal=200, date_start=datetime.datetime.now(), id=1)
+                goal=200, date_start=timezone.now(), id=1)
 
         custom = base64.b64encode(json.dumps({'campaign_id': 1, 'name': 'Anonymous', 'display_amount': True}).encode()).decode()
         params = {'txn_id': '8B703020T00352816',
@@ -96,7 +97,7 @@ class DonationTest(TestCase):
 
     def test_non_annon_donation_with_name_stripe(self):
         donations.models.DonationCampaign.objects.create(
-            goal=200, date_start=datetime.datetime.now(), id=1)
+            goal=200, date_start=timezone.now(), id=1)
         self.user = User.objects.create_user(
             username='fsuser', email='j@test.com', password='top', id='46280')
         self.client.force_login(self.user)
@@ -113,7 +114,7 @@ class DonationTest(TestCase):
         }
         with mock.patch('stripe.Webhook.construct_event') as mock_create:
             mock_create.return_value = params
-            resp = self.client.post(reverse('donation-complete-stripe'), params, HTTP_STRIPE_SIGNATURE="1")
+            resp = self.client.post(reverse('donation-complete-stripe'), params, headers={"stripe-signature": "1"})
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
@@ -126,7 +127,7 @@ class DonationTest(TestCase):
 
     def test_non_annon_donation_stripe(self):
         donations.models.DonationCampaign.objects.create(
-            goal=200, date_start=datetime.datetime.now(), id=1)
+            goal=200, date_start=timezone.now(), id=1)
         self.user = User.objects.create_user(
             username='fsuser', email='j@test.com', password='top', id='46280')
         self.client.force_login(self.user)
@@ -143,7 +144,7 @@ class DonationTest(TestCase):
         }
         with mock.patch('stripe.Webhook.construct_event') as mock_create:
             mock_create.return_value = params
-            resp = self.client.post(reverse('donation-complete-stripe'), params, HTTP_STRIPE_SIGNATURE="1")
+            resp = self.client.post(reverse('donation-complete-stripe'), params, headers={"stripe-signature": "1"})
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
@@ -156,7 +157,7 @@ class DonationTest(TestCase):
 
     def test_annon_donation_stripe(self):
         donations.models.DonationCampaign.objects.create(
-                goal=200, date_start=datetime.datetime.now(), id=1)
+                goal=200, date_start=timezone.now(), id=1)
         custom = base64.b64encode(json.dumps({'campaign_id': 1, 'name': 'Anonymous', 'display_amount': True}).encode()).decode()
         params = {"data": {"object" :{"id": "txn123",
                   "customer_email": "donor@freesound.org",
@@ -170,7 +171,7 @@ class DonationTest(TestCase):
         }
         with mock.patch('stripe.Webhook.construct_event') as mock_create:
             mock_create.return_value = params
-            resp = self.client.post(reverse('donation-complete-stripe'), params, HTTP_STRIPE_SIGNATURE="1")
+            resp = self.client.post(reverse('donation-complete-stripe'), params, headers={"stripe-signature": "1"})
             donations_query = donations.models.Donation.objects.filter(\
                 transaction_id='txn123')
             self.assertEqual(donations_query.exists(), True)
@@ -180,7 +181,7 @@ class DonationTest(TestCase):
 
     def test_donation_form_stripe(self):
         donations.models.DonationCampaign.objects.create(\
-                goal=200, date_start=datetime.datetime.now(), id=1)
+                goal=200, date_start=timezone.now(), id=1)
 
         Session = namedtuple('Session', 'id')
         session = Session(id=1)
@@ -241,7 +242,7 @@ class DonationTest(TestCase):
 
     def test_donation_form_paypal(self):
         donations.models.DonationCampaign.objects.create(\
-                goal=200, date_start=datetime.datetime.now(), id=1)
+                goal=200, date_start=timezone.now(), id=1)
         data = {
             'amount': '0,1',
             'show_amount': True,
@@ -299,7 +300,7 @@ class DonationTest(TestCase):
         self.assertIsNone(self.user_c.profile.last_donation_email_sent)
 
         # Simulate a donation from the user (older than donation_settings.minimum_days_since_last_donation)
-        old_donation_date = datetime.datetime.now() - datetime.timedelta(
+        old_donation_date = timezone.now() - datetime.timedelta(
             days=donation_settings.minimum_days_since_last_donation + 100)
         donation = donations.models.Donation.objects.create(
             user=self.user_a, amount=50.25, email=self.user_a.email, currency='EUR')
@@ -485,7 +486,7 @@ class DonationTest(TestCase):
         self.assertIsNone(self.user_c.profile.last_donation_email_sent)
 
         # Simulate a donation from the user (older than donation_settings.minimum_days_since_last_donation)
-        old_donation_date = datetime.datetime.now() - datetime.timedelta(
+        old_donation_date = timezone.now() - datetime.timedelta(
             days=donation_settings.minimum_days_since_last_donation + 100)
         donation = donations.models.Donation.objects.create(
             user=self.user_a, amount=50.25, email=self.user_a.email, currency='EUR')

@@ -32,6 +32,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.template import loader
 from django.urls import reverse
 from django.db import transaction
+from django.utils import timezone
 
 from accounts.models import DeletedUser
 from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
@@ -62,22 +63,20 @@ def last_action(view_func):
         if not request.user.is_authenticated:
             return view_func(request, *args, **kwargs)
 
-        from datetime import datetime, timedelta
-        date_format = "%Y-%m-%d %H:%M:%S:%f"
-        date2string = lambda date: date.strftime(date_format)
-        string2date = lambda date_string: datetime.strptime(date_string, date_format)
-
         key = "forum-last-visited"
-
-        now = datetime.now()
-        now_as_string = date2string(now)
+        now = timezone.now()
+        now_as_string = now.isoformat()
 
         if key not in request.COOKIES or not request.session.get(key, False):
             request.session[key] = now_as_string
-        elif now - string2date(request.COOKIES[key]) > timedelta(minutes=30):
-            request.session[key] = request.COOKIES[key]
+        else:
+            cookie_value = datetime.datetime.fromisoformat(request.COOKIES[key])
+            if cookie_value.tzinfo is None:
+                cookie_value = cookie_value.replace(tzinfo=timezone.utc)
+            if now - cookie_value > datetime.timedelta(minutes=30):
+                request.session[key] = request.COOKIES[key]
 
-        request.last_action_time = string2date(request.session.get(key, now_as_string))
+        request.last_action_time = datetime.datetime.fromisoformat(request.session.get(key, now_as_string))
 
         reply_object = view_func(request, *args, **kwargs)
 
@@ -149,7 +148,7 @@ def thread(request, forum_name_slug, thread_id):
 
 def get_hot_threads(n=None, days=15):
     if not settings.DEBUG:
-        last_days_filter = datetime.datetime.today() - datetime.timedelta(days=days)
+        last_days_filter = timezone.now() - datetime.timedelta(days=days)
     else:
         # If in DEBUG mode we won't have recent posts, so we modify the filter to match all existing threads
         last_days_filter = Post.objects.order_by('created').first().created

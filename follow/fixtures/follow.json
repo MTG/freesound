@@ -5,7 +5,7 @@
         "fields": {
             "user_to": 2,
             "user_from": 3,
-            "created": "2015-05-06T16:56:09.523"
+            "created": "2015-05-06T16:56:09.523Z"
         }
     },
     {
@@ -14,7 +14,7 @@
         "fields": {
             "user_to": 2,
             "user_from": 4,
-            "created": "2015-05-06T16:56:11.310"
+            "created": "2015-05-06T16:56:11.310Z"
         }
     },
     {
@@ -23,7 +23,7 @@
         "fields": {
             "user_to": 2,
             "user_from": 5,
-            "created": "2015-05-06T16:56:13.145"
+            "created": "2015-05-06T16:56:13.145Z"
         }
     },
     {
@@ -32,7 +32,7 @@
         "fields": {
             "user_to": 4,
             "user_from": 2,
-            "created": "2015-05-06T16:57:02.795"
+            "created": "2015-05-06T16:57:02.795Z"
         }
     },
     {
@@ -41,7 +41,7 @@
         "fields": {
             "user_to": 3,
             "user_from": 2,
-            "created": "2015-05-07T16:37:25.442"
+            "created": "2015-05-07T16:37:25.442Z"
         }
     },
     {
@@ -50,7 +50,7 @@
         "fields": {
             "query": "field-recording",
             "user": 2,
-            "created": "2015-05-07T17:01:50.734"
+            "created": "2015-05-07T17:01:50.734Z"
         }
     },
     {
@@ -59,7 +59,7 @@
         "fields": {
             "query": "field-recording binaural",
             "user": 2,
-            "created": "2015-05-07T17:02:02.294"
+            "created": "2015-05-07T17:02:02.294Z"
         }
     }
 ]

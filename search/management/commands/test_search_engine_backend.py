@@ -38,12 +38,8 @@ global_output_file = None
 def core_exists(solr_base_url, core_name):
     r = requests.get(f'{solr_base_url}/admin/cores?action=STATUS&core={core_name}')
     r.raise_for_status()
-    try:
-        status = r.json()
-        return status['status'][core_name] != {}
-    except ValueError:
-        # Solr 5 returns xml. "Empty list" means that the core does not exist
-        return f"""<lst name="{core_name}"/></lst>""" not in r.text
+    status = r.json()
+    return status['status'][core_name] != {}
 
 
 def create_core(solr_base_url, core_name, configSet, delete_core=False):

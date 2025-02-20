@@ -268,7 +268,7 @@ pyproject-hooks==1.0.0
     # via build
 pysndfile==1.4.4
     # via -r requirements.in
-pysolr==3.10.0b1
+pysolr==3.10.0
     # via -r requirements.in
 pytest==8.0.2
     # via

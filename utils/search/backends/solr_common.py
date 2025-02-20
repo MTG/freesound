@@ -18,7 +18,10 @@
 #     Bram de Jong
 #
 import json
-import urllib.request, urllib.parse, urllib.error
+from datetime import date, datetime
+import urllib.request
+import urllib.parse
+import urllib.error
 
 from utils.search import SearchEngineException
 
@@ -324,3 +327,13 @@ class SolrResponseInterpreter:
             self.highlighting = response["highlighting"]
         except KeyError:
             self.highlighting = {}
+
+
+class FreesoundSoundJsonEncoder(json.JSONEncoder):
+    def default(self, value):
+        if isinstance(value, datetime):
+            return value.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        elif isinstance(value, date):
+            return value.strftime('%Y-%m-%dT00:00:00.000Z')
+
+        return json.JSONEncoder.default(self, value)

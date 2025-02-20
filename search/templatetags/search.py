@@ -23,8 +23,7 @@ from django import template
 from django.conf import settings
 
 from sounds.models import License
-from utils.search import search_query_processor_options
-from utils.search.backends.solr555pysolr import FIELD_NAMES_MAP
+from utils.search import search_query_processor_options, FIELD_NAMES_MAP
 from utils.tags import annotate_tags
 
 register = template.Library()

@@ -18,9 +18,67 @@
 #     See AUTHORS file.
 #
 import importlib
-import math
 
+import math
 from django.conf import settings
+
+SOLR_SOUND_FACET_DEFAULT_OPTIONS = {"limit": 5, "type": "terms", "sort": "count desc", "mincount": 1, "missing": False}
+
+SOLR_DOC_CONTENT_TYPES = {"sound": "s", "similarity_vector": "v"}
+
+# Mapping from db sound field names to solr sound field names
+FIELD_NAMES_MAP = {
+    settings.SEARCH_SOUNDS_FIELD_ID: "id",
+    settings.SEARCH_SOUNDS_FIELD_NAME: "original_filename",
+    settings.SEARCH_SOUNDS_FIELD_TAGS: "tag",
+    settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: "description",
+    settings.SEARCH_SOUNDS_FIELD_USER_NAME: "username",
+    settings.SEARCH_SOUNDS_FIELD_PACK_NAME: "pack_tokenized",
+    settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: "grouping_pack",
+    settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: "samplerate",
+    settings.SEARCH_SOUNDS_FIELD_BITRATE: "bitrate",
+    settings.SEARCH_SOUNDS_FIELD_BITDEPTH: "bitdepth",
+    settings.SEARCH_SOUNDS_FIELD_TYPE: "type",
+    settings.SEARCH_SOUNDS_FIELD_CHANNELS: "channels",
+    settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: "license",
+}
+
+REVERSE_FIELD_NAMES_MAP = {value: key for key, value in FIELD_NAMES_MAP.items()}
+
+
+# Map "web" sorting options to solr sorting options
+SORT_OPTIONS_MAP = {
+    settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC: "score desc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST: "duration desc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST: "duration asc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST: "created desc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST: "created asc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST: "num_downloads desc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST: "num_downloads asc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST: "avg_rating desc",
+    settings.SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST: "avg_rating asc",
+}
+SORT_OPTIONS_MAP_FORUM = {
+    settings.SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST: "thread_created desc",
+    settings.SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST: "post_created desc",
+}
+
+# Map of suffixes used for each type of dynamic fields defined in our Solr schema
+# The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer),
+# '*_s' (for string) and '*_ls' (for lists of strings)
+SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
+    float: "_d",
+    int: "_i",
+    bool: "_b",
+    str: "_s",
+    list: "_ls",
+}
+
+
+SOLR_VECTOR_FIELDS_DIMENSIONS_MAP = {
+    100: "sim_vector100",
+    512: "sim_vector512",
+}
 
 
 def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds_index_url=None, forum_index_url=None):
@@ -34,15 +92,32 @@ def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds
     Returns:
         utils.search.SearchEngineBase: search engine backend class instance
     """
-    module_name, class_name = backend_class.rsplit('.', 1)
+    module_name, class_name = backend_class.rsplit(".", 1)
     module = importlib.import_module(module_name)
     return getattr(module, class_name)(sounds_index_url, forum_index_url)
 
 
-class SearchResults:
+def get_solr_dense_vector_search_field_name(dimensions, l2_norm=False):
+    base_field_name = SOLR_VECTOR_FIELDS_DIMENSIONS_MAP.get(dimensions, None)
+    if base_field_name is None:
+        return None
+    if l2_norm:
+        return f"{base_field_name}_l2"
+    return base_field_name
 
-    def __init__(self, docs=None, num_found=-1, start=-1, num_rows=-1, non_grouped_number_of_results=-1,
-                 facets=None, highlighting=None, q_time=-1):
+
+class SearchResults:
+    def __init__(
+        self,
+        docs=None,
+        num_found=-1,
+        start=-1,
+        num_rows=-1,
+        non_grouped_number_of_results=-1,
+        facets=None,
+        highlighting=None,
+        q_time=-1,
+    ):
         """
         Class that holds the results of a search query. It must contain the fields defined below.
 
@@ -140,11 +215,10 @@ class SearchResults:
         self.q_time = q_time
 
     def __str__(self):
-        return f'<SearchResults with {self.num_found} results found>'
+        return f"<SearchResults with {self.num_found} results found>"
 
 
 class SearchResultsPaginator:
-
     def __init__(self, search_results, num_per_page):
         """Paginator object for search results which has a similar API to django.core.paginator.Paginator
 
@@ -165,234 +239,14 @@ class SearchResultsPaginator:
         has_next = page_num < self.num_pages
         has_previous = 1 < page_num <= self.num_pages
         return {
-            'object_list': self.results,
-            'has_next': has_next,
-            'has_previous': has_previous,
-            'has_other_pages': has_next or has_previous,
-            'next_page_number': page_num + 1,
-            'previous_page_number': page_num - 1
+            "object_list": self.results,
+            "has_next": has_next,
+            "has_previous": has_previous,
+            "has_other_pages": has_next or has_previous,
+            "next_page_number": page_num + 1,
+            "previous_page_number": page_num - 1,
         }
 
 
 class SearchEngineException(Exception):
     pass
-
-
-class SearchEngineBase:
-
-    # Test subclasses of SearchEngineBase with the test_search_engine_backend management command
-
-    # Sound search related methods
-
-    def add_sounds_to_index(self, sound_objects, fields_to_include=[], update=False):
-        """Indexes the provided sound objects in the search index
-
-        Args:
-            sound_objects (list[sounds.models.Sound]): Sound objects of the sounds to index
-            fields_to_include (list[str]): Specific sound fields that will be included in the document to
-                be indexed. If empty, all available sound fields will be included.
-            update (bool): Whether to perform an update of the existing documents in the index or to 
-                completely replace them. An update is useful so that fields not included in the document are 
-                not removed from the index.
-        """
-        raise NotImplementedError
-
-    def remove_sounds_from_index(self, sound_objects_or_ids):
-        """Removes sounds from the search index
-
-        Args:
-            sound_objects_or_ids (list[sounds.models.Sound] or list[int]):  Sound objects or sound IDs to remove
-        """
-        raise NotImplementedError
-
-    def remove_all_sounds(self):
-        """Removes all sounds from the search index"""
-        raise NotImplementedError
-
-    def sound_exists_in_index(self, sound_object_or_id):
-        """Check if a sound is indexed in the search engine
-
-        Args:
-            sound_object_or_id (sounds.models.Sound or int): Sound object or sound ID to check if indexed
-
-        Returns:
-            bool: whether the sound is indexed in the search engine
-        """
-        raise NotImplementedError
-    
-    def get_all_sound_ids_from_index(self):
-        """Return a list of all sound IDs indexed in the search engine
-
-        Returns:
-            List[int]: list of all sound IDs indexed in the search engine
-        """
-        raise NotImplementedError
-
-    def search_sounds(self, textual_query='', query_fields=None, query_filter='', field_list=['id', 'score'], 
-                      offset=0, current_page=None, num_sounds=settings.SOUNDS_PER_PAGE, 
-                      sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
-                      group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
-                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False, 
-                      similar_to=None, similar_to_max_num_sounds=settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY, 
-                      similar_to_analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
-        """Search for sounds that match specific criteria and return them in a SearchResults object
-
-        Args:
-            textual_query (str, optional): the textual query
-            query_fields (List[str] or Dict{str: int}, optional): a list of the fields that should be matched when
-                querying. Field weights can also be specified if a dict is passed with keys as field names and values as
-                weights. Field names should use the names defined in settings.SEARCH_SOUNDS_FIELD_*. Eg:
-                    query_fields = [settings.SEARCH_SOUNDS_FIELD_ID, settings.SEARCH_SOUNDS_FIELD_USER_NAME]
-                    query_fields = {settings.SEARCH_SOUNDS_FIELD_ID:1 , settings.SEARCH_SOUNDS_FIELD_USER_NAME: 4}
-            query_filter (str, optional): filter expression following lucene filter syntax
-            field_list (List[str], optional): list of fields to return by the search engine. Typically we're only interested
-                in sound IDs because we don't use data form the search engine to display sounds, but in some cases it can 
-                be necessary to return further data.
-            offset (int, optional): offset for the returned results
-            current_page (int, optional): alternative way to set offset using page numbers. Using current_page will
-                set offset like offset=current_page*num_sounds
-            num_sounds (int, optional): number of sounds to return
-            sort (str, optional): sorting criteria. should be one of settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB
-            group_by_pack (bool, optional): whether the search results should be grouped by sound pack. When grouped
-                by pack, only "num_sounds_per_pack_group" sounds per pack will be returned, together with additional 
-                information about the number of other sounds in the pack that would be i the same group.
-            num_sounds_per_pack_group (int, optional): number of sounds to return per pack group
-            facets (Dict{str: Dict}, optional): information about facets to be returned. Can be None if no faceting
-                information is required. Facets should be specified as a dictionary with the "db" field names to be
-                included in the faceting as keys, and a dictionary as values with optional specific parameters for
-                every field facet. Field names should use the names defined in settings.SEARCH_SOUNDS_FIELD_*. Eg:
-                    {
-                        settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: {},
-                        settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10},
-                        settings.SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 30}
-                    }
-                Supported individual facet options include:
-                    - limit: the number of items returned per facet
-            only_sounds_with_pack (bool, optional): whether to only include sounds that belong to a pack
-            only_sounds_within_ids (List[int], optional): restrict search results to sounds with these IDs
-            group_counts_as_one_in_facets (bool, optional): whether only one result from a group should be counted
-                when computing facets or all should be taken into account. This is used to reduce the influence of
-                large groups in facets. We use it for computing the main tag cloud and avoiding a large packs of sounds
-                with the same tags to largely influence the general tag cloud (only one sound of the pack will be
-                counted)
-            similar_to (int or List[float], optional): sound ID or similarity vector to be used as target for similarity 
-                search. Note that when this parameter is passed, some of the other parameters will be ignored 
-                ('textual_query', 'facets', 'group_by_pack', 'num_sounds_per_pack_group', 'group_counts_as_one_in_facets'). 
-                'query_filter' should still be usable, although this remains to be throughly tested. 
-            similar_to_max_num_sounds (int, optional): max number of sounds to return in a similarity search query.
-            similar_to_analyzer (str, optional): analyzer name from which to select similarity vectors for similarity search.
-                It defaults to settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, but it could be change to something else
-                if we want to use a different type of similarity vectors for a similarity search query.
-
-        Returns:
-            SearchResults: SearchResults object containing the results of the query
-        """
-        raise NotImplementedError
-
-    def get_random_sound_id(self):
-        """Return the id of a random sound from the search engine.
-        This is used for random sound browsing. We filter explicit sounds,
-        but otherwise don't have any other restrictions on sound attributes.
-
-        Returns:
-            int: the ID of the selected random sound (or 0 if there were errors)
-        """
-        raise NotImplementedError
-    
-    def get_num_sim_vectors_indexed_per_analyzer(self):
-        """Returns the number of similarity vectors indexed in the search engine for each 
-        analyzer. Because there might be several similarity vectors per sound, we distinguish 
-        between the total number of similarity vectors and the total number of sounds per analyzer.
-
-        Returns:
-            dict: dictionary with the number of similarity vectors and number of soudns indexed per analyzer.
-                E.g.: {'fsd-sinet_v1': {'num_sounds': 0, 'num_vectors': 0}, 
-                       'fs-essentia-extractor_legacy': {'num_sounds': 15876, 'num_vectors': 25448}}
-        """
-        raise NotImplementedError
-
-
-    # Forum search related methods
-
-    def add_forum_posts_to_index(self, forum_post_objects):
-        """Indexes the provided forum post objects in the search index
-
-        Args:
-            forum_post_objects (list[forum.models.Post]): Post objects of the forum posts to index
-        """
-        raise NotImplementedError
-
-    def remove_forum_posts_from_index(self, forum_post_objects_or_ids):
-        """Removes forum posts from the search index
-
-        Args:
-            forum_post_objects_or_ids (list[forum.models.Post] or list[int]):  Post objects or post IDs to remove
-        """
-        raise NotImplementedError
-
-    def remove_all_forum_posts(self):
-        """Removes all forum posts from the search index"""
-        raise NotImplementedError
-
-    def forum_post_exists_in_index(self, forum_post_object_or_id):
-        """Check if a sound is indexed in the search engine
-
-        Args:
-            forum_post_object_or_id (forum.models.Post or int): Post object or post ID to check if indexed
-
-        Returns:
-            bool: whether the post is indexed in the search engine
-        """
-        raise NotImplementedError
-
-
-    def search_forum_posts(self, textual_query='', query_filter='', offset=0, sort=None, current_page=None,
-                           num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
-        """Search for forum posts that match specific criteria and return them in a SearchResults object
-
-        Args:
-            textual_query (str, optional): the textual query
-            query_filter (str, optional): filter expression following lucene filter syntax
-            offset (int, optional): offset for the returned results
-            sort (str, optional): sorting criteria. should be one of settings.SEARCH_FORUM_SORT_OPTIONS_WEB
-            current_page (int, optional): alternative way to set offset using page numbers. Using current_page will
-                set offset like offset=current_page*num_sounds
-            num_posts (int, optional): number of forum posts to return
-            group_by_thread (bool, optional): whether the search results should be grouped by forum post thread. When
-                grouped by thread, all matching results per every thread will be returned following the structure
-                defined in SearchResults. Note that this is different than the group_by_pack option of search_sounds,
-                with which only 1 result is returned per group.
-
-        Returns:
-            SearchResults: SearchResults object containing the results of the query
-
-        """
-        raise NotImplementedError
-
-
-    # Tag clouds methods
-
-    def get_user_tags(self, username):
-        """Retrieves the tags used by a user and their counts
-
-        Args:
-            username: name of the user for which we want to know tags and counts
-
-        Returns:
-            List[Tuple(str, int)]: List of tuples with the tags and counts of the tags used by the user.
-                Eg: [('cat', 1), ('echo', 1), ('forest', 1)]
-        """
-        raise NotImplementedError
-
-    def get_pack_tags(self, username, pack_name):
-        """Retrieves the tags in the sounds of a pack and their counts
-
-        Args:
-            username: name of the user who owns the pack
-            pack_name: name of the pack for which tags and counts should be retrieved
-
-        Returns:
-            List[Tuple(str, int)]: List of tuples with the tags and counts of the tags in the pack.
-                Eg: [('cat', 1), ('echo', 1), ('forest', 1)]
-        """
-        raise NotImplementedError

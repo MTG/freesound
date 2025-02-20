@@ -146,20 +146,6 @@ urlpatterns = [
     re_path(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
     re_path(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
     re_path(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
-
-    # sitemaps
-    '''
-    path('sitemap.xml',
-         cache_page(86400)(sitemap_index),
-         {"sitemaps": sound_sitemaps.sitemaps, "sitemap_url_name": "django.contrib.sitemaps.views.sitemap"},
-         name="django.contrib.sitemaps.views.index",
-    ),
-    path('sitemap-<section>.xml',
-         cache_page(86400)(sitemap_sitemap),
-         {'sitemaps': sound_sitemaps.sitemaps},
-         name="django.contrib.sitemaps.views.sitemap"
-    ),
-    '''
 ]
 
 urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]

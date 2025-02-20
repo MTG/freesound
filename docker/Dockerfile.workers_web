@@ -49,7 +49,7 @@ COPY --from=stereofy /code/stereofy /usr/local/bin
 
 # Install python dependencies
 COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
-RUN --mount=type=cache,target=/root/.cache/uv uv pip install --system -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/uv uv pip install --system --compile-bytecode -r requirements.txt
 
 # Copy source code
 COPY --chown=fsweb:fsweb . /code

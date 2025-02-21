@@ -11,7 +11,7 @@ RUN make clean && make
 
 # --- main Freesound docker file contents
 
-FROM freesound:2023-07
+FROM freesound:2025-02
 
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 

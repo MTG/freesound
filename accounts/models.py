@@ -37,7 +37,7 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.encoding import smart_str
 from django.utils import timezone
-from psycopg2.errors import ForeignKeyViolation
+from psycopg.errors import ForeignKeyViolation
 from urllib.parse import quote
 
 import tickets.models

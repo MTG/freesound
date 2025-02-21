@@ -8,7 +8,7 @@
         {% bw_icon 'stack' 'text-light-grey' %} <a class="text-19 bw-link--black" title="{{ user.username }} has created {{ user_stats.num_packs|bw_intcomma }} pack{{ user_stats.num_packs|pluralize }}" href="{{ user.profile.get_user_packs_in_search_url }}">{{ user_stats.num_packs|formatnumber }} pack{{ user_stats.num_packs|pluralize }}</a>
     </li>
     <li class="v-spacing-3">
-        {% bw_icon 'clock' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds together account for {{ user_stats.total_uploaded_sounds_length|duration_hours }} hours of audio">{{ user_stats.total_uploaded_sounds_length|duration_hours }} hours of audio</span>
+        {% bw_icon 'clock' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds together account for {{ user_stats.total_uploaded_sounds_length|smart_duration_with_units }} of audio">{{ user_stats.total_uploaded_sounds_length|smart_duration_with_units }}</span>
     </li>
     <li class="v-spacing-3">
         {% bw_icon 'star' 'text-light-grey' %} <span class="text-19" title="{{ user.username }}'s sounds have an average rating of {{ user_stats.avg_rating_0_5|floatformat:1 }}">{{ user_stats.avg_rating_0_5|floatformat:1 }} average rating</span>

@@ -944,12 +944,11 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 if 'geotag' in serializer.data:
                     if serializer.data['geotag']:
                         lat, lon, zoom = serializer.data['geotag'].split(',')
-                        geotag = GeoTag(user=self.user,
+                        geotag = GeoTag.objects.create(
+                            sound=sound,
                             lat=float(lat),
                             lon=float(lon),
                             zoom=int(zoom))
-                        geotag.save()
-                        sound.geotag = geotag
                 if 'pack' in serializer.data:
                     if serializer.data['pack']:
                         if Pack.objects.filter(name=serializer.data['pack'], user=self.user)\

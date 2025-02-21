@@ -445,12 +445,12 @@ class SoundManager(models.Manager):
           sound.num_comments,
           sound.duration,
           sound.pack_id,
-          sound.geotag_id,
           sound.bitrate,
           sound.bitdepth,
           sound.samplerate,
           sounds_pack.name as pack_name,
           sounds_license.name as license_name,
+          geotags_geotag.id as geotag_id,
           geotags_geotag.lat as geotag_lat,
           geotags_geotag.lon as geotag_lon,
           geotags_geotag.location_name as geotag_name,
@@ -472,7 +472,7 @@ class SoundManager(models.Manager):
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
-          LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
+          LEFT JOIN geotags_geotag ON sound.id = geotags_geotag.sound_id
           %s
         """ % (self.get_analyzers_data_select_sql(),
                ContentType.objects.get_for_model(Sound).id,
@@ -513,10 +513,15 @@ class SoundManager(models.Manager):
           sound.license_id,
           sounds_license.name as license_name,
           sounds_license.deed_url as license_deed_url,
-          sound.geotag_id,
-          geotags_geotag.lat as geotag_lat,
-          geotags_geotag.lon as geotag_lon,
-          geotags_geotag.location_name as geotag_name,
+          geotags_geotag.id,
+          geotags_geotag.sound_id,
+          geotags_geotag.lat,
+          geotags_geotag.lon,
+          geotags_geotag.zoom,
+          geotags_geotag.information,
+          geotags_geotag.location_name,
+          geotags_geotag.should_update_information,
+          geotags_geotag.created,
           tickets_ticket.key as ticket_key,
           sounds_remixgroup_sounds.id as remixgroup_id,
           accounts_profile.has_avatar as user_has_avatar,
@@ -535,7 +540,7 @@ class SoundManager(models.Manager):
           LEFT JOIN accounts_profile ON accounts_profile.user_id = sound.user_id
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
-          LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
+          LEFT JOIN geotags_geotag ON sound.id = geotags_geotag.sound_id
           LEFT JOIN tickets_ticket ON tickets_ticket.sound_id = sound.id
           %s
           LEFT OUTER JOIN sounds_remixgroup_sounds ON sounds_remixgroup_sounds.sound_id = sound.id
@@ -624,7 +629,6 @@ class Sound(models.Model):
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
     tags = fields.GenericRelation(TaggedItem)
-    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # fields for specifying if the sound was uploaded via API or via bulk upload process (or none)
     uploaded_with_apiv2_client = models.ForeignKey(
@@ -1523,7 +1527,7 @@ def on_delete_sound(sender, instance, **kwargs):
     data['pack'] = pack
 
     geotag = None
-    if instance.geotag:
+    if hasattr(instance, 'geotag'):
         geotag = list(GeoTag.objects.filter(pk=instance.geotag.pk).values())[0]
     data['geotag'] = geotag
 
@@ -1548,16 +1552,13 @@ def on_delete_sound(sender, instance, **kwargs):
         tag['created'] = str(tag['created'])
     for comment in data['comments']:
         comment['created'] = str(comment['created'])
-    if instance.geotag:
+    if hasattr(instance, 'geotag'):
         geotag['created'] = str(geotag['created'])
     ds.data = data
     ds.save()
 
-    try:
-        if instance.geotag:
-            instance.geotag.delete()
-    except:
-        pass
+    if hasattr(instance, 'geotag'):
+        instance.geotag.delete()
 
     instance.delete_from_indexes()
     instance.unlink_moderation_ticket()
@@ -1600,6 +1601,7 @@ class PackManager(models.Manager):
             Prefetch('sounds', queryset=Sound.public.order_by('-created')),
             Prefetch('sounds__tags__tag'),
             Prefetch('sounds__license'),
+            Prefetch('sounds__geotag'),
         ).select_related('user').select_related('user__profile').filter(id__in=pack_ids)
         if exclude_deleted:
             packs = packs.exclude(is_deleted=True)
@@ -1616,7 +1618,7 @@ class PackManager(models.Manager):
                 licenses.append((s.license.name, s.license.id))
                 if s.num_ratings >= settings.MIN_NUMBER_RATINGS:
                     ratings.append(s.avg_rating)
-                if not has_geotags and s.geotag_id is not None:
+                if not has_geotags and hasattr(s, 'geotag'):
                     has_geotags = True
                 should_add_sound_to_selected_sounds = False
                 if sound_ids_pre_selected is None:

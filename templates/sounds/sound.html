@@ -100,7 +100,7 @@
                             {% endif %}
                         </div>
                         <div class="middle v-spacing-top-3">
-                            {% if sound.geotag_id %}
+                            {% if sound.geotag %}
                                 <div>
                                     <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'sound-geotag' sound.user.username sound.id %}?ajax=1">
                                         {% bw_icon 'pin' %} {{ sound.get_geotag_name }}

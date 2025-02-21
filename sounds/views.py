@@ -516,20 +516,24 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                     packs_to_process.append(old_pack)
 
         if data["remove_geotag"]:
-            if sound.geotag:
+            if hasattr(sound, 'geotag'):
                 sound.geotag.delete()
                 sound.geotag = None
         else:
             if data["lat"] and data["lon"] and data["zoom"]:
-                if sound.geotag:
+                if hasattr(sound, 'geotag'):
                     sound.geotag.lat = data["lat"]
                     sound.geotag.lon = data["lon"]
                     sound.geotag.zoom = data["zoom"]
                     sound.geotag.should_update_information = True
                     sound.geotag.save()
                 else:
-                    sound.geotag = GeoTag.objects.create(
-                        lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
+                    GeoTag.objects.create(
+                        sound=sound,
+                        lat=data["lat"],
+                        lon=data["lon"],
+                        zoom=data["zoom"]
+                    )
 
         sound_sources = data["sources"]
         if sound_sources != sound.get_sound_sources_as_set():
@@ -622,9 +626,9 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                             name=element.original_filename,
                             license=element.license,
                             pack=element.pack.id if element.pack else None,
-                            lat=element.geotag.lat if element.geotag else None,
-                            lon=element.geotag.lon if element.geotag else None,
-                            zoom=element.geotag.zoom if element.geotag else None,
+                            lat=element.geotag.lat if hasattr(element, 'geotag') else None,
+                            lon=element.geotag.lon if hasattr(element, 'geotag') else None,
+                            zoom=element.geotag.zoom if hasattr(element, 'geotag') else None,
                             sources=','.join([str(item) for item in sound_sources_ids]))
             else:
                 sound_sources_ids = []

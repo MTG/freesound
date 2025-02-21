@@ -100,7 +100,6 @@ django==4.2.19
     #   django-multiupload-plus
     #   django-oauth-toolkit
     #   django-recaptcha
-    #   django-redis
     #   django-silk
     #   djangorestframework
     #   sentry-sdk
@@ -123,8 +122,6 @@ django-object-actions==4.3.0
 django-ratelimit==4.1.0
     # via -r requirements.in
 django-recaptcha==4.0.0
-    # via -r requirements.in
-django-redis==5.4.0
     # via -r requirements.in
 django-silk==5.3.2
     # via -r requirements.in
@@ -290,9 +287,7 @@ pyyaml==6.0.1
     #   -r requirements.in
     #   djangorestframework-yaml
 redis==5.2.1
-    # via
-    #   -r requirements.in
-    #   django-redis
+    # via -r requirements.in
 requests==2.31.0
     # via
     #   akismet

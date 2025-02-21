@@ -44,6 +44,35 @@ from utils.mail import send_mail
 from utils.test_helpers import override_avatars_path_with_temp_directory, create_user_and_sounds
 
 
+class ProfileTest(TestCase):
+    fixtures = ['licenses', 'sounds_with_tags']
+
+    def test_get_stats_for_profile_page(self):
+        user = User.objects.get(username="Anton")
+        expected = {
+            'avg_rating_0_5': 0.0,
+            'num_downloads': 0,
+            'num_packs': 1,
+            'num_posts': 0,
+            'num_sounds': 0,
+            'total_uploaded_sounds_length': {
+                'formatted_length': '2:51',
+                'length_text': 'minutes',
+            },
+        }
+        assert user.profile.get_stats_for_profile_page() == expected
+
+        sound = user.sounds.all()[0]
+        sound.duration = 3600 + 1260
+        sound.save()
+
+        expected['total_uploaded_sounds_length'] = {
+            'formatted_length': '1:23',
+            'length_text': 'hours',
+        }
+        assert user.profile.get_stats_for_profile_page() == expected
+
+
 class ProfileGetUserTags(TestCase):
     fixtures = ['licenses', 'sounds_with_tags']
 

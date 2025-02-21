@@ -477,8 +477,8 @@ class SoundManager(models.Manager):
         """ % (self.get_analyzers_data_select_sql(),
                ContentType.objects.get_for_model(Sound).id,
                self.get_analyzers_data_left_join_sql())
-        query += "WHERE sound.id IN %s"
-        return self.raw(query, [tuple(sound_ids)])
+        query += "WHERE sound.id = ANY(%s)"
+        return self.raw(query, [sound_ids])
 
     def bulk_query(self, where, order_by, limit, args, include_analyzers_output=False):
         """For each sound, get all fields needed to display a sound on the web (using display_sound templatetag) or

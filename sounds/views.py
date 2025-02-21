@@ -860,11 +860,8 @@ def pack(request, username, pack_id):
         pack = Pack.objects.bulk_query_id(pack_id)[0]
         if pack.user.username.lower() != username.lower():
             raise Http404
-    except (Pack.DoesNotExist, IndexError) as e:
+    except IndexError:
         raise Http404
-
-    if pack.is_deleted:
-        return render(request, 'sounds/pack_deleted.html')
 
     qs = Sound.public.only('id').filter(pack=pack).order_by('-created')
     num_sounds_to_display = settings.SOUNDS_PER_PAGE_PROFILE_PACK_PAGE
@@ -901,7 +898,7 @@ def pack_stats_section(request, username, pack_id):
         pack = Pack.objects.bulk_query_id(pack_id)[0]
         if pack.user.username.lower() != username.lower():
             raise Http404
-    except (Pack.DoesNotExist, IndexError) as e:
+    except IndexError:
         raise Http404
     tvars = {
         'pack': pack,

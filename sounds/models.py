@@ -37,7 +37,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import F, Prefetch
+from django.db.models import F, Prefetch, Sum
 from django.db.models.functions import Greatest
 from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
@@ -1832,8 +1832,22 @@ class Pack(models.Model):
             return Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS)
 
     def get_total_pack_sounds_length(self):
-        durations = list(Sound.objects.filter(pack=self).values_list('duration', flat=True))
-        return sum(durations)
+        result = Sound.objects.filter(pack=self).aggregate(total_duration=Sum('duration'))
+        total_duration = result['total_duration'] or 0
+        if total_duration < 3600:
+            minutes = int(total_duration // 60)
+            seconds = int(total_duration % 60)
+            formatted_length = f'{minutes}:{seconds:02d}'
+            length_text = 'minutes'
+        else:
+            hours = int(total_duration // 3600)
+            minutes = int((total_duration % 3600) // 60)
+            formatted_length = f'{hours}:{minutes:02d}'
+            length_text = 'hours'
+        return {
+            'formatted_length': formatted_length,
+            'length_text': length_text
+        }
 
     def num_sounds_unpublished(self):
         if hasattr(self, 'num_sounds_unpublished_precomputed'):

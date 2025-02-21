@@ -637,9 +637,24 @@ class Profile(models.Model):
             }
         stats_from_cache = cache.get(settings.USER_STATS_CACHE_KEY.format(self.user_id), None)
         if stats_from_cache is None:
+            total_uploaded_sounds_length = self.get_total_uploaded_sounds_length()
+            if total_uploaded_sounds_length < 3600:
+                minutes = int(total_uploaded_sounds_length // 60)
+                seconds = int(total_uploaded_sounds_length % 60)
+                formatted_length = f'{minutes}:{seconds:02d}'
+                length_text = 'minutes'
+            else:
+                hours = int(total_uploaded_sounds_length // 3600)
+                minutes = int((total_uploaded_sounds_length % 3600) // 60)
+                formatted_length = f'{hours}:{minutes:02d}'
+                length_text = 'hours'
+
             stats_from_cache = {
                 'num_packs': self.num_packs,
-                'total_uploaded_sounds_length': self.get_total_uploaded_sounds_length(),
+                'total_uploaded_sounds_length': {
+                    'formatted_length': formatted_length,
+                    'length_text': length_text
+                },
                 'avg_rating_0_5': self.avg_rating_0_5,
             }
             cache.set(settings.USER_STATS_CACHE_KEY.format(self.user_id), stats_from_cache, 60*60*24)

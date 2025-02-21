@@ -605,12 +605,9 @@ class Profile(models.Model):
 
     @property
     def avg_rating(self):
-        """Returns the average raring from 0 to 10"""
-        ratings = list(SoundRating.objects.filter(sound__user=self.user).values_list('rating', flat=True))
-        if ratings:
-            return sum(ratings) / len(ratings)
-        else:
-            return 0
+        """Returns the average rating from 0 to 10"""
+        avg = SoundRating.objects.filter(sound__user=self.user).aggregate(models.Avg('rating'))['rating__avg']
+        return avg if avg is not None else 0
 
     @property
     def avg_rating_0_5(self):

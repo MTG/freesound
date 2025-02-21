@@ -1,4 +1,3 @@
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -28,6 +27,7 @@ from django.core.cache import cache
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
+import pytest
 
 from general.templatetags.filter_img import replace_img
 from sounds.models import Pack, Sound
@@ -148,3 +148,21 @@ class PackViewsTestCase(TestCase):
         url = reverse('pack', args=[username, 9999999])
         resp = self.client.get(url)
         assert resp.status_code == 404
+
+
+@pytest.mark.django_db
+class PackStatsSectionTest:
+
+    def test_get_total_pack_sounds_length(self, use_dummy_cache_backend, client):
+        call_command('loaddata', 'licenses', 'sounds')
+        pack = Pack.objects.all()[0]
+
+        response = client.get(reverse('pack-stats-section', kwargs={'username': pack.user.username, 'pack_id': pack.id}) + '?ajax=1')
+        assert response.status_code == 200
+        assert "0:21 minutes" in response.content.decode('utf-8')
+
+        sound = pack.sounds.all()[0]
+        sound.duration = 1260
+        sound.save()
+        response = client.get(reverse('pack-stats-section', kwargs={'username': pack.user.username, 'pack_id': pack.id}) + '?ajax=1')
+        assert "21:16 minutes" in response.content.decode('utf-8')

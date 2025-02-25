@@ -177,14 +177,15 @@ def edit_collection(request, collection_id):
     else:
         form = CollectionEditForm(instance=collection, initial=dict(collection_sounds=collection_sounds, collection_maintainers=collection_maintainers), label_suffix='', is_owner=is_owner)
         current_sounds = Sound.objects.bulk_sounds_for_collection(collection_id=collection.id)
+        current_maintainers = User.objects.filter(collection_maintainer=collection.id)
         form.collection_sound_objects = current_sounds
+        form.collection_maintainers_objects = current_maintainers
         display_fields = ["name", "description", "public"]
 
     tvars = {
         "form": form,
         "collection": collection,
         "is_owner": is_owner,
-        "current_sounds": current_sounds,
         "display_fields": display_fields,
     }
     

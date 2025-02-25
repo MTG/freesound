@@ -3,6 +3,7 @@
 {% load util %}
 {% load bw_templatetags %}
 {% load sounds_selector %}
+{% load users_selector %}
 {% load custom_form_display %}
 
 {% block title %}Edit collection - {{ collection.name }}{% endblock %}
@@ -42,7 +43,7 @@
                 {% if not form.collection_maintainers.value %}
                 <div class="v-spacing-4 v-spacing-top-2">This collection has no maintainers</div>
                 {% endif %}
-                {{ form.maintainers }}
+                {% users_selector form.collection_maintainers_objects%}
             </div>
             <div class="between v-spacing-2">
                 <button class="btn-inverse" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'add-maintainers-to-collection' collection.id%}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>

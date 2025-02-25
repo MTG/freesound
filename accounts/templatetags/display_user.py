@@ -93,3 +93,12 @@ def display_user_top_donor(context, user, donated_amount):
 @register.inclusion_tag('accounts/display_user.html', takes_context=True)
 def display_user_comment(context, user, comment_created):
     return display_user(context, user, size='comment', comment_created=comment_created)
+
+@register.inclusion_tag('accounts/display_user_selectable.html', takes_context=True)
+def display_user_small_selectable(context, user, selected=False):
+    context = context.get('original_context', context)  # This is to allow passing context in nested inclusion tags
+    tvars = display_user(context, user, size='basic')
+    tvars.update({
+        'selected': selected,
+    })
+    return tvars

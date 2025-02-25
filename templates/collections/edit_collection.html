@@ -3,6 +3,7 @@
 {% load util %}
 {% load bw_templatetags %}
 {% load sounds_selector %}
+{% load custom_form_display %}
 
 {% block title %}Edit collection - {{ collection.name }}{% endblock %}
 {% block page-title %}Edit collection{% endblock %}
@@ -20,22 +21,47 @@
         <span class="help-block text-grey">You don't have permissions to edit collection's name nor description</span>
         {% endif %}
         <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
-            {{form }}
-            <!--<span class="helptext">{{ form.description.help_text|safe }}</span>-->
-            <!--<div class="select-sounds-field v-spacing-5">
-                {{ form.pack_sounds }}
-                <label>Sounds in collection ({{ form.pack_sound_objects|length }})</label>
-                {% if not form.pack_sounds.value %}
+            <!-- the following code will be available when Django version is updated to 5.0
+            {{ form.name.as_field_group }}
+            {{ form.description.as_field_group }}            
+            {{ form.public.as_field_group }}            
+            {{ form.maintainers.as_field_group }}
+             while this does not happen I'll have to survive with the following -->
+            {% custom_form_display form display_fields as custom_fields%}
+            {% for field in custom_fields %}
+                {{ field.errors }}
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                    <span class="helptext"><i>{{field.help_text|safe}}</i></span>
+                {% endif %}
+            {% endfor %}
+            <div class="select-sound-field v-spacing-2">
+                {{ form.collection_maintainers }}
+                <label>Maintainers</label>
+                {% if not form.collection_maintainers.value %}
+                <div class="v-spacing-4 v-spacing-top-2">This collection has no maintainers</div>
+                {% endif %}
+                {{ form.maintainers }}
+            </div>
+            <div class="between v-spacing-2">
+                <button class="btn-inverse" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'add-maintainers-to-collection' collection.id%}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
+                <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
+            </div>
+            <div class="select-sounds-field v-spacing-5">
+                {{ form.collection_sounds }}
+                <label>Sounds in collection ({{ form.collection_sound_objects|length }})</label>
+                {% if not form.collection_sounds.value %}
                 <div class="v-spacing-4 v-spacing-top-2">No sounds have been added to this collection yet</div>
                 {% endif %}
-                {% sounds_selector form.pack_sound_objects %}
+                {% sounds_selector form.collection_sound_objects %}
                 <div class="between v-spacing-top-2">
-                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from pack</button>
+                    <button class="btn-inverse" data-toggle="add-sounds-modal" data-selected-sounds-hidden-input-id="{{ form.collection_sounds.id_for_label }}" data-modal-url="{% url 'add-sounds-modal-collection' collection.id %}">{% bw_icon 'plus' %}Add sounds</button>
+                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from collection</button>
                 </div>
-            </div>-->
+            </div>
             <button class="btn-primary w-100">Save collection</button>
         </form>
-        <button class="btn-primary w-100 v-spacing-top-3" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'add-maintainers-to-collection' collection.id %}?ajax=1" data-reload-on-success="true" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
         <button class="btn-secondary w-100 v-spacing-top-3" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{% url "delete-collection" collection.id %}">Delete Collection</button>
     </div>
 </div>

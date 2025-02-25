@@ -533,6 +533,7 @@ class SoundManager(models.Manager):
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
           LEFT JOIN accounts_profile ON accounts_profile.user_id = sound.user_id
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
+          LEFT JOIN fscollections_collectionsound cs ON sound.id = cs.sound_id
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
           LEFT JOIN tickets_ticket ON tickets_ticket.sound_id = sound.id
@@ -567,6 +568,15 @@ class SoundManager(models.Manager):
         if limit:
             limit = str(limit)
         return self.bulk_query(where, order_by, limit, (pack_id, ), include_analyzers_output=include_analyzers_output)
+    
+    def bulk_sounds_for_collection(self, collection_id, limit=None, include_analyzers_output=False):
+        where = """sound.moderation_state = 'OK'
+            AND sound.processing_state = 'OK'
+            AND cs.collection_id = %s"""
+        order_by = "sound.created DESC"
+        if limit:
+            limit = str(limit)
+        return self.bulk_query(where, order_by, limit, (collection_id, ), include_analyzers_output=include_analyzers_output)
 
     def bulk_query_id(self, sound_ids, include_analyzers_output=False):
         if not isinstance(sound_ids, list):

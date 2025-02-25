@@ -12,5 +12,6 @@ urlpatterns = [
     path('<int:collection_id>/delete', views.delete_collection, name="delete-collection"),
     path('<int:collection_id>/addmaintainer', views.add_maintainer_to_collection, name="add-maintainers-to-collection"),
     path('<int:collection_id>/download/', views.download_collection, name="download-collection"),
-    path('<int:collection_id>/licenses/', views.collection_licenses, name="collection-licenses")
+    path('<int:collection_id>/licenses/', views.collection_licenses, name="collection-licenses"),
+    path('<int:collection_id>/addsoundsmodal', views.add_sounds_modal_for_collection_edit, name="add-sounds-modal-collection"),
 ]

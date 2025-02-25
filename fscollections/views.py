@@ -134,8 +134,8 @@ def get_form_for_collecting_sound(request, sound_id):
     return render(request, 'collections/modal_collect_sound.html', tvars)
 
 def create_collection(request):
-    # if not request.GET.get('ajax'):
-      #  return HttpResponseRedirect(reverse("collections"))
+    if not request.GET.get('ajax'):
+      return HttpResponseRedirect(reverse("collections"))
     if request.method == "POST":
         form = CreateCollectionForm(request.POST, user=request.user)
         if form.is_valid():
@@ -160,25 +160,32 @@ def delete_collection(request, collection_id):
 def edit_collection(request, collection_id):
     
     collection = get_object_or_404(Collection, id=collection_id)
-
+    collection_sounds = ",".join([str(s.id) for s in Sound.objects.filter(collectionsound__collection=collection)])
+    collection_maintainers = ",".join([str(u.id) for u in User.objects.filter(collection_maintainer=collection.id)])
     if request.user == collection.user:
         is_owner = True
     else:
         is_owner = False
 
+    current_sounds = list()
     if request.method=="POST":
-        form = CollectionEditForm(request.POST, instance=collection)
+        form = CollectionEditForm(request.POST, instance=collection, label_suffix='')
         if form.is_valid():
-            form.save()
+            form.save(user_adding_sound=request.user)
             return HttpResponseRedirect(reverse('collections', args=[collection.id]))
         
     else:
-        form = CollectionEditForm(instance=collection, is_owner=is_owner)
+        form = CollectionEditForm(instance=collection, initial=dict(collection_sounds=collection_sounds, collection_maintainers=collection_maintainers), label_suffix='', is_owner=is_owner)
+        current_sounds = Sound.objects.bulk_sounds_for_collection(collection_id=collection.id)
+        form.collection_sound_objects = current_sounds
+        display_fields = ["name", "description", "public"]
 
     tvars = {
         "form": form,
         "collection": collection,
-        "is_owner": is_owner
+        "is_owner": is_owner,
+        "current_sounds": current_sounds,
+        "display_fields": display_fields,
     }
     
     return render(request, 'collections/edit_collection.html', tvars)
@@ -186,8 +193,8 @@ def edit_collection(request, collection_id):
 
 def add_maintainer_to_collection(request, collection_id):
     #TODO: store maintainers inside modal to further add them at once
-    # if not request.GET.get('ajax'):
-      #  return HttpResponseRedirect(reverse("collections", args=[collection_id]))
+    if not request.GET.get('ajax'):
+      return HttpResponseRedirect(reverse("collections", args=[collection_id]))
     
     collection = get_object_or_404(Collection, id=collection_id, user=request.user)
 
@@ -195,9 +202,8 @@ def add_maintainer_to_collection(request, collection_id):
         form = MaintainerForm(request.POST, collection=collection)
         if form.is_valid():
             new_maintainer = User.objects.get(username=form.cleaned_data['maintainer'])
-            collection.maintainers.add(new_maintainer)
-            collection.save()
-            return JsonResponse({'success': True})
+            # instead of sending data through JSON response this should be fully handled in Javascript
+            return JsonResponse({'success': True, 'new_maintainers': new_maintainer.id})
     else:
         form = MaintainerForm()
     tvars = {"collection": collection,
@@ -217,6 +223,16 @@ def collection_licenses(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
     attribution = collection.get_attribution()
     return HttpResponse(attribution, content_type="text/plain")
+
+def add_sounds_modal_for_collection_edit(request, collection_id):
+    collection = get_object_or_404(Collection, id=collection_id)
+    tvars = add_sounds_modal_helper(request, collection.user.username)
+    tvars.update({
+        'modal_title':'Add sounds to collection',
+        'help_text':'Modal to add sounds to your collection'})
+    return render(request, 'sounds/modal_add_sounds.html', tvars)
+
+
 
 # NOTE: there should be two methods to add a sound into a collection
 # 1: adding from the sound.html page through a "bookmark-like" button and opening a Collections modal

@@ -18,11 +18,14 @@
 #     See AUTHORS file.
 #
 
+import re
 from django import forms
 from django.forms import ModelForm, Textarea, TextInput, SelectMultiple
 from django.contrib.auth.models import User
 from fscollections.models import Collection, CollectionSound
 from utils.forms import HtmlCleaningCharField
+
+from sounds.models import Sound
 
 #this class was aimed to perform similarly to BookmarkSound, however, at first the method to add a sound to a collection
 #will be opening the search engine in a modal, looking for a sound in there and adding it to the actual collection page
@@ -115,16 +118,16 @@ class CollectionSoundForm(forms.Form):
         return super().clean()
     
 class CollectionEditForm(forms.ModelForm):
-
-    class Meta():
-        model = Collection
-        fields = ('name', 'description','maintainers', 'public')
-        widgets = {
-            'name': TextInput(),
-            'description': Textarea(attrs={'rows': 5, 'cols': 50}),
-            'maintainers': forms.CheckboxSelectMultiple(attrs={'class': 'bw-checkbox'}),
-            'public': forms.RadioSelect(choices=[(True, 'Public'), (False, 'Private')], attrs={'class': 'bw-radio'})
-        }
+    collection_sounds = forms.CharField(min_length=1,
+                                  widget=forms.widgets.HiddenInput(attrs={'id': 'collection_sounds', 'name': 'collection_sounds'}),
+                                  required=False)
+    
+    collection_maintainers = forms.CharField(min_length=1, 
+                                             widget = forms.widgets.HiddenInput(attrs={'id':'collection_maintainers', 'name': 'collection_maintainers'}),
+                                             required=False)
+    # Create a form attribute that stores the temporary maintainers of the collection, so the modification to the DB is not applied until
+    # user clicks "save collection"
+    # places to check: add-maintainer view (review post), add maintainer modal and form - button does not reload the url but triggers form rendering
 
     def __init__(self, *args, **kwargs):
         is_owner = kwargs.pop('is_owner', True)
@@ -135,9 +138,9 @@ class CollectionEditForm(forms.ModelForm):
         # this block below is not necessarily true but it eases making restrictions for default collection 'bookmarks'
         if self.instance.is_default_collection:
             self.fields['name'].widget.attrs.update({'readonly': 'readonly'})
-            self.fields['name'].help_text = "<i>Your personal bookmarks collection's name can't be edited.</i>"
+            self.fields['name'].help_text = "Your personal bookmarks collection's name can't be edited."
             self.fields['public'].widget.attrs.update({'disabled':'disabled'})
-            self.fields['public'].help_text = "<i>Your personal bookmarks collection is private</i>"
+            self.fields['public'].help_text = "Your personal bookmarks collection is private."
 
         if not self.fields['maintainers'].queryset:
             self.fields['maintainers'].help_text = "This collection doesn't have any maintainers"
@@ -153,7 +156,62 @@ class CollectionEditForm(forms.ModelForm):
             if Collection.objects.filter(user=self.instance.user, name=clean_data['name']).exists():
                 self.add_error('name', forms.ValidationError("You already have a collection with this name"))
         
-        return super().clean()  
+        return super().clean()
+    
+    def clean_ids_field(self, field):
+        # this function cleans the sounds and maintainers fields which store temporary changes on the edit URL
+        new_field = re.sub("[^0-9,]", "", self.cleaned_data[field])
+        new_field = re.sub(",+", ",", new_field)
+        new_field = re.sub("^,+", "", new_field)
+        new_field = re.sub(",+$", "", new_field)
+        if len(new_field) > 0:
+            new_field = {int(usr) for usr in new_field.split(",")}
+        else:
+            new_field = set()
+        return new_field
+    
+    def save(self, user_adding_sound):
+        """This method is used to apply the temporary changes from the edit URL to the DB.
+        Useful for maintainers and sounds, where several objects are added to the Collection attrs.
+        This way, the server side does not change until the Save Collection button is clicked.
+
+        Args:
+            user_adding_sound (User): the user modifying the collection
+
+        Returns:
+            collection (Collection): the saved collection with proper modficiations
+        """
+        collection = super().save(commit=False)        
+        new_sounds = self.clean_ids_field('collection_sounds')
+        current_sounds = list(Sound.objects.filter(collectionsound__collection=collection).values_list('id', flat=True))
+        for snd in new_sounds:
+            if snd not in current_sounds:
+                sound = Sound.objects.get(id=snd)
+                cs = CollectionSound(user=user_adding_sound, sound=sound, collection=collection)
+                if user_adding_sound == collection.user:
+                    cs.status = 'OK'
+                cs.save()                
+                collection.num_sounds += 1
+
+        new_maintainers = self.clean_ids_field('collection_maintainers')
+        current_maintainers = list(User.objects.filter(collection_maintainer=collection).values_list('id', flat=True))
+        for usr in new_maintainers:
+            if usr not in current_maintainers:
+                print(usr)
+                maintainer = User.objects.get(id=usr)
+                collection.maintainers.add(maintainer)
+        collection.save()
+        return collection
+    
+    class Meta():
+        model = Collection
+        fields = ('name', 'description', 'public', 'maintainers')
+        widgets = {
+            'name': TextInput(),
+            'description': Textarea(attrs={'rows': 5, 'cols': 50}),
+            'maintainers': forms.CheckboxSelectMultiple(attrs={'class': 'bw-checkbox'}),
+            'public': forms.RadioSelect(choices=[(True, 'Public'), (False, 'Private')], attrs={'class': 'bw-radio'})
+        }
 
 class CreateCollectionForm(forms.ModelForm):
     

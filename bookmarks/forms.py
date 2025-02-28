@@ -60,11 +60,21 @@ class BookmarkForm(forms.Form):
         self.user_bookmark_categories = kwargs.pop('user_bookmark_categories', False)
         self.user_saving_bookmark = kwargs.pop('user_saving_bookmark', False)
         self.sound_id = kwargs.pop('sound_id', False)
+        # Get categories that already contain this sound
+        self.categories_already_containing_sound = kwargs.pop('categories_already_containing_sound', [])
         super().__init__(*args, **kwargs)
-        self.fields['category'].choices = [(self.NO_CATEGORY_CHOICE_VALUE, '--- No category ---'),
-                                           (self.NEW_CATEGORY_CHOICE_VALUE, 'Create a new category...')] + \
-                                          ([(category.id, category.name) for category in self.user_bookmark_categories]
-                                           if self.user_bookmark_categories else [])
+        
+        # Filter out categories that already contain the sound
+        available_categories = []
+        if self.user_bookmark_categories:
+            for category in self.user_bookmark_categories:
+                if category not in self.categories_already_containing_sound:
+                    available_categories.append((category.id, category.name))
+        
+        self.fields['category'].choices = [
+            (self.NO_CATEGORY_CHOICE_VALUE, '--- No category ---'),
+            (self.NEW_CATEGORY_CHOICE_VALUE, 'Create a new category...')
+        ] + available_categories
         
         self.fields['new_category_name'].widget.attrs['placeholder'] = "Fill in the name for the new category"
         self.fields['category'].widget.attrs = {

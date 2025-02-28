@@ -49,6 +49,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django_ratelimit.decorators import ratelimit
 
 from accounts.models import Profile
+from bookmarks.models import Bookmark
 from comments.forms import CommentForm
 from comments.models import Comment
 from donations.models import DonationsModalSettings
@@ -258,6 +259,7 @@ def sound(request, username, sound_id):
     display_random_link = request.GET.get('random_browsing', False)
     is_following = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, sound.user)
     is_explicit = sound.is_explicit and (not request.user.is_authenticated or not request.user.profile.is_adult)
+    sound_is_bookmarked = request.user.is_authenticated and Bookmark.objects.filter(user=request.user, sound=sound).exists()
 
     tvars = {
         'sound': sound,
@@ -267,7 +269,8 @@ def sound(request, username, sound_id):
         'is_following': is_following,
         'is_explicit': is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         'sizes': settings.IFRAME_PLAYER_SIZE,
-        'min_num_ratings': settings.MIN_NUMBER_RATINGS
+        'min_num_ratings': settings.MIN_NUMBER_RATINGS,
+        'sound_is_bookmarked': sound_is_bookmarked,
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)

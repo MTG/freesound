@@ -847,6 +847,9 @@ RABBITMQ_API_PORT = '5673'
 # Important: place settings which depend on other settings potentially modified in local_settings.py BELOW the import
 from .local_settings import *
 
+CACHES['default'] = {
+    'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+}
 
 # -------------------------------------------------------------------------------
 # Celery

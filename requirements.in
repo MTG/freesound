@@ -38,6 +38,7 @@ numpy==1.24.3
 oauthlib
 openpyxl==3.1.0  # for reading .xlsx files (but not .xls)
 Pillow==9.5.0
+psutil~=7.0.0
 psycopg~=3.2.4
 PyJWT==2.6.0
 pyparsing==2.4.7

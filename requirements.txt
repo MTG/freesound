@@ -231,6 +231,8 @@ prompt-toolkit==3.0.43
     # via
     #   click-repl
     #   ipython
+psutil==7.0.0
+    # via -r requirements.in
 psycopg==3.2.4
     # via -r requirements.in
 ptyprocess==0.7.0

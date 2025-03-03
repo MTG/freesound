@@ -176,14 +176,8 @@ def donation_session_stripe(request):
             session = stripe.checkout.Session.create(
                 customer_email=email_to,
                 payment_method_types=['card'],
-                line_items=[{
-                    'name': 'Freesound donation',
-                    'description': 'Donation for freesound.org',
-                    'images': ['https://freesound.org/media/images/logo.png'],
-                    'amount': int(amount*100),
-                    'currency': 'eur',
-                    'quantity': 1,
-                }],
+                line_items=[{"price": 'price_1QuuVbCKrHd9PvRmTg8cA7JA', "quantity": 1}],
+                mode='payment',
               success_url=return_url_success,
               cancel_url=return_url_cancel,
             )

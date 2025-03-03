@@ -37,7 +37,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import F, Prefetch
+from django.db.models import Avg, F, Prefetch
 from django.db.models.functions import Greatest
 from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
@@ -1812,11 +1812,11 @@ class Pack(models.Model):
         if hasattr(self, 'avg_rating_precomputed'):
             return self.avg_rating_precomputed
         else:
-            ratings = list(Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS).values_list('avg_rating', flat=True))
-            if ratings:
-                return sum(ratings) / len(ratings)
-            else:
-                return 0
+            result = Sound.objects.filter(
+                pack=self, 
+                num_ratings__gte=settings.MIN_NUMBER_RATINGS
+            ).aggregate(avg=Avg('avg_rating'))
+            return result['avg'] or 0
 
     @property
     def avg_rating_0_5(self):

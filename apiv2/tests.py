@@ -362,21 +362,22 @@ class TestSoundSerializer(TestCase):
     fixtures = ['licenses', 'sounds']
 
     def setUp(self):
-        self.sound = Sound.objects.bulk_query_id(Sound.objects.first().id, include_analyzers_output=True)[0]
+        self.sound_id = Sound.objects.first().id
         self.factory = RequestFactory()
 
     def test_num_fields_and_num_queries(self):
-
+        
         # Make sure sound content type and site objects are cached to avoid further queries
         ContentType.objects.get_for_model(Sound)
         Site.objects.get_current()
 
-        # Test that the serialized sound instance includes all fields in the serializer and does not perform any
-        # extra query. Because in this test we get sound info using Sound.objects.bulk_query_id, the serializer
-        # should perform no extra queries to render the data
-        with self.assertNumQueries(0):
-            dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound.id]) + '?fields=*')
-            serialized_sound = SoundSerializer(self.sound, context={'request': dummy_request}).data
+        with self.assertNumQueries(2):
+            # Test that the serialized sound instance includes all fields in the serializer and does not perform any
+            # extra query. Because in this test we get sound info using Sound.objects.bulk_query_id, the serializer
+            # should perform no extra queries to render the data
+            sound = Sound.objects.bulk_query_id(self.sound_id, include_analyzers_output=True)[0]
+            dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound_id]) + '?fields=*')
+            serialized_sound = SoundSerializer(sound, context={'request': dummy_request}).data
             self.assertCountEqual(list(serialized_sound.keys()), SoundSerializer.Meta.fields)
 
 

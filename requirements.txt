@@ -312,7 +312,9 @@ scipy==1.12.0
     #   -r requirements.in
     #   scikit-learn
 sentry-sdk[django]==2.21.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   sentry-sdk
 sgmllib3k==1.0.0
     # via feedparser
 six==1.16.0
@@ -379,6 +381,8 @@ webencodings==0.5.1
     # via bleach
 wheel==0.42.0
     # via pip-tools
+whitenoise==6.9.0
+    # via -r requirements.in
 wrapt==1.16.0
     # via deprecated
 xlrd==2.0.1

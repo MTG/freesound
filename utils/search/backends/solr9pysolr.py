@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -24,13 +22,15 @@ import re
 import pysolr
 from django.conf import settings
 
-from utils.search.backends import solr555pysolr
+from utils.search.backends import SearchEngineBase
+from utils.search.backends.solr_common import FreesoundSoundJsonEncoder, SolrResponseInterpreter
 
 SOLR_FORUM_URL = f"{settings.SOLR9_BASE_URL}/forum"
 SOLR_SOUNDS_URL = f"{settings.SOLR9_BASE_URL}/freesound"
 
 
-class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
+class Solr9PySolrSearchEngine(SearchEngineBase):
+
     def __init__(self, sounds_index_url=None, forum_index_url=None):
         if sounds_index_url is None:
             sounds_index_url = SOLR_SOUNDS_URL
@@ -38,27 +38,30 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
             forum_index_url = SOLR_FORUM_URL
         self.sounds_index_url = sounds_index_url
         self.forum_index_url = forum_index_url
+        self._sounds_index = None
+        self._forum_index = None
 
-
-    def get_sounds_index(self):
-        if self.sounds_index is None:
-            self.sounds_index = pysolr.Solr(
+    @property
+    def sounds_index(self):
+        if self._sounds_index is None:
+            self._sounds_index = pysolr.Solr(
                 self.sounds_index_url,
-                encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
-                results_cls=solr555pysolr.SolrResponseInterpreter,
+                encoder=FreesoundSoundJsonEncoder(),
+                results_cls=SolrResponseInterpreter,
                 always_commit=True
             )
-        return self.sounds_index
+        return self._sounds_index
 
-    def get_forum_index(self):
-        if self.forum_index is None:
-            self.forum_index = pysolr.Solr(
+    @property
+    def forum_index(self):
+        if self._forum_index is None:
+            self._forum_index = pysolr.Solr(
                 self.forum_index_url,
-                encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
-                results_cls=solr555pysolr.SolrResponseInterpreter,
+                encoder=FreesoundSoundJsonEncoder(),
+                results_cls=SolrResponseInterpreter,
                 always_commit=True
             )
-        return self.forum_index
+        return self._forum_index
 
 
     def search_process_filter(self, query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
@@ -92,23 +95,23 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
             query_filter = query_filter.replace('created:', 'created_range:')
 
         # If we only want sounds with packs and there is no pack filter, add one
-        if only_sounds_with_pack and not 'pack:' in query_filter:
+        if only_sounds_with_pack and 'pack:' not in query_filter:
             query_filter += ' pack:*'
 
         if 'geotag:"Intersects(' in query_filter:
             # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
             #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
-            query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+            query_filter = re.sub(r'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
 
         query_filter = self.search_filter_make_intersection(query_filter)
 
         # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
         # our query to the sounds in that list of IDs.
         if only_sounds_within_ids:
-            sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
+            sounds_within_ids_filter = ' OR '.join([f'id:{sound_id}' for sound_id in only_sounds_within_ids])
             if query_filter:
-                query_filter += ' AND ({})'.format(sounds_within_ids_filter)
+                query_filter += f' AND ({sounds_within_ids_filter})'
             else:
-                query_filter = '({})'.format(sounds_within_ids_filter)
+                query_filter = f'({sounds_within_ids_filter})'
 
         return query_filter

@@ -25,6 +25,7 @@ Check out these new cool sounds that you might be interested in:
     {% absurl "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}
 {% endif %}
 
-{% include "emails/email_opt_out_text.txt" %}
+{% endfor %}
 
-{% endfor %}{% endblock %}
+{% include "emails/email_opt_out_text.txt" %}
+{% endblock %}

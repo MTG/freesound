@@ -1417,16 +1417,16 @@ class Sound(models.Model):
     def get_top_level_category_search_url(self):
         top_level_name, _ = self.get_category_names
         if top_level_name:
-            cat_filter = urlencode({'f': 'bst_top_level:' + top_level_name})
+            cat_filter = urlencode({'f': f'bst_top_level:"{top_level_name}"'})
             return f'{reverse("sounds-search")}?{cat_filter}'
         else:
             return None
         
     @property
     def get_second_level_category_search_url(self):
-        second_level_name, _ = self.get_category_names
+        top_level_name, second_level_name = self.get_category_names 
         if second_level_name:
-            cat_filter = urlencode({'f': 'bst_second_level:' + second_level_name})
+            cat_filter = urlencode({'f': f'bst_top_level:"{top_level_name}" bst_second_level:"{second_level_name}"'})
             return f'{reverse("sounds-search")}?{cat_filter}'
         else:
             return None

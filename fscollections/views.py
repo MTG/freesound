@@ -191,26 +191,6 @@ def edit_collection(request, collection_id):
     
     return render(request, 'collections/edit_collection.html', tvars)
 
-
-def add_maintainer_to_collection(request, collection_id):
-    #TODO: store maintainers inside modal to further add them at once
-    if not request.GET.get('ajax'):
-      return HttpResponseRedirect(reverse("collections", args=[collection_id]))
-    
-    collection = get_object_or_404(Collection, id=collection_id, user=request.user)
-
-    if request.method == "POST":
-        form = MaintainerForm(request.POST, collection=collection)
-        if form.is_valid():
-            new_maintainer = User.objects.get(username=form.cleaned_data['maintainer'])
-            # instead of sending data through JSON response this should be fully handled in Javascript
-            return JsonResponse({'success': True, 'new_maintainers': new_maintainer.id})
-    else:
-        form = MaintainerForm()
-    tvars = {"collection": collection,
-             "form": form}
-    return render(request, 'collections/modal_add_maintainer.html', tvars)
-
 def download_collection(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
     collection_sounds = CollectionSound.objects.filter(collection=collection).values('sound_id')
@@ -232,9 +212,21 @@ def add_sounds_modal_for_collection_edit(request, collection_id):
         'modal_title':'Add sounds to collection',
         'help_text':'Modal to add sounds to your collection'})
     return render(request, 'sounds/modal_add_sounds.html', tvars)
-
-
-
-# NOTE: there should be two methods to add a sound into a collection
-# 1: adding from the sound.html page through a "bookmark-like" button and opening a Collections modal
-# 2: from the collection.html page through a search-engine modal as done in Packs
+    
+def add_maintainer_modal(request, collection_id):
+    collection = get_object_or_404(Collection, id=collection_id)
+    form = MaintainerForm()
+    usernames = request.GET.get('q','').replace(' ','').split(',')
+    excluded_users = request.GET.get('exclude','').split(',')
+    
+    if request.GET.get('ajax'):
+        new_maintainers = User.objects.filter(username__in=usernames)
+    else:
+        new_maintainers = User.objects.filter(username__in=usernames).exclude(id__in=excluded_users)
+    
+    tvars = ({'collection': collection,
+             'help_text': 'Modal to add maintainers to your collection',
+             'form': form,
+             'new_maintainers': new_maintainers})
+    
+    return render(request, 'collections/modal_add_maintainer.html', tvars)

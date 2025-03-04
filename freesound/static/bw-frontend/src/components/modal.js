@@ -93,9 +93,7 @@ const handleDefaultModal = (modalUrl, modalActivationParam, atPage) => {
 }
 
 const handleDefaultModalWithForm = (modalUrl, modalActivationParam, element) => {
-  //handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast(element.dataset.successMessage || 'Form submitted succesfully!')}, (req) => {showToast(element.dataset.errorMessage || "There were errors processing the form...")}, true, true, modalActivationParam, element.dataset.reloadOnSuccess==="true");
-  // NOTE: this modification is only specific as an attempt for maintainers addition
-  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {handleFormSubmissionSuccess(req)}, (req) => {showToast(element.dataset.errorMessage || "There were errors processing the form...")}, true, true, modalActivationParam, element.dataset.reloadOnSuccess==="true");
+  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast(element.dataset.successMessage || 'Form submitted succesfully!')}, (req) => {showToast(element.dataset.errorMessage || "There were errors processing the form...")}, true, true, modalActivationParam, element.dataset.reloadOnSuccess==="true");
 }
 
 const bindDefaultModals = (container) => {
@@ -106,17 +104,6 @@ const bindDefaultModals = (container) => {
 const activateDefaultModalsIfParameters = () => {
   activateModalsIfParameters('[data-toggle="modal-default"]', handleDefaultModal);
   activateModalsIfParameters('[data-toggle="modal-default-with-form"]', handleDefaultModalWithForm);
-}
-
-const handleFormSubmissionSuccess = (req) => {
-  responseData = JSON.parse(req.responseText)
-  if(responseData.new_maintainers){
-    console.log(responseData.new_maintainers)
-    const selectedMaintainersHiddenInput = document.getElementById('collection_maintainers')
-    selectedMaintainersHiddenInput.value = selectedMaintainersHiddenInput.value + ',' + responseData.new_maintainers
-    // look at join of combinedIds for addSoundsModal
-    // it reinitializes the object selector, should do sth similar for the list of maintainers
-  }
 }
 
 // Generic modals logic

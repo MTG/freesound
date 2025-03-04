@@ -125,9 +125,6 @@ class CollectionEditForm(forms.ModelForm):
     collection_maintainers = forms.CharField(min_length=1, 
                                              widget = forms.widgets.HiddenInput(attrs={'id':'collection_maintainers', 'name': 'collection_maintainers'}),
                                              required=False)
-    # Create a form attribute that stores the temporary maintainers of the collection, so the modification to the DB is not applied until
-    # user clicks "save collection"
-    # places to check: add-maintainer view (review post), add maintainer modal and form - button does not reload the url but triggers form rendering
 
     def __init__(self, *args, **kwargs):
         is_owner = kwargs.pop('is_owner', True)
@@ -192,14 +189,25 @@ class CollectionEditForm(forms.ModelForm):
                     cs.status = 'OK'
                 cs.save()                
                 collection.num_sounds += 1
-
+            else:
+                current_sounds.remove(snd)
+        for snd in current_sounds:
+            sound = Sound.objects.get(id=snd)
+            cs = CollectionSound.objects.get(collection=collection, sound=sound)
+            cs.delete()
+            collection.num_sounds -= 1
+            
         new_maintainers = self.clean_ids_field('collection_maintainers')
         current_maintainers = list(User.objects.filter(collection_maintainer=collection).values_list('id', flat=True))
         for usr in new_maintainers:
             if usr not in current_maintainers:
-                print(usr)
                 maintainer = User.objects.get(id=usr)
                 collection.maintainers.add(maintainer)
+            else:
+                current_maintainers.remove(usr)
+        for usr in current_maintainers:
+            maintainer = User.objects.get(id=usr)
+            collection.maintainers.remove(maintainer)
         collection.save()
         return collection
     
@@ -241,22 +249,25 @@ class MaintainerForm(forms.Form):
         label=False, 
         help_text=None, 
         max_length=128, 
-        required=True)
+        required=False)
     
     collection = None
     
     def __init__(self, *args, **kwargs):
         self.collection = kwargs.pop('collection', False)
         super().__init__(*args, **kwargs)
-
+    # with the new behaviour of the addMaintainersModal, we don't validate the form anymore
+    # TODO: look for a way so that these validation errors can be displayed in the modal when performing queries
     def clean(self):
-        try:
-            new_maintainer = User.objects.get(username=self.cleaned_data['maintainer'])
-            if new_maintainer in self.collection.maintainers.all():
-                raise forms.ValidationError("The user is already a maintainer")
-            return super().clean()
-        except User.DoesNotExist:
-            raise forms.ValidationError("The user does not exist")
+        new_maintainers = self.cleaned_data['maintainer'].split(',').replace(" ","")
+        for username in new_maintainers:
+            try:
+                new_maintainer = User.objects.get(username=username)
+                if new_maintainer in self.collection.maintainers.all():
+                    raise forms.ValidationError("The user is already a maintainer")
+                return super().clean()
+            except User.DoesNotExist:
+                raise forms.ValidationError("The user does not exist")
     
 # NOTE: adding maintainers will be done frome edit collection page using a modal to introduce
 # username

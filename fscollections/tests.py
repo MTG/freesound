@@ -68,13 +68,6 @@ class CollectionTest(TestCase):
         resp = self.client.get(reverse('edit-collection', args=[self.collection.id]))
         self.assertEqual(resp.status_code, 200)
 
-        # Test adding maintainer to collection
-        maintainer = User.objects.create(username='maintainer_user', email='maintainer@freesound.org')
-        resp = self.client.post(reverse('add-maintainers-to-collection', args=[self.collection.id]), {'maintainer': maintainer.username})
-        self.collection.refresh_from_db()
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(maintainer, self.collection.maintainers.all()[0])
-
         # Test download collection
         resp = self.client.get(reverse('download-collection', args=[self.collection.id]))
         self.assertEqual(resp.status_code, 200)

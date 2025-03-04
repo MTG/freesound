@@ -42,8 +42,6 @@ def get_user_from_username_or_oldusername(username):
 def get_user_or_404(username):
     # Helper to get the user from an username or raise 404
     user = get_user_from_username_or_oldusername(username)
-    if user is None:
-        raise Http404
     return user
 
 
@@ -64,9 +62,10 @@ def redirect_if_old_username_or_404(func):
             # Otherwise get the corresponding user (considering OldUsernames) object or raise 404
             user = get_user_or_404(kwargs['username'])
 
-        if kwargs['username'] != user.username:
+        if user and kwargs['username'] != user.username:
             # If the the username is an old username of the user, do redirect
             kwargs['username'] = user.username
+
             return redirect(reverse(inner, args=args, kwargs=kwargs), permanent=True)
 
         # Save user object in the request so it can be used by the view and/or other decorators

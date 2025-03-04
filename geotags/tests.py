@@ -67,9 +67,7 @@ class GeoTagsTests(TestCase):
 
     def test_geotags_infowindow(self):
         sound = Sound.objects.first()
-        gt = GeoTag.objects.create(user=sound.user, lat=45.8498, lon=-62.6879, zoom=9)
-        sound.geotag = gt
-        sound.save()
+        gt = GeoTag.objects.create(sound=sound, lat=45.8498, lon=-62.6879, zoom=9)
         resp = self.client.get(reverse('geotags-infowindow', kwargs={'sound_id': sound.id}))
         self.check_context(resp.context, {'sound': sound})
         self.assertContains(resp, f'href="/people/{sound.user.username}/sounds/{sound.id}/"')
@@ -82,10 +80,11 @@ class GeoTagsTests(TestCase):
         sounds[1].set_tags([tag])
         sounds[0].set_tags([tag.upper()])
 
-        gt = GeoTag.objects.create(user=user, lat=45.8498, lon=-62.6879, zoom=9)
+        lat = 45.8498
+        lon = -62.6879
+        
         for sound in sounds:
-            sound.geotag = gt
-            sound.save()
+            GeoTag.objects.create(sound=sound, lat=lat + 0.0001, lon=lon + 0.0001, zoom=9)
 
         resp = self.client.get(reverse('geotags-barray', kwargs={'tag': tag}))
         # Response contains 3 int32 objects per sound: id, lat and lng. Total size = 3 * 4 bytes = 12 bytes

@@ -44,6 +44,7 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import smart_str
+from django.utils.http import urlencode
 from django.utils.functional import cached_property
 from django.utils.text import Truncator, slugify
 from django.utils import timezone
@@ -58,6 +59,7 @@ from general.templatetags.absurl import url2absurl
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
+from sounds.templatetags.bst_category import bst_taxonomy_category_key_to_category_names
 from tags.models import TaggedItem, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, Queue, TicketComment
@@ -433,6 +435,7 @@ class SoundManager(models.Manager):
           sound.id,
           sound.type,
           sound.original_filename,
+          sound.bst_category,
           sound.is_explicit,
           sound.filesize,
           sound.md5,
@@ -491,6 +494,7 @@ class SoundManager(models.Manager):
           sound.type,
           sound.user_id,
           sound.original_filename,
+          sound.bst_category,
           sound.is_explicit,
           sound.avg_rating,
           sound.channels,
@@ -619,6 +623,10 @@ class Sound(models.Model):
     description = models.TextField()
     date_recorded = models.DateField(null=True, blank=True, default=None)
 
+    # Broad Sound Taxonomy (BST) category
+    BST_CATEGORY_CHOICES = [(item['key'], item['name']) for item in settings.BROAD_SOUND_TAXONOMY]
+    bst_category = models.CharField(max_length=8, null=True, blank=True, default=None, choices=BST_CATEGORY_CHOICES)
+
     # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one
     license = models.ForeignKey(License, on_delete=models.CASCADE)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
@@ -692,11 +700,6 @@ class Sound(models.Model):
 
     def __str__(self):
         return self.base_filename_slug
-
-    @staticmethod
-    def is_sound():
-        # N.B. This is used in the ticket template (ugly, but a quick fix)
-        return True
 
     @property
     def moderated_and_processed_ok(self):
@@ -1402,6 +1405,28 @@ class Sound(models.Model):
     def get_similarity_search_target_vector(self, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
         # If the sound has been analyzed for similarity, returns the vector to be used for similarity search
         return get_similarity_search_target_vector(self.id, analyzer=analyzer)
+    
+    @property
+    def get_category_names(self):
+        return bst_taxonomy_category_key_to_category_names(self.bst_category)
+    
+    @property
+    def get_top_level_category_search_url(self):
+        top_level_name, _ = self.get_category_names
+        if top_level_name:
+            cat_filter = urlencode({'f': f'bst_top_level:"{top_level_name}"'})
+            return f'{reverse("sounds-search")}?{cat_filter}'
+        else:
+            return None
+        
+    @property
+    def get_second_level_category_search_url(self):
+        top_level_name, second_level_name = self.get_category_names 
+        if second_level_name:
+            cat_filter = urlencode({'f': f'bst_top_level:"{top_level_name}" bst_second_level:"{second_level_name}"'})
+            return f'{reverse("sounds-search")}?{cat_filter}'
+        else:
+            return None
 
     class Meta:
         ordering = ("-created", )

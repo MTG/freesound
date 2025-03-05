@@ -128,13 +128,14 @@ class CollectionEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         is_owner = kwargs.pop('is_owner', True)
+        is_maintainer = kwargs.pop('is_maintainer', True)
         super().__init__(*args, **kwargs)
         self.fields['maintainers'].queryset = self.instance.maintainers.all()
         self.fields['public'].label = "Visibility"
 
         # this block below is not necessarily true but it eases making restrictions for default collection 'bookmarks'
         if self.instance.is_default_collection:
-            self.fields['name'].widget.attrs.update({'readonly': 'readonly'})
+            self.fields['name'].widget.attrs.update({'disabled': 'disabled'})
             self.fields['name'].help_text = "Your personal bookmarks collection's name can't be edited."
             self.fields['public'].widget.attrs.update({'disabled':'disabled'})
             self.fields['public'].help_text = "Your personal bookmarks collection is private."
@@ -142,9 +143,10 @@ class CollectionEditForm(forms.ModelForm):
         if not self.fields['maintainers'].queryset:
             self.fields['maintainers'].help_text = "This collection doesn't have any maintainers"
         
+        owner_fields = ['name', 'description', 'public', 'maintainers', 'collection_maintainers']
         if not is_owner:
-            for field in self.fields:
-                self.fields[field].widget.attrs['readonly'] = 'readonly'
+            for field in owner_fields:
+                self.fields[field].widget.attrs['disabled'] = 'disabled'
 
     def clean(self):
         clean_data = super().clean()

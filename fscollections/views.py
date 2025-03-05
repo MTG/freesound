@@ -36,38 +36,50 @@ from utils.downloads import download_sounds
 
 
 @login_required
-def collections_for_user(request, collection_id=None):
+def collection(request, collection_id):
     user = request.user
-    user_collections = Collection.objects.filter(user=user).order_by('-modified') 
     is_owner = False
     is_maintainer = False
     maintainers = []
     # if no collection id is provided for this URL, render the oldest collection
     # only show the collections for which you're the user(owner)
     if not collection_id:
-        collection = user_collections.last()
+        # this could probably be a JsonResponse message indicating an error
+        return HttpResponseRedirect(reverse('your-collections'))
     else:
         collection = get_object_or_404(Collection, id=collection_id)
     
-    if collection:
-        maintainers = User.objects.filter(collection_maintainer=collection.id)
-        if user == collection.user:
-            is_owner = True
-        elif user in maintainers:
-            is_maintainer = True
+    maintainers = User.objects.filter(collection_maintainer=collection.id)
+    if user == collection.user:
+        is_owner = True
+    elif user in maintainers:
+        is_maintainer = True
 
     tvars = {'collection': collection,
-             'collections_for_user': user_collections,
              'is_owner': is_owner,
              'is_maintainer': is_maintainer,
              'maintainers': maintainers}
-    
+    # one URL needed to display all collections and one URL to display ONE collection at a time
+    # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display
     collection_sounds = CollectionSound.objects.filter(collection=collection).order_by('created')
     paginator = paginate(request, collection_sounds, settings.BOOKMARKS_PER_PAGE)
     page_sounds = Sound.objects.ordered_ids([col_sound.sound_id for col_sound in paginator['page'].object_list])
     tvars.update(paginator)
     tvars['page_collection_and_sound_objects'] = zip(paginator['page'].object_list, page_sounds)
-    return render(request, 'collections/collections.html', tvars)
+    return render(request, 'collections/collection.html', tvars)
+
+@login_required
+def collections_for_user(request):
+    user = request.user
+    user_collections = Collection.objects.filter(user=user).order_by('-modified')
+    maintainer_collections = Collection.objects.filter(maintainers__id=user.id).order_by('-modified')
+    tvars = {'user_collections': user_collections,
+             'maintainer_collections': maintainer_collections
+             }
+    # one URL needed to display all collections and one URL to display ONE collection at a time
+    # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display
+    return render(request, 'collections/your_collections.html', tvars)
+
 
 def add_sound_to_collection(request, sound_id):
     # TODO: add restrictions for sound repetition and for user being owner/maintainer
@@ -218,8 +230,14 @@ def add_maintainer_modal(request, collection_id):
     form = MaintainerForm()
     usernames = request.GET.get('q','').replace(' ','').split(',')
     excluded_users = request.GET.get('exclude','').split(',')
-    
-    if request.GET.get('ajax'):
+
+    # if request.GET.get('ajax'):
+      #  new_maintainers = User.objects.filter(username__in=usernames)
+    # TODO: the above conditional is more suitable for its purpose (first modal load)
+    # However, there's a strange error in collections.js, when loading the object selector that contains the maintainers.
+    # The selectedIds and unselectedIds parameters are not added to its dataset until the user interacts with a checkbox.
+    # Until that's not solved, the below if statement must be used to avoid crashings
+    if excluded_users[0] == '':
         new_maintainers = User.objects.filter(username__in=usernames)
     else:
         new_maintainers = User.objects.filter(username__in=usernames).exclude(id__in=excluded_users)

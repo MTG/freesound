@@ -77,6 +77,7 @@ class CollectionSound(models.Model):
    user = models.ForeignKey(User, on_delete=models.CASCADE) 
    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
    collection = models.ForeignKey(Collection, related_name='collectionsound', on_delete=models.CASCADE)
+   featured_sound = models.BooleanField(default=False)
    created = models.DateTimeField(db_index=True, auto_now_add=True)
    
    STATUS_CHOICES = (

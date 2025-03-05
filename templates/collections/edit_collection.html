@@ -44,10 +44,12 @@
                 <div class="v-spacing-4 v-spacing-top-2">This collection has no maintainers</div>
                 {% endif %}
                 {% users_selector form.collection_maintainers_objects%}
-                <div class="between v-spacing-2">
-                    <button class="btn-inverse" data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.collection_maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.id%}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
-                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
-                </div>
+                {% if is_owner %}
+                    <div class="between v-spacing-2">
+                        <button class="btn-inverse" data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.collection_maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.id%}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
+                        <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
+                    </div>
+                {% endif %}
             </div>
             <div class="select-sounds-field v-spacing-5">
                 {{ form.collection_sounds }}

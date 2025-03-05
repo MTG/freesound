@@ -404,7 +404,7 @@ class SoundInstance(RetrieveAPIView):
 
     def get_queryset(self):
         needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
-        return Sound.objects.test_bulk_query(include_analyzers_output=needs_analyzers_output)
+        return Sound.objects.bulk_query(include_analyzers_output=needs_analyzers_output)
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))

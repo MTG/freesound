@@ -160,10 +160,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     license = serializers.SerializerMethodField()
     def get_license(self, obj):
-        try:
-            return obj.license_deed_url
-        except AttributeError:
-            return obj.license.deed_url
+        return obj.license.deed_url
 
     pack = serializers.SerializerMethodField()
     def get_pack(self, obj):
@@ -178,10 +175,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     pack_name = serializers.SerializerMethodField()
     def get_pack_name(self, obj):
-        try:
-            return obj.pack_name
-        except AttributeError:
-            return None
+        return obj.pack.name
 
     previews = serializers.SerializerMethodField()
     def get_previews(self, obj):

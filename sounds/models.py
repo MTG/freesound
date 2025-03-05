@@ -392,81 +392,16 @@ class SoundManager(models.Manager):
         else:
             return None
 
-    def get_analyzers_data_select_sql(self):
-        """Returns the SQL bits to add to bulk_query and bulk_query_solr so that analyzer's data is selected
-        in the bulk query"""
-        analyzers_select_section_parts = []
-        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_info:
-                analyzers_select_section_parts.append("{0}.analysis_data as {0},"
-                                                      .format(analyzer_name.replace('-', '_')))
-        return "\n          ".join(analyzers_select_section_parts)
-
-    def get_analyzers_data_left_join_sql(self):
-        """Returns the SQL bits to add to bulk_query and bulk_query_solr so that analyzer's data can be left joined
-        in the bulk query"""
-        analyzers_left_join_section_parts = []
-        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_info:
-                analyzers_left_join_section_parts.append(
-                    "LEFT JOIN sounds_soundanalysis {0} ON (sound.id = {0}.sound_id AND {0}.analyzer = '{1}')"
-                        .format(analyzer_name.replace('-', '_'), analyzer_name))
-        return "\n          ".join(analyzers_left_join_section_parts)
-
     def bulk_query_solr(self, sound_ids):
-        """For each sound, get all fields needed to index the sound in Solr. Using this custom query to avoid the need
-        of having to do some extra queries when displaying some fields related to the sound (e.g. for tags). Using this
-        method, all the information for all requested sounds is obtained with a single query."""
-        query = """SELECT
-          auth_user.username,
-          sound.user_id,
-          sound.id,
-          sound.type,
-          sound.original_filename,
-          sound.is_explicit,
-          sound.filesize,
-          sound.md5,
-          sound.channels,
-          sound.avg_rating,
-          sound.num_ratings,
-          sound.description,
-          sound.created,
-          sound.num_downloads,
-          sound.num_comments,
-          sound.duration,
-          sound.pack_id,
-          sound.geotag_id,
-          sound.bitrate,
-          sound.bitdepth,
-          sound.samplerate,
-          sounds_pack.name as pack_name,
-          sounds_license.name as license_name,
-          geotags_geotag.lat as geotag_lat,
-          geotags_geotag.lon as geotag_lon,
-          geotags_geotag.location_name as geotag_name,
-          %s
-          exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
-          exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
-          ARRAY(
-            SELECT tags_tag.name
-            FROM tags_tag
-            LEFT JOIN tags_soundtag ON tags_soundtag.sound_id = sound.id
-          WHERE tags_tag.id = tags_soundtag.tag_id) AS tag_array,
-          ARRAY(
-            SELECT comments_comment.comment
-            FROM comments_comment
-            WHERE comments_comment.sound_id = sound.id) AS comments_array
-        FROM
-          sounds_sound sound
-          LEFT JOIN auth_user ON auth_user.id = sound.user_id
-          LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
-          LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
-          LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
-          %s
-        """ % (self.get_analyzers_data_select_sql(),
-               self.get_analyzers_data_left_join_sql())
-        query += "WHERE sound.id = ANY(%s)"
-        return self.raw(query, [sound_ids])
+        qs = self.bulk_query_id(sound_ids, include_analyzers_output=True)
+        comments_subquery = Comment.objects.filter(sound=OuterRef("id")).values("comment")
+        is_remix_subquery = Sound.objects.filter(remixes=OuterRef("id")).values("id")
+        was_remixed_subquery = Sound.objects.filter(sources=OuterRef("id")).values("id")
+
+        qs = qs.annotate(comments_array=ArraySubquery(comments_subquery),
+                         is_remix=Exists(is_remix_subquery),
+                         was_remixed=Exists(was_remixed_subquery))
+        return qs
 
 
     def bulk_query(self, include_analyzers_output=False):

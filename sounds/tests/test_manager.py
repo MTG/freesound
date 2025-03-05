@@ -35,12 +35,6 @@ class SoundManagerQueryMethods(TestCase):
                                      'num_comments', 'pack_id', 'duration', 'pack_name', 'license_id', 'license_name',
                                      'license_deed_url', 'geotag_id', 'remixgroup_id', 'tag_array']
 
-    fields_to_check_bulk_query_solr = ['username', 'user_id', 'id', 'type', 'original_filename', 'is_explicit',
-                                       'filesize', 'md5', 'channels', 'avg_rating', 'num_ratings', 'description',
-                                       'created', 'num_downloads', 'num_comments', 'duration', 'pack_id', 'geotag_id',
-                                       'bitrate', 'bitdepth', 'samplerate', 'pack_name', 'license_name', 'geotag_lat',
-                                       'geotag_lon', 'is_remix', 'was_remixed', 'tag_array', 'comments_array']
-
     def setUp(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=3, num_packs=1, tags="tag1 tag2 tag3")
         self.sound_ids = [s.id for s in sounds]
@@ -61,25 +55,6 @@ class SoundManagerQueryMethods(TestCase):
         for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_analyzers_output=True):
             self.assertEqual(Sound.objects.get(id=sound.id).user.username, sound.username)
             self.assertEqual(Sound.objects.get(id=sound.id).original_filename, sound.original_filename)
-            self.assertEqual(Sound.objects.get(id=sound.id).pack_id, sound.pack_id)
-            self.assertEqual(Sound.objects.get(id=sound.id).license_id, sound.license_id)
-            self.assertCountEqual(Sound.objects.get(id=sound.id).get_sound_tags(), sound.tag_array)
-
-    def test_bulk_query_solr_num_queries(self):
-
-        # Check that all fields for each sound are retrieved with one query
-        with self.assertNumQueries(1):
-            for sound in Sound.objects.bulk_query_solr(sound_ids=self.sound_ids):
-                for field in self.fields_to_check_bulk_query_solr:
-                    self.assertTrue(hasattr(sound, field), True)
-
-    def test_bulk_query_solr_field_contents(self):
-
-        # Check the contents of some fields are correct
-        for sound in Sound.objects.bulk_query_solr(sound_ids=self.sound_ids):
-            self.assertEqual(Sound.objects.get(id=sound.id).user.username, sound.username)
-            self.assertEqual(Sound.objects.get(id=sound.id).original_filename, sound.original_filename)
-            self.assertEqual(Sound.objects.get(id=sound.id).md5, sound.md5)
             self.assertEqual(Sound.objects.get(id=sound.id).pack_id, sound.pack_id)
             self.assertEqual(Sound.objects.get(id=sound.id).license_id, sound.license_id)
             self.assertCountEqual(Sound.objects.get(id=sound.id).get_sound_tags(), sound.tag_array)

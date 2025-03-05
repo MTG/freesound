@@ -233,14 +233,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
         
         # Analyzer's output
+        sound_analysis_dict = {an.analyzer: an.analysis_data for an in sound.analyses.all()}
         for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
             if 'descriptors_map' in analyzer_info:
-                query_select_name = analyzer_name.replace('-', '_')
-                analysis_data = getattr(sound, query_select_name, None)
+                analysis_data = sound_analysis_dict.get(analyzer_name, None)
                 if analysis_data is not None:
                     # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on
                     # the value type (see SOLR_DYNAMIC_FIELDS_SUFFIX_MAP) so solr knows how to treat when filtering, etc.
-                    for key, value in json.loads(analysis_data).items():
+                    for key, value in analysis_data:
                         if isinstance(value, list):
                             # Make sure that the list is formed by strings
                             value = [f'{item}' for item in value]

@@ -198,6 +198,9 @@ def ticket(request, ticket_key):
                                     moderator_only=False)
                     tc.save()
 
+        # Prevent multiple submissions if a user reloads the page
+        return redirect(reverse('tickets-ticket', args=[ticket.key]))
+
     if clean_status_forms:
         default_action = 'Return' if ticket.sound and ticket.sound.moderation_state == 'OK' else 'Approve'
         sound_form = SoundStateForm(initial={'action': default_action}, prefix="ss")

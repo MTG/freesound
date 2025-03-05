@@ -32,8 +32,8 @@ class SoundManagerQueryMethods(TestCase):
     fields_to_check_bulk_query_id = ['username', 'id', 'type', 'user_id', 'original_filename', 'is_explicit',
                                      'avg_rating', 'num_ratings', 'description', 'moderation_state', 'processing_state',
                                      'processing_ongoing_state', 'similarity_state', 'created', 'num_downloads',
-                                     'num_comments', 'pack_id', 'duration', 'pack_name', 'license_id', 'license_name',
-                                     'license_deed_url', 'geotag_id', 'remixgroup_id', 'tag_array']
+                                     'num_comments', 'pack_id', 'duration', 'pack_name', 'license_id',
+                                     'geotag_id', 'remix_group_id', 'tag_array']
 
     def setUp(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=3, num_packs=1, tags="tag1 tag2 tag3")

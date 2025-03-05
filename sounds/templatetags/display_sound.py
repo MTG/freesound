@@ -120,7 +120,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
         request = context['request']
         return {
             'sound': sound_obj,
-            'user_profile_locations': Profile.locations_static(sound_obj.user_id, getattr(sound_obj, 'user_has_avatar', False)),
+            'user_profile_locations': Profile.locations_static(sound_obj.user_id, sound_obj.user.profile.has_avatar),
             'request': request,
             'is_explicit': sound_obj.is_explicit and
                            (not request.user.is_authenticated or not request.user.profile.is_adult),
@@ -201,7 +201,7 @@ def display_sound_no_sound_object(context, file_data, player_size, show_bookmark
         'id': sound.id,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity buttons
         'username': sound.user.username,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
         'ready_for_similarity': sound.ready_for_similarity  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
-        'remixgroup_id': sound.remixgroup_id  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
+        'remix_group_id': sound.remix_group_id  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
         'num_ratings': sound.num_ratings,  # Used to display rating widget in players
         'avg_rating': sound.avg_rating,  # Used to display rating widget in players
     }
@@ -237,7 +237,7 @@ def display_sound_no_sound_object(context, file_data, player_size, show_bookmark
         'show_milliseconds': 'true' if ('big' in player_size ) else 'false',
         'show_bookmark_button': show_bookmark and 'id' in file_data,
         'show_similar_sounds_button': show_similar_sounds and file_data.get('ready_for_similarity', False),
-        'show_remix_group_button': show_remix and 'remixgroup_id' in file_data,
+        'show_remix_group_button': show_remix and 'remix_group_id' in file_data,
         'show_rate_widget': 'avg_rating' in file_data,
         'player_size': player_size,
         'request': context['request']

@@ -418,14 +418,6 @@ class SoundManager(models.Manager):
             ).annotate(
                 username=F("user__username"),
                 pack_name=F("pack__name"),
-                license_name=F("license__name"),
-                license_deed_url=F("license__deed_url"),
-                ticket_key=F("ticket__key"),
-                remixgroup_id=F("remix_group__id"),
-                user_has_avatar=F("user__profile__has_avatar"),
-                geotag_lat=F("geotag__lat"),
-                geotag_lon=F("geotag__lon"),
-                geotag_name=F("geotag__location_name"),
                 tag_array=ArraySubquery(tags_subquery),
                 analysis_state_essentia_exists=Exists(analysis_subquery),
                 search_engine_similarity_state=Exists(search_engine_similarity_subquery)
@@ -433,7 +425,6 @@ class SoundManager(models.Manager):
 
         if include_analyzers_output:
             analyzer_names = list(settings.ANALYZERS_CONFIGURATION.keys())
-            print(analyzer_names)
             qs = qs.prefetch_related(
                 Prefetch('analyses', queryset=SoundAnalysis.objects.filter(analyzer__in=analyzer_names))
             )
@@ -814,10 +805,7 @@ class Sound(models.Model):
 
     @property
     def license_bw_icon_name(self):
-        if hasattr(self, 'license_name'):
-            return License.bw_cc_icon_name_from_license_name(self.license_name)
-        else:
-            return self.license.icon_name
+        return self.license.icon_name
 
     def get_license_history(self):
         """
@@ -1274,16 +1262,10 @@ class Sound(models.Model):
 
     def get_geotag_name(self):
         if settings.USE_TEXTUAL_LOCATION_NAMES_IN_BW:
-            if hasattr(self, 'geotag_name'):
-                name = self.geotag_name
-            else:
-                name = self.geotag.location_name
+            name = self.geotag.location_name
             if name:
                 return name
-        if hasattr(self, 'geotag_lat'):
-            return f'{self.geotag_lat:.2f}, {self.geotag_lon:.3f}'
-        else:
-            return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
+        return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
 
     @property
     def ready_for_similarity(self):

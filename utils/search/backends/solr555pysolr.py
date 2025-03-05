@@ -210,10 +210,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             document["grouping_pack"] = str(getattr(sound, "id"))
 
         document["is_geotagged"] = False
-        if getattr(sound, "geotag_id"):
+        if sound.geotag:
             document["is_geotagged"] = True
-            if not math.isnan(getattr(sound, "geotag_lon")) and not math.isnan(getattr(sound, "geotag_lat")):
-                document["geotag"] = str(getattr(sound, "geotag_lon")) + " " + str(getattr(sound, "geotag_lat"))
+            if not math.isnan(sound.geotag.lon) and not math.isnan(sound.geotag.lat):
+                document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)
 
         document["in_remix_group"] = getattr(sound, "was_remixed") or getattr(sound, "is_remix")
 

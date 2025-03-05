@@ -1065,7 +1065,7 @@ def embed_iframe(request, sound_id, player_size):
         raise Http404
     tvars = {
         'sound': sound,
-        'user_profile_locations': Profile.locations_static(sound.user_id, getattr(sound, 'user_has_avatar', False)),
+        'user_profile_locations': Profile.locations_static(sound.user_id, sound.user.profile.has_avatar),
         'username_and_filename': f'{sound.username} - {sound.original_filename}',
         'size': player_size,
         'use_spectrogram': request.GET.get('spec', None) == '1',

@@ -32,6 +32,7 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import int_to_base36
+import pytest
 
 import accounts.models
 from accounts.management.commands.process_email_bounces import process_message, decode_idna_email
@@ -42,6 +43,26 @@ from sounds.models import Pack, Download, PackDownload
 from tags.models import SoundTag
 from utils.mail import send_mail
 from utils.test_helpers import override_avatars_path_with_temp_directory, create_user_and_sounds
+
+
+@pytest.mark.django_db
+class ProfileTest:
+
+    def test_get_stats_for_profile_page(self, use_dummy_cache_backend, client):
+        call_command('loaddata', 'licenses', 'sounds_with_tags')
+        user = User.objects.get(username="Anton")
+
+        response = client.get(reverse('account-stats-section', kwargs={'username': user.username}) + '?ajax=1')
+        assert response.status_code == 200
+        assert "2:51 minutes" in response.content.decode('utf-8')
+
+        sound = user.sounds.all()[0]
+        sound.duration = 3600 + 1260
+        sound.save()
+
+        response = client.get(reverse('account-stats-section', kwargs={'username': user.username}) + '?ajax=1')
+        assert response.status_code == 200
+        assert "1:23 hours" in response.content.decode('utf-8')
 
 
 class ProfileGetUserTags(TestCase):

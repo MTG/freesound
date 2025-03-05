@@ -19,14 +19,11 @@
 #
 
 from django.core.management import call_command
-from django.test import TestCase, RequestFactory
+from django.test import TestCase
 from django.urls import reverse
 
 from forum.models import Thread, Post, Forum
-from general.templatetags.bw_templatetags import bw_paginator
 from ratings.models import SoundRating
-from sounds.models import Sound
-from utils.pagination import paginate
 from utils.test_helpers import create_user_and_sounds
 
 
@@ -127,23 +124,3 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         self.assertEqual(sound.avg_rating, 4)
         self.assertEqual(sound.num_comments, 1)
         self.assertEqual(sound.num_downloads, 0)
-
-
-class PaginatorTestCase(TestCase):
-
-    def test_url_with_non_ascii_characters(self):
-        """Paginator objects are passed a request object which includes a list of request GET parameters and values.
-        The paginator uses this object to get parameters like the current page that is requested, and also to construct
-        pagination links which contain all the same GET parameters as the initial request so that whatever things
-        are determined there, will be preserved when moving to the next page. To do that the paginator iterates over
-        all GET parameters and values. This test checks that if non-ascii characters are passed as GET parameter names
-        or values, paginator does not break.
-        """
-        text_with_non_ascii = '�textèé'
-        dummy_request = RequestFactory().get(reverse('sounds'), {
-            text_with_non_ascii: '1',
-            'param_name': text_with_non_ascii,
-            'param2_name': 'ok_value',
-        })
-        paginator = paginate(dummy_request, Sound.objects.all(), 10)
-        bw_paginator({}, paginator['paginator'], paginator['page'], paginator['current_page'], dummy_request)

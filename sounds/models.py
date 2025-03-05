@@ -37,7 +37,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Avg, F, Prefetch
+from django.db.models import Avg, F, Prefetch, Sum
 from django.db.models.functions import Greatest
 from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
@@ -1827,8 +1827,8 @@ class Pack(models.Model):
             return Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS)
 
     def get_total_pack_sounds_length(self):
-        durations = list(Sound.objects.filter(pack=self).values_list('duration', flat=True))
-        return sum(durations)
+        result = Sound.objects.filter(pack=self).aggregate(total_duration=Sum('duration'))
+        return result['total_duration'] or 0
 
     def num_sounds_unpublished(self):
         if hasattr(self, 'num_sounds_unpublished_precomputed'):

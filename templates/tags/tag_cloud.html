@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% load bw_templatetags %}
+{% load tags %}
+
+{% block title %}Search{% endblock %}
+
+{% block navbar %}
+        {% include 'molecules/navbar.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {% if error_text %}
+            <div class="navbar-space-filler v-spacing-3 v-spacing-top-2">
+                <div class="v-spacing-6 v-spacing-top-4">
+                    <p class="v-spacing-4">{{ error_text }}</p>
+                    <p>
+                        <button onclick="window.history.back();" class="btn-primary">Go back</button>
+                    </p>
+                </div>
+            </div>
+        {% else %}
+            <div class="navbar-space-filler v-spacing-3 v-spacing-top-2">
+            <section id="tags-mode-input-section" class="v-spacing-5">
+                <h3 class="v-spacing-5 text-light-grey center">Choose a tag to start browsing</h3>
+                {% for tag in initial_tagcloud|add_sizes:"count:0.1:1.0" %}
+                    {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
+                {% endfor %}
+            </section>
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

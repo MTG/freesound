@@ -27,6 +27,7 @@ from django.core.cache import caches
 from fabric import Connection
 
 from sounds.models import Sound
+from utils.cache import get_all_keys_matching_pattern
 from utils.management_commands import LoggingBaseCommand
 
 console_logger = logging.getLogger('console')
@@ -72,7 +73,7 @@ class Command(LoggingBaseCommand):
                 console_logger.info('Finding new sounds to add to the cache')
                 # Find sounds which are not in cache
                 # To do that, we get all sounds with IDs higher than the highest sound ID in the cache
-                keys = cache_cdn_map.keys('*')
+                keys = get_all_keys_matching_pattern('*', cache_cdn_map)
                 int_keys = [int(key) for key in keys]
                 if int_keys:
                     highest_sound_id_in_cache = max(int_keys)

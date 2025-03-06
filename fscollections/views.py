@@ -227,7 +227,7 @@ def collection_licenses(request, collection_id):
     attribution = collection.get_attribution()
     return HttpResponse(attribution, content_type="text/plain")
 
-def add_sounds_modal_for_collection_edit(request):
+def add_sounds_modal_for_collection_edit(request, collection_id):
     tvars = add_sounds_modal_helper(request)
     tvars.update({
         'modal_title':'Add sounds to collection',
@@ -240,7 +240,6 @@ def add_maintainer_modal(request, collection_id):
     # TODO: the below statements exclude users with whitespaces in their usernames (and they still exist)
     usernames = request.GET.get('q','').replace(' ','').split(',')
     excluded_users = request.GET.get('exclude','').split(',')
-
     # if request.GET.get('ajax'):
       #  new_maintainers = User.objects.filter(username__in=usernames)
     # TODO: the above conditional is more suitable for its purpose (first modal load)
@@ -251,10 +250,25 @@ def add_maintainer_modal(request, collection_id):
         new_maintainers = User.objects.filter(username__in=usernames)
     else:
         new_maintainers = User.objects.filter(username__in=usernames).exclude(id__in=excluded_users)
+        
+    not_found_users = []
+    not_found_message = False
+    for usr in usernames:
+        if usr not in list(new_maintainers.values_list('username', flat=True)):
+            not_found_users.append(usr)
     
+    if not_found_users != ['']:
+        not_found_message = "The following users either don't exist or are maintainers already: "
+        for usr in not_found_users:
+            if usr == not_found_users[-1]:
+                not_found_message += usr + "."
+            else:
+                not_found_message += usr + ", "
+
     tvars = ({'collection': collection,
              'help_text': 'Modal to add maintainers to your collection',
              'form': form,
-             'new_maintainers': new_maintainers})
+             'new_maintainers': new_maintainers,
+             'not_found_msg': not_found_message})
     
     return render(request, 'collections/modal_add_maintainer.html', tvars)

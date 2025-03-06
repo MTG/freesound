@@ -251,8 +251,13 @@ class CreateCollectionForm(forms.ModelForm):
         return super().clean()
 
 class MaintainerForm(forms.Form):
+    # this field got autocompleted with the users' email, and setting autocomplete to 'off' did not work
+    # from field widget set up, nor from modal html file, nor from javascript handlers, so apparently the 
+    # suitable way to trick the browser into not autocompleting the field is giving the 'autocomplete' 
+    # attribute the "new-password" value
     maintainer = forms.CharField(
-        widget=TextInput(attrs={'placeholder': "Fill in the username of the maintainer"}),
+        widget=TextInput(attrs={'placeholder': "Fill in the usernames separated by commas",
+                                'autocomplete':'new-password'}),
         label=False, 
         help_text=None, 
         max_length=128, 

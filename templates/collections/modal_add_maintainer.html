@@ -11,8 +11,11 @@
 <div class="col-12">
     <div class="text-center">
         <h4 class="v-spacing-5">Add maintainer to collection</h4>
-        <form method="post" action="{% url 'add-maintainers-modal' collection.id %}?ajax=1." class = "disable-on-submit">{% csrf_token %}
+        <form method="post" action="{% url 'add-maintainers-modal' collection.id %}?ajax=1." autocomplete="off" class = "disable-on-submit">{% csrf_token %}
             {{form}}
+            {% if not_found_msg %}
+                {{not_found_msg}}
+            {% endif %}
             <button class="btn-primary v-spacing-top-3">Add maintainer</button>
         </form>
     </div>

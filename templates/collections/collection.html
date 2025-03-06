@@ -37,7 +37,6 @@
             {% if collection %}
             <h3>{{collection.name}}
                 <span class="h-spacing-left-3">
-                    <!-- this should be displayed in a section containing relevant collection data pack-wise -->
                     {% if collection.public %}{% bw_icon 'eye' %}{% else %}{%bw_icon 'eye-blocked'%}{% endif %}
                 </span>
             </h3> 
@@ -59,7 +58,7 @@
                     {% for collectionsound, sound in page_collection_and_sound_objects  %}
                         <div class="col-6 col-md-4">
                             {% display_sound_small sound %}
-                            {% if is_owner %}
+                            {% if is_owner or is_maintainer%}
                                 <div class="right v-spacing-4 v-spacing-top-negative-2">
                                     <a class="cursor-pointer bw-link--grey" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove '{{sound.original_filename}}' from '{{collection.name}}'?" data-modal-confirmation-url="{% url "delete-sound-from-collection" collectionsound.id %}" title="Remove from collection" aria-label="Remove from collection">{% bw_icon 'trash' %} Remove sound</a>
                                 </div>                                        

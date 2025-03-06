@@ -18,16 +18,8 @@
 <div class="row no-gutters">
     <div class="col-lg-8 offset-lg-2">
         <h2 class="v-spacing-3">{{ collection.name }}</h2>
-        {% if not is_owner %}
-        <span class="help-block text-grey">You don't have permissions to edit collection's name nor description</span>
-        {% endif %}
         <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
-            <!-- the following code will be available when Django version is updated to 5.0
-            {{ form.name.as_field_group }}
-            {{ form.description.as_field_group }}            
-            {{ form.public.as_field_group }}            
-            {{ form.maintainers.as_field_group }}
-             while this does not happen I'll have to survive with the following -->
+            <!--when Django hits 5.0 the below tag is not necessary, instead use "as_field_group"-->
             {% custom_form_display form display_fields as custom_fields%}
             {% for field in custom_fields %}
                 {{ field.errors }}
@@ -44,12 +36,10 @@
                 <div class="v-spacing-4 v-spacing-top-2">This collection has no maintainers</div>
                 {% endif %}
                 {% users_selector form.collection_maintainers_objects%}
-                {% if is_owner %}
-                    <div class="between v-spacing-2">
-                        <button class="btn-inverse" data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.collection_maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.id%}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
-                        <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
-                    </div>
-                {% endif %}
+                <div class="between v-spacing-2">
+                    <button class="btn-inverse" data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.collection_maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.id%}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
+                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
+                </div>
             </div>
             <div class="select-sounds-field v-spacing-5">
                 {{ form.collection_sounds }}
@@ -59,13 +49,17 @@
                 {% endif %}
                 {% sounds_selector form.collection_sound_objects %}
                 <div class="between v-spacing-top-2">
-                    <button class="btn-inverse" data-toggle="add-sounds-modal" data-selected-sounds-hidden-input-id="{{ form.collection_sounds.id_for_label }}" data-modal-url="{% url 'add-sounds-modal-collection' collection.id %}">{% bw_icon 'plus' %}Add sounds</button>
+                    <button class="btn-inverse" data-toggle="add-sounds-modal" data-selected-sounds-hidden-input-id="{{ form.collection_sounds.id_for_label }}" data-modal-url="{% url 'add-sounds-modal-collection' %}">{% bw_icon 'plus' %}Add sounds</button>
                     <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from collection</button>
                 </div>
             </div>
-            <button class="btn-primary w-100">Save collection</button>
+            {% if is_owner or is_maintainer%}
+                <button class="btn-primary w-100">Save collection</button>
+            {% endif %}
         </form>
-        <button class="btn-secondary w-100 v-spacing-top-3" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{% url "delete-collection" collection.id %}">Delete Collection</button>
+        {% if is_owner%}
+            <button class="btn-secondary w-100 v-spacing-top-3" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{% url "delete-collection" collection.id %}">Delete Collection</button>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

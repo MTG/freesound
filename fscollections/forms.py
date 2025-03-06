@@ -113,8 +113,11 @@ class CollectionSoundForm(forms.Form):
     
     def clean(self):
         collection = self.cleaned_data['collection']
+        
         if CollectionSound.objects.filter(collection=collection,sound=self.sound_id).exists():
             self.add_error('collection', forms.ValidationError("This sound already exists in the collection"))
+        elif self.user_saving_sound not in collection.maintainers and self.user_saving_sound != collection.user:
+            self.add_error('collection', forms.ValidationError("You don't have permissions to add sounds to this collection"))
         return super().clean()
     
 class CollectionEditForm(forms.ModelForm):
@@ -127,34 +130,36 @@ class CollectionEditForm(forms.ModelForm):
                                              required=False)
 
     def __init__(self, *args, **kwargs):
-        is_owner = kwargs.pop('is_owner', True)
-        is_maintainer = kwargs.pop('is_maintainer', True)
+        self.is_owner = kwargs.pop('is_owner', False)
+        self.is_maintainer = kwargs.pop('is_maintainer', False)
         super().__init__(*args, **kwargs)
         self.fields['maintainers'].queryset = self.instance.maintainers.all()
         self.fields['public'].label = "Visibility"
 
-        # this block below is not necessarily true but it eases making restrictions for default collection 'bookmarks'
         if self.instance.is_default_collection:
-            self.fields['name'].widget.attrs.update({'disabled': 'disabled'})
+            self.fields['name'].widget.attrs.update({'readonly': 'readonly'})
             self.fields['name'].help_text = "Your personal bookmarks collection's name can't be edited."
-            self.fields['public'].widget.attrs.update({'disabled':'disabled'})
+            self.fields['public'].widget.attrs.update({'readonly':'readonly'})
             self.fields['public'].help_text = "Your personal bookmarks collection is private."
 
         if not self.fields['maintainers'].queryset:
             self.fields['maintainers'].help_text = "This collection doesn't have any maintainers"
         
-        owner_fields = ['name', 'description', 'public', 'maintainers', 'collection_maintainers']
-        if not is_owner:
+        owner_fields = ['name', 'description', 'public', 'collection_maintainers']
+        if not self.is_owner:
+            if not self.is_maintainer:
+                owner_fields.append('collection_sounds')
             for field in owner_fields:
-                self.fields[field].widget.attrs['disabled'] = 'disabled'
+                self.fields[field].widget.attrs['readonly'] = 'readonly'
+                self.fields[field].help_text = "Only the collection's owner can edit this field."
 
     def clean(self):
         clean_data = super().clean()
-
         if clean_data['name'] != self.instance.name:
             if Collection.objects.filter(user=self.instance.user, name=clean_data['name']).exists():
                 self.add_error('name', forms.ValidationError("You already have a collection with this name"))
-        
+        if not self.is_owner and not self.is_maintainer:
+            self.add_error(field=None, error=forms.ValidationError("You don't have permissions to edit this collection"))
         return super().clean()
     
     def clean_ids_field(self, field):

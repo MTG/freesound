@@ -51,6 +51,16 @@ const prepareAddSoundsModalAndFields = (container) => {
             removeSoundsButton.disabled = element.dataset.selectedIds == ""
         });
 
+        const soundsInput = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName('input')[0];
+        if(soundsInput.getAttribute('readonly') !== null){
+            addSoundsButton.disabled = true
+            const checkboxes = selectedSoundsDestinationElement.querySelectorAll('span.bw-checkbox-container');
+            checkboxes.forEach(checkbox => {
+                console.log(checkbox)
+                checkbox.remove()
+            })
+        }
+
         removeSoundsButton.addEventListener('click', (evt) => {
             evt.preventDefault();
             const soundCheckboxes = selectedSoundsDestinationElement.querySelectorAll('input.bw-checkbox');

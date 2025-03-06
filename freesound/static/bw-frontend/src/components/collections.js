@@ -158,6 +158,16 @@ const prepareAddMaintainersModalAndFields = (container) => {
             removeMaintainersButton.disabled = element.dataset.selectedIds == "" 
         })
 
+        const maintainersInput = selectedMaintainersDestinationElement.parentNode.parentNode.getElementsByTagName('input')[0];
+        if(maintainersInput.getAttribute('readonly') !== null){
+            addMaintainersButton.disabled = true
+            const checkboxes = selectedMaintainersDestinationElement.querySelectorAll('span.bw-checkbox-container');
+            checkboxes.forEach(checkbox => {
+                console.log(checkbox)
+                checkbox.remove()
+            })
+        }
+
         removeMaintainersButton.addEventListener('click', (evt) => {
             evt.preventDefault();
             const maintainerCheckboxes = selectedMaintainersDestinationElement.querySelectorAll('input.bw-checkbox');

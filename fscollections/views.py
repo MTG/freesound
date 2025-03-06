@@ -91,8 +91,8 @@ def add_sound_to_collection(request, sound_id):
         HttpResponseRedirect(reverse("sound", args=[sound.user.username,sound.id]))
 
     if request.method == 'POST':
-        #by now work with direct additions (only user-wise, not maintainer-wise)
-        user_collections = Collection.objects.filter(user=request.user)
+        user_collections = Collection.objects.filter(user=request.user) | Collection.objects.filter(maintainers__id=request.user.id)
+        user_collections = user_collections.distinct().order_by('modified')
         form = CollectionSoundForm(request.POST, sound_id=sound_id, user_collections=user_collections, user_saving_sound=request.user)
     
         if form.is_valid():
@@ -105,14 +105,17 @@ def add_sound_to_collection(request, sound_id):
             return JsonResponse({'success': True, 'message': msg_to_return})
 
 def delete_sound_from_collection(request, collectionsound_id):
-    #this should work as in Packs - select several sounds and remove them all at once from the collection
-    #TODO: this should be done through a POST request method
     collection_sound = get_object_or_404(CollectionSound, id=collectionsound_id)
     collection = collection_sound.collection
-    collection_sound.delete()
-    collection.num_sounds -= 1 #this shouldn't be done like this but it is for the sake of tests
-    collection.save()
-    return HttpResponseRedirect(reverse("collections", args=[collection.id]))
+    if request.method=="POST":
+        collection_maintainers = User.objects.filter(collection_maintainer=collection.id)
+        if request.user != collection.user and request.user not in collection_maintainers:
+            return HttpResponseRedirect(reverse("collection", args=[collection.id]))
+        else:
+            collection_sound.delete()
+            collection.num_sounds -= 1 #this shouldn't be done like this but it is for the sake of tests
+            collection.save()
+            return HttpResponseRedirect(reverse("collection", args=[collection.id]))
 
 @login_required
 def get_form_for_collecting_sound(request, sound_id):
@@ -127,7 +130,8 @@ def get_form_for_collecting_sound(request, sound_id):
     except IndexError:
         last_collection = None
     
-    user_collections = Collection.objects.filter(user=request.user).order_by('-created')
+    user_collections = Collection.objects.filter(user=request.user) | Collection.objects.filter(maintainers__id=request.user.id)
+    user_collections = user_collections.distinct().order_by('modified')
     form = CollectionSoundForm(initial={'collection': last_collection.id if last_collection else CollectionSoundForm.BOOKMARK_COLLECTION_CHOICE_VALUE},
                                sound_id=sound.id,
                                prefix=sound.id,
@@ -165,7 +169,7 @@ def delete_collection(request, collection_id):
 
     if request.user==collection.user:
         collection.delete()
-        return HttpResponseRedirect(reverse('collections'))
+        return HttpResponseRedirect(reverse('your-collections'))
     else:
         return HttpResponseRedirect(reverse('edit-collection', args=[collection.id]))
 
@@ -174,17 +178,22 @@ def edit_collection(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
     collection_sounds = ",".join([str(s.id) for s in Sound.objects.filter(collectionsound__collection=collection)])
     collection_maintainers = ",".join([str(u.id) for u in User.objects.filter(collection_maintainer=collection.id)])
+
     if request.user == collection.user:
         is_owner = True
     else:
         is_owner = False
-
+    if str(request.user.id) in collection_maintainers:
+        is_maintainer = True
+    else:
+        is_maintainer = False
+    
     current_sounds = list()
     if request.method=="POST":
-        form = CollectionEditForm(request.POST, instance=collection, label_suffix='')
+        form = CollectionEditForm(request.POST, instance=collection, label_suffix='', is_owner=is_owner, is_maintainer=is_maintainer)
         if form.is_valid():
             form.save(user_adding_sound=request.user)
-            return HttpResponseRedirect(reverse('collections', args=[collection.id]))
+            return HttpResponseRedirect(reverse('collection', args=[collection.id]))
         
     else:
         form = CollectionEditForm(instance=collection, initial=dict(collection_sounds=collection_sounds, collection_maintainers=collection_maintainers), label_suffix='', is_owner=is_owner)
@@ -198,6 +207,7 @@ def edit_collection(request, collection_id):
         "form": form,
         "collection": collection,
         "is_owner": is_owner,
+        "is_maintainer": is_maintainer,
         "display_fields": display_fields,
     }
     
@@ -217,9 +227,8 @@ def collection_licenses(request, collection_id):
     attribution = collection.get_attribution()
     return HttpResponse(attribution, content_type="text/plain")
 
-def add_sounds_modal_for_collection_edit(request, collection_id):
-    collection = get_object_or_404(Collection, id=collection_id)
-    tvars = add_sounds_modal_helper(request, collection.user.username)
+def add_sounds_modal_for_collection_edit(request):
+    tvars = add_sounds_modal_helper(request)
     tvars.update({
         'modal_title':'Add sounds to collection',
         'help_text':'Modal to add sounds to your collection'})
@@ -228,6 +237,7 @@ def add_sounds_modal_for_collection_edit(request, collection_id):
 def add_maintainer_modal(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
     form = MaintainerForm()
+    # TODO: the below statements exclude users with whitespaces in their usernames (and they still exist)
     usernames = request.GET.get('q','').replace(' ','').split(',')
     excluded_users = request.GET.get('exclude','').split(',')
 

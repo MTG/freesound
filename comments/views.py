@@ -30,7 +30,7 @@ from django.urls import reverse
 from comments.models import Comment
 from sounds.models import Sound
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
+from utils.username import redirect_if_old_username, raise_404_if_user_is_deleted
 
 
 @login_required
@@ -53,7 +53,7 @@ def delete(request, comment_id):
     return HttpResponseRedirect(next + "#comments")
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def for_user(request, username):
     """ Display all comments for the sounds of the user """
@@ -81,7 +81,7 @@ def for_user(request, username):
     return render(request, 'accounts/modal_comments.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def by_user(request, username):
     if not request.GET.get('ajax'):
@@ -107,7 +107,7 @@ def by_user(request, username):
     return render(request, 'accounts/modal_comments.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def for_sound(request, username, sound_id):
     if not request.GET.get('ajax'):

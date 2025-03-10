@@ -45,7 +45,7 @@ def get_user_or_404(username):
     return user
 
 
-def redirect_if_old_username_or_404(func):
+def redirect_if_old_username(func):
     """
     This is a decorator to return redirects when accessing a URL with the username in the pattern and that usernames
     corresponds to an old username. We re-build the URL with the current username of that user and return a redirect.
@@ -90,7 +90,7 @@ def raise_404_if_user_is_deleted(func):
             # Otherwise get the corresponding user object (considering OldUsernames) or raise 404
             user = get_user_or_404(kwargs['username'])
 
-        if user.profile.is_anonymized_user:
+        if user is None or user.profile.is_anonymized_user:
             raise Http404
 
         # Save user object in the request so it can be used by the view and/or other decorators

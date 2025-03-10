@@ -32,7 +32,7 @@ from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
 from utils.downloads import download_sounds
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
+from utils.username import redirect_if_old_username, raise_404_if_user_is_deleted
 
 
 @login_required
@@ -59,7 +59,7 @@ def bookmarks(request, category_id=None):
     tvars['page_bookmarks_and_sound_objects'] = zip(paginator['page'].object_list, page_sounds)
     return render(request, 'bookmarks/bookmarks.html', tvars)
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def bookmarks_for_user(request, username, category_id=None):
     user = request.parameter_user

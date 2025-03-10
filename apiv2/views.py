@@ -138,8 +138,8 @@ class TextSearch(GenericAPIView):
         sound_ids = [ob[0] for ob in object_list]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=sound_ids)
         # In search queries, only include audio analyers's output if requested through the fields parameter
-        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '') or 'ac_analysis' in search_form.cleaned_data.get('fields', '')
-        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_analyzers_output=needs_analyzers_ouptut)
+        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_analyzers_output=needs_analyzers_output)
         sounds = []
         for i, sid in enumerate(sound_ids):
             try:
@@ -229,8 +229,8 @@ class ContentSearch(GenericAPIView):
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyers's output if requested through the fields parameter
-        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '') or 'ac_analysis' in search_form.cleaned_data.get('fields', '')
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
+        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -348,8 +348,8 @@ class CombinedSearch(GenericAPIView):
         ids = results
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyers's output if requested through the fields parameter
-        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '') or 'ac_analysis' in search_form.cleaned_data.get('fields', '')
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
+        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -388,6 +388,9 @@ class CombinedSearch(GenericAPIView):
 # SOUND VIEWS
 #############
 
+def get_needs_analyzers_output(fields):
+    return 'analyzers_output' in fields or 'ac_analysis' in fields or '*' in fields
+
 class SoundInstance(RetrieveAPIView):
 
     @classmethod
@@ -398,7 +401,10 @@ class SoundInstance(RetrieveAPIView):
                   get_formatted_examples_for_view('SoundInstance', 'apiv2-sound-instance', max=5))
 
     serializer_class = SoundSerializer
-    queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK").annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
+
+    def get_queryset(self):
+        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
+        return Sound.objects.bulk_query(include_analyzers_output=needs_analyzers_output)
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))
@@ -477,7 +483,7 @@ class SimilarSounds(GenericAPIView):
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyers's output if requested through the fields parameter
-        needs_analyzers_ouptut = 'analyzers_output' in similarity_sound_form.cleaned_data.get('fields', '') or 'ac_analysis' in similarity_sound_form.cleaned_data.get('fields', '')
+        needs_analyzers_output = get_needs_analyzers_output(similarity_sound_form.cleaned_data.get('fields', ''))
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
 
         sounds = []
@@ -605,8 +611,8 @@ class UserSounds(ListAPIView):
             user = User.objects.get(username=self.kwargs['username'], is_active=True)
         except User.DoesNotExist:
             raise NotFoundException(resource=self)
-        needs_analyzers_ouptut = 'analyzers_output' in self.request.GET.get('fields', '') or 'ac_analysis' in self.request.GET.get('fields', '')
-        queryset = Sound.objects.bulk_sounds_for_user(user_id=user.id, include_analyzers_output=needs_analyzers_ouptut)
+        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
+        queryset = Sound.objects.bulk_sounds_for_user(user_id=user.id, include_analyzers_output=needs_analyzers_output)
         return queryset
 
 
@@ -675,8 +681,8 @@ class PackSounds(ListAPIView):
             Pack.objects.get(id=self.kwargs['pk'], is_deleted=False)
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
-        needs_analyzers_ouptut = 'analyzers_output' in self.request.GET.get('fields', '') or 'ac_analysis' in self.request.GET.get('fields', '')  
-        queryset = Sound.objects.bulk_sounds_for_pack(pack_id=self.kwargs['pk'], include_analyzers_output=needs_analyzers_ouptut)
+        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
+        queryset = Sound.objects.bulk_sounds_for_pack(pack_id=self.kwargs['pk'], include_analyzers_output=needs_analyzers_output)
         return queryset
 
 

@@ -16,7 +16,7 @@
     </div>
     {% endif %}
     {% if sound.pack_id %}
-    <div class="h-spacing-left-1" title="Pack: {{ sound.pack_name }}">
+    <div class="h-spacing-left-1" title="Pack: {{ sound.pack.name }}">
         <a href="{% url 'pack' sound.username sound.pack_id %}" class="bw-link--grey-light">
             <span class="bw-icon-stack"></span>
         </a>

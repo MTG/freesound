@@ -81,14 +81,7 @@ def ticket(request, ticket_key):
         # First try to get the ticket matching the key, but if it fails, try also matching the id
         ticket = Ticket.objects.select_related('sound__license', 'sound__user').get(key=ticket_key)
     except Ticket.DoesNotExist:
-        try:
-            ticket_id = int(ticket_key)
-            ticket = Ticket.objects.select_related('sound__license', 'sound__user').get(id=ticket_id)
-            return HttpResponseRedirect(reverse('tickets-ticket', args=[ticket.key]))
-        except ValueError:
-            raise Http404
-        except Ticket.DoesNotExist:
-            raise Http404
+        raise Http404
 
     if not (ticket.sender == request.user or _can_view_mod_msg(request)):
         raise Http404

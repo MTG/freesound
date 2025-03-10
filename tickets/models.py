@@ -29,15 +29,6 @@ import uuid
 from utils.mail import send_mail_template
 
 
-class Queue(models.Model):
-    name            = models.CharField(max_length=128)
-    groups          = models.ManyToManyField(Group)
-    notify_by_email = models.BooleanField()
-
-    def __str__(self):
-        return self.name
-
-
 def defaultkey():
     return str(uuid.uuid4()).replace('-','')
 
@@ -53,7 +44,6 @@ class Ticket(models.Model):
     sender          = models.ForeignKey(User, related_name='sent_tickets', null=True, on_delete=models.SET_NULL)
     sender_email    = models.EmailField(null=True)
     assignee        = models.ForeignKey(User, related_name='assigned_tickets', null=True, on_delete=models.SET_NULL)
-    queue           = models.ForeignKey(Queue, related_name='tickets', on_delete=models.CASCADE)
     sound           = models.OneToOneField('sounds.Sound', null=True, on_delete=models.SET_NULL)
 
     NOTIFICATION_QUESTION     = 'emails/email_notification_question.txt'

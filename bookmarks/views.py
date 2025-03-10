@@ -190,21 +190,25 @@ def get_form_for_sound(request, sound_id):
     except IndexError:
         last_category = None
     user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
-    form = BookmarkForm(initial={'category': last_category.id if last_category else BookmarkForm.NO_CATEGORY_CHOICE_VALUE},
-                     prefix=sound.id,
-                     user_bookmark_categories=user_bookmark_categories)
     categories_already_containing_sound = BookmarkCategory.objects.filter(user=request.user,
-                                                                          bookmarks__sound=sound).distinct()
-    sound_has_bookmark_without_category = Bookmark.objects.filter(user=request.user, sound=sound, category=None).exists()
+                                                                      bookmarks__sound=sound).distinct()
+    form = BookmarkForm(
+        initial={'category': last_category.id if last_category else BookmarkForm.NO_CATEGORY_CHOICE_VALUE},
+        prefix=sound.id,
+        user_bookmark_categories=user_bookmark_categories,
+        categories_already_containing_sound=categories_already_containing_sound)
+    bookmark_without_category = Bookmark.objects.filter(user=request.user, sound=sound, category=None).first()
     add_bookmark_url = '/'.join(
         request.build_absolute_uri(reverse('add-bookmark', args=[sound_id])).split('/')[:-2]) + '/'
+    print("bookmark form")
+    
     tvars = {
-        'bookmarks': Bookmark.objects.filter(user=request.user, sound=sound).exists(),
+        'bookmarks': Bookmark.objects.filter(user=request.user, sound=sound),
         'sound_id': sound.id,
         'sound_is_moderated_and_processed_ok': sound.moderated_and_processed_ok,
         'form': form,
-        'sound_has_bookmark_without_category': sound_has_bookmark_without_category,
-        'categories_aready_containing_sound': categories_already_containing_sound,
+        'bookmark_without_category': bookmark_without_category,
         'add_bookmark_url': add_bookmark_url
     }
+    print(tvars['bookmarks'])
     return render(request, 'bookmarks/modal_bookmark_sound.html', tvars)

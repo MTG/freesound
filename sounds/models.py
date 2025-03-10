@@ -418,6 +418,7 @@ class SoundManager(models.Manager):
             ).annotate(
                 username=F("user__username"),
                 pack_name=F("pack__name"),
+                remixgroup_id=F("remix_group__id"),
                 tag_array=ArraySubquery(tags_subquery),
                 analysis_state_essentia_exists=Exists(analysis_subquery),
                 search_engine_similarity_state=Exists(search_engine_similarity_subquery)
@@ -426,7 +427,7 @@ class SoundManager(models.Manager):
         if include_analyzers_output:
             analyzer_names = list(settings.ANALYZERS_CONFIGURATION.keys())
             qs = qs.prefetch_related(
-                Prefetch('analyses', queryset=SoundAnalysis.objects.filter(analyzer__in=analyzer_names))
+                Prefetch('analyses', queryset=SoundAnalysis.objects.filter(analyzer__in=analyzer_names, analysis_status="OK"))
             )
 
         return qs

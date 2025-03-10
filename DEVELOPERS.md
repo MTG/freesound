@@ -86,14 +86,14 @@ account a number of things:
 * In case a user object exists, is the user marked as having been deleted? (check `user.profile.is_anonymized_user`) 
 * In case there's no `User` object with such username, is there any `OldUsername` object which maps the username in the
   URL with a `User` object in DB?
-  
-To deal with these checks, we use the `utils.username.raise_404_if_user_is_deleted` and 
-`utils.username.redirect_if_old_username_or_404` decorators in view functions. The first one will try to find a user
+
+To deal with these checks, we use the `utils.username.raise_404_if_user_is_deleted` and
+`utils.username.redirect_if_old_username` decorators in view functions. The first one will try to find a user
 object (checking for old usernames as well) and if it can't find it or the user is marked as deleted, it will raise
 HTTP 404 error. The second one will try to find a user object (also considering old usernames) and do an HTTP redirect
 with an updated username if user was found in the old usernames table.
 
-In general, we should use `utils.username.redirect_if_old_username_or_404` in **all public views** that have username
+In general, we should use `utils.username.redirect_if_old_username` in **all public views** that have username
 in the URL path. For login-required views (using `@login_required` decorator) we are not supposed to use that decorator
 because most of them won't include username in the URL and also there should be no links pointing to these URLs with
 old usernames. In addition, **if these public views should should not be reachable in case users have been anonymized**,
@@ -101,7 +101,7 @@ then we should also use `utils.username.raise_404_if_user_is_deleted`. When usin
 to use them in that order:
 
 ```
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def view_function(request, username, ...):
     ...

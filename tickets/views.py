@@ -41,7 +41,7 @@ from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_
 from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, \
     SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
 from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
-from utils.username import redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username
 from utils.pagination import paginate
 from wiki.models import Content, Page
 
@@ -681,7 +681,7 @@ def add_user_annotation(request, user_id):
 
 
 @permission_required('tickets.can_moderate')
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def pending_tickets_per_user(request, username):
     if not request.GET.get('ajax'):
         # If not loaded as a modal, redirect to account page with parameter to open modal

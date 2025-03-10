@@ -34,10 +34,10 @@ from follow.models import FollowingQueryItem
 from follow.models import FollowingUserItem
 from utils.cache import invalidate_user_template_caches
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
+from utils.username import redirect_if_old_username, raise_404_if_user_is_deleted
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def following_users(request, username):
     """List of users that are being followed by user with "username"
@@ -64,7 +64,7 @@ def following_users(request, username):
     return render(request, 'accounts/modal_follow.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def followers(request, username):
     """List of users that are following user with "username"
@@ -91,7 +91,7 @@ def followers(request, username):
     return render(request, 'accounts/modal_follow.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def following_tags(request, username):
     """List of tags that are being followed by user with "username"

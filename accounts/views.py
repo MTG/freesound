@@ -88,7 +88,7 @@ from utils.mirror_files import copy_avatar_to_mirror_locations, \
     copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations, \
     remove_empty_user_directory_from_mirror_locations
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
+from utils.username import redirect_if_old_username, raise_404_if_user_is_deleted
 
 sounds_logger = logging.getLogger('sounds')
 upload_logger = logging.getLogger('file_upload')
@@ -934,7 +934,7 @@ def download_attribution(request):
         return HttpResponseRedirect(reverse('accounts-attribution'))
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def downloaded_sounds(request, username):
     if not request.GET.get('ajax'):
@@ -960,7 +960,7 @@ def downloaded_sounds(request, username):
     return render(request, 'accounts/modal_downloads.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def downloaded_packs(request, username):
     if not request.GET.get('ajax'):
@@ -1121,7 +1121,7 @@ def charts(request):
     return render(request, 'accounts/charts.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def account(request, username):
     user = request.parameter_user
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE_PROFILE_PACK_PAGE))
@@ -1170,13 +1170,13 @@ def account(request, username):
         'following_modal_page': request.GET.get('following', 1),
         'followers_modal_page': request.GET.get('followers', 1),
         'following_tags_modal_page': request.GET.get('followingTags', 1),
-        'last_geotags_serialized': last_geotags_serialized, 
+        'last_geotags_serialized': last_geotags_serialized,
         'user_downloads_public': settings.USER_DOWNLOADS_PUBLIC,
     }
     return render(request, 'accounts/account.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def account_stats_section(request, username):
     if not request.GET.get('ajax'):
         raise Http404  # Only accessible via ajax
@@ -1188,7 +1188,7 @@ def account_stats_section(request, username):
     return render(request, 'accounts/account_stats_section.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def account_latest_packs_section(request, username):
     if not request.GET.get('ajax'):
         raise Http404  # Only accessible via ajax

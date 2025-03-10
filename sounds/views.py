@@ -74,7 +74,7 @@ from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsExce
     get_duration_from_processing_before_describe_files, \
     get_samplerate_from_processing_before_describe_files
 from utils.text import remove_control_chars
-from utils.username import redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username
 
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
@@ -206,7 +206,7 @@ def front_page(request):
     return render(request, 'front.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def sound(request, username, sound_id):
     try:
         sound = Sound.objects.prefetch_related("tags")\
@@ -308,7 +308,7 @@ def after_download_modal(request):
         return HttpResponse()
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @transaction.atomic()
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
@@ -342,7 +342,7 @@ def sound_download(request, username, sound_id):
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @transaction.atomic()
 def pack_download(request, username, pack_id):
     if not request.user.is_authenticated:
@@ -797,7 +797,7 @@ def _remix_group_view_helper(request, group_id):
     }
     return tvars
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def remixes(request, username, sound_id):
     if not request.GET.get('ajax'):
         # If not loaded as modal, redirect to sound page with parameter to open modal
@@ -816,7 +816,7 @@ def remixes(request, username, sound_id):
     return render(request, 'sounds/modal_remix_group.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SIMILARITY_GROUP, block=True)
 def similar(request, username, sound_id):
     if not request.GET.get('ajax'):
@@ -853,7 +853,7 @@ def similar(request, username, sound_id):
     return render(request, 'sounds/modal_similar_sounds.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @transaction.atomic()
 def pack(request, username, pack_id):
     try:
@@ -890,7 +890,7 @@ def pack(request, username, pack_id):
     return render(request, 'sounds/pack.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def pack_stats_section(request, username, pack_id):
     if not request.GET.get('ajax'):
         raise Http404  # Only accessible via ajax
@@ -906,19 +906,20 @@ def pack_stats_section(request, username, pack_id):
     return render(request, 'sounds/pack_stats_section.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def packs_for_user(request, username):
     user = request.parameter_user
     return HttpResponseRedirect(user.profile.get_user_packs_in_search_url())
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def for_user(request, username):
     user = request.parameter_user
     return HttpResponseRedirect(user.profile.get_user_sounds_in_search_url())
     
 
-@redirect_if_old_username_or_404
+
+@redirect_if_old_username
 @transaction.atomic()
 def flag(request, username, sound_id):
     if not request.GET.get('ajax'):
@@ -1001,7 +1002,7 @@ def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def display_sound_wrapper(request, username, sound_id):
     try:
         sound_obj = Sound.objects.bulk_query_id(sound_id)[0]

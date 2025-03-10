@@ -32,13 +32,13 @@ from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
-from django.shortcuts import render 
+from django.shortcuts import render
 from general.tasks import whitelist_user as whitelist_user_task, post_moderation_assigned_tickets as post_moderation_assigned_tickets_task
 
 from .models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
-from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, \
+from tickets.forms import UserMessageForm, ModeratorMessageForm, \
     SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
 from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
 from utils.username import redirect_if_old_username_or_404
@@ -47,22 +47,15 @@ from wiki.models import Content, Page
 
 
 def _get_tc_form(request, use_post=True):
-    return _get_anon_or_user_form(request, 
-                                  AnonymousMessageForm, 
-                                  UserMessageForm, 
-                                  use_post)
-
-
-def _get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
     if _can_view_mod_msg(request):
-        user_form = ModeratorMessageForm
-    if len(request.POST.keys()) > 0 and use_post:
-        if request.user.is_authenticated:
-            return user_form(request.POST)
-        else:
-            return anonymous_form(request.POST)
+        form = ModeratorMessageForm
     else:
-        return user_form() if request.user.is_authenticated else anonymous_form()
+        form = UserMessageForm
+
+    if len(request.POST.keys()) > 0 and use_post:
+        return form(request.POST)
+    else:
+        return form()
 
 
 def _can_view_mod_msg(request):
@@ -106,8 +99,8 @@ def ticket(request, ticket_key):
         invalidate_all_moderators_header_cache()
 
         # Left ticket message
-        if is_selected(request, 'recaptcha') or (request.user.is_authenticated and is_selected(request, 'message')):
-            tc_form = _get_tc_form(request)
+        if is_selected(request, 'message'):
+            tc_form = _get_tc_form(request, use_post=True)
             if tc_form.is_valid():
                 tc = TicketComment()
                 tc.text = tc_form.cleaned_data['message']
@@ -117,9 +110,7 @@ def ticket(request, ticket_key):
                         tc.sender = request.user
                     tc.ticket = ticket
                     tc.save()
-                    if not request.user.is_authenticated:
-                        email_to = Ticket.MODERATOR_ONLY
-                    elif request.user == ticket.sender:
+                    if request.user == ticket.sender:
                         email_to = Ticket.MODERATOR_ONLY
                     else:
                         email_to = Ticket.USER_ONLY

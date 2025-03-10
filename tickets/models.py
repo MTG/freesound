@@ -55,7 +55,6 @@ class Ticket(models.Model):
 
     MODERATOR_ONLY = 1
     USER_ONLY = 2
-    USER_AND_MODERATOR = 3
 
     def get_n_last_non_moderator_only_comments(self, n):
         """
@@ -66,7 +65,7 @@ class Ticket(models.Model):
 
     def send_notification_emails(self, notification_type, sender_moderator):
         # send message to assigned moderator
-        if sender_moderator in [Ticket.MODERATOR_ONLY, Ticket.USER_AND_MODERATOR]:
+        if sender_moderator in [Ticket.MODERATOR_ONLY]:
             if self.assignee:
                 tvars = {'ticket': self,
                          'user_to': self.assignee}
@@ -75,7 +74,7 @@ class Ticket(models.Model):
                                    tvars,
                                    user_to=self.assignee)
         # send message to user
-        if sender_moderator in [Ticket.USER_ONLY, Ticket.USER_AND_MODERATOR]:
+        if sender_moderator in [Ticket.USER_ONLY]:
             if self.sender:
                 tvars = {'ticket': self,
                          'user_to': self.sender}

@@ -1262,10 +1262,9 @@ class Sound(models.Model):
         invalidate_template_cache("bw_sound_page_sidebar", self.id)
 
     def get_geotag_name(self):
-        if settings.USE_TEXTUAL_LOCATION_NAMES_IN_BW:
-            name = self.geotag.location_name
-            if name:
-                return name
+        name = self.geotag.location_name
+        if name:
+            return name
         return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
 
     @property

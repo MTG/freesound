@@ -95,20 +95,23 @@ def ticket(request, ticket_key):
         if is_selected(request, 'message'):
             tc_form = _get_tc_form(request, use_post=True)
             if tc_form.is_valid():
-                tc = TicketComment()
-                tc.text = tc_form.cleaned_data['message']
-                tc.moderator_only = tc_form.cleaned_data.get('moderator_only', False)
-                if tc.text:
-                    if request.user.is_authenticated:
-                        tc.sender = request.user
-                    tc.ticket = ticket
-                    tc.save()
+                moderator_only = tc_form.cleaned_data.get('moderator_only', False)
+                ticket_text = tc_form.cleaned_data['message']
+                if ticket_text:
+                    tc = TicketComment.objects.create(
+                        text=ticket_text,
+                        moderator_only=moderator_only,
+                        sender=request.user,
+                        ticket=ticket
+                    )
                     if request.user == ticket.sender:
-                        email_to = Ticket.MODERATOR_ONLY
+                        # If the sender is the same as the user, we send the notification to the moderator
+                        ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED, Ticket.MODERATOR_ONLY)
                     else:
-                        email_to = Ticket.USER_ONLY
-                    ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED,
-                                                    email_to)
+                        # If the sender is not the same as the user, then this is a moderator editing the ticket
+                        # only send the notification to the user if the message is not moderator only
+                        if not moderator_only:
+                            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED, Ticket.USER_ONLY)
             else:
                 clean_comment_form = False
         # update sound ticket

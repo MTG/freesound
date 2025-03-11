@@ -1289,7 +1289,21 @@ def upload(request, no_flash=False):
             form = UploadFileForm(request.POST, request.FILES)
             if form.is_valid():
                 submitted_files = request.FILES.getlist('files')
+                if not submitted_files: 
+                    #this allows upload_tests to work, requests use the dict key in singular
+                    submitted_files = request.FILES.getlist('file') 
+                duplicated_filenames = list()
                 for file_ in submitted_files:
+                    #check for duplicated names and add an identifier, otherwise, different files with the same
+                    #name will be overwritten in the description queue
+                    if file_.name in duplicated_filenames:                        
+                        name_counter = duplicated_filenames.count(file_.name) 
+                        duplicated_filenames.append(file_.name) 
+                        name, extension = os.path.splitext(file_.name)
+                        file_.name = "%s(%d)%s" % (name, name_counter, extension) 
+                    else:
+                        duplicated_filenames.append(file_.name)
+                    
                     if handle_uploaded_file(request.user.id, file_):
                         uploaded_file = file_
                         successes += 1
@@ -1308,6 +1322,7 @@ def upload(request, no_flash=False):
         'all_file_extensions': settings.ALLOWED_AUDIOFILE_EXTENSIONS,
         'uploads_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED
     }
+    #print(tvars)
     return render(request, 'accounts/upload.html', tvars)
 
 

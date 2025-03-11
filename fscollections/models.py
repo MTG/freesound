@@ -18,12 +18,18 @@
 #     See AUTHORS file.
 #
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.text import slugify
+from django.dispatch import receiver
+from django.db.models.signals import post_save
+from django.db.models.functions import Greatest
+from django.db.models import F
 
 from sounds.models import Sound, License
+
 
 class Collection(models.Model):
 
@@ -31,16 +37,15 @@ class Collection(models.Model):
     name = models.CharField(max_length=255) #max_length as in Packs (128 for Bookmarks)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     modified = models.DateTimeField(db_index=True, auto_now=True)
-    # NOTE: double-check if description should be required (and how to display it)
+    # TODO: description should be required (check how to display it in edit form + collectionsound form)
     description = models.TextField(blank=True)
     maintainers = models.ManyToManyField(User, related_name="collection_maintainer", blank=True)
     num_sounds = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0)
     public = models.BooleanField(default=False)
     is_default_collection = models.BooleanField(default=False)
+    max_num_sounds = models.PositiveIntegerField(default=settings.MAX_SOUNDS_PER_COLLECTION)
     #NOTE: Don't fear migrations, you're just testing
-    #sounds are related to collections through CollectionSound model (bookmark-wise)
-    #contributors = delicate stuff 
     #subcolletion_path = sth with tagn and routing folders for downloads
     #follow relation for users and collections (intersted but not owner nor contributor)
 
@@ -69,6 +74,16 @@ class Collection(models.Model):
         name_slug = slugify(self.name)
         username_slug = slugify(self.user.username)
         return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
+    
+    def save(self, *args, **kwargs):   
+        self.num_sounds = CollectionSound.objects.filter(collection=self).count()
+        if self.num_sounds > 0:
+            # this need to be reviewed, featured_sound feature is not fully developed
+            csound = CollectionSound.objects.filter(collection=self).first()
+            csound.featured_sound = True
+            csound.save()
+        super().save(*args, **kwargs)
+        
 
 class CollectionSound(models.Model):
    #this model relates collections and sounds
@@ -87,3 +102,22 @@ class CollectionSound(models.Model):
     )
    status = models.CharField(db_index=True, max_length=2, choices=STATUS_CHOICES, default="PE")
    #sound won't be added to collection until maintainers approve the sound
+
+class CollectionDownload(models.Model):
+    user = models.ForeignKey(User, related_name='collection_downloads', on_delete=models.CASCADE)
+    collection = models.ForeignKey(Collection, related_name='collection', on_delete=models.CASCADE)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created",)
+
+class CollectionDownloadSound(models.Model):
+    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
+    collection_download = models.ForeignKey(CollectionDownload, on_delete=models.CASCADE)
+    license = models.ForeignKey(License, on_delete=models.CASCADE)
+
+@receiver(post_save, sender=CollectionDownload)
+def update_collection_downloads(**kwargs):
+    download = kwargs.pop('instance', False)
+    if download and kwargs['created']:
+        Collection.objects.filter(id=download.collection.id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))

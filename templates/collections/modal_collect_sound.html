@@ -31,8 +31,16 @@
     <div class="v-spacing-4">
         {% if collections_with_sound%}
             <div class="v-spacing-4">
-            {% bw_icon 'bookmark-filled' %}This sound is already in your collections under
+            {% bw_icon 'bookmark-filled' %}This sound is already in your collections under:
             {% for col in collections_with_sound %}
+            <span class="text-black font-weight-bold">{{col.name}}</span>{% if not forloop.last%},{% endif %}
+            {% endfor %}
+            </div>
+        {% endif %}
+        {% if full_collections%}
+            <div class="v-spacing-2">
+            {% bw_icon 'atom' %}The following collections have reached the maximum number of sounds allowed (250):
+            {% for col in full_collections %}
             <span class="text-black font-weight-bold">{{col.name}}</span>{% if not forloop.last%},{% endif %}
             {% endfor %}
             </div>

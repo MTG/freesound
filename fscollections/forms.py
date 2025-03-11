@@ -19,6 +19,7 @@
 #
 
 import re
+from django.conf import settings
 from django import forms
 from django.forms import ModelForm, Textarea, TextInput, SelectMultiple
 from django.contrib.auth.models import User
@@ -33,8 +34,7 @@ from sounds.models import Sound
 #class CollectSoundForm(forms.ModelForm):
 
 class CollectionSoundForm(forms.Form):
-    #list of existing collections 
-    #add sound to collection from sound page
+
     collection = forms.ChoiceField(
         label=False,
         choices=[], 
@@ -49,6 +49,7 @@ class CollectionSoundForm(forms.Form):
     use_last_collection = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     user_collections = None
     user_available_collections = None
+    user_full_collections = None
 
     BOOKMARK_COLLECTION_CHOICE_VALUE = '-1'
     NEW_COLLECTION_CHOICE_VALUE = '0'
@@ -61,7 +62,8 @@ class CollectionSoundForm(forms.Form):
 
         if self.user_collections:
             # NOTE: as a provisional solution to avoid duplicate sounds in a collection, Collections already containing the sound are not selectable
-            self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(collectionsound__sound__id=self.sound_id).exclude(is_default_collection=True)   
+            # this is also useful to discard adding sounds to collections that are full (max_num_sounds)
+            self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(collectionsound__sound__id=self.sound_id).exclude(is_default_collection=True).exclude(num_sounds__gte=settings.MAX_SOUNDS_PER_COLLECTION)   
         
         display_bookmark_collection = True
         try:
@@ -111,19 +113,11 @@ class CollectionSoundForm(forms.Form):
             name = collection_to_use.name, user=self.user_saving_sound)
         return collection
     
-    def clean(self):
-        collection = self.cleaned_data['collection']
-        
-        if CollectionSound.objects.filter(collection=collection,sound=self.sound_id).exists():
-            self.add_error('collection', forms.ValidationError("This sound already exists in the collection"))
-        elif self.user_saving_sound not in collection.maintainers and self.user_saving_sound != collection.user:
-            self.add_error('collection', forms.ValidationError("You don't have permissions to add sounds to this collection"))
-        return super().clean()
-    
 class CollectionEditForm(forms.ModelForm):
     collection_sounds = forms.CharField(min_length=1,
                                   widget=forms.widgets.HiddenInput(attrs={'id': 'collection_sounds', 'name': 'collection_sounds'}),
-                                  required=False)
+                                  required=False, help_text="You have reached the maximum number of sounds available for a collection. "
+                                  "In order to add new sounds, first remove some of the current ones.")
     
     collection_maintainers = forms.CharField(min_length=1, 
                                              widget = forms.widgets.HiddenInput(attrs={'id':'collection_maintainers', 'name': 'collection_maintainers'}),
@@ -155,13 +149,23 @@ class CollectionEditForm(forms.ModelForm):
 
     def clean(self):
         clean_data = super().clean()
+        collection_sounds = self.cleaned_data.get('collection_sounds').split(',')
         if clean_data['name'] != self.instance.name:
+            # in case the collection name has changed, check whether there's another collection with the same
+            # name for this user
             if Collection.objects.filter(user=self.instance.user, name=clean_data['name']).exists():
                 self.add_error('name', forms.ValidationError("You already have a collection with this name"))
         if not self.is_owner and not self.is_maintainer:
+            # check if the request user is either a maintainer or owner for this collection
             self.add_error(field=None, error=forms.ValidationError("You don't have permissions to edit this collection"))
-        return super().clean()
-    
+        if len(collection_sounds) > 4: #settings.MAX_SOUNDS_PER_COLLECTION
+            # NOTE: in this case, a user is trying to add more sounds than permitted for a collection, so the form needs to 
+            # be reloaded displaying an error for this field. However, the maximum number of sounds will be displayed,
+            # i.e.: if num_sounds has gone from 248 to 252, display 250 sounds (max), and discard the last 2
+            self.add_error('collection_sounds', forms.ValidationError('You have reached the maximum number of sounds for a collection.'))
+            self.cleaned_data['collection_sounds'] = collection_sounds[:4] #settings.MAX_SOUNDS_PER_COLLECTION
+        return clean_data
+
     def clean_ids_field(self, field):
         # this function cleans the sounds and maintainers fields which store temporary changes on the edit URL
         new_field = re.sub("[^0-9,]", "", self.cleaned_data[field])

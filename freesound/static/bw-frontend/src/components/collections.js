@@ -90,8 +90,8 @@ const bindCollectionModals = (container) => {
         element.dataset.alreadyBinded = true;
         element.addEventListener('click', (evt) => {
             evt.preventDefault();   
-            const modalUrlSplitted = element.dataset.modalUrl.split('/');
-            const soundId = parseInt(modalUrlSplitted[modalUrlSplitted.length - 2], 10);
+            const modalUrlSplitted = element.dataset.modalUrl.split('/')
+            const soundId = parseInt(modalUrlSplitted[modalUrlSplitted.length - 3], 10)
             if (!evt.altKey) {
                 handleGenericModal(element.dataset.modalUrl, () => {
                     initCollectionFormModal(soundId, element.dataset.collectionSoundUrl);

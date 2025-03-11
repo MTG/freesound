@@ -31,7 +31,10 @@
             {% endfor %}
             <div class="select-sound-field v-spacing-2">
                 {{ form.collection_maintainers }}
-                <label>Maintainers</label>
+                <label>Maintainers ({{ form.collection_maintainers_objects|length }})</label>
+                    {% if form.collection_maintainers.errors %}
+                        <div>{{form.collection_maintainers.errors}}</div>
+                    {% endif %}
                 {% if not form.collection_maintainers.value %}
                 <div class="v-spacing-4 v-spacing-top-2">This collection has no maintainers</div>
                 {% endif %}
@@ -44,6 +47,9 @@
             <div class="select-sounds-field v-spacing-5">
                 {{ form.collection_sounds }}
                 <label>Sounds in collection ({{ form.collection_sound_objects|length }})</label>
+                    {% if form.collection_sounds.errors %}
+                        <div> {{form.collection_sounds.errors}}</div>
+                    {% endif %}
                 {% if not form.collection_sounds.value %}
                 <div class="v-spacing-4 v-spacing-top-2">No sounds have been added to this collection yet</div>
                 {% endif %}
@@ -51,6 +57,11 @@
                 <div class="between v-spacing-top-2">
                     <button class="btn-inverse" data-toggle="add-sounds-modal" data-selected-sounds-hidden-input-id="{{ form.collection_sounds.id_for_label }}" data-modal-url="{% url 'add-sounds-modal-collection' collection.id %}">{% bw_icon 'plus' %}Add sounds</button>
                     <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from collection</button>
+                </div>
+                <div class="between v-spacing-top-5">
+                    {% if form.collection_sounds|length != 4 %}
+                    <span class="helptext"><i>{{form.collection_sounds.help_text|safe}}</i></span>
+                    {% endif%}
                 </div>
             </div>
             {% if is_owner or is_maintainer%}

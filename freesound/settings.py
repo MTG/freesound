@@ -929,6 +929,7 @@ if SENTRY_DSN:
 # Extra Freesound settings
 
 ENABLE_COLLECTIONS = True
+MAX_SOUNDS_PER_COLLECTION = 250
 
 # Paths (depend on DATA_PATH potentially re-defined in local_settings.py)
 # If new paths are added here, remember to add a line for them at general.apps.GeneralConfig. This will ensure

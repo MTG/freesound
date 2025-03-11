@@ -44,8 +44,6 @@
                     {{ preprocessed_description|truncatechars_html:55 }}
                 </div>
                 {% endwith %}
-            {% else %}
-                This pack has no description.
             {% endif %}
         </div>
     </div>
@@ -91,8 +89,6 @@
                         {{ preprocessed_description|truncatewords_html:20 }}
                     </div>
                     {% endwith %}
-                {% else %}
-                    This pack has no description.
                 {% endif %}
             </div>
             {% with pack.get_pack_tags_bw as tags %}

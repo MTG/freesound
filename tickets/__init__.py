@@ -1,5 +1,3 @@
-QUEUE_SOUND_MODERATION = 'sound moderation'
-
 TICKET_STATUS_NEW = 'new'
 TICKET_STATUS_DEFERRED = 'deferred'
 TICKET_STATUS_ACCEPTED = 'accepted'

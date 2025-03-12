@@ -1821,9 +1821,10 @@ class Pack(models.Model):
     def num_ratings(self):
         # The number of ratings for a pack is the number of sounds that have >= 3 ratings
         if hasattr(self, 'num_ratings_precomputed'):
+            # Comes from the bulk_query_id method in PackManager
             return self.num_ratings_precomputed
         else:
-            return Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS)
+            return Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS).count()
 
     def get_total_pack_sounds_length(self):
         result = Sound.objects.filter(pack=self).aggregate(total_duration=Sum('duration'))

@@ -348,7 +348,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         num_akismet, _ = obj.akismetspam_set.all().delete()
         num_reports, _ = obj.flags.all().delete()
         messages.add_message(request, messages.INFO,
-                                 'User \'%s\' flags have been cleared: %i akismet flags and %i user reports.' 
+                                 'User \'%s\' flags have been cleared: %i akismet flags and %i user reports.'
                                  % (obj.username, num_akismet, num_reports))
         return HttpResponseRedirect(reverse('admin:auth_user_change', args=[obj.id]))
 

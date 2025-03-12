@@ -518,6 +518,7 @@ class ForumPageResponses(TestCase):
         self.assertEqual(resp.status_code, 302)
 
         self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=user2).count(), 1)
+        self.assertTrue(thread.is_user_subscribed(user2))
 
         # Try to create another subscription for the same user and thread, it should not create it
         resp = self.client.get(reverse('forums-thread-subscribe', args=[forum.name_slug, thread.id]))
@@ -530,6 +531,7 @@ class ForumPageResponses(TestCase):
         self.assertEqual(resp.status_code, 302)
 
         self.assertEqual(Subscription.objects.filter(thread=thread, subscriber=user2).count(), 0)
+        self.assertFalse(thread.is_user_subscribed(user2))
 
     def test_emails_sent_for_subscription_to_thread(self):
         forum = Forum.objects.first()

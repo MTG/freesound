@@ -75,6 +75,11 @@ class DeletedUserAdmin(admin.ModelAdmin):
     list_display = ('get_object_link', 'get_view_link', 'deletion_date', 'reason')
     search_fields = ('=username',)
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related('user')
+        return qs
+
     @admin.display(
         description='DeletedUser',
         ordering='username',

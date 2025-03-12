@@ -18,26 +18,14 @@
 #     See AUTHORS file.
 #
 
-from django.contrib import admin
-from wiki.models import Page, Content
-
-@admin.register(Page)
-class PageAdmin(admin.ModelAdmin):
-    list_display = ('name', )
-
-    def has_add_permission(self, request):
-        return False
+from oauth2_provider.admin import ApplicationAdmin as ProviderApplicationAdmin
 
 
-@admin.register(Content)
-class ContentAdmin(admin.ModelAdmin):
-    raw_id_fields = ('author', )
-    list_display = ('page', 'author', 'title', 'created', )
-
+class ApplicationAdmin(ProviderApplicationAdmin):
+    """
+    Override the default admin class for oauth2_provider.Application to add a custom queryset
+    """
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        qs = qs.select_related('author', 'page')
+        qs = qs.select_related('user')
         return qs
-
-    def has_add_permission(self, request):
-        return False

@@ -156,9 +156,8 @@ class FlagAdmin(admin.ModelAdmin):
         return False
 
     def get_queryset(self, request):
-        # overrride 'get_queryset' to optimize query by using select_related on 'sound' and 'reporting_user'
         qs = super().get_queryset(request)
-        qs = qs.select_related('sound', 'reporting_user')
+        qs = qs.select_related('sound', 'sound__user', 'reporting_user')
         return qs
 
     @admin.display(

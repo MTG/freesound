@@ -191,7 +191,6 @@ def create_sound(user,
 
     # 3 move to new path
     orig = os.path.splitext(os.path.basename(sound.original_filename))[0]  # WATCH OUT!
-    sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
     new_original_path = sound.locations("path")
     if sound.original_path != new_original_path:
         os.makedirs(os.path.dirname(new_original_path), exist_ok=True)

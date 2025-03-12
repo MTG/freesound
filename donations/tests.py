@@ -321,7 +321,6 @@ class DonationTest(TestCase):
             sounds.models.Sound.objects.create(
                 user=self.user_c,
                 original_filename="Test sound %i" % i,
-                base_filename_slug="test_sound_%i" % i,
                 license=sounds.models.License.objects.all()[0],
                 md5="fakemd5_%i" % i)
         self.user_c.profile.num_sounds = TEST_DOWNLOADS_IN_PERIOD + 1
@@ -498,7 +497,6 @@ class DonationTest(TestCase):
             sounds.models.Sound.objects.create(
                 user=self.user_c,
                 original_filename="Test sound %i" % i,
-                base_filename_slug="test_sound_%i" % i,
                 license=sounds.models.License.objects.all()[0],
                 md5="fakemd5_%i" % i)
         self.user_c.profile.num_sounds = TEST_DOWNLOADS_IN_PERIOD + 1

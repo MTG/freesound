@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     'silk',
     'django_recaptcha',
     'adminsortable',
+    'fscollections'
 ]
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
@@ -874,6 +875,8 @@ if SENTRY_DSN:
 
 # -------------------------------------------------------------------------------
 # Extra Freesound settings
+
+ENABLE_COLLECTIONS = True
 
 # Paths (depend on DATA_PATH potentially re-defined in local_settings.py)
 # If new paths are added here, remember to add a line for them at general.apps.GeneralConfig. This will ensure

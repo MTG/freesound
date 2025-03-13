@@ -1,0 +1,83 @@
+{% extends "simple_page.html" %}
+{% load static %}
+{% load bw_templatetags %}
+{% load display_sound %}
+{% load util %}
+
+{% block title%}Collections{%endblock title%}
+{% block page-title%}Collections{%endblock page-title%}
+{% block page-content %}
+<div class="v-spacing-top-5">
+    <div class="row no-gutters">
+        <div class="col-lg-3 offset-lg-1 order-lg-last v-spacing-3">
+            <h4>Your collections</h4>
+            <div class="v-spacing-top-3">
+                <ul class="list-style-type-none">
+                    {% if collections_for_user %}
+                    {% for col in collections_for_user %}
+                        <li><a href="{% url "collections" col.id %}" {% if collection.id == col.id %}style="font-weight:bold"{% endif %}>{{col.name}}</a>
+                        <span class=text-light-grey> · {{col.num_sounds}} sound{{col.num_sounds|pluralize}}</span></li>
+                    {% endfor %}
+                    {% else %}
+                    <span class=text-light-grey> You don't have any collection yet... </span>
+                    {% endif %}
+                   <li><a class="cursor-pointer" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'create-collection' %}?ajax=1" data-reload-on-success= "true" title="Create new collection" aria-label="Create new collection">... Create a new collection {% bw_icon 'plus' %}</a></li>
+                </ul>    
+            </div>
+            <div class="v-spacing-top-4">
+                {% if is_owner or is_maintainer%}
+                <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'edit-collection' collection.id %}" title="Edit collection">Edit collection</a>
+                {% endif %}
+                {% if collection.num_sounds > 0%}
+                <a class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'download-collection' collection.id %}" title="Download collection">Download Collection</a> 
+                {% endif %}
+            </div>
+        </div>    
+        <div class="col-lg-8">
+            {% if collection %}
+            <h3>{{collection.name}}
+                <span class="h-spacing-left-3">
+                    <!-- this should be displayed in a section containing relevant collection data pack-wise -->
+                    {% if collection.public %}{% bw_icon 'eye' %}{% else %}{%bw_icon 'eye-blocked'%}{% endif %}
+                </span>
+            </h3> 
+            by <a href="{% url "account" collection.user.username %}">{{collection.user.username}}</a>
+            <div>Description: {% if collection.description %}{{collection.description}} {% endif %}</div>
+            <span>Maintainers: 
+                {% if maintainers %}{% for u in maintainers %}
+                    {% if not forloop.last%}
+                        <a href="{% url 'account' u.username%}">{{u.username}}</a>, 
+                    {% else %} 
+                    <a href="{% url 'account' u.username%}">{{u.username}}</a>
+                    {% endif %}
+                {% endfor %}
+                {% else %}There are no maintainers in this collection yet.{% endif %}
+            </span>
+            <div class="v-spacing-top-3">
+            {% if page.object_list %}    
+                <div class = "row">
+                    {% for collectionsound, sound in page_collection_and_sound_objects  %}
+                        <div class="col-6 col-md-4">
+                            {% display_sound_small sound %}
+                            {% if is_owner %}
+                                <div class="right v-spacing-4 v-spacing-top-negative-2">
+                                    <a class="cursor-pointer bw-link--grey" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove '{{sound.original_filename}}' from '{{collection.name}}'?" data-modal-confirmation-url="{% url "delete-sound-from-collection" collectionsound.id %}" title="Remove from collection" aria-label="Remove from collection">{% bw_icon 'trash' %} Remove sound</a>
+                                </div>                                        
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %} 
+            There aren't any sounds in this collection yet 
+            {% endif %}
+            {% bw_paginator paginator page current_page request "collection" %}
+            </div>
+            {% else %}
+            <div class="v-spacing-top-3">
+                <span class=text-light-grey> You don't have any collection yet...</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>         
+{% endblock page-content %}

@@ -101,7 +101,6 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
             pack = packs[i % len(packs)]
         sound = Sound.objects.create(user=user,
                                      original_filename="Test sound %i" % (i + count_offset),
-                                     base_filename_slug="test_sound_%i" % (i + count_offset),
                                      license=License.objects.last(),
                                      description=description if description is not None else '',
                                      pack=pack,

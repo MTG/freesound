@@ -24,7 +24,7 @@ Licenses in this {{type}} (see below for individual sound licenses)
 Sounds in this {{type}}
 -------------------
 
-{% for sound in sound_list %}  * {{sound.base_filename_slug}}.{{sound.type}}
+{% for sound in sound_list %}  * {{sound.friendly_filename}}.{{sound.type}}
     * url: {% absurl 'short-sound-link' sound.id %}
     * license: {{sound.license}}
 {% endfor %}

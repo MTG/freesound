@@ -45,7 +45,7 @@ class LicenseAdmin(admin.ModelAdmin):
 @admin.register(Sound)
 class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     fieldsets = ((None, {'fields': ('user', 'num_downloads' )}),
-                 ('Filenames', {'fields': ('base_filename_slug',)}),
+                 ('Filenames', {'fields': ('get_filename',)}),
                  ('User defined fields', {'fields': ('description', 'license', 'original_filename', 'sources', 'pack')}),
                  ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate',
                                                  'filesize', 'channels', 'date_recorded')}),
@@ -94,6 +94,9 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
                 sound.process(force=True, high_priority=True)
             messages.add_message(request, messages.INFO,
                                  f'{queryset_or_object.count()} sounds were send to re-process.')
+
+    def get_filename(self, obj):
+        return obj.friendly_filename()
 
     reprocess_sound.label = 'Re-process sound'
 
@@ -191,7 +194,7 @@ class FlagAdmin(admin.ModelAdmin):
     )
     def sound_link(self, obj):
         return mark_safe('<a href="{}" target="_blank">{}</a>'.format(reverse('short-sound-link', args=[obj.sound_id]),
-                                                              truncatechars(obj.sound.base_filename_slug, 50)))
+                                                              truncatechars(obj.sound.friendly_filename(), 50)))
 
     def reason_summary(self, obj):
         reason_no_newlines = obj.reason.replace('\n', '|')

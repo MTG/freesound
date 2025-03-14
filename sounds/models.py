@@ -607,10 +607,6 @@ class Sound(models.Model):
     # "path" or "sound_path"
     original_path = models.CharField(max_length=512, null=True, blank=True, default=None)
 
-    # "base_filename_slug" is a slugified version of the original filename, set at upload time. This is used
-    # to create the friendly filename when downloading the sound and once set is never changed.
-    base_filename_slug = models.CharField(max_length=512, null=True, blank=True, default=None)
-
     # user defined fields
     description = models.TextField()
     date_recorded = models.DateField(null=True, blank=True, default=None)
@@ -687,7 +683,10 @@ class Sound(models.Model):
     public = PublicSoundManager()
 
     def __str__(self):
-        return self.base_filename_slug
+        if self.id:
+            return self.friendly_filename()
+        else:
+            return f"Unsaved sound: {self.original_filename}"
 
     @staticmethod
     def is_sound():

@@ -241,7 +241,7 @@ class ProfileNumSoundsTestCase(TestCase):
 
         # Check this elements are in the json saved on DeletedSound
         keys = ['num_ratings', 'duration', 'id', 'geotag_id', 'comments',
-                'base_filename_slug', 'num_downloads', 'md5', 'description',
+                'num_downloads', 'md5', 'description',
                 'original_path', 'pack_id', 'license', 'created',
                 'original_filename', 'geotag']
 

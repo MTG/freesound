@@ -31,14 +31,17 @@
     <div class="v-spacing-4">
         {% if bookmarks %}
             <div class="v-spacing-4 text-grey">
-            {% bw_icon 'bookmark-filled' %}This sound is already in your bookmarks{% if not categories_aready_containing_sound %} under no category{% endif %}
-            {% if categories_aready_containing_sound %}
-                under the categories:
-                {% if sound_has_bookmark_without_category %}
-                    <span class="text-black">Uncategorized</span>, 
-                {% endif %}
-                {% for cat in categories_aready_containing_sound %}
-                    <span class="text-black">{{cat.name}}</span>{% if not forloop.last %}, {% endif %}
+            {% bw_icon 'bookmark-filled' %}This sound is already in your bookmarks
+            {% if bookmark_without_category %}
+                under:
+                {% for bookmark in bookmarks %}
+                    <div class="bookmark-category">
+                        <span class="text-black">{{bookmark.category_name_or_uncategorized}}</span>
+                        <form action="{% url 'delete-bookmark' bookmark.id %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-small btn-secondary">Remove</button>
+                        </form>
+                    </div>
                 {% endfor %}
             {% endif %}
             </div>

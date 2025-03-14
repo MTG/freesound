@@ -42,11 +42,6 @@ class UserMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea)
 
 
-class AnonymousMessageForm(forms.Form):
-    message = HtmlCleaningCharField(widget=forms.Textarea)
-    recaptcha = ReCaptchaField(label="")
-
-
 # Sound moderation forms
 MODERATION_CHOICES = [(x, x) for x in
                       ['Approve',

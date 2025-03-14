@@ -111,7 +111,7 @@ def search_view_helper(request):
                 # Add URLs to "more from this pack" in the result object so these are easily accessible in the template
                 for d in docs:
                     if d.get("n_more_in_group") and d["sound"].pack_id is not None:
-                        d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'grouping_pack:"{d["sound"].pack_id}_{d["sound"].pack_name}"'])
+                        d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'grouping_pack:"{d["sound"].pack_id}_{d["sound"].pack.name}"'])
             else:
                 resultspackids = []
                 sound_ids_for_pack_id = {}

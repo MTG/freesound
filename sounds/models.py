@@ -1822,12 +1822,13 @@ class Pack(models.Model):
     def num_ratings(self):
         # The number of ratings for a pack is the number of sounds that have >= 3 ratings
         if hasattr(self, 'num_ratings_precomputed'):
+            # Comes from the bulk_query_id method in PackManager
             return self.num_ratings_precomputed
         else:
-            return Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS)
+            return self.sounds.filter(num_ratings__gte=settings.MIN_NUMBER_RATINGS).count()
 
     def get_total_pack_sounds_length(self):
-        result = Sound.objects.filter(pack=self).aggregate(total_duration=Sum('duration'))
+        result = self.sounds.aggregate(total_duration=Sum('duration'))
         return result['total_duration'] or 0
 
     def num_sounds_unpublished(self):
@@ -1841,7 +1842,7 @@ class Pack(models.Model):
         if hasattr(self, 'licenses_data_precomputed'):
             return self.licenses_data_precomputed  # If precomputed from PackManager.bulk_query_id method
         else:
-            licenses_data = list(Sound.objects.select_related('license').filter(pack=self).values_list('license__name', 'license_id'))
+            licenses_data = list(self.sounds.select_related('license').values_list('license__name', 'license_id'))
             license_ids = [lid for _, lid in licenses_data]
             license_names = [lname for lname, _ in licenses_data]
             return license_ids, license_names
@@ -1887,8 +1888,8 @@ class Pack(models.Model):
         if hasattr(self, "has_geotags_precomputed"):
             return self.has_geotags_precomputed
         else:
-            return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
-        
+            return self.sounds.exclude(geotag=None).exists()
+
     @property
     def should_display_small_icons_in_second_line(self):
         # See same method in Sound class more more information

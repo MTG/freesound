@@ -30,7 +30,7 @@ class Page(models.Model):
         return self.name
 
     def content(self):
-        return Content.objects.filter(page=self).latest()
+        return self.content_set.latest()
 
     def get_absolute_url(self):
         return reverse("wiki-page", args=[smart_str(self.name)])

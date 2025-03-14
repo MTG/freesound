@@ -146,13 +146,12 @@ class Thread(models.Model):
         return Subscription.objects.filter(thread=self, subscriber=user, is_active=True).exists()
 
     def get_most_relevant_commenters_info_for_avatars(self):
-        author_ids = Post.objects.filter(thread=self, moderation_state="OK").values_list('author__id', flat=True)
-        num_distinct_authors = len(set(author_ids))
-        most_common_author_ids = [uid for (uid, _) in Counter(author_ids).most_common(6)]
-        users_data = User.objects.select_related('profile').filter(id__in=most_common_author_ids)
+        thread_authors = [p.author for p in self.post_set.all()]
+        most_common_authors = [author for author, _ in Counter(thread_authors).most_common(6)]
+        num_distinct_authors = len(set([a.id for a in thread_authors]))
         info_to_return = {
-            'common_commenters': [(user.profile.locations('avatar.S.url'), user.username) for user in users_data],
-            'num_extra_commenters': num_distinct_authors - len(most_common_author_ids)
+            'common_commenters': [(author.profile.locations('avatar.S.url'), author.username) for author in most_common_authors],
+            'num_extra_commenters': num_distinct_authors - len(most_common_authors)
         }
         return info_to_return
 

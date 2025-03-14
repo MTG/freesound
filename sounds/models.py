@@ -977,8 +977,9 @@ class Sound(models.Model):
                 tagged_item.delete()
 
         # add tags that are not there yet
+        current_tags = set([t.name for t in self.tags.all()])
         for tag in tags:
-            if self.tags.filter(name=tag).count() == 0:
+            if tag not in current_tags:
                 (tag_object, created) = Tag.objects.get_or_create(name=tag)
                 tagged_object = SoundTag.objects.create(user=self.user, tag=tag_object, sound=self)
                 tagged_object.save()

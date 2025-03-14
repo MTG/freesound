@@ -512,7 +512,7 @@ class SoundComments(ListAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        return Comment.objects.filter(sound_id=self.kwargs['pk'])
+        return Comment.objects.filter(sound_id=self.kwargs['pk']).select_related('user')
 
 
 class DownloadSound(DownloadAPIView):
@@ -578,7 +578,7 @@ class UserInstance(RetrieveAPIView):
 
     lookup_field = "username"
     serializer_class = UserSerializer
-    queryset = User.objects.filter(is_active=True)
+    queryset = User.objects.filter(is_active=True).select_related('profile')
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message(f"user:{self.kwargs['username']} instance"))

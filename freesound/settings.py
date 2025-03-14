@@ -776,7 +776,8 @@ OAUTH2_PROVIDER = {
     'OAUTH2_VALIDATOR_CLASS': 'apiv2.oauth2_validators.OAuth2Validator',
     'REQUEST_APPROVAL_PROMPT': 'auto',
     'CLIENT_ID_GENERATOR_CLASS': 'apiv2.apiv2_utils.FsClientIdGenerator',
-    'PKCE_REQUIRED': False
+    'PKCE_REQUIRED': False,
+    'APPLICATION_ADMIN_CLASS': 'apiv2.oauth2_admin.ApplicationAdmin'
 }
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 

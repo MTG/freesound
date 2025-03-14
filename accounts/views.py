@@ -1059,7 +1059,7 @@ def compute_charts_stats():
         .values('user_id').annotate(n_sounds=Count('user_id')) \
         .order_by('-n_sounds')[0:num_items]
     user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_count])}
+                    User.objects.select_related("profile").filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_count])}
     top_recent_uploaders_by_count_display = [
         (user_objects[item['user_id']].profile.locations("avatar.M.url"),
          user_objects[item['user_id']].username,
@@ -1070,7 +1070,7 @@ def compute_charts_stats():
          .values('user_id').annotate(total_duration=Sum('duration')) \
          .order_by('-total_duration')[0:num_items]
     user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_length])}
+                    User.objects.select_related("profile").filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_length])}
     top_recent_uploaders_by_length_display = [
         (user_objects[item['user_id']].profile.locations("avatar.M.url"),
          user_objects[item['user_id']].username,
@@ -1081,7 +1081,7 @@ def compute_charts_stats():
         .values('user_id').annotate(n_sounds=Count('user_id')) \
         .order_by('-n_sounds')[0:num_items]
     user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_count])}
+                    User.objects.select_related("profile").filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_count])}
     all_time_top_uploaders_by_count_display = [
         (user_objects[item['user_id']].profile.locations("avatar.M.url"),
          user_objects[item['user_id']].username,
@@ -1091,7 +1091,7 @@ def compute_charts_stats():
          .values('user_id').annotate(total_duration=Sum('duration')) \
          .order_by('-total_duration')[0:num_items]
     user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_length])}
+                    User.objects.select_related("profile").filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_length])}
     all_time_top_uploaders_by_length_display = [
         (user_objects[item['user_id']].profile.locations("avatar.M.url"),
          user_objects[item['user_id']].username,

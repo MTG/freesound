@@ -601,6 +601,7 @@ def moderation_assigned(request, user_id):
         msg_form = ModerationMessageForm()
 
     qs = Ticket.objects.select_related('sound', 'sender') \
+                       .prefetch_related('messages', 'messages__sender') \
                        .filter(assignee=user_id) \
                        .exclude(status=TICKET_STATUS_CLOSED) \
                        .exclude(sound=None) \

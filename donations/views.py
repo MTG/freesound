@@ -255,6 +255,11 @@ class DonationsList(ListView):
     paginate_by = settings.DONATIONS_PER_PAGE
     ordering = ["-created"]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = qs.select_related('user', 'user__profile')
+        return qs
+
 
 def donate_redirect(request):
     return HttpResponseRedirect(reverse('donate'))

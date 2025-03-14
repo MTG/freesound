@@ -29,6 +29,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from geotags.models import GeoTag
 import utils.downloads
 from donations.models import Donation, DonationsModalSettings
 from sounds.models import Sound, Pack, License, Download
@@ -429,7 +430,9 @@ class BulkDescribeUtils(TestCase):
         self.assertEqual(sound1.pack.name, 'ambient')  # Check sound has pack and name of pack is 'ambient'
         sound2 = Sound.objects.get(user=user, original_filename='file5.wav')  # Get last correct sound
         sound2_id = sound2.id  # This is used in a test below
-        self.assertIsNone(sound2.geotag)  # Check sound has no geotag
+        with self.assertRaises(GeoTag.DoesNotExist):
+            # sound has no geotag
+            assert sound2.geotag
         self.assertIsNone(sound2.pack)  # Check sound has no pack
 
         # Run again using 'force_import' and sounds won't be created because sounds already exist and md5 check fails

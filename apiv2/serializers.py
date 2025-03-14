@@ -278,7 +278,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     geotag = serializers.SerializerMethodField()
     def get_geotag(self, obj):
-        if obj.geotag:
+        if hasattr(obj, 'geotag'):
             return str(obj.geotag.lat) + " " + str(obj.geotag.lon)
         else:
             return None

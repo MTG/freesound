@@ -39,6 +39,7 @@ import accounts
 from accounts.models import EmailPreferenceType
 from comments.models import Comment
 from general.templatetags.filter_img import replace_img
+from geotags.models import GeoTag
 from sounds.forms import PackForm
 from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis, Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
@@ -232,6 +233,8 @@ class ProfileNumSoundsTestCase(TestCase):
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
+        GeoTag.objects.create(sound=sound, lat=45.8498, lon=-62.6879, zoom=9)
+
         sound_id = sound.id
         sound.delete()
         delete_sounds_from_search_engine.assert_called_once_with([sound_id])
@@ -240,14 +243,15 @@ class ProfileNumSoundsTestCase(TestCase):
         ds = DeletedSound.objects.get(sound_id=sound_id)
 
         # Check this elements are in the json saved on DeletedSound
-        keys = ['num_ratings', 'duration', 'id', 'geotag_id', 'comments',
+        keys = ['num_ratings', 'duration', 'id', 'comments',
                 'num_downloads', 'md5', 'description',
                 'original_path', 'pack_id', 'license', 'created',
                 'original_filename', 'geotag']
 
         json_data = list(ds.data.keys())
         for k in keys:
-            self.assertTrue(k in json_data)
+            self.assertTrue(k in json_data, f"{k} not in data")
+        self.assertEqual(ds.data['geotag']['lat'], 45.8498)
 
     def test_pack_delete(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
@@ -278,13 +282,13 @@ class SoundViewsTestCase(TestCase):
         _, _, sounds_other_user = create_user_and_sounds(num_sounds=1, username="testuser4")
 
         # Try to delete a sound not owned by the request user (should return 200 but not delete the sound)
-        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']), 
+        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']),
             {"delete_confirm": "delete_confirm", "object-ids": [sounds_other_user[0].id]})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(Sound.objects.filter(id=sounds_other_user[0].id).count(), 1)
 
         # Try to delete a sound owned the user (should delete sound)
-        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']), 
+        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']),
             {"delete_confirm": "delete_confirm", "object-ids": [sound.id]}, follow=True)
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 0)
         self.assertEqual(resp.status_code, 200)
@@ -561,7 +565,7 @@ class SoundTemplateCacheTests(TestCase):
     def _get_sound_view_cache_keys(self):
         return ([get_template_cache_key('bw_sound_page', self.sound.id),
                  get_template_cache_key('bw_sound_page_sidebar', self.sound.id)])
-    
+
     def _get_sound_view_footer_top_cache_keys(self):
         return [get_template_cache_key('bw_sound_page', self.sound.id)]
 
@@ -590,7 +594,7 @@ class SoundTemplateCacheTests(TestCase):
         print(cache_keys)
 
     def test_update_description(self):
-        
+
         cache_keys = self._get_sound_view_cache_keys()
         self._assertCacheAbsent(cache_keys)
 
@@ -794,7 +798,8 @@ class SoundTemplateCacheTests(TestCase):
 
         self.client.force_login(self.user)
 
-        self.assertIsNone(self.sound.geotag)
+        with self.assertRaises(GeoTag.DoesNotExist):
+            assert self.sound.geotag
         self.assertNotContains(request_func(user) if user is not None else request_func() if user is not None else request_func(), text)
         self._assertCachePresent(cache_keys)
 
@@ -832,7 +837,8 @@ class SoundTemplateCacheTests(TestCase):
 
         # Check geotag icon being absent
         self.sound.refresh_from_db()
-        self.assertIsNone(self.sound.geotag)
+        with self.assertRaises(GeoTag.DoesNotExist):
+            assert self.sound.geotag
         self.assertNotContains(request_func(user) if user is not None else request_func(), text)
 
     def test_add_remove_geotag_display(self):
@@ -1083,9 +1089,9 @@ class SoundEditTestCase(TestCase):
         self.sound.change_processing_state("OK")
         self.sound.change_moderation_state("OK")
         self.user = user
-    
+
     def test_update_description(self):
-        
+
         self.client.force_login(self.user)
         new_description = 'New description'
         new_name = 'New name'

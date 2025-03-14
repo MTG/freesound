@@ -513,7 +513,6 @@ class Sound(models.Model):
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
     tags = models.ManyToManyField(Tag, through=SoundTag)
-    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # fields for specifying if the sound was uploaded via API or via bulk upload process (or none)
     uploaded_with_apiv2_client = models.ForeignKey(
@@ -788,7 +787,7 @@ class Sound(models.Model):
         icons_count = 1
         if self.pack_id:
             icons_count += 1
-        if self.geotag_id:
+        if hasattr(self, 'geotag'):
             icons_count += 1
         if self.num_downloads:
             icons_count +=2  # Counts double as it takes more width
@@ -1405,7 +1404,7 @@ def on_delete_sound(sender, instance, **kwargs):
     data['pack'] = pack
 
     geotag = None
-    if instance.geotag:
+    if hasattr(instance, 'geotag'):
         geotag = list(GeoTag.objects.filter(pk=instance.geotag.pk).values())[0]
     data['geotag'] = geotag
 
@@ -1430,16 +1429,13 @@ def on_delete_sound(sender, instance, **kwargs):
         tag['created'] = str(tag['created'])
     for comment in data['comments']:
         comment['created'] = str(comment['created'])
-    if instance.geotag:
+    if hasattr(instance, 'geotag'):
         geotag['created'] = str(geotag['created'])
     ds.data = data
     ds.save()
 
-    try:
-        if instance.geotag:
-            instance.geotag.delete()
-    except:
-        pass
+    if hasattr(instance, 'geotag'):
+        instance.geotag.delete()
 
     instance.delete_from_indexes()
     instance.unlink_moderation_ticket()
@@ -1479,9 +1475,10 @@ class PackManager(models.Manager):
         if not isinstance(pack_ids, list):
             pack_ids = [pack_ids]
         packs = Pack.objects.prefetch_related(
-            Prefetch('sounds', queryset=Sound.public.select_related('license').order_by('-created')),
+            Prefetch('sounds', queryset=Sound.public.select_related('license', 'geotag').order_by('-created')),
             Prefetch('sounds__tags'),
-        ).select_related('user').select_related('user__profile').filter(id__in=pack_ids)
+            Prefetch('sounds__license'),
+        ).select_related('user', 'user__profile').filter(id__in=pack_ids)
         if exclude_deleted:
             packs = packs.exclude(is_deleted=True)
         num_sounds_selected_per_pack = 3
@@ -1497,7 +1494,7 @@ class PackManager(models.Manager):
                 licenses.append((s.license.name, s.license.id))
                 if s.num_ratings >= settings.MIN_NUMBER_RATINGS:
                     ratings.append(s.avg_rating)
-                if not has_geotags and s.geotag_id is not None:
+                if not has_geotags and hasattr(s, 'geotag'):
                     has_geotags = True
                 should_add_sound_to_selected_sounds = False
                 if sound_ids_pre_selected is None:

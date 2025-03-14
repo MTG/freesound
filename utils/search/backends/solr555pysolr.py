@@ -210,7 +210,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             document["grouping_pack"] = str(getattr(sound, "id"))
 
         document["is_geotagged"] = False
-        if sound.geotag:
+        if hasattr(sound, "geotag"):
             document["is_geotagged"] = True
             if not math.isnan(sound.geotag.lon) and not math.isnan(sound.geotag.lat):
                 document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)

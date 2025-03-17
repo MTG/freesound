@@ -1,3 +1,4 @@
+@use "sass:list";
 input.bw-checkbox {
   display: none;
 }
@@ -31,7 +32,7 @@ input.bw-checkbox {
 
   ul.bw-checkbox li {
     list-style: none;
-    margin-bottom: nth($spacing-values-list, 1);
+    margin-bottom: list.nth($spacing-values-list, 1);
   }
 }
 

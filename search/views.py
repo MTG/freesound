@@ -67,7 +67,7 @@ def search_view_helper(request):
     open_in_map_url = None
     map_mode_query_results_cache_key = None
     map_bytearray_url = ''
-    if sqp.map_mode:
+    if sqp.map_mode_active():
         current_query_params = request.get_full_path().split("?")[-1]
         open_in_map_url = reverse('geotags-query') + f'?{current_query_params}'
         map_mode_query_results_cache_key = f'map-query-results-{create_hash(current_query_params, 10)}'

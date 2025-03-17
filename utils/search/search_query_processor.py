@@ -57,111 +57,128 @@ class SearchQueryProcessor:
     """
     request = None
     errors = ''
-
-    query = SearchOptionStr(
-        advanced=False,
-        query_param_name='q',
-        should_be_disabled=lambda option: bool(option.sqp.get_option_value_to_apply('similar_to')))
-    sort_by = SearchOptionChoice(
-        advanced=False,
-        query_param_name='s',
-        label='Sort',
-        choices = [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
-        should_be_disabled = lambda option: bool(option.sqp.get_option_value_to_apply('similar_to')),
-        get_default_value = lambda option: settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST if option.sqp.get_option_value_to_apply('query') == '' else settings.SEARCH_SOUNDS_SORT_DEFAULT)
-    page = SearchOptionInt(
-        advanced=False,
-        query_param_name='page',
-        value_default=1,
-        get_value_to_apply = lambda option: 1 if option.sqp.get_option_value_to_apply('map_mode') else option.value)
-    search_in = SearchOptionMultipleChoice(
-        query_param_name_prefix='si',
-        label='Search in',
-        value_default=[],
-        choices = [
-            (settings.SEARCH_SOUNDS_FIELD_TAGS, 'Tags'),
-            (settings.SEARCH_SOUNDS_FIELD_NAME, 'Sound name'),
-            (settings.SEARCH_SOUNDS_FIELD_DESCRIPTION, 'Description'),
-            (settings.SEARCH_SOUNDS_FIELD_PACK_NAME, 'Pack name'),
-            (settings.SEARCH_SOUNDS_FIELD_ID, 'Sound ID'),
-            (settings.SEARCH_SOUNDS_FIELD_USER_NAME, 'Username')],
-        should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('tags_mode') or bool(option.sqp.get_option_value_to_apply('similar_to')))
-    duration = SearchOptionRange(
-        query_param_min='d0',
-        query_param_max='d1',
-        search_engine_field_name = 'duration',
-        label = 'Duration',
-        value_default=['0', '*'])
-    is_geotagged = SearchOptionBool(
-        query_param_name='ig',
-        search_engine_field_name='is_geotagged',
-        label='Only geotagged sounds',
-        help_text='Only find sounds that have geolocation information',
-        should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('map_mode'),
-        get_value_to_apply = lambda option: True if option.sqp.get_option_value_to_apply('map_mode') else option.value)
-    is_remix = SearchOptionBool(
-        query_param_name='r',
-        search_engine_field_name='in_remix_group',
-        label='Only remix sounds',
-        help_text='Only find sounds that are a remix of other sounds or have been remixed')
-    group_by_pack = SearchOptionBool(
-        query_param_name='g',
-        label='Group sounds by pack',
-        help_text='Group search results so that multiple sounds of the same pack only represent one item',
-        value_default=True,
-        get_value_to_apply = _get_value_to_apply_group_by_pack,
-        should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('display_as_packs') or option.sqp.get_option_value_to_apply('map_mode'))
-    display_as_packs = SearchOptionBool(
-        advanced=False,
-        query_param_name='dp',
-        label='Display results as packs',
-        help_text='Display search results as packs rather than individual sounds',
-        get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('grouping_pack') else option.value,
-        should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode'))
-    grid_mode = SearchOptionBool(
-        advanced=False,
-        query_param_name='cm',
-        label='Display results in grid',
-        help_text='Display search results in a grid so that more sounds are visible per search results page',
-        get_default_value = lambda option: option.request.user.profile.use_compact_mode if option.request.user.is_authenticated else False,
-        should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('map_mode'))
-    map_mode = SearchOptionBool(
-        advanced=False,
-        query_param_name='mm',
-        label='Display results in map',
-        help_text='Display search results in a map')
-    tags_mode = SearchOptionBoolElementInPath(
-        advanced=False,
-        element_in_path='/browse/tags/')
-    similar_to = SearchOptionStr(
-        query_param_name='st',
-        label='Similarity target',
-        placeholder='Sound ID')
-    compute_clusters = SearchOptionBool(
-        query_param_name='cc',
-        label='Cluster results by sound similarity')
-    cluster_id = SearchOptionInt(
-        advanced=False,
-        query_param_name='cid',
-        get_value_to_apply = lambda option: -1 if not option.sqp.get_option_value_to_apply('compute_clusters') else option.value)
-    similarity_space = SearchOptionChoice(
-        query_param_name='ss',
-        label='Similarity space',
-        choices = [(option, option) for option in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS.keys()],
-        get_default_value = lambda option: settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER)
-    field_weights = SearchOptionFieldWeights(
-        query_param_name = 'w'
-    )
-    include_audio_problems = SearchOptionBoolFilterInverted(
-        query_param_name='eap',
-        search_engine_field_name= 'has_audio_problems',
-        label='Exclude sounds with potential audio problems'
-    )
-    single_event = SearchOptionBool(
-        query_param_name='se',
-        search_engine_field_name= 'ac_single_event',
-        label='Only include "single event" sounds',
-    )
+    option_definitions = [
+        ('query', SearchOptionStr, dict(
+            advanced=False,
+            query_param_name='q',
+            should_be_disabled=lambda option: bool(option.sqp.get_option_value_to_apply('similar_to'))
+        )),
+        ('sort_by', SearchOptionChoice, dict(
+            advanced=False,
+            query_param_name='s',
+            label='Sort',
+            choices = [(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
+            should_be_disabled = lambda option: bool(option.sqp.get_option_value_to_apply('similar_to')),
+            get_default_value = lambda option: settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST if option.sqp.get_option_value_to_apply('query') == '' else settings.SEARCH_SOUNDS_SORT_DEFAULT
+        )),
+        ('page', SearchOptionInt, dict(
+            advanced=False,
+            query_param_name='page',
+            value_default=1,
+            get_value_to_apply = lambda option: 1 if option.sqp.get_option_value_to_apply('map_mode') else option.value
+        )),
+        ('search_in', SearchOptionMultipleChoice, dict(
+            query_param_name_prefix='si',
+            label='Search in',
+            value_default=[],
+            choices = [
+                (settings.SEARCH_SOUNDS_FIELD_TAGS, 'Tags'),
+                (settings.SEARCH_SOUNDS_FIELD_NAME, 'Sound name'),
+                (settings.SEARCH_SOUNDS_FIELD_DESCRIPTION, 'Description'),
+                (settings.SEARCH_SOUNDS_FIELD_PACK_NAME, 'Pack name'),
+                (settings.SEARCH_SOUNDS_FIELD_ID, 'Sound ID'),
+                (settings.SEARCH_SOUNDS_FIELD_USER_NAME, 'Username')],
+            should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('tags_mode') or bool(option.sqp.get_option_value_to_apply('similar_to'))
+        )),
+        ('duration', SearchOptionRange, dict(
+            query_param_min='d0',
+            query_param_max='d1',
+            search_engine_field_name = 'duration',
+            label = 'Duration',
+            value_default=['0', '*']
+        )),
+        ('is_geotagged', SearchOptionBool, dict(
+            query_param_name='ig',
+            search_engine_field_name='is_geotagged',
+            label='Only geotagged sounds',
+            help_text='Only find sounds that have geolocation information',
+            should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('map_mode'),
+            get_value_to_apply = lambda option: True if option.sqp.get_option_value_to_apply('map_mode') else option.value
+        )),
+        ('is_remix', SearchOptionBool, dict(
+            query_param_name='r',
+            search_engine_field_name='in_remix_group',
+            label='Only remix sounds',
+            help_text='Only find sounds that are a remix of other sounds or have been remixed'
+        )),
+        ('group_by_pack', SearchOptionBool, dict(
+            query_param_name='g',
+            label='Group sounds by pack',
+            help_text='Group search results so that multiple sounds of the same pack only represent one item',
+            value_default=True,
+            get_value_to_apply = _get_value_to_apply_group_by_pack,
+            should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('display_as_packs') or option.sqp.get_option_value_to_apply('map_mode')
+        )),
+        ('display_as_packs', SearchOptionBool, dict(
+            advanced=False,
+            query_param_name='dp',
+            label='Display results as packs',
+            help_text='Display search results as packs rather than individual sounds',
+            get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('grouping_pack') else option.value,
+            should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode')
+        )),
+        ('grid_mode', SearchOptionBool, dict(
+            advanced=False,
+            query_param_name='cm',
+            label='Display results in grid',
+            help_text='Display search results in a grid so that more sounds are visible per search results page',
+            get_default_value = lambda option: option.request.user.profile.use_compact_mode if option.request.user.is_authenticated else False,
+            should_be_disabled = lambda option: option.sqp.get_option_value_to_apply('map_mode')
+        )),
+        ('map_mode', SearchOptionBool, dict(
+            advanced=False,
+            query_param_name='mm',
+            label='Display results in map',
+            help_text='Display search results in a map'
+        )),
+        ('tags_mode', SearchOptionBoolElementInPath, dict(
+            advanced=False,
+            element_in_path='/browse/tags/'
+        )),
+        ('similar_to', SearchOptionStr, dict(
+            query_param_name='st',
+            label='Similarity target',
+            placeholder='Sound ID'
+        )),
+        ('compute_clusters', SearchOptionBool, dict(
+            query_param_name='cc',
+            label='Cluster results by sound similarity'
+        )),
+        ('cluster_id', SearchOptionInt, dict(
+            advanced=False,
+            query_param_name='cid',
+            get_value_to_apply = lambda option: -1 if not option.sqp.get_option_value_to_apply('compute_clusters') else option.value
+        )),
+        ('similarity_space', SearchOptionChoice, dict(
+            query_param_name='ss',
+            label='Similarity space',
+            choices = [(option, option) for option in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS.keys()],
+            get_default_value = lambda option: settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER
+        )),
+        ('field_weights', SearchOptionFieldWeights, dict(
+            query_param_name = 'w'
+        )),
+        ('include_audio_problems', SearchOptionBoolFilterInverted, dict(
+            query_param_name='eap',
+            search_engine_field_name= 'has_audio_problems',
+            label='Exclude sounds with potential audio problems'
+        )),
+        ('single_event', SearchOptionBool, dict(
+            query_param_name='se',
+            search_engine_field_name= 'ac_single_event',
+            label='Only include "single event" sounds',
+        ))        
+    ]
 
     def __init__(self, request, facets=None):
         """Initializes the SearchQueryProcessor object by parsing data from the request and setting up search options.
@@ -183,15 +200,14 @@ class SearchQueryProcessor:
         if allow_beta_search_features(request):
             self.facets.update(settings.SEARCH_SOUNDS_BETA_FACETS)
 
-        # Put all SearchOption objects in a self.options dictionary so we can easily iterate them and we can access them through self.options attribute
-        # In this was SearchOption objects are accessible in a similar way as Django form fields are accessible in form objects
-        # NOTE: even though we add references to the SearchOption objects in the self.options dictionary, we don't actually remove these references from
-        # the SearchQueryProcessor "root". Ideally we should remove these references from the root object to avoid confusion.
+        # Iterate over option_definitions and instantiate corresponding SearchOption objectss in a self.options dictionary so we 
+        # can easily iterate and access options through self.options attribute. In this way SearchOption objects are accessible in 
+        # a similar way as Django form fields are accessible in form objects
         self.options = {}
-        for member in dir(self):
-            if isinstance(getattr(self, member), SearchOption):
-                self.options[member] = getattr(self, member)
-        
+        for option_name, option_class, option_kwargs in self.option_definitions:
+            option = option_class(**option_kwargs)
+            self.options[option_name] = option
+         
         # Get filter and parse it. Make sure it is iterable (even if it only has one element)
         self.f = urllib.parse.unquote(request.GET.get('f', '')).strip().lstrip()
         if self.f:
@@ -237,11 +253,11 @@ class SearchQueryProcessor:
 
         if values_to_update:
             self.request.GET = self.request.GET.copy()
-            if self.is_remix.search_engine_field_name in values_to_update:
+            if self.options['is_remix'].search_engine_field_name in values_to_update:
                 self.request.GET[self.options['is_remix'].query_param_name] = '1' if values_to_update[self.options['is_remix'].search_engine_field_name] else '0'
-            if self.is_geotagged.search_engine_field_name in values_to_update:
+            if self.options['is_geotagged'].search_engine_field_name in values_to_update:
                 self.request.GET[self.options['is_geotagged'].query_param_name] = '1' if values_to_update[self.options['is_geotagged'].search_engine_field_name] else '0'
-            if self.duration.search_engine_field_name in values_to_update:
+            if self.options['duration'].search_engine_field_name in values_to_update:
                 self.request.GET[self.options['duration'].query_param_min] = values_to_update[self.options['duration'].search_engine_field_name][0]
                 self.request.GET[self.options['duration'].query_param_max] = values_to_update[self.options['duration'].search_engine_field_name][1]
 

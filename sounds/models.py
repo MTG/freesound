@@ -1227,7 +1227,7 @@ class Sound(models.Model):
                         'analysis_folder': self.locations('analysis.base_path'), 'metadata':json.dumps({
                             'duration': self.duration,
                             'tags': self.get_sound_tags(),
-                            'geotag': [self.geotag.lat, self.geotag.lon] if self.geotag else None,
+                            'geotag': [self.geotag.lat, self.geotag.lon] if hasattr(self, 'geotag') else None,
                         })}, queue=analyzer)
             if verbose:
                 sounds_logger.info(f"Sending sound {self.id} to analyzer {analyzer}")
@@ -1261,10 +1261,12 @@ class Sound(models.Model):
         invalidate_template_cache("bw_sound_page_sidebar", self.id)
 
     def get_geotag_name(self):
-        name = self.geotag.location_name
-        if name:
-            return name
-        return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
+        if hasattr(self, 'geotag'):
+            name = self.geotag.location_name
+            if name:
+                return name
+            return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
+        return None
 
     @property
     def ready_for_similarity(self):

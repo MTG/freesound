@@ -46,7 +46,7 @@ def get_user_or_404(username):
 
 
 def get_parameter_user_or_404(request):
-    if request.parameter_user:
+    if request.parameter_user is None:
         raise Http404
     return request.parameter_user
 

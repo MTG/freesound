@@ -32,7 +32,7 @@ from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
 from utils.downloads import download_sounds
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username, raise_404_if_user_is_deleted
+from utils.username import redirect_if_old_username, get_parameter_user_or_404, raise_404_if_user_is_deleted
 
 
 @login_required
@@ -62,7 +62,7 @@ def bookmarks(request, category_id=None):
 @redirect_if_old_username
 @raise_404_if_user_is_deleted
 def bookmarks_for_user(request, username, category_id=None):
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     is_owner = request.user.is_authenticated and user == request.user
     if is_owner:
         # If accessing own bookmarks using the people/xx/bookmarks URL, redirect to the /home/bookmarks URL

@@ -45,6 +45,12 @@ def get_user_or_404(username):
     return user
 
 
+def get_parameter_user_or_404(request):
+    if request.parameter_user:
+        raise Http404
+    return request.parameter_user
+
+
 def redirect_if_old_username(func):
     """
     This is a decorator to return redirects when accessing a URL with the username in the pattern and that usernames
@@ -57,7 +63,7 @@ def redirect_if_old_username(func):
     def inner(request, *args, **kwargs):
         if hasattr(request, 'parameter_user'):
             # If request.parameter_user already exists because it was added by some other decorator, reuse it
-            user = request.parameter_user
+            user = request.parameter_user 
         else:
             # Otherwise get the corresponding user (considering OldUsernames) object or raise 404
             user = get_user_or_404(kwargs['username'])

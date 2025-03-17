@@ -207,7 +207,7 @@ def for_user(request, username):
     tvars = _get_geotags_query_params(request)
     tvars.update({  # Overwrite tag and username query params (if present)
         'tag': None,
-        'username': request.parameter_user.username,
+        'username': username,
         'pack': None,
         'sound': None,
         'url': reverse('geotags-for-user-barray', args=[username]),

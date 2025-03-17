@@ -34,7 +34,7 @@ from follow.models import FollowingQueryItem
 from follow.models import FollowingUserItem
 from utils.cache import invalidate_user_template_caches
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username, raise_404_if_user_is_deleted
+from utils.username import redirect_if_old_username, get_parameter_user_or_404, raise_404_if_user_is_deleted
 
 
 @redirect_if_old_username
@@ -46,7 +46,7 @@ def following_users(request, username):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?following=1')
 
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     following = follow_utils.get_users_following_qs(user)
     tvars = {
         'user': user
@@ -73,7 +73,7 @@ def followers(request, username):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?followers=1')
 
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     followers = follow_utils.get_users_followers_qs(user)
     tvars = {
         'user': user
@@ -100,7 +100,7 @@ def following_tags(request, username):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?followingTags=1')
 
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     following_tags = follow_utils.get_tags_following_qs(user)
     tvars = {
         'user': user,

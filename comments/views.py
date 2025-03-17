@@ -30,7 +30,7 @@ from django.urls import reverse
 from comments.models import Comment
 from sounds.models import Sound
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username, raise_404_if_user_is_deleted
+from utils.username import redirect_if_old_username, get_parameter_user_or_404, raise_404_if_user_is_deleted
 
 
 @login_required
@@ -61,7 +61,7 @@ def for_user(request, username):
         # If not loading as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?comments=1')
         
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     sounds = Sound.objects.filter(user=user)
     qs = Comment.objects.filter(sound__in=sounds).select_related("user", "user__profile",
                                                                  "sound__user", "sound__user__profile")
@@ -88,7 +88,7 @@ def by_user(request, username):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?comments_by=1')
     
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     qs = Comment.objects.filter(user=user).select_related("user", "user__profile",
                                                           "sound__user", "sound__user__profile")
     num_items_per_page = settings.COMMENTS_IN_MODAL_PER_PAGE
@@ -118,13 +118,15 @@ def for_sound(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
     
+    user = get_parameter_user_or_404(request)
+    
     qs = Comment.objects.filter(sound=sound).select_related("user", "user__profile",
                                                           "sound__user", "sound__user__profile")
     num_items_per_page = settings.SOUND_COMMENTS_PER_PAGE
     paginator = paginate(request, qs, num_items_per_page)
     tvars = {
         "sound": sound,
-        "user": request.parameter_user,
+        "user": user,
         "mode": "for_sound",
         "delete_next_url": reverse('sound', args=[username, sound_id]) + f'?page={paginator["current_page"]}#comments'
     }

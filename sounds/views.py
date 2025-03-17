@@ -74,7 +74,7 @@ from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsExce
     get_duration_from_processing_before_describe_files, \
     get_samplerate_from_processing_before_describe_files
 from utils.text import remove_control_chars
-from utils.username import redirect_if_old_username
+from utils.username import redirect_if_old_username, get_parameter_user_or_404
 
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
@@ -912,13 +912,13 @@ def pack_stats_section(request, username, pack_id):
 
 @redirect_if_old_username
 def packs_for_user(request, username):
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     return HttpResponseRedirect(user.profile.get_user_packs_in_search_url())
 
 
 @redirect_if_old_username
 def for_user(request, username):
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     return HttpResponseRedirect(user.profile.get_user_sounds_in_search_url())
     
 

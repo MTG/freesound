@@ -41,7 +41,7 @@ from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_
 from tickets.forms import UserMessageForm, ModeratorMessageForm, \
     SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
 from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
-from utils.username import redirect_if_old_username
+from utils.username import redirect_if_old_username, get_parameter_user_or_404
 from utils.pagination import paginate
 from wiki.models import Content, Page
 
@@ -675,7 +675,7 @@ def pending_tickets_per_user(request, username):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?pending_moderation=1')
     
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     tickets, _ = _get_pending_tickets_for_user(user, include_mod_messages=True)
     _add_sound_objects_to_tickets(tickets)
     mods = set()

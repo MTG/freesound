@@ -88,7 +88,7 @@ from utils.mirror_files import copy_avatar_to_mirror_locations, \
     copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations, \
     remove_empty_user_directory_from_mirror_locations
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username, raise_404_if_user_is_deleted
+from utils.username import redirect_if_old_username, get_parameter_user_or_404, raise_404_if_user_is_deleted
 
 sounds_logger = logging.getLogger('sounds')
 upload_logger = logging.getLogger('file_upload')
@@ -940,7 +940,7 @@ def downloaded_sounds(request, username):
     if not request.GET.get('ajax'):
         # If not loading as a modal, redirect to the account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_sounds=1')
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     qs = Download.objects.filter(user_id=user.id).order_by('-created')
     num_items_per_page = settings.DOWNLOADED_SOUNDS_PACKS_PER_PAGE
     paginator = paginate(request, qs, num_items_per_page, object_count=user.profile.num_sound_downloads)
@@ -966,7 +966,7 @@ def downloaded_packs(request, username):
     if not request.GET.get('ajax'):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_packs=1')
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     qs = PackDownload.objects.filter(user=user.id).order_by('-created')
     num_items_per_page = settings.DOWNLOADED_SOUNDS_PACKS_PER_PAGE
     paginator = paginate(request, qs, num_items_per_page, object_count=user.profile.num_pack_downloads)
@@ -1123,7 +1123,7 @@ def charts(request):
 
 @redirect_if_old_username
 def account(request, username):
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE_PROFILE_PACK_PAGE))
     following = follow_utils.get_users_following_qs(user)
     followers = follow_utils.get_users_followers_qs(user)
@@ -1180,7 +1180,7 @@ def account(request, username):
 def account_stats_section(request, username):
     if not request.GET.get('ajax'):
         raise Http404  # Only accessible via ajax
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     tvars = {
         'user': user,
         'user_stats': user.profile.get_stats_for_profile_page(),
@@ -1193,7 +1193,7 @@ def account_latest_packs_section(request, username):
     if not request.GET.get('ajax'):
         raise Http404  # Only accessible via ajax
     
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     tvars = {
         'user': user,
         # Note we don't pass latest packs data because it is requested from the template

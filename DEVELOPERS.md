@@ -91,7 +91,11 @@ To deal with these checks, we use the `utils.username.raise_404_if_user_is_delet
 `utils.username.redirect_if_old_username` decorators in view functions. The first one will try to find a user
 object (checking for old usernames as well) and if it can't find it or the user is marked as deleted, it will raise
 HTTP 404 error. The second one will try to find a user object (also considering old usernames) and do an HTTP redirect
-with an updated username if user was found in the old usernames table.
+with an updated username if user was found in the old usernames table. Note that when using this second decorator, a
+`parameter_user` property will be set to the request object so that the view can use the corresponding `User` object without
+doing an extra database query. In that case however, `request.parameter_user` can be `None` if no user exists. To that end,
+it is advisable to get the `parameter_user` object using a util function we provide, `user = get_parameter_user_or_404(request)`,
+which will raise 404 if the user does not exist.
 
 In general, we should use `utils.username.redirect_if_old_username` in **all public views** that have username
 in the URL path. For login-required views (using `@login_required` decorator) we are not supposed to use that decorator

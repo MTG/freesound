@@ -57,7 +57,7 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     list_filter = ('moderation_state', 'processing_state')
     ordering = ['id']
     search_fields = ('=id', '=user__username')
-    readonly_fields = ('num_downloads', )
+    readonly_fields = ('num_downloads', 'get_filename')
     actions = ('reprocess_sound', )
     change_actions = ('reprocess_sound', )
 
@@ -95,6 +95,10 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
             messages.add_message(request, messages.INFO,
                                  f'{queryset_or_object.count()} sounds were send to re-process.')
 
+
+    @admin.display(
+        description='Download filename'
+    )
     def get_filename(self, obj):
         return obj.friendly_filename()
 

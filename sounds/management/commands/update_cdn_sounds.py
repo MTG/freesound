@@ -34,8 +34,7 @@ console_logger = logging.getLogger('console')
 cache_cdn_map = caches["cdn_map"]
 cdn_host = 'fsweb@cdn.freesound.org'
 cdn_sounds_dir = '/home/fsweb/sounds'
-cdn_symlinks_dir = '/home/fsweb/symlinks'
-tmp_dest_sound_dir =  '/home/fsweb/tmp/'
+cdn_symlinks_dir = '/mnt/data/fsweb/symlinks'
 
 
 class Command(LoggingBaseCommand):

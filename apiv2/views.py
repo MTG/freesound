@@ -484,7 +484,7 @@ class SimilarSounds(GenericAPIView):
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyers's output if requested through the fields parameter
         needs_analyzers_output = get_needs_analyzers_output(similarity_sound_form.cleaned_data.get('fields', ''))
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
 
         sounds = []
         for i, sid in enumerate(ids):

@@ -201,8 +201,7 @@ class SearchQueryProcessor:
             self.facets.update(settings.SEARCH_SOUNDS_BETA_FACETS)
 
         # Iterate over option_definitions and instantiate corresponding SearchOption objectss in a self.options dictionary so we 
-        # can easily iterate and access options through self.options attribute. In this way SearchOption objects are accessible in 
-        # a similar way as Django form fields are accessible in form objects
+        # can easily iterate and access options through self.options attribute. 
         self.options = {}
         for option_name, option_class, option_kwargs in self.option_definitions:
             option = option_class(**option_kwargs)

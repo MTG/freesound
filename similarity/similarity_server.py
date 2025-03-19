@@ -105,7 +105,7 @@ class SimilarityServer(resource.Resource):
 
     def api_search(self, request, target_type=None, target=None, filter=None, preset=[DEFAULT_PRESET], metric_descriptor_names=None, num_results=[DEFAULT_NUMBER_OF_RESULTS], offset=[0], in_ids=None):
         '''
-        This function is used as an interface to all search-related gaia funcionalities we use in freesound.
+        This function is used as an interface to all search-related gaia functionalities we use in freesound.
         This function allows the definition of a query point that will be used by gaia as the target for the search (i.e.
         gaia will sort the results by similarity according to this point), and a filter to reduce the scope of the search.
 

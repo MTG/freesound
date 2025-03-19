@@ -40,7 +40,7 @@ class Command(BaseCommand):
             '-s', '--sleep',
             dest='sleep',
             default="0",
-            help='Time in (seconds) to sleep after each day of Downlaods processed.')
+            help='Time in (seconds) to sleep after each day of Downloads processed.')
         parser.add_argument(
             '-sd', '--start-date',
             dest='start_date',

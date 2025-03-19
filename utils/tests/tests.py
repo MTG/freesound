@@ -112,7 +112,7 @@ class ShouldSuggestDonationTest(TestCase):
 
     fixtures = ['licenses']
 
-    def test_should_suggest_donation_probabilty_1(self):
+    def test_should_suggest_donation_probability_1(self):
 
         # In this set of tests 'should_suggest_donation' should return True or False depending on the decided criteria
         # Probability is set to 1.0 to avoid randomness in the test
@@ -163,7 +163,7 @@ class ShouldSuggestDonationTest(TestCase):
             created=timezone.now())  # Change downloads date again to be recent (modal show be shown)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), True)
 
-    def test_should_suggest_donation_probabilty_0(self):
+    def test_should_suggest_donation_probability_0(self):
         # In this set of tests 'should_suggest_donation' should always return False as probability is set to 0.0
         donations_settings, _ = DonationsModalSettings.objects.get_or_create()
         donations_settings.display_probability = 0.0

@@ -83,16 +83,16 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
 
                 # count 3 most occurring tags
                 # we iterate with range(len(clusters)) to ensure that we get the right order when iterating through the dict
-                cluster_most_occuring_tags = [
+                cluster_most_occurring_tags = [
                     [tag for tag, _ in Counter(cluster_tags[cluster_id]).most_common(settings.NUM_TAGS_SHOWN_PER_CLUSTER)]
                     if cluster_tags[cluster_id] else []
                     for cluster_id in range(len(clusters))
                 ]
-                most_occuring_tags_formatted = [
-                    ' '.join(sorted(most_occuring_tags))
-                    for most_occuring_tags in cluster_most_occuring_tags
+                most_occurring_tags_formatted = [
+                    ' '.join(sorted(most_occurring_tags))
+                    for most_occurring_tags in cluster_most_occurring_tags
                 ]
-                results['cluster_names'] = most_occuring_tags_formatted
+                results['cluster_names'] = most_occurring_tags_formatted
 
                 # select sound examples for each cluster
                 sound_ids_examples_per_cluster = [

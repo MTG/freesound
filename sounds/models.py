@@ -948,7 +948,7 @@ class Sound(models.Model):
         Updates several fields of the Sound object which store some audio properties and saves to DB without
         updating other fields. This function is used in cases when two instances of the same Sound object could be
         edited by two processes in parallel and we want to avoid possible field overwrites.
-        :param int samplerate: saplerate to store
+        :param int samplerate: samplerate to store
         :param int bitrate: bitrate to store
         :param int bitdepth: bitdepth to store
         :param int channels: number of channels to store
@@ -1191,13 +1191,13 @@ class Sound(models.Model):
         NOTE: high_priority is not implemented and setting it has no effect
         """
         if force or ((self.processing_state != "OK" or self.processing_ongoing_state != "FI")
-                     and self.estimate_num_processing_attemps() <= 3):
+                     and self.estimate_num_processing_attempts() <= 3):
             self.set_processing_ongoing_state("QU")
             tasks.process_sound.apply_async(kwargs=dict(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays), countdown=countdown)
             sounds_logger.info(f"Send sound with id {self.id} to queue 'process'")
             return True
 
-    def estimate_num_processing_attemps(self):
+    def estimate_num_processing_attempts(self):
         # Estimates how many processing attempts have been made by looking at the processing logs
         if self.processing_log is not None:
             return max(1, self.processing_log.count('----Processed sound'))

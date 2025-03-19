@@ -62,19 +62,19 @@ def aNormalizedRankSum(candidate_tags, input_tags, options):
     candidate_tags.sort(key=operator.itemgetter('rank'))
     candidate_tags.reverse()
 
-    aggregated_candiate_tags = {}
+    aggregated_candidate_tags = {}
     for item in candidate_tags:
-        if item['name'] in aggregated_candiate_tags: # Item already there
-            aggregated_candiate_tags[item['name']] = (aggregated_candiate_tags[item['name']] + float(item['rank'])/(len(input_tags))) * factor
+        if item['name'] in aggregated_candidate_tags: # Item already there
+            aggregated_candidate_tags[item['name']] = (aggregated_candidate_tags[item['name']] + float(item['rank'])/(len(input_tags))) * factor
         else:
-            aggregated_candiate_tags[item['name']] = float(item['rank'])/(len(input_tags))
+            aggregated_candidate_tags[item['name']] = float(item['rank'])/(len(input_tags))
     aggregated_candiate_tags_list = []
-    for key in aggregated_candiate_tags.keys():
-        aggregated_candiate_tags_list.append({"name":key, "rank": aggregated_candiate_tags[key]})
+    for key in aggregated_candidate_tags.keys():
+        aggregated_candiate_tags_list.append({"name":key, "rank": aggregated_candidate_tags[key]})
     aggregated_candiate_tags_list.sort(key=operator.itemgetter('rank'))
     aggregated_candiate_tags_list.reverse()
 
-    return aggregated_candiate_tags, aggregated_candiate_tags_list
+    return aggregated_candidate_tags, aggregated_candiate_tags_list
 
 
 def sThreshold(aggregated_candiate_tags_list, aggregated_candiate_tags, input_tags, options, threshold = None):

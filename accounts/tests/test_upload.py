@@ -81,10 +81,10 @@ class UserUploadAndDescribeSounds(TestCase):
             'describe': 'describe',
             'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
-        sesison_key_prefix = resp.url.split('session=')[1]
-        self.assertRedirects(resp, reverse('accounts-describe-sounds') + f'?session={sesison_key_prefix}')
-        self.assertEqual(self.client.session[f'{sesison_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
-        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{sesison_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
+        session_key_prefix = resp.url.split('session=')[1]
+        self.assertRedirects(resp, reverse('accounts-describe-sounds') + f'?session={session_key_prefix}')
+        self.assertEqual(self.client.session[f'{session_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
+        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{session_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
         
         # Selecting multiple file redirects to /home/describe/license/
         sounds_to_describe_idx = [1, 2, 3]
@@ -92,10 +92,10 @@ class UserUploadAndDescribeSounds(TestCase):
             'describe': 'describe',
             'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
-        sesison_key_prefix = resp.url.split('session=')[1]
-        self.assertRedirects(resp, reverse('accounts-describe-license') + f'?session={sesison_key_prefix}')
-        self.assertEqual(self.client.session[f'{sesison_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
-        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{sesison_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
+        session_key_prefix = resp.url.split('session=')[1]
+        self.assertRedirects(resp, reverse('accounts-describe-license') + f'?session={session_key_prefix}')
+        self.assertEqual(self.client.session[f'{session_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
+        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{session_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
         
         # Selecting files to delete, deletes the files
         sounds_to_delete_idx = [1, 2, 3]

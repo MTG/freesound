@@ -1,5 +1,5 @@
 """
-This was copied directl from django, but a small hack was added to allow different configuration of
+This was copied directly from django, but a small hack was added to allow different configuration of
 markdown. It uses MARKDOWN_FILTER_SETTINGS from settings.py
 """
 

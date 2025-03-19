@@ -70,7 +70,7 @@ def parse_filter(filter_string, layout_descriptor_names):
         # As filtering in multidimensional descriptors is indicated by (example) feature.name.3 or feature.name.0, we
         # also check the existence of this feature name by removing the last number (and dot)
         if feature_name not in ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS and feature_name.split('[')[0] not in ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS:
-            return 'Filter error: At least one feature name does not match with any descirptor name in our database or the matched descriptor can not be used in a filter (' + str(feature_name) + '). '
+            return 'Filter error: At least one feature name does not match with any descriptor name in our database or the matched descriptor can not be used in a filter (' + str(feature_name) + '). '
 
         filter_struct.append({'feature':feature_name,'type':type_val,'value':right_part,'delimiter_position':current_pos,'id':len(filter_struct)+1})
 
@@ -235,7 +235,7 @@ def parse_target(target_string, layout_descriptor_names):
             feature_name = '.' + feature_name
 
         if feature_name not in ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS:
-            return 'Target error: At least one feature name does not match with any descirptor name in our database or the matched descriptor can not be used as target (' + str(feature_name) + '). '
+            return 'Target error: At least one feature name does not match with any descriptor name in our database or the matched descriptor can not be used as target (' + str(feature_name) + '). '
 
         # Right part
         next_space_pos = target_string.find(' ',current_pos + 1)

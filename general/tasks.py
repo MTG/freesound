@@ -390,8 +390,8 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
 
 @shared_task(name=PROCESS_BEFORE_DESCRIPTION_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def process_before_description(audio_file_path):
-    """Processes an uploaed sound file before the sound is described and saves generated previews
-    and wave/spectral images in a specfic directory so these can be served in the sound players
+    """Processes an uploaded sound file before the sound is described and saves generated previews
+    and wave/spectral images in a specific directory so these can be served in the sound players
     used in the description phase.
 
     Args:

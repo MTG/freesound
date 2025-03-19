@@ -29,7 +29,7 @@ from messages.views import get_previously_contacted_usernames, quote_message_for
 
 class RecaptchaPresenceInMessageForms(TestCase):
     """
-    Test whether the recapctha field should or should not be present in new message/reply message forms.
+    Test whether the recaptcha field should or should not be present in new message/reply message forms.
     """
 
     fixtures = ['licenses']

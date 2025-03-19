@@ -85,7 +85,7 @@ cache_cdn_map = caches["cdn_map"]
 def get_n_weeks_back_datetime(n_weeks):
     """
     Returns a datetime object set to a time `n_weeks` back from now.
-    If DEBUG=True, it is likely that the contents of the development databse have not been updated and no
+    If DEBUG=True, it is likely that the contents of the development database have not been updated and no
     activity will be registered for the last `n_weeks`. To compensate for that, when in DEBUG mode the returned
     date is calculated with respect to the date of the most recent sound stored in database. In this way it is
     more likely that the selected time range will include activity in database.
@@ -236,7 +236,7 @@ def sound(request, username, sound_id):
         if request.user.is_authenticated:
             if request.user.profile.is_blocked_for_spam_reports():
                 messages.add_message(request, messages.INFO, "You're not allowed to post the comment because your "
-                                                             "account has been temporaly blocked after multiple spam "
+                                                             "account has been temporarily blocked after multiple spam "
                                                              "reports")
             else:
                 if form.is_valid():
@@ -1034,7 +1034,7 @@ def display_sound_wrapper(request, username, sound_id):
 @xframe_options_exempt
 def embed_iframe(request, sound_id, player_size):
     """
-    This view returns an HTML player of `sound_id` which can be embeded in external sites.
+    This view returns an HTML player of `sound_id` which can be embedded in external sites.
     The player can take different "sizes" including:
 
         - 'mini': shows just a play button and a loop button. No background image.

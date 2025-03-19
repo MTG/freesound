@@ -60,7 +60,7 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(current_num_comments + 1, sound.num_comments)
         self.assertTrue(sound.is_index_dirty)
 
-    def test_email_notificaiton_on_send_email(self):
+    def test_email_notification_on_send_email(self):
         # Add a comment to a sound using the view and test that email was sent
         sound = Sound.objects.get(id=19)
         commenting_user = User.objects.get(id=2)
@@ -1005,7 +1005,7 @@ class SoundAnalysisModel(TestCase):
     def test_get_analysis(self):
         _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
-        analysis_data = {'descriptor1': 0.56, 'descirptor2': 1.45, 'descriptor3': 'label'}
+        analysis_data = {'descriptor1': 0.56, 'descriptor2': 1.45, 'descriptor3': 'label'}
 
         # Create one analysis object that stores the data in the model. Check that get_analysis returns correct data.
         sa = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor1", analysis_data=analysis_data,

@@ -391,6 +391,6 @@ class SearchQueryProcessorTests(TestCase):
         sqp, _ = self.run_fake_search_query_processor(params={'f': flt})
         self.assertEqual(sqp.as_query_params()['query_filter'], flt)
 
-        flt = 'license:"smapling+"'
+        flt = 'license:"sampling+"'
         sqp, _ = self.run_fake_search_query_processor(params={'f': flt})
         self.assertEqual(sqp.as_query_params()['query_filter'], flt)

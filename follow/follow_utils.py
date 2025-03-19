@@ -59,7 +59,7 @@ def is_user_following_tag(user, slash_tag):
     return FollowingQueryItem.objects.filter(user=user, query=slash_tag.replace("/", " ")).exists()
 
 
-def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
+def get_stream_sounds(user, time_lapse, num_results_per_group=3):
 
     search_engine = get_search_engine()
 
@@ -78,13 +78,13 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             query_filter=filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
-            num_sounds=num_results_per_grup,
+            num_sounds=num_results_per_group,
             group_by_pack=False,
         )
 
         if result.num_rows != 0:
 
-            more_count = max(0, result.num_found - num_results_per_grup)
+            more_count = max(0, result.num_found - num_results_per_group)
 
             # the sorting only works if done like this!
             more_url_params = [urllib.parse.quote(filter_str), urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
@@ -120,13 +120,13 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             query_filter=tag_filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
-            num_sounds=num_results_per_grup,
+            num_sounds=num_results_per_group,
             group_by_pack=False,
         )
 
         if result.num_rows != 0:
 
-            more_count = max(0, result.num_found - num_results_per_grup)
+            more_count = max(0, result.num_found - num_results_per_group)
 
             # the sorting only works if done like this!
             more_url_params = [urllib.parse.quote(tag_filter_str), urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]

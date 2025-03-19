@@ -33,7 +33,7 @@ console_logger = logging.getLogger("console")
 
 def parse_weights_parameter(weights_param):
     """param weights can be used to specify custom field weights with this format 
-    w=field_name1:integer_weight1,field_name2:integrer_weight2, eg: w=name:4,tags:1
+    w=field_name1:integer_weight1,field_name2:integer_weight2, eg: w=name:4,tags:1
     ideally, field names should any of those specified in settings.SEARCH_SOUNDS_FIELD_*
     so the search engine can implement ways to translate the "web names" to "search engine"
     names if needed.

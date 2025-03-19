@@ -36,7 +36,7 @@ class Command(BaseCommand):
     help = 'Create the groups used for rendering the global remix page'
 
     def handle(self, *args, **options):
-        web_logger.info("Starting to create remix grooups")
+        web_logger.info("Starting to create remix groups")
 
         # 1) Get all the sounds that have remixes
         cursor = connection.cursor()
@@ -75,7 +75,7 @@ class Command(BaseCommand):
             _create_and_save_remixgroup(sg, RemixGroup())
             n_groups_created += 1
 
-        web_logger.info("Finished createing remix grooups (%i groups created)" % n_groups_created)
+        web_logger.info("Finished creating remix groups (%i groups created)" % n_groups_created)
 
 
 def _create_nodes(dg):

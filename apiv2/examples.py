@@ -124,7 +124,7 @@ examples = {
     ],
     'MeBookmarkCategorySounds': [
         ('Getting uncategorized bookmarks', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/me/bookmark_categories/0/sounds/\'']),
-        ('Getting sounds of a particular bookmark cateogry', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/me/bookmark_categories/11819/sounds/\'', 'curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/me/bookmark_categories/11819/sounds/?fields=duration,previews\'']),
+        ('Getting sounds of a particular bookmark category', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/me/bookmark_categories/11819/sounds/\'', 'curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/me/bookmark_categories/11819/sounds/?fields=duration,previews\'']),
     ],
 
 }

@@ -103,7 +103,7 @@ def get_samplerate_from_processing_before_describe_files(audio_file_path):
 
 def get_processing_before_describe_sound_folder(audio_file_path):
     """
-    Get the path to the folder where the sound files generated during procesing-before-describe
+    Get the path to the folder where the sound files generated during processing-before-describe
     should be stored.
     """    
     user_id = os.path.basename(os.path.dirname(audio_file_path))
@@ -347,13 +347,13 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
     Reads through the lines of a CSV file containing metadata to describe (and create) new Sound objects and returns
     the list of lines after the validation process and a list of global errors (if any).
 
-    Each element in the returned list of lines after the validation process is a dictionary which inclues the original
+    Each element in the returned list of lines after the validation process is a dictionary which includes the original
     line content, the cleaned line content (i.e. fields with cleaned data), and a dictionary of errors for the line
     (if any). Lines that validated ok form lines that did not validate ok can be separated by checking whether there
     are any errors for them.
 
-    :param csv_header: header of the CSV (as returned by 'get_csv_lines' funtion above).
-    :param csv_lines: lines of the CSV (as returned by 'get_csv_lines' funtion above).
+    :param csv_header: header of the CSV (as returned by 'get_csv_lines' function above).
+    :param csv_lines: lines of the CSV (as returned by 'get_csv_lines' function above).
     :param sounds_base_dir: directory where audio files referenced in CSV file lines should be found.
     :param username: username of the User to which sounds should be assigned to.
     :return: tuple - (lines_validated, global_errors)
@@ -508,13 +508,13 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
     Reads through the lines of a CSV file containing metadata to describe (and create) new Sound objects and creates
     them if the metadata is valid.
     :param csv_file_path: filepath of the CSV file to read.
-    :param delete_already_existing: if sounds thata are being created are already part of Freesound (md5 check),
-    remove them before createing the new ones.
+    :param delete_already_existing: if sounds that are being created are already part of Freesound (md5 check),
+    remove them before creating the new ones.
     :param force_import: ignore sounds corresponding to the CSV lines that failed validation and import the others.
     :param sounds_base_dir: directory where audio files referenced in CSV file lines should be found.
     :param username: username of the User to which sounds should be assigned to.
     :param bulkupload_progress_id: ID of the BulkUploadProgress object that should be use to store progress information
-    to. If not specified, progress informaiton is not written anywhere.
+    to. If not specified, progress information is not written anywhere.
     """
 
     # Import models using apps.get_model (to avoid circular dependencies)

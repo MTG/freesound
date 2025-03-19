@@ -71,7 +71,7 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id, source
         del log_data['user']  # Don't want to serialize user
         del log_data['campaign']  # Don't want to serialize campaign
         log_data['amount_float'] = float(log_data['amount'])
-        web_logger.info(f'Recevied donation ({json.dumps(log_data)})')
+        web_logger.info(f'Received donation ({json.dumps(log_data)})')
     return True
 
 
@@ -121,7 +121,7 @@ def donation_complete_stripe(request):
 @csrf_exempt
 def donation_success(request):
     """
-    This user reaches this view from sripe when the credit card was valid, here we only
+    This user reaches this view from stripe when the credit card was valid, here we only
     add a message to the user and redirect to donations page.
     """
     messages.add_message(request, messages.INFO, 'Thanks! we will process your donation and send you an email soon.')
@@ -196,7 +196,7 @@ def donation_session_stripe(request):
 
 def donation_session_paypal(request):
     ''' Donate page: display form for donations where if user is logged in
-    we give the option to doneate anonymously otherwise we just give the option
+    we give the option to donate anonymously otherwise we just give the option
     to enter the name that will be displayed.
     If request is post we generate the data to send to paypal.
     '''

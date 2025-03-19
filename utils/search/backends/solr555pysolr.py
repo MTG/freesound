@@ -563,7 +563,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     vector = similar_to  # we allow vectors to be passed directly
                 else:
                     # similar_to should be a sound_id
-                    sound = Sound.objects.get(id=similar_to)
+                    try:
+                        sound = Sound.objects.get(id=similar_to)
+                    except Sound.DoesNotExist:
+                        # Return no results if sound does not exist
+                        return SearchResults(num_found=0)
                     vector = get_similarity_search_target_vector(sound.id, analyzer=similar_to_analyzer)                
                 vector_field_name = get_solr_dense_vector_search_field_name(config_options['vector_size'], config_options.get('l2_norm', False))
                 if vector is not None and vector_field_name is not None:

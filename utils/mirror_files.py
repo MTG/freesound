@@ -38,7 +38,7 @@ def copy_files_to_mirror_locations(object, source_location_keys, source_base_pat
     if destination_base_paths is None:
         return
 
-    # Generate a list of tuples of (source_path, destionation_path) of files that need to be copied
+    # Generate a list of tuples of (source_path, destination_path) of files that need to be copied
     source_destination_tuples = []
     for destination_base_path in destination_base_paths:
         for location_path in source_location_keys:

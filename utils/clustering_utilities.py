@@ -54,7 +54,7 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
             # Now launch the clustering celery task
             # Note that we launch the task synchronously (i.e. we block here until the task finishes). This is because this
             # view will be loaded asynchronously from the search page, and the clustering task should only take a few seconds.
-            # If for some reason the clustering task takes longer and a timeout erorr is raised, that is fine as we'll simply
+            # If for some reason the clustering task takes longer and a timeout error is raised, that is fine as we'll simply
             # not show the clustering section.
             async_task_result = cluster_sounds.apply_async(kwargs={
                 'cache_key': cache_key,
@@ -71,7 +71,7 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
                 clusters = results['clusters']
                 partition = {sound_id: cluster_id for cluster_id, cluster in enumerate(clusters) for sound_id in cluster}
 
-                # label clusters using most occuring tags
+                # label clusters using most occurring tags
                 sound_instances = sounds.models.Sound.objects.bulk_query_id(list(map(int, list(partition.keys()))))
                 sound_tags = {sound.id: sound.tag_array for sound in sound_instances}
                 cluster_tags = defaultdict(list)
@@ -81,18 +81,18 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
                 for sound_id, tags in sound_tags.items():
                     cluster_tags[partition[str(sound_id)]] += [t.lower() for t in tags if t.lower() not in query_terms]
 
-                # count 3 most occuring tags
+                # count 3 most occurring tags
                 # we iterate with range(len(clusters)) to ensure that we get the right order when iterating through the dict
-                cluster_most_occuring_tags = [
+                cluster_most_occurring_tags = [
                     [tag for tag, _ in Counter(cluster_tags[cluster_id]).most_common(settings.NUM_TAGS_SHOWN_PER_CLUSTER)]
                     if cluster_tags[cluster_id] else []
                     for cluster_id in range(len(clusters))
                 ]
-                most_occuring_tags_formatted = [
-                    ' '.join(sorted(most_occuring_tags))
-                    for most_occuring_tags in cluster_most_occuring_tags
+                most_occurring_tags_formatted = [
+                    ' '.join(sorted(most_occurring_tags))
+                    for most_occurring_tags in cluster_most_occurring_tags
                 ]
-                results['cluster_names'] = most_occuring_tags_formatted
+                results['cluster_names'] = most_occurring_tags_formatted
 
                 # select sound examples for each cluster
                 sound_ids_examples_per_cluster = [

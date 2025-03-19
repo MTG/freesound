@@ -46,7 +46,7 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         forum = Forum.objects.create(name="testForum", name_slug="test_forum", description="test")
         thread = Thread.objects.create(forum=forum, title="testThread", author=user)
         Post.objects.create(author=user, body="testBody", thread=thread)
-        Post.objects.create(author=user, body="testBody unnmoderated", thread=thread, moderation_state="NM")
+        Post.objects.create(author=user, body="testBody unmoderated", thread=thread, moderation_state="NM")
         user.profile.refresh_from_db()  # Refresh from db after methods that use F-expressions
 
         # Assert initial counts are ok

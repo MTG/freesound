@@ -117,7 +117,7 @@ class Command(LoggingBaseCommand):
                             c.run(f'ln -s {dst_sound_path} {dst_symlink_path}')
 
                             # Fill cache
-                            # Before filling the cache, make sure symlink exists (has been cretated successfully), otherwise do not fill the cache
+                            # Before filling the cache, make sure symlink exists (has been created successfully), otherwise do not fill the cache
                             # as there were problems creating the symlink
                             symlink_exists = c.run(f'ls {dst_symlink_path}', hide=True, warn=True).exited == 0
                             if symlink_exists:

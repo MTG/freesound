@@ -93,7 +93,7 @@ const handleDefaultModal = (modalUrl, modalActivationParam, atPage) => {
 }
 
 const handleDefaultModalWithForm = (modalUrl, modalActivationParam, element) => {
-  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast(element.dataset.successMessage || 'Form submitted succesfully!')}, (req) => {showToast(element.dataset.errorMessage || "There were errors processing the form...")}, true, true, modalActivationParam, element.dataset.reloadOnSuccess==="true");
+  handleGenericModalWithForm(modalUrl, undefined, undefined, (req) => {showToast(element.dataset.successMessage || 'Form submitted successfully!')}, (req) => {showToast(element.dataset.errorMessage || "There were errors processing the form...")}, true, true, modalActivationParam, element.dataset.reloadOnSuccess==="true");
 }
 
 const bindDefaultModals = (container) => {
@@ -267,7 +267,7 @@ const handleGenericModalWithForm = (fetchContentUrl, onLoadedCallback, onClosedC
       if (onFormSubmissionError !== undefined){
         onFormSubmissionError(req);
       } else {
-        showToast("Unexpected errors occurred while processing the form, pelase try again later...")
+        showToast("Unexpected errors occurred while processing the form, please try again later...")
       }
     };
     

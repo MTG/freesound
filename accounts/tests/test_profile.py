@@ -540,7 +540,7 @@ class ProfileEnabledEmailTypes(TestCase):
         self.assertEqual(len(default_email_types), EmailPreferenceType.objects.filter(send_by_default=True).count())
 
         # Disable email preferences which are set to true by default
-        # At each iteraiton of the foorloop, one less email type should be returned by get_enabled_email_types
+        # At each iterate of the for loop, one less email type should be returned by get_enabled_email_types
         for count, email_type in enumerate(EmailPreferenceType.objects.filter(send_by_default=True)):
             UserEmailSetting.objects.create(user=user, email_type=email_type)
             email_types = user.profile.get_enabled_email_types()

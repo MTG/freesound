@@ -104,7 +104,7 @@ class TermsOfServiceForm(forms.Form):
         help_text='Check this box to accept the <a href="/help/tos_web/" target="_blank" class="bw-link--grey">terms of use</a> '
                   'and the <a href="/help/privacy/" target="_blank" class="bw-link--grey">privacy policy</a> of Freesound (required)',
         required=True,
-        error_messages={'required': 'You must accept the terms of use and the privacy poclicy in order to continue '
+        error_messages={'required': 'You must accept the terms of use and the privacy policy in order to continue '
                                     'using Freesound.'}
     )
     accepted_license_change = forms.BooleanField(

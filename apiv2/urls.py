@@ -18,12 +18,6 @@
 #     See AUTHORS file.
 #
 
-# packages to install:
-#   - django-oauth2-provider ('0.2.6')
-#   - djangorestframework ('2.3.8')
-#   - markdown (for browseable api)
-
-
 from django.urls import include, path, re_path
 from django.contrib.auth.views import LogoutView
 from apiv2 import views
@@ -31,7 +25,7 @@ from accounts.views import login
 from accounts.forms import FsAuthenticationForm
 
 #
-# WATCH OUT! if changing url pattern names these should be changed in vews __doc__ too (to make sure examples work properly)
+# WATCH OUT! if changing url pattern names these should be changed in views __doc__ too (to make sure examples work properly)
 #
 
 urlpatterns = [

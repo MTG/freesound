@@ -53,7 +53,7 @@ def search_view_helper(request):
         search_logger.info(f"Errors in SearchQueryProcessor: {sqp.errors}")
         return {'error_text': 'There was an error while searching, is your query correct?'}
 
-    # Update compact mode prefernece if user has explicitely specified a different value than the preference
+    # Update compact mode preference if user has explicitly specified a different value than the preference
     if request.user.is_authenticated:
         option = sqp.options['grid_mode']
         if option.set_in_request:
@@ -81,7 +81,7 @@ def search_view_helper(request):
             # If clustering data for the current query is fully available, we can get it directly
             clusters_data = _get_clusters_data_helper(sqp)
         else:
-            # Otherwise pass the url where the cluster data fill be fetched asyncronously from
+            # Otherwise pass the url where the cluster data fill be fetched asynchronously from
             get_clusters_url = reverse('clusters-section') + f'?{request.get_full_path().split("?")[-1]}'
 
     # If in tags mode and no tags in filter, return before making the query as we'll make
@@ -137,7 +137,7 @@ def search_view_helper(request):
             # data points for the map of sounds. 
             cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 5 minutes
 
-            # Nevertheless we set docs to empty list as we won't displat anything in the search results page (the map
+            # Nevertheless we set docs to empty list as we won't display anything in the search results page (the map
             # will make an extra request that will load the cached data and display it in the map)
             docs = []
 
@@ -201,7 +201,7 @@ def _get_clusters_data_helper(sqp):
     # See get_num_sounds_per_cluster for more details.
     num_sounds_per_cluster = get_num_sounds_per_cluster(sqp, results['clusters'])
 
-    # Resurn a list with information for each cluster
+    # Return a list with information for each cluster
     # Note that this information DOES NOT include the actual sound IDs per cluster.
     return list(zip(
         results.get('cluster_ids', []),  # cluster ID

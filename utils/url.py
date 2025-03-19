@@ -46,7 +46,7 @@ def redirect_inline(function=None, redirect_url_name='front-page', kwarg_keys=No
 
 
 class ComparableUrl:
-    '''A url object that can be compared with other url orbjects
+    '''A url object that can be compared with other url objects
     without regard to the vagaries of encoding, escaping, and ordering
     of parameters in query strings.'''
     # NOTE: from https://stackoverflow.com/questions/5371992/comparing-two-urls-in-python

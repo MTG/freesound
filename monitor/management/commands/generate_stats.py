@@ -43,7 +43,7 @@ class Command(LoggingBaseCommand):
 
         time_span = timezone.now()-datetime.timedelta(weeks=2)
 
-        # Compute stats relatad with sounds:
+        # Compute stats related with sounds:
 
         new_sounds_mod = sounds.models.Sound.objects\
                 .filter(created__gt=time_span, moderation_date__isnull=False)\

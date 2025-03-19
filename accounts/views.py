@@ -210,7 +210,7 @@ def multi_email_cleanup(request):
         email_issues_still_valid = False
 
     if same_user.secondary_user_changed_email():
-        # Then the email problems have been fixeed when email of secondary user was changed
+        # Then the email problems have been fixed when email of secondary user was changed
         # No need to re-assign emails here
         email_issues_still_valid = False
 
@@ -366,13 +366,13 @@ def resend_activation(request):
 
 def username_reminder(request):
     return HttpResponseRedirect(reverse('front-page') + '?loginProblems=1')
-    
+
 
 @login_required
 def home(request):
     # In BW we no longer have the concept of "home", thus we redirect to the account page
     # This view is however still useful as we can redirect to the account page of the request.user
-    # uing the path /home/ without needing to construct the URL with the username in it
+    # using the path /home/ without needing to construct the URL with the username in it
     return HttpResponseRedirect(reverse('account', args=[request.user.username]))
 
 
@@ -768,7 +768,7 @@ def sounds_pending_description_helper(request, file_structure, files):
                 session_key_prefix = str(uuid.uuid4())[0:8]  # Use a new so we don't interfere with other active description/editing processes
                 request.session[f'{session_key_prefix}-describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
                 request.session[f'{session_key_prefix}-len_original_describe_sounds'] = len(request.session[f'{session_key_prefix}-describe_sounds'])
-                # If only one file is choosen, go straight to the last step of the describe process, otherwise go to license selection step
+                # If only one file is chosen, go straight to the last step of the describe process, otherwise go to license selection step
                 if len(request.session[f'{session_key_prefix}-describe_sounds']) > 1:
                     return HttpResponseRedirect(reverse('accounts-describe-license') + f'?session={session_key_prefix}')
                 else:
@@ -1404,7 +1404,7 @@ def delete(request):
                                     'Your user account will be deleted in a few moments. Note that this process could '
                                     'take up to several hours for users with many uploaded sounds.')
 
-                # Logout user, mark account inctive, set unusable password and change email to a dummy one so that
+                # Logout user, mark account inactive, set unusable password and change email to a dummy one so that
                 # user can't recover the account while it is being delete asynchronously
                 # Note that some of these actions are also done in the delete_user method of the Profile model, but
                 # we need to do them here as well before the async task is triggered and to make sure user can't
@@ -1500,11 +1500,11 @@ def email_reset_complete(request, uidb36=None, token=None):
     except (ValueError, User.DoesNotExist):
         raise Http404
 
-    # Check that the user makind the request is the same user in the base36 data
+    # Check that the user making the request is the same user in the base36 data
     if request.user != user:
         raise Http404
 
-    # Retreive the new mail from the DB
+    # Retrieve the new mail from the DB
     try:
         rer = ResetEmailRequest.objects.get(user=user)
     except ResetEmailRequest.DoesNotExist:

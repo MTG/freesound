@@ -49,7 +49,7 @@ class ApiV2Client(models.Model):
     redirect_uri = models.URLField()
     description = models.TextField(blank=True)
     accepted_tos = models.BooleanField(default=False)
-    allow_oauth_passoword_grant = models.BooleanField(default=False)
+    allow_oauth_password_grant = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     throttling_level = models.IntegerField(default=1)
 

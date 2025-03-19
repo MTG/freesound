@@ -46,9 +46,9 @@ LOG_TO_FILE = False
 # Classifier files can be found in freesound-deploy repository.
 #
 # Having this classifier the recommendation server can be started. Once the server is running
-# a command from the appservers must be run so the recomendation is feeded with tag assignement data
-# from freesound which is stored in a file called Index.json. This fille incrementally stores
-# all tag assingment information from freesound. Once this file exists and has some data, the
+# a command from the appservers must be run so the recommendation is feed with tag assignment data
+# from freesound which is stored in a file called Index.json. This file incrementally stores
+# all tag assignment information from freesound. Once this file exists and has some data, the
 # "update_tagrecommendation_data.py" script can be run and will generate the following files:
 # (if running in Docker environment, you can run the script like:
 # docker compose run tagrecommendation  bash -c "cd /code; python update_tagrecommendation_data.py"

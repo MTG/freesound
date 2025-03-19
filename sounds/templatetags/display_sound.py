@@ -79,8 +79,8 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
             return None
 
     def sound_object_retrieved_using_bulk_query_id(sound):
-        """Checeks whether the given Sound object has the extra properties that are loaded if the object was
-        retrieved usnig the Sound.objects.bulk_query_id method. Sound objects retrieved with bulk_query_id have
+        """Checks whether the given Sound object has the extra properties that are loaded if the object was
+        retrieved using the Sound.objects.bulk_query_id method. Sound objects retrieved with bulk_query_id have
         the following extra properties required in the display_sound templatetag: 'tag_array', 'username',
         'license_name'. To optimize the code, we only check for the presence of 'tag_array' and assume the other
         properties will go together.
@@ -99,8 +99,8 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
             sound_obj = sound
         else:
             # If 'sound' is a Sound instance but has not been retrieved using bulk_query_id, we would need to make
-            # some extra DB queries to get the metadata that must be rendered. Instead, we retreive again
-            # the sound using the bulk_query_id method which will get all needed maetadaata in only one query.
+            # some extra DB queries to get the metadata that must be rendered. Instead, we retrieve again
+            # the sound using the bulk_query_id method which will get all needed metadata in only one query.
             # Note that we don't re-retrieve when player size contains "no_info" as in these cases there is
             # no extra metadata needed to be shown.
             if 'no_info' not in player_size:
@@ -108,7 +108,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
             else:
                 sound_obj = sound
     else:
-        # If 'sound' argument is not a Sound instance then we assume it is a sound ID and we retreive the
+        # If 'sound' argument is not a Sound instance then we assume it is a sound ID and we retrieve the
         # corresponding object from the DB.
         sound_obj = get_sound_using_bulk_query_id(sound)
 
@@ -189,7 +189,7 @@ def display_sound_no_sound_object(context, file_data, player_size, show_bookmark
     URLs to the sound files (mp3 and ogg)a and the wave/spectral images, and
     the duration of the sound the JS player can be created. This data is
     passed through the file_data argument. Here is an example of how file_data
-    should look like if preapring it from a Sound object:
+    should look like if preparing it from a Sound object:
 
     file_data = {
         'duration': sound.duration,

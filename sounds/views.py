@@ -85,7 +85,7 @@ cache_cdn_map = caches["cdn_map"]
 def get_n_weeks_back_datetime(n_weeks):
     """
     Returns a datetime object set to a time `n_weeks` back from now.
-    If DEBUG=True, it is likely that the contents of the development databse have not been updated and no
+    If DEBUG=True, it is likely that the contents of the development database have not been updated and no
     activity will be registered for the last `n_weeks`. To compensate for that, when in DEBUG mode the returned
     date is calculated with respect to the date of the most recent sound stored in database. In this way it is
     more likely that the selected time range will include activity in database.
@@ -236,7 +236,7 @@ def sound(request, username, sound_id):
         if request.user.is_authenticated:
             if request.user.profile.is_blocked_for_spam_reports():
                 messages.add_message(request, messages.INFO, "You're not allowed to post the comment because your "
-                                                             "account has been temporaly blocked after multiple spam "
+                                                             "account has been temporarily blocked after multiple spam "
                                                              "reports")
             else:
                 if form.is_valid():
@@ -562,8 +562,8 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
     num_rounds = int(math.ceil(len_original_describe_edit_sounds/forms_per_round))
     current_round = int((len_original_describe_edit_sounds - len(all_remaining_sounds_to_edit_or_describe))/forms_per_round + 1)
     files_data_for_players = []  # Used when describing sounds (not when editing) to be able to show sound players
-    preselected_license = request.session.get(f'{session_key_prefix}-describe_license', False)  # Pre-selected from the license selection page when describing mulitple sounds
-    preselected_pack = request.session.get(f'{session_key_prefix}-describe_pack', False)  # Pre-selected from the pack selection page when describing mulitple sounds
+    preselected_license = request.session.get(f'{session_key_prefix}-describe_license', False)  # Pre-selected from the license selection page when describing multiple sounds
+    preselected_pack = request.session.get(f'{session_key_prefix}-describe_pack', False)  # Pre-selected from the pack selection page when describing multiple sounds
     
     for count, element in enumerate(sounds_to_edit_or_describe):
         prefix = str(count)
@@ -1034,7 +1034,7 @@ def display_sound_wrapper(request, username, sound_id):
 @xframe_options_exempt
 def embed_iframe(request, sound_id, player_size):
     """
-    This view returns an HTML player of `sound_id` which can be embeded in external sites.
+    This view returns an HTML player of `sound_id` which can be embedded in external sites.
     The player can take different "sizes" including:
 
         - 'mini': shows just a play button and a loop button. No background image.

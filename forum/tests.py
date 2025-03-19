@@ -80,7 +80,7 @@ class ForumPostSignalTestCase(TestCase):
         self.assertEqual(self.thread.num_posts, 1)
         self.assertEqual(self.thread.last_post, post)
 
-    def test_moderate_post_not_lastest(self):
+    def test_moderate_post_not_latest(self):
         """When a post is moderated, it might not be the most recent post of a thread or forum"""
 
         firstpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="NM")
@@ -99,7 +99,7 @@ class ForumPostSignalTestCase(TestCase):
         self.assertEqual(self.thread.last_post, secondpost)
 
     def test_remove_moderated_post(self):
-        """Removing a moderated post decreses count and might change last_post"""
+        """Removing a moderated post decreases count and might change last_post"""
 
         firstpost = Post.objects.create(thread=self.thread, author=self.user, body="first", moderation_state="OK")
         secondpost = Post.objects.create(thread=self.thread, author=self.user, body="second", moderation_state="OK")
@@ -127,7 +127,7 @@ class ForumPostSignalTestCase(TestCase):
         self.assertEqual(self.thread.last_post, secondpost)
 
     def test_remove_unmoderated_post(self):
-        """Removing an unmoderated post does not decrese count or change last_post"""
+        """Removing an unmoderated post does not decrease count or change last_post"""
 
         firstpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
         secondpost = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="NM")
@@ -274,7 +274,7 @@ class ForumThreadSignalTestCase(TestCase):
 class ForumTestCase(TestCase):
 
     def test_cant_view_unmoderated_post(self):
-        """If a thread only has an unmoderated post, visting the thread with the client results in HTTP404"""
+        """If a thread only has an unmoderated post, visiting the thread with the client results in HTTP404"""
 
         user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
         forum = Forum.objects.create(name="Second Forum", name_slug="second_forum", description="another forum")

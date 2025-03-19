@@ -36,7 +36,7 @@ class DonationsModalSettings(models.Model):
     downloads_in_period = models.PositiveIntegerField(default=5, help_text='After user has download Z sounds...')
     download_days = models.PositiveIntegerField(default=7, help_text='...in Y days, we display the modal')
     display_probability = models.FloatField(
-        default=0.25, help_text='probabily of the modal being shown once all previous requirements are met')
+        default=0.25, help_text='probability of the modal being shown once all previous requirements are met')
     max_times_display_a_day = models.PositiveIntegerField(
         default=10, help_text='max number of times we display the modal during a single day')
 
@@ -46,7 +46,7 @@ class DonationsModalSettings(models.Model):
     def get_donation_modal_settings(cls):
         """
         Return the current setting stored in the model.
-        Because this model will be queryied often (every time a user downloads a sound), we want to avoid hitting the
+        Because this model will be queried often (every time a user downloads a sound), we want to avoid hitting the
         DB every time. We store the settings in the cache and return the data from there (if exists).
         """
         instance = cache.get(cls.DONATION_MODAL_SETTINGS_CACHE_KEY, None)

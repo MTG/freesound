@@ -276,7 +276,7 @@ class SoundEditAndDescribeForm(forms.Form):
                            }, label="Longitude")
     zoom = forms.IntegerField(min_value=11, max_value=19,
                               widget=forms.NumberInput (attrs={'placeholder': '11 to 19'}),
-                              error_messages={'min_value': "The zoom value sould be at least 11."},
+                              error_messages={'min_value': "The zoom value should be at least 11."},
                               required=False, label="Zoom")
     sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(), required=False)
 

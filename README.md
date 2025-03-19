@@ -37,12 +37,13 @@ Below are instructions for setting up a local Freesound installation for develop
 
        mkdir freesound-data
 
-3. Download the [Freesound development data zip file](https://drive.google.com/file/d/1c6w01tE4dIt8lEMMmK5aBEGV40oqe9vi/view?usp=share_link) (~7GB) and uncompress it inside `freesound-data`. You should get permission to download this file from Freesound admins. File structure should look like this:
+3. Download the [Freesound development data zip file](https://drive.google.com/file/d/19BMxEv7Hyl08hCG7qJkkgzw3F5-IOhC-/view?usp=share_link) (~7GB) and uncompress it inside `freesound-data`. You should get permission to download this file from Freesound admins. File structure should look like this:
 
        freesound-data/
        freesound-data/avatars/
        freesound-data/displays/
        freesound-data/previews/
+       freesound-data/analysis/
 
 4. Download [Freesound development similarity index](https://drive.google.com/file/d/1ydJUUXbQZbHrva4UZd3C05wDcOXI7v1m/view?usp=sharing) and the [Freesound tag recommendation models](https://drive.google.com/file/d/1snaktMysCXdThWKkYuKWoGc_Hk2BElmz/view?usp=sharing) and place their contents under `freesound-data/similarity_index/` and `freesound-data/tag_recommendation_models` directories respectively (you'll need to create the directories). You should get permission to download these files from Freesound admins.
 
@@ -67,12 +68,12 @@ Below are instructions for setting up a local Freesound installation for develop
 
        docker compose build
 
-9. Download the [Freesound development database dump](https://drive.google.com/file/d/11z9s8GyYkVlmWdEsLSwUuz0AjZ8cEvGy/view?usp=share_link) (~6MB), uncompress it and place the resulting `freesound-small-dev-dump-2023-09.sql` in the `freesound-data/db_dev_dump/` directory. Then run the database container and load the data into it using the commands below. You should get permission to download this file from Freesound admins.
+9. Download the [Freesound development database dump](https://drive.google.com/file/d/1-s4fkEBVbC0rNmqkh5kHoJreHsdGnDoa/view?usp=sharing) (~7MB), uncompress it and place the resulting `freesound-small-dev-dump-2025-03.sql` in the `freesound-data/db_dev_dump/` directory. Then run the database container and load the data into it using the commands below. You should get permission to download this file from Freesound admins.
 
        docker compose up -d db
-       docker compose run --rm db psql -h db -U freesound  -d freesound -f freesound-data/db_dev_dump/freesound-small-dev-dump-2023-09.sql
+       docker compose run --rm db psql -h db -U freesound  -d freesound -f freesound-data/db_dev_dump/freesound-small-dev-dump-2025-03.sql
        # or if the above command does not work, try this one 
-       docker compose run --rm --no-TTY db psql -h db -U freesound -d freesound < freesound-data/db_dev_dump/freesound-small-dev-dump-2023-09.sql
+       docker compose run --rm --no-TTY db psql -h db -U freesound -d freesound < freesound-data/db_dev_dump/freesound-small-dev-dump-2025-03.sql
 
 If you a prompted for a password, use `localfreesoundpgpassword`, this is defined in the `docker-compose.yml` file.
 

@@ -24,6 +24,6 @@ class OAuth2Validator(ProviderOauth2Validator):
         """
         assert (grant_type in GRANT_TYPE_MAPPING)  # mapping misconfiguration
         if grant_type == AbstractApplication.GRANT_PASSWORD:
-            if request.client.apiv2_client.allow_oauth_passoword_grant:
+            if request.client.apiv2_client.allow_oauth_password_grant:
                 return True
         return request.client.authorization_grant_type in GRANT_TYPE_MAPPING[grant_type]

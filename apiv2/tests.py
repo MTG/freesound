@@ -419,7 +419,7 @@ class TestMeResources(TestCase):
         client = ApiV2Client.objects.create(
             name='PasswordClient',
             user=self.dev_user,
-            allow_oauth_passoword_grant=True,
+            allow_oauth_password_grant=True,
         )
 
         # Get access token for end_user
@@ -479,12 +479,12 @@ class APIAuthenticationTestCase(TestCase):
         ApiV2Client.objects.create(
             name='PasswordClient',
             user=self.dev_user,
-            allow_oauth_passoword_grant=True,
+            allow_oauth_password_grant=True,
         )
         ApiV2Client.objects.create(
             name='AuthorizationCodeClient',
             user=self.dev_user,
-            allow_oauth_passoword_grant=False,
+            allow_oauth_password_grant=False,
         )
 
     @staticmethod
@@ -526,7 +526,7 @@ class APIAuthenticationTestCase(TestCase):
         self.assertEqual(resp.json()['error'], 'unauthorized_client')
 
         # Return 200 OK when trying password grant with a client with 'allow_oauth_password_grant' set to True
-        client.allow_oauth_passoword_grant = True
+        client.allow_oauth_password_grant = True
         client.save()
         resp = self.client.post(
             reverse('oauth2_provider:access_token'),

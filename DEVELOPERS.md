@@ -304,3 +304,16 @@ After doing all the changes follow this list as a guideline to check if things a
 * Add to Github team
 * Add to Slack channel
 * Give access to Sentry/Graylog
+
+
+## Making a dump of the local development database
+
+To make a dump of the database in a development environment, the following commands can be used:
+
+````
+docker compose up db -d  # Run db container in the background
+docker compose run --rm --user $(id -u):$(id -g) db pg_dump postgres://freesound:localfreesoundpgpassword@db/freesound -f /freesound-data/db_dev_dump/NAME_OF_THE_DUMP.sql
+docker compose run --rm --user $(id -u):$(id -g) db  zstd /freesound-data/db_dev_dump/NAME_OF_THE_DUMP.sql  # This is to compress the file, will be saved in `freesound-data/db_dev_dump/NAME_OF_THE_DUMP.sql.zst`
+````
+
+This will create a file inside the `freesound-data/db_dev_dump` folder, which is mounted in the `db` service. This dump can then be loaded following instructions like in step 9 of the [main README file](https://github.com/MTG/freesound) (note that if the dump is compressed you need to decompress it first). I

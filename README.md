@@ -37,7 +37,7 @@ Below are instructions for setting up a local Freesound installation for develop
 
        mkdir freesound-data
 
-3. Download the [Freesound development data zip file](https://drive.google.com/file/d/19BMxEv7Hyl08hCG7qJkkgzw3F5-IOhC-/view?usp=share_link) (~7GB) and uncompress it inside `freesound-data`. You should get permission to download this file from Freesound admins. File structure should look like this:
+3. Download the [Freesound development data zip file](https://drive.google.com/file/d/19BMxEv7Hyl08hCG7qJkkgzw3F5-IOhC-/view?usp=share_link) (~7GB) and uncompress it inside `freesound-data`. File structure should look like this:
 
        freesound-data/
        freesound-data/avatars/
@@ -45,7 +45,7 @@ Below are instructions for setting up a local Freesound installation for develop
        freesound-data/previews/
        freesound-data/analysis/
 
-4. Download [Freesound development similarity index](https://drive.google.com/file/d/1ydJUUXbQZbHrva4UZd3C05wDcOXI7v1m/view?usp=sharing) and the [Freesound tag recommendation models](https://drive.google.com/file/d/1snaktMysCXdThWKkYuKWoGc_Hk2BElmz/view?usp=sharing) and place their contents under `freesound-data/similarity_index/` and `freesound-data/tag_recommendation_models` directories respectively (you'll need to create the directories). You should get permission to download these files from Freesound admins.
+4. Download [Freesound development similarity index](https://drive.google.com/file/d/1ydJUUXbQZbHrva4UZd3C05wDcOXI7v1m/view?usp=sharing) and the [Freesound tag recommendation models](https://drive.google.com/file/d/1snaktMysCXdThWKkYuKWoGc_Hk2BElmz/view?usp=sharing) and place their contents under `freesound-data/similarity_index/` and `freesound-data/tag_recommendation_models` directories respectively (you'll need to create the directories). 
 
 5. Rename `freesound/local_settings.example.py` file, so you can customise Django settings if needed and create a `.env` file with your local user UID and other useful settings. These other settings include `COMPOSE_PROJECT_NAME` and `LOCAL_PORT_PREFIX` which can be used to allow parallel local installations running on the same machine (provided that these to variables are different in the local installations), and `FS_BIND_HOST` which you should set to `0.0.0.0` if you need to access your local Freesound services from a remote machine.
 

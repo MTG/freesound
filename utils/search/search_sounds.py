@@ -175,12 +175,12 @@ def get_sound_similarity_from_search_engine_query(query_params, analyzer_name=se
 
     # Update query params to get similarity vectors of the first 
     config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[analyzer_name]
-    vector_field_name = utils.search.backends.solr555pysolr.get_solr_dense_vector_search_field_name(config_options['vector_size'], config_options('l2_norm', False))
+    vector_field_name = utils.search.backends.solr555pysolr.get_solr_dense_vector_search_field_name(config_options['vector_size'], config_options.get('l2_norm', False))
     query_params.update({
         'facets': None,
         'current_page': current_page if current_page is not None else query_params['current_page'],
         'num_sounds': num_sounds if num_sounds is not None else query_params['num_sounds'],
-        'field_list': ['id', 'score', 'similarity_vectors', 'sim_vector100', f'[child childFilter="content_type:v AND analyzer:{analyzer_name}" limit=1]']
+        'field_list': ['id', 'score', 'similarity_vectors', vector_field_name, f'[child childFilter="content_type:v AND analyzer:{analyzer_name}" limit=1]']
     })
     results, _ = perform_search_engine_query(query_params)
 

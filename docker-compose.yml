@@ -50,13 +50,10 @@ services:
 
     # Search server
     search:
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.solr
+        image: solr:9.8.1
+        command: ["-c"]
         volumes:
-            - ./utils/search/solr9/cores:/var/solr/data/configsets
             - solr9data:/var/solr
-            - ./utils/search/solr9/docker-entrypoint:/docker-entrypoint-initdb.d
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8983:8983"
 

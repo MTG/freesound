@@ -231,7 +231,7 @@ class SearchQueryProcessor:
                 f_parsed_no_duplicates.append(node)
         self.f_parsed = f_parsed_no_duplicates
 
-        # Implement compatibilty with old URLs in which "duration"/"is remix"/"is geotagged" options were passed as raw filters.
+        # Implement compatibility with old URLs in which "duration"/"is remix"/"is geotagged" options were passed as raw filters.
         # If any of these filters are present, we parse them to get their values and modify the request to simulate the data being 
         # passed in the new expected way (through request parameters). If present, we also remove these filters from the f_parsed object.
         values_to_update = {}
@@ -525,7 +525,7 @@ class SearchQueryProcessor:
             if similar_to.startswith('['):
                 similar_to = json.loads(similar_to)
             else:
-                # Othrwise, we assume it is a sound id and we pass it as integer
+                # Otherwise, we assume it is a sound id and we pass it as integer
                 similar_to = int(similar_to)
         else:
             similar_to = None

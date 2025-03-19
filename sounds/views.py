@@ -562,8 +562,8 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
     num_rounds = int(math.ceil(len_original_describe_edit_sounds/forms_per_round))
     current_round = int((len_original_describe_edit_sounds - len(all_remaining_sounds_to_edit_or_describe))/forms_per_round + 1)
     files_data_for_players = []  # Used when describing sounds (not when editing) to be able to show sound players
-    preselected_license = request.session.get(f'{session_key_prefix}-describe_license', False)  # Pre-selected from the license selection page when describing mulitple sounds
-    preselected_pack = request.session.get(f'{session_key_prefix}-describe_pack', False)  # Pre-selected from the pack selection page when describing mulitple sounds
+    preselected_license = request.session.get(f'{session_key_prefix}-describe_license', False)  # Pre-selected from the license selection page when describing multiple sounds
+    preselected_pack = request.session.get(f'{session_key_prefix}-describe_pack', False)  # Pre-selected from the pack selection page when describing multiple sounds
     
     for count, element in enumerate(sounds_to_edit_or_describe):
         prefix = str(count)

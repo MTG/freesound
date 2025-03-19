@@ -251,7 +251,7 @@ class GaiaWrapper(object):
                 logger.info('WARNING: enumerate transformation to .tonal.chords_progression could not be performed.')
 
         # If when adding a new point we reach the minimum points for similarity, do the needful so that the dataset
-        # can be used for search. This includes preparing the dataset, normalizing it, saveing it and creating view and
+        # can be used for search. This includes preparing the dataset, normalizing it, saving it and creating view and
         # distance metrics. This will only happen once when the size of the dataset reaches SIMILARITY_MINIMUM_POINTS.
         if self.original_dataset.size() == sim_settings.SIMILARITY_MINIMUM_POINTS and not self.indexing_only_mode:
             self.__prepare_original_dataset()

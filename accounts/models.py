@@ -127,7 +127,7 @@ class Profile(models.Model):
     num_user_sounds_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of times user's sounds have been downloaded
     num_user_packs_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of times user's packs have been downloaded
 
-    # "is_anonymized_user" indicates that the user account has been anonimized and no longer contains personal data
+    # "is_anonymized_user" indicates that the user account has been anonymized and no longer contains personal data
     # This is what we do when we delete a user to still preserve statistics and information and downloads
     # "is_anonymized_user" used to be called "is_deleted_user"
     is_anonymized_user = models.BooleanField(db_index=True, default=False)
@@ -723,7 +723,7 @@ def presave_user(sender, instance, **kwargs):
             # We use .get_or_create below to avoid having 2 OldUsername objects with the same user/username pair
             OldUsername.objects.get_or_create(user=instance, username=old_username)
 
-            # Also mark all sounds as index dirty because they'll need to be reindexed with the new username
+            # Also mark all sounds as index dirty because they'll need to be re-indexed with the new username
             Sound.objects.filter(user=instance).update(is_index_dirty=True)
 
         # Check if email has change and, if so, remove existing EmailBounce objects associated to the user (if any)

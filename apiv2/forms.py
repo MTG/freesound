@@ -187,7 +187,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
             if similar_to.startswith('['):
                 similar_to = json.loads(similar_to)
             else:
-                # Othrwise, we assume it is a sound id and we pass it as integer
+                # Otherwise, we assume it is a sound id and we pass it as integer
                 similar_to = int(similar_to)
         else:
             similar_to = None

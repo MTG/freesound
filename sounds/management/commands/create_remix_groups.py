@@ -102,7 +102,7 @@ def _create_and_save_remixgroup(sg, remixgroup):
     # print ' ========== SORTED NODE_LIST ========= '
     # pp(node_list)
 
-    # dict with key=sound_id, value=index, nodeName=original_filname
+    # dict with key=sound_id, value=index, nodeName=original_filename
     # in the previous sorted by date list
     # FIXME: no need for all this data, can be simple dict, key=value
     container = {val[0]: {'index': idx, 'nodeName': val[1]['nodeName']} for (idx, val) in enumerate(node_list)}

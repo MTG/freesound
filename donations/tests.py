@@ -461,7 +461,7 @@ class DonationTest(TestCase):
         # Run command again
         call_command('send_donation_request_emails')
 
-        # Check that now user_a does not receive an email beacuse he donated recently
+        # Check that now user_a does not receive an email because he donated recently
         self.user_a.profile.refresh_from_db()
         self.assertEqual(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
 

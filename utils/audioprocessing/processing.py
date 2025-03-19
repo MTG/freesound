@@ -179,7 +179,7 @@ class AudioProcessor:
         it returns (min, max) else the other way around. """
 
         # larger blocksizes are faster but take more mem...
-        # Aha, Watson, a clue, a tradeof!
+        # Aha, Watson, a clue, a tradeoff!
         block_size = 4096
 
         max_index = -1

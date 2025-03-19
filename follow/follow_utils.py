@@ -95,7 +95,7 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
 
             sound_ids = [element['id'] for element in result.docs]
             #sound_objs = sounds.models.Sound.objects.ordered_ids(sound_ids)
-            # NOTE: for now we add sound_ids in users_sounds insetad of the actual sound objetcs. We retrieve sound objs later in a single query.
+            # NOTE: for now we add sound_ids in users_sounds instead of the actual sound object. We retrieve sound objs later in a single query.
             new_count = more_count + len(sound_ids)
             users_sounds.append(((user_following, False), sound_ids, more_url_params, more_count, new_count))
 
@@ -136,7 +136,8 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             # more_url_quoted = urllib.quote(more_url)
 
             sound_ids = [element['id'] for element in result.docs]
-            # NOTE: for now we add sound_ids in users_sounds insetad of the actual sound objetcs. We retrieve sound objs later in a single query.
+            # NOTE: for now we add sound_ids in users_sounds instead of the actual sound objetcs. We retrieve sound
+            # objs later in a single query.
             new_count = more_count + len(sound_ids)
             tags_sounds.append((tags, sound_ids, more_url_params, more_count, new_count))
 

@@ -346,7 +346,7 @@ class TestSearchEngineBackend():
         results = self.run_sounds_query_and_save_results(dict(similar_to=target_sound_vector, similar_to_max_num_sounds=10, similar_to_analyzer='test_analyzer2'))
         assert_and_continue(len(results.docs) == 0, 'Similarity search returned results for an unexsiting analyzer')
 
-        # Check similar_to_max_num_sounds parmeter 
+        # Check similar_to_max_num_sounds parameter
         results = self.run_sounds_query_and_save_results(dict(similar_to=target_sound_vector, similar_to_max_num_sounds=5, similar_to_analyzer='test_analyzer'))
         assert_and_continue(len(results.docs) == 5, 'Similarity search returned unexpected number of results')
 

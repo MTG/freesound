@@ -290,7 +290,7 @@ class SearchQueryProcessorTests(TestCase):
         sqp, _ = self.run_fake_search_query_processor(params={'q': ''})
         self.assertEqual(sqp.contains_active_advanced_search_options(), False)
         
-        # Empty query with sorting specifyied
+        # Empty query with sorting specified
         sqp, _ = self.run_fake_search_query_processor(params={'s': settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC})
         self.assertEqual(sqp.contains_active_advanced_search_options(), False)
         

@@ -114,7 +114,7 @@ def whitelist_user(ticket_ids=None, user_id=None):
 
 @shared_task(name=POST_MODERATION_ASSIGNED_TICKETS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
 def post_moderation_assigned_tickets(ticket_ids=[], notification=None, msg=False, moderator_only=False, users_to_update=None, packs_to_update=None):
-    # Carry out post-processing tasks for the approved sounds like invlaidating caches, sending packs to process, etc...
+    # Carry out post-processing tasks for the approved sounds like invalidating caches, sending packs to process, etc...
     # We do that in an async task to avoid moderation requests taking too long when approving sounds
     workers_logger.info("Start post moderation assigned tickets (%s)" % json.dumps({
         'task_name': POST_MODERATION_ASSIGNED_TICKETS_TASK_NAME, 
@@ -130,7 +130,7 @@ def post_moderation_assigned_tickets(ticket_ids=[], notification=None, msg=False
 
     for ticket in tickets:
         if collect_users_and_packs:
-            # Collect list of users and packls to update
+            # Collect list of users and packs to update
             # We only fill here users_to_update and packs_to_update if action is not
             # "Delete". See comment in "Delete" action case some lines above
             users_to_update.add(ticket.sound.user_id)
@@ -189,7 +189,7 @@ def delete_user(user_id, deletion_action, deletion_reason):
                                 DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_SPAMMER_USER_ACTION_NAME]:
 
             if deletion_action == DELETE_USER_KEEP_SOUNDS_ACTION_NAME:
-                # This will anonymize the user and will keep the sounds publicly availabe under a "deleted user"
+                # This will anonymize the user and will keep the sounds publicly available under a "deleted user"
                 # account. A DeletedUser object will be created, but no DeletedSound objects will be created as sound
                 # will be still available. Extra user content (posts, comments, etc) will be preserved but shown as
                 # being authored by a "deleted user".
@@ -205,7 +205,7 @@ def delete_user(user_id, deletion_action, deletion_reason):
 
             elif deletion_action == DELETE_SPAMMER_USER_ACTION_NAME:
                 # This will completely remove the user object and all of its related data (including sounds)
-                # from the database. A DeletedUser object will be creaetd to keep a record of a user having been
+                # from the database. A DeletedUser object will be created to keep a record of a user having been
                 # deleted.
                 user.profile.delete_user(delete_user_object_from_db=True,
                                          deletion_reason=deletion_reason)

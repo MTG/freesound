@@ -38,7 +38,7 @@ class Command(LoggingBaseCommand):
         self.log_start()
 
         # Generate the bytearray for all geotagged sounds in Freesound and store it in cache
-        # Don't set expiration time because the bytearray will be overwriten everytime this command runs
+        # Don't set expiration time because the bytearray will be overwritten everytime this command runs
         sounds = Sound.objects.select_related('geotag').exclude(geotag=None)
         count = sounds.count()
         computed_bytearray, num_geotags = generate_bytearray(sounds.all())

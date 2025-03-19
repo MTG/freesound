@@ -188,7 +188,7 @@ class BulkUploadProgress(models.Model):
             # This is a broad exception clause intentionally placed here to make sure that BulkUploadProgress is
             # updated with a global error. Otherwise it will appear to the user that the object is permanently being
             # validated. After we update the object with the "unexpected error" message, we log the exception and
-            # continue with excecution
+            # continue with execution
             lines_validated = []
             global_errors = ['An unexpected error occurred while validating your data file']
 
@@ -921,7 +921,7 @@ class Sound(models.Model):
             self.invalidate_template_caches()
 
     # N.B. The set_xxx functions below are used in the distributed processing and other parts of the app where we only
-    # want to save an individual field of the model to prevent overwritting other model fields.
+    # want to save an individual field of the model to prevent overwriting other model fields.
 
     def set_processing_ongoing_state(self, state):
         """
@@ -1198,7 +1198,7 @@ class Sound(models.Model):
             return True
 
     def estimate_num_processing_attemps(self):
-        # Estimates how many processing attemps have been made by looking at the processing logs
+        # Estimates how many processing attempts have been made by looking at the processing logs
         if self.processing_log is not None:
             return max(1, self.processing_log.count('----Processed sound'))
         else:
@@ -1609,7 +1609,7 @@ class Pack(models.Model):
         if self.num_sounds:
             if sounds[0].created > self.last_updated:
                 # Only update last_updated if the sound that changed was created after the packs last_updated time
-                # Otherwise it could be that the pack was edited (e.g. the description was changed) ater the last
+                # Otherwise it could be that the pack was edited (e.g. the description was changed) after the last
                 # sound was added and we could be setting the date of the sound here
                 self.last_updated = sounds[0].created
         self.save()

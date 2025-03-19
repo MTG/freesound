@@ -109,14 +109,14 @@ class UsernameLookup(TestCase):
             get_previously_contacted_usernames(self.sender)
 
     def test_get_previously_contacted_usernames(self):
-        # Check get_previously_contacted_usernames helper function returns userames of users previously contacted by
+        # Check get_previously_contacted_usernames helper function returns usernames of users previously contacted by
         # the sender or users who previously contacted the sender
         self.assertCountEqual([self.receiver3.username, self.receiver2.username, self.receiver1.username,
                                     self.sender2.username, self.sender.username],
                              get_previously_contacted_usernames(self.sender))
 
     def test_username_lookup_response(self):
-        # Check username lookup view returns userames of users previously contacted by the sender or users who
+        # Check username lookup view returns usernames of users previously contacted by the sender or users who
         # previously contacted the sender
         self.client.force_login(self.sender)
         resp = self.client.get(reverse('messages-username_lookup') + '?q=re')

@@ -138,8 +138,8 @@ def donation_complete_paypal(request):
     params.update({'cmd': '_notify-validate'})
 
     if "mc_gross" in params:
-        # Paypal makes notifications of different events e.g: new suscriptions,
-        # we only want to save when the actual payment happends
+        # Paypal makes notifications of different events e.g: new subscriptions,
+        # we only want to save when the actual payment happens
         params = request.POST.copy()
         params.update({'cmd': '_notify-validate'})
 

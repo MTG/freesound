@@ -428,7 +428,7 @@ class SoundPackDownloadTestCase(TestCase):
             self.assertRedirects(resp, '{}?next={}'.format(
             reverse('login'), reverse('pack', args=[self.sound.user.username, self.pack.id])))
 
-            # Check donwload works successfully if user logged in
+            # Check download works successfully if user logged in
             self.client.force_login(self.user)
             resp = self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
             self.assertEqual(resp.status_code, 200)
@@ -468,7 +468,7 @@ class SoundPackDownloadTestCase(TestCase):
             self.pack.user.username = 'other_username'
             self.pack.user.save()
 
-            # Check donwload works successfully if user logged in
+            # Check download works successfully if user logged in
             self.client.force_login(self.user)
 
             # First check that the response is a 301

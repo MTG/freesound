@@ -99,8 +99,8 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
             sound_obj = sound
         else:
             # If 'sound' is a Sound instance but has not been retrieved using bulk_query_id, we would need to make
-            # some extra DB queries to get the metadata that must be rendered. Instead, we retreive again
-            # the sound using the bulk_query_id method which will get all needed maetadaata in only one query.
+            # some extra DB queries to get the metadata that must be rendered. Instead, we retrieve again
+            # the sound using the bulk_query_id method which will get all needed metadata in only one query.
             # Note that we don't re-retrieve when player size contains "no_info" as in these cases there is
             # no extra metadata needed to be shown.
             if 'no_info' not in player_size:
@@ -108,7 +108,7 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
             else:
                 sound_obj = sound
     else:
-        # If 'sound' argument is not a Sound instance then we assume it is a sound ID and we retreive the
+        # If 'sound' argument is not a Sound instance then we assume it is a sound ID and we retrieve the
         # corresponding object from the DB.
         sound_obj = get_sound_using_bulk_query_id(sound)
 

@@ -44,7 +44,7 @@ def server_interface(resource):
         'get_all_point_names': resource.get_all_point_names,
         'get_descriptor_names': resource.get_descriptor_names,
         'contains': resource.contains,  # sound_id
-        'get_sounds_descriptors': resource.get_sounds_descriptors,  # sound_ids, descritor_names (optional), normalization (optional)
+        'get_sounds_descriptors': resource.get_sounds_descriptors,  # sound_ids, descriptor_names (optional), normalization (optional)
         'nnsearch': resource.nnsearch,  # sound_id, num_results (optional), preset (optional)
         'api_search': resource.api_search,
         'save': resource.save,  # filename (optional)

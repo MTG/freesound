@@ -265,12 +265,12 @@ class BulkDescribe(TestCase):
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertContains(resp, 'Validation results of the data file')
 
-        # Test that chosing option to delete existing BulkUploadProgress really does it
+        # Test that choosing option to delete existing BulkUploadProgress really does it
         resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]), data={'delete': True})
         self.assertRedirects(resp, reverse('accounts-manage-sounds', args=['pending_description']))  # Redirects to describe page after delete
         self.assertEqual(BulkUploadProgress.objects.filter(user=user).count(), 0)
 
-        # Test that chosing option to start describing files triggers bulk describe gearmnan job
+        # Test that choosing option to start describing files triggers bulk describe job
         bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
         resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]), data={'start': True})
         self.assertEqual(resp.status_code, 200)

@@ -74,7 +74,7 @@ def clean_processing_before_describe_files(audio_file_path):
     directory_path = get_processing_before_describe_sound_folder(audio_file_path)
     if os.path.exists(directory_path):
         # Note we use ignore_errors=True below because we've found issues with remove_directory similar
-        # to those described here https://github.com/ansible/ansible/issues/34335 (sort of race confitions)
+        # to those described here https://github.com/ansible/ansible/issues/34335 (sort of race conditions)
         # We suspect these errors can happen if the user describes the sound before it has finished "processing
         # before description" (maybe the case of long sounds?). In that case the directory will be removed while
         # new sounds are being added to it. If this happens, the error will be ignored and the folder will not be
@@ -365,7 +365,7 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
     # Import required sound models using apps.get_model (to avoid circular dependencies)
     License = apps.get_model('sounds', 'License')
 
-    # Import sound form here to avoid circular dependecy problems between sounds.models, sounds.forms and
+    # Import sound form here to avoid circular dependency problems between sounds.models, sounds.forms and
     # utils.sound_upload.
     from sounds.forms import SoundCSVDescriptionForm
 

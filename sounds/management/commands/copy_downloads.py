@@ -69,7 +69,7 @@ class Command(BaseCommand):
 
         start_date = options.get('start_date', None)
         if start_date is None:
-            # If no start date is specified, determine it automatically. Either get date of last processed dowwnload
+            # If no start date is specified, determine it automatically. Either get date of last processed download
             # or get date of first existing download object (if none have been processed yet)
             if last_downloads.count():
                 start_date = last_downloads[0].created

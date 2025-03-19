@@ -347,7 +347,7 @@ class TestSoundListSerializer(TestCase):
                 # Call serializer .data to actually get the data and potentially trigger unwanted extra queries
                 _ = SoundListSerializer(list(sounds_dict.values())[0], context={'request': dummy_request}).data
 
-        # Test when serializing mulitple sounds
+        # Test when serializing multiple sounds
         for field_set in field_sets:
             sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids, include_analyzers_output=True)
             with self.assertNumQueries(0):
@@ -511,7 +511,7 @@ class APIAuthenticationTestCase(TestCase):
 
     def test_oauth2_password_grant_flow(self):
 
-        # Return 'unauthorized_client' when trying password grant with a client with 'allow_oauth_passoword_grant' set
+        # Return 'unauthorized_client' when trying password grant with a client with 'allow_oauth_password_grant' set
         # to false
         client = ApiV2Client.objects.get(name='AuthorizationCodeClient')
         resp = self.client.post(
@@ -525,7 +525,7 @@ class APIAuthenticationTestCase(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()['error'], 'unauthorized_client')
 
-        # Return 200 OK when trying password grant with a client with 'allow_oauth_passoword_grant' set to True
+        # Return 200 OK when trying password grant with a client with 'allow_oauth_password_grant' set to True
         client.allow_oauth_passoword_grant = True
         client.save()
         resp = self.client.post(

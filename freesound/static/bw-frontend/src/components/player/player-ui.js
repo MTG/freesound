@@ -577,8 +577,7 @@ const createCollectionButton = (parentNode, playerImgNode) => {
     //favoriteButtonContainer.classList.add('opacity-050')
   }
   collectionButton.setAttribute('data-toggle', 'collection-modal');
-  collectionButton.setAttribute('data-modal-url', parentNode.dataset.collectionModalUrl);
-  collectionButton.setAttribute('data-collection-sound-url', parentNode.dataset.collectionSoundUrl); 
+  collectionButton.setAttribute('data-modal-content-url', parentNode.dataset.collectionModalContentUrl);
   collectionButtonContainer.appendChild(collectionButton);
   return collectionButtonContainer;
 }

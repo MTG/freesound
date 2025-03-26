@@ -44,7 +44,6 @@ class Collection(models.Model):
     num_downloads = models.PositiveIntegerField(default=0)
     public = models.BooleanField(default=False)
     is_default_collection = models.BooleanField(default=False)
-    max_num_sounds = models.PositiveIntegerField(default=settings.MAX_SOUNDS_PER_COLLECTION)
     #NOTE: Don't fear migrations, you're just testing
     #subcolletion_path = sth with tagn and routing folders for downloads
     #follow relation for users and collections (intersted but not owner nor contributor)
@@ -116,6 +115,7 @@ class CollectionDownloadSound(models.Model):
     collection_download = models.ForeignKey(CollectionDownload, on_delete=models.CASCADE)
     license = models.ForeignKey(License, on_delete=models.CASCADE)
 
+# TODO: add post_delete
 @receiver(post_save, sender=CollectionDownload)
 def update_collection_downloads(**kwargs):
     download = kwargs.pop('instance', False)

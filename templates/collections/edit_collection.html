@@ -4,7 +4,6 @@
 {% load bw_templatetags %}
 {% load sounds_selector %}
 {% load users_selector %}
-{% load custom_form_display %}
 
 {% block title %}Edit collection - {{ collection.name }}{% endblock %}
 {% block page-title %}Edit collection{% endblock %}
@@ -19,37 +18,43 @@
     <div class="col-lg-8 offset-lg-2">
         <h2 class="v-spacing-3">{{ collection.name }}</h2>
         <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
-            <!--when Django hits 5.0 the below tag is not necessary, instead use "as_field_group"-->
-            {% custom_form_display form display_fields as custom_fields%}
-            {% for field in custom_fields %}
-                {{ field.errors }}
-                {{ field.label_tag }}
-                {{ field }}
-                {% if field.help_text %}
-                    <span class="helptext"><i>{{field.help_text|safe}}</i></span>
-                {% endif %}
-            {% endfor %}
+            <div>
+                {{ form.name.errors }}
+                {{ form.name.label_tag }}
+                {{ form.name }}
+                    <span class="helptext"><i>{{form.name.help_text|safe}}</i></span>
+            </div>
+            <div>
+                {{ form.description.errors }}
+                {{ form.description.label_tag }}
+                {{ form.description }}
+                    <span class="helptext"><i>{{form.description.help_text|safe}}</i></span>
+            </div>
+            <div>
+                {{ form.public.errors }}
+                {{ form.public.label_tag }}
+                {{ form.public }}
+                    <span class="helptext"><i>{{form.public.help_text|safe}}</i></span>
+            </div>
             <div class="select-sound-field v-spacing-2">
-                {{ form.collection_maintainers }}
+                {{ form.maintainers }}
                 <label>Maintainers ({{ form.collection_maintainers_objects|length }})</label>
-                    {% if form.collection_maintainers.errors %}
-                        <div>{{form.collection_maintainers.errors}}</div>
+                    {% if form.maintainers.errors %}
+                        <div>{{form.maintainers.errors}}</div>
                     {% endif %}
-                {% if not form.collection_maintainers.value %}
+                {% if form.collection_maintainers_objects|length == 0 %}
                 <div class="v-spacing-4 v-spacing-top-2">This collection has no maintainers</div>
                 {% endif %}
                 {% users_selector form.collection_maintainers_objects%}
                 <div class="between v-spacing-2">
-                    <button class="btn-inverse" data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.collection_maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.id%}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
+                    <button class="btn-inverse" data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.id%}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
                     <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
                 </div>
             </div>
             <div class="select-sounds-field v-spacing-5">
                 {{ form.collection_sounds }}
                 <label>Sounds in collection ({{ form.collection_sound_objects|length }})</label>
-                    {% if form.collection_sounds.errors %}
-                        <div> {{form.collection_sounds.errors}}</div>
-                    {% endif %}
+                <div> {{form.collection_sounds.errors}}</div>
                 {% if not form.collection_sounds.value %}
                 <div class="v-spacing-4 v-spacing-top-2">No sounds have been added to this collection yet</div>
                 {% endif %}
@@ -59,9 +64,7 @@
                     <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from collection</button>
                 </div>
                 <div class="between v-spacing-top-5">
-                    {% if form.collection_sounds|length != 4 %}
-                    <span class="helptext"><i>{{form.collection_sounds.help_text|safe}}</i></span>
-                    {% endif%}
+                    <span class="helptext display-none" ><i>{{form.collection_sounds.help_text|safe}}</i></span>
                 </div>
             </div>
             {% if is_owner or is_maintainer%}

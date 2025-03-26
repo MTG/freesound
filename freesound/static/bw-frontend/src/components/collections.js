@@ -1,36 +1,8 @@
 import {dismissModal, handleGenericModal, handleGenericModalWithForm} from "./modal";
 import {showToast} from "./toast";
-import {makePostRequest} from "../utils/postRequest";
+import { initializeStuffInContainer } from "../utils/initHelper";
 import {initializeObjectSelector, updateObjectSelectorDataProperties} from "./objectSelector";
 import {combineIdsLists, serializedIdListToIntList} from "../utils/data";
-
-const saveCollectionSound = (collectionSoundUrl, data) => {
-
-    let formData = {};
-    if (data === undefined){
-        formData.name = "";
-        formData.collection = "";
-        formData.new_collection_name = "";
-        formData.use_last_collection = true;
-    } else {
-        formData = data;
-    }
-    makePostRequest(collectionSoundUrl, formData, (responseText) => {
-        // Collection attribute saved successfully. Close model and show feedback
-        dismissModal('collectSoundModal'); // TBC
-        try {
-            showToast(JSON.parse(responseText).message);
-        } catch (error) {
-            // If not logged in, the url will respond with a redirect and JSON parsing will fail
-            showToast("You need to be logged in before using collections.")
-        }
-    }, () => {
-        // Unexpected errors happened while processing request: close modal and show error in toast
-        dismissModal('collectSoundModal');
-        showToast('Some errors occurred while adding the sound to the collection.');
-    });
-}
-
 
 const toggleNewCollectionNameDiv = (select, newCollectionNameDiv) => {
     if (select.value == '0'){
@@ -42,10 +14,13 @@ const toggleNewCollectionNameDiv = (select, newCollectionNameDiv) => {
 }
 
 
-const initCollectionFormModal = (soundId, collectionSoundUrl) => {
+const initCollectionFormModal = () => {
     
     // Modify the form structure to add a "Category" label inline with the select dropdown
     const modalContainer = document.getElementById('collectSoundModal');
+    // To display the selector in case of an error in form, the following function is needed, despite it being called in
+    // handleGenericModal. TODO: this needs an improvement so it's only called when necessary
+    initializeStuffInContainer(modalContainer, false, false);
     const selectElement = modalContainer.getElementsByTagName('select')[0];
     const wrapper = document.createElement('div');
     wrapper.style = 'display:inline-block;';
@@ -60,26 +35,12 @@ const initCollectionFormModal = (soundId, collectionSoundUrl) => {
     wrapper.appendChild(label)
     wrapper.appendChild(selectElement)
 
-    const formElement = modalContainer.getElementsByTagName('form')[0];
-    const buttonsInModalForm = formElement.getElementsByTagName('button');
-    const saveButtonElement = buttonsInModalForm[buttonsInModalForm.length - 1];
-    const categorySelectElement = document.getElementById(`id_${  soundId.toString()  }-collection`);
-
-    const newCategoryNameElement = document.getElementById(`id_${  soundId.toString()  }-new_collection_name`);
+    const categorySelectElement = document.getElementById('id_collection');
+    const newCategoryNameElement = document.getElementById('id_new_collection_name');
     toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
     categorySelectElement.addEventListener('change', (event) => {
     toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
-    });
-
-    // Bind action to save collection attribute and prevent default submit
-    saveButtonElement.addEventListener('click', (e) => {
-        e.preventDefault();
-        const data = {};
-        data.collection = document.getElementById(`id_${  soundId.toString()  }-collection`).value;
-        data.new_collection_name = document.getElementById(`id_${  soundId.toString()  }-new_collection_name`).value;
-        saveCollectionSound(collectionSoundUrl, data);
-    });
-};
+});}
 
 const bindCollectionModals = (container) => {
     const collectionButtons = [...container.querySelectorAll('[data-toggle="collection-modal"]')];
@@ -90,15 +51,13 @@ const bindCollectionModals = (container) => {
         element.dataset.alreadyBinded = true;
         element.addEventListener('click', (evt) => {
             evt.preventDefault();   
-            const modalUrlSplitted = element.dataset.modalUrl.split('/')
+            const modalUrlSplitted = element.dataset.modalContentUrl.split('/')
             const soundId = parseInt(modalUrlSplitted[modalUrlSplitted.length - 3], 10)
             if (!evt.altKey) {
-                handleGenericModal(element.dataset.modalUrl, () => {
-                    initCollectionFormModal(soundId, element.dataset.collectionSoundUrl);
-                }, undefined, true, true);
-            } else {
-                saveCollectionSound(element.dataset.collectionSoundUrl);
-            }
+                handleGenericModalWithForm(element.dataset.modalContentUrl, () => {
+                    initCollectionFormModal(soundId, element.dataset.modalContentUrl);
+                }, undefined, (req) => {showToast(JSON.parse(req.responseText).message);}, () => {showToast('There were errors processing the form...');}, true, true, undefined, false);
+            } 
         });
     });
 }
@@ -112,9 +71,7 @@ const handleAddMaintainersModal = (modalId, modalUrl, selectedMaintainersDestina
             if (evt.key === 'Enter'){
                 evt.preventDefault();
                 const baseUrl = modalUrl.split('?')[0];
-                const maintainersIdsToExclude = combineIdsLists(serializedIdListToIntList(selectedMaintainersDestinationElement.dataset.selectedIds), serializedIdListToIntList(selectedMaintainersDestinationElement.dataset.unselectedIds)).join(',');
-                console.log(maintainersIdsToExclude)
-                handleAddMaintainersModal(modalId, `${baseUrl}?q=${inputElement.value}&exclude=${maintainersIdsToExclude}`, selectedMaintainersDestinationElement, onMaintainersSelectedCallback);
+                handleAddMaintainersModal(modalId, `${baseUrl}?q=${inputElement.value}`, selectedMaintainersDestinationElement, onMaintainersSelectedCallback);
             }
         });
 
@@ -152,18 +109,31 @@ const prepareAddMaintainersModalAndFields = (container) => {
     addMaintainersButtons.forEach(addMaintainersButton => {
         const removeMaintainersButton = addMaintainersButton.nextElementSibling;
         removeMaintainersButton.disabled = true;
-
-        const selectedMaintainersDestinationElement = addMaintainersButton.parentNode.parentNode.getElementsByClassName('bw-object-selector-container')[0];
+        
+        const selectedMaintainersDestinationElement = addMaintainersButton.parentNode.parentNode.querySelector('.bw-object-selector-container[data-type="users"]');
+        /*
+        USEFUL NOTES AFTER DEBUGGING:
+        
+        The function updateObjectSelectorDataProperties in charge of defining the selectedIds and unselectedIds for each
+        selector does not work for maintainers. Instead it is only triggered once the user interacts with a maintainer checkbox.
+        Data might get overwritten as this works simultaneously with addSoundsModal.js file. The thing is that in
+        updateObjectSelectorDataProperties, the "call stack" states that originally, the function is called from here (line 175).
+        Therefore, the definition of selectedMaintainersDestinationElement somehow is wrong or confused with the selectedSoundsDestinationElement.
+        I tried to filter this using the above queryselector but it does not work. I guess this might have something to do with the file
+        collectionEdit.js.
+        */
         initializeObjectSelector(selectedMaintainersDestinationElement, (element) => {
             removeMaintainersButton.disabled = element.dataset.selectedIds == "" 
         })
 
+
         const maintainersInput = selectedMaintainersDestinationElement.parentNode.parentNode.getElementsByTagName('input')[0];
-        if(maintainersInput.getAttribute('readonly') !== null){
-            addMaintainersButton.disabled = true
+        if(maintainersInput.disabled !== false){
+            addMaintainersButton.disabled = true;
+            addMaintainersButton.nextElementSibling.remove();
+            addMaintainersButton.remove();
             const checkboxes = selectedMaintainersDestinationElement.querySelectorAll('span.bw-checkbox-container');
             checkboxes.forEach(checkbox => {
-                console.log(checkbox)
                 checkbox.remove()
             })
         }

@@ -4,8 +4,8 @@
     data-size="{% if player_size == 'small' or player_size == 'small_no_info' or player_size == 'middle' or player_size == 'moderation' %}small{% elif player_size == 'big_no_info' %}big{% elif player_size == 'minimal' %}minimal{% endif %}"
 
     data-collection="{% if show_collection_button %}true{% else %}false{% endif %}"
-    data-collection-modal-url="{% if show_collection_button %}{% url 'collection-add-form-for-sound' sound.id %}{% endif %}" 
-    data-collection-sound-url="{% if show_collection_button %}{% url 'add-sound-to-collection' sound.id %}{% endif %}"
+    data-collection-modal-content-url="{% if show_collection_button %}{% url 'add-sound-to-collection' sound.id %}{% endif %}" 
+    
 
     data-bookmark="{% if show_bookmark_button %}true{% else %}false{% endif %}"
     data-bookmark-modal-url="{% if show_bookmark_button %}{% url 'bookmarks-add-form-for-sound' sound.id %}{% endif %}"

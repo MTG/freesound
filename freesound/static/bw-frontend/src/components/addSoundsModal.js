@@ -46,13 +46,13 @@ const prepareAddSoundsModalAndFields = (container) => {
         const removeSoundsButton = addSoundsButton.nextElementSibling;
         removeSoundsButton.disabled = true;
 
-        const selectedSoundsDestinationElement = addSoundsButton.parentNode.parentNode.getElementsByClassName('bw-object-selector-container')[0];
+        const selectedSoundsDestinationElement = addSoundsButton.parentNode.parentNode.querySelector('.bw-object-selector-container[data-type="sounds"]');
         initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
             removeSoundsButton.disabled = element.dataset.selectedIds == ""
         });
 
         const soundsInput = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName('input')[0];
-        if(soundsInput.getAttribute('readonly') !== null){
+        if(soundsInput.disabled){
             addSoundsButton.disabled = true
             const checkboxes = selectedSoundsDestinationElement.querySelectorAll('span.bw-checkbox-container');
             checkboxes.forEach(checkbox => {
@@ -60,7 +60,7 @@ const prepareAddSoundsModalAndFields = (container) => {
             })
         }
         if(soundsInput.value.split(',').length >= 4 && soundsInput.id === "collection_sounds"){
-            addSoundsButton.disabled = true
+                addSoundsButton.disabled = true
         }
 
         removeSoundsButton.addEventListener('click', (evt) => {

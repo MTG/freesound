@@ -45,7 +45,7 @@
             {% endfor %}
             </div>
         {% endif %}
-        <form>
+        <form method="post" action="{% url 'add-sound-to-collection' sound.id %}?ajax=1." class = "disable-on-submit">{% csrf_token %}
             {{ form }}
             <button class = "btn-primary v-spacing-top-2">Collect Sound</button>
         </form>

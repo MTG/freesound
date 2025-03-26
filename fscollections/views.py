@@ -82,30 +82,47 @@ def collections_for_user(request):
 
 
 def add_sound_to_collection(request, sound_id):
-    # TODO: add restrictions for sound repetition and for user being owner/maintainer
-    # this does not work when adding sounds from search results
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ''
-
+    user_collections = Collection.objects.filter(user=request.user) | Collection.objects.filter(maintainers__id=request.user.id)
+    user_collections = user_collections.distinct().order_by('modified')
+    try:
+        last_collection = \
+            Collection.objects.filter(user=request.user).order_by('-modified')[0]
+        # If user has a previous bookmark, use the same category by default (or use none if no category used in last
+        # bookmark)
+    except IndexError:
+        last_collection = None
+        
     if not request.GET.get('ajax'):
         HttpResponseRedirect(reverse("sound", args=[sound.user.username,sound.id]))
 
     if request.method == 'POST':
-        user_collections = Collection.objects.filter(user=request.user) | Collection.objects.filter(maintainers__id=request.user.id)
-        user_collections = user_collections.distinct().order_by('modified')
-        form = CollectionSoundForm(request.POST, sound_id=sound_id, user_collections=user_collections, user_saving_sound=request.user)
-    
+        form = SelectCollectionOrNewCollectionForm(request.POST, sound_id=sound_id, user_collections=user_collections, user_saving_sound=request.user)
         if form.is_valid():
             saved_collection = form.save()
-            # TODO: moderation of CollectionSounds to be accounted for users who are neither maintainers nor owners
             CollectionSound.objects.create(user=request.user, collection=saved_collection, sound=sound, status="OK")
+            # NOTE: this save is only called in order to update num_sounds
             saved_collection.save()
             msg_to_return = f'Sound "{sound.original_filename}" saved under collection {saved_collection.name}'
             return JsonResponse({'success': True, 'message': msg_to_return})
-        else:
-            msg_to_return = f'There were some errors handling the collection'
-            return JsonResponse({'success': False, 'message': msg_to_return})
+    else:
+        form = SelectCollectionOrNewCollectionForm(initial={'collection': last_collection.id if last_collection else SelectCollectionOrNewCollectionForm.BOOKMARK_COLLECTION_CHOICE_VALUE},
+                                sound_id=sound.id,
+                                user_collections=user_collections,
+                                user_saving_sound=request.user)
+    collections_already_containing_sound = user_collections.filter(collectionsound__sound__id=sound.id).distinct()
+    full_collections = Collection.objects.filter(num_sounds__gte=4) # settings.MAX_SOUNDS_PER_COLLECTIONadd
+    tvars = {'user': request.user,
+             'sound': sound,
+             'sound_is_moderated_and_processed_ok': sound.moderated_and_processed_ok,
+             'form': form,
+             'collections_with_sound': collections_already_containing_sound,
+             'full_collections': full_collections
+             }
 
+    return render(request, 'collections/modal_collect_sound.html', tvars)
+            
 def delete_sound_from_collection(request, collectionsound_id):
     collection_sound = get_object_or_404(CollectionSound, id=collectionsound_id)
     collection = collection_sound.collection
@@ -117,40 +134,6 @@ def delete_sound_from_collection(request, collectionsound_id):
             collection_sound.delete()
             collection.save()
             return HttpResponseRedirect(reverse("collection", args=[collection.id]))
-
-@login_required
-def get_form_for_collecting_sound(request, sound_id):
-
-    sound = Sound.objects.get(id=sound_id)
-    
-    try:
-        last_collection = \
-            Collection.objects.filter(user=request.user).order_by('-modified')[0]
-        # If user has a previous bookmark, use the same category by default (or use none if no category used in last
-        # bookmark)
-    except IndexError:
-        last_collection = None
-    
-    user_collections = Collection.objects.filter(user=request.user) | Collection.objects.filter(maintainers__id=request.user.id)
-    user_collections = user_collections.distinct().order_by('modified')
-    form = CollectionSoundForm(initial={'collection': last_collection.id if last_collection else CollectionSoundForm.BOOKMARK_COLLECTION_CHOICE_VALUE},
-                               sound_id=sound.id,
-                               prefix=sound.id,
-                               user_collections=user_collections,
-                               user_saving_sound=request.user)
-    collections_already_containing_sound = Collection.objects.filter(user=request.user, collectionsound__sound__id=sound.id).distinct()
-    full_collections = Collection.objects.filter(num_sounds=settings.MAX_SOUNDS_PER_COLLECTION)
-    tvars = {'user': request.user,
-             'sound': sound,
-             'sound_is_moderated_and_processed_ok': sound.moderated_and_processed_ok,
-             'last_collection': last_collection,
-             'collections': user_collections,
-             'form': form,
-             'collections_with_sound': collections_already_containing_sound,
-             'full_collections': full_collections
-             }
-    
-    return render(request, 'collections/modal_collect_sound.html', tvars)
 
 def create_collection(request):
     if not request.GET.get('ajax'):
@@ -180,52 +163,59 @@ def edit_collection(request, collection_id):
     
     collection = get_object_or_404(Collection, id=collection_id)
     collection_sounds = ",".join([str(s.id) for s in Sound.objects.filter(collectionsound__collection=collection)])
-    collection_maintainers = ",".join([str(u.id) for u in User.objects.filter(collection_maintainer=collection.id)])
-
+    collection_maintainers = ",".join([str(u.id) for u in User.objects.filter(collection_maintainer=collection.id)])    
+    is_owner = False
+    is_maintainer = False
     if request.user == collection.user:
         is_owner = True
-    else:
-        is_owner = False
-    if str(request.user.id) in collection_maintainers:
+    elif str(request.user.id) in collection_maintainers:
         is_maintainer = True
     else:
-        is_maintainer = False
+        return HttpResponseRedirect(reverse('collection', args=[collection_id]))
     
     current_sounds = list()
     if request.method=="POST":
-        form = CollectionEditForm(request.POST, instance=collection, label_suffix='', is_owner=is_owner, is_maintainer=is_maintainer)
+        if is_owner:
+            form = CollectionEditForm(request.POST, instance=collection, label_suffix='', is_owner=is_owner, is_maintainer=is_maintainer)
+        elif is_maintainer:
+            form = CollectionEditFormAsMaintainer(request.POST, instance=collection, label_suffix='', is_owner=is_owner, is_maintainer=is_maintainer)
+        else:
+            return HttpResponseRedirect(reverse('collection',collection_id))
+        
         if form.is_valid():
             form.save(user_adding_sound=request.user)
             return HttpResponseRedirect(reverse('collection', args=[collection.id]))
-        elif "collection_sounds" in form.errors:
-            # NOTE: creating a form.data.copy() is useful because it returns a mutable version of the QueryDict instance
-            # that contains the form.data (which originally is immutable to avoid changes in it throughout the request process)
-            # However, in this case this is useful because if the editor has added too many sounds for the collection (num_sounds>250),
-            # we want to display a modified version of the input values for 'collection_sounds'. The form will be reloaded displaying
-            # 250 sounds maximum.
-            form.data = form.data.copy()
-            form.data['collection_sounds'] = form.cleaned_data['collection_sounds']
-            original_sounds_in_collection = [str(s) for s in list(Sound.objects.filter(collectionsound__collection=collection).values_list('id',flat=True))]
-            for snd in form.data['collection_sounds']:
-                if snd not in original_sounds_in_collection:
-                    sound = Sound.objects.get(id=snd)
-                    CollectionSound.objects.create(user=request.user, sound=sound, collection=collection)
-                    collection.save()
-                    
+        else:
+            # NOTE: in this form's validation, errors are raised for each speific field, so when there is a submission attempt the error
+            # is displayed within it. However, fields containing errors are removed from the clean data but we are still interested in
+            # preserving its value. Therefore, we re-initialize a form according to the user's permissions preserving the field's validated data if so,
+            # and in case of error for a field, we take its value from the POST request. The error messages are still attached to the form so that they're displayed.
+            errors_data = form.errors
+            new_form_data = dict()
+            for field in form.fields:
+                try:
+                    new_form_data.setdefault(field, form.cleaned_data[field])
+                except KeyError:
+                    new_form_data.setdefault(field, request.POST.get(field,))
+            if is_owner:
+                form = CollectionEditForm(initial=new_form_data, label_suffix='', is_owner=is_owner, is_maintainer=is_maintainer)
+            elif is_maintainer:
+                form = CollectionEditFormAsMaintainer(initial=new_form_data, label_suffix='', is_owner=is_owner, is_maintainer=is_maintainer)    
+            form._errors=errors_data
     else:
-        form = CollectionEditForm(instance=collection, initial=dict(collection_sounds=collection_sounds, collection_maintainers=collection_maintainers), label_suffix='', is_owner=is_owner, is_maintainer=is_maintainer)
-    
+        if is_owner:
+            form = CollectionEditForm(instance=collection, initial=dict(collection_sounds=collection_sounds, maintainers=collection_maintainers), label_suffix='', is_owner=is_owner, is_maintainer=is_maintainer)
+        elif is_maintainer:
+            form = CollectionEditFormAsMaintainer(instance=collection, initial=dict(collection_sounds=collection_sounds, maintainers=collection_maintainers), label_suffix='', is_owner=is_owner, is_maintainer=is_maintainer)
     current_sounds = Sound.objects.bulk_sounds_for_collection(collection_id=collection.id)
     current_maintainers = User.objects.filter(collection_maintainer=collection.id)
     form.collection_sound_objects = current_sounds
     form.collection_maintainers_objects = current_maintainers
-    display_fields = ["name", "description", "public"]
     tvars = {
         "form": form,
         "collection": collection,
         "is_owner": is_owner,
         "is_maintainer": is_maintainer,
-        "display_fields": display_fields,
     }
     
     return render(request, 'collections/edit_collection.html', tvars)
@@ -269,26 +259,16 @@ def add_maintainer_modal(request, collection_id):
     form = MaintainerForm()
     # TODO: the below statements exclude users with whitespaces in their usernames (and they still exist)
     usernames = request.GET.get('q','').replace(' ','').split(',')
-    excluded_users = request.GET.get('exclude','').split(',')
-    # if request.GET.get('ajax'):
-      #  new_maintainers = User.objects.filter(username__in=usernames)
-    # TODO: the above conditional is more suitable for its purpose (first modal load)
-    # However, there's a strange error in collections.js, when loading the object selector that contains the maintainers.
-    # The selectedIds and unselectedIds parameters are not added to its dataset until the user interacts with a checkbox.
-    # Until that's not solved, the below if statement must be used to avoid crashings
-    if excluded_users[0] == '':
-        new_maintainers = User.objects.filter(username__in=usernames)
-    else:
-        new_maintainers = User.objects.filter(username__in=usernames).exclude(id__in=excluded_users)
-        
+
+    new_maintainers = User.objects.filter(username__in=usernames)
     not_found_users = []
     not_found_message = False
     for usr in usernames:
-        if usr not in list(new_maintainers.values_list('username', flat=True)):
+        if usr!='' and usr not in list(new_maintainers.values_list('username', flat=True)):
             not_found_users.append(usr)
     
-    if not_found_users != ['']:
-        not_found_message = "The following users either don't exist or are maintainers already: "
+    if len(not_found_users)>0:
+        not_found_message = "The following users don't exist: "
         for usr in not_found_users:
             if usr == not_found_users[-1]:
                 not_found_message += usr + "."

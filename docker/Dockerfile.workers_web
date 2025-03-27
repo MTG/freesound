@@ -11,7 +11,7 @@ RUN make clean && make
 
 # --- main Freesound docker file contents
 
-FROM freesound:2023-07
+FROM freesound:2025-03
 
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 
@@ -49,7 +49,7 @@ COPY --from=stereofy /code/stereofy /usr/local/bin
 
 # Install python dependencies
 COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
-RUN --mount=type=cache,target=/root/.cache/uv uv pip install --system -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/uv uv pip install --system --compile-bytecode -r requirements.txt
 
 # Copy source code
 COPY --chown=fsweb:fsweb . /code

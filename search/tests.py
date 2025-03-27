@@ -167,12 +167,12 @@ class SearchPageTests(TestCase):
 
             # Now check number of queries when displaying results as packs (i.e., searching for packs)
             cache.clear()
-            with self.assertNumQueries(6):
+            with self.assertNumQueries(4):
                 self.client.get(reverse('sounds-search') + '?dp=1')
 
             # Also check packs when displaying in grid mode
             cache.clear()
-            with self.assertNumQueries(6):
+            with self.assertNumQueries(4):
                 self.client.get(reverse('sounds-search') + '?dp=1&cm=1')
 
         with override_settings(USE_SEARCH_ENGINE_SIMILARITY=False):
@@ -180,12 +180,12 @@ class SearchPageTests(TestCase):
 
             # Now check number of queries when displaying results as packs (i.e., searching for packs)
             cache.clear()
-            with self.assertNumQueries(5):
+            with self.assertNumQueries(3):
                 self.client.get(reverse('sounds-search') + '?dp=1')
 
             # Also check packs when displaying in grid mode
             cache.clear()
-            with self.assertNumQueries(5):
+            with self.assertNumQueries(3):
                 self.client.get(reverse('sounds-search') + '?dp=1&cm=1')
 
 

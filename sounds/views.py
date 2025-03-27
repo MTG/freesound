@@ -106,7 +106,7 @@ def get_sound_of_the_day_id():
         try:
             today = datetime.date.today()
             now = timezone.now()
-            tomorrow = datetime.datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
+            tomorrow = datetime.datetime(today.year, today.month, today.day, tzinfo=datetime.timezone.utc)
             time_until_tomorrow = tomorrow - now
 
             rnd = SoundOfTheDay.objects.get(date_display=today)
@@ -209,7 +209,7 @@ def front_page(request):
 @redirect_if_old_username_or_404
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.prefetch_related("tags__tag")\
+        sound = Sound.objects.prefetch_related("tags")\
             .select_related("license", "user", "user__profile", "pack")\
             .get(id=sound_id, user__username=username)
 
@@ -864,11 +864,8 @@ def pack(request, username, pack_id):
         pack = Pack.objects.bulk_query_id(pack_id)[0]
         if pack.user.username.lower() != username.lower():
             raise Http404
-    except (Pack.DoesNotExist, IndexError) as e:
+    except IndexError:
         raise Http404
-
-    if pack.is_deleted:
-        return render(request, 'sounds/pack_deleted.html')
 
     qs = Sound.public.only('id').filter(pack=pack).order_by('-created')
     num_sounds_to_display = settings.SOUNDS_PER_PAGE_PROFILE_PACK_PAGE
@@ -905,7 +902,7 @@ def pack_stats_section(request, username, pack_id):
         pack = Pack.objects.bulk_query_id(pack_id)[0]
         if pack.user.username.lower() != username.lower():
             raise Http404
-    except (Pack.DoesNotExist, IndexError) as e:
+    except IndexError:
         raise Http404
     tvars = {
         'pack': pack,

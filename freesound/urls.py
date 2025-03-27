@@ -22,10 +22,13 @@ import os
 
 from django.urls import path, re_path, include
 from django.contrib import admin
-from django.views.generic import TemplateView, RedirectView
+from django.contrib.sitemaps.views import index as sitemap_index, sitemap as sitemap_sitemap
+from django.views.decorators.cache import cache_page
+from django.views.generic import RedirectView
 import accounts.views
 import geotags.views
 import search.views
+import sounds.sitemaps as sound_sitemaps
 import sounds.views
 import support.views
 import tags.views
@@ -143,6 +146,18 @@ urlpatterns = [
     re_path(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
     re_path(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
     re_path(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
+
+    # sitemaps
+    path('sitemap.xml',
+         cache_page(86400)(sitemap_index),
+         {"sitemaps": sound_sitemaps.sitemaps, "sitemap_url_name": "django.contrib.sitemaps.views.sitemap"},
+         name="django.contrib.sitemaps.views.index",
+    ),
+    path('sitemap-<section>.xml',
+         cache_page(86400)(sound_sitemaps.sitemap_view),
+         {'sitemaps': sound_sitemaps.sitemaps},
+         name="django.contrib.sitemaps.views.sitemap"
+    ),
 ]
 
 urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]

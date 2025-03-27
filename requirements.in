@@ -16,7 +16,6 @@ django-oauth-toolkit==3.0.1
 django-object-actions==4.3.0
 django-ratelimit==4.1.0
 django-recaptcha==4.0.0
-django-redis==5.4.0
 django-silk==5.3.2
 Django~=4.2.19
 djangorestframework-jsonp==1.0.2
@@ -39,14 +38,13 @@ numpy==1.24.3
 oauthlib
 openpyxl==3.1.0  # for reading .xlsx files (but not .xls)
 Pillow==9.5.0
-pip-tools==7.1.0
-psycopg2-binary==2.9.6
+psutil~=7.0.0
+psycopg~=3.2.4
 PyJWT==2.6.0
 pyparsing==2.4.7
 pysndfile==1.4.4
 pysolr==3.10.0b1
 python-louvain==0.16  # community detection in clustering
-pytz==2023.3
 pytest~=8.0.2
 pytest-django~=4.8.0
 PyYAML==6.0.1

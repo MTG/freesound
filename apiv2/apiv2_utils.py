@@ -347,8 +347,12 @@ def api_search(
                 sort=processed_sort,
                 offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
                 num_sounds=search_form.cleaned_data['page_size'],
-                group_by_pack=search_form.cleaned_data['group_by_pack']
+                group_by_pack=search_form.cleaned_data['group_by_pack'],
+                similar_to=search_form.cleaned_data['similar_to'],
+                similar_to_max_num_sounds=min(search_form.cleaned_data['page'] * search_form.cleaned_data['page_size'], settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY),
+                similar_to_analyzer=search_form.cleaned_data['similarity_space'] or settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER,
             )
+
             ids_score = [(int(element['id']), element['score']) for element in result.docs]
             num_found = result.num_found
             more_from_pack_data = None

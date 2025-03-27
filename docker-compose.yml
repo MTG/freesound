@@ -1,6 +1,6 @@
 volumes:
     pgdata:
-    m2home:
+    pghome:
     solr9data:
     fswebhome:
 
@@ -10,6 +10,7 @@ services:
     db:
         image: postgres:16.6
         volumes:
+            - pghome:/root
             - pgdata:/var/lib/postgresql/data
             - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         ports:

@@ -37,7 +37,7 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.encoding import smart_str
 from django.utils import timezone
-from psycopg2.errors import ForeignKeyViolation
+from psycopg.errors import ForeignKeyViolation
 from urllib.parse import quote
 
 import tickets.models
@@ -50,7 +50,6 @@ from geotags.models import GeoTag
 from messages.models import Message
 from ratings.models import SoundRating
 from sounds.models import DeletedSound, License, Sound, Pack, Download, PackDownload, BulkUploadProgress
-from tags.models import TaggedItem
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from utils.search import get_search_engine, SearchEngineException
@@ -605,12 +604,9 @@ class Profile(models.Model):
 
     @property
     def avg_rating(self):
-        """Returns the average raring from 0 to 10"""
-        ratings = list(SoundRating.objects.filter(sound__user=self.user).values_list('rating', flat=True))
-        if ratings:
-            return sum(ratings) / len(ratings)
-        else:
-            return 0
+        """Returns the average rating from 0 to 10"""
+        avg = SoundRating.objects.filter(sound__user=self.user).aggregate(models.Avg('rating'))['rating__avg']
+        return avg if avg is not None else 0
 
     @property
     def avg_rating_0_5(self):

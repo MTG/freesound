@@ -168,7 +168,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
         try:
             return obj.tag_array
         except AttributeError:
-            return [tagged.tag.name for tagged in obj.tags.select_related("tag").all()]
+            return [tagged.name for tagged in obj.tags.all()]
 
     license = serializers.SerializerMethodField()
     def get_license(self, obj):

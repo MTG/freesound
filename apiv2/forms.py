@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+import json
 
 import django.forms as forms
 from django.conf import settings
@@ -100,6 +101,8 @@ class SoundCombinedSearchFormAPI(forms.Form):
     group_by_pack = forms.CharField(required=False, label='group_by_pack')
     descriptors_filter = forms.CharField(required=False, label='descriptors_filter')
     target = forms.CharField(required=False, label='target')
+    similar_to = forms.CharField(required=False, label='similar_to')
+    similarity_space = forms.CharField(required=False, label='similarity_space')
     original_url_sort_value = None
 
     def clean_query(self):
@@ -176,6 +179,19 @@ class SoundCombinedSearchFormAPI(forms.Form):
         if 'target' in self.data and (not target or target.isspace()):
             raise BadRequestException('Invalid target.')
         return my_quote(target) if target is not None else ""
+    
+    def clean_similar_to(self):
+        similar_to = self.cleaned_data['similar_to']
+        if similar_to != '':
+            # If it stars with '[', then we assume this is a serialized vector passed as target for similarity
+            if similar_to.startswith('['):
+                similar_to = json.loads(similar_to)
+            else:
+                # Othrwise, we assume it is a sound id and we pass it as integer
+                similar_to = int(similar_to)
+        else:
+            similar_to = None
+        return similar_to
 
     def construct_link(self, base_url, page=None, filt=None, group_by_pack=None, include_page=True):
         link = "?"

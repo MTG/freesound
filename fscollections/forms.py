@@ -124,31 +124,39 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
             sound = Sound.objects.get(id=self.sound_id, moderation_state="OK")
         except Sound.DoesNotExist:
                 raise forms.ValidationError('Unexpected errors occured while handling the sound.')
-        
         # existing collection selected
-        if clean_data['collection'] != 0 and clean_data['new_collection_name'] == '':
-            try:
-                collection = Collection.objects.get(id=clean_data['collection'])
-                
-                if collection.num_sounds >= 4: #settings.MAX_SOUNDS_PER_COLLECTION
-                    raise forms.ValidationError(f"The chosen collection has reached the maximum number of sounds allowed ({settings.MAX_SOUNDS_PER_COLLECTION})")
-                
-                maintainers_list = list(collection.maintainers.all().values_list('id', flat=True))
-                if self.user_saving_sound.id not in maintainers_list  and self.user_saving_sound != collection.user:
-                    raise forms.ValidationError('You do not have permission to edit this collection.')
-                
-                collection_sounds = Sound.objects.filter(collectionsound__collection=collection)
-                if sound in collection_sounds:
-                    raise forms.ValidationError('This sound already exists in this collection')
-                
-            except Collection.DoesNotExist:
-                raise forms.ValidationError('This collection does not exist.')
+        try:
+            if clean_data['collection'] != '0' and clean_data['new_collection_name'] == '':
+                # if the value for collection is -1 the form must pass validation so the first Bookmarks collection is created for the request user
+                if clean_data['collection'] == '-1':
+                    pass
+                else:
+                    try:
+                        collection = Collection.objects.get(id=clean_data['collection'])
+                        
+                        if collection.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION:
+                            raise forms.ValidationError(f"The chosen collection has reached the maximum number of sounds allowed ({settings.MAX_SOUNDS_PER_COLLECTION})")
+                        
+                        maintainers_list = list(collection.maintainers.all().values_list('id', flat=True))
+                        if self.user_saving_sound.id not in maintainers_list  and self.user_saving_sound != collection.user:
+                            raise forms.ValidationError('You do not have permission to edit this collection.')
+                        
+                        collection_sounds = Sound.objects.filter(collectionsound__collection=collection)
+                        if sound in collection_sounds:
+                            raise forms.ValidationError('This sound already exists in this collection')
+                        
+                    except Collection.DoesNotExist:
+                        raise forms.ValidationError('This collection does not exist.')
 
-        # new collection selected
-        elif clean_data['new_collection_name'] != '':
-            if Collection.objects.filter(user=self.user_saving_sound, name=clean_data['new_collection_name']).exists():
-                raise forms.ValidationError('You already have a collection with this name.')
-            
+            # new collection selected
+            elif clean_data['new_collection_name'] != '':
+                if Collection.objects.filter(user=self.user_saving_sound, name=clean_data['new_collection_name']).exists():
+                    raise forms.ValidationError('You already have a collection with this name.')
+            else:
+                raise forms.ValidationError('Please introduce a valid name for the collection.')
+
+        except KeyError:
+                raise forms.ValidationError('The chosen collection is not valid.')
         return clean_data
     
 class CollectionEditForm(forms.ModelForm):
@@ -166,7 +174,7 @@ class CollectionEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['public'].label = "Visibility"
 
-        if self.instance.num_sounds >= 4: # settings.MAX_SOUNDS_PER_COLLECTION
+        if self.instance.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION: 
            self.fields['collection_sounds'].help_text="You have reached the maximum number of sounds available for a collection. " \
            "In order to add new sounds, first remove some of the current ones."
 
@@ -188,9 +196,10 @@ class CollectionEditForm(forms.ModelForm):
             if cleaned_data['name'] != self.instance.name:
                 if Collection.objects.filter(user=self.instance.user, name=cleaned_data['name']).exists():
                     self.add_error('name', forms.ValidationError("You already have a collection with this name"))
-        
+                elif cleaned_data['name'].lower() == 'bookmarks' or cleaned_data['name'].lower() == 'bookmark':
+                    self.add_error('name', forms.ValidationError("This collection name is booked for your personal default collection. Please choose another one."))
         collection_sounds = self.cleaned_data.get('collection_sounds').split(',')    
-        if len(collection_sounds) > 4: #settings.MAX_SOUNDS_PER_COLLECTION
+        if len(collection_sounds) > settings.MAX_SOUNDS_PER_COLLECTION:
             self.add_error('collection_sounds', forms.ValidationError(f'You have exceeded the maximum number of sounds for a collection ({settings.MAX_SOUNDS_PER_COLLECTION}).'))
             cleaned_data['collection_sounds'] = collection_sounds[:self.instance.num_sounds]
         return cleaned_data

@@ -112,7 +112,7 @@ def add_sound_to_collection(request, sound_id):
                                 user_collections=user_collections,
                                 user_saving_sound=request.user)
     collections_already_containing_sound = user_collections.filter(collectionsound__sound__id=sound.id).distinct()
-    full_collections = Collection.objects.filter(num_sounds__gte=4) # settings.MAX_SOUNDS_PER_COLLECTIONadd
+    full_collections = Collection.objects.filter(num_sounds__gte=settings.MAX_SOUNDS_PER_COLLECTION) 
     tvars = {'user': request.user,
              'sound': sound,
              'sound_is_moderated_and_processed_ok': sound.moderated_and_processed_ok,
@@ -137,7 +137,7 @@ def delete_sound_from_collection(request, collectionsound_id):
 
 def create_collection(request):
     if not request.GET.get('ajax'):
-      return HttpResponseRedirect(reverse("collections"))
+      return HttpResponseRedirect(reverse("your-collections"))
     if request.method == "POST":
         form = CreateCollectionForm(request.POST, user=request.user)
         if form.is_valid():
@@ -157,7 +157,7 @@ def delete_collection(request, collection_id):
         collection.delete()
         return HttpResponseRedirect(reverse('your-collections'))
     else:
-        return HttpResponseRedirect(reverse('edit-collection', args=[collection.id]))
+        return HttpResponseRedirect(reverse('collection', args=[collection.id]))
 
 def edit_collection(request, collection_id):
     

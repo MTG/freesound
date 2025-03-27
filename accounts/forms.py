@@ -352,7 +352,21 @@ class ProfileForm(forms.ModelForm):
     allow_simultaneous_playback = forms.BooleanField(
         label="Allow simultaneous audio playback", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
     prefer_spectrograms = forms.BooleanField(
-        label="Show spectrograms in sound players by default", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))    
+        label="Show spectrograms in sound players by default", required=False, widget=forms.CheckboxInput(attrs={'class': 'bw-checkbox'}))
+    
+    ai_sound_usage_preference = forms.ChoiceField(
+        label=mark_safe("<div class=\"v-spacing-1 text-grey\">I agree with my sounds being used to train generative AI models provided that:</div>"),
+        choices=[
+            (0, "My sounds are used following Freesound's recommendations for interpreting Creative Commons licenses in a generative AI training context"), 
+            (1, "My sounds are used to train open models that are freely available to the public"),
+            (2, "My sounds are used to train open models that are freely available to the public and that do not allow a commercial use")
+        ],
+        required=False,
+        help_text=mark_safe("<div class=\"v-spacing-top-3 text-light-grey\">Use the setting above to express a "
+        "preference regarding the usage of your sounds for training generative Artificial Intelligence models. "
+        "This preference <b>applies to all your uploaded sounds</b>. Please, read the <a href=""><i>Usage of my sounds for "
+        "training genrative AI models</i> help section</a> to learn more about the details and implications of the available options.</div> ")
+    )
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
@@ -396,6 +410,7 @@ class ProfileForm(forms.ModelForm):
         self.fields['sound_signature'].widget.attrs['class'] = 'unsecure-image-check'
         self.fields['is_adult'].widget.attrs['class'] = 'bw-checkbox'
         self.fields['not_shown_in_online_users_list'].widget = forms.HiddenInput()
+        self.fields['ui_theme_preference'].label = "User Interface theme preference:"
 
     def clean_username(self):
         username = self.cleaned_data["username"]

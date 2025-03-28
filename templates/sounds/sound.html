@@ -14,7 +14,7 @@
 
 {% block title %}{{sound.original_filename}} by {{sound.user.username}}{% endblock title %}
 
-{% block head %}
+{% block extrahead %}
     {{ block.super }}
     <meta property="og:title" content="{{ sound.original_filename }} by {{ sound.user.username }}" />
     <meta property="og:type" content="song" />
@@ -35,7 +35,7 @@
     <meta name="twitter:player:height" content="{{ sizes.twitter_card.1 }}" />
     <meta name="twitter:player:stream" content="{{ sound.get_preview_abs_url }}" />
     <meta name="twitter:player:stream:content_type" content="audio/mp4" />
-{% endblock head %}
+{% endblock extrahead %}
 
 {% block content %}
     <div class="container">

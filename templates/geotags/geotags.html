@@ -29,7 +29,7 @@
             {% elif sound %}
                 Map for sound <a href="{% url "sound" sound.user.username sound.id %}">{{ sound.original_filename }}</a>
             {% elif query_params %}
-                Map for query <a href="{{ query_search_page_url }}">{{ query_description}}</a
+                Map for query <a href="{{ query_search_page_url }}">{{ query_description}}</a>
             {% else %}
                 Map of sounds
             {% endif %}

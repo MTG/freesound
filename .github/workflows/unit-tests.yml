@@ -46,13 +46,13 @@ jobs:
       run: docker compose -f docker-compose.test.yml pull
 
     - name: Build base image
-      run: make -C docker
+      run: make -C docker py3
 
     - name: Build images
       run: docker compose -f docker-compose.test.yml build db test_runner
 
     - name: Run tests
-      run: docker compose -f docker-compose.test.yml run --rm test_runner python manage.py test --noinput --settings=freesound.test_settings
+      run: docker compose -f docker-compose.test.yml run --rm test_runner pytest
 
     #- name: Notify success
     #  uses: voxmedia/github-action-slack-notify-build@v1

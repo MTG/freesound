@@ -105,7 +105,7 @@ class ServerErrorException(APIException):
         errors_logger.info(apiv2.apiv2_utils.log_message_helper(summary_message, data_dict={
             'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
-        sentry_sdk.capture_exception(self)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(self)
 
 
 class OtherException(APIException):

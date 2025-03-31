@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from captcha.fields import ReCaptchaField
+from django_recaptcha.fields import ReCaptchaField
 from django import forms
 
 

@@ -5,25 +5,23 @@ bleach==5.0.1
 boto3==1.26.130
 celery==5.3.4
 debugpy==1.5.1
-dj-database-url==0.5.0
-django-admin-sortable==2.2.4
+dj-database-url==2.3.0
+django-admin-sortable==2.3
 django-amazon-ses==4.0.1
-django-cors-headers==3.13.0
-django-debug-toolbar==3.1.1
-django-extensions==3.1.5
-django-modeladmin-reorder==0.3.1
-django-multiupload==0.6.1
-django-oauth-toolkit==2.2.0
-django-object-actions==4.1.0
-django-ratelimit==3.0.1
-django-recaptcha==3.0.0
-django-redis==5.2.0
-django-silk==5.0.3
-Django~=3.2.23
+django-cors-headers==4.7.0
+django-debug-toolbar==5.0.1
+django-extensions==3.2.3
+django-multiupload-plus==0.1.0
+django-oauth-toolkit==3.0.1
+django-object-actions==4.3.0
+django-ratelimit==4.1.0
+django-recaptcha==4.0.0
+django-silk==5.3.2
+Django~=4.2.19
 djangorestframework-jsonp==1.0.2
 djangorestframework-xml==2.0.0
 djangorestframework-yaml==2.0.0
-djangorestframework==3.13.1
+djangorestframework==3.15.2
 fabric==2.6.0
 feedparser~=6.0.10
 freezegun==1.2.2
@@ -40,19 +38,20 @@ numpy==1.24.3
 oauthlib
 openpyxl==3.1.0  # for reading .xlsx files (but not .xls)
 Pillow==9.5.0
-pip-tools==7.1.0
-psycopg2-binary==2.9.6
+psutil~=7.0.0
+psycopg~=3.2.4
 PyJWT==2.6.0
 pyparsing==2.4.7
 pysndfile==1.4.4
 pysolr==3.10.0b1
 python-louvain==0.16  # community detection in clustering
-pytz==2023.3
+pytest~=8.0.2
+pytest-django~=4.8.0
 PyYAML==6.0.1
-redis==3.2.0
+redis==5.2.1
 scikit-learn==1.4.1.post1  # clustering
 scipy==1.12.0  # clustering
-sentry-sdk[django]~=1.31
+sentry-sdk[django]~=2.21.0
 Sphinx==1.6.3
 stripe==2.28.1
 xlrd==2.0.1  # for reading .xls files (but not .xlsx)

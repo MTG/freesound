@@ -23,6 +23,7 @@ import random
 import zlib
 
 from django.http import HttpResponse
+from django.utils import timezone
 
 from donations.models import DonationsModalSettings
 from sounds.models import Download, PackDownload
@@ -76,7 +77,7 @@ def should_suggest_donation(user, times_shown_in_last_day):
             # Never show modal to users that have uploaded sounds
             return False
 
-    donation_period = datetime.datetime.now() - datetime.timedelta(days=donation_modal_settings.days_after_donation)
+    donation_period = timezone.now() - datetime.timedelta(days=donation_modal_settings.days_after_donation)
     last_donation = user.donation_set.order_by('created').last()
     if not last_donation or last_donation.created < donation_period:
         # If there has never been a donation or last donation is older than settings.DONATION_MODAL_DAYS_AFTER_DONATION,
@@ -84,11 +85,11 @@ def should_suggest_donation(user, times_shown_in_last_day):
         # settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD. If that is the case, show the modal.
         num_sound_downloads = Download.objects.filter(
             user=user,
-            created__gt=datetime.datetime.now() - datetime.timedelta(days=donation_modal_settings.download_days)
+            created__gt=timezone.now() - datetime.timedelta(days=donation_modal_settings.download_days)
         ).count()
         num_pack_downloads = PackDownload.objects.filter(
             user=user,
-            created__gt=datetime.datetime.now() - datetime.timedelta(days=donation_modal_settings.download_days)
+            created__gt=timezone.now() - datetime.timedelta(days=donation_modal_settings.download_days)
         ).count()
         num_downloads_in_period = num_sound_downloads + num_pack_downloads
         if num_downloads_in_period > donation_modal_settings.downloads_in_period:

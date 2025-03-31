@@ -109,7 +109,7 @@ def donation_complete_stripe(request):
             if encoded_data.startswith("b'"):
                 encoded_data = encoded_data[2:-1]
             customer_email = session['customer_email']
-            if customer_email == None:
+            if customer_email is None:
                 customer = stripe.Customer.retrieve(session['customer'])
                 customer_email = customer['email']
             _save_donation(encoded_data, customer_email, amount, 'EUR', session['id'], 's')
@@ -124,7 +124,7 @@ def donation_success(request):
     This user reaches this view from sripe when the credit card was valid, here we only
     add a message to the user and redirect to donations page.
     """
-    messages.add_message(request, messages.INFO, 'Thanks! we will process you donation and send you an email soon.')
+    messages.add_message(request, messages.INFO, 'Thanks! we will process your donation and send you an email soon.')
     return redirect('donate')
 
 
@@ -242,8 +242,7 @@ def donation_session_paypal(request):
 
 def donate(request):
     """Donate page: display form for donations where if user is logged in we give the option to donate anonymously
-    otherwise we just give the option to enter the name that will be displayed. If request is post we generate the
-    data to send to paypal or stripe.
+    otherwise we just give the option to enter the name that will be displayed.
     """
     default_donation_amount = request.GET.get(settings.DONATION_AMOUNT_REQUEST_PARAM, None)
     form = DonateForm(user=request.user, default_donation_amount=default_donation_amount)
@@ -255,6 +254,11 @@ class DonationsList(ListView):
     model = Donation
     paginate_by = settings.DONATIONS_PER_PAGE
     ordering = ["-created"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = qs.select_related('user', 'user__profile')
+        return qs
 
 
 def donate_redirect(request):

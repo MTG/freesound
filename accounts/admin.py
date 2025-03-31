@@ -75,6 +75,11 @@ class DeletedUserAdmin(admin.ModelAdmin):
     list_display = ('get_object_link', 'get_view_link', 'deletion_date', 'reason')
     search_fields = ('=username',)
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related('user')
+        return qs
+
     @admin.display(
         description='DeletedUser',
         ordering='username',
@@ -140,7 +145,10 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         ('Personal info', {'fields': ('email', )}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
-     )
+    )
+    add_fieldsets = (
+        (None, {'fields': ('username', 'email', 'password1', 'password2')}),
+    )
 
     paginator = LargeTablePaginator
 
@@ -340,7 +348,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         num_akismet, _ = obj.akismetspam_set.all().delete()
         num_reports, _ = obj.flags.all().delete()
         messages.add_message(request, messages.INFO,
-                                 'User \'%s\' flags have been cleared: %i akismet flags and %i user reports.' 
+                                 'User \'%s\' flags have been cleared: %i akismet flags and %i user reports.'
                                  % (obj.username, num_akismet, num_reports))
         return HttpResponseRedirect(reverse('admin:auth_user_change', args=[obj.id]))
 

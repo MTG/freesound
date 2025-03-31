@@ -53,6 +53,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.http import base36_to_int
 from django.utils.http import int_to_base36
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from general.templatetags.absurl import url2absurl
@@ -86,9 +87,8 @@ from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.mirror_files import copy_avatar_to_mirror_locations, \
     copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations, \
     remove_empty_user_directory_from_mirror_locations
-from utils.onlineusers import get_online_users
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
+from utils.username import redirect_if_old_username, get_parameter_user_or_404, raise_404_if_user_is_deleted
 
 sounds_logger = logging.getLogger('sounds')
 upload_logger = logging.getLogger('file_upload')
@@ -318,6 +318,11 @@ def registration_modal(request):
             # If the form is NOT valid we return the Django rendered HTML version of the
             # registration modal (which includes the form and error messages) so the browser can show the updated
             # modal contents to the user
+            if form.has_error("email1") and "email2" in form.data:
+                # If email1 has an error, remove the value of email2
+                post_data = request.POST.copy()
+                post_data["email2"] = ""
+                form = RegistrationForm(post_data)
             return render(request, 'accounts/modal_registration.html', {'registration_form': form})
     else:
         form = RegistrationForm()
@@ -690,7 +695,7 @@ def manage_sounds(request, tab):
         elif tab == 'processing':
             sounds = sounds_processing_base_qs
         if filter_db is not None:
-            sounds = sounds.annotate(search=SearchVector('original_filename', 'id', 'description', 'tags__tag__name')).filter(search=filter_db).distinct()
+            sounds = sounds.annotate(search=SearchVector('original_filename', 'id', 'description', 'tags__name')).filter(search=filter_db).distinct()
         sounds = sounds.order_by(sort_by_db)
         sound_ids = list(sounds.values_list('id', flat=True))
 
@@ -874,7 +879,7 @@ def download_attribution(request):
     qs = qs_sounds.union(qs_packs).order_by('-created')
 
     download = request.GET.get('dl', '')
-    now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    now = timezone.now().strftime('%Y-%m-%d_%H-%M-%S_UTC')
     filename = f'{request.user}_{now}_attribution.{download}'
     if download in ['csv', 'txt']:
         response = HttpResponse(content_type=f'text/{content[download]}')
@@ -929,13 +934,13 @@ def download_attribution(request):
         return HttpResponseRedirect(reverse('accounts-attribution'))
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def downloaded_sounds(request, username):
     if not request.GET.get('ajax'):
         # If not loading as a modal, redirect to the account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_sounds=1')
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     qs = Download.objects.filter(user_id=user.id).order_by('-created')
     num_items_per_page = settings.DOWNLOADED_SOUNDS_PACKS_PER_PAGE
     paginator = paginate(request, qs, num_items_per_page, object_count=user.profile.num_sound_downloads)
@@ -955,13 +960,13 @@ def downloaded_sounds(request, username):
     return render(request, 'accounts/modal_downloads.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def downloaded_packs(request, username):
     if not request.GET.get('ajax'):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?downloaded_packs=1')
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     qs = PackDownload.objects.filter(user=user.id).order_by('-created')
     num_items_per_page = settings.DOWNLOADED_SOUNDS_PACKS_PER_PAGE
     paginator = paginate(request, qs, num_items_per_page, object_count=user.profile.num_pack_downloads)
@@ -1054,7 +1059,7 @@ def compute_charts_stats():
         .values('user_id').annotate(n_sounds=Count('user_id')) \
         .order_by('-n_sounds')[0:num_items]
     user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_count])}
+                    User.objects.select_related("profile").filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_count])}
     top_recent_uploaders_by_count_display = [
         (user_objects[item['user_id']].profile.locations("avatar.M.url"),
          user_objects[item['user_id']].username,
@@ -1065,7 +1070,7 @@ def compute_charts_stats():
          .values('user_id').annotate(total_duration=Sum('duration')) \
          .order_by('-total_duration')[0:num_items]
     user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_length])}
+                    User.objects.select_related("profile").filter(id__in=[item['user_id'] for item in top_recent_uploaders_by_length])}
     top_recent_uploaders_by_length_display = [
         (user_objects[item['user_id']].profile.locations("avatar.M.url"),
          user_objects[item['user_id']].username,
@@ -1076,7 +1081,7 @@ def compute_charts_stats():
         .values('user_id').annotate(n_sounds=Count('user_id')) \
         .order_by('-n_sounds')[0:num_items]
     user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_count])}
+                    User.objects.select_related("profile").filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_count])}
     all_time_top_uploaders_by_count_display = [
         (user_objects[item['user_id']].profile.locations("avatar.M.url"),
          user_objects[item['user_id']].username,
@@ -1086,7 +1091,7 @@ def compute_charts_stats():
          .values('user_id').annotate(total_duration=Sum('duration')) \
          .order_by('-total_duration')[0:num_items]
     user_objects = {user.id: user for user in
-                    User.objects.filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_length])}
+                    User.objects.select_related("profile").filter(id__in=[item['user_id'] for item in all_time_top_uploaders_by_length])}
     all_time_top_uploaders_by_length_display = [
         (user_objects[item['user_id']].profile.locations("avatar.M.url"),
          user_objects[item['user_id']].username,
@@ -1116,9 +1121,9 @@ def charts(request):
     return render(request, 'accounts/charts.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def account(request, username):
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE_PROFILE_PACK_PAGE))
     following = follow_utils.get_users_following_qs(user)
     followers = follow_utils.get_users_followers_qs(user)
@@ -1165,17 +1170,17 @@ def account(request, username):
         'following_modal_page': request.GET.get('following', 1),
         'followers_modal_page': request.GET.get('followers', 1),
         'following_tags_modal_page': request.GET.get('followingTags', 1),
-        'last_geotags_serialized': last_geotags_serialized, 
+        'last_geotags_serialized': last_geotags_serialized,
         'user_downloads_public': settings.USER_DOWNLOADS_PUBLIC,
     }
     return render(request, 'accounts/account.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def account_stats_section(request, username):
     if not request.GET.get('ajax'):
         raise Http404  # Only accessible via ajax
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     tvars = {
         'user': user,
         'user_stats': user.profile.get_stats_for_profile_page(),
@@ -1183,12 +1188,12 @@ def account_stats_section(request, username):
     return render(request, 'accounts/account_stats_section.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def account_latest_packs_section(request, username):
     if not request.GET.get('ajax'):
         raise Http404  # Only accessible via ajax
     
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     tvars = {
         'user': user,
         # Note we don't pass latest packs data because it is requested from the template
@@ -1367,7 +1372,7 @@ def delete(request):
         else:
             # Check if a deletion request already exist and not allow user to continue if
             # that is the case. In this way we avoid duplicating deletion tasks
-            cutoff_date = datetime.datetime.today() - datetime.timedelta(days=1)
+            cutoff_date = timezone.now() - datetime.timedelta(days=1)
             recent_pending_deletion_requests_exist = UserDeletionRequest.objects\
                 .filter(user_to_id=request.user.id, last_updated__gt=cutoff_date)\
                 .filter(status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED).exists()                

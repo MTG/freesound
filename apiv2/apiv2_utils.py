@@ -19,7 +19,6 @@
 #
 
 import collections
-import datetime
 import json
 import logging
 import math
@@ -32,6 +31,7 @@ from django.core.cache import cache, caches
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import resolve
 from django.utils.encoding import smart_str
+from django.utils import timezone
 from oauth2_provider.generators import BaseHashGenerator
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
 from oauthlib.common import generate_client_id as oauthlib_generate_client_id
@@ -124,7 +124,7 @@ class FreesoundAPIViewMixin:
         previous days.
         """
         if self.client_id is not None:
-            now = datetime.datetime.now().date()
+            now = timezone.now().date()
             monitoring_key = f'{now.year}-{now.month}-{now.day}_{self.client_id}'
             current_value = cache_api_monitoring.get(monitoring_key, 0)
             cache_api_monitoring.set(monitoring_key, current_value + 1, 60 * 60 * 24 * 3)  # Expire in 3 days
@@ -347,8 +347,12 @@ def api_search(
                 sort=processed_sort,
                 offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
                 num_sounds=search_form.cleaned_data['page_size'],
-                group_by_pack=search_form.cleaned_data['group_by_pack']
+                group_by_pack=search_form.cleaned_data['group_by_pack'],
+                similar_to=search_form.cleaned_data['similar_to'],
+                similar_to_max_num_sounds=min(search_form.cleaned_data['page'] * search_form.cleaned_data['page_size'], settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY),
+                similar_to_analyzer=search_form.cleaned_data['similarity_space'] or settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER,
             )
+
             ids_score = [(int(element['id']), element['score']) for element in result.docs]
             num_found = result.num_found
             more_from_pack_data = None

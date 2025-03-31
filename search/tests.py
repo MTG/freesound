@@ -18,19 +18,15 @@
 #     See AUTHORS file.
 #
 
-from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.conf import settings
-from django.test import TestCase, RequestFactory
+from django.test import TestCase
 from django.test.utils import skipIf, override_settings
 from django.urls import reverse
-from utils.search import search_query_processor
 from sounds.models import Sound
 from utils.search import SearchResults, SearchResultsPaginator
 from utils.test_helpers import create_user_and_sounds
-from utils.url import ComparableUrl
 from unittest import mock
-from django.contrib.auth.models import AnonymousUser
 
 
 def create_fake_search_engine_results():
@@ -167,12 +163,12 @@ class SearchPageTests(TestCase):
 
             # Now check number of queries when displaying results as packs (i.e., searching for packs)
             cache.clear()
-            with self.assertNumQueries(6):
+            with self.assertNumQueries(4):
                 self.client.get(reverse('sounds-search') + '?dp=1')
 
             # Also check packs when displaying in grid mode
             cache.clear()
-            with self.assertNumQueries(6):
+            with self.assertNumQueries(4):
                 self.client.get(reverse('sounds-search') + '?dp=1&cm=1')
 
         with override_settings(USE_SEARCH_ENGINE_SIMILARITY=False):
@@ -180,12 +176,12 @@ class SearchPageTests(TestCase):
 
             # Now check number of queries when displaying results as packs (i.e., searching for packs)
             cache.clear()
-            with self.assertNumQueries(5):
+            with self.assertNumQueries(3):
                 self.client.get(reverse('sounds-search') + '?dp=1')
 
             # Also check packs when displaying in grid mode
             cache.clear()
-            with self.assertNumQueries(5):
+            with self.assertNumQueries(3):
                 self.client.get(reverse('sounds-search') + '?dp=1&cm=1')
 
 

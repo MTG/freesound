@@ -34,5 +34,10 @@ class ContentAdmin(admin.ModelAdmin):
     raw_id_fields = ('author', )
     list_display = ('page', 'author', 'title', 'created', )
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related('author', 'page')
+        return qs
+
     def has_add_permission(self, request):
         return False

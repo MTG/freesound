@@ -9,12 +9,12 @@
             "is_active": true,
             "is_superuser": true,
             "is_staff": true,
-            "last_login": "2010-10-13 15:46:20",
+            "last_login": "2010-10-13 15:46:20Z",
             "groups": [],
             "user_permissions": [],
             "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
             "email": "anon8@xmpl.org",
-            "date_joined": "2005-02-07 16:42:00"
+            "date_joined": "2005-02-07 16:42:00Z"
         }
     },
     {
@@ -22,8 +22,8 @@
         "model": "sounds.pack",
         "fields": {
             "description": "",
-            "created": "2005-04-06 12:25:50",
-            "last_updated": "2005-04-06 12:25:50",
+            "created": "2005-04-06 12:25:50Z",
+            "last_updated": "2005-04-06 12:25:50Z",
             "is_dirty": true,
             "user": [
               "Bram"

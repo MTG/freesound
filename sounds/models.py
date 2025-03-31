@@ -35,18 +35,20 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
+from django.contrib.postgres.expressions import ArraySubquery
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import F, Prefetch
+from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Sum
 from django.db.models.functions import Greatest
 from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import smart_str
-from django.utils.http import urlquote
 from django.utils.functional import cached_property
 from django.utils.text import Truncator, slugify
+from django.utils import timezone
+from urllib.parse import quote
 
 import accounts.models
 from apiv2.models import ApiV2Client
@@ -57,9 +59,9 @@ from general.templatetags.absurl import url2absurl
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
-from tags.models import TaggedItem, Tag
+from tags.models import SoundTag, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
-from tickets.models import Ticket, Queue, TicketComment
+from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_template_cache, invalidate_user_template_caches
 from utils.locations import locations_decorator
 from utils.mail import send_mail_template
@@ -336,7 +338,7 @@ class SoundManager(models.Manager):
             latest_sound = Sound.public.order_by('-created').first()
             date_threshold = latest_sound.created
         else:
-            date_threshold = datetime.datetime.now()
+            date_threshold = timezone.now()
 
         date_threshold = date_threshold - datetime.timedelta(days=period_days)
 
@@ -390,207 +392,89 @@ class SoundManager(models.Manager):
         else:
             return None
 
-    def get_analyzers_data_select_sql(self):
-        """Returns the SQL bits to add to bulk_query and bulk_query_solr so that analyzer's data is selected
-        in the bulk query"""
-        analyzers_select_section_parts = []
-        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_info:
-                analyzers_select_section_parts.append("{0}.analysis_data as {0},"
-                                                      .format(analyzer_name.replace('-', '_')))
-        return "\n          ".join(analyzers_select_section_parts)
-
-    def get_analyzers_data_left_join_sql(self):
-        """Returns the SQL bits to add to bulk_query and bulk_query_solr so that analyzer's data can be left joined
-        in the bulk query"""
-        analyzers_left_join_section_parts = []
-        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_info:
-                analyzers_left_join_section_parts.append(
-                    "LEFT JOIN sounds_soundanalysis {0} ON (sound.id = {0}.sound_id AND {0}.analyzer = '{1}')"
-                        .format(analyzer_name.replace('-', '_'), analyzer_name))
-        return "\n          ".join(analyzers_left_join_section_parts)
-
-    def get_analysis_state_essentia_exists_sql(self):
-        """Returns the SQL bits to add analysis_state_essentia_exists to the returned data indicating if thers is a
-        SoundAnalysis objects existing for the given sound_id for the essentia analyzer and with status OK"""
-        return f"          exists(select 1 from sounds_soundanalysis where sounds_soundanalysis.sound_id = sound.id AND sounds_soundanalysis.analyzer = '{settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME}' AND sounds_soundanalysis.analysis_status = 'OK') as analysis_state_essentia_exists,"
-
-    def get_search_engine_similarity_state_sql(self):
-        """Returns the SQL bits to add search_engine_similarity_state to the returned data indicating if thers is a
-        SoundAnalysis object existing for the default similarity analyzer (settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER)
-        given sound_id and with status OK"""
-        return f"          exists(select 1 from sounds_soundanalysis where sounds_soundanalysis.sound_id = sound.id AND sounds_soundanalysis.analyzer = '{settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER}' AND sounds_soundanalysis.analysis_status = 'OK') as search_engine_similarity_state,"
-
     def bulk_query_solr(self, sound_ids):
-        """For each sound, get all fields needed to index the sound in Solr. Using this custom query to avoid the need
-        of having to do some extra queries when displaying some fields related to the sound (e.g. for tags). Using this
-        method, all the information for all requested sounds is obtained with a single query."""
-        query = """SELECT
-          auth_user.username,
-          sound.user_id,
-          sound.id,
-          sound.type,
-          sound.original_filename,
-          sound.is_explicit,
-          sound.filesize,
-          sound.md5,
-          sound.channels,
-          sound.avg_rating,
-          sound.num_ratings,
-          sound.description,
-          sound.created,
-          sound.num_downloads,
-          sound.num_comments,
-          sound.duration,
-          sound.pack_id,
-          sound.geotag_id,
-          sound.bitrate,
-          sound.bitdepth,
-          sound.samplerate,
-          sounds_pack.name as pack_name,
-          sounds_license.name as license_name,
-          geotags_geotag.lat as geotag_lat,
-          geotags_geotag.lon as geotag_lon,
-          geotags_geotag.location_name as geotag_name,
-          %s
-          exists(select 1 from sounds_sound_sources where from_sound_id=sound.id) as is_remix,
-          exists(select 1 from sounds_sound_sources where to_sound_id=sound.id) as was_remixed,
-          ARRAY(
-            SELECT tags_tag.name
-            FROM tags_tag
-            LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
-          WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=%s) AS tag_array,
-          ARRAY(
-            SELECT comments_comment.comment
-            FROM comments_comment
-            WHERE comments_comment.sound_id = sound.id) AS comments_array
-        FROM
-          sounds_sound sound
-          LEFT JOIN auth_user ON auth_user.id = sound.user_id
-          LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
-          LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
-          LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
-          %s
-        """ % (self.get_analyzers_data_select_sql(),
-               ContentType.objects.get_for_model(Sound).id,
-               self.get_analyzers_data_left_join_sql())
-        query += "WHERE sound.id IN %s"
-        return self.raw(query, [tuple(sound_ids)])
+        qs = self.bulk_query_id(sound_ids, include_analyzers_output=True)
+        comments_subquery = Comment.objects.filter(sound=OuterRef("id")).values("comment")
+        is_remix_subquery = Sound.objects.filter(remixes=OuterRef("id")).values("id")
+        was_remixed_subquery = Sound.objects.filter(sources=OuterRef("id")).values("id")
 
-    def bulk_query(self, where, order_by, limit, args, include_analyzers_output=False):
-        """For each sound, get all fields needed to display a sound on the web (using display_sound templatetag) or
-         in the API (including analyzers output). Using this custom query to avoid the need of having to do
-         some extra queries when displaying some fields related to the sound (e.g. for tags). Using this method, all the
-         information for all requested sounds is obtained with a single query."""
-        query = """SELECT
-          auth_user.username,
-          sound.id,
-          sound.type,
-          sound.user_id,
-          sound.original_filename,
-          sound.is_explicit,
-          sound.avg_rating,
-          sound.channels,
-          sound.filesize,
-          sound.bitdepth,
-          sound.bitrate,
-          sound.samplerate,
-          sound.num_ratings,
-          sound.description,
-          sound.moderation_state,
-          sound.processing_state,
-          sound.processing_ongoing_state,
-          sound.similarity_state,
-          sound.created,
-          sound.num_downloads,
-          sound.num_comments,
-          sound.pack_id,
-          sound.duration,
-          sounds_pack.name as pack_name,
-          sound.license_id,
-          sounds_license.name as license_name,
-          sounds_license.deed_url as license_deed_url,
-          sound.geotag_id,
-          geotags_geotag.lat as geotag_lat,
-          geotags_geotag.lon as geotag_lon,
-          geotags_geotag.location_name as geotag_name,
-          tickets_ticket.key as ticket_key,
-          sounds_remixgroup_sounds.id as remixgroup_id,
-          accounts_profile.has_avatar as user_has_avatar,
-          %s
-          %s
-          %s
-          ARRAY(
-            SELECT tags_tag.name
-            FROM tags_tag
-            LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
-          WHERE tags_tag.id = tags_taggeditem.tag_id
-           AND tags_taggeditem.content_type_id=%s) AS tag_array
-        FROM
-          sounds_sound sound
-          LEFT JOIN auth_user ON auth_user.id = sound.user_id
-          LEFT JOIN accounts_profile ON accounts_profile.user_id = sound.user_id
-          LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
-          LEFT JOIN fscollections_collectionsound cs ON sound.id = cs.sound_id
-          LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
-          LEFT JOIN geotags_geotag ON sound.geotag_id = geotags_geotag.id
-          LEFT JOIN tickets_ticket ON tickets_ticket.sound_id = sound.id
-          %s
-          LEFT OUTER JOIN sounds_remixgroup_sounds ON sounds_remixgroup_sounds.sound_id = sound.id
-        WHERE %s """ % (self.get_search_engine_similarity_state_sql(),
-                        self.get_analysis_state_essentia_exists_sql(),
-                        self.get_analyzers_data_select_sql() if include_analyzers_output else '',
-                        ContentType.objects.get_for_model(Sound).id,
-                        self.get_analyzers_data_left_join_sql() if include_analyzers_output else '',
-                        where, )
-        if order_by:
-            query = f"{query} ORDER BY {order_by}"
-        if limit:
-            query = f"{query} LIMIT {limit}"
-        return self.raw(query, args)
+        qs = qs.annotate(comments_array=ArraySubquery(comments_subquery),
+                         is_remix=Exists(is_remix_subquery),
+                         was_remixed=Exists(was_remixed_subquery))
+        return qs
+
+
+    def bulk_query(self, include_analyzers_output=False):
+        tags_subquery = Tag.objects.filter(soundtag__sound=OuterRef("id")).values("name")
+        analysis_subquery = SoundAnalysis.objects.filter(
+            sound=OuterRef("id"), analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK"
+        )
+        search_engine_similarity_subquery = SoundAnalysis.objects.filter(
+            sound=OuterRef("id"), analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, analysis_status="OK"
+        )
+
+        qs = self.select_related(
+            'user', 'user__profile', 'license', 'ticket', 'pack', 'geotag'
+            ).annotate(
+                username=F("user__username"),
+                pack_name=F("pack__name"),
+                remixgroup_id=F("remix_group__id"),
+                tag_array=ArraySubquery(tags_subquery),
+                analysis_state_essentia_exists=Exists(analysis_subquery),
+                search_engine_similarity_state=Exists(search_engine_similarity_subquery)
+            )
+
+        if include_analyzers_output:
+            analyzer_names = list(settings.ANALYZERS_CONFIGURATION.keys())
+            qs = qs.prefetch_related(
+                Prefetch('analyses', queryset=SoundAnalysis.objects.filter(analyzer__in=analyzer_names, analysis_status="OK"))
+            )
+
+        return qs
 
     def bulk_sounds_for_user(self, user_id, limit=None, include_analyzers_output=False):
-        where = """sound.moderation_state = 'OK'
-            AND sound.processing_state = 'OK'
-            AND sound.user_id = %s"""
-        order_by = "sound.created DESC"
+        qs = self.bulk_query(include_analyzers_output=include_analyzers_output)
+        qs = qs.filter(
+            moderation_state="OK",
+            processing_state="OK",
+            user_id=user_id
+        ).order_by('-created')
+
         if limit:
-            limit = str(limit)
-        return self.bulk_query(where, order_by, limit, (user_id, ), include_analyzers_output=include_analyzers_output)
+            qs = qs[:limit]
+        return qs
 
     def bulk_sounds_for_pack(self, pack_id, limit=None, include_analyzers_output=False):
-        where = """sound.moderation_state = 'OK'
-            AND sound.processing_state = 'OK'
-            AND sound.pack_id = %s"""
-        order_by = "sound.created DESC"
-        if limit:
-            limit = str(limit)
-        return self.bulk_query(where, order_by, limit, (pack_id, ), include_analyzers_output=include_analyzers_output)
-    
-    def bulk_sounds_for_collection(self, collection_id, limit=None, include_analyzers_output=False):
-        where = """sound.moderation_state = 'OK'
-            AND sound.processing_state = 'OK'
-            AND cs.collection_id = %s"""
-        order_by = "sound.created DESC"
-        if limit:
-            limit = str(limit)
-        return self.bulk_query(where, order_by, limit, (collection_id, ), include_analyzers_output=include_analyzers_output)
+        qs = self.bulk_query(include_analyzers_output=include_analyzers_output)
+        qs = qs.filter(
+            moderation_state="OK",
+            processing_state="OK",
+            pack_id=pack_id
+        ).order_by('-created')
 
-    def bulk_query_id(self, sound_ids, include_analyzers_output=False):
+        if limit:
+            qs = qs[:limit]
+        return qs
+
+    def bulk_query_id(self, sound_ids, limit=None, include_analyzers_output=False):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]
-        where = "sound.id = ANY(%s)"
-        return self.bulk_query(where, "", "", (sound_ids, ), include_analyzers_output=include_analyzers_output)
+        qs = self.bulk_query(include_analyzers_output=include_analyzers_output)
+        qs = qs.filter(
+            id__in=sound_ids
+        ).order_by('-created')
 
-    def bulk_query_id_public(self, sound_ids, include_analyzers_output=False):
-        if not isinstance(sound_ids, list):
-            sound_ids = [sound_ids]
-        where = """sound.id = ANY(%s) 
-            AND sound.moderation_state = 'OK' 
-            AND sound.processing_state = 'OK'"""
-        return self.bulk_query(where, "", "", (sound_ids, ), include_analyzers_output=include_analyzers_output)
+        if limit:
+            qs = qs[:limit]
+        return qs
+
+    def bulk_query_id_public(self, sound_ids, limit=None, include_analyzers_output=False):
+        qs = self.bulk_query_id(sound_ids, limit=limit, include_analyzers_output=include_analyzers_output)
+        qs = qs.filter(
+            moderation_state="OK",
+            processing_state="OK",
+        )
+        return qs
 
     def dict_ids(self, sound_ids, include_analyzers_output=False):
         return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids, include_analyzers_output=include_analyzers_output)}
@@ -620,10 +504,6 @@ class Sound(models.Model):
     # "path" or "sound_path"
     original_path = models.CharField(max_length=512, null=True, blank=True, default=None)
 
-    # "base_filename_slug" is a slugified version of the original filename, set at upload time. This is used
-    # to create the friendly filename when downloading the sound and once set is never changed.
-    base_filename_slug = models.CharField(max_length=512, null=True, blank=True, default=None)
-
     # user defined fields
     description = models.TextField()
     date_recorded = models.DateField(null=True, blank=True, default=None)
@@ -632,8 +512,7 @@ class Sound(models.Model):
     license = models.ForeignKey(License, on_delete=models.CASCADE)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
-    tags = fields.GenericRelation(TaggedItem)
-    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    tags = models.ManyToManyField(Tag, through=SoundTag)
 
     # fields for specifying if the sound was uploaded via API or via bulk upload process (or none)
     uploaded_with_apiv2_client = models.ForeignKey(
@@ -700,7 +579,10 @@ class Sound(models.Model):
     public = PublicSoundManager()
 
     def __str__(self):
-        return self.base_filename_slug
+        if self.id:
+            return self.friendly_filename()
+        else:
+            return f"Unsaved sound: {self.original_filename}"
 
     @staticmethod
     def is_sound():
@@ -905,7 +787,7 @@ class Sound(models.Model):
         icons_count = 1
         if self.pack_id:
             icons_count += 1
-        if self.geotag_id:
+        if hasattr(self, 'geotag'):
             icons_count += 1
         if self.num_downloads:
             icons_count +=2  # Counts double as it takes more width
@@ -920,13 +802,10 @@ class Sound(models.Model):
             return title_num_chars >= 23
         else:
             return title_num_chars >= 30
-        
+
     @property
     def license_bw_icon_name(self):
-        if hasattr(self, 'license_name'):
-            return License.bw_cc_icon_name_from_license_name(self.license_name)
-        else:
-            return self.license.icon_name
+        return self.license.icon_name
 
     def get_license_history(self):
         """
@@ -939,7 +818,7 @@ class Sound(models.Model):
         """
         return [(slh.created, slh.license) for slh in
                 self.soundlicensehistory_set.select_related('license').order_by('-created')]
-    
+
     @cached_property
     def attribution_texts(self):
         attribution_texts = {
@@ -962,14 +841,14 @@ class Sound(models.Model):
             attribution_texts['html'] = "<br>\n".join([attribution_texts['html']] + [st['html'] for st in sources_attribution_texts])
             attribution_texts['json'] = json.dumps([json.loads(attribution_texts['json'])] + [json.loads(st['json']) for st in sources_attribution_texts])
             return attribution_texts
-            
+
 
     def get_sound_tags(self, limit=None):
         """
         Returns the tags assigned to the sound as a list of strings, e.g. ["tag1", "tag2", "tag3"]
         :param limit: The maximum number of tags to return
         """
-        return [ti.tag.name for ti in self.tags.select_related("tag").all().order_by('tag__name')[0:limit]]
+        return [t.name for t in self.tags.all().order_by('name')[0:limit]]
 
     def get_sound_tags_string(self, limit=None):
         """
@@ -980,20 +859,21 @@ class Sound(models.Model):
 
     def set_tags(self, tags):
         """
-        Updates the tags of the Sound object. To do that it first removes all TaggedItem objects which relate the sound
+        Updates the tags of the Sound object. To do that it first removes all SoundTag objects which relate the sound
         with tags which are not in the provided list of tags, and then adds the new tags.
         :param list tags: list of strings representing the new tags that the Sound object should be assigned
         """
         # remove tags that are not in the list
-        for tagged_item in self.tags.all():
+        for tagged_item in self.soundtag_set.select_related('tag').all():
             if tagged_item.tag.name not in tags:
                 tagged_item.delete()
 
         # add tags that are not there yet
+        current_tags = set([t.name for t in self.tags.all()])
         for tag in tags:
-            if self.tags.filter(tag__name=tag).count() == 0:
+            if tag not in current_tags:
                 (tag_object, created) = Tag.objects.get_or_create(name=tag)
-                tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
+                tagged_object = SoundTag.objects.create(user=self.user, tag=tag_object, sound=self)
                 tagged_object.save()
 
     def set_license(self, new_license):
@@ -1017,7 +897,7 @@ class Sound(models.Model):
         """
         new_sources.discard(self.id)  # stop the universe from collapsing :-D
         old_sources = self.get_sound_sources_as_set()
-        
+
         # process sources in old but not in new
         for sid in old_sources - new_sources:
             try:
@@ -1036,7 +916,7 @@ class Sound(models.Model):
                 settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX, 'emails/email_remix_update.txt',
                 {'source': source, 'action': 'added', 'remix': self},
                 user_to=source.user, email_type_preference_check='new_remix')
-        
+
         if old_sources != new_sources:
             self.invalidate_template_caches()
 
@@ -1102,7 +982,7 @@ class Sound(models.Model):
         if current_state != new_state:
             self.mark_index_dirty(commit=False)
             self.moderation_state = new_state
-            self.moderation_date = datetime.datetime.now()
+            self.moderation_date = timezone.now()
             self.save()
 
             if new_state != 'OK':
@@ -1117,7 +997,7 @@ class Sound(models.Model):
                     self.pack.process()
         else:
             # If the moderation state has not changed, only update moderation date
-            self.moderation_date = datetime.datetime.now()
+            self.moderation_date = timezone.now()
             self.save()
 
         self.invalidate_template_caches()
@@ -1135,10 +1015,10 @@ class Sound(models.Model):
             # Sound either went from PE to OK, from PE to FA, from OK to FA, or from FA to OK (never from OK/FA to PE)
             self.mark_index_dirty(commit=False)
             self.processing_state = new_state
-            self.processing_date = datetime.datetime.now()
+            self.processing_date = timezone.now()
             if self.processing_log is None:
                 self.processing_log = ''
-            self.processing_log += f'----Processed sound {datetime.datetime.today()} - {self.id}\n{processing_log}'
+            self.processing_log += f'----Processed sound {timezone.now()} - {self.id}\n{processing_log}'
             self.save(update_fields=['processing_state', 'processing_date', 'processing_log', 'is_index_dirty'])
 
             if new_state == 'FA':
@@ -1152,10 +1032,10 @@ class Sound(models.Model):
 
         else:
             # If processing state has not changed, only update the processing date and log
-            self.processing_date = datetime.datetime.now()
+            self.processing_date = timezone.now()
             if self.processing_log is None:
                 self.processing_log = ''
-            self.processing_log += f'----Processed sound {datetime.datetime.today()} - {self.id}\n{processing_log}'
+            self.processing_log += f'----Processed sound {timezone.now()} - {self.id}\n{processing_log}'
             self.save(update_fields=['processing_date', 'processing_log'])
 
         self.invalidate_template_caches()
@@ -1210,7 +1090,7 @@ class Sound(models.Model):
             self.pack = new_pack
 
         # Change tags ownership too (otherwise they might get deleted if original user is deleted)
-        self.tags.all().update(user=new_owner)
+        self.soundtag_set.all().update(user=new_owner)
 
         # Change user field
         old_owner = self.user
@@ -1271,7 +1151,6 @@ class Sound(models.Model):
         ticket = Ticket.objects.create(
             title=f'Moderate sound {self.original_filename}',
             status=TICKET_STATUS_NEW,
-            queue=Queue.objects.get(name='sound moderation'),
             sender=self.user,
             sound=self,
         )
@@ -1296,7 +1175,7 @@ class Sound(models.Model):
         Process and analyze a sound if the sound has a processing state different than "OK" and/or and analysis state
         other than "OK". 'force' argument can be used to trigger processing and analysis regardless of the processing
         state and analysis state of the sound.
-        The countdown parameter will add some delay before the task is executed (in seconds). 
+        The countdown parameter will add some delay before the task is executed (in seconds).
         NOTE: high_priority is not implemented and setting it has no effect
         """
         self.process(force=force, high_priority=high_priority, countdown=countdown)
@@ -1319,7 +1198,7 @@ class Sound(models.Model):
             return True
 
     def estimate_num_processing_attemps(self):
-        # Estimates how many processing attemps have been made by looking at the processing logs 
+        # Estimates how many processing attemps have been made by looking at the processing logs
         if self.processing_log is not None:
             return max(1, self.processing_log.count('----Processed sound'))
         else:
@@ -1339,7 +1218,7 @@ class Sound(models.Model):
             sa.num_analysis_attempts += 1
             sa.analysis_status = "QU"
             sa.analysis_time = 0
-            sa.last_sent_to_queue = datetime.datetime.now()
+            sa.last_sent_to_queue = timezone.now()
             sa.save(update_fields=['num_analysis_attempts', 'analysis_status', 'last_sent_to_queue', 'analysis_time'])
             sound_path = self.locations('path')
             if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
@@ -1348,7 +1227,7 @@ class Sound(models.Model):
                         'analysis_folder': self.locations('analysis.base_path'), 'metadata':json.dumps({
                             'duration': self.duration,
                             'tags': self.get_sound_tags(),
-                            'geotag': [self.geotag.lat, self.geotag.lon] if self.geotag else None,
+                            'geotag': [self.geotag.lat, self.geotag.lon] if hasattr(self, 'geotag') else None,
                         })}, queue=analyzer)
             if verbose:
                 sounds_logger.info(f"Sending sound {self.id} to analyzer {analyzer}")
@@ -1382,21 +1261,16 @@ class Sound(models.Model):
         invalidate_template_cache("bw_sound_page_sidebar", self.id)
 
     def get_geotag_name(self):
-        if settings.USE_TEXTUAL_LOCATION_NAMES_IN_BW:
-            if hasattr(self, 'geotag_name'):
-                name = self.geotag_name
-            else:
-                name = self.geotag.location_name
+        if hasattr(self, 'geotag'):
+            name = self.geotag.location_name
             if name:
                 return name
-        if hasattr(self, 'geotag_lat'):
-            return f'{self.geotag_lat:.2f}, {self.geotag_lon:.3f}'
-        else:
             return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
-        
+        return None
+
     @property
     def ready_for_similarity(self):
-        # Retruns True is the sound has been analyzed for similarity and should be available for simialrity queries
+        # Returns True if the sound has been analyzed for similarity and should be available for similarity queries
         if settings.USE_SEARCH_ENGINE_SIMILARITY:
             if hasattr(self, 'search_engine_similarity_state'):
                 # If attribute is precomputed from query (because Sound was retrieved using bulk_query), no need to perform extra queries
@@ -1407,7 +1281,7 @@ class Sound(models.Model):
         else:
             # If not using search engine based similarity, then use the old similarity_state DB field
             return self.similarity_state == "OK"
-        
+
     def get_similarity_search_target_vector(self, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
         # If the sound has been analyzed for similarity, returns the vector to be used for similarity search
         return get_similarity_search_target_vector(self.id, analyzer=analyzer)
@@ -1532,7 +1406,7 @@ def on_delete_sound(sender, instance, **kwargs):
     data['pack'] = pack
 
     geotag = None
-    if instance.geotag:
+    if hasattr(instance, 'geotag'):
         geotag = list(GeoTag.objects.filter(pk=instance.geotag.pk).values())[0]
     data['geotag'] = geotag
 
@@ -1542,7 +1416,7 @@ def on_delete_sound(sender, instance, **kwargs):
     data['license'] = license
 
     data['comments'] = list(instance.comments.values())
-    data['tags'] = list(instance.tags.values())
+    data['tags'] = list(instance.soundtag_set.values())
     data['sources'] = list(instance.sources.values('id'))
 
     # Alter datetime objects in data to avoid serialization problems
@@ -1557,16 +1431,13 @@ def on_delete_sound(sender, instance, **kwargs):
         tag['created'] = str(tag['created'])
     for comment in data['comments']:
         comment['created'] = str(comment['created'])
-    if instance.geotag:
+    if hasattr(instance, 'geotag'):
         geotag['created'] = str(geotag['created'])
     ds.data = data
     ds.save()
 
-    try:
-        if instance.geotag:
-            instance.geotag.delete()
-    except:
-        pass
+    if hasattr(instance, 'geotag'):
+        instance.geotag.delete()
 
     instance.delete_from_indexes()
     instance.unlink_moderation_ticket()
@@ -1606,10 +1477,10 @@ class PackManager(models.Manager):
         if not isinstance(pack_ids, list):
             pack_ids = [pack_ids]
         packs = Pack.objects.prefetch_related(
-            Prefetch('sounds', queryset=Sound.public.order_by('-created')),
-            Prefetch('sounds__tags__tag'),
+            Prefetch('sounds', queryset=Sound.public.select_related('license', 'geotag').order_by('-created')),
+            Prefetch('sounds__tags'),
             Prefetch('sounds__license'),
-        ).select_related('user').select_related('user__profile').filter(id__in=pack_ids)
+        ).select_related('user', 'user__profile').filter(id__in=pack_ids)
         if exclude_deleted:
             packs = packs.exclude(is_deleted=True)
         num_sounds_selected_per_pack = 3
@@ -1621,11 +1492,11 @@ class PackManager(models.Manager):
             sound_ids_pre_selected = sound_ids_for_pack_id.get(p.id, None)
             ratings = []
             for s in p.sounds.all():
-                tags += [ti.tag.name for ti in s.tags.all()]
+                tags += [ti.name for ti in s.tags.all()]
                 licenses.append((s.license.name, s.license.id))
                 if s.num_ratings >= settings.MIN_NUMBER_RATINGS:
                     ratings.append(s.avg_rating)
-                if not has_geotags and s.geotag_id is not None:
+                if not has_geotags and hasattr(s, 'geotag'):
                     has_geotags = True
                 should_add_sound_to_selected_sounds = False
                 if sound_ids_pre_selected is None:
@@ -1646,7 +1517,7 @@ class PackManager(models.Manager):
                             'spectral': s.locations('display.spectral_bw.L.url'),
                             'num_ratings': s.num_ratings,
                             'avg_rating': s.avg_rating
-                        })            
+                        })
             p.num_sounds_unpublished_precomputed = p.sounds.count() - p.num_sounds
             p.licenses_data_precomputed = ([lid for _, lid in licenses], [lname for lname, _ in licenses])
             p.pack_tags = [{'name': tag, 'count': count, 'browse_url': p.browse_pack_tag_url(tag)}
@@ -1756,7 +1627,7 @@ class Pack(models.Model):
             return False
 
     def pack_filter_value(self):
-        return f"\"{self.id}_{urlquote(self.name)}\""
+        return f"\"{self.id}_{quote(self.name)}\""
 
     def browse_pack_tag_url(self, tag):
         return reverse('tags', args=[tag]) + f'?pack_flt={self.pack_filter_value()}'
@@ -1821,11 +1692,11 @@ class Pack(models.Model):
         if hasattr(self, 'avg_rating_precomputed'):
             return self.avg_rating_precomputed
         else:
-            ratings = list(Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS).values_list('avg_rating', flat=True))
-            if ratings:
-                return sum(ratings) / len(ratings)
-            else:
-                return 0
+            result = Sound.objects.filter(
+                pack=self,
+                num_ratings__gte=settings.MIN_NUMBER_RATINGS
+            ).aggregate(avg=Avg('avg_rating'))
+            return result['avg'] or 0
 
     @property
     def avg_rating_0_5(self):
@@ -1836,13 +1707,14 @@ class Pack(models.Model):
     def num_ratings(self):
         # The number of ratings for a pack is the number of sounds that have >= 3 ratings
         if hasattr(self, 'num_ratings_precomputed'):
+            # Comes from the bulk_query_id method in PackManager
             return self.num_ratings_precomputed
         else:
-            return Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS)
+            return self.sounds.filter(num_ratings__gte=settings.MIN_NUMBER_RATINGS).count()
 
     def get_total_pack_sounds_length(self):
-        durations = list(Sound.objects.filter(pack=self).values_list('duration', flat=True))
-        return sum(durations)
+        result = self.sounds.aggregate(total_duration=Sum('duration'))
+        return result['total_duration'] or 0
 
     def num_sounds_unpublished(self):
         if hasattr(self, 'num_sounds_unpublished_precomputed'):
@@ -1855,15 +1727,15 @@ class Pack(models.Model):
         if hasattr(self, 'licenses_data_precomputed'):
             return self.licenses_data_precomputed  # If precomputed from PackManager.bulk_query_id method
         else:
-            licenses_data = list(Sound.objects.select_related('license').filter(pack=self).values_list('license__name', 'license_id'))
+            licenses_data = list(self.sounds.select_related('license').values_list('license__name', 'license_id'))
             license_ids = [lid for _, lid in licenses_data]
             license_names = [lname for lname, _ in licenses_data]
             return license_ids, license_names
-    
+
     @property
     def license_summary_name_and_id(self):
         license_ids, license_names = self.licenses_data
-        
+
         if len(set(license_ids)) == 1:
             # All sounds have same license
             license_summary_name = license_names[0]
@@ -1901,8 +1773,8 @@ class Pack(models.Model):
         if hasattr(self, "has_geotags_precomputed"):
             return self.has_geotags_precomputed
         else:
-            return Sound.objects.filter(pack=self).exclude(geotag=None).count() > 0
-        
+            return self.sounds.exclude(geotag=None).exists()
+
     @property
     def should_display_small_icons_in_second_line(self):
         # See same method in Sound class more more information

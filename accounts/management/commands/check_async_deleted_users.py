@@ -22,6 +22,7 @@ import datetime
 import logging
 
 from django.conf import settings
+from django.utils import timezone
 
 from accounts.models import UserDeletionRequest
 from utils.management_commands import LoggingBaseCommand
@@ -43,7 +44,7 @@ class Command(LoggingBaseCommand):
         user_ids_not_properly_deleted = []
         for user_deletion_request in UserDeletionRequest.objects.filter(
                 status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED,
-                last_updated__lt=datetime.datetime.now()
+                last_updated__lt=timezone.now()
                                  - datetime.timedelta(hours=settings.CHECK_ASYNC_DELETED_USERS_HOURS_BACK)):
 
             if user_deletion_request.user_to is not None and \

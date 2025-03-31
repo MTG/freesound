@@ -16,10 +16,10 @@
             {% endif %}
         </ul>
         {% endif %}
-        <form method="post" action="." class="bw-form w-100">{% csrf_token %}
-        {{ form }}
+        <form method="post" action="." class="bw-form bw-form-less-spacing w-100">{% csrf_token %}
+        {{ form.as_p }}
         <div class="text-right">
-            <button class="btn-primary v-spacing-top-1">Save</button>
+            <button class="btn-primary v-spacing-top-2">Save</button>
         </div>
         </form>
     </div>

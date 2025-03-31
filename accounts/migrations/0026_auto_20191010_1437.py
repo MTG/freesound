@@ -2,7 +2,7 @@
 
 import datetime
 from django.db import migrations, models
-
+import django.utils.timezone
 
 class Migration(migrations.Migration):
 
@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='deleteduser',
             name='date_joined',
-            field=models.DateTimeField(default=datetime.datetime(2019, 10, 10, 14, 37, 16, 698738)),
+            field=models.DateTimeField(default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AlterField(

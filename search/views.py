@@ -27,7 +27,7 @@ from django.core.cache import cache
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, reverse, render
-from ratelimit.decorators import ratelimit
+from django_ratelimit.decorators import ratelimit
 
 import forum
 import sounds
@@ -63,11 +63,11 @@ def search_view_helper(request):
                 request.user.profile.use_compact_mode = request_preference
                 request.user.profile.save()
 
-    # Parpare variables for map view (prepare some URLs for loading sounds and providing links to map)
+    # Prepare variables for map view (prepare some URLs for loading sounds and providing links to map)
     open_in_map_url = None
     map_mode_query_results_cache_key = None
     map_bytearray_url = ''
-    if sqp.map_mode:
+    if sqp.map_mode_active():
         current_query_params = request.get_full_path().split("?")[-1]
         open_in_map_url = reverse('geotags-query') + f'?{current_query_params}'
         map_mode_query_results_cache_key = f'map-query-results-{create_hash(current_query_params, 10)}'
@@ -111,7 +111,7 @@ def search_view_helper(request):
                 # Add URLs to "more from this pack" in the result object so these are easily accessible in the template
                 for d in docs:
                     if d.get("n_more_in_group") and d["sound"].pack_id is not None:
-                        d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'grouping_pack:"{d["sound"].pack_id}_{d["sound"].pack_name}"'])
+                        d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'grouping_pack:"{d["sound"].pack_id}_{d["sound"].pack.name}"'])
             else:
                 resultspackids = []
                 sound_ids_for_pack_id = {}
@@ -152,7 +152,7 @@ def search_view_helper(request):
             'tags_mode': sqp.tags_mode_active(),
             'query_time': results.q_time 
         }))
-
+        
         # Compile template variables
         return {
             'sqp': sqp,
@@ -176,11 +176,11 @@ def search_view_helper(request):
 
     except SearchEngineException as e:
         search_logger.info(f'Search error: query: {str(query_params)} error {e}')
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
         return {'error_text': 'There was an error while searching, is your query correct?'}
     except Exception as e:
         search_logger.info(f'Could probably not connect to Solr - {e}')
-        sentry_sdk.capture_exception(e)  # Manually capture exception so it has more info and Sentry can organize it properly
+        sentry_sdk.capture_exception(e)
         return {'error_text': 'The search server could not be reached, please try again later.'}
 
 
@@ -253,7 +253,7 @@ def search_forum(request):
     remove_username_filter_url = ''
     if 'post_author' in filter_query:
         username_filter = filter_query.split('post_author:"')[1].split('"')[0]
-        remove_username_filter_url = '{}?{}'.format(reverse('forums-search'), filter_query.replace('post_author:"{}"'.format(username_filter), ''))
+        remove_username_filter_url = '{}?{}'.format(reverse('forums-search'), filter_query.replace(f'post_author:"{username_filter}"', ''))
         sort = settings.SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST
     
     # Parse advanced search options
@@ -305,13 +305,13 @@ def search_forum(request):
             page = paginator.page(current_page)
             error = False
         except SearchEngineException as e:
-            error.info(f"Search error: query: {search_query} error {e}")
-            sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+            search_logger.info(f"Search error: query: {search_query} error {e}")
+            sentry_sdk.capture_exception(e)
             error = True
             error_text = 'There was an error while searching, is your query correct?'
         except Exception as e:
             search_logger.info(f"Could probably not connect to the search engine - {e}")
-            sentry_sdk.capture_exception(e)  # Manually capture exception so it has mroe info and Sentry can organize it properly
+            sentry_sdk.capture_exception(e)
             error = True
             error_text = 'The search server could not be reached, please try again later.'
 

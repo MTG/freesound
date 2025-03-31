@@ -22,9 +22,12 @@ import datetime
 import logging
 
 from django.core.cache import caches
+from django.utils import timezone
 
-from utils.management_commands import LoggingBaseCommand
 from apiv2.models import ApiV2Client, APIClientDailyUsageHistory
+from utils.cache import get_all_keys_matching_pattern
+from utils.management_commands import LoggingBaseCommand
+
 
 
 console_logger = logging.getLogger("console")
@@ -42,11 +45,15 @@ class Command(LoggingBaseCommand):
         self.log_start()
 
         n_days_back = 2
-        now = datetime.datetime.now().date()
+        now = timezone.now().date()
         for i in range(0, n_days_back):
             date_filter = now - datetime.timedelta(days=i)
-            monitoring_key_pattern = f'{date_filter.year}-{date_filter.month}-{date_filter.day}_*'
-            for key, count in cache_api_monitoring.get_many(cache_api_monitoring.keys(monitoring_key_pattern)).items():
+            
+            # Get cache keys that match a pattern. Note that using Django's default redis client, this requires some special trickery
+            monitoring_key_pattern = f'*{date_filter.year}-{date_filter.month}-{date_filter.day}_*'
+            cache_keys = get_all_keys_matching_pattern(monitoring_key_pattern, cache_api_monitoring) 
+
+            for key, count in cache_api_monitoring.get_many(cache_keys).items():
                 try:
                     apiv2_client = ApiV2Client.objects.get(oauth_client__client_id=key.split('_')[1])
                     usage_history, _ = APIClientDailyUsageHistory\

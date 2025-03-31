@@ -27,6 +27,7 @@ from django.db.models import Count, Sum
 from django.db.models.functions import Greatest
 from django.template.loader import render_to_string
 from django.core.cache import cache
+from django.utils import timezone
 
 from donations.models import Donation
 from sounds.models import Download, Pack, Sound, SoundOfTheDay
@@ -103,7 +104,7 @@ class Command(LoggingBaseCommand):
         cache.set("top_rated_new_sound_ids", top_rated_new_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
         
         # Generate latest "random sound of the day" ids
-        recent_random_sound_ids = [sd.sound_id for sd in SoundOfTheDay.objects.filter(date_display__lt=datetime.datetime.today()).order_by('-date_display')[:NUM_ITEMS_PER_SECTION]]
+        recent_random_sound_ids = [sd.sound_id for sd in SoundOfTheDay.objects.filter(date_display__lt=timezone.now()).order_by('-date_display')[:NUM_ITEMS_PER_SECTION]]
         cache.set("recent_random_sound_ids", list(recent_random_sound_ids), cache_time)
 
         # Add total number of sounds in Freesound to the cache

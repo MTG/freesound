@@ -20,7 +20,7 @@
 
 {% regroup page.object_list by created|date:"F jS, Y" as downloads %}
 
-{% ifequal format "regular" %}
+{% if format == "regular" %}
 	{% for group in downloads %}
 		<h4 class="v-spacing-top-4">Downloaded on {{group.grouper}}</h4>
 		<ul>
@@ -35,9 +35,9 @@
         {% endfor %}
 		</ul>
 	{% endfor %}
-{% endifequal %}
+{% endif %}
 
-{% ifequal format "html" %}
+{% if format == "html" %}
 <p>
 	{% for group in downloads %}
 		{% filter force_escape %}<h4>Downloaded on {{group.grouper}}</h4>{% endfilter %}<br />
@@ -56,9 +56,9 @@
 		{% filter force_escape %}</ul>{% endfilter %}<br />
 	{% endfor %}
 </p>
-{% endifequal %}
+{% endif %}
 
-{% ifequal format "plaintext" %}
+{% if format == "plaintext" %}
 <p>
 	{% for group in downloads %}
     Downloaded on {{group.grouper}}<br />
@@ -74,7 +74,7 @@
     {% endfor %}
 	{% endfor %}
 </p>
-{% endifequal %}
+{% endif %}
 
 </div>
 

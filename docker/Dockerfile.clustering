@@ -1,4 +1,4 @@
-FROM freesound:2023-07
+FROM freesound:2025-03
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

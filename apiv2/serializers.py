@@ -46,23 +46,12 @@ DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,geotag,created,li
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
 
-def get_sound_analyzers_output_helper(sound, fallback_to_db=True):
+def get_sound_analyzers_output_helper(sound):
     analyzers_output = {}
+    sound_analysis_dict = {an.analyzer: an.analysis_data for an in sound.analyses.all()}
     for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
         if 'descriptors_map' in analyzer_info:
-            query_select_name = analyzer_name.replace('-', '_')
-            analysis_data = None
-            if hasattr(sound, query_select_name):
-                analysis_data = getattr(sound, query_select_name)
-                if type(analysis_data) == str:
-                    analysis_data = json.loads(analysis_data)
-            else:
-                if fallback_to_db:
-                    # Retrieve the analysis data from the db
-                    try:
-                        analysis_data = sound.analyses.get(analyzer=analyzer_name, analysis_status="OK").analysis_data
-                    except SoundAnalysis.DoesNotExist:
-                        pass
+            analysis_data = sound_analysis_dict.get(analyzer_name, None)
             if analysis_data is not None:
                 analyzers_output.update(analysis_data)
     return analyzers_output
@@ -167,31 +156,25 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
         try:
             return obj.tag_array
         except AttributeError:
-            return [tagged.tag.name for tagged in obj.tags.select_related("tag").all()]
+            return [tagged.name for tagged in obj.tags.all()]
 
     license = serializers.SerializerMethodField()
     def get_license(self, obj):
-        try:
-            return obj.license_deed_url
-        except AttributeError:
-            return obj.license.deed_url
+        return obj.license.deed_url
 
     pack = serializers.SerializerMethodField()
     def get_pack(self, obj):
-        try:
-            if obj.pack_id:
-                return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack_id]),
-                                    request_is_secure=self.context['request'].is_secure())
-            else:
-                return None
-        except:
+        if obj.pack:
+            return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack_id]),
+                                request_is_secure=self.context['request'].is_secure())
+        else:
             return None
 
     pack_name = serializers.SerializerMethodField()
     def get_pack_name(self, obj):
-        try:
-            return obj.pack_name
-        except AttributeError:
+        if obj.pack:
+            return obj.pack.name
+        else:
             return None
 
     previews = serializers.SerializerMethodField()
@@ -295,7 +278,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     geotag = serializers.SerializerMethodField()
     def get_geotag(self, obj):
-        if obj.geotag:
+        if hasattr(obj, 'geotag'):
             return str(obj.geotag.lat) + " " + str(obj.geotag.lon)
         else:
             return None
@@ -307,7 +290,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     analyzers_output = serializers.SerializerMethodField()
     def get_analyzers_output(self, obj):
         raise NotImplementedError  # Should be implemented in subclasses
-    
+
     is_explicit = serializers.SerializerMethodField()
     def get_is_explicit(self, obj):
         return obj.is_explicit
@@ -326,12 +309,10 @@ class SoundListSerializer(AbstractSoundSerializer):
         return self.sound_analysis_data.get(str(obj.id), None)
 
     def get_ac_analysis(self, obj):
-        # Get ac analysis data form the object itself as it will have been included in the Sound
-        # by SoundManager.bulk_query
-        query_select_name = settings.AUDIOCOMMONS_ANALYZER_NAME.replace('-', '_')
-        try:
-            return json.loads(getattr(obj, query_select_name))
-        except (AttributeError, TypeError, ValueError) as e:
+        analyses = [an for an in obj.analyses.all() if an.analyzer == settings.AUDIOCOMMONS_ANALYZER_NAME and an.analysis_status == "OK"]
+        if analyses:
+            return analyses[0].analysis_data
+        else:
             return None
 
     def get_analyzers_output(self, obj):
@@ -369,21 +350,11 @@ class SoundSerializer(AbstractSoundSerializer):
     def get_ac_analysis(self, obj):
         # Retrieve analysis data already loaded in the provided object of get it from related SoundAnalysis object
         # corresponding to the Audio Commons extractor.
-        query_select_name = settings.AUDIOCOMMONS_ANALYZER_NAME.replace('-', '_')
-        if hasattr(obj, query_select_name):
-            try:
-                return json.loads(getattr(obj, query_select_name))
-            except (AttributeError, TypeError, ValueError) as e:
-                return None
+        analyses = [an for an in obj.analyses.all() if an.analyzer == settings.AUDIOCOMMONS_ANALYZER_NAME and an.analysis_status == "OK"]
+        if analyses:
+            return analyses[0].analysis_data
         else:
-            # No ac analysis data already loaded in the object, load it with an extra query
-            try:
-                return obj.analyses.get(analyzer=settings.AUDIOCOMMONS_ANALYZER_NAME, analysis_status="OK")\
-                    .analysis_data
-            except SoundAnalysis.DoesNotExist:
-                # Do nothing, will lead to end of the method returning None
-                pass
-        return None
+            return None
 
     def get_analyzers_output(self, obj):
         # Get the output of analyzers configured in settings.ANALYZERS_CONFIGURATION.

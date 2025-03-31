@@ -16,7 +16,7 @@
 
 {% block branding %}
     <a style="color: #999;" href="/apiv2/">
-        <img src="/media/images/logo_white_small_api.png" height="40px"/>
+        <img src="{% static 'bw-frontend/dist/logo-text-white.svg' %}" height="40px"/>
     </a>
     <span class="pull-right" style="line-height: 50px;">
         <a style="color: #999;" href="/docs/api" target="_blank">Documentation</a>
@@ -42,20 +42,6 @@
         </ul>
     {% endif %}
 {% endblock %}
-
-{% block script %}
-    <script src="{% static 'rest_framework/js/jquery-3.5.1.min.js' %}"></script>
-    <script src="{% static 'rest_framework/js/ajax-form.js' %}"></script>
-    <script src="{% static 'rest_framework/js/csrf.js' %}"></script>
-    <script src="{% static 'rest_framework/js/bootstrap.min.js' %}"></script>
-    <script src="{% static 'rest_framework/js/prettify-min.js' %}"></script>
-    <script src="{% static 'rest_framework/js/default.js' %}"></script>
-    <script>
-        $(document).ready(function() {
-            $('form').ajaxForm();
-        });
-    </script>
-  {% endblock %}
 
 {% block footer %}{% endblock %}
 

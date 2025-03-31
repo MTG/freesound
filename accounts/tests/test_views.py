@@ -28,6 +28,7 @@ from unittest import mock
 from accounts.models import OldUsername
 from geotags.models import GeoTag
 from sounds.models import SoundOfTheDay, Download, PackDownload
+from utils.search import SearchResultsPaginator
 from utils.test_helpers import create_user_and_sounds, create_fake_perform_search_engine_query_results_tags_mode
 
 
@@ -46,7 +47,12 @@ class SimpleUserTest(TestCase):
         self.sound.moderation_state = "OK"
         self.sound.processing_state = "OK"
         self.sound.similarity_state = "OK"
-        self.sound.geotag = GeoTag.objects.create(user=user, lat=45.8498, lon=-62.6879, zoom=9)
+        GeoTag.objects.create(
+            sound=self.sound,
+            lat=45.8498,
+            lon=-62.6879,
+            zoom=9
+        )
         self.sound.save()
         SoundOfTheDay.objects.create(sound=self.sound, date_display=datetime.date.today())
         self.download = Download.objects.create(user=self.user, sound=self.sound, license=self.sound.license,
@@ -262,14 +268,17 @@ class SimpleUserTest(TestCase):
             reverse('pack-downloaders', kwargs={'username': user.username, "pack_id": self.pack.id}) + '?ajax=1')
         self.assertEqual(resp.status_code, 200)
 
-    @mock.patch('tags.views.perform_search_engine_query')
+    @mock.patch("search.views.perform_search_engine_query")
     def test_tags_response(self, perform_search_engine_query):
-        perform_search_engine_query.return_value = (create_fake_perform_search_engine_query_results_tags_mode(), None)
+        results = create_fake_perform_search_engine_query_results_tags_mode()
+        paginator = SearchResultsPaginator(results, 15)
+        perform_search_engine_query.return_value = (results, paginator)
 
         # 200 response on tags page access
-        resp = self.client.get(reverse('tags'))
+        resp = self.client.get(reverse("tags", args=["foley"]), follow=True)
+        perform_search_engine_query.assert_called()
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['sqp'].tags_mode_active(), True)
+        self.assertTrue(resp.context["sqp"].tags_mode_active())
 
     def test_packs_response(self):
         # 302 response (note that since BW, there will be a redirect to the search page in between)

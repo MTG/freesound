@@ -32,6 +32,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.template import loader
 from django.urls import reverse
 from django.db import transaction
+from django.db.models import Prefetch
+from django.utils import timezone
 
 from accounts.models import DeletedUser
 from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
@@ -62,22 +64,16 @@ def last_action(view_func):
         if not request.user.is_authenticated:
             return view_func(request, *args, **kwargs)
 
-        from datetime import datetime, timedelta
-        date_format = "%Y-%m-%d %H:%M:%S:%f"
-        date2string = lambda date: date.strftime(date_format)
-        string2date = lambda date_string: datetime.strptime(date_string, date_format)
-
         key = "forum-last-visited"
-
-        now = datetime.now()
-        now_as_string = date2string(now)
+        now = timezone.now()
+        now_as_string = now.isoformat()
 
         if key not in request.COOKIES or not request.session.get(key, False):
             request.session[key] = now_as_string
-        elif now - string2date(request.COOKIES[key]) > timedelta(minutes=30):
+        elif now - datetime.datetime.fromisoformat(request.COOKIES[key]) > datetime.timedelta(minutes=30):
             request.session[key] = request.COOKIES[key]
 
-        request.last_action_time = string2date(request.session.get(key, now_as_string))
+        request.last_action_time = datetime.datetime.fromisoformat(request.session.get(key, now_as_string))
 
         reply_object = view_func(request, *args, **kwargs)
 
@@ -103,12 +99,12 @@ def forum(request, forum_name_slug):
     except Forum.DoesNotExist:
         raise Http404
 
-    tvars = {'forum': forum}
-    paginator = paginate(request, Thread.objects.filter(forum=forum, first_post__moderation_state="OK")
-                         .select_related('last_post', 'last_post__author', 'last_post__author__profile',
-                                         'author', 'author__profile', 'first_post', 'forum'),
-                         settings.FORUM_THREADS_PER_PAGE)
-    tvars.update(paginator)
+    threads = forum.thread_set.filter(first_post__moderation_state="OK") \
+        .select_related('last_post', 'last_post__author', 'last_post__author__profile',
+                        'author', 'author__profile', 'first_post', 'forum') \
+        .prefetch_related(Prefetch('post_set', queryset=Post.objects.filter(moderation_state="OK").select_related('author','author__profile')))
+    paginator = paginate(request, threads, settings.FORUM_THREADS_PER_PAGE)
+    tvars = {'forum': forum, **paginator}
 
     return render(request, 'forum/threads.html', tvars)
 
@@ -149,7 +145,7 @@ def thread(request, forum_name_slug, thread_id):
 
 def get_hot_threads(n=None, days=15):
     if not settings.DEBUG:
-        last_days_filter = datetime.datetime.today() - datetime.timedelta(days=days)
+        last_days_filter = timezone.now() - datetime.timedelta(days=days)
     else:
         # If in DEBUG mode we won't have recent posts, so we modify the filter to match all existing threads
         last_days_filter = Post.objects.order_by('created').first().created
@@ -157,6 +153,7 @@ def get_hot_threads(n=None, days=15):
                                  last_post__moderation_state="OK",
                                  last_post__created__gte=last_days_filter) \
                .order_by('-last_post__created') \
+               .prefetch_related(Prefetch('post_set', queryset=Post.objects.filter(moderation_state="OK").select_related('author','author__profile'))) \
                .select_related('author',
                                'forum',
                                'last_post',

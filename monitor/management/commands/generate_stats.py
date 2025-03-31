@@ -24,13 +24,14 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import Count, Sum
+from django.utils import timezone
 
 import comments.models
 import donations.views
 import forum.models
 import ratings.models
 import sounds.views
-from tags.models import Tag, TaggedItem
+from tags.models import Tag, SoundTag
 from utils.management_commands import LoggingBaseCommand
 
 
@@ -40,7 +41,7 @@ class Command(LoggingBaseCommand):
     def handle(self, **options):
         self.log_start()
 
-        time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
+        time_span = timezone.now()-datetime.timedelta(weeks=2)
 
         # Compute stats relatad with sounds:
 
@@ -85,7 +86,7 @@ class Command(LoggingBaseCommand):
 
         cache.set("users_stats", {"new_users": list(new_users)}, 60 * 60 * 24)
 
-        time_span = datetime.datetime.now()-datetime.timedelta(days=365)
+        time_span = timezone.now()-datetime.timedelta(days=365)
 
         active_users = {
             'sounds': {'obj': sounds.models.Sound.objects, 'attr': 'user_id'},
@@ -118,24 +119,24 @@ class Command(LoggingBaseCommand):
         cache.set('donations_stats', {'new_donations': list(query_donations)}, 60*60*24)
 
         # Compute stats related with Tags:
-        time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
+        time_span = timezone.now()-datetime.timedelta(weeks=2)
 
-        tags_stats = TaggedItem.objects.values('tag_id')\
+        tags_stats = SoundTag.objects.values('tag_id')\
             .filter(created__gt=time_span).annotate(num=Count('tag_id'))\
             .values('num', 'tag__name').order_by('-num')[:300]
 
         # Most used tags for tags cloud
-        all_tags = TaggedItem.objects.values('tag_id')\
+        all_tags = SoundTag.objects.values('tag_id')\
                 .annotate(num=Count('tag_id'))\
                 .values('num', 'tag__name').order_by('-num')[:300]
 
         with connection.cursor() as cursor:
             cursor.execute(\
-                    """SELECT count(*) as num_c, t.name, ti.tag_id as id FROM
-                    tags_taggeditem ti, tags_tag t, sounds_download d
-                    WHERE d.sound_id = ti.object_id AND t.id = ti.tag_id
+                    """SELECT count(*) as num_c, t.name, st.tag_id as id FROM
+                    tags_soundtag st, tags_tag t, sounds_download d
+                    WHERE d.sound_id = st.sound_id AND t.id = st.tag_id
                     AND d.created > current_date - interval '14 days'
-                    GROUP BY ti.tag_id, t.name ORDER BY num_c DESC limit 300""")
+                    GROUP BY st.tag_id, t.name ORDER BY num_c DESC limit 300""")
 
             downloads_tags = cursor.fetchall()
 
@@ -155,7 +156,7 @@ class Command(LoggingBaseCommand):
         num_donations = donations.models.Donation.objects\
             .aggregate(Sum('amount'))['amount__sum']
 
-        time_span = datetime.datetime.now()-datetime.timedelta(30)
+        time_span = timezone.now()-datetime.timedelta(30)
         sum_donations_month = donations.models.Donation.objects\
             .filter(created__gt=time_span).aggregate(Sum('amount'))['amount__sum']
 
@@ -170,7 +171,7 @@ class Command(LoggingBaseCommand):
         num_ratings = ratings.models.SoundRating.objects.all().count()
 
         tags = Tag.objects.all().count()
-        tags_used = TaggedItem.objects.all().count()
+        tags_used = SoundTag.objects.all().count()
 
         posts = forum.models.Post.objects.all().count()
         threads = forum.models.Thread.objects.all().count()

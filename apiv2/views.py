@@ -34,8 +34,9 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render 
+from django.shortcuts import render
 from django.urls import reverse
+from django.utils import timezone
 from oauth2_provider.models import Grant, AccessToken
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from rest_framework import status
@@ -137,8 +138,8 @@ class TextSearch(GenericAPIView):
         sound_ids = [ob[0] for ob in object_list]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=sound_ids)
         # In search queries, only include audio analyers's output if requested through the fields parameter
-        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '') or 'ac_analysis' in search_form.cleaned_data.get('fields', '')
-        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_analyzers_output=needs_analyzers_ouptut)
+        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_analyzers_output=needs_analyzers_output)
         sounds = []
         for i, sid in enumerate(sound_ids):
             try:
@@ -228,8 +229,8 @@ class ContentSearch(GenericAPIView):
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyers's output if requested through the fields parameter
-        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '') or 'ac_analysis' in search_form.cleaned_data.get('fields', '')
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
+        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -347,8 +348,8 @@ class CombinedSearch(GenericAPIView):
         ids = results
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyers's output if requested through the fields parameter
-        needs_analyzers_ouptut = 'analyzers_output' in search_form.cleaned_data.get('fields', '') or 'ac_analysis' in search_form.cleaned_data.get('fields', '')
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
+        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -387,6 +388,9 @@ class CombinedSearch(GenericAPIView):
 # SOUND VIEWS
 #############
 
+def get_needs_analyzers_output(fields):
+    return 'analyzers_output' in fields or 'ac_analysis' in fields or '*' in fields
+
 class SoundInstance(RetrieveAPIView):
 
     @classmethod
@@ -397,7 +401,10 @@ class SoundInstance(RetrieveAPIView):
                   get_formatted_examples_for_view('SoundInstance', 'apiv2-sound-instance', max=5))
 
     serializer_class = SoundSerializer
-    queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK").annotate(analysis_state_essentia_exists=Exists(SoundAnalysis.objects.filter(analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound=OuterRef('id'))))
+
+    def get_queryset(self):
+        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
+        return Sound.objects.bulk_query(include_analyzers_output=needs_analyzers_output)
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))
@@ -476,8 +483,8 @@ class SimilarSounds(GenericAPIView):
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyers's output if requested through the fields parameter
-        needs_analyzers_ouptut = 'analyzers_output' in similarity_sound_form.cleaned_data.get('fields', '') or 'ac_analysis' in similarity_sound_form.cleaned_data.get('fields', '')
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_ouptut)
+        needs_analyzers_output = get_needs_analyzers_output(similarity_sound_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -511,7 +518,7 @@ class SoundComments(ListAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        return Comment.objects.filter(sound_id=self.kwargs['pk'])
+        return Comment.objects.filter(sound_id=self.kwargs['pk']).select_related('user')
 
 
 class DownloadSound(DownloadAPIView):
@@ -577,7 +584,7 @@ class UserInstance(RetrieveAPIView):
 
     lookup_field = "username"
     serializer_class = UserSerializer
-    queryset = User.objects.filter(is_active=True)
+    queryset = User.objects.filter(is_active=True).select_related('profile')
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message(f"user:{self.kwargs['username']} instance"))
@@ -604,8 +611,8 @@ class UserSounds(ListAPIView):
             user = User.objects.get(username=self.kwargs['username'], is_active=True)
         except User.DoesNotExist:
             raise NotFoundException(resource=self)
-        needs_analyzers_ouptut = 'analyzers_output' in self.request.GET.get('fields', '') or 'ac_analysis' in self.request.GET.get('fields', '')
-        queryset = Sound.objects.bulk_sounds_for_user(user_id=user.id, include_analyzers_output=needs_analyzers_ouptut)
+        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
+        queryset = Sound.objects.bulk_sounds_for_user(user_id=user.id, include_analyzers_output=needs_analyzers_output)
         return queryset
 
 
@@ -674,8 +681,8 @@ class PackSounds(ListAPIView):
             Pack.objects.get(id=self.kwargs['pk'], is_deleted=False)
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
-        needs_analyzers_ouptut = 'analyzers_output' in self.request.GET.get('fields', '') or 'ac_analysis' in self.request.GET.get('fields', '')  
-        queryset = Sound.objects.bulk_sounds_for_pack(pack_id=self.kwargs['pk'], include_analyzers_output=needs_analyzers_ouptut)
+        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
+        queryset = Sound.objects.bulk_sounds_for_pack(pack_id=self.kwargs['pk'], include_analyzers_output=needs_analyzers_output)
         return queryset
 
 
@@ -943,12 +950,11 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 if 'geotag' in serializer.data:
                     if serializer.data['geotag']:
                         lat, lon, zoom = serializer.data['geotag'].split(',')
-                        geotag = GeoTag(user=self.user,
+                        geotag = GeoTag.objects.create(
+                            sound=sound,
                             lat=float(lat),
                             lon=float(lon),
                             zoom=int(zoom))
-                        geotag.save()
-                        sound.geotag = geotag
                 if 'pack' in serializer.data:
                     if serializer.data['pack']:
                         if Pack.objects.filter(name=serializer.data['pack'], user=self.user)\
@@ -1158,7 +1164,7 @@ class MeBookmarkCategories(OauthRequiredAPIView, ListAPIView):
                 return list(categories)
         else:
             raise ServerErrorException(resource=self)
-        
+
 
 class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
     serializer_class = SoundListSerializer
@@ -1427,7 +1433,7 @@ def monitor_api_credential(request, key):
             day_limit = 0
         n_days = int(request.GET.get('n_days', 30))
         usage_history = client.get_usage_history(n_days_back=n_days)
-        last_year = datetime.datetime.now().year - 1
+        last_year = timezone.now().year - 1
         tvars = {
             'n_days': n_days,
             'n_days_options': [
@@ -1476,7 +1482,7 @@ def granted_permissions(request):
 
     for token in tokens_raw:
         if token.application.apiv2_client.name not in token_names:
-            td = (token.expires - datetime.datetime.today())
+            td = (token.expires - timezone.now())
             seconds_to_expiration_date = td.total_seconds()
             tokens.append({
                 'client_name': token.application.apiv2_client.name,
@@ -1493,7 +1499,7 @@ def granted_permissions(request):
     grant_and_token_names = token_names[:]
     for grant in grants_pending_access_token_request_raw:
         if grant.application.apiv2_client.name not in grant_and_token_names:
-            td = (grant.expires - datetime.datetime.today())
+            td = (grant.expires - timezone.now())
             seconds_to_expiration_date = td.total_seconds()
             if seconds_to_expiration_date > 0:
                 grants.append({
@@ -1510,7 +1516,7 @@ def granted_permissions(request):
         'tokens': tokens,
         'grants': grants,
         'show_expiration_date': False,
-        'activePage': 'api', 
+        'activePage': 'api',
     })
 
 

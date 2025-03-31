@@ -88,8 +88,8 @@
                 </div>
                 <div class="sample_info_right">
                     <ul id="tags">
-                        {% for tag_link in sound.tags.all %}
-                            <li><span>{{tag_link.tag.name}}</span></li>
+                        {% for tag in sound.tags_array %}
+                            <li><span>{{tag}}</span></li>
                         {% endfor %}
                     </ul>
                 </div>

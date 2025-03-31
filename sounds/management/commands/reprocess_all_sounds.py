@@ -36,7 +36,7 @@ console_logger = logging.getLogger("console")
 class Command(LoggingBaseCommand):
 
     help = """Progressively reprocesses all sounds in the database and replaces their images and preview files. This command is 
-    expected to be run multiple times untill all sounds have been processed. The progress of the reprocessing task is saved using
+    expected to be run multiple times until all sounds have been processed. The progress of the reprocessing task is saved using
     in a file in the server which uses the parameter "-id" in its name. Multiple executions of this command with the same ID will
     therefore continue the reprocessing task from where it was left.
     """
@@ -54,7 +54,7 @@ class Command(LoggingBaseCommand):
             action='store',
             dest='limit',
             default=1000,
-            help='Maximum number of sounds in the processing queue (it will only send new sounds untill the queue is filled '\
+            help='Maximum number of sounds in the processing queue (it will only send new sounds until the queue is filled '\
                  'with this number).')
         
         parser.add_argument(
@@ -86,7 +86,7 @@ class Command(LoggingBaseCommand):
         reprocessing_progress = []
         num_sounds_failed_processing_before_command_run = Sound.objects.filter(processing_state='FA').count()
         if max_sounds_to_send <= 0:
-            console_logger.info(f'Not sending any sounds to the queue as it is already full (litmit: {limit}, '
+            console_logger.info(f'Not sending any sounds to the queue as it is already full (limit: {limit}, '
                                 f'currently in queue: {n_sounds_currently_in_processing})')
         else:
             progress_file_path = os.path.join(settings.DATA_PATH, f'reprocessing_progress_{options["reprocessing-id"]}.json')

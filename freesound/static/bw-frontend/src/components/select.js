@@ -43,7 +43,7 @@ function makeSelect(container) {
         liElement.addEventListener(
           'click',
           function() {
-            displyUl(this);
+            displayUl(this);
           },
           false
         );
@@ -70,7 +70,7 @@ function makeSelect(container) {
                 // Enter (select the pre-selected element)
                 const liElement = getPreSelectedLiElement(ulElement);
                 if (liElement !== undefined){
-                  displyUl(liElement);
+                  displayUl(liElement);
                 }
               }
             } else {
@@ -138,7 +138,7 @@ function makeSelect(container) {
     return wrapper;
   }
 
-  function displyUl(element) {
+  function displayUl(element) {
     var select = element.parentNode.parentNode.getElementsByTagName('select')[0];
     if (element.tagName == 'BUTTON') {
       selectDropdown = element.parentNode.getElementsByTagName('ul')[0];
@@ -221,7 +221,7 @@ function makeSelect(container) {
         'click',
         function(e) {
           e.preventDefault();
-          displyUl(this);
+          displayUl(this);
         },
         false
       );

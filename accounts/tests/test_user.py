@@ -634,7 +634,7 @@ class UserEmailsUniqueTestCase(TestCase):
             secondary_orig_email=self.user_b.email,  # Must be same email (original)
         )
         # User a never had problems with email
-        # User b and c had the same email, but user_c's was automaitcally changed to avoid duplicates
+        # User b and c had the same email, but user_c's was automatically changed to avoid duplicates
 
     def test_redirects_when_shared_emails(self):
         # Try to log-in with user and go to messages page (any login_required page would work)
@@ -913,7 +913,7 @@ class ChangeUsernameTest(TestCase):
         self.assertEqual(OldUsername.objects.filter(username='userANewNewUsername', user=userA).count(), 1)
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 3)
 
-        # Change again the username to another previosuly used username and check that no new OldUsername is created
+        # Change again the username to another previously used username and check that no new OldUsername is created
         userA.username = 'userA'
         userA.save()
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 3)

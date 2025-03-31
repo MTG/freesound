@@ -76,7 +76,7 @@ class FollowTestCase(TestCase):
         resp = self.client.get(reverse('user-following-tags', args=['User32']) + '?ajax=1')
         self.assertEqual(resp.status_code, 404)
 
-    def test_following_tags_oldusename(self):
+    def test_following_tags_oldusername(self):
         user = User.objects.get(username='User2')
         user.username = "new-username"
         user.save()

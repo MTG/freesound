@@ -101,7 +101,7 @@ class Command(BaseCommand):
         console_logger.info('   - downloads')
         # Do a bulk delete because it's faster than django deleting download rows individually for each user
         # TODO: This could be faster by making new download tables for only
-        # the users that we are going to keep, and then remove the orignal
+        # the users that we are going to keep, and then remove the original
         # table and rename.
         with connection.cursor() as cursor:
             cursor.execute("delete from sounds_download where user_id in %s", [tuple(userids)])

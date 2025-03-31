@@ -44,7 +44,7 @@ def server_interface(resource):
         'get_all_point_names': resource.get_all_point_names,
         'get_descriptor_names': resource.get_descriptor_names,
         'contains': resource.contains,  # sound_id
-        'get_sounds_descriptors': resource.get_sounds_descriptors,  # sound_ids, descritor_names (optional), normalization (optional)
+        'get_sounds_descriptors': resource.get_sounds_descriptors,  # sound_ids, descriptor_names (optional), normalization (optional)
         'nnsearch': resource.nnsearch,  # sound_id, num_results (optional), preset (optional)
         'api_search': resource.api_search,
         'save': resource.save,  # filename (optional)
@@ -105,7 +105,7 @@ class SimilarityServer(resource.Resource):
 
     def api_search(self, request, target_type=None, target=None, filter=None, preset=[DEFAULT_PRESET], metric_descriptor_names=None, num_results=[DEFAULT_NUMBER_OF_RESULTS], offset=[0], in_ids=None):
         '''
-        This function is used as an interface to all search-related gaia funcionalities we use in freesound.
+        This function is used as an interface to all search-related gaia functionalities we use in freesound.
         This function allows the definition of a query point that will be used by gaia as the target for the search (i.e.
         gaia will sort the results by similarity according to this point), and a filter to reduce the scope of the search.
 

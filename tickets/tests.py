@@ -279,7 +279,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         self.assertEqual(self.ticket.sound.is_explicit, False)
 
     def test_add_is_explicit_flag_for_explicit_sound(self):
-        """Test that when apporving a sound it's 'is_explicit' flag is set to True if the moderator chooses to add
+        """Test that when approving a sound its 'is_explicit' flag is set to True if the moderator chooses to add
         the explicit flag
         """
         self.ticket.sound.is_explicit = True
@@ -289,7 +289,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         self.assertTrue(self.ticket.sound.is_explicit)
 
     def test_add_is_explicit_flag_for_non_explicit_sound(self):
-        """Test that when apporving a sound it's 'is_explicit' flag is set to True if the moderator chooses to add
+        """Test that when approving a sound its 'is_explicit' flag is set to True if the moderator chooses to add
         the explicit flag, even if the sound was originally marked as non explicit
         """
         self.ticket.sound.is_explicit = False
@@ -299,7 +299,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         self.assertTrue(self.ticket.sound.is_explicit)
 
     def test_remove_is_explicit_flag_for_non_explicit_sound(self):
-        """Test that when apporving a sound it's 'is_explicit' flag is set to False if the moderator chooses to remove
+        """Test that when approving a sound its 'is_explicit' flag is set to False if the moderator chooses to remove
         the explicit flag
         """
         self.ticket.sound.is_explicit = False
@@ -309,7 +309,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         self.assertFalse(self.ticket.sound.is_explicit)
 
     def test_remove_is_explicit_flag_for_explicit_sound(self):
-        """Test that when apporving a sound it's 'is_explicit' flag is set to False if the moderator chooses to remove
+        """Test that when approving a sound its 'is_explicit' flag is set to False if the moderator chooses to remove
         the explicit flag, even if the sound was originally marked as explicit
         """
         self.ticket.sound.is_explicit = True

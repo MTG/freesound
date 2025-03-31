@@ -46,8 +46,8 @@ def truncate_string(value, length):
 def duration(value):
     duration_minutes = int(value / 60)
     duration_seconds = int(value) % 60
-    duration_miliseconds = int((value - int(value)) * 1000)
-    return "%d:%02d.%03d" % (duration_minutes, duration_seconds, duration_miliseconds)
+    duration_milliseconds = int((value - int(value)) * 1000)
+    return "%d:%02d.%03d" % (duration_minutes, duration_seconds, duration_milliseconds)
 
 
 @register.filter

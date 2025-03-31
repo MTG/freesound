@@ -24,12 +24,12 @@ from utils.search import SearchEngineException
 
 
 class SolrQuery:
-    """A wrapper around a lot of Solr query funcionality.
+    """A wrapper around a lot of Solr query functionality.
     """
 
     def __init__(self, debug_query=None):
         """Creates a SolrQuery object
-        debug_query: if 1 output debug infomation
+        debug_query: if 1 output debug information
         """
         # some default parameters
         self.params = {
@@ -115,7 +115,7 @@ class SolrQuery:
     def set_facet_options_default(self, limit=None, offset=None, prefix=None, sort=None, mincount=None,
                                   count_missing=None, enum_cache_mindf=None):
         """Set default facet options: these will be applied to all facets, but overridden by particular options (see set_facet_options())
-        prefix: retun only facets with this prefix
+        prefix: return only facets with this prefix
         sort: sort facets, True or False
         limit: nr of facets to return
         offset: start from this row
@@ -162,18 +162,18 @@ class SolrQuery:
         except KeyError:
             self.params['facet.date'] = list(args)
 
-    def set_date_facet_options_default(self, start=None, end=None, gap=None, hardened=None, count_other=None):
+    def set_date_facet_options_default(self, start=None, end=None, gap=None, hardend=None, count_other=None):
         """Set default date facet options: these will be applied to all date facets, but overridden by particular options (see set_date_facet_options())
             start: date start in DateMathParser syntax
             end: date end in DateMathParser syntax
             gap: size of slices of date range
-            hardend: True: if gap doesn't devide range make last slice smaller. False: go out of bounds with last slice
+            hardend: True: if gap doesn't divide range make last slice smaller. False: go out of bounds with last slice
             count_other: A tuple of other dates to count: before, after, between, none, all
         """
         self.params['facet.date.start'] = start
         self.params['facet.date.end'] = start
         self.params['facet.date.gap'] = gap
-        self.params['facet.date.hardend'] = hardened
+        self.params['facet.date.hardend'] = hardend
         self.params['facet.date.other'] = count_other
 
     def set_date_facet_options(self, field, start=None, end=None, gap=None, hardened=None, count_other=None):
@@ -209,7 +209,7 @@ class SolrQuery:
         post: what to put after the snippet (like </strong>)
         fragmenter: specify a text snippet generator for highlighted text.
         use_phrase_highlighter: use SpanScorer to highlight phrase terms only when they appear within the query phrase in the document.
-        regex_slop: factor by which the regex fragmenter can stray from the ideal fragment size (given by hl.fragsize) to accomodate the regular expression
+        regex_slop: factor by which the regex fragmenter can stray from the ideal fragment size (given by hl.fragsize) to accommodate the regular expression
         regex_pattern: the regular expression for fragmenting.
         regex_max_analyzed_chars: only analyze this many characters from a field when using the regex fragmenter
         """

@@ -21,7 +21,7 @@ class DonationTest(TestCase):
 
     fixtures = ['licenses', 'email_preference_type']
 
-    def test_non_annon_donation_with_name_paypal(self):
+    def test_non_anon_donation_with_name_paypal(self):
         donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=timezone.now(), id=1)
         self.user = User.objects.create_user(
@@ -47,7 +47,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].is_anonymous, True)
             self.assertEqual(donations_query[0].source, 'p')
 
-    def test_non_annon_donation_paypal(self):
+    def test_non_anon_donation_paypal(self):
         donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=timezone.now(), id=1)
         self.user = User.objects.create_user(
@@ -73,7 +73,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].is_anonymous, False)
             self.assertEqual(donations_query[0].source, 'p')
 
-    def test_annon_donation_paypal(self):
+    def test_anon_donation_paypal(self):
         donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=timezone.now(), id=1)
 
@@ -95,7 +95,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].is_anonymous, True)
             self.assertEqual(donations_query[0].source, 'p')
 
-    def test_non_annon_donation_with_name_stripe(self):
+    def test_non_anon_donation_with_name_stripe(self):
         donations.models.DonationCampaign.objects.create(
             goal=200, date_start=timezone.now(), id=1)
         self.user = User.objects.create_user(
@@ -125,7 +125,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].source, 's')
             self.assertEqual(donations_query[0].amount*100, 1510)
 
-    def test_non_annon_donation_stripe(self):
+    def test_non_anon_donation_stripe(self):
         donations.models.DonationCampaign.objects.create(
             goal=200, date_start=timezone.now(), id=1)
         self.user = User.objects.create_user(
@@ -155,7 +155,7 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query[0].source, 's')
             self.assertEqual(donations_query[0].amount, 15.0)
 
-    def test_annon_donation_stripe(self):
+    def test_anon_donation_stripe(self):
         donations.models.DonationCampaign.objects.create(
                 goal=200, date_start=timezone.now(), id=1)
         custom = base64.b64encode(json.dumps({'campaign_id': 1, 'name': 'Anonymous', 'display_amount': True}).encode()).decode()
@@ -461,7 +461,7 @@ class DonationTest(TestCase):
         # Run command again
         call_command('send_donation_request_emails')
 
-        # Check that now user_a does not receive an email beacuse he donated recently
+        # Check that now user_a does not receive an email because he donated recently
         self.user_a.profile.refresh_from_db()
         self.assertEqual(self.user_a.profile.last_donation_email_sent, user_a_last_donation_email_sent)
 

@@ -67,15 +67,15 @@ class DonateForm(forms.Form):
         campaign = DonationCampaign.objects.order_by('date_start').last()
         returned_data = {"campaign_id": campaign.id, "display_amount": cleaned_data.get('show_amount')}
 
-        annon = cleaned_data.get('donation_type')
+        anon = cleaned_data.get('donation_type')
 
         # We store the user even if the donation is anonymous (but don't display the name)
         if self.user_id:
             returned_data['user_id'] = self.user_id
 
-        if annon == '1':
+        if anon == '1':
             returned_data['name'] = "Anonymous"
-        elif annon == '2':
+        elif anon == '2':
             returned_data['name'] = cleaned_data.get('name_option', '')
             if returned_data['name'] == '':
                 raise forms.ValidationError('You have to enter a name to display')

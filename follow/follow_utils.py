@@ -59,7 +59,7 @@ def is_user_following_tag(user, slash_tag):
     return FollowingQueryItem.objects.filter(user=user, query=slash_tag.replace("/", " ")).exists()
 
 
-def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
+def get_stream_sounds(user, time_lapse, num_results_per_group=3):
 
     search_engine = get_search_engine()
 
@@ -78,13 +78,13 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             query_filter=filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
-            num_sounds=num_results_per_grup,
+            num_sounds=num_results_per_group,
             group_by_pack=False,
         )
 
         if result.num_rows != 0:
 
-            more_count = max(0, result.num_found - num_results_per_grup)
+            more_count = max(0, result.num_found - num_results_per_group)
 
             # the sorting only works if done like this!
             more_url_params = [urllib.parse.quote(filter_str), urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
@@ -95,7 +95,7 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
 
             sound_ids = [element['id'] for element in result.docs]
             #sound_objs = sounds.models.Sound.objects.ordered_ids(sound_ids)
-            # NOTE: for now we add sound_ids in users_sounds insetad of the actual sound objetcs. We retrieve sound objs later in a single query.
+            # NOTE: for now we add sound_ids in users_sounds instead of the actual sound object. We retrieve sound objs later in a single query.
             new_count = more_count + len(sound_ids)
             users_sounds.append(((user_following, False), sound_ids, more_url_params, more_count, new_count))
 
@@ -120,13 +120,13 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             query_filter=tag_filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
-            num_sounds=num_results_per_grup,
+            num_sounds=num_results_per_group,
             group_by_pack=False,
         )
 
         if result.num_rows != 0:
 
-            more_count = max(0, result.num_found - num_results_per_grup)
+            more_count = max(0, result.num_found - num_results_per_group)
 
             # the sorting only works if done like this!
             more_url_params = [urllib.parse.quote(tag_filter_str), urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
@@ -136,7 +136,8 @@ def get_stream_sounds(user, time_lapse, num_results_per_grup=3):
             # more_url_quoted = urllib.quote(more_url)
 
             sound_ids = [element['id'] for element in result.docs]
-            # NOTE: for now we add sound_ids in users_sounds insetad of the actual sound objetcs. We retrieve sound objs later in a single query.
+            # NOTE: for now we add sound_ids in users_sounds instead of the actual sound objetcs. We retrieve sound
+            # objs later in a single query.
             new_count = more_count + len(sound_ids)
             tags_sounds.append((tags, sound_ids, more_url_params, more_count, new_count))
 

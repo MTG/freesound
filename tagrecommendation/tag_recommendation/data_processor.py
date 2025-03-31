@@ -100,7 +100,7 @@ class RecommendationDataProcessor(object):
         if self.verbose:
             print("done!")
 
-        # Compute tag ocurrences after loading the file
+        # Compute tag occurrences after loading the file
         tag_occurrences = dict()
         unique_ts = list(set(ts))
         for id, t in enumerate(unique_ts):
@@ -158,7 +158,7 @@ class RecommendationDataProcessor(object):
         if self.verbose:
             print("done!")
 
-        # Generate assocoation matrix
+        # Generate association matrix
         if self.verbose:
             print("\tOriginal number of associations: " + str(n_original_associations))
             print("\tAssociations after filtering: " + str(n_filtered_associations))
@@ -378,7 +378,7 @@ class RecommendationDataProcessor(object):
                         print("Removing %s" % RECOMMENDATION_DATA_DIR + filename)
                         os.remove(RECOMMENDATION_DATA_DIR + filename)
                     else:
-                        # Set previous matrixs to "backup mode" (will be deleted in the next update)
+                        # Set previous matrix to "backup mode" (will be deleted in the next update)
                         print("Setting to backup %s" % RECOMMENDATION_DATA_DIR + filename)
                         os.rename(RECOMMENDATION_DATA_DIR + filename, RECOMMENDATION_DATA_DIR + "backup_" + filename)
 
@@ -395,7 +395,7 @@ class RecommendationDataProcessor(object):
                         current_database_name = filename.split("_")[0]
                         class_names.append(filename.split("_")[1])
                 else:
-                    # Remove remeaining files in tmp dir (except for the tas file)
+                    # Remove remaining files in tmp dir (except for the tas file)
                     print("Clearing %s" % RECOMMENDATION_TMP_DATA_DIR + filename)
                     os.remove(RECOMMENDATION_TMP_DATA_DIR + filename)
 
@@ -427,7 +427,7 @@ class RecommendationDataProcessor(object):
             if file_extension in ['npy', 'json']:
                 if "Classifier" not in filename:  # Do not alter Classifier files
                     if filename[0:6] == "backup":
-                        # Set previous matrixs to "backup mode" (will be deleted in the next update)
+                        # Set previous matrixes to "backup mode" (will be deleted in the next update)
                         print("Rolling back backup %s" % RECOMMENDATION_DATA_DIR + filename)
                         os.rename(RECOMMENDATION_DATA_DIR + filename, RECOMMENDATION_DATA_DIR + filename[7:])
 

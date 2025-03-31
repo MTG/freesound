@@ -41,8 +41,8 @@ def create_test_files(filenames=None, directory=None, paths=None, n_bytes=1024, 
     This function generates test files with random content and saves them in the specified directory.
     :param filenames: list of names for the files to generate
     :param directory: folder where to store the files
-    :param paths: if provided, then files are created in the indicated paths regardless of filenames and direcotry args
-    :param n_bytes: numnber of bytes of each generated file
+    :param paths: if provided, then files are created in the indicated paths regardless of filenames and directory args
+    :param n_bytes: number of bytes of each generated file
     :param make_valid_wav_files: whether to create a valid wav file with noise
     :param duration: duration of the wav file in seconds if make_valid_wav_files is True
     """

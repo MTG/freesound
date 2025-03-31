@@ -65,7 +65,7 @@ def set_timeout_alarm(time, msg):
 
 def cancel_timeout_alarm():
     """
-    Cancels an exsting timeout alarm (or does nothing if no alarm was set).
+    Cancels an existing timeout alarm (or does nothing if no alarm was set).
     """
     signal.alarm(0)
 
@@ -135,8 +135,8 @@ class FreesoundAudioProcessorBase:
     def convert_to_pcm(self, sound_path, tmp_directory, force_use_ffmpeg=False, mono=False):
         """
         Convert a given sound file to PCM. By default we first try to use corresponding decoders for each format and
-        preserve original file properties (sampling rate, etc). If conversion fails with this method we failback to
-        ffmpeg conversion and set standartized 44.1kHz, 16bit output. ffmpeg conversion still preserves number of
+        preserve original file properties (sampling rate, etc). If conversion fails with this method we fallback to
+        ffmpeg conversion and set standardized 44.1kHz, 16bit output. ffmpeg conversion still preserves number of
         channels but can be optionally set to output a mono file (useful for analysis code)
         :param sound_path: path of the audiofile to convert
         :param force_use_ffmpeg: don't try to use format specific decoder and go straight to ffmpeg
@@ -259,7 +259,7 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                     info['bitrate'] = 0
                 self.sound.set_audio_info_fields(**info)
             except Exception as e:  # Could not catch a more specific exception
-                self.set_failure("failed writting audio info fields to db", e)
+                self.set_failure("failed writing audio info fields to db", e)
                 return False
 
             # Generate MP3 and OGG previews

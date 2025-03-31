@@ -52,7 +52,7 @@ class Command(LoggingBaseCommand):
         donation_timespan = timezone.now()-datetime.timedelta(  # donation_timestamp is today - X days (12 mo)
             days=donation_settings.minimum_days_since_last_donation)
 
-        email_timespan = timezone.now() - datetime.timedelta(  # email_timestap is today - Y days (3 mo)
+        email_timespan = timezone.now() - datetime.timedelta(  # email_timestamp is today - Y days (3 mo)
             days=donation_settings.minimum_days_since_last_donation_email)
 
         user_received_donation_email_within_email_timespan = User.objects.filter(

@@ -43,8 +43,8 @@ def create_directories(path, exist_ok=True):
     Creates directory at the specified path, including all intermediate-level directories needed to contain it.
     NOTE: after migrating to Python3, this util function can be entirely replaced by calling
     "os.makedirs(path, exist_ok=True)".
-    :param str path: path of the direcotry to create
-    :param bool exist_ok: if set to True, exceptions won't be raised if the target direcotry already exists
+    :param str path: path of the directory to create
+    :param bool exist_ok: if set to True, exceptions won't be raised if the target directory already exists
     """
     try:
         os.makedirs(path)
@@ -142,16 +142,16 @@ class GaiaWrapper(object):
     def __calculate_descriptor_names(self):
         layout = self.original_dataset.layout()
         all_descriptor_names = layout.descriptorNames()
-        fixed_length_descritpor_names = []
-        variable_length_descritpor_names = []
+        fixed_length_descriptor_names = []
+        variable_length_descriptor_names = []
         multidimensional_descriptor_names = []
 
         for name in all_descriptor_names:
             region = layout.descriptorLocation(name)
             if region.lengthType() == VariableLength:
-                variable_length_descritpor_names.append(name)
+                variable_length_descriptor_names.append(name)
             else:
-                fixed_length_descritpor_names.append(name)
+                fixed_length_descriptor_names.append(name)
                 try:
                     if region.dimension() > 1:
                         multidimensional_descriptor_names.append(name)
@@ -159,8 +159,8 @@ class GaiaWrapper(object):
                     pass
 
         self.descriptor_names = {'all': all_descriptor_names,
-                                 'fixed-length': fixed_length_descritpor_names,
-                                 'variable-length': variable_length_descritpor_names,
+                                 'fixed-length': fixed_length_descriptor_names,
+                                 'variable-length': variable_length_descriptor_names,
                                  'multidimensional': multidimensional_descriptor_names}
 
     @staticmethod
@@ -190,7 +190,7 @@ class GaiaWrapper(object):
     def __build_metrics(self):
         for preset in sim_settings.PRESETS:
             if preset != 'pca':  # PCA metric is built only after pca dataset is created so it should not be built here
-                logger.info('Bulding metric for preset %s' % preset)
+                logger.info('Building metric for preset %s' % preset)
                 name = preset
                 path = sim_settings.PRESET_DIR + name + ".yaml"
                 preset_file = yaml.safe_load(open(path))
@@ -201,7 +201,7 @@ class GaiaWrapper(object):
                 self.metrics[name] = search_metric
 
     def __build_pca_metric(self):
-        logger.info('Bulding metric for preset pca')
+        logger.info('Building metric for preset pca')
         preset_file = yaml.safe_load(open(sim_settings.PRESET_DIR + "pca.yaml"))
         distance = preset_file['distance']['type']
         parameters = preset_file['distance']['parameters']
@@ -251,7 +251,7 @@ class GaiaWrapper(object):
                 logger.info('WARNING: enumerate transformation to .tonal.chords_progression could not be performed.')
 
         # If when adding a new point we reach the minimum points for similarity, do the needful so that the dataset
-        # can be used for search. This includes preparing the dataset, normalizing it, saveing it and creating view and
+        # can be used for search. This includes preparing the dataset, normalizing it, saving it and creating view and
         # distance metrics. This will only happen once when the size of the dataset reaches SIMILARITY_MINIMUM_POINTS.
         if self.original_dataset.size() == sim_settings.SIMILARITY_MINIMUM_POINTS and not self.indexing_only_mode:
             self.__prepare_original_dataset()

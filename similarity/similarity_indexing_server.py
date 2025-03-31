@@ -21,7 +21,7 @@
 
 '''
 The similarity indexing server is a simpler version of the similarity server which can only handle indexing sounds.
-This server can be used to index a new dataset in background so whent it is indexed the main similarity service
+This server can be used to index a new dataset in background so when it is indexed the main similarity service
 can be reloaded with the new index.
 '''
 

@@ -98,14 +98,14 @@ class Paypal:
             email='', # used by paypal to set email for account creation
             desc='Freesound donation of %d euro' % amount, # description of what the person is buying
             custom=amount, # custom field, can be anything you want
-            hdrimg='', # url to image for header, recomended to be stored on https server 
+            hdrimg='', # url to image for header, recommended to be stored on https server
         )
 
         return self.query(params)
     
 
     def get_express_checkout_details(self, token):
-        """Once the user returns to the return url, call this to get the detailsthe user returns to the return url, call this"""
+        """Once the user returns to the return url, call this to get the details the user returns to the return url, call this"""
         params = dict(
             method="GetExpressCheckoutDetails",
             token=token,

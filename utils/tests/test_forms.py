@@ -26,13 +26,13 @@ from utils.forms import filename_has_valid_extension, TagField
 class UtilsTest(TestCase):
     def test_filename_has_valid_extension(self):
         cases = [
-            ("filaneme.wav", True),
-            ("filaneme.aiff", True),
-            ("filaneme.aif", True),
-            ("filaneme.mp3", True),
-            ("filaneme.ogg", True),
-            ("filaneme.flac", True),
-            ("filaneme.xyz", False),
+            ("filename.wav", True),
+            ("filename.aiff", True),
+            ("filename.aif", True),
+            ("filename.mp3", True),
+            ("filename.ogg", True),
+            ("filename.flac", True),
+            ("filename.xyz", False),
             ("wav", False),
         ]
         for filename, expected_result in cases:

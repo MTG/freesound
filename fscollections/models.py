@@ -40,6 +40,7 @@ class Collection(models.Model):
     # TODO: description should be required (check how to display it in edit form + collectionsound form)
     description = models.TextField(blank=True)
     maintainers = models.ManyToManyField(User, related_name="collection_maintainer", blank=True)
+    sounds = models.ManyToManyField(Sound, through="CollectionSound", related_name='collections', blank=True)
     num_sounds = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0)
     public = models.BooleanField(default=False)

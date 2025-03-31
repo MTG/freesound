@@ -61,9 +61,9 @@ def collection(request, collection_id):
              'maintainers': maintainers}
     # one URL needed to display all collections and one URL to display ONE collection at a time
     # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display
-    collection_sounds = CollectionSound.objects.filter(collection=collection).order_by('created')
+    collection_sounds = Sound.objects.filter(collections=collection).order_by('created')
     paginator = paginate(request, collection_sounds, settings.BOOKMARKS_PER_PAGE)
-    page_sounds = Sound.objects.ordered_ids([col_sound.sound_id for col_sound in paginator['page'].object_list])
+    page_sounds = Sound.objects.ordered_ids([sound.id for sound in paginator['page'].object_list])
     tvars.update(paginator)
     tvars['page_collection_and_sound_objects'] = zip(paginator['page'].object_list, page_sounds)
     return render(request, 'collections/collection.html', tvars)
@@ -111,7 +111,7 @@ def add_sound_to_collection(request, sound_id):
                                 sound_id=sound.id,
                                 user_collections=user_collections,
                                 user_saving_sound=request.user)
-    collections_already_containing_sound = user_collections.filter(collectionsound__sound__id=sound.id).distinct()
+    collections_already_containing_sound = user_collections.filter(sounds__id=sound.id).distinct()
     full_collections = Collection.objects.filter(num_sounds__gte=settings.MAX_SOUNDS_PER_COLLECTION) 
     tvars = {'user': request.user,
              'sound': sound,
@@ -162,7 +162,7 @@ def delete_collection(request, collection_id):
 def edit_collection(request, collection_id):
     
     collection = get_object_or_404(Collection, id=collection_id)
-    collection_sounds = ",".join([str(s.id) for s in Sound.objects.filter(collectionsound__collection=collection)])
+    collection_sounds = ",".join([str(s.id) for s in Sound.objects.filter(collections=collection)])
     collection_maintainers = ",".join([str(u.id) for u in User.objects.filter(collection_maintainer=collection.id)])    
     is_owner = False
     is_maintainer = False
@@ -208,6 +208,7 @@ def edit_collection(request, collection_id):
         elif is_maintainer:
             form = CollectionEditFormAsMaintainer(instance=collection, initial=dict(collection_sounds=collection_sounds, maintainers=collection_maintainers), label_suffix='', is_owner=is_owner, is_maintainer=is_maintainer)
     current_sounds = Sound.objects.bulk_sounds_for_collection(collection_id=collection.id)
+    print("CURRENT SOUNDS:", current_sounds)
     current_maintainers = User.objects.filter(collection_maintainer=collection.id)
     form.collection_sound_objects = current_sounds
     form.collection_maintainers_objects = current_maintainers

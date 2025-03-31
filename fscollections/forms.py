@@ -63,7 +63,7 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
         if self.user_collections:
             # NOTE: as a provisional solution to avoid duplicate sounds in a collection, Collections already containing the sound are not selectable
             # this is also useful to discard adding sounds to collections that are full (max_num_sounds)
-            self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(collectionsound__sound__id=self.sound_id).exclude(is_default_collection=True).exclude(num_sounds__gte=settings.MAX_SOUNDS_PER_COLLECTION)   
+            self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(sounds__id=self.sound_id).exclude(is_default_collection=True).exclude(num_sounds__gte=settings.MAX_SOUNDS_PER_COLLECTION)   
         
         display_bookmark_collection = True
         try:
@@ -141,7 +141,7 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
                         if self.user_saving_sound.id not in maintainers_list  and self.user_saving_sound != collection.user:
                             raise forms.ValidationError('You do not have permission to edit this collection.')
                         
-                        collection_sounds = Sound.objects.filter(collectionsound__collection=collection)
+                        collection_sounds = Sound.objects.filter(collections=collection)
                         if sound in collection_sounds:
                             raise forms.ValidationError('This sound already exists in this collection')
                         
@@ -229,7 +229,7 @@ class CollectionEditForm(forms.ModelForm):
         """
         collection = super().save(commit=False)        
         new_sounds = self.clean_ids_field('collection_sounds')
-        current_sounds = list(Sound.objects.filter(collectionsound__collection=collection).values_list('id', flat=True))
+        current_sounds = list(Sound.objects.filter(collections=collection).values_list('id', flat=True))
         for snd in new_sounds:
             if snd not in current_sounds:
                 sound = Sound.objects.get(id=snd)

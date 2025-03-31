@@ -33,7 +33,7 @@ def display_collection(context, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
     request = context.get('request')
     try: 
-        sound = Sound.objects.get(collectionsound__collection=collection, collectionsound__featured_sound=True)
+        sound = Sound.objects.get(collections=collection, collectionsound__featured_sound=True)
     except Sound.DoesNotExist:
         sound = None
     tvars = {'collection': collection,

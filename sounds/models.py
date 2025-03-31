@@ -456,6 +456,18 @@ class SoundManager(models.Manager):
             qs = qs[:limit]
         return qs
 
+    def bulk_sounds_for_collection(self, collection_id, limit=None, include_analyzers_output=False):
+        qs = self.bulk_query(include_analyzers_output=include_analyzers_output)
+        qs = qs.filter(
+            moderation_state="OK",
+            processing_state="OK",
+            collections=collection_id
+        ).order_by('-created')
+
+        if limit:
+            qs = qs[:limit]
+        return qs
+
     def bulk_query_id(self, sound_ids, limit=None, include_analyzers_output=False):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]

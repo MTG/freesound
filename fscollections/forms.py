@@ -96,8 +96,7 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
             elif self.cleaned_data['collection'] == self.NEW_COLLECTION_CHOICE_VALUE:
                 if self.cleaned_data['new_collection_name'] != "":
                     collection = \
-                        Collection(user=self.user_saving_sound, name=self.cleaned_data['new_collection_name'])
-                    collection.save()
+                        Collection.objects.create(user=self.user_saving_sound, name=self.cleaned_data['new_collection_name'])
                     collection_to_use = collection
             else:
                 collection_to_use = Collection.objects.get(id=self.cleaned_data['collection'])
@@ -233,18 +232,13 @@ class CollectionEditForm(forms.ModelForm):
         for snd in new_sounds:
             if snd not in current_sounds:
                 sound = Sound.objects.get(id=snd)
-                cs = CollectionSound(user=user_adding_sound, sound=sound, collection=collection)
-                if user_adding_sound == collection.user:
-                    cs.status = 'OK'
-                cs.save()                
-                collection.num_sounds += 1
+                CollectionSound.objects.create(user=user_adding_sound, sound=sound, collection=collection, status='OK')
+              
             else:
                 current_sounds.remove(snd)
         for snd in current_sounds:
             sound = Sound.objects.get(id=snd)
-            cs = CollectionSound.objects.get(collection=collection, sound=sound)
-            cs.delete()
-            collection.num_sounds -= 1
+            CollectionSound.objects.get(collection=collection, sound=sound).delete()
 
         new_maintainers = set(self.clean_ids_field('maintainers'))
         current_maintainers = list(self.instance.maintainers.values_list('id', flat=True))

@@ -102,8 +102,6 @@ def add_sound_to_collection(request, sound_id):
         if form.is_valid():
             saved_collection = form.save()
             CollectionSound.objects.create(user=request.user, collection=saved_collection, sound=sound, status="OK")
-            # NOTE: this save is only called in order to update num_sounds
-            saved_collection.save()
             msg_to_return = f'Sound "{sound.original_filename}" saved under collection {saved_collection.name}'
             return JsonResponse({'success': True, 'message': msg_to_return})
     else:
@@ -122,18 +120,6 @@ def add_sound_to_collection(request, sound_id):
              }
 
     return render(request, 'collections/modal_collect_sound.html', tvars)
-            
-def delete_sound_from_collection(request, collectionsound_id):
-    collection_sound = get_object_or_404(CollectionSound, id=collectionsound_id)
-    collection = collection_sound.collection
-    if request.method=="POST":
-        collection_maintainers = User.objects.filter(collection_maintainer=collection.id)
-        if request.user != collection.user and request.user not in collection_maintainers:
-            return HttpResponseRedirect(reverse("collection", args=[collection.id]))
-        else:
-            collection_sound.delete()
-            collection.save()
-            return HttpResponseRedirect(reverse("collection", args=[collection.id]))
 
 def create_collection(request):
     if not request.GET.get('ajax'):
@@ -153,7 +139,7 @@ def create_collection(request):
 def delete_collection(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
 
-    if request.user==collection.user:
+    if request.method=="POST" and request.user==collection.user:
         collection.delete()
         return HttpResponseRedirect(reverse('your-collections'))
     else:
@@ -189,7 +175,7 @@ def edit_collection(request, collection_id):
             # NOTE: in this form's validation, errors are raised for each speific field, so when there is a submission attempt the error
             # is displayed within it. However, fields containing errors are removed from the clean data but we are still interested in
             # preserving its value. Therefore, we re-initialize a form according to the user's permissions preserving the field's validated data if so,
-            # and in case of error for a field, we take its value from the POST request. The error messages are still attached to the form so that they're displayed.
+            # and in case of error, we take its value from the POST request. The error messages are then attached to the form so that they're displayed.
             errors_data = form.errors
             new_form_data = dict()
             for field in form.fields:
@@ -208,7 +194,6 @@ def edit_collection(request, collection_id):
         elif is_maintainer:
             form = CollectionEditFormAsMaintainer(instance=collection, initial=dict(collection_sounds=collection_sounds, maintainers=collection_maintainers), label_suffix='', is_owner=is_owner, is_maintainer=is_maintainer)
     current_sounds = Sound.objects.bulk_sounds_for_collection(collection_id=collection.id)
-    print("CURRENT SOUNDS:", current_sounds)
     current_maintainers = User.objects.filter(collection_maintainer=collection.id)
     form.collection_sound_objects = current_sounds
     form.collection_maintainers_objects = current_maintainers

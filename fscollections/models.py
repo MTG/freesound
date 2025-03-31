@@ -24,7 +24,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.text import slugify
 from django.dispatch import receiver
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.db.models.functions import Greatest
 from django.db.models import F
 
@@ -87,8 +87,6 @@ class Collection(models.Model):
 
 class CollectionSound(models.Model):
    #this model relates collections and sounds
-   #it might be worth adding a name field composed of the sound ID and the collection name for
-   # for the sake of queries understanding
    user = models.ForeignKey(User, on_delete=models.CASCADE) 
    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
    collection = models.ForeignKey(Collection, related_name='collectionsound', on_delete=models.CASCADE)
@@ -103,6 +101,19 @@ class CollectionSound(models.Model):
    status = models.CharField(db_index=True, max_length=2, choices=STATUS_CHOICES, default="PE")
    #sound won't be added to collection until maintainers approve the sound
 
+@receiver(post_save, sender=CollectionSound)
+def update_collection_num_sounds(**kwargs):
+    collectionsound = kwargs.pop('instance', False)
+    if collectionsound:
+        Collection.objects.filter(collectionsound=collectionsound).update(num_sounds=Greatest(F('num_sounds') + 1, 0))
+
+@receiver(post_delete, sender=CollectionSound)
+def update_collection_num_sounds_sound_removal(**kwargs):
+    collectionsound = kwargs.pop('instance', False)
+    if collectionsound:
+        Collection.objects.filter(collectionsound=collectionsound).update(num_sounds=Greatest(F('num_sounds') - 1, 0))
+
+
 class CollectionDownload(models.Model):
     user = models.ForeignKey(User, related_name='collection_downloads', on_delete=models.CASCADE)
     collection = models.ForeignKey(Collection, related_name='collection', on_delete=models.CASCADE)
@@ -116,9 +127,14 @@ class CollectionDownloadSound(models.Model):
     collection_download = models.ForeignKey(CollectionDownload, on_delete=models.CASCADE)
     license = models.ForeignKey(License, on_delete=models.CASCADE)
 
-# TODO: add post_delete
 @receiver(post_save, sender=CollectionDownload)
 def update_collection_downloads(**kwargs):
     download = kwargs.pop('instance', False)
-    if download and kwargs['created']:
+    if download:
         Collection.objects.filter(id=download.collection.id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
+
+@receiver(post_delete, sender=CollectionDownload)
+def update_collection_downloads_on_delete(**kwargs):
+    download = kwargs.pop('instance', False)
+    if download:
+        Collection.objects.filter(id=download.collection.id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))

@@ -14,7 +14,7 @@
 
 {% block title %}{{sound.original_filename}} by {{sound.user.username}}{% endblock title %}
 
-{% block head %}
+{% block extrahead %}
     {{ block.super }}
     <meta property="og:title" content="{{ sound.original_filename }} by {{ sound.user.username }}" />
     <meta property="og:type" content="song" />
@@ -24,6 +24,8 @@
     <meta property="og:url" content="{% absurl 'sound' sound.user.username sound.id %}" />
     <meta property="og:audio:type" content="application/mp3" />
     <meta property="og:site_name" content="Freesound" />
+    <meta property="og:image" content="{{sound.get_large_thumbnail_abs_url}}" />
+    <meta property="og:image:alt" content="A waveform image of the sound" />
     <meta property="fb:admins" content="100002130282170" />
     <meta name="twitter:card" content="player" />
     <meta name="twitter:site" content="@freesound_dev" />
@@ -35,7 +37,7 @@
     <meta name="twitter:player:height" content="{{ sizes.twitter_card.1 }}" />
     <meta name="twitter:player:stream" content="{{ sound.get_preview_abs_url }}" />
     <meta name="twitter:player:stream:content_type" content="audio/mp4" />
-{% endblock head %}
+{% endblock extrahead %}
 
 {% block content %}
     <div class="container">

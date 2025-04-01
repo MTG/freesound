@@ -57,8 +57,7 @@ def get_recommended_tags(input_tags, max_number_of_tags=30):
 
 
 def get_recommended_tags_view(request):
-    if request.is_ajax() and request.method == 'POST':
-        print(request.POST)
+    if request.method == 'POST':
         input_tags = request.POST.get('input_tags', False)
         if input_tags:
             input_tags = list(clean_and_split_tags(input_tags))
@@ -91,7 +90,7 @@ def post_sounds_to_tagrecommendation_service(sound_qs):
     idx = 1
     for count, sound in enumerate(sound_qs):
         data_to_post.append(
-            (sound.id, list(sound.tags.select_related("tag").values_list('tag__name', flat=True)))
+            (sound.id, list(sound.tags.values_list('name', flat=True)))
         )
         if (count + 1) % N_SOUNDS_PER_CALL == 0:
             ids = [element[0] for element in data_to_post]

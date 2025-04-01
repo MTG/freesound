@@ -58,6 +58,24 @@ def duration_hours(total_seconds):
 
 
 @register.filter
+def smart_duration_with_units(total_seconds):
+    """Format the number of seconds in a human-readable format with units
+    For values less than 1 hour, returns "mm:ss minutes"
+    For values 1 hour or greater, returns "hh:mm hours"
+    """
+    if total_seconds < 3600:
+        minutes = int(total_seconds // 60)
+        seconds = int(total_seconds % 60)
+        formatted_length = f'{minutes}:{seconds:02d}'
+        length_text = 'minutes'
+    else:
+        hours = int(total_seconds // 3600)
+        minutes = int((total_seconds % 3600) // 60)
+        formatted_length = f'{hours}:{minutes:02d}'
+        length_text = 'hours'
+    return f'{formatted_length} {length_text}'
+
+@register.filter
 def formatnumber(number):
     if 1000 <= number < 1000000:
         return f'{number/1000:.1f}K'

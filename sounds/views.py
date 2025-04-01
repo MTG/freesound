@@ -44,8 +44,9 @@ from django.http import HttpResponseRedirect, Http404, \
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, resolve
+from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_exempt
-from ratelimit.decorators import ratelimit
+from django_ratelimit.decorators import ratelimit
 
 from accounts.models import Profile
 from comments.forms import CommentForm
@@ -73,7 +74,7 @@ from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsExce
     get_duration_from_processing_before_describe_files, \
     get_samplerate_from_processing_before_describe_files
 from utils.text import remove_control_chars
-from utils.username import redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username, get_parameter_user_or_404
 
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
@@ -89,7 +90,7 @@ def get_n_weeks_back_datetime(n_weeks):
     date is calculated with respect to the date of the most recent sound stored in database. In this way it is
     more likely that the selected time range will include activity in database.
     """
-    now = datetime.datetime.now()
+    now = timezone.now()
     if settings.DEBUG:
         now = Sound.objects.last().created
     return now - datetime.timedelta(weeks=n_weeks)
@@ -104,8 +105,8 @@ def get_sound_of_the_day_id():
     if not random_sound:
         try:
             today = datetime.date.today()
-            now = datetime.datetime.now()
-            tomorrow = datetime.datetime(today.year, today.month, today.day)
+            now = timezone.now()
+            tomorrow = datetime.datetime(today.year, today.month, today.day, tzinfo=datetime.timezone.utc)
             time_until_tomorrow = tomorrow - now
 
             rnd = SoundOfTheDay.objects.get(date_display=today)
@@ -205,10 +206,10 @@ def front_page(request):
     return render(request, 'front.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.prefetch_related("tags__tag")\
+        sound = Sound.objects.prefetch_related("tags")\
             .select_related("license", "user", "user__profile", "pack")\
             .get(id=sound_id, user__username=username)
 
@@ -307,7 +308,7 @@ def after_download_modal(request):
         return HttpResponse()
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @transaction.atomic()
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
@@ -341,7 +342,7 @@ def sound_download(request, username, sound_id):
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @transaction.atomic()
 def pack_download(request, username, pack_id):
     if not request.user.is_authenticated:
@@ -515,20 +516,24 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                     packs_to_process.append(old_pack)
 
         if data["remove_geotag"]:
-            if sound.geotag:
+            if hasattr(sound, 'geotag'):
                 sound.geotag.delete()
                 sound.geotag = None
         else:
             if data["lat"] and data["lon"] and data["zoom"]:
-                if sound.geotag:
+                if hasattr(sound, 'geotag'):
                     sound.geotag.lat = data["lat"]
                     sound.geotag.lon = data["lon"]
                     sound.geotag.zoom = data["zoom"]
                     sound.geotag.should_update_information = True
                     sound.geotag.save()
                 else:
-                    sound.geotag = GeoTag.objects.create(
-                        lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
+                    GeoTag.objects.create(
+                        sound=sound,
+                        lat=data["lat"],
+                        lon=data["lon"],
+                        zoom=data["zoom"]
+                    )
 
         sound_sources = data["sources"]
         if sound_sources != sound.get_sound_sources_as_set():
@@ -621,9 +626,9 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                             name=element.original_filename,
                             license=element.license,
                             pack=element.pack.id if element.pack else None,
-                            lat=element.geotag.lat if element.geotag else None,
-                            lon=element.geotag.lon if element.geotag else None,
-                            zoom=element.geotag.zoom if element.geotag else None,
+                            lat=element.geotag.lat if hasattr(element, 'geotag') else None,
+                            lon=element.geotag.lon if hasattr(element, 'geotag') else None,
+                            zoom=element.geotag.zoom if hasattr(element, 'geotag') else None,
                             sources=','.join([str(item) for item in sound_sources_ids]))
             else:
                 sound_sources_ids = []
@@ -796,7 +801,7 @@ def _remix_group_view_helper(request, group_id):
     }
     return tvars
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def remixes(request, username, sound_id):
     if not request.GET.get('ajax'):
         # If not loaded as modal, redirect to sound page with parameter to open modal
@@ -815,7 +820,7 @@ def remixes(request, username, sound_id):
     return render(request, 'sounds/modal_remix_group.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SIMILARITY_GROUP, block=True)
 def similar(request, username, sound_id):
     if not request.GET.get('ajax'):
@@ -852,18 +857,15 @@ def similar(request, username, sound_id):
     return render(request, 'sounds/modal_similar_sounds.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @transaction.atomic()
 def pack(request, username, pack_id):
     try:
         pack = Pack.objects.bulk_query_id(pack_id)[0]
         if pack.user.username.lower() != username.lower():
             raise Http404
-    except (Pack.DoesNotExist, IndexError) as e:
+    except IndexError:
         raise Http404
-
-    if pack.is_deleted:
-        return render(request, 'sounds/pack_deleted.html')
 
     qs = Sound.public.only('id').filter(pack=pack).order_by('-created')
     num_sounds_to_display = settings.SOUNDS_PER_PAGE_PROFILE_PACK_PAGE
@@ -892,7 +894,7 @@ def pack(request, username, pack_id):
     return render(request, 'sounds/pack.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def pack_stats_section(request, username, pack_id):
     if not request.GET.get('ajax'):
         raise Http404  # Only accessible via ajax
@@ -900,7 +902,7 @@ def pack_stats_section(request, username, pack_id):
         pack = Pack.objects.bulk_query_id(pack_id)[0]
         if pack.user.username.lower() != username.lower():
             raise Http404
-    except (Pack.DoesNotExist, IndexError) as e:
+    except IndexError:
         raise Http404
     tvars = {
         'pack': pack,
@@ -908,19 +910,20 @@ def pack_stats_section(request, username, pack_id):
     return render(request, 'sounds/pack_stats_section.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def packs_for_user(request, username):
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     return HttpResponseRedirect(user.profile.get_user_packs_in_search_url())
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def for_user(request, username):
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     return HttpResponseRedirect(user.profile.get_user_sounds_in_search_url())
     
 
-@redirect_if_old_username_or_404
+
+@redirect_if_old_username
 @transaction.atomic()
 def flag(request, username, sound_id):
     if not request.GET.get('ajax'):
@@ -1003,7 +1006,7 @@ def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def display_sound_wrapper(request, username, sound_id):
     try:
         sound_obj = Sound.objects.bulk_query_id(sound_id)[0]
@@ -1066,7 +1069,7 @@ def embed_iframe(request, sound_id, player_size):
         raise Http404
     tvars = {
         'sound': sound,
-        'user_profile_locations': Profile.locations_static(sound.user_id, getattr(sound, 'user_has_avatar', False)),
+        'user_profile_locations': Profile.locations_static(sound.user_id, sound.user.profile.has_avatar),
         'username_and_filename': f'{sound.username} - {sound.original_filename}',
         'size': player_size,
         'use_spectrogram': request.GET.get('spec', None) == '1',

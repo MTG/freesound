@@ -37,7 +37,7 @@ from utils.test_helpers import create_test_files, override_uploads_path_with_tem
 
 
 class UserUploadAndDescribeSounds(TestCase):
-    fixtures = ['licenses', 'user_groups', 'moderation_queues', 'email_preference_type']
+    fixtures = ['licenses', 'user_groups', 'email_preference_type']
 
     @skipIf(True, "Test not ready for new uploader")
     @override_uploads_path_with_temp_directory
@@ -248,8 +248,8 @@ class BulkDescribe(TestCase):
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertEqual(resp.status_code, 200)  # After login, page loads normally (200 OK)
 
-        User.objects.create_user("testuser2", password="testpass", email='another_email@example.com')
-        self.client.login(username='testuser2', password='testpass')
+        user = User.objects.create_user("testuser2", email='another_email@example.com')
+        self.client.force_login(user)
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertEqual(resp.status_code, 404)  # User without permission (not owner of object) gets 404
 

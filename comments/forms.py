@@ -25,7 +25,7 @@ from utils.spam import is_spam
 class CommentForm(forms.Form):
     comment = HtmlCleaningCharField(
         widget=forms.Textarea, max_length=4000, label='',
-        help_text="You can add comments with a timestamp using the syntax #minute:second (e.g., \"The sound in #1:34 is really neat\").")
+        help_text='You can add comments with a timestamp using the syntax #minute:second (e.g., "The sound at #1:34 is really neat").')
     
     def __init__(self, request, *args, **kwargs):
         self.request = request

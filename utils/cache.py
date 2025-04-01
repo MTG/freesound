@@ -50,3 +50,5 @@ def invalidate_all_moderators_header_cache():
     for mod in mods:
         invalidate_user_template_caches(mod.id)
 
+def get_all_keys_matching_pattern(pattern, cache_store):
+    return [k.decode().split(':')[-1] for k in cache_store._cache.get_client().keys(pattern)]

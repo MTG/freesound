@@ -39,6 +39,7 @@ import accounts
 from accounts.models import EmailPreferenceType
 from comments.models import Comment
 from general.templatetags.filter_img import replace_img
+from geotags.models import GeoTag
 from sounds.forms import PackForm
 from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis, Pack, Sound, License, DeletedSound
 from utils.cache import get_template_cache_key
@@ -232,6 +233,8 @@ class ProfileNumSoundsTestCase(TestCase):
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
+        GeoTag.objects.create(sound=sound, lat=45.8498, lon=-62.6879, zoom=9)
+
         sound_id = sound.id
         sound.delete()
         delete_sounds_from_search_engine.assert_called_once_with([sound_id])
@@ -240,14 +243,15 @@ class ProfileNumSoundsTestCase(TestCase):
         ds = DeletedSound.objects.get(sound_id=sound_id)
 
         # Check this elements are in the json saved on DeletedSound
-        keys = ['num_ratings', 'duration', 'id', 'geotag_id', 'comments',
-                'base_filename_slug', 'num_downloads', 'md5', 'description',
+        keys = ['num_ratings', 'duration', 'id', 'comments',
+                'num_downloads', 'md5', 'description',
                 'original_path', 'pack_id', 'license', 'created',
                 'original_filename', 'geotag']
 
         json_data = list(ds.data.keys())
         for k in keys:
-            self.assertTrue(k in json_data)
+            self.assertTrue(k in json_data, f"{k} not in data")
+        self.assertEqual(ds.data['geotag']['lat'], 45.8498)
 
     def test_pack_delete(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
@@ -261,89 +265,6 @@ class ProfileNumSoundsTestCase(TestCase):
         self.assertEqual(pack.is_deleted, True)
 
 
-class PackNumSoundsTestCase(TestCase):
-
-    fixtures = ['licenses']
-
-    @mock.patch('sounds.models.delete_sounds_from_search_engine')
-    def test_create_and_delete_sounds(self, delete_sounds_from_search_engine):
-        N_SOUNDS = 5
-        user, packs, sounds = create_user_and_sounds(num_sounds=N_SOUNDS, num_packs=1)
-        pack = packs[0]
-        self.assertEqual(pack.num_sounds, 0)
-        for count, sound in enumerate(pack.sounds.all()):
-            sound.change_processing_state("OK")
-            sound.change_moderation_state("OK")
-            self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, count + 1)  # Check pack has all sounds
-
-        sound_to_delete = sounds[0]
-        sound_to_delete_id = sound_to_delete.id
-        sound_to_delete.delete()
-        delete_sounds_from_search_engine.assert_called_once_with([sound_to_delete_id])
-        self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, N_SOUNDS - 1)  # Check num_sounds on delete sound
-
-    def test_edit_sound(self):
-        N_SOUNDS = 1
-        user, packs, sounds = create_user_and_sounds(num_sounds=N_SOUNDS, num_packs=1)
-        pack = packs[0]
-        sound = sounds[0]
-        self.assertEqual(pack.num_sounds, 0)
-        sound.change_processing_state("OK")
-        sound.change_moderation_state("OK")
-        self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, 1)  # Check pack has all sounds
-
-        self.client.force_login(user)
-        resp = self.client.post(reverse('sound-edit', args=[sound.user.username, sound.id]), {
-            '0-sound_id': sound.id,
-            '0-description': 'this is a description for the sound',
-            '0-name': sound.original_filename,
-            '0-tags': 'tag1 tag2 tag3',
-            '0-license': '3',
-            '0-new_pack': 'new pack name',
-            '0-pack': ''
-        })
-        self.assertRedirects(resp, reverse('sound', args=[sound.user.username, sound.id]))
-        self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, 0)  # Sound changed from pack
-
-    def test_edit_pack(self):
-        user, packs, sounds = create_user_and_sounds(num_sounds=4, num_packs=2)
-        for sound in sounds:
-            sound.change_processing_state("OK")
-            sound.change_moderation_state("OK")
-        pack1 = packs[0]
-        pack2 = packs[1]
-        self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 2)
-        self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 2)
-
-        # Move one sound from one pack to the other
-        sound_ids_pack1 = [s.id for s in pack1.sounds.all()]
-        sound_ids_pack2 = [s.id for s in pack2.sounds.all()]
-        sound_ids_pack2.append(sound_ids_pack1.pop())
-        self.client.force_login(user)
-        resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
-            'pack_sounds': ','.join([str(sid) for sid in sound_ids_pack2]),
-            'name': 'Test pack 1 (edited)',
-            'description': 'A new description'
-        })
-        self.assertRedirects(resp, reverse('pack', args=[pack2.user.username, pack2.id]))
-        self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 1)
-        self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 3)
-
-        # Move one sound that had no pack
-        user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=0, user=user, count_offset=5)
-        sound = sounds[0]
-        sound.change_processing_state("OK")
-        sound.change_moderation_state("OK")
-        resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
-            'pack_sounds':
-                ','.join([str(snd.id) for snd in Pack.objects.get(id=pack2.id).sounds.all()] + [str(sound.id)]),
-            'name': 'Test pack 1 (edited again)',
-            'description': 'A new description'
-        })
-        self.assertRedirects(resp, reverse('pack', args=[pack2.user.username, pack2.id]))
-        self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 1)
-        self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 4)
-        self.assertEqual(Sound.objects.get(id=sound.id).pack.id, pack2.id)
 
 
 class SoundViewsTestCase(TestCase):
@@ -361,13 +282,13 @@ class SoundViewsTestCase(TestCase):
         _, _, sounds_other_user = create_user_and_sounds(num_sounds=1, username="testuser4")
 
         # Try to delete a sound not owned by the request user (should return 200 but not delete the sound)
-        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']), 
+        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']),
             {"delete_confirm": "delete_confirm", "object-ids": [sounds_other_user[0].id]})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(Sound.objects.filter(id=sounds_other_user[0].id).count(), 1)
 
         # Try to delete a sound owned the user (should delete sound)
-        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']), 
+        resp = self.client.post(reverse('accounts-manage-sounds', args=['published']),
             {"delete_confirm": "delete_confirm", "object-ids": [sound.id]}, follow=True)
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 0)
         self.assertEqual(resp.status_code, 200)
@@ -644,7 +565,7 @@ class SoundTemplateCacheTests(TestCase):
     def _get_sound_view_cache_keys(self):
         return ([get_template_cache_key('bw_sound_page', self.sound.id),
                  get_template_cache_key('bw_sound_page_sidebar', self.sound.id)])
-    
+
     def _get_sound_view_footer_top_cache_keys(self):
         return [get_template_cache_key('bw_sound_page', self.sound.id)]
 
@@ -673,7 +594,7 @@ class SoundTemplateCacheTests(TestCase):
         print(cache_keys)
 
     def test_update_description(self):
-        
+
         cache_keys = self._get_sound_view_cache_keys()
         self._assertCacheAbsent(cache_keys)
 
@@ -877,7 +798,8 @@ class SoundTemplateCacheTests(TestCase):
 
         self.client.force_login(self.user)
 
-        self.assertIsNone(self.sound.geotag)
+        with self.assertRaises(GeoTag.DoesNotExist):
+            assert self.sound.geotag
         self.assertNotContains(request_func(user) if user is not None else request_func() if user is not None else request_func(), text)
         self._assertCachePresent(cache_keys)
 
@@ -915,7 +837,8 @@ class SoundTemplateCacheTests(TestCase):
 
         # Check geotag icon being absent
         self.sound.refresh_from_db()
-        self.assertIsNone(self.sound.geotag)
+        with self.assertRaises(GeoTag.DoesNotExist):
+            assert self.sound.geotag
         self.assertNotContains(request_func(user) if user is not None else request_func(), text)
 
     def test_add_remove_geotag_display(self):
@@ -1166,9 +1089,9 @@ class SoundEditTestCase(TestCase):
         self.sound.change_processing_state("OK")
         self.sound.change_moderation_state("OK")
         self.user = user
-    
+
     def test_update_description(self):
-        
+
         self.client.force_login(self.user)
         new_description = 'New description'
         new_name = 'New name'

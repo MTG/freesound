@@ -27,7 +27,9 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
+from geotags.models import GeoTag
 import utils.downloads
 from donations.models import Donation, DonationsModalSettings
 from sounds.models import Sound, Pack, License, Download
@@ -44,7 +46,7 @@ from utils.test_helpers import create_test_files, create_user_and_sounds, overri
 
 class UtilsTest(TestCase):
 
-    fixtures = ['licenses', 'user_groups', 'moderation_queues']
+    fixtures = ['licenses', 'user_groups']
 
     def test_download_sounds(self):
         user = User.objects.create_user("testuser", password="testpass")
@@ -53,7 +55,6 @@ class UtilsTest(TestCase):
             Sound.objects.create(
                 user=user,
                 original_filename="Test sound %i" % i,
-                base_filename_slug="test_sound_%i" % i,
                 license=License.objects.all()[0],
                 pack=pack,
                 md5="fakemd5_%i" % i)
@@ -141,7 +142,6 @@ class ShouldSuggestDonationTest(TestCase):
         sound = Sound.objects.create(
             user=user,
             original_filename="Test sound",
-            base_filename_slug="test_sound_10",
             license=License.objects.all()[0],
             md5="fakemd5_10")
         for i in range(0, donations_settings.downloads_in_period):
@@ -152,15 +152,15 @@ class ShouldSuggestDonationTest(TestCase):
 
         # if the download objects are older than donations_settings.download_days, don't consider them
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now()-datetime.timedelta(days=donations_settings.download_days + 1))
+            created=timezone.now()-datetime.timedelta(days=donations_settings.download_days + 1))
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
         # if user has donations but these are older than donations_settings.days_after_donation, do not consider them
         Donation.objects.create(user=user, amount=1)
         Donation.objects.filter(user=user).update(
-            created=datetime.datetime.now()-datetime.timedelta(days=donations_settings.days_after_donation + 1))
+            created=timezone.now()-datetime.timedelta(days=donations_settings.days_after_donation + 1))
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now())  # Change downloads date again to be recent (modal show be shown)
+            created=timezone.now())  # Change downloads date again to be recent (modal show be shown)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), True)
 
     def test_should_suggest_donation_probabilty_0(self):
@@ -191,7 +191,6 @@ class ShouldSuggestDonationTest(TestCase):
         sound = Sound.objects.create(
             user=user,
             original_filename="Test sound",
-            base_filename_slug="test_sound_10",
             license=License.objects.all()[0],
             md5="fakemd5_10")
         for i in range(0, donations_settings.downloads_in_period):
@@ -203,15 +202,15 @@ class ShouldSuggestDonationTest(TestCase):
 
         # if the download objects are older than donations_settings.download_days, don't consider them
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.download_days + 1))
+            created=timezone.now() - datetime.timedelta(days=donations_settings.download_days + 1))
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
         # if user has donations but these are older than donations_settings.days_after_donation, do not consider them
         Donation.objects.create(user=user, amount=1)
         Donation.objects.filter(user=user).update(
-            created=datetime.datetime.now() - datetime.timedelta(days=donations_settings.days_after_donation + 1))
+            created=timezone.now() - datetime.timedelta(days=donations_settings.days_after_donation + 1))
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now())
+            created=timezone.now())
         # Change downloads date again to be recent (however modal won't show because probability is 0.0)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
@@ -431,7 +430,9 @@ class BulkDescribeUtils(TestCase):
         self.assertEqual(sound1.pack.name, 'ambient')  # Check sound has pack and name of pack is 'ambient'
         sound2 = Sound.objects.get(user=user, original_filename='file5.wav')  # Get last correct sound
         sound2_id = sound2.id  # This is used in a test below
-        self.assertIsNone(sound2.geotag)  # Check sound has no geotag
+        with self.assertRaises(GeoTag.DoesNotExist):
+            # sound has no geotag
+            assert sound2.geotag
         self.assertIsNone(sound2.pack)  # Check sound has no pack
 
         # Run again using 'force_import' and sounds won't be created because sounds already exist and md5 check fails

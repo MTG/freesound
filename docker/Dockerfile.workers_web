@@ -11,9 +11,11 @@ RUN make clean && make
 
 # --- main Freesound docker file contents
 
-FROM freesound:2023-07
+FROM freesound:2025-03
 
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install specific dependencies needed for processing, building static files and for ssh
 RUN apt-get update \
@@ -46,9 +48,8 @@ WORKDIR /code
 COPY --from=stereofy /code/stereofy /usr/local/bin
 
 # Install python dependencies
-# Some of our "old" dependencies require setuptools<=58, once we upgrade dependencies we could try unpinning setuptools
 COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r /code/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/uv uv pip install --system --compile-bytecode -r requirements.txt
 
 # Copy source code
 COPY --chown=fsweb:fsweb . /code

@@ -25,12 +25,13 @@ import os
 import time
 
 from django.conf import settings
+from django.utils import timezone
 from unittest import mock
 
 import utils.search
 from forum.models import Post
 from sounds.models import Sound, Download
-from tags.models import TaggedItem
+from tags.models import SoundTag
 from utils.search import get_search_engine
 
 
@@ -50,7 +51,7 @@ class TestSearchEngineBackend():
             base_dir = os.path.join(settings.DATA_PATH, 'search_backend_tests')
             if not os.path.exists(base_dir):
                 os.makedirs(base_dir)
-            date_label = datetime.datetime.today().strftime('%Y%m%d_%H%M')
+            date_label = timezone.now().strftime('%Y%m%d_%H%M')
             self.output_file = open(os.path.join(base_dir, '{}_test_results_{}.txt'
                                                 .format(date_label, backend_name)), 'w')
             self.output_file.write(f'TESTING SEARCH ENGINE BACKEND: {backend_name}\n')
@@ -281,7 +282,7 @@ class TestSearchEngineBackend():
         so this could by chance not coincide with any of the tags on this sound.
         Instead, get all tags by the user and check that the ones from solr are a subset of them.
         """
-        user_tagged_items = TaggedItem.objects.filter(user=sound.user).select_related('tag').all()
+        user_tagged_items = SoundTag.objects.filter(user=sound.user).select_related('tag').all()
         all_user_tags = [ti.tag.name for ti in user_tagged_items]
         tags_and_counts = self.search_engine.get_user_tags(sound.user.username)
         search_engine_tags = [t[0] for t in tags_and_counts]

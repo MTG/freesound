@@ -20,10 +20,11 @@
 
 from django.contrib.auth.models import User
 from django.db.models import Max
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 import ratings.models
 import sounds.models
+from utils.test_helpers import create_user_and_sounds
 
 
 class RatingsTestCase(TestCase):
@@ -34,6 +35,7 @@ class RatingsTestCase(TestCase):
         self.sound = sounds.models.Sound.objects.get(pk=16)
         self.user1 = User.objects.create_user("testuser1", email="testuser1@freesound.org", password="testpass")
         self.user2 = User.objects.create_user("testuser2", email="testuser2@freesound.org", password="testpass")
+        self.user3 = User.objects.create_user("testuser3", email="testuser3@freesound.org", password="testpass")
 
     def test_rating_normal(self):
         """ Add a rating """
@@ -118,6 +120,53 @@ class RatingsTestCase(TestCase):
         # If sound id doesn't match username
         resp = self.client.get(f"/people/NotAnton/sounds/{self.sound.id}/rate/{2}/")
         self.assertEqual(resp.status_code, 404)
+
+    @override_settings(MIN_NUMBER_RATINGS=3)
+    def test_avg_rating_pack_model(self):
+    
+        _, packs, sound = create_user_and_sounds(num_sounds=3, num_packs=1)
+        pack = packs[0]
+
+        # Check that the average rating is 0 when there are no ratings for the sounds in the pack
+        self.assertEqual(pack.avg_rating, 0)
+
+        # Rate some sounds, but avg rating is still 0 because none of the sounds has been rated at least MIN_NUMBER_RATINGS number of times
+        ratings.models.SoundRating.objects.create(user=self.user1, sound=sound[0], rating=4)
+        ratings.models.SoundRating.objects.create(user=self.user1, sound=sound[1], rating=6)
+        ratings.models.SoundRating.objects.create(user=self.user1, sound=sound[2], rating=5)
+        self.assertEqual(pack.avg_rating, 0)
+
+        # Now rate sounds again until MIN_NUMBER_RATINGS is reached per sound
+        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[0], rating=4)
+        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[1], rating=6)
+        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[2], rating=5)
+        ratings.models.SoundRating.objects.create(user=self.user3, sound=sound[0], rating=4)
+        ratings.models.SoundRating.objects.create(user=self.user3, sound=sound[1], rating=6)
+        ratings.models.SoundRating.objects.create(user=self.user3, sound=sound[2], rating=5)
+        
+        # Finally pack avg rating should be the avg of the avg_rating of each individual sound
+        self.assertEqual(pack.avg_rating, 5)
+
+    def test_avg_rating_profile_model(self):
+    
+        user, _, sound = create_user_and_sounds(num_sounds=3)
+        
+        # Check that the average rating is 0 when there are no ratings for the sounds of the user
+        self.assertEqual(user.profile.avg_rating, 0)
+
+        # Rate some sounds and check that avg_rating is updated accordingly. There is no MIN_NUMBER_RATINGS for user avg_rating
+        ratings.models.SoundRating.objects.create(user=self.user1, sound=sound[0], rating=4)
+        ratings.models.SoundRating.objects.create(user=self.user1, sound=sound[1], rating=6)
+        ratings.models.SoundRating.objects.create(user=self.user1, sound=sound[2], rating=5)
+        self.assertEqual(user.profile.avg_rating, 5)
+
+        # Check that avg rating is updated when sounds get more ratings
+        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[0], rating=2)  # sound willl have avg_rating 3
+        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[1], rating=8)  # sound willl have avg_rating 7
+        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[2], rating=10)  # sound willl have avg_rating 7.5
+        
+        # Finally user avg rating should be the avg of the avg_rating of each individual sound
+        self.assertEqual(round(user.profile.avg_rating, 2), 5.83)
 
 
 class RatingsPageTestCase(TestCase):

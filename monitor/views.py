@@ -30,7 +30,7 @@ from django.db.models import Count
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-
+from django.utils import timezone
 import tickets
 from freesound.celery import get_queues_task_counts
 from sounds.models import Sound, SoundAnalysis
@@ -130,7 +130,7 @@ def monitor_moderation(request):
     _, tardy_moderator_sounds_count = tickets.views._get_tardy_moderator_tickets_and_count()
     _, tardy_user_sounds_count = tickets.views._get_tardy_user_tickets_and_count()
 
-    time_span = datetime.datetime.now() - datetime.timedelta((6 * 365) // 12)
+    time_span = timezone.now() - datetime.timedelta((6 * 365) // 12)
     #Maybe we should user created and not modified
     user_ids = tickets.models.Ticket.objects.filter(
             status=TICKET_STATUS_CLOSED,
@@ -256,7 +256,7 @@ def process_sounds(request):
 
 def moderator_stats_ajax(request):
     user_id = request.GET.get('user_id', None)
-    time_span = datetime.datetime.now() - datetime.timedelta((6 * 365) // 12)
+    time_span = timezone.now() - datetime.timedelta((6 * 365) // 12)
     tickets_mod = tickets.models.Ticket.objects.filter(
             assignee_id=user_id,
             status=TICKET_STATUS_CLOSED,

@@ -31,12 +31,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'silk.middleware.SilkyMiddleware',
-    #'freesound.middleware.ModelAdminReorderWithNav',
-    'ratelimit.middleware.RatelimitMiddleware',
+    'django_ratelimit.middleware.RatelimitMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
     'freesound.middleware.UpdateEmailHandler',
-    'freesound.middleware.OnlineUsersHandler',
     'corsheaders.middleware.CorsMiddleware',
 ]
 
@@ -45,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'django.contrib.sitemaps',
     'django.contrib.admin',
     'django.contrib.messages',
     'django.contrib.staticfiles',
@@ -75,50 +74,9 @@ INSTALLED_APPS = [
     'monitor',
     'django_object_actions',
     'silk',
-    'admin_reorder',
-    'captcha',
+    'django_recaptcha',
     'adminsortable',
 ]
-
-# Specify custom ordering of models in Django Admin index
-ADMIN_REORDER = (
-
-    {'app': 'accounts', 'models': (
-        'auth.User',
-        'accounts.Profile',
-        'accounts.DeletedUser',
-        'accounts.UserDeletionRequest',
-        'accounts.UserFlag',
-        'accounts.OldUsername',
-        'accounts.EmailBounce',
-        'auth.Groups',
-        'fsmessages.Message',
-        'accounts.GdprAcceptance',
-    )},
-    {'app': 'sounds', 'models': (
-        'sounds.Sound',
-        {'model': 'sounds.SoundAnalysis', 'label': 'Sound analyses'},
-        'sounds.Pack',
-        'sounds.DeletedSound',
-        'sounds.License',
-        {'model': 'sounds.Flag', 'label': 'Sound flags'},
-        'sounds.BulkUploadProgress',
-        {'model': 'sounds.SoundOfTheDay', 'label': 'Sound of the day'}
-    )},
-    {'app': 'apiv2', 'label': 'API', 'models': (
-        {'model': 'apiv2.ApiV2Client', 'label': 'API V2 Application'},
-        'oauth2_provider.AccessToken',
-        'oauth2_provider.RefreshToken',
-        'oauth2_provider.Grant',
-    )},
-    'forum',
-    {'app': 'donations', 'models': (
-        'donations.Donation',
-        'donations.DonationsEmailSettings',
-        'donations.DonationsModalSettings',
-    )},
-    'sites',
-)
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
 # It can be activated in local_settings by changing INTERCEPT_FUNC
@@ -127,7 +85,7 @@ SILKY_AUTHORISATION = True  # User must have permissions
 SILKY_PERMISSIONS = lambda user: user.is_superuser
 SILKY_INTERCEPT_FUNC = lambda request: False
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
@@ -144,9 +102,7 @@ SITE_ID = 1
 
 USE_X_FORWARDED_HOST = True
 
-# Not using django timezones as project originally with Django 1.3. We might fix this in the future:
-# https://docs.djangoproject.com/en/1.5/topics/i18n/timezones/#time-zones-migration-guide
-USE_TZ = False
+USE_TZ = True
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
@@ -168,25 +124,16 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
     'api_monitoring': {
-        "BACKEND": "django_redis.cache.RedisCache",
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{API_MONITORING_REDIS_STORE_ID}",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
     },
     'cdn_map': {
-        "BACKEND": "django_redis.cache.RedisCache",
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{CDN_MAP_STORE_ID}",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
     },
     'clustering': {
-        "BACKEND": "django_redis.cache.RedisCache",
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{CLUSTERING_CACHE_REDIS_STORE_ID}",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
     }
 }
 
@@ -313,7 +260,14 @@ EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
 STATIC_URL = '/static/'
 STATIC_ROOT = 'bw_static'
-STATICFILES_STORAGE = 'freesound.storage.NoStrictManifestStaticFilesStorage'
+STORAGES = {
+    "default": {
+       "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": 'freesound.storage.NoStrictManifestStaticFilesStorage',
+    },
+}
 
 
 # -------------------------------------------------------------------------------
@@ -411,7 +365,6 @@ RANDOM_SOUND_OF_THE_DAY_CACHE_KEY = "random_sound"
 #Geotags  stuff
 # Cache key for storing "all geotags" bytearray
 ALL_GEOTAGS_BYTEARRAY_CACHE_KEY = "geotags_bytearray"
-USE_TEXTUAL_LOCATION_NAMES_IN_BW = True
 
 # Avatar background colors (only BW)
 from utils.audioprocessing.processing import interpolate_colors
@@ -513,6 +466,7 @@ FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
 AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
 BIRDNET_ANALYZER_NAME = 'birdnet_v1'
 FSDSINET_ANALYZER_NAME = 'fsd-sinet_v1'
+BST_ANALYZER_NAME = 'bst-extractor_v1'
  
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
@@ -561,6 +515,13 @@ ANALYZERS_CONFIGURATION = {
             ('num_detections', 'fsdsinet_detections_count', int),
         ]
     },
+    BST_ANALYZER_NAME: {
+         'max_jobs_in_queue': 5000,
+        'descriptors_map': [
+            ('bst_top_level', 'bst_top_level', str), 
+            ('bst_second_level', 'bst_second_level', str),
+        ]
+    }
 }
 
 # -------------------------------------------------------------------------------
@@ -650,13 +611,23 @@ SOLR5_BASE_URL = "http://search:8983/solr"
 SOLR9_BASE_URL = "http://search:8983/solr"
 
 SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
+    BST_ANALYZER_NAME: {
+        'vector_property_name': 'clap_embedding', 
+        'vector_size': 512,
+        'l2_norm': True
+    },
+    FSDSINET_ANALYZER_NAME: {
+        'vector_property_name': 'embeddings', 
+        'vector_size': 512,
+        'l2_norm': True
+    },
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {
         'vector_property_name': 'sim_vector', 
         'vector_size': 100,
         'l2_norm': True
     }
 }
-SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = FREESOUND_ESSENTIA_EXTRACTOR_NAME
+SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = BST_ANALYZER_NAME
 SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY = 500
 USE_SEARCH_ENGINE_SIMILARITY = False
 
@@ -715,7 +686,7 @@ MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 # To bypass the security check that prevents the test keys from being used unknowingly add
 # SILENCED_SYSTEM_CHECKS = [..., 'captcha.recaptcha_test_key_error', ...] to your settings.
 
-SILENCED_SYSTEM_CHECKS += ['captcha.recaptcha_test_key_error']
+SILENCED_SYSTEM_CHECKS += ['django_recaptcha.recaptcha_test_key_error']
 
 
 # -------------------------------------------------------------------------------
@@ -822,7 +793,8 @@ OAUTH2_PROVIDER = {
     'OAUTH2_VALIDATOR_CLASS': 'apiv2.oauth2_validators.OAuth2Validator',
     'REQUEST_APPROVAL_PROMPT': 'auto',
     'CLIENT_ID_GENERATOR_CLASS': 'apiv2.apiv2_utils.FsClientIdGenerator',
-    'PKCE_REQUIRED': False
+    'PKCE_REQUIRED': False,
+    'APPLICATION_ADMIN_CLASS': 'apiv2.oauth2_admin.ApplicationAdmin'
 }
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 
@@ -874,12 +846,6 @@ TEMPLATES = [
         }
     },
 ]
-
-# We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
-# settings were loaded). We add this variable to the context processor and use it in base.html as a
-# parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
-# files when we do a deploy (the url changes)
-LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
 # -------------------------------------------------------------------------------
 # Analytics
@@ -959,6 +925,7 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     INSTALLED_APPS += ['debug_toolbar']
 
     DEBUG_TOOLBAR_PANELS = [
+        'debug_toolbar.panels.history.HistoryPanel',
         'debug_toolbar.panels.versions.VersionsPanel',
         'debug_toolbar.panels.timer.TimerPanel',
         'debug_toolbar.panels.settings.SettingsPanel',
@@ -967,9 +934,9 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
         'debug_toolbar.panels.sql.SQLPanel',
         'debug_toolbar.panels.staticfiles.StaticFilesPanel',
         'debug_toolbar.panels.templates.TemplatesPanel',
+        'debug_toolbar.panels.alerts.AlertsPanel',
         'debug_toolbar.panels.cache.CachePanel',
         'debug_toolbar.panels.signals.SignalsPanel',
-        'debug_toolbar.panels.logging.LoggingPanel',
         'debug_toolbar.panels.redirects.RedirectsPanel',
     ]
 

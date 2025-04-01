@@ -195,26 +195,25 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             document["type"] = sound.type
         document["original_filename"] = remove_control_chars(getattr(sound, "original_filename"))
         document["description"] = remove_control_chars(getattr(sound, "description"))
-        document["tag"] = list(set([t.lower() for t in getattr(sound, "tag_array")]))
-        document["license"] = getattr(sound, "license_name")
-        
+        document["tag"] = list({t.lower() for t in getattr(sound, "tag_array")})
+        document["license"] = sound.license.name
+
         if document["num_ratings"] >= settings.MIN_NUMBER_RATINGS:
             document["avg_rating"] = getattr(sound, "avg_rating")
         else:
             document["avg_rating"] = 0
 
-        if getattr(sound, "pack_id"):
-            document["pack"] = remove_control_chars(getattr(sound, "pack_name"))
-            document["grouping_pack"] = str(getattr(sound, "pack_id")) + "_" + remove_control_chars(
-                getattr(sound, "pack_name"))
+        if sound.pack:
+            document["pack"] = remove_control_chars(sound.pack.name)
+            document["grouping_pack"] = str(sound.pack.id) + "_" + remove_control_chars(sound.pack.name)
         else:
             document["grouping_pack"] = str(getattr(sound, "id"))
 
         document["is_geotagged"] = False
-        if getattr(sound, "geotag_id"):
+        if hasattr(sound, "geotag"):
             document["is_geotagged"] = True
-            if not math.isnan(getattr(sound, "geotag_lon")) and not math.isnan(getattr(sound, "geotag_lat")):
-                document["geotag"] = str(getattr(sound, "geotag_lon")) + " " + str(getattr(sound, "geotag_lat"))
+            if not math.isnan(sound.geotag.lon) and not math.isnan(sound.geotag.lat):
+                document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)
 
         document["in_remix_group"] = getattr(sound, "was_remixed") or getattr(sound, "is_remix")
 
@@ -233,14 +232,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
         
         # Analyzer's output
+        sound_analysis_dict = {an.analyzer: an.analysis_data for an in sound.analyses.all()}
         for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
             if 'descriptors_map' in analyzer_info:
-                query_select_name = analyzer_name.replace('-', '_')
-                analysis_data = getattr(sound, query_select_name, None)
+                analysis_data = sound_analysis_dict.get(analyzer_name, None)
                 if analysis_data is not None:
                     # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on
                     # the value type (see SOLR_DYNAMIC_FIELDS_SUFFIX_MAP) so solr knows how to treat when filtering, etc.
-                    for key, value in json.loads(analysis_data).items():
+                    for key, value in analysis_data.items():
                         if isinstance(value, list):
                             # Make sure that the list is formed by strings
                             value = [f'{item}' for item in value]
@@ -440,24 +439,24 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query_filter = self.add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
 
         # If we only want sounds with packs and there is no pack filter, add one
-        if only_sounds_with_pack and not 'pack:' in query_filter:
+        if only_sounds_with_pack and 'pack:' not in query_filter:
             query_filter += ' pack:*'
 
         if 'geotag:"Intersects(' in query_filter:
             # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
             #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
-            query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+            query_filter = re.sub(r'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
 
         query_filter = self.search_filter_make_intersection(query_filter)
 
         # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
         # our query to the sounds in that list of IDs.
         if only_sounds_within_ids:
-            sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
+            sounds_within_ids_filter = ' OR '.join([f'id:{sound_id}' for sound_id in only_sounds_within_ids])
             if query_filter:
-                query_filter += ' AND ({})'.format(sounds_within_ids_filter)
+                query_filter += f' AND ({sounds_within_ids_filter})'
             else:
-                query_filter = '({})'.format(sounds_within_ids_filter)
+                query_filter = f'({sounds_within_ids_filter})'
 
         return query_filter
 
@@ -564,7 +563,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     vector = similar_to  # we allow vectors to be passed directly
                 else:
                     # similar_to should be a sound_id
-                    sound = Sound.objects.get(id=similar_to)
+                    try:
+                        sound = Sound.objects.get(id=similar_to)
+                    except Sound.DoesNotExist:
+                        # Return no results if sound does not exist
+                        return SearchResults(num_found=0)
                     vector = get_similarity_search_target_vector(sound.id, analyzer=similar_to_analyzer)                
                 vector_field_name = get_solr_dense_vector_search_field_name(config_options['vector_size'], config_options.get('l2_norm', False))
                 if vector is not None and vector_field_name is not None:
@@ -691,7 +694,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         results = {}
         for analyzer_name in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS.keys():
             query = SolrQuery()
-            filter_query = 'analyzer:"{}" content_type:"v"'.format(analyzer_name)
+            filter_query = f'analyzer:"{analyzer_name}" content_type:"v"'
             query.set_query("*:*")
             query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query)
             query.set_group_field("_nest_parent_")
@@ -813,7 +816,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def get_pack_tags(self, username, pack_name):
         query = SolrQuery()
         query.set_dismax_query('*:*')
-        filter_query = 'username:\"%s\" pack:\"%s\"' % (username, pack_name)
+        filter_query = f'username:\"{username}\" pack:\"{pack_name}\"'
         query.set_query_options(field_list=["id"], filter_query=filter_query)
         query.add_facet_fields("tag")
         query.set_facet_options("tag", limit=20, mincount=1)

@@ -52,7 +52,7 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(Profile.objects.filter(user=u).exists(), True)
         u.save()  # Check saving user again (with existing profile) does not fail
 
-    @mock.patch("captcha.fields.ReCaptchaField.validate")
+    @mock.patch("django_recaptcha.fields.ReCaptchaField.validate")
     def test_user_registration(self, magic_mock_function):
         username = 'new_user'
 
@@ -645,13 +645,13 @@ class UserEmailsUniqueTestCase(TestCase):
                                 {'username': self.user_a, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Now try with user_b and user_c. User b had a shared email with user_c. Even if user_b's email was
         # not changed, he is still redirected to the duplicate email cleanup page
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
@@ -670,13 +670,13 @@ class UserEmailsUniqueTestCase(TestCase):
         # Also check that related SameUser objects have been removed
         self.assertEqual(SameUser.objects.all().count(), 0)
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Now next time user_c tries to go to messages again, there is only one redirect (like for user_a)
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Also if user_b logs in, redirect goes straight to messages
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
@@ -701,13 +701,13 @@ class UserEmailsUniqueTestCase(TestCase):
         # Also check that related SameUser objects have been removed
         self.assertEqual(SameUser.objects.all().count(), 0)
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Now next time user_b tries to go to messages again, there is only one redirect (like for user_a)
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Also if user_c logs in, redirect goes straight to messages
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
@@ -733,13 +733,13 @@ class UserEmailsUniqueTestCase(TestCase):
         # Also check that related SameUser objects have been removed
         self.assertEqual(SameUser.objects.all().count(), 0)
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Now next time user_b tries to go to messages again, there is only one redirect (like for user_a)
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Also if user_c logs in, redirect goes straight to messages
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
@@ -921,8 +921,8 @@ class ChangeUsernameTest(TestCase):
     @override_settings(USERNAME_CHANGE_MAX_TIMES=2)
     def test_change_username_form_profile_page(self):
         # Create user and login
-        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
-        self.client.login(username='userA', password='testpass')
+        userA = User.objects.create_user('userA', email='userA@freesound.org')
+        self.client.force_login(userA)
 
         # Test save profile without changing username (note we set all mandatory fields)
         resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userA'], 'profile-ui_theme_preference': 'f'})
@@ -990,11 +990,11 @@ class ChangeUsernameTest(TestCase):
 
     @override_settings(USERNAME_CHANGE_MAX_TIMES=2)
     def test_change_username_form_admin(self):
-        User.objects.create_user('superuser', password='testpass', is_superuser=True, is_staff=True)
-        self.client.login(username='superuser', password='testpass')
+        superuser = User.objects.create_user('superuser', is_superuser=True, is_staff=True)
+        self.client.force_login(superuser)
 
         # Create user and get admin change url
-        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
+        userA = User.objects.create_user('userA', email='userA@freesound.org')
         admin_change_url = reverse('admin:auth_user_change', args=[userA.id])
 
         post_data = {'username': 'userA',
@@ -1068,8 +1068,8 @@ class ChangeUsernameTest(TestCase):
         OldUsername entry because usernames should be treated as case insensitive.
         """
         # Create user and login
-        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
-        self.client.login(username='userA', password='testpass')
+        userA = User.objects.create_user('userA', email='userA@freesound.org')
+        self.client.force_login(userA)
 
         # Rename "userA" to "UserA", should not create OldUsername object
         resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['UserA'], 'profile-ui_theme_preference': 'f'})
@@ -1085,13 +1085,36 @@ class ChangeUsernameTest(TestCase):
         OldUsername.objects.create(user=userA, username='newUserAUsername')
         with self.assertRaises(IntegrityError):
             OldUsername.objects.create(user=userA, username='NewUserAUsername')
+    
+    def test_username_whitespace(self):
+        """Test that for usernames created before stronger validation was applied, whitespaces are a valid character
+        but for new edited ones they are not."""
+        userA = User.objects.create_user('user A', email='userA@freesound.org', password='testpass')
+        self.client.force_login(userA)
 
+        # Test save profile without changing username with whitespaces
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['user A'], 'profile-ui_theme_preference': 'f'})
+        self.assertRedirects(resp, reverse('accounts-edit'))
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
+
+        # Test save profile changing username (no whitespaces)
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewName'], 'profile-ui_theme_preference': 'f'})
+        self.assertRedirects(resp, reverse('accounts-edit'))
+        userA.refresh_from_db()
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
+
+        # Test save profile changing username (whitespaces -> fail)
+        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userA SpaceName'], 'profile-ui_theme_preference': 'f'})
+        self.assertEqual(resp.status_code, 200)
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, 'userANewName')
+        self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
 
 class ChangeEmailViaAdminTestCase(TestCase):
 
     def test_change_email_form_admin(self):
-        User.objects.create_user('superuser', password='testpass', is_superuser=True, is_staff=True)
-        self.client.login(username='superuser', password='testpass')
+        superuser = User.objects.create_user('superuser', is_superuser=True, is_staff=True)
+        self.client.force_login(superuser)
 
         # Create user and get admin change url
         userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')

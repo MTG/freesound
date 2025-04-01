@@ -24,6 +24,7 @@ import os
 import time
 
 from django.conf import settings
+from django.utils import timezone
 
 from utils.management_commands import LoggingBaseCommand
 
@@ -55,7 +56,7 @@ class Command(LoggingBaseCommand):
                 datetime.datetime.strptime(time.ctime(), "%a %b %d %H:%M:%S %Y")
                 modification_time = datetime.datetime.strptime(time.ctime(os.path.getmtime(filepath)), "%c")
                 date_cutoff = \
-                    datetime.datetime.now() - datetime.timedelta(
+                    timezone.now() - datetime.timedelta(
                         hours=settings.ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK)
                 if modification_time < date_cutoff:
                     files_to_remove.append(filepath)

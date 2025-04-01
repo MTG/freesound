@@ -140,7 +140,7 @@ class LoggingFiltersTest(TestCase):
             'filter': 'license:"Creative Commons 0"'
         }
         params = '&'.join([f'{key}={value}' for key, value in query_params.items()])
-        self.client.get(reverse('apiv2-sound-text-search') + '?{}'.format(params))
+        self.client.get(reverse('apiv2-sound-text-search') + f'?{params}')
         log_record = logs_list[0]
 
         for prop, value in query_params.items():

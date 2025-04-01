@@ -47,9 +47,7 @@ def display_pack(context, pack, size='small', show_bookmark_similarity_buttons=T
             # use filter here instead of get because we don't want the query to be evaluated before rendering the
             # template as this would bypass the html cache in the template
             pack = Pack.objects.bulk_query_id([int(pack)])[0]
-        except ValueError:
-            pack = None
-        except Pack.DoesNotExist:
+        except IndexError:
             pack = None
 
     request = context.get('request')

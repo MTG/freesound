@@ -31,37 +31,31 @@ from django.db.models.functions import JSONObject
 from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.shortcuts import render 
+from django.utils import timezone
+from django.shortcuts import render
 from general.tasks import whitelist_user as whitelist_user_task, post_moderation_assigned_tickets as post_moderation_assigned_tickets_task
 
 from .models import Ticket, TicketComment, UserAnnotation
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW, MODERATION_TEXTS
-from tickets.forms import AnonymousMessageForm, UserMessageForm, ModeratorMessageForm, \
+from tickets.forms import UserMessageForm, ModeratorMessageForm, \
     SoundStateForm, SoundModerationForm, ModerationMessageForm, UserAnnotationForm, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
 from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
-from utils.username import redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username, get_parameter_user_or_404
 from utils.pagination import paginate
 from wiki.models import Content, Page
 
 
 def _get_tc_form(request, use_post=True):
-    return _get_anon_or_user_form(request, 
-                                  AnonymousMessageForm, 
-                                  UserMessageForm, 
-                                  use_post)
-
-
-def _get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
     if _can_view_mod_msg(request):
-        user_form = ModeratorMessageForm
-    if len(request.POST.keys()) > 0 and use_post:
-        if request.user.is_authenticated:
-            return user_form(request.POST)
-        else:
-            return anonymous_form(request.POST)
+        form = ModeratorMessageForm
     else:
-        return user_form() if request.user.is_authenticated else anonymous_form()
+        form = UserMessageForm
+
+    if len(request.POST.keys()) > 0 and use_post:
+        return form(request.POST)
+    else:
+        return form()
 
 
 def _can_view_mod_msg(request):
@@ -87,14 +81,7 @@ def ticket(request, ticket_key):
         # First try to get the ticket matching the key, but if it fails, try also matching the id
         ticket = Ticket.objects.select_related('sound__license', 'sound__user').get(key=ticket_key)
     except Ticket.DoesNotExist:
-        try:
-            ticket_id = int(ticket_key)
-            ticket = Ticket.objects.select_related('sound__license', 'sound__user').get(id=ticket_id)
-            return HttpResponseRedirect(reverse('tickets-ticket', args=[ticket.key]))
-        except ValueError:
-            raise Http404
-        except Ticket.DoesNotExist:
-            raise Http404
+        raise Http404
 
     if not (ticket.sender == request.user or _can_view_mod_msg(request)):
         raise Http404
@@ -105,25 +92,26 @@ def ticket(request, ticket_key):
         invalidate_all_moderators_header_cache()
 
         # Left ticket message
-        if is_selected(request, 'recaptcha') or (request.user.is_authenticated and is_selected(request, 'message')):
-            tc_form = _get_tc_form(request)
+        if is_selected(request, 'message'):
+            tc_form = _get_tc_form(request, use_post=True)
             if tc_form.is_valid():
-                tc = TicketComment()
-                tc.text = tc_form.cleaned_data['message']
-                tc.moderator_only = tc_form.cleaned_data.get('moderator_only', False)
-                if tc.text:
-                    if request.user.is_authenticated:
-                        tc.sender = request.user
-                    tc.ticket = ticket
-                    tc.save()
-                    if not request.user.is_authenticated:
-                        email_to = Ticket.MODERATOR_ONLY
-                    elif request.user == ticket.sender:
-                        email_to = Ticket.MODERATOR_ONLY
+                moderator_only = tc_form.cleaned_data.get('moderator_only', False)
+                ticket_text = tc_form.cleaned_data['message']
+                if ticket_text:
+                    tc = TicketComment.objects.create(
+                        text=ticket_text,
+                        moderator_only=moderator_only,
+                        sender=request.user,
+                        ticket=ticket
+                    )
+                    if request.user == ticket.sender:
+                        # If the sender is the same as the user, we send the notification to the moderator
+                        ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED, Ticket.MODERATOR_ONLY)
                     else:
-                        email_to = Ticket.USER_ONLY
-                    ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED,
-                                                    email_to)
+                        # If the sender is not the same as the user, then this is a moderator editing the ticket
+                        # only send the notification to the user if the message is not moderator only
+                        if not moderator_only:
+                            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED, Ticket.USER_ONLY)
             else:
                 clean_comment_form = False
         # update sound ticket
@@ -197,6 +185,9 @@ def ticket(request, ticket_key):
                                     moderator_only=False)
                     tc.save()
 
+        # Prevent multiple submissions if a user reloads the page
+        return redirect(reverse('tickets-ticket', args=[ticket.key]))
+
     if clean_status_forms:
         default_action = 'Return' if ticket.sound and ticket.sound.moderation_state == 'OK' else 'Approve'
         sound_form = SoundStateForm(initial={'action': default_action}, prefix="ss")
@@ -255,7 +246,7 @@ def _get_new_uploaders_by_ticket():
                                  "username": users_dict[t['sender']].username,
                                  "new_count": t['total'],
                                  "num_uploaded_sounds": users_dict[t['sender']].profile.num_sounds,
-                                 "time": (datetime.datetime.now() - t['older']).days})
+                                 "time": (timezone.now() - t['older']).days})
     return new_sounds_users
 
 
@@ -286,7 +277,7 @@ def _get_tardy_moderator_tickets_and_count(num=None, include_mod_messages=True):
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
         (Q(last_commenter=F('sender')) | Q(messages__sender=None)) &
-        Q(comment_date__lt=time_span))\
+        Q(comment_date__date__lt=time_span))\
     .order_by('created')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
@@ -300,7 +291,7 @@ def _get_tardy_user_tickets_and_count(num=None, include_mod_messages=True):
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
         ~Q(last_commenter=F('sender')) &
-        Q(comment_date__lt=time_span))\
+        Q(comment_date__date__lt=time_span))\
     .order_by('created')
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
@@ -424,7 +415,7 @@ def moderation_assign_all_new(request):
                                     sound__moderation_state='PE',
                                     status=TICKET_STATUS_NEW)
 
-    tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=datetime.datetime.now())
+    tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=timezone.now())
 
     msg = f'You have been assigned all new sounds ({tickets.count()}) from the queue.'
     messages.add_message(request, messages.INFO, msg)
@@ -447,7 +438,7 @@ def moderation_assign_user(request, user_id, only_unassigned=True):
     if only_unassigned:
         tickets = tickets.filter(assignee=None, status=TICKET_STATUS_NEW)
 
-    tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=datetime.datetime.now())
+    tickets.update(assignee=request.user, status=TICKET_STATUS_ACCEPTED, modified=timezone.now())
 
     msg = f'You have been assigned all new sounds from {sender.username}.'
     messages.add_message(request, messages.INFO, msg)
@@ -470,7 +461,7 @@ def moderation_assign_single_ticket(request, ticket_id):
     ticket.status = TICKET_STATUS_ACCEPTED
 
     # update modified date, so it doesn't appear in tardy moderator's sounds
-    ticket.modified = datetime.datetime.now()
+    ticket.modified = timezone.now()
     ticket.save()
     invalidate_all_moderators_header_cache()
 
@@ -520,7 +511,7 @@ def moderation_assigned(request, user_id):
                 sounds_update_params = {
                     'is_index_dirty': True,
                     'moderation_state': 'OK',
-                    'moderation_date': datetime.datetime.now()
+                    'moderation_date': timezone.now()
                 }
                 is_explicit_choice_key = mod_sound_form.cleaned_data.get("is_explicit")
                 if is_explicit_choice_key == IS_EXPLICIT_ADD_FLAG_KEY:
@@ -597,6 +588,7 @@ def moderation_assigned(request, user_id):
         msg_form = ModerationMessageForm()
 
     qs = Ticket.objects.select_related('sound', 'sender') \
+                       .prefetch_related('messages', 'messages__sender') \
                        .filter(assignee=user_id) \
                        .exclude(status=TICKET_STATUS_CLOSED) \
                        .exclude(sound=None) \
@@ -677,13 +669,13 @@ def add_user_annotation(request, user_id):
 
 
 @permission_required('tickets.can_moderate')
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def pending_tickets_per_user(request, username):
     if not request.GET.get('ajax'):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[username]) + '?pending_moderation=1')
     
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     tickets, _ = _get_pending_tickets_for_user(user, include_mod_messages=True)
     _add_sound_objects_to_tickets(tickets)
     mods = set()

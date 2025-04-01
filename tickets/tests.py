@@ -29,22 +29,20 @@ from django.urls import reverse
 
 import sounds
 import tickets
-from .models import Ticket, Queue
+from .models import Ticket
 from sounds.models import Sound
-from tickets import QUEUE_SOUND_MODERATION
 from tickets import TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED
 from tickets.forms import IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
 
 
 class NewTicketTests(TestCase):
-    fixtures = ['licenses', 'user_groups', 'moderation_queues', 'moderation_test_users']
+    fixtures = ['licenses', 'user_groups', 'moderation_test_users']
 
     def test_new_ticket(self):
         """New tickets shouldn't have an assignee"""
         ticket = Ticket()
         ticket.status = 'new'
         ticket.sender = User.objects.get(username='test_user')
-        ticket.queue = Queue.objects.get(name=QUEUE_SOUND_MODERATION)
         ticket.save()
         self.assertEqual(ticket.assignee, None)
 
@@ -55,7 +53,6 @@ class NewTicketTests(TestCase):
         ticket.status = 'new'
         ticket.sender = User.objects.get(username='test_user')
         ticket.assignee = User.objects.get(username='test_moderator')
-        ticket.queue = Queue.objects.get(name=QUEUE_SOUND_MODERATION)
         ticket.save()
         # just to test, this would be a sound object for example
         s = Sound(description='test sound', license_id=1, user=test_user)
@@ -67,7 +64,7 @@ class NewTicketTests(TestCase):
 
 class TicketTests(TestCase):
     """Superclass that has several helper methods"""
-    fixtures = ['licenses', 'user_groups', 'moderation_queues', 'moderation_test_users']
+    fixtures = ['licenses', 'user_groups', 'moderation_test_users']
 
     @staticmethod
     def _create_test_sound(user, filename='test_sound.wav', moderation_state='PE', processing_state='OK'):
@@ -86,7 +83,6 @@ class TicketTests(TestCase):
         """Creates a ticket with specified parameters"""
         ticket = tickets.models.Ticket.objects.create(
             title='Moderate sound test_sound.wav',
-            queue=Queue.objects.get(name='sound moderation'),
             status=ticket_status,
             sender=user,
             sound=sound,

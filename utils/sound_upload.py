@@ -191,7 +191,6 @@ def create_sound(user,
 
     # 3 move to new path
     orig = os.path.splitext(os.path.basename(sound.original_filename))[0]  # WATCH OUT!
-    sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
     new_original_path = sound.locations("path")
     if sound.original_path != new_original_path:
         os.makedirs(os.path.dirname(new_original_path), exist_ok=True)
@@ -226,24 +225,22 @@ def create_sound(user,
         # Create geotag from lat,lon,zoom text format
         if sound_fields['geotag']:
             lat, lon, zoom = sound_fields['geotag'].split(',')
-            geotag = GeoTag(user=user,
-                            lat=float(lat),
-                            lon=float(lon),
-                            zoom=int(zoom))
-            geotag.save()
-            sound.geotag = geotag
+            geotag = GeoTag.objects.create(
+                sound=sound,
+                lat=float(lat),
+                lon=float(lon),
+                zoom=int(zoom))
     else:
         # Create geotag from lat, lon, zoom separated fields (if available)
         lat = sound_fields.get('lat', None)
         lon = sound_fields.get('lon', None)
         zoom = sound_fields.get('zoom', None)
         if lat is not None and lon is not None and zoom is not None:
-            geotag = GeoTag(user=user,
-                            lat=float(lat),
-                            lon=float(lon),
-                            zoom=int(zoom))
-            geotag.save()
-            sound.geotag = geotag
+            geotag = GeoTag.objects.create(
+                sound=sound,
+                lat=float(lat),
+                lon=float(lon),
+                zoom=int(zoom))
 
     # 6 set description, tags
     sound.description = remove_control_chars(sound_fields['description'])

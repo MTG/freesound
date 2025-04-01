@@ -5,19 +5,15 @@ if postgres_username is not None:
     DATABASES['default']['NAME'] = 'freesound'
     DATABASES['default']['USER'] = postgres_username
 
-use_django_nose = os.getenv('FS_TEST_USE_DJANGO_NOSE', None)
-if use_django_nose is not None:
-    INSTALLED_APPS = INSTALLED_APPS + ('django_nose',)
-    TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-    SOUTH_TESTS_MIGRATE = False
-    NOSE_ARGS = [
-        '--with-xunit',
-    ]
-
 AKISMET_KEY = ''  # Avoid making requests to "real" Akismet server if running
 SECRET_KEY = "testsecretwhichhastobeatleast16characterslong"
 SUPPORT = (('Name Surname', 'support@freesound.org'),)
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+STORAGES = {
+    **STORAGES,
+    "staticfiles": {
+        "BACKEND": 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',

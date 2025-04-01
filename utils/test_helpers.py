@@ -31,6 +31,7 @@ from django.contrib.auth.models import User
 from django.test.utils import override_settings
 
 from sounds.models import Sound, Pack, License
+from geotags.models import GeoTag
 from tempfile import TemporaryDirectory
 from utils.tags import clean_and_split_tags
 
@@ -101,7 +102,6 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
             pack = packs[i % len(packs)]
         sound = Sound.objects.create(user=user,
                                      original_filename="Test sound %i" % (i + count_offset),
-                                     base_filename_slug="test_sound_%i" % (i + count_offset),
                                      license=License.objects.last(),
                                      description=description if description is not None else '',
                                      pack=pack,
@@ -113,6 +113,8 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
         if tags is not None:
             sound.set_tags(clean_and_split_tags(tags))
         sounds.append(sound)
+    if len(sounds) > 1:
+        GeoTag.objects.create(sound=sounds[1], lon=1.0, lat=1.0, zoom=1)
     return user, packs, sounds
 
 

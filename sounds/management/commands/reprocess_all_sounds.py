@@ -18,12 +18,12 @@
 #     See AUTHORS file.
 #
 
-import datetime
 import json
 import logging
 import os
 
 from django.conf import settings
+from django.utils import timezone
 
 from freesound.celery import get_queues_task_counts
 from sounds.models import Sound
@@ -106,7 +106,7 @@ class Command(LoggingBaseCommand):
                     last_reprocessed_sound_id = sound.id
                 # Save current progress
                 console_logger.info(f'{n_sent} sounds sent to processing queue, last sound ID: {last_reprocessed_sound_id}')
-                reprocessing_progress.append({'last_sound_id': last_reprocessed_sound_id, 'date': str(datetime.datetime.now())})
+                reprocessing_progress.append({'last_sound_id': last_reprocessed_sound_id, 'date': str(timezone.now())})
                 json.dump(reprocessing_progress, open(progress_file_path, 'w'))
     
         self.log_end({'n_sent_to_processing': n_sent, 

@@ -32,6 +32,7 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import int_to_base36
+import pytest
 
 import accounts.models
 from accounts.management.commands.process_email_bounces import process_message, decode_idna_email
@@ -39,9 +40,29 @@ from accounts.models import EmailPreferenceType, EmailBounce, UserEmailSetting
 from accounts.views import handle_uploaded_image
 from forum.models import Forum, Thread, Post
 from sounds.models import Pack, Download, PackDownload
-from tags.models import TaggedItem
+from tags.models import SoundTag
 from utils.mail import send_mail
 from utils.test_helpers import override_avatars_path_with_temp_directory, create_user_and_sounds
+
+
+@pytest.mark.django_db
+class ProfileTest:
+
+    def test_get_stats_for_profile_page(self, use_dummy_cache_backend, client):
+        call_command('loaddata', 'licenses', 'sounds_with_tags')
+        user = User.objects.get(username="Anton")
+
+        response = client.get(reverse('account-stats-section', kwargs={'username': user.username}) + '?ajax=1')
+        assert response.status_code == 200
+        assert "2:51 minutes" in response.content.decode('utf-8')
+
+        sound = user.sounds.all()[0]
+        sound.duration = 3600 + 1260
+        sound.save()
+
+        response = client.get(reverse('account-stats-section', kwargs={'username': user.username}) + '?ajax=1')
+        assert response.status_code == 200
+        assert "1:23 hours" in response.content.decode('utf-8')
 
 
 class ProfileGetUserTags(TestCase):
@@ -67,8 +88,8 @@ class ProfileGetUserTags(TestCase):
         mock_search_engine.return_value.configure_mock(**conf)
         accounts.models.get_search_engine = mock_search_engine
         tag_names = [item['name'] for item in user.profile.get_user_tags()]
-        used_tag_names = list({item.tag.name for item in TaggedItem.objects.filter(user=user)})
-        non_used_tag_names = list({item.tag.name for item in TaggedItem.objects.exclude(user=user)})
+        used_tag_names = list({item.tag.name for item in SoundTag.objects.filter(user=user)})
+        non_used_tag_names = list({item.tag.name for item in SoundTag.objects.exclude(user=user)})
 
         # Test that tags retrieved with get_user_tags are those found in db
         self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
@@ -404,30 +425,30 @@ class ProfilePostInForumTest(TestCase):
 
     def test_can_post_in_forum_time(self):
         """If you have no sounds, you can't post within 5 minutes of the last one"""
-        created = parse_date("2019-02-03 10:50:00")
+        created = parse_date("2019-02-03 10:50:00 UTC")
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
         self.user.profile.refresh_from_db()
-        with freezegun.freeze_time("2019-02-03 10:52:30"):
+        with freezegun.freeze_time("2019-02-03 10:52:30", tz_offset=0):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertFalse(can_post)
             self.assertIn("was less than 5", reason)
 
-        with freezegun.freeze_time("2019-02-03 11:03:30"):
+        with freezegun.freeze_time("2019-02-03 11:03:30", tz_offset=0):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertTrue(can_post)
 
     def test_can_post_in_forum_has_sounds(self):
         """If you have sounds you can post even within 5 minutes of the last one"""
-        created = parse_date("2019-02-03 10:50:00")
+        created = parse_date("2019-02-03 10:50:00 UTC")
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
         self.user.profile.num_sounds = 3
         self.user.profile.save()
         self.user.profile.refresh_from_db()
-        with freezegun.freeze_time("2019-02-03 10:52:30"):
+        with freezegun.freeze_time("2019-02-03 10:52:30", tz_offset=0):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertTrue(can_post)
 
@@ -435,14 +456,14 @@ class ProfilePostInForumTest(TestCase):
         """If you have no sounds, you can't post more than x posts per day.
         this is 5 + d^2 posts, where d is the number of days between your first post and now"""
         # our first post, 2 days ago
-        created = parse_date("2019-02-03 10:50:00")
+        created = parse_date("2019-02-03 10:50:00 UTC")
 
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
 
         # 2 days later, the maximum number of posts we can make today will be 5 + 4 = 9
-        today = parse_date("2019-02-05 01:50:00")
+        today = parse_date("2019-02-05 01:50:00 UTC")
         for i in range(9):
             post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
             today = today + datetime.timedelta(minutes=i+10)
@@ -451,7 +472,7 @@ class ProfilePostInForumTest(TestCase):
         self.user.profile.refresh_from_db()
 
         # After making 9 posts, we can't make any more
-        with freezegun.freeze_time("2019-02-05 14:52:30"):
+        with freezegun.freeze_time("2019-02-05 14:52:30", tz_offset=0):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertFalse(can_post)
             self.assertIn("you exceeded your maximum", reason)
@@ -459,14 +480,14 @@ class ProfilePostInForumTest(TestCase):
     def test_can_post_in_forum_admin(self):
         """If you're a forum admin, you can post even if you have no sounds, you're within
         5 minutes of the last one, and you've gone over the limit of posts for the day"""
-        created = parse_date("2019-02-03 10:50:00")
+        created = parse_date("2019-02-03 10:50:00 UTC")
         post = Post.objects.create(thread=self.thread, body="", author=self.user, moderation_state="OK")
         post.created = created
         post.save()
         perm = Permission.objects.get_by_natural_key('can_moderate_forum', 'forum', 'post')
         self.user.user_permissions.add(perm)
 
-        with freezegun.freeze_time("2019-02-04 10:00:30"):
+        with freezegun.freeze_time("2019-02-04 10:00:30", tz_offset=0):
             can_post, reason = self.user.profile.can_post_in_forum()
             self.assertTrue(can_post)
 

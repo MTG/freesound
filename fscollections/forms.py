@@ -28,12 +28,30 @@ from utils.forms import HtmlCleaningCharField
 
 from sounds.models import Sound
 
-#this class was aimed to perform similarly to BookmarkSound, however, at first the method to add a sound to a collection
-#will be opening the search engine in a modal, looking for a sound in there and adding it to the actual collection page
-#this can be found in edit pack -> add sounds
-#class CollectSoundForm(forms.ModelForm):
+class SelectCollectionOrNewCollectionForm(forms.Form):
+    """This form unfolds all the available collections for the user in a modal and allows to select one.
+    So far it is only used to add one sound to a collection interacting from the sound player (as previously done
+    in Bookmarks). Available collections are those where the user is either the owner or a maintainer, with a number
+    of sounds lower than MAX_SOUNDS_PER_COLLECTION and still do not contain the selected sound. New collections can be
+    created with a custom name, or with the default name for the personal collection's name (Bookmark), if the user has
+    not created any collection yet.
 
-class SelectCollectionOrNewCollectionForm(forms.Form): 
+    Args:
+        forms (Form): django Form class.
+
+    Raises:
+        forms.ValidationError: sound does not exist.
+        forms.ValidationError: collection.num_sounds exceeds settings.MAX_SOUNDS_PER_COLLECTION.
+        forms.ValidationError: user is not owner nor maintainer so lacks permission to edit the collection.
+        forms.ValidationError: sound already exists in collection.
+        forms.ValidationError: collection does not exist.
+        forms.ValidationError: new collection name already exists in user's collection.
+        forms.ValidationError: new collection name is empty
+        forms.ValidationError: invalid selected category value
+
+    Returns:
+        save: returns the selected collection object to be used
+    """
 
     collection = forms.ChoiceField(
         label=False,
@@ -61,7 +79,7 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
         self.sound_id = kwargs.pop('sound_id', False)
 
         if self.user_collections:
-            # NOTE: as a provisional solution to avoid duplicate sounds in a collection, Collections already containing the sound are not selectable
+            # NOTE: as a solution to avoid duplicate sounds in a collection, Collections already containing the sound are not selectable
             # this is also useful to discard adding sounds to collections that are full (max_num_sounds)
             self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(sounds__id=self.sound_id).exclude(is_default_collection=True).exclude(num_sounds__gte=settings.MAX_SOUNDS_PER_COLLECTION)   
         
@@ -126,7 +144,6 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
         # existing collection selected
         try:
             if clean_data['collection'] != '0' and clean_data['new_collection_name'] == '':
-                # if the value for collection is -1 the form must pass validation so the first Bookmarks collection is created for the request user
                 if clean_data['collection'] == '-1':
                     pass
                 else:
@@ -146,8 +163,6 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
                         
                     except Collection.DoesNotExist:
                         raise forms.ValidationError('This collection does not exist.')
-
-            # new collection selected
             elif clean_data['new_collection_name'] != '':
                 if Collection.objects.filter(user=self.user_saving_sound, name=clean_data['new_collection_name']).exists():
                     raise forms.ValidationError('You already have a collection with this name.')
@@ -241,6 +256,9 @@ class CollectionEditForm(forms.ModelForm):
             CollectionSound.objects.get(collection=collection, sound=sound).delete()
 
         new_maintainers = set(self.clean_ids_field('maintainers'))
+        # if the owner of the collection has been added as a maintainer, discard it
+        if collection.user.id in new_maintainers:
+            new_maintainers.remove(collection.user.id)
         current_maintainers = list(self.instance.maintainers.values_list('id', flat=True))
         for usr in new_maintainers:
             if usr not in current_maintainers:
@@ -337,32 +355,4 @@ class MaintainerForm(forms.Form):
                 return super().clean()
             except User.DoesNotExist:
                 raise forms.ValidationError("The user does not exist")
-    
-class CollectionMaintainerForm(forms.Form):
-    collection = forms.ChoiceField(
-        label=False,
-        choices=[], 
-        required=True)
-    
-    use_last_collection = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
-    user_collections = None
-    user_available_collections = None
 
-    def __init__(self, *args, **kwargs):
-        self.user_collections = kwargs.pop('user_collections', False)
-        self.user_adding_maintainer = kwargs.pop('user_adding_maintainer', False)
-        self.maintainer_id = kwargs.pop('maintainer_id', False)
-        
-        if self.user_collections:
-            # the available collections are: from the user's collections, the ones in which the maintainer is not a maintaner still
-            self.user_available_collections = Collection.objects.filter(id__in=self.user_collections).exclude(maintainers__id=self.maintainer_id)
-
-        super().__init__(*args, **kwargs)
-        self.fields['collection'].choices = ([(collection.id, collection.name) for collection in self.user_available_collections]
-                                              if self.user_available_collections else [])
-        
-    
-    def save(self, *args, **kwargs):
-        # this function returns de selected collection
-        collection_to_use = Collection.objects.get(id=self.cleaned_data['collection'])
-        return collection_to_use

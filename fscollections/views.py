@@ -80,7 +80,14 @@ def collections_for_user(request):
     # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display
     return render(request, 'collections/your_collections.html', tvars)
 
+def collection_stats_section(request, collection_id):
+    if not request.GET.get('ajax'):
+        return HttpResponseRedirect(reverse('your-collections'))
+    collection = get_object_or_404(Collection, id=collection_id)
+    tvars = {'collection': collection}
+    return render(request, 'collections/collection_stats_section.html', tvars)
 
+                                    
 def add_sound_to_collection(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ''

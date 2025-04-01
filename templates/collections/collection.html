@@ -10,6 +10,10 @@
 <div class="v-spacing-top-5">
     <div class="row no-gutters">
         <div class="col-lg-3 offset-lg-1 order-lg-last v-spacing-3">
+            <section class="bw-profile__section_stats v-spacing-top-4 async-section"
+                            data-async-section-content-url="{% url 'collection-stats-section' collection.id %}?ajax=1">
+                            <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
+            </section>
             <h4>Your collections</h4>
             <div class="v-spacing-top-3">
                 <ul class="list-style-type-none">

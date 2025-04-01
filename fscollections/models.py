@@ -26,7 +26,7 @@ from django.utils.text import slugify
 from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete
 from django.db.models.functions import Greatest
-from django.db.models import F
+from django.db.models import F, Sum
 
 from sounds.models import Sound, License
 
@@ -74,6 +74,10 @@ class Collection(models.Model):
         name_slug = slugify(self.name)
         username_slug = slugify(self.user.username)
         return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
+    
+    def get_total_collection_sounds_length(self):
+        result = self.sounds.aggregate(total_duration=Sum('duration'))
+        return result['total_duration'] or 0
     
     def save(self, *args, **kwargs):   
         self.num_sounds = CollectionSound.objects.filter(collection=self).count()

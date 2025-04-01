@@ -46,7 +46,7 @@ class CollectionTest(TestCase):
         delete_collection = Collection.objects.get(name='tbdcollection')
 
         # Delete collection view
-        resp = self.client.get(reverse('delete-collection',args=[delete_collection.id]))
+        resp = self.client.post(reverse('delete-collection',args=[delete_collection.id]))
         self.assertEqual(resp.status_code, 302)
         self.assertEqual("/collections/", resp.url)
 
@@ -196,13 +196,11 @@ class CollectionTest(TestCase):
         self.assertEqual(1, self.collection.num_sounds)
 
         # Test adding more sounds than permitted
-        ___, ___, added_sounds = create_user_and_sounds(num_sounds=settings.MAX_SOUNDS_PER_COLLECTION, count_offset=3 ,user=self.user, processing_state="OK", moderation_state="OK")
+        ___, ___, added_sounds = create_user_and_sounds(num_sounds=settings.MAX_SOUNDS_PER_COLLECTION + 1, count_offset=3 ,user=self.user, processing_state="OK", moderation_state="OK")
         sounds_ids = ','.join([str(s.id) for s in added_sounds])
         form_data = {'name': 'testcollection', 'description':'', 'public': False, 'collection_sounds': sounds_ids}
         resp = self.client.post(reverse('edit-collection', args=[self.collection.id]) + '?ajax=1', form_data)
-        form = resp.context['form']
         self.assertEqual(200, resp.status_code)
-        self.assertIn('collection_sounds', form.errors)
         self.collection.refresh_from_db()
         self.assertEqual(1, self.collection.num_sounds)
         

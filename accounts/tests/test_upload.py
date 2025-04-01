@@ -61,7 +61,8 @@ class UserUploadAndDescribeSounds(TestCase):
         self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), False)
 
     @override_uploads_path_with_temp_directory
-    def test_handle_uploaded_duplicate_filenames_html(self):
+    @mock.patch('general.tasks.process_before_description.delay')
+    def test_handle_uploaded_duplicate_filenames_html(self, patched_method):
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
 

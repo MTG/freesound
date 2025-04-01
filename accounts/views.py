@@ -1206,6 +1206,9 @@ def handle_uploaded_file(user_id, f):
     # Move or copy the uploaded file from the temporary folder created by Django to the /uploads path
     dest_directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
     os.makedirs(dest_directory, exist_ok=True)
+    if f.name in os.listdir(dest_directory):
+        msg_to_return = 'Duplicated filenames are not allowed. You have a sound pending description with the same file name.'
+        return msg_to_return
     dest_path = os.path.join(dest_directory, os.path.basename(f.name)).encode("utf-8")
     upload_logger.info(f"handling file upload and saving to {dest_path}")
     starttime = time.time()
@@ -1282,33 +1285,25 @@ def upload_file(request):
 def upload(request, no_flash=False):
     form = UploadFileForm()
     successes = 0
-    errors = []
+    errors = {}
     uploaded_file = None
     if no_flash:
         if request.method == 'POST':
             form = UploadFileForm(request.POST, request.FILES)
             if form.is_valid():
                 submitted_files = request.FILES.getlist('files')
-                if not submitted_files: 
-                    #this allows upload_tests to work, requests use the dict key in singular
-                    submitted_files = request.FILES.getlist('file') 
-                duplicated_filenames = list()
+                filenames = [f.name for f in submitted_files]
                 for file_ in submitted_files:
-                    #check for duplicated names and add an identifier, otherwise, different files with the same
-                    #name will be overwritten in the description queue
-                    if file_.name in duplicated_filenames:                        
-                        name_counter = duplicated_filenames.count(file_.name) 
-                        duplicated_filenames.append(file_.name) 
-                        name, extension = os.path.splitext(file_.name)
-                        file_.name = "%s(%d)%s" % (name, name_counter, extension) 
-                    else:
-                        duplicated_filenames.append(file_.name)
+                    if filenames.count(file_.name) > 1:
+                        errors[file_.name] = 'Duplicated filenames are not allowed. Please upload the files again with different filenames.'
                     
-                    if handle_uploaded_file(request.user.id, file_):
-                        uploaded_file = file_
-                        successes += 1
                     else:
-                        errors.append(file_)
+                        upload_result = handle_uploaded_file(request.user.id, file_)
+                        if upload_result == True:
+                            uploaded_file = file_
+                            successes += 1
+                        else:
+                            errors[file_.name] = upload_result
     tvars = {
         'form': form,
         'uploaded_file': uploaded_file,

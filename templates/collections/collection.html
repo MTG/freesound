@@ -14,20 +14,6 @@
                             data-async-section-content-url="{% url 'collection-stats-section' collection.id %}?ajax=1">
                             <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
             </section>
-            <h4>Your collections</h4>
-            <div class="v-spacing-top-3">
-                <ul class="list-style-type-none">
-                    {% if collections_for_user %}
-                    {% for col in collections_for_user %}
-                        <li><a href="{% url "collections" col.id %}" {% if collection.id == col.id %}style="font-weight:bold"{% endif %}>{{col.name}}</a>
-                        <span class=text-light-grey> · {{col.num_sounds}} sound{{col.num_sounds|pluralize}}</span></li>
-                    {% endfor %}
-                    {% else %}
-                    <span class=text-light-grey> You don't have any collection yet... </span>
-                    {% endif %}
-                   <li><a class="cursor-pointer" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'create-collection' %}?ajax=1" data-reload-on-success= "true" title="Create new collection" aria-label="Create new collection">... Create a new collection {% bw_icon 'plus' %}</a></li>
-                </ul>    
-            </div>
             <div class="v-spacing-top-4">
                 {% if is_owner or is_maintainer%}
                 <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'edit-collection' collection.id %}" title="Edit collection">Edit collection</a>
@@ -39,8 +25,16 @@
         </div>    
         <div class="col-lg-8">
             {% if collection %}
-            by <a href="{% url "account" collection.user.username %}">{{collection.user.username}}</a>
-            <div>Description: {% if collection.description %}{{collection.description}} {% endif %}</div>
+            <div class="middle bw-sound-page__user v-spacing-top-3">
+                <div class="h-spacing-1 ellipsis">
+                    {% bw_user_avatar collection.user.profile.locations.avatar.M.url collection.user.username 40 %}
+                </div>
+                <div class="h-spacing-left-1">
+                    <a href="{% url 'account' collection.user.username %}">{{ collection.user.username | truncate_string:15 }}</a>
+                    <p class="text-grey">{{ collection.created|date:"F jS, Y" }}</p>
+                </div>
+            </div>
+            <div class="v-spacing-top-3">Description: {% if collection.description %}{{collection.description}} {% endif %}</div>
             <div>{% if collection.public %} {% bw_icon 'eye' %} Public {% else %} {% bw_icon 'eye-blocked' %} Private {% endif %}collection</div>
             <span>Maintainers: 
                 {% if maintainers %}{% for u in maintainers %}

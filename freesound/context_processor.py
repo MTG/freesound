@@ -78,6 +78,7 @@ def context_extra(request):
             'problems_logging_in_form': ProblemsLoggingInForm(),
             'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', 'no') == 'yes',  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
             'enable_collections': settings.ENABLE_COLLECTIONS,
+            'max_sounds_per_collection': settings.MAX_SOUNDS_PER_COLLECTION,
         })
     
     return tvars

@@ -22,55 +22,33 @@
         <div class="text-black v-spacing-top-1 padding-right-2 v-spacing-1">
             {% if collection.description %}
                 {% with collection.description|striptags|safe as preprocessed_description %}
-                <div {% if preprocessed_description|wordcount >= 20%}title="{{ preprocessed_description|truncatewords_html:200|force_escape }}"{% endif %}>
-                    {{ preprocessed_description|truncatewords_html:20 }}
+                <div {% if preprocessed_description|wordcount >= 10%}title="{{ preprocessed_description|truncatewords_html:200|force_escape }}"{% endif %}>
+                    {{ preprocessed_description|truncatewords_html:10 }}
                 </div>
                 {% endwith %}
             {% else %}
                 This collection has no description.
             {% endif %}
         </div>
-        <!--{% with pack.get_pack_tags_bw as tags %}
-            {% if tags %}
-                <div class="right wrap">
-                {% for tag in tags|slice:":5" %}
-                    {% bw_tag tag.name 1 '' tag.browse_url %}
-                {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}-->
     </div>
     <div class="between middle v-spacing-2">
         <div class="">
             <div class="middle text-grey h-spacing-1">
                 <div class="h-spacing-1">
-                    {% bw_user_avatar collection.user_profile_locations.avatar.S.url collection.user.username 32 %}
+                    {% bw_user_avatar collection.user.profile.locations.avatar.S.url collection.user.username 32 %}
                 </div>
                 <a href="{% url 'account' collection.user %}">{{ collection.user | truncate_string:15 }}</a>
-                <span class="h-spacing-left-1 text-light-grey">{{ collection.created|date:"F jS, Y" }}</span>
             </div>
         </div>
         <div class="text-light-grey right padding-right-1">
             <div title="{{ collection.num_sounds|bw_intcomma }} sound{{ collection.num_sounds|pluralize }}">
-                <!--<a href="{{ pack.get_pack_sounds_in_search_url }}" class="bw-link--grey-light">-->
-                    <span class="bw-icon-wave"></span> {{ collection.num_sounds|formatnumber }}
-                <!--</a>-->
+                <span class="bw-icon-wave"></span> {{ collection.num_sounds|formatnumber }}
             </div>
-            <!--{% if pack.has_geotags %}
-                <div class="h-spacing-left-2" title="Pack has geotags">
-                    <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'pack-geotags' pack.user.username pack.id %}?ajax=1" class="bw-link--grey-light">
-                        <span class="bw-icon-pin"></span>
-                    </a>
-                </div>
-            {% endif %}-->
             <div class="h-spacing-left-2" title="{{ collection.num_downloads|bw_intcomma }} download{{ collection.num_downloads|pluralize }}">
                 <a href="{% url 'download-collection' collection.id %}" class="bw-link--grey-light">
                     <span class="bw-icon-download"></span> {{ collection.num_downloads|formatnumber }}
                 </a>
             </div>
-            <!--<div class="h-spacing-left-2" title="License: {{ collection.license_summary_name_and_id.0 }}">
-                <span class="bw-icon-{{ pack.license_bw_icon_name }}"></span>
-            </div>-->
         </div>
     </div>
 </div>

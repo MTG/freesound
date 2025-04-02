@@ -189,7 +189,7 @@ class CollectionEditForm(forms.ModelForm):
         self.fields['public'].label = "Visibility"
 
         if self.instance.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION: 
-           self.fields['collection_sounds'].help_text="You have reached the maximum number of sounds available for a collection. " \
+           self.fields['collection_sounds'].help_text=f"You have reached the maximum number of sounds available for a collection ({settings.MAX_SOUNDS_PER_COLLECTION}). " \
            "In order to add new sounds, first remove some of the current ones."
 
         if self.instance.is_default_collection:

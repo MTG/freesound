@@ -2,9 +2,9 @@
 {% load static %}
 {% load bw_templatetags %}
 
-{% block id %}collectSoundModal{% endblock %}
+{% block id %}addSoundToCollectionModal{% endblock %}
 {% block extra-class %}{% if request.user.is_authenticated %}modal-width-60{% endif %}{% endblock %}
-{% block aria-label %}Collect sound modal{% endblock %}
+{% block aria-label %}Add sound to collection modal{% endblock %}
 
 {% block body %}
 <div class="col-12">
@@ -39,7 +39,7 @@
         {% endif %}
         {% if full_collections%}
             <div class="v-spacing-2">
-            {% bw_icon 'atom' %}The following collections have reached the maximum number of sounds allowed (250):
+            {% bw_icon 'atom' %}The following collections have reached the maximum number of sounds allowed ({{max_sounds_per_collection}}):
             {% for col in full_collections %}
             <span class="text-black font-weight-bold">{{col.name}}</span>{% if not forloop.last%},{% endif %}
             {% endfor %}

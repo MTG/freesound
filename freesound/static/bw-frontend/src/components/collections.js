@@ -17,9 +17,9 @@ const toggleNewCollectionNameDiv = (select, newCollectionNameDiv) => {
 const initCollectionFormModal = () => {
     
     // Modify the form structure to add a "Category" label inline with the select dropdown
-    const modalContainer = document.getElementById('collectSoundModal');
+    const modalContainer = document.getElementById('addSoundToCollectionModal');
     // To display the selector in case of an error in form, the following function is needed, despite it being called in
-    // handleGenericModal. TODO: this needs an improvement so it's only called when necessary
+    // handleGenericModal. 
     initializeStuffInContainer(modalContainer, false, false);
     const selectElement = modalContainer.getElementsByTagName('select')[0];
     const wrapper = document.createElement('div');
@@ -111,17 +111,6 @@ const prepareAddMaintainersModalAndFields = (container) => {
         removeMaintainersButton.disabled = true;
         
         const selectedMaintainersDestinationElement = addMaintainersButton.parentNode.parentNode.querySelector('.bw-object-selector-container[data-type="users"]');
-        /*
-        USEFUL NOTES AFTER DEBUGGING:
-        
-        The function updateObjectSelectorDataProperties in charge of defining the selectedIds and unselectedIds for each
-        selector does not work for maintainers. Instead it is only triggered once the user interacts with a maintainer checkbox.
-        Data might get overwritten as this works simultaneously with addSoundsModal.js file. The thing is that in
-        updateObjectSelectorDataProperties, the "call stack" states that originally, the function is called from here (line 175).
-        Therefore, the definition of selectedMaintainersDestinationElement somehow is wrong or confused with the selectedSoundsDestinationElement.
-        I tried to filter this using the above queryselector but it does not work. I guess this might have something to do with the file
-        collectionEdit.js.
-        */
         initializeObjectSelector(selectedMaintainersDestinationElement, (element) => {
             removeMaintainersButton.disabled = element.dataset.selectedIds == "" 
         })

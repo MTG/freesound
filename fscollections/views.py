@@ -81,6 +81,8 @@ def collections_for_user(request):
     return render(request, 'collections/your_collections.html', tvars)
 
 def collection_stats_section(request, collection_id):
+    # TODO: this tries to imitate the pack_stats_section behaviour despite a lack of comprehension
+    # on cache behaviour, so the stats shown by this are not properly updated
     if not request.GET.get('ajax'):
         return HttpResponseRedirect(reverse('your-collections'))
     collection = get_object_or_404(Collection, id=collection_id)
@@ -126,7 +128,7 @@ def add_sound_to_collection(request, sound_id):
              'full_collections': full_collections
              }
 
-    return render(request, 'collections/modal_collect_sound.html', tvars)
+    return render(request, 'collections/modal_add_sound_to_collection.html', tvars)
 
 def create_collection(request):
     if not request.GET.get('ajax'):

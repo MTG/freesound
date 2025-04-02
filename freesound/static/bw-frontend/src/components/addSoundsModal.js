@@ -59,8 +59,12 @@ const prepareAddSoundsModalAndFields = (container) => {
                 checkbox.remove()
             })
         }
-        if(soundsInput.value.split(',').length >= 4 && soundsInput.id === "collection_sounds"){
+
+        if(soundsInput.id === "collection_sounds"){
+            const maxSounds = document.getElementById('config').dataset.maxSounds;
+            if (soundsInput.value.split(',').length >= maxSounds){
                 addSoundsButton.disabled = true
+            }
         }
 
         removeSoundsButton.addEventListener('click', (evt) => {
@@ -74,7 +78,7 @@ const prepareAddSoundsModalAndFields = (container) => {
             updateObjectSelectorDataProperties(selectedSoundsDestinationElement);
             const selectedSoundsHiddenInput = document.getElementById(addSoundsButton.dataset.selectedSoundsHiddenInputId);
             selectedSoundsHiddenInput.value = selectedSoundsDestinationElement.dataset.unselectedIds;
-            if(selectedSoundsHiddenInput.value.split(',').length < 4 && selectedSoundsHiddenInput.id === "collection_sounds"){
+            if(selectedSoundsHiddenInput.value.split(',').length < maxSounds && selectedSoundsHiddenInput.id === "collection_sounds"){
                 addSoundsButton.disabled = false;
             }
             removeSoundsButton.disabled = true;

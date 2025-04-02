@@ -75,7 +75,7 @@ class UserUploadAndDescribeSounds(TestCase):
 
     @override_uploads_path_with_temp_directory
     @mock.patch('general.tasks.process_before_description.delay')
-    def test_handle_duplicate_filename_in_describe_queue(self, pathced_method):
+    def test_handle_duplicate_filenames_in_description_queue(self, pathced_method):
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
 
@@ -88,7 +88,8 @@ class UserUploadAndDescribeSounds(TestCase):
 
         resp = self.client.post("/home/upload/html/", {'files': [f1]})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(os.listdir(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), list(f))
+        errors = resp.context['errors']
+        self.assertIn('sound pending description',errors[filename])
 
     @override_uploads_path_with_temp_directory
     def test_select_uploaded_files_to_describe(self):

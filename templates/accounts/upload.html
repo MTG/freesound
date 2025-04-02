@@ -59,7 +59,10 @@
                     {% if errors %}
                     <p>
                         <b>There were errors uploading the files:</b>
-                        <ul>{% for file in errors %}<li>{{ file }}</li>{% endfor %}</ul>
+                        <ul>{% for file, msg in errors.items %}<li>
+                            {{ file }} 
+                            {% if msg %}<span style="color: #ff3546 "> {{msg}} {%endif%}</span>
+                        </li>{% endfor %}</ul>
                     </p>
                     {% endif %}
                 </div>

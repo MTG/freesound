@@ -12,9 +12,9 @@ class CollectionTest(TestCase):
     fixtures = ['licenses', 'sounds']
 
     def setUp(self):
-        self.user = User.objects.create(username='testuser', email='testuser@freesound.org')
-        self.maintainer = User.objects.create(username='maintaineruser', email='maintainer@freesound.org')
-        self.external_user = User.objects.create(username='external_user', email='externaluser@freesound.org')
+        self.user = User.objects.create_user(username='testuser', email='testuser@freesound.org')
+        self.maintainer = User.objects.create_user(username='maintaineruser', email='maintainer@freesound.org')
+        self.external_user = User.objects.create_user(username='external_user', email='externaluser@freesound.org')
         ___, ___, sounds = create_user_and_sounds(num_sounds=3, user=self.user, processing_state="OK", moderation_state="OK")
         self.sound = sounds[0]
         self.sound1 = sounds[1]

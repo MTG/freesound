@@ -32,6 +32,11 @@ class DonationAdmin(admin.ModelAdmin):
     list_display = ('id', 'email', 'user', 'amount', 'currency', 'created', )
     search_fields = ('=user__username', '=email', )
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related('user')
+        return qs
+
     def has_change_permission(self, request, obj=None):
         return False
 

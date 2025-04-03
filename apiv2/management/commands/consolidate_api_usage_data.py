@@ -24,8 +24,10 @@ import logging
 from django.core.cache import caches
 from django.utils import timezone
 
-from utils.management_commands import LoggingBaseCommand
 from apiv2.models import ApiV2Client, APIClientDailyUsageHistory
+from utils.cache import get_all_keys_matching_pattern
+from utils.management_commands import LoggingBaseCommand
+
 
 
 console_logger = logging.getLogger("console")
@@ -49,7 +51,7 @@ class Command(LoggingBaseCommand):
             
             # Get cache keys that match a pattern. Note that using Django's default redis client, this requires some special trickery
             monitoring_key_pattern = f'*{date_filter.year}-{date_filter.month}-{date_filter.day}_*'
-            cache_keys = [k.decode().split(':')[-1] for k in cache_api_monitoring._cache.get_client().keys(monitoring_key_pattern)]
+            cache_keys = get_all_keys_matching_pattern(monitoring_key_pattern, cache_api_monitoring) 
 
             for key, count in cache_api_monitoring.get_many(cache_keys).items():
                 try:

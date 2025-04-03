@@ -74,7 +74,7 @@ from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsExce
     get_duration_from_processing_before_describe_files, \
     get_samplerate_from_processing_before_describe_files
 from utils.text import remove_control_chars
-from utils.username import redirect_if_old_username_or_404
+from utils.username import redirect_if_old_username, get_parameter_user_or_404
 
 web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
@@ -206,7 +206,7 @@ def front_page(request):
     return render(request, 'front.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def sound(request, username, sound_id):
     try:
         sound = Sound.objects.prefetch_related("tags")\
@@ -308,7 +308,7 @@ def after_download_modal(request):
         return HttpResponse()
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @transaction.atomic()
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated:
@@ -342,7 +342,7 @@ def sound_download(request, username, sound_id):
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @transaction.atomic()
 def pack_download(request, username, pack_id):
     if not request.user.is_authenticated:
@@ -518,20 +518,24 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                     packs_to_process.append(old_pack)
 
         if data["remove_geotag"]:
-            if sound.geotag:
+            if hasattr(sound, 'geotag'):
                 sound.geotag.delete()
                 sound.geotag = None
         else:
             if data["lat"] and data["lon"] and data["zoom"]:
-                if sound.geotag:
+                if hasattr(sound, 'geotag'):
                     sound.geotag.lat = data["lat"]
                     sound.geotag.lon = data["lon"]
                     sound.geotag.zoom = data["zoom"]
                     sound.geotag.should_update_information = True
                     sound.geotag.save()
                 else:
-                    sound.geotag = GeoTag.objects.create(
-                        lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
+                    GeoTag.objects.create(
+                        sound=sound,
+                        lat=data["lat"],
+                        lon=data["lon"],
+                        zoom=data["zoom"]
+                    )
 
         sound_sources = data["sources"]
         if sound_sources != sound.get_sound_sources_as_set():
@@ -625,9 +629,9 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                             bst_category=element.bst_category,
                             license=element.license,
                             pack=element.pack.id if element.pack else None,
-                            lat=element.geotag.lat if element.geotag else None,
-                            lon=element.geotag.lon if element.geotag else None,
-                            zoom=element.geotag.zoom if element.geotag else None,
+                            lat=element.geotag.lat if hasattr(element, 'geotag') else None,
+                            lon=element.geotag.lon if hasattr(element, 'geotag') else None,
+                            zoom=element.geotag.zoom if hasattr(element, 'geotag') else None,
                             sources=','.join([str(item) for item in sound_sources_ids]))
             else:
                 sound_sources_ids = []
@@ -801,7 +805,7 @@ def _remix_group_view_helper(request, group_id):
     }
     return tvars
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def remixes(request, username, sound_id):
     if not request.GET.get('ajax'):
         # If not loaded as modal, redirect to sound page with parameter to open modal
@@ -820,7 +824,7 @@ def remixes(request, username, sound_id):
     return render(request, 'sounds/modal_remix_group.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SIMILARITY_GROUP, block=True)
 def similar(request, username, sound_id):
     if not request.GET.get('ajax'):
@@ -857,7 +861,7 @@ def similar(request, username, sound_id):
     return render(request, 'sounds/modal_similar_sounds.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @transaction.atomic()
 def pack(request, username, pack_id):
     try:
@@ -894,7 +898,7 @@ def pack(request, username, pack_id):
     return render(request, 'sounds/pack.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def pack_stats_section(request, username, pack_id):
     if not request.GET.get('ajax'):
         raise Http404  # Only accessible via ajax
@@ -910,19 +914,20 @@ def pack_stats_section(request, username, pack_id):
     return render(request, 'sounds/pack_stats_section.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def packs_for_user(request, username):
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     return HttpResponseRedirect(user.profile.get_user_packs_in_search_url())
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def for_user(request, username):
-    user = request.parameter_user
+    user = get_parameter_user_or_404(request)
     return HttpResponseRedirect(user.profile.get_user_sounds_in_search_url())
     
 
-@redirect_if_old_username_or_404
+
+@redirect_if_old_username
 @transaction.atomic()
 def flag(request, username, sound_id):
     if not request.GET.get('ajax'):
@@ -1005,7 +1010,7 @@ def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def display_sound_wrapper(request, username, sound_id):
     try:
         sound_obj = Sound.objects.bulk_query_id(sound_id)[0]
@@ -1068,7 +1073,7 @@ def embed_iframe(request, sound_id, player_size):
         raise Http404
     tvars = {
         'sound': sound,
-        'user_profile_locations': Profile.locations_static(sound.user_id, getattr(sound, 'user_has_avatar', False)),
+        'user_profile_locations': Profile.locations_static(sound.user_id, sound.user.profile.has_avatar),
         'username_and_filename': f'{sound.username} - {sound.original_filename}',
         'size': player_size,
         'use_spectrogram': request.GET.get('spec', None) == '1',

@@ -86,14 +86,18 @@ account a number of things:
 * In case a user object exists, is the user marked as having been deleted? (check `user.profile.is_anonymized_user`) 
 * In case there's no `User` object with such username, is there any `OldUsername` object which maps the username in the
   URL with a `User` object in DB?
-  
-To deal with these checks, we use the `utils.username.raise_404_if_user_is_deleted` and 
-`utils.username.redirect_if_old_username_or_404` decorators in view functions. The first one will try to find a user
+
+To deal with these checks, we use the `utils.username.raise_404_if_user_is_deleted` and
+`utils.username.redirect_if_old_username` decorators in view functions. The first one will try to find a user
 object (checking for old usernames as well) and if it can't find it or the user is marked as deleted, it will raise
 HTTP 404 error. The second one will try to find a user object (also considering old usernames) and do an HTTP redirect
-with an updated username if user was found in the old usernames table.
+with an updated username if user was found in the old usernames table. Note that when using this second decorator, a
+`parameter_user` property will be set to the request object so that the view can use the corresponding `User` object without
+doing an extra database query. In that case however, `request.parameter_user` can be `None` if no user exists. To that end,
+it is advisable to get the `parameter_user` object using a util function we provide, `user = get_parameter_user_or_404(request)`,
+which will raise 404 if the user does not exist.
 
-In general, we should use `utils.username.redirect_if_old_username_or_404` in **all public views** that have username
+In general, we should use `utils.username.redirect_if_old_username` in **all public views** that have username
 in the URL path. For login-required views (using `@login_required` decorator) we are not supposed to use that decorator
 because most of them won't include username in the URL and also there should be no links pointing to these URLs with
 old usernames. In addition, **if these public views should should not be reachable in case users have been anonymized**,
@@ -101,7 +105,7 @@ then we should also use `utils.username.raise_404_if_user_is_deleted`. When usin
 to use them in that order:
 
 ```
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def view_function(request, username, ...):
     ...
@@ -300,3 +304,16 @@ After doing all the changes follow this list as a guideline to check if things a
 * Add to Github team
 * Add to Slack channel
 * Give access to Sentry/Graylog
+
+
+## Making a dump of the local development database
+
+To make a dump of the database in a development environment, the following commands can be used:
+
+````
+docker compose up db -d  # Run db container in the background
+docker compose run --rm --user $(id -u):$(id -g) db pg_dump postgres://freesound:localfreesoundpgpassword@db/freesound -f /freesound-data/db_dev_dump/NAME_OF_THE_DUMP.sql
+docker compose run --rm --user $(id -u):$(id -g) db  zstd /freesound-data/db_dev_dump/NAME_OF_THE_DUMP.sql  # This is to compress the file, will be saved in `freesound-data/db_dev_dump/NAME_OF_THE_DUMP.sql.zst`
+````
+
+This will create a file inside the `freesound-data/db_dev_dump` folder, which is mounted in the `db` service. This dump can then be loaded following instructions like in step 9 of the [main README file](https://github.com/MTG/freesound) (note that if the dump is compressed you need to decompress it first). I

@@ -67,9 +67,9 @@
             </div>
         </div>
         {% endif %}
-        {% if sound.show_moderation_ticket and sound.ticket_key and player_size != 'moderation' %}
+        {% if sound.show_moderation_ticket and sound.ticket.key and player_size != 'moderation' %}
         <div class="v-spacing-3 v-spacing-top-negative-2">
-            <a class="bw-link--black" href="{% url 'tickets-ticket' sound.ticket_key %}">{% bw_icon "file-text" %} See moderation ticket</a>
+            <a class="bw-link--black" href="{% url 'tickets-ticket' sound.ticket.key %}">{% bw_icon "file-text" %} See moderation ticket</a>
         </div>
         {% endif %}
         {% if sound.show_processing_status or player_size == 'moderation' %}
@@ -143,13 +143,13 @@
                 </div>
                 <div class="middle text-light-grey bw_sound-info-extended right">
                     {% if sound.pack_id %}
-                    <div class="h-spacing-left-2" title="Pack: {{ sound.pack_name }}">
+                    <div class="h-spacing-left-2" title="Pack: {{ sound.pack.name }}">
                         <a href="{% url 'pack' sound.username sound.pack_id %}" class="bw-link--grey-light">
-                            <span class="bw-icon-stack"></span> {{ sound.pack_name|truncatechars:20 }}
+                            <span class="bw-icon-stack"></span> {{ sound.pack.name|truncatechars:20 }}
                         </a>
                     </div>
                     {% endif %}
-                    {% if sound.geotag_id %}
+                    {% if sound.geotag %}
                     <div class="h-spacing-left-2" title="Geotag: {{ sound.get_geotag_name }}">
                         <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'sound-geotag' sound.username sound.id %}?ajax=1" class="bw-link--grey-light">
                             <span class="bw-icon-pin"></span> {{ sound.get_geotag_name|truncatechars:20 }}

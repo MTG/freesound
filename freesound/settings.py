@@ -365,7 +365,6 @@ RANDOM_SOUND_OF_THE_DAY_CACHE_KEY = "random_sound"
 #Geotags  stuff
 # Cache key for storing "all geotags" bytearray
 ALL_GEOTAGS_BYTEARRAY_CACHE_KEY = "geotags_bytearray"
-USE_TEXTUAL_LOCATION_NAMES_IN_BW = True
 
 # Avatar background colors (only BW)
 from utils.audioprocessing.processing import interpolate_colors
@@ -506,6 +505,7 @@ FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
 AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
 BIRDNET_ANALYZER_NAME = 'birdnet_v1'
 FSDSINET_ANALYZER_NAME = 'fsd-sinet_v1'
+BST_ANALYZER_NAME = 'bst-extractor_v1'
  
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {
@@ -554,6 +554,13 @@ ANALYZERS_CONFIGURATION = {
             ('num_detections', 'fsdsinet_detections_count', int),
         ]
     },
+    BST_ANALYZER_NAME: {
+         'max_jobs_in_queue': 5000,
+        'descriptors_map': [
+            ('bst_top_level', 'bst_top_level', str), 
+            ('bst_second_level', 'bst_second_level', str),
+        ]
+    }
 }
 
 # -------------------------------------------------------------------------------
@@ -643,13 +650,23 @@ SOLR5_BASE_URL = "http://search:8983/solr"
 SOLR9_BASE_URL = "http://search:8983/solr"
 
 SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
+    BST_ANALYZER_NAME: {
+        'vector_property_name': 'clap_embedding', 
+        'vector_size': 512,
+        'l2_norm': True
+    },
+    FSDSINET_ANALYZER_NAME: {
+        'vector_property_name': 'embeddings', 
+        'vector_size': 512,
+        'l2_norm': True
+    },
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {
         'vector_property_name': 'sim_vector', 
         'vector_size': 100,
         'l2_norm': True
     }
 }
-SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = FREESOUND_ESSENTIA_EXTRACTOR_NAME
+SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = BST_ANALYZER_NAME
 SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY = 500
 USE_SEARCH_ENGINE_SIMILARITY = False
 
@@ -815,7 +832,8 @@ OAUTH2_PROVIDER = {
     'OAUTH2_VALIDATOR_CLASS': 'apiv2.oauth2_validators.OAuth2Validator',
     'REQUEST_APPROVAL_PROMPT': 'auto',
     'CLIENT_ID_GENERATOR_CLASS': 'apiv2.apiv2_utils.FsClientIdGenerator',
-    'PKCE_REQUIRED': False
+    'PKCE_REQUIRED': False,
+    'APPLICATION_ADMIN_CLASS': 'apiv2.oauth2_admin.ApplicationAdmin'
 }
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 
@@ -946,6 +964,7 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     INSTALLED_APPS += ['debug_toolbar']
 
     DEBUG_TOOLBAR_PANELS = [
+        'debug_toolbar.panels.history.HistoryPanel',
         'debug_toolbar.panels.versions.VersionsPanel',
         'debug_toolbar.panels.timer.TimerPanel',
         'debug_toolbar.panels.settings.SettingsPanel',
@@ -954,9 +973,9 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
         'debug_toolbar.panels.sql.SQLPanel',
         'debug_toolbar.panels.staticfiles.StaticFilesPanel',
         'debug_toolbar.panels.templates.TemplatesPanel',
+        'debug_toolbar.panels.alerts.AlertsPanel',
         'debug_toolbar.panels.cache.CachePanel',
         'debug_toolbar.panels.signals.SignalsPanel',
-        'debug_toolbar.panels.logging.LoggingPanel',
         'debug_toolbar.panels.redirects.RedirectsPanel',
     ]
 

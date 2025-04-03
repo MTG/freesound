@@ -26,10 +26,15 @@ from .models import Ticket
 
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):
-    raw_id_fields = ('sender', 'assignee', 'sound') 
+    raw_id_fields = ('sender', 'assignee', 'sound')
     list_display = ('id', 'status', 'assignee', 'sender', 'sound_link', 'created')
     list_filter = ('status', )
     search_fields = ('=sender__username', '=sound__id', )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related('sender', 'assignee', 'sound')
+        return qs
 
     def has_add_permission(self, request):
         return False

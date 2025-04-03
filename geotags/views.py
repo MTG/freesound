@@ -39,7 +39,7 @@ from sounds.models import Sound, Pack
 from utils.logging_filters import get_client_ip
 from utils.search.search_query_processor import SearchQueryProcessor
 from utils.search.search_sounds import perform_search_engine_query
-from utils.username import redirect_if_old_username_or_404, raise_404_if_user_is_deleted
+from utils.username import redirect_if_old_username, raise_404_if_user_is_deleted
 
 web_logger = logging.getLogger('web')
 
@@ -94,7 +94,7 @@ def geotags_barray(request, tag=None):
             return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 @cache_page(60 * 15)
 def geotags_for_user_barray(request, username):
@@ -111,7 +111,7 @@ def geotags_for_user_barray(request, username):
     return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def geotags_for_user_latest_barray(request, username):
     sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
@@ -201,13 +201,13 @@ def geotags(request, tag=None):
     return render(request, 'geotags/geotags.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 @raise_404_if_user_is_deleted
 def for_user(request, username):
     tvars = _get_geotags_query_params(request)
     tvars.update({  # Overwrite tag and username query params (if present)
         'tag': None,
-        'username': request.parameter_user.username,
+        'username': username,
         'pack': None,
         'sound': None,
         'url': reverse('geotags-for-user-barray', args=[username]),
@@ -216,7 +216,7 @@ def for_user(request, username):
     return render(request, 'geotags/geotags.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def for_sound(request, username, sound_id):
     sound = get_object_or_404(
         Sound.objects.select_related('geotag', 'user'), id=sound_id)
@@ -242,7 +242,7 @@ def for_sound(request, username, sound_id):
         return render(request, 'geotags/geotags.html', tvars)
 
 
-@redirect_if_old_username_or_404
+@redirect_if_old_username
 def for_pack(request, username, pack_id):
     pack = get_object_or_404(Pack.objects.select_related('user'), id=pack_id)
     tvars = _get_geotags_query_params(request)

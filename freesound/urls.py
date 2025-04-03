@@ -42,6 +42,7 @@ from apiv2.apiv2_utils import apiv1_end_of_life_message
 
 admin.autodiscover()
 
+
 urlpatterns = [
     path('', sounds.views.front_page, name='front-page'),
 
@@ -93,7 +94,7 @@ urlpatterns = [
 
     path('browse/', sounds.views.sounds, name="sounds"),
     path('browse/tags/', tags.views.tags, name="tags"),
-    re_path(r'^browse/tags/(?P<multiple_tags>[\w//-]+)/$', tags.views.tags, name="tags"),
+    re_path(r'^browse/tags/(?P<multiple_tags>[\w//-]+)/$', tags.views.multiple_tags_lookup, name="tags"),
     path('browse/packs/', sounds.views.packs, name="packs"),
     path('browse/random/', sounds.views.random, name="sounds-random"),
     re_path(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
@@ -159,7 +160,6 @@ urlpatterns = [
          name="django.contrib.sitemaps.views.sitemap"
     ),
 ]
-
 urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]
 
 # if you need django to host the admin files...

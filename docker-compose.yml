@@ -150,7 +150,8 @@ services:
         depends_on:
             - rabbitmq
 
-    # BST analyzer - needs image to be built from freesound-audio-analyzers repository
+    # BST-Extractor analyzer - needs image to be built from freesound-audio-analyzers repository
+    # Note this worker must be run with --pool=threads in order for tensorflow predictions to work inside celery
     worker_analyzer6:
         profiles: ["analyzers", "all"]
         image: bst-extractor_v1
@@ -160,7 +161,6 @@ services:
         command: celery -A main worker --pool=threads --concurrency=1 -l info -Q bst-extractor_v1
         depends_on:
             - rabbitmq
-            
     # Similarity http server
     similarity:
         profiles: ["all"]

@@ -37,7 +37,7 @@ from utils.test_helpers import create_test_files, override_uploads_path_with_tem
 
 
 class UserUploadAndDescribeSounds(TestCase):
-    fixtures = ['licenses', 'user_groups', 'moderation_queues', 'email_preference_type']
+    fixtures = ['licenses', 'user_groups', 'email_preference_type']
 
     @skipIf(True, "Test not ready for new uploader")
     @override_uploads_path_with_temp_directory

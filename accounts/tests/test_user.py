@@ -645,13 +645,13 @@ class UserEmailsUniqueTestCase(TestCase):
                                 {'username': self.user_a, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Now try with user_b and user_c. User b had a shared email with user_c. Even if user_b's email was
         # not changed, he is still redirected to the duplicate email cleanup page
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
@@ -670,13 +670,13 @@ class UserEmailsUniqueTestCase(TestCase):
         # Also check that related SameUser objects have been removed
         self.assertEqual(SameUser.objects.all().count(), 0)
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Now next time user_c tries to go to messages again, there is only one redirect (like for user_a)
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Also if user_b logs in, redirect goes straight to messages
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
@@ -701,13 +701,13 @@ class UserEmailsUniqueTestCase(TestCase):
         # Also check that related SameUser objects have been removed
         self.assertEqual(SameUser.objects.all().count(), 0)
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Now next time user_b tries to go to messages again, there is only one redirect (like for user_a)
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Also if user_c logs in, redirect goes straight to messages
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
@@ -733,13 +733,13 @@ class UserEmailsUniqueTestCase(TestCase):
         # Also check that related SameUser objects have been removed
         self.assertEqual(SameUser.objects.all().count(), 0)
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Now next time user_b tries to go to messages again, there is only one redirect (like for user_a)
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))
 
-        resp = self.client.get(reverse('logout'))
+        self.client.logout()
         # Also if user_c logs in, redirect goes straight to messages
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})

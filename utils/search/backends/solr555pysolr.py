@@ -196,25 +196,24 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["original_filename"] = remove_control_chars(getattr(sound, "original_filename"))
         document["description"] = remove_control_chars(getattr(sound, "description"))
         document["tag"] = list({t.lower() for t in getattr(sound, "tag_array")})
-        document["license"] = getattr(sound, "license_name")
-        
+        document["license"] = sound.license.name
+
         if document["num_ratings"] >= settings.MIN_NUMBER_RATINGS:
             document["avg_rating"] = getattr(sound, "avg_rating")
         else:
             document["avg_rating"] = 0
 
-        if getattr(sound, "pack_id"):
-            document["pack"] = remove_control_chars(getattr(sound, "pack_name"))
-            document["grouping_pack"] = str(getattr(sound, "pack_id")) + "_" + remove_control_chars(
-                getattr(sound, "pack_name"))
+        if sound.pack:
+            document["pack"] = remove_control_chars(sound.pack.name)
+            document["grouping_pack"] = str(sound.pack.id) + "_" + remove_control_chars(sound.pack.name)
         else:
             document["grouping_pack"] = str(getattr(sound, "id"))
 
         document["is_geotagged"] = False
-        if getattr(sound, "geotag_id"):
+        if hasattr(sound, "geotag"):
             document["is_geotagged"] = True
-            if not math.isnan(getattr(sound, "geotag_lon")) and not math.isnan(getattr(sound, "geotag_lat")):
-                document["geotag"] = str(getattr(sound, "geotag_lon")) + " " + str(getattr(sound, "geotag_lat"))
+            if not math.isnan(sound.geotag.lon) and not math.isnan(sound.geotag.lat):
+                document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)
 
         document["in_remix_group"] = getattr(sound, "was_remixed") or getattr(sound, "is_remix")
 
@@ -233,14 +232,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
         
         # Analyzer's output
+        sound_analysis_dict = {an.analyzer: an.analysis_data for an in sound.analyses.all()}
         for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
             if 'descriptors_map' in analyzer_info:
-                query_select_name = analyzer_name.replace('-', '_')
-                analysis_data = getattr(sound, query_select_name, None)
+                analysis_data = sound_analysis_dict.get(analyzer_name, None)
                 if analysis_data is not None:
                     # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on
                     # the value type (see SOLR_DYNAMIC_FIELDS_SUFFIX_MAP) so solr knows how to treat when filtering, etc.
-                    for key, value in json.loads(analysis_data).items():
+                    for key, value in analysis_data.items():
                         if isinstance(value, list):
                             # Make sure that the list is formed by strings
                             value = [f'{item}' for item in value]
@@ -564,7 +563,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     vector = similar_to  # we allow vectors to be passed directly
                 else:
                     # similar_to should be a sound_id
-                    sound = Sound.objects.get(id=similar_to)
+                    try:
+                        sound = Sound.objects.get(id=similar_to)
+                    except Sound.DoesNotExist:
+                        # Return no results if sound does not exist
+                        return SearchResults(num_found=0)
                     vector = get_similarity_search_target_vector(sound.id, analyzer=similar_to_analyzer)                
                 vector_field_name = get_solr_dense_vector_search_field_name(config_options['vector_size'], config_options.get('l2_norm', False))
                 if vector is not None and vector_field_name is not None:

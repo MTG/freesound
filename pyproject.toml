@@ -1,3 +1,5 @@
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "freesound.test_settings"
 python_files = "test*.py"
+python_classes = ["Test*", "*Test"]
+addopts = "--ignore=utils/search/backends/test_search_engine_backend.py --ignore=search/management/commands/test_search_engine_backend.py"

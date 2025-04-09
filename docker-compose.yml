@@ -29,6 +29,7 @@ services:
         build:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
+            target: freesound
         init: true
         command: python manage.py runserver 0.0.0.0:8000
         volumes:

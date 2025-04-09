@@ -62,9 +62,9 @@ def generate_bytearray(sound_queryset_or_list):
                 num_sounds_in_bytearray += 1
         elif type(s) == dict:
             try:
-                lon, lat = s['geotag'][0].split(' ')
-                lat = max(min(float(lat), 90), -90) 
-                lon = max(min(float(lon), 180), -180) 
+                lon, lat = s['geotag'].split(' ')
+                lat = max(min(float(lat), 90), -90)
+                lon = max(min(float(lon), 180), -180)
                 packed_sounds.write(struct.pack("i", s['id']))
                 packed_sounds.write(struct.pack("i", int(lat * 1000000)))
                 packed_sounds.write(struct.pack("i", int(lon * 1000000)))

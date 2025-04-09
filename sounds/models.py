@@ -1955,11 +1955,11 @@ class SoundAnalysis(models.Model):
                 return not math.isinf(value) and not math.isnan(value)
             return True
 
-        if self.analysis_status == "OK" and \
-            'descriptors_map' in settings.ANALYZERS_CONFIGURATION.get(self.analyzer, {}):
+        analysis_configuration = settings.ANALYZERS_CONFIGURATION.get(self.analyzer, {})
+        if self.analysis_status == "OK" and 'descriptors_map' in analysis_configuration:
             analysis_results = self.get_analysis_data_from_file()
             if analysis_results:
-                descriptors_map = settings.ANALYZERS_CONFIGURATION[self.analyzer]['descriptors_map']
+                descriptors_map = analysis_configuration['descriptors_map']
                 analysis_data_for_db = {}
                 for file_descriptor_key_path, db_descriptor_key, _ in descriptors_map:
                     # TODO: here we could implement support for nested keys in the analysis file, maybe by accessing
@@ -1976,18 +1976,16 @@ class SoundAnalysis(models.Model):
     def get_analysis_data_from_file(self):
         """Returns the analysis data as stored in file or returns empty dict if no file exists. It tries
         extensions .json and .yaml as these are the supported formats for analysis results"""
-        if os.path.exists(self.analysis_filepath_base + '.json'):
-            try:
-                with open(self.analysis_filepath_base + '.json') as f:
-                    return json.load(f)
-            except Exception:
-                pass
-        if os.path.exists(self.analysis_filepath_base + '.yaml'):
-            try:
-                with open(self.analysis_filepath_base + '.yaml') as f:
-                    return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
-            except Exception:
-                pass
+        try:
+            with open(self.analysis_filepath_base + '.json') as f:
+                return json.load(f)
+        except Exception:
+            pass
+        try:
+            with open(self.analysis_filepath_base + '.yaml') as f:
+                return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
+        except Exception:
+            pass
         return {}
 
     def get_analysis_data(self):

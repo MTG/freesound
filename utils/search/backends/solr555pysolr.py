@@ -326,14 +326,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             "has_posts": False if post.thread.num_posts == 0 else True
         }
         return document
-    
+
     def get_dynamic_fields_map(self):
         if hasattr(self, '_dynamic_fields_map'):
             return self._dynamic_fields_map
         dynamic_fields_map = {}
         for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
             if 'descriptors_map' in analyzer_data:
-                descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
+                descriptors_map = analyzer_data['descriptors_map']
                 for _, db_descriptor_key, descriptor_type in descriptors_map:
                     if descriptor_type is not None:
                         dynamic_fields_map[db_descriptor_key] = '{}{}'.format(

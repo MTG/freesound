@@ -178,6 +178,14 @@ const prepareTagsFormFields = (container) => {
                 updateTags(inputElement, newTagsStr);
             }, 200);
         });
+
+        // Add click event listeners to the "add tag buttons" (if any). When clicked, these buttons will automatically add the tag to tge list
+        tagsFieldElement.getElementsByClassName('add-tag-button').forEach(button => {
+            button.addEventListener('click', evt => {
+                const tag = button.innerText
+                updateTags(inputElement, tag);
+            });
+        });
     });
 }
 

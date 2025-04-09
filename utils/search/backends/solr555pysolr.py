@@ -408,7 +408,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # that allows us to define our own filter syntax and then represent filters as some intermediate structure that can later
         # be converted to valid lucene/dismax syntax.
         query_filter = re.sub(r'\b([a-zA-Z_]+:)', r'+\1', query_filter)
-        query_filter = re.sub(r"(\+)\1+", r"\1", query_filter)  # This is to avoid having multiple + in a row if user already has added them
+        query_filter = re.sub(r'(\+)\1+', r'\1', query_filter)  # This is to avoid having multiple + in a row if user already has added them
+        query_filter = re.sub(r'(-)\+', r'\1', query_filter) # Removes added '+' when user has included a negation '-'
         if len(query_filter) > 0 and query_filter[-1] == '+':
             query_filter = query_filter[:-1]
         return query_filter

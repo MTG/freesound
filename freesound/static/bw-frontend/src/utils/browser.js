@@ -19,8 +19,8 @@ export const isDesktopMacOSWithSafari = () => {
 }
 
 function update_viewport_width_if_needed(){
-    const minWdth = isPhone() ? 1000: 600;
-    if (window.innerWidth < minWdth) {
+    const minWidth = isPhone() ? 1000: 600;
+    if (window.innerWidth < minWidth) {
         document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=0, initial-scale=0.8');
     } else {
         document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=0');

@@ -556,7 +556,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             # We fist set an empty query that will return no results and will be used by default if similarity can't be performed
             query.set_query('')
             if similar_to_analyzer in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS:
-                # Similarity search will find documents close to a target vector. This will match "child" sound documents (of content_type "similarity vectpor")
+                # Similarity search will find documents close to a target vector. This will match "child" sound documents (of content_type "similarity vector")
                 config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[similar_to_analyzer]
                 vector = None
                 if isinstance(similar_to, list):

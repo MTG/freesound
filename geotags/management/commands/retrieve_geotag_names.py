@@ -30,7 +30,7 @@ console_logger = logging.getLogger('console')
 
 class Command(LoggingBaseCommand):
 
-    help = 'Retreive geotag names using the mapbox API for geotags that have no information'
+    help = 'Retrieve geotag names using the mapbox API for geotags that have no information'
 
     def add_arguments(self, parser):
         parser.add_argument(

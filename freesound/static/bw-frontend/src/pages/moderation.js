@@ -126,7 +126,7 @@ const scrollWindowToSoundInfoElement = (soundId) => {
     }
 }
 
-const shouldInludeDeferredTickets = () => {
+const shouldIncludeDeferredTickets = () => {
     return includeDeferredTicketsCheckbox.checked;
 }
 
@@ -165,12 +165,12 @@ const correspondingTicketIsDeferred = (checkbox) => {
     return checkbox.closest('tr').dataset.ticketStatus === 'deferred';
 }
 
-const selectConsiderringDeferredStatus = (checkbox) => {
+const selectConsideringDeferredStatus = (checkbox) => {
     const ticketIsDeferred = correspondingTicketIsDeferred(checkbox);
     if (!ticketIsDeferred) {
         checkbox.checked = true;
     } else {
-        if (shouldInludeDeferredTickets()) {
+        if (shouldIncludeDeferredTickets()) {
             checkbox.checked = true;
         }
     }
@@ -178,7 +178,7 @@ const selectConsiderringDeferredStatus = (checkbox) => {
 
 selectAllButton.addEventListener('click', () => {
     ticketCheckboxes.forEach(checkbox => {
-        selectConsiderringDeferredStatus(checkbox);
+        selectConsideringDeferredStatus(checkbox);
     });
     postTicketsSelected();
 })
@@ -201,7 +201,7 @@ selectOtherFromSameUser.addEventListener('click', () => {
     ticketCheckboxes.forEach(checkbox => {
         const userId = checkbox.closest('tr').dataset.senderId;
         if (selectedTicketUserIds.indexOf(userId) !== -1) {
-            selectConsiderringDeferredStatus(checkbox);
+            selectConsideringDeferredStatus(checkbox);
         };
     });
     postTicketsSelected();

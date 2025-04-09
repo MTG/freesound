@@ -90,7 +90,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
 # This was the default serializer in django 1.6. Now we keep using it because
-# we saw some erros when running tests, in the future we should change to the
+# we saw some errors when running tests, in the future we should change to the
 # new one.
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
@@ -801,7 +801,7 @@ OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 # APIv2 throttling limits
 # Define API usage limit rates per defined throttling levels
 # Possible time units: second, minute, hour or day
-# Every level must include three limits, a burst limit, a sustained limit andan ip which are checked separately
+# Every level must include three limits, a burst limit, a sustained limit and an ip which are checked separately
 # Burst limit sets the maximum number of requests that an api client can do in a minute
 # Sustained limit sets the maximum number of requests that an api client can do in a day
 # Ip limit sets the maximum number of requests from different ips that a client can do in an hour

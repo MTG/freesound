@@ -81,10 +81,10 @@ class UserUploadAndDescribeSounds(TestCase):
             'describe': 'describe',
             'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
-        sesison_key_prefix = resp.url.split('session=')[1]
-        self.assertRedirects(resp, reverse('accounts-describe-sounds') + f'?session={sesison_key_prefix}')
-        self.assertEqual(self.client.session[f'{sesison_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
-        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{sesison_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
+        session_key_prefix = resp.url.split('session=')[1]
+        self.assertRedirects(resp, reverse('accounts-describe-sounds') + f'?session={session_key_prefix}')
+        self.assertEqual(self.client.session[f'{session_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
+        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{session_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
         
         # Selecting multiple file redirects to /home/describe/license/
         sounds_to_describe_idx = [1, 2, 3]
@@ -92,10 +92,10 @@ class UserUploadAndDescribeSounds(TestCase):
             'describe': 'describe',
             'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
         })
-        sesison_key_prefix = resp.url.split('session=')[1]
-        self.assertRedirects(resp, reverse('accounts-describe-license') + f'?session={sesison_key_prefix}')
-        self.assertEqual(self.client.session[f'{sesison_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
-        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{sesison_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
+        session_key_prefix = resp.url.split('session=')[1]
+        self.assertRedirects(resp, reverse('accounts-describe-license') + f'?session={session_key_prefix}')
+        self.assertEqual(self.client.session[f'{session_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
+        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{session_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
         
         # Selecting files to delete, deletes the files
         sounds_to_delete_idx = [1, 2, 3]
@@ -265,12 +265,12 @@ class BulkDescribe(TestCase):
         resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
         self.assertContains(resp, 'Validation results of the data file')
 
-        # Test that chosing option to delete existing BulkUploadProgress really does it
+        # Test that choosing option to delete existing BulkUploadProgress really does it
         resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]), data={'delete': True})
         self.assertRedirects(resp, reverse('accounts-manage-sounds', args=['pending_description']))  # Redirects to describe page after delete
         self.assertEqual(BulkUploadProgress.objects.filter(user=user).count(), 0)
 
-        # Test that chosing option to start describing files triggers bulk describe gearmnan job
+        # Test that choosing option to start describing files triggers bulk describe job
         bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
         resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]), data={'start': True})
         self.assertEqual(resp.status_code, 200)

@@ -88,7 +88,7 @@ class UtilsTest(TestCase):
         try:
             create_sound(user, sound_fields, process=False)
         except NoAudioException:
-            # If we try to upload the same file again it shuld also fail
+            # If we try to upload the same file again it should also fail
             sound_fields['dest_path'] = user_upload_path + "copy.wav"
             try:
                 create_sound(user, sound_fields, process=False)
@@ -112,10 +112,10 @@ class ShouldSuggestDonationTest(TestCase):
 
     fixtures = ['licenses']
 
-    def test_should_suggest_donation_probabilty_1(self):
+    def test_should_suggest_donation_probability_1(self):
 
         # In this set of tests 'should_suggest_donation' should return True or False depending on the decided criteria
-        # Probabilty is set to 1.0 to avoid ranomeness in the test
+        # Probability is set to 1.0 to avoid randomness in the test
         donations_settings, _ = DonationsModalSettings.objects.get_or_create()
         donations_settings.display_probability = 1.0
         donations_settings.save()
@@ -163,7 +163,7 @@ class ShouldSuggestDonationTest(TestCase):
             created=timezone.now())  # Change downloads date again to be recent (modal show be shown)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), True)
 
-    def test_should_suggest_donation_probabilty_0(self):
+    def test_should_suggest_donation_probability_0(self):
         # In this set of tests 'should_suggest_donation' should always return False as probability is set to 0.0
         donations_settings, _ = DonationsModalSettings.objects.get_or_create()
         donations_settings.display_probability = 0.0
@@ -254,10 +254,10 @@ class BulkDescribeUtils(TestCase):
                     self.assertEqual(lines_xls[j][header_value].lower(), lines_xlsx[j][header_value].lower())
                     self.assertEqual(lines_csv[j][header_value].lower(), lines_xls[j][header_value].lower())
 
-        # NOTE: more advance testing of this funciton would mean testing with different types of "good" and "bad" files
+        # NOTE: more advance testing of this function would mean testing with different types of "good" and "bad" files
         # for each of the formats. For the CSV case that would rather feasible as we can generate the files
-        # programatically. For the XLS and XLSX case we would need to rely on a third-party library to create XLS and
-        # XLSX files which would only be used for that. In any of the cases, we will never cover the myriard of
+        # programmatically. For the XLS and XLSX case we would need to rely on a third-party library to create XLS and
+        # XLSX files which would only be used for that. In any of the cases, we will never cover the myriad of
         # evil CSV/XLS/XLSX files that can be out there. I think it is better to make sure that in case of unexpected
         # error we show that message to the users instead of trying to cover all possible errors.
 
@@ -375,7 +375,7 @@ class BulkDescribeUtils(TestCase):
         csv_file_path = self.create_file_with_lines('test_descriptions.csv', [
             'audio_filename,name,tags,geotag,description,license,pack_name,is_explicit,username',
             'file1.wv,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1,new_username',  # User does not exist
-            'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # Invlaid num columns
+            'file2.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,1',  # Inlaid num columns
             'file3.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0,testuser',  # All fields OK
         ], csv_file_base_path)
         header, lines = get_csv_lines(csv_file_path)
@@ -448,7 +448,7 @@ class BulkDescribeUtils(TestCase):
 
         # Run again using 'force_import' AND 'delete_already_existing' and existing sounds will be removed before
         # creating the new ones
-        # NOTE: first we copy back the files that failed MD5 check as files are discarted (deleted) when MD5 fails
+        # NOTE: first we copy back the files that failed MD5 check as files are discarded (deleted) when MD5 fails
         shutil.copy(sound1.locations()['path'], os.path.join(user_upload_path, 'file1.wav'))
         shutil.copy(sound2.locations()['path'], os.path.join(user_upload_path, 'file5.wav'))
         bulk_describe_from_csv(csv_file_path,

@@ -51,7 +51,7 @@ def convert_using_ffmpeg_mock_fail(input_filename, output_filename, mono_out=Fal
     raise AudioProcessingException("failed converting to pcm")
 
 
-def stereofy_mock(stereofy_executble_path, input_filename, output_filename):
+def stereofy_mock(stereofy_executable_path, input_filename, output_filename):
     return dict(
         duration=123.5,
         channels=2,
@@ -59,7 +59,7 @@ def stereofy_mock(stereofy_executble_path, input_filename, output_filename):
         bitdepth=16)
 
 
-def stereofy_mock_fail(stereofy_executble_path, input_filename, output_filename):
+def stereofy_mock_fail(stereofy_executable_path, input_filename, output_filename):
     raise AudioProcessingException("stereofy has failed")
 
 
@@ -115,7 +115,7 @@ class AudioProcessingTestCase(TestCase):
     def test_sound_path_does_not_exist(self):
         self.pre_test(create_sound_file=False)
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -131,7 +131,7 @@ class AudioProcessingTestCase(TestCase):
         self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         # will fail because mocked version of convert_to_pcm fails
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -146,7 +146,7 @@ class AudioProcessingTestCase(TestCase):
         self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         # processing will fail because stereofy mock raises an exception
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -175,7 +175,7 @@ class AudioProcessingTestCase(TestCase):
         self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         # processing will fail because convert_to_mp3 mock raises an exception
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -191,7 +191,7 @@ class AudioProcessingTestCase(TestCase):
         self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         # processing will fail because convert_to_ogg mock raises an exception
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")
@@ -208,7 +208,7 @@ class AudioProcessingTestCase(TestCase):
         self.pre_test()
         result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
         # processing will fail because create_wave_images mock raises an exception
-        self.assertFalse(result)  # Processing failed, retutned False
+        self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
         self.assertEqual(self.sound.processing_ongoing_state, "FI")

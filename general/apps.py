@@ -9,7 +9,7 @@ class GeneralConfig(AppConfig):
 
     def ready(self):
         """
-        Create the folders (if not already existing) for the base data directory and all needed subdirecotries.
+        Create the folders (if not already existing) for the base data directory and all needed subdirectories.
         This code is run here as we want to run it at Django startup.
         """
         os.makedirs(settings.DATA_PATH, exist_ok=True)

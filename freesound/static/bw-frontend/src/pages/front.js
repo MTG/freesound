@@ -18,13 +18,13 @@ const fetchSuggestions = async inputElement => {
 }
 
 addTypeAheadFeatures(document.getElementById('search-sounds'), fetchSuggestions, 
-  (suggestion, suggestionsWrapper, inputElemnent) => {
+  (suggestion, suggestionsWrapper, inputElement) => {
     suggestionsWrapper.classList.add('hidden');
-    inputElemnent.value = suggestion.value;
-    inputElemnent.blur();
+    inputElement.value = suggestion.value;
+    inputElement.blur();
     setTimeout(() => {
       // Add timeout so that input has time to update before form is submitted
-      inputElemnent.form.submit();
+      inputElement.form.submit();
     }, 50);
   }
 );

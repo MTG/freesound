@@ -188,7 +188,7 @@ class BulkUploadProgress(models.Model):
             # This is a broad exception clause intentionally placed here to make sure that BulkUploadProgress is
             # updated with a global error. Otherwise it will appear to the user that the object is permanently being
             # validated. After we update the object with the "unexpected error" message, we log the exception and
-            # continue with excecution
+            # continue with execution
             lines_validated = []
             global_errors = ['An unexpected error occurred while validating your data file']
 
@@ -921,7 +921,7 @@ class Sound(models.Model):
             self.invalidate_template_caches()
 
     # N.B. The set_xxx functions below are used in the distributed processing and other parts of the app where we only
-    # want to save an individual field of the model to prevent overwritting other model fields.
+    # want to save an individual field of the model to prevent overwriting other model fields.
 
     def set_processing_ongoing_state(self, state):
         """
@@ -948,7 +948,7 @@ class Sound(models.Model):
         Updates several fields of the Sound object which store some audio properties and saves to DB without
         updating other fields. This function is used in cases when two instances of the same Sound object could be
         edited by two processes in parallel and we want to avoid possible field overwrites.
-        :param int samplerate: saplerate to store
+        :param int samplerate: samplerate to store
         :param int bitrate: bitrate to store
         :param int bitdepth: bitdepth to store
         :param int channels: number of channels to store
@@ -1191,14 +1191,14 @@ class Sound(models.Model):
         NOTE: high_priority is not implemented and setting it has no effect
         """
         if force or ((self.processing_state != "OK" or self.processing_ongoing_state != "FI")
-                     and self.estimate_num_processing_attemps() <= 3):
+                     and self.estimate_num_processing_attempts() <= 3):
             self.set_processing_ongoing_state("QU")
             tasks.process_sound.apply_async(kwargs=dict(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays), countdown=countdown)
             sounds_logger.info(f"Send sound with id {self.id} to queue 'process'")
             return True
 
-    def estimate_num_processing_attemps(self):
-        # Estimates how many processing attemps have been made by looking at the processing logs
+    def estimate_num_processing_attempts(self):
+        # Estimates how many processing attempts have been made by looking at the processing logs
         if self.processing_log is not None:
             return max(1, self.processing_log.count('----Processed sound'))
         else:
@@ -1609,7 +1609,7 @@ class Pack(models.Model):
         if self.num_sounds:
             if sounds[0].created > self.last_updated:
                 # Only update last_updated if the sound that changed was created after the packs last_updated time
-                # Otherwise it could be that the pack was edited (e.g. the description was changed) ater the last
+                # Otherwise it could be that the pack was edited (e.g. the description was changed) after the last
                 # sound was added and we could be setting the date of the sound here
                 self.last_updated = sounds[0].created
         self.save()

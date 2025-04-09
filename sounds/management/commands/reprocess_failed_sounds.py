@@ -32,7 +32,7 @@ console_logger = logging.getLogger("console")
 
 class Command(LoggingBaseCommand):
 
-    help = """Gets a list of sounds that failed processing (or did not fininsh processing successfully) and re-sends them to processing"""
+    help = """Gets a list of sounds that failed processing (or did not finish processing successfully) and re-sends them to processing"""
 
     def add_arguments(self, parser):
         parser.add_argument(

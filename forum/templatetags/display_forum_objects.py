@@ -83,7 +83,7 @@ def display_post(context, post, forloop_counter=0, post_number_offset=0, show_po
         show_post_location (bool): show Forum and Thread name of the post (used for forum search results)
         show_action_icons (bool): show quote/edit/delete action buttons and post number
         show_report_actions (bool): show links to admin pages for post/thread and for reporting post as spam
-        results_highlighted (dict): dictionary with highlighed contents of all posts in the current search results
+        results_highlighted (dict): dictionary with highlighted contents of all posts in the current search results
           page (with post IDs as keys of the dictionary). This is returned by the search engine.
 
     Returns:

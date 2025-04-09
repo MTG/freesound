@@ -41,7 +41,7 @@ class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
     def authenticate(self, request):
         """
         We override this method to check the status of related ApiV2Client.
-        Check that ApiV2Client associatied to the given acess_token has not been disabled.
+        Check that ApiV2Client associated to the given access_token has not been disabled.
         """
         try:
             super_response = super().authenticate(request)

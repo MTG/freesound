@@ -37,7 +37,7 @@ class Command(LoggingBaseCommand):
     help = '''Remove analysis temp PCM conversion files which are left in disk from analyzers and have not been used 
     for a while. We normally keep these files in disk in case we need to re-analyze a file or analyze a file with 
     different analyzers in a short period of time and so we can reuse the converted file. However old files can be safely 
-    deleted and will be recreated if needbe.'''
+    deleted and will be recreated if need be.'''
 
     def add_arguments(self, parser):
         parser.add_argument(

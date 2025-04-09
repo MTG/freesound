@@ -49,7 +49,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
     """Sends email with a lot of defaults.
 
     The function will check if user's email is valid based on bounce info. The function will also check email
-    preferences of destinataries of the email. Parameters user_to and email_to are mutually exclusive, if one is set,
+    preferences of recipients of the email. Parameters user_to and email_to are mutually exclusive, if one is set,
     other should be None.
 
     Args:
@@ -60,7 +60,7 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         email_to (Union[str, List[str]]): a string representing an email address or a list of strings representing
             email addresses who to send the email to.  If email_to is set, user_to should be None.
         email_from (str): email string that shows up as sender. The default value is DEFAULT_FROM_EMAIL in config.
-        reply_to (str): cemail string that will be added as a "Reply-To" header to all mails being sent.
+        reply_to (str): email string that will be added as a "Reply-To" header to all mails being sent.
         email_type_preference_check (str): name of EmailPreferenceType that users should have enabled for the email to
             be sent. If set to None, no checks will be carried out.
         extra_subject (str): extra contents for the email subject which will be appended to the 'subject' param above

@@ -642,7 +642,7 @@ def validate_geotag(value):
             raise serializers.ValidationError('Geotag should have the format \'float,float,integer\' (for latitude, '
                                               'longitude and zoom respectively).')
         else:
-            # Check that ranges are corrent
+            # Check that ranges are correct
             if float(data[0]) > 90 or float(data[0]) < -90:
                 raise serializers.ValidationError('Latitude must be in the range [-90,90].')
             if float(data[1]) > 180 or float(data[0]) < -180:
@@ -773,7 +773,7 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
             #  No need to validate individual fields because no description is provided
             return data
 
-        # Validate description fileds
+        # Validate description fields
         errors = dict()
         try:
             data['description'] = validate_description(self.initial_data.get('description', ''))

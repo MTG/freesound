@@ -107,6 +107,7 @@
                                 <div class="ellipsis">
                                     {% bw_icon 'tree' %}
                                     <a href="{{ sound.get_top_level_category_search_url }}" title="Category: {{ cat_names.0}}">{{ cat_names.0 }}</a>{% if cat_names.1 %} > <a href="{{ sound.get_second_level_category_search_url }}" title="Subcategory: {{ cat_names.1}}">{{ cat_names.1}}</a>{% endif %}
+                                    {% if sound.bst_category is None %}<span title="This category was added automatically by an algorithm">{% bw_icon 'notification' %}</span>{% endif %}
                                 </div>
                             {% endif %}
                             {% endwith %}

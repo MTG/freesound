@@ -1289,7 +1289,14 @@ class Sound(models.Model):
     
     @property
     def get_category_names(self):
-        return bst_taxonomy_category_key_to_category_names(self.bst_category)
+        if self.bst_category is None:
+            # If the sound category has not be defind by user, return estimated precomputed category.
+            try:
+                computed_bst = self.analyses.get(analyzer=settings.BST_ANALYZER_NAME, analysis_status="OK")
+            except SoundAnalysis.DoesNotExist:
+                return None
+            return [computed_bst.analysis_data['category'], computed_bst.analysis_data['subcategory']]
+        return bst_taxonomy_category_key_to_category_names(self.bst_category)    
 
     @property
     def get_top_level_category_search_url(self):

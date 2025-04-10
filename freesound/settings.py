@@ -628,8 +628,8 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_TYPE: {'limit': len(SOUND_TYPE_CHOICES)},
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
     SEARCH_SOUNDS_FIELD_CATEGORY: {'limit': 30, 'title': 'Category'},
-    SEARCH_SOUNDS_FIELD_SUBCATEGORY: {'limit': 30, 'title': 'Subcategory'},
 }
+SEARCH_SOUNDS_SUBCATEGORY_FACET = {SEARCH_SOUNDS_FIELD_SUBCATEGORY: {'limit': 30, 'title': 'Subcategory'}}
 
 SEARCH_SOUNDS_BETA_FACETS = {
     'fsdsinet_detected_class': {'limit': 30, 'title': 'FSD-SINet class'},

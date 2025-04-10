@@ -234,9 +234,8 @@ class SearchQueryProcessor:
         # Make sure that only the "category" or "subcategory" facets are active, as we never show both at the same time. Subcategory facet
         # only makes sense if there is a category filter.
         if self.has_category_filter():
+            self.facets.update(settings.SEARCH_SOUNDS_SUBCATEGORY_FACET)
             del self.facets[settings.SEARCH_SOUNDS_FIELD_CATEGORY]
-        else:
-            del self.facets[settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY]
             
         # Implement compatibility with old URLs in which "duration"/"is remix"/"is geotagged" options were passed as raw filters.
         # If any of these filters are present, we parse them to get their values and modify the request to simulate the data being 

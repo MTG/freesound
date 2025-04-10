@@ -1292,10 +1292,12 @@ class Sound(models.Model):
         if self.bst_category is None:
             # If the sound category has not be defind by user, return estimated precomputed category.
             try:
-                computed_bst = self.analyses.get(analyzer=settings.BST_ANALYZER_NAME, analysis_status="OK")
-            except SoundAnalysis.DoesNotExist:
-                return None
-            return [computed_bst.analysis_data['category'], computed_bst.analysis_data['subcategory']]
+                for analysis in self.analyses.all():
+                    if analysis.analyzer == settings.BST_ANALYZER_NAME:
+                        return [analysis.analysis_data['category'], analysis.analysis_data['subcategory']]
+            except KeyError:
+                pass
+            return None
         return bst_taxonomy_category_key_to_category_names(self.bst_category)    
 
     @property

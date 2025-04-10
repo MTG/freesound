@@ -39,7 +39,7 @@ from utils.tags import clean_and_split_tags
 ###################
 
 DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by commas (None = all)
-DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,bst_category,geotag,created,license,type,channels,filesize,bitrate,' + \
+DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,geotag,created,license,type,channels,filesize,bitrate,' + \
 'bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,' + \
 'num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,' +  \
 'analysis,analysis_frames,analysis_stats,is_explicit'  # All except for analyzers
@@ -89,7 +89,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'name',
                   'tags',
                   'description',
-                  'bst_category',
+                  'category',
                   'geotag',
                   'created',
                   'license',
@@ -162,6 +162,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     license = serializers.SerializerMethodField()
     def get_license(self, obj):
         return obj.license.deed_url
+    
+    category = serializers.SerializerMethodField()
+    def get_category(self, obj):
+        return obj.get_category_names
 
     pack = serializers.SerializerMethodField()
     def get_pack(self, obj):

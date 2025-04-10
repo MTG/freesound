@@ -231,6 +231,13 @@ class SearchQueryProcessor:
                 f_parsed_no_duplicates.append(node)
         self.f_parsed = f_parsed_no_duplicates
 
+        # Make sure that only the "category" or "subcategory" facets are active, as we never show both at the same time. Subcategory facet
+        # only makes sense if there is a category filter.
+        if self.has_category_filter():
+            del self.facets[settings.SEARCH_SOUNDS_FIELD_CATEGORY]
+        else:
+            del self.facets[settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY]
+            
         # Implement compatibility with old URLs in which "duration"/"is remix"/"is geotagged" options were passed as raw filters.
         # If any of these filters are present, we parse them to get their values and modify the request to simulate the data being 
         # passed in the new expected way (through request parameters). If present, we also remove these filters from the f_parsed object.
@@ -607,4 +614,6 @@ class SearchQueryProcessor:
     def map_mode_active(self):
         return self.options['map_mode'].value_to_apply
     
+    def has_category_filter(self):
+        return self.has_filter_with_name('category')
     

@@ -494,7 +494,7 @@ PAYPAL_SIGNATURE = ''
 
 
 # -------------------------------------------------------------------------------
-# New Analysis options
+# Sound Analysis configuration
 ORCHESTRATE_ANALYSIS_MAX_JOBS_PER_QUEUE_DEFAULT = 500
 ORCHESTRATE_ANALYSIS_MAX_NUM_ANALYSIS_ATTEMPTS = 3
 ORCHESTRATE_ANALYSIS_MAX_TIME_IN_QUEUED_STATUS = 24 * 2 # in hours
@@ -581,6 +581,8 @@ SEARCH_SOUNDS_FIELD_BITDEPTH = 'bitdepth'
 SEARCH_SOUNDS_FIELD_TYPE = 'type'
 SEARCH_SOUNDS_FIELD_CHANNELS = 'channels'
 SEARCH_SOUNDS_FIELD_LICENSE_NAME = 'license'
+SEARCH_SOUNDS_FIELD_CATEGORY = 'category'
+SEARCH_SOUNDS_FIELD_SUBCATEGORY = 'subcategory'
 
 # Default weights for fields to match
 SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS = {
@@ -625,11 +627,11 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30, 'widget': 'cloud'},
     SEARCH_SOUNDS_FIELD_TYPE: {'limit': len(SOUND_TYPE_CHOICES)},
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
+    SEARCH_SOUNDS_FIELD_CATEGORY: {'limit': 30, 'title': 'Category'},
+    SEARCH_SOUNDS_FIELD_SUBCATEGORY: {'limit': 30, 'title': 'Subcategory'},
 }
 
 SEARCH_SOUNDS_BETA_FACETS = {
-    'category': {'limit': 30, 'title': 'Category'},
-    'subcategory': {'limit': 30, 'title': 'Subcategory'},
     'fsdsinet_detected_class': {'limit': 30, 'title': 'FSD-SINet class'},
     'ac_brightness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Brightness'},
     'ac_depth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Depth'},

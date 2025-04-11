@@ -251,11 +251,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # When adding fields from analyzers output, automatically predicted category and subcategory will be added. However,
         # if a sound does indeed have that field annotated by a user, then we want to use the user provided-value and not the
         # automatically-generated one
-        user_provided_category, user_provided_subcategory = sound.get_category_names
-        if user_provided_category is not None:
-            document[f'{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_category
-        if user_provided_subcategory is not None:
-            document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_subcategory
+        if sound.bst_category is not None:
+            user_provided_category, user_provided_subcategory = sound.get_category_names
+            if user_provided_category is not None:
+                document[f'{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_category
+            if user_provided_subcategory is not None:
+                document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_subcategory
 
         if fields_to_include:
             # Remove fields that should not be included

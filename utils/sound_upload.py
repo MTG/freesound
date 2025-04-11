@@ -339,9 +339,9 @@ def get_csv_lines(csv_file_path):
 
 
 EXPECTED_HEADER_NO_USERNAME = \
-    ['audio_filename', 'name', 'tags', 'geotag', 'description', 'license', 'pack_name', 'is_explicit']
+    ['audio_filename', 'name', 'tags', 'geotag', 'description', 'license', 'pack_name', 'is_explicit', 'bst_category']
 EXPECTED_HEADER = \
-    ['audio_filename', 'name', 'tags', 'geotag', 'description', 'license', 'pack_name', 'is_explicit', 'username']
+    ['audio_filename', 'name', 'tags', 'geotag', 'description', 'license', 'pack_name', 'is_explicit', 'bst_category', 'username']
 
 
 def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=None):
@@ -456,7 +456,8 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                     'license': license_id,
                     'tags': line['tags'],
                     'pack_name': line['pack_name'] or None,
-                    'is_explicit': str(line['is_explicit']) == '1'
+                    'is_explicit': str(line['is_explicit']) == '1',
+                    'bst_category': line['bst_category']
                 }
 
                 if line['geotag'].strip():
@@ -592,6 +593,7 @@ def bulk_describe_from_csv(csv_file_path, delete_already_existing=False, force_i
                         'lon': line_cleaned['lon'],
                         'zoom': line_cleaned['zoom'],
                         'is_explicit': line_cleaned['is_explicit'],
+                        'bst_category': line_cleaned['bst_category'],
                     },
                     process=False,
                     bulk_upload_progress=bulk_upload_progress_object,

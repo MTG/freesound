@@ -40,7 +40,7 @@
         </p>
         <table class="csv-validation-table">
         <thead>
-            <tr><th>Line</th><th>Filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th><th>Explicit</th></tr>
+            <tr><th>Line</th><th>Filename</th><th>Name</th><th>Tags</th><th>Geotag</th><th>Description</th><th>License</th><th>Pack</th><th>Explicit</th><th>BST Category</th></tr>
         </thead>
         <tbody>
             {% for line in lines_failed_validation %}
@@ -81,6 +81,10 @@
                     <td {% if line.line_errors.is_explicit %}class="csv-bulk-upload-error-cell tooltip_left"{% endif %}>
                         {{ line.line_original.is_explicit }}
                         <span class="tooltiptext">{{ line.line_errors.is_explicit  }}</span>
+                    </td>
+                    <td {% if line.line_errors.bst_category %}class="csv-bulk-upload-error-cell tooltip_left"{% endif %}>
+                        {{ line.line_original.bst_category }}
+                        <span class="tooltiptext">{{ line.line_errors.bst_category  }}</span>
                     </td>
                 </tr>
             {% endfor %}

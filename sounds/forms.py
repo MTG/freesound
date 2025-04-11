@@ -365,4 +365,5 @@ class SoundCSVDescriptionForm(SoundEditAndDescribeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['name'].required = False  # Make sound name not required
+        self.fields['bst_category'].error_messages.update({'invalid_choice': 'Please use a valid BST subcategory ID. See bulk describe instructions for more details.'})
         

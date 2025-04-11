@@ -1,9 +1,9 @@
 audio_filename,name,tags,geotag,description,license,pack_name,is_explicit,bst_category
 heart beat.mp3,,low-frequency beat heart heartbeat,,"This was produced by tapping on a stethoscope which had an earbud pressed against a Shure SM57 mic. Low pass filter applied, as well as compression and a gate. Chorus added. Used a recording cassette deck as a preamp going into an M-Audio Audiophile USB soundcard.
 
-Note: If you're having problems listening to this clip, the cutoff frequency of your speaker set may be too high(solution: new speakers). The signal strength exists almost entirely in the very low frequencies, so you may need a sub-woofer to hear it. Otherwise, try turning your speaker volume all the way up. Doing so may saturate the signal and at least allow you to hear the harmonics of the signal caused by the distortion. I don't recommend it, but you'll at least maybe be able to hear something.",Creative Commons 0,,0
+Note: If you're having problems listening to this clip, the cutoff frequency of your speaker set may be too high(solution: new speakers). The signal strength exists almost entirely in the very low frequencies, so you may need a sub-woofer to hear it. Otherwise, try turning your speaker volume all the way up. Doing so may saturate the signal and at least allow you to hear the harmonics of the signal caused by the distortion. I don't recommend it, but you'll at least maybe be able to hear something.",Creative Commons 0,,0,fx-h
 rbh thunder storm.wav,,siren xy stereo heavy-rain thunder-storm storm nature field-recording rain thunder purist weather lightning,,"rain and several thunder claps. Stereo. Recorded with a minidisc recorder and an AT822 mic. Edited in Protools and saved as a 48/16 wav file.
 
 I have more sounds available here:
-http://sfx.TakomaMedia.com",Attribution,Storm,0,fx-h
+http://sfx.TakomaMedia.com",Attribution,Storm,0,ss-n
 STEREO_41.wav,Close seashore - Saintes-Maries-de-la-Mer,shure-mv88 beach close waves sea seashore shore water field-recording,"43.44902, 4.40802, 16","Close recording of the seashore in Saintes-Maries-de-la-Mer, Provence-Alpes-Côte d'Azur, France. Recorded with my mobile phone with a Shure mv88 on August 2015.",Attribution NonCommercial,Provence-Alpes-Côte d'Azur,0,ss-n

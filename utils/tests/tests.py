@@ -312,7 +312,7 @@ class BulkDescribeUtils(TestCase):
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path, username=user.username)
         self.assertEqual(len(global_errors), 0)  # No global errors
-        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 4)  # Four lines have errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 5)  # Five lines have errors
         self.assertTrue('description' in lines_validated[1]['line_errors'])  # Missing description error reported
         self.assertTrue('columns' in lines_validated[2]['line_errors'])  # Wrong number of columns reported
         self.assertTrue('audio_filename' in lines_validated[3]['line_errors'])  # Audiofile not exist error reported
@@ -334,7 +334,7 @@ class BulkDescribeUtils(TestCase):
         lines_validated, global_errors = \
             validate_input_csv_file(header, lines, user_upload_path, username=user.username)
         self.assertEqual(len(global_errors), 0)  # No global errors
-        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 6)  # Six lines have errors
+        self.assertEqual(len([line for line in lines_validated if line['line_errors']]), 7)  # Seven lines have errors
         self.assertTrue('tags' in lines_validated[0]['line_errors'])  # Wrong tags
         self.assertTrue('tags' in lines_validated[1]['line_errors'])  # Wrong tags
         self.assertTrue('geotag' in lines_validated[2]['line_errors'])  # Wrong geotag
@@ -411,7 +411,7 @@ class BulkDescribeUtils(TestCase):
             'file3.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,1,fx-h',  # Wrong number of columns
             'file4.wav,,"tag1 tag2 tag3",dg,"Description for file",Creative Commons 0,,0,fx-h',  # Invalid geotag
             'file5.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0,fx-h',  # OK
-            'file6.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0,zzz',  # Invalid bst_category
+            'file6.wav,,"tag1 tag2 tag3",,"Description for file",Creative Commons 0,,0,fx',  # Invalid bst_category
         ], csv_file_base_path)
 
         # Test case when no sounds are been created because CSV file has some errors and 'force_import' is set to False

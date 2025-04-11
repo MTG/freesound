@@ -406,9 +406,10 @@ class SoundInstance(RetrieveAPIView):
     serializer_class = SoundSerializer
 
     def get_queryset(self):
-        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
-        if self.request.GET.get('fields', '') == '':
-            # The "category" field of the single sound instance requires analyzer's output to avoid making extra quereis to the DB
+        fields_request_param_value = self.request.GET.get('fields', '')
+        needs_analyzers_output = get_needs_analyzers_output(fields_request_param_value)
+        if fields_request_param_value == '':
+            # The "category" field of the single sound instance requires analyzer's output to avoid making extra queries to the DB
             # However, get_needs_analyzers_output will return False if fields parameter is not specified. This is ok in the views that
             # return lists of sounds because by default "category" is not included. But for SoundInstance we need to make sure that
             # category field can be populated without making extra queries to the DB when fields are not specified

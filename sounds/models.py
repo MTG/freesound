@@ -511,8 +511,7 @@ class Sound(models.Model):
     date_recorded = models.DateField(null=True, blank=True, default=None)
 
     # Broad Sound Taxonomy (BST) category
-    BST_CATEGORY_CHOICES = [(item['key'], item['name']) for item in settings.BROAD_SOUND_TAXONOMY]
-    bst_category = models.CharField(max_length=8, null=True, blank=True, default=None, choices=BST_CATEGORY_CHOICES)
+    bst_category = models.CharField(max_length=8, null=True, blank=True, default=None, choices=settings.BST_SUBCATEGORY_CHOICES)
 
     # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one
     license = models.ForeignKey(License, on_delete=models.CASCADE)
@@ -1288,7 +1287,7 @@ class Sound(models.Model):
         return get_similarity_search_target_vector(self.id, analyzer=analyzer)
     
     @property
-    def get_category_names(self):
+    def category_names(self):
         if self.bst_category is None:
             # If the sound category has not be defind by user, return estimated precomputed category.
             try:
@@ -1297,13 +1296,13 @@ class Sound(models.Model):
                         return [analysis.analysis_data['category'], analysis.analysis_data['subcategory']]
             except KeyError:
                 pass
-            return None
+            return [None, None]
         return bst_taxonomy_category_key_to_category_names(self.bst_category)    
 
     @property
     def get_top_level_category_search_url(self):
-        top_level_name, _ = self.get_category_names
-        if top_level_name:
+        top_level_name, _ = self.category_names
+        if top_level_name is not None:
             cat_filter = urlencode({'f': f'category:"{top_level_name}"'})
             return f'{reverse("sounds-search")}?{cat_filter}'
         else:
@@ -1311,8 +1310,8 @@ class Sound(models.Model):
 
     @property
     def get_second_level_category_search_url(self):
-        top_level_name, second_level_name = self.get_category_names 
-        if second_level_name:
+        top_level_name, second_level_name = self.category_names 
+        if second_level_name is not None:
             cat_filter = urlencode({'f': f'category:"{top_level_name}" subcategory:"{second_level_name}"'})
             return f'{reverse("sounds-search")}?{cat_filter}'
         else:

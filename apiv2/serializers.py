@@ -165,7 +165,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     
     category = serializers.SerializerMethodField()
     def get_category(self, obj):
-        return obj.get_category_names
+        category, subcategory = obj.category_names
+        if category is None and subcategory is None:
+            return None
+        return [category, subcategory]
 
     pack = serializers.SerializerMethodField()
     def get_pack(self, obj):
@@ -608,8 +611,8 @@ def validate_name(value):
 
 
 def validate_bst_category(value):
-     if value not in [key for key, name in Sound.BST_CATEGORY_CHOICES]:
-         raise serializers.ValidationError('Invalid BST category, should be a valid Broad Sound Taxonomy code.')
+     if value not in [key for key, _ in settings.BST_SUBCATEGORY_CHOICES]:
+         raise serializers.ValidationError('Invalid BST category, should be a valid Broad Sound Taxonomy subcategory code.')
      return value
 
 
@@ -675,8 +678,8 @@ class SoundDescriptionSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=512, required=False,
                                  help_text='Not required. Name you want to give to the sound (by default it will be '
                                            'the original filename).')
-    bst_category = serializers.ChoiceField(required=False, allow_blank=True, choices=Sound.BST_CATEGORY_CHOICES,
-                                           help_text='Not required. Must be a valid Broad Sound Taxonomy category code.')
+    bst_category = serializers.ChoiceField(required=False, allow_blank=True, choices=settings.BST_SUBCATEGORY_CHOICES,
+                                           help_text='Not required. Must be a valid Broad Sound Taxonomy subcategory code.')
     tags = serializers.CharField(max_length=512,
                                  help_text='Separate tags with spaces. Join multi-word tags with dashes.')
     description = serializers.CharField(help_text='Textual description of the sound.')
@@ -756,8 +759,8 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=512, required=False,
                                  help_text='Not required. Name you want to give to the sound (by default it will be '
                                            'the original filename).')
-    bst_category = serializers.ChoiceField(required=False, allow_blank=True, choices=Sound.BST_CATEGORY_CHOICES,
-                                           help_text='Not required. Must be a valid Broad Sound Taxonomy category code.')
+    bst_category = serializers.ChoiceField(required=False, allow_blank=True, choices=settings.BST_SUBCATEGORY_CHOICES,
+                                           help_text='Not required. Must be a valid Broad Sound Taxonomy subcategory code.')
     tags = serializers.CharField(max_length=512, required=False,
                                  help_text='Only required if providing file description. Separate tags with spaces. '
                                            'Join multi-word tags with dashes.')

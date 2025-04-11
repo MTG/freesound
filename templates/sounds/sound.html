@@ -102,7 +102,7 @@
                             {% endif %}
                         </div>
                         <div class="middle v-spacing-top-3 dot-separated-divs text-grey">
-                            {% with sound.get_category_names as cat_names %}
+                            {% with sound.category_names as cat_names %}
                             {% if cat_names.0 is not None %} 
                                 <div class="ellipsis">
                                     {% bw_icon 'tree' %}

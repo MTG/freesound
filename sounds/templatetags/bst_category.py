@@ -21,13 +21,12 @@ def bst_taxonomy_category_key_to_category_names(category_key):
         top_level_key = category_key
         second_level_key = None
     try:
-        top_level_category_name = [item['name'] for item in settings.BROAD_SOUND_TAXONOMY if item['key'] == top_level_key][0]
+        top_level_category_name = settings.BROAD_SOUND_TAXONOMY[top_level_key]['name']
     except IndexError:
         # If for some reason we change category keys and some sounds are outdated, let's not crash
         top_level_category_name = None
     try:
-        second_level_category_name = [item['name'] for item in settings.BROAD_SOUND_TAXONOMY if item['key'] == second_level_key][0] \
-            if second_level_key is not None else None
+        second_level_category_name = settings.BROAD_SOUND_TAXONOMY[second_level_key]['name'] if second_level_key is not None else None
     except IndexError:
         # If for some reason we change category keys and some sounds are outdated, let's not crash
         second_level_category_name = None
@@ -42,3 +41,11 @@ def get_bst_taxonomy_top_level_category_key(value):
     E.g.: "m-sp" -> "m"
     """
     return value.split('-')[0] if '-' in value else value
+
+@register.filter
+def get_bst_taxonomy_description(value):
+    """
+    Return BST taxonomy class description for a given taxonomy 
+    cateogory/subcategory key.
+    """
+    return settings.BROAD_SOUND_TAXONOMY[value]['description'] 

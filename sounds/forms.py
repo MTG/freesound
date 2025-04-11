@@ -23,6 +23,7 @@ import re
 
 from django_recaptcha.fields import ReCaptchaField
 from django import forms
+from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
@@ -246,10 +247,11 @@ class SoundEditAndDescribeForm(forms.Form):
     name = forms.CharField(max_length=512, min_length=5,
                            widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
     bst_category = forms.ChoiceField(
-        choices=Sound.BST_CATEGORY_CHOICES,
+        choices=settings.BST_SUBCATEGORY_CHOICES,
         help_text="Choose the most appropriate <i>Category</i> and <i>Subcategory</i> for the sound. "\
-                "These categories are drawn from the <a class=\"bw-link--grey\" href=\"/help/faq/#the-broad-sound-taxonomy\">Broad Sound Taxonomy</a>, "\
+                "These categories come from the <a class=\"bw-link--grey\" href=\"/help/faq/#the-broad-sound-taxonomy\">Broad Sound Taxonomy</a>, "\
                 "and are used to improve Freesound search capabilities.",
+        error_messages={'invalid_choice': 'Please select a valid category and a subcategory.'},
         required=True)
     tags = TagField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
@@ -350,12 +352,6 @@ class SoundEditAndDescribeForm(forms.Form):
 
     def clean_pack(self):
         return _pack_form_clean_pack_helper(self.cleaned_data)
-    
-    def clean_bst_category(self):
-        value = self.cleaned_data['bst_category']
-        if not '-' in value:
-            raise ValidationError("Please choose both a category and a subcategory.")
-        return value
 
 
 class SoundCSVDescriptionForm(SoundEditAndDescribeForm):

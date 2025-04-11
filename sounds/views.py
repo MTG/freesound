@@ -666,7 +666,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
         'sounds_per_round': forms_per_round,
         'last_latlong': request.user.profile.get_last_latlong(),
         'total_sounds_to_describe': len_original_describe_edit_sounds,
-        'bst_taxonomy': settings.BROAD_SOUND_TAXONOMY,
+        'bst_top_level_categories': settings.BST_CATEGORY_CHOICES,
         'next': request.GET.get('next', '')
     }
     

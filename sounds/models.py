@@ -45,6 +45,7 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import smart_str
+from django.utils.http import urlencode
 from django.utils.functional import cached_property
 from django.utils.text import Truncator, slugify
 from django.utils import timezone
@@ -59,6 +60,7 @@ from general.templatetags.absurl import url2absurl
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
+from sounds.templatetags.bst_category import bst_taxonomy_category_key_to_category_names
 from tags.models import SoundTag, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, TicketComment
@@ -508,6 +510,9 @@ class Sound(models.Model):
     description = models.TextField()
     date_recorded = models.DateField(null=True, blank=True, default=None)
 
+    # Broad Sound Taxonomy (BST) category
+    bst_category = models.CharField(max_length=8, null=True, blank=True, default=None, choices=settings.BST_SUBCATEGORY_CHOICES)
+
     # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one
     license = models.ForeignKey(License, on_delete=models.CASCADE)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
@@ -583,11 +588,6 @@ class Sound(models.Model):
             return self.friendly_filename()
         else:
             return f"Unsaved sound: {self.original_filename}"
-
-    @staticmethod
-    def is_sound():
-        # N.B. This is used in the ticket template (ugly, but a quick fix)
-        return True
 
     @property
     def moderated_and_processed_ok(self):
@@ -1285,6 +1285,37 @@ class Sound(models.Model):
     def get_similarity_search_target_vector(self, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
         # If the sound has been analyzed for similarity, returns the vector to be used for similarity search
         return get_similarity_search_target_vector(self.id, analyzer=analyzer)
+    
+    @property
+    def category_names(self):
+        if self.bst_category is None:
+            # If the sound category has not be defind by user, return estimated precomputed category.
+            try:
+                for analysis in self.analyses.all():
+                    if analysis.analyzer == settings.BST_ANALYZER_NAME:
+                        return [analysis.analysis_data['category'], analysis.analysis_data['subcategory']]
+            except KeyError:
+                pass
+            return [None, None]
+        return bst_taxonomy_category_key_to_category_names(self.bst_category)    
+
+    @property
+    def get_top_level_category_search_url(self):
+        top_level_name, _ = self.category_names
+        if top_level_name is not None:
+            cat_filter = urlencode({'f': f'category:"{top_level_name}"'})
+            return f'{reverse("sounds-search")}?{cat_filter}'
+        else:
+            return None
+
+    @property
+    def get_second_level_category_search_url(self):
+        top_level_name, second_level_name = self.category_names 
+        if second_level_name is not None:
+            cat_filter = urlencode({'f': f'category:"{top_level_name}" subcategory:"{second_level_name}"'})
+            return f'{reverse("sounds-search")}?{cat_filter}'
+        else:
+            return None
 
     class Meta:
         ordering = ("-created", )

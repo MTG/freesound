@@ -31,7 +31,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('search/facet.html', takes_context=True)
-def display_facet(context, facet_name, facet_title=None):
+def display_facet(context, facet_name, facet_title=None, beta_facet=False):
     sqp = context['sqp']
     facets = context['facets']
     solr_fieldname = FIELD_NAMES_MAP.get(facet_name, facet_name)
@@ -137,7 +137,12 @@ def display_facet(context, facet_name, facet_title=None):
             else:
                 element['icon'] = 'fcw'
 
-    return {'type': facet_type, 'title': facet_title, 'facet': facet}
+    return {'type': facet_type, 'title': facet_title, 'facet': facet, 'beta_facet': beta_facet}
+
+
+@register.inclusion_tag('search/facet.html', takes_context=True)
+def display_facet_beta(context, facet_name, facet_title=None):
+    return display_facet(context, facet_name, facet_title=facet_title, beta_facet=True)
 
 
 @register.inclusion_tag('search/search_option.html', takes_context=True)

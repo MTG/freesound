@@ -42,7 +42,18 @@
                     {% for tag in sound.tag_array%}
                         {% bw_tag tag %}
                     {% endfor %}
-                    <div class="v-spacing-top-1" title="{{ sound.description|striptags|safe|force_escape }}">
+                    {% if sound.bst_category is not None %}
+                        {% comment %}In moderation, we never want to show automatically generated categories, only user provided ones{% endcomment %}
+                        {% with sound.category_names as cat_names %}
+                            {% if cat_names.0 is not None %} 
+                                <div class="ellipsis text-grey v-spacing-top-1">
+                                    {% bw_icon 'tree' %}
+                                    {{ cat_names.0 }}{% if cat_names.1 %} > {{ cat_names.1}}{% endif %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    {% endif %}
+                    <div title="{{ sound.description|striptags|safe|force_escape }}">
                         {{ sound.description|safe|linebreaks }}
                     </div>
                 </div>

@@ -389,7 +389,10 @@ class CombinedSearch(GenericAPIView):
 #############
 
 def get_needs_analyzers_output(fields):
-    return 'analyzers_output' in fields or 'ac_analysis' in fields or '*' in fields
+    return 'analyzers_output' in fields \
+        or 'ac_analysis' in fields \
+        or 'category' in fields \
+        or '*' in fields
 
 class SoundInstance(RetrieveAPIView):
 
@@ -403,7 +406,14 @@ class SoundInstance(RetrieveAPIView):
     serializer_class = SoundSerializer
 
     def get_queryset(self):
-        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
+        fields_request_param_value = self.request.GET.get('fields', '')
+        needs_analyzers_output = get_needs_analyzers_output(fields_request_param_value)
+        if fields_request_param_value == '':
+            # The "category" field of the single sound instance requires analyzer's output to avoid making extra queries to the DB
+            # However, get_needs_analyzers_output will return False if fields parameter is not specified. This is ok in the views that
+            # return lists of sounds because by default "category" is not included. But for SoundInstance we need to make sure that
+            # category field can be populated without making extra queries to the DB when fields are not specified
+            needs_analyzers_output = True
         return Sound.objects.bulk_query(include_analyzers_output=needs_analyzers_output)
 
     def get(self, request,  *args, **kwargs):
@@ -935,6 +945,9 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 if 'name' in serializer.data:
                     if serializer.data['name']:
                         sound.original_filename = serializer.data['name']
+                if 'bst_category' in serializer.data:
+                    if serializer.data['bst_category']:
+                        sound.bst_category = serializer.data['bst_category']
                 if 'description' in serializer.data:
                     if serializer.data['description']:
                         sound.description = serializer.data['description']

@@ -31,7 +31,7 @@ class SearchQueryProcessorTests(TestCase):
 
     default_expected_params = {
         'current_page': 1,
-        'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS | settings.SEARCH_SOUNDS_BETA_FACETS,  # Combine all facets because we normally test with superuser
+        'facets': settings.SEARCH_SOUNDS_DEFAULT_FACETS | settings.SEARCH_SOUNDS_BETA_FACETS,  # Combine all facets because we normally test with superuser,
         'field_list': ['id', 'score'],
         'group_by_pack': True,
         'num_sounds': settings.SOUNDS_PER_PAGE,

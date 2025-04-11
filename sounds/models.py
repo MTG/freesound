@@ -1293,7 +1293,8 @@ class Sound(models.Model):
             try:
                 for analysis in self.analyses.all():
                     if analysis.analyzer == settings.BST_ANALYZER_NAME:
-                        return [analysis.analysis_data['category'], analysis.analysis_data['subcategory']]
+                        if analysis.analysis_data is not None:
+                            return [analysis.analysis_data['category'], analysis.analysis_data['subcategory']]
             except KeyError:
                 pass
             return [None, None]

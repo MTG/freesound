@@ -49,29 +49,31 @@ def log_map_load(map_type, num_geotags, request):
         'map_type': map_type, 'num_geotags': num_geotags, 'ip': get_client_ip(request)}))
 
 
-def generate_bytearray(sound_queryset_or_list):
+def generate_geotag_bytearray_sounds(sound_queryset):
     # sounds as bytearray
     packed_sounds = io.BytesIO()
     num_sounds_in_bytearray = 0
-    for s in sound_queryset_or_list:
-        if type(s) == Sound:
-            if not math.isnan(s.geotag.lat) and not math.isnan(s.geotag.lon):
-                packed_sounds.write(struct.pack("i", s.id))
-                packed_sounds.write(struct.pack("i", int(s.geotag.lat * 1000000)))
-                packed_sounds.write(struct.pack("i", int(s.geotag.lon * 1000000)))
-                num_sounds_in_bytearray += 1
-        elif type(s) == dict:
-            try:
-                lon, lat = s['geotag'].split(' ')
-                lat = max(min(float(lat), 90), -90)
-                lon = max(min(float(lon), 180), -180)
-                packed_sounds.write(struct.pack("i", s['id']))
-                packed_sounds.write(struct.pack("i", int(lat * 1000000)))
-                packed_sounds.write(struct.pack("i", int(lon * 1000000)))
-                num_sounds_in_bytearray += 1
-            except:
-                pass
-            
+    for s in sound_queryset:
+        if not math.isnan(s.geotag.lat) and not math.isnan(s.geotag.lon):
+            packed_sounds.write(struct.pack("i", s.id))
+            packed_sounds.write(struct.pack("i", int(s.geotag.lat * 1000000)))
+            packed_sounds.write(struct.pack("i", int(s.geotag.lon * 1000000)))
+            num_sounds_in_bytearray += 1
+
+    return packed_sounds.getvalue(), num_sounds_in_bytearray
+
+
+def generate_geotag_bytearray_dict(sound_list):
+    packed_sounds = io.BytesIO()
+    num_sounds_in_bytearray = 0
+    for s in sound_list:
+        lon, lat = s['geotag'].split(' ')
+        lat = max(min(float(lat), 90), -90)
+        lon = max(min(float(lon), 180), -180)
+        packed_sounds.write(struct.pack("i", s['id']))
+        packed_sounds.write(struct.pack("i", int(lat * 1000000)))
+        packed_sounds.write(struct.pack("i", int(lon * 1000000)))
+        num_sounds_in_bytearray += 1
     return packed_sounds.getvalue(), num_sounds_in_bytearray
 
 
@@ -79,7 +81,7 @@ def geotags_barray(request, tag=None):
     is_embed = request.GET.get("embed", "0") == "1"
     if tag is not None:
         sounds = Sound.objects.select_related('geotag').filter(tags__name__iexact=tag)
-        generated_bytearray, num_geotags = generate_bytearray(sounds.exclude(geotag=None).all())
+        generated_bytearray, num_geotags = generate_geotag_bytearray_sounds(sounds.exclude(geotag=None).all())
         if num_geotags > 0:
             log_map_load('tag-embed' if is_embed else 'tag', num_geotags, request)
         return HttpResponse(generated_bytearray, content_type='application/octet-stream')
@@ -90,7 +92,7 @@ def geotags_barray(request, tag=None):
             log_map_load('all-embed' if is_embed else 'all', num_geotags, request)
             return HttpResponse(cached_bytearray, content_type='application/octet-stream')
         else:
-            generated_bytearray, _ = generate_bytearray(Sound.objects.none())
+            generated_bytearray, _ = generate_geotag_bytearray_sounds(Sound.objects.none())
             return HttpResponse(generated_bytearray, content_type='application/octet-stream')
 
 
@@ -105,7 +107,7 @@ def geotags_for_user_barray(request, username):
         'field_list': ['id', 'score', 'geotag'],
         'num_sounds': profile.num_sounds,
     })
-    generated_bytearray, num_geotags = generate_bytearray(results.docs)
+    generated_bytearray, num_geotags = generate_geotag_bytearray_dict(results.docs)
     if num_geotags > 0:
         log_map_load('user-embed' if is_embed else 'user', num_geotags, request)
     return HttpResponse(generated_bytearray, content_type='application/octet-stream')
@@ -115,7 +117,7 @@ def geotags_for_user_barray(request, username):
 @raise_404_if_user_is_deleted
 def geotags_for_user_latest_barray(request, username):
     sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
-    generated_bytearray, num_geotags = generate_bytearray(sounds)
+    generated_bytearray, num_geotags = generate_geotag_bytearray_sounds(sounds)
     if num_geotags > 0:
         log_map_load('user_latest', num_geotags, request)
     return HttpResponse(generated_bytearray, content_type='application/octet-stream')
@@ -128,7 +130,7 @@ def geotags_for_pack_barray(request, pack_id):
         'field_list': ['id', 'score', 'geotag'],
         'num_sounds': pack.num_sounds,
     })
-    generated_bytearray, num_geotags = generate_bytearray(results.docs)
+    generated_bytearray, num_geotags = generate_geotag_bytearray_dict(results.docs)
     if num_geotags > 0:
         log_map_load('pack', num_geotags, request)
     return HttpResponse(generated_bytearray, content_type='application/octet-stream')
@@ -136,7 +138,7 @@ def geotags_for_pack_barray(request, pack_id):
 
 def geotag_for_sound_barray(request, sound_id):
     sounds = Sound.objects.filter(id=sound_id).exclude(geotag=None)
-    generated_bytearray, num_geotags = generate_bytearray(sounds)
+    generated_bytearray, num_geotags = generate_geotag_bytearray_sounds(sounds)
     if num_geotags > 0:
         log_map_load('sound', num_geotags, request)
     return HttpResponse(generated_bytearray, content_type='application/octet-stream')
@@ -156,8 +158,8 @@ def geotags_for_query_barray(request):
             del query_params['facets']
         results, _ = perform_search_engine_query(query_params)
         results_docs = results.docs
-    
-    generated_bytearray, num_geotags = generate_bytearray(results_docs)
+
+    generated_bytearray, num_geotags = generate_geotag_bytearray_dict(results_docs)
     if num_geotags > 0:
         log_map_load('query', num_geotags, request)
     return HttpResponse(generated_bytearray, content_type='application/octet-stream')

@@ -112,7 +112,7 @@
                             {% endif %}
                             {% endwith %}
                             {% if sound.geotag %}
-                                <div>
+                                <div class="ellipsis">
                                     {% bw_icon 'pin' %} 
                                     <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'sound-geotag' sound.user.username sound.id %}?ajax=1" title="Geotag: {{ sound.get_geotag_name }}">
                                         {{ sound.get_geotag_name }}

@@ -1299,6 +1299,11 @@ class Sound(models.Model):
                 pass
             return [None, None]
         return bst_taxonomy_category_key_to_category_names(self.bst_category)    
+    
+    @property
+    def category_code(self):
+        if self.bst_category is None:
+            return bst_taxonomy_category_key_to_category_names(self.bst_category)    
 
     @property
     def get_top_level_category_search_url(self):

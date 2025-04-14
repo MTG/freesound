@@ -71,16 +71,16 @@ examples = {
     ],
     'UploadSound': [
         ('Upload a sound (audiofile only, no description)', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" \'%s/apiv2/sounds/upload/\'']),
-        ('Upload and describe a sound all at once', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "license=Attribution" \'%s/apiv2/sounds/upload/\'']),
-        ('Upload and describe a sound with name, pack and geotag', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "name=Another cool sound" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "license=Attribution" -F "pack=A birds pack" -F "geotag=2.145677,3.22345,14" \'%s/apiv2/sounds/upload/\'']),
+        ('Upload and describe a sound all at once', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "bst_category=fx-a" -F "license=Attribution" \'%s/apiv2/sounds/upload/\'']),
+        ('Upload and describe a sound with name, pack and geotag', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "name=Another cool sound" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "bst_category=fx-a" -F "license=Attribution" -F "pack=A birds pack" -F "geotag=2.145677,3.22345,14" \'%s/apiv2/sounds/upload/\'']),
     ],
     'PendingUploads': [
         ('Get uploaded sounds that are pending description, processing or moderation', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/pending_uploads/\'']),
     ],
     'DescribeSound': [
-        ('Describe a sound (only with required fields)', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" \'%s/apiv2/sounds/describe/\'']),
-        ('Also add a name to the sound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&name=A cool bird sound&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" \'%s/apiv2/sounds/describe/\'']),
-        ('Include geotag and pack information', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&name=A cool bird sound&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution&pack=A birds pack&geotag=2.145677,3.22345,14" \'%s/apiv2/sounds/describe/\'']),
+        ('Describe a sound (only with required fields)', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&bst_category=fx-a&license=Attribution" \'%s/apiv2/sounds/describe/\'']),
+        ('Also add a name to the sound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&name=A cool bird sound&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&bst_category=fx-a&license=Attribution" \'%s/apiv2/sounds/describe/\'']),
+        ('Include geotag and pack information', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&name=A cool bird sound&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&bst_category=fx-a&license=Attribution&pack=A birds pack&geotag=2.145677,3.22345,14" \'%s/apiv2/sounds/describe/\'']),
     ],
     #'EditSoundDescription': [
     #    ('Setting tags of an existing sound to be "new tags for the sound" and description to "New sound description..."', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "tags=new tags for the sound&description=New sound description..." \'%s/apiv2/sounds/1234/edit/\'']),

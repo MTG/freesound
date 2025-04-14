@@ -60,15 +60,17 @@ Filter name             Type           Description
 ``username``            string         Username of the sound uploader (not tokenized).
 ``created``             date           Date in which the sound was added to Freesound (see date example filters below).
 ``original_filename``   string         Name given to the sound (tokenized).
+``category``            string         Category name (top-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_. 
+``subcategory``         string         Subategory name (second-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_. Note that it is recommended to select a (top-level) category first.
+``tag``                 string         Tag of the sound.
 ``description``         string         Textual description given to the sound (tokenized).
-``tag``                 string         Tag
-``license``             string         Name of the Creative Commons license, one of["Attribution", "Attribution NonCommercial", "Creative Commons 0"].
+``license``             string         Name of the Creative Commons license, one of ["Attribution", "Attribution NonCommercial", "Creative Commons 0"].
 ``is_remix``            boolean        Whether the sound is a remix of another Freesound sound.
 ``was_remixed``         boolean        Whether the sound has remixes in Freesound.
 ``pack``                string         Pack name (not tokenized).
 ``pack_tokenized``      string         Pack name (tokenized).
 ``is_geotagged``        boolean        Whether the sound has geotag information.
-``type``                string         Original file type, one off ["wav", "aiff", "ogg", "mp3", "m4a", "flac"].
+``type``                string         Original file type, one of ["wav", "aiff", "ogg", "mp3", "m4a", "flac"].
 ``duration``            numerical      Duration of sound in seconds.
 ``bitdepth``            integer        Encoding bitdepth. WARNING is not to be trusted right now.
 ``bitrate``             numerical      Encoding bitrate. WARNING is not to be trusted right now.
@@ -80,7 +82,7 @@ Filter name             Type           Description
 ``avg_rating``          numerical      Average rating for the sound in the range [0, 5].
 ``num_ratings``         integer        Number of times the sound has been rated.
 ``comment``             string         Textual content of the comments of a sound  (tokenized). The filter is satisfied if sound contains the filter value in at least one of its comments.
-``num_comments``            integer        Number of times the sound has been commented.
+``num_comments``        integer        Number of times the sound has been commented.
 ======================  =============  ====================================================
 
 
@@ -490,6 +492,8 @@ Name                  Type              Description
 ``name``              string            The name user gave to the sound.
 ``tags``              array[strings]    An array of tags the user gave to the sound.
 ``description``       string            The description the user gave to the sound.
+``category``          array[strings]    A two-element array containing the sound's category and subcategory from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (if it is not given by the user, it is computed by an algorithm).
+``category_code``     string            The category ID from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "fx-a", with the prefix indicating the category and the suffix indicating the subcategory).
 ``geotag``            string            Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
 ``created``           string            The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
 ``license``           string            The license under which the sound is available to you.
@@ -688,6 +692,7 @@ Additionally, the request can include the following POST parameters to provide a
 Name                  Type              Description
 ====================  ================  ====================================================================================
 ``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
+``bst_category``      string            The category code that will be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
 ``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            A textual description of the sound.
 ``license``           string            The license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
@@ -695,8 +700,8 @@ Name                  Type              Description
 ``geotag``            string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
 ====================  ================  ====================================================================================
 
-Note that ``tags``, ``description`` and ``license`` parameters are REQUIRED when providing a description for the file, but can be omitted if no description is provided.
-In other words, you can either only provide the ``audiofile`` parameter, or provide ``audiofile`` plus ``tags``, ``description``, ``license`` and any of the other optional parameters.
+Note that ``bst_category``, ``tags``, ``description`` and ``license`` parameters are REQUIRED when providing a description for the file, but can be omitted if no description is provided.
+In other words, you can either only provide the ``audiofile`` parameter, or provide ``audiofile`` plus ``bst_category``, ``tags``, ``description``, ``license`` and any of the other optional parameters.
 In the first case, a file will be uploaded but not described (you will need to describe it later), and in the second case a file will both be uploaded and described.
 
 
@@ -761,6 +766,7 @@ Name                  Type              Description
 ====================  ================  ====================================================================================
 ``upload_filename``   string            The filename of the sound to describe. Must match with one of the filenames returned in :ref:`sound-pending-uploads` resource.
 ``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
+``bst_category``      string            The category code that will be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
 ``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            A textual description of the sound.
 ``license``           string            The license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
@@ -877,6 +883,7 @@ A request to the Edit Sound Description resource must include mostly the same PO
 Name                  Type              Description
 ====================  ================  ====================================================================================
 ``name``              string            (OPTIONAL) The new name that will be given to the sound.
+``bst_category``      string            (OPTIONAL) The new category code that will be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
 ``tags``              string            (OPTIONAL) The new tags that will be assigned to the sound. Note that if this parameter is filled, old tags will be deleted. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            (OPTIONAL) The new textual description for the sound.
 ``license``           string            (OPTIONAL) The new license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".

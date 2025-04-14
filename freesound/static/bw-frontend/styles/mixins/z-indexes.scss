@@ -1,5 +1,6 @@
+@use "sass:list";
 $z-indexes-lower-to-higher: dropdown, navbar, modals;
 
 @function get-z-index($element) {
-  @return index($z-indexes-lower-to-higher, $element);
+  @return list.index($z-indexes-lower-to-higher, $element);
 }

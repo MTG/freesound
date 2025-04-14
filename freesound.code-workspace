@@ -1,15 +1,19 @@
 {
 	"folders": [
 		{
+			"name": "freesound",
 			"path": "."
 		},
 		{
+			"name": "freesound-deploy",
 			"path": "../freesound-deploy"
 		},
 		{
+			"name": "freesound-audio-analyzers",
 			"path": "../freesound-audio-analyzers"
 		},
 		{
+			"name": "freesound-data",
 			"path": "freesound-data"
 		}
 	],

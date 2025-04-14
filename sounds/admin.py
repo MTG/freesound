@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.urls import re_path
+from django.urls import path
 from django.contrib import admin, messages
 from django.core.cache import cache
 from django.core.management import call_command
@@ -223,8 +223,8 @@ class SoundOfTheDayAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            re_path('generate_new_sounds/', self.generate_new_sounds),
-            re_path('clear_sound_of_the_day_cache/', self.clear_sound_of_the_day_cache),
+            path('generate_new_sounds/', self.generate_new_sounds),
+            path('clear_sound_of_the_day_cache/', self.clear_sound_of_the_day_cache),
         ]
         return my_urls + urls
 
@@ -242,7 +242,7 @@ class SoundOfTheDayAdmin(admin.ModelAdmin):
              messages.add_message(request, messages.WARNING, 'Could not empty cache for sound of the day as selected cache backend is not compatible')
         return HttpResponseRedirect(reverse('admin:sounds_soundoftheday_changelist'))
 
-        
+
 
 
 

@@ -63,6 +63,14 @@ def generate_geotag_bytearray_sounds(sound_queryset):
     return packed_sounds.getvalue(), num_sounds_in_bytearray
 
 
+def generate_geotag_bytearray_queryset_fast(sound_queryset):
+    # Take a queryset of sounds and get only the lat and long with .values_list,
+    # this is much faster than using Sound/Geotag objects, or even using .only
+    sounds = sound_queryset.values_list('id', 'geotag__lon', 'geotag__lat')
+    sounds = [{"id": id, "geotag": f"{lon} {lat}"} for id, lon, lat in sounds]
+    return generate_geotag_bytearray_dict(sounds)
+
+
 def generate_geotag_bytearray_dict(sound_list):
     packed_sounds = io.BytesIO()
     num_sounds_in_bytearray = 0
@@ -84,8 +92,8 @@ def generate_geotag_bytearray_dict(sound_list):
 def geotags_barray(request, tag=None):
     is_embed = request.GET.get("embed", "0") == "1"
     if tag is not None:
-        sounds = Sound.objects.select_related('geotag').filter(tags__name__iexact=tag)
-        generated_bytearray, num_geotags = generate_geotag_bytearray_sounds(sounds.exclude(geotag=None).all())
+        sounds = Sound.objects.select_related('geotag').filter(tags__name__iexact=tag).exclude(geotag=None)
+        generated_bytearray, num_geotags = generate_geotag_bytearray_queryset_fast(sounds)
         if num_geotags > 0:
             log_map_load('tag-embed' if is_embed else 'tag', num_geotags, request)
         return HttpResponse(generated_bytearray, content_type='application/octet-stream')
@@ -121,7 +129,7 @@ def geotags_for_user_barray(request, username):
 @raise_404_if_user_is_deleted
 def geotags_for_user_latest_barray(request, username):
     sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
-    generated_bytearray, num_geotags = generate_geotag_bytearray_sounds(sounds)
+    generated_bytearray, num_geotags = generate_geotag_bytearray_queryset_fast(sounds)
     if num_geotags > 0:
         log_map_load('user_latest', num_geotags, request)
     return HttpResponse(generated_bytearray, content_type='application/octet-stream')

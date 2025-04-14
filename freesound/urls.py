@@ -176,6 +176,7 @@ if settings.DEBUG:
     urlpatterns += [
         re_path(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve,
                 {'document_root': settings.DATA_PATH, 'show_indexes': True}),
+        re_path(r'^docs/api/(?P<path>.*)$', serve, {'path': 'index.html', 'document_root': '_docs/api/build/html'}),  # Serve API docs, useful for local development
         path('__debug__/', include(debug_toolbar.urls)),
         re_path(r'^.*\.map$', serve_source_map_files),
     ]

@@ -231,7 +231,13 @@ class SearchQueryProcessor:
                 f_parsed_no_duplicates.append(node)
         self.f_parsed = f_parsed_no_duplicates
 
-        # Implement compatibilty with old URLs in which "duration"/"is remix"/"is geotagged" options were passed as raw filters.
+        # Make sure that only the "category" or "subcategory" facets are active, as we never show both at the same time. Subcategory facet
+        # only makes sense if there is a category filter.
+        if self.has_category_filter():
+            self.facets.update(settings.SEARCH_SOUNDS_SUBCATEGORY_FACET)
+            del self.facets[settings.SEARCH_SOUNDS_FIELD_CATEGORY]
+            
+        # Implement compatibility with old URLs in which "duration"/"is remix"/"is geotagged" options were passed as raw filters.
         # If any of these filters are present, we parse them to get their values and modify the request to simulate the data being 
         # passed in the new expected way (through request parameters). If present, we also remove these filters from the f_parsed object.
         values_to_update = {}
@@ -338,7 +344,7 @@ class SearchQueryProcessor:
 
     def get_filters_data_to_display_in_search_results_page(self):
         """Returns a list of filters to be displayed in the search results page. Each element in the list is a tuple with (field, value, remove_url), where
-        field is the name of the field, value is the value of the filter, and remove_url is the URL thta should be followed to remove the filter from the query.
+        field is the name of the field, value is the value of the filter, and remove_url is the URL that should be followed to remove the filter from the query.
         """
         filters_data = []
         for name, value in self.non_option_filters:
@@ -421,7 +427,7 @@ class SearchQueryProcessor:
         by default because clusters are computed on the subset of results BEFORE applying the facet filters (this is by
         design to avoid recomputing clusters when changing facets). However, the key can be generated including facets as
         well because in some occasions we want to store clustering-related data which does depend on the facet filters which
-        are applied after the main clustaering computation.
+        are applied after the main clustering computation.
 
         Args:
             include_filters_from_facets (bool): If True, the key will include filters from facets as well. Default is False.
@@ -472,7 +478,7 @@ class SearchQueryProcessor:
                 
     def as_query_params(self, exclude_facet_filters=False):
         """Returns a dictionary with the search options and filters to be used as parameters for the SearchEngine.search_sounds method.
-        This method post-processes the data loaded into the SearchQueryProcessor to generate an approptiate query_params dict. Note that
+        This method post-processes the data loaded into the SearchQueryProcessor to generate an appropriate query_params dict. Note that
         this method includes some complex logic that takes into account the interaction with some option values to calculate the
         query_params values to be used by the search engine. 
 
@@ -525,7 +531,7 @@ class SearchQueryProcessor:
             if similar_to.startswith('['):
                 similar_to = json.loads(similar_to)
             else:
-                # Othrwise, we assume it is a sound id and we pass it as integer
+                # Otherwise, we assume it is a sound id and we pass it as integer
                 similar_to = int(similar_to)
         else:
             similar_to = None
@@ -549,7 +555,7 @@ class SearchQueryProcessor:
     
     def get_url(self, add_filters=None, remove_filters=None):
         """Returns the URL of the search page (or tags page, see below) corresponding to the current parameters loaded in the SearchQueryProcessor.
-        This method also ha sparameters to "add_filters" and "remove_filters", which will return the URL to the search page corresponding to the
+        This method also has parameters to "add_filters" and "remove_filters", which will return the URL to the search page corresponding to the
         current parameters loaded in the SearchQueryProcessor BUT with some filters added or removed.
 
         Args:
@@ -607,4 +613,6 @@ class SearchQueryProcessor:
     def map_mode_active(self):
         return self.options['map_mode'].value_to_apply
     
+    def has_category_filter(self):
+        return self.has_filter_with_name('category')
     

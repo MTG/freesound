@@ -90,7 +90,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
 # This was the default serializer in django 1.6. Now we keep using it because
-# we saw some erros when running tests, in the future we should change to the
+# we saw some errors when running tests, in the future we should change to the
 # new one.
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
@@ -410,6 +410,47 @@ USER_DOWNLOADS_PUBLIC = True
 
 ANNOUNCEMENT_CACHE_KEY = 'announcement_cache'
 
+#-------------------------------------------------------------------------------
+# Broad Sound Taxonomy definition
+
+BROAD_SOUND_TAXONOMY = {
+    "m": {"level": 1, "name": "Music", "description": "Music excerpts, melodies, loops, fillers, drones and short musical snippets."},
+    "m-sp": {"level": 2, "name": "Solo percussion", "description": "Music excerpts with solo percussive instruments."},
+    "m-si": {"level": 2, "name": "Solo instrument", "description": "Music excerpts with only one instrument, excluding percussion."},
+    "m-m": {"level": 2, "name": "Multiple instruments", "description": "Music excerpts with more than one instrument."},
+    "m-other": {"level": 2, "name": "Other", "description": "Music that doesn't belong to any of the above categories."},
+    "is": {"level": 1, "name": "Instrument samples", "description": "Single notes from musical instruments, various versions of the same note, and scales."},
+    "is-p": {"level": 2, "name": "Percussion", "description": "Instrument samples that are percussive (idiophones or membraphones)."},
+    "is-s": {"level": 2, "name": "String", "description": "Instrument samples that belong to the string instrument family."},
+    "is-w": {"level": 2, "name": "Wind", "description": "Instrument samples that belong to the wind instrument family (aerophones)."},
+    "is-k": {"level": 2, "name": "Piano / Keyboard instruments", "description": "Instrument samples of piano or other keyboard instruments, not synthesized."},
+    "is-e": {"level": 2, "name": "Synths / Electronic", "description": "Instrument samples synthesized or produced by electronic means."},
+    "is-other": {"level": 2, "name": "Other", "description": "Instrument samples that don't belong to any of the above categories."},
+    "sp": {"level": 1, "name": "Speech", "description": "Sounds where human voice is prominent."},
+    "sp-s": {"level": 2, "name": "Solo speech", "description": "Recording of a single voice speaking, excluding singing."},
+    "sp-c": {"level": 2, "name": "Conversation / Crowd", "description": "Several people talking, having a conversation or dialogue."},
+    "sp-p": {"level": 2, "name": "Processed / Synthetic", "description": "Voice(s) from an indirect source (e.g. radio), processed or synthesized."},
+    "sp-other": {"level": 2, "name": "Other", "description": "Voice-predominant recordings that don't belong to any of the above categories."},
+    "fx": {"level": 1, "name": "Sound effects", "description": "Isolated sound effects or sound events, each happening one at a time."},
+    "fx-o": {"level": 2, "name": "Objects / House appliances", "description": "Everyday objects, inside the home or smaller in size."},
+    "fx-v": {"level": 2, "name": "Vehicles", "description": "Sounds produced from a vehicle."},
+    "fx-m": {"level": 2, "name": "Other mechanisms, engines, machines", "description": "Machine-like sounds, except vehicles and small house electric devices."},
+    "fx-h": {"level": 2, "name": "Human sounds and actions", "description": "Sounds from the human body, excluding speech."},
+    "fx-a": {"level": 2, "name": "Animals", "description": "Animal vocalizations or sounds."},
+    "fx-n": {"level": 2, "name": "Natural elements and explosions", "description": "Sound events occurring by natural processes."},
+    "fx-ex": {"level": 2, "name": "Experimental", "description": "Experimental sounds or heavily processed audio recordings."},
+    "fx-el": {"level": 2, "name": "Electronic / Design", "description": "Sound effects that are computer-made or designed for user interfaces or animations."},
+    "fx-other": {"level": 2, "name": "Other", "description": "Sound effects that don't belong to any of the above categories."},
+    "ss": {"level": 1, "name": "Soundscapes", "description": "Ambiances, field-recordings with multiple events and sound environments."},
+    "ss-n": {"level": 2, "name": "Nature", "description": "Soundscapes from natural habitats."},
+    "ss-i": {"level": 2, "name": "Indoors", "description": "Soundscapes from closed or indoor spaces."},
+    "ss-u": {"level": 2, "name": "Urban", "description": "Soundscapes from cityscapes or outdoor places with human intervention."},
+    "ss-s": {"level": 2, "name": "Synthetic / Artificial", "description": "Soundscapes that are synthesized or computer-made ambiences."},
+    "ss-other": {"level": 2, "name": "Other", "description": "Soundscapes that don't belong to any of the above categories."}
+}
+BST_CATEGORY_CHOICES = [(key, value['name']) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" not in key]  # Top-level categories
+BST_SUBCATEGORY_CHOICES = [(key, value['name']) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" in key]  # Second-level categories
+
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls
 
@@ -455,7 +496,7 @@ PAYPAL_SIGNATURE = ''
 
 
 # -------------------------------------------------------------------------------
-# New Analysis options
+# Sound Analysis configuration
 ORCHESTRATE_ANALYSIS_MAX_JOBS_PER_QUEUE_DEFAULT = 500
 ORCHESTRATE_ANALYSIS_MAX_NUM_ANALYSIS_ATTEMPTS = 3
 ORCHESTRATE_ANALYSIS_MAX_TIME_IN_QUEUED_STATUS = 24 * 2 # in hours
@@ -516,10 +557,9 @@ ANALYZERS_CONFIGURATION = {
         ]
     },
     BST_ANALYZER_NAME: {
-         'max_jobs_in_queue': 5000,
         'descriptors_map': [
-            ('bst_top_level', 'bst_top_level', str), 
-            ('bst_second_level', 'bst_second_level', str),
+            ('bst_top_level', 'category', str), 
+            ('bst_second_level', 'subcategory', str),
         ]
     }
 }
@@ -543,6 +583,8 @@ SEARCH_SOUNDS_FIELD_BITDEPTH = 'bitdepth'
 SEARCH_SOUNDS_FIELD_TYPE = 'type'
 SEARCH_SOUNDS_FIELD_CHANNELS = 'channels'
 SEARCH_SOUNDS_FIELD_LICENSE_NAME = 'license'
+SEARCH_SOUNDS_FIELD_CATEGORY = 'category'
+SEARCH_SOUNDS_FIELD_SUBCATEGORY = 'subcategory'
 
 # Default weights for fields to match
 SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS = {
@@ -587,7 +629,9 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30, 'widget': 'cloud'},
     SEARCH_SOUNDS_FIELD_TYPE: {'limit': len(SOUND_TYPE_CHOICES)},
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
+    SEARCH_SOUNDS_FIELD_CATEGORY: {'limit': 30, 'title': 'Category'},
 }
+SEARCH_SOUNDS_SUBCATEGORY_FACET = {SEARCH_SOUNDS_FIELD_SUBCATEGORY: {'limit': 30, 'title': 'Subcategory'}}
 
 SEARCH_SOUNDS_BETA_FACETS = {
     'fsdsinet_detected_class': {'limit': 30, 'title': 'FSD-SINet class'},
@@ -801,7 +845,7 @@ OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 # APIv2 throttling limits
 # Define API usage limit rates per defined throttling levels
 # Possible time units: second, minute, hour or day
-# Every level must include three limits, a burst limit, a sustained limit andan ip which are checked separately
+# Every level must include three limits, a burst limit, a sustained limit and an ip which are checked separately
 # Burst limit sets the maximum number of requests that an api client can do in a minute
 # Sustained limit sets the maximum number of requests that an api client can do in a day
 # Ip limit sets the maximum number of requests from different ips that a client can do in an hour

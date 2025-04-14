@@ -60,7 +60,7 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(current_num_comments + 1, sound.num_comments)
         self.assertTrue(sound.is_index_dirty)
 
-    def test_email_notificaiton_on_send_email(self):
+    def test_email_notification_on_send_email(self):
         # Add a comment to a sound using the view and test that email was sent
         sound = Sound.objects.get(id=19)
         commenting_user = User.objects.get(id=2)
@@ -428,7 +428,7 @@ class SoundPackDownloadTestCase(TestCase):
             self.assertRedirects(resp, '{}?next={}'.format(
             reverse('login'), reverse('pack', args=[self.sound.user.username, self.pack.id])))
 
-            # Check donwload works successfully if user logged in
+            # Check download works successfully if user logged in
             self.client.force_login(self.user)
             resp = self.client.get(reverse('pack-download', args=[self.sound.user.username, self.pack.id]))
             self.assertEqual(resp.status_code, 200)
@@ -468,7 +468,7 @@ class SoundPackDownloadTestCase(TestCase):
             self.pack.user.username = 'other_username'
             self.pack.user.save()
 
-            # Check donwload works successfully if user logged in
+            # Check download works successfully if user logged in
             self.client.force_login(self.user)
 
             # First check that the response is a 301
@@ -611,6 +611,7 @@ class SoundTemplateCacheTests(TestCase):
         new_name = 'New name'
         resp = self.client.post(self._get_sound_url('sound-edit'), {
             '0-sound_id': self.sound.id,
+            '0-bst_category': 'ss-n',
             '0-description': new_description,
             '0-name': new_name,
             '0-tags': 'tag1 tag2 tag3',
@@ -745,6 +746,7 @@ class SoundTemplateCacheTests(TestCase):
         pack_name = 'New pack'
         resp = self.client.post(self._get_sound_url('sound-edit'), {
             '0-sound_id': self.sound.id,
+            '0-bst_category': 'ss-n',
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -763,6 +765,7 @@ class SoundTemplateCacheTests(TestCase):
         # Remove sound from pack
         resp = self.client.post(self._get_sound_url('sound-edit'), {
             '0-sound_id': self.sound.id,
+            '0-bst_category': 'ss-n',
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -806,6 +809,7 @@ class SoundTemplateCacheTests(TestCase):
         # Add a geotag to the sound
         resp = self.client.post(self._get_sound_url('sound-edit'), {
             '0-sound_id': self.sound.id,
+            '0-bst_category': 'ss-n',
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -826,6 +830,7 @@ class SoundTemplateCacheTests(TestCase):
         # Remove geotag from the sound
         resp = self.client.post(self._get_sound_url('sound-edit'), {
             '0-sound_id': self.sound.id,
+            '0-bst_category': 'ss-n',
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -869,6 +874,7 @@ class SoundTemplateCacheTests(TestCase):
         # Change license
         resp = self.client.post(self._get_sound_url('sound-edit'), {
             '0-sound_id': self.sound.id,
+            '0-bst_category': 'ss-n',
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -912,6 +918,7 @@ class SoundTemplateCacheTests(TestCase):
         # Indicate another sound as source
         resp = self.client.post(self._get_sound_url('sound-edit'), {
             '0-sound_id': self.sound.id,
+            '0-bst_category': 'ss-n',
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -931,6 +938,7 @@ class SoundTemplateCacheTests(TestCase):
         # Remove remix from the sound
         resp = self.client.post(self._get_sound_url('sound-edit'), {
             '0-sound_id': self.sound.id,
+            '0-bst_category': 'ss-n',
             '0-description': self.sound.description,
             '0-name': self.sound.original_filename,
             '0-tags': self.sound.get_sound_tags_string(),
@@ -1005,7 +1013,7 @@ class SoundAnalysisModel(TestCase):
     def test_get_analysis(self):
         _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
-        analysis_data = {'descriptor1': 0.56, 'descirptor2': 1.45, 'descriptor3': 'label'}
+        analysis_data = {'descriptor1': 0.56, 'descriptor2': 1.45, 'descriptor3': 'label'}
 
         # Create one analysis object that stores the data in the model. Check that get_analysis returns correct data.
         sa = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor1", analysis_data=analysis_data,
@@ -1097,6 +1105,7 @@ class SoundEditTestCase(TestCase):
         new_name = 'New name'
         new_tags = ['tag1', 'tag2', 'tag3']
         new_pack_name = 'Name of a new pack'
+        new_bst_category = 'ss-n'
         new_sound_sources = Sound.objects.exclude(id=self.sound.id)
         geotag_lat = 46.31658418182218
         resp = self.client.post(reverse('sound-edit', args=[self.sound.user.username, self.sound.id]), {
@@ -1108,6 +1117,7 @@ class SoundEditTestCase(TestCase):
             '0-sources': ','.join([f'{s.id}' for s in new_sound_sources]),
             '0-pack': PackForm.NEW_PACK_CHOICE_VALUE,
             '0-new_pack': new_pack_name,
+            '0-bst_category': new_bst_category,
             '0-lat': f'{geotag_lat}',
             '0-lon': '3.515625',
             '0-zoom': '16',
@@ -1117,6 +1127,7 @@ class SoundEditTestCase(TestCase):
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.description, new_description)
         self.assertEqual(self.sound.original_filename, new_name)
+        self.assertEqual(self.sound.bst_category, new_bst_category)
         self.assertListEqual(sorted(self.sound.get_sound_tags()), sorted(new_tags))
         self.assertEqual(self.sound.sources.all().count(), len(new_sound_sources))
         self.assertTrue(Pack.objects.filter(name='Name of a new pack').exists())

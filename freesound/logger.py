@@ -58,7 +58,7 @@ LOGGING = {
         },
         'search': {
             'handlers': ['stdout'],
-            'level': 'INFO',
+            'level': 'ERROR',
             'propagate': False,
         },
         'file_upload': {

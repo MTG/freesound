@@ -112,7 +112,7 @@ class SearchResults:
             facets (Dict{str:List[Tuple(str,int)]}, optional): data structure including information about the facets
                 calculated by the search engine. The keys of the main dictionary correspond to the field names of each
                 returned facet. For each facet, a list of tuples is returned with the most common facet elements and
-                their count (sorted in descending count order). Ecample:
+                their count (sorted in descending count order). Example:
                     facets = {
                         'username': [('wjoojoo', 64), ('zbylut', 58), ('filipefalcao', 52), ('lonemonk', 49), ...]
                         'bitdepth': [('16', 938), ('24', 594), ('0', 298), ('32', 68), ('4', 4)],
@@ -278,7 +278,7 @@ class SearchEngineBase:
             similar_to (int or List[float], optional): sound ID or similarity vector to be used as target for similarity 
                 search. Note that when this parameter is passed, some of the other parameters will be ignored 
                 ('textual_query', 'facets', 'group_by_pack', 'num_sounds_per_pack_group', 'group_counts_as_one_in_facets'). 
-                'query_filter' should still be usable, although this remains to be throughly tested. 
+                'query_filter' should still be usable, although this remains to be thoroughly tested.
             similar_to_max_num_sounds (int, optional): max number of sounds to return in a similarity search query.
             similar_to_analyzer (str, optional): analyzer name from which to select similarity vectors for similarity search.
                 It defaults to settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, but it could be change to something else
@@ -305,7 +305,7 @@ class SearchEngineBase:
         between the total number of similarity vectors and the total number of sounds per analyzer.
 
         Returns:
-            dict: dictionary with the number of similarity vectors and number of soudns indexed per analyzer.
+            dict: dictionary with the number of similarity vectors and number of sounds indexed per analyzer.
                 E.g.: {'fsd-sinet_v1': {'num_sounds': 0, 'num_vectors': 0}, 
                        'fs-essentia-extractor_legacy': {'num_sounds': 15876, 'num_vectors': 25448}}
         """

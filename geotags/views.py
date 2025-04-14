@@ -62,9 +62,9 @@ def generate_bytearray(sound_queryset_or_list):
                 num_sounds_in_bytearray += 1
         elif type(s) == dict:
             try:
-                lon, lat = s['geotag'][0].split(' ')
-                lat = max(min(float(lat), 90), -90) 
-                lon = max(min(float(lon), 180), -180) 
+                lon, lat = s['geotag'].split(' ')
+                lat = max(min(float(lat), 90), -90)
+                lon = max(min(float(lon), 180), -180)
                 packed_sounds.write(struct.pack("i", s['id']))
                 packed_sounds.write(struct.pack("i", int(lat * 1000000)))
                 packed_sounds.write(struct.pack("i", int(lon * 1000000)))
@@ -101,7 +101,7 @@ def geotags_for_user_barray(request, username):
     profile = get_object_or_404(Profile, user__username=username)
     is_embed = request.GET.get("embed", "0") == "1"
     results, _ = perform_search_engine_query({
-        'query_filter': f'username:"{username}" is_geotagged:1',  # No need to urlencode here as it will happpen somwhere before sending query to solr
+        'query_filter': f'username:"{username}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
         'field_list': ['id', 'score', 'geotag'],
         'num_sounds': profile.num_sounds,
     })
@@ -124,7 +124,7 @@ def geotags_for_user_latest_barray(request, username):
 def geotags_for_pack_barray(request, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     results, _ = perform_search_engine_query({
-        'query_filter': f'grouping_pack:"{pack.id}_{pack.name}" is_geotagged:1',  # No need to urlencode here as it will happpen somwhere before sending query to solr
+        'query_filter': f'grouping_pack:"{pack.id}_{pack.name}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
         'field_list': ['id', 'score', 'geotag'],
         'num_sounds': pack.num_sounds,
     })

@@ -243,7 +243,7 @@ def stream(request):
 
     errors_getting_data = False
     try:
-        users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse, num_results_per_grup=4)
+        users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse, num_results_per_group=4)
     except socket_error:
         # Could not connect to solr
         errors_getting_data = True

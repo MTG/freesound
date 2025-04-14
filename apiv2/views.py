@@ -137,7 +137,7 @@ class TextSearch(GenericAPIView):
         id_score_map = dict(object_list)
         sound_ids = [ob[0] for ob in object_list]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=sound_ids)
-        # In search queries, only include audio analyers's output if requested through the fields parameter
+        # In search queries, only include audio analyzer's output if requested through the fields parameter
         needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
         sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_analyzers_output=needs_analyzers_output)
         sounds = []
@@ -228,7 +228,7 @@ class ContentSearch(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
-        # In search queries, only include audio analyers's output if requested through the fields parameter
+        # In search queries, only include audio analyzer's output if requested through the fields parameter
         needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
 
@@ -347,7 +347,7 @@ class CombinedSearch(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = results
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
-        # In search queries, only include audio analyers's output if requested through the fields parameter
+        # In search queries, only include audio analyzer's output if requested through the fields parameter
         needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
 
@@ -389,7 +389,10 @@ class CombinedSearch(GenericAPIView):
 #############
 
 def get_needs_analyzers_output(fields):
-    return 'analyzers_output' in fields or 'ac_analysis' in fields or '*' in fields
+    return 'analyzers_output' in fields \
+        or 'ac_analysis' in fields \
+        or 'category' in fields \
+        or '*' in fields
 
 class SoundInstance(RetrieveAPIView):
 
@@ -403,7 +406,14 @@ class SoundInstance(RetrieveAPIView):
     serializer_class = SoundSerializer
 
     def get_queryset(self):
-        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
+        fields_request_param_value = self.request.GET.get('fields', '')
+        needs_analyzers_output = get_needs_analyzers_output(fields_request_param_value)
+        if fields_request_param_value == '':
+            # The "category" field of the single sound instance requires analyzer's output to avoid making extra queries to the DB
+            # However, get_needs_analyzers_output will return False if fields parameter is not specified. This is ok in the views that
+            # return lists of sounds because by default "category" is not included. But for SoundInstance we need to make sure that
+            # category field can be populated without making extra queries to the DB when fields are not specified
+            needs_analyzers_output = True
         return Sound.objects.bulk_query(include_analyzers_output=needs_analyzers_output)
 
     def get(self, request,  *args, **kwargs):
@@ -482,7 +492,7 @@ class SimilarSounds(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
-        # In search queries, only include audio analyers's output if requested through the fields parameter
+        # In search queries, only include audio analyzer's output if requested through the fields parameter
         needs_analyzers_output = get_needs_analyzers_output(similarity_sound_form.cleaned_data.get('fields', ''))
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
 
@@ -935,6 +945,9 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 if 'name' in serializer.data:
                     if serializer.data['name']:
                         sound.original_filename = serializer.data['name']
+                if 'bst_category' in serializer.data:
+                    if serializer.data['bst_category']:
+                        sound.bst_category = serializer.data['bst_category']
                 if 'description' in serializer.data:
                     if serializer.data['description']:
                         sound.description = serializer.data['description']
@@ -1196,7 +1209,7 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
                 kwargs['category'] = None
             try:
                 # TODO: this line below will not add the analysis_state_essentia_exists property to the sound objects and will
-                # make the queries inneficient if the "analysis" is requested. This could be improved in the future.
+                # make the queries inefficient if the "analysis" is requested. This could be improved in the future.
                 queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
             except:
                 raise NotFoundException(resource=self)
@@ -1317,7 +1330,7 @@ class FreesoundApiV2Resources(GenericAPIView):
 
         # Xml format seems to have problems with white spaces and numbers in dict keys...
         def key_to_valid_xml(key):
-            # Remove white spaces, parenthesis, and add underscore in the beggining
+            # Remove white spaces, parenthesis, and add underscore in the beginning
             return '_' + key.replace(' ', '_').replace('(', '').replace(')', '')
 
         if request.accepted_renderer.format == 'xml':

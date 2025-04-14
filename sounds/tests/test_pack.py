@@ -69,6 +69,7 @@ class PackNumSoundsTestCase(TestCase):
         self.client.force_login(user)
         resp = self.client.post(reverse('sound-edit', args=[sound.user.username, sound.id]), {
             '0-sound_id': sound.id,
+            '0-bst_category': 'ss-n',
             '0-description': 'this is a description for the sound',
             '0-name': sound.original_filename,
             '0-tags': 'tag1 tag2 tag3',

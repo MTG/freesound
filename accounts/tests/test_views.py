@@ -70,7 +70,7 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('comments-by-user', kwargs={'username': self.user.username}))
         self.assertRedirects(resp, reverse('account', args=[self.user.username]) + '?comments_by=1')
 
-        # User downloaded soudns
+        # User downloaded sounds
         resp = self.client.get(reverse('user-downloaded-sounds', kwargs={'username': self.user.username}))
         self.assertRedirects(resp, reverse('account', args=[self.user.username]) + '?downloaded_sounds=1')
 
@@ -233,7 +233,7 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 404)
 
     def test_sounds_response(self):
-        # 302 response on sounds page access (since BW, there is a redicrect to the search page)
+        # 302 response on sounds page access (since BW, there is a redirect to the search page)
         resp = self.client.get(reverse('sounds'))
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(reverse('sounds-search') in resp.url)

@@ -86,7 +86,7 @@ class LoggingFiltersTest(TestCase):
 
         for count, (log_message, properties_to_check_in_output) in enumerate([
             ("Simple message without json-formatted part", {}),
-            ("Simple message with nòn-ascií chacracters", {}),
+            ("Simple message with nòn-ascií characters", {}),
             (f"Rate limited IP ({json.dumps({'ip': '1.1.1.1', 'path': 'testPath/'})})", {
                 'ip': '1.1.1.1',
                 'path': 'testPath/',

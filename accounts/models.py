@@ -127,7 +127,7 @@ class Profile(models.Model):
     num_user_sounds_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of times user's sounds have been downloaded
     num_user_packs_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of times user's packs have been downloaded
 
-    # "is_anonymized_user" indicates that the user account has been anonimized and no longer contains personal data
+    # "is_anonymized_user" indicates that the user account has been anonymized and no longer contains personal data
     # This is what we do when we delete a user to still preserve statistics and information and downloads
     # "is_anonymized_user" used to be called "is_deleted_user"
     is_anonymized_user = models.BooleanField(db_index=True, default=False)
@@ -273,8 +273,8 @@ class Profile(models.Model):
 
     def email_type_enabled(self, email_type):
         """
-        Checkes user email settings to determine whether emails for the email_type_name should be sent.
-        If the email type has send_by_default = True it menas the email should be sent if user has no assiciated
+        Checks user email settings to determine whether emails for the email_type_name should be sent.
+        If the email type has send_by_default = True it means the email should be sent if user has no associated
         UserEmailSetting object for this email type. If send_by_default = False, it means the email should be sent
         if the user has a UserEmailSetting for that type. This was implemented in this way to minimize the number
         of objects that need to be created in the UserEmailSetting table.
@@ -475,7 +475,7 @@ class Profile(models.Model):
               with all related content. Defaults to False.
             deletion_reason (str): reason for the user being deleted. Should be one of the choices defined in
               DeletedUser.DELETION_REASON_CHOICES. Defaults to DeletedUser.DELETION_REASON_DELETED_BY_ADMIN.
-            chunk_size (int): size of the chunks in which sounds will be deleted inside atomic trasactions.
+            chunk_size (int): size of the chunks in which sounds will be deleted inside atomic transactions.
         """
 
         # If required, start by deleting all user's sounds and packs 
@@ -723,7 +723,7 @@ def presave_user(sender, instance, **kwargs):
             # We use .get_or_create below to avoid having 2 OldUsername objects with the same user/username pair
             OldUsername.objects.get_or_create(user=instance, username=old_username)
 
-            # Also mark all sounds as index dirty because they'll need to be reindexed with the new username
+            # Also mark all sounds as index dirty because they'll need to be re-indexed with the new username
             Sound.objects.filter(user=instance).update(is_index_dirty=True)
 
         # Check if email has change and, if so, remove existing EmailBounce objects associated to the user (if any)
@@ -812,9 +812,9 @@ class UserDeletionRequest(models.Model):
     email_from = email through which the deletion request was made (used for classic GDPR case)
     user_from = user object who requested the deletion of 'user_to' (can be blank if request was done via email and
         there is no user associated with that email)
-    username_from = username of 'user_from' (stored as string to better keep recprds in case 'user_from' gets deleted)
+    username_from = username of 'user_from' (stored as string to better keep records in case 'user_from' gets deleted)
     user_to = user object that will be deleted (can be the same as user_from in case of self-deletion)
-    username_to = username of 'user_to' (stored as string to better keep recprds in case 'user_from' gets deleted)
+    username_to = username of 'user_to' (stored as string to better keep records in case 'user_from' gets deleted)
     deleted_user = DeletedUser object after 'user_to' gets deleted
 
     NOTE: username_from and username_to are filled in automatically when UserDeletionRequest object is saved.

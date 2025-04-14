@@ -170,7 +170,7 @@
                             </div>
                             {% comment %}apply button{% endcomment %}
                             <div class="v-spacing-4 center">
-                                <button id="avanced-search-apply-button" class="btn-primary" disabled>Apply advanced search filters</button>
+                                <button id="advanced-search-apply-button" class="btn-primary" disabled>Apply advanced search filters</button>
                             </div>
                             <div class="divider-light"></div>
                         </div>
@@ -204,6 +204,11 @@
                         {% display_facet "tags" %}
                     {% endif %}
                     {% display_facet "license" %}
+                    {% if not sqp.has_category_filter %}
+                        {% display_facet "category" %}                        
+                    {% else %}
+                        {% display_facet "subcategory" %}
+                    {% endif %}
                     {% if not sqp.tags_mode_active %}
                         {% display_facet "tags" %}
                     {% endif %}
@@ -218,7 +223,7 @@
                     {% display_facet "bitrate" %}
                     {% if show_beta_search_options %}
                         {% for experimental_facet in experimental_facets %}
-                            {% display_facet experimental_facet %}
+                            {% display_facet_beta experimental_facet %}
                         {% endfor %}
                     {% endif %}
                 </aside>

@@ -544,7 +544,7 @@ def moderation_assigned(request, user_id):
                 # to prevent a crash if the form is resubmitted
                 tickets.update(status=TICKET_STATUS_CLOSED)
                 # if tickets are being deleted we have to fill users_to_update
-                # and sounds_to_update before we delete the sounds and they dissapear
+                # and sounds_to_update before we delete the sounds and they disappear
                 # from the ticket (thus losing reference)
                 for ticket in tickets:
                     users_to_update.add(ticket.sound.user_id)

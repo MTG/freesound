@@ -20,7 +20,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # pip
-ENV PYTHON_PIP_VERSION 20.0.2
+ENV PYTHON_PIP_VERSION=20.0.2
 RUN set -ex; \
 	\
 	wget -O get-pip.py 'https://bootstrap.pypa.io/pip/2.7/get-pip.py'; \

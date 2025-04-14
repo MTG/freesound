@@ -42,7 +42,7 @@ class Command(LoggingBaseCommand):
             action='store',
             dest='analyzer',
             default=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-            help='Only index sounds analyzed with specific anayzer name/version')
+            help='Only index sounds analyzed with specific analyzer name/version')
 
         parser.add_argument(
             '-l', '--limit',
@@ -88,7 +88,7 @@ class Command(LoggingBaseCommand):
         for count, sound in enumerate(to_be_added):
             try:
                 if options['indexing_server']:
-                    result = Similarity.add_to_indeixing_server(sound.id, sound.locations('analysis.statistics.path'))
+                    result = Similarity.add_to_indexing_server(sound.id, sound.locations('analysis.statistics.path'))
                 else:
                     result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
                     sound.set_similarity_state('OK')

@@ -94,7 +94,7 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
 
     if not returned_sounds or target_file:
         if target_file:
-            # If there is a file attahced, set the file as the target
+            # If there is a file attached, set the file as the target
             target_type = 'file'
             target = None  # If target is given as a file, we set target to None (just in case)
         else:

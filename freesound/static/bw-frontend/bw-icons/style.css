@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'bw-icons';
-  src:  url('fonts/bw-icons.eot?8pbk45');
-  src:  url('fonts/bw-icons.eot?8pbk45#iefix') format('embedded-opentype'),
-    url('fonts/bw-icons.ttf?8pbk45') format('truetype'),
-    url('fonts/bw-icons.woff?8pbk45') format('woff'),
-    url('fonts/bw-icons.svg?8pbk45#bw-icons') format('svg');
+  src:  url('fonts/bw-icons.eot?vrky13');
+  src:  url('fonts/bw-icons.eot?vrky13#iefix') format('embedded-opentype'),
+    url('fonts/bw-icons.ttf?vrky13') format('truetype'),
+    url('fonts/bw-icons.woff?vrky13') format('woff'),
+    url('fonts/bw-icons.svg?vrky13#bw-icons') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,6 +25,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.bw-icon-books:before {
+  content: "\e920";
+}
+.bw-icon-tree:before {
+  content: "\e9bc";
+  margin-left: 1px; /* NOTE: this was added manually so the icon fits better */
+}
 .bw-icon-remix:before {
   content: "\e93c";
 }
@@ -33,7 +40,7 @@
   color: rgb(126, 126, 141);
 }
 .bw-icon-half-star .path2:before {
-  content: "\e958";
+  content: "\e956";
   margin-left: -1em;
   color: rgb(255, 53, 70);
 }
@@ -82,7 +89,7 @@
   content: '\e912';
 }
 .bw-radio:checked + .bw-radio-container .bw-icon-radio-unchecked:before { /* NOTE: this was added manually */
-  content: '\e936';
+  content: '\e937';
 }
 .bw-icon-chevron-up:before {
   content: "\e913";
@@ -130,93 +137,93 @@
   content: "\e91f";
 }
 .bw-icon-flag:before {
-  content: "\e920";
+  content: "\e921";
 }
 .bw-icon-google-plus .path1:before {
-  content: "\e921";
+  content: "\e922";
   color: rgb(255, 53, 70);
 }
 .bw-icon-google-plus .path2:before {
-  content: "\e922";
-  margin-left: -1em;
-  color: rgb(255, 255, 255);
-}
-.bw-icon-google-plus .path3:before {
   content: "\e923";
   margin-left: -1em;
   color: rgb(255, 255, 255);
 }
-.bw-icon-image:before {
+.bw-icon-google-plus .path3:before {
   content: "\e924";
+  margin-left: -1em;
+  color: rgb(255, 255, 255);
 }
-.bw-icon-italic:before {
+.bw-icon-image:before {
   content: "\e925";
 }
-.bw-icon-link:before {
+.bw-icon-italic:before {
   content: "\e926";
 }
-.bw-icon-list-bullets:before {
+.bw-icon-link:before {
   content: "\e927";
 }
-.bw-icon-list-numbered:before {
+.bw-icon-list-bullets:before {
   content: "\e928";
 }
-.bw-icon-loop:before {
+.bw-icon-list-numbered:before {
   content: "\e929";
 }
-.bw-icon-more:before {
+.bw-icon-loop:before {
   content: "\e92a";
 }
-.bw-icon-next:before {
+.bw-icon-more:before {
   content: "\e92b";
 }
-.bw-icon-open:before {
+.bw-icon-next:before {
   content: "\e92c";
 }
-.bw-icon-pause-filled:before {
+.bw-icon-open:before {
   content: "\e92d";
 }
-.bw-icon-pause-stroke:before {
+.bw-icon-pause-filled:before {
   content: "\e92e";
 }
-.bw-icon-pin:before {
+.bw-icon-pause-stroke:before {
   content: "\e92f";
 }
-.bw-icon-play-filled:before {
+.bw-icon-pin:before {
   content: "\e930";
 }
-.bw-icon-play-stroke:before {
+.bw-icon-play-filled:before {
   content: "\e931";
 }
-.bw-icon-playlist:before {
+.bw-icon-play-stroke:before {
   content: "\e932";
 }
-.bw-icon-plus:before {
+.bw-icon-playlist:before {
   content: "\e933";
 }
-.bw-icon-question:before {
+.bw-icon-plus:before {
   content: "\e934";
 }
-.bw-icon-quote:before {
+.bw-icon-question:before {
   content: "\e935";
 }
-.bw-icon-radio:before {
+.bw-icon-quote:before {
   content: "\e936";
 }
-.bw-icon-reply:before {
+.bw-icon-radio:before {
   content: "\e937";
 }
-.bw-icon-ruler:before {
+.bw-icon-reply:before {
   content: "\e938";
 }
-.bw-icon-share:before {
+.bw-icon-ruler:before {
   content: "\e939";
 }
-.bw-icon-similar:before {
+.bw-icon-share:before {
   content: "\e93a";
 }
-.bw-icon-spectogram:before {
+.bw-icon-similar:before {
   content: "\e93b";
+}
+.bw-icon-spectrogram:before {
+  content: "\e93d";
 }
 .bw-icon-star { /* NOTE: this was added manually */
   display: inline-block;
@@ -306,10 +313,10 @@
   content: "\ea82";
 }
 .bw-icon-stack:before {
-  content: "\e956";
+  content: "\e957";
 }
 .bw-icon-clock:before {
-  content: "\e957";
+  content: "\e958";
 }
 .bw-icon-box-add:before {
   content: "\e95e";
@@ -336,11 +343,14 @@
   content: "\e9b8";
 }
 .bw-icon-copy:before {
-  content: "\e93d";
+  content: "\e94a";
 }
 .bw-icon-bullhorn:before {
-  content: "\e94a";
+  content: "\e94b";
 }
 .bw-icon-info:before {
   content: "\ea0c";
+}
+.bw-icon-robot:before {
+  content: "\e94c";
 }

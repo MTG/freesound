@@ -179,7 +179,7 @@ class AudioProcessor:
         it returns (min, max) else the other way around. """
 
         # larger blocksizes are faster but take more mem...
-        # Aha, Watson, a clue, a tradeof!
+        # Aha, Watson, a clue, a tradeoff!
         block_size = 4096
 
         max_index = -1
@@ -493,7 +493,7 @@ def convert_to_pcm(input_filename, output_filename, use_ffmpeg_for_unknown_type=
     return True
 
 
-def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filename):
+def stereofy_and_find_info(stereofy_executable_path, input_filename, output_filename):
     """
     converts a pcm wave file to two channel, 16 bit integer
     """
@@ -501,7 +501,7 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     if not os.path.exists(input_filename):
         raise AudioProcessingException(f"file {input_filename} does not exist")
 
-    cmd = [stereofy_executble_path, "--input", input_filename, "--output", output_filename]
+    cmd = [stereofy_executable_path, "--input", input_filename, "--output", output_filename]
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()

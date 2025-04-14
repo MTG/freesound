@@ -22,7 +22,7 @@ const saveAnnotation = (addAnnotationUrl, text, user_id) => {
     });
 }
 
-const handleUserAnnnotationsModal = (modalUrl, modalActivationParam) => {
+const handleUserAnnotationsModal = (modalUrl, modalActivationParam) => {
     handleGenericModal(modalUrl, (modalContainer) => {
         // Bind action to save annotation (and prevent default form submit)
         const formElement = modalContainer.getElementsByTagName('form')[0];
@@ -37,11 +37,11 @@ const handleUserAnnnotationsModal = (modalUrl, modalActivationParam) => {
 }
 
 const bindUserAnnotationsModal = (container) => {
-    bindModalActivationElements('[data-toggle="user-annotations-modal"]', handleUserAnnnotationsModal, container);
+    bindModalActivationElements('[data-toggle="user-annotations-modal"]', handleUserAnnotationsModal, container);
 }
 
 const activateUserAnnotationsModalIfParameters = () => {
-    activateModalsIfParameters('[data-toggle="user-annotations-modal"]', handleUserAnnnotationsModal);
+    activateModalsIfParameters('[data-toggle="user-annotations-modal"]', handleUserAnnotationsModal);
 }
 
 export {bindUserAnnotationsModal, activateUserAnnotationsModalIfParameters};

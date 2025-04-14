@@ -18,7 +18,9 @@
 #     See AUTHORS file.
 #
 
+import datetime
 import logging
+import time
 
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
@@ -28,12 +30,23 @@ from utils.search.search_sounds import add_sounds_to_search_engine, delete_sound
 console_logger = logging.getLogger("console")
 
 
+def time_stats(done, total, starttime):
+    nowtime = time.monotonic()
+    position = done*1.0 / total
+    duration = round(nowtime - starttime)
+    durdelta = datetime.timedelta(seconds=duration)
+    remaining = round((duration / position) - duration)
+    remdelta = datetime.timedelta(seconds=remaining)
+
+    return str(durdelta), str(remdelta)
+
+
 def send_sounds_to_search_engine(sounds_to_index_ids, slice_size=4000, delete_if_existing=False):
-    num_sounds = len(sounds_to_index_ids)
-    console_logger.info("Starting to post dirty sounds to solr. %i sounds to be added/updated to the search engine"
-                        % num_sounds)
+    total_sounds = len(sounds_to_index_ids)
+    console_logger.info(f"Starting to post dirty sounds to solr. {total_sounds} sounds to be added/updated to the search engine")
     n_sounds_indexed_correctly = 0
-    for i in range(0, num_sounds, slice_size):
+    starttime = time.monotonic()
+    for i in range(0, total_sounds, slice_size):
         sound_ids_slice = sounds_to_index_ids[i:i + slice_size]
         if delete_if_existing:
             delete_sounds_from_search_engine(sound_ids_slice)
@@ -42,6 +55,8 @@ def send_sounds_to_search_engine(sounds_to_index_ids, slice_size=4000, delete_if
         if n_sounds_indexed > 0:
             Sound.objects.filter(pk__in=sound_ids_slice).update(is_index_dirty=False)
         n_sounds_indexed_correctly += n_sounds_indexed
+        elapsed, remaining = time_stats(n_sounds_indexed_correctly, total_sounds, starttime)
+        console_logger.info(f"Added {n_sounds_indexed_correctly}/{total_sounds} sounds. Elapsed: {elapsed}, Remaining: {remaining}")
 
     return n_sounds_indexed_correctly
 

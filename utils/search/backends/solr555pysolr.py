@@ -247,6 +247,17 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                         if suffix:
                             document[f'{key}{suffix}'] = value
 
+        # Category and subcategory fields
+        # When adding fields from analyzers output, automatically predicted category and subcategory will be added. However,
+        # if a sound does indeed have that field annotated by a user, then we want to use the user provided-value and not the
+        # automatically-generated one
+        if sound.bst_category is not None:
+            user_provided_category, user_provided_subcategory = sound.category_names
+            if user_provided_category is not None:
+                document[f'{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_category
+            if user_provided_subcategory is not None:
+                document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_subcategory
+
         if fields_to_include:
             # Remove fields that should not be included
             # Note that we could optimize this by never getting the data for these fields in the first place, but because
@@ -326,14 +337,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             "has_posts": False if post.thread.num_posts == 0 else True
         }
         return document
-    
+
     def get_dynamic_fields_map(self):
         if hasattr(self, '_dynamic_fields_map'):
             return self._dynamic_fields_map
         dynamic_fields_map = {}
         for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
             if 'descriptors_map' in analyzer_data:
-                descriptors_map = settings.ANALYZERS_CONFIGURATION[analyzer]['descriptors_map']
+                descriptors_map = analyzer_data['descriptors_map']
                 for _, db_descriptor_key, descriptor_type in descriptors_map:
                     if descriptor_type is not None:
                         dynamic_fields_map[db_descriptor_key] = '{}{}'.format(
@@ -408,7 +419,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # that allows us to define our own filter syntax and then represent filters as some intermediate structure that can later
         # be converted to valid lucene/dismax syntax.
         query_filter = re.sub(r'\b([a-zA-Z_]+:)', r'+\1', query_filter)
-        query_filter = re.sub(r"(\+)\1+", r"\1", query_filter)  # This is to avoid having multiple + in a row if user already has added them
+        query_filter = re.sub(r'(\+)\1+', r'\1', query_filter)  # This is to avoid having multiple + in a row if user already has added them
+        query_filter = re.sub(r'(-)\+', r'\1', query_filter) # Removes added '+' when user has included a negation '-'
         if len(query_filter) > 0 and query_filter[-1] == '+':
             query_filter = query_filter[:-1]
         return query_filter
@@ -556,7 +568,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             # We fist set an empty query that will return no results and will be used by default if similarity can't be performed
             query.set_query('')
             if similar_to_analyzer in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS:
-                # Similarity search will find documents close to a target vector. This will match "child" sound documents (of content_type "similarity vectpor")
+                # Similarity search will find documents close to a target vector. This will match "child" sound documents (of content_type "similarity vector")
                 config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[similar_to_analyzer]
                 vector = None
                 if isinstance(similar_to, list):

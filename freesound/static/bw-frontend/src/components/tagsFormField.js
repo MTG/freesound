@@ -12,11 +12,11 @@ const fetchTagSuggestions = async inputElement => {
         allTags = inputElement.value;
     }
     const data = await getJSONFromPostRequestWithFetch(inputElement.dataset.typeaheadSuggestionsUrl, {'input_tags': allTags});
-    const sugggestions = [];
+    const suggestions = [];
     data[0].forEach(tag => {
-        sugggestions.push({'label': '<div class="padding-1">' + tag + '</div>', 'value': tag})
+        suggestions.push({'label': '<div class="padding-1">' + tag + '</div>', 'value': tag})
     });
-    return  sugggestions
+    return  suggestions
 }
 
 const onSuggestionSelectedFromDropdown = (suggestion, suggestionsWrapper, inputElement) => {

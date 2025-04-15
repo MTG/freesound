@@ -60,7 +60,7 @@ from general.templatetags.absurl import url2absurl
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
-from sounds.templatetags.bst_category import bst_taxonomy_category_key_to_category_names
+from sounds.templatetags.bst_category import bst_taxonomy_category_key_to_category_names, bst_taxonomy_category_names_to_category_key
 from tags.models import SoundTag, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, TicketComment
@@ -1289,7 +1289,7 @@ class Sound(models.Model):
     @property
     def category_names(self):
         if self.bst_category is None:
-            # If the sound category has not be defind by user, return estimated precomputed category.
+            # If the sound category has not been defind by user, return estimated precomputed category.
             try:
                 for analysis in self.analyses.all():
                     if analysis.analyzer == settings.BST_ANALYZER_NAME:
@@ -1302,8 +1302,7 @@ class Sound(models.Model):
     
     @property
     def category_code(self):
-        if self.bst_category is None:
-            return bst_taxonomy_category_key_to_category_names(self.bst_category)    
+        return bst_taxonomy_category_names_to_category_key(*self.category_names)
 
     @property
     def get_top_level_category_search_url(self):

@@ -61,6 +61,37 @@ class UserUploadAndDescribeSounds(TestCase):
         self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), False)
 
     @override_uploads_path_with_temp_directory
+    @mock.patch('general.tasks.process_before_description.delay')
+    def test_handle_uploaded_duplicate_filenames_html(self, patched_method):
+        user = User.objects.create_user("testuser", password="testpass")
+        self.client.force_login(user)
+
+        filename = "file.wav"
+        f = SimpleUploadedFile(filename, b"file_content")
+        f1 = SimpleUploadedFile(filename, b"file_content_1")
+        resp = self.client.post("/home/upload/html/", {'files': [f, f1]})
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)))
+
+    @override_uploads_path_with_temp_directory
+    @mock.patch('general.tasks.process_before_description.delay')
+    def test_handle_duplicate_filenames_in_description_queue(self, pathced_method):
+        user = User.objects.create_user("testuser", password="testpass")
+        self.client.force_login(user)
+
+        filename = "file.wav"
+        f = SimpleUploadedFile(filename, b"file_content")
+        f1 = SimpleUploadedFile(filename, b"file_content_1")
+        resp = self.client.post("/home/upload/html/", {'files': [f]})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)))
+
+        resp = self.client.post("/home/upload/html/", {'files': [f1]})
+        self.assertEqual(resp.status_code, 200)
+        errors = resp.context['errors']
+        self.assertIn('sound pending description',errors[filename])
+
+    @override_uploads_path_with_temp_directory
     def test_select_uploaded_files_to_describe(self):
         # Create audio files
         filenames = ['file1.wav', 'file2.wav', 'file3.wav', 'filè4.wav']

@@ -60,8 +60,8 @@ Filter name             Type           Description
 ``username``            string         Username of the sound uploader (not tokenized).
 ``created``             date           Date in which the sound was added to Freesound (see date example filters below).
 ``original_filename``   string         Name given to the sound (tokenized).
-``category``            string         Category name (top-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_. 
-``subcategory``         string         Subategory name (second-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_. Note that it is recommended to select a (top-level) category first.
+``category``            string         Category name (top-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "Instrument samples"). 
+``subcategory``         string         Subategory name (second-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "Piano / Keyboard instruments"). For optimal results, it is recommended to use this filter in combination with the ``category`` filter.
 ``tag``                 string         Tag of the sound.
 ``description``         string         Textual description given to the sound (tokenized).
 ``license``             string         Name of the Creative Commons license, one of ["Attribution", "Attribution NonCommercial", "Creative Commons 0"].
@@ -484,45 +484,46 @@ Response (sound instance)
 
 The Sound Instance response is a dictionary including the following properties/fields:
 
-====================  ================  ====================================================================================
-Name                  Type              Description
-====================  ================  ====================================================================================
-``id``                number            The sound's unique identifier.
-``url``               URI               The URI for this sound on the Freesound website.
-``name``              string            The name user gave to the sound.
-``tags``              array[strings]    An array of tags the user gave to the sound.
-``description``       string            The description the user gave to the sound.
-``category``          array[strings]    A two-element array containing the sound's category and subcategory from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (if it is not given by the user, it is computed by an algorithm).
-``category_code``     string            The category ID from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "fx-a", with the prefix indicating the category and the suffix indicating the subcategory).
-``geotag``            string            Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
-``created``           string            The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
-``license``           string            The license under which the sound is available to you.
-``type``              string            The type of sound (wav, aif, aiff, mp3, m4a or flac).
-``channels``          number            The number of channels.
-``filesize``          number            The size of the file in bytes.
-``bitrate``           number            The bit rate of the sound in kbps.
-``bitdepth``          number            The bit depth of the sound.
-``duration``          number            The duration of the sound in seconds.
-``samplerate``        number            The samplerate of the sound.
-``username``          string            The username of the uploader of the sound.
-``pack``              URI               If the sound is part of a pack, this URI points to that pack's API resource.
-``download``          URI               The URI for retrieving the original sound.
-``bookmark``          URI               The URI for bookmarking the sound.
-``previews``          object            Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively).
-``images``            object            Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields ``waveform_l`` and ``waveform_m`` (for large and medium waveform images respectively), and ``spectral_l`` and ``spectral_m`` (for large and medium spectrogram images respectively).
-``num_downloads``     number            The number of times the sound was downloaded.
-``avg_rating``        number            The average rating of the sound.
-``num_ratings``       number            The number of times the sound was rated.
-``rate``              URI               The URI for rating the sound.
-``comments``          URI               The URI of a paginated list of the comments of the sound.
-``num_comments``      number            The number of comments.
-``comment``           URI               The URI to comment the sound.
-``similar_sounds``    URI               URI pointing to the similarity resource (to get a list of similar sounds).
-``analysis``          object            Dictionary containing requested descriptors information according to the ``descriptors`` request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.
-``analysis_stats``    URI               URI pointing to the complete analysis results of the sound (see :ref:`analysis-docs`).
-``analysis_frames``   URI               The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
-``ac_analysis``       object            Dictionary containing the results of the AudioCommons analysis for the given sound.
-====================  ================  ====================================================================================
+==============================  ================  ====================================================================================
+Name                            Type              Description
+==============================  ================  ====================================================================================
+``id``                          number            The sound's unique identifier.
+``url``                         URI               The URI for this sound on the Freesound website.
+``name``                        string            The name user gave to the sound.
+``tags``                        array[strings]    An array of tags the user gave to the sound.
+``description``                 string            The description the user gave to the sound.
+``category``                    array[strings]    A two-element array containing the sound's category and subcategory names from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_. Note that categories are filled-out by an algorithm if not provided by the original author of the sound.
+``category_code``               string            The category ID from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "fx-a", with the prefix indicating the category and the suffix indicating the subcategory). Note that categories are filled-out by an algorithm if not provided by the original author of the sound.
+``category_is_user_provided``   boolean           Whether the ``category`` (and ``category_code``) were provided by the author of the sound or assigned automatically by an algorithm.
+``geotag``                      string            Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
+``created``                     string            The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
+``license``                     string            The license under which the sound is available to you.
+``type``                        string            The type of sound (wav, aif, aiff, mp3, m4a or flac).
+``channels``                    number            The number of channels.
+``filesize``                    number            The size of the file in bytes.
+``bitrate``                     number            The bit rate of the sound in kbps.
+``bitdepth``                    number            The bit depth of the sound.
+``duration``                    number            The duration of the sound in seconds.
+``samplerate``                  number            The samplerate of the sound.
+``username``                    string            The username of the uploader of the sound.
+``pack``                        URI               If the sound is part of a pack, this URI points to that pack's API resource.
+``download``                    URI               The URI for retrieving the original sound.
+``bookmark``                    URI               The URI for bookmarking the sound.
+``previews``                    object            Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively).
+``images``                      object            Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields ``waveform_l`` and ``waveform_m`` (for large and medium waveform images respectively), and ``spectral_l`` and ``spectral_m`` (for large and medium spectrogram images respectively).
+``num_downloads``               number            The number of times the sound was downloaded.
+``avg_rating``                  number            The average rating of the sound.
+``num_ratings``                 number            The number of times the sound was rated.
+``rate``                        URI               The URI for rating the sound.
+``comments``                    URI               The URI of a paginated list of the comments of the sound.
+``num_comments``                number            The number of comments.
+``comment``                     URI               The URI to comment the sound.
+``similar_sounds``              URI               URI pointing to the similarity resource (to get a list of similar sounds).
+``analysis``                    object            Dictionary containing requested descriptors information according to the ``descriptors`` request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.
+``analysis_stats``              URI               URI pointing to the complete analysis results of the sound (see :ref:`analysis-docs`).
+``analysis_frames``             URI               The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
+``ac_analysis``                 object            Dictionary containing the results of the AudioCommons analysis for the given sound.
+==============================  ================  ====================================================================================
 
 
 The contents of the field ``analysis`` of the Sound Instance response can be determined using an additional request parameter ``descriptors``.
@@ -692,7 +693,7 @@ Additionally, the request can include the following POST parameters to provide a
 Name                  Type              Description
 ====================  ================  ====================================================================================
 ``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
-``bst_category``      string            The category code that will be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
+``bst_category``      string            The ID of a category to be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
 ``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            A textual description of the sound.
 ``license``           string            The license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
@@ -766,7 +767,7 @@ Name                  Type              Description
 ====================  ================  ====================================================================================
 ``upload_filename``   string            The filename of the sound to describe. Must match with one of the filenames returned in :ref:`sound-pending-uploads` resource.
 ``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
-``bst_category``      string            The category code that will be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
+``bst_category``      string            The ID of a category to be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
 ``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            A textual description of the sound.
 ``license``           string            The license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
@@ -883,7 +884,7 @@ A request to the Edit Sound Description resource must include mostly the same PO
 Name                  Type              Description
 ====================  ================  ====================================================================================
 ``name``              string            (OPTIONAL) The new name that will be given to the sound.
-``bst_category``      string            (OPTIONAL) The new category code that will be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
+``bst_category``      string            (OPTIONAL) The new category ID that will be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
 ``tags``              string            (OPTIONAL) The new tags that will be assigned to the sound. Note that if this parameter is filled, old tags will be deleted. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            (OPTIONAL) The new textual description for the sound.
 ``license``           string            (OPTIONAL) The new license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".

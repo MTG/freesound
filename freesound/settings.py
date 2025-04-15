@@ -414,7 +414,7 @@ ANNOUNCEMENT_CACHE_KEY = 'announcement_cache'
 # Broad Sound Taxonomy definition
 
 BROAD_SOUND_TAXONOMY = {
-    "m": {"level": 1, "name": "Music", "description": "Music excerpts, melodies, loops, fillers, drones and short musical snippets."},
+    "m": {"level": 1, "name": "Music", "description": "Music excerpts, including melodies, singing, loops, fillers, drones and short musical snippets."},
     "m-sp": {"level": 2, "name": "Solo percussion", "description": "Music excerpts with solo percussive instruments."},
     "m-si": {"level": 2, "name": "Solo instrument", "description": "Music excerpts with only one instrument, excluding percussion."},
     "m-m": {"level": 2, "name": "Multiple instruments", "description": "Music excerpts with more than one instrument."},

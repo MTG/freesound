@@ -79,9 +79,7 @@ def generate_geotag_bytearray_dict(sound_list):
             lon, lat = s['geotag'].split(' ')
             lat = max(min(float(lat), 90), -90)
             lon = max(min(float(lon), 180), -180)
-            packed_sounds.write(struct.pack("i", s['id']))
-            packed_sounds.write(struct.pack("i", int(lat * 1000000)))
-            packed_sounds.write(struct.pack("i", int(lon * 1000000)))
+            packed_sounds.write(struct.pack("iii", s['id'], int(lat * 1000000), int(lon * 1000000)))
             num_sounds_in_bytearray += 1
         except ValueError:
             pass

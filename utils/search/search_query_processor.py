@@ -116,7 +116,7 @@ class SearchQueryProcessor:
             query_param_name='dp',
             label='Display results as packs',
             help_text='Display search results as packs rather than individual sounds',
-            get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('grouping_pack') else option.value,
+            get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode') else option.value,
             should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode')
         )),
         ('group_by_pack', SearchOptionBool, dict(

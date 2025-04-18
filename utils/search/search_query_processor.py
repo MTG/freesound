@@ -41,12 +41,12 @@ from .search_query_processor_options import SearchOptionStr, SearchOptionChoice,
 
 def _get_value_to_apply_group_by_pack(self):
     # Force return True if display_as_packs is enabled, and False if map_mode is enabled
-    if self.sqp.has_filter_with_name('grouping_pack'):
+    if self.sqp.get_option_value_to_apply('map_mode'):
+        return False
+    elif self.sqp.has_filter_with_name('grouping_pack'):
         return False
     elif self.sqp.get_option_value_to_apply('display_as_packs'):
         return True
-    elif self.sqp.get_option_value_to_apply('map_mode'):
-        return False
     return self.value
 
 

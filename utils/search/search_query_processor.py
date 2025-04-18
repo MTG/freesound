@@ -111,14 +111,6 @@ class SearchQueryProcessor:
             label='Only remix sounds',
             help_text='Only find sounds that are a remix of other sounds or have been remixed'
         )),
-        ('group_by_pack', SearchOptionBool, dict(
-            query_param_name='g',
-            label='Group sounds by pack',
-            help_text='Group search results so that multiple sounds of the same pack only represent one item',
-            value_default=True,
-            get_value_to_apply = _get_value_to_apply_group_by_pack,
-            should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('display_as_packs') or option.sqp.get_option_value_to_apply('map_mode')
-        )),
         ('display_as_packs', SearchOptionBool, dict(
             advanced=False,
             query_param_name='dp',
@@ -126,6 +118,14 @@ class SearchQueryProcessor:
             help_text='Display search results as packs rather than individual sounds',
             get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('grouping_pack') else option.value,
             should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode')
+        )),
+        ('group_by_pack', SearchOptionBool, dict(
+            query_param_name='g',
+            label='Group sounds by pack',
+            help_text='Group search results so that multiple sounds of the same pack only represent one item',
+            value_default=True,
+            get_value_to_apply = _get_value_to_apply_group_by_pack,
+            should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('display_as_packs') or option.sqp.get_option_value_to_apply('map_mode')
         )),
         ('grid_mode', SearchOptionBool, dict(
             advanced=False,

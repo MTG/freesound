@@ -26,7 +26,7 @@ import struct
 import urllib.parse
 
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -42,6 +42,7 @@ from utils.search.search_sounds import perform_search_engine_query
 from utils.username import redirect_if_old_username, raise_404_if_user_is_deleted
 
 web_logger = logging.getLogger('web')
+cache_persistent = caches['persistent']
 
 
 def log_map_load(map_type, num_geotags, request):
@@ -96,7 +97,7 @@ def geotags_barray(request, tag=None):
             log_map_load('tag-embed' if is_embed else 'tag', num_geotags, request)
         return HttpResponse(generated_bytearray, content_type='application/octet-stream')
     else:
-        all_geotags = cache.get(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY)
+        all_geotags = cache_persistent.get(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY)
         if isinstance(all_geotags, (list, tuple)) and len(all_geotags) == 2:
             cached_bytearray, num_geotags = all_geotags
             log_map_load('all-embed' if is_embed else 'all', num_geotags, request)

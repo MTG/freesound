@@ -13,10 +13,11 @@ Example usage:
 
 """
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import caches
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 
+cache_persistent = caches['persistent']
 
 class Command(BaseCommand):
     help = 'Set/clear "announcement_cache" for front page announcements banner'
@@ -43,13 +44,13 @@ class Command(BaseCommand):
             text = kwargs["text"]
             timeout = kwargs.get("timeout")
             value = render_to_string("molecules/announcement_banner.html", {"title": title, "text": text})
-            cache.set(settings.ANNOUNCEMENT_CACHE_KEY, value, timeout)
+            cache_persistent.set(settings.ANNOUNCEMENT_CACHE_KEY, value, timeout)
             self.stdout.write(self.style.SUCCESS("Successfully set announcement_cache"))
         elif action == "clear":
-            cache.delete(settings.ANNOUNCEMENT_CACHE_KEY)
+            cache_persistent.delete(settings.ANNOUNCEMENT_CACHE_KEY)
             self.stdout.write(self.style.SUCCESS("Successfully cleared announcement_cache"))
         elif action == "show":
-            current_value = cache.get(settings.ANNOUNCEMENT_CACHE_KEY, "<<Cache is empty>>")
+            current_value = cache_persistent.get(settings.ANNOUNCEMENT_CACHE_KEY, "<<Cache is empty>>")
             self.stdout.write(self.style.SUCCESS("Current value of announcement_cache:"))
             self.stdout.write(current_value)
         else:

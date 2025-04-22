@@ -20,13 +20,15 @@
 
 import logging
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import caches
 
 from geotags.views import generate_geotag_bytearray_queryset_fast
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
 
 console_logger = logging.getLogger('console')
+
+cache_persistent = caches['persistent']
 
 
 class Command(LoggingBaseCommand):
@@ -40,7 +42,7 @@ class Command(LoggingBaseCommand):
         # Don't set expiration time because the bytearray will be overwritten everytime this command runs
         sounds = Sound.objects.select_related('geotag').exclude(geotag=None)
         computed_bytearray, num_geotags = generate_geotag_bytearray_queryset_fast(sounds)
-        cache.set(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY, [computed_bytearray, num_geotags], timeout=None)
+        cache_persistent.set(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY, [computed_bytearray, num_geotags], timeout=None)
         console_logger.info(f'Generated all geotags bytearray with {num_geotags} sounds')
 
         self.log_end({'all_geotags_bytearray_n_sounds': num_geotags})

@@ -80,6 +80,7 @@ web_logger = logging.getLogger('web')
 sounds_logger = logging.getLogger('sounds')
 upload_logger = logging.getLogger('file_upload')
 cache_cdn_map = caches["cdn_map"]
+cache_persistent = caches["persistent"]
 
 
 def get_n_weeks_back_datetime(n_weeks):
@@ -101,6 +102,7 @@ def get_sound_of_the_day_id():
     Returns random id of sound (int)
     """
     cache_key = settings.RANDOM_SOUND_OF_THE_DAY_CACHE_KEY
+
     random_sound = cache.get(cache_key)
     if not random_sound:
         try:
@@ -154,16 +156,16 @@ def packs(request):
 
 
 def front_page(request):
-    rss_cache = cache.get("rss_cache", None)
-    trending_sound_ids = cache.get("trending_sound_ids", None)
-    trending_new_sound_ids = cache.get("trending_new_sound_ids", None)
-    top_rated_new_sound_ids = cache.get("top_rated_new_sound_ids", None)
-    trending_new_pack_ids = cache.get("trending_new_pack_ids", None)
-    recent_random_sound_ids = cache.get("recent_random_sound_ids", None)
-    total_num_sounds = cache.get("total_num_sounds", 0)
-    popular_searches = cache.get("popular_searches", None)
-    top_donor_user_id = cache.get("top_donor_user_id", None)
-    top_donor_donation_amount = cache.get("top_donor_donation_amount", None)
+    rss_cache = cache_persistent.get("rss_cache", None)
+    trending_sound_ids = cache_persistent.get("trending_sound_ids", None)
+    trending_new_sound_ids = cache_persistent.get("trending_new_sound_ids", None)
+    top_rated_new_sound_ids = cache_persistent.get("top_rated_new_sound_ids", None)
+    trending_new_pack_ids = cache_persistent.get("trending_new_pack_ids", None)
+    recent_random_sound_ids = cache_persistent.get("recent_random_sound_ids", None)
+    total_num_sounds = cache_persistent.get("total_num_sounds", 0)
+    popular_searches = cache_persistent.get("popular_searches", None)
+    top_donor_user_id = cache_persistent.get("top_donor_user_id", None)
+    top_donor_donation_amount = cache_persistent.get("top_donor_donation_amount", None)
     if popular_searches is not None:
         popular_searches = [(query_terms, f"{reverse('sounds-search')}?q={query_terms}")
                             for query_terms in popular_searches]
@@ -201,7 +203,7 @@ def front_page(request):
         'enable_query_suggestions': settings.ENABLE_QUERY_SUGGESTIONS,
         'query_suggestions_url': reverse('query-suggestions'),
         'enable_popular_searches': settings.ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE,
-        'announcement_cache': cache.get(settings.ANNOUNCEMENT_CACHE_KEY, None),
+        'announcement_cache': cache_persistent.get(settings.ANNOUNCEMENT_CACHE_KEY, None),
     }
     return render(request, 'front.html', tvars)
 

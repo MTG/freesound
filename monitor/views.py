@@ -37,7 +37,7 @@ from sounds.models import Sound, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
 from utils.search import get_search_engine, SearchEngineException
 
-cache_persistent = ['persistent']
+cache_persistent = caches['persistent']
 
 
 @login_required

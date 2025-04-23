@@ -75,7 +75,7 @@ def perform_search_engine_query(query_params):
     return results, paginator
 
 
-def add_sounds_to_search_engine(sound_objects: list["sounds.models.Sound"]):
+def add_sounds_to_search_engine(sound_objects: list["sounds.models.Sound"], solr_collection_url=None):
     """Add the Sounds from the queryset to the search engine
 
     Args:
@@ -90,7 +90,7 @@ def add_sounds_to_search_engine(sound_objects: list["sounds.models.Sound"]):
     try:
         console_logger.debug(f"Adding {num_sounds} sounds to the search engine")
         search_logger.debug(f"Adding {num_sounds} sounds to the search engine")
-        get_search_engine().add_sounds_to_index(sound_objects, fields_to_include=[], update=False)
+        get_search_engine(sounds_index_url=solr_collection_url).add_sounds_to_index(sound_objects, fields_to_include=[], update=False)
         return num_sounds
     except SearchEngineException as e:
         console_logger.error(f"Failed to add sounds to search engine index: {str(e)}")
@@ -98,7 +98,7 @@ def add_sounds_to_search_engine(sound_objects: list["sounds.models.Sound"]):
         return 0
 
 
-def delete_sounds_from_search_engine(sound_ids):
+def delete_sounds_from_search_engine(sound_ids, solr_collection_url=None):
     """Delete sounds from the search engine
 
     Args:
@@ -107,24 +107,24 @@ def delete_sounds_from_search_engine(sound_ids):
     console_logger.info(f"Deleting {len(sound_ids)} sounds from search engine")
     search_logger.info(f"Deleting {len(sound_ids)} sounds from search engine")
     try:
-        get_search_engine().remove_sounds_from_index(sound_ids)
+        get_search_engine(sounds_index_url=solr_collection_url).remove_sounds_from_index(sound_ids)
     except SearchEngineException as e:
         console_logger.info(f"Could not delete sounds: {str(e)}")
         search_logger.info(f"Could not delete sounds: {str(e)}")
 
 
-def delete_all_sounds_from_search_engine():
+def delete_all_sounds_from_search_engine(solr_collection_url=None):
     """Delete all sounds from the search engine """
     console_logger.info("Deleting ALL sounds from search engine")
     search_logger.info("Deleting ALL sounds from search engine")
     try:
-        get_search_engine().remove_all_sounds()
+        get_search_engine(sounds_index_url=solr_collection_url).remove_all_sounds()
     except SearchEngineException as e:
         console_logger.info(f"Could not delete sounds: {str(e)}")
         search_logger.info(f"Could not delete sounds: {str(e)}")
 
 
-def get_all_sound_ids_from_search_engine(page_size=2000):
+def get_all_sound_ids_from_search_engine(page_size=2000, solr_collection_url=None):
     """Retrieves the list of all sound IDs currently indexed in the search engine
 
     Args:
@@ -134,18 +134,18 @@ def get_all_sound_ids_from_search_engine(page_size=2000):
         list[int]: list of sound IDs indexed in the search engine
     """
     console_logger.info("Getting all sound ids from search engine")
-    search_engine = get_search_engine()
+    search_engine = get_search_engine(sounds_index_url=solr_collection_url)
     try:
         return search_engine.get_all_sound_ids_from_index()
     except SearchEngineException as e:
         search_logger.info(f"Could not retrieve all sound IDs from search engine: {str(e)}")
 
 
-def get_random_sound_id_from_search_engine():
+def get_random_sound_id_from_search_engine(solr_collection_url=None):
     # This helper function is used to facilitate unit testing and handle exception
     try:
         search_logger.info("Making random sound query")
-        return get_search_engine().get_random_sound_id()
+        return get_search_engine(sounds_index_url=solr_collection_url).get_random_sound_id()
     except SearchEngineException as e:
         search_logger.info(f"Could not retrieve a random sound ID from search engine: {str(e)}")
     return 0

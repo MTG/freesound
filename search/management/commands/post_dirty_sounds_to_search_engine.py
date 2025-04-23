@@ -41,7 +41,7 @@ def time_stats(done, total, starttime):
     return str(durdelta), str(remdelta)
 
 
-def send_sounds_to_search_engine(sounds_to_index_ids, slice_size=4000, delete_if_existing=False):
+def send_sounds_to_search_engine(sounds_to_index_ids, slice_size=4000, delete_if_existing=False, solr_collection_url=None):
     total_sounds = len(sounds_to_index_ids)
     console_logger.info(f"Starting to post dirty sounds to solr. {total_sounds} sounds to be added/updated to the search engine")
     n_sounds_indexed_correctly = 0
@@ -49,9 +49,9 @@ def send_sounds_to_search_engine(sounds_to_index_ids, slice_size=4000, delete_if
     for i in range(0, total_sounds, slice_size):
         sound_ids_slice = sounds_to_index_ids[i:i + slice_size]
         if delete_if_existing:
-            delete_sounds_from_search_engine(sound_ids_slice)
+            delete_sounds_from_search_engine(sound_ids_slice, solr_collection_url=solr_collection_url)
         sound_objects = Sound.objects.bulk_query_solr(sound_ids_slice)
-        n_sounds_indexed = add_sounds_to_search_engine(sound_objects)
+        n_sounds_indexed = add_sounds_to_search_engine(sound_objects, solr_collection_url=solr_collection_url)
         if n_sounds_indexed > 0:
             Sound.objects.filter(pk__in=sound_ids_slice).update(is_index_dirty=False)
         n_sounds_indexed_correctly += n_sounds_indexed

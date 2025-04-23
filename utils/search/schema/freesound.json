@@ -41,7 +41,6 @@
   ],
   "deleteDynamicFields": [
     "*_is",
-    "*_s",
     "*_ss",
     "*_l",
     "*_ls",
@@ -55,7 +54,6 @@
     "*_t",
     "*_txt",
     "ignored_*",
-    "*_str",
     "*_p",
     "*_srpt",
     "*_dpf",

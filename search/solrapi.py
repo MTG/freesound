@@ -18,8 +18,8 @@ def check_collection_has_field(base_url, collection, field):
     return False
 
 
-def get_field_types(core_url):
-    schema = get_collection_schema(core_url, "freesound")
+def get_field_types(core_url, collection_name):
+    schema = get_collection_schema(core_url, collection_name)
     return schema["schema"]["fieldTypes"]
 
 
@@ -121,7 +121,7 @@ def create_collection_and_schema(collection, schema_definition, test_field_name,
         delete_field_types(schema_url, field_types)
 
     print("field types")
-    existing_field_types = get_field_types(schema_url)
+    existing_field_types = get_field_types(schema_url, collection)
     field_types = schema_definition.get("fieldTypes", [])
     if field_types:
         add_field_types(schema_url, field_types)

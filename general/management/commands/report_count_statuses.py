@@ -181,12 +181,12 @@ class Command(LoggingBaseCommand):
             user_profile = user.profile
             real_num_posts = user.real_num_posts
             if real_num_posts != user_profile.num_posts:
-                # Only moderated posts shoud count in profile.num_posts, therore the fact that we reach this part of the
+                # Only moderated posts should count in profile.num_posts, therefore the fact that we reach this part of the
                 # code does not mean profile.num_posts is wrong because the difference between real_num_posts and
                 # profile.num_posts could be due to unmoderated posts being wrongly counted in the annotated query
                 # Ideally we should filter out unmoderated post in the annotated Count(), but it is easier to do the
                 # check here as this is a case that will rarely happen and filtering in an annotation is complex without
-                # writting custom SQL.
+                # writing custom SQL.
                 real_num_moderated_posts = user.posts.exclude(moderation_state="NM").count()
                 if real_num_moderated_posts != user_profile.num_posts:
                     mismatches_report['User.num_posts'] += 1
@@ -202,7 +202,7 @@ class Command(LoggingBaseCommand):
             # Look at number of sound downloads for all active users
             # NOTE: a possible optimization here would be to first get user candidates that have downloaded sounds.
             # It seems like 1/8th of the users do not have downloaded sounds, so we could probably make this step last
-            # for 1/8th less of the time. Nevertheless, because we only run this very ocasionally and the performance
+            # for 1/8th less of the time. Nevertheless, because we only run this very occasionally and the performance
             # is not severely impacted when running, we decided that the optimization is probably not worth right now.
             # Same thing applies to pack downloads below.
             for count, user in enumerate(User.objects.filter(is_active=True).select_related('profile').

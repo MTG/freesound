@@ -342,16 +342,16 @@ class TestSearchEngineBackend():
         sounds_ids = [s.id for s in sounds][0:10] # target sound is expected to be in results
         assert_and_continue(results_ids == sounds_ids, 'Similarity search did not return sounds sorted as expected when searching with a target vector')
         
-        # Check requesting sounds for an unexisting analyzer, should return 0 results    
+        # Check requesting sounds for an analyzer that doesn't exist, should return 0 results
         results = self.run_sounds_query_and_save_results(dict(similar_to=target_sound_vector, similar_to_max_num_sounds=10, similar_to_analyzer='test_analyzer2'))
-        assert_and_continue(len(results.docs) == 0, 'Similarity search returned results for an unexsiting analyzer')
+        assert_and_continue(len(results.docs) == 0, "Similarity search returned results for an analyzer that doesn't exist")
 
-        # Check similar_to_max_num_sounds parmeter 
+        # Check similar_to_max_num_sounds parameter
         results = self.run_sounds_query_and_save_results(dict(similar_to=target_sound_vector, similar_to_max_num_sounds=5, similar_to_analyzer='test_analyzer'))
         assert_and_continue(len(results.docs) == 5, 'Similarity search returned unexpected number of results')
 
     
-    def test_search_enginge_backend_sounds(self):
+    def test_search_engine_backend_sounds(self):
         # Monkey patch 'add_similarity_vectors_to_documents' from search engine so we add fake similarity vectors
         # to our testing core. Also override some settings to similarity search works in test environment.
         def patched_add_similarity_vectors_to_documents(sound_objects, documents):
@@ -431,7 +431,7 @@ class TestSearchEngineBackend():
         # in the new index, now the query should return no results.
         self.search_engine.add_sounds_to_index(sounds, update=False, fields_to_include=['id', 'original_filename'])
         results = self.search_engine.search_sounds(query_filter='duration:[* TO *]')
-        assert_and_continue(0 == results.num_found, "No soulds should have been returned in this query")
+        assert_and_continue(0 == results.num_found, "No sounds should have been returned in this query")
 
         # Now we update the index with the duration field for all sounds and repeat the query, we should get all results again
         self.search_engine.add_sounds_to_index(sounds, update=True, fields_to_include=['duration'])
@@ -549,7 +549,7 @@ class TestSearchEngineBackend():
         self.run_forum_query_and_save_results(dict(textual_query='technique'))
         self.run_forum_query_and_save_results(dict(textual_query='freesound'))    
 
-    def test_search_enginge_backend_forum(self):
+    def test_search_engine_backend_forum(self):
         # Get posts for testing
         test_post_ids = list(Post.objects.filter(moderation_state="OK").values_list('id', flat=True)[0:20])
         posts = list(Post.objects.filter(id__in=test_post_ids))

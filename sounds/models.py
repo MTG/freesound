@@ -45,6 +45,7 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import smart_str
+from django.utils.http import urlencode
 from django.utils.functional import cached_property
 from django.utils.text import Truncator, slugify
 from django.utils import timezone
@@ -59,6 +60,7 @@ from general.templatetags.absurl import url2absurl
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
+from sounds.templatetags.bst_category import bst_taxonomy_category_key_to_category_names, bst_taxonomy_category_names_to_category_key
 from tags.models import SoundTag, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, TicketComment
@@ -188,7 +190,7 @@ class BulkUploadProgress(models.Model):
             # This is a broad exception clause intentionally placed here to make sure that BulkUploadProgress is
             # updated with a global error. Otherwise it will appear to the user that the object is permanently being
             # validated. After we update the object with the "unexpected error" message, we log the exception and
-            # continue with excecution
+            # continue with execution
             lines_validated = []
             global_errors = ['An unexpected error occurred while validating your data file']
 
@@ -520,6 +522,9 @@ class Sound(models.Model):
     description = models.TextField()
     date_recorded = models.DateField(null=True, blank=True, default=None)
 
+    # Broad Sound Taxonomy (BST) category
+    bst_category = models.CharField(max_length=8, null=True, blank=True, default=None, choices=settings.BST_SUBCATEGORY_CHOICES)
+
     # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one
     license = models.ForeignKey(License, on_delete=models.CASCADE)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
@@ -595,11 +600,6 @@ class Sound(models.Model):
             return self.friendly_filename()
         else:
             return f"Unsaved sound: {self.original_filename}"
-
-    @staticmethod
-    def is_sound():
-        # N.B. This is used in the ticket template (ugly, but a quick fix)
-        return True
 
     @property
     def moderated_and_processed_ok(self):
@@ -933,7 +933,7 @@ class Sound(models.Model):
             self.invalidate_template_caches()
 
     # N.B. The set_xxx functions below are used in the distributed processing and other parts of the app where we only
-    # want to save an individual field of the model to prevent overwritting other model fields.
+    # want to save an individual field of the model to prevent overwriting other model fields.
 
     def set_processing_ongoing_state(self, state):
         """
@@ -960,7 +960,7 @@ class Sound(models.Model):
         Updates several fields of the Sound object which store some audio properties and saves to DB without
         updating other fields. This function is used in cases when two instances of the same Sound object could be
         edited by two processes in parallel and we want to avoid possible field overwrites.
-        :param int samplerate: saplerate to store
+        :param int samplerate: samplerate to store
         :param int bitrate: bitrate to store
         :param int bitdepth: bitdepth to store
         :param int channels: number of channels to store
@@ -1203,14 +1203,14 @@ class Sound(models.Model):
         NOTE: high_priority is not implemented and setting it has no effect
         """
         if force or ((self.processing_state != "OK" or self.processing_ongoing_state != "FI")
-                     and self.estimate_num_processing_attemps() <= 3):
+                     and self.estimate_num_processing_attempts() <= 3):
             self.set_processing_ongoing_state("QU")
             tasks.process_sound.apply_async(kwargs=dict(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays), countdown=countdown)
             sounds_logger.info(f"Send sound with id {self.id} to queue 'process'")
             return True
 
-    def estimate_num_processing_attemps(self):
-        # Estimates how many processing attemps have been made by looking at the processing logs
+    def estimate_num_processing_attempts(self):
+        # Estimates how many processing attempts have been made by looking at the processing logs
         if self.processing_log is not None:
             return max(1, self.processing_log.count('----Processed sound'))
         else:
@@ -1297,6 +1297,42 @@ class Sound(models.Model):
     def get_similarity_search_target_vector(self, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
         # If the sound has been analyzed for similarity, returns the vector to be used for similarity search
         return get_similarity_search_target_vector(self.id, analyzer=analyzer)
+    
+    @property
+    def category_names(self):
+        if self.bst_category is None:
+            # If the sound category has not been defind by user, return estimated precomputed category.
+            try:
+                for analysis in self.analyses.all():
+                    if analysis.analyzer == settings.BST_ANALYZER_NAME:
+                        if analysis.analysis_data is not None:
+                            return [analysis.analysis_data['category'], analysis.analysis_data['subcategory']]
+            except KeyError:
+                pass
+            return [None, None]
+        return bst_taxonomy_category_key_to_category_names(self.bst_category)    
+    
+    @property
+    def category_code(self):
+        return bst_taxonomy_category_names_to_category_key(*self.category_names)
+
+    @property
+    def get_top_level_category_search_url(self):
+        top_level_name, _ = self.category_names
+        if top_level_name is not None:
+            cat_filter = urlencode({'f': f'category:"{top_level_name}"'})
+            return f'{reverse("sounds-search")}?{cat_filter}'
+        else:
+            return None
+
+    @property
+    def get_second_level_category_search_url(self):
+        top_level_name, second_level_name = self.category_names 
+        if second_level_name is not None:
+            cat_filter = urlencode({'f': f'category:"{top_level_name}" subcategory:"{second_level_name}"'})
+            return f'{reverse("sounds-search")}?{cat_filter}'
+        else:
+            return None
 
     class Meta:
         ordering = ("-created", )
@@ -1621,7 +1657,7 @@ class Pack(models.Model):
         if self.num_sounds:
             if sounds[0].created > self.last_updated:
                 # Only update last_updated if the sound that changed was created after the packs last_updated time
-                # Otherwise it could be that the pack was edited (e.g. the description was changed) ater the last
+                # Otherwise it could be that the pack was edited (e.g. the description was changed) after the last
                 # sound was added and we could be setting the date of the sound here
                 self.last_updated = sounds[0].created
         self.save()
@@ -1967,11 +2003,11 @@ class SoundAnalysis(models.Model):
                 return not math.isinf(value) and not math.isnan(value)
             return True
 
-        if self.analysis_status == "OK" and \
-            'descriptors_map' in settings.ANALYZERS_CONFIGURATION.get(self.analyzer, {}):
+        analysis_configuration = settings.ANALYZERS_CONFIGURATION.get(self.analyzer, {})
+        if self.analysis_status == "OK" and 'descriptors_map' in analysis_configuration:
             analysis_results = self.get_analysis_data_from_file()
             if analysis_results:
-                descriptors_map = settings.ANALYZERS_CONFIGURATION[self.analyzer]['descriptors_map']
+                descriptors_map = analysis_configuration['descriptors_map']
                 analysis_data_for_db = {}
                 for file_descriptor_key_path, db_descriptor_key, _ in descriptors_map:
                     # TODO: here we could implement support for nested keys in the analysis file, maybe by accessing
@@ -1988,18 +2024,16 @@ class SoundAnalysis(models.Model):
     def get_analysis_data_from_file(self):
         """Returns the analysis data as stored in file or returns empty dict if no file exists. It tries
         extensions .json and .yaml as these are the supported formats for analysis results"""
-        if os.path.exists(self.analysis_filepath_base + '.json'):
-            try:
-                with open(self.analysis_filepath_base + '.json') as f:
-                    return json.load(f)
-            except Exception:
-                pass
-        if os.path.exists(self.analysis_filepath_base + '.yaml'):
-            try:
-                with open(self.analysis_filepath_base + '.yaml') as f:
-                    return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
-            except Exception:
-                pass
+        try:
+            with open(self.analysis_filepath_base + '.json') as f:
+                return json.load(f)
+        except Exception:
+            pass
+        try:
+            with open(self.analysis_filepath_base + '.yaml') as f:
+                return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
+        except Exception:
+            pass
         return {}
 
     def get_analysis_data(self):

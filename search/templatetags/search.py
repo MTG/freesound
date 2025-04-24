@@ -31,7 +31,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('search/facet.html', takes_context=True)
-def display_facet(context, facet_name, facet_title=None):
+def display_facet(context, facet_name, facet_title=None, beta_facet=False):
     sqp = context['sqp']
     facets = context['facets']
     solr_fieldname = FIELD_NAMES_MAP.get(facet_name, facet_name)
@@ -39,7 +39,7 @@ def display_facet(context, facet_name, facet_title=None):
         facet_title = sqp.facets[facet_name].get('title', facet_name.capitalize())
         facet_type = sqp.facets[facet_name].get('widget', 'list')
 
-        # If a facet contains a value which is already used in a filter (this can hapen with facets with multiple values like
+        # If a facet contains a value which is already used in a filter (this can happen with facets with multiple values like
         # tags), then we remove it from the list of options so we don't show redundant information
         facet_values_to_skip = []
         for field_name_value in sqp.get_active_filters():
@@ -137,7 +137,12 @@ def display_facet(context, facet_name, facet_title=None):
             else:
                 element['icon'] = 'fcw'
 
-    return {'type': facet_type, 'title': facet_title, 'facet': facet}
+    return {'type': facet_type, 'title': facet_title, 'facet': facet, 'beta_facet': beta_facet}
+
+
+@register.inclusion_tag('search/facet.html', takes_context=True)
+def display_facet_beta(context, facet_name, facet_title=None):
+    return display_facet(context, facet_name, facet_title=facet_title, beta_facet=True)
 
 
 @register.inclusion_tag('search/search_option.html', takes_context=True)

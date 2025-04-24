@@ -161,9 +161,9 @@ class RatingsTestCase(TestCase):
         self.assertEqual(user.profile.avg_rating, 5)
 
         # Check that avg rating is updated when sounds get more ratings
-        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[0], rating=2)  # sound willl have avg_rating 3
-        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[1], rating=8)  # sound willl have avg_rating 7
-        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[2], rating=10)  # sound willl have avg_rating 7.5
+        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[0], rating=2)  # sound will have avg_rating 3
+        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[1], rating=8)  # sound will have avg_rating 7
+        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[2], rating=10)  # sound will have avg_rating 7.5
         
         # Finally user avg rating should be the avg of the avg_rating of each individual sound
         self.assertEqual(round(user.profile.avg_rating, 2), 5.83)

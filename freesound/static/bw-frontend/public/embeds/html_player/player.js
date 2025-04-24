@@ -194,9 +194,9 @@ function makePlayer(selector) {
             if (typeof showToggleDisplayButton !== "undefined"){
                 if (showToggleDisplayButton){
                     var toggle_display_button = '<a href="javascript:void(0)" title="change display" class="toggle display">change display</a>';
-                    var cotrols_element = $('.controls');
-                    cotrols_element.css('width', '60px');
-                    cotrols_element.append(toggle_display_button);
+                    var controls_element = $('.controls');
+                    controls_element.css('width', '60px');
+                    controls_element.append(toggle_display_button);
                 }
             }
         }

@@ -141,11 +141,11 @@ import { addTypeAheadFeatures } from '../components/typeahead'
 const fetchSuggestions = async inputElement => {
   const response = await fetch(inputElement.dataset.typeaheadSuggestionsUrl + '?q=' + inputElement.value);
   const returnedData = await response.json()
-  const sugggestions = [];
+  const suggestions = [];
   returnedData.forEach(username => {
-      sugggestions.push({'label': '<div class="padding-1">' + username + '</div>', 'value': username})
+      suggestions.push({'label': '<div class="padding-1">' + username + '</div>', 'value': username})
   });
-  return sugggestions;
+  return suggestions;
 }
 
 const onSuggestionSelectedFromDropdown = (suggestion, suggestionsWrapper, inputElement) => {

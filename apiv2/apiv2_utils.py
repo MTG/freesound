@@ -144,8 +144,8 @@ class FreesoundAPIViewMixin:
             2) user is using the browseable API and HTTP
 
         The redirect is done to no-www and HTTPS. This is implemented here because, for compatibility reasons, the API
-        is the only part of Freesound which is not autotmatically redriected to HTTPS/no-www. However, when users are
-        browsing the API interactively (with the browser), we want this behvaiour top be applied.
+        is the only part of Freesound which is not automatically redirected to HTTPS/no-www. However, when users are
+        browsing the API interactively (with the browser), we want this behaviour top be applied.
         """
 
         if isinstance(response.accepted_renderer, BrowsableAPIRenderer):
@@ -176,7 +176,7 @@ class GenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
         self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
-        """ This method is overriden to make a redirect when the user is using the interactive API browser and
+        """ This method is overridden to make a redirect when the user is using the interactive API browser and
         with 'www' sub-domain. The problem is that we can't check if it's accessing through the interactive browser
         inside the 'initial' method because it raises an exception when the user is not logged in, that exception is
         handled by 'finalize_response' method of APIView.

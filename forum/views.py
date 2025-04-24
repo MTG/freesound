@@ -264,7 +264,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
 
     if user_is_blocked_for_spam_reports:
         messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account "
-                                                     "has been temporaly blocked after multiple spam reports")
+                                                     "has been temporarily blocked after multiple spam reports")
 
     tvars = {'forum': forum,
              'thread': thread,

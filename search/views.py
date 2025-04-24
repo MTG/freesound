@@ -53,7 +53,7 @@ def search_view_helper(request):
         search_logger.info(f"Errors in SearchQueryProcessor: {sqp.errors}")
         return {'error_text': 'There was an error while searching, is your query correct?'}
 
-    # Update compact mode prefernece if user has explicitely specified a different value than the preference
+    # Update compact mode preference if user has explicitly specified a different value than the preference
     if request.user.is_authenticated:
         option = sqp.options['grid_mode']
         if option.set_in_request:
@@ -81,7 +81,7 @@ def search_view_helper(request):
             # If clustering data for the current query is fully available, we can get it directly
             clusters_data = _get_clusters_data_helper(sqp)
         else:
-            # Otherwise pass the url where the cluster data fill be fetched asyncronously from
+            # Otherwise pass the url where the cluster data fill be fetched asynchronously from
             get_clusters_url = reverse('clusters-section') + f'?{request.get_full_path().split("?")[-1]}'
 
     # If in tags mode and no tags in filter, return before making the query as we'll make
@@ -90,10 +90,19 @@ def search_view_helper(request):
         return {'sqp': sqp}  # sqp will be needed in tags.views.tags view
 
     # Run the query and post-process the results
-    try:    
-        query_params = sqp.as_query_params()    
+    try:
+        query_params = sqp.as_query_params()
         results, paginator = perform_search_engine_query(query_params)
-        if not sqp.map_mode_active():
+        if sqp.map_mode_active():
+            # In map we configure the search query to already return geotags data. Here we collect all this data
+            # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares
+            # data points for the map of sounds.
+            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 5 minutes
+
+            # Nevertheless we set docs to empty list as we won't display anything in the search results page (the map
+            # will make an extra request that will load the cached data and display it in the map)
+            docs = []
+        else:
             if not sqp.display_as_packs_active():
                 resultids = [d.get("id") for d in results.docs]
                 resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
@@ -131,15 +140,6 @@ def search_view_helper(request):
                 for d in docs:
                     d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
                     d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'grouping_pack:"{d["pack"].id}_{d["pack"].name}"'])
-        else:
-            # In map we configure the search query to already return geotags data. Here we collect all this data
-            # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares
-            # data points for the map of sounds. 
-            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 5 minutes
-
-            # Nevertheless we set docs to empty list as we won't displat anything in the search results page (the map
-            # will make an extra request that will load the cached data and display it in the map)
-            docs = []
 
         search_logger.info('Search (%s)' % json.dumps({
             'ip': get_client_ip(request),
@@ -201,7 +201,7 @@ def _get_clusters_data_helper(sqp):
     # See get_num_sounds_per_cluster for more details.
     num_sounds_per_cluster = get_num_sounds_per_cluster(sqp, results['clusters'])
 
-    # Resurn a list with information for each cluster
+    # Return a list with information for each cluster
     # Note that this information DOES NOT include the actual sound IDs per cluster.
     return list(zip(
         results.get('cluster_ids', []),  # cluster ID

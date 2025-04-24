@@ -1,15 +1,19 @@
 {
 	"folders": [
 		{
+			"name": "freesound",
 			"path": "."
 		},
 		{
+			"name": "freesound-deploy",
 			"path": "../freesound-deploy"
 		},
 		{
+			"name": "freesound-audio-analyzers",
 			"path": "../freesound-audio-analyzers"
 		},
 		{
+			"name": "freesound-data",
 			"path": "freesound-data"
 		}
 	],
@@ -111,6 +115,18 @@
 				"label": "Orchestrate analysis",
 				"type": "shell",
 				"command": "docker compose run --rm web python manage.py orchestrate_analysis",
+				"problemMatcher": []
+			},
+			{
+				"label": "Build API docs",
+				"type": "shell",
+				"command": "docker compose run --rm web bash -c \"cd _docs/api/ && make html\"",
+				"problemMatcher": []
+			},
+			{
+				"label": "Start API docs server",
+				"type": "shell",
+				"command": "cd _docs/api/build/html && python -m http.server 8008",
 				"problemMatcher": []
 			}
 		]

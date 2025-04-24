@@ -21,3 +21,22 @@ class SearchQueryProcessorOptionsTest(TestCase):
         option = search_query_processor_options.SearchOptionInt(query_param_name='test')
         option.set_search_query_processor(sqp)
         assert option.get_value_from_request() is None
+
+class DisplayMapModeTest(TestCase):
+    def test_display_map_mode(self):
+        request = RequestFactory().get('/?mm=1')
+        request.user = AnonymousUser()
+        sqp = search_query_processor.SearchQueryProcessor(request)
+        assert sqp.get_option_value_to_apply('display_as_packs') is False
+
+    def test_display_map_mode_and_display_as_packs(self):
+        request = RequestFactory().get('/?mm=1&dp=1')
+        request.user = AnonymousUser()
+        sqp = search_query_processor.SearchQueryProcessor(request)
+        assert sqp.get_option_value_to_apply('display_as_packs') is False
+
+    def test_display_map_mode_and_display_as_packs_and_grouping_pack(self):
+        request = RequestFactory().get('/?mm=1&dp=1&grouping_pack=1')
+        request.user = AnonymousUser()
+        sqp = search_query_processor.SearchQueryProcessor(request)
+        assert sqp.get_option_value_to_apply('display_as_packs') is False

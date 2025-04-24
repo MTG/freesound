@@ -55,14 +55,14 @@ class ClusteringEngine(object):
     K-Nearest Neighbors Graph that is then partitioned for obtaining the clusters.
     The available features used for clustering are listed in the clustering_settings.py file.
 
-    It also includes some methods that enable to automaticaly estimate the performance of the clustering
-    method. Moreover, a few unsued alternative methods for performing some intermediate steps are left 
-    here for developement and research purpose.
+    It also includes some methods that enable to automatically estimate the performance of the clustering
+    method. Moreover, a few unused alternative methods for performing some intermediate steps are left
+    here for development and research purpose.
     """
 
     def _prepare_clustering_result_and_reference_features_for_evaluation(self, partition):
         """Formats the clustering classes and some reference features in order to then estimate how good is the 
-        clustering performance. Tipically the reference features can be tag-derived features that reflect semantic 
+        clustering performance. Typically the reference features can be tag-derived features that reflect semantic
         characteristics of the content. The reference features are defined in the clustering settings file.
         
         Extracts reference features for the sounds given as keys of the partition argument.
@@ -137,7 +137,7 @@ class ClusteringEngine(object):
 
     def _evaluation_metrics(self, partition):
         """Computes different scores related to the clustering performance by comparing the resulting clustering classes
-        to the reference features defined in the clustering settings file. The reference features tipically correspond to 
+        to the reference features defined in the clustering settings file. The reference features typically correspond to
         tag-derived features that can reflect semantic characteristics of the audio clips.
 
         Args:
@@ -326,7 +326,7 @@ class ClusteringEngine(object):
         """Applies clustering on the requested sounds using the given features name.
 
         Args:
-            query_params (str): string representing the query parameters submited by the user to the search engine.
+            query_params (str): string representing the query parameters submitted by the user to the search engine.
             sound_ids (List[int]): list containing the ids of the sound to cluster.
             similarity_vectors_map (Dict{int:List[float]}): dictionary with the similarity feature vectors for each sound.
         

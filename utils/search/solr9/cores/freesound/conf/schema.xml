@@ -211,7 +211,7 @@
   <copyField source="pack" dest="pack_tokenized" />
 
   <field name="is_geotagged" type="boolean" indexed="true" stored="true" required="false" />
-  <field name="geotag" type="location_rpt" indexed="true" stored="true" required="false"  multiValued="true"/>
+  <field name="geotag" type="location_rpt" indexed="true" stored="true" required="false" />
 
   <field name="type" type="alphaOnlySort" indexed="true" stored="true" required="false" />
   <field name="duration" type="pdouble" indexed="true" stored="true" required="false" />

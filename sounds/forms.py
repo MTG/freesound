@@ -23,7 +23,8 @@ import re
 
 from django_recaptcha.fields import ReCaptchaField
 from django import forms
-from django.core.exceptions import PermissionDenied
+from django.conf import settings
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
 from django.core.signing import BadSignature, SignatureExpired
@@ -245,6 +246,13 @@ class SoundEditAndDescribeForm(forms.Form):
     file_full_path = None
     name = forms.CharField(max_length=512, min_length=5,
                            widget=forms.TextInput(attrs={'size': 65, 'class': 'inputText'}))
+    bst_category = forms.ChoiceField(
+        choices=settings.BST_SUBCATEGORY_CHOICES,
+        help_text="Choose the most appropriate <i>Category</i> and <i>Subcategory</i> for the sound. "\
+                "These categories come from the <a class=\"bw-link--grey\" href=\"/help/faq/#the-broad-sound-taxonomy\">Broad Sound Taxonomy</a>, "\
+                "and are used to improve Freesound search capabilities.",
+        error_messages={'invalid_choice': 'Please select a valid category and a subcategory.'},
+        required=True)
     tags = TagField(
         widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
         help_text="At least 3 tags, separated by spaces or commas. "
@@ -276,7 +284,7 @@ class SoundEditAndDescribeForm(forms.Form):
                            }, label="Longitude")
     zoom = forms.IntegerField(min_value=11, max_value=19,
                               widget=forms.NumberInput (attrs={'placeholder': '11 to 19'}),
-                              error_messages={'min_value': "The zoom value sould be at least 11."},
+                              error_messages={'min_value': "The zoom value should be at least 11."},
                               required=False, label="Zoom")
     sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(), required=False)
 
@@ -357,4 +365,5 @@ class SoundCSVDescriptionForm(SoundEditAndDescribeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['name'].required = False  # Make sound name not required
+        self.fields['bst_category'].error_messages.update({'invalid_choice': 'Please use a valid BST subcategory ID. See bulk describe instructions for more details.'})
         

@@ -143,7 +143,7 @@ const advancedSearchOptionsHaveChangedSinceLastQuery = () => {
 }
 
 const onAdvancedSearchOptionsInputsChange = () => {
-  document.getElementById('avanced-search-apply-button').disabled = !advancedSearchOptionsHaveChangedSinceLastQuery();
+  document.getElementById('advanced-search-apply-button').disabled = !advancedSearchOptionsHaveChangedSinceLastQuery();
 }
 
 advancedSearchOptionsDiv.getElementsByTagName("input").forEach(inputElement => {

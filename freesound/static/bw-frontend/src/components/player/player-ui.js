@@ -290,7 +290,7 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
   const remixSoundsElement = playerImgNode.parentElement.querySelector('.bw-player__remix');
   let spectrogramButton = undefined;
   try {
-    spectrogramButton = controlsElement.querySelector('i.bw-icon-spectogram').parentElement;
+    spectrogramButton = controlsElement.querySelector('i.bw-icon-spectrogram').parentElement;
   } catch (error){}
   const hasWaveform = playerImgNode.src.indexOf(waveform) > -1
   if (hasWaveform) {
@@ -347,20 +347,20 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
  * @param {'small' | 'big'} playerSize
  * @param {bool} startWithSpectrum
  */
-const createSpectogramButton = (playerImgNode, parentNode, playerSize, startWithSpectrum) => {
-  const spectogramButton = createControlButton('spectogram')
-  spectogramButton.setAttribute('title', 'Spectrogram/Waveform')
-  spectogramButton.setAttribute('aria-label', 'Spectrogram/Waveform')
+const createspectrogramButton = (playerImgNode, parentNode, playerSize, startWithSpectrum) => {
+  const spectrogramButton = createControlButton('spectrogram')
+  spectrogramButton.setAttribute('title', 'Spectrogram/Waveform')
+  spectrogramButton.setAttribute('aria-label', 'Spectrogram/Waveform')
   const { spectrum, waveform } = parentNode.dataset
   if (startWithSpectrum){
-    spectogramButton.classList.add('text-red-important');
+    spectrogramButton.classList.add('text-red-important');
   }
-  spectogramButton.addEventListener('pointerup', evt => evt.stopPropagation())
-  spectogramButton.addEventListener('click', evt => {
+  spectrogramButton.addEventListener('pointerup', evt => evt.stopPropagation())
+  spectrogramButton.addEventListener('click', evt => {
     toggleSpectrogramWaveform(playerImgNode, waveform, spectrum, playerSize)
     evt.stopPropagation()
   })
-  return spectogramButton
+  return spectrogramButton
 }
 
 const createRulerButton = (parentNode) => {
@@ -513,7 +513,7 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
       ? [createLoopButton(audioElement),
          createStopButton(audioElement, parentNode),
          createPlayButton(audioElement, playerSize),
-         createSpectogramButton(playerImgNode, parentNode, playerSize, startWithSpectrum),
+         createspectrogramButton(playerImgNode, parentNode, playerSize, startWithSpectrum),
          createRulerButton(parentNode)]
       : [createPlayButton(audioElement, playerSize),
          createLoopButton(audioElement)]

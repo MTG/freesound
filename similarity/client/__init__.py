@@ -116,7 +116,7 @@ class Similarity(object):
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod
-    def add_to_indeixing_server(cls, sound_id, yaml_path):
+    def add_to_indexing_server(cls, sound_id, yaml_path):
         url = _BASE_INDEXING_SERVER_URL + _URL_ADD_POINT + '?' + 'sound_id=' + str(sound_id) + '&location=' + str(yaml_path)
         return _result_or_exception(_get_url_as_json(url))
 

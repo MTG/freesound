@@ -40,7 +40,7 @@ class ApiV2ClientForm(forms.Form):
             In this way your application can be automatically notified when users have given the permissions to access their data.
             If your application does not support the use of a callback url (generally non web-based applications or non server-based), you must
             introduce the following url: <span style="font-family: 'Courier'">http://freesound.org/home/app_permissions/permission_granted/</span>.
-            <br>See the <a href="/docs/api" target="_blank">API docummentation</a> for more information.</div>""")
+            <br>See the <a href="/docs/api" target="_blank">API documentation</a> for more information.</div>""")
     description = forms.CharField(label='Description*', widget=forms.Textarea(
         attrs={'style': 'width:100%', 'placeholder': 'Tell us something about what you\'re planning to do with this '
                                                       'API credential (i.e. what kind of project or application you\'re'
@@ -187,7 +187,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
             if similar_to.startswith('['):
                 similar_to = json.loads(similar_to)
             else:
-                # Othrwise, we assume it is a sound id and we pass it as integer
+                # Otherwise, we assume it is a sound id and we pass it as integer
                 similar_to = int(similar_to)
         else:
             similar_to = None

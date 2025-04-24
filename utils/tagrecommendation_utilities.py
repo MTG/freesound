@@ -68,7 +68,7 @@ def get_recommended_tags_view(request):
                 except urllib.error.URLError as e:
                     web_logger.info('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
                                      (e, traceback.format_exc()))
-                    return HttpResponseUnavailabileError()
+                    return HttpResponseUnavailableError()
 
     return HttpResponse(json.dumps([[],"-"]), content_type='application/javascript')
 
@@ -109,5 +109,5 @@ def post_sounds_to_tagrecommendation_service(sound_qs):
     print("Finished!")
 
 
-class HttpResponseUnavailabileError(HttpResponse):
+class HttpResponseUnavailableError(HttpResponse):
     status_code = 503

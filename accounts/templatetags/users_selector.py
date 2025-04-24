@@ -15,7 +15,7 @@ register = template.Library()
 def users_selector(context, users, selected_user_ids=[], show_select_all_buttons=False):
     if users:
         if not isinstance(users[0], User):
-            # users are passed as a list of user ids, retrieve the Sound objects from DB
+            # users are passed as a list of user ids, retrieve the User objects from DB
             users = User.objects.ordered_ids(users)
         for user in users:
             user.selected = user.id in selected_user_ids

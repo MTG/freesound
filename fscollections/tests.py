@@ -119,6 +119,11 @@ class CollectionTest(TestCase):
         maintainer_test_collection.refresh_from_db()
         self.assertEqual(0, maintainer_test_collection.num_sounds)
 
+        # Test deleting a collection where request user is maintainer (not valid)
+        resp = self.client.post(reverse('delete-collection',args=[self.collection.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(f"/collections/{self.collection.id}/", resp.url)
+
     def test_add_remove_sounds_as_external_user(self):
         self.client.force_login(self.external_user)
 
@@ -131,6 +136,11 @@ class CollectionTest(TestCase):
         # Additionally, test edit URL for external user
         resp = self.client.get(reverse('edit-collection', args=[self.collection.id]))
         self.assertEqual(302, resp.status_code)
+        self.assertEqual(f"/collections/{self.collection.id}/", resp.url)
+
+        # Test deleting a collection as an external user (not owner -> not valid)
+        resp = self.client.post(reverse('delete-collection',args=[self.collection.id]))
+        self.assertEqual(resp.status_code, 302)
         self.assertEqual(f"/collections/{self.collection.id}/", resp.url)
 
     def test_edit_collection_as_user(self):

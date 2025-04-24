@@ -41,13 +41,7 @@ def collection(request, collection_id):
     is_owner = False
     is_maintainer = False
     maintainers = []
-    # if no collection id is provided for this URL, render the oldest collection
-    # only show the collections for which you're the user(owner)
-    if not collection_id:
-        # this could probably be a JsonResponse message indicating an error
-        return HttpResponseRedirect(reverse('your-collections'))
-    else:
-        collection = get_object_or_404(Collection, id=collection_id)
+    collection = get_object_or_404(Collection, id=collection_id)
     
     maintainers = User.objects.filter(collection_maintainer=collection.id)
     if user == collection.user:
@@ -125,7 +119,8 @@ def add_sound_to_collection(request, sound_id):
              'sound_is_moderated_and_processed_ok': sound.moderated_and_processed_ok,
              'form': form,
              'collections_with_sound': collections_already_containing_sound,
-             'full_collections': full_collections
+             'full_collections': full_collections,
+             'max_sounds_per_collection': settings.MAX_SOUNDS_PER_COLLECTION,
              }
 
     return render(request, 'collections/modal_add_sound_to_collection.html', tvars)
@@ -149,9 +144,13 @@ def delete_collection(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
 
     if request.method=="POST" and request.user==collection.user:
+        msg = f"Collection {collection.name} successfully deleted."
         collection.delete()
+        messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('your-collections'))
     else:
+        messages.add_message(request, messages.INFO, "You're not allowed to delete this collection."
+                             "In order to delte a collection you must be the owner.")
         return HttpResponseRedirect(reverse('collection', args=[collection.id]))
 
 def edit_collection(request, collection_id):
@@ -211,6 +210,7 @@ def edit_collection(request, collection_id):
         "collection": collection,
         "is_owner": is_owner,
         "is_maintainer": is_maintainer,
+        "max_sounds_per_collection": settings.MAX_SOUNDS_PER_COLLECTION,
     }
     
     return render(request, 'collections/edit_collection.html', tvars)

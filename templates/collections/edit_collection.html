@@ -14,7 +14,6 @@
 
     </p>
 </div>
-<div id="config" data-max-sounds="{{max_sounds_per_collection}}"></div>
 <div class="row no-gutters">
     <div class="col-lg-8 offset-lg-2">
         <h2 class="v-spacing-3">{{ collection.name }}</h2>
@@ -59,13 +58,13 @@
                 {% if not form.collection_sounds.value %}
                 <div class="v-spacing-4 v-spacing-top-2">No sounds have been added to this collection yet</div>
                 {% endif %}
-                {% sounds_selector form.collection_sound_objects %}
+                {% sounds_selector form.collection_sound_objects max_sounds=max_sounds_per_collection%}
                 <div class="between v-spacing-top-2">
                     <button class="btn-inverse" data-toggle="add-sounds-modal" data-selected-sounds-hidden-input-id="{{ form.collection_sounds.id_for_label }}" data-modal-url="{% url 'add-sounds-modal-collection' collection.id %}">{% bw_icon 'plus' %}Add sounds</button>
                     <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from collection</button>
                 </div>
                 <div class="between v-spacing-top-5">
-                    <span class="helptext display-none" ><i>{{form.collection_sounds.help_text|safe}}</i></span>
+                    <span class="helptext" style="display:none" ><i>{{form.collection_sounds.help_text|safe}}</i></span>
                 </div>
             </div>
             {% if is_owner or is_maintainer%}

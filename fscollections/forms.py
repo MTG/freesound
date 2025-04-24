@@ -187,10 +187,9 @@ class CollectionEditForm(forms.ModelForm):
         self.is_maintainer = kwargs.pop('is_maintainer', False)
         super().__init__(*args, **kwargs)
         self.fields['public'].label = "Visibility"
-
-        if self.instance.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION: 
-           self.fields['collection_sounds'].help_text=f"You have reached the maximum number of sounds available for a collection ({settings.MAX_SOUNDS_PER_COLLECTION}). " \
-           "In order to add new sounds, first remove some of the current ones."
+    
+        self.fields['collection_sounds'].help_text=f"You have reached the maximum number of sounds available for a collection ({settings.MAX_SOUNDS_PER_COLLECTION}). " \
+        "In order to add new sounds, first remove some of the current ones."
 
         if self.instance.is_default_collection:
             self.fields['name'].disabled = True

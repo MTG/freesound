@@ -60,10 +60,13 @@ const prepareAddSoundsModalAndFields = (container) => {
             })
         }
 
-        if(soundsInput.id === "collection_sounds"){
-            const maxSounds = document.getElementById('config').dataset.maxSounds;
+        const soundsLabel = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName('label')[0];
+        const maxSounds = selectedSoundsDestinationElement.dataset.maxElements;
+        const maxSoundsHelpText = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByClassName('helptext')[0]
+        if(maxSounds !== "None"){
             if (soundsInput.value.split(',').length >= maxSounds){
                 addSoundsButton.disabled = true
+                maxSoundsHelpText.style.display = 'block';
             }
         }
 
@@ -78,9 +81,12 @@ const prepareAddSoundsModalAndFields = (container) => {
             updateObjectSelectorDataProperties(selectedSoundsDestinationElement);
             const selectedSoundsHiddenInput = document.getElementById(addSoundsButton.dataset.selectedSoundsHiddenInputId);
             selectedSoundsHiddenInput.value = selectedSoundsDestinationElement.dataset.unselectedIds;
-            if(selectedSoundsHiddenInput.value.split(',').length < maxSounds && selectedSoundsHiddenInput.id === "collection_sounds"){
+            if(maxSounds !== "None" && selectedSoundsHiddenInput.value.split(',').length < maxSounds){
                 addSoundsButton.disabled = false;
+                maxSoundsHelpText.style.display = 'none';
             }
+            if (soundsLabel){
+                soundsLabel.innerHTML = "Sounds in collection (" + selectedSoundsDestinationElement.children.length + ")"}
             removeSoundsButton.disabled = true;
         });
 
@@ -92,9 +98,12 @@ const prepareAddSoundsModalAndFields = (container) => {
                 const newSoundIds = serializedIdListToIntList(selectedSoundIds);
                 const combinedIds = combineIdsLists(currentSoundIds, newSoundIds);
                 selectedSoundsHiddenInput.value = combinedIds.join(',');
-                if(selectedSoundsHiddenInput.value.split(',').length >= 4 && selectedSoundsHiddenInput.id === "collection_sounds"){
+                if(maxSounds !== "None" && selectedSoundsHiddenInput.value.split(',').length >= maxSounds){
                     addSoundsButton.disabled = true;
+                    maxSoundsHelpText.style.display = 'block';
                 }
+                if (soundsLabel){
+                    soundsLabel.innerHTML = "Sounds in collection (" + selectedSoundsDestinationElement.children.length + ")"}
                 initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
                     removeSoundsButton.disabled = element.dataset.selectedIds == ""
                 });

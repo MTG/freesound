@@ -1207,6 +1207,9 @@ def handle_uploaded_file(user_id, f):
     # Move or copy the uploaded file from the temporary folder created by Django to the /uploads path
     dest_directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
     os.makedirs(dest_directory, exist_ok=True)
+    if f.name in os.listdir(dest_directory):
+        msg_to_return = 'Duplicated filenames are not allowed. You have a sound pending description with the same file name.'
+        return msg_to_return
     dest_path = os.path.join(dest_directory, os.path.basename(f.name)).encode("utf-8")
     upload_logger.info(f"handling file upload and saving to {dest_path}")
     starttime = time.time()
@@ -1283,19 +1286,25 @@ def upload_file(request):
 def upload(request, no_flash=False):
     form = UploadFileForm()
     successes = 0
-    errors = []
+    errors = {}
     uploaded_file = None
     if no_flash:
         if request.method == 'POST':
             form = UploadFileForm(request.POST, request.FILES)
             if form.is_valid():
                 submitted_files = request.FILES.getlist('files')
+                filenames = [f.name for f in submitted_files]
                 for file_ in submitted_files:
-                    if handle_uploaded_file(request.user.id, file_):
-                        uploaded_file = file_
-                        successes += 1
+                    if filenames.count(file_.name) > 1:
+                        errors[file_.name] = 'Duplicated filenames are not allowed. Please upload the files again with different filenames.'
+                    
                     else:
-                        errors.append(file_)
+                        upload_result = handle_uploaded_file(request.user.id, file_)
+                        if upload_result == True:
+                            uploaded_file = file_
+                            successes += 1
+                        else:
+                            errors[file_.name] = upload_result
     tvars = {
         'form': form,
         'uploaded_file': uploaded_file,
@@ -1309,6 +1318,7 @@ def upload(request, no_flash=False):
         'all_file_extensions': settings.ALLOWED_AUDIOFILE_EXTENSIONS,
         'uploads_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED
     }
+    #print(tvars)
     return render(request, 'accounts/upload.html', tvars)
 
 

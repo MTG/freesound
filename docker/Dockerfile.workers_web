@@ -65,3 +65,6 @@ COPY --chown=fsweb:fsweb . /code
 # Build static files
 RUN npm run build
 RUN python manage.py collectstatic --noinput
+
+# Build API docs
+RUN cd _docs/api && make html

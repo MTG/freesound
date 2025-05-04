@@ -47,6 +47,10 @@
         border: 1px solid $black;
         outline: none;
       }
+
+      &:disabled {
+        opacity: $disabled-input-opacity;
+      }
     }
 
     button {

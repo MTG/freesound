@@ -1,0 +1,18 @@
+{% load bw_templatetags %}
+{% load util %}
+{% load cache %}
+<!--{% cache 3600 bw_collection_stats collection.id %}-->
+<div>
+    <ol>
+        <li class="v-spacing-3">
+            {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black"> {{ collection.num_sounds|formatnumber }} sound{{ collection.num_sounds|pluralize }}</a>
+        </li>
+        <li class="v-spacing-3">
+            {% bw_icon 'clock' 'text-light-grey' %} <span class="text-19"> {{ collection.get_total_collection_sounds_length|smart_duration_with_units }}</span>
+        </li>
+        <li class="v-spacing-3">
+            {% bw_icon 'download' 'text-light-grey' %}<span class="text-19">{{ collection.num_downloads}} download{{ collection.num_downloads|pluralize }}</span>
+        </li>
+    </ol>
+</div>
+{% endcache %}

@@ -263,7 +263,7 @@ EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 # Static settings
 
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is not an installed Django app)
-STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), 'webroot']
+STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static')]
 STATIC_URL = '/static/'
 STATIC_ROOT = 'bw_static'
 WHITENOISE_ROOT = os.path.join(os.path.dirname(__file__), '../webroot')

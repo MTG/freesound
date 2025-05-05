@@ -10,6 +10,11 @@
     <title>Freesound{% if request.resolver_match.url_name != "front-page" %} - {% block title %}{% endblock %}{% endif %}</title>
     <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?">
     <meta name="keywords" content="free, sound">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'site.webmanifest' %}">
+    <link rel="mask-icon" href="{% static 'safari-pinned-tab.svg' %}" color="#fd5b65">
     <meta name="theme-color" content="#fd5b65">
     <meta name="msapplication-config" content="none" />
     {% block extrahead %}

@@ -19,11 +19,13 @@
 #
 
 import logging
-
+import os
+import json
+import datetime
 from django.conf import settings
 from django.core.management.base import BaseCommand
-import requests
 
+from search import solrapi
 from utils.search import get_search_engine
 from utils.search.backends.test_search_engine_backend import TestSearchEngineBackend
 
@@ -33,26 +35,6 @@ console_logger = logging.getLogger("console")
 global_write_output = False
 global_backend_name = ''
 global_output_file = None
-
-
-def core_exists(solr_base_url, core_name):
-    r = requests.get(f'{solr_base_url}/admin/cores?action=STATUS&core={core_name}')
-    r.raise_for_status()
-    try:
-        status = r.json()
-        return status['status'][core_name] != {}
-    except ValueError:
-        # Solr 5 returns xml. "Empty list" means that the core does not exist
-        return f"""<lst name="{core_name}"/></lst>""" not in r.text
-
-
-def create_core(solr_base_url, core_name, configSet, delete_core=False):
-    if core_exists(solr_base_url, core_name):
-        if delete_core:
-            requests.get(f'{solr_base_url}/admin/cores?action=UNLOAD&core={core_name}&deleteInstanceDir=true')
-        else:
-            raise Exception(f"Core {core_name} already exists, use --force to delete it.")
-    requests.get(f'{solr_base_url}/admin/cores?action=CREATE&name={core_name}&configSet={configSet}')
 
 
 class Command(BaseCommand):
@@ -79,9 +61,9 @@ class Command(BaseCommand):
         parser.add_argument(
             '--force',
             action='store_true',
-            dest='force_create_core',
+            dest='force_cleanup',
             default=False,
-            help='Test sound-related methods of the SearchEngine')
+            help='Delete the test cores after running the tests')
 
         parser.add_argument(
             '-s', '--sound_methods',
@@ -112,9 +94,15 @@ class Command(BaseCommand):
                             'and leave it in a "wrong" state.')
 
         # Instantiate search engine
+        backend_class_name = options['backend_class']
+        write_output = options['write_output']
+        test_sounds = options['sound_methods']
+        test_forum = options['forum_methods']
+        force_cleanup = options['force_cleanup']
+
         try:
             search_engine = get_search_engine(
-                backend_class=options['backend_class']
+                backend_class=backend_class_name
             )
         except ValueError:
             raise Exception('Wrong backend name format. Should be a path like '
@@ -122,25 +110,49 @@ class Command(BaseCommand):
         except ImportError as e:
             raise Exception(f'Backend class to test could not be imported: {e}')
 
-        console_logger.info(f"Testing search engine backend: {options['backend_class']}")
-        backend_name = options['backend_class']
-        write_output = options['write_output']
+        console_logger.info(f"Testing search engine backend: {backend_class_name}")
 
-        # Create the engine above to get the base url for that engine and check that the given class exists.
-        # Then create temporary cores using this base url and re-create the engine with these core urls.
-        create_core(search_engine.solr_base_url, "engine_test_freesound", "freesound", delete_core=options['force_create_core'])
-        create_core(search_engine.solr_base_url, "engine_test_forum", "forum", delete_core=options['force_create_core'])
-        sounds_index_url = f'{search_engine.solr_base_url}/engine_test_freesound'
-        forum_index_url = f'{search_engine.solr_base_url}/engine_test_forum'
+
 
         if not options['sound_methods'] and not options['forum_methods']:
             console_logger.info('None of sound methods or forum methods were selected, so nothing will be tested. '
                                 'Use the -s, -f or both options to test sound and/or forum methods.')
+            return
 
 
-        backend_test = TestSearchEngineBackend(backend_name, write_output, sounds_index_url=sounds_index_url, forum_index_url=forum_index_url)
-        if options['sound_methods']:
-            backend_test.test_search_enginge_backend_sounds()
+        solr_base_url = "http://search:8983"
 
-        if options['forum_methods']:
-            backend_test.test_search_enginge_backend_forum()
+        today = datetime.datetime.now().strftime('%Y%m%d')
+        freesound_temp_collection_name = f"engine_test_freesound_{today}"
+        forum_temp_collection_name = f"engine_test_forum_{today}"
+
+        if test_sounds and force_cleanup and solrapi.collection_exists(solr_base_url, freesound_temp_collection_name):
+            solrapi.delete_collection(search_engine.solr_base_url, freesound_temp_collection_name)
+        if test_forum and force_cleanup and solrapi.collection_exists(solr_base_url, forum_temp_collection_name):
+            solrapi.delete_collection(search_engine.solr_base_url, forum_temp_collection_name)
+
+
+        schema_directory = os.path.join('.', "utils", "search", "schema")
+        freesound_schema_definition = json.load(open(os.path.join(schema_directory, "freesound.json")))
+        forum_schema_definition = json.load(open(os.path.join(schema_directory, "forum.json")))
+
+        if test_sounds:
+            solrapi.create_collection_and_schema(freesound_temp_collection_name, freesound_schema_definition, "username", solr_base_url)
+        if test_forum:
+            solrapi.create_collection_and_schema(forum_temp_collection_name, forum_schema_definition, "thread_id", solr_base_url)
+
+        sounds_index_url = f'{solr_base_url}/solr/{freesound_temp_collection_name}'
+        forum_index_url = f'{solr_base_url}/solr/{forum_temp_collection_name}'
+
+        backend_test = TestSearchEngineBackend(backend_class_name, write_output, sounds_index_url=sounds_index_url, forum_index_url=forum_index_url)
+        if test_sounds:
+            backend_test.test_search_engine_backend_sounds()
+
+        if test_forum:
+            backend_test.test_search_engine_backend_forum()
+
+        if force_cleanup:
+            if test_sounds:
+                solrapi.delete_collection(solr_base_url, freesound_temp_collection_name)
+            if test_forum:
+                solrapi.delete_collection(solr_base_url, forum_temp_collection_name)

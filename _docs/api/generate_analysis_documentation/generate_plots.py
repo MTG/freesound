@@ -54,7 +54,7 @@ reject_stats = ['dmean', 'dmean2', 'dvar', 'dvar2', 'max',  'min', 'var']
 for descriptor_name in descriptor_names:
     region = ds.layout().descriptorLocation(descriptor_name)
     if region.lengthType() == gaia2.VariableLength or descriptor_name.split('.')[-1] in reject_stats:
-	continue
+        continue
 
     try:
         example_value = example_point.value(descriptor_name)

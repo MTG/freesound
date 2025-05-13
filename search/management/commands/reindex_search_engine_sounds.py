@@ -19,12 +19,16 @@
 #
 
 import logging
+import json
+import datetime
+import os
 
 from django.core.management.base import BaseCommand
 
 from sounds.models import Sound
 from search.management.commands.post_dirty_sounds_to_search_engine import send_sounds_to_search_engine
 from utils.search.search_sounds import delete_all_sounds_from_search_engine, delete_sounds_from_search_engine, get_all_sound_ids_from_search_engine
+from search import solrapi
 
 console_logger = logging.getLogger("console")
 
@@ -50,6 +54,13 @@ class Command(BaseCommand):
                  'needed as the command will clean any leftover sounds from the search index which are no longer'
                  'in the DB.')
 
+        parser.add_argument(
+            '--recreate-index',
+            action='store_true',
+            dest='recreate_index',
+            default=False,
+            help='Create a new index and index into it. Update the freesound alias to point to this new index.')
+
 
     def handle(self, *args, **options):
         # Get all indexed sound IDs and remove them
@@ -57,18 +68,31 @@ class Command(BaseCommand):
         if clear_index:
             delete_all_sounds_from_search_engine()
 
+        base_url = "http://search:8983"
+
+        recreate_index = options['recreate_index']
+        schema_directory = os.path.join('.', "utils", "search", "schema")
+        freesound_schema_definition = json.load(open(os.path.join(schema_directory, "freesound.json")))
+        if recreate_index:
+            current_date = datetime.datetime.now().strftime("%Y%m%d")
+            collection_name = f"freesound_{current_date}"
+            solrapi.create_collection_and_schema(collection_name, freesound_schema_definition, "username", base_url)
+
         # Get all sounds moderated and processed ok and add them to the search engine
         # Don't delete existing sounds in each loop because we clean up in the final step
         sounds_to_index_ids = list(
             Sound.objects.filter(processing_state="OK", moderation_state="OK").values_list('id', flat=True))
         console_logger.info("Re-indexing %d sounds to the search engine", len(sounds_to_index_ids))
-        send_sounds_to_search_engine(sounds_to_index_ids, slice_size=options['size_size'], delete_if_existing=False)
+        send_sounds_to_search_engine(sounds_to_index_ids, slice_size=options['size_size'], delete_if_existing=False, solr_collection_url=f"{base_url}/solr/{collection_name}")
 
         # Delete all sounds in the search engine which are not found in the DB. This part of code is to make sure that
         # no "leftover" sounds remain in the search engine, but should normally do nothing, specially if the
         # "clear_index" option is passed
-        indexed_sound_ids = get_all_sound_ids_from_search_engine()
+        indexed_sound_ids = get_all_sound_ids_from_search_engine(solr_collection_url=f"{base_url}/solr/{collection_name}")
         sound_ids_to_delete = list(set(indexed_sound_ids).difference(sounds_to_index_ids))
         console_logger.info("Deleting %d non-existing sounds from the search engine", len(sound_ids_to_delete))
         if sound_ids_to_delete:
-            delete_sounds_from_search_engine(sound_ids_to_delete)
+            delete_sounds_from_search_engine(sound_ids_to_delete, solr_collection_url=f"{base_url}/solr/{collection_name}")
+
+        console_logger.info("Updating the freesound alias to point to the new index")
+        solrapi.create_collection_alias(base_url, collection_name, "freesound")

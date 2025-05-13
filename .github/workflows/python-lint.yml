@@ -1,0 +1,16 @@
+name: Python Lint
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  lint:
+    name: Run ruff check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3

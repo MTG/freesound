@@ -26,8 +26,8 @@ from django.conf import settings
 
 from utils.search.backends import solr555pysolr
 
-SOLR_FORUM_URL = f"{settings.SOLR9_BASE_URL}/forum"
-SOLR_SOUNDS_URL = f"{settings.SOLR9_BASE_URL}/freesound"
+SOLR_FORUM_URL = f"{settings.SOLR9_BASE_URL}/solr/forum"
+SOLR_SOUNDS_URL = f"{settings.SOLR9_BASE_URL}/solr/freesound"
 
 
 class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
@@ -38,6 +38,7 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
             forum_index_url = SOLR_FORUM_URL
         self.sounds_index_url = sounds_index_url
         self.forum_index_url = forum_index_url
+        self.solr_base_url = settings.SOLR9_BASE_URL
 
 
     def get_sounds_index(self):

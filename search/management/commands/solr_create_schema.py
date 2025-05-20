@@ -13,8 +13,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         schema_directory = os.path.join('.', "utils", "search", "schema")
+        delete_default_fields_definition = json.load(open(os.path.join(schema_directory, "delete_default_fields.json")))
         freesound_schema_definition = json.load(open(os.path.join(schema_directory, "freesound.json")))
         forum_schema_definition = json.load(open(os.path.join(schema_directory, "forum.json")))
         solr_base_url = "http://search:8983"
-        solrapi.create_collection_and_schema("freesound", freesound_schema_definition, "username", solr_base_url)
-        solrapi.create_collection_and_schema("forum", forum_schema_definition, "thread_id", solr_base_url)
+
+        # Create freesound collection
+        freesound_api = solrapi.SolrManagementAPI(solr_base_url, "freesound1234")
+        freesound_api.create_collection_and_schema(delete_default_fields_definition, freesound_schema_definition, "username")
+        freesound_api.create_collection_alias("freesound")
+
+        # Create forum collection
+        forum_api = solrapi.SolrManagementAPI(solr_base_url, "forum1234")
+        forum_api.create_collection_and_schema(delete_default_fields_definition, forum_schema_definition, "thread_id")
+        forum_api.create_collection_alias("forum")

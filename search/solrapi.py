@@ -1,202 +1,255 @@
 import requests
 from urllib.parse import urljoin
+import logging
+from requests.exceptions import RequestException
+from json.decoder import JSONDecodeError
+
+logger = logging.getLogger("console")
 
 
-def get_collection_schema(base_url, collection):
-    url = urljoin(base_url, f"/api/collections/{collection}/schema")
-    res = requests.get(url)
-    res.raise_for_status()
-    return res.json()
+class SolrAPIError(Exception):
+    """Base exception for SolrAPI errors"""
+    pass
 
 
-def check_collection_has_field(base_url, collection, field):
-    schema = get_collection_schema(base_url, collection)
-    fields = schema['schema']['fields']
-    for f in fields:
-        if f['name'] == field:
-            return True
-    return False
-
-
-def get_field_types(core_url, collection_name):
-    schema = get_collection_schema(core_url, collection_name)
-    return schema["schema"]["fieldTypes"]
-
-
-def make_post(url, data):
-    resp = requests.post(url, json=data, timeout=10)
-    resp.raise_for_status()
-    return resp.json()
-
-
-def add_field_types(api_url, field_types, bulk=True):
-    if bulk:
-        request = {"add-field-type": field_types}
-        print(f"Creating field types {field_types}")
-        make_post(api_url, request)
-    else:
-        for field_type in field_types:
-            request = {"add-field-type": field_type}
-            print(f"Creating field type {field_type['name']}")
-
-def add_fields(api_url, fields, bulk=True):
-    if bulk:
-        request = {"add-field": fields}
-        print(f"Creating fields {fields}")
-        make_post(api_url, request)
-    else:
-        for field in fields:
-            request = {"add-field": field}
-            print(f"Creating field {field['name']} with type {field['type']}")
-            make_post(api_url, request)
-
-
-def create_copyfields(api_url, copyfields, bulk=True):
-    if bulk:
-        request = {"add-copy-field": copyfields}
-        print(f"Creating copyfields {copyfields}")
-        make_post(api_url, request)
-    else:
-        for copyfield in copyfields:
-            request = {"add-copy-field": copyfield}
-            print(f"Creating copyfield {copyfield['source']}-{copyfield['dest']}")
-            make_post(api_url, request)
-
-
-def delete_dynamic_fields(api_url, fields, bulk=True):
-    if bulk:
-        request = {"delete-dynamic-field": [{"name": field} for field in fields]}
-        print(f"Deleting dynamic fields {fields}")
-        make_post(api_url, request)
-    else:
-        for field in fields:
-            request = {"delete-dynamic-field": {"name": field}}
-            print(f"Deleting dynamic field {field}")
-            make_post(api_url, request)
-
-
-def add_dynamic_fields(api_url, dynamic_fields, bulk=True):
-    if bulk:
-        request = {"add-dynamic-field": dynamic_fields}
-        print(f"Creating dynamic fields {dynamic_fields}")
-        make_post(api_url, request)
-    else:
-        for dynamic_field in dynamic_fields:
-            request = {"add-dynamic-field": dynamic_field}
-            print(f"Creating dynamic field {dynamic_field['name']} with type {dynamic_field['type']}")
-            make_post(api_url, request)
-
-
-def delete_field_types(api_url, field_types, bulk=True):
-    if bulk:
-        request = {"delete-field-type": [{"name": field_type} for field_type in field_types]}
-        print(f"Deleting field types {field_types}")
-        make_post(api_url, request)
-    else:
-        for field_type in field_types:
-            request = {"delete-field-type": {"name": field_type}}
-            print(f"Deleting field type {field_type}")
-            make_post(api_url, request)
-
-
-def create_collection_and_schema(collection, schema_definition, test_field_name, solr_base_url):
-    created = create_collection(solr_base_url, collection)
-    if not created:
-        has_field = check_collection_has_field(solr_base_url, collection, test_field_name)
-        if has_field:
-            print(f"Collection {collection} already exists, not creating")
-            return
+def get_target_for_collection_alias(base_url, collection_alias):
+    url = urljoin(base_url, "api/aliases")
+    try:
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        aliases = resp.json().get("aliases", [])
+        if collection_alias in aliases:
+            return aliases[collection_alias]
         else:
-            print(f"Collection {collection} already exists, but no field {test_field_name}, going ahead with schema creation")
-
-    schema_url = urljoin(solr_base_url, f"/api/collections/{collection}/schema")
-    print("delete unneeded fields")
-    dynamic_fields = schema_definition.get("deleteDynamicFields", [])
-    if dynamic_fields:
-        delete_dynamic_fields(schema_url, dynamic_fields)
-
-    print("delete unneeded field types")
-    field_types = schema_definition.get("deleteFieldTypes", [])
-    if field_types:
-        delete_field_types(schema_url, field_types)
-
-    print("field types")
-    existing_field_types = get_field_types(schema_url, collection)
-    field_types = schema_definition.get("fieldTypes", [])
-    if field_types:
-        add_field_types(schema_url, field_types)
-
-    print("fields")
-    fields = schema_definition["fields"]
-    if fields:
-        add_fields(schema_url, fields)
-
-    print("dynamic fields")
-    dynamic_fields = schema_definition.get("dynamicFields", [])
-    if dynamic_fields:
-        add_dynamic_fields(schema_url, dynamic_fields)
-
-    print("copy fields")
-    copyfields = schema_definition.get("copyFields", [])
-    if copyfields:
-        create_copyfields(schema_url, copyfields)
+            return None
+    except (RequestException, JSONDecodeError) as e:
+        return None
 
 
+class SolrManagementAPI:
+    def __init__(self, base_url, collection, logging_verbose=0):
+        self.base_url = base_url
+        self.collection = collection
+        self.logging_verbose = logging_verbose
+        self.request_timeout = 10
 
-def collection_exists(base_url, collection):
-    print(f"Checking if collection {collection} exists")
-    url = urljoin(base_url, "api/collections")
-    resp = requests.get(url, timeout=10)
-    return collection in resp.json()["collections"]
+    def _handle_request_exception(self, e, operation):
+        """Handle request exceptions and convert to SolrAPIError"""
+        raise SolrAPIError(f"Error while {operation}: {str(e)}") from e
 
+    def get_collection_schema(self):
+        url = urljoin(self.base_url, f"/api/collections/{self.collection}/schema")
+        try:
+            res = requests.get(url, timeout=self.request_timeout)
+            res.raise_for_status()
+            return res.json()
+        except (RequestException, JSONDecodeError) as e:
+            self._handle_request_exception(e, "getting collection schema")
 
-def create_collection(base_url, collection, configset=None):
-    """Create a new Solr collection."""
-    if collection_exists(base_url, collection):
-        print(f"Collection {collection} already exists, not creating")
+    def check_collection_has_field(self, field):
+        schema = self.get_collection_schema()
+        fields = schema['schema']['fields']
+        for f in fields:
+            if f['name'] == field:
+                return True
         return False
 
-    url = urljoin(base_url, "api/collections")
-    data = {"name": collection, "numShards": 1}
-    if configset:
-        data["config"] = configset
-    resp = make_post(url, data)
-    print(resp)
-    disable_auto_data_driven_schema(base_url, collection)
-    return True
+    def get_field_types(self):
+        schema = self.get_collection_schema()
+        return schema["schema"]["fieldTypes"]
 
+    def _make_post(self, url, data):
+        try:
+            resp = requests.post(url, json=data, timeout=self.request_timeout)
+            resp.raise_for_status()
+            return resp.json()
+        except (RequestException, JSONDecodeError) as e:
+            self._handle_request_exception(e, "making POST request")
 
-def disable_auto_data_driven_schema(base_url, collection):
-    """Disable auto data driven schema for a collection."""
-    url = urljoin(base_url, f"api/collections/{collection}/config")
-    data = {"set-user-property": {"update.autoCreateFields": "false"}}
-    resp = make_post(url, data)
-    print(resp)
+    def add_field_types(self, field_types, bulk=True):
+        schema_url = urljoin(self.base_url, f"/api/collections/{self.collection}/schema")
+        if bulk:
+            request = {"add-field-type": field_types}
+            if self.logging_verbose >= 2:
+                logger.info(f"Bulk creating field types {field_types}")
+            self._make_post(schema_url, request)
+        else:
+            for field_type in field_types:
+                request = {"add-field-type": field_type}
+                if self.logging_verbose >= 2:
+                    logger.info(f"Creating field type {field_type['name']}")
+                self._make_post(schema_url, request)
 
+    def add_fields(self, fields, bulk=True):
+        schema_url = urljoin(self.base_url, f"/api/collections/{self.collection}/schema")
+        if bulk:
+            request = {"add-field": fields}
+            if self.logging_verbose >= 2:
+                logger.info(f"Bulk creating fields {fields}")
+            self._make_post(schema_url, request)
+        else:
+            for field in fields:
+                request = {"add-field": field}
+                if self.logging_verbose >= 2:
+                    logger.info(f"Creating field {field['name']} with type {field['type']}")
+                self._make_post(schema_url, request)
 
-def delete_collection(base_url, collection):
-    """Delete a Solr collection."""
-    url = urljoin(base_url, f"api/collections/{collection}")
-    resp = requests.delete(url, timeout=10)
-    print(resp)
+    def create_copyfields(self, copyfields, bulk=True):
+        schema_url = urljoin(self.base_url, f"/api/collections/{self.collection}/schema")
+        if bulk:
+            request = {"add-copy-field": copyfields}
+            if self.logging_verbose >= 2:
+                logger.info(f"Bulk creating copyfields {copyfields}")
+            self._make_post(schema_url, request)
+        else:
+            for copyfield in copyfields:
+                request = {"add-copy-field": copyfield}
+                if self.logging_verbose >= 2:
+                    logger.info(f"Creating copyfield {copyfield['source']}-{copyfield['dest']}")
+                self._make_post(schema_url, request)
 
+    def delete_dynamic_fields(self, fields, bulk=True):
+        schema_url = urljoin(self.base_url, f"/api/collections/{self.collection}/schema")
+        if bulk:
+            request = {"delete-dynamic-field": [{"name": field} for field in fields]}
+            if self.logging_verbose >= 2:
+                logger.info(f"Deleting dynamic fields {fields}")
+            self._make_post(schema_url, request)
+        else:
+            for field in fields:
+                request = {"delete-dynamic-field": {"name": field}}
+                if self.logging_verbose >= 2:
+                    logger.info(f"Deleting dynamic field {field}")
+                self._make_post(schema_url, request)
 
-def upload_configset(base_url, configset, file):
-    url = urljoin(base_url, f"api/cluster/configs/{configset}")
-    headers = {
-        "Content-Type": "application/octet-stream",
-    }
+    def add_dynamic_fields(self, dynamic_fields, bulk=True):
+        schema_url = urljoin(self.base_url, f"/api/collections/{self.collection}/schema")
+        if bulk:
+            request = {"add-dynamic-field": dynamic_fields}
+            if self.logging_verbose >= 2:
+                logger.info(f"Bulk creating dynamic fields {dynamic_fields}")
+            self._make_post(schema_url, request)
+        else:
+            for dynamic_field in dynamic_fields:
+                request = {"add-dynamic-field": dynamic_field}
+                if self.logging_verbose >= 2:
+                    logger.info(f"Creating dynamic field {dynamic_field['name']} with type {dynamic_field['type']}")
+                self._make_post(schema_url, request)
 
-    with file as f:
-        data = f.read()
+    def delete_field_types(self, field_types, bulk=True):
+        schema_url = urljoin(self.base_url, f"/api/collections/{self.collection}/schema")
+        if bulk:
+            request = {"delete-field-type": [{"name": field_type} for field_type in field_types]}
+            if self.logging_verbose >= 2:
+                logger.info(f"Deleting field types {field_types}")
+            self._make_post(schema_url, request)
+        else:
+            for field_type in field_types:
+                request = {"delete-field-type": {"name": field_type}}
+                if self.logging_verbose >= 2:
+                    logger.info(f"Deleting field type {field_type}")
+                self._make_post(schema_url, request)
 
-    resp = requests.put(url, headers=headers, data=data)
-    resp.raise_for_status()
+    def create_collection_and_schema(self, delete_default_fields_definition, schema_definition, test_field_name):
+        created = self.create_collection()
+        if not created:
+            has_field = self.check_collection_has_field(test_field_name)
+            if has_field:
+                if self.logging_verbose >= 1:
+                    logger.info(f"Collection {self.collection} already exists, not creating")
+                return
+            else:
+                if self.logging_verbose >= 1:
+                    logger.info(f"Collection {self.collection} already exists, but no field {test_field_name}, going ahead with schema creation")
 
+        if self.logging_verbose >= 1:
+            logger.info("Delete unneeded fields")
+        dynamic_fields = delete_default_fields_definition.get("deleteDynamicFields", [])
+        if dynamic_fields:
+            self.delete_dynamic_fields(dynamic_fields)
 
-def create_collection_alias(base_url, collection, alias):
-    """Create a collection alias."""
-    url = urljoin(base_url, "api/aliases")
-    data = {"name": alias, "collections": [collection]}
-    resp = make_post(url, data)
-    print(resp)
+        if self.logging_verbose >= 1:
+            logger.info("Delete unneeded field types")
+        field_types = delete_default_fields_definition.get("deleteFieldTypes", [])
+        if field_types:
+            self.delete_field_types(field_types)
+
+        if self.logging_verbose >= 1:
+            logger.info("Create field types")
+        field_types = schema_definition.get("fieldTypes", [])
+        if field_types:
+            self.add_field_types(field_types)
+
+        if self.logging_verbose >= 1:
+            logger.info("Create fields")
+        fields = schema_definition["fields"]
+        if fields:
+            self.add_fields(fields)
+
+        if self.logging_verbose >= 1:
+            logger.info("Create dynamic fields")
+        dynamic_fields = schema_definition.get("dynamicFields", [])
+        if dynamic_fields:
+            self.add_dynamic_fields(dynamic_fields)
+
+        if self.logging_verbose >= 1:
+            logger.info("Create copy fields")
+        copyfields = schema_definition.get("copyFields", [])
+        if copyfields:
+            self.create_copyfields(copyfields)
+
+    def collection_exists(self):
+        if self.logging_verbose >= 1:
+            logger.info(f"Checking if collection {self.collection} exists")
+        url = urljoin(self.base_url, "api/collections")
+        try:
+            resp = requests.get(url, timeout=self.request_timeout)
+            resp.raise_for_status()
+            collections = resp.json().get("collections", [])
+            return self.collection in collections
+        except (RequestException, JSONDecodeError) as e:
+            self._handle_request_exception(e, "checking if collection exists")
+
+    def create_collection(self, configset=None):
+        """Create a new Solr collection."""
+        if self.collection_exists():
+            if self.logging_verbose >= 1:
+                logger.info(f"Collection {self.collection} already exists, not creating")
+            return False
+
+        url = urljoin(self.base_url, "api/collections")
+        data = {"name": self.collection, "numShards": 1}
+        if configset:
+            data["config"] = configset
+        self._make_post(url, data)
+        if self.logging_verbose >= 1:
+            logger.info(f"Created collection {self.collection}")
+        self.disable_auto_data_driven_schema()
+        return True
+
+    def disable_auto_data_driven_schema(self):
+        """Disable auto data driven schema for a collection."""
+        url = urljoin(self.base_url, f"api/collections/{self.collection}/config")
+        data = {"set-user-property": {"update.autoCreateFields": "false"}}
+        self._make_post(url, data)
+        if self.logging_verbose >= 1:
+            logger.info(f"Disabled auto data driven schema for collection {self.collection}")
+
+    def delete_collection(self):
+        """Delete a Solr collection."""
+        url = urljoin(self.base_url, f"api/collections/{self.collection}")
+        try:
+            resp = requests.delete(url, timeout=self.request_timeout)
+            resp.raise_for_status()
+            if self.logging_verbose >= 1:
+                logger.info(f"Deleted collection {self.collection}")
+        except (RequestException, JSONDecodeError) as e:
+            self._handle_request_exception(e, "deleting collection")
+
+    def create_collection_alias(self, alias):
+        """Create a collection alias."""
+        url = urljoin(self.base_url, "api/aliases")
+        data = {"name": alias, "collections": [self.collection]}
+        self._make_post(url, data)
+        if self.logging_verbose >= 1:
+            logger.info(f"Created collection alias {alias} for collection {self.collection}")

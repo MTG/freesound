@@ -120,29 +120,31 @@ class Command(BaseCommand):
             return
 
 
-        solr_base_url = "http://search:8983"
-
         today = datetime.datetime.now().strftime('%Y%m%d')
         freesound_temp_collection_name = f"engine_test_freesound_{today}"
         forum_temp_collection_name = f"engine_test_forum_{today}"
 
-        if test_sounds and force_cleanup and solrapi.collection_exists(solr_base_url, freesound_temp_collection_name):
-            solrapi.delete_collection(search_engine.solr_base_url, freesound_temp_collection_name)
-        if test_forum and force_cleanup and solrapi.collection_exists(solr_base_url, forum_temp_collection_name):
-            solrapi.delete_collection(search_engine.solr_base_url, forum_temp_collection_name)
+        # Create API instances for both collections
+        freesound_api = solrapi.SolrManagementAPI(search_engine.solr_base_url, freesound_temp_collection_name)
+        forum_api = solrapi.SolrManagementAPI(search_engine.solr_base_url, forum_temp_collection_name)
 
+        if test_sounds and force_cleanup and freesound_api.collection_exists():
+            freesound_api.delete_collection()
+        if test_forum and force_cleanup and forum_api.collection_exists():
+            forum_api.delete_collection()
 
         schema_directory = os.path.join('.', "utils", "search", "schema")
         freesound_schema_definition = json.load(open(os.path.join(schema_directory, "freesound.json")))
         forum_schema_definition = json.load(open(os.path.join(schema_directory, "forum.json")))
+        delete_default_fields_definition = json.load(open(os.path.join(schema_directory, "delete_default_fields.json")))
 
         if test_sounds:
-            solrapi.create_collection_and_schema(freesound_temp_collection_name, freesound_schema_definition, "username", solr_base_url)
+            freesound_api.create_collection_and_schema(delete_default_fields_definition, freesound_schema_definition, "username")
         if test_forum:
-            solrapi.create_collection_and_schema(forum_temp_collection_name, forum_schema_definition, "thread_id", solr_base_url)
+            forum_api.create_collection_and_schema(delete_default_fields_definition, forum_schema_definition, "thread_id")
 
-        sounds_index_url = f'{solr_base_url}/solr/{freesound_temp_collection_name}'
-        forum_index_url = f'{solr_base_url}/solr/{forum_temp_collection_name}'
+        sounds_index_url = f'{search_engine.solr_base_url}/solr/{freesound_temp_collection_name}'
+        forum_index_url = f'{search_engine.solr_base_url}/solr/{forum_temp_collection_name}'
 
         backend_test = TestSearchEngineBackend(backend_class_name, write_output, sounds_index_url=sounds_index_url, forum_index_url=forum_index_url)
         if test_sounds:
@@ -153,6 +155,6 @@ class Command(BaseCommand):
 
         if force_cleanup:
             if test_sounds:
-                solrapi.delete_collection(solr_base_url, freesound_temp_collection_name)
+                freesound_api.delete_collection()
             if test_forum:
-                solrapi.delete_collection(solr_base_url, forum_temp_collection_name)
+                forum_api.delete_collection()

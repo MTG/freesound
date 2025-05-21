@@ -1,0 +1,201 @@
+{
+    "fieldTypes": [
+        {
+            "name": "alpha_only_sort",
+            "class": "solr.TextField",
+            "sortMissingLast": true,
+            "omitNorms": true,
+            "analyzer": {
+              "tokenizer": {
+                "name": "keyword"
+              },
+              "filters": [
+                {
+                  "name": "lowercase"
+                },
+                {
+                  "name": "trim"
+                }
+              ]
+            },
+            "similarity": {
+              "class": "solr.BooleanSimilarityFactory"
+            }
+        },
+        {
+            "name": "freesound_text",
+            "class": "solr.TextField",
+            "positionIncrementGap": "100",
+            "indexAnalyzer": {
+              "tokenizer": {
+                "name": "whitespace"
+              },
+              "charFilters": [
+                {
+                  "name": "htmlStrip"
+                }
+              ],
+              "filters": [
+                {
+                  "name": "stop",
+                  "ignoreCase": "true",
+                  "words": "lang/stopwords_en.txt"
+                },
+                {
+                  "name": "wordDelimiterGraph",
+                  "generateWordParts": "1",
+                  "generateNumberParts": "1",
+                  "catenateWords": "1",
+                  "catenateNumbers": "1",
+                  "catenateAll": "0",
+                  "splitOnCaseChange": "1"
+                },
+                {
+                  "name": "flattenGraph"
+                },
+                {
+                  "name": "lowercase"
+                },
+                {
+                  "name": "snowballPorter",
+                  "language": "English"
+                },
+                {
+                  "name": "removeDuplicates"
+                }
+              ]
+            },
+            "queryAnalyzer": {
+              "tokenizer": {
+                "name": "whitespace"
+              },
+              "charFilters": [
+                {
+                  "name": "htmlStrip"
+                }
+              ],
+              "filters": [
+                {
+                  "name": "stop",
+                  "ignoreCase": "true",
+                  "words": "lang/stopwords_en.txt"
+                },
+                {
+                  "name": "wordDelimiterGraph",
+                  "generateWordParts": "1",
+                  "generateNumberParts": "1",
+                  "catenateWords": "0",
+                  "catenateNumbers": "0",
+                  "catenateAll": "0",
+                  "splitOnCaseChange": "1"
+                },
+                {
+                  "name": "lowercase"
+                },
+                {
+                  "name": "snowballPorter",
+                  "language": "English"
+                },
+                {
+                  "name": "removeDuplicates"
+                }
+              ]
+            },
+            "similarity": {
+              "class": "solr.BooleanSimilarityFactory"
+            }
+          }
+    ],
+    "fields": [
+        {
+            "name": "thread_id",
+            "type": "pint",
+            "indexed": true,
+            "stored": true,
+            "required": true
+        },
+        {
+            "name": "thread_title",
+            "type": "freesound_text",
+            "indexed": true,
+            "stored": true,
+            "required": true
+        },
+        {
+            "name": "thread_title_grouped",
+            "type": "string",
+            "indexed": true,
+            "stored": true,
+            "required": false
+        },
+        {
+            "name": "thread_author",
+            "type": "alpha_only_sort",
+            "indexed": true,
+            "stored": true,
+            "required": true
+        },
+        {
+            "name": "thread_created",
+            "type": "pdate",
+            "indexed": true,
+            "stored": true,
+            "required": true
+        },
+        {
+            "name": "forum_name",
+            "type": "freesound_text",
+            "indexed": true,
+            "stored": true,
+            "required": true
+        },
+        {
+            "name": "forum_name_slug",
+            "type": "freesound_text",
+            "indexed": true,
+            "stored": true,
+            "required": true
+        },
+        {
+            "name": "post_author",
+            "type": "alpha_only_sort",
+            "indexed": true,
+            "stored": true,
+            "required": true
+        },
+        {
+            "name": "post_body",
+            "type": "freesound_text",
+            "indexed": true,
+            "stored": true,
+            "required": true
+        },
+        {
+            "name": "post_created",
+            "type": "pdate",
+            "indexed": true,
+            "stored": true,
+            "required": true
+        },
+        {
+            "name": "num_posts",
+            "type": "pint",
+            "indexed": true,
+            "stored": true,
+            "required": true
+        },
+        {
+            "name": "has_posts",
+            "type": "boolean",
+            "indexed": true,
+            "stored": true,
+            "required": true
+        }
+    ],
+    "copyFields": [
+        {
+            "source": "thread_title",
+            "dest": "thread_title_grouped"
+        }
+    ]
+}

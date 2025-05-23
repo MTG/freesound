@@ -39,7 +39,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from multiupload_plus.fields import MultiFileField
 
-from accounts.models import Profile, EmailPreferenceType, OldUsername, DeletedUser
+from accounts.models import Profile, EmailPreferenceType, OldUsername, DeletedUser, AIPreference
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import HtmlCleaningCharField, HtmlCleaningCharFieldWithCenterTag, filename_has_valid_extension
 from utils.spam import is_spam
@@ -356,11 +356,7 @@ class ProfileForm(forms.ModelForm):
     
     ai_sound_usage_preference = forms.ChoiceField(
         label=mark_safe("<div class=\"v-spacing-1 text-grey\">I agree with my sounds being used to train generative AI models provided that:</div>"),
-        choices=[
-            (0, "My sounds are used following Freesound's recommendations for interpreting Creative Commons licenses in a generative AI training context"), 
-            (1, "My sounds are used to train open models that are freely available to the public"),
-            (2, "My sounds are used to train open models that are freely available to the public and that do not allow a commercial use")
-        ],
+        choices=AIPreference.AI_PREFERENCE_CHOICES,
         required=False,
         help_text=mark_safe("<div class=\"v-spacing-top-3 text-light-grey\">Use the setting above to express a "
         "preference regarding the usage of your sounds for training generative Artificial Intelligence models. "
@@ -370,9 +366,13 @@ class ProfileForm(forms.ModelForm):
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
-        kwargs.update(initial={
-            'username': request.user.username
-        })
+        initial_kwargs = {
+            'username': request.user.username,
+        }
+        ai_preference = request.user.profile.get_ai_preference()
+        if ai_preference:
+            initial_kwargs['ai_sound_usage_preference'] = ai_preference
+        kwargs.update(initial=initial_kwargs)
         kwargs.update(dict(label_suffix=''))
         super().__init__(*args, **kwargs)
 
@@ -411,6 +411,10 @@ class ProfileForm(forms.ModelForm):
         self.fields['is_adult'].widget.attrs['class'] = 'bw-checkbox'
         self.fields['not_shown_in_online_users_list'].widget = forms.HiddenInput()
         self.fields['ui_theme_preference'].label = "User Interface theme preference:"
+
+        # If user has no sounds, do not show the AI sound usage preference field
+        if request.user.profile.num_sounds == 0:
+            self.fields.pop('ai_sound_usage_preference')
 
     def clean_username(self):
         username = self.cleaned_data["username"]

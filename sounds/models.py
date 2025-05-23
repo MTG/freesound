@@ -416,7 +416,7 @@ class SoundManager(models.Manager):
         )
 
         qs = self.select_related(
-            'user', 'user__profile', 'license', 'ticket', 'pack', 'geotag'
+            'user', 'user__profile', 'user__ai_preference', 'license', 'ticket', 'pack', 'geotag'
             ).annotate(
                 username=F("user__username"),
                 pack_name=F("pack__name"),

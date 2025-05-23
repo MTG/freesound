@@ -90,10 +90,19 @@ def search_view_helper(request):
         return {'sqp': sqp}  # sqp will be needed in tags.views.tags view
 
     # Run the query and post-process the results
-    try:    
-        query_params = sqp.as_query_params()    
+    try:
+        query_params = sqp.as_query_params()
         results, paginator = perform_search_engine_query(query_params)
-        if not sqp.map_mode_active():
+        if sqp.map_mode_active():
+            # In map we configure the search query to already return geotags data. Here we collect all this data
+            # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares
+            # data points for the map of sounds.
+            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 5 minutes
+
+            # Nevertheless we set docs to empty list as we won't display anything in the search results page (the map
+            # will make an extra request that will load the cached data and display it in the map)
+            docs = []
+        else:
             if not sqp.display_as_packs_active():
                 resultids = [d.get("id") for d in results.docs]
                 resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
@@ -131,15 +140,6 @@ def search_view_helper(request):
                 for d in docs:
                     d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
                     d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'grouping_pack:"{d["pack"].id}_{d["pack"].name}"'])
-        else:
-            # In map we configure the search query to already return geotags data. Here we collect all this data
-            # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares
-            # data points for the map of sounds. 
-            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 5 minutes
-
-            # Nevertheless we set docs to empty list as we won't display anything in the search results page (the map
-            # will make an extra request that will load the cached data and display it in the map)
-            docs = []
 
         search_logger.info('Search (%s)' % json.dumps({
             'ip': get_client_ip(request),

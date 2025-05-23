@@ -39,7 +39,7 @@ from utils.tags import clean_and_split_tags
 ###################
 
 DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by commas (None = all)
-DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,geotag,created,license,type,channels,filesize,bitrate,' + \
+DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,category_code,category_is_user_provided,geotag,created,license,type,channels,filesize,bitrate,' + \
 'bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,' + \
 'num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,' +  \
 'analysis,analysis_frames,analysis_stats,is_explicit'  # All except for analyzers
@@ -90,6 +90,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'tags',
                   'description',
                   'category',
+                  'category_code',
+                  'category_is_user_provided',
                   'geotag',
                   'created',
                   'license',
@@ -169,6 +171,14 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
         if category is None and subcategory is None:
             return None
         return [category, subcategory]
+    
+    category_code = serializers.SerializerMethodField()
+    def get_category_code(self, obj):
+        return obj.category_code or None
+    
+    category_is_user_provided = serializers.SerializerMethodField()
+    def get_category_is_user_provided(self, obj):
+        return obj.bst_category is not None
 
     pack = serializers.SerializerMethodField()
     def get_pack(self, obj):

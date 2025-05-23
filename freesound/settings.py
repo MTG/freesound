@@ -24,6 +24,7 @@ DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -39,6 +40,7 @@ MIDDLEWARE = [
 ]
 
 INSTALLED_APPS = [
+    'whitenoise.runserver_nostatic',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -122,6 +124,10 @@ CDN_MAP_STORE_ID = 5
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'persistent': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '../freesound-data/')), "_cache/"),
     },
     'api_monitoring': {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -257,18 +263,19 @@ EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 # Static settings
 
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is not an installed Django app)
-STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
+STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static')]
 STATIC_URL = '/static/'
 STATIC_ROOT = 'bw_static'
+WHITENOISE_ROOT = os.path.join(os.path.dirname(__file__), '../webroot')
+
 STORAGES = {
     "default": {
-       "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": 'freesound.storage.NoStrictManifestStaticFilesStorage',
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-
 
 # -------------------------------------------------------------------------------
 # Freesound miscellaneous settings
@@ -414,7 +421,7 @@ ANNOUNCEMENT_CACHE_KEY = 'announcement_cache'
 # Broad Sound Taxonomy definition
 
 BROAD_SOUND_TAXONOMY = {
-    "m": {"level": 1, "name": "Music", "description": "Music excerpts, melodies, loops, fillers, drones and short musical snippets."},
+    "m": {"level": 1, "name": "Music", "description": "Music excerpts, including melodies, singing, loops, fillers, drones and short musical snippets."},
     "m-sp": {"level": 2, "name": "Solo percussion", "description": "Music excerpts with solo percussive instruments."},
     "m-si": {"level": 2, "name": "Solo instrument", "description": "Music excerpts with only one instrument, excluding percussion."},
     "m-m": {"level": 2, "name": "Multiple instruments", "description": "Music excerpts with more than one instrument."},

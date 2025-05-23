@@ -1,6 +1,6 @@
 # --- build stereofy static binary
 
-FROM debian:10 as stereofy
+FROM debian:10 AS stereofy
 
 RUN apt-get update && apt-get install -y build-essential libsndfile-dev
 
@@ -11,7 +11,7 @@ RUN make clean && make
 
 # --- main Freesound docker file contents
 
-FROM freesound:2025-03
+FROM freesound:2025-03 AS freesound
 
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 
@@ -51,5 +51,20 @@ COPY --from=stereofy /code/stereofy /usr/local/bin
 COPY --chown=fsweb:fsweb requirements.txt /code/requirements.txt
 RUN --mount=type=cache,target=/root/.cache/uv uv pip install --system --compile-bytecode -r requirements.txt
 
+FROM freesound AS freesound_prod
+
+# JS dependencies
+COPY --chown=fsweb:fsweb package.json /code/package.json
+COPY --chown=fsweb:fsweb package-lock.json /code/package-lock.json
+
+RUN npm install
+
 # Copy source code
 COPY --chown=fsweb:fsweb . /code
+
+# Build static files
+RUN npm run build
+RUN python manage.py collectstatic --noinput
+
+# Build API docs
+RUN cd _docs/api && make html

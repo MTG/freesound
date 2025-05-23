@@ -21,7 +21,7 @@
 import datetime
 
 from django.contrib.auth.models import User
-from django.core.cache import cache
+from django.core.cache import caches
 from django.db import connection
 from django.db.models import Count, Sum
 from django.utils import timezone
@@ -34,6 +34,7 @@ import sounds.views
 from tags.models import Tag, SoundTag
 from utils.management_commands import LoggingBaseCommand
 
+cache_persistent = caches['persistent']
 
 class Command(LoggingBaseCommand):
     help = "Compute stats to display on monitor section."
@@ -59,7 +60,7 @@ class Command(LoggingBaseCommand):
             "new_sounds_mod": list(new_sounds_mod),
             "new_sounds": list(new_sounds)
         }
-        cache.set("sounds_stats", sounds_stats, 60 * 60 * 24)
+        cache_persistent.set("sounds_stats", sounds_stats, 60 * 60 * 24)
 
         # Compute stats related with downloads:
         new_downloads_sound = sounds.models.Download.objects\
@@ -77,14 +78,14 @@ class Command(LoggingBaseCommand):
             'new_downloads_pack': list(new_downloads_pack),
         }
 
-        cache.set("downloads_stats", downloads_stats, 60 * 60 * 24)
+        cache_persistent.set("downloads_stats", downloads_stats, 60 * 60 * 24)
 
         # Compute stats related with users:
         new_users = User.objects.filter(date_joined__gt=time_span)\
             .extra(select={'day': 'date(date_joined)'})\
             .values('day', 'is_active').order_by().annotate(Count('id'))
 
-        cache.set("users_stats", {"new_users": list(new_users)}, 60 * 60 * 24)
+        cache_persistent.set("users_stats", {"new_users": list(new_users)}, 60 * 60 * 24)
 
         time_span = timezone.now()-datetime.timedelta(days=365)
 
@@ -108,7 +109,7 @@ class Command(LoggingBaseCommand):
             } for d in qq]
 
             active_users[i] = converted_weeks
-        cache.set("active_users_stats", active_users, 60 * 60 * 24)
+        cache_persistent.set("active_users_stats", active_users, 60 * 60 * 24)
 
         # Compute stats related with donations:
         query_donations = donations.models.Donation.objects\
@@ -116,7 +117,7 @@ class Command(LoggingBaseCommand):
             .extra({'day': 'date(created)'}).values('day').order_by()\
             .annotate(Sum('amount'))
 
-        cache.set('donations_stats', {'new_donations': list(query_donations)}, 60*60*24)
+        cache_persistent.set('donations_stats', {'new_donations': list(query_donations)}, 60*60*24)
 
         # Compute stats related with Tags:
         time_span = timezone.now()-datetime.timedelta(weeks=2)
@@ -146,7 +147,7 @@ class Command(LoggingBaseCommand):
             "downloads_tags": list(downloads_tags)
         }
 
-        cache.set('tags_stats', tags_stats, 60*60*24)
+        cache_persistent.set('tags_stats', tags_stats, 60*60*24)
 
         # Compute stats for Totals table:
 
@@ -192,5 +193,5 @@ class Command(LoggingBaseCommand):
             "threads": threads,
         }
 
-        cache.set('totals_stats', totals_stats, 60*60*24)
+        cache_persistent.set('totals_stats', totals_stats, 60*60*24)
         self.log_end()

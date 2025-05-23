@@ -41,12 +41,12 @@ from .search_query_processor_options import SearchOptionStr, SearchOptionChoice,
 
 def _get_value_to_apply_group_by_pack(self):
     # Force return True if display_as_packs is enabled, and False if map_mode is enabled
-    if self.sqp.has_filter_with_name('grouping_pack'):
+    if self.sqp.get_option_value_to_apply('map_mode'):
+        return False
+    elif self.sqp.has_filter_with_name('grouping_pack'):
         return False
     elif self.sqp.get_option_value_to_apply('display_as_packs'):
         return True
-    elif self.sqp.get_option_value_to_apply('map_mode'):
-        return False
     return self.value
 
 
@@ -111,6 +111,14 @@ class SearchQueryProcessor:
             label='Only remix sounds',
             help_text='Only find sounds that are a remix of other sounds or have been remixed'
         )),
+        ('display_as_packs', SearchOptionBool, dict(
+            advanced=False,
+            query_param_name='dp',
+            label='Display results as packs',
+            help_text='Display search results as packs rather than individual sounds',
+            get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode') else option.value,
+            should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode')
+        )),
         ('group_by_pack', SearchOptionBool, dict(
             query_param_name='g',
             label='Group sounds by pack',
@@ -118,14 +126,6 @@ class SearchQueryProcessor:
             value_default=True,
             get_value_to_apply = _get_value_to_apply_group_by_pack,
             should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('display_as_packs') or option.sqp.get_option_value_to_apply('map_mode')
-        )),
-        ('display_as_packs', SearchOptionBool, dict(
-            advanced=False,
-            query_param_name='dp',
-            label='Display results as packs',
-            help_text='Display search results as packs rather than individual sounds',
-            get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('grouping_pack') else option.value,
-            should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode')
         )),
         ('grid_mode', SearchOptionBool, dict(
             advanced=False,

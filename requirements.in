@@ -55,4 +55,5 @@ sentry-sdk[django]~=2.21.0
 Sphinx==1.6.3
 stripe==2.28.1
 xlrd==2.0.1  # for reading .xls files (but not .xlsx)
+whitenoise~=6.9.0
 zenpy==1.1.3

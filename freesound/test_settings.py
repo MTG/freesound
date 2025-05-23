@@ -18,6 +18,9 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
+    'persistent': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
     'api_monitoring': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },

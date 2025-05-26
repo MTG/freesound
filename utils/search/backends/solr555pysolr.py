@@ -176,7 +176,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         new_document.update({key: {'set': value} for key, value in document.items() if key != 'id'})
         return new_document
 
-    def convert_sound_to_search_engine_document(self, sound, fields_to_include=[]):
+    def convert_sound_to_search_engine_document(self, sound, include_analyzer_output=False):
         """
         TODO: Document that this includes remove_control_chars due to originally sending XML. not strictly necessary when submitting
             to json (and also, freesound model code fixes this), but keep it in to ensure that docs are clean.
@@ -258,17 +258,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             if user_provided_subcategory is not None:
                 document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_subcategory
 
-        if fields_to_include:
-            # Remove fields that should not be included
-            # Note that we could optimize this by never getting the data for these fields in the first place, but because
-            # the data is already retrieved in the queryset, that optimization would be negligible so we keep it simple.
-            document = {k: v for k, v in document.items() if k in fields_to_include}
-
         # Finally add the sound ID and content type
         document.update({'id': sound.id, 'content_type': SOLR_DOC_CONTENT_TYPES['sound']})
 
         return document
-    
+
     def add_similarity_vectors_to_documents(self, sound_objects, documents):
         similarity_data = defaultdict(list)
         sound_ids = [s.id for s in sound_objects]
@@ -482,14 +476,24 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         return query_dict
 
     # Sound methods
-    def add_sounds_to_index(self, sound_objects, update=False, fields_to_include=[]):
+    def add_sounds_to_index(self, sound_objects, update=False, include_similarity_vectors=False):
         # Generate basic documents for Solr
-        documents = [self.convert_sound_to_search_engine_document(s, fields_to_include=fields_to_include) for s in sound_objects]
+        documents = [self.convert_sound_to_search_engine_document(s) for s in sound_objects]
         # If required, collect similarity vectors from all configured analyzers
-        if 'similarity_vectors' in fields_to_include or not fields_to_include:
+        if include_similarity_vectors:
             self.add_similarity_vectors_to_documents(sound_objects, documents)
         if update:
             documents = [self.transform_document_into_update_document(d) for d in documents]
+        try:
+            self.get_sounds_index().add(documents)
+        except pysolr.SolrError as e:
+            raise SearchEngineException(e)
+
+    def update_similarity_vectors_in_index(self, sound_objects):
+        """Create an update document to add only similarity vectors to sounds that already exist in the index"""
+        documents = [{'id': sound.id, 'content_type': SOLR_DOC_CONTENT_TYPES['sound']} for sound in sound_objects]
+        self.add_similarity_vectors_to_documents(sound_objects, documents)
+        documents = [self.transform_document_into_update_document(d) for d in documents]
         try:
             self.get_sounds_index().add(documents)
         except pysolr.SolrError as e:
@@ -535,11 +539,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             current_page += 1
         return sorted(solr_ids)
 
-    def search_sounds(self, textual_query='', query_fields=None, query_filter='', field_list=['id', 'score'], 
-                      offset=0, current_page=None, num_sounds=settings.SOUNDS_PER_PAGE, 
+    def search_sounds(self, textual_query='', query_fields=None, query_filter='', field_list=['id', 'score'],
+                      offset=0, current_page=None, num_sounds=settings.SOUNDS_PER_PAGE,
                       sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
-                      group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
-                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False, 
+                      group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False,
+                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False,
                       similar_to=None, similar_to_max_num_sounds=settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY ,
                       similar_to_analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
 

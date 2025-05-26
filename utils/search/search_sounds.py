@@ -75,7 +75,7 @@ def perform_search_engine_query(query_params):
     return results, paginator
 
 
-def add_sounds_to_search_engine(sound_objects: list["sounds.models.Sound"], solr_collection_url=None):
+def add_sounds_to_search_engine(sound_objects: list["sounds.models.Sound"], update=False, include_similarity_vectors=False, solr_collection_url=None):
     """Add the Sounds from the queryset to the search engine
 
     Args:
@@ -90,7 +90,30 @@ def add_sounds_to_search_engine(sound_objects: list["sounds.models.Sound"], solr
     try:
         console_logger.debug(f"Adding {num_sounds} sounds to the search engine")
         search_logger.debug(f"Adding {num_sounds} sounds to the search engine")
-        get_search_engine(sounds_index_url=solr_collection_url).add_sounds_to_index(sound_objects, fields_to_include=[], update=False)
+        get_search_engine(sounds_index_url=solr_collection_url).add_sounds_to_index(sound_objects, update=update, include_similarity_vectors=include_similarity_vectors)
+        return num_sounds
+    except SearchEngineException as e:
+        console_logger.error(f"Failed to add sounds to search engine index: {str(e)}")
+        search_logger.error(f"Failed to add sounds to search engine index: {str(e)}")
+        return 0
+
+
+def send_update_similarity_vectors_in_search_engine(sound_objects: list["sounds.models.Sound"], solr_collection_url=None):
+    """Update the similarity vectors for the Sounds from the queryset in the search engine
+
+    Args:
+        sound_objects: list (or queryset) of Sound objects to index
+    Returns:
+        int: number of sounds added to the index
+    """
+    if isinstance(sound_objects, RawQuerySet):
+        num_sounds = len(list(sound_objects))
+    else:
+        num_sounds = len(sound_objects)
+    try:
+        console_logger.debug(f"Adding similarity vectors for {num_sounds} sounds to the search engine")
+        search_logger.debug(f"Adding similarity vectors for {num_sounds} sounds to the search engine")
+        get_search_engine(sounds_index_url=solr_collection_url).update_similarity_vectors_in_index(sound_objects)
         return num_sounds
     except SearchEngineException as e:
         console_logger.error(f"Failed to add sounds to search engine index: {str(e)}")
@@ -139,6 +162,8 @@ def get_all_sound_ids_from_search_engine(page_size=2000, solr_collection_url=Non
         return search_engine.get_all_sound_ids_from_index()
     except SearchEngineException as e:
         search_logger.info(f"Could not retrieve all sound IDs from search engine: {str(e)}")
+        raise
+    return []
 
 
 def get_random_sound_id_from_search_engine(solr_collection_url=None):

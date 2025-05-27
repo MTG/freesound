@@ -78,8 +78,7 @@ class Command(LoggingBaseCommand):
         if options['force']:
             sound_ids_to_be_added = sound_ids_analyzed_with_analyzer_ok[:limit]
         else:
-            sound_ids_similarity_pending =  list(Sound.public.filter(similarity_state='PE').values_list('id', flat=True))
-            sound_ids_to_be_added = list(set(sound_ids_similarity_pending).intersection(sound_ids_analyzed_with_analyzer_ok))[:limit]
+            sound_ids_to_be_added = list(SoundAnalysis.objects.filter(analyzer=analyzer_name, analysis_status="OK", sound_id__in=Sound.objects.filter(similarity_state="PE").values_list('id', flat=True)).values_list('sound_id', flat=True))
 
         N = len(sound_ids_to_be_added)
         to_be_added = sorted(Sound.objects.filter(id__in=sound_ids_to_be_added), key=lambda x: x.id)

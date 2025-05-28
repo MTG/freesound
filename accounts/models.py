@@ -641,7 +641,19 @@ class Profile(models.Model):
             cache.set(settings.USER_STATS_CACHE_KEY.format(self.user_id), stats_from_cache, 60*60*24)
         stats_from_db.update(stats_from_cache)
         return stats_from_db
-
+    
+    def get_ai_preference(self):
+        try:
+            return self.user.ai_preference.preference
+        except AIPreference.DoesNotExist:
+            # If no preference is set, return the default one
+            return AIPreference.DEFAULT_AI_PREFERENCE
+        
+    def set_ai_preference(self, preference_value):
+        num_updated = AIPreference.objects.update(user=self.user, preference=preference_value)
+        if num_updated == 0:
+            # If no AIPreference object was updated, it means no AIPreference object exister for that user. Create a new one.
+            AIPreference.objects.create(user=self.user, preference=preference_value)
 
     class Meta:
         ordering = ('-user__date_joined', )
@@ -656,6 +668,18 @@ class GdprAcceptance(models.Model):
     # the user accepted the terms
     date_accepted = models.DateTimeField(auto_now_add=True)
 
+
+class AIPreference(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="ai_preference")
+    date_updated = models.DateTimeField(auto_now=True)
+    AI_PREFERENCE_CHOICES = (
+        ("fr", "My sounds are used following Freesound's recommendations for interpreting Creative Commons licenses in a generative AI training context"), 
+        ("o", "My sounds are used to train open models that are freely available to the public"),
+        ("on", "My sounds are used to train open models that are freely available to the public and that do not allow a commercial use")
+    )
+    DEFAULT_AI_PREFERENCE = "fr"
+    preference = models.CharField(max_length=2, choices=AI_PREFERENCE_CHOICES, default=DEFAULT_AI_PREFERENCE)
+    
 
 class UserFlag(models.Model):
     user = models.ForeignKey(User, related_name="flags", on_delete=models.CASCADE)

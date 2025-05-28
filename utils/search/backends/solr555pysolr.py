@@ -44,7 +44,7 @@ SOLR_SOUNDS_URL = f"{settings.SOLR5_BASE_URL}/freesound"
 FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_ID: 'id',
     settings.SEARCH_SOUNDS_FIELD_NAME: 'original_filename',
-    settings.SEARCH_SOUNDS_FIELD_TAGS: 'tag',
+    settings.SEARCH_SOUNDS_FIELD_TAGS: 'tagfacet',
     settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 'description',
     settings.SEARCH_SOUNDS_FIELD_USER_NAME: 'username',
     settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 'pack_tokenized',

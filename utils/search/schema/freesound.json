@@ -198,6 +198,12 @@
       "multiValued": true
     },
     {
+      "name": "tagfacet",
+      "type": "strings",
+      "stored": true,
+      "required": false
+    },
+    {
       "name": "is_explicit",
       "type": "boolean",
       "indexed": true,
@@ -465,6 +471,12 @@
       "source": "created",
       "dest": [
         "created_range"
+      ]
+    },
+    {
+      "source": "tag",
+      "dest": [
+        "tagfacet"
       ]
     }
   ]

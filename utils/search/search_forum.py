@@ -36,12 +36,10 @@ def add_posts_to_search_engine(post_objects, solr_collection_url=None):
     """
     num_posts = len(post_objects)
     try:
-        console_logger.info("Adding %d posts to search engine" % num_posts)
         search_logger.info("Adding %d posts to search engine" % num_posts)
         get_search_engine(forum_index_url=solr_collection_url).add_forum_posts_to_index(post_objects)
         return num_posts
     except SearchEngineException as e:
-        console_logger.info(f"Failed to add posts to search engine index: {str(e)}")
         search_logger.info(f"Failed to add posts to search engine index: {str(e)}")
         return 0
 
@@ -87,7 +85,7 @@ def get_all_post_ids_from_search_engine(solr_collection_url=None, page_size=2000
         while solr_count is None or len(solr_ids) < solr_count:
             response = search_engine.search_forum_posts(query_filter='*:*', group_by_thread=False,
                                                         offset=(current_page - 1) * page_size, num_posts=page_size)
-            solr_ids += [element['id'] for element in response.docs]
+            solr_ids += [int(element['id']) for element in response.docs]
             solr_count = response.num_found
             current_page += 1
     except SearchEngineException as e:

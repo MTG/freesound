@@ -63,7 +63,7 @@ import tickets.views as TicketViews
 import utils.sound_upload
 from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import EmailResetForm, FsPasswordResetForm, FsSetPasswordForm, \
-    UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, \
+    UploadFileForm, FileChoiceForm, RegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, \
     UsernameField, ProblemsLoggingInForm, username_taken_by_other_user, FsPasswordChangeForm
 from general.templatetags.util import license_with_version
@@ -1241,67 +1241,27 @@ def handle_uploaded_file(user_id, f):
     return True
 
 
-@csrf_exempt
-def upload_file(request):
-    """ upload a file. This function does something weird: it gets the session id from the
-    POST variables. This is weird but... as far as we know it's not too bad as we only need
-    the user login """
-
-    upload_logger.info("start uploading file")
-    engine = __import__(settings.SESSION_ENGINE, {}, {}, [''])  # get the current session engine
-    session_data = engine.SessionStore(request.POST.get('sessionid', ''))
-    try:
-        user_id = session_data['_auth_user_id']
-        upload_logger.info("\tuser id %s", str(user_id))
-    except KeyError:
-        upload_logger.warning("failed to get user id from session")
-        return HttpResponseBadRequest("You're not logged in. Log in and try again.")
-    try:
-        request.user = User.objects.get(id=user_id)
-        upload_logger.info("\tfound user: %s", request.user.username)
-    except User.DoesNotExist:
-        upload_logger.warning("user with this id does not exist")
-        return HttpResponseBadRequest("user with this ID does not exist.")
-
-    if request.method == 'POST':
-        form = FlashUploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            upload_logger.info("\tform data is valid")
-            if handle_uploaded_file(user_id, request.FILES["file"]):
-                return HttpResponse("File uploaded OK")
-            else:
-                return HttpResponseServerError("Error in file upload")
-        else:
-            upload_logger.warning("form data is invalid: %s", str(form.errors))
-            return HttpResponseBadRequest("Form is not valid.")
-    else:
-        upload_logger.warning("no data in post")
-        return HttpResponseBadRequest("No POST data in request")
-
-
 @login_required
-def upload(request, no_flash=False):
+def upload(request):
     form = UploadFileForm()
     successes = 0
     errors = []
     uploaded_file = None
-    if no_flash:
-        if request.method == 'POST':
-            form = UploadFileForm(request.POST, request.FILES)
-            if form.is_valid():
-                submitted_files = request.FILES.getlist('files')
-                for file_ in submitted_files:
-                    if handle_uploaded_file(request.user.id, file_):
-                        uploaded_file = file_
-                        successes += 1
-                    else:
-                        errors.append(file_)
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            submitted_files = request.FILES.getlist('files')
+            for file_ in submitted_files:
+                if handle_uploaded_file(request.user.id, file_):
+                    uploaded_file = file_
+                    successes += 1
+                else:
+                    errors.append(file_)
     tvars = {
         'form': form,
         'uploaded_file': uploaded_file,
         'successes': successes,
         'errors': errors,
-        'no_flash': no_flash,
         'max_file_size': settings.UPLOAD_MAX_FILE_SIZE_COMBINED,
         'max_file_size_in_MB': int(round(settings.UPLOAD_MAX_FILE_SIZE_COMBINED * 1.0 / (1024 * 1024))),
         'lossless_file_extensions': [ext for ext in settings.ALLOWED_AUDIOFILE_EXTENSIONS if ext not in settings.LOSSY_FILE_EXTENSIONS],

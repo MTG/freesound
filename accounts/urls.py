@@ -77,10 +77,7 @@ urlpatterns = [
     path('download-attribution/', accounts.download_attribution, name="accounts-download-attribution"),
     path('stream/', follow.stream, name='stream'),
 
-    path('upload/', accounts.upload, name="accounts-upload", kwargs=dict(no_flash=True)),
-    path('upload/html/', accounts.upload, name="accounts-upload-html", kwargs=dict(no_flash=True)),
-    path('upload/flash/', accounts.upload, name="accounts-upload-flash"),
-    path('upload/file/', accounts.upload_file, name="accounts-upload-file"),
+    path('upload/', accounts.upload, name="accounts-upload"),
     path('upload/bulk-describe/<int:bulk_id>/', accounts.bulk_describe, name="accounts-bulk-describe"),
 
     path('sounds/manage/<tab>/', accounts.manage_sounds, name="accounts-manage-sounds"),

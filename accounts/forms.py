@@ -48,36 +48,30 @@ web_logger = logging.getLogger('web')
 
 
 def validate_file_extension(audiofiles):
-    try:
-        for file_ in audiofiles:
-            content_type = file_.content_type
-            if filename_has_valid_extension(str(file_)):
-                ext = str(file_).rsplit('.', 1)[-1].lower()
-                if ext == 'flac':
-                    # At least Safari and Firefox do not set the proper mime type for .flac files
-                    # (use 'application/octet-stream' instead of 'audio/flac'). For this reason we also allow
-                    # this mime type for flac files.
-                    if not content_type.startswith("audio") and not content_type == 'application/octet-stream':
-                        raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
-                elif ext == 'ogg':
-                    # Firefox seems to set wrong mime type for ogg files to video/ogg instead of audio/ogg.
-                    # Also safari seems to use 'application/octet-stream'.
-                    # For these reasons we also allow extra mime types for ogg files.
-                    if not content_type.startswith("audio") and not content_type == 'video/ogg' and not content_type == 'application/octet-stream':
-                        raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
-                elif ext == 'wv':
-                    # All major browsers seem to use 'application/octet-stream' for wv (wavpack) files.
-                    if not content_type == 'application/octet-stream':
-                        raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
-                else:
-                    if not content_type.startswith("audio"):
-                        raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+    for file_ in audiofiles:
+        content_type = file_.content_type
+        if filename_has_valid_extension(str(file_)):
+            ext = str(file_).rsplit('.', 1)[-1].lower()
+            if ext == 'flac':
+                # At least Safari and Firefox do not set the proper mime type for .flac files
+                # (use 'application/octet-stream' instead of 'audio/flac'). For this reason we also allow
+                # this mime type for flac files.
+                if not content_type.startswith("audio") and not content_type == 'application/octet-stream':
+                    raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+            elif ext == 'ogg':
+                # Firefox seems to set wrong mime type for ogg files to video/ogg instead of audio/ogg.
+                # Also safari seems to use 'application/octet-stream'.
+                # For these reasons we also allow extra mime types for ogg files.
+                if not content_type.startswith("audio") and not content_type == 'video/ogg' and not content_type == 'application/octet-stream':
+                    raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+            elif ext == 'wv':
+                # All major browsers seem to use 'application/octet-stream' for wv (wavpack) files.
+                if not content_type == 'application/octet-stream':
+                    raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
             else:
-                raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
-
-    except AttributeError:
-        # Will happen when uploading with the flash uploader
-        if not filename_has_valid_extension(str(audiofiles)):
+                if not content_type.startswith("audio"):
+                    raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+        else:
             raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
 
 
@@ -92,11 +86,6 @@ class BulkDescribeForm(forms.Form):
 
 class UploadFileForm(forms.Form):
     files = MultiFileField(min_num=1, validators=[validate_file_extension], label="", required=False)
-
-
-class FlashUploadFileForm(forms.Form):
-    file = forms.FileField(validators=[validate_file_extension])
-
 
 class TermsOfServiceForm(forms.Form):
     accepted_tos = forms.BooleanField(
@@ -156,7 +145,7 @@ class UsernameField(forms.CharField):
     def __init__(self, required=True):
         """Validates the username field for a form. Validation for brand new usernames must have strong validation (see Regex).
         For profile modifications, the username validation is done in ProfileForm cleaning methods, as antique usernames can
-        contain spaces but new modified ones cannot. 
+        contain spaces but new modified ones cannot.
 
         Args:
             required (bool, optional): True for RegistrationForms, false for ProfileForms

@@ -63,16 +63,6 @@ class Command(LoggingBaseCommand):
         one_day_ago = timezone.now() - datetime.timedelta(days=1)
         one_year_ago = timezone.now() - datetime.timedelta(days=365)
 
-        # Clean files from tmp_uploads which are olden than a day
-        for filename in os.listdir(settings.FILE_UPLOAD_TEMP_DIR):
-            filepath = os.path.join(settings.FILE_UPLOAD_TEMP_DIR, filename)
-            if datetime.datetime.fromtimestamp(os.path.getmtime(filepath), tz=datetime.timezone.utc) < one_day_ago:
-                # Delete sound
-                console_logger.info(f'Deleting file {filepath}')
-                cleaned_files['tmp_uploads'] += 1
-                if not options['dry_run']:
-                    os.remove(filepath)
-
         # Clean folders from tmp_processing that are empty or folders in which all files are older than a day
         for filename in os.listdir(settings.PROCESSING_TEMP_DIR):
             folderpath = os.path.join(settings.PROCESSING_TEMP_DIR, filename)

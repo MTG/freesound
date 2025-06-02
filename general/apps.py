@@ -21,6 +21,5 @@ class GeneralConfig(AppConfig):
         os.makedirs(settings.UPLOADS_PATH, exist_ok=True)
         os.makedirs(settings.CSV_PATH, exist_ok=True)
         os.makedirs(settings.ANALYSIS_PATH, exist_ok=True)
-        os.makedirs(settings.FILE_UPLOAD_TEMP_DIR, exist_ok=True)
         os.makedirs(settings.PROCESSING_TEMP_DIR, exist_ok=True)
         os.makedirs(settings.PROCESSING_BEFORE_DESCRIPTION_DIR, exist_ok=True)

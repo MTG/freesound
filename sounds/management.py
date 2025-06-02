@@ -33,8 +33,7 @@ def create_locations(sender, **kwargs):
                    settings.AVATARS_PATH,
                    settings.UPLOADS_PATH,
                    settings.PREVIEWS_PATH,
-                   settings.DISPLAYS_PATH,
-                   settings.FILE_UPLOAD_TEMP_DIR]:
+                   settings.DISPLAYS_PATH]:
         if not os.path.isdir(folder):
             os.makedirs(folder, exist_ok=True)
         else:

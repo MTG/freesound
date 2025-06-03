@@ -106,7 +106,7 @@ class CollectionSound(models.Model):
    #sound won't be added to collection until maintainers approve the sound
 
 @receiver(post_save, sender=CollectionSound)
-def update_collection_num_sounds(**kwargs):
+def update_collection_num_sounds(sender, instance, raw, using, update_fields):
     collectionsound = kwargs.pop('instance', False)
     if collectionsound:
         Collection.objects.filter(collectionsound=collectionsound).update(num_sounds=Greatest(F('num_sounds') + 1, 0))

@@ -36,16 +36,16 @@
             </div>
             <div class="v-spacing-top-3">Description: {% if collection.description %}{{collection.description}} {% endif %}</div>
             <div>{% if collection.public %} {% bw_icon 'eye' %} Public {% else %} {% bw_icon 'eye-blocked' %} Private {% endif %}collection</div>
+            {% if maintainers %}
             <span>Maintainers: 
-                {% if maintainers %}{% for u in maintainers %}
+                {% for u in maintainers %}
                     {% if not forloop.last%}
                         <a href="{% url 'account' u.username%}">{{u.username}}</a>, 
                     {% else %} 
                     <a href="{% url 'account' u.username%}">{{u.username}}</a>
                     {% endif %}
-                {% endfor %}
-                {% else %}There are no maintainers in this collection yet.{% endif %}
-            </span>
+                {% endfor %}</span>
+            {% endif %}
             <div class="v-spacing-top-3">
             {% if page.object_list %}    
                 <div class = "row">
@@ -62,7 +62,7 @@
             </div>
             {% else %}
             <div class="v-spacing-top-3">
-                <span class=text-light-grey> You don't have any collection yet...</span>
+                <span class=text-light-grey> You don't have any collections yet...</span>
             </div>
             {% endif %}
         </div>

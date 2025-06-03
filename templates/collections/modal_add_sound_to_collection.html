@@ -10,15 +10,15 @@
 <div class="col-12">
     {% if not request.user.is_authenticated %}
         <div class="text-center">
-            <h4 class="v-spacing-5">Can't collect sound</h4>
+            <h4 class="v-spacing-5">Can't add sound to collection</h4>
         </div>
         <div class="v-spacing-4 text-center">
-            <div class="v-spacing-4">To collect sounds, you need to be logged in with your Freesound account.</div>
+            <div class="v-spacing-4">To add sounds, you need to be logged in with your Freesound account.</div>
             <button class="btn-primary" data-dismiss="modal">Ok</button>
         </div>
     {% elif not sound_is_moderated_and_processed_ok %}
         <div class="text-center">
-            <h4 class="v-spacing-5">Can't collect sound</h4>
+            <h4 class="v-spacing-5">Can't add sound to collection</h4>
         </div>
         <div class="v-spacing-4 text-center">
             <div class="v-spacing-4">This sound can't be collected because it has not yet been processed or moderated.</div>
@@ -47,7 +47,7 @@
         {% endif %}
         <form method="post" action="{% url 'add-sound-to-collection' sound.id %}?ajax=1." class = "disable-on-submit">{% csrf_token %}
             {{ form }}
-            <button class = "btn-primary v-spacing-top-2">Collect Sound</button>
+            <button class = "btn-primary v-spacing-top-2">Add sound to collection</button>
         </form>
     </div>
     {% endif %}

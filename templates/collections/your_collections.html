@@ -17,7 +17,7 @@
                     <li><a class="cursor-pointer" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'create-collection' %}?ajax=1" data-reload-on-success= "true" title="Create new collection" aria-label="Create new collection">
                         Create a new collection <span style="margin-left: 5px">{% bw_icon 'bookmark' %}</span></a></li>
                     {% if user_collections %}
-                        <li><span> Collections you own: {{user_collections|length}} </span></li>
+                        <li><span> Your collections: {{user_collections|length}} </span></li>
                     {% else %}
                     <span class=text-light-grey> You don't have any collection yet... </span>
                     {% endif %}
@@ -64,7 +64,7 @@
                 </div>
                 {% else %}
                 <div class="v-spacing-top-3">
-                    <span class=text-light-grey> You're not a maintainer in any collection yet...</span>
+                    <span class=text-light-grey> You're not a maintainer of any collection yet...</span>
                 </div>
                 {% endif %}
             </div>

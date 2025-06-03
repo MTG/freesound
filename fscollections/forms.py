@@ -106,6 +106,7 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
     
     def save(self, *args, **kwargs):
         collection_to_use = None
+        sound = Sound.objects.get(id=self.sound_id)
 
         if not self.cleaned_data['use_last_collection']:
             if self.cleaned_data['collection'] == self.BOOKMARK_COLLECTION_CHOICE_VALUE:
@@ -133,6 +134,7 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
         elif self.user_saving_sound.id in maintainers_list:
             collection, _ = Collection.objects.get_or_create(
                 name = collection_to_use.name, id=collection_to_use.id)
+        CollectionSound.objects.create(user=self.user_saving_sound, collection=collection, sound=sound, status="OK")
         return collection
     
     def clean(self):
@@ -250,9 +252,9 @@ class CollectionEditForm(forms.ModelForm):
               
             else:
                 current_sounds.remove(snd)
-        for snd in current_sounds:
-            sound = Sound.objects.get(id=snd)
-            CollectionSound.objects.get(collection=collection, sound=sound).delete()
+        
+        sounds = Sound.objects.filter(id__in=current_sounds)
+        CollectionSound.objects.filter(collection=collection, sound__in=sounds).delete()
 
         new_maintainers = set(self.clean_ids_field('maintainers'))
         # if the owner of the collection has been added as a maintainer, discard it

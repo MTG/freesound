@@ -1,10 +1,11 @@
+from django.conf import settings
 from django.test import TestCase
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from django.urls import reverse
 
 from utils.test_helpers import create_user_and_sounds
-from fscollections.models import *
-from fscollections.forms import *
+from fscollections.models import Collection
 
 # Create your tests here.
 class CollectionTest(TestCase):
@@ -15,13 +16,11 @@ class CollectionTest(TestCase):
         self.user = User.objects.create_user(username='testuser', email='testuser@freesound.org')
         self.maintainer = User.objects.create_user(username='maintaineruser', email='maintainer@freesound.org')
         self.external_user = User.objects.create_user(username='external_user', email='externaluser@freesound.org')
-        ___, ___, sounds = create_user_and_sounds(num_sounds=3, user=self.user, processing_state="OK", moderation_state="OK")
+        _, _, sounds = create_user_and_sounds(num_sounds=3, user=self.user, processing_state="OK", moderation_state="OK")
         self.sound = sounds[0]
         self.sound1 = sounds[1]
         self.sound2 = sounds[2]
-        self.collection = Collection(user=self.user, name='testcollection')
-        self.collection.save()
-
+        self.collection = Collection.objects.create(user=self.user, name='testcollection')
 
     def test_collections_create_and_delete(self):        
 
@@ -121,6 +120,10 @@ class CollectionTest(TestCase):
 
         # Test deleting a collection where request user is maintainer (not valid)
         resp = self.client.post(reverse('delete-collection',args=[self.collection.id]))
+        messages = list(get_messages(resp.wsgi_request))
+        self.assertTrue(len(messages)>0)
+        self.assertEqual(str(messages[0]), "You're not allowed to delete this collection."
+                             "In order to delete a collection you must be the owner.")
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(f"/collections/{self.collection.id}/", resp.url)
 
@@ -131,6 +134,8 @@ class CollectionTest(TestCase):
         resp = self.client.post(reverse('add-sound-to-collection', args=[self.sound.id]), {'collection': self.collection.id})
         self.collection.refresh_from_db()
         self.assertEqual(resp.status_code, 200)
+        response_data = resp.json()
+        self.assertEqual(response_data['success'], False)
         self.assertEqual(0, self.collection.num_sounds)
 
         # Additionally, test edit URL for external user

@@ -24,7 +24,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.text import slugify
 from django.dispatch import receiver
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.db.models.functions import Greatest
 from django.db.models import F, Sum
 
@@ -34,29 +34,25 @@ from sounds.models import Sound, License
 class Collection(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE) 
-    name = models.CharField(max_length=255) #max_length as in Packs (128 for Bookmarks)
+    name = models.CharField(max_length=255) 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     modified = models.DateTimeField(db_index=True, auto_now=True)
     # TODO: description should be required (check how to display it in edit form + collectionsound form)
     description = models.TextField(blank=True)
-    maintainers = models.ManyToManyField(User, related_name="collection_maintainer", blank=True)
+    maintainers = models.ManyToManyField(User, related_name="collection_maintainer")
     sounds = models.ManyToManyField(Sound, through="CollectionSound", related_name='collections', blank=True)
     num_sounds = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0)
     public = models.BooleanField(default=False)
     is_default_collection = models.BooleanField(default=False)
-    #NOTE: Don't fear migrations, you're just testing
-    #subcolletion_path = sth with tagn and routing folders for downloads
-    #follow relation for users and collections (intersted but not owner nor contributor)
 
     def __str__(self):
         return f"{self.name}"
     
     def get_attribution(self, sound_qs=None):
-        #If no queryset of sounds is provided, take it from the bookmark category
+        #If no queryset of sounds is provided, take it from the collection
         if sound_qs is None:
-            collection_sounds = CollectionSound.objects.filter(collection=self).values("sound_id")
-            sound_qs = Sound.objects.filter(id__in=collection_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
+            sound_qs = self.sounds.filter(processing_state="OK", moderation_state="OK").select_related('user','license')
         
         users = User.objects.filter(sounds__in=sound_qs).distinct()
         # Generate text file with license info
@@ -111,8 +107,8 @@ def update_collection_num_sounds(**kwargs):
     if collectionsound:
         Collection.objects.filter(collectionsound=collectionsound).update(num_sounds=Greatest(F('num_sounds') + 1, 0))
 
-@receiver(post_delete, sender=CollectionSound)
-def update_collection_num_sounds_sound_removal(**kwargs):
+@receiver(m2m_changed, sender=CollectionSound)
+def update_collection_num_sounds_bulk_changes(**kwargs):
     collectionsound = kwargs.pop('instance', False)
     if collectionsound:
         Collection.objects.filter(collectionsound=collectionsound).update(num_sounds=Greatest(F('num_sounds') - 1, 0))

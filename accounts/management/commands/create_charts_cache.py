@@ -21,13 +21,13 @@
 import logging
 
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import caches
 
 from accounts.views import compute_charts_stats
 from utils.management_commands import LoggingBaseCommand
 
 commands_logger = logging.getLogger("commands")
-
+cache_persistent = caches['persistent']
 
 class Command(LoggingBaseCommand):
     help = "Create caches needed for the charts page"
@@ -35,5 +35,5 @@ class Command(LoggingBaseCommand):
     def handle(self, **options):
         self.log_start()
         tvars = compute_charts_stats()
-        cache.set(settings.CHARTS_DATA_CACHE_KEY, tvars, 60 * 60 * 24)
+        cache_persistent.set(settings.CHARTS_DATA_CACHE_KEY, tvars, 60 * 60 * 24)
         self.log_end()

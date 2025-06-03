@@ -1,0 +1,483 @@
+{
+  "fieldTypes": [
+    {
+      "name": "knn_vector100",
+      "class": "solr.DenseVectorField",
+      "vectorDimension": "100",
+      "similarityFunction": "euclidean",
+      "knnAlgorithm": "hnsw",
+      "hnswMaxConnections": "10",
+      "hnswBeamWidth": "40"
+    },
+    {
+      "name": "knn_vector100_l2",
+      "class": "solr.DenseVectorField",
+      "vectorDimension": "100",
+      "similarityFunction": "dot_product",
+      "knnAlgorithm": "hnsw",
+      "hnswMaxConnections": "10",
+      "hnswBeamWidth": "40"
+    },
+    {
+      "name": "knn_vector512",
+      "class": "solr.DenseVectorField",
+      "vectorDimension": "512",
+      "similarityFunction": "euclidean",
+      "knnAlgorithm": "hnsw",
+      "hnswMaxConnections": "10",
+      "hnswBeamWidth": "40"
+    },
+    {
+      "name": "knn_vector512_l2",
+      "class": "solr.DenseVectorField",
+      "vectorDimension": "512",
+      "similarityFunction": "dot_product",
+      "knnAlgorithm": "hnsw",
+      "hnswMaxConnections": "10",
+      "hnswBeamWidth": "40"
+    },
+    {
+      "name": "alpha_only_sort",
+      "class": "solr.TextField",
+      "sortMissingLast": true,
+      "omitNorms": true,
+      "analyzer": {
+        "tokenizer": {
+          "name": "keyword"
+        },
+        "filters": [
+          {
+            "name": "lowercase"
+          },
+          {
+            "name": "trim"
+          }
+        ]
+      },
+      "similarity": {
+        "class": "solr.BooleanSimilarityFactory"
+      }
+    },
+    {
+      "name": "freesound_text",
+      "class": "solr.TextField",
+      "positionIncrementGap": "100",
+      "indexAnalyzer": {
+        "tokenizer": {
+          "name": "whitespace"
+        },
+        "charFilters": [
+          {
+            "name": "htmlStrip"
+          }
+        ],
+        "filters": [
+          {
+            "name": "stop",
+            "ignoreCase": "true",
+            "words": "lang/stopwords_en.txt"
+          },
+          {
+            "name": "wordDelimiterGraph",
+            "generateWordParts": "1",
+            "generateNumberParts": "1",
+            "catenateWords": "1",
+            "catenateNumbers": "1",
+            "catenateAll": "0",
+            "splitOnCaseChange": "1"
+          },
+          {
+            "name": "flattenGraph"
+          },
+          {
+            "name": "lowercase"
+          },
+          {
+            "name": "snowballPorter",
+            "language": "English"
+          },
+          {
+            "name": "removeDuplicates"
+          }
+        ]
+      },
+      "queryAnalyzer": {
+        "tokenizer": {
+          "name": "whitespace"
+        },
+        "charFilters": [
+          {
+            "name": "htmlStrip"
+          }
+        ],
+        "filters": [
+          {
+            "name": "stop",
+            "ignoreCase": "true",
+            "words": "lang/stopwords_en.txt"
+          },
+          {
+            "name": "wordDelimiterGraph",
+            "generateWordParts": "1",
+            "generateNumberParts": "1",
+            "catenateWords": "0",
+            "catenateNumbers": "0",
+            "catenateAll": "0",
+            "splitOnCaseChange": "1"
+          },
+          {
+            "name": "lowercase"
+          },
+          {
+            "name": "snowballPorter",
+            "language": "English"
+          },
+          {
+            "name": "removeDuplicates"
+          }
+        ]
+      },
+      "similarity": {
+        "class": "solr.BooleanSimilarityFactory"
+      }
+    },
+    {
+      "name": "daterange",
+      "class": "solr.DateRangeField"
+    }
+  ],
+  "fields": [
+    {
+      "name": "content_type",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": true
+    },
+    {
+      "name": "username",
+      "type": "alpha_only_sort",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "original_filename",
+      "type": "freesound_text",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "created",
+      "type": "pdate",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "created_range",
+      "type": "daterange",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "description",
+      "type": "freesound_text",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "tag",
+      "type": "alpha_only_sort",
+      "indexed": true,
+      "stored": true,
+      "required": false,
+      "multiValued": true
+    },
+    {
+      "name": "tagfacet",
+      "type": "strings",
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "is_explicit",
+      "type": "boolean",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "license",
+      "type": "string",
+      "indexed": false,
+      "stored": false
+    },
+    {
+      "name": "is_remix",
+      "type": "boolean",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "was_remixed",
+      "type": "boolean",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "in_remix_group",
+      "type": "boolean",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "pack",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "grouping_pack",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "pack_tokenized",
+      "type": "freesound_text",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "is_geotagged",
+      "type": "boolean",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "geotag",
+      "type": "location_rpt",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "type",
+      "type": "alpha_only_sort",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "duration",
+      "type": "pdouble",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "bitdepth",
+      "type": "pint",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "bitrate",
+      "type": "pint",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "samplerate",
+      "type": "pint",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "filesize",
+      "type": "plong",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "channels",
+      "type": "pint",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "md5",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "num_downloads",
+      "type": "plong",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "avg_rating",
+      "type": "pfloat",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "num_ratings",
+      "type": "plong",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "comment",
+      "type": "freesound_text",
+      "indexed": true,
+      "stored": true,
+      "required": false,
+      "multiValued": true
+    },
+    {
+      "name": "num_comments",
+      "type": "plong",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "waveform_path_m",
+      "type": "string",
+      "indexed": false,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "waveform_path_l",
+      "type": "string",
+      "indexed": false,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "spectral_path_m",
+      "type": "string",
+      "indexed": false,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "spectral_path_l",
+      "type": "string",
+      "indexed": false,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "preview_path",
+      "type": "string",
+      "indexed": false,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "sim_vector100",
+      "type": "knn_vector100",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "_nest_parent_",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "sim_vector100_l2",
+      "type": "knn_vector100_l2",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "sim_vector512_l2",
+      "type": "knn_vector512_l2",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "analyzer",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "timestamp_start",
+      "type": "pdouble",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "timestamp_end",
+      "type": "pdouble",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "grouping_pack_child",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    }
+  ],
+  "dynamicFields": [
+    {
+      "name": "*_ls",
+      "type": "alpha_only_sort",
+      "indexed": true,
+      "stored": true,
+      "multiValued": true,
+      "required": false
+    }
+  ],
+  "copyFields": [
+    {
+      "source": "created",
+      "dest": [
+        "created_range"
+      ]
+    },
+    {
+      "source": "tag",
+      "dest": [
+        "tagfacet"
+      ]
+    }
+  ]
+}

@@ -62,7 +62,7 @@ def messages_change_state(request):
 
 
 # base query object
-base_qs = Message.objects.select_related('body', 'user_from', 'user_to')
+base_qs = Message.objects.select_related('body', 'user_from', 'user_from__profile', 'user_to', 'user_to__profile')
 
 
 @login_required

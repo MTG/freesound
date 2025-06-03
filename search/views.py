@@ -338,10 +338,11 @@ def search_forum(request):
     }
 
     if results:
+        post_ids = [int(d['id']) for d in results.docs]
         posts_unsorted = Post.objects.select_related('thread', 'thread__forum', 'author', 'author__profile')\
-            .filter(id__in=[d['id'] for d in results.docs])
+            .filter(id__in=post_ids)
         posts_map = {post.id:post for post in posts_unsorted}
-        posts = [posts_map[d['id']] for d in results.docs]            
+        posts = [posts_map[id] for id in post_ids]
     else:
         posts = []
     tvars.update({

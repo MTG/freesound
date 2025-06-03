@@ -24,6 +24,7 @@ DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -39,6 +40,7 @@ MIDDLEWARE = [
 ]
 
 INSTALLED_APPS = [
+    'whitenoise.runserver_nostatic',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -123,6 +125,10 @@ CDN_MAP_STORE_ID = 5
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'persistent': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '../freesound-data/')), "_cache/"),
     },
     'api_monitoring': {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -258,18 +264,19 @@ EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
 # Static settings
 
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is not an installed Django app)
-STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static'), ]
+STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static')]
 STATIC_URL = '/static/'
 STATIC_ROOT = 'bw_static'
+WHITENOISE_ROOT = os.path.join(os.path.dirname(__file__), '../webroot')
+
 STORAGES = {
     "default": {
-       "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": 'freesound.storage.NoStrictManifestStaticFilesStorage',
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-
 
 # -------------------------------------------------------------------------------
 # Freesound miscellaneous settings
@@ -653,7 +660,7 @@ SEARCH_FORUM_SORT_DEFAULT = SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST
 
 SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine'
 SOLR5_BASE_URL = "http://search:8983/solr"
-SOLR9_BASE_URL = "http://search:8983/solr"
+SOLR9_BASE_URL = "http://search:8983"
 
 SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
     BST_ANALYZER_NAME: {

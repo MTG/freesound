@@ -26,7 +26,7 @@ from django.conf import settings
 from django.db.models import Count, Sum
 from django.db.models.functions import Greatest
 from django.template.loader import render_to_string
-from django.core.cache import cache
+from django.core.cache import caches
 from django.utils import timezone
 
 from donations.models import Donation
@@ -35,6 +35,7 @@ from sounds.views import get_n_weeks_back_datetime
 from utils.management_commands import LoggingBaseCommand
 
 commands_logger = logging.getLogger("commands")
+cache_persistent = caches['persistent']
 
 
 class Command(LoggingBaseCommand):
@@ -56,15 +57,15 @@ class Command(LoggingBaseCommand):
         # Create one for Freeesound Nightingale frontend and one for BeastWhoosh
         rss_cache_bw = render_to_string('molecules/news_cache.html', {'rss_url': settings.FREESOUND_RSS})
         if len(rss_cache_bw.strip()):
-            cache.set("rss_cache", rss_cache_bw, cache_time)
+            cache_persistent.set("rss_cache", rss_cache_bw, cache_time)
         else:
-            cache.set("rss_cache", None, cache_time)
+            cache_persistent.set("rss_cache", None, cache_time)
 
         # Generate popular searches cache
         # TODO: implement this properly if we want to add this functionality
         popular_searches = ['wind', 'music', 'footsteps', 'woosh', 'explosion', 'scream', 'click', 'whoosh', 'piano',
                             'swoosh', 'rain', 'fire']
-        cache.set("popular_searches", popular_searches,  cache_time)
+        cache_persistent.set("popular_searches", popular_searches,  cache_time)
 
         # Generate trending sounds cache (most downloaded sounds during last week)
         trending_sound_ids = Download.objects \
@@ -73,7 +74,7 @@ class Command(LoggingBaseCommand):
             .order_by('-n_downloads').values_list('sound_id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
         trending_sound_ids = list(trending_sound_ids)
         random.shuffle(trending_sound_ids)  # Randomize the order of the sounds
-        cache.set("trending_sound_ids", trending_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
+        cache_persistent.set("trending_sound_ids", trending_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
 
         # Generate trending new sounds cache (most downloaded sounds from those created last week)
         trending_new_sound_ids = Sound.public.select_related('license', 'user') \
@@ -82,7 +83,7 @@ class Command(LoggingBaseCommand):
             .order_by("-num_downloads").values_list('id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
         trending_new_sound_ids = list(trending_new_sound_ids)
         random.shuffle(trending_new_sound_ids)  # Randomize the order of the sounds
-        cache.set("trending_new_sound_ids", trending_new_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
+        cache_persistent.set("trending_new_sound_ids", trending_new_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
 
         # Generate trending new packs cache (most downloaded packs from those created last week)
         trending_new_pack_ids = Pack.objects.select_related('user') \
@@ -90,7 +91,7 @@ class Command(LoggingBaseCommand):
             .order_by("-num_downloads").values_list('id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
         trending_new_pack_ids = list(trending_new_pack_ids)
         random.shuffle(trending_new_pack_ids)  # Randomize the order of the packs
-        cache.set("trending_new_pack_ids", trending_new_pack_ids[0:NUM_ITEMS_PER_SECTION], cache_time)
+        cache_persistent.set("trending_new_pack_ids", trending_new_pack_ids[0:NUM_ITEMS_PER_SECTION], cache_time)
 
         # Generate top rated new sounds cache (top rated sounds from those created last two weeks)
         # Note we use two weeks here instead of one to make sure we have enough sounds to choose from
@@ -101,15 +102,15 @@ class Command(LoggingBaseCommand):
             .order_by("-avg_rating", "-num_ratings").values_list('id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
         top_rated_new_sound_ids = list(top_rated_new_sound_ids)
         random.shuffle(top_rated_new_sound_ids)  # Randomize the order of the sounds
-        cache.set("top_rated_new_sound_ids", top_rated_new_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
+        cache_persistent.set("top_rated_new_sound_ids", top_rated_new_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
         
         # Generate latest "random sound of the day" ids
         recent_random_sound_ids = [sd.sound_id for sd in SoundOfTheDay.objects.filter(date_display__lt=timezone.now()).order_by('-date_display')[:NUM_ITEMS_PER_SECTION]]
-        cache.set("recent_random_sound_ids", list(recent_random_sound_ids), cache_time)
+        cache_persistent.set("recent_random_sound_ids", list(recent_random_sound_ids), cache_time)
 
         # Add total number of sounds in Freesound to the cache
         total_num_sounds = Sound.public.all().count()
-        cache.set("total_num_sounds", total_num_sounds, cache_time)
+        cache_persistent.set("total_num_sounds", total_num_sounds, cache_time)
 
         # Calculate top donor
         try:
@@ -123,7 +124,7 @@ class Command(LoggingBaseCommand):
         except IndexError:
             top_donor_user_id = None
             top_donor_donation_amount = None
-        cache.set("top_donor_user_id", top_donor_user_id, cache_time)
-        cache.set("top_donor_donation_amount", top_donor_donation_amount, cache_time)
+        cache_persistent.set("top_donor_user_id", top_donor_user_id, cache_time)
+        cache_persistent.set("top_donor_donation_amount", top_donor_donation_amount, cache_time)
 
         self.log_end()

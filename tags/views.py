@@ -31,7 +31,6 @@ from search.views import search_view_helper
 from tags.models import Tag, FS1Tag
 from utils.search import SearchEngineException
 from utils.search.search_sounds import perform_search_engine_query
-from utils.search.backends.solr555pysolr import get_solr_fieldname, get_solr_fieldname_for_facet
 
 search_logger = logging.getLogger("search")
 
@@ -69,11 +68,10 @@ def tag_cloud(request):
             sentry_sdk.capture_exception(e)
             tvars.update({"error_text": "The search server could not be reached, please try again later."})
         else:
-            solr_tags_facet_fieldname = get_solr_fieldname_for_facet(get_solr_fieldname(settings.SEARCH_SOUNDS_FIELD_TAGS))
-            if solr_tags_facet_fieldname in results.facets:
+            if settings.SEARCH_SOUNDS_FIELD_TAGS in results.facets:
                 initial_tagcloud = [
                     dict(name=f[0], count=f[1], browse_url=reverse("tags", args=[f[0]]))
-                    for f in results.facets.get(solr_tags_facet_fieldname, [])
+                    for f in results.facets.get(settings.SEARCH_SOUNDS_FIELD_TAGS, [])
                 ]
                 cache.set("initial_tagcloud", initial_tagcloud, 60 * 60 * 12)  # cache for 12 hours
                 tvars.update({"initial_tagcloud": initial_tagcloud})

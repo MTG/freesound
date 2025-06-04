@@ -418,11 +418,16 @@ def edit(request):
         profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
+            # Update AI sound usage preference, only if field present in the form
+            if 'ai_sound_usage_preference' in profile_form.cleaned_data:
+                profile.set_ai_preference(profile_form.cleaned_data['ai_sound_usage_preference'])
+            
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data['username']
             request.user.save()
             invalidate_user_template_caches(request.user.id)
             profile.save()
+                
             msg_txt = "Your profile has been updated correctly."
             if old_sound_signature != profile.sound_signature:
                 msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."

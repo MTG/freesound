@@ -660,10 +660,11 @@ def add_user_annotation(request, user_id):
     if request.method == 'POST':
         form = UserAnnotationForm(request.POST)
         if form.is_valid():
-            ua = UserAnnotation(sender=request.user,
-                                user=user,
-                                text=form.cleaned_data['text'])
-            ua.save()
+            UserAnnotation.objects.create(
+                sender=request.user,
+                user=user,
+                text=form.cleaned_data['text']
+            )
             return JsonResponse({'message': 'Annotation successfully added', 'num_annotations': UserAnnotation.objects.filter(user=user).count()})
     return JsonResponse({'message': 'Annotation could not be added', 'num_annotations': UserAnnotation.objects.filter(user=user).count()})
 

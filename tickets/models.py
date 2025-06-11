@@ -122,6 +122,8 @@ post_save.connect(create_ticket_message, sender=TicketComment)
 
 
 class UserAnnotation(models.Model):
+    created = models.DateTimeField(null=True, auto_now_add=True)
+    automated = models.BooleanField(default=False)
     sender = models.ForeignKey(User, related_name='sent_annotations', on_delete=models.CASCADE)
     user = models.ForeignKey(User, related_name='annotations', on_delete=models.CASCADE)
     text = models.TextField()

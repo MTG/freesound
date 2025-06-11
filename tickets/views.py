@@ -161,7 +161,7 @@ def ticket(request, ticket_key):
                     notification = ticket.NOTIFICATION_APPROVED
 
                 elif sound_action == 'Whitelist':
-                    whitelist_user_task.delay(ticket_ids=[ticket.id])  # async job should take care of whitelisting
+                    whitelist_user_task.delay(sender=request.user, ticket_ids=[ticket.id])  # async job should take care of whitelisting
                     comment += f'whitelisted all sounds from user {ticket.sender}'
                     notification = ticket.NOTIFICATION_WHITELISTED
 
@@ -559,7 +559,7 @@ def moderation_assigned(request, user_id):
 
             elif action == "Whitelist":
                 ticket_ids = list(tickets.values_list('id',flat=True))
-                whitelist_user_task.delay(ticket_ids=ticket_ids)  # async job should take care of whitelisting
+                whitelist_user_task.delay(sender=request.user, ticket_ids=ticket_ids)  # async job should take care of whitelisting
                 notification = Ticket.NOTIFICATION_WHITELISTED
 
                 users = set(tickets.values_list('sender__username', flat=True))
@@ -643,8 +643,8 @@ def user_annotations(request, user_id):
     if not request.GET.get('ajax'):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[user.username]) + '?mod_annotations=1')
-    
-    annotations = UserAnnotation.objects.filter(user=user)
+
+    annotations = UserAnnotation.objects.filter(user=user).order_by(F('created').desc(nulls_first=True), 'id')
     user_recent_ticket_comments = TicketComment.objects.filter(sender=user).select_related('ticket').order_by('-created')[:15]
     tvars = {"user": user,
                 "recent_comments": user_recent_ticket_comments,
@@ -728,9 +728,9 @@ def whitelist_user(request, user_id):
         messages.add_message(request, messages.ERROR,
                              """The user you are trying to whitelist does not exist""")
         return HttpResponseRedirect(reverse('tickets-moderation-home'))
-    
-    whitelist_user_task(user_id=user_id)  # async job should take care of whitelisting
-    
+
+    whitelist_user_task.delay(sender=request.user, user_id=user_id)
+
     messages.add_message(request, messages.INFO,
         f"""User {user.username} has been whitelisted. Note that some of tickets might
         still appear on her pending tickets list for some time.""")

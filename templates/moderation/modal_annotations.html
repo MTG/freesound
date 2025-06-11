@@ -36,7 +36,7 @@
                         {% if annotation.created %}
                             <span class="text-grey">{{ annotation.created.date.isoformat }}</span> <span class="h-spacing-1">·</span>
                         {% endif %}
-                        {% if annotation.sender %} <a href="{% url "account" annotation.sender.username %}">{{ annotation.sender.username }}</a> {% else %} Anonymous {% endif %} wrote:
+                        {% if annotation.sender %} <a href="{% url "account" annotation.sender.username %}">{{ annotation.sender.username }}</a> {% if annotation.automated %} (automated message){% endif %} {% else %} Anonymous {% endif %} wrote:
                     </div>
                     <div>{{ annotation.text|safe|linebreaksbr }}</div>
                 </div>

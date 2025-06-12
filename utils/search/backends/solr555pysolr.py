@@ -44,7 +44,7 @@ SOLR_SOUNDS_URL = f"{settings.SOLR5_BASE_URL}/freesound"
 FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_ID: 'id',
     settings.SEARCH_SOUNDS_FIELD_NAME: 'original_filename',
-    settings.SEARCH_SOUNDS_FIELD_TAGS: 'tagfacet',
+    settings.SEARCH_SOUNDS_FIELD_TAGS: 'tag',
     settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 'description',
     settings.SEARCH_SOUNDS_FIELD_USER_NAME: 'username',
     settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 'pack_tokenized',
@@ -57,7 +57,22 @@ FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: 'license'
 }
 
+def get_solr_fieldname(field_name):
+    return FIELD_NAMES_MAP.get(field_name, field_name)
+
+# Some solr fields need to use alternative field names for faceting purposes, so we define a map for those
+FACET_FIELD_NAMES_MAP = {
+    'tag': 'tagfacet',
+}
+
+def get_solr_fieldname_for_facet(solr_field_name):
+    return FACET_FIELD_NAMES_MAP.get(solr_field_name, solr_field_name)
+
+# Create a reverse field name map that will be useful to get the original freesound field name from a solr field name
+# Include the facet-specific field names as well
 REVERSE_FIELD_NAMES_MAP = {value: key for key, value in FIELD_NAMES_MAP.items()}
+for key, value in FACET_FIELD_NAMES_MAP.items():
+    REVERSE_FIELD_NAMES_MAP[value] = REVERSE_FIELD_NAMES_MAP.get(key, key)
 
 
 # Map "web" sorting options to solr sorting options
@@ -371,8 +386,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 return fieldname[:-len(suffix)]
         return fieldname
     
-    def get_solr_fieldname(self, fieldname):
-        return self.add_solr_suffix_to_dynamic_fieldname(FIELD_NAMES_MAP.get(fieldname, fieldname))
+    def get_solr_fieldname_with_suffix(self, fieldname):
+        return self.add_solr_suffix_to_dynamic_fieldname(get_solr_fieldname(fieldname))
     
     def get_original_fieldname(self, solr_fieldname):
         solr_fieldname_no_suffix = self.remove_solr_suffix_from_dynamic_fieldname(solr_fieldname)
@@ -557,10 +572,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 # If no fields provided, use the default
                 query_fields = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
             if isinstance(query_fields, list):
-                query_fields = [self.get_solr_fieldname(field_name) for field_name in query_fields]
+                query_fields = [self.get_solr_fieldname_with_suffix(field_name) for field_name in query_fields]
             elif isinstance(query_fields, dict):
                 # Also remove fields with weight <= 0
-                query_fields = [(self.get_solr_fieldname(field_name), weight)
+                query_fields = [(self.get_solr_fieldname_with_suffix(field_name), weight)
                     for field_name, weight in query_fields.items() if weight > 0]
 
             # Set main query options
@@ -631,7 +646,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # Configure facets
         if facets is not None:
             json_facets = {}
-            facet_fields = [self.get_solr_fieldname(field_name) for field_name, _ in facets.items()]
+            facet_fields = [get_solr_fieldname_for_facet(self.get_solr_fieldname_with_suffix(field_name)) for field_name, _ in facets.items()]
             for field in facet_fields:
                 json_facets[field] = SOLR_SOUND_FACET_DEFAULT_OPTIONS.copy()
                 json_facets[field]['field'] = field
@@ -639,7 +654,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     # In similarity search we need to set the "domain" facet option to apply them to the parent documents of the child documents we will match
                     json_facets[field]['domain'] = {'blockParent': f'content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}'}
             for field_name, extra_options in facets.items():
-                json_facets[self.get_solr_fieldname(field_name)].update(extra_options)
+                json_facets[get_solr_fieldname_for_facet(self.get_solr_fieldname_with_suffix(field_name))].update(extra_options)
             query.set_facet_json_api(json_facets)
 
         # Configure grouping
@@ -821,11 +836,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query.set_query('*:*')
         filter_query = f'username:"{username}"'
         query.set_query_options(field_list=["id"], filter_query=filter_query)
-        query.add_facet_fields("tag")
-        query.set_facet_options("tag", limit=10, mincount=1)
+        tag_facet_field_name = get_solr_fieldname_for_facet(get_solr_fieldname(settings.SEARCH_SOUNDS_FIELD_TAGS))
+        query.add_facet_fields(tag_facet_field_name)
+        query.set_facet_options(tag_facet_field_name, limit=10, mincount=1)
         try:
             results = self.get_sounds_index().search(**self.force_sounds(query.as_kwargs()))
-            return results.facets['tag']
+            return results.facets[tag_facet_field_name]
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
 
@@ -834,10 +850,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query.set_dismax_query('*:*')
         filter_query = f'username:\"{username}\" pack:\"{pack_name}\"'
         query.set_query_options(field_list=["id"], filter_query=filter_query)
-        query.add_facet_fields("tag")
-        query.set_facet_options("tag", limit=20, mincount=1)
+        tag_facet_field_name = get_solr_fieldname_for_facet(get_solr_fieldname(settings.SEARCH_SOUNDS_FIELD_TAGS))
+        query.add_facet_fields(tag_facet_field_name)
+        query.set_facet_options(tag_facet_field_name, limit=20, mincount=1)
         try:
             results = self.get_sounds_index().search(**self.force_sounds(query.as_kwargs()))
-            return results.facets['tag']
+            return results.facets[tag_facet_field_name]
         except pysolr.SolrError as e:
             raise SearchEngineException(e)

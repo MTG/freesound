@@ -67,7 +67,7 @@ FACET_FIELD_NAMES_MAP = {
 
 def get_solr_fieldname_for_facet(solr_field_name):
     if solr_field_name.endswith('_ls'):
-        return solr_field_name + '_f'
+        return solr_field_name + SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX
     return FACET_FIELD_NAMES_MAP.get(solr_field_name, solr_field_name)
 
 # Create a reverse field name map that will be useful to get the original freesound field name from a solr field name

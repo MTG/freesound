@@ -66,6 +66,8 @@ FACET_FIELD_NAMES_MAP = {
 }
 
 def get_solr_fieldname_for_facet(solr_field_name):
+    if solr_field_name.endswith('_ls'):
+        return solr_field_name + '_f'
     return FACET_FIELD_NAMES_MAP.get(solr_field_name, solr_field_name)
 
 # Create a reverse field name map that will be useful to get the original freesound field name from a solr field name
@@ -102,6 +104,9 @@ SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
     str: '_s',
     list: '_ls',
 }
+
+# Some dynamic field types need to have alternative field versions that work with facets. In that case an extra suffix is added.
+SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX = '_f'
 
 
 SOLR_VECTOR_FIELDS_DIMENSIONS_MAP = {
@@ -261,6 +266,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                         suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
                         if suffix:
                             document[f'{key}{suffix}'] = value
+                            if suffix == '_ls':
+                                # For dynamic fields of type "list of strings", we also need to set an extra field that
+                                # will be used for faceting
+                                document[f'{key}{suffix}{SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX}'] = value
 
         # Category and subcategory fields
         # When adding fields from analyzers output, automatically predicted category and subcategory will be added. However,
@@ -390,6 +399,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         return self.add_solr_suffix_to_dynamic_fieldname(get_solr_fieldname(fieldname))
     
     def get_original_fieldname(self, solr_fieldname):
+        if solr_fieldname.endswith(SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX):
+            solr_fieldname = solr_fieldname[:-len(SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX)]
         solr_fieldname_no_suffix = self.remove_solr_suffix_from_dynamic_fieldname(solr_fieldname)
         return REVERSE_FIELD_NAMES_MAP.get(solr_fieldname_no_suffix, solr_fieldname_no_suffix)
         

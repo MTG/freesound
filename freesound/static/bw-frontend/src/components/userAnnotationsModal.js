@@ -6,13 +6,17 @@ const saveAnnotation = (addAnnotationUrl, text, user_id) => {
 
     let formData = {};
     formData.text = text;
-    
+
     makePostRequest(addAnnotationUrl, formData, (responseText) => {
-        // Bookmark saved successfully. Close model and show feedback
+        // Annotation saved successfully. Close model and show feedback
         dismissModal(`moderationAnnotationsModal`);
         const responseData = JSON.parse(responseText);
         document.getElementsByClassName('annotation-counter-' + user_id).forEach(element => {
             element.innerText = responseData.num_annotations;
+        });
+        document.querySelectorAll('.annotation-label-' + user_id).forEach(element => {
+            const count = responseData.num_annotations;
+            element.innerHTML = `mod annotation${count === 1 ? '' : 's'}`;
         });
         showToast(responseData.message);
     }, () => {

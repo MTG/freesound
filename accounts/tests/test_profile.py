@@ -110,7 +110,7 @@ class UserEditProfile(TestCase):
         STATIC_PUBLIC_BASE_DIR = 'freesound/static/bw-frontend/public/'
         test_avatar_path = os.path.join(STATIC_PUBLIC_BASE_DIR, 'test_avatar.png')
         with open(test_avatar_path, 'rb') as f:
-            f = InMemoryUploadedFile(f, None, None, None, None, None)
+            f = InMemoryUploadedFile(f, None, None, "image/png", None, None)
             handle_uploaded_image(user.profile, f)
 
         # Test that avatar files were created

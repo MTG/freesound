@@ -53,7 +53,7 @@ DELETE_USER_KEEP_SOUNDS_ACTION_NAME = 'delete_user_keep_sounds'
 
 
 @shared_task(name=WHITELIST_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
-def whitelist_user(sender, ticket_ids=None, user_id=None):
+def whitelist_user(annotation_sender_id, ticket_ids=None, user_id=None):
     # Whitelist "sender" users from the tickets with given ids
     workers_logger.info("Start whitelisting users from tickets (%s)" % json.dumps({
         'task_name': WHITELIST_USER_TASK_NAME,
@@ -94,7 +94,7 @@ def whitelist_user(sender, ticket_ids=None, user_id=None):
             # Invalidate template caches for sender user
             invalidate_user_template_caches(whitelist_user.id)
             UserAnnotation.objects.create(
-                sender=sender,
+                sender_id=annotation_sender_id,
                 user=whitelist_user,
                 text="The user was whitelisted by a moderator",
                 automated=True

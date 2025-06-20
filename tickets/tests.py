@@ -196,7 +196,7 @@ class TicketTestsFromQueue(TicketTests):
     @mock.patch('general.tasks.whitelist_user.delay')
     def test_whitelist_from_queue(self, whitelist_task):
         self._perform_action('Whitelist')
-        whitelist_task.assert_called_once_with(sender=self.test_moderator, ticket_ids=[self.ticket.id])
+        whitelist_task.assert_called_once_with(annotation_sender_id=self.test_moderator.id, ticket_ids=[self.ticket.id])
 
     def _assert_ticket_and_sound_fields(self, status, assignee, moderation_state):
         self.ticket.refresh_from_db()

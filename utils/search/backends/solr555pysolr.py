@@ -39,12 +39,11 @@ from utils.similarity_utilities import get_similarity_search_target_vector, get_
 SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
 SOLR_SOUNDS_URL = f"{settings.SOLR5_BASE_URL}/freesound"
 
-
-# Mapping from db sound field names to solr sound field names
+# Mapping from freesound sound field names to solr sound field names
 FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_ID: 'id',
     settings.SEARCH_SOUNDS_FIELD_NAME: 'original_filename',
-    settings.SEARCH_SOUNDS_FIELD_TAGS: 'tag',
+    settings.SEARCH_SOUNDS_FIELD_TAGS: {'field': 'tag', 'facet': 'tagfacet'},
     settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 'description',
     settings.SEARCH_SOUNDS_FIELD_USER_NAME: 'username',
     settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 'pack_tokenized',
@@ -57,24 +56,81 @@ FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: 'license'
 }
 
-def get_solr_fieldname(field_name):
-    return FIELD_NAMES_MAP.get(field_name, field_name)
-
-# Some solr fields need to use alternative field names for faceting purposes, so we define a map for those
-FACET_FIELD_NAMES_MAP = {
-    'tag': 'tagfacet',
-}
-
-def get_solr_fieldname_for_facet(solr_field_name):
-    if solr_field_name.endswith('_ls'):
-        return solr_field_name + SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX
-    return FACET_FIELD_NAMES_MAP.get(solr_field_name, solr_field_name)
-
 # Create a reverse field name map that will be useful to get the original freesound field name from a solr field name
 # Include the facet-specific field names as well
-REVERSE_FIELD_NAMES_MAP = {value: key for key, value in FIELD_NAMES_MAP.items()}
-for key, value in FACET_FIELD_NAMES_MAP.items():
-    REVERSE_FIELD_NAMES_MAP[value] = REVERSE_FIELD_NAMES_MAP.get(key, key)
+REVERSE_FIELD_NAMES_MAP = {}
+for key, value in FIELD_NAMES_MAP.items():
+    if isinstance(value, dict):
+        REVERSE_FIELD_NAMES_MAP[value['field']] = key
+        REVERSE_FIELD_NAMES_MAP[value['facet']] = key
+    else:
+        REVERSE_FIELD_NAMES_MAP[value] = key
+
+# Map of suffixes used for each type of dynamic fields defined in our Solr schema
+# The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer),
+# '*_s' (for string) and '*_ls' (for lists of strings)
+SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
+    float: '_d',
+    int: '_i',
+    bool: '_b',
+    str: '_s',
+    list: '_ls',
+}
+
+# Some dynamic field types need to have alternative field versions that work with facets. In that case an extra suffix is added.
+SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX = '_f'
+
+# Generate a map of dynamic fields that will be used to index the output of analyzers. In ANALYZERS_CONFIGURATION, a list of descriptors is
+# defined along with their type. This map will be used to generate the dynamic field names that will be used to index the descriptors
+SOLR_DYNAMIC_FIELDS_MAP = {}
+for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
+    if 'descriptors_map' in analyzer_data:
+        descriptors_map = analyzer_data['descriptors_map']
+        for _, db_descriptor_key, descriptor_type in descriptors_map:
+            if descriptor_type is not None:
+                SOLR_DYNAMIC_FIELDS_MAP[db_descriptor_key] = '{}{}'.format(
+                    db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
+
+
+def get_solr_fieldname_from_freesound_fieldname(field_name, facet=False):
+    # Get solr field name from the field name map. If the field is to be used for faceting, it is possible that a 
+    # special field name is used
+    name_or_dict = FIELD_NAMES_MAP.get(field_name, field_name)
+    if isinstance(name_or_dict, dict):
+        if facet and 'facet' in name_or_dict:
+            solr_field_name = name_or_dict['facet']
+        else:
+            solr_field_name = name_or_dict['field']
+    else:
+        solr_field_name = name_or_dict
+
+    # Add the suffix to the field name if it is a dynamic field
+    solr_field_name = SOLR_DYNAMIC_FIELDS_MAP.get(solr_field_name, solr_field_name)
+    
+    # If the field is a list of strings and we want to use it for faceting, we need to add the extra suffix
+    if solr_field_name.endswith("_ls") and facet:
+        solr_field_name += SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX
+    
+    return solr_field_name
+
+
+def get_solr_facet_fieldname_from_freesound_fieldname(solr_field_name):
+    return get_solr_fieldname_from_freesound_fieldname(solr_field_name, facet=True)
+    
+
+def get_freesound_fieldname_from_solr_fieldname(solr_field_name):
+
+    # Remove special dynamic field faced suffix
+    if solr_field_name.endswith(f"_ls{SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX}"):
+        solr_field_name = solr_field_name[:-len(SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX)]
+
+    # Remove the rest of dynamic field suffixes
+    for suffix in SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.values():
+        if solr_field_name.endswith(suffix):
+            solr_field_name = solr_field_name[:-len(suffix)]
+
+    # Now get the original freesound field name using the reserve map
+    return REVERSE_FIELD_NAMES_MAP.get(solr_field_name, solr_field_name)
 
 
 # Map "web" sorting options to solr sorting options
@@ -93,21 +149,6 @@ SORT_OPTIONS_MAP_FORUM = {
     settings.SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST: "thread_created desc",
     settings.SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST: "post_created desc",
 }
-
-# Map of suffixes used for each type of dynamic fields defined in our Solr schema
-# The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer),
-# '*_s' (for string) and '*_ls' (for lists of strings)
-SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
-    float: '_d',
-    int: '_i',
-    bool: '_b',
-    str: '_s',
-    list: '_ls',
-}
-
-# Some dynamic field types need to have alternative field versions that work with facets. In that case an extra suffix is added.
-SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX = '_f'
-
 
 SOLR_VECTOR_FIELDS_DIMENSIONS_MAP = {
     100: 'sim_vector100',
@@ -356,26 +397,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         }
         return document
 
-    def get_dynamic_fields_map(self):
-        if hasattr(self, '_dynamic_fields_map'):
-            return self._dynamic_fields_map
-        dynamic_fields_map = {}
-        for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_data:
-                descriptors_map = analyzer_data['descriptors_map']
-                for _, db_descriptor_key, descriptor_type in descriptors_map:
-                    if descriptor_type is not None:
-                        dynamic_fields_map[db_descriptor_key] = '{}{}'.format(
-                            db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
-        self._dynamic_fields_map = dynamic_fields_map
-        return dynamic_fields_map
-
-    def add_solr_suffix_to_dynamic_fieldname(self, fieldname):
-        """Add the corresponding SOLR dynamic field suffix to the given fieldname. If the fieldname does not correspond
-        to a dynamic field, leave it unchanged.  E.g. 'ac_tonality' -> 'ac_tonality_s'. See docstring in 
-        'add_solr_suffix_to_dynamic_fieldnames_in_filter' for more information"""
-        return self.get_dynamic_fields_map().get(fieldname, fieldname)
-
     def add_solr_suffix_to_dynamic_fieldnames_in_filter(self, query_filter):
         """Processes a filter string containing field names and replaces the occurrences of fieldnames that match with
         descriptor names from the descriptors_map of different configured analyzers with updated fieldnames with
@@ -383,26 +404,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         fields which need to end with a specific suffi that SOLR uses to learn about the type of the field and how it
         should treat it.
         """
-        for raw_fieldname, solr_fieldname in self.get_dynamic_fields_map().items():
+        for raw_fieldname, solr_fieldname in SOLR_DYNAMIC_FIELDS_MAP.items():
             query_filter = query_filter.replace(
                 f'{raw_fieldname}:', f'{solr_fieldname}:')
         return query_filter
-    
-    def remove_solr_suffix_from_dynamic_fieldname(self, fieldname):
-        """Removes the solr dynamic field suffix from the given fieldname (if any). E.g. 'ac_tonality_s' -> 'ac_tonality'"""
-        for suffix in SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.values():
-            if fieldname.endswith(suffix):
-                return fieldname[:-len(suffix)]
-        return fieldname
-    
-    def get_solr_fieldname_with_suffix(self, fieldname):
-        return self.add_solr_suffix_to_dynamic_fieldname(get_solr_fieldname(fieldname))
-    
-    def get_original_fieldname(self, solr_fieldname):
-        if solr_fieldname.endswith(SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX):
-            solr_fieldname = solr_fieldname[:-len(SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX)]
-        solr_fieldname_no_suffix = self.remove_solr_suffix_from_dynamic_fieldname(solr_fieldname)
-        return REVERSE_FIELD_NAMES_MAP.get(solr_fieldname_no_suffix, solr_fieldname_no_suffix)
         
     def search_process_sort(self, sort, forum=False):
         """Translates sorting criteria to solr sort criteria and add extra criteria if sorting by ratings.
@@ -583,10 +588,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 # If no fields provided, use the default
                 query_fields = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
             if isinstance(query_fields, list):
-                query_fields = [self.get_solr_fieldname_with_suffix(field_name) for field_name in query_fields]
+                query_fields = [get_solr_fieldname_from_freesound_fieldname(field_name) for field_name in query_fields]
             elif isinstance(query_fields, dict):
                 # Also remove fields with weight <= 0
-                query_fields = [(self.get_solr_fieldname_with_suffix(field_name), weight)
+                query_fields = [(get_solr_fieldname_from_freesound_fieldname(field_name), weight)
                     for field_name, weight in query_fields.items() if weight > 0]
 
             # Set main query options
@@ -657,7 +662,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # Configure facets
         if facets is not None:
             json_facets = {}
-            facet_fields = [get_solr_fieldname_for_facet(self.get_solr_fieldname_with_suffix(field_name)) for field_name, _ in facets.items()]
+            facet_fields = [get_solr_facet_fieldname_from_freesound_fieldname(field_name) for field_name, _ in facets.items()]
             for field in facet_fields:
                 json_facets[field] = SOLR_SOUND_FACET_DEFAULT_OPTIONS.copy()
                 json_facets[field]['field'] = field
@@ -665,7 +670,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     # In similarity search we need to set the "domain" facet option to apply them to the parent documents of the child documents we will match
                     json_facets[field]['domain'] = {'blockParent': f'content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}'}
             for field_name, extra_options in facets.items():
-                json_facets[get_solr_fieldname_for_facet(self.get_solr_fieldname_with_suffix(field_name))].update(extra_options)
+                json_facets[get_solr_facet_fieldname_from_freesound_fieldname(field_name)].update(extra_options)
             query.set_facet_json_api(json_facets)
 
         # Configure grouping
@@ -696,7 +701,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
             # Facets returned in results use the corresponding solr fieldnames as keys. We want to convert them to the
             # original fieldnames so that the rest of the code can use them without knowing about the solr fieldnames.
-            results.facets = {self.get_original_fieldname(facet_name): data for facet_name, data in results.facets.items()}
+            results.facets = {get_freesound_fieldname_from_solr_fieldname(facet_name): data for facet_name, data in results.facets.items()}
 
             # Solr uses a string for the id field, but django uses an int. Convert the id in all results to int
             # before use to avoid issues
@@ -847,7 +852,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query.set_query('*:*')
         filter_query = f'username:"{username}"'
         query.set_query_options(field_list=["id"], filter_query=filter_query)
-        tag_facet_field_name = get_solr_fieldname_for_facet(get_solr_fieldname(settings.SEARCH_SOUNDS_FIELD_TAGS))
+        tag_facet_field_name = get_solr_facet_fieldname_from_freesound_fieldname(get_solr_fieldname_from_freesound_fieldname(settings.SEARCH_SOUNDS_FIELD_TAGS))
         query.add_facet_fields(tag_facet_field_name)
         query.set_facet_options(tag_facet_field_name, limit=10, mincount=1)
         try:
@@ -861,7 +866,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query.set_dismax_query('*:*')
         filter_query = f'username:\"{username}\" pack:\"{pack_name}\"'
         query.set_query_options(field_list=["id"], filter_query=filter_query)
-        tag_facet_field_name = get_solr_fieldname_for_facet(get_solr_fieldname(settings.SEARCH_SOUNDS_FIELD_TAGS))
+        tag_facet_field_name = get_solr_facet_fieldname_from_freesound_fieldname(get_solr_fieldname_from_freesound_fieldname(settings.SEARCH_SOUNDS_FIELD_TAGS))
         query.add_facet_fields(tag_facet_field_name)
         query.set_facet_options(tag_facet_field_name, limit=20, mincount=1)
         try:

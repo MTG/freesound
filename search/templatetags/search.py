@@ -24,7 +24,7 @@ from django.conf import settings
 
 from sounds.models import License
 from utils.search import search_query_processor_options
-from utils.search.backends.solr555pysolr import FIELD_NAMES_MAP
+from utils.search.backends.solr555pysolr import get_solr_fieldname_from_freesound_fieldname
 from utils.tags import annotate_tags
 
 register = template.Library()
@@ -34,7 +34,8 @@ register = template.Library()
 def display_facet(context, facet_name, facet_title=None, beta_facet=False):
     sqp = context['sqp']
     facets = context['facets']
-    solr_fieldname = FIELD_NAMES_MAP.get(facet_name, facet_name)
+    solr_fieldname = get_solr_fieldname_from_freesound_fieldname(facet_name)  
+    # Note that "solr_fieldname" does not need the facet version of solr fieldname, but the normal one that can be used for filtering
     if facet_name in facets:
         facet_title = sqp.facets[facet_name].get('title', facet_name.capitalize())
         facet_type = sqp.facets[facet_name].get('widget', 'list')

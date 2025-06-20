@@ -45,6 +45,12 @@ class Command(BaseCommand):
             default=5000,
             type=int,
             help='How many sounds to add at once')
+        parser.add_argument(
+            '--immediately-create-alias',
+            action='store_true',
+            dest='immediately_create_alias',
+            default=False,
+            help='Immediately create the alias for the new index before indexing')
 
         group = parser.add_mutually_exclusive_group(required=False)
         group.add_argument(
@@ -81,6 +87,10 @@ class Command(BaseCommand):
         solr_api = solrapi.SolrManagementAPI(search_engine.solr_base_url, collection_name)
         if not only_similarity_vectors:
             solr_api.create_collection_and_schema(delete_default_fields_definition, freesound_schema_definition, "username")
+
+        if options['immediately_create_alias']:
+            console_logger.info("Creating the freesound alias to point to the new index")
+            solr_api.create_collection_alias("freesound")
 
         # Get all sounds moderated and processed ok and add them to the search engine
         # Don't delete existing sounds in each loop because we clean up in the final step

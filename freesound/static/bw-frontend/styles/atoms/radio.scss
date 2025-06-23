@@ -2,6 +2,12 @@ input.bw-radio {
   display: none;
 }
 
+input.bw-radio:disabled ~ .bw-radio-container{
+  cursor: not-allowed;
+  opacity: $disabled-input-opacity;
+  color: gray;
+}
+
 .bw-icon-radio-unchecked {
   width: 15px;
   height: 15px;

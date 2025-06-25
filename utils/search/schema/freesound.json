@@ -464,6 +464,10 @@
       "stored": true,
       "multiValued": true,
       "required": false
+    },{
+      "name": "*_ls_f",
+      "type": "strings",
+      "stored": false
     }
   ],
   "copyFields": [

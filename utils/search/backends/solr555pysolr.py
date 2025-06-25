@@ -45,13 +45,13 @@ FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_NAME: 'original_filename',
     settings.SEARCH_SOUNDS_FIELD_TAGS: {'field': 'tag', 'facet': 'tagfacet'},
     settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 'description',
-    settings.SEARCH_SOUNDS_FIELD_USER_NAME: 'username',
+    settings.SEARCH_SOUNDS_FIELD_USER_NAME: {'field': 'username', 'facet': 'username_facet'},
     settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 'pack_tokenized',
     settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: 'grouping_pack',
     settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: 'samplerate',
     settings.SEARCH_SOUNDS_FIELD_BITRATE: 'bitrate',
     settings.SEARCH_SOUNDS_FIELD_BITDEPTH: 'bitdepth',
-    settings.SEARCH_SOUNDS_FIELD_TYPE: 'type',
+    settings.SEARCH_SOUNDS_FIELD_TYPE: {'field': 'type', 'facet': 'type_facet'},
     settings.SEARCH_SOUNDS_FIELD_CHANNELS: 'channels',
     settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: 'license'
 }

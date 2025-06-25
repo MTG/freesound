@@ -162,6 +162,13 @@
       "required": false
     },
     {
+      "name": "username_facet",
+      "type": "string",
+      "indexed": true,
+      "stored": false,
+      "required": false
+    },
+    {
       "name": "original_filename",
       "type": "freesound_text",
       "indexed": true,
@@ -277,6 +284,13 @@
       "type": "alpha_only_sort",
       "indexed": true,
       "stored": true,
+      "required": false
+    },
+    {
+      "name": "type_facet",
+      "type": "string",
+      "indexed": true,
+      "stored": false,
       "required": false
     },
     {
@@ -481,6 +495,18 @@
       "source": "tag",
       "dest": [
         "tagfacet"
+      ]
+    },
+    {
+      "source": "username",
+      "dest": [
+        "username_facet"
+      ]
+    },
+    {
+      "source": "type",
+      "dest": [
+        "type_facet"
       ]
     }
   ]

@@ -189,7 +189,7 @@ class TestSearchEngineBackend():
             result_ids = [r['id'] for r in results.docs]
             sounds = Sound.objects.ordered_ids(result_ids)
             assert_and_continue(sorted(test_sound_ids) == sorted(result_ids),
-                                'only_sounds_within_ids not respected')
+                                f'only_sounds_within_ids not respected (sort option: {sort_option_web})')
 
             # Assert that sorting criteria is preserved
             for sound1, sound2 in zip(sounds[:-1], sounds[1:]):
@@ -396,13 +396,15 @@ class TestSearchEngineBackend():
             assert_and_continue(self.search_engine.sound_exists_in_index(sound.id),
                                 f'Sound ID {sound.id} should be in the search index')
 
-        # Remove some sounds form the ones just indexed and check they do not exist
+        # Remove some sounds from the ones just indexed and check they do not exist
         removed_sounds_by_sound_object = sounds[0:3]
+        # Using sound objects
         self.search_engine.remove_sounds_from_index(removed_sounds_by_sound_object)
         for sound in removed_sounds_by_sound_object:
             assert_and_continue(not self.search_engine.sound_exists_in_index(sound),
                                 f'Sound ID {sound.id} should not be in the search index')
         removed_sounds_by_sound_id = [s.id for s in sounds[3:6]]
+        # Using sound IDs
         self.search_engine.remove_sounds_from_index(removed_sounds_by_sound_id)
         for sid in removed_sounds_by_sound_id:
             assert_and_continue(not self.search_engine.sound_exists_in_index(sid),
@@ -413,6 +415,9 @@ class TestSearchEngineBackend():
         for sound in remaining_sounds:
             assert_and_continue(self.search_engine.sound_exists_in_index(sound),
                                 f'Sound ID {sound.id} should be in search index')
+
+        # Re-index all sounds to leave index in "correct" state for next tests
+        self.search_engine.add_sounds_to_index(sounds)
 
         # Test that the method to get all sound IDs works as expected
         sound_ids = self.search_engine.get_all_sound_ids_from_index()

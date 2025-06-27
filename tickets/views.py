@@ -644,7 +644,7 @@ def user_annotations(request, user_id):
         # If not loaded as a modal, redirect to account page with parameter to open modal
         return HttpResponseRedirect(reverse('account', args=[user.username]) + '?mod_annotations=1')
 
-    annotations = UserAnnotation.objects.filter(user=user).order_by(F('created').desc(nulls_first=True), 'id')
+    annotations = UserAnnotation.objects.filter(user=user).order_by(F('created').asc(nulls_first=True), 'id')
     user_recent_ticket_comments = TicketComment.objects.filter(sender=user).select_related('ticket').order_by('-created')[:15]
     tvars = {"user": user,
                 "recent_comments": user_recent_ticket_comments,

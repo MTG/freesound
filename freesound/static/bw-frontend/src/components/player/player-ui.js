@@ -338,6 +338,21 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
       progressStatusContainerElement.classList.remove('bw-player__progress-container--inverted');
     }
   }
+  const detectionOverlay = playerImgNode.parentElement.querySelector('.bw-player__detection-overlay');
+  if (detectionOverlay) {
+    const detectionRects = detectionOverlay.querySelectorAll('.bw-player__detection-rect');
+    detectionRects.forEach(rect => {
+      const currentBg = getComputedStyle(rect).getPropertyValue('--background').trim();
+      const newBg = currentBg.replace(
+        /rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)/,
+        (_, r, g, b) => {
+          const newAlpha = hasWaveform ? '0.8' : '0.4';
+          return `rgba(${r}, ${g}, ${b}, ${newAlpha})`;
+        }
+      );
+      rect.style.setProperty('--background', newBg);
+    });
+  }
 }
 
 /**
@@ -397,6 +412,22 @@ const createRulerIndicator = (playerImage) => {
   return rulerIndicator
 }
 
+const createSedButton = (parentNode) => {
+  const sedButton = createControlButton('splus')
+  sedButton.setAttribute('title', 'Sound Event Detection')
+  sedButton.setAttribute('aria-label', 'Show fsd-sinet results for sound event detections.')
+  sedButton.classList.add('text-20')
+  sedButton.addEventListener('pointerup', evt => evt.stopPropagation())
+  sedButton.addEventListener('click', evt =>{
+    const detectionsOverlay = parentNode.querySelector('.bw-player__detection-overlay');
+    if(!detectionsOverlay) return;
+    const isHidden = getComputedStyle(detectionsOverlay).display === 'none';
+    detectionsOverlay.style.display = isHidden ? 'block' : 'none';
+    evt.stopPropagation()
+  });
+  return sedButton;
+}
+
 /**
  *
  * @param {HTMLDivElement} parentNode
@@ -428,26 +459,18 @@ const createDetectionOverlay = (parentNode, audioElement, detectionData) => {
 
   const detectionOverlay = document.createElement('div');
   detectionOverlay.className = 'bw-player__detection-overlay';
-  detectionOverlay.style.cssText = `
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 4;`;
 
-    // get color for rectangle
-    const colors = ['rgba(255, 0, 0, 0.4)',
-      ' rgba(255, 123, 0, 0.4)',
-       'rgba(0, 132, 255, 0.4)',
-       'rgba(225, 0, 255, 0.4)',
-       'rgba(255, 0, 157, 0.4)'];
-    
-    const classColorMap = {};
-    detectionData.fsdsinet_detected_class.forEach((className, index) => {
-      classColorMap[className] = colors[index % colors.length];
-    });
+  // get color for rectangle
+  const colors = ['rgba(255, 0, 0, 0.4)',
+    ' rgba(255, 123, 0, 0.4)',
+      'rgba(0, 132, 255, 0.4)',
+      'rgba(225, 0, 255, 0.4)',
+      'rgba(255, 0, 157, 0.4)'];
+  
+  const classColorMap = {};
+  detectionData.fsdsinet_detected_class.forEach((className, index) => {
+    classColorMap[className] = colors[index % colors.length];
+  });
 
   //create rectangles for detection
   detectionData.fsdsinet_detections.forEach((detection,index) => {
@@ -651,7 +674,8 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
          createStopButton(audioElement, parentNode),
          createPlayButton(audioElement, playerSize),
          createspectrogramButton(playerImgNode, parentNode, playerSize, startWithSpectrum),
-         createRulerButton(parentNode)]
+         createRulerButton(parentNode),
+         createSedButton(parentNode)]
       : [createPlayButton(audioElement, playerSize),
          createLoopButton(audioElement)]
   controls.forEach(el => playerControls.appendChild(el))

@@ -301,6 +301,17 @@
   overflow: hidden;
 }
 
+.bw-player__detection-overlay{
+  position: absolute;
+  display: none;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+
 .bw-player__detection-rect {
   position: absolute;
   left: var(--left);

@@ -57,7 +57,7 @@ from forum.views import get_hot_threads
 from geotags.models import GeoTag
 from sounds.forms import FlagForm,PackEditForm, SoundEditAndDescribeForm
 from sounds.models import PackDownload, PackDownloadSound
-from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, SoundOfTheDay
+from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, SoundOfTheDay, SoundAnalysis
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_user_template_caches

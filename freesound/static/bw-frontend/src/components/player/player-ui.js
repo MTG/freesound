@@ -401,6 +401,162 @@ const createRulerIndicator = (playerImage) => {
  *
  * @param {HTMLDivElement} parentNode
  * @param {HTMLAudioElement} audioElement
+ * @param {Object} detectionData
+ */
+
+const createDetectionOverlay = (parentNode, audioElement, detectionData) => {
+  if(!detectionData){
+    return;
+  }
+
+  const progressIndicatorContainer = parentNode.querySelector('.bw-player__progress-indicator-container');
+  if(!progressIndicatorContainer){
+    return;
+  }
+
+  const existingOverlay = progressIndicatorContainer.querySelector('.bw-player__detection-overlay');
+  if(existingOverlay){
+    existingOverlay.remove();
+  }
+
+  const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode)
+  if(!duration || duration===0){
+    return;
+  }
+
+  //add color mapping
+
+  const detectionOverlay = document.createElement('div');
+  detectionOverlay.className = 'bw-player__detection-overlay';
+  detectionOverlay.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 4;`;
+
+    // get color for rectangle
+    const colors = ['rgba(255, 0, 0, 0.4)',
+      ' rgba(255, 123, 0, 0.4)',
+       'rgba(0, 132, 255, 0.4)',
+       'rgba(225, 0, 255, 0.4)',
+       'rgba(255, 0, 157, 0.4)'];
+    
+    const classColorMap = {};
+    detectionData.fsdsinet_detected_class.forEach((className, index) => {
+      classColorMap[className] = colors[index % colors.length];
+    });
+
+  //create rectangles for detection
+  detectionData.fsdsinet_detections.forEach((detection,index) => {
+    const rect = document.createElement('div');
+    rect.className = 'bw-player__detection-rect';
+
+    const left = (detection.start_time / duration) * 100;
+    const width = ((detection.end_time-detection.start_time) / duration) * 100;
+
+    const backgroundColor = classColorMap[detection.name];
+    const borderColor = backgroundColor.replace('0.4)','1)');
+
+    const numLevels = 5;
+    const bottomOffset = 50;
+    const availableHeight = 100 - bottomOffset
+    const levelHeight = availableHeight/numLevels;
+    const level = detection.level;
+    const topPercent = level * levelHeight
+
+    rect.style.setProperty('--left', `${left}%`);
+    rect.style.setProperty('--width', `${Math.max(width, 0.5)}%`);
+    rect.style.setProperty('--top', `${topPercent}%`);
+    rect.style.setProperty('--height', `${levelHeight - 2}%`);
+    rect.style.setProperty('--background', backgroundColor);
+    rect.style.setProperty('--border-color', borderColor);
+
+    const confidence = Math.round(detection.confidence * 100);
+    if (width > 0.5) {
+      const fullText = `${detection.name} ${confidence}%`;
+      const confidenceText = `${confidence}%`
+
+      const measureTextWidth = (text) => {
+        const tempElement = document.createElement('span');
+        tempElement.style.cssText = `
+          position: absolute;
+          visibility: hidden;
+          white-space: nowrap;
+          font-size: 10px;
+          font-weight: bold;
+          font-family: inherit;
+        `;
+        tempElement.textContent = text;
+        document.body.appendChild(tempElement);
+        const textWidth = tempElement.offsetWidth;
+        document.body.removeChild(tempElement);
+        return textWidth
+      };
+
+      const rectWidth = (width/100)*progressIndicatorContainer.offsetWidth;
+      const padding = 5;
+      const availableWidth = rectWidth-padding;
+      
+      const fullTextWidth = measureTextWidth(fullText);
+      const confidenceWidth = measureTextWidth(confidenceText);
+
+      if (fullTextWidth <= availableWidth){
+        rect.innerHTML = fullText;
+      } else if (confidenceWidth <= availableWidth){
+        rect.innerHTML = confidenceText;
+      } else {
+        rect.innerHTML = '';
+      }
+    }
+
+    //create a display of detection information when mouse hovers over rectangle
+    /*rect.addEventListener('mouseenter', () => {
+      rect.style.transform = 'translateY(-1px)';
+      rect.style.boxShadow = `0 2px 8px ${backgroundColor}60`;
+      rect.style.zIndex = '10';
+      
+      // Show tooltip with detection info
+      const tooltip = document.createElement('div');
+      tooltip.className = 'bw-player__detection-info';
+      tooltip.innerHTML = `Class: ${detection.name}<br>
+        Time interval: ${detection.start_time} - ${detection.end_time}<br>
+        Confidence: ${Math.round(detection.confidence * 100)}%`;
+      rect.appendChild(tooltip);
+    });
+    
+    rect.addEventListener('mouseleave', () => {
+      rect.style.transform = 'translateY(0)';
+      rect.style.boxShadow = 'none';
+      rect.style.zIndex = '3';
+      
+      // Remove tooltip
+      const tooltip = rect.querySelector('.bw-player__detection-info');
+      if (tooltip) {
+        tooltip.remove();
+      }
+    });*/
+
+    rect.addEventListener('click',(e) => {
+      e.stopPropagation()
+      const playTime = detection.start_time;
+      if (audioElement.pause) {
+        playAtTime(audioElement,playTime);
+      } else {
+        audioElement.currentTime = playTime;
+      }
+    });
+    detectionOverlay.appendChild(rect);
+  });
+  progressIndicatorContainer.parentElement.appendChild(detectionOverlay);
+  };
+
+/**
+ *
+ * @param {HTMLDivElement} parentNode
+ * @param {HTMLAudioElement} audioElement
  * @param {'small' | 'big'} playerSize
  */
 const createPlayerImage = (parentNode, audioElement, playerSize) => {
@@ -668,6 +824,7 @@ const createPlayer = parentNode => {
   }
 
   const playerSize = parentNode.dataset.size
+  const sed_detection = parentNode.dataset.sed ? JSON.parse(parentNode.dataset.sed) : null;
   const showBookmarkButton = parentNode.dataset.bookmark === 'true'
   const showSimilarSoundsButton = parentNode.dataset.similarSounds === 'true'
   const showRemixGroupButton = parentNode.dataset.remixGroup === 'true'
@@ -685,6 +842,7 @@ const createPlayer = parentNode => {
   const playerImgNode = playerImage.getElementsByTagName('img')[0]
   parentNode.appendChild(playerImage)
   parentNode.appendChild(audioElement)
+  createDetectionOverlay(parentNode,audioElement,sed_detection);
   const controls = createPlayerControls(parentNode, playerImgNode, audioElement, playerSize)
   playerImage.appendChild(controls)
   const topControls = createPlayerTopControls(parentNode, playerImgNode, playerSize, showSimilarSoundsButton, showBookmarkButton, showRemixGroupButton)

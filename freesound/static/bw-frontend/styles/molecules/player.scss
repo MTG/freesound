@@ -300,3 +300,42 @@
   max-height: 54px;
   overflow: hidden;
 }
+
+.bw-player__detection-rect {
+  position: absolute;
+  left: var(--left);
+  width: var(--width);
+  top: var(--top);
+  height: var(--height);
+  background-color: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  font-size: 10px;
+  color: var(--body-loud-color);
+  text-shadow: 0 0 2px var(--body-bg);
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 5;
+}
+
+.bw-player__detection-info{
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 20;
+  pointer-events: none;
+}

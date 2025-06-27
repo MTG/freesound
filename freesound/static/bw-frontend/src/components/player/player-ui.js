@@ -512,14 +512,7 @@ const createDetectionOverlay = (parentNode, audioElement, detectionData) => {
 
       const measureTextWidth = (text) => {
         const tempElement = document.createElement('span');
-        tempElement.style.cssText = `
-          position: absolute;
-          visibility: hidden;
-          white-space: nowrap;
-          font-size: 10px;
-          font-weight: bold;
-          font-family: inherit;
-        `;
+        tempElement.className = 'bw-player__text-measure';
         tempElement.textContent = text;
         document.body.appendChild(tempElement);
         const textWidth = tempElement.offsetWidth;

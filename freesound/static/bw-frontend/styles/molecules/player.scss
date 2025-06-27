@@ -324,18 +324,3 @@
   transition: all 0.2s ease;
   z-index: 5;
 }
-
-.bw-player__detection-info{
-  position: absolute;
-  bottom: 110%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.9);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  white-space: nowrap;
-  z-index: 20;
-  pointer-events: none;
-}

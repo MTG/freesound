@@ -474,6 +474,14 @@ const createDetectionOverlay = (parentNode, audioElement, detectionData) => {
     rect.style.setProperty('--background', backgroundColor);
     rect.style.setProperty('--border-color', borderColor);
 
+    rect.setAttribute('role', 'region'); 
+    rect.setAttribute('aria-label', 
+      `Audio detection of ${detection.name} from ${detection.start_time} to ${detection.end_time} seconds with ${Math.round(detection.confidence * 100)}% confidence. Click to play.`
+    );
+    rect.setAttribute('title', 
+    `Class: ${detection.name}\nTime: ${detection.start_time}s - ${detection.end_time}s\nConfidence: ${Math.round(detection.confidence * 100)}%\nClick to play.`
+  );
+
     const confidence = Math.round(detection.confidence * 100);
     if (width > 0.5) {
       const fullText = `${detection.name} ${confidence}%`;
@@ -511,33 +519,6 @@ const createDetectionOverlay = (parentNode, audioElement, detectionData) => {
         rect.innerHTML = '';
       }
     }
-
-    //create a display of detection information when mouse hovers over rectangle
-    /*rect.addEventListener('mouseenter', () => {
-      rect.style.transform = 'translateY(-1px)';
-      rect.style.boxShadow = `0 2px 8px ${backgroundColor}60`;
-      rect.style.zIndex = '10';
-      
-      // Show tooltip with detection info
-      const tooltip = document.createElement('div');
-      tooltip.className = 'bw-player__detection-info';
-      tooltip.innerHTML = `Class: ${detection.name}<br>
-        Time interval: ${detection.start_time} - ${detection.end_time}<br>
-        Confidence: ${Math.round(detection.confidence * 100)}%`;
-      rect.appendChild(tooltip);
-    });
-    
-    rect.addEventListener('mouseleave', () => {
-      rect.style.transform = 'translateY(0)';
-      rect.style.boxShadow = 'none';
-      rect.style.zIndex = '3';
-      
-      // Remove tooltip
-      const tooltip = rect.querySelector('.bw-player__detection-info');
-      if (tooltip) {
-        tooltip.remove();
-      }
-    });*/
 
     rect.addEventListener('click',(e) => {
       e.stopPropagation()

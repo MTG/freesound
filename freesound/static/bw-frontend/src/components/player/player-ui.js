@@ -420,9 +420,15 @@ const createSedButton = (parentNode) => {
   sedButton.addEventListener('pointerup', evt => evt.stopPropagation())
   sedButton.addEventListener('click', evt =>{
     const detectionsOverlay = parentNode.querySelector('.bw-player__detection-overlay');
-    if(!detectionsOverlay) return;
-    const isHidden = getComputedStyle(detectionsOverlay).display === 'none';
-    detectionsOverlay.style.display = isHidden ? 'block' : 'none';
+    const detectionsLegend = document.querySelector('.bw-player__detection-legend')
+    if(detectionsOverlay){
+    const isOverlayHidden = getComputedStyle(detectionsOverlay).display === 'none';
+    detectionsOverlay.style.display = isOverlayHidden ? 'block' : 'none';
+    }
+    if (detectionsLegend) {
+    const isLegendHidden = getComputedStyle(detectionsLegend).display === 'none';
+    detectionsLegend.style.display = isLegendHidden ? 'flex' : 'none';
+    }
     evt.stopPropagation()
   });
   return sedButton;
@@ -490,12 +496,31 @@ const createDetectionOverlay = (parentNode, audioElement, detectionData) => {
     const level = detection.level;
     const topPercent = level * levelHeight
 
+    const borderOptions = ['solid','dashed']
+    const borderWidthOptions = ['3px','2px','1px']
+    
+    const getBorderStyle = (confidence) => {
+      if (confidence >= 0.5) return borderOptions[0]; 
+      return borderOptions[1];                        
+    };
+
+    const getBorderWidth = (confidence) => {
+      if (confidence >= 0.9) return borderWidthOptions[0];
+      if (confidence >= 0.7) return borderWidthOptions[1];
+      return borderWidthOptions[2];
+    }
+    
+    const borderStyle = getBorderStyle(detection.confidence);
+    const borderWidth = getBorderWidth(detection.confidence);
+
     rect.style.setProperty('--left', `${left}%`);
     rect.style.setProperty('--width', `${Math.max(width, 0.5)}%`);
     rect.style.setProperty('--top', `${topPercent}%`);
     rect.style.setProperty('--height', `${levelHeight - 2}%`);
     rect.style.setProperty('--background', backgroundColor);
     rect.style.setProperty('--border-color', borderColor);
+    rect.style.setProperty('--border-style', borderStyle);
+    rect.style.setProperty('--border-width', borderWidth);
 
     rect.setAttribute('role', 'region'); 
     rect.setAttribute('aria-label', 
@@ -548,7 +573,31 @@ const createDetectionOverlay = (parentNode, audioElement, detectionData) => {
     detectionOverlay.appendChild(rect);
   });
   progressIndicatorContainer.parentElement.appendChild(detectionOverlay);
-  };
+
+  // create a legend to display color-class matches
+  let existingLegend = parentNode.querySelector('.bw-player__detection-legend');
+  if (existingLegend) existingLegend.remove();
+
+  const legend = document.createElement('div');
+  legend.className = 'bw-player__detection-legend';
+
+  Object.entries(classColorMap).forEach(([label,color]) => {
+    const item = document.createElement('div');
+    item.style.display = 'flex';
+    item.style.alignItems = 'center';
+
+    const circle = document.createElement('div');
+    circle.className = 'bw-player__legend-circle';
+    circle.style.setProperty('--color', color)
+    const labelSpan = document.createElement('span');
+    labelSpan.textContent = label;
+
+    item.appendChild(circle);
+    item.appendChild(labelSpan);
+    legend.appendChild(item);
+  });
+  parentNode.parentElement.appendChild(legend);
+};
 
 /**
  *

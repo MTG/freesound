@@ -319,7 +319,9 @@
   top: var(--top);
   height: var(--height);
   background-color: var(--background);
-  border: 1px solid var(--border-color);
+  border-width: var(--border-width);
+  border-style: var(--border-style);
+  border-color: var(--border-color);
   border-radius: 2px;
   font-size: 10px;
   color: var(--body-loud-color);
@@ -343,4 +345,21 @@
   font-size: 10px;
   font-weight: bold;
   font-family: inherit;
+}
+
+.bw-player__detection-legend {
+  display: none;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  gap: 10px;
+  font-size: 12px;
+  align-items: center;
+}
+
+.bw-player__legend-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--color);
+  margin-right: 6px;
 }

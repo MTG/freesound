@@ -118,10 +118,12 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
         try:
             sed_object = SoundAnalysis.objects.get(sound=sound,analyzer='fsd-sinet_v1',analysis_status='OK').analysis_data
             if sed_object and len(sed_object['fsdsinet_detections']):
-                print(sed_object)
-                if 'level' in sed_object['fsdsinet_detections'][0]:
+                if 'level' not in sed_object['fsdsinet_detections'][0]:
+                    sound.analyze(analyzer='fsd-sinet_v1')
+                else:
                     sed_dict = json.dumps(sed_object)
         except SoundAnalysis.DoesNotExist:
+            sound.analyze(analyzer='fsd-sinet_v1')
             pass
 
     if sound_obj is None:

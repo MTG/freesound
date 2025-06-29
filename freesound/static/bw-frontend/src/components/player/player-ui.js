@@ -581,7 +581,12 @@ const createDetectionOverlay = (parentNode, audioElement, detectionData) => {
   const legend = document.createElement('div');
   legend.className = 'bw-player__detection-legend';
 
-  Object.entries(classColorMap).forEach(([label,color]) => {
+  if(Object.entries(classColorMap).length === 0){
+    const auxMessage = document.createElement('div');
+    auxMessage.textContent = 'Note: no detections available for this sound';
+    legend.appendChild(auxMessage);
+  } else {
+    Object.entries(classColorMap).forEach(([label,color]) => {
     const item = document.createElement('div');
     item.style.display = 'flex';
     item.style.alignItems = 'center';
@@ -596,6 +601,8 @@ const createDetectionOverlay = (parentNode, audioElement, detectionData) => {
     item.appendChild(labelSpan);
     legend.appendChild(item);
   });
+  }
+ 
   parentNode.parentElement.appendChild(legend);
 };
 
@@ -710,6 +717,8 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
     playerControls.classList.add('bw-player__controls-inverted');
   }
 
+  const detectionOverlayExists = !!document.querySelector('.bw-player__detection-overlay');
+
   const controls =
     playerSize === 'big'
       ? [createLoopButton(audioElement),
@@ -717,7 +726,7 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
          createPlayButton(audioElement, playerSize),
          createspectrogramButton(playerImgNode, parentNode, playerSize, startWithSpectrum),
          createRulerButton(parentNode),
-         createSedButton(parentNode)]
+         ...(detectionOverlayExists ? [createSedButton(parentNode)] : [])]
       : [createPlayButton(audioElement, playerSize),
          createLoopButton(audioElement)]
   controls.forEach(el => playerControls.appendChild(el))

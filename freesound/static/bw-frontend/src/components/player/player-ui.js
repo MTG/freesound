@@ -500,13 +500,13 @@ const createDetectionOverlay = (parentNode, audioElement, detectionData) => {
     const borderWidthOptions = ['3px','2px','1px']
     
     const getBorderStyle = (confidence) => {
-      if (confidence >= 0.5) return borderOptions[0]; 
+      if (confidence >= 0.8) return borderOptions[0]; 
       return borderOptions[1];                        
     };
 
     const getBorderWidth = (confidence) => {
       if (confidence >= 0.9) return borderWidthOptions[0];
-      if (confidence >= 0.7) return borderWidthOptions[1];
+      if (confidence >= 0.8) return borderWidthOptions[1];
       return borderWidthOptions[2];
     }
     

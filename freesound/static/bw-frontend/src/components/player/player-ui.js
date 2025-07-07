@@ -413,7 +413,7 @@ const createRulerIndicator = (playerImage) => {
 }
 
 const createSedButton = (parentNode) => {
-  const sedButton = createControlButton('splus')
+  const sedButton = createControlButton('robot')
   sedButton.setAttribute('title', 'Sound Event Detection')
   sedButton.setAttribute('aria-label', 'Show fsd-sinet results for sound event detections.')
   sedButton.classList.add('text-20')

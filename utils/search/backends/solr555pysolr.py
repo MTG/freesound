@@ -92,7 +92,7 @@ for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
                     db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
 
 
-def get_solr_fieldname_from_freesound_fieldname(field_name, facet=False):
+def get_solr_fieldname_from_freesound_fieldname(field_name, facet=False, skip_dynamic_field_suffix=False):
     # Get solr field name from the field name map. If the field is to be used for faceting, it is possible that a 
     # special field name is used
     name_or_dict = FIELD_NAMES_MAP.get(field_name, field_name)
@@ -105,11 +105,12 @@ def get_solr_fieldname_from_freesound_fieldname(field_name, facet=False):
         solr_field_name = name_or_dict
 
     # Add the suffix to the field name if it is a dynamic field
-    solr_field_name = SOLR_DYNAMIC_FIELDS_MAP.get(solr_field_name, solr_field_name)
+    if not skip_dynamic_field_suffix:
+        solr_field_name = SOLR_DYNAMIC_FIELDS_MAP.get(solr_field_name, solr_field_name)
     
-    # If the field is a list of strings and we want to use it for faceting, we need to add the extra suffix
-    if solr_field_name.endswith("_ls") and facet:
-        solr_field_name += SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX
+        # If the field is a list of strings and we want to use it for faceting, we need to add the extra suffix
+        if solr_field_name.endswith("_ls") and facet:
+            solr_field_name += SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX
     
     return solr_field_name
 

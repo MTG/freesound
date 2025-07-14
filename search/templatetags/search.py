@@ -34,7 +34,10 @@ register = template.Library()
 def display_facet(context, facet_name, facet_title=None, beta_facet=False):
     sqp = context['sqp']
     facets = context['facets']
-    solr_fieldname = get_solr_fieldname_from_freesound_fieldname(facet_name)  
+    solr_fieldname = get_solr_fieldname_from_freesound_fieldname(facet_name, skip_dynamic_field_suffix=True)  
+    # Note that this version of solr_fieldname does not need the dynamic field suffix because it is used for filtering and the dynamic
+    # field suffix will be applied at a later time if a facet filter is added to the search query processor.
+
     # Note that "solr_fieldname" does not need the facet version of solr fieldname, but the normal one that can be used for filtering
     if facet_name in facets:
         facet_title = sqp.facets[facet_name].get('title', facet_name.capitalize())

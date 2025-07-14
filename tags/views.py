@@ -96,8 +96,8 @@ def multiple_tags_lookup(request, multiple_tags):
         search_filter += f"+username:{username_flt}"
     pack_flt = request.GET.get("pack_flt", None)
     if pack_flt is not None:
-        # If username is passed as a GET parameter, add it as well to the filter
-        search_filter += f"+grouping_pack:{pack_flt}"
+        # If pack is passed as a GET parameter, add it as well to the filter
+        search_filter += f"+pack_grouping:{pack_flt}"
 
     return HttpResponseRedirect(f"{reverse('tags')}?f={search_filter}")
 

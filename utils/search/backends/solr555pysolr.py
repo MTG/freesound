@@ -46,8 +46,8 @@ FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_TAGS: {'field': 'tag', 'facet': 'tagfacet'},
     settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 'description',
     settings.SEARCH_SOUNDS_FIELD_USER_NAME: {'field': 'username', 'facet': 'username_facet'},
-    settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 'pack_tokenized',
-    settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: 'grouping_pack',
+    settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 'pack',
+    settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: 'pack_grouping',
     settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: 'samplerate',
     settings.SEARCH_SOUNDS_FIELD_BITRATE: 'bitrate',
     settings.SEARCH_SOUNDS_FIELD_BITDEPTH: 'bitdepth',
@@ -267,9 +267,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         if sound.pack:
             document["pack"] = remove_control_chars(sound.pack.name)
-            document["grouping_pack"] = str(sound.pack.id) + "_" + remove_control_chars(sound.pack.name)
+            document["pack_grouping"] = str(sound.pack.id) + "_" + remove_control_chars(sound.pack.name)
         else:
-            document["grouping_pack"] = str(getattr(sound, "id"))
+            document["pack_grouping"] = str(getattr(sound, "id"))
 
         document["is_geotagged"] = False
         if hasattr(sound, "geotag"):
@@ -358,13 +358,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                             vector_field_name: vector_data
                         }
                         # Because we still want to be able to group by pack when matching sim vector documents (sound child documents),
-                        # we add the grouping_pack field here as well. In the future we might be able to optimize this if we can tell solr
+                        # we add the pack_grouping field here as well. In the future we might be able to optimize this if we can tell solr
                         # to group results by the field value of a parent document (just like we do to compute facets)
                         if getattr(sound_objects_dict[sa.sound_id], "pack_id"):
-                            sim_vector_document_data['grouping_pack_child'] = str(getattr(sound_objects_dict[sa.sound_id], "pack_id")) + "_" + remove_control_chars(
+                            sim_vector_document_data['pack_grouping_child'] = str(getattr(sound_objects_dict[sa.sound_id], "pack_id")) + "_" + remove_control_chars(
                                 getattr(sound_objects_dict[sa.sound_id], "pack_name"))
                         else:
-                            sim_vector_document_data['grouping_pack_child'] = str(getattr(sound_objects_dict[sa.sound_id], "id"))
+                            sim_vector_document_data['pack_grouping_child'] = str(getattr(sound_objects_dict[sa.sound_id], "id"))
                         similarity_vectors_per_analyzer_per_sound.append(sim_vector_document_data)
                 if similarity_vectors_per_analyzer_per_sound:
                     similarity_data[sa.sound_id] += similarity_vectors_per_analyzer_per_sound
@@ -676,7 +676,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         # Configure grouping
         if group_by_pack:
-            query.set_group_field(group_field="grouping_pack" if not similar_to else "grouping_pack_child")  # We name the fields differently to avoid solr conflicts with matches of both child and parent docs
+            query.set_group_field(group_field="pack_grouping" if not similar_to else "pack_grouping_child")  # We name the fields differently to avoid solr conflicts with matches of both child and parent docs
             query.set_group_options(
                 group_func=None,
                 group_query=None,

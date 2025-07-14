@@ -59,6 +59,28 @@
       }
     },
     {
+      "name": "lowercase_tokenized",
+      "class": "solr.TextField",
+      "sortMissingLast": true,
+      "omitNorms": true,
+      "analyzer": {
+        "tokenizer": {
+          "class": "solr.LowerCaseTokenizerFactory"
+        },
+        "filters": [
+          {
+            "name": "lowercase"
+          },
+          {
+            "name": "trim"
+          }
+        ]
+      },
+      "similarity": {
+        "class": "solr.BooleanSimilarityFactory"
+      }
+    },
+    {
       "name": "freesound_text",
       "class": "solr.TextField",
       "positionIncrementGap": "100",
@@ -156,7 +178,7 @@
     },
     {
       "name": "username",
-      "type": "alpha_only_sort",
+      "type": "lowercase_tokenized",
       "indexed": true,
       "stored": true,
       "required": false
@@ -246,21 +268,21 @@
     },
     {
       "name": "pack",
-      "type": "string",
-      "indexed": true,
-      "stored": true,
-      "required": false
-    },
-    {
-      "name": "grouping_pack",
-      "type": "string",
-      "indexed": true,
-      "stored": true,
-      "required": false
-    },
-    {
-      "name": "pack_tokenized",
       "type": "freesound_text",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "pack_grouping",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "pack_grouping_child",
+      "type": "string",
       "indexed": true,
       "stored": true,
       "required": false
@@ -458,13 +480,6 @@
     {
       "name": "timestamp_end",
       "type": "pdouble",
-      "indexed": true,
-      "stored": true,
-      "required": false
-    },
-    {
-      "name": "grouping_pack_child",
-      "type": "string",
       "indexed": true,
       "stored": true,
       "required": false

@@ -36,7 +36,7 @@ class DisplayMapModeTest(TestCase):
         assert sqp.get_option_value_to_apply('display_as_packs') is False
 
     def test_display_map_mode_and_display_as_packs_and_grouping_pack(self):
-        request = RequestFactory().get('/?mm=1&dp=1&grouping_pack=1')
+        request = RequestFactory().get('/?mm=1&dp=1&pack_grouping=1')
         request.user = AnonymousUser()
         sqp = search_query_processor.SearchQueryProcessor(request)
         assert sqp.get_option_value_to_apply('display_as_packs') is False

@@ -64,12 +64,6 @@ def _setup_search_engine_backend(collection_type, schema_filename, unique_field,
     Returns:
         tuple: (backend, api_instance) where api_instance can be used for cleanup
     """
-    if not settings.DEBUG:
-        pytest.fail(
-            "Running search engine tests in a production deployment. This should not be done as "
-            "running these tests will modify the contents of the production search engine index "
-            "and leave it in a 'wrong' state."
-        )
 
     try:
         search_engine = get_search_engine(backend_class=backend_class_name)

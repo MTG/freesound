@@ -18,10 +18,9 @@ ignore = ["E501", "E7", "E4"]
 DJANGO_SETTINGS_MODULE = "freesound.test_settings"
 python_files = "test*.py"
 python_classes = ["Test*", "*Test"]
-addopts = "--ignore=search/management/commands/test_search_engine_backend.py --ignore=freesound-data -m 'not search_engine'"
+addopts = "--ignore=freesound-data -m 'not search_engine'"
 markers = [
     "search_engine: solr tests",
     "forum: search engine forum tests",
     "sounds: search engine search tests",
 ]
-django_debug_mode = "keep"

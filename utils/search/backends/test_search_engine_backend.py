@@ -671,6 +671,103 @@ def test_sound_facets(search_engine_sounds_backend, output_file_handle):
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
+def test_sound_search_query_fields_parameter(search_engine_sounds_backend, output_file_handle, test_sounds):
+    """Test that query_fields parameter works as expected matching only in the specified fields.
+    This is used for the advanced search "SEARCH IN" functionality."""
+    
+    # Test that searching using the ID field only, returns exact match by ID
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=f"{test_sounds[0].id}", query_fields={settings.SEARCH_SOUNDS_FIELD_ID: 1}))
+    assert results.docs[0]["id"] == test_sounds[0].id, (
+        "Searching in the ID field did not return the expected sound"
+    )
+
+    # Test searching with a filename but only matching on ID does not return any results
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=f"{test_sounds[0].original_filename}", query_fields={settings.SEARCH_SOUNDS_FIELD_ID: 1}))
+    assert results.num_found == 0, (
+        "Searching in the 'ID' field did not return the expected number of results"
+    )
+
+    # Test matching on the original_filename field only
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=f"{test_sounds[0].original_filename}", query_fields={settings.SEARCH_SOUNDS_FIELD_NAME: 1}))
+    assert results.docs[0]["id"] == test_sounds[0].id, (
+        "Searching in the 'name' field did not return the expected sound"
+    )
+
+    # Test partial matching in the original_filename also works
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query="Glass E1", query_fields={settings.SEARCH_SOUNDS_FIELD_NAME: 1}))
+    assert results.docs[0]["id"] == test_sounds[0].id, (
+        "Searching in the 'name' field (partial match) did not return the expected sound"
+    )
+
+    # Test searching in the tags field...
+    sound_with_tags = [s for s in test_sounds if s.get_sound_tags()][0]
+    sound_tags = sound_with_tags.get_sound_tags()
+    
+    # ...first with all tags
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=" ".join(sound_tags), query_fields={settings.SEARCH_SOUNDS_FIELD_TAGS: 1}))
+    result_sids = [s["id"] for s in results.docs]
+    assert sound_with_tags.id in result_sids, (
+        "Searching in the 'tags' field did not return the expected sound"
+    )
+
+    # ...then with only one of the tags
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=sound_tags[0], query_fields={settings.SEARCH_SOUNDS_FIELD_TAGS: 1}))
+    result_sids = [s["id"] for s in results.docs]
+    assert sound_with_tags.id in result_sids, (
+        "Searching in the 'tags' field did not return the expected sound"
+    )
+
+    # Test searching in the description field...
+    # ...first with full description
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=test_sounds[0].description, query_fields={settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 1}))
+    assert results.docs[0]["id"] == test_sounds[0].id, (
+        "Searching in the 'description' field did not return the expected sound"
+    )
+
+    # ...then with a partial description
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=" ".join(test_sounds[0].description.split(" ")[0:5]), query_fields={settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 1}))
+    assert results.docs[0]["id"] == test_sounds[0].id, (
+        "Searching in the 'description' field (partial match) did not return the expected sound"
+    )
+
+    # Test searching in the username field...
+    username = "Twisted.Lemon"  # Known to be in the fixture data
+    # ...first with full username
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=username, query_fields={settings.SEARCH_SOUNDS_FIELD_USER_NAME: 1}))
+    results_first_sound = Sound.objects.get(id=results.docs[0]["id"])
+    assert results_first_sound.user.username == username, (
+        "Searching in the 'username' field did not return the expected sound"
+    )
+
+    # ...then with a partial username (note that the tokenizer splits on spaces and other punctuaiton symbols)
+    partial_username = "Twisted"  # Partial username to test
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=partial_username, query_fields={settings.SEARCH_SOUNDS_FIELD_USER_NAME: 1}))
+    results_first_sound = Sound.objects.get(id=results.docs[0]["id"])
+    assert results_first_sound.user.username == username, (
+        "Searching in the 'username' field (partial match) did not return the expected sound"
+    )
+
+    # Test searching in the pack name field...
+    pack_name = "sinusoid pack"  # Known to be in the fixture data
+    # ...first with full username
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=pack_name, query_fields={settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 1}))
+    results_first_sound = Sound.objects.get(id=results.docs[0]["id"])
+    assert results_first_sound.pack.name == pack_name, (
+        "Searching in the 'pack name' field did not return the expected sound"
+    )
+
+    # ...then with a partial pack name
+    partial_pack_name = "sinusoid"  # Partial pack name to test
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=partial_pack_name, query_fields={settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 1}))
+    results_first_sound = Sound.objects.get(id=results.docs[0]["id"])
+    assert results_first_sound.pack.name == username, (
+        "Searching in the 'pack name' field (partial match) did not return the expected sound"
+    )
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
 def test_sound_user_tags(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test user tags functionality"""
     sound = test_sounds[0]

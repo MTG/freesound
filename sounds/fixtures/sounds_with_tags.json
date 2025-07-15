@@ -55,7 +55,7 @@
     },
     {
         "fields": {
-            "username": "TwistedLemon",
+            "username": "Twisted.Lemon",
             "first_name": "",
             "last_name": "",
             "is_active": true,
@@ -410,7 +410,7 @@
             "description": "Dirty electric fuzzy sound. Changed with a dynamic delay.",
             "original_path": "/home/fsweb/freesound/freesound-data/sounds/0/12_29.wav",
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "analysis_state": "OK",
             "bitrate": 705,
@@ -2170,7 +2170,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 17682,
             "sound_id": 6,
@@ -2182,7 +2182,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 17682,
             "sound_id": 7,
@@ -2194,7 +2194,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 5344,
             "sound_id": 8,
@@ -2206,7 +2206,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 17682,
             "sound_id": 8,
@@ -2218,7 +2218,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 17682,
             "sound_id": 9,
@@ -2410,7 +2410,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 11491,
             "sound_id": 12,
@@ -2422,7 +2422,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 8168,
             "sound_id": 12,
@@ -2434,7 +2434,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 25688,
             "sound_id": 12,

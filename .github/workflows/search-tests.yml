@@ -1,4 +1,4 @@
-name: Freesound Tests
+name: Freesound Search Tests
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  test:
+  test-search:
     runs-on: ubuntu-latest
 
     steps:

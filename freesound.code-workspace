@@ -82,6 +82,12 @@
 				"problemMatcher": []
 			},
 			{
+				"label": "Run tests for search engine",
+				"type": "shell",
+				"command": "docker compose run --rm web pytest -m \"search_engine\"",
+				"problemMatcher": []
+			},
+			{
 				"label": "Migrate",
 				"type": "shell",
 				"command": "docker compose run --rm web python manage.py migrate",

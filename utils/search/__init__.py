@@ -180,7 +180,9 @@ class SearchEngineException(Exception):
 
 class SearchEngineBase:
 
-    # Test subclasses of SearchEngineBase with the test_search_engine_backend management command
+    solr_base_url = None
+
+    # Test SearchEngineBase with `pytest -m "search_engine" utils/search/backends/test_search_engine_backend.py`
 
     # Sound search related methods
 

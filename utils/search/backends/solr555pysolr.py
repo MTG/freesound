@@ -600,7 +600,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         else:
             # Similarity search!
-
+            
             # We fist set an empty query that will return no results and will be used by default if similarity can't be performed
             query.set_query('')
             if similar_to_analyzer in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS:
@@ -616,7 +616,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     except Sound.DoesNotExist:
                         # Return no results if sound does not exist
                         return SearchResults(num_found=0)
-                    vector = get_similarity_search_target_vector(sound.id, analyzer=similar_to_analyzer)                
+                    vector = get_similarity_search_target_vector(sound.id, analyzer=similar_to_analyzer)       
                 vector_field_name = get_solr_dense_vector_search_field_name(config_options['vector_size'], config_options.get('l2_norm', False))
                 if vector is not None and vector_field_name is not None:
                     max_similar_sounds = similar_to_max_num_sounds  # Max number of results for similarity search search. Filters are applied before the similarity search, so this number will usually be the total number of results (unless filters are more restrictive)

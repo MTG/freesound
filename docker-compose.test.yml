@@ -1,5 +1,6 @@
 volumes:
     pgdata:
+    solr9data:
 
 services:
     db:
@@ -16,6 +17,14 @@ services:
             - POSTGRES_DB=freesound
             - FS_USER_ID
 
+    search:
+        image: solr:9.8.1
+        command: ["-c"]
+        volumes:
+            - solr9data:/var/solr
+        ports:
+            - "8983:8983"
+
     test_runner:
         build:
             context: ./
@@ -30,3 +39,19 @@ services:
             - FS_USER_ID
         depends_on:
             - db
+
+    test_runner_search:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.workers_web
+        init: true
+        volumes:
+            - .:/code
+            - ./freesound-data/:/freesound-data
+        env_file:
+            - environment
+        environment:
+            - FS_USER_ID
+        depends_on:
+            - db
+            - search

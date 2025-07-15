@@ -42,7 +42,7 @@ DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by c
 DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,category_code,category_is_user_provided,geotag,created,license,type,channels,filesize,bitrate,' + \
 'bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,' + \
 'num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,' +  \
-'analysis,analysis_frames,analysis_stats,is_explicit'  # All except for analyzers
+'analysis,analysis_frames,analysis_stats,is_explicit,author_ai_preference'  # All except for analyzers
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
 
@@ -95,6 +95,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'geotag',
                   'created',
                   'license',
+                  'author_ai_preference',
                   'type',
                   'channels',
                   'filesize',
@@ -165,6 +166,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_license(self, obj):
         return obj.license.deed_url
     
+    author_ai_preference = serializers.SerializerMethodField()
+    def get_author_ai_preference(self, obj):
+        return obj.user.profile.get_ai_preference()
+            
     category = serializers.SerializerMethodField()
     def get_category(self, obj):
         category, subcategory = obj.category_names
@@ -404,6 +409,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
                   'packs',
                   'num_posts',
                   'num_comments',
+                  'ai_preference'
                   )
 
     url = serializers.SerializerMethodField()
@@ -463,6 +469,10 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     num_comments = serializers.SerializerMethodField()
     def get_num_comments(self, obj):
         return obj.comment_set.all().count()
+    
+    ai_preference = serializers.SerializerMethodField()
+    def get_ai_preference(self, obj):
+        return obj.profile.get_ai_preference()
 
 
 ##################

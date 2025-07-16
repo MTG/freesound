@@ -100,7 +100,7 @@ def search_view_helper(request):
     try:
         query_params = sqp.as_query_params()
 
-        if is_empty_query(request):
+        if is_empty_query(request) and settings.SEARCH_CACHE_EMPTY_QUERIES:
             # This common case produces long queries but the results will change very slowly (only when we index new sounds), 
             # so we can cache them.
             results_paginator = cache.get(settings.SEARCH_EMPTY_QUERY_CACHE_KEY, None)

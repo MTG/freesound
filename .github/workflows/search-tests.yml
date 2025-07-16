@@ -3,8 +3,14 @@ name: Freesound Search Tests
 on:
   push:
     branches: [ master ]
+    paths: 
+      - 'utils/search/**'
+      - 'freesound/settings.py'
   pull_request:
     branches: [ '*' ]
+    paths: 
+      - 'utils/search/**'
+      - 'freesound/settings.py'
 
 jobs:
 

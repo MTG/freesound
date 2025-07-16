@@ -754,7 +754,7 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
     partial_pack_name = "sinusoid"  # Partial pack name to test
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=partial_pack_name, query_fields={settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 1}))
     results_first_sound = Sound.objects.get(id=results.docs[0]["id"])
-    assert results_first_sound.pack.name == username, (
+    assert results_first_sound.pack.name == pack_name, (
         "Searching in the 'pack name' field (partial match) did not return the expected sound"
     )
 

@@ -151,7 +151,7 @@ class TextSearch(GenericAPIView):
                         sound['more_from_same_pack'] = search_form.construct_link(
                             reverse('apiv2-sound-text-search'),
                             page=1,
-                            filt='grouping_pack:"%i_%s"' % (int(pack_id), pack_name),
+                            filt='pack_grouping:"%i_%s"' % (int(pack_id), pack_name),
                             group_by_pack='0')
                         sound['n_from_same_pack'] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)

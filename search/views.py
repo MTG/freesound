@@ -110,6 +110,7 @@ def search_view_helper(request):
             else:
                 # Perform the query and cache the results
                 results, paginator = perform_search_engine_query(query_params)
+                results.q_time = None  # Set query time to None as we are not actually querying the search engine
                 cache.set(settings.SEARCH_EMPTY_QUERY_CACHE_KEY, (results, paginator), settings.SEARCH_EMPTY_QUERY_CACHE_TIME)
 
         else:

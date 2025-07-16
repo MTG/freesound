@@ -22,6 +22,9 @@ import datetime
 import logging
 import time
 
+from django.conf import settings
+from django.core.cache import cache
+
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
 from utils.search import get_search_engine
@@ -57,6 +60,9 @@ def send_sounds_to_search_engine(sounds_to_index_ids, slice_size=4000, delete_if
         n_sounds_indexed_correctly += n_sounds_indexed
         elapsed, remaining = time_stats(n_sounds_indexed_correctly, total_sounds, starttime)
         console_logger.info(f"Added {n_sounds_indexed_correctly}/{total_sounds} sounds. Elapsed: {elapsed}, Remaining: {remaining}")
+
+        # Clear empty query cache as we have modified the sounds index
+        cache.delete(settings.SEARCH_EMPTY_QUERY_CACHE_KEY, None)
 
     return n_sounds_indexed_correctly
 

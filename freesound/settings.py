@@ -684,6 +684,10 @@ USE_SEARCH_ENGINE_SIMILARITY = False
 
 MAX_SEARCH_RESULTS_IN_MAP_DISPLAY = 10000  # This is the maximum number of sounds that will be shown when using "display results in map" mode
 
+SEARCH_CACHE_EMPTY_QUERIES = True
+SEARCH_EMPTY_QUERY_CACHE_KEY = 'search_empty_query_results_paginator'
+SEARCH_EMPTY_QUERY_CACHE_TIME = 60 * 10  # 10 minutes, although we manually invalidate this cache when the search index is updated so this time could theoretically be longer
+
 # -------------------------------------------------------------------------------
 # Similarity client settings
 SIMILARITY_ADDRESS = 'similarity'

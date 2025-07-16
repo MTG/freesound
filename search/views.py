@@ -44,6 +44,13 @@ from utils.search.search_sounds import perform_search_engine_query, allow_beta_s
 search_logger = logging.getLogger("search")
 
 
+def is_empty_query(request):
+    # Check if the request correpsonds to an empty query with all the default parameters. It happens when the user
+    # hits "enter" in the search box without entering any text. This can be used to return cached results for this common 
+    # case which typically produces long queries
+    return len(request.GET) == 0
+
+
 def search_view_helper(request):
     # Process request data with the SearchQueryProcessor
     sqp = search_query_processor.SearchQueryProcessor(request)
@@ -92,12 +99,29 @@ def search_view_helper(request):
     # Run the query and post-process the results
     try:
         query_params = sqp.as_query_params()
-        results, paginator = perform_search_engine_query(query_params)
+
+        if is_empty_query(request) and settings.SEARCH_CACHE_EMPTY_QUERIES:
+            # This common case produces long queries but the results will change very slowly (only when we index new sounds), 
+            # so we can cache them.
+            results_paginator = cache.get(settings.SEARCH_EMPTY_QUERY_CACHE_KEY, None)
+            if results_paginator is not None:
+                # If results are cached, we use them directly
+                results, paginator = results_paginator
+            else:
+                # Perform the query and cache the results
+                results, paginator = perform_search_engine_query(query_params)
+                results.q_time = None  # Set query time to None as we are not actually querying the search engine
+                cache.set(settings.SEARCH_EMPTY_QUERY_CACHE_KEY, (results, paginator), settings.SEARCH_EMPTY_QUERY_CACHE_TIME)
+
+        else:
+            # Perform the query normally
+            results, paginator = perform_search_engine_query(query_params)
+
         if sqp.map_mode_active():
             # In map we configure the search query to already return geotags data. Here we collect all this data
             # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares
             # data points for the map of sounds.
-            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 5 minutes
+            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 15 minutes
 
             # Nevertheless we set docs to empty list as we won't display anything in the search results page (the map
             # will make an extra request that will load the cached data and display it in the map)

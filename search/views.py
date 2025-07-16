@@ -48,7 +48,7 @@ def is_empty_query(request):
     # Check if the request correpsonds to an empty query with all the default parameters. It happens when the user
     # hits "enter" in the search box without entering any text. This can be used to return cached results for this common 
     # case which typically produces long queries
-    return len(request.GET) == 0
+    return len(request.GET) == 0 or (len(request.GET) == 1 and 'q' in request.GET and request.GET['q'] == '')
 
 
 def search_view_helper(request):

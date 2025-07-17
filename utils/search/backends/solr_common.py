@@ -332,7 +332,6 @@ class SolrResponseInterpreter:
 
         # If query is slow, log its SOLR parameters so we can debug it later
         if settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD > -1 and self.q_time > settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD:
-            search_logger.info(f"SOLR slow query detected: {self.q_time}ms. SOLR query params: {str(response['responseHeader']['params'])}")
-
-
-
+            query_params = urllib.parse.urlencode(response['responseHeader']['params'], doseq=True, safe=':/?&",\{\}*^')
+            solr_admin_query_url = f"{settings.SEARCH_LOG_SLOW_QUERIES_BASE_ADMIN_URL}?{query_params}"
+            search_logger.info(f"SOLR slow query detected: {self.q_time}ms. URL: {solr_admin_query_url}")

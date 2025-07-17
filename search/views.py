@@ -100,8 +100,8 @@ def search_view_helper(request):
     # Run the query and post-process the results
     try:
         query_params = sqp.as_query_params()
+        
         empty_query_cache_key = get_empty_query_cache_key(request, use_beta_features=use_beta_features)
-
         if is_empty_query(request) and empty_query_cache_key:
             # This common case produces long queries but the results will change very slowly (only when we index new sounds), 
             # so we can cache them.

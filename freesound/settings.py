@@ -689,7 +689,7 @@ SEARCH_EMPTY_QUERY_CACHE_KEY = 'search_empty_query_results_paginator'
 SEARCH_EMPTY_QUERY_CACHE_TIME = 60 * 10  # 10 minutes, although we manually invalidate this cache when the search index is updated so this time could theoretically be longer
 
 SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take longer than this threshold in milliseconds. Set it to -1 to disable logging of slow queries.
-SEARCH_LOG_SLOW_QUERIES_BASE_ADMIN_URL = "http://localhost:8983/solr/#/freesound/query"
+SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
 
 
 # -------------------------------------------------------------------------------

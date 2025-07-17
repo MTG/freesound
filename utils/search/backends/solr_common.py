@@ -339,3 +339,4 @@ class SolrResponseInterpreter:
                 'num_results': self.num_found, 
                 'url': solr_admin_query_url
             }))
+            print(solr_admin_query_url)

@@ -243,3 +243,12 @@ def allow_beta_search_features(request):
         return False
     if request.user.has_perm('accounts.can_beta_test'):
         return True
+
+
+def get_empty_query_cache_key(request, use_beta_features=None):
+    if not settings.SEARCH_EMPTY_QUERY_CACHE_KEY:
+        return False
+    if use_beta_features is None:
+        # If not specified, we check if the user has beta features enabled
+        use_beta_features = allow_beta_search_features(request)
+    return settings.SEARCH_EMPTY_QUERY_CACHE_KEY if not use_beta_features else settings.SEARCH_EMPTY_QUERY_CACHE_KEY + "_beta"

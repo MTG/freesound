@@ -336,5 +336,6 @@ class SolrResponseInterpreter:
             solr_admin_query_url = f"{settings.SEARCH_LOG_SLOW_QUERIES_BASE_ADMIN_URL}?{query_params}"
             search_logger.info('SOLR slow query detected (%s)' % json.dumps({
                 'q_time': self.q_time,
+                'num_results': self.num_found, 
                 'url': solr_admin_query_url
             }))

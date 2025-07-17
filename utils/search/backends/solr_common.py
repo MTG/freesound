@@ -18,9 +18,14 @@
 #     Bram de Jong
 #
 import json
-import urllib.request, urllib.parse, urllib.error
+import logging
+import urllib.parse
+
+from django.conf import settings
 
 from utils.search import SearchEngineException
+
+search_logger = logging.getLogger("search")
 
 
 class SolrQuery:
@@ -324,3 +329,10 @@ class SolrResponseInterpreter:
             self.highlighting = response["highlighting"]
         except KeyError:
             self.highlighting = {}
+
+        # If query is slow, log its SOLR parameters so we can debug it later
+        if settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD > -1 and self.q_time > settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD:
+            search_logger.info(f"SOLR slow query detected: {self.q_time}ms. SOLR query params: {str(response['responseHeader']['params'])}")
+
+
+

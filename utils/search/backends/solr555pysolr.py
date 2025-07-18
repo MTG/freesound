@@ -717,7 +717,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 non_grouped_number_of_results=results.non_grouped_number_of_results,
                 facets=results.facets,
                 highlighting=results.highlighting,
-                q_time=results.q_time
+                q_time=results.q_time,
+                extra_debug_info=results._solr_extra_debug_info
             )
         except pysolr.SolrError as e:
             raise SearchEngineException(e)

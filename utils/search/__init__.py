@@ -42,7 +42,7 @@ def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds
 class SearchResults:
 
     def __init__(self, docs=None, num_found=-1, start=-1, num_rows=-1, non_grouped_number_of_results=-1,
-                 facets=None, highlighting=None, q_time=-1):
+                 facets=None, highlighting=None, q_time=-1, extra_debug_info=dict()):
         """
         Class that holds the results of a search query. It must contain the fields defined below.
 
@@ -129,6 +129,8 @@ class SearchResults:
                 }
 
             q_time (int, optional): time that it took to execute the query in the backend, in ms
+            extra_debug_info (Dict, optional): dictionary with extra information about the query/results which can
+                be useful for debugging purposes.
         """
         self.docs = docs if docs is not None else list()
         self.facets = facets if facets is not None else dict()
@@ -138,6 +140,7 @@ class SearchResults:
         self.start = start
         self.num_rows = num_rows
         self.q_time = q_time
+        self.extra_debug_info = extra_debug_info
 
     def __str__(self):
         return f'<SearchResults with {self.num_found} results found>'

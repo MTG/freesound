@@ -20,8 +20,9 @@
 
 import logging
 
-from django.conf import settings
 from django.db.models.query import RawQuerySet
+from django.conf import settings
+from django.core.cache import cache
 
 from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
 import utils.search
@@ -72,6 +73,22 @@ def perform_search_engine_query(query_params):
     """
     results = get_search_engine().search_sounds(**query_params)
     paginator = SearchResultsPaginator(results, query_params['num_sounds'])
+
+    if settings.DEBUG:
+        # Store query stats in cache so they can be loaded by the SOLR debug panel
+        query_info = {
+            'query_params': query_params,
+            'num_results': results.num_found,
+            'time': results.q_time,
+            'query_solr_url': results.extra_debug_info.get('query_url', None),
+            'query_solr_response': results.extra_debug_info.get('response', None),
+        }
+        info_for_panel = cache.get("solr_debug_panel_query_info")
+        if info_for_panel is None:
+            info_for_panel = []
+        info_for_panel.append(query_info)
+        cache.set("solr_debug_panel_query_info", info_for_panel, 60 * 60)
+
     return results, paginator
 
 

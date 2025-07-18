@@ -997,6 +997,7 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
         'debug_toolbar.panels.cache.CachePanel',
         'debug_toolbar.panels.signals.SignalsPanel',
         'debug_toolbar.panels.redirects.RedirectsPanel',
+        'freesound.panels.SolrDebugPanel',
     ]
 
     DEBUG_TOOLBAR_CONFIG = {

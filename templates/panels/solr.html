@@ -1,0 +1,31 @@
+{% load util %}
+
+<!-- Overall request info -->
+<ul>
+    <li><b>Request URL:</b> {{ request_url }}</li>
+    <li><b>Total time:</b> {{ total_time }} ms</li>
+    <li><b>Num queries:</b> {{ num_queries }}</li>
+</ul>
+
+<!-- Show individual query info on a table -->
+
+{% for query in queries_info %}
+<div>
+    <h3>Query {{ forloop.counter }}: q={{ query.query_params.textual_query }}</h3>
+    <ul>
+        <li><b>Time:</b> {{ query.time }} ms</li>
+        <li><b>Num results:</b> {{ query.num_results }}</li>
+        <li><b>SOLR URL:</b> <a href="{{ query.query_solr_url }}" target="_blank">{{ query.query_solr_url }}</a></li>
+    </ul>
+    <div>
+        <br><b>SOLR Response</b>
+        {{ query.query_solr_response|format_json }}
+    </div>
+    <div>
+        <br><b>Search function query parameters</b>
+        {{ query.query_params|format_json }}
+    </div>
+</div>
+<br>
+<hr>
+{% endfor %}

@@ -32,15 +32,14 @@ class SolrQuery:
     """A wrapper around a lot of Solr query functionality.
     """
 
-    def __init__(self, debug_query=None):
+    def __init__(self):
         """Creates a SolrQuery object
-        debug_query: if 1 output debug information
         """
         # some default parameters
         self.params = {
             'wt': 'json',
             'indent': 'true',
-            'debugQuery': debug_query,
+            'debugQuery': 'true' if settings.DEBUG else '',
             'q.op': 'AND',
             'echoParams': 'explicit',
         }
@@ -330,14 +329,21 @@ class SolrResponseInterpreter:
         except KeyError:
             self.highlighting = {}
 
-        # If query is slow, log its SOLR parameters so we can debug it later
-        if settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD > -1 and self.q_time > settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD:
+        # If in debug mode, add some extra information to the response that we'll use in the debug panel
+        if settings.DEBUG:
             params = response['responseHeader']['params']
-            params['debugQuery'] = 'true'
-            query_params = urllib.parse.urlencode(response['responseHeader']['params'], doseq=True, safe=':/?&",\{\}*^')
-            solr_admin_query_url = f"{settings.SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL}?{query_params}"
-            search_logger.info('SOLR slow query detected (%s)' % json.dumps({
-                'q_time': self.q_time,
-                'num_results': self.num_found, 
-                'url': solr_admin_query_url
-            }))
+            params['debugQuery'] = 'true'  # force debugQuery to be true so it is included in the URL
+            query_params = urllib.parse.urlencode(params, doseq=True, safe=':/?&",\{\}*^')
+            solr_query_url = f"{settings.SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL}?{query_params}"
+            self._solr_extra_debug_info = {
+                'query_url': solr_query_url,
+                'response': response,
+            }
+
+            # If query is slow, log its SOLR parameters so we can debug it later
+            if settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD > -1 and self.q_time > settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD:
+                search_logger.info('SOLR slow query detected (%s)' % json.dumps({
+                    'q_time': self.q_time,
+                    'num_results': self.num_found, 
+                    'url': solr_query_url
+                }))

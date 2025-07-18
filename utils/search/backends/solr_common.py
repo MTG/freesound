@@ -294,6 +294,9 @@ def make_solr_query_url(solr_query_params, debug=False):
 
 class SolrResponseInterpreter:
     def __init__(self, response, next_page_query=None):
+        if "grouped" in response and "expanded" in response:
+            raise SearchEngineException("Response contains both grouped and expanded results, this is not supported")
+        
         if "grouped" in response:
             grouping_field = list(response["grouped"].keys())[0]            
             self.docs = [{
@@ -307,6 +310,19 @@ class SolrResponseInterpreter:
             self.num_rows = len(self.docs)
             self.num_found = response["grouped"][grouping_field]["ngroups"]
             self.non_grouped_number_of_results = response["grouped"][grouping_field]["matches"]
+        elif "expanded" in response:
+            collapse_field = 'pack_grouping_child' if 'pack_grouping_child' in response['responseHeader']['params']['fl'] else 'pack_grouping'
+            self.docs = [{ 
+                'id': doc['id'],
+                'score': doc['score'],
+                'n_more_in_group': response['expanded'][doc[collapse_field]]['numFound'] if doc[collapse_field] in response['expanded'] else 0,
+                'group_docs': doc,
+                'group_name': doc[collapse_field]
+            } for doc in response["response"]["docs"]]
+            self.start = int(response["response"]["start"])
+            self.num_rows = len(self.docs)
+            self.num_found = response["response"]["numFound"]  # Note that using "Collapse and Expand" for grouping we can't get the total number of uncollapsed matches
+            self.non_grouped_number_of_results = -1
         else:
             self.docs = response["response"]["docs"]
             self.start = int(response["response"]["start"])

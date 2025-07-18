@@ -676,21 +676,34 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         # Configure grouping
         if group_by_pack:
-            query.set_group_field(group_field="pack_grouping" if not similar_to else "pack_grouping_child")  # We name the fields differently to avoid solr conflicts with matches of both child and parent docs
-            query.set_group_options(
-                group_func=None,
-                group_query=None,
-                group_rows=10,  # TODO: if limit is lower than rows and start=0, this should probably be equal to limit
-                group_start=0,
-                group_limit=num_sounds_per_pack_group,  # This is the number of documents that will be returned for each group.
-                group_offset=0,
-                group_sort=None,
-                group_sort_ingroup=None,
-                group_format='grouped',
-                group_main=False,
-                group_num_groups=True,
-                group_cache_percent=0,
-                group_truncate=group_counts_as_one_in_facets)
+            use_collapse_expand_query_parser = True
+            if use_collapse_expand_query_parser:
+                current_filter = query.params.get('fq', '')
+                field_name = "pack_grouping" if not similar_to else "pack_grouping_child"
+                group_by_pack_filter = f'{{!collapse field={field_name}}}'
+                if current_filter:
+                    query.params['fq'] = [current_filter, group_by_pack_filter]
+                else:
+                    query.params['fq'] = [group_by_pack_filter]
+                query.params['fl'] = query.params['fl'] + f',{field_name}'
+                query.params['expand'] = True
+                query.params['expand.rows'] = 0
+            else:
+                query.set_group_field(group_field="pack_grouping" if not similar_to else "pack_grouping_child")  
+                query.set_group_options(
+                    group_func=None,
+                    group_query=None,
+                    group_rows=10,  # TODO: if limit is lower than rows and start=0, this should probably be equal to limit
+                    group_start=0,
+                    group_limit=num_sounds_per_pack_group,  # This is the number of documents that will be returned for each group.
+                    group_offset=0,
+                    group_sort=None,
+                    group_sort_ingroup=None,
+                    group_format='grouped',
+                    group_main=False,
+                    group_num_groups=True,
+                    group_cache_percent=0,
+                    group_truncate=group_counts_as_one_in_facets)
 
         # Do the query!
         # Note: we create a SearchResults with the same members as SolrResponseInterpreter (the response from .search()).

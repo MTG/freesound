@@ -285,6 +285,13 @@ class SolrQuery:
         return params
 
 
+def make_solr_query_url(solr_query_params, debug=False):
+    if debug:
+        solr_query_params['debugQuery'] = 'true'
+    query_params = urllib.parse.urlencode(solr_query_params, doseq=True, safe=':/?&",\{\}*^')
+    return f"{settings.SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL}?{query_params}"
+
+
 class SolrResponseInterpreter:
     def __init__(self, response, next_page_query=None):
         if "grouped" in response:
@@ -329,18 +336,16 @@ class SolrResponseInterpreter:
         except KeyError:
             self.highlighting = {}
 
-        # If in debug mode, add some extra information to the response that we'll use in the debug panel
-        if settings.DEBUG:
-            params = response['responseHeader']['params']
-            params['debugQuery'] = 'true'  # force debugQuery to be true so it is included in the URL
-            query_params = urllib.parse.urlencode(params, doseq=True, safe=':/?&",\{\}*^')
-            solr_query_url = f"{settings.SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL}?{query_params}"
+        if settings.DEBUG or (settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD > -1 and self.q_time > settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD):
+            solr_query_url = make_solr_query_url(response['responseHeader']['params'], debug=True) 
+            
+            # Add the query URL and response to the extra debug info, this will be used in the SOLR debug panel
             self._solr_extra_debug_info = {
                 'query_url': solr_query_url,
                 'response': response,
             }
 
-            # If query is slow, log its SOLR parameters so we can debug it later
+            # If query is slow, log the SOLR parameters so we can debug it later (this works in production environment as well)
             if settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD > -1 and self.q_time > settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD:
                 search_logger.info('SOLR slow query detected (%s)' % json.dumps({
                     'q_time': self.q_time,

@@ -22,6 +22,7 @@ import datetime
 import json
 import logging
 import sentry_sdk
+import traceback
 
 from django.core.cache import cache
 from django.conf import settings
@@ -205,7 +206,8 @@ def search_view_helper(request):
         sentry_sdk.capture_exception(e)
         return {'error_text': 'There was an error while searching, is your query correct?'}
     except Exception as e:
-        search_logger.info(f'Could probably not connect to Solr - {e}')
+        stack_trace = traceback.format_exc()
+        search_logger.info(f'Could probably not connect to Solr - {e}\n{stack_trace}')
         sentry_sdk.capture_exception(e)
         return {'error_text': 'The search server could not be reached, please try again later.'}
 

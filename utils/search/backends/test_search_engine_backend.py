@@ -160,19 +160,23 @@ def fake_analyzer_settings_for_similarity_tests(settings):
 
 
 @pytest.fixture()
-def test_sounds(db, fake_analyzer_settings_for_similarity_tests):
+def test_sounds_qs(db):
     call_command('loaddata', 'sounds/fixtures/licenses.json', 'sounds/fixtures/sounds_with_tags.json', verbosity=0)
     sound_ids = Sound.public.filter(
             is_index_dirty=False, num_ratings__gte=settings.MIN_NUMBER_RATINGS
         ).values_list('id', flat=True)
-    sounds = list(Sound.objects.bulk_query_solr(sound_ids))
     if len(sound_ids) < 20:
         pytest.fail(
             f"Can't test search engine backend as there are not enough sounds for testing: {len(sounds)}, needed: 20"
         )
+    return Sound.objects.bulk_query_solr(sound_ids)
 
+
+@pytest.fixture()
+def test_sounds(db, test_sounds_qs, fake_analyzer_settings_for_similarity_tests):
+    
     # Create fake SoundAnalysis objects for each sound
-    for sound in sounds:
+    for sound in test_sounds_qs:
         vector_size = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER]['vector_size']
         SoundAnalysis.objects.create(
             sound=sound,
@@ -183,7 +187,7 @@ def test_sounds(db, fake_analyzer_settings_for_similarity_tests):
             }
         )
 
-    return sounds
+    return list(test_sounds_qs)
 
 @pytest.fixture()
 def expected_license_facet_results_all_sounds(test_sounds):
@@ -967,16 +971,16 @@ def test_sound_similarity_search(search_engine_sounds_backend, output_file_handl
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
-def test_sound_similarity_search_filter(search_engine_sounds_backend, output_file_handle, test_sounds):
+def test_sound_similarity_search_filter(search_engine_sounds_backend, output_file_handle, test_sounds_qs):
     """Test filtering when using similarity search functionality"""
 
     for fq, expected_results_count in [
-        ("username:Anton", Sound.objects.filter(user__username="Anton").count()),
-        ("license:Attribution", Sound.objects.filter(license__name="Attribution").count()),
-        ("license:CC0", Sound.objects.filter(license__name="CC0").count()),  
-        ("type:wav", Sound.objects.filter(type="wav").count()),
-        ("type:non_existing", Sound.objects.filter(type="non_existing").count()),
-        ("username:Anton license:Attribution", Sound.objects.filter(user__username="Anton", license__name="Attribution").count())
+        ("username:\"Anton\"", test_sounds_qs.filter(user__username="Anton").count()),
+        ("license:\"Attribution\"", test_sounds_qs.filter(license__name="Attribution").count()),
+        ("license:\"CC0\"", test_sounds_qs.filter(license__name="CC0").count()),  
+        ("type:wav", test_sounds_qs.filter(type="wav").count()),
+        ("type:non_existing", test_sounds_qs.filter(type="non_existing").count()),
+        ("username:Anton license:Attribution", test_sounds_qs.filter(user__username="Anton", license__name="Attribution").count())
     ]:
         # Make a query for target sound 0 and check that results are sorted by ID
         results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
@@ -984,10 +988,10 @@ def test_sound_similarity_search_filter(search_engine_sounds_backend, output_fil
             similar_to_max_num_sounds=100,
             num_sounds=100,
             similar_to_analyzer="test_analyzer",
-            filter_query=fq,
+            query_filter=fq
         ))
-        assert expected_results_count == results.non_grouped_number_of_results, (
-            "Similarity search with filter did not return the expected number of results"
+        assert expected_results_count == results.num_found, (
+            f"Similarity search with filter did not return the expected number of results for {fq}"
         )
 
 

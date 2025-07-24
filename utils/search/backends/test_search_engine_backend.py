@@ -290,43 +290,6 @@ def test_sounds_qs(db, fake_analyzer_settings_for_similarity_tests, fake_audio_d
 def test_sounds(db, test_sounds_qs):
     return list(test_sounds_qs)
 
-
-@pytest.fixture()
-def expected_license_facet_results_all_sounds(test_sounds):
-    """
-    Fixture to provide expected facet counts for the license field based on test sounds.
-    """
-    expected_license_facet_results_all_sounds = {}
-    for sound in test_sounds:
-        license_name = sound.license.name
-        if license_name not in expected_license_facet_results_all_sounds:
-            expected_license_facet_results_all_sounds[license_name] = 1
-        else:
-            expected_license_facet_results_all_sounds[license_name] += 1
-    return expected_license_facet_results_all_sounds
-
-
-@pytest.fixture()
-def expected_license_facet_results_group_counts_as_one_in_facets(test_sounds):
-    """
-    Fixture to provide expected facet counts for the license field based on test sounds when
-    grouped sounds should count as 1 for facet count.
-    """
-    expected_license_facet_results_group_counts_as_one_in_facets = {}
-    packs_already_considered = list()
-    for sound in test_sounds:
-        if sound.pack is not None and sound.pack.id in packs_already_considered:
-            continue
-        if sound.pack is not None:
-            packs_already_considered.append(sound.pack.id)
-        license_name = sound.license.name
-        if license_name not in expected_license_facet_results_group_counts_as_one_in_facets:
-            expected_license_facet_results_group_counts_as_one_in_facets[license_name] = 1
-        else:
-            expected_license_facet_results_group_counts_as_one_in_facets[license_name] += 1
-    return expected_license_facet_results_group_counts_as_one_in_facets
-
-
 @pytest.fixture()
 def test_users(db):
     call_command('loaddata', 'accounts/fixtures/users.json', verbosity=0)
@@ -578,6 +541,37 @@ def run_forum_posts_query_and_save_results(search_engine_backend, output_file_ha
         return results
 
 
+def expected_license_facet_results_all_sounds(test_sounds):
+    """ Get expected facet counts for the license field based on test sounds.
+    """
+    expected_license_facet_results_all_sounds = {}
+    for sound in test_sounds:
+        license_name = sound.license.name
+        if license_name not in expected_license_facet_results_all_sounds:
+            expected_license_facet_results_all_sounds[license_name] = 1
+        else:
+            expected_license_facet_results_all_sounds[license_name] += 1
+    return expected_license_facet_results_all_sounds
+
+
+def expected_license_facet_results_group_counts_as_one_in_facets(test_sounds):
+    """ Get expected facet counts for the license field based on test sounds when grouped sounds should count as 1 for facet count.
+    """
+    expected_license_facet_results_group_counts_as_one_in_facets = {}
+    packs_already_considered = list()
+    for sound in test_sounds:
+        if sound.pack is not None and sound.pack.id in packs_already_considered:
+            continue
+        if sound.pack is not None:
+            packs_already_considered.append(sound.pack.id)
+        license_name = sound.license.name
+        if license_name not in expected_license_facet_results_group_counts_as_one_in_facets:
+            expected_license_facet_results_group_counts_as_one_in_facets[license_name] = 1
+        else:
+            expected_license_facet_results_group_counts_as_one_in_facets[license_name] += 1
+    return expected_license_facet_results_group_counts_as_one_in_facets
+
+
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
@@ -780,7 +774,7 @@ def test_sound_sounds_with_pack(search_engine_sounds_backend, output_file_handle
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
-def test_sound_facets(search_engine_sounds_backend, output_file_handle, expected_license_facet_results_all_sounds):
+def test_sound_facets(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test faceting functionality"""
     test_facet_options = {
         settings.SEARCH_SOUNDS_FIELD_USER_NAME: {"limit": 3},
@@ -797,9 +791,10 @@ def test_sound_facets(search_engine_sounds_backend, output_file_handle, expected
                 f"Wrong number of items in facet {facet_field}"
             )
     
+    expected_factets = expected_license_facet_results_all_sounds(test_sounds)
     # Assert count results for one of the facets
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
+        assert facet_count == expected_factets[facet_name]
 
     # Test if no facets requested, no facets returned
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict())
@@ -811,26 +806,27 @@ def test_sound_facets(search_engine_sounds_backend, output_file_handle, expected
 @pytest.mark.django_db
 def test_sound_facets_group_counts_as_one_in_facets(search_engine_sounds_backend, 
                                                     output_file_handle, 
-                                                    expected_license_facet_results_all_sounds,
-                                                    expected_license_facet_results_group_counts_as_one_in_facets
+                                                    test_sounds
                                                     ):
     """Test how grouping by pack affets facet counts when considering the group_counts_as_one_in_facets option"""
 
+    expected_factets = expected_license_facet_results_all_sounds(test_sounds)
     # Check that facet counts are not collapsed to packs when group_counts_as_one_in_facets is False
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
                                                 dict(group_by_pack=True,
                                                         facets={settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}},
                                                         group_counts_as_one_in_facets=False))
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
+        assert facet_count == expected_factets[facet_name]
 
     # Check that facet counts are collapsed to packs when group_counts_as_one_in_facets is True
+    expected_license_facets = expected_license_facet_results_group_counts_as_one_in_facets(test_sounds)
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
                                                 dict(group_by_pack=True,
                                                         facets={settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}},
                                                         group_counts_as_one_in_facets=True))
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_group_counts_as_one_in_facets[facet_name]
+        assert facet_count == expected_license_facets[facet_name]
 
 
 @pytest.mark.search_engine
@@ -1151,8 +1147,7 @@ def test_sound_similarity_search_filter(search_engine_sounds_backend, output_fil
 @pytest.mark.django_db
 def test_sound_similarity_search_facets(search_engine_sounds_backend, 
                                         output_file_handle, 
-                                        expected_license_facet_results_all_sounds,
-                                        expected_license_facet_results_group_counts_as_one_in_facets):
+                                        test_sounds):
     
     """Test that faceting works as expected in combination wih the similarity search functionality"""
     # Check that faceting also work when doing similarity search queries
@@ -1174,9 +1169,10 @@ def test_sound_similarity_search_facets(search_engine_sounds_backend,
     ))
     assert len(results.facets) == 4, "Wrong number of facets returned"
 
+    expected_factets = expected_license_facet_results_all_sounds(test_sounds)
     # Assess the counts for one of the facets
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
+        assert facet_count == expected_factets[facet_name]
 
     # Now repeat the experiment, for the case in which group_counts_as_one_in_facets is True
     results = run_sounds_query_and_save_results(
@@ -1193,8 +1189,9 @@ def test_sound_similarity_search_facets(search_engine_sounds_backend,
         ),
     )
     assert len(results.facets) == 4, "Wrong number of facets returned"
+    expected_license_facets = expected_license_facet_results_group_counts_as_one_in_facets(test_sounds)
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_group_counts_as_one_in_facets[facet_name]
+        assert facet_count == expected_license_facets[facet_name]
 
 
 @pytest.mark.search_engine

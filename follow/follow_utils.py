@@ -59,9 +59,12 @@ def is_user_following_tag(user, slash_tag):
     return FollowingQueryItem.objects.filter(user=user, query=slash_tag.replace("/", " ")).exists()
 
 
-def get_stream_sounds(user, time_lapse, num_results_per_group=3):
+def get_stream_sounds(user, time_lapse, num_results_per_group=3, search_engine_backend=None):
 
-    search_engine = get_search_engine()
+    if search_engine_backend is None:
+        search_engine = get_search_engine()
+    else:
+        search_engine = search_engine_backend
 
     #
     # USERS FOLLOWING

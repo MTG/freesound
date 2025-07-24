@@ -30,6 +30,7 @@ import json
 import logging
 import os
 import time
+import urllib
 
 import pytest
 from django.conf import settings
@@ -45,7 +46,8 @@ from search import solrapi
 from sounds.models import Download, Sound, SoundAnalysis, SoundSimilarityVector
 from tags.models import SoundTag
 from utils.search import get_search_engine
-from utils.search.search_sounds import add_sounds_to_search_engine, get_all_sound_ids_from_search_engine, delete_sounds_from_search_engine
+from follow.models import FollowingUserItem, FollowingQueryItem
+from follow import follow_utils
 
 console_logger = logging.getLogger("console")
 console_logger.setLevel(logging.DEBUG)
@@ -1177,15 +1179,19 @@ def test_sound_similarity_search_facets(search_engine_sounds_backend,
         assert facet_count == expected_license_facet_results_all_sounds[facet_name]
 
     # Now repeat the experiment, for the case in which group_counts_as_one_in_facets is True
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-        similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
-        similar_to_min_similarity=0.0,  # Will return all test sounds
-        num_sounds=100,
-        similar_to_similarity_space="test_sim_space",
-        facets=test_facet_options,
-        group_by_pack=True,
-        group_counts_as_one_in_facets=True,
-    ))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
+            similar_to_max_num_sounds=100,  # Will return all test sounds
+            num_sounds=100,
+            similar_to_analyzer="test_sim_space",
+            facets=test_facet_options,
+            group_by_pack=True,
+            group_counts_as_one_in_facets=True,
+        ),
+    )
     assert len(results.facets) == 4, "Wrong number of facets returned"
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
         assert facet_count == expected_license_facet_results_group_counts_as_one_in_facets[facet_name]
@@ -1229,6 +1235,88 @@ def test_num_queries_when_adding_sounds_to_search_index(
         "Too many database queries when adding sounds to search engine"
     )
     
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_follow_utils_get_stream_sounds(search_engine_sounds_backend, output_file_handle, test_sounds):
+    users = User.objects.all()
+    test_user = users[0]
+
+    user_to_follow_1 = User.objects.get(username="xserra")
+    user_to_follow_2 = User.objects.get(username="Anton")
+
+    # Create following relationships
+    FollowingUserItem.objects.create(user_from=test_user, user_to=user_to_follow_1)
+    FollowingUserItem.objects.create(user_from=test_user, user_to=user_to_follow_2)
+
+    # we know these tags exist in the test data
+    FollowingQueryItem.objects.create(user=test_user, query="voice")
+    FollowingQueryItem.objects.create(user=test_user, query="conversation")
+
+    date_from = datetime.datetime(2005, 3, 1, tzinfo=datetime.timezone.utc)
+    date_to = datetime.datetime(2005, 3, 31, tzinfo=datetime.timezone.utc)
+    time_lapse = follow_utils.build_time_lapse(date_from, date_to)
+
+    users_sounds, tags_sounds = follow_utils.get_stream_sounds(
+        test_user, time_lapse, num_results_per_group=3, search_engine_backend=search_engine_sounds_backend
+    )
+    assert len(users_sounds) == 2, "Should have sounds from 2 followed users"
+
+    user_following, sound_objects, more_url_params, more_count, new_count = users_sounds[0]
+
+    # We can't be sure which order solr will return this in, but we know it's one of these two
+    assert user_following in [user_to_follow_1, user_to_follow_2]
+    # Check that all sounds belong to the followed user
+    for sound in sound_objects:
+        assert sound.user == user_following
+
+    assert len(more_url_params) == 2, "more_url_params should have 2 elements"
+    decoded_filter = urllib.parse.unquote(more_url_params[0])
+    assert f'username:"{user_following.username}"' in decoded_filter, "Filter should contain the followed username"
+    assert "created:" in decoded_filter, "Filter should contain created date filter"
+
+    # Check counts
+    assert more_count >= 0, "more_count should be non-negative"
+    assert len(sound_objects) <= 3, "Should not return more than num_results_per_group sounds"
+
+    # We expect sounds with "voice" tag (5 sounds) and "conversation" tag (1 sound)
+    assert len(tags_sounds) == 2, "Should have sounds from 2 followed tag queries"
+
+    tags, sound_objects, more_url_params, more_count, new_count = tags_sounds[0]
+    tags1, _, _, _, _ = tags_sounds[1]
+
+    assert (tags == ["voice"] and tags1 == ["conversation"]) or (tags == ["conversation"] and tags1 == ["voice"]), (
+        "Unexpected tags"
+    )
+
+    # Check that sounds have the expected tags
+    expected_tag = tags[0]
+    for sound in sound_objects:
+        sound_tags = [tag.name for tag in sound.tags.all()]
+        assert expected_tag in sound_tags, f"Sound {sound.id} should have '{expected_tag}' tag"
+
+    assert len(more_url_params) == 2, "more_url_params should have 2 elements"
+    decoded_filter = urllib.parse.unquote(more_url_params[0])
+    for tag in tags:
+        assert f"tag:{tag}" in decoded_filter, f"Filter should contain tag:{tag}"
+    assert "created:" in decoded_filter, "Filter should contain created date filter"
+
+    decoded_sort = urllib.parse.unquote(more_url_params[1])
+    assert decoded_sort == settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST, "Sort should be date newest first"
+
+    assert more_count >= 0, "more_count should be non-negative"
+    assert len(sound_objects) <= 3, "Should not return more than num_results_per_group sounds"
+
+    # No sounds in this range
+    old_date_from = datetime.datetime(2004, 1, 1, tzinfo=datetime.timezone.utc)
+    old_date_to = datetime.datetime(2004, 12, 31, tzinfo=datetime.timezone.utc)
+    old_time_lapse = follow_utils.build_time_lapse(old_date_from, old_date_to)
+
+    old_users_sounds, old_tags_sounds = follow_utils.get_stream_sounds(
+        test_user, old_time_lapse, num_results_per_group=3, search_engine_backend=search_engine_sounds_backend
+    )
+    assert len(old_users_sounds) == 0
+    assert len(old_tags_sounds) == 0
 
 @pytest.mark.search_engine
 @pytest.mark.forum

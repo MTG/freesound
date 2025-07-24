@@ -59,7 +59,7 @@ def tag_cloud(request):
                     num_sounds=1,
                     facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {"limit": 200}},
                     group_by_pack=True,
-                    group_counts_as_one_in_facets=False,
+                    group_counts_as_one_in_facets=True,
                 )
             )
         except SearchEngineException as e:

@@ -97,7 +97,7 @@ def get_stream_sounds(user, time_lapse, num_results_per_group=3):
             #sound_objs = sounds.models.Sound.objects.ordered_ids(sound_ids)
             # NOTE: for now we add sound_ids in users_sounds instead of the actual sound object. We retrieve sound objs later in a single query.
             new_count = more_count + len(sound_ids)
-            users_sounds.append(((user_following, False), sound_ids, more_url_params, more_count, new_count))
+            users_sounds.append((user_following, sound_ids, more_url_params, more_count, new_count))
 
     #
     # TAGS FOLLOWING
@@ -151,16 +151,19 @@ def get_stream_sounds(user, time_lapse, num_results_per_group=3):
     sound_objs_dict = sounds.models.Sound.objects.dict_ids(all_sound_ids_to_retrieve)
 
     # Replace lists of sound_ids by actual sound objects
-    for count, (user, sound_ids, more_url_params, more_count, new_count) in enumerate(users_sounds):
+    users_sounds_with_objects = []
+    for user, sound_ids, more_url_params, more_count, new_count in users_sounds:
         sound_objs = [sound_objs_dict.get(sid, None) for sid in sound_ids]
         sound_objs = [sound_obj for sound_obj in sound_objs if sound_obj is not None]
-        users_sounds[count] = (user, sound_objs, more_url_params, more_count, new_count)
-    for count, (tags, sound_ids, more_url_params, more_count, new_count) in enumerate(tags_sounds):
-        sound_objs = [sound_objs_dict.get(sid, None) for sid in sound_ids]
-        sound_objs = [sound_obj for sound_obj in sound_objs if sound_obj is not None]
-        tags_sounds[count] = (tags, sound_objs, more_url_params, more_count, new_count)
+        users_sounds_with_objects.append((user, sound_objs, more_url_params, more_count, new_count))
 
-    return users_sounds, tags_sounds
+    tags_sounds_with_objects = []
+    for tags, sound_ids, more_url_params, more_count, new_count in tags_sounds:
+        sound_objs = [sound_objs_dict.get(sid, None) for sid in sound_ids]
+        sound_objs = [sound_obj for sound_obj in sound_objs if sound_obj is not None]
+        tags_sounds_with_objects.append((tags, sound_objs, more_url_params, more_count, new_count))
+
+    return users_sounds_with_objects, tags_sounds_with_objects
 
 
 def build_time_lapse(date_from, date_to):

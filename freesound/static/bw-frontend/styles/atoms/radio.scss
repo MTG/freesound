@@ -1,3 +1,4 @@
+@use "sass:list";
 input.bw-radio {
   display: none;
 }
@@ -47,7 +48,7 @@ input.bw-radio {
 
   ul.bw-radio li {
     list-style: none;
-    margin-bottom: nth($spacing-values-list, 2);
+    margin-bottom: list.nth($spacing-values-list, 2);
   }
 }
 
@@ -59,8 +60,8 @@ input.bw-radio {
   ul.bw-radio li {
     display: inline;
     list-style: none;
-    margin-bottom: nth($spacing-values-list, 1);
-    margin-right: nth($spacing-values-list, 3);
+    margin-bottom: list.nth($spacing-values-list, 1);
+    margin-right: list.nth($spacing-values-list, 3);
   }
 
   .bw-radio-container {

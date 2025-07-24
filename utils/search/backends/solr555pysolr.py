@@ -501,7 +501,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         if 'geotag:"Intersects(' in query_filter:
             # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
-            #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
+            #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LATITUDE> <MAXIMUM_LONGITUDE>"]
             query_filter = re.sub(r'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
 
         query_filter = self.search_filter_make_intersection(query_filter)

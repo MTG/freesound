@@ -1319,6 +1319,72 @@ def test_follow_utils_get_stream_sounds(search_engine_sounds_backend, output_fil
     assert len(old_tags_sounds) == 0
 
 @pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_geotag_queries(search_engine_sounds_backend, output_file_handle):
+    """Test geotag query functionality with both Intersects and range query formats"""
+
+    # Test 1: Using geotag:"Intersects()" format - should be converted to range format
+    # Query for sounds in a bounding box around Barcelona (includes Sagrada Familia)
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        query_filter='geotag:"Intersects(2.0 41.0 2.5 42.0)"',
+        num_sounds=10
+    ))
+
+    # Should find the Barcelona sound (ID 40) at lat=41.4036, lon=2.1744
+    result_ids = [r["id"] for r in results.docs]
+    assert 40 in result_ids, "Barcelona sound should be found in the bounding box query"
+    assert 41 not in result_ids, "Madrid sound should not be found in the bounding box query"
+
+    # Test 2: Using geotag range format directly
+    # Query for sounds in a bounding box around Madrid (includes Plaza Mayor)
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        query_filter='geotag:["40.0,-4.0" TO "41.0,-3.0"]',
+        num_sounds=10
+    ))
+
+    # Should find the Madrid sound (ID 41) at lat=40.4155, lon=-3.7074
+    result_ids = [r["id"] for r in results.docs]
+    print(result_ids)
+    assert 41 in result_ids, "Madrid sound should be found in the range query"
+    assert 40 not in result_ids, "Barcelona sound should not be found in the range query"
+
+    # Test 3: Query for sounds in Andalusia region (includes Seville and Granada)
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        query_filter='geotag:"Intersects(-6.5 36.0 -3.0 38.0)"',
+        num_sounds=10
+    ))
+
+    # Should find Seville (ID 42) at lat=37.3891, lon=-5.9845 and Granada (ID 44) at lat=37.1760, lon=-3.5976
+    result_ids = [r["id"] for r in results.docs]
+    assert 42 in result_ids, "Seville sound should be found in Andalusia query"
+    assert 44 in result_ids, "Granada sound should be found in Andalusia query"
+    assert 40 not in result_ids, "Barcelona sound should not be found in Andalusia query"
+
+    # Test 4: Query that should return no results (area with no sounds)
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        query_filter='geotag:"Intersects(0.0 0.0 1.0 1.0)"',
+        num_sounds=10
+    ))
+
+    # Should find no sounds in this area
+    assert results.num_found == 0, "No sounds should be found in the middle of the ocean"
+
+    # Test 5: Query for sounds with geotags (should return all 5 sounds)
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        query_filter='is_geotagged:true',
+        num_sounds=10
+    ))
+
+    # Should find all 5 sounds with geotags
+    assert results.num_found == 5, "All 5 sounds with geotags should be found"
+    result_ids = [r["id"] for r in results.docs]
+    expected_ids = [40, 41, 42, 43, 44]
+    for expected_id in expected_ids:
+        assert expected_id in result_ids, f"Sound {expected_id} should be found when querying for geotagged sounds"
+
+
+@pytest.mark.search_engine
 @pytest.mark.forum
 @pytest.mark.django_db
 def test_forum_mandatory_doc_fields(search_engine_forum_backend, output_file_handle):

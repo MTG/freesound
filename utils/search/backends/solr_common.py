@@ -22,6 +22,7 @@ import logging
 import urllib.parse
 
 from django.conf import settings
+from django.core.cache import cache
 
 from utils.search import SearchEngineException
 
@@ -39,7 +40,7 @@ class SolrQuery:
         self.params = {
             'wt': 'json',
             'indent': 'true',
-            'debugQuery': 'true' if settings.DEBUG else '',
+            'debugQuery': 'true' if settings.DEBUG else 'false',
             'q.op': 'AND',
             'echoParams': 'explicit',
         }
@@ -258,13 +259,12 @@ class SolrQuery:
     def set_group_field(self, group_field=None):
         self.params['group.field'] = group_field
 
-    def set_group_options(self, group_func=None, group_query=None, group_rows=10, group_start=0, group_limit=1,
+    def set_group_options(self, group_func=None, group_query=None, group_start=0, group_limit=1,
                           group_offset=0, group_sort=None, group_sort_ingroup=None, group_format='grouped',
                           group_main=False, group_num_groups=True, group_cache_percent=0, group_truncate=False):
         self.params['group'] = True
         self.params['group.func'] = group_func
         self.params['group.query'] = group_query
-        self.params['group.rows'] = group_rows
         self.params['group.start'] = group_start
         self.params['group.limit'] = group_limit
         self.params['group.offset'] = group_offset
@@ -294,8 +294,12 @@ def make_solr_query_url(solr_query_params, debug=False):
 
 class SolrResponseInterpreter:
     def __init__(self, response, next_page_query=None):
+
+        if "grouped" in response and "expanded" in response:
+            raise SearchEngineException("Response contains both grouped and expanded results, this is not supported")
+        
         if "grouped" in response:
-            grouping_field = list(response["grouped"].keys())[0]            
+            grouping_field = list(response["grouped"].keys())[0]     
             self.docs = [{
                 'id': group['doclist']['docs'][0]['id'],
                 'score': group['doclist']['docs'][0].get('score', 0),
@@ -307,12 +311,31 @@ class SolrResponseInterpreter:
             self.num_rows = len(self.docs)
             self.num_found = response["grouped"][grouping_field]["ngroups"]
             self.non_grouped_number_of_results = response["grouped"][grouping_field]["matches"]
+        elif "expanded" in response:
+            collapse_field = 'pack_grouping_child' if 'pack_grouping_child' in response['responseHeader']['params']['fl'] else 'pack_grouping'
+            self.docs = []
+            for doc in response["response"]["docs"]:
+                group_name = doc[collapse_field] if collapse_field in doc else ''
+                group_docs = response['expanded'][doc[collapse_field]]['docs'] if collapse_field in doc and doc[collapse_field] in response['expanded'] else []
+                group_docs = [doc] + group_docs  # Add the original document to the group docs list
+                n_more_in_group = response['expanded'][doc[collapse_field]]['numFound'] if collapse_field in doc and doc[collapse_field] in response['expanded'] else 0
+                self.docs.append({
+                    'id': doc['id'],
+                    'score': doc['score'],
+                    'n_more_in_group': n_more_in_group,
+                    'group_docs': group_docs,
+                    'group_name': group_name
+                })
+            self.start = int(response["response"]["start"])
+            self.num_rows = len(self.docs)
+            self.num_found = response["response"]["numFound"]  # This corresponds to the total number of groups (including sounds without group being counted as one group because of nullPolicy=expand)
+            self.non_grouped_number_of_results = -1. # When using the collapse and expand query parser, we don't know the number of uncollapsed results, this will be obtained later making a second query
         else:
             self.docs = response["response"]["docs"]
             self.start = int(response["response"]["start"])
             self.num_rows = len(self.docs)
             self.num_found = response["response"]["numFound"]
-            self.non_grouped_number_of_results = -1
+            self.non_grouped_number_of_results = 0
 
         self.q_time = response["responseHeader"]["QTime"]
 
@@ -339,12 +362,6 @@ class SolrResponseInterpreter:
         if settings.DEBUG or (settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD > -1 and self.q_time > settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD):
             solr_query_url = make_solr_query_url(response['responseHeader']['params'], debug=True) 
             
-            # Add the query URL and response to the extra debug info, this will be used in the SOLR debug panel
-            self._solr_extra_debug_info = {
-                'query_url': solr_query_url,
-                'response': response,
-            }
-
             # If query is slow, log the SOLR parameters so we can debug it later (this works in production environment as well)
             if settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD > -1 and self.q_time > settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD:
                 search_logger.info('SOLR slow query detected (%s)' % json.dumps({
@@ -352,3 +369,18 @@ class SolrResponseInterpreter:
                     'num_results': self.num_found, 
                     'url': solr_query_url
                 }))
+        
+            if settings.DEBUG: 
+                # If in debug mode, store query stats in cache so they can be loaded by the SOLR debug panel
+                query_info = {
+                    'num_results': self.num_found,
+                    'time': self.q_time,
+                    'query_solr_url': solr_query_url,
+                    'query_solr_response': response,
+                }
+                info_for_panel = cache.get("solr_debug_panel_query_info")
+                if info_for_panel is None:
+                    info_for_panel = []
+                info_for_panel.append(query_info)
+                cache.set("solr_debug_panel_query_info", info_for_panel, 60 * 60)
+

@@ -131,6 +131,6 @@ def strip_unnecessary_br(value):
 
 @register.filter
 def format_json(value):
-    value = json.dumps(value, sort_keys=True, indent=4)
+    value = json.dumps(value, indent=4)
     value = '<pre>' + value + '</pre>'
     return mark_safe(value)

@@ -108,6 +108,12 @@
 			{
 				"label": "Reindex search engine",
 				"type": "shell",
+				"command": "docker compose run --rm web python manage.py reindex_search_engine_sounds && docker compose run --rm web python manage.py reindex_search_engine_forum",
+				"problemMatcher": []
+			},
+			{
+				"label": "Reindex search engine (include sim vectors)",
+				"type": "shell",
 				"command": "docker compose run --rm web python manage.py reindex_search_engine_sounds --include-similarity-vectors && docker compose run --rm web python manage.py reindex_search_engine_forum",
 				"problemMatcher": []
 			},

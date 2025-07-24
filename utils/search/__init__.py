@@ -42,7 +42,7 @@ def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds
 class SearchResults:
 
     def __init__(self, docs=None, num_found=-1, start=-1, num_rows=-1, non_grouped_number_of_results=-1,
-                 facets=None, highlighting=None, q_time=-1, extra_debug_info=dict()):
+                 facets=None, highlighting=None, q_time=-1):
         """
         Class that holds the results of a search query. It must contain the fields defined below.
 
@@ -129,8 +129,6 @@ class SearchResults:
                 }
 
             q_time (int, optional): time that it took to execute the query in the backend, in ms
-            extra_debug_info (Dict, optional): dictionary with extra information about the query/results which can
-                be useful for debugging purposes.
         """
         self.docs = docs if docs is not None else list()
         self.facets = facets if facets is not None else dict()
@@ -140,7 +138,6 @@ class SearchResults:
         self.start = start
         self.num_rows = num_rows
         self.q_time = q_time
-        self.extra_debug_info = extra_debug_info
 
     def __str__(self):
         return f'<SearchResults with {self.num_found} results found>'
@@ -264,7 +261,7 @@ class SearchEngineBase:
             group_by_pack (bool, optional): whether the search results should be grouped by sound pack. When grouped
                 by pack, only "num_sounds_per_pack_group" sounds per pack will be returned, together with additional
                 information about the number of other sounds in the pack that would be i the same group.
-            num_sounds_per_pack_group (int, optional): number of sounds to return per pack group
+            num_sounds_per_pack_group (int, optional): number of sounds to return per pack group (minimum one)
             facets (Dict{str: Dict}, optional): information about facets to be returned. Can be None if no faceting
                 information is required. Facets should be specified as a dictionary with the "db" field names to be
                 included in the faceting as keys, and a dictionary as values with optional specific parameters for

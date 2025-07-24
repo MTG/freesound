@@ -42,7 +42,7 @@ from django.utils import timezone
 
 from forum.models import Post, Forum, Thread
 from search import solrapi
-from sounds.models import Download, Sound
+from sounds.models import Download, Sound, SoundAnalysis
 from tags.models import SoundTag
 from utils.search import get_search_engine
 
@@ -115,50 +115,6 @@ def search_engine_sounds_backend(request, test_sounds):
         backend_class_name=backend_class_name,
     )
 
-    backend.add_sounds_to_index(test_sounds)
-    yield backend
-
-    # Only delete if not keeping indexes
-    if not request.config.option.keep_solr_index:
-        if api.collection_exists():
-            api.delete_collection()
-    else:
-        print(f"Keeping Solr index for inspection: {api.collection}")
-
-
-@pytest.fixture()
-def fake_analyzer_settings_for_similarity_tests(settings):
-    settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
-        "test_analyzer": {
-            'vector_property_name': 'embeddings', 
-            'vector_size': 100,}
-        }
-    settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = 'test_analyzer'
-
-
-@pytest.fixture()
-def search_engine_sounds_backend_for_similarity_tests(request, fake_analyzer_settings_for_similarity_tests, test_sounds):
-    backend_class_name = request.config.option.search_engine_backend
-    backend, api = _setup_search_engine_backend(
-        collection_type="freesound",
-        schema_filename="freesound.json",
-        unique_field="username",
-        index_url_key="sounds_index_url",
-        backend_class_name=backend_class_name,
-    )
-
-    # Monkey patch add_similarity_vectors_to_documents to add fake similarity vectors which are consturcted based on the sound ID number
-    def patched_add_similarity_vectors_to_documents(sound_objects, documents):
-        for document in documents:
-            document['similarity_vectors'] = [{
-                    'content_type': 'v',  # Content type for similarity vectors
-                    'analyzer': 'test_analyzer',
-                    'timestamp_start': 0,
-                    'timestamp_end': -1,
-                    'sim_vector100': [document['id'] for _ in range(100)],  # Use fake vectors using sound ID so we can do some easy checks later
-            }]
-    backend.add_similarity_vectors_to_documents = patched_add_similarity_vectors_to_documents
-
     backend.add_sounds_to_index(test_sounds, include_similarity_vectors=True)
     yield backend
 
@@ -193,17 +149,81 @@ def search_engine_forum_backend(request, test_posts):
 
 
 @pytest.fixture()
-def test_sounds(db):
+def fake_analyzer_settings_for_similarity_tests(settings):
+    settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
+        "test_analyzer": {
+            'vector_property_name': 'embeddings', 
+            'vector_size': 100,
+            'l2_norm': False
+        }}
+    settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = 'test_analyzer'
+
+
+@pytest.fixture()
+def test_sounds_qs(db):
     call_command('loaddata', 'sounds/fixtures/licenses.json', 'sounds/fixtures/sounds_with_tags.json', verbosity=0)
     sound_ids = Sound.public.filter(
             is_index_dirty=False, num_ratings__gte=settings.MIN_NUMBER_RATINGS
         ).values_list('id', flat=True)
-    sounds = list(Sound.objects.bulk_query_solr(sound_ids))
     if len(sound_ids) < 20:
         pytest.fail(
             f"Can't test search engine backend as there are not enough sounds for testing: {len(sounds)}, needed: 20"
         )
-    return sounds
+    return Sound.objects.bulk_query_solr(sound_ids)
+
+
+@pytest.fixture()
+def test_sounds(db, test_sounds_qs, fake_analyzer_settings_for_similarity_tests):
+    
+    # Create fake SoundAnalysis objects for each sound
+    for sound in test_sounds_qs:
+        vector_size = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER]['vector_size']
+        SoundAnalysis.objects.create(
+            sound=sound,
+            analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER,
+            analysis_status="OK",
+            analysis_data={
+                "embeddings": [sound.id for i in range(0, vector_size)],  # Fake embeddings used for testing
+            }
+        )
+
+    return list(test_sounds_qs)
+
+@pytest.fixture()
+def expected_license_facet_results_all_sounds(test_sounds):
+    """
+    Fixture to provide expected facet counts for the license field based on test sounds.
+    """
+    expected_license_facet_results_all_sounds = {}
+    for sound in test_sounds:
+        license_name = sound.license.name
+        if license_name not in expected_license_facet_results_all_sounds:
+            expected_license_facet_results_all_sounds[license_name] = 1
+        else:
+            expected_license_facet_results_all_sounds[license_name] += 1
+    return expected_license_facet_results_all_sounds
+
+
+
+@pytest.fixture()
+def expected_license_facet_results_group_counts_as_one_in_facets(test_sounds):
+    """
+    Fixture to provide expected facet counts for the license field based on test sounds when
+    grouped sounds should count as 1 for facet count.
+    """
+    expected_license_facet_results_group_counts_as_one_in_facets = {}
+    packs_already_considered = list()
+    for sound in test_sounds:
+        if sound.pack is not None and sound.pack.id in packs_already_considered:
+            continue
+        if sound.pack is not None:
+            packs_already_considered.append(sound.pack.id)
+        license_name = sound.license.name
+        if license_name not in expected_license_facet_results_group_counts_as_one_in_facets:
+            expected_license_facet_results_group_counts_as_one_in_facets[license_name] = 1
+        else:
+            expected_license_facet_results_group_counts_as_one_in_facets[license_name] += 1
+    return expected_license_facet_results_group_counts_as_one_in_facets
 
 
 @pytest.fixture()
@@ -605,22 +625,41 @@ def test_sound_sort_parameter(search_engine_sounds_backend, output_file_handle, 
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
-def test_sound_group_by_pack(search_engine_sounds_backend, output_file_handle):
-    """Test grouping by pack functionality"""
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(group_by_pack=True))
-    for result in results.docs:
-        assert "id" in result, "No ID field in doc from results"
-        assert "group_name" in result, "No group_name field in doc from results"
-        assert "group_docs" in result, "No group_docs field in doc from results"
-        assert "n_more_in_group" in result, (
-            "No n_more_in_group field in doc from results"
-        )
-        group_sounds = Sound.objects.bulk_query_id(
-            sound_ids=[int(r["id"]) for r in result["group_docs"]]
-        )
-        first_sound_pack = group_sounds[0].pack
-        for sound in group_sounds:
-            assert sound.pack == first_sound_pack, "Different packs in pack group"
+def test_sound_group_by_pack(search_engine_sounds_backend, output_file_handle, test_sounds):
+    """Test grouping by pack functionality including different values for num_sounds_per_pack_group"""
+    
+    # Collect data from existing packs so we can later compare with search results
+    expected_pack_data = {}
+    for sound in test_sounds:
+        if sound.pack is not None:
+            pack_grouping_field = f'{sound.pack.id}_{sound.pack.name}'
+            if pack_grouping_field not in expected_pack_data:
+                expected_pack_data[pack_grouping_field] = {
+                    'num_sounds': 0,
+                }
+            expected_pack_data[pack_grouping_field]['num_sounds'] += 1
+    
+    # Check that the number of sounds per pack and the number of docs returned per pack is correct
+    for num_sounds_per_pack_group in [1, 3]:
+        results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
+                                                    dict(group_by_pack=True,
+                                                        num_sounds_per_pack_group=num_sounds_per_pack_group))
+        num_packs_assessed = 0
+        for result in results.docs:
+            assert "id" in result, "No ID field in doc from results"
+            assert "group_name" in result, "No group_name field in doc from results"
+            assert "group_docs" in result, "No group_docs field in doc from results"
+            assert "n_more_in_group" in result, (
+                "No n_more_in_group field in doc from results"
+            )
+            expected_data = expected_pack_data.get(result["group_name"], None)
+            if expected_data is not None:
+                assert result["n_more_in_group"] == expected_data["num_sounds"] - 1, \
+                    "n_more_in_group does not match expected number of sounds in pack group"
+                assert len(result["group_docs"]) == min(num_sounds_per_pack_group, expected_data["num_sounds"]), "Unexpected number of sounds in group docs"
+                num_packs_assessed += 1
+
+    assert num_packs_assessed > 0, "Results returned no sounds with packs so no packs were assessed"
 
 
 @pytest.mark.search_engine
@@ -628,9 +667,8 @@ def test_sound_group_by_pack(search_engine_sounds_backend, output_file_handle):
 @pytest.mark.django_db
 def test_sound_sounds_with_pack(search_engine_sounds_backend, output_file_handle):
     """Test filtering sounds with pack"""
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-        only_sounds_with_pack=True, num_sounds=50
-    ))
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
+                                                dict(only_sounds_with_pack=True, num_sounds=50))
     sounds = Sound.objects.bulk_query_id(sound_ids=[r["id"] for r in results.docs])
     for sound in sounds:
         assert sound.pack is not None, (
@@ -641,25 +679,57 @@ def test_sound_sounds_with_pack(search_engine_sounds_backend, output_file_handle
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
-def test_sound_facets(search_engine_sounds_backend, output_file_handle):
+def test_sound_facets(search_engine_sounds_backend, output_file_handle, expected_license_facet_results_all_sounds):
     """Test faceting functionality"""
     test_facet_options = {
         settings.SEARCH_SOUNDS_FIELD_USER_NAME: {"limit": 3},
         settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: {"limit": 1},
         settings.SEARCH_SOUNDS_FIELD_TYPE: {},
+        settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}
     }
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(facets=test_facet_options))
-    assert len(results.facets) == 3, "Wrong number of facets returned"
+    assert len(results.facets) == 4, "Wrong number of facets returned"
     for facet_field, facet_options in test_facet_options.items():
         assert facet_field in results.facets, f"Facet {facet_field} not found in facets"
         if "limit" in facet_options:
-            assert len(results.facets[facet_field]) == facet_options["limit"], (
+            assert len(results.facets[facet_field]) <= facet_options["limit"], (
                 f"Wrong number of items in facet {facet_field}"
             )
+    
+    # Assert count results for one of the facets
+    for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
+        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
 
     # Test if no facets requested, no facets returned
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict())
     assert results.facets == dict(), "Facets returned but not requested"
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_facets_group_counts_as_one_in_facets(search_engine_sounds_backend, 
+                                                    output_file_handle, 
+                                                    expected_license_facet_results_all_sounds,
+                                                    expected_license_facet_results_group_counts_as_one_in_facets
+                                                    ):
+    """Test how grouping by pack affets facet counts when considering the group_counts_as_one_in_facets option"""
+
+    # Check that facet counts are not collapsed to packs when group_counts_as_one_in_facets is False
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
+                                                dict(group_by_pack=True,
+                                                        facets={settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}},
+                                                        group_counts_as_one_in_facets=False))
+    for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
+        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
+
+    # Check that facet counts are collapsed to packs when group_counts_as_one_in_facets is True
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
+                                                dict(group_by_pack=True,
+                                                        facets={settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}},
+                                                        group_counts_as_one_in_facets=True))
+    for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
+        assert facet_count == expected_license_facet_results_group_counts_as_one_in_facets[facet_name]
 
 
 @pytest.mark.search_engine
@@ -818,68 +888,158 @@ def test_sound_pack_tags(search_engine_sounds_backend, output_file_handle, test_
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
-@mock.patch("utils.search.backends.solr555pysolr.get_similarity_search_target_vector")
-def test_sound_similarity_search(
-    get_similarity_search_target_vector, search_engine_sounds_backend_for_similarity_tests, output_file_handle, test_sounds
-):
+def test_sound_similarity_search(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test similarity search functionality"""
 
     # Make sure sounds are sorted by ID so that in similarity search the closest sound is either the next or the previous one
     test_sounds = sorted(test_sounds, key=lambda x: x.id)
 
-    # Implement mock for get_similarity_search_target_vector to return a vector based on the sound ID number
-    get_similarity_search_target_vector.return_value = [
-        test_sounds[0].id for _ in range(100)  # Will return vector corresponding to the first sound ID, with ID 6
-    ]
-
     # Make a query for target sound 0 and check that results are sorted by ID
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend_for_similarity_tests, output_file_handle, dict(
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
         similar_to=test_sounds[0].id,
         similar_to_max_num_sounds=10,
         similar_to_analyzer="test_analyzer",
+        group_by_pack=False,
     ))
+    
     results_ids = [r["id"] for r in results.docs]
-    sounds_ids = [s.id for s in test_sounds][
-        1:11
-    ]  # target sound is expected to be in results
-    assert results_ids == sounds_ids, (
+    # Because in our testing environment the similarity vector for each sound is its sound ID * num dimensions (e.g. [6, 6, 6, ...]),
+    # if we make a query starting from the lowest sound ID, the results should be the following existing IDs in proper order.
+    expected_result_ids = [s.id for s in test_sounds][1:11]
+    assert results_ids == expected_result_ids, (
         "Similarity search did not return sounds sorted as expected when searching with a target sound ID"
     )
 
     # Now make the same query but passing an arbitrary vector
     target_sound_vector = [test_sounds[0].id for _ in range(100)]
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend_for_similarity_tests, output_file_handle, dict(
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
         similar_to=target_sound_vector,
         similar_to_max_num_sounds=10,
         similar_to_analyzer="test_analyzer",
+        group_by_pack=False,
     ))
     results_ids = [r["id"] for r in results.docs]
-    sounds_ids = [s.id for s in test_sounds][
-        0:10
-    ]  # target sound is expected to be in results
-    assert results_ids == sounds_ids, (
+    # In that case, the target vector is [6, 6, 6, ...] which corresponds to the lowest sound ID. However, 
+    # unlike the previous case, now sound ID 6 will also be included in the results because we are not using it
+    # as target for the the query, we're only using a vector which happens to be the same as that of sound ID 6.
+    expected_result_ids = [s.id for s in test_sounds][0:10]  # target sound is expected to be in results
+    assert results_ids == expected_result_ids, (
         "Similarity search did not return sounds sorted as expected when searching with a target vector"
     )
 
     # Check requesting sounds for an analyzer that doesn't exist
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend_for_similarity_tests, output_file_handle, dict(
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
         similar_to=target_sound_vector,
         similar_to_max_num_sounds=10,
         similar_to_analyzer="test_analyzer2",
+        group_by_pack=False,
     ))
     assert len(results.docs) == 0, (
         "Similarity search returned results for an analyzer that doesn't exist"
     )
 
-    # Check similar_to_max_num_sounds parameter
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend_for_similarity_tests, output_file_handle, dict(
+    # Check limiting the similar_to_max_num_sounds parameter
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
         similar_to=target_sound_vector,
         similar_to_max_num_sounds=5,
         similar_to_analyzer="test_analyzer",
+        group_by_pack=False,
     ))
     assert len(results.docs) == 5, (
         "Similarity search returned unexpected number of results"
     )
+
+    # Check that group by pack also works when doing similarity search
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        similar_to=test_sounds[0].id,
+        similar_to_max_num_sounds=100,  # Use a larger number to ensure we get multiple packs
+        num_sounds=100,
+        similar_to_analyzer="test_analyzer",
+        group_by_pack=True,
+    ))
+
+    all_packs = list()
+    for result in results.docs:
+        s = Sound.objects.get(id=result["id"])
+        if s.pack:
+            all_packs.append(s.pack_id)
+    assert len(all_packs) == len(set(all_packs)), (
+        "Similarity search with group_by_pack returned results with the same pack multiple times"
+    )
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_similarity_search_filter(search_engine_sounds_backend, output_file_handle, test_sounds_qs):
+    """Test filtering when using similarity search functionality"""
+
+    for fq, expected_results_count in [
+        ("username:\"Anton\"", test_sounds_qs.filter(user__username="Anton").count()),
+        ("license:\"Attribution\"", test_sounds_qs.filter(license__name="Attribution").count()),
+        ("license:\"CC0\"", test_sounds_qs.filter(license__name="CC0").count()),  
+        ("type:wav", test_sounds_qs.filter(type="wav").count()),
+        ("type:non_existing", test_sounds_qs.filter(type="non_existing").count()),
+        ("username:Anton license:Attribution", test_sounds_qs.filter(user__username="Anton", license__name="Attribution").count())
+    ]:
+        # Make a query for target sound 0 and check that results are sorted by ID
+        results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+            similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
+            similar_to_max_num_sounds=100,
+            num_sounds=100,
+            similar_to_analyzer="test_analyzer",
+            query_filter=fq
+        ))
+        assert expected_results_count == results.num_found, (
+            f"Similarity search with filter did not return the expected number of results for {fq}"
+        )
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_similarity_search_facets(search_engine_sounds_backend, 
+                                        output_file_handle, 
+                                        expected_license_facet_results_all_sounds,
+                                        expected_license_facet_results_group_counts_as_one_in_facets):
+    
+    """Test that faceting works as expected in combination wih the similarity search functionality"""
+    # Check that faceting also work when doing similarity search queries
+    test_facet_options = {
+        settings.SEARCH_SOUNDS_FIELD_USER_NAME: {"limit": 3},
+        settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: {"limit": 1},
+        settings.SEARCH_SOUNDS_FIELD_TYPE: {},
+        settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}
+    }
+
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
+        similar_to_max_num_sounds=100,  # Will return all test sounds
+        num_sounds=100,
+        similar_to_analyzer="test_analyzer",
+        facets=test_facet_options,
+        group_by_pack=True,
+        group_counts_as_one_in_facets=False,
+    ))
+    assert len(results.facets) == 4, "Wrong number of facets returned"
+
+    # Assess the counts for one of the facets
+    for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
+        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
+
+    # Now repeat the experiment, for the case in which group_counts_as_one_in_facets is True
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
+        similar_to_max_num_sounds=100,  # Will return all test sounds
+        num_sounds=100,
+        similar_to_analyzer="test_analyzer",
+        facets=test_facet_options,
+        group_by_pack=True,
+        group_counts_as_one_in_facets=True,
+    ))
+    assert len(results.facets) == 4, "Wrong number of facets returned"
+    for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
+        assert facet_count == expected_license_facet_results_group_counts_as_one_in_facets[facet_name]
 
 
 @pytest.mark.search_engine

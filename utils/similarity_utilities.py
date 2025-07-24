@@ -183,12 +183,16 @@ def get_similarity_search_target_vector(sound_id, analyzer=settings.SEARCH_ENGIN
     sa = sounds.models.SoundAnalysis.objects.filter(sound_id=sound_id, analyzer=analyzer, analysis_status="OK")
     if sa.exists():
         config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[analyzer]
-        if sa.exists():
-            data = sa.first().get_analysis_data_from_file()
-            if data is not None:
-                vector_raw = data[config_options['vector_property_name']]
-                if vector_raw is not None:
-                    if config_options['l2_norm']:
-                        vector_raw = get_l2_normalized_vector(vector_raw)
-                    return vector_raw
+        vector_property_name = config_options['vector_property_name']
+        sa = sa.first()
+        if sa.analysis_data is not None and vector_property_name in sa.analysis_data:
+            data = sa.analysis_data
+        else:
+            data = sa.get_analysis_data_from_file()
+        if data is not None:
+            vector_raw = data[vector_property_name]
+            if vector_raw is not None:
+                if config_options['l2_norm']:
+                    vector_raw = get_l2_normalized_vector(vector_raw)
+                return vector_raw
     return None

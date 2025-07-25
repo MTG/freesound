@@ -7,10 +7,10 @@
 Check out these new cool sounds that you might be interested in:
 
 
-{% for user, sound_objs, more_url_params, more_count, new_count in users_sounds %}{{ user.0 }} has uploaded {{ new_count }} new sound{{ new_count|pluralize }}:
+{% for user, sound_objs, more_url_params, more_count, new_count in users_sounds %}{{ user }} has uploaded {{ new_count }} new sound{{ new_count|pluralize }}:
 {% for sound_obj in sound_objs %}
     {{ sound_obj.original_filename }}
-    {% absurl "sound" user.0 sound_obj.id %}
+    {% absurl "sound" user sound_obj.id %}
 {% endfor %}{% if more_count > 0 %}
     See all results in Freesound ({{ more_count }} more)
     {% absurl "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}

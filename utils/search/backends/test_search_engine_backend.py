@@ -32,6 +32,7 @@ import os
 from unittest import mock
 import time
 from contextlib import contextmanager
+import urllib
 
 from django.contrib.auth.models import User
 import pytest
@@ -43,8 +44,10 @@ from django.utils import timezone
 from forum.models import Post, Forum, Thread
 from search import solrapi
 from sounds.models import Download, Sound, SoundAnalysis
-from tags.models import SoundTag
+from tags.models import SoundTag, Tag
 from utils.search import get_search_engine
+from follow.models import FollowingUserItem, FollowingQueryItem
+from follow import follow_utils
 
 console_logger = logging.getLogger("console")
 console_logger.setLevel(logging.DEBUG)
@@ -167,7 +170,7 @@ def test_sounds_qs(db):
         ).values_list('id', flat=True)
     if len(sound_ids) < 20:
         pytest.fail(
-            f"Can't test search engine backend as there are not enough sounds for testing: {len(sounds)}, needed: 20"
+            f"Can't test search engine backend as there are not enough sounds for testing: {len(sound_ids)}, needed: 20"
         )
     return Sound.objects.bulk_query_solr(sound_ids)
 
@@ -188,42 +191,6 @@ def test_sounds(db, test_sounds_qs, fake_analyzer_settings_for_similarity_tests)
         )
 
     return list(test_sounds_qs)
-
-@pytest.fixture()
-def expected_license_facet_results_all_sounds(test_sounds):
-    """
-    Fixture to provide expected facet counts for the license field based on test sounds.
-    """
-    expected_license_facet_results_all_sounds = {}
-    for sound in test_sounds:
-        license_name = sound.license.name
-        if license_name not in expected_license_facet_results_all_sounds:
-            expected_license_facet_results_all_sounds[license_name] = 1
-        else:
-            expected_license_facet_results_all_sounds[license_name] += 1
-    return expected_license_facet_results_all_sounds
-
-
-
-@pytest.fixture()
-def expected_license_facet_results_group_counts_as_one_in_facets(test_sounds):
-    """
-    Fixture to provide expected facet counts for the license field based on test sounds when
-    grouped sounds should count as 1 for facet count.
-    """
-    expected_license_facet_results_group_counts_as_one_in_facets = {}
-    packs_already_considered = list()
-    for sound in test_sounds:
-        if sound.pack is not None and sound.pack.id in packs_already_considered:
-            continue
-        if sound.pack is not None:
-            packs_already_considered.append(sound.pack.id)
-        license_name = sound.license.name
-        if license_name not in expected_license_facet_results_group_counts_as_one_in_facets:
-            expected_license_facet_results_group_counts_as_one_in_facets[license_name] = 1
-        else:
-            expected_license_facet_results_group_counts_as_one_in_facets[license_name] += 1
-    return expected_license_facet_results_group_counts_as_one_in_facets
 
 
 @pytest.fixture()
@@ -477,6 +444,37 @@ def run_forum_posts_query_and_save_results(search_engine_backend, output_file_ha
         return results
 
 
+def expected_license_facet_results_all_sounds(test_sounds):
+    """ Get expected facet counts for the license field based on test sounds.
+    """
+    expected_license_facet_results_all_sounds = {}
+    for sound in test_sounds:
+        license_name = sound.license.name
+        if license_name not in expected_license_facet_results_all_sounds:
+            expected_license_facet_results_all_sounds[license_name] = 1
+        else:
+            expected_license_facet_results_all_sounds[license_name] += 1
+    return expected_license_facet_results_all_sounds
+
+
+def expected_license_facet_results_group_counts_as_one_in_facets(test_sounds):
+    """ Get expected facet counts for the license field based on test sounds when grouped sounds should count as 1 for facet count.
+    """
+    expected_license_facet_results_group_counts_as_one_in_facets = {}
+    packs_already_considered = list()
+    for sound in test_sounds:
+        if sound.pack is not None and sound.pack.id in packs_already_considered:
+            continue
+        if sound.pack is not None:
+            packs_already_considered.append(sound.pack.id)
+        license_name = sound.license.name
+        if license_name not in expected_license_facet_results_group_counts_as_one_in_facets:
+            expected_license_facet_results_group_counts_as_one_in_facets[license_name] = 1
+        else:
+            expected_license_facet_results_group_counts_as_one_in_facets[license_name] += 1
+    return expected_license_facet_results_group_counts_as_one_in_facets
+
+
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
@@ -679,7 +677,7 @@ def test_sound_sounds_with_pack(search_engine_sounds_backend, output_file_handle
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
-def test_sound_facets(search_engine_sounds_backend, output_file_handle, expected_license_facet_results_all_sounds):
+def test_sound_facets(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test faceting functionality"""
     test_facet_options = {
         settings.SEARCH_SOUNDS_FIELD_USER_NAME: {"limit": 3},
@@ -696,9 +694,10 @@ def test_sound_facets(search_engine_sounds_backend, output_file_handle, expected
                 f"Wrong number of items in facet {facet_field}"
             )
     
+    expected_factets = expected_license_facet_results_all_sounds(test_sounds)
     # Assert count results for one of the facets
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
+        assert facet_count == expected_factets[facet_name]
 
     # Test if no facets requested, no facets returned
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict())
@@ -710,26 +709,27 @@ def test_sound_facets(search_engine_sounds_backend, output_file_handle, expected
 @pytest.mark.django_db
 def test_sound_facets_group_counts_as_one_in_facets(search_engine_sounds_backend, 
                                                     output_file_handle, 
-                                                    expected_license_facet_results_all_sounds,
-                                                    expected_license_facet_results_group_counts_as_one_in_facets
+                                                    test_sounds
                                                     ):
     """Test how grouping by pack affets facet counts when considering the group_counts_as_one_in_facets option"""
 
+    expected_factets = expected_license_facet_results_all_sounds(test_sounds)
     # Check that facet counts are not collapsed to packs when group_counts_as_one_in_facets is False
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
                                                 dict(group_by_pack=True,
                                                         facets={settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}},
                                                         group_counts_as_one_in_facets=False))
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
+        assert facet_count == expected_factets[facet_name]
 
     # Check that facet counts are collapsed to packs when group_counts_as_one_in_facets is True
+    expected_license_facets = expected_license_facet_results_group_counts_as_one_in_facets(test_sounds)
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
                                                 dict(group_by_pack=True,
                                                         facets={settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}},
                                                         group_counts_as_one_in_facets=True))
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_group_counts_as_one_in_facets[facet_name]
+        assert facet_count == expected_license_facets[facet_name]
 
 
 @pytest.mark.search_engine
@@ -1000,8 +1000,7 @@ def test_sound_similarity_search_filter(search_engine_sounds_backend, output_fil
 @pytest.mark.django_db
 def test_sound_similarity_search_facets(search_engine_sounds_backend, 
                                         output_file_handle, 
-                                        expected_license_facet_results_all_sounds,
-                                        expected_license_facet_results_group_counts_as_one_in_facets):
+                                        test_sounds):
     
     """Test that faceting works as expected in combination wih the similarity search functionality"""
     # Check that faceting also work when doing similarity search queries
@@ -1023,23 +1022,179 @@ def test_sound_similarity_search_facets(search_engine_sounds_backend,
     ))
     assert len(results.facets) == 4, "Wrong number of facets returned"
 
+    expected_factets = expected_license_facet_results_all_sounds(test_sounds)
     # Assess the counts for one of the facets
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
+        assert facet_count == expected_factets[facet_name]
 
     # Now repeat the experiment, for the case in which group_counts_as_one_in_facets is True
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-        similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
-        similar_to_max_num_sounds=100,  # Will return all test sounds
-        num_sounds=100,
-        similar_to_analyzer="test_analyzer",
-        facets=test_facet_options,
-        group_by_pack=True,
-        group_counts_as_one_in_facets=True,
-    ))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
+            similar_to_max_num_sounds=100,  # Will return all test sounds
+            num_sounds=100,
+            similar_to_analyzer="test_analyzer",
+            facets=test_facet_options,
+            group_by_pack=True,
+            group_counts_as_one_in_facets=True,
+        ),
+    )
     assert len(results.facets) == 4, "Wrong number of facets returned"
+    expected_license_facets = expected_license_facet_results_group_counts_as_one_in_facets(test_sounds)
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_group_counts_as_one_in_facets[facet_name]
+        assert facet_count == expected_license_facets[facet_name]
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_follow_utils_get_stream_sounds(search_engine_sounds_backend, output_file_handle, test_sounds):
+    users = User.objects.all()
+    test_user = users[0]
+
+    user_to_follow_1 = User.objects.get(username="xserra")
+    user_to_follow_2 = User.objects.get(username="Anton")
+
+    # Create following relationships
+    FollowingUserItem.objects.create(user_from=test_user, user_to=user_to_follow_1)
+    FollowingUserItem.objects.create(user_from=test_user, user_to=user_to_follow_2)
+
+    # we know these tags exist in the test data
+    FollowingQueryItem.objects.create(user=test_user, query="voice")
+    FollowingQueryItem.objects.create(user=test_user, query="conversation")
+
+    date_from = datetime.datetime(2005, 3, 1, tzinfo=datetime.timezone.utc)
+    date_to = datetime.datetime(2005, 3, 31, tzinfo=datetime.timezone.utc)
+    time_lapse = follow_utils.build_time_lapse(date_from, date_to)
+
+    users_sounds, tags_sounds = follow_utils.get_stream_sounds(
+        test_user, time_lapse, num_results_per_group=3, search_engine_backend=search_engine_sounds_backend
+    )
+    assert len(users_sounds) == 2, "Should have sounds from 2 followed users"
+
+    user_following, sound_objects, more_url_params, more_count, new_count = users_sounds[0]
+
+    # We can't be sure which order solr will return this in, but we know it's one of these two
+    assert user_following in [user_to_follow_1, user_to_follow_2]
+    # Check that all sounds belong to the followed user
+    for sound in sound_objects:
+        assert sound.user == user_following
+
+    assert len(more_url_params) == 2, "more_url_params should have 2 elements"
+    decoded_filter = urllib.parse.unquote(more_url_params[0])
+    assert f'username:"{user_following.username}"' in decoded_filter, "Filter should contain the followed username"
+    assert "created:" in decoded_filter, "Filter should contain created date filter"
+
+    # Check counts
+    assert more_count >= 0, "more_count should be non-negative"
+    assert len(sound_objects) <= 3, "Should not return more than num_results_per_group sounds"
+
+    # We expect sounds with "voice" tag (5 sounds) and "conversation" tag (1 sound)
+    assert len(tags_sounds) == 2, "Should have sounds from 2 followed tag queries"
+
+    tags, sound_objects, more_url_params, more_count, new_count = tags_sounds[0]
+    tags1, _, _, _, _ = tags_sounds[1]
+
+    assert (tags == ["voice"] and tags1 == ["conversation"]) or (tags == ["conversation"] and tags1 == ["voice"]), (
+        "Unexpected tags"
+    )
+
+    # Check that sounds have the expected tags
+    expected_tag = tags[0]
+    for sound in sound_objects:
+        sound_tags = [tag.name for tag in sound.tags.all()]
+        assert expected_tag in sound_tags, f"Sound {sound.id} should have '{expected_tag}' tag"
+
+    assert len(more_url_params) == 2, "more_url_params should have 2 elements"
+    decoded_filter = urllib.parse.unquote(more_url_params[0])
+    for tag in tags:
+        assert f"tag:{tag}" in decoded_filter, f"Filter should contain tag:{tag}"
+    assert "created:" in decoded_filter, "Filter should contain created date filter"
+
+    decoded_sort = urllib.parse.unquote(more_url_params[1])
+    assert decoded_sort == settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST, "Sort should be date newest first"
+
+    assert more_count >= 0, "more_count should be non-negative"
+    assert len(sound_objects) <= 3, "Should not return more than num_results_per_group sounds"
+
+    # No sounds in this range
+    old_date_from = datetime.datetime(2004, 1, 1, tzinfo=datetime.timezone.utc)
+    old_date_to = datetime.datetime(2004, 12, 31, tzinfo=datetime.timezone.utc)
+    old_time_lapse = follow_utils.build_time_lapse(old_date_from, old_date_to)
+
+    old_users_sounds, old_tags_sounds = follow_utils.get_stream_sounds(
+        test_user, old_time_lapse, num_results_per_group=3, search_engine_backend=search_engine_sounds_backend
+    )
+    assert len(old_users_sounds) == 0
+    assert len(old_tags_sounds) == 0
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_geotag_queries(search_engine_sounds_backend, output_file_handle):
+    """Test geotag query functionality with both Intersects and range query formats"""
+
+    # Test 1: Using geotag:"Intersects()" format - should be converted to range format
+    # Query for sounds in a bounding box around Barcelona (includes Sagrada Familia)
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        query_filter='geotag:"Intersects(2.0 41.0 2.5 42.0)"',
+        num_sounds=10
+    ))
+
+    # Should find the Barcelona sound (ID 40) at lat=41.4036, lon=2.1744
+    result_ids = [r["id"] for r in results.docs]
+    assert 40 in result_ids, "Barcelona sound should be found in the bounding box query"
+    assert 41 not in result_ids, "Madrid sound should not be found in the bounding box query"
+
+    # Test 2: Using geotag range format directly
+    # Query for sounds in a bounding box around Madrid (includes Plaza Mayor)
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        query_filter='geotag:["40.0,-4.0" TO "41.0,-3.0"]',
+        num_sounds=10
+    ))
+
+    # Should find the Madrid sound (ID 41) at lat=40.4155, lon=-3.7074
+    result_ids = [r["id"] for r in results.docs]
+    print(result_ids)
+    assert 41 in result_ids, "Madrid sound should be found in the range query"
+    assert 40 not in result_ids, "Barcelona sound should not be found in the range query"
+
+    # Test 3: Query for sounds in Andalusia region (includes Seville and Granada)
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        query_filter='geotag:"Intersects(-6.5 36.0 -3.0 38.0)"',
+        num_sounds=10
+    ))
+
+    # Should find Seville (ID 42) at lat=37.3891, lon=-5.9845 and Granada (ID 44) at lat=37.1760, lon=-3.5976
+    result_ids = [r["id"] for r in results.docs]
+    assert 42 in result_ids, "Seville sound should be found in Andalusia query"
+    assert 44 in result_ids, "Granada sound should be found in Andalusia query"
+    assert 40 not in result_ids, "Barcelona sound should not be found in Andalusia query"
+
+    # Test 4: Query that should return no results (area with no sounds)
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        query_filter='geotag:"Intersects(0.0 0.0 1.0 1.0)"',
+        num_sounds=10
+    ))
+
+    # Should find no sounds in this area
+    assert results.num_found == 0, "No sounds should be found in the middle of the ocean"
+
+    # Test 5: Query for sounds with geotags (should return all 5 sounds)
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        query_filter='is_geotagged:true',
+        num_sounds=10
+    ))
+
+    # Should find all 5 sounds with geotags
+    assert results.num_found == 5, "All 5 sounds with geotags should be found"
+    result_ids = [r["id"] for r in results.docs]
+    expected_ids = [40, 41, 42, 43, 44]
+    for expected_id in expected_ids:
+        assert expected_id in result_ids, f"Sound {expected_id} should be found when querying for geotagged sounds"
 
 
 @pytest.mark.search_engine

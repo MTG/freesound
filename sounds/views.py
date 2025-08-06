@@ -209,7 +209,7 @@ def front_page(request):
 
 
 @redirect_if_old_username
-def sound(request, username, sound_id):
+def sound(request, username, sound_id, sed_experiment=0):
     try:
         sound = Sound.objects.prefetch_related("tags")\
             .select_related("license", "user", "user__profile", "pack")\
@@ -272,6 +272,8 @@ def sound(request, username, sound_id):
         'min_num_ratings': settings.MIN_NUMBER_RATINGS
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
+    if sed_experiment != 0:
+        tvars.update({'sed_exp':sed_experiment})
     return render(request, 'sounds/sound.html', tvars)
 
 
@@ -1170,3 +1172,12 @@ def pack_downloaders(request, username, pack_id):
              "download_list": download_list}
     tvars.update(pagination)
     return render(request, 'sounds/modal_downloaders.html', tvars)
+
+def get_sed_data(request, sound_id):
+    sound = get_object_or_404(Sound, id=sound_id)
+    try:
+        analysis = SoundAnalysis.objects.get(sound=sound, analyzer='fsd-sinet_v1', analysis_status='OK').analysis_data
+    except SoundAnalysis.DoesNotExist:
+        sound.analyze(analyzer='fsd-sinet_v1')
+        analysis = {}
+    return JsonResponse(analysis)

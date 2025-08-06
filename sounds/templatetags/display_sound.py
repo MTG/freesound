@@ -112,19 +112,6 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
         # If 'sound' argument is not a Sound instance then we assume it is a sound ID and we retrieve the
         # corresponding object from the DB.
         sound_obj = get_sound_using_bulk_query_id(sound)
-    
-    sed_dict = {}
-    if player_size == 'big_no_info':
-        try:
-            sed_object = SoundAnalysis.objects.get(sound=sound,analyzer='fsd-sinet_v1',analysis_status='OK').analysis_data
-            if sed_object and len(sed_object['fsdsinet_detections']):
-                if 'level' not in sed_object['fsdsinet_detections'][0]:
-                    sound.analyze(analyzer='fsd-sinet_v1')
-                else:
-                    sed_dict = json.dumps(sed_object)
-        except SoundAnalysis.DoesNotExist:
-            sound.analyze(analyzer='fsd-sinet_v1')
-            pass
 
     if sound_obj is None:
         return {
@@ -149,7 +136,6 @@ def display_sound(context, sound, player_size='small', show_bookmark=None, show_
             'show_timesince': show_timesince,
             'min_num_ratings': settings.MIN_NUMBER_RATINGS,
             'random_number': randint(1, 1000000),  # Used to generate IDs for HTML elements that need to be unique per sound/player instance
-            'sed': sed_dict,
         }
 
 

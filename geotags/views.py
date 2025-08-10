@@ -137,7 +137,7 @@ def geotags_for_user_latest_barray(request, username):
 def geotags_for_pack_barray(request, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     results, _ = perform_search_engine_query({
-        'query_filter': f'grouping_pack:"{pack.id}_{pack.name}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
+        'query_filter': f'pack_grouping:"{pack.id}_{pack.name}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
         'field_list': ['id', 'score', 'geotag'],
         'num_sounds': pack.num_sounds,
     })
@@ -265,7 +265,7 @@ def for_pack(request, username, pack_id):
         'pack': pack,
         'sound': None,
         'url': reverse('geotags-for-pack-barray', args=[pack.id]),
-        'query_search_page_url': reverse('sounds-search') + f'?f=grouping_pack:"{pack.id}_{urllib.parse.quote(pack.name)}"&mm=1',
+        'query_search_page_url': reverse('sounds-search') + f'?f=pack_grouping:"{pack.id}_{urllib.parse.quote(pack.name)}"&mm=1',
         'modal_version': request.GET.get('ajax'),
     })
     if request.GET.get('ajax'):

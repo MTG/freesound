@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.urls import re_path
+from django.urls import path
 from django.contrib import admin, messages
 from django.core.cache import cache
 from django.core.management import call_command
@@ -49,7 +49,7 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
                  ('User defined fields', {'fields': ('description', 'license', 'original_filename', 'bst_category', 'sources', 'pack')}),
                  ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate',
                                                  'filesize', 'channels', 'date_recorded')}),
-                 ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'has_bad_description', 'is_explicit')}),
+                 ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'is_explicit')}),
                  ('Processing', {'fields': ('processing_state', 'processing_date', 'processing_ongoing_state', 'processing_log', 'similarity_state')}),
                  )
     raw_id_fields = ('user', 'pack', 'sources')
@@ -223,8 +223,8 @@ class SoundOfTheDayAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            re_path('generate_new_sounds/', self.generate_new_sounds),
-            re_path('clear_sound_of_the_day_cache/', self.clear_sound_of_the_day_cache),
+            path('generate_new_sounds/', self.generate_new_sounds),
+            path('clear_sound_of_the_day_cache/', self.clear_sound_of_the_day_cache),
         ]
         return my_urls + urls
 
@@ -242,7 +242,7 @@ class SoundOfTheDayAdmin(admin.ModelAdmin):
              messages.add_message(request, messages.WARNING, 'Could not empty cache for sound of the day as selected cache backend is not compatible')
         return HttpResponseRedirect(reverse('admin:sounds_soundoftheday_changelist'))
 
-        
+
 
 
 

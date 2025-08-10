@@ -43,7 +43,7 @@ def _get_value_to_apply_group_by_pack(self):
     # Force return True if display_as_packs is enabled, and False if map_mode is enabled
     if self.sqp.get_option_value_to_apply('map_mode'):
         return False
-    elif self.sqp.has_filter_with_name('grouping_pack'):
+    elif self.sqp.has_filter_with_name('pack_grouping'):
         return False
     elif self.sqp.get_option_value_to_apply('display_as_packs'):
         return True
@@ -116,8 +116,8 @@ class SearchQueryProcessor:
             query_param_name='dp',
             label='Display results as packs',
             help_text='Display search results as packs rather than individual sounds',
-            get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode') else option.value,
-            should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode')
+            get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('pack_grouping') or option.sqp.get_option_value_to_apply('map_mode') else option.value,
+            should_be_disabled = lambda option: option.sqp.has_filter_with_name('pack_grouping') or option.sqp.get_option_value_to_apply('map_mode')
         )),
         ('group_by_pack', SearchOptionBool, dict(
             query_param_name='g',
@@ -125,7 +125,7 @@ class SearchQueryProcessor:
             help_text='Group search results so that multiple sounds of the same pack only represent one item',
             value_default=True,
             get_value_to_apply = _get_value_to_apply_group_by_pack,
-            should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('display_as_packs') or option.sqp.get_option_value_to_apply('map_mode')
+            should_be_disabled = lambda option: option.sqp.has_filter_with_name('pack_grouping') or option.sqp.get_option_value_to_apply('display_as_packs') or option.sqp.get_option_value_to_apply('map_mode')
         )),
         ('grid_mode', SearchOptionBool, dict(
             advanced=False,
@@ -349,8 +349,8 @@ class SearchQueryProcessor:
         filters_data = []
         for name, value in self.non_option_filters:
             filter_data = [name, value, self.get_url(remove_filters=[f'{name}:{value}'])]
-            if name == 'grouping_pack':
-                # There is a special case for the grouping_pack filter in which we only want to display the name of the pack and not the ID
+            if name == 'pack_grouping':
+                # There is a special case for the pack_grouping filter in which we only want to display the name of the pack and not the ID
                 filter_data[0] = 'pack'
                 if value.startswith('"'):
                     filter_data[1] = '"'+ value[value.find("_")+1:]

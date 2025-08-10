@@ -1625,7 +1625,7 @@ class Pack(models.Model):
         return reverse('pack', args=[self.user.username, smart_str(self.id)])
 
     def get_pack_sounds_in_search_url(self):
-        return f'{reverse("sounds-search")}?f=grouping_pack:{ self.pack_filter_value() }&s=Date+added+(newest+first)&g=1'
+        return f'{reverse("sounds-search")}?f=pack_grouping:{ self.pack_filter_value() }&s=Date+added+(newest+first)&g=1'
 
     class Meta:
         unique_together = ('user', 'name', 'is_deleted')

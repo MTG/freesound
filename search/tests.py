@@ -118,7 +118,7 @@ def create_fake_perform_search_engine_query_response(num_results=15):
         {'group_docs': [{'id': sound_id}],
          'id': sound_id,
          'n_more_in_group': 0,
-         'group_name': f'{pack_id}_xyz' if pack_id is not None else str(sound_id)} for sound_id, pack_id in sound_ids
+         'group_name': f'{pack_id}_xyz' if pack_id is not None else ''} for sound_id, pack_id in sound_ids
     ]
     paginator = SearchResultsPaginator(results, num_results)
     return (results, paginator)

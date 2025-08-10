@@ -180,7 +180,9 @@ class SearchEngineException(Exception):
 
 class SearchEngineBase:
 
-    # Test subclasses of SearchEngineBase with the test_search_engine_backend management command
+    solr_base_url = None
+
+    # Test SearchEngineBase with `pytest -m "search_engine" utils/search/backends/test_search_engine_backend.py`
 
     # Sound search related methods
 
@@ -259,7 +261,7 @@ class SearchEngineBase:
             group_by_pack (bool, optional): whether the search results should be grouped by sound pack. When grouped
                 by pack, only "num_sounds_per_pack_group" sounds per pack will be returned, together with additional
                 information about the number of other sounds in the pack that would be i the same group.
-            num_sounds_per_pack_group (int, optional): number of sounds to return per pack group
+            num_sounds_per_pack_group (int, optional): number of sounds to return per pack group (minimum one)
             facets (Dict{str: Dict}, optional): information about facets to be returned. Can be None if no faceting
                 information is required. Facets should be specified as a dictionary with the "db" field names to be
                 included in the faceting as keys, and a dictionary as values with optional specific parameters for

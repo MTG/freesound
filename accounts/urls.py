@@ -59,7 +59,7 @@ urlpatterns = [
     path('registration_modal/', login_redirect(accounts.registration_modal), name="accounts-registration-modal"),
     path('reactivate/', login_redirect(accounts.resend_activation), name="accounts-resend-activation"),
     path('username/', login_redirect(accounts.username_reminder), name="accounts-username-reminder"),
-    re_path(r'^activate/(?P<username>[^\/]+)/(?P<uid_hash>[^\/]+)/.*$', login_redirect(accounts.activate_user), name="accounts-activate"),
+    path('activate/<str:username>/<str:uid_hash>/', login_redirect(accounts.activate_user), name="accounts-activate"),
     path('resetemail/', accounts.email_reset, name="accounts-email-reset"),
     path('resetemail/sent/', accounts.email_reset_done, name="accounts-email-reset-done"),
     re_path(r'^resetemail/complete/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', accounts.email_reset_complete, name="accounts-email-reset-complete"),
@@ -85,7 +85,7 @@ urlpatterns = [
     path('describe/license/', accounts.describe_license, name="accounts-describe-license"),
     path('describe/pack/', accounts.describe_pack, name="accounts-describe-pack"),
     path('describe/sounds/', accounts.describe_sounds, name="accounts-describe-sounds"),
-    
+
     path('bookmarks/', bookmarks.bookmarks, name="bookmarks"),
     path('bookmarks/category/<int:category_id>/', bookmarks.bookmarks, name="bookmarks-category"),
     path('bookmarks/add/<int:sound_id>/', bookmarks.add_bookmark, name="add-bookmark"),

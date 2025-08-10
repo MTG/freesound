@@ -348,7 +348,7 @@
   border-color: var(--border-color);
   border-radius: 2px;
   font-size: 10px;
-  color: var(--body-loud-color);
+  color: var(--detection-text-color, var(--body-loud-color));;
   text-shadow: 0 0 2px var(--body-bg);
   font-weight: bold;
   display: flex;

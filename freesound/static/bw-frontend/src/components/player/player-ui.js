@@ -343,7 +343,7 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
   }
   const detectionOverlay = playerImgNode.parentElement.querySelector('.bw-player__detection-overlay');
   if (detectionOverlay) {
-    const detectionRects = detectionOverlay.querySelectorAll('.bw-player__detection-rect');
+    const detectionRects = detectionOverlay.querySelectorAll('.bw-player__detection-rect-base');
     detectionRects.forEach(rect => {
       const currentBg = getComputedStyle(rect).getPropertyValue('--background').trim();
       const newBg = currentBg.replace(
@@ -354,6 +354,7 @@ const toggleSpectrogramWaveform = (playerImgNode, waveform, spectrum, playerSize
         }
       );
       rect.style.setProperty('--background', newBg);
+      rect.style.setProperty('--detection-text-color', 'white');
     });
   }
 }

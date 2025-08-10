@@ -7,6 +7,8 @@ import { createAudioElement, setProgressIndicator, onPlayerTimeUpdate } from './
 import { rulerFrequencyMapping } from './utils'
 import { isDesktopMacOSWithSafari, isTouchEnabledDevice } from '../../utils/browser'
 import { createDetectionOverlay } from './sed_overlay'
+import { showToast } from "../toast";
+
 
 const removeAllLastPlayedClasses = () => {
   document.getElementsByClassName('last-played').forEach(element => {
@@ -433,11 +435,24 @@ const createSedButton = (audioElement, parentNode, soundId, sedExperiment) => {
       xhr.open('GET', `/api/sound/${soundId}/analysis`);
       xhr.setRequestHeader('Content-Type','application/json');
       xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200){
-          analysisData = JSON.parse(xhr.responseText);
-          console.log(analysisData)
-          createDetectionOverlay(parentNode,audioElement,analysisData,sedExperiment);
-          toggleOverlays();
+        if (xhr.readyState === 4){
+          isLoading = false;
+
+          if (xhr.status === 200){
+            try {
+              analysisData = JSON.parse(xhr.responseText);
+              if (analysisData.error) {
+                showToast(analysisData.error);
+                return;
+              }
+              createDetectionOverlay(parentNode,audioElement,analysisData,sedExperiment);
+              toggleOverlays();
+            } catch(e) {
+              showToast('Invalid response from server');
+            }
+          } else {
+            showToast('Analysis data unavailable')
+          }
         }
       }
       xhr.send();
@@ -597,7 +612,8 @@ const createPlayerControls = (parentNode, playerImgNode, audioElement, playerSiz
     sedExperiment = 0;
   }
 
-  const showSedButton = sedExperiment !== 0;
+  const duration = getAudioElementDurationOrDurationProperty(audioElement, parentNode);
+  const showSedButton = (sedExperiment !== 0 && duration < 30);
   const controls =
     playerSize === 'big'
       ? [createLoopButton(audioElement),

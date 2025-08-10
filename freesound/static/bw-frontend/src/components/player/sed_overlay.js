@@ -48,9 +48,9 @@ export const createDetectionOverlay = (parentNode, audioElement, detectionData, 
   });
 
   if (sedExperiment === 1) {
-    sedClassWise(detectionData.fsdsinet_detections, duration, classColorMap, progressIndicatorContainer, detectionOverlay, audioElement);
+    sedLevelWise(detectionData.fsdsinet_detections, duration, classColorMap, progressIndicatorContainer, detectionOverlay, audioElement);
   } else if (sedExperiment === 2) {
-    sedLevelWise(detectionData.fsdsinet_detections, duration, classColorMap, progressIndicatorContainer, detectionOverlay, audioElement, classLevels);
+    sedClassWise(detectionData.fsdsinet_detections, duration, classColorMap, progressIndicatorContainer, detectionOverlay, audioElement, classLevels);
   } else if (sedExperiment === 3) {
     sedOnsets(detectionData.fsdsinet_detections, duration, classColorMap, detectionOverlay, audioElement);
   }
@@ -89,7 +89,7 @@ export const createDetectionOverlay = (parentNode, audioElement, detectionData, 
   parentNode.parentElement.appendChild(legend);
 };
 
-const sedClassWise = (detections, duration, classColorMap, progressIndicatorContainer, detectionOverlay, audioElement) => {
+const sedLevelWise = (detections, duration, classColorMap, progressIndicatorContainer, detectionOverlay, audioElement) => {
   const borderOptions = ['solid','dashed']
   const borderWidthOptions = ['3px','2px','1px']
   
@@ -104,6 +104,14 @@ const sedClassWise = (detections, duration, classColorMap, progressIndicatorCont
     return borderWidthOptions[2];
   }
 
+    // Map the levels returned in detections according to the desired levels in the display
+  const uniqueLevels = [...new Set(detections.map(d => d.level))].sort((a, b) => a - b);
+  const levelMapping = {};
+  uniqueLevels.forEach((originalLevel, index) => {
+    levelMapping[originalLevel] = index;
+  });
+
+
   detections.forEach((detection) => {
     const rect = document.createElement('div');
     rect.className = 'bw-player__detection-rect-base bw-player__detection-rect-class';
@@ -115,10 +123,10 @@ const sedClassWise = (detections, duration, classColorMap, progressIndicatorCont
     const borderColor = backgroundColor.replace('0.4)','1)');
 
     const numLevels = 5;
-    const bottomOffset = 50;
+    const bottomOffset = 25;
     const availableHeight = 100 - bottomOffset
     const levelHeight = availableHeight/numLevels;
-    const level = detection.level;
+    const level = levelMapping[detection.level];
     const topPercent = level * levelHeight
     
     const borderStyle = getBorderStyle(detection.confidence);
@@ -144,6 +152,7 @@ const sedClassWise = (detections, duration, classColorMap, progressIndicatorCont
     const confidence = Math.round(detection.confidence * 100);
     if (width > 0.5) {
       const fullText = `${detection.name} ${confidence}%`;
+      const classText = `${detection.name}`
       const confidenceText = `${confidence}%`
 
       const measureTextWidth = (text) => {
@@ -161,10 +170,13 @@ const sedClassWise = (detections, duration, classColorMap, progressIndicatorCont
       const availableWidth = rectWidth-padding;
       
       const fullTextWidth = measureTextWidth(fullText);
+      const classTextWidth = measureTextWidth(classText)
       const confidenceWidth = measureTextWidth(confidenceText);
 
-      if (fullTextWidth <= availableWidth){
+      if (fullTextWidth + confidenceWidth <= availableWidth){
         rect.innerHTML = fullText;
+      } else if (classTextWidth + confidenceWidth <= availableWidth){
+        rect.innerHTML = classText;
       } else if (confidenceWidth <= availableWidth){
         rect.innerHTML = confidenceText;
       } else {
@@ -185,13 +197,11 @@ const sedClassWise = (detections, duration, classColorMap, progressIndicatorCont
   });
 }
 
-const sedLevelWise = (detections, duration, classColorMap, progressIndicatorContainer, detectionOverlay, audioElement, classLevels) => {
+const sedClassWise = (detections, duration, classColorMap, progressIndicatorContainer, detectionOverlay, audioElement, classLevels) => {
   const borderOptions = ['solid','dashed', 'dotted']
   const borderWidthOptions = ['3px','2px']
 
-  // insert labels just once per level (and class)
-  const insertedLabels = new Set();
-    const getBorderStyle = (confidence) => {
+  const getBorderStyle = (confidence) => {
     if (confidence >= 0.8) return borderOptions[0]; //solid
     if (confidence >=0.6) return borderOptions[1]; //dashed
     return borderOptions[2]; //dotted                        
@@ -202,25 +212,41 @@ const sedLevelWise = (detections, duration, classColorMap, progressIndicatorCont
     return borderWidthOptions[1]; //2px borders
   }
   
+  const classToLevel = {};
+  const uniqueClasses = [];
+  let currentLevel = 0;
+
+  detections.forEach((detection, index) => {
+      if(!classToLevel.hasOwnProperty(detection.name)) {
+      classToLevel[detection.name] = currentLevel;
+      uniqueClasses.push(detection.name);
+      currentLevel++;
+    }
+  })
+
+  const numLevels = uniqueClasses.length;
+  const auxLevels = numLevels > 4 ? 10 : 20; 
+  const bottomOffset = 100 - Math.max(0, numLevels) * auxLevels;
+  const availableHeight = 100 - bottomOffset;
+  const levelHeight = availableHeight / numLevels;
+  
+  const insertedLabels = new Set();
   const wrappers = {}
+
   //create rectangles for detection
-  detections.forEach((detection) => {
+  detections.forEach((detection, index) => {
     const rect = document.createElement('div');
     rect.className = 'bw-player__detection-rect-base bw-player__detection-rect-level';
-
+    
     const left = (detection.start_time / duration) * 100;
     const width = ((detection.end_time-detection.start_time) / duration) * 100;
 
     const backgroundColor = classColorMap[detection.name];
     const borderColor = backgroundColor.replace('0.4)','1)');
 
-    const numLevels = Object.keys(classLevels).length;
-    const auxLevels = numLevels > 4 ? 10 : 20; 
-    const bottomOffset = 100 - Math.max(0, numLevels) * auxLevels;
-    const availableHeight = 100 - bottomOffset
-    const levelHeight = availableHeight/numLevels;
-    const level = classLevels[detection.name]
-    const topPercent = level * levelHeight
+    // Use the level based on first occurrence
+    const level = classToLevel[detection.name];
+    const topPercent = level * levelHeight;
 
     if(!insertedLabels.has(detection.name)){
       insertedLabels.add(detection.name);
@@ -312,6 +338,13 @@ const sedOnsets = (detections, duration, classColorMap, detectionOverlay, audioE
     return borderOptions[2];                        
   };
 
+  // Map the levels returned in detections according to the desired levels in the display
+  const uniqueLevels = [...new Set(detections.map(d => d.level))].sort((a, b) => a - b);
+  const levelMapping = {};
+  uniqueLevels.forEach((originalLevel, index) => {
+    levelMapping[originalLevel] = index;
+  });
+
   detections.forEach((detection) => {
     const onset = document.createElement('div');
     onset.className = 'bw-player__detection-onset';
@@ -337,26 +370,33 @@ const sedOnsets = (detections, duration, classColorMap, detectionOverlay, audioE
     // Improved overlap detection logic
     let overlapCount = 0;
 
-    // Check overlap with all previous detections that are still active
-    for (let i = activeDetections.length - 1; i >= 0; i--) {
-      const activeDetection = activeDetections[i];
+    activeDetections.forEach(activeDetection => {
+      // Check for actual time overlap
+      const hasTimeOverlap = (
+        detection.start_time < activeDetection.end_time && 
+        detection.end_time > activeDetection.start_time
+      );
       
-      // Remove detections that have ended before this one starts
-      if (activeDetection.end_time <= detection.start_time) {
-        activeDetections.splice(i, 1);
-      } else {
-        // This detection overlaps with the current one
-        overlapCount++;
+      if (hasTimeOverlap) {
+        // Only count overlap if they're at the same hierarchy level
+        const activeLevel = levelMapping[activeDetection.level];
+        const currentLevel = levelMapping[detection.level];
+        
+        if (activeLevel === currentLevel) {
+          overlapCount++;
+        }
       }
-    }
+    });
 
     // Add current detection to active list
     activeDetections.push(detection);
 
-    // Calculate height percentage based on overlap count
-    let heightPercentage = 0.9 - (overlapCount * 0.1);
-
     // Ensure minimum height
+    const currentLevel = levelMapping[detection.level];
+    const baseHeight = 0.9 - (currentLevel * 0.1);
+    // Calculate height percentage based on overlap count
+    let heightPercentage = baseHeight - (overlapCount * 0.1);
+
     heightPercentage = Math.max(heightPercentage, 0.1);
 
     onset.style.setProperty('--border',`${borderWidth} ${borderStyle} ${borderColor}`)
@@ -365,7 +405,6 @@ const sedOnsets = (detections, duration, classColorMap, detectionOverlay, audioE
     onset.style.setProperty('--duration-width', `${durationWidth}%`);
     onset.style.setProperty('--height-percentage',heightPercentage);
     
-    heightPercentage = 0.9;
     onset.setAttribute('role', 'region'); 
     onset.setAttribute('aria-label', 
       `Audio detection of ${detection.name} from ${detection.start_time} to ${detection.end_time} seconds with ${Math.round(detection.confidence * 100)}% confidence. Click to play.`

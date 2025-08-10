@@ -427,6 +427,11 @@
   max-width: 100%;
   font-size: 12px;
   color: var(--border-color);
+  background-color: var(--body-bg, #333);
+  display: inline-block;
+  padding: 1px 2px; 
+  line-height: 1.2; 
+  border-radius: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -438,7 +443,7 @@
   content: '';
   position: absolute;
   left: 100%;
-  top: var(--border-width);
+  top: calc(-2 * var(--border-width, 1px));;
   width: 1px;
   height: 20px;
   border-left: var(--border);

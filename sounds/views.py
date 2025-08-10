@@ -1177,7 +1177,11 @@ def get_sed_data(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     try:
         analysis = SoundAnalysis.objects.get(sound=sound, analyzer='fsd-sinet_v1', analysis_status='OK').analysis_data
+        return JsonResponse(analysis)
     except SoundAnalysis.DoesNotExist:
-        sound.analyze(analyzer='fsd-sinet_v1')
-        analysis = {}
-    return JsonResponse(analysis)
+        try:
+            analysis = SoundAnalysis.objects.get(sound=sound, analyzer='fsd-sinet_v1', analysis_status = 'QU')
+            return JsonResponse({'error': 'The analysis is queued'})
+        except SoundAnalysis.DoesNotExist:
+            sound.analyze(analyzer='fsd-sinet_v1')
+            return JsonResponse({'error':'FSD-SINet analysis still not available for this sound.'})

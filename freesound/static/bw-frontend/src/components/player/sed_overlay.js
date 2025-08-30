@@ -50,9 +50,9 @@ export const createDetectionOverlay = (parentNode, audioElement, detectionData, 
   if (sedExperiment === 1) {
     sedLevelWise(detectionData.fsdsinet_detections, duration, classColorMap, progressIndicatorContainer, detectionOverlay, audioElement);
   } else if (sedExperiment === 2) {
-    sedClassWise(detectionData.fsdsinet_detections, duration, classColorMap, progressIndicatorContainer, detectionOverlay, audioElement, classLevels);
-  } else if (sedExperiment === 3) {
     sedOnsets(detectionData.fsdsinet_detections, duration, classColorMap, detectionOverlay, audioElement);
+  } else if (sedExperiment === 3) {
+    sedClassWise(detectionData.fsdsinet_detections, duration, classColorMap, progressIndicatorContainer, detectionOverlay, audioElement, classLevels);
   }
   
   progressIndicatorContainer.parentElement.appendChild(detectionOverlay);

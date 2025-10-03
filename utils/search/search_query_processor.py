@@ -221,6 +221,13 @@ class SearchQueryProcessor:
                 self.f_parsed = []
         else:
             self.f_parsed = []
+
+        # Handle the special case of old "gropuing_pack" filter which is not valid anymore
+        # Looks like some bots are still using it which results in many errors reported in the logs and
+        # many Solr queries failing. By returning an early error, we avoid the Solr request.
+        if self.has_filter_with_name('grouping_pack'):
+            self.errors = f"Filter parsing error: 'grouping_pack' is not a valid filter name"
+            return
        
         # Remove duplicate filters if any
         nodes_in_filter = []

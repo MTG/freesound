@@ -255,7 +255,7 @@ pyparsing==2.4.7
     # via -r requirements.in
 pysndfile==1.4.4
     # via -r requirements.in
-pysolr==3.10.0b1
+pysolr==3.10.0
     # via -r requirements.in
 pytest==8.0.2
     # via
@@ -299,7 +299,9 @@ scipy==1.12.0
 sentry-sdk==2.21.0
     # via -r requirements.in
 setuptools==76.0.0
-    # via sphinx
+    # via
+    #   pysolr
+    #   sphinx
 sgmllib3k==1.0.0
     # via feedparser
 six==1.16.0

@@ -33,6 +33,6 @@ urlpatterns = [
     path('sounds_barray/pack/<int:pack_id>/', geotags.geotags_for_pack_barray, name="geotags-for-pack-barray"),
     path('sounds_barray/sound/<int:sound_id>/', geotags.geotag_for_sound_barray, name="geotags-for-sound-barray"),
     path('sounds_barray/query/', geotags.geotags_for_query_barray, name="geotags-for-query-barray"),
-    path('sounds_barray/tag/<str:tag_name>/', geotags.geotags_for_tag_barray, name="geotags-for-tag-barray"),
+    path('sounds_barray/tag/<str:tag_name>/', geotags.geotags_barray, name="geotags-for-tag-barray"),
     path('infowindow/<int:sound_id>/', geotags.infowindow, name="geotags-infowindow"),
 ]

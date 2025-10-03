@@ -18,10 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.urls import path, register_converter
-from utils.converters import MultipleTagsConverter
-
-register_converter(MultipleTagsConverter, 'multitags')
+from django.urls import path
 
 import geotags.views as geotags
 

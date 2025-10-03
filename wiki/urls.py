@@ -18,11 +18,8 @@
 #     See AUTHORS file.
 #
 
-from django.urls import path, re_path, register_converter
+from django.urls import path, re_path
 from django.views.generic import RedirectView
-from utils.converters import MultipleTagsConverter
-
-register_converter(MultipleTagsConverter, 'multitags')
 
 import wiki.views as wiki
 

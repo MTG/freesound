@@ -18,11 +18,8 @@
 #     See AUTHORS file.
 #
 
-from django.urls import path, re_path, register_converter
+from django.urls import path, re_path
 from follow import views
-from utils.converters import MultipleTagsConverter
-
-register_converter(MultipleTagsConverter, 'multitags')
 
 urlpatterns = [
     path('follow_user/<username>/', views.follow_user, name='follow-user'),

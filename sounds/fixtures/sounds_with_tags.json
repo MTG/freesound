@@ -1570,7 +1570,7 @@
             "samplerate": 48000.0,
             "bitdepth": 16,
             "num_comments": 0,
-            "num_ratings": 1,
+            "num_ratings": 3,
             "similarity_state": "OK",
             "filesize": 167666,
             "processing_date": "2005-03-09T20:40:36Z",
@@ -1609,7 +1609,7 @@
             "samplerate": 48000.0,
             "bitdepth": 16,
             "num_comments": 0,
-            "num_ratings": 0,
+            "num_ratings": 3,
             "similarity_state": "OK",
             "filesize": 174344,
             "processing_date": "2005-03-09T20:40:36Z",
@@ -1648,7 +1648,7 @@
             "samplerate": 48000.0,
             "bitdepth": 16,
             "num_comments": 0,
-            "num_ratings": 2,
+            "num_ratings": 3,
             "similarity_state": "OK",
             "filesize": 142234,
             "processing_date": "2005-03-09T20:40:36Z",
@@ -1687,7 +1687,7 @@
             "samplerate": 48000.0,
             "bitdepth": 16,
             "num_comments": 0,
-            "num_ratings": 1,
+            "num_ratings": 3,
             "similarity_state": "OK",
             "filesize": 100618,
             "processing_date": "2005-03-09T20:40:36Z",
@@ -1726,7 +1726,7 @@
             "samplerate": 44100.0,
             "bitdepth": 16,
             "num_comments": 0,
-            "num_ratings": 1,
+            "num_ratings": 3,
             "similarity_state": "OK",
             "filesize": 265424,
             "processing_date": "2005-03-09T20:40:36Z",
@@ -2694,5 +2694,75 @@
         },
         "model": "tags.soundtag",
         "pk": 842431
+    },
+    {
+        "fields": {
+            "sound": 40,
+            "lat": 41.4036,
+            "lon": 2.1744,
+            "zoom": 18,
+            "information": null,
+            "location_name": "Sagrada Familia, Barcelona",
+            "should_update_information": true,
+            "created": "2005-03-09T10:45:28Z"
+        },
+        "model": "geotags.geotag",
+        "pk": 1001
+    },
+    {
+        "fields": {
+            "sound": 41,
+            "lat": 40.4155,
+            "lon": -3.7074,
+            "zoom": 17,
+            "information": null,
+            "location_name": "Plaza Mayor, Madrid",
+            "should_update_information": true,
+            "created": "2005-03-09T10:46:12Z"
+        },
+        "model": "geotags.geotag",
+        "pk": 1002
+    },
+    {
+        "fields": {
+            "sound": 42,
+            "lat": 37.3891,
+            "lon": -5.9845,
+            "zoom": 16,
+            "information": null,
+            "location_name": "Seville Cathedral",
+            "should_update_information": true,
+            "created": "2005-03-09T10:46:38Z"
+        },
+        "model": "geotags.geotag",
+        "pk": 1003
+    },
+    {
+        "fields": {
+            "sound": 43,
+            "lat": 39.4699,
+            "lon": -0.3763,
+            "zoom": 15,
+            "information": null,
+            "location_name": "Valencia Beach",
+            "should_update_information": true,
+            "created": "2005-03-09T10:47:07Z"
+        },
+        "model": "geotags.geotag",
+        "pk": 1004
+    },
+    {
+        "fields": {
+            "sound": 44,
+            "lat": 37.1760,
+            "lon": -3.5976,
+            "zoom": 16,
+            "information": null,
+            "location_name": "Alhambra, Granada",
+            "should_update_information": true,
+            "created": "2005-03-09T10:47:33Z"
+        },
+        "model": "geotags.geotag",
+        "pk": 1005
     }
 ]

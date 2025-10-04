@@ -47,8 +47,8 @@
         {% else %}
             <div class="v-spacing-top-2">
             {% for user, sound_objs, more_url_params, more_count, new_count in users_sounds %}
-                <h5 class="text-grey v-spacing-top-3 v-spacing-2">From user "{{ user.0.username }}"</h5>
-                <a id="{{ user.0 }}" ></a>
+                <h5 class="text-grey v-spacing-top-3 v-spacing-2">From user "{{ user.username }}"</h5>
+                <a id="{{ user }}" ></a>
                 <div>    
                 {% if sound_objs %}
                     <div class="row no-margin">

@@ -48,7 +48,7 @@
             </div>
         </div>            
         <div class="col-12">
-            <div class="v-spacing-top-5 text-center">
+            <div class="v-spacing-top-5 text-center" data-message-id="{{ message.id }}">
                 <a class="btn-primary no-hover" href="{% url "message-reply" message.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Reply</a>
                         {% if not hide_archive_unarchive %}<a title="{% if message.is_archived %}Unarchive{% else %}Archive{% endif %} message" 
                             aria-label="{% if message.is_archived %}Unarchive{% else %}Archive{% endif %} message" 

@@ -29,12 +29,12 @@
                 </li>
             </ul>
         </div>
+        {% endif %}
         <form method="post" action="{% url 'messages-change-state' %}" id="message-action-form">{% csrf_token %}
             <input id="message_ids" type="hidden" name="ids" />
             <input id="action_choice" type="hidden" name="choice" />
             <input type="hidden" name="next" value="{{ request.path }}" />
         </form>
-        {% endif %}
     </div>
     <div class="col-md-4 col-6 center v-spacing-1 v-spacing-top-1">
         <ul class="navbar-messages">

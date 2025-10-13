@@ -44,6 +44,7 @@ def messages_change_state(request):
     if request.method == "POST":
         choice = request.POST.get("choice", False)
         message_ids = [int(mid) for mid in request.POST.get("ids", "").split(',')]
+        next_url = request.POST.get("next", reverse("messages"))
         if choice and message_ids:
             fs_messages = Message.objects.filter(Q(user_to=request.user, is_sent=False) |
                                               Q(user_from=request.user, is_sent=True)).filter(id__in=message_ids)
@@ -53,12 +54,15 @@ def messages_change_state(request):
                     message.save()
             elif choice == "d":
                 fs_messages.delete()
+            elif choice == "dm":
+                fs_messages.delete()
+                next_url = reverse("messages")
             elif choice == "r":
                 for message in fs_messages:
                     message.is_read = not message.is_read
                     message.save()
             invalidate_user_template_caches(request.user.id)
-    return HttpResponseRedirect(request.POST.get("next", reverse("messages")))
+    return HttpResponseRedirect(next_url)
 
 
 # base query object
@@ -115,7 +119,8 @@ def message(request, message_id):
         invalidate_user_template_caches(request.user.id)
         message.save()
 
-    tvars = {'message': message}
+    tvars = {'message': message,
+             'hide_archive_unarchive': message.is_sent}
     return render(request, 'messages/message.html', tvars)
 
 

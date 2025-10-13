@@ -50,7 +50,24 @@
         <div class="col-12">
             <div class="v-spacing-top-5 text-center">
                 <a class="btn-primary no-hover" href="{% url "message-reply" message.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Reply</a>
+                        {% if not hide_archive_unarchive %}<a title="{% if message.is_archived %}Unarchive{% else %}Archive{% endif %} message" 
+                            aria-label="{% if message.is_archived %}Unarchive{% else %}Archive{% endif %} message" 
+                            class="h-spacing-left-2 btn-inverse no-hover message-action" 
+                            href=""
+                            data-action-value="a">
+                            {% if message.is_archived %}{% bw_icon "box-remove" %}{% else %}{% bw_icon "box-add" %}{% endif %}
+                            </i>{% if message.is_archived %}Unarchive{% else %}Archive{% endif %}</a>{% endif %}
+                        <a title="Delete message" 
+                            aria-label="Delete message" 
+                            class="h-spacing-left-2 btn-inverse no-hover message-action" 
+                            href=""
+                            data-action-value="dm">
+                            {% bw_icon "trash" %}</i>Delete</a>
             </div>
         </div> 
     </div>
+{% endblock %}
+
+{% block extrabody %}
+<script src="{% static 'bw-frontend/dist/messages.js' %}"></script>
 {% endblock %}

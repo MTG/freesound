@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+import json 
+
 from django.urls import path
 from django.contrib import admin, messages
 from django.core.cache import cache
@@ -29,6 +31,7 @@ from django.utils.safestring import mark_safe
 from django_object_actions import DjangoObjectActions
 
 from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress, SoundAnalysis
+from utils.search.search_sounds import add_sounds_to_search_engine
 
 
 @admin.register(License)
@@ -51,22 +54,21 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
                                                  'filesize', 'channels', 'date_recorded')}),
                  ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'is_explicit')}),
                  ('Processing', {'fields': ('processing_state', 'processing_date', 'processing_ongoing_state', 'processing_log', 'similarity_state')}),
+                 ('Analysis', {'fields': ('get_consolidated_analysis',)}),
                  )
     raw_id_fields = ('user', 'pack', 'sources')
     list_display = ('id', 'user', 'get_sound_name', 'created', 'moderation_state', 'get_processing_state')
     list_filter = ('moderation_state', 'processing_state')
     ordering = ['id']
     search_fields = ('=id', '=user__username')
-    readonly_fields = ('num_downloads', 'get_filename')
-    actions = ('reprocess_sound', )
-    change_actions = ('reprocess_sound', )
+    readonly_fields = ('num_downloads', 'get_filename', 'get_consolidated_analysis')
+    actions = ('reprocess_sound', 'consolidate_analysis', 'reindex_sound', 'mark_as_index_dirty', 'clear_caches')
+    change_actions = ('reprocess_sound', 'consolidate_analysis', 'reindex_sound', 'mark_as_index_dirty', 'clear_caches')
 
     def has_add_permission(self, request):
         return False
 
-    @admin.display(
-        description='Processing state'
-    )
+    @admin.display(description='Processing state')
     def get_processing_state(self, obj):
         processing_state = f'{obj.get_processing_state_display()}'
         ongoing_state_display = obj.get_processing_ongoing_state_display()
@@ -74,16 +76,12 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
             processing_state += f' ({ongoing_state_display})'
         return processing_state
 
-    @admin.display(
-        description='Name'
-    )
+    @admin.display(description='Name')
     def get_sound_name(self, obj):
         max_len = 15
         return f"{obj.original_filename[:max_len]}{'...' if len(obj.original_filename) > max_len else ''}"
 
-    @admin.action(
-        description='Re-process and re-analyze sounds'
-    )
+    @admin.action(description='Re-process and re-analyze sounds')
     def reprocess_sound(self, request, queryset_or_object):
         if isinstance(queryset_or_object, Sound):
             queryset_or_object.process(force=True, high_priority=True)
@@ -94,16 +92,65 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
                 sound.process(force=True, high_priority=True)
             messages.add_message(request, messages.INFO,
                                  f'{queryset_or_object.count()} sounds were send to re-process.')
+    reprocess_sound.label = 'Re-process sound'
+            
+    @admin.action(description='Consolidate analysis')
+    def consolidate_analysis(self, request, queryset_or_object):
+        if isinstance(queryset_or_object, Sound):
+            queryset_or_object.consolidate_analysis()
+            messages.add_message(request, messages.INFO,
+                                 f'Sound {queryset_or_object.id} analysis data was consolidated.')
+        else:
+            for sound in queryset_or_object:
+                sound.consolidate_analysis()
+            messages.add_message(request, messages.INFO,
+                                 f'{queryset_or_object.count()} sounds analysis data were consolidated.')
+            
+    @admin.action(description='Mark as index dirty')
+    def mark_as_index_dirty(self, request, queryset_or_object):
+        if isinstance(queryset_or_object, Sound):
+            queryset_or_object.mark_index_dirty()
+            messages.add_message(request, messages.INFO,
+                                 f'Sound {queryset_or_object.id} was marked as index dirty.')
+        else:
+            queryset_or_object.update(is_index_dirty=True)
+            messages.add_message(request, messages.INFO,
+                                 f'{queryset_or_object.count()} sounds were marked as index dirty.')
+            
+    @admin.action(description='Clear caches')
+    def clear_caches(self, request, queryset_or_object):
+        if isinstance(queryset_or_object, Sound):
+            queryset_or_object.invalidate_template_caches()
+            messages.add_message(request, messages.INFO,
+                                 f'Sound {queryset_or_object.id} caches were cleared.')
+        else:
+            for sound in queryset_or_object:
+                sound.invalidate_template_caches()
+            messages.add_message(request, messages.INFO,
+                                 f'{queryset_or_object.count()} sounds caches were cleared.')
+            
+    @admin.action(description='Reindex sound')
+    def reindex_sound(self, request, queryset_or_object):
+        if isinstance(queryset_or_object, Sound):
+            sound_objects = Sound.objects.bulk_query_solr([queryset_or_object.id])
+        else:
+            sound_objects = Sound.objects.bulk_query_solr([s.id for s in queryset_or_object])
+        n_indexed = add_sounds_to_search_engine(sound_objects, update=True, include_similarity_vectors=True)
+        messages.add_message(request, messages.INFO,
+                                 f'{n_indexed} sounds were re-indexed.')
 
-
-    @admin.display(
-        description='Download filename'
-    )
+    @admin.display(description='Download filename')
     def get_filename(self, obj):
         return obj.friendly_filename()
-
-    reprocess_sound.label = 'Re-process sound'
-
+    
+    @admin.display(description='Consolidated analysis')
+    def get_consolidated_analysis(self, obj):
+        data = obj.analyses.filter(analyzer='consolidated').first().analysis_data if obj.analyses.filter(analyzer='consolidated').exists() else None
+        if data is None:
+            return 'No consolidated analysis available'
+        else:
+            str_data = json.dumps(data, indent=4, sort_keys=True)
+            return mark_safe(f'<pre>{str_data}</pre>')
 
 
 @admin.register(DeletedSound)

@@ -341,7 +341,7 @@ class TestSoundListSerializer(TestCase):
 
         # Test when serializing a single sound
         for field_set in field_sets:
-            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids[0], include_analyzers_output=True)
+            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids[0], include_audio_descriptors=True)
             with self.assertNumQueries(0):
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
                 # Call serializer .data to actually get the data and potentially trigger unwanted extra queries
@@ -349,7 +349,7 @@ class TestSoundListSerializer(TestCase):
 
         # Test when serializing multiple sounds
         for field_set in field_sets:
-            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids, include_analyzers_output=True)
+            sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids, include_audio_descriptors=True)
             with self.assertNumQueries(0):
                 dummy_request = self.factory.get(reverse('apiv2-sound-text-search'), {'fields': field_set})
                 for sound in sounds_dict.values():
@@ -375,7 +375,7 @@ class TestSoundSerializer(TestCase):
             # Test that the serialized sound instance includes all fields in the serializer and does not perform any
             # extra query. Because in this test we get sound info using Sound.objects.bulk_query_id, the serializer
             # should perform no extra queries to render the data
-            sound = Sound.objects.bulk_query_id(self.sound_id, include_analyzers_output=True)[0]
+            sound = Sound.objects.bulk_query_id(self.sound_id, include_audio_descriptors=True)[0]
             dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound_id]) + '?fields=*')
             serialized_sound = SoundSerializer(sound, context={'request': dummy_request}).data
             self.assertCountEqual(list(serialized_sound.keys()), SoundSerializer.Meta.fields)

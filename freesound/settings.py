@@ -727,6 +727,38 @@ ANALYZERS_CONFIGURATION = {
     }
 }
 
+CONSOLIDATED_AUDIO_DESCRIPTORS = [
+    {
+        'name': 'spectral_centroid', 
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['spectral_centroid']['mean']
+    },
+    {
+        'name': 'brightness', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'brightness',
+    },
+    {
+        'name': 'hardness', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'hardness',
+    },
+    {
+        'name': 'fsdsinet_detected_class', 
+        'analyzer': FSDSINET_ANALYZER_NAME,
+        'original_name': 'detected_classes',
+        'transformation': lambda v, d, s: None if v == [] else v,
+    },
+    {
+        'name': 'fsdsinet_detections', 
+        'analyzer': FSDSINET_ANALYZER_NAME,
+        'original_name': 'detections',
+        'transformation': lambda v, d, s: None if v == [] else v,
+        'index': False
+    },
+]
+
+
 # -------------------------------------------------------------------------------
 # Search engine
 

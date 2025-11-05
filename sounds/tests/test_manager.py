@@ -51,7 +51,7 @@ class SoundManagerQueryMethods(TestCase):
         # Check that all fields for each sound are retrieved with one query + one for the analyzers
         with self.assertNumQueries(2):
             has_at_least_one_geotag = False
-            for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_analyzers_output=True):
+            for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_audio_descriptors=True):
                 if hasattr(sound, 'geotag'):
                     # We do this separately, because a OneToOneField needs to be checked by "getattr", and it'll
                     # raise an AttributeError if the field is not present. Therefore we just check that at least one
@@ -67,7 +67,7 @@ class SoundManagerQueryMethods(TestCase):
     def test_bulk_query_id_field_contents(self):
 
         # Check the contents of some fields are correct
-        for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_analyzers_output=True):
+        for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_audio_descriptors=True):
             self.assertEqual(Sound.objects.get(id=sound.id).user.username, sound.username)
             self.assertEqual(Sound.objects.get(id=sound.id).original_filename, sound.original_filename)
             self.assertEqual(Sound.objects.get(id=sound.id).pack_id, sound.pack_id)

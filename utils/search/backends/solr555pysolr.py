@@ -240,7 +240,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         new_document.update({key: {'set': value} for key, value in document.items() if key != 'id'})
         return new_document
 
-    def convert_sound_to_search_engine_document(self, sound, include_analyzer_output=False):
+    def convert_sound_to_search_engine_document(self, sound):
         """
         TODO: Document that this includes remove_control_chars due to originally sending XML. not strictly necessary when submitting
             to json (and also, freesound model code fixes this), but keep it in to ensure that docs are clean.
@@ -301,26 +301,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
         document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
         
-        # Analyzer's output
-        sound_analysis_dict = {an.analyzer: an.analysis_data for an in sound.analyses.all()}
-        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_info:
-                analysis_data = sound_analysis_dict.get(analyzer_name, None)
-                if analysis_data is not None:
-                    # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on
-                    # the value type (see SOLR_DYNAMIC_FIELDS_SUFFIX_MAP) so solr knows how to treat when filtering, etc.
-                    for key, value in analysis_data.items():
-                        if isinstance(value, list):
-                            # Make sure that the list is formed by strings
-                            value = [f'{item}' for item in value]
-                        suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
-                        if suffix:
-                            document[f'{key}{suffix}'] = value
-                            if suffix == '_ls':
-                                # For dynamic fields of type "list of strings", we also need to set an extra field that
-                                # will be used for faceting
-                                document[f'{key}{suffix}{SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX}'] = value
-
         # Category and subcategory fields
         # When adding fields from analyzers output, automatically predicted category and subcategory will be added. However,
         # if a sound does indeed have that field annotated by a user, then we want to use the user provided-value and not the
@@ -331,6 +311,32 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 document[f'{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_category
             if user_provided_subcategory is not None:
                 document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_subcategory
+
+        # Index consolidated audio descriptors
+        descriptors_to_index = {}
+        try:
+            descriptors_data = sound.consolidated_audio_descriptors[0]
+        except IndexError:
+            descriptors_data = None
+        if descriptors_data is not None:
+            for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+                index = descriptor.get('index', True)
+                if index:
+                    descriptor_name = descriptor['name']
+                    value = descriptors_data.get(descriptor_name, None)
+                    if value is not None:
+                        if isinstance(value, list):
+                            # Make sure that the list is formed by strings
+                            value = [f'{item}' for item in value]
+                        suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
+                        if suffix is not None:
+                            descriptors_to_index[f'{descriptor_name}{suffix}'] = value
+                            if suffix == '_ls':
+                                # For dynamic fields of type "list of strings", we also need to set an extra field that
+                                # will be used for faceting
+                                descriptors_to_index[f'{descriptor_name}{suffix}{SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX}'] = value
+        if descriptors_to_index:
+            document.update(descriptors_to_index)
 
         # Finally add the sound ID and content type
         document.update({'id': sound.id, 'content_type': SOLR_DOC_CONTENT_TYPES['sound']})

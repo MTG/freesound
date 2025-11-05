@@ -39,7 +39,7 @@ from django.contrib.postgres.expressions import ArraySubquery
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Sum
-from django.db.models.functions import Greatest
+from django.db.models.functions import Greatest, JSONObject
 from django.db.models.signals import pre_delete, post_delete, post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -395,7 +395,7 @@ class SoundManager(models.Manager):
             return None
 
     def bulk_query_solr(self, sound_ids):
-        qs = self.bulk_query_id(sound_ids, include_analyzers_output=True)
+        qs = self.bulk_query_id(sound_ids, include_audio_descriptors=True)
         comments_subquery = Comment.objects.filter(sound=OuterRef("id")).values("comment")
         is_remix_subquery = Sound.objects.filter(remixes=OuterRef("id")).values("id")
         was_remixed_subquery = Sound.objects.filter(sources=OuterRef("id")).values("id")
@@ -406,7 +406,7 @@ class SoundManager(models.Manager):
         return qs
 
 
-    def bulk_query(self, include_analyzers_output=False):
+    def bulk_query(self, include_audio_descriptors=False):
         tags_subquery = Tag.objects.filter(soundtag__sound=OuterRef("id")).values("name")
         analysis_subquery = SoundAnalysis.objects.filter(
             sound=OuterRef("id"), analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK"
@@ -426,16 +426,23 @@ class SoundManager(models.Manager):
                 search_engine_similarity_state=Exists(search_engine_similarity_subquery)
             )
 
-        if include_analyzers_output:
-            analyzer_names = list(settings.ANALYZERS_CONFIGURATION.keys())
-            qs = qs.prefetch_related(
-                Prefetch('analyses', queryset=SoundAnalysis.objects.filter(analyzer__in=analyzer_names, analysis_status="OK"))
-            )
+        if include_audio_descriptors:
+            # By default include all consolidated audio descriptors, but if include_audio_descriptors is a list, then only include those specified
+            if isinstance(include_audio_descriptors, list):
+                descriptor_names = include_audio_descriptors
+            else:
+                descriptor_names = [descriptor['name'] for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS]
+
+            json_object_args = {descriptor_name: f'analysis_data__' + descriptor_name for descriptor_name in descriptor_names} 
+            consolidated_audio_descriptors_subquery = SoundAnalysis.objects.filter(
+                sound=OuterRef("id"), analyzer="consolidated", analysis_status="OK"
+            ).values(data=JSONObject(**json_object_args))
+            qs = qs.annotate(consolidated_audio_descriptors=ArraySubquery(consolidated_audio_descriptors_subquery))
 
         return qs
 
-    def bulk_sounds_for_user(self, user_id, limit=None, include_analyzers_output=False):
-        qs = self.bulk_query(include_analyzers_output=include_analyzers_output)
+    def bulk_sounds_for_user(self, user_id, limit=None, include_audio_descriptors=False):
+        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors)
         qs = qs.filter(
             moderation_state="OK",
             processing_state="OK",
@@ -446,8 +453,8 @@ class SoundManager(models.Manager):
             qs = qs[:limit]
         return qs
 
-    def bulk_sounds_for_pack(self, pack_id, limit=None, include_analyzers_output=False):
-        qs = self.bulk_query(include_analyzers_output=include_analyzers_output)
+    def bulk_sounds_for_pack(self, pack_id, limit=None, include_audio_descriptors=False):
+        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors)
         qs = qs.filter(
             moderation_state="OK",
             processing_state="OK",
@@ -458,10 +465,10 @@ class SoundManager(models.Manager):
             qs = qs[:limit]
         return qs
 
-    def bulk_query_id(self, sound_ids, limit=None, include_analyzers_output=False):
+    def bulk_query_id(self, sound_ids, limit=None, include_audio_descriptors=False):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]
-        qs = self.bulk_query(include_analyzers_output=include_analyzers_output)
+        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors)
         qs = qs.filter(
             id__in=sound_ids
         ).order_by('-created')
@@ -470,19 +477,19 @@ class SoundManager(models.Manager):
             qs = qs[:limit]
         return qs
 
-    def bulk_query_id_public(self, sound_ids, limit=None, include_analyzers_output=False):
-        qs = self.bulk_query_id(sound_ids, limit=limit, include_analyzers_output=include_analyzers_output)
+    def bulk_query_id_public(self, sound_ids, limit=None, include_audio_descriptors=False):
+        qs = self.bulk_query_id(sound_ids, limit=limit, include_audio_descriptors=include_audio_descriptors)
         qs = qs.filter(
             moderation_state="OK",
             processing_state="OK",
         )
         return qs
 
-    def dict_ids(self, sound_ids, include_analyzers_output=False):
-        return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids, include_analyzers_output=include_analyzers_output)}
+    def dict_ids(self, sound_ids, include_audio_descriptors=False):
+        return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids, include_audio_descriptors=include_audio_descriptors)}
 
-    def ordered_ids(self, sound_ids, include_analyzers_output=False):
-        sounds = self.dict_ids(sound_ids, include_analyzers_output=include_analyzers_output)
+    def ordered_ids(self, sound_ids, include_audio_descriptors=False):
+        sounds = self.dict_ids(sound_ids, include_audio_descriptors=include_audio_descriptors)
         return [sounds[sound_id] for sound_id in sound_ids if sound_id in sounds]
 
 
@@ -1203,6 +1210,11 @@ class Sound(models.Model):
             return 0
 
     def analyze(self, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, force=False, verbose=True, high_priority=False):
+
+        if analyzer == "consolidated":
+            # Special case for consolidated analysis
+            return self.consolidate_analysis()
+
         # Note that "high_priority" is not implemented but needs to be here for compatibility with older code
         if analyzer not in settings.ANALYZERS_CONFIGURATION.keys():
             # If specified analyzer is not one of the analyzers configured, do nothing
@@ -1233,6 +1245,79 @@ class Sound(models.Model):
             if verbose:
                 sounds_logger.info(f"Not sending sound {self.id} to analyzer {analyzer} as is already queued")
         return sa
+    
+    def consolidate_analysis(self):
+        """
+        This method post-processes the analysis results of all analyzers for this sound and consolidates them into a new
+        SoundAnalysis object with analyzer name 'consolidated'. This consolidated analysis contains audio descriptors data
+        from various analyzers that will be stored in the DB and also used for indexing in the search engine.
+        """
+        consolidated_analysis_object, _ = SoundAnalysis.objects.get_or_create(sound=self, analyzer='consolidated')
+        current_consolidated_analysis_data = consolidated_analysis_object.analysis_data
+
+        # Iterate over all descriptors defined in settings.CONSOLIDATED_AUDIO_DESCRIPTORS and obtain/process their values
+        tmp_analyzers_data = {}
+        consolidated_analysis_data = {}
+        for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+
+            condition = descriptor.get('condition', None)
+            if condition is not None:
+                if not condition(self):
+                    # If condition is defined and not met, skip descriptor
+                    continue
+            
+            # Load analyzer data stored in files in disk
+            # Avoid reading the same file multiple times by caching data in tmp_analyzers_data
+            analyzer = descriptor['analyzer']
+            try:
+                sa = self.analyses.get(analyzer=analyzer, analysis_status='OK')
+            except SoundAnalysis.DoesNotExist:
+                sa = None
+            if sa is None:
+                # This analyzer has not analyzed the sound successfully, skip descriptor
+                continue
+            if analyzer not in tmp_analyzers_data:
+                analyzer_data = sa.get_analysis_data_from_file()
+                tmp_analyzers_data[analyzer] = analyzer_data
+            else:
+                analyzer_data = tmp_analyzers_data[analyzer]
+ 
+            name = descriptor['name']
+            original_name = descriptor.get('original_name', None)
+            get_func = descriptor.get('get_func', None)
+            transformation = descriptor.get('transformation', None)
+            
+            if original_name is not None and get_func is not None:
+                raise Exception(f"Descriptor {name} cannot have both original_name and get_func defined")
+
+            if original_name is None and get_func is None:
+                raise Exception(f"Descriptor {name} must have either original_name or get_func defined")
+            
+            value = None
+            if original_name is not None:
+                if original_name in analyzer_data:
+                    value = analyzer_data[original_name]
+                
+            if get_func is not None:
+                value = get_func(analyzer_data, self)
+            
+            if value is not None and transformation is not None:
+                value = transformation(value, analyzer_data, self)
+
+            if value is not None:
+                consolidated_analysis_data[name] = value
+
+        if current_consolidated_analysis_data != consolidated_analysis_data:
+            # If consolidated analysis data has changed...
+            # ...save SoundAnalysis object
+            consolidated_analysis_object.analysis_data = consolidated_analysis_data
+            consolidated_analysis_object.analysis_status = "OK"
+            consolidated_analysis_object.last_analyzer_finished = timezone.now()
+            consolidated_analysis_object.save()
+            # ...and mark sound as index dirty so it eventually gets reindexed with new analysis data
+            self.mark_index_dirty(commit=True)
+
+        return consolidated_analysis_object
 
     def delete_from_indexes(self):
         delete_sounds_from_search_engine([self.id])

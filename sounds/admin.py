@@ -146,7 +146,7 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     
     @admin.display(description='Consolidated analysis')
     def get_consolidated_analysis(self, obj):
-        data = obj.analyses.filter(analyzer=settings.CONSOLIDATED_ANALYZER_NAME).first().analysis_data if obj.analyses.filter(analyzer=settings.CONSOLIDATED_ANALYZER_NAME).exists() else None
+        data = obj.get_consolidated_analysis_data()
         if data is None:
             return 'No consolidated analysis available'
         else:

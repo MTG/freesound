@@ -1331,7 +1331,7 @@ class Sound(models.Model):
 
         return consolidated_analysis_object
 
-    def get_consolidated_analysis_data(self, try_db=True):
+    def get_consolidated_analysis_data(self):
         if hasattr(self, 'consolidated_audio_descriptors'):
             # The sound object was retrieved using bulk_query and consolidated analysis data is pre-fetched
             try:
@@ -1339,8 +1339,6 @@ class Sound(models.Model):
             except IndexError:
                 return None
         else:
-            if not try_db:
-                return None
             try:
                 sa = self.analyses.get(analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status='OK')
                 return sa.analysis_data

@@ -51,11 +51,10 @@ audio_descriptor_accessors = {}
 for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
     field_name = descriptor['name']
     def get_descriptor_accessor(obj, field_name=field_name):
-        if obj.get_consolidated_analysis_data(try_db=True) is None:
+        if obj.get_consolidated_analysis_data() is None:
             return None
         return obj.get_consolidated_analysis_data().get(field_name, None)
     audio_descriptor_accessors[field_name] = get_descriptor_accessor
-
 
 
 class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):

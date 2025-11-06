@@ -42,7 +42,7 @@ DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by c
 DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,category_code,category_is_user_provided,geotag,created,license,type,channels,filesize,bitrate,' + \
 'bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,' + \
 'num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,' +  \
-'analysis,analysis_frames,analysis_stats,is_explicit'  # All except for analyzers
+'analysis,analysis_files,is_explicit'  # All except for analyzers
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
 
@@ -140,8 +140,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'comment',
                   'similar_sounds',
                   'analysis',
-                  'analysis_frames',
-                  'analysis_stats',
+                  'analysis_files',
                   'is_explicit',
                   'score',
                   )
@@ -259,20 +258,15 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_analysis(self, obj):
         raise NotImplementedError  # Should be implemented in subclasses
 
-    analysis_frames = serializers.SerializerMethodField()
-    def get_analysis_frames(self, obj):
-        if not self.get_or_compute_analysis_state_essentia_exists(obj):
-            return None
-        return prepend_base(obj.locations('analysis.frames.url'),
-                            request_is_secure=self.context['request'].is_secure())
-
-    analysis_stats = serializers.SerializerMethodField()
-    def get_analysis_stats(self, obj):
-        if not self.get_or_compute_analysis_state_essentia_exists(obj):
-            return None
-        return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]),
-                            request_is_secure=self.context['request'].is_secure())
-
+    analysis_files = serializers.SerializerMethodField()
+    def get_analysis_files(self, obj):
+        return {
+            'essentia_frames': prepend_base(obj.locations("analysis.frames.url"), 
+                request_is_secure=self.context['request'].is_secure()),
+            'essentia_stats': prepend_base(obj.locations("analysis.statistics.url"),
+                request_is_secure=self.context['request'].is_secure()),
+        }
+        
     similar_sounds = serializers.SerializerMethodField()
     def get_similar_sounds(self, obj):
         if obj.similarity_state != 'OK':

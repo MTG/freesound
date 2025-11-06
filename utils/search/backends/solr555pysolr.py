@@ -72,11 +72,11 @@ for key, value in FIELD_NAMES_MAP.items():
 # The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer),
 # '*_s' (for string) and '*_ls' (for lists of strings)
 SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
-    float: '_d',
-    int: '_i',
-    bool: '_b',
-    str: '_s',
-    list: '_ls',
+    settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: '_d',
+    settings.AUDIO_DESCRIPTOR_TYPE_INT: '_i',
+    settings.AUDIO_DESCRIPTOR_TYPE_BOOL: '_b',
+    settings.AUDIO_DESCRIPTOR_TYPE_STRING: '_s',
+    settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: '_ls',
 }
 
 # Some dynamic field types need to have alternative field versions that work with facets. In that case an extra suffix is added.
@@ -85,13 +85,14 @@ SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX = '_f'
 # Generate a map of dynamic fields that will be used to index the output of analyzers. In ANALYZERS_CONFIGURATION, a list of descriptors is
 # defined along with their type. This map will be used to generate the dynamic field names that will be used to index the descriptors
 SOLR_DYNAMIC_FIELDS_MAP = {}
-for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
-    if 'descriptors_map' in analyzer_data:
-        descriptors_map = analyzer_data['descriptors_map']
-        for _, db_descriptor_key, descriptor_type in descriptors_map:
-            if descriptor_type is not None:
-                SOLR_DYNAMIC_FIELDS_MAP[db_descriptor_key] = '{}{}'.format(
-                    db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
+for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+    index = descriptor.get('index', True)
+    if index:
+        descriptor_name = descriptor['name']
+        descriptor_type = descriptor.get('type', settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
+        if descriptor_type is not None:
+            SOLR_DYNAMIC_FIELDS_MAP[descriptor_name] = '{}{}'.format(
+                descriptor_name, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
 
 
 def get_solr_fieldname_from_freesound_fieldname(field_name, facet=False, skip_dynamic_field_suffix=False):
@@ -308,27 +309,25 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if sound.bst_category is not None:
             user_provided_category, user_provided_subcategory = sound.category_names
             if user_provided_category is not None:
-                document[f'{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_category
+                document[f'{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}'] = user_provided_category
             if user_provided_subcategory is not None:
-                document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_subcategory
+                document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}'] = user_provided_subcategory
 
         # Index consolidated audio descriptors
         descriptors_to_index = {}
-        try:
-            descriptors_data = sound.consolidated_audio_descriptors[0]
-        except IndexError:
-            descriptors_data = None
+        descriptors_data = sound.self.get_consolidated_analysis_data()
         if descriptors_data is not None:
             for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
                 index = descriptor.get('index', True)
                 if index:
                     descriptor_name = descriptor['name']
+                    descriptor_type = descriptor.get('type', settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
                     value = descriptors_data.get(descriptor_name, None)
                     if value is not None:
                         if isinstance(value, list):
                             # Make sure that the list is formed by strings
                             value = [f'{item}' for item in value]
-                        suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
+                        suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(descriptor_type, None)
                         if suffix is not None:
                             descriptors_to_index[f'{descriptor_name}{suffix}'] = value
                             if suffix == '_ls':
@@ -336,6 +335,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                                 # will be used for faceting
                                 descriptors_to_index[f'{descriptor_name}{suffix}{SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX}'] = value
         if descriptors_to_index:
+            descriptors_to_index_keys = list(descriptors_to_index.keys())
+            current_document_keys = list(document.keys())
+            if set(descriptors_to_index_keys).intersection(set(current_document_keys)):
+                raise SearchEngineException(f"Trying to index audio descriptors but some of the field names already exist in the document. "
+                                            f"Conflicting keys: {set(descriptors_to_index_keys).intersection(set(current_document_keys))}")
             document.update(descriptors_to_index)
 
         # Finally add the sound ID and content type
@@ -419,10 +423,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     def add_solr_suffix_to_dynamic_fieldnames_in_filter(self, query_filter):
         """Processes a filter string containing field names and replaces the occurrences of fieldnames that match with
-        descriptor names from the descriptors_map of different configured analyzers with updated fieldnames with
-        the required SOLR dynamic field suffix. This is needed because fields from analyzers are indexed as dynamic
-        fields which need to end with a specific suffi that SOLR uses to learn about the type of the field and how it
-        should treat it.
+        descriptor names from the "consolidated audio descriptors list" (previously added to SOLR_DYNAMIC_FIELDS_MAP) with 
+        updated fieldnames with the required SOLR dynamic field suffix. This is needed because fields from analyzers are 
+        indexed as dynamic fields which need to end with a specific suffi that SOLR uses to learn about the type of the 
+        field and how it should treat it.
         """
         for raw_fieldname, solr_fieldname in SOLR_DYNAMIC_FIELDS_MAP.items():
             query_filter = query_filter.replace(

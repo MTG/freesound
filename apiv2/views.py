@@ -138,7 +138,7 @@ class TextSearch(GenericAPIView):
         sound_ids = [ob[0] for ob in object_list]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=sound_ids)
         # In search queries, only include audio analyzer's output if requested through the fields parameter
-        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
+        needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get('fields', ''))
         sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_audio_descriptors=needs_analyzers_output)
         sounds = []
         for i, sid in enumerate(sound_ids):
@@ -229,7 +229,7 @@ class ContentSearch(GenericAPIView):
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyzer's output if requested through the fields parameter
-        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
+        needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get('fields', ''))
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output)
 
         sounds = []
@@ -348,7 +348,7 @@ class CombinedSearch(GenericAPIView):
         ids = results
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyzer's output if requested through the fields parameter
-        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
+        needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get('fields', ''))
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output)
 
         sounds = []
@@ -388,11 +388,24 @@ class CombinedSearch(GenericAPIView):
 # SOUND VIEWS
 #############
 
-def get_needs_analyzers_output(fields):
-    return 'analyzers_output' in fields \
-        or 'ac_analysis' in fields \
-        or 'category' in fields \
-        or '*' in fields
+def get_needed_audio_descriptors(fields):
+    requested_fields = fields.split(',')
+
+    # Include all the descriptors requested in the fields parameter. If "all_descriptors" is requested, include all descriptors
+    if 'all_descriptors' in requested_fields or fields == '*':
+        return True
+
+    descriptor_names = []
+    if 'category' in requested_fields or 'category_code' in requested_fields:
+        # This is a special case, estimated bst category should be included to provide the category field
+        descriptor_names += ['category', 'subcategory']
+    
+    # Add the rest of descriptors requested
+    descriptor_names += [descriptor["name"] for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS if descriptor["name"] in requested_fields]
+    descriptor_names = list(set(descriptor_names))
+
+    return descriptor_names
+
 
 class SoundInstance(RetrieveAPIView):
 
@@ -407,10 +420,10 @@ class SoundInstance(RetrieveAPIView):
 
     def get_queryset(self):
         fields_request_param_value = self.request.GET.get('fields', '')
-        needs_analyzers_output = get_needs_analyzers_output(fields_request_param_value)
+        needs_analyzers_output = get_needed_audio_descriptors(fields_request_param_value)
         if fields_request_param_value == '':
-            # The "category" field of the single sound instance requires analyzer's output to avoid making extra queries to the DB
-            # However, get_needs_analyzers_output will return False if fields parameter is not specified. This is ok in the views that
+            # The "category" field of the single sound instance requires some audio descriptors to avoid making extra queries to the DB
+            # However, get_needed_audio_descriptors will return False if fields parameter is not specified. This is ok in the views that
             # return lists of sounds because by default "category" is not included. But for SoundInstance we need to make sure that
             # category field can be populated without making extra queries to the DB when fields are not specified
             needs_analyzers_output = True
@@ -493,7 +506,7 @@ class SimilarSounds(GenericAPIView):
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyzer's output if requested through the fields parameter
-        needs_analyzers_output = get_needs_analyzers_output(similarity_sound_form.cleaned_data.get('fields', ''))
+        needs_analyzers_output = get_needed_audio_descriptors(similarity_sound_form.cleaned_data.get('fields', ''))
         sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output)
 
         sounds = []
@@ -621,7 +634,7 @@ class UserSounds(ListAPIView):
             user = User.objects.get(username=self.kwargs['username'], is_active=True)
         except User.DoesNotExist:
             raise NotFoundException(resource=self)
-        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
+        needs_analyzers_output = get_needed_audio_descriptors(self.request.GET.get('fields', ''))
         queryset = Sound.objects.bulk_sounds_for_user(user_id=user.id, include_audio_descriptors=needs_analyzers_output)
         return queryset
 
@@ -691,7 +704,7 @@ class PackSounds(ListAPIView):
             Pack.objects.get(id=self.kwargs['pk'], is_deleted=False)
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
-        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
+        needs_analyzers_output = get_needed_audio_descriptors(self.request.GET.get('fields', ''))
         queryset = Sound.objects.bulk_sounds_for_pack(pack_id=self.kwargs['pk'], include_audio_descriptors=needs_analyzers_output)
         return queryset
 

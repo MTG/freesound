@@ -20,6 +20,7 @@
 
 import json 
 
+from django.conf import settings
 from django.urls import path
 from django.contrib import admin, messages
 from django.core.cache import cache
@@ -145,7 +146,7 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     
     @admin.display(description='Consolidated analysis')
     def get_consolidated_analysis(self, obj):
-        data = obj.analyses.filter(analyzer='consolidated').first().analysis_data if obj.analyses.filter(analyzer='consolidated').exists() else None
+        data = obj.analyses.filter(analyzer=settings.CONSOLIDATED_ANALYZER_NAME).first().analysis_data if obj.analyses.filter(analyzer=settings.CONSOLIDATED_ANALYZER_NAME).exists() else None
         if data is None:
             return 'No consolidated analysis available'
         else:

@@ -673,61 +673,41 @@ FSDSINET_ANALYZER_NAME = 'fsd-sinet_v1'
 BST_ANALYZER_NAME = 'bst-extractor_v1'
  
 ANALYZERS_CONFIGURATION = {
-    AUDIOCOMMONS_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('loudness', 'ac_loudness', float),
-            ('dynamic_range', 'ac_dynamic_range', float),
-            ('temporal_centroid', 'ac_temporal_centroid', float),
-            ('log_attack_time', 'ac_log_attack_time', float),
-            ('single_event', 'ac_single_event', bool),
-            ('tonality', 'ac_tonality', str),
-            ('tonality_confidence', 'ac_tonality_confidence', float),
-            ('loop', 'ac_loop', bool),
-            ('tempo', 'ac_tempo', int),
-            ('tempo_confidence', 'ac_tempo_confidence', float),
-            ('note_midi', 'ac_note_midi', int),
-            ('note_name', 'ac_note_name', str),
-            ('note_frequency', 'ac_note_frequency', float),
-            ('note_confidence', 'ac_note_confidence', float),
-            ('brightness', 'ac_brightness', float),
-            ('depth', 'ac_depth', float),
-            ('hardness', 'ac_hardness', float),
-            ('roughness', 'ac_roughness', float),
-            ('boominess', 'ac_boominess', float),
-            ('warmth', 'ac_warmth', float),
-            ('sharpness', 'ac_sharpness', float),
-            ('reverb', 'ac_reverb', bool)
-        ]
-    },
+    AUDIOCOMMONS_ANALYZER_NAME: {},
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
-    AUDIOSET_YAMNET_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('classes', 'yamnet_class', list)
-        ]
-    },
-    BIRDNET_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('detections', 'birdnet_detections', None),  # Use None so detections are not indexed in solr but stored in database
-            ('detected_classes', 'birdnet_detected_class', list),
-            ('num_detections', 'birdnet_detections_count', int),
-        ]
-    },
-    FSDSINET_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('detections', 'fsdsinet_detections', None),  # Use None so detections are not indexed in solr but stored in database
-            ('detected_classes', 'fsdsinet_detected_class', list),
-            ('num_detections', 'fsdsinet_detections_count', int),
-        ]
-    },
-    BST_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('bst_top_level', 'category', str), 
-            ('bst_second_level', 'subcategory', str),
-        ]
-    }
+    AUDIOSET_YAMNET_ANALYZER_NAME: {},
+    BIRDNET_ANALYZER_NAME: {},
+    FSDSINET_ANALYZER_NAME: {},
+    BST_ANALYZER_NAME: {}
 }
 
+CONSOLIDATED_ANALYZER_NAME = 'consolidated'
+
+AUDIO_DESCRIPTOR_TYPE_FLOAT = 'float'
+AUDIO_DESCRIPTOR_TYPE_INT = 'int'
+AUDIO_DESCRIPTOR_TYPE_BOOL = 'bool'
+AUDIO_DESCRIPTOR_TYPE_STRING = 'string'
+AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS = 'list_of_strings'
+AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY = 'float_array'
+AUDIO_DESCRIPTOR_TYPE_JSON = 'json'  # For complex structures
+DEFAULT_AUDIO_DESCRIPTOR_TYPE = AUDIO_DESCRIPTOR_TYPE_FLOAT
+DEFAULT_AUDIO_DESCRIPTOR_FLOAT_PRECISION = 2
+
 CONSOLIDATED_AUDIO_DESCRIPTORS = [
+    {
+        'name': 'category', 
+        'analyzer': BST_ANALYZER_NAME,
+        'original_name': 'bst_top_level',
+        'type': AUDIO_DESCRIPTOR_TYPE_STRING,
+        'index': False,  # This field is special and has dedicated code for indexing
+    },
+    {
+        'name': 'subcategory', 
+        'analyzer': BST_ANALYZER_NAME,
+        'original_name': 'bst_second_level',
+        'type': AUDIO_DESCRIPTOR_TYPE_STRING,
+        'index': False,  # This field is special and has dedicated code for indexing
+    },
     {
         'name': 'spectral_centroid', 
         'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
@@ -745,6 +725,7 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     },
     {
         'name': 'fsdsinet_detected_class', 
+        'type': AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
         'analyzer': FSDSINET_ANALYZER_NAME,
         'original_name': 'detected_classes',
         'transformation': lambda v, d, s: None if v == [] else v,
@@ -752,11 +733,14 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     {
         'name': 'fsdsinet_detections', 
         'analyzer': FSDSINET_ANALYZER_NAME,
+        'type': AUDIO_DESCRIPTOR_TYPE_JSON,
         'original_name': 'detections',
         'transformation': lambda v, d, s: None if v == [] else v,
         'index': False
     },
 ]
+
+AVAILABLE_AUDIO_DESCRIPTORS_NAMES = [desc['name'] for desc in CONSOLIDATED_AUDIO_DESCRIPTORS]
 
 
 # -------------------------------------------------------------------------------

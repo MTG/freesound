@@ -431,11 +431,11 @@ class SoundManager(models.Manager):
             if isinstance(include_audio_descriptors, list):
                 descriptor_names = include_audio_descriptors
             else:
-                descriptor_names = [descriptor['name'] for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS]
+                descriptor_names = settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES
 
             json_object_args = {descriptor_name: f'analysis_data__' + descriptor_name for descriptor_name in descriptor_names} 
             consolidated_audio_descriptors_subquery = SoundAnalysis.objects.filter(
-                sound=OuterRef("id"), analyzer="consolidated", analysis_status="OK"
+                sound=OuterRef("id"), analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status="OK"
             ).values(data=JSONObject(**json_object_args))
             qs = qs.annotate(consolidated_audio_descriptors=ArraySubquery(consolidated_audio_descriptors_subquery))
 
@@ -1211,7 +1211,7 @@ class Sound(models.Model):
 
     def analyze(self, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, force=False, verbose=True, high_priority=False):
 
-        if analyzer == "consolidated":
+        if analyzer == settings.CONSOLIDATED_ANALYZER_NAME:
             # Special case for consolidated analysis
             return self.consolidate_analysis()
 
@@ -1249,17 +1249,17 @@ class Sound(models.Model):
     def consolidate_analysis(self):
         """
         This method post-processes the analysis results of all analyzers for this sound and consolidates them into a new
-        SoundAnalysis object with analyzer name 'consolidated'. This consolidated analysis contains audio descriptors data
-        from various analyzers that will be stored in the DB and also used for indexing in the search engine.
+        SoundAnalysis object with analyzer name settings.CONSOLIDATED_ANALYZER_NAME. This consolidated analysis contains 
+        audio descriptors data from various analyzers that will be stored in the DB and also used for indexing in the 
+        search engine.
         """
-        consolidated_analysis_object, _ = SoundAnalysis.objects.get_or_create(sound=self, analyzer='consolidated')
+        consolidated_analysis_object, _ = SoundAnalysis.objects.get_or_create(sound=self, analyzer=settings.CONSOLIDATED_ANALYZER_NAME)
         current_consolidated_analysis_data = consolidated_analysis_object.analysis_data
 
         # Iterate over all descriptors defined in settings.CONSOLIDATED_AUDIO_DESCRIPTORS and obtain/process their values
         tmp_analyzers_data = {}
         consolidated_analysis_data = {}
         for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
-
             condition = descriptor.get('condition', None)
             if condition is not None:
                 if not condition(self):
@@ -1286,6 +1286,7 @@ class Sound(models.Model):
             original_name = descriptor.get('original_name', None)
             get_func = descriptor.get('get_func', None)
             transformation = descriptor.get('transformation', None)
+            descriptor_type = descriptor.get('type', settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
             
             if original_name is not None and get_func is not None:
                 raise Exception(f"Descriptor {name} cannot have both original_name and get_func defined")
@@ -1300,7 +1301,16 @@ class Sound(models.Model):
                 
             if get_func is not None:
                 value = get_func(analyzer_data, self)
-            
+
+            # Reduce float precision to avoid storing very long floats in the DB
+            # This could be implemented in a transformation but we assume it is common enough to be part of the main code
+            if value is not None and (descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT or descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY):    
+                float_precision = descriptor.get('float_precision', settings.DEFAULT_AUDIO_DESCRIPTOR_FLOAT_PRECISION)
+                if descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT:
+                    value = round(value, float_precision)
+                else:
+                    value = [round(v, float_precision) for v in value]
+
             if value is not None and transformation is not None:
                 value = transformation(value, analyzer_data, self)
 
@@ -1314,10 +1324,28 @@ class Sound(models.Model):
             consolidated_analysis_object.analysis_status = "OK"
             consolidated_analysis_object.last_analyzer_finished = timezone.now()
             consolidated_analysis_object.save()
-            # ...and mark sound as index dirty so it eventually gets reindexed with new analysis data
+            # ...mark sound as index dirty so it eventually gets reindexed with new analysis data
             self.mark_index_dirty(commit=True)
+            # ... and invalidate template caches in case anything shown in the sound pages depends on analysis data (like automatic category)
+            self.invalidate_template_caches()
 
         return consolidated_analysis_object
+
+    def get_consolidated_analysis_data(self, try_db=True):
+        if hasattr(self, 'consolidated_audio_descriptors'):
+            # The sound object was retrieved using bulk_query and consolidated analysis data is pre-fetched
+            try:
+                return self.consolidated_audio_descriptors[0]
+            except IndexError:
+                return None
+        else:
+            if not try_db:
+                return None
+            try:
+                sa = self.analyses.get(analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status='OK')
+                return sa.analysis_data
+            except SoundAnalysis.DoesNotExist:
+                return None
 
     def delete_from_indexes(self):
         delete_sounds_from_search_engine([self.id])
@@ -1373,13 +1401,12 @@ class Sound(models.Model):
     def category_names(self):
         if self.bst_category is None:
             # If the sound category has not been defind by user, return estimated precomputed category.
-            try:
-                for analysis in self.analyses.all():
-                    if analysis.analyzer == settings.BST_ANALYZER_NAME:
-                        if analysis.analysis_data is not None:
-                            return [analysis.analysis_data['category'], analysis.analysis_data['subcategory']]
-            except KeyError:
-                pass
+            consolidated_analysis_data = self.get_consolidated_analysis_data()
+            if consolidated_analysis_data is not None:
+                try:
+                    return [consolidated_analysis_data['category'], consolidated_analysis_data['subcategory']]
+                except KeyError:
+                    pass
             return [None, None]
         return bst_taxonomy_category_key_to_category_names(self.bst_category)    
     
@@ -2060,7 +2087,10 @@ class SoundAnalysis(models.Model):
         """This method checks the analysis output data which has been written to a file, and loads it to the
         database using the SoundAnalysis.analysis_data field. The loading of the data into DB only happens if a
         data mapping for the current analyzer has been specified in the Django settings. Note that for some analyzers
-        we don't actually want the data to be loaded in the DB as it would take a lot of space."""
+        we don't actually want the data to be loaded in the DB as it would take a lot of space.
+        
+        NOTE: this method is not used much now that we load data to the consolidated SoundAnalysis object only,
+        but it might still be used for some specific analyzers in the future."""
 
         def value_is_valid(value):
             # By convention in the analyzer's code, if descriptors have a value of None, these should not be loaded/indexed
@@ -2080,7 +2110,7 @@ class SoundAnalysis(models.Model):
             if analysis_results:
                 descriptors_map = analysis_configuration['descriptors_map']
                 analysis_data_for_db = {}
-                for file_descriptor_key_path, db_descriptor_key, _ in descriptors_map:
+                for file_descriptor_key_path, db_descriptor_key in descriptors_map:
                     # TODO: here we could implement support for nested keys in the analysis file, maybe by accessing
                     # TODO: nested keys with dot notation (e.g. "key1.nested_key2")
                     if file_descriptor_key_path in analysis_results:

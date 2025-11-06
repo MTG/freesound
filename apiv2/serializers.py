@@ -77,7 +77,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             requested_fields = self.default_fields
 
         # If parameter is *, return all fields, also include all audio descriptor fields
-        # Remove category and subcategory from descritor names as they are handled separately
+        # Remove category and subcategory from descritor names as they are handled separately and should not be obtained from custom descriptor accessors
         available_audio_descriptor_names = settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES.copy()
         available_audio_descriptor_names.remove('category')
         available_audio_descriptor_names.remove('subcategory')

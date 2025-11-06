@@ -698,15 +698,13 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
         'name': 'category', 
         'analyzer': BST_ANALYZER_NAME,
         'original_name': 'bst_top_level',
-        'type': AUDIO_DESCRIPTOR_TYPE_STRING,
-        'index': False,  # This field is special and has dedicated code for indexing
+        'type': AUDIO_DESCRIPTOR_TYPE_STRING
     },
     {
         'name': 'subcategory', 
         'analyzer': BST_ANALYZER_NAME,
         'original_name': 'bst_second_level',
-        'type': AUDIO_DESCRIPTOR_TYPE_STRING,
-        'index': False,  # This field is special and has dedicated code for indexing
+        'type': AUDIO_DESCRIPTOR_TYPE_STRING
     },
     {
         'name': 'spectral_centroid', 
@@ -717,6 +715,21 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
         'name': 'brightness', 
         'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
         'original_name': 'brightness',
+    },
+    {
+        'name': 'depth', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'depth',
+    },
+    {
+        'name': 'warmth', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'warmth',
+    },
+    {
+        'name': 'boominess', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'boominess',
     },
     {
         'name': 'hardness', 
@@ -814,11 +827,11 @@ SEARCH_SOUNDS_SUBCATEGORY_FACET = {SEARCH_SOUNDS_FIELD_SUBCATEGORY: {'limit': 30
 
 SEARCH_SOUNDS_BETA_FACETS = {
     'fsdsinet_detected_class': {'limit': 30, 'title': 'FSD-SINet class'},
-    'ac_brightness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Brightness'},
-    'ac_depth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Depth'},
-    'ac_warmth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Warmth'},
-    'ac_hardness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Hardness'},
-    'ac_boominess': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Boominess'},
+    'brightness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Brightness'},
+    'depth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Depth'},
+    'warmth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Warmth'},
+    'hardness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Hardness'},
+    'boominess': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Boominess'},
 }
 
 SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST = "Thread creation (newest first)"

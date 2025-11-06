@@ -302,20 +302,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
         document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
         
-        # Category and subcategory fields
-        # When adding fields from analyzers output, automatically predicted category and subcategory will be added. However,
-        # if a sound does indeed have that field annotated by a user, then we want to use the user provided-value and not the
-        # automatically-generated one
-        if sound.bst_category is not None:
-            user_provided_category, user_provided_subcategory = sound.category_names
-            if user_provided_category is not None:
-                document[f'{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}'] = user_provided_category
-            if user_provided_subcategory is not None:
-                document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}'] = user_provided_subcategory
+        
 
         # Index consolidated audio descriptors
         descriptors_to_index = {}
-        descriptors_data = sound.self.get_consolidated_analysis_data()
+        descriptors_data = sound.get_consolidated_analysis_data()
         if descriptors_data is not None:
             for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
                 index = descriptor.get('index', True)
@@ -341,6 +332,17 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 raise SearchEngineException(f"Trying to index audio descriptors but some of the field names already exist in the document. "
                                             f"Conflicting keys: {set(descriptors_to_index_keys).intersection(set(current_document_keys))}")
             document.update(descriptors_to_index)
+
+        # Category and subcategory fields
+        # When adding fields from analyzers output, automatically predicted category and subcategory will be added. However,
+        # if a sound does indeed have that field annotated by a user, then we want to use the user provided-value and not the
+        # automatically-generated one
+        if sound.bst_category is not None:
+            user_provided_category, user_provided_subcategory = sound.category_names
+            if user_provided_category is not None:
+                document[f'{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}'] = user_provided_category
+            if user_provided_subcategory is not None:
+                document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}'] = user_provided_subcategory
 
         # Finally add the sound ID and content type
         document.update({'id': sound.id, 'content_type': SOLR_DOC_CONTENT_TYPES['sound']})

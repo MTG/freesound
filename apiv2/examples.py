@@ -21,18 +21,19 @@
 
 examples = {
     # Search
-    'TextSearch': [
-        ('Simple search', ['apiv2/search/text/?query=cars', 'apiv2/search/text/?query=piano&page=2', 'apiv2/search/text/?query=bass -drum', 'apiv2/search/text/?query="bass drum" -double']),
-        ('Search with a filter', ['apiv2/search/text/?query=music&filter=tag:guitar','apiv2/search/text/?query=music&filter=type:(wav OR aiff)','apiv2/search/text/?query=music&filter=tag:bass tag:drum','apiv2/search/text/?query=music&filter=tag:bass description:"heavy distortion"','apiv2/search/text/?query=music&filter=is_geotagged:true tag:field-recording duration:[60 TO 120]','apiv2/search/text/?query=music&filter=samplerate:44100 type:wav channels:2','apiv2/search/text/?query=music&filter=duration:[0.1 TO 0.3] avg_rating:[3 TO *]']),
-        ('Simple search and selection of sound fields to return in the results', ['apiv2/search/text/?query=alarm&fields=name,previews', 'apiv2/search/text/?query=alarm&fields=name,previews,analysis&descriptors=lowlevel.spectral_centroid.mean,lowlevel.pitch.mean', 'apiv2/search/text/?query=loop&fields=uri,analysis&descriptors=rhythm.onset_times']),
-        ('Group search results by pack', ['apiv2/search/text/?query=piano&group_by_pack=1']),
-        ('Get geotagged sounds with tag field-recording. Return only geotag and tags for each result', ['apiv2/search/text/?filter=is_geotagged:1 tag:field-recording&fields=geotag,tags']),
-        ('Basic geospatial filtering', ['apiv2/search/text/?filter=geotag:"Intersects(-74.093 41.042 -69.347 44.558)"', 'apiv2/search/text/?filter=geotag:"IsDisjointTo(-74.093 41.042 -69.347 44.558)"']),
+    'Search': [
+        ('Simple search', ['apiv2/search/?query=cars', 'apiv2/search/?query=piano&page=2', 'apiv2/search/?query=bass -drum', 'apiv2/search/?query="bass drum" -double']),
+        ('Search with a filter', ['apiv2/search/?query=music&filter=tag:guitar','apiv2/search/?query=music&filter=type:(wav OR aiff)','apiv2/search/?query=music&filter=tag:bass tag:drum','apiv2/search/?query=music&filter=category:Music subcategory:"Solo instrument"','apiv2/search/?query=music&filter=is_geotagged:true tag:field-recording duration:[60 TO 120]','apiv2/search/?query=music&filter=samplerate:44100 type:wav channels:2','apiv2/search/?query=music&filter=duration:[0.1 TO 0.3] avg_rating:[3 TO *]']),
+        ('Search with a content-based filter', ['apiv2/search/?query=piano&filter=bpm:60','apiv2/search/?query=piano&filter=pitch:[435 TO 445]','apiv2/search/?query=piano&filter=note_name:E','apiv2/search/?query=piano&filter=note_confidence:[0.9 TO *]']),
+        ('Simple search and selection of sound fields to return in the results', ['apiv2/search/?query=alarm&fields=name,previews', 'apiv2/search/?query=alarm&fields=name,spectral_centroid,pitch', 'apiv2/search/?query=loop&fields=uri,onset_times']),
+        ('Group search results by pack', ['apiv2/search/?query=piano&group_by_pack=1']),
+        ('Get geotagged sounds with tag field-recording. Return only geotag and tags for each result', ['apiv2/search/?filter=is_geotagged:1 tag:field-recording&fields=geotag,tags']),
+        ('Basic geospatial filtering', ['apiv2/search/?filter=geotag:"Intersects(-74.093 41.042 -69.347 44.558)"', 'apiv2/search/?filter=geotag:"IsDisjointTo(-74.093 41.042 -69.347 44.558)"']),
         ('Geospatial with customizable max error parameter (in degrees) and combinations of filters',
-                                 ['apiv2/search/text/?filter=geotag:"Intersects(-74.093 41.042 -69.347 44.558) distErr=20"',
-                                  'apiv2/search/text/?filter=geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)"&fields=id,geotag,tags',
-                                  'apiv2/search/text/?filter=(geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)") AND tag:field-recording&fields=id,geotag,tags']),
-        ('Geospatial search for points at a maximum distance d (in km) from a latitude,longitude position and with a particular tag', ['apiv2/search/text/?filter={!geofilt sfield=geotag pt=41.3833,2.1833 d=10} tag:barcelona&fields=id,geotag,tags',]),
+                                 ['apiv2/search/?filter=geotag:"Intersects(-74.093 41.042 -69.347 44.558) distErr=20"',
+                                  'apiv2/search/?filter=geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)"&fields=id,geotag,tags',
+                                  'apiv2/search/?filter=(geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)") AND tag:field-recording&fields=id,geotag,tags']),
+        ('Geospatial search for points at a maximum distance d (in km) from a latitude,longitude position and with a particular tag', ['apiv2/search/?filter={!geofilt sfield=geotag pt=41.3833,2.1833 d=10} tag:barcelona&fields=id,geotag,tags',]),
     ],
     'ContentSearch': [
         ('Setting a target as some descriptor values', ['apiv2/search/content/?target=lowlevel.pitch.mean:220', 'apiv2/search/content/?target=lowlevel.pitch.mean:220 AND lowlevel.pitch.var:0']),
@@ -50,18 +51,18 @@ examples = {
 
     # Sounds
     'SoundInstance': [
-        ('Complete sound information', ['apiv2/sounds/1234/']),
-        ('Complete sound information plus some descriptors', ['apiv2/sounds/213524/?descriptors=lowlevel.mfcc,rhythm.bpm']),
-        ('Getting only id and tags for a particular sound', ['apiv2/sounds/1234/?fields=id,tags']),
-        ('Getting sound name and spectral centroid values (second example gets normalized centroid values)', ['apiv2/sounds/1234/?fields=name,analysis&descriptors=lowlevel.spectral_centroid', 'apiv2/sounds/1234/?fields=name,analysis&descriptors=lowlevel.spectral_centroid&normalized=1']),
+        ('Complete sound information for a particular sound (excluding descriptors)', ['apiv2/sounds/1234/']),
+        ('Getting only ID and tags', ['apiv2/sounds/1234/?fields=id,tags']),
+        ('Getting only sound name plus some descriptors', ['apiv2/sounds/1234/?fields=name,spectral_centroid,mfcc']),
+        ('Getting only some descriptors', ['apiv2/sounds/213524/?fields=mfcc,bpm']),
     ],
     'SoundAnalysis': [
         ('Full analysis information', ['apiv2/sounds/1234/analysis/']),
-        ('Getting only tristimulus descriptor', ['apiv2/sounds/1234/analysis/?descriptors=sfx.tristimulus']),
-        ('Getting normalized mean mfcc descriptors', ['apiv2/sounds/1234/analysis/?descriptors=lowlevel.mfcc.mean&normalized=1']),
+        ('Getting only tristimulus descriptor', ['apiv2/sounds/1234/analysis/?fields=tristimulus']),
+        ('Getting two or more descriptors', ['apiv2/sounds/1234/analysis/?fields=mfcc,tristimulus,warmth']),
     ],
     'SimilarSounds': [
-        ('Getting similar sounds', ['apiv2/sounds/80408/similar/', 'apiv2/sounds/80408/similar/?page=2', 'apiv2/sounds/1234/similar/?fields=name,analysis&descriptors=lowlevel.pitch.mean&descriptors_filter=.lowlevel.pitch.mean:[90 TO 110]']),
+        ('Getting similar sounds', ['apiv2/sounds/80408/similar/', 'apiv2/sounds/80408/similar/?page=2', 'apiv2/sounds/1234/similar/?fields=name,pitch,spectral_centroid&filter=spectral_centroid:[80 TO 100] note_midi:60']),
     ],
     'SoundComments': [
         ('Get sound comments', ['apiv2/sounds/14854/comments/', 'apiv2/sounds/14854/comments/?page=2']),

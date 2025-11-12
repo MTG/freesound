@@ -435,10 +435,15 @@ class SoundManager(models.Manager):
             else:
                 descriptor_names = settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES
 
-            json_object_args = {descriptor_name: f'analysis_data__' + descriptor_name for descriptor_name in descriptor_names} 
+            # We need to split the query in two subqueries because Postgres has a limit of 100 function arguments
+            # this needs to be taken into account later to join the data again
+            json_object_args1 = {descriptor_name: f'analysis_data__' + descriptor_name for descriptor_name in descriptor_names[0:50]} 
+            json_object_args2 = {descriptor_name: f'analysis_data__' + descriptor_name for descriptor_name in descriptor_names[50:100]} 
+            if len(descriptor_names) > 100:
+                raise ValueError("Cannot include more than 100 audio descriptors in bulk query")
             consolidated_audio_descriptors_subquery = SoundAnalysis.objects.filter(
                 sound=OuterRef("id"), analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status="OK"
-                ).values(data=JSONObject(**json_object_args))
+                ).values(data=JSONObject(part1=JSONObject(**json_object_args1), part2=JSONObject(**json_object_args2)))
             qs = qs.annotate(consolidated_audio_descriptors=ArraySubquery(consolidated_audio_descriptors_subquery))
 
         if include_similarity_vectors:
@@ -1310,24 +1315,35 @@ class Sound(models.Model):
                 raise Exception(f"Descriptor {name} must have either original_name or get_func defined")
             
             value = None
-            if original_name is not None:
-                if original_name in analyzer_data:
-                    value = analyzer_data[original_name]
-                
-            if get_func is not None:
-                value = get_func(analyzer_data, self)
+            try:
+                if original_name is not None:
+                    if original_name in analyzer_data:
+                        value = analyzer_data[original_name]
+                    
+                if get_func is not None:
+                    value = get_func(analyzer_data, self)
+            except Exception as e:
+                # If value can't be loaded, continue with next descriptor
+                print(f"Can't get value for descriptor {name}: {e} (sound id: {self.id})")
+                continue
 
-            # Reduce float precision to avoid storing very long floats in the DB
-            # This could be implemented in a transformation but we assume it is common enough to be part of the main code
-            if value is not None and (descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT or descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY):    
-                float_precision = descriptor.get('float_precision', settings.DEFAULT_AUDIO_DESCRIPTOR_FLOAT_PRECISION)
-                if descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT:
-                    value = round(value, float_precision)
-                else:
-                    value = [round(v, float_precision) for v in value]
+            try:
+                # Reduce float precision to avoid storing very long floats in the DB
+                # This could be implemented in a transformation but we assume it is common enough to be part of the main code
+                if value is not None and (descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT or descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY):    
+                    float_precision = descriptor.get('float_precision', settings.DEFAULT_AUDIO_DESCRIPTOR_FLOAT_PRECISION)
+                    if descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT:
+                        value = round(value, float_precision)
+                    else:
+                        value = [round(v, float_precision) for v in value]
 
-            if value is not None and transformation is not None:
-                value = transformation(value, analyzer_data, self)
+                if value is not None and transformation is not None:
+                    value = transformation(value, analyzer_data, self)
+
+            except Exception as e:
+                # If value can't be transformed, continue with next descriptor
+                print(f"Can't transform or adjust precision of value {value} for descriptor {name}: {e} (sound id: {self.id})")
+                continue
 
             if value is not None:
                 consolidated_analysis_data[name] = value
@@ -1349,9 +1365,16 @@ class Sound(models.Model):
     def get_consolidated_analysis_data(self):
         if hasattr(self, 'consolidated_audio_descriptors'):
             # The sound object was retrieved using bulk_query and consolidated analysis data is pre-fetched
+            # Because of a limitation with postgress max number of function arguments, we need to split the
+            # prefetched descriptors in two dictionaries, which are then merged here
             try:
-                return self.consolidated_audio_descriptors[0]
-            except IndexError:
+                combined_descriptors = {}
+                if 'part1' in self.consolidated_audio_descriptors[0]:
+                    combined_descriptors.update(self.consolidated_audio_descriptors[0]['part1'])
+                if 'part2' in self.consolidated_audio_descriptors[0]:
+                    combined_descriptors.update(self.consolidated_audio_descriptors[0]['part2'])
+                return combined_descriptors
+            except (IndexError, KeyError):
                 return None
         else:
             try:

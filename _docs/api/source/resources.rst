@@ -305,15 +305,21 @@ The 'similar_to' and 'simiarity_space' parameters
 These parameters allow similarity-based search in order to retrieve sounds that are acoustically, semantically, or perceptually similar to a given reference sound.
 The ``similar_to`` parameter takes the ID of a sound (e.g. 1234) or a similarity vector (e.g. [1.36, 2.05, ..]) and returns results sorted by similarity to that sound. For example::
 
-  similar_to=sound_id&similarity_space=space_name
+  similar_to=<SOUND_ID>&similarity_space=<SIMILARITY_SPACE_NAME>
 
-When using a sound ID, it should be a valid Freesound ID corresponding to a sound that still exists.
-When using a similarity vector, it should be obtained by extracting the corresponding feature representation for a sound defined by the chosen similarity space, and its length must match the dimensionality of that space.
+When using a sound ID, it should be a valid Freesound ID corresponding to a sound that exists.
+When using a similarity vector, it should be obtained by extracting the a feature representation for a sound corresponding to the used similarity space (see below).
 
 The ``similarity_space`` parameter can optionally be used (in combination with ``similar_to``) to indicate which feature space should be used for computing similarity. 
 Each similarity space is built using different types of descriptors, ranging from low-level acoustic characteristics to semantically informed or perceptual sound information. 
-If the ``similarity_space`` parameter is not specified, the default space is used.
-There are different available spaces such as [insert list].
+If the ``similarity_space`` parameter is not specified, the default space is used. These are the similarity spaces which are currently available:
+
+=====================  =====================  ====================================================================
+Simialrity space name  Number of dimensions   Explanation
+=====================  =====================  ====================================================================
+laion_clap             512                    This space is built using LAION-CLAP embeddings, which designed to capture both acoustic and semantic properties of sounds. We use L2-normed versions of the embeddings that can be extracted using the standard tools provided by LAION organisation (https://github.com/LAION-AI/CLAP). We use the ``630k-audioset-fusion-best.pt`` pre-trained model.
+freesound_classic      100                    This space is built using a combination of low-level acoustic audio features extracted using the ``FreesoundExtractor`` from the Essentia audio analysis library (https://essentia.upf.edu). We currently don't provide code to extract these features from arbitrary audio, but we might do that in the future.
+=====================  =====================  ====================================================================
 
 
 .. _search-weights:

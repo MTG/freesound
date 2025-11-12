@@ -48,18 +48,6 @@ console_logger = logging.getLogger("console")
 console_logger.setLevel(logging.DEBUG)
 
 
-# Monkey patch SoundAnalysis.get_analysis_data_from_file to return fake data instead of loading it from a file in disk
-SoundAnalysis.get_analysis_data_from_file = lambda self: {
-    'feature_float': 1.0,
-    'feature_int': 1,
-    'feature_string': 'a',
-    'feature_list_strings': ['a', 'b', 'c'],
-    'feature_bool': True,
-    'feature_array_float': [1.0, 2.0, 3.0],
-    'feature_json': {'key': 'value'}
-}
-
-
 def _setup_search_engine_backend(collection_type, schema_filename, unique_field, index_url_key, backend_class_name):
     """
     Helper function to set up a search engine backend for testing.
@@ -194,8 +182,8 @@ def fake_audio_descriptor_settings_for_tests(settings, monkeypatch):
             'type': settings.AUDIO_DESCRIPTOR_TYPE_STRING
         },
         {
-            'name': 'test_feature_list_strings',
-            'original_name': 'feature_list_strings',
+            'name': 'test_feature_list_string',
+            'original_name': 'feature_list_string',
             'analyzer': 'test_analyzer',
             'type': settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS
         },
@@ -238,7 +226,7 @@ def fake_audio_descriptor_settings_for_tests(settings, monkeypatch):
 
 
 @pytest.fixture()
-def test_sounds_qs(db, fake_analyzer_settings_for_similarity_tests, fake_audio_descriptor_settings_for_tests):
+def test_sounds_qs(db, fake_analyzer_settings_for_similarity_tests, fake_audio_descriptor_settings_for_tests, monkeypatch):
     call_command('loaddata', 'sounds/fixtures/licenses.json', 'sounds/fixtures/sounds_with_tags.json', verbosity=0)
     sound_ids = Sound.public.filter(
             is_index_dirty=False, num_ratings__gte=settings.MIN_NUMBER_RATINGS
@@ -247,6 +235,17 @@ def test_sounds_qs(db, fake_analyzer_settings_for_similarity_tests, fake_audio_d
         pytest.fail(
             f"Can't test search engine backend as there are not enough sounds for testing: {len(sound_ids)}, needed: 20"
         )
+
+    # Monkey patch SoundAnalysis.get_analysis_data_from_file to return fake data instead of loading it from a file in disk
+    monkeypatch.setattr(SoundAnalysis, 'get_analysis_data_from_file', lambda self: {
+        'feature_float': 1.0,
+        'feature_int': 1,
+        'feature_string': 'a',
+        'feature_list_string': ['a', 'b', 'c'],
+        'feature_bool': True,
+        'feature_array_float': [1.0, 2.0, 3.0],
+        'feature_json': {'key': 'value'}
+    })
 
     # Create fake similarity vector objects and fake consolidated audio descriptors for each sound
     for sound in Sound.public.all():

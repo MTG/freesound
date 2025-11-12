@@ -997,14 +997,28 @@ class SoundAnalysisModel(TestCase):
     def test_get_analysis(self):
         _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
-        analysis_data = {'descriptor1': 0.56, 'descriptor2': 1.45, 'descriptor3': 'label'}
+        analysis_data = {
+            'feature_float': 1.0,
+            'feature_int': 1,
+            'feature_string': 'string',
+            'feature_list_string': ['a', 'b', 'c'],
+            'feature_bool': True,
+            'feature_array_float': [0.1, 0.2, 0.3],
+            'feature_json': {'a': 1, 'b': 2}
+        }
 
         # Create one analysis object that stores the data in the model. Check that get_analysis returns correct data.
         sa = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor1", analysis_data=analysis_data,
                                           analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 1)
         self.assertEqual(list(sa.get_analysis_data().keys()), list(analysis_data.keys()))
-        self.assertEqual(sa.get_analysis_data()['descriptor1'], 0.56)
+        self.assertEqual(sa.get_analysis_data()['feature_float'], 1.0)
+        self.assertEqual(sa.get_analysis_data()['feature_int'], 1)
+        self.assertEqual(sa.get_analysis_data()['feature_string'], 'string')
+        self.assertEqual(sa.get_analysis_data()['feature_list_string'], ['a', 'b', 'c'])
+        self.assertEqual(sa.get_analysis_data()['feature_bool'], True)
+        self.assertEqual(sa.get_analysis_data()['feature_array_float'], [0.1, 0.2, 0.3])
+        self.assertEqual(sa.get_analysis_data()['feature_json'], {'a': 1, 'b': 2})
 
         # Now create an analysis object which stores output in a JSON file. Again check that get_analysis works.
         analysis_filename = '%i-TestExtractor2.json' % sound.id
@@ -1015,7 +1029,13 @@ class SoundAnalysisModel(TestCase):
         sa2 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor2", analysis_status="OK")
         self.assertEqual(sound.analyses.all().count(), 2)
         self.assertEqual(list(sa2.get_analysis_data().keys()), list(analysis_data.keys()))
-        self.assertEqual(sa2.get_analysis_data()['descriptor1'], 0.56)
+        self.assertEqual(sa2.get_analysis_data()['feature_float'], 1.0)
+        self.assertEqual(sa2.get_analysis_data()['feature_int'], 1)
+        self.assertEqual(sa2.get_analysis_data()['feature_string'], 'string')
+        self.assertEqual(sa2.get_analysis_data()['feature_list_string'], ['a', 'b', 'c'])
+        self.assertEqual(sa2.get_analysis_data()['feature_bool'], True)
+        self.assertEqual(sa2.get_analysis_data()['feature_array_float'], [0.1, 0.2, 0.3])
+        self.assertEqual(sa2.get_analysis_data()['feature_json'], {'a': 1, 'b': 2})
 
         # Create an analysis object which references a non-existing file. Check that get_analysis returns None.
         sa3 = SoundAnalysis.objects.create(sound=sound, analyzer="TestExtractor3", analysis_status="OK")

@@ -34,7 +34,7 @@
                                        name="{{ sqp.options.query.query_param_name }}"
                                        type="text"
                                        value="{% if not sqp.similar_to_active %}{{ sqp.options.query.value_to_apply }}{% endif %}"
-                                       placeholder="{% if not sqp.similar_to_active %}Search {% if not sqp.display_as_packs_active %}sounds{% else %}packs{% endif %}...{% else %}Similar to {{ sqp.similar_to_active }}{% endif %}"
+                                       placeholder="{% if not sqp.similar_to_active %}Search {% if not sqp.display_as_packs_active %}sounds{% else %}packs{% endif %}...{% else %}Similar to {{ sqp.similar_to_display_label }}{% endif %}"
                                        autocomplete="off"
                                        {% if sqp.options.query.disabled %}disabled{% endif %}/>
                             </div>

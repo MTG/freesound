@@ -41,7 +41,7 @@ class SearchQueryProcessorTests(TestCase):
         'query_fields': settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS,
         'query_filter': '',
         'similar_to': None,
-        'similar_to_analyzer': settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER,
+        'similar_to_similarity_space': settings.SIMILARITY_SPACE_DEFAULT,
         'sort': settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,  # Empty query should sort by date added, so use this as expected default
         'textual_query': ''}
 

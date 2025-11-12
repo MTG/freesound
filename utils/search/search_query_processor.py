@@ -29,6 +29,7 @@ import luqum.tree
 from luqum.parser import parser
 from luqum.pretty import prettify
 
+from sounds.models import Sound
 from utils.clustering_utilities import get_ids_in_cluster, get_clusters_for_query
 from utils.encryption import create_hash
 from utils.search.backends.solr555pysolr import Solr555PySolrSearchEngine
@@ -162,8 +163,8 @@ class SearchQueryProcessor:
         ('similarity_space', SearchOptionChoice, dict(
             query_param_name='ss',
             label='Similarity space',
-            choices = [(option, option) for option in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS.keys()],
-            get_default_value = lambda option: settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER
+            choices = [(sim_space_name, sim_space_options.get('display_name', sim_space_name)) for sim_space_name, sim_space_options in settings.SIMILARITY_SPACES.items()],
+            get_default_value = lambda option: settings.SIMILARITY_SPACE_DEFAULT
         )),
         ('field_weights', SearchOptionFieldWeights, dict(
             query_param_name = 'w'
@@ -557,7 +558,7 @@ class SearchQueryProcessor:
             only_sounds_with_pack=self.get_option_value_to_apply('display_as_packs'), 
             only_sounds_within_ids=only_sounds_within_ids, 
             similar_to=similar_to,
-            similar_to_analyzer=self.get_option_value_to_apply('similarity_space')
+            similar_to_similarity_space=self.get_option_value_to_apply('similarity_space')
         )
     
     def get_url(self, add_filters=None, remove_filters=None):
@@ -607,6 +608,22 @@ class SearchQueryProcessor:
     
     def similar_to_active(self):
         return self.options['similar_to'].value_to_apply
+    
+    def similar_to_display_label(self):
+        similar_to = self.options['similar_to'].value_to_apply
+        # If similar_to is a number, we assume it is a sound ID and we return sound's name (we make an extra query...)
+        # Otherwise, we return the raw similar_to value (which will be a vector in serialized format)
+        similar_to_active = self.similar_to_active()
+        if similar_to_active:
+            if str(similar_to).isdigit():
+                sound = Sound.objects.filter(id=int(similar_to)).only('original_filename').first()
+                if sound:
+                    return sound.original_filename
+                else:
+                    return similar_to
+            else:
+                return similar_to
+        return similar_to
 
     def compute_clusters_active(self):
         return self.options['compute_clusters'].value_to_apply

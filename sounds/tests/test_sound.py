@@ -715,22 +715,6 @@ class SoundTemplateCacheTests(TestCase):
         self.assertEqual(self.sound.similarity_state, 'OK')
         self.assertContains(request_func(user) if user is not None else request_func(), expected)
 
-    @override_settings(USE_SEARCH_ENGINE_SIMILARITY=False)
-    def test_similarity_update_display(self):
-        self._test_similarity_update(
-            self._get_sound_display_cache_keys(),
-            'data-similar-sounds="true"',
-            self._get_sound_from_profile_page,
-            user=self.user,
-        )
-
-    @override_settings(USE_SEARCH_ENGINE_SIMILARITY=False)
-    def test_similarity_update_view(self):
-        self._test_similarity_update(
-            self._get_sound_view_footer_top_cache_keys(),
-            'class="bw-icon-similar',
-            self._get_sound_view,
-        )
 
     # Pack link (cached in display and view)
     def _test_add_remove_pack(self, cache_keys, text, request_func, user=None):

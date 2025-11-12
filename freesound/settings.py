@@ -312,7 +312,7 @@ MESSAGES_PER_PAGE = 10
 BOOKMARKS_PER_PAGE = 12 
 SOUNDS_PER_PAGE_PROFILE_PACK_PAGE = 12
 NUM_SIMILAR_SOUNDS_PER_PAGE = 9
-NUM_SIMILAR_SOUNDS_PAGES = 5
+NUM_SIMILAR_SOUNDS_PAGES = 1 # In the modal we only show one page, full results can be seen in search page
 
 
 # Weights using to compute charts
@@ -681,8 +681,6 @@ ANALYZERS_CONFIGURATION = {
     BST_ANALYZER_NAME: {}
 }
 
-CONSOLIDATED_ANALYZER_NAME = 'consolidated'
-
 AUDIO_DESCRIPTOR_TYPE_FLOAT = 'float'
 AUDIO_DESCRIPTOR_TYPE_INT = 'int'
 AUDIO_DESCRIPTOR_TYPE_BOOL = 'bool'
@@ -693,6 +691,7 @@ AUDIO_DESCRIPTOR_TYPE_JSON = 'json'  # For complex structures
 DEFAULT_AUDIO_DESCRIPTOR_TYPE = AUDIO_DESCRIPTOR_TYPE_FLOAT
 DEFAULT_AUDIO_DESCRIPTOR_FLOAT_PRECISION = 2
 
+CONSOLIDATED_ANALYZER_NAME = 'consolidated'
 CONSOLIDATED_AUDIO_DESCRIPTORS = [
     {
         'name': 'category', 
@@ -753,6 +752,7 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     },
 ]
 
+CONSOLIDATED_AUDIO_DESCRIPTORS_ANALYZER_NAMES = list(set([ad['analyzer'] for ad in CONSOLIDATED_AUDIO_DESCRIPTORS]))
 AVAILABLE_AUDIO_DESCRIPTORS_NAMES = [desc['name'] for desc in CONSOLIDATED_AUDIO_DESCRIPTORS]
 
 
@@ -846,26 +846,28 @@ SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr9pysolr.Solr9PySolrSear
 SOLR5_BASE_URL = "http://search:8983/solr"
 SOLR9_BASE_URL = "http://search:8983"
 
-SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
-    BST_ANALYZER_NAME: {
+SIMILARITY_SPACE_LAION_CLAP = 'laion_clap'
+SIMILARITY_FREESOUND_CLASSIC = 'freesound_classic'
+SIMILARITY_SPACES = {
+    SIMILARITY_SPACE_LAION_CLAP: {
         'vector_property_name': 'clap_embedding', 
         'vector_size': 512,
-        'l2_norm': True
+        'l2_norm': True,
+        'analyzer': BST_ANALYZER_NAME,
+        'display_name': 'Acoustic and semantic'
     },
-    FSDSINET_ANALYZER_NAME: {
-        'vector_property_name': 'embeddings', 
-        'vector_size': 512,
-        'l2_norm': True
-    },
-    FREESOUND_ESSENTIA_EXTRACTOR_NAME: {
+    SIMILARITY_FREESOUND_CLASSIC: {
         'vector_property_name': 'sim_vector', 
         'vector_size': 100,
-        'l2_norm': True
+        'l2_norm': True,
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'display_name': 'Acoustic'
     }
 }
-SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = BST_ANALYZER_NAME
-SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY = 500
-USE_SEARCH_ENGINE_SIMILARITY = False
+SIMILARITY_SPACES_NAMES = list(SIMILARITY_SPACES.keys())
+SIMILARITY_SPACES_ANALYZER_NAMES = list(set([ss['analyzer'] for ss in SIMILARITY_SPACES.values()]))
+SIMILARITY_SPACE_DEFAULT = SIMILARITY_SPACE_LAION_CLAP
+SIMILARITY_MIN_THRESHOLD = 0.7
 
 MAX_SEARCH_RESULTS_IN_MAP_DISPLAY = 10000  # This is the maximum number of sounds that will be shown when using "display results in map" mode
 

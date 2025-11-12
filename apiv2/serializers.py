@@ -42,11 +42,11 @@ DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by c
 DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,category_code,category_is_user_provided,geotag,created,license,type,channels,filesize,bitrate,' + \
 'bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,' + \
 'num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,' +  \
-'analysis,analysis_files,is_explicit'  # All except for analyzers
+'analysis,analysis_files,is_explicit'
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
 
-# Dynamically create accessor functions for all audio descriptors
+# Dynamically create accessor functions for all audio descriptors and similarity vectors
 audio_descriptor_accessors = {}
 for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
     field_name = descriptor['name']
@@ -55,6 +55,13 @@ for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
             return None
         return obj.get_consolidated_analysis_data().get(field_name, None)
     audio_descriptor_accessors[field_name] = get_descriptor_accessor
+
+similarity_vectors_accessors = {}
+for sim_space_name in settings.SIMILARITY_SPACES_NAMES:
+    field_name = f'sim_{sim_space_name}'
+    def get_similarity_vector_accessor(obj, field_name=field_name):
+        return obj.get_similarity_vector(similarity_space_name=field_name.replace('sim_', ''))
+    similarity_vectors_accessors[field_name] = get_similarity_vector_accessor
 
 
 class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
@@ -80,8 +87,9 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
         available_audio_descriptor_names = settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES.copy()
         available_audio_descriptor_names.remove('category')
         available_audio_descriptor_names.remove('subcategory')
+        available_similarity_space_names = [f'sim_{name}' for name in settings.SIMILARITY_SPACES_NAMES]
         if requested_fields == '*':  
-            requested_fields = ','.join(list(self.fields.keys()) + available_audio_descriptor_names)
+            requested_fields = ','.join(list(self.fields.keys()) + available_audio_descriptor_names + available_similarity_space_names)
 
         if requested_fields:
             requested_fields = requested_fields.split(",")
@@ -90,16 +98,24 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             if 'all_descriptors' in requested_fields:
                 requested_fields.remove('all_descriptors')
                 requested_fields += available_audio_descriptor_names
+
+            # If 'all_similarity_spaces' is requested, replace it with all available audio descriptor names
+            if 'all_similarity_spaces' in requested_fields:
+                requested_fields.remove('all_similarity_spaces')
+                requested_fields += available_similarity_space_names
             
-            # Also dynamically create accessors and SerializerMethodFields for the requested audio descriptors
+            # Also dynamically create accessors and SerializerMethodFields for the requested audio descriptors and similarity vectors
             for field_name in requested_fields:
                 if field_name in available_audio_descriptor_names:
                     self.fields[field_name] = serializers.SerializerMethodField()
                     setattr(self, 'get_' + field_name, audio_descriptor_accessors[field_name])
+                elif field_name.startswith('sim_'):
+                    self.fields[field_name] = serializers.SerializerMethodField()
+                    setattr(self, 'get_' + field_name, similarity_vectors_accessors[field_name])
 
             # Make sure that no non-existing field is requested
             requested = set(requested_fields)
-            existing = set(list(self.fields.keys()) + settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES)
+            existing = set(list(self.fields.keys()) + available_audio_descriptor_names + available_similarity_space_names)
             for field_name in existing - requested:
                 if field_name in self.fields:
                     self.fields.pop(field_name)

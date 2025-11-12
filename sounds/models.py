@@ -36,6 +36,7 @@ from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.contrib.postgres.expressions import ArraySubquery
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Sum
@@ -69,7 +70,7 @@ from utils.locations import locations_decorator
 from utils.mail import send_mail_template
 from utils.search import get_search_engine, SearchEngineException
 from utils.search.search_sounds import delete_sounds_from_search_engine
-from utils.similarity_utilities import delete_sound_from_gaia, get_similarity_search_target_vector
+from utils.similarity_utilities import delete_sound_from_gaia
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
 
 web_logger = logging.getLogger('web')
@@ -395,7 +396,7 @@ class SoundManager(models.Manager):
             return None
 
     def bulk_query_solr(self, sound_ids):
-        qs = self.bulk_query_id(sound_ids, include_audio_descriptors=True)
+        qs = self.bulk_query_id(sound_ids, include_audio_descriptors=True, include_similarity_vectors=True)
         comments_subquery = Comment.objects.filter(sound=OuterRef("id")).values("comment")
         is_remix_subquery = Sound.objects.filter(remixes=OuterRef("id")).values("id")
         was_remixed_subquery = Sound.objects.filter(sources=OuterRef("id")).values("id")
@@ -406,13 +407,14 @@ class SoundManager(models.Manager):
         return qs
 
 
-    def bulk_query(self, include_audio_descriptors=False):
+    def bulk_query(self, include_audio_descriptors=False, include_similarity_vectors=False):
         tags_subquery = Tag.objects.filter(soundtag__sound=OuterRef("id")).values("name")
         analysis_subquery = SoundAnalysis.objects.filter(
             sound=OuterRef("id"), analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK"
         )
-        search_engine_similarity_subquery = SoundAnalysis.objects.filter(
-            sound=OuterRef("id"), analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, analysis_status="OK"
+        default_similarity_space_analyzer = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]['analyzer']
+        ready_for_similarity_subquery = SoundAnalysis.objects.filter(
+            sound=OuterRef("id"), analyzer=default_similarity_space_analyzer, analysis_status="OK"
         )
 
         qs = self.select_related(
@@ -423,7 +425,7 @@ class SoundManager(models.Manager):
                 remixgroup_id=F("remix_group__id"),
                 tag_array=ArraySubquery(tags_subquery),
                 analysis_state_essentia_exists=Exists(analysis_subquery),
-                search_engine_similarity_state=Exists(search_engine_similarity_subquery)
+                ready_for_similarity_precomputed=Exists(ready_for_similarity_subquery)
             )
 
         if include_audio_descriptors:
@@ -436,13 +438,26 @@ class SoundManager(models.Manager):
             json_object_args = {descriptor_name: f'analysis_data__' + descriptor_name for descriptor_name in descriptor_names} 
             consolidated_audio_descriptors_subquery = SoundAnalysis.objects.filter(
                 sound=OuterRef("id"), analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status="OK"
-            ).values(data=JSONObject(**json_object_args))
+                ).values(data=JSONObject(**json_object_args))
             qs = qs.annotate(consolidated_audio_descriptors=ArraySubquery(consolidated_audio_descriptors_subquery))
+
+        if include_similarity_vectors:
+            # By default include all similarity vectors, but if include_similarity_vectors is a list, then only include those specified
+            if isinstance(include_similarity_vectors, list):
+                similarity_spaces = include_similarity_vectors
+            else:
+                similarity_spaces = settings.SIMILARITY_SPACES_NAMES
+
+            json_object_args = {'similarity_space_name': 'similarity_space_name', 'vector': 'vector'} 
+            similarity_vectors_subquery = SoundSimilarityVector.objects.filter(
+                sound=OuterRef("id"), similarity_space_name__in=similarity_spaces
+                ).values(data=JSONObject(**json_object_args))
+            qs = qs.annotate(similarity_vectors=ArraySubquery(similarity_vectors_subquery))
 
         return qs
 
-    def bulk_sounds_for_user(self, user_id, limit=None, include_audio_descriptors=False):
-        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors)
+    def bulk_sounds_for_user(self, user_id, limit=None, include_audio_descriptors=False, include_similarity_vectors=False):
+        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)
         qs = qs.filter(
             moderation_state="OK",
             processing_state="OK",
@@ -453,8 +468,8 @@ class SoundManager(models.Manager):
             qs = qs[:limit]
         return qs
 
-    def bulk_sounds_for_pack(self, pack_id, limit=None, include_audio_descriptors=False):
-        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors)
+    def bulk_sounds_for_pack(self, pack_id, limit=None, include_audio_descriptors=False, include_similarity_vectors=False):
+        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)
         qs = qs.filter(
             moderation_state="OK",
             processing_state="OK",
@@ -465,10 +480,10 @@ class SoundManager(models.Manager):
             qs = qs[:limit]
         return qs
 
-    def bulk_query_id(self, sound_ids, limit=None, include_audio_descriptors=False):
+    def bulk_query_id(self, sound_ids, limit=None, include_audio_descriptors=False, include_similarity_vectors=False):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]
-        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors)
+        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)
         qs = qs.filter(
             id__in=sound_ids
         ).order_by('-created')
@@ -477,19 +492,19 @@ class SoundManager(models.Manager):
             qs = qs[:limit]
         return qs
 
-    def bulk_query_id_public(self, sound_ids, limit=None, include_audio_descriptors=False):
-        qs = self.bulk_query_id(sound_ids, limit=limit, include_audio_descriptors=include_audio_descriptors)
+    def bulk_query_id_public(self, sound_ids, limit=None, include_audio_descriptors=False, include_similarity_vectors=False):
+        qs = self.bulk_query_id(sound_ids, limit=limit, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)
         qs = qs.filter(
             moderation_state="OK",
             processing_state="OK",
         )
         return qs
 
-    def dict_ids(self, sound_ids, include_audio_descriptors=False):
-        return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids, include_audio_descriptors=include_audio_descriptors)}
+    def dict_ids(self, sound_ids, include_audio_descriptors=False, include_similarity_vectors=False):
+        return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)}
 
-    def ordered_ids(self, sound_ids, include_audio_descriptors=False):
-        sounds = self.dict_ids(sound_ids, include_audio_descriptors=include_audio_descriptors)
+    def ordered_ids(self, sound_ids, include_audio_descriptors=False, include_similarity_vectors=False):
+        sounds = self.dict_ids(sound_ids, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)
         return [sounds[sound_id] for sound_id in sound_ids if sound_id in sounds]
 
 
@@ -1345,6 +1360,58 @@ class Sound(models.Model):
             except SoundAnalysis.DoesNotExist:
                 return None
 
+    def load_similarity_vectors(self, force=False):
+        n_loaded = 0
+        for similarity_space_name in settings.SIMILARITY_SPACES.keys():
+            loaded = self.load_similarity_vector(similarity_space_name, force=force)
+            if loaded:
+                n_loaded += 1
+        if n_loaded:
+            self.mark_index_dirty(commit=True)
+        return n_loaded
+    
+    def load_similarity_vector(self, similarity_space_name, force=False):
+        if not force and SoundSimilarityVector.objects.filter(sound=self, similarity_space_name=similarity_space_name).exists():
+            # Similarity vector already exists, do nothing
+            return False
+
+        similarity_space = settings.SIMILARITY_SPACES[similarity_space_name]
+        try:
+            sa = self.analyses.get(analyzer=similarity_space['analyzer'], analysis_status='OK')
+            analyzer_data = sa.get_analysis_data_from_file()
+            sim_vector = analyzer_data[similarity_space['vector_property_name']]
+            sim_vector = [float(x) for x in sim_vector] 
+        except (SoundAnalysis.DoesNotExist, KeyError, ValueError) as e:
+            return False
+
+        if len(sim_vector) != similarity_space['vector_size']:
+            return False
+        
+        try:
+            sound_sim_vector = SoundSimilarityVector.objects.get(sound=self, similarity_space_name=similarity_space_name)
+        except SoundSimilarityVector.DoesNotExist:
+            sound_sim_vector = SoundSimilarityVector(sound=self, similarity_space_name=similarity_space_name)
+        sound_sim_vector.vector = sim_vector
+        if similarity_space['l2_norm']:
+            sound_sim_vector.apply_l2_normalization()
+        sound_sim_vector.save()
+
+        return True
+
+    def get_similarity_vector(self, similarity_space_name=settings.SIMILARITY_SPACE_DEFAULT):
+        if hasattr(self, 'similarity_vectors'):
+            # The sound object was retrieved using bulk_query and similarity vectors were pre-fetched
+            try:
+                vectors_dict = {sv['similarity_space_name']: sv['vector'] for sv in self.similarity_vectors}
+                return vectors_dict[similarity_space_name]
+            except KeyError:
+                return None
+        else:
+            try:
+                return SoundSimilarityVector.objects.get(sound=self, similarity_space_name=similarity_space_name).vector
+            except SoundSimilarityVector.DoesNotExist:
+                return None
+
     def delete_from_indexes(self):
         delete_sounds_from_search_engine([self.id])
         delete_sound_from_gaia(self.id)
@@ -1380,21 +1447,14 @@ class Sound(models.Model):
     @property
     def ready_for_similarity(self):
         # Returns True if the sound has been analyzed for similarity and should be available for similarity queries
-        if settings.USE_SEARCH_ENGINE_SIMILARITY:
-            if hasattr(self, 'search_engine_similarity_state'):
-                # If attribute is precomputed from query (because Sound was retrieved using bulk_query), no need to perform extra queries
-                return self.search_engine_similarity_state
-            else:
-                # Otherwise, check if there is a SoundAnalysis object for this sound with the correct analyzer and status
-                return SoundAnalysis.objects.filter(sound_id=self.id, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, analysis_status='OK').exists()
+        if hasattr(self, 'ready_for_similarity_precomputed'):
+            # If attribute is precomputed from query (because Sound was retrieved using bulk_query), no need to perform extra queries
+            return self.ready_for_similarity_precomputed
         else:
-            # If not using search engine based similarity, then use the old similarity_state DB field
-            return self.similarity_state == "OK"
+            # Otherwise, check if there is a SoundAnalysis object for this sound with the correct analyzer and status
+            analyzer_for_default_sim_space = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]['analyzer']
+            return SoundAnalysis.objects.filter(sound_id=self.id, analyzer=analyzer_for_default_sim_space, analysis_status='OK').exists()
 
-    def get_similarity_search_target_vector(self, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
-        # If the sound has been analyzed for similarity, returns the vector to be used for similarity search
-        return get_similarity_search_target_vector(self.id, analyzer=analyzer)
-    
     @property
     def category_names(self):
         if self.bst_category is None:
@@ -1653,7 +1713,7 @@ class PackManager(models.Manager):
                     selected_sounds_data.append({
                             'id': s.id,
                             'username': p.user.username,  # Packs have same username as sounds inside pack
-                            'ready_for_similarity': s.similarity_state == "OK" if not settings.USE_SEARCH_ENGINE_SIMILARITY else None,  # If using search engine similarity, this needs to be retrieved later (see below)
+                            'ready_for_similarity': None,  # If using search engine-based similarity, this needs to be retrieved later (see below)
                             'duration': s.duration,
                             'preview_mp3': s.locations('preview.LQ.mp3.url'),
                             'preview_ogg': s.locations('preview.LQ.ogg.url'),
@@ -1672,15 +1732,15 @@ class PackManager(models.Manager):
             p.num_ratings_precomputed = len(ratings)
             p.avg_rating_precomputed = sum(ratings) / len(ratings) if len(ratings) else 0.0
 
-        if settings.USE_SEARCH_ENGINE_SIMILARITY:
-            # To save an individual query for each selected sound, we get the similarity state of all selected sounds per pack in one single extra query
-            selected_sounds_ids = []
-            for p in packs:
-                selected_sounds_ids += [s['id'] for s in p.selected_sounds_data]
-            sound_ids_ready_for_similarity = SoundAnalysis.objects.filter(sound_id__in=selected_sounds_ids, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, analysis_status="OK").values_list('sound_id', flat=True)
-            for p in packs:
-                for s in p.selected_sounds_data:
-                    s['ready_for_similarity'] = s['id'] in sound_ids_ready_for_similarity
+        # To avoid making an individual query for each selected sound, we get the similarity state of all selected sounds per pack in one single extra query
+        selected_sounds_ids = []
+        for p in packs:
+            selected_sounds_ids += [s['id'] for s in p.selected_sounds_data]
+        analyzer_for_default_sim_space = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]['analyzer']
+        sound_ids_ready_for_similarity = SoundAnalysis.objects.filter(sound_id__in=selected_sounds_ids, analyzer=analyzer_for_default_sim_space, analysis_status="OK").values_list('sound_id', flat=True)
+        for p in packs:
+            for s in p.selected_sounds_data:
+                s['ready_for_similarity'] = s['id'] in sound_ids_ready_for_similarity
 
         return packs
 
@@ -2172,3 +2232,20 @@ def on_delete_sound_analysis(sender, instance, **kwargs):
             pass
 
 pre_delete.connect(on_delete_sound_analysis, sender=SoundAnalysis)
+
+
+class SoundSimilarityVector(models.Model):
+    """Model to store similarity vectors for sound. We use DB array field to optimize
+    disk space. The alternative would be to save similarity vectors in the JSON data fields
+    of SoundAnalysis obects, but that would be less optimial.
+    """
+    sound = models.ForeignKey(Sound, related_name='sim_vectors', on_delete=models.CASCADE)
+    similarity_space_name = models.CharField(max_length=100)
+    vector = ArrayField(models.FloatField())
+
+    def apply_l2_normalization(self, commit=True):
+        norm = math.sqrt(sum([v*v for v in self.vector]))
+        if norm > 0:
+            self.vector = [v/norm for v in self.vector]
+        if commit:
+            self.save()

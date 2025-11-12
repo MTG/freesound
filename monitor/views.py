@@ -33,7 +33,7 @@ from django.urls import reverse
 from django.utils import timezone
 import tickets
 from freesound.celery import get_queues_task_counts
-from sounds.models import Sound, SoundAnalysis
+from sounds.models import Sound, SoundAnalysis, SoundSimilarityVector
 from tickets import TICKET_STATUS_CLOSED
 from utils.search import get_search_engine, SearchEngineException
 
@@ -110,9 +110,17 @@ def monitor_analysis(request):
 
     # Get stats about similarity vectors indexed in Solr
     try:
-        sim_vector_stats = get_search_engine().get_num_sim_vectors_indexed_per_analyzer()
+        sim_vector_stats = get_search_engine().get_num_sim_vectors_indexed_per_similarity_space()
     except SearchEngineException: 
         sim_vector_stats = {}
+    
+    # Add sim vector stats from DB
+    for similarity_space_name in settings.SIMILARITY_SPACES_NAMES:
+        num_vectors_in_db = SoundSimilarityVector.objects.filter(
+            similarity_space_name=similarity_space_name).count()
+        if similarity_space_name not in sim_vector_stats:
+            sim_vector_stats[similarity_space_name] = {}
+        sim_vector_stats[similarity_space_name]['num_vectors_in_db'] = num_vectors_in_db
 
     tvars = {
         "analyzers_data": [(key, value) for key, value in analyzers_data.items()],

@@ -163,7 +163,6 @@ def get_all_sound_ids_from_search_engine(page_size=2000, solr_collection_url=Non
         return search_engine.get_all_sound_ids_from_index()
     except SearchEngineException as e:
         search_logger.info(f"Could not retrieve all sound IDs from search engine: {str(e)}")
-        raise
     return []
 
 
@@ -176,13 +175,13 @@ def get_random_sound_id_from_search_engine(solr_collection_url=None):
         search_logger.info(f"Could not retrieve a random sound ID from search engine: {str(e)}")
     return 0
 
-def get_sound_similarity_from_search_engine_query(query_params, analyzer_name=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, current_page=None, num_sounds=None):
+def get_sound_similarity_vectors_from_search_engine_query(query_params, similarity_space=settings.SIMILARITY_SPACE_DEFAULT, current_page=None, num_sounds=None):
     '''Gets the similarity vectors for the first "num_results" sounds for the given query.
 
     Args:
         query_params (dict): query parameters dictionary with parameters following the specification of search_sounds
             function from utils.search.SearchEngine.
-        analyzer_name (str): name of the similarity analyzer from which to get the vector
+        similarity_space (str): name of the similarity space from which to get the vector
         current_page (int): page number of the results to retrieve similarity vectors for. If None, the current page
             from query_params will be used.
         num_sounds (int): number of sounds to retrieve similarity vectors for. If None, the number of sounds
@@ -191,15 +190,14 @@ def get_sound_similarity_from_search_engine_query(query_params, analyzer_name=se
     Returns:
         dict: dictionary with sound IDs as keys and similarity vectors as values
     '''
-
     # Update query params to get similarity vectors of the first 
-    config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[analyzer_name]
+    config_options = settings.SIMILARITY_SPACES[similarity_space]
     vector_field_name = utils.search.backends.solr555pysolr.get_solr_dense_vector_search_field_name(config_options['vector_size'], config_options.get('l2_norm', False))
     query_params.update({
         'facets': None,
         'current_page': current_page if current_page is not None else query_params['current_page'],
         'num_sounds': num_sounds if num_sounds is not None else query_params['num_sounds'],
-        'field_list': ['id', 'score', 'similarity_vectors', vector_field_name, f'[child childFilter="content_type:v AND analyzer:{analyzer_name}" limit=1]']
+        'field_list': ['id', 'score', 'similarity_vectors', vector_field_name, f'[child childFilter="content_type:v AND similarity_space:{similarity_space}" limit=1]']
     })
     results, _ = perform_search_engine_query(query_params)
 
@@ -210,9 +208,12 @@ def get_sound_similarity_from_search_engine_query(query_params, analyzer_name=se
             d0 = d['group_docs'][0]
         else:
             d0 = d
-        if len(d0.get("similarity_vectors", [])) > 0:
-            similarity_vectors_map[d0['id']] = d0["similarity_vectors"][0][vector_field_name]
-    
+        d0_sim_vectors = d0.get("similarity_vectors", [])
+        if len(d0_sim_vectors) > 0:
+            if type(d0_sim_vectors) == dict:
+                d0_sim_vectors = [d0_sim_vectors]
+            similarity_vectors_map[d0['id']] = d0_sim_vectors[0][vector_field_name]
+
     return similarity_vectors_map
 
 def get_sound_ids_from_search_engine_query(query_params, current_page=None, num_sounds=None):

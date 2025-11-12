@@ -31,7 +31,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django_object_actions import DjangoObjectActions
 
-from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress, SoundAnalysis
+from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress, SoundAnalysis, SoundSimilarityVector
 from utils.search.search_sounds import add_sounds_to_search_engine
 
 
@@ -63,8 +63,8 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
     ordering = ['id']
     search_fields = ('=id', '=user__username')
     readonly_fields = ('num_downloads', 'get_filename', 'get_consolidated_analysis')
-    actions = ('reprocess_sound', 'consolidate_analysis', 'reindex_sound', 'mark_as_index_dirty', 'clear_caches')
-    change_actions = ('reprocess_sound', 'consolidate_analysis', 'reindex_sound', 'mark_as_index_dirty', 'clear_caches')
+    actions = ('reprocess_sound', 'consolidate_analysis', 'load_similarity_vectors', 'reindex_sound', 'clear_caches')
+    change_actions = ('reprocess_sound', 'consolidate_analysis', 'load_similarity_vectors', 'reindex_sound', 'clear_caches')
 
     def has_add_permission(self, request):
         return False
@@ -106,17 +106,17 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
                 sound.consolidate_analysis()
             messages.add_message(request, messages.INFO,
                                  f'{queryset_or_object.count()} sounds analysis data were consolidated.')
-            
-    @admin.action(description='Mark as index dirty')
-    def mark_as_index_dirty(self, request, queryset_or_object):
+
+    @admin.action(description='Load sim vectors')
+    def load_similarity_vectors(self, request, queryset_or_object):
         if isinstance(queryset_or_object, Sound):
-            queryset_or_object.mark_index_dirty()
+            n_loaded = queryset_or_object.load_similarity_vectors(force=True)
             messages.add_message(request, messages.INFO,
-                                 f'Sound {queryset_or_object.id} was marked as index dirty.')
+                                 f'Loaded {n_loaded} sim vectors for sound {queryset_or_object.id}.')
         else:
-            queryset_or_object.update(is_index_dirty=True)
+            n_loaded = sum(sound.load_similarity_vectors(force=True) for sound in queryset_or_object)
             messages.add_message(request, messages.INFO,
-                                 f'{queryset_or_object.count()} sounds were marked as index dirty.')
+                                 f'Loaded {n_loaded} sim vectors for {queryset_or_object.count()} sounds.')
             
     @admin.action(description='Clear caches')
     def clear_caches(self, request, queryset_or_object):
@@ -363,3 +363,11 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
     )
     def analysis_data_file(self, obj):
         return obj.get_analysis_data_from_file()
+
+
+@admin.register(SoundSimilarityVector)
+class SoundSimilarityVectorAdmin(DjangoObjectActions, admin.ModelAdmin):
+    list_display = ('sound', 'similarity_space_name')
+    list_filter = ('similarity_space_name', )
+    search_fields = ('=sound__id',)
+    raw_id_fields = ('sound',)

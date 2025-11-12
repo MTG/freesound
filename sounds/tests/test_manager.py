@@ -23,7 +23,7 @@ from django.test import TestCase
 
 from sounds.models import Sound, Pack
 from tickets.models import Ticket
-from utils.test_helpers import create_user_and_sounds
+from utils.test_helpers import create_user_and_sounds, create_consolidated_audio_descriptors_and_similarity_vectors_for_sound
 
 
 class SoundManagerQueryMethods(TestCase):
@@ -35,39 +35,51 @@ class SoundManagerQueryMethods(TestCase):
                                      'similarity_state', 'created', 'num_downloads', 'num_comments', 'pack_id',
                                      'duration', 'pack_name', 'license_id', 'remixgroup_id', 'tag_array']
     fields_to_check_related = ['user', 'pack', 'license', 'ticket']
-    fields_to_check_lists = ['analyses']
+    fields_to_check_subqueries = ['consolidated_audio_descriptors', 'similarity_vectors', 'analysis_state_essentia_exists', 'ready_for_similarity_precomputed']
+
 
     def setUp(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=3, num_packs=1, tags="tag1 tag2 tag3")
+        for sound in sounds:
+            create_consolidated_audio_descriptors_and_similarity_vectors_for_sound(sound)
+
         self.sound_ids = [s.id for s in sounds]
         self.user = user
         self.pack = packs[0]
 
     def test_bulk_query_id_num_queries(self):
         for sound_id in self.sound_ids:
-            ticket = Ticket.objects.create(sender=self.user, sound_id=sound_id)
-
+            Ticket.objects.create(sender=self.user, sound_id=sound_id)
 
         # Check that all fields for each sound are retrieved with one query + one for the analyzers
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(1):
             has_at_least_one_geotag = False
-            for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_audio_descriptors=True):
+            for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_audio_descriptors=True, include_similarity_vectors=True):
                 if hasattr(sound, 'geotag'):
                     # We do this separately, because a OneToOneField needs to be checked by "getattr", and it'll
                     # raise an AttributeError if the field is not present. Therefore we just check that at least one
                     # sound has a geotag.
                     has_at_least_one_geotag = True
+                
                 for field in self.fields_to_check_bulk_query_id:
                     self.assertTrue(hasattr(sound, field), f"Missing field {field} in sound {sound.id}")
                 for field in self.fields_to_check_related:
                     self.assertTrue(hasattr(sound, field), f"Missing field {field} in sound {sound.id}")
-                for field in self.fields_to_check_lists:
-                    _ = list(getattr(sound, field).all())
+                for field in self.fields_to_check_subqueries:
+                    self.assertTrue(hasattr(sound, field), f"Missing field {field} in sound {sound.id}")
+                
+                # Check that accessing the audio features and similarity vectors does not raise additional queries
+                for feature_name in settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES:
+                    sound.get_consolidated_analysis_data()[feature_name]
+                for similarity_space_name in settings.SIMILARITY_SPACES_NAMES:
+                    sound.get_similarity_vector(similarity_space_name=similarity_space_name)
+
             self.assertTrue(has_at_least_one_geotag, "No geotag found in any of the sounds")
+    
     def test_bulk_query_id_field_contents(self):
 
         # Check the contents of some fields are correct
-        for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_audio_descriptors=True):
+        for sound in Sound.objects.bulk_query_id(sound_ids=self.sound_ids, include_audio_descriptors=True, include_similarity_vectors=True):
             self.assertEqual(Sound.objects.get(id=sound.id).user.username, sound.username)
             self.assertEqual(Sound.objects.get(id=sound.id).original_filename, sound.original_filename)
             self.assertEqual(Sound.objects.get(id=sound.id).pack_id, sound.pack_id)

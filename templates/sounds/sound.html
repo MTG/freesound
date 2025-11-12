@@ -69,7 +69,7 @@
                                     {% endif %}
                                     {% if sound.ready_for_similarity %}
                                     <span class="h-spacing-left-1"></span>
-                                    <button title="Find similar sounds" aria-label="Find similar sounds" class="btn-neutral" data-toggle="modal-default" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
+                                    <button title="Find similar sounds" aria-label="Find similar sounds" class="btn-neutral" data-toggle="similar-sounds-modal" data-modal-activation-param="similar" data-modal-content-url="{% url 'sound-similar' sound.user.username sound.id %}?ajax=1">
                                         {% bw_icon 'similar' %}
                                     </button>
                                     {% endif %}

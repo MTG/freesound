@@ -16,6 +16,7 @@ import { bindUserAnnotationsModal, activateUserAnnotationsModalIfParameters} fro
 import { makeRadios } from '../components/radio.js';
 import { makeRatingWidgets } from '../components/rating.js';
 import { bindRemixGroupModals, activateRemixGroupModalsIfParameters } from '../components/remixGroupModal.js';
+import { bindSimilarSoundsModal, activateSimilarSoundsModalIfParameters } from '../components/similarSoundsModal.js';
 import { makeSelect } from '../components/select.js';
 import { makeTextareaCharacterCounter } from '../components/textareaCharactersCounter.js';
 import { bindUnsecureImageCheckListeners } from '../components/unsecureImageCheck.js';
@@ -52,6 +53,7 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
         bindDefaultModals(container);
         bindRemixGroupModals(container);
         bindBookmarkSoundModals(container);
+        bindSimilarSoundsModal(container);
         bindUserAnnotationsModal(container); 
     }
     
@@ -60,6 +62,7 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
         activateDefaultModalsIfParameters();
         activateUserAnnotationsModalIfParameters();
         activateRemixGroupModalsIfParameters();
+        activateSimilarSoundsModalIfParameters();
     }
 
     // Init maps (note that already initialized maps won't be re-initialized)

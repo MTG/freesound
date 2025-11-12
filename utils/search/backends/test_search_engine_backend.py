@@ -29,9 +29,7 @@ import datetime
 import json
 import logging
 import os
-from unittest import mock
 import time
-from contextlib import contextmanager
 
 from django.contrib.auth.models import User
 import pytest
@@ -42,7 +40,7 @@ from django.utils import timezone
 
 from forum.models import Post, Forum, Thread
 from search import solrapi
-from sounds.models import Download, Sound, SoundAnalysis
+from sounds.models import Download, Sound, SoundAnalysis, SoundSimilarityVector
 from tags.models import SoundTag
 from utils.search import get_search_engine
 
@@ -150,44 +148,135 @@ def search_engine_forum_backend(request, test_posts):
 
 @pytest.fixture()
 def fake_analyzer_settings_for_similarity_tests(settings):
-    settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
-        "test_analyzer": {
+    settings.SIMILARITY_SPACES = {
+        "test_sim_space": {
             'vector_property_name': 'embeddings', 
             'vector_size': 100,
-            'l2_norm': False
+            'l2_norm': False,
+            'analyzer': 'test_analyzer',
         }}
-    settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = 'test_analyzer'
+    settings.SIMILARITY_SPACE_NAMES = ['test_sim_space']
+    settings.SIMILARITY_SPACE_DEFAULT = 'test_sim_space'
+    settings.SIMILARITY_SPACES_ANALYZER_NAMES = list(set([ss['analyzer'] for ss in settings.SIMILARITY_SPACES.values()]))
 
 
 @pytest.fixture()
-def test_sounds_qs(db):
+def fake_audio_descriptor_settings_for_tests(settings, monkeypatch):
+    settings.CONSOLIDATED_AUDIO_DESCRIPTORS = [
+        {
+            'name': 'test_feature_float', 
+            'original_name': 'feature_float',
+            'analyzer': 'test_analyzer',
+            'type': settings.AUDIO_DESCRIPTOR_TYPE_FLOAT
+        },
+        {
+            'name': 'test_feature_int',
+            'original_name': 'feature_int',
+            'analyzer': 'test_analyzer',
+            'type': settings.AUDIO_DESCRIPTOR_TYPE_INT
+        },
+        {
+            'name': 'test_feature_string',
+            'original_name': 'feature_string',
+            'analyzer': 'test_analyzer',
+            'type': settings.AUDIO_DESCRIPTOR_TYPE_STRING
+        },
+        {
+            'name': 'test_feature_list_string',
+            'original_name': 'feature_list_string',
+            'analyzer': 'test_analyzer',
+            'type': settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS
+        },
+        {
+            'name': 'test_feature_bool',
+            'original_name': 'feature_bool',
+            'analyzer': 'test_analyzer',
+            'type': settings.AUDIO_DESCRIPTOR_TYPE_BOOL
+        },
+        {
+            'name': 'test_feature_array_float',
+            'original_name': 'feature_array_float',
+            'analyzer': 'test_analyzer',
+            'type': settings.AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,
+            'index': False
+        },
+        {
+            'name': 'test_feature_json',
+            'original_name': 'feature_json',
+            'analyzer': 'test_analyzer',
+            'type': settings.AUDIO_DESCRIPTOR_TYPE_JSON,
+            'index': False
+        }
+    ]
+    settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES = [desc['name'] for desc in settings.CONSOLIDATED_AUDIO_DESCRIPTORS]
+    settings.CONSOLIDATED_AUDIO_DESCRIPTORS_ANALYZER_NAMES = list(set([ad['analyzer'] for ad in settings.CONSOLIDATED_AUDIO_DESCRIPTORS]))
+    
+    # Patch solr555pysolr.SOLR_DYNAMIC_FIELDS_MAP to include the descriptors defined above, otherwise query filter processing will fail
+    from utils.search.backends import solr555pysolr 
+    PATCHED_SOLR_DYNAMIC_FIELDS_MAP = {}
+    for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+        index = descriptor.get('index', True)
+        if index:
+            descriptor_name = descriptor['name']
+            descriptor_type = descriptor.get('type', settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
+            if descriptor_type is not None:
+                PATCHED_SOLR_DYNAMIC_FIELDS_MAP[descriptor_name] = '{}{}'.format(
+                    descriptor_name, solr555pysolr.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
+    monkeypatch.setattr(solr555pysolr, 'SOLR_DYNAMIC_FIELDS_MAP', PATCHED_SOLR_DYNAMIC_FIELDS_MAP)  
+
+
+@pytest.fixture()
+def test_sounds_qs(db, fake_analyzer_settings_for_similarity_tests, fake_audio_descriptor_settings_for_tests, monkeypatch):
     call_command('loaddata', 'sounds/fixtures/licenses.json', 'sounds/fixtures/sounds_with_tags.json', verbosity=0)
     sound_ids = Sound.public.filter(
             is_index_dirty=False, num_ratings__gte=settings.MIN_NUMBER_RATINGS
         ).values_list('id', flat=True)
     if len(sound_ids) < 20:
         pytest.fail(
-            f"Can't test search engine backend as there are not enough sounds for testing: {len(sounds)}, needed: 20"
+            f"Can't test search engine backend as there are not enough sounds for testing: {len(sound_ids)}, needed: 20"
         )
+
+    # Monkey patch SoundAnalysis.get_analysis_data_from_file to return fake data instead of loading it from a file in disk
+    monkeypatch.setattr(SoundAnalysis, 'get_analysis_data_from_file', lambda self: {
+        'feature_float': 1.0,
+        'feature_int': 1,
+        'feature_string': 'a',
+        'feature_list_string': ['a', 'b', 'c'],
+        'feature_bool': True,
+        'feature_array_float': [1.0, 2.0, 3.0],
+        'feature_json': {'key': 'value'}
+    })
+
+    # Create fake similarity vector objects and fake consolidated audio descriptors for each sound
+    for sound in Sound.public.all():
+        vector_size = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]['vector_size']
+        SoundSimilarityVector.objects.create(
+            sound=sound,
+            similarity_space_name=settings.SIMILARITY_SPACE_DEFAULT,
+            vector=[sound.id for i in range(0, vector_size)]
+        )
+
+        SoundAnalysis.objects.create(
+            sound=sound,
+            analysis_status='OK',
+            analyzer='test_analyzer'
+        )
+
+        # Load the similarity space vectors and consolidated descriptors to db
+        sound.load_similarity_vectors()
+        sound.consolidate_analysis()
+        
+        # Set sound as index dirty false as consolidate_analysis would have changed that
+        sound.is_index_dirty = False
+        sound.save()
+
     return Sound.objects.bulk_query_solr(sound_ids)
 
 
 @pytest.fixture()
-def test_sounds(db, test_sounds_qs, fake_analyzer_settings_for_similarity_tests):
-    
-    # Create fake SoundAnalysis objects for each sound
-    for sound in test_sounds_qs:
-        vector_size = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER]['vector_size']
-        SoundAnalysis.objects.create(
-            sound=sound,
-            analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER,
-            analysis_status="OK",
-            analysis_data={
-                "embeddings": [sound.id for i in range(0, vector_size)],  # Fake embeddings used for testing
-            }
-        )
-
+def test_sounds(db, test_sounds_qs):
     return list(test_sounds_qs)
+
 
 @pytest.fixture()
 def expected_license_facet_results_all_sounds(test_sounds):
@@ -202,7 +291,6 @@ def expected_license_facet_results_all_sounds(test_sounds):
         else:
             expected_license_facet_results_all_sounds[license_name] += 1
     return expected_license_facet_results_all_sounds
-
 
 
 @pytest.fixture()
@@ -832,6 +920,47 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
+def test_sound_search_query_audio_descriptors(search_engine_sounds_backend, output_file_handle, test_sounds):
+    """Test that audio descriptors are properly indexed and can be searched"""
+
+    expected_feature_values = {
+        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: 1.0,
+        settings.AUDIO_DESCRIPTOR_TYPE_INT: 1,
+        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: True,
+        settings.AUDIO_DESCRIPTOR_TYPE_STRING: 'a',
+        settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: 'a',  # filter by the first element of the list
+    }
+
+    non_expected_feature_values = {
+        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: 0.5,
+        settings.AUDIO_DESCRIPTOR_TYPE_INT: 5,
+        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: False,
+        settings.AUDIO_DESCRIPTOR_TYPE_STRING: 'nonexistent_value',
+        settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: 'z',  # filter by a non-existing first element of the list
+    }
+
+    for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+        if descriptor.get('index', True):
+            name = descriptor['name']
+
+            # All the sounds have the same value for every descriptor in our test dataset, so the query should return them all
+            expected_value = expected_feature_values[descriptor['type']]
+            results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(query_filter=f'{name}:"{expected_value}"'))
+            assert results.num_found == len(test_sounds), (
+                f"Searching for audio descriptor {name} with value {expected_value} did not return the expected number of results"
+            )
+
+            # Now try with a value that is not present and should return 0 results
+            non_expected_value = non_expected_feature_values[descriptor['type']]
+            results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(query_filter=f'{name}:"{non_expected_value}"'))
+            assert results.num_found == 0, (
+                f"Searching for audio descriptor {name} with value {non_expected_value} returned results but none were expected"
+            )
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
 def test_sound_user_tags(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test user tags functionality"""
     sound = test_sounds[0]
@@ -897,12 +1026,12 @@ def test_sound_similarity_search(search_engine_sounds_backend, output_file_handl
     # Make a query for target sound 0 and check that results are sorted by ID
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
         similar_to=test_sounds[0].id,
-        similar_to_max_num_sounds=10,
-        similar_to_analyzer="test_analyzer",
+        similar_to_min_similarity=0.0,  # Return all sounds
+        similar_to_similarity_space="test_sim_space",
         group_by_pack=False,
     ))
     
-    results_ids = [r["id"] for r in results.docs]
+    results_ids = [r["id"] for r in results.docs][0:10]
     # Because in our testing environment the similarity vector for each sound is its sound ID * num dimensions (e.g. [6, 6, 6, ...]),
     # if we make a query starting from the lowest sound ID, the results should be the following existing IDs in proper order.
     expected_result_ids = [s.id for s in test_sounds][1:11]
@@ -914,11 +1043,11 @@ def test_sound_similarity_search(search_engine_sounds_backend, output_file_handl
     target_sound_vector = [test_sounds[0].id for _ in range(100)]
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
         similar_to=target_sound_vector,
-        similar_to_max_num_sounds=10,
-        similar_to_analyzer="test_analyzer",
+        similar_to_min_similarity=0.0,  # Return all sounds
+        similar_to_similarity_space="test_sim_space",
         group_by_pack=False,
     ))
-    results_ids = [r["id"] for r in results.docs]
+    results_ids = [r["id"] for r in results.docs][0:10]
     # In that case, the target vector is [6, 6, 6, ...] which corresponds to the lowest sound ID. However, 
     # unlike the previous case, now sound ID 6 will also be included in the results because we are not using it
     # as target for the the query, we're only using a vector which happens to be the same as that of sound ID 6.
@@ -930,31 +1059,40 @@ def test_sound_similarity_search(search_engine_sounds_backend, output_file_handl
     # Check requesting sounds for an analyzer that doesn't exist
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
         similar_to=target_sound_vector,
-        similar_to_max_num_sounds=10,
-        similar_to_analyzer="test_analyzer2",
+        similar_to_similarity_space="test_sim_space2",
         group_by_pack=False,
     ))
     assert len(results.docs) == 0, (
         "Similarity search returned results for an analyzer that doesn't exist"
     )
 
-    # Check limiting the similar_to_max_num_sounds parameter
+    # Check limiting results using the similar_to_min_similarity parameter
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
         similar_to=target_sound_vector,
-        similar_to_max_num_sounds=5,
-        similar_to_analyzer="test_analyzer",
+        similar_to_min_similarity=1.1,  # Higher than max possible similarity, should return 0 results
+        similar_to_similarity_space="test_sim_space",
         group_by_pack=False,
     ))
-    assert len(results.docs) == 5, (
+    assert len(results.docs) == 0, (
+        "Similarity search returned unexpected number of results"
+    )
+
+    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+        similar_to=target_sound_vector,
+        similar_to_min_similarity=0.0,  # We get all sounds
+        similar_to_similarity_space="test_sim_space",
+        group_by_pack=False,
+    ))
+    assert len(results.docs) == 15, (  # 15 is all sounds in the test dataset
         "Similarity search returned unexpected number of results"
     )
 
     # Check that group by pack also works when doing similarity search
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
         similar_to=test_sounds[0].id,
-        similar_to_max_num_sounds=100,  # Use a larger number to ensure we get multiple packs
+        similar_to_min_similarity=0.0,  # Get all results to ensure we get multiple packs
         num_sounds=100,
-        similar_to_analyzer="test_analyzer",
+        similar_to_similarity_space="test_sim_space",
         group_by_pack=True,
     ))
 
@@ -985,9 +1123,9 @@ def test_sound_similarity_search_filter(search_engine_sounds_backend, output_fil
         # Make a query for target sound 0 and check that results are sorted by ID
         results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
             similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
-            similar_to_max_num_sounds=100,
+            similar_to_min_similarity=0.0,
             num_sounds=100,
-            similar_to_analyzer="test_analyzer",
+            similar_to_similarity_space="test_sim_space",
             query_filter=fq
         ))
         assert expected_results_count == results.num_found, (
@@ -1014,9 +1152,9 @@ def test_sound_similarity_search_facets(search_engine_sounds_backend,
 
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
         similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
-        similar_to_max_num_sounds=100,  # Will return all test sounds
+        similar_to_min_similarity=0.0,  # Will return all test sounds
         num_sounds=100,
-        similar_to_analyzer="test_analyzer",
+        similar_to_similarity_space="test_sim_space",
         facets=test_facet_options,
         group_by_pack=True,
         group_counts_as_one_in_facets=False,
@@ -1030,9 +1168,9 @@ def test_sound_similarity_search_facets(search_engine_sounds_backend,
     # Now repeat the experiment, for the case in which group_counts_as_one_in_facets is True
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
         similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
-        similar_to_max_num_sounds=100,  # Will return all test sounds
+        similar_to_min_similarity=0.0,  # Will return all test sounds
         num_sounds=100,
-        similar_to_analyzer="test_analyzer",
+        similar_to_similarity_space="test_sim_space",
         facets=test_facet_options,
         group_by_pack=True,
         group_counts_as_one_in_facets=True,

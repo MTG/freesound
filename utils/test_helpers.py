@@ -30,7 +30,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.test.utils import override_settings
 
-from sounds.models import Sound, Pack, License
+from sounds.models import Sound, Pack, License, SoundAnalysis, SoundSimilarityVector
 from geotags.models import GeoTag
 from tempfile import TemporaryDirectory
 from utils.tags import clean_and_split_tags
@@ -118,6 +118,27 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
     if len(sounds) > 1:
         GeoTag.objects.create(sound=sounds[1], lon=1.0, lat=1.0, zoom=1)
     return user, packs, sounds
+
+
+def create_consolidated_audio_descriptors_and_similarity_vectors_for_sound(sound):
+    """Creates fake consolidated audio descriptors and similarity vectors for a given sound.
+
+    Args:
+        sound (Sound): Sound object for which to create the descriptors and vectors.
+    """
+    # Create fake consolidated audio descriptors
+    # The value that the feature takes is the idx of the feature in the provided list of feature names
+    SoundAnalysis.objects.create(sound=sound, analysis_status='OK', 
+                                 analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_data={feature_name: idx for idx, feature_name in enumerate(settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES)})
+    
+    # Create fake similarity vectors
+    # The vector values are just the sound ID repeated to fill the vector size
+    for similarity_space_name, space_options  in settings.SIMILARITY_SPACES.items():
+        SoundSimilarityVector.objects.create(
+            sound=sound, 
+            similarity_space_name=similarity_space_name,
+            vector=[float(sound.id) for i in range(space_options['vector_size'])]
+        )
 
 
 def override_path_with_temp_directory(fun, settings_path_name):

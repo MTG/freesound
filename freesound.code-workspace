@@ -140,6 +140,12 @@
 				"type": "shell",
 				"command": "cd _docs/api/build/html && python -m http.server 8008",
 				"problemMatcher": []
+			},
+			{
+				"label": "Run psql",
+				"type": "shell",
+				"command": "docker compose run --rm db psql -h db -U freesound  -d freesound",
+				"problemMatcher": []
 			}
 		]
 	},

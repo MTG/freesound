@@ -610,9 +610,9 @@ Name                            Type              Description
 ``id``                          numeric           The sound's unique identifier.
 ``url``                         URI               The URI for this sound on the Freesound website.
 ``name``                        string            The name user gave to the sound.
-``tags``                        array[string]    An array of tags the user gave to the sound.
+``tags``                        array[string]     An array of tags the user gave to the sound.
 ``description``                 string            The description the user gave to the sound.
-``category``                    array[string]    A two-element array containing the sound's category and subcategory names from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_. Note that categories are filled-out by an algorithm if not provided by the original author of the sound.
+``category``                    array[string]     A two-element array containing the sound's category and subcategory names from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_. Note that categories are filled-out by an algorithm if not provided by the original author of the sound.
 ``category_code``               string            The category ID from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "fx-a", with the prefix indicating the category and the suffix indicating the subcategory). Note that categories are filled-out by an algorithm if not provided by the original author of the sound.
 ``category_is_user_provided``   boolean           Whether the ``category`` (and ``category_code``) were provided by the author of the sound or assigned automatically by an algorithm.
 ``geotag``                      string            Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).

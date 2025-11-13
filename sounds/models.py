@@ -1266,15 +1266,16 @@ class Sound(models.Model):
                 sounds_logger.info(f"Not sending sound {self.id} to analyzer {analyzer} as is already queued")
         return sa
     
-    def consolidate_analysis(self):
+    def consolidate_analysis(self, no_db_operations=False):
         """
         This method post-processes the analysis results of all analyzers for this sound and consolidates them into a new
         SoundAnalysis object with analyzer name settings.CONSOLIDATED_ANALYZER_NAME. This consolidated analysis contains 
         audio descriptors data from various analyzers that will be stored in the DB and also used for indexing in the 
         search engine.
+
+        :param bool no_db_operations: If True, the method only computes the data but does not save it in the DB. Also it returns
+            the consolidated analysis data dictionary instead of the SoundAnalysis object.
         """
-        consolidated_analysis_object, _ = SoundAnalysis.objects.get_or_create(sound=self, analyzer=settings.CONSOLIDATED_ANALYZER_NAME)
-        current_consolidated_analysis_data = consolidated_analysis_object.analysis_data
 
         # Iterate over all descriptors defined in settings.CONSOLIDATED_AUDIO_DESCRIPTORS and obtain/process their values
         tmp_analyzers_data = {}
@@ -1347,6 +1348,15 @@ class Sound(models.Model):
 
             if value is not None:
                 consolidated_analysis_data[name] = value
+
+        if no_db_operations:
+            # Return the computed descriptors data without saving it in the DB, and also return the analyzer's data
+            # which was already loaded in memory. This is useful for a use case where we want to compute the consolidated
+            # analysis and then load similarity vectors without having to read again the analyzer data from disk.
+            return consolidated_analysis_data, tmp_analyzers_data
+
+        consolidated_analysis_object, _ = SoundAnalysis.objects.get_or_create(sound=self, analyzer=settings.CONSOLIDATED_ANALYZER_NAME)
+        current_consolidated_analysis_data = consolidated_analysis_object.analysis_data
 
         if current_consolidated_analysis_data != consolidated_analysis_data:
             # If consolidated analysis data has changed...
@@ -2272,3 +2282,6 @@ class SoundSimilarityVector(models.Model):
             self.vector = [v/norm for v in self.vector]
         if commit:
             self.save()
+
+    class Meta:
+        unique_together = (("sound", "similarity_space_name")) # one sounds.SoundSimilarityVector object per sound<>similarity_space_name combination

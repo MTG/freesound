@@ -272,12 +272,14 @@ class SimilarityFormAPI(SoundCombinedSearchFormAPI):
     def clean_filter(self):
         return None
 
-    def clean_sort(self):
-        self.original_url_sort_value = None
-        return None
-
     def clean_group_by_pack(self):
         return None
 
     def clean_target(self):
+        return None
+    
+    def clean_similar_to(self):
+        return None
+    
+    def clean_weights(self):
         return None

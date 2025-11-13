@@ -43,17 +43,17 @@ API documentation:
    resources_apiv2.rst
 
 
-Analysis documentation:
+Audio Descriptors Documentation:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
-   analysis_index.rst
+   analysis_docs.rst
 
 
 API client libraries:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    client_libs.rst

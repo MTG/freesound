@@ -20,8 +20,23 @@
                         {% display_sound_small_no_bookmark sound %}
                     </div>
                 {% endfor %}
-                <div class="v-spacing-top-5 w-100">
-                    {% bw_paginator paginator page current_page request "" -1 %}
+                <div class="v-spacing-top-5 w-100 between middle">
+                    <div>
+                        {% if show_similarity_space_selector%}
+                        <span class="text-light-grey">Similarity space: </span>
+                        <select id="similarity-space-select" data-current-page="{{ current_page }}">
+                            {% for space_name, space_display_name in similarity_spaces_names %}
+                                <option value="{{ space_name }}"{% if space_name == similarity_space %} selected{% endif %}>{{ space_display_name }}</option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% bw_paginator paginator page current_page request "" -1 %}
+                    </div>
+                    <div>
+                        <a href="{% url 'sounds-search' %}?st={{ sound.id }}&ss={{ similarity_space }}" class="btn-primary">See more results...</a>
+                    </div>
                 </div>
             {% else %}
                 <div class="text-center">

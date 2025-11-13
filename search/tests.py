@@ -158,31 +158,17 @@ class SearchPageTests(TestCase):
         with self.assertNumQueries(1):
             self.client.get(reverse('sounds-search') + '?cm=1')
        
-        with override_settings(USE_SEARCH_ENGINE_SIMILARITY=True):
-            # When using search engine similarity, there'll be one extra query performed to get the similarity status of the sounds
+        # When using search engine similarity, there'll be one extra query performed to get the similarity status of the sounds
 
-            # Now check number of queries when displaying results as packs (i.e., searching for packs)
-            cache.clear()
-            with self.assertNumQueries(4):
-                self.client.get(reverse('sounds-search') + '?dp=1')
+        # Now check number of queries when displaying results as packs (i.e., searching for packs)
+        cache.clear()
+        with self.assertNumQueries(4):
+            self.client.get(reverse('sounds-search') + '?dp=1')
 
-            # Also check packs when displaying in grid mode
-            cache.clear()
-            with self.assertNumQueries(4):
-                self.client.get(reverse('sounds-search') + '?dp=1&cm=1')
-
-        with override_settings(USE_SEARCH_ENGINE_SIMILARITY=False):
-            # When not using search engine similarity, there'll be one less query performed as similarity state is retrieved directly from sound object
-
-            # Now check number of queries when displaying results as packs (i.e., searching for packs)
-            cache.clear()
-            with self.assertNumQueries(3):
-                self.client.get(reverse('sounds-search') + '?dp=1')
-
-            # Also check packs when displaying in grid mode
-            cache.clear()
-            with self.assertNumQueries(3):
-                self.client.get(reverse('sounds-search') + '?dp=1&cm=1')
+        # Also check packs when displaying in grid mode
+        cache.clear()
+        with self.assertNumQueries(4):
+            self.client.get(reverse('sounds-search') + '?dp=1&cm=1')
 
 
 class SearchResultClustering(TestCase):

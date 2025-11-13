@@ -29,11 +29,10 @@ import pysolr
 from django.conf import settings
 
 from forum.models import Post
-from sounds.models import Sound, SoundAnalysis
+from sounds.models import Sound, SoundAnalysis, SoundSimilarityVector
 from utils.text import remove_control_chars
 from utils.search import SearchEngineBase, SearchResults, SearchEngineException
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
-from utils.similarity_utilities import get_similarity_search_target_vector, get_l2_normalized_vector
 
 
 SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
@@ -72,11 +71,11 @@ for key, value in FIELD_NAMES_MAP.items():
 # The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer),
 # '*_s' (for string) and '*_ls' (for lists of strings)
 SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
-    float: '_d',
-    int: '_i',
-    bool: '_b',
-    str: '_s',
-    list: '_ls',
+    settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: '_d',
+    settings.AUDIO_DESCRIPTOR_TYPE_INT: '_i',
+    settings.AUDIO_DESCRIPTOR_TYPE_BOOL: '_b',
+    settings.AUDIO_DESCRIPTOR_TYPE_STRING: '_s',
+    settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: '_ls',
 }
 
 # Some dynamic field types need to have alternative field versions that work with facets. In that case an extra suffix is added.
@@ -85,13 +84,14 @@ SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX = '_f'
 # Generate a map of dynamic fields that will be used to index the output of analyzers. In ANALYZERS_CONFIGURATION, a list of descriptors is
 # defined along with their type. This map will be used to generate the dynamic field names that will be used to index the descriptors
 SOLR_DYNAMIC_FIELDS_MAP = {}
-for analyzer, analyzer_data in settings.ANALYZERS_CONFIGURATION.items():
-    if 'descriptors_map' in analyzer_data:
-        descriptors_map = analyzer_data['descriptors_map']
-        for _, db_descriptor_key, descriptor_type in descriptors_map:
-            if descriptor_type is not None:
-                SOLR_DYNAMIC_FIELDS_MAP[db_descriptor_key] = '{}{}'.format(
-                    db_descriptor_key, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
+for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+    index = descriptor.get('index', True)
+    if index:
+        descriptor_name = descriptor['name']
+        descriptor_type = descriptor.get('type', settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
+        if descriptor_type is not None:
+            SOLR_DYNAMIC_FIELDS_MAP[descriptor_name] = '{}{}'.format(
+                descriptor_name, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
 
 
 def get_solr_fieldname_from_freesound_fieldname(field_name, facet=False, skip_dynamic_field_suffix=False):
@@ -240,7 +240,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         new_document.update({key: {'set': value} for key, value in document.items() if key != 'id'})
         return new_document
 
-    def convert_sound_to_search_engine_document(self, sound, include_analyzer_output=False):
+    def convert_sound_to_search_engine_document(self, sound):
         """
         TODO: Document that this includes remove_control_chars due to originally sending XML. not strictly necessary when submitting
             to json (and also, freesound model code fixes this), but keep it in to ensure that docs are clean.
@@ -301,25 +301,34 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
         document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
         
-        # Analyzer's output
-        sound_analysis_dict = {an.analyzer: an.analysis_data for an in sound.analyses.all()}
-        for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-            if 'descriptors_map' in analyzer_info:
-                analysis_data = sound_analysis_dict.get(analyzer_name, None)
-                if analysis_data is not None:
-                    # If analysis is present, index all existing analysis fields using SOLR dynamic fields depending on
-                    # the value type (see SOLR_DYNAMIC_FIELDS_SUFFIX_MAP) so solr knows how to treat when filtering, etc.
-                    for key, value in analysis_data.items():
+        # Index consolidated audio descriptors
+        descriptors_to_index = {}
+        descriptors_data = sound.get_consolidated_analysis_data()
+        if descriptors_data is not None:
+            for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+                index = descriptor.get('index', True)
+                if index:
+                    descriptor_name = descriptor['name']
+                    descriptor_type = descriptor.get('type', settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
+                    value = descriptors_data.get(descriptor_name, None)
+                    if value is not None:
                         if isinstance(value, list):
                             # Make sure that the list is formed by strings
                             value = [f'{item}' for item in value]
-                        suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(type(value), None)
-                        if suffix:
-                            document[f'{key}{suffix}'] = value
+                        suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(descriptor_type, None)
+                        if suffix is not None:
+                            descriptors_to_index[f'{descriptor_name}{suffix}'] = value
                             if suffix == '_ls':
                                 # For dynamic fields of type "list of strings", we also need to set an extra field that
                                 # will be used for faceting
-                                document[f'{key}{suffix}{SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX}'] = value
+                                descriptors_to_index[f'{descriptor_name}{suffix}{SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX}'] = value
+        if descriptors_to_index:
+            descriptors_to_index_keys = list(descriptors_to_index.keys())
+            current_document_keys = list(document.keys())
+            if set(descriptors_to_index_keys).intersection(set(current_document_keys)):
+                raise SearchEngineException(f"Trying to index audio descriptors but some of the field names already exist in the document. "
+                                            f"Conflicting keys: {set(descriptors_to_index_keys).intersection(set(current_document_keys))}")
+            document.update(descriptors_to_index)
 
         # Category and subcategory fields
         # When adding fields from analyzers output, automatically predicted category and subcategory will be added. However,
@@ -328,9 +337,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if sound.bst_category is not None:
             user_provided_category, user_provided_subcategory = sound.category_names
             if user_provided_category is not None:
-                document[f'{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_category
+                document[f'{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}'] = user_provided_category
             if user_provided_subcategory is not None:
-                document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[str]}'] = user_provided_subcategory
+                document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}'] = user_provided_subcategory
 
         # Finally add the sound ID and content type
         document.update({'id': sound.id, 'content_type': SOLR_DOC_CONTENT_TYPES['sound']})
@@ -341,46 +350,37 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         similarity_data = defaultdict(list)
         sound_ids = [s.id for s in sound_objects]
         sound_objects_dict = {s.id: s for s in sound_objects}
-        for analyzer_name, config_options in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS.items():
+        for similarity_space_name, similarity_space_options in settings.SIMILARITY_SPACES.items():
             # If we should index similarity data, add it to the documents
-            vector_field_name = get_solr_dense_vector_search_field_name(config_options['vector_size'], config_options.get('l2_norm', False))
+            vector_field_name = get_solr_dense_vector_search_field_name(similarity_space_options['vector_size'], similarity_space_options.get('l2_norm', False))
 
             if vector_field_name is None:
                 # If the vector size is not supported, then we can't index the vectors generated by the requested analyzer
                 continue
 
-            vector_property_name = config_options['vector_property_name']
-            for sa in SoundAnalysis.objects.filter(sound_id__in=sound_ids, analyzer=analyzer_name, analysis_status="OK"):
-                similarity_vectors_per_analyzer_per_sound=[]
-                if sa.analysis_data is not None and vector_property_name in sa.analysis_data:
-                    data = sa.analysis_data
+            for ssv in SoundSimilarityVector.objects.filter(sound_id__in=sound_ids, similarity_space_name=similarity_space_name):
+                similairty_vectors_per_space_per_sound = []
+                sim_vector_document_data = {
+                    'content_type': SOLR_DOC_CONTENT_TYPES['similarity_vector'],
+                    'similarity_space': ssv.similarity_space_name,
+                    'timestamp_start': 0,  # This will be used in the future if analyzers generate multiple sound vectors
+                    'timestamp_end': -1,  # This will be used in the future if analyzers generate multiple sound vectors
+                    vector_field_name: ssv.vector
+                }
+                # Because we still want to be able to group by pack when matching sim vector documents (sound child documents),
+                # we add the pack_grouping field here as well. In the future we might be able to optimize this if we can tell solr
+                # to group results by the field value of a parent document (just like we do to compute facets)
+                if getattr(sound_objects_dict[ssv.sound_id], "pack_id"):
+                    sim_vector_document_data['pack_grouping_child'] = str(getattr(sound_objects_dict[ssv.sound_id], "pack_id")) + "_" + remove_control_chars(
+                        getattr(sound_objects_dict[ssv.sound_id], "pack_name"))
                 else:
-                    data = sa.get_analysis_data_from_file()
-                if data is not None:
-                    if data.get(vector_property_name, None) is not None:
-                        vector_data =data[vector_property_name][0:config_options['vector_size']]
-                        if config_options.get('l2_norm', False):
-                            # Normalize the vector to have unit length
-                            vector_data = get_l2_normalized_vector(vector_data)
+                    sim_vector_document_data['pack_grouping_child'] = str(getattr(sound_objects_dict[ssv.sound_id], "id"))
 
-                        sim_vector_document_data = {
-                            'content_type': SOLR_DOC_CONTENT_TYPES['similarity_vector'],
-                            'analyzer': sa.analyzer,
-                            'timestamp_start': 0,  # This will be used in the future if analyzers generate multiple sound vectors
-                            'timestamp_end': -1,  # This will be used in the future if analyzers generate multiple sound vectors
-                            vector_field_name: vector_data
-                        }
-                        # Because we still want to be able to group by pack when matching sim vector documents (sound child documents),
-                        # we add the pack_grouping field here as well. In the future we might be able to optimize this if we can tell solr
-                        # to group results by the field value of a parent document (just like we do to compute facets)
-                        if getattr(sound_objects_dict[sa.sound_id], "pack_id"):
-                            sim_vector_document_data['pack_grouping_child'] = str(getattr(sound_objects_dict[sa.sound_id], "pack_id")) + "_" + remove_control_chars(
-                                getattr(sound_objects_dict[sa.sound_id], "pack_name"))
-                        else:
-                            sim_vector_document_data['pack_grouping_child'] = str(getattr(sound_objects_dict[sa.sound_id], "id"))
-                        similarity_vectors_per_analyzer_per_sound.append(sim_vector_document_data)
-                if similarity_vectors_per_analyzer_per_sound:
-                    similarity_data[sa.sound_id] += similarity_vectors_per_analyzer_per_sound
+                # NOTE: if there were multiple vectors per sound per similarity space, we would add them all here
+                similairty_vectors_per_space_per_sound.append(sim_vector_document_data)
+            
+                if similairty_vectors_per_space_per_sound:
+                    similarity_data[ssv.sound_id] += similairty_vectors_per_space_per_sound
         
         # Add collected vectors to the documents created as child documents
         for document in documents:
@@ -413,10 +413,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     def add_solr_suffix_to_dynamic_fieldnames_in_filter(self, query_filter):
         """Processes a filter string containing field names and replaces the occurrences of fieldnames that match with
-        descriptor names from the descriptors_map of different configured analyzers with updated fieldnames with
-        the required SOLR dynamic field suffix. This is needed because fields from analyzers are indexed as dynamic
-        fields which need to end with a specific suffi that SOLR uses to learn about the type of the field and how it
-        should treat it.
+        descriptor names from the "consolidated audio descriptors list" (previously added to SOLR_DYNAMIC_FIELDS_MAP) with 
+        updated fieldnames with the required SOLR dynamic field suffix. This is needed because fields from analyzers are 
+        indexed as dynamic fields which need to end with a specific suffix that SOLR uses to learn about the type of the
+        field and how it should treat it.
         """
         for raw_fieldname, solr_fieldname in SOLR_DYNAMIC_FIELDS_MAP.items():
             query_filter = query_filter.replace(
@@ -589,8 +589,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                       sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
                       group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False,
                       only_sounds_within_ids=False, group_counts_as_one_in_facets=False,
-                      similar_to=None, similar_to_max_num_sounds=settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY ,
-                      similar_to_analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
+                      similar_to=None, similar_to_min_similarity=settings.SIMILARITY_MIN_THRESHOLD,
+                      similar_to_similarity_space=settings.SIMILARITY_SPACE_DEFAULT):
 
         query = SolrQuery()
 
@@ -613,29 +613,28 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         else:
             # Similarity search!
-            
             # We fist set an empty query that will return no results and will be used by default if similarity can't be performed
             query.set_query('')
-            if similar_to_analyzer in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS:
+            if similar_to_similarity_space in settings.SIMILARITY_SPACES:
                 # Similarity search will find documents close to a target vector. This will match "child" sound documents (of content_type "similarity vector")
-                config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[similar_to_analyzer]
+                config_options = settings.SIMILARITY_SPACES[similar_to_similarity_space]
                 vector = None
                 if isinstance(similar_to, list):
                     vector = similar_to  # we allow vectors to be passed directly
                 else:
                     # similar_to should be a sound_id
                     try:
-                        sound = Sound.objects.get(id=similar_to)
-                    except Sound.DoesNotExist:
+                        ss = Sound.objects.bulk_query_id([similar_to], include_similarity_vectors=[similar_to_similarity_space])
+                        sound = ss[0]
+                    except IndexError:
                         # Return no results if sound does not exist
-                        return SearchResults(num_found=0)
-                    vector = get_similarity_search_target_vector(sound.id, analyzer=similar_to_analyzer)       
+                        return SearchResults(num_found=0, non_grouped_number_of_results=0)
+                    vector = sound.get_similarity_vector(similarity_space_name=similar_to_similarity_space)
                 vector_field_name = get_solr_dense_vector_search_field_name(config_options['vector_size'], config_options.get('l2_norm', False))
                 if vector is not None and vector_field_name is not None:
-                    max_similar_sounds = similar_to_max_num_sounds  # Max number of results for similarity search search. Filters are applied before the similarity search, so this number will usually be the total number of results (unless filters are more restrictive)
                     serialized_vector = ','.join([str(n) for n in vector])
-                    query.set_query(f'{{!knn f={vector_field_name} topK={max_similar_sounds}}}[{serialized_vector}]')
-        
+                    query.set_query(f'{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} }}[{serialized_vector}]')
+
         # Process filter
         query_filter = self.search_process_filter(query_filter,
                                                   only_sounds_within_ids=only_sounds_within_ids,
@@ -643,18 +642,16 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         
         if similar_to is not None:
             # If doing a similarity query, the filter needs to be further processed so we perform filters based on parent documents
-            query_filter_modified = [f'content_type:{SOLR_DOC_CONTENT_TYPES["similarity_vector"]}', f'analyzer:{similar_to_analyzer}']  # Add basic filter to only get similarity vectors from selected analyzer and from child documents (this is because root documents can also have sim vectors)
+            query_filter_modified = [f'content_type:{SOLR_DOC_CONTENT_TYPES["similarity_vector"]}', f'similarity_space:{similar_to_similarity_space}']  # Add basic filter to only get similarity vectors from selected similarity space and from child documents (this is because root documents can also have sim vectors)
             top_similar_sounds_as_filter = query.as_kwargs()['q']
             try:
-                # Also if target is specified as a sound ID, remove it from the list
+                # Also if target is specified as a sound ID, remove it from the list so it is not returned as a result
                 query_filter_modified.append(f'-_nest_parent_:{int(similar_to)}')
-                # Update the top_similar_sounds_as_filter so we compensate for the fact that we are removing the target sound from the results
-                top_similar_sounds_as_filter=top_similar_sounds_as_filter.replace(f'topK={similar_to_max_num_sounds}', f'topK={similar_to_max_num_sounds + 1}')
             except TypeError:
                 # Target is not a sound id, so we don't need to add the filter
                 pass
-            
-            # Also add the NN query as a filter so we don't get past the first similar_to_max_num_sounds results when applying extra filters
+
+            # Also add the NN query as a filter so we don't get past the first similar_to_min_similarity results when applying extra filters
             query_filter_modified += [top_similar_sounds_as_filter]  
 
             # Now add the usual filter, but wrap it in "child of" modifier so it filters on parent documents instead of child documents
@@ -796,18 +793,18 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
         
-    def get_num_sim_vectors_indexed_per_analyzer(self):
+    def get_num_sim_vectors_indexed_per_similarity_space(self):
         results = {}
-        for analyzer_name in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS.keys():
+        for similarity_space_name in settings.SIMILARITY_SPACES.keys():
             query = SolrQuery()
-            filter_query = f'analyzer:"{analyzer_name}" content_type:"v"'
+            filter_query = f'similarity_space:"{similarity_space_name}" content_type:"v"'
             query.set_query("*:*")
             query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query)
             query.set_group_field("_nest_parent_")
             query.set_group_options()
             try:
                 response = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
-                results[analyzer_name] = {
+                results[similarity_space_name] = {
                     'num_sounds': response.num_found,
                     'num_vectors': response.non_grouped_number_of_results
                 }

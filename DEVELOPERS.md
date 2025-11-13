@@ -227,8 +227,11 @@ that will also be reflected in the `SoundAnalysis` object by setting a status of
 `SoundAnalysis` object and will hopefully show deatils about the anlaysis errors. If the analyzer has defined
 a `descriptors_map` property in `settings.ANALYZERS_CONFIGURATION[analyzer_name]`, then the mapping will be used to load some of the
 analysis results from the analysis output file and store them directly in the Freesound database (the `SoundAnalysis` object has a
-JSON field to store `analysis_data`). Analysis results stored in the database can be easily used for indexing sounds and filtering 
-them with the search engine and the Freesound API (for a "how to" see implementation examples for analyzer `ac-extractor_v3`).
+JSON field to store `analysis_data`) (UPDATE: we no longer use `descriptors_map` to load analyzers output data to the DB, although
+the feature is still available. We now use `settings.CONSOLIDATED_AUDIO_DESCRIPTORS` configuration option to determine which combination
+of analyzers' outputs should be loaded into the DB in a new *meta* `SoundAnalysis` object which combines output from all analyzers).
+These new *meta* `SoundAnalysis` objects are created with the method `Sound.consolidate_analysis()` which is automatically triggered from 
+`process_analysis_results` jobs if required.
 
 It is not advised to add more than a *few thousands* of jobs in the Celery/RabbitMQ queue (we've experienced problems with that although
 we never furthe investigated). For this reason, if we want to, e.g. analyze the whole Freesound with a new analyzer, we won't simply

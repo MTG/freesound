@@ -321,11 +321,20 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
                  'exception': str(exception), 'work_time': round(time.time() - start_time)}))
         else:
             # Load analysis output to database field (following configuration in settings.ANALYZERS_CONFIGURATION)
+            # NOTE: this features is no longer used as we only load data for the "meta" SoundAnalysis objects with consolidated 
+            # audio descriptors from several analyers. Still we, we leave the feature for possible future use.
             a.load_analysis_data_from_file_to_db()
             
-            if analyzer in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS or analyzer in settings.ANALYZERS_CONFIGURATION:
-                # If the analyzer produces data that should be indexed in the search engine, set sound index to dirty so that the sound gets reindexed soon
-                a.sound.mark_index_dirty(commit=True)
+            if analyzer in settings.CONSOLIDATED_AUDIO_DESCRIPTORS_ANALYZER_NAMES:
+                # If the analyzer produces data that should be loaded in db as consolidated audio descriptors, trigger
+                # function to load it (note that the sound will be marked as index dirty by that method if needed)
+                a.sound.consolidate_analysis()
+
+            if analyzer in settings.SIMILARITY_SPACES_ANALYZER_NAMES:
+                # If the analyzer produces data that should be loaded in db as a similarity vector, trigger
+                # function to load it (note that the sound will be marked as index dirty by that method if needed)
+                a.sound.load_similarity_vectors()
+
             workers_logger.info("Finished processing analysis results (%s)" % json.dumps(
                 {'task_name': PROCESS_ANALYSIS_RESULTS_TASK_NAME, 'sound_id': sound_id, 'analyzer': analyzer, 'status': status,
                  'work_time': round(time.time() - start_time)}))

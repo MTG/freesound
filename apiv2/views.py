@@ -64,7 +64,7 @@ from comments.models import Comment
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from similarity.client import Similarity
-from sounds.models import Sound, Pack, License, SoundAnalysis
+from sounds.models import Sound, Pack, License
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
@@ -77,9 +77,41 @@ resources_doc_filename = 'resources_apiv2.html'
 class AuthorizationView(ProviderAuthorizationView):
     login_url = '/apiv2/login/'
 
-####################################
-# SEARCH AND SIMILARITY SEARCH VIEWS
-####################################
+##############
+# SEARCH VIEWS
+##############
+
+
+def get_needed_audio_descriptors(fields):
+    requested_fields = fields.split(',')
+
+    # Include all the descriptors requested in the fields parameter. If "all_descriptors" is requested, include all descriptors
+    if 'all_descriptors' in requested_fields or fields == '*':
+        return True
+
+    descriptor_names = []
+    if 'category' in requested_fields or 'category_code' in requested_fields:
+        # This is a special case, estimated bst category should be included to provide the category field
+        descriptor_names += ['category', 'subcategory']
+    
+    # Add the rest of descriptors requested
+    descriptor_names += [descriptor_name for descriptor_name in settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES if descriptor_name in requested_fields]
+    descriptor_names = list(set(descriptor_names))
+
+    return descriptor_names
+
+
+def get_needed_similarity_vectors(fields):
+    requested_fields = fields.split(',')
+
+    # Include all the similarity vectors requested in the fields parameter. If "all_similarity_vectors" is requested, include all vectors
+    if 'all_similarity_spaces' in requested_fields or fields == '*':
+        return True
+
+    similarity_spaces = [similarity_space_name for similarity_space_name in settings.SIMILARITY_SPACES_NAMES if f'sim_{similarity_space_name}' in requested_fields]
+    similarity_spaces = list(set(similarity_spaces))
+
+    return similarity_spaces
 
 
 class TextSearch(GenericAPIView):
@@ -126,10 +158,10 @@ class TextSearch(GenericAPIView):
         response_data['next'] = None
         if page['has_other_pages']:
                 if page['has_previous']:
-                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-text-search'),
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-search'),
                                                                            page=page['previous_page_number'])
                 if page['has_next']:
-                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-text-search'),
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-search'),
                                                                        page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
@@ -138,8 +170,9 @@ class TextSearch(GenericAPIView):
         sound_ids = [ob[0] for ob in object_list]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=sound_ids)
         # In search queries, only include audio analyzer's output if requested through the fields parameter
-        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
-        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_analyzers_output=needs_analyzers_output)
+        needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get('fields', ''))
+        needs_similarity_vectors = get_needed_similarity_vectors(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
         sounds = []
         for i, sid in enumerate(sound_ids):
             try:
@@ -149,7 +182,7 @@ class TextSearch(GenericAPIView):
                         pack_id =  more_from_pack_data[sid][1][:more_from_pack_data[sid][1].find("_")]
                         pack_name = more_from_pack_data[sid][1][more_from_pack_data[sid][1].find("_")+1:]
                         sound['more_from_same_pack'] = search_form.construct_link(
-                            reverse('apiv2-sound-text-search'),
+                            reverse('apiv2-sound-search'),
                             page=1,
                             filt='pack_grouping:"%i_%s"' % (int(pack_id), pack_name),
                             group_by_pack='0')
@@ -229,8 +262,9 @@ class ContentSearch(GenericAPIView):
         ids = [id for id in page['object_list']]
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyzer's output if requested through the fields parameter
-        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
+        needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get('fields', ''))
+        needs_similarity_vectors = get_needed_similarity_vectors(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -348,8 +382,9 @@ class CombinedSearch(GenericAPIView):
         ids = results
         sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
         # In search queries, only include audio analyzer's output if requested through the fields parameter
-        needs_analyzers_output = get_needs_analyzers_output(search_form.cleaned_data.get('fields', ''))
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
+        needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get('fields', ''))
+        needs_similarity_vectors = get_needed_similarity_vectors(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -388,12 +423,6 @@ class CombinedSearch(GenericAPIView):
 # SOUND VIEWS
 #############
 
-def get_needs_analyzers_output(fields):
-    return 'analyzers_output' in fields \
-        or 'ac_analysis' in fields \
-        or 'category' in fields \
-        or '*' in fields
-
 class SoundInstance(RetrieveAPIView):
 
     @classmethod
@@ -407,14 +436,15 @@ class SoundInstance(RetrieveAPIView):
 
     def get_queryset(self):
         fields_request_param_value = self.request.GET.get('fields', '')
-        needs_analyzers_output = get_needs_analyzers_output(fields_request_param_value)
+        needs_analyzers_output = get_needed_audio_descriptors(fields_request_param_value)
+        needs_similarity_vectors = get_needed_similarity_vectors(fields_request_param_value)
         if fields_request_param_value == '':
-            # The "category" field of the single sound instance requires analyzer's output to avoid making extra queries to the DB
-            # However, get_needs_analyzers_output will return False if fields parameter is not specified. This is ok in the views that
+            # The "category" field of the single sound instance requires some audio descriptors to avoid making extra queries to the DB
+            # However, get_needed_audio_descriptors will return False if fields parameter is not specified. This is ok in the views that
             # return lists of sounds because by default "category" is not included. But for SoundInstance we need to make sure that
             # category field can be populated without making extra queries to the DB when fields are not specified
             needs_analyzers_output = True
-        return Sound.objects.bulk_query(include_analyzers_output=needs_analyzers_output)
+        return Sound.objects.bulk_query(include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))
@@ -432,18 +462,24 @@ class SoundAnalysisView(GenericAPIView):  # Needs to be named SoundAnalysisView 
 
     def get(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
-        descriptors = []
-        if request.query_params.get('descriptors', False):
-            descriptors = request.query_params['descriptors'].split(',')
-        api_logger.info(self.log_message('sound:%i analysis' % (int(sound_id))))
-        response_data = get_sounds_descriptors([sound_id],
-                                                descriptors,
-                                                request.query_params.get('normalized', '0') == '1',
-                                                only_leaf_descriptors=True)
-        if response_data:
-            return Response(response_data[str(sound_id)], status=status.HTTP_200_OK)
-        else:
+        try:
+            ss = Sound.objects.bulk_query_id_public([sound_id], include_audio_descriptors=True, include_similarity_vectors=True)
+        except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
+
+        response_data = {}
+        
+        sound = ss[0]
+        audio_descriptors = sound.get_consolidated_analysis_data()
+        response_data.update(audio_descriptors)
+
+        similarity_vectors = {}
+        for similarity_space_name in settings.SIMILARITY_SPACES_NAMES:
+            vector = sound.get_similarity_vector(similarity_space_name)
+            similarity_vectors[similarity_space_name] = vector
+        response_data.update(similarity_vectors)
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class SimilarSounds(GenericAPIView):
@@ -468,9 +504,12 @@ class SimilarSounds(GenericAPIView):
             raise NotFoundException(resource=self)
 
         # Get search results
-        similarity_sound_form.cleaned_data['target'] = str(sound_id)
+        similarity_sound_form.cleaned_data['similar_to'] = str(sound_id)
         results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = \
             api_search(similarity_sound_form, resource=self)
+
+        id_score_map = {sound_id: sound_score for sound_id, sound_score in results}
+        results = [sound_id for sound_id, _ in results] 
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, similarity_sound_form.cleaned_data['page_size'])
@@ -489,20 +528,17 @@ class SimilarSounds(GenericAPIView):
                     response_data['next'] = similarity_sound_form.construct_link(
                         reverse('apiv2-similarity-sound', args=[sound_id]), page=page['next_page_number'])
 
-        # Get analysis data and serialize sound results
-        ids = [id for id in page['object_list']]
-        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
+        # Serialize sound results
         # In search queries, only include audio analyzer's output if requested through the fields parameter
-        needs_analyzers_output = get_needs_analyzers_output(similarity_sound_form.cleaned_data.get('fields', ''))
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_analyzers_output=needs_analyzers_output)
+        ids = [id for id in page['object_list']]
+        needs_analyzers_output = get_needed_audio_descriptors(similarity_sound_form.cleaned_data.get('fields', ''))
+        needs_similarity_vectors = get_needed_similarity_vectors(similarity_sound_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
 
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data).data
-                # Distance to target is present we add it to the serialized sound
-                if distance_to_target_data:
-                    sound['distance_to_target'] = distance_to_target_data[sid]
+                sound = SoundListSerializer(sounds_dict[sid], score_map=id_score_map, context=self.get_serializer_context()).data
                 sounds.append(sound)
             except:
                 # This will happen if there are synchronization errors between gaia and the database.
@@ -621,8 +657,9 @@ class UserSounds(ListAPIView):
             user = User.objects.get(username=self.kwargs['username'], is_active=True)
         except User.DoesNotExist:
             raise NotFoundException(resource=self)
-        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
-        queryset = Sound.objects.bulk_sounds_for_user(user_id=user.id, include_analyzers_output=needs_analyzers_output)
+        needs_analyzers_output = get_needed_audio_descriptors(self.request.GET.get('fields', ''))
+        needs_similarity_vectors = get_needed_similarity_vectors(self.request.GET.get('fields', ''))
+        queryset = Sound.objects.bulk_sounds_for_user(user_id=user.id, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
         return queryset
 
 
@@ -691,8 +728,9 @@ class PackSounds(ListAPIView):
             Pack.objects.get(id=self.kwargs['pk'], is_deleted=False)
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
-        needs_analyzers_output = get_needs_analyzers_output(self.request.GET.get('fields', ''))
-        queryset = Sound.objects.bulk_sounds_for_pack(pack_id=self.kwargs['pk'], include_analyzers_output=needs_analyzers_output)
+        needs_analyzers_output = get_needed_audio_descriptors(self.request.GET.get('fields', ''))
+        needs_similarity_vectors = get_needed_similarity_vectors(self.request.GET.get('fields', ''))
+        queryset = Sound.objects.bulk_sounds_for_pack(pack_id=self.kwargs['pk'], include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
         return queryset
 
 
@@ -1257,8 +1295,8 @@ class FreesoundApiV2Resources(GenericAPIView):
         api_logger.info(self.log_message('api_root'))
         api_index = [
             {'Search resources': OrderedDict(sorted({
-                    '01 Text Search': prepend_base(
-                        reverse('apiv2-sound-text-search'), request_is_secure=request.is_secure()),
+                    '01 Search': prepend_base(
+                        reverse('apiv2-sound-search'), request_is_secure=request.is_secure()),
                     '02 Content Search': prepend_base(
                         reverse('apiv2-sound-content-search'), request_is_secure=request.is_secure()),
                     '03 Combined Search': prepend_base(

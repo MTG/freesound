@@ -1,7 +1,6 @@
-
 .. _analysis-docs:
 
-Analysis Descriptor Documentation
+Audio Descriptors Documentation
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 .. contents::
@@ -9,2679 +8,1246 @@ Analysis Descriptor Documentation
     :backlinks: top
 
 
-Analysis Settings
+Analysis settings
 >>>>>>>>>>>>>>>>>
 
-The analysis sample rate is 44100Hz and the audio file's channels are mixed down
-to mono. For the lowlevel namespace the frame size is 2048 samples with a hop
-size of 1024, while for the tonal namespace the frame size is 4096 and the hop
-size 2048.
+Most of the available descriptors come from Essentia_, while some come from related initiatives such as the AudioCommons_ project.
+
+.. _Essentia: https://essentia.upf.edu/
+.. _AudioCommons: http://www.audiocommons.org/
+
+During analysis, the sample rate is 44,100Hz and the audio file's channels are mixed down
+to mono. For most descriptors, the frame size is 2,048 samples with a hop size of 1,024,
+while for some tonal descriptors, the frame size is 4,096 samples with a hop size of 2,048.
 
 
-Acronyms for the statistics
->>>>>>>>>>>>>>>>>>>>>>>>>>>
+Glossary 
+>>>>>>>>>>>>>>>>
 
-Generally, the lowlevel descriptors have the statistics mean, max, min, var,
-dmean, dmean2, dvar, and dvar2. These should be read as follows.
+Basic terms used in the documentation of audio descriptors:
 
 ========= =====================================
-Statistic
+numeric   The descriptor returns a numeric value; can be either an integer or a float.
+integer   The descriptor returns an integer value only.
+string    The descriptor returns a textual value.
+boolean   The descriptor returns a binary value; 0 (no) or 1 (yes).
+array[x]  The descriptor returns a list of elements of type X.
+VL        Variable-length descriptor; the returned list may vary in length depending on the sound.
+mean      The arithmetic mean of the descriptor values over the entire sound.
+min       The lowest (minimum) descriptor value over the entire sound.
+max       The highest (maximum) descriptor value over the entire sound.
+var       The variance of the descriptor values over the entire sound.
 ========= =====================================
-mean      The arithmetic mean
-max       The maximum value
-min       The minimum value
-var       The variance
-dmean     The mean of the derivative
-dmean2    The mean of the second derivative
-dvar      The variance of the derivative
-dvar2     The variance of the second derivative
-========= =====================================
+
+Most descriptors have ``fixed length`` and are divided into ``one-dimensional`` (descriptors that consist 
+of a single value, e.g. pitch, note_name) and ``multi-dimensional`` (descriptors with several dimensions, e.g. tristimulus).
+The remaining descriptors have ``variable length``, i.e. their length depends on the analyzed sound (denoted with `VL` in ``mode``).
+
+All ``one-dimensional`` descriptors (regardless their ``type``) can be used in the ``filter`` parameter of the :ref:`sound-search` resource.
+The ``multi-dimensional`` and ``variable-length`` descriptors can be accessed through the sound metadata 
+(use ``fields`` parameter in any API resource that returns a sound list or the :ref:`sound-analysis`).
+If ``mode`` ends with a number in parentheses (``n``), it indicates that this descriptor is ``multi-dimensional``, 
+and this mode is calculated for a specific number of values.  
+For example, if ``mode`` is ``mean (36)``, it represents the mean calculated across 36 values.
 
 
-Metadata Descriptors
->>>>>>>>>>>>>>>>>>>>
+Main set of descriptors
+>>>>>>>>>>>>>>>>
 
-
-metadata.version
+beat_count
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/metadata/version
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/beat_count
 
+**Description:** Number of beats in the audio signal, derived from the total detected beat positions and expresses a measure of rhythmic density or tempo-related activity.
 
-Lowlevel Descriptors
->>>>>>>>>>>>>>>>>>>>
+**Type:** integer
 
-
-lowlevel.spectral_complexity
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_complexity
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_SpectralComplexity.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_complexity.mean.png
+    .. image:: _static/descriptors/beat_count.png
         :height: 300px
 
 
-
-lowlevel.silence_rate_20dB
+beat_times
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/silence_rate_20dB
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/beat_times
 
-**Essentia Algorithm**
+**Description:** Beat timestamps (in seconds) for the audio signal, which can vary according to the amount (count) of beats identified in the audio.
 
-http://essentia.upf.edu/documentation/reference/streaming_SilenceRate.html
+**Mode:** VL
 
+**Type:** array[numeric]
 
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.silence_rate_20dB.mean.png
+    .. image:: _static/descriptors/beat_times.png
         :height: 300px
 
 
-
-lowlevel.erb_bands
+boominess
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/erb_bands
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/boominess
 
-**Essentia Algorithm**
+**Description:** Boominess of the audio signal. A boomy sound is one that conveys a sense of loudness, depth and resonance.
 
-http://essentia.upf.edu/documentation/reference/streaming_ERBBands.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Values:** 0-100
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.000.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.001.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.002.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.003.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.004.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.005.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.006.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.007.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.008.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.009.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.010.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.011.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.012.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.013.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.014.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.015.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.016.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.erb_bands.mean.017.png
+    .. image:: _static/descriptors/boominess.png
         :height: 300px
 
 
-
-lowlevel.average_loudness
+bpm
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/average_loudness
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/bpm
 
-**Essentia Algorithm**
+**Description:** BPM value estimated by beat tracking algorithm.
 
-http://essentia.upf.edu/documentation/reference/streaming_Loudness.html
-    .. image:: _static/descriptors/lowlevel.average_loudness.png
-        :height: 300px
+**Type:** integer
 
-
-
-lowlevel.spectral_rms
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_rms
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_RMS.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://en.wikipedia.org/wiki/Tempo
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_rms.mean.png
+    .. image:: _static/descriptors/bpm.png
         :height: 300px
 
 
-
-lowlevel.spectral_kurtosis
+bpm_confidence
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_kurtosis
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/bpm_confidence
 
-**Essentia Algorithm**
+**Description:** Confidence score on how reliable the tempo (BPM) estimation is.
 
-http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Values:** 0-1
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_kurtosis.mean.png
+    .. image:: _static/descriptors/bpm_confidence.png
         :height: 300px
 
 
-
-lowlevel.barkbands_kurtosis
+brightness
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_kurtosis
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/brightness
 
-**Essentia Algorithm**
+**Description:** Brightness of the audio signal. A bright sound is one that is clear/vibrant and/or contains significant high-pitched elements.
 
-http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dmean2
-/dmean
-/var
-/mean
-
+**Values:** 0-100
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.barkbands_kurtosis.mean.png
+    .. image:: _static/descriptors/brightness.png
         :height: 300px
 
 
-
-lowlevel.scvalleys
+depth
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/scvalleys
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/depth
 
-**Essentia Algorithm**
+**Description:** Depth of the audio signal. A deep sound is one that conveys the sense of having been made far down below the surface of its source.
 
-http://essentia.upf.edu/documentation/reference/streaming_SpectralContrast.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Values:** 0-100
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.scvalleys.mean.000.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.scvalleys.mean.001.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.scvalleys.mean.002.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.scvalleys.mean.003.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.scvalleys.mean.004.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.scvalleys.mean.005.png
+    .. image:: _static/descriptors/depth.png
         :height: 300px
 
 
-
-lowlevel.spectral_spread
+dissonance
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_spread
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/dissonance
 
-**Essentia Algorithm**
+**Description:** Sensory dissonance of the audio signal given its spectral peaks.
 
-http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_Dissonance.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_spread.mean.png
+    .. image:: _static/descriptors/dissonance.png
         :height: 300px
 
 
-
-lowlevel.pitch
+dynamic_range
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/dynamic_range
 
-**Essentia Algorithm**
+**Description:** Loudness range (dB, LU) of the audio signal measured using the EBU R128 standard.
 
-http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Type:** numeric
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.pitch.mean.png
+    .. image:: _static/descriptors/dynamic_range.png
         :height: 300px
 
 
-
-lowlevel.dissonance
+hardness
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/dissonance
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/hardness
 
-**Essentia Algorithm**
+**Description:** Hardness of the audio signal. A hard sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.
 
-http://essentia.upf.edu/documentation/reference/streaming_Dissonance.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Values:** 0-100
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.dissonance.mean.png
+    .. image:: _static/descriptors/hardness.png
         :height: 300px
 
 
-
-lowlevel.spectral_energyband_high
+inharmonicity
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_high
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/inharmonicity
 
-**Essentia Algorithm**
+**Description:** Deviation of spectral components from perfect harmonicity, computed as the energy-weighted divergence from their closest multiples of the fundamental frequency.
 
-http://essentia.upf.edu/documentation/reference/streaming_EnergyBand.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
+**Values:** 0-1
 
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_Inharmonicity.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_energyband_high.mean.png
+    .. image:: _static/descriptors/inharmonicity.png
         :height: 300px
 
 
-
-lowlevel.gfcc
+loopable
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/gfcc
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/loopable
 
-**Essentia Algorithm**
+**Description:** Whether the audio signal is loopable, i.e. it begins and ends in a way that sounds smooth when repeated.
 
-http://essentia.upf.edu/documentation/reference/streaming_GFCC.html
+**Type:** boolean
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://en.wikipedia.org/wiki/Loop_(music)
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.000.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.001.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.002.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.003.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.004.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.005.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.006.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.007.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.008.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.009.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.010.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.011.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.gfcc.mean.012.png
+    .. image:: _static/descriptors/loopable.png
         :height: 300px
 
 
-
-lowlevel.spectral_flux
+loudness
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_flux
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/loudness
 
-**Essentia Algorithm**
+**Description:** Overall loudness (LUFS) of the audio signal measured using the EBU R128 standard.
 
-http://essentia.upf.edu/documentation/reference/streaming_Flux.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://en.wikipedia.org/wiki/LUFS
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_flux.mean.png
+    .. image:: _static/descriptors/loudness.png
         :height: 300px
 
 
-
-lowlevel.silence_rate_30dB
+note_confidence
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/silence_rate_30dB
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/note_confidence
 
-**Essentia Algorithm**
+**Description:** Confidence score on how reliable the note name/MIDI estimation is.
 
-http://essentia.upf.edu/documentation/reference/streaming_SilenceRate.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Values:** 0-1
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.silence_rate_30dB.mean.png
+    .. image:: _static/descriptors/note_confidence.png
         :height: 300px
 
 
-
-lowlevel.spectral_contrast
+note_midi
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_contrast
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/note_midi
 
-**Essentia Algorithm**
+**Description:** MIDI value corresponding to the estimated note (computed by the note_name descriptor).
 
-http://essentia.upf.edu/documentation/reference/streaming_SpectralContrast.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Type:** integer
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_contrast.mean.000.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.spectral_contrast.mean.001.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.spectral_contrast.mean.002.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.spectral_contrast.mean.003.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.spectral_contrast.mean.004.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.spectral_contrast.mean.005.png
+    .. image:: _static/descriptors/note_midi.png
         :height: 300px
 
 
-
-lowlevel.spectral_energyband_middle_high
+note_name
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_middle_high
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/note_name
 
-**Essentia Algorithm**
+**Description:** Pitch note name that includes one of the 12 western notes ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"] and the octave number, e.g. "A4", "E#7". It is computed by the median of the estimated fundamental frequency.
 
-http://essentia.upf.edu/documentation/reference/streaming_EnergyBand.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Type:** string
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_energyband_middle_high.mean.png
+    .. image:: _static/descriptors/note_name.png
         :height: 300px
 
 
-
-lowlevel.barkbands_spread
+onset_count
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_spread
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/onset_count
 
-**Essentia Algorithm**
+**Description:** Number of detected onsets in the audio signal.
 
-http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
+**Type:** integer
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_OnsetRate.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.barkbands_spread.mean.png
+    .. image:: _static/descriptors/onset_count.png
         :height: 300px
 
 
-
-lowlevel.spectral_centroid
+onset_times
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_centroid
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/onset_times
 
-**Essentia Algorithm**
+**Description:** Timestamps for the detected onsets in the audio signal in seconds, which can vary according to the amount of onsets (computed by the onset_count descriptor).
 
-http://essentia.upf.edu/documentation/reference/streaming_Centroid.html
+**Mode:** VL
 
+**Type:** array[numeric]
 
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_OnsetRate.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_centroid.mean.png
+    .. image:: _static/descriptors/onset_times.png
         :height: 300px
 
 
-
-lowlevel.pitch_salience
+pitch
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch_salience
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/pitch
 
-**Essentia Algorithm**
+**Description:** Mean (average) fundamental frequency derived from the audio signal, computed with the YinFFT algorithm.
 
-http://essentia.upf.edu/documentation/reference/streaming_PitchSalience.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
+**Values:** 0-25000
 
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.pitch_salience.mean.png
+    .. image:: _static/descriptors/pitch.png
         :height: 300px
 
 
-
-lowlevel.silence_rate_60dB
+pitch_salience
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/silence_rate_60dB
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/pitch_salience
 
-**Essentia Algorithm**
+**Description:** Pitch salience (i.e. tone sensation) given by the ratio of the highest auto correlation value of the spectrum to the non-shifted auto correlation value. Unpitched sounds and pure tones have value close to 0.
 
-http://essentia.upf.edu/documentation/reference/streaming_SilenceRate.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
+**Values:** 0-1
 
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.silence_rate_60dB.mean.png
+    .. image:: _static/descriptors/pitch_salience.png
         :height: 300px
 
 
-
-lowlevel.spectral_entropy
+reverbness
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_entropy
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/reverbness
 
-**Essentia Algorithm**
+**Description:** Whether the signal is reverberated or not.
 
-http://essentia.upf.edu/documentation/reference/streaming_Entropy.html
+**Type:** boolean
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://en.wikipedia.org/wiki/Reverberation
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_entropy.mean.png
+    .. image:: _static/descriptors/reverbness.png
         :height: 300px
 
 
-
-lowlevel.spectral_rolloff
+roughness
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_rolloff
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/roughness
 
-**Essentia Algorithm**
+**Description:** Roughness of the audio signal. A rough sound is one that has an uneven or irregular sonic texture.
 
-http://essentia.upf.edu/documentation/reference/streaming_RollOff.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Values:** 0-100
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_rolloff.mean.png
+    .. image:: _static/descriptors/roughness.png
         :height: 300px
 
 
-
-lowlevel.barkbands
+sharpness
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/sharpness
 
-**Essentia Algorithm**
+**Description:** Sharpness of the audio signal. A sharp sound is one that suggests it might cut if it were to take on physical form.
 
-http://essentia.upf.edu/documentation/reference/streaming_BarkBands.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Values:** 0-100
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.000.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.001.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.002.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.003.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.004.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.005.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.006.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.007.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.008.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.009.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.010.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.011.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.012.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.013.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.014.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.015.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.016.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.017.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.018.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.019.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.020.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.021.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.022.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.023.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.024.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.025.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.barkbands.mean.026.png
+    .. image:: _static/descriptors/sharpness.png
         :height: 300px
 
 
-
-lowlevel.spectral_energyband_low
+silence_rate
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_low
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/silence_rate
 
-**Essentia Algorithm**
+**Description:** Amount of silence in the audio signal, computed by the fraction of frames with instant power below 30dB.
 
-http://essentia.upf.edu/documentation/reference/streaming_EnergyBand.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
+**Values:** 0-1
 
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_SilenceRate.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_energyband_low.mean.png
+    .. image:: _static/descriptors/silence_rate.png
         :height: 300px
 
 
-
-lowlevel.barkbands_skewness
+single_event
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_skewness
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/single_event
 
-**Essentia Algorithm**
+**Description:** Whether the audio signal contains one single audio event or more than one. This computation is based on the loudness of the signal and does not do any frequency analysis.
 
-http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Type:** boolean
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.barkbands_skewness.mean.png
+    .. image:: _static/descriptors/single_event.png
         :height: 300px
 
 
-
-lowlevel.pitch_instantaneous_confidence
+start_time
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch_instantaneous_confidence
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/start_time
 
-**Essentia Algorithm**
+**Description:** The moment at which sound begins in seconds, i.e. when the audio signal first rises above silence.
 
-http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_StartStopSilence.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.pitch_instantaneous_confidence.mean.png
+    .. image:: _static/descriptors/start_time.png
         :height: 300px
 
 
-
-lowlevel.spectral_energyband_middle_low
+tonality
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_middle_low
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonality
 
-**Essentia Algorithm**
+**Description:** Key (tonality) estimated by a key detection algorithm. The key name includes the root note of the scale, which is one of ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], and the scale mode, which is one of ["major", "minor"], e.g. "C minor", "F# major".
 
-http://essentia.upf.edu/documentation/reference/streaming_EnergyBand.html
+**Type:** string
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://en.wikipedia.org/wiki/Key_(music)
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_energyband_middle_low.mean.png
+    .. image:: _static/descriptors/tonality.png
         :height: 300px
 
 
-
-lowlevel.spectral_strongpeak
+tonality_confidence
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_strongpeak
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonality_confidence
 
-**Essentia Algorithm**
+**Description:** Confidence score on how reliable the key estimation is (computed by the tonality descriptor).
 
-http://essentia.upf.edu/documentation/reference/streaming_StrongPeak.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**Values:** 0-1
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_strongpeak.mean.png
+    .. image:: _static/descriptors/tonality_confidence.png
         :height: 300px
 
 
-
-lowlevel.startFrame
+warmth
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/startFrame
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/warmth
 
-**Essentia Algorithm**
+**Description:** Warmth of the audio signal. A warm sound is one that promotes a sensation analogous to that caused by a physical increase in temperature.
 
-http://essentia.upf.edu/documentation/reference/streaming_StartStopSilence.html
-    .. image:: _static/descriptors/lowlevel.startFrame.png
-        :height: 300px
+**Type:** numeric
 
-
-
-lowlevel.spectral_decrease
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_decrease
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_Decrease.html
-
-
-**Stats**::
-
-
-/dmean2
-/dmean
-/mean
-/max
-/min
-
+**Values:** 0-100
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_decrease.mean.png
+    .. image:: _static/descriptors/warmth.png
         :height: 300px
 
 
+Advanced set of descriptors
+>>>>>>>>>>>>>>>>
 
-lowlevel.stopFrame
+amplitude_peak_ratio
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/stopFrame
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/amplitude_peak_ratio
 
-**Essentia Algorithm**
+**Description:** Ratio between the position of the peak in the amplitude envelope and the total envelope duration, indicating whether the maximum magnitude of the audio signal occurs early (impulsive or decrescendo) or late (crescendo).
 
-http://essentia.upf.edu/documentation/reference/streaming_StartStopSilence.html
-    .. image:: _static/descriptors/lowlevel.stopFrame.png
-        :height: 300px
+**Type:** numeric
 
+**Values:** 0-1
 
-
-lowlevel.mfcc
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/mfcc
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_MFCC.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_MaxToTotal.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.000.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.001.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.002.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.003.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.004.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.005.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.006.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.007.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.008.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.009.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.010.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.011.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.mfcc.mean.012.png
+    .. image:: _static/descriptors/amplitude_peak_ratio.png
         :height: 300px
 
 
-
-lowlevel.spectral_energy
+beat_loudness
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energy
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/beat_loudness
 
-**Essentia Algorithm**
+**Description:** Spectral energy measured at the beat positions of the audio signal.
 
-http://essentia.upf.edu/documentation/reference/streaming_Energy.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_BeatsLoudness.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_energy.mean.png
+    .. image:: _static/descriptors/beat_loudness.png
         :height: 300px
 
 
-
-lowlevel.spectral_flatness_db
+chord_count
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_flatness_db
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/chord_count
 
-**Essentia Algorithm**
+**Description:** Number of chords in the audio signal based on the number of detected chords by the chord_progression descriptor.
 
-http://essentia.upf.edu/documentation/reference/streaming_FlatnessDB.html
+**Type:** integer
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_flatness_db.mean.png
+    .. image:: _static/descriptors/chord_count.png
         :height: 300px
 
 
-
-lowlevel.frequency_bands
+chord_progression
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/frequency_bands
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/chord_progression
 
-**Essentia Algorithm**
+**Description:** Chords estimated from the harmonic pitch class profiles (HPCPs) across the audio signal. Using the pitch classes ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], it finds the best-matching major or minor triad and outputs a time-varying chord sequence as a sequence of labels (e.g. A#, Bm). Note, chords are major if no minor symbol.
 
-http://essentia.upf.edu/documentation/reference/streaming_FrequencyBands.html
+**Mode:** VL
 
+**Type:** array[string]
 
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_ChordsDetection.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.000.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.001.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.002.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.003.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.004.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.005.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.006.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.007.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.008.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.009.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.010.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.011.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.012.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.013.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.014.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.015.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.016.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.017.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.018.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.019.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.020.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.021.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.022.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.023.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.024.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.025.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.026.png
-        :height: 300px
-    .. image:: _static/descriptors/lowlevel.frequency_bands.mean.027.png
+    .. image:: _static/descriptors/chord_progression.png
         :height: 300px
 
 
-
-lowlevel.zerocrossingrate
+decay_strength
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/zerocrossingrate
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/decay_strength
 
-**Essentia Algorithm**
+**Description:** Rate at which the audio signal's energy decays (i.e. how quickly it decreases) after the initial attack. It is computed from a non-linear combination of the signal's energy and its temporal centroid (the balance point of the signal's absolute amplitude).
 
-http://essentia.upf.edu/documentation/reference/streaming_ZeroCrossingRate.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_StrongDecay.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.zerocrossingrate.mean.png
+    .. image:: _static/descriptors/decay_strength.png
         :height: 300px
 
 
-
-lowlevel.spectral_skewness
+duration_effective
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_skewness
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/duration_effective
 
-**Essentia Algorithm**
+**Description:** Duration of the audio signal (in seconds) during which the envelope amplitude is perceptually significant (above 40% of peak and 90dB), e.g. for distinguishing short/percussive from sustained sounds.
 
-http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
+**Type:** numeric
 
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_EffectiveDuration.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_skewness.mean.png
+    .. image:: _static/descriptors/duration_effective.png
         :height: 300px
 
 
-
-lowlevel.hfc
+hpcp
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/hfc
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/hpcp
 
-**Essentia Algorithm**
+**Description:** Harmonic Pitch Class Profile (HPCP) computed from the spectral peaks of the audio signal, representing the energy distribution across 36 pitch classes (3 subdivisions per semitone).
 
-http://essentia.upf.edu/documentation/reference/streaming_HFC.html
+**Mode:** mean (36)
 
+**Type:** array[numeric]
 
-**Stats**::
+**Values:** 0-36
 
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_HPCP.html, https://en.wikipedia.org/wiki/Harmonic_pitch_class_profiles
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.hfc.mean.png
+    .. image:: _static/descriptors/hpcp.png
         :height: 300px
 
 
-
-lowlevel.spectral_crest
+hpcp_crest
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_crest
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/hpcp_crest
 
-**Essentia Algorithm**
+**Description:** Dominance of the strongest pitch class (crest) compared to the rest, computed as the ratio between the maximum HPCP value and the mean HPCP value (computed by the hpcp descriptor).
 
-http://essentia.upf.edu/documentation/reference/streaming_Crest.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_Crest.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_crest.mean.png
+    .. image:: _static/descriptors/hpcp_crest.png
         :height: 300px
 
 
-
-Rhythm Descriptors
->>>>>>>>>>>>>>>>>>>>
-
-
-rhythm.first_peak_bpm
+hpcp_entropy
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_bpm
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/hpcp_entropy
 
-**Essentia Algorithm**
+**Description:** Uniformity of the pitch-class distribution, computed as the Shannon entropy of the HPCP (computed by the hpcp descriptor).
 
-http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_Entropy.html, http://essentia.upf.edu/documentation/reference/streaming_HPCP.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/rhythm.first_peak_bpm.mean.png
+    .. image:: _static/descriptors/hpcp_entropy.png
         :height: 300px
 
 
-
-rhythm.onset_times
+log_attack_time
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_times
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/log_attack_time
 
-**Essentia Algorithm**
+**Description:** Log (base 10) of the attack time of the audio signal's envelope, where the attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.
 
-http://essentia.upf.edu/documentation/reference/streaming_OnsetRate.html
+**Type:** numeric
 
-
-
-rhythm.beats_count
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_count
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.html
-    .. image:: _static/descriptors/rhythm.beats_count.png
-        :height: 300px
-
-
-
-rhythm.beats_loudness
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_loudness
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_BeatsLoudness.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_LogAttackTime.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/rhythm.beats_loudness.mean.png
+    .. image:: _static/descriptors/log_attack_time.png
         :height: 300px
 
 
-
-rhythm.first_peak_spread
+mfcc
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_spread
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/mfcc
 
-**Essentia Algorithm**
+**Description:** 13 mel-frequency cepstrum coefficients of a spectrum (MFCC-FB40).
 
-http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
+**Mode:** mean (13)
 
+**Type:** array[numeric]
 
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_MFCC.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/rhythm.first_peak_spread.mean.png
+    .. image:: _static/descriptors/mfcc.png
         :height: 300px
 
 
-
-rhythm.second_peak_weight
+pitch_max
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_weight
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/pitch_max
 
-**Essentia Algorithm**
+**Description:** Maximum fundamental frequency observed throughout the audio signal.
 
-http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
+**Mode:** max
 
+**Type:** numeric
 
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/rhythm.second_peak_weight.mean.png
+    .. image:: _static/descriptors/pitch_max.png
         :height: 300px
 
 
-
-rhythm.bpm
+pitch_min
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/bpm
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/pitch_min
 
-**Essentia Algorithm**
+**Description:** Minimum fundamental frequency observed throughout the audio signal.
 
-http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.html
-    .. image:: _static/descriptors/rhythm.bpm.png
-        :height: 300px
+**Mode:** min
 
+**Type:** numeric
 
-
-rhythm.bpm_intervals
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/bpm_intervals
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.html
-
-
-
-rhythm.onset_count
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_count
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_OnsetRate.html
-    .. image:: _static/descriptors/rhythm.onset_count.png
-        :height: 300px
-
-
-
-rhythm.second_peak_spread
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_spread
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
-
-
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/rhythm.second_peak_spread.mean.png
+    .. image:: _static/descriptors/pitch_min.png
         :height: 300px
 
 
-
-rhythm.beats_loudness_band_ratio
+pitch_var
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_loudness_band_ratio
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/pitch_var
 
-**Essentia Algorithm**
+**Description:** Variance of the fundamental frequency of the audio signal.
 
-http://essentia.upf.edu/documentation/reference/streaming_BeatsLoudness.html
+**Mode:** var
 
+**Type:** numeric
 
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/rhythm.beats_loudness_band_ratio.mean.000.png
-        :height: 300px
-    .. image:: _static/descriptors/rhythm.beats_loudness_band_ratio.mean.001.png
-        :height: 300px
-    .. image:: _static/descriptors/rhythm.beats_loudness_band_ratio.mean.002.png
-        :height: 300px
-    .. image:: _static/descriptors/rhythm.beats_loudness_band_ratio.mean.003.png
-        :height: 300px
-    .. image:: _static/descriptors/rhythm.beats_loudness_band_ratio.mean.004.png
-        :height: 300px
-    .. image:: _static/descriptors/rhythm.beats_loudness_band_ratio.mean.005.png
+    .. image:: _static/descriptors/pitch_var.png
         :height: 300px
 
 
-
-rhythm.second_peak_bpm
+spectral_centroid
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_bpm
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/spectral_centroid
 
-**Essentia Algorithm**
+**Description:** Spectral centroid of the audio signal, indicating where the "center of mass" of the spectrum is. It correlates with the perception of "brightness" of a sound, making it useful for characterizing musical timbre. It is computed as the weighted mean of the signal's frequencies, weighted by their magnitudes.
 
-http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_Centroid.html, https://en.wikipedia.org/wiki/Spectral_centroid
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/rhythm.second_peak_bpm.mean.png
+    .. image:: _static/descriptors/spectral_centroid.png
         :height: 300px
 
 
-
-rhythm.onset_rate
+spectral_complexity
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_rate
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/spectral_complexity
 
-**Essentia Algorithm**
+**Description:** Spectral complexity of the audio signal's spectrum, based on the number of peaks in the spectrum.
 
-http://essentia.upf.edu/documentation/reference/streaming_OnsetDetection.html
+**Mode:** mean
 
+**Type:** numeric
 
-rhythm.beats_position
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_position
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.html
-
-
-
-rhythm.first_peak_weight
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_weight
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
-
-
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_SpectralComplexity.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/rhythm.first_peak_weight.mean.png
+    .. image:: _static/descriptors/spectral_complexity.png
         :height: 300px
 
 
-
-Tonal Descriptors
->>>>>>>>>>>>>>>>>>>>
-
-
-tonal.hpcp_entropy
+spectral_crest
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp_entropy
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/spectral_crest
 
-**Essentia Algorithm**
+**Description:** Dominance of the strongest spectral peak (crest) compared to the rest, computed as the ratio between the maximum and mean spectral magnitudes.
 
-http://essentia.upf.edu/documentation/reference/streaming_Entropy.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_Crest.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/tonal.hpcp_entropy.mean.png
+    .. image:: _static/descriptors/spectral_crest.png
         :height: 300px
 
 
-
-tonal.chords_scale
+spectral_energy
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_scale
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/spectral_energy
 
-**Essentia Algorithm**
+**Description:** Energy in the spectrum of the audio signal. It represents the total magnitude of all frequency components and indicates how much power is present across the spectrum.
 
-http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
+**Mode:** mean
 
+**Type:** numeric
 
-
-tonal.chords_number_rate
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_number_rate
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
-    .. image:: _static/descriptors/tonal.chords_number_rate.png
-        :height: 300px
-
-
-
-tonal.key_strength
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/key_strength
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_Key.html
-    .. image:: _static/descriptors/tonal.key_strength.png
-        :height: 300px
-
-
-
-tonal.chords_progression
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_progression
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_ChordsDetection.html
-
-
-
-tonal.key_scale
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/key_scale
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_Key.html
-
-
-
-tonal.chords_strength
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_strength
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_ChordsDetection.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_Energy.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/tonal.chords_strength.mean.png
+    .. image:: _static/descriptors/spectral_energy.png
         :height: 300px
 
 
-
-tonal.key_key
+spectral_entropy
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/key_key
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/spectral_entropy
 
-**Essentia Algorithm**
+**Description:** Shannon entropy in the frequency domain of the audio signal, measuring the unpredictability in the spectrum.
 
-http://essentia.upf.edu/documentation/reference/streaming_Key.html
+**Mode:** mean
 
+**Type:** numeric
 
-
-tonal.chords_changes_rate
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_changes_rate
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
-    .. image:: _static/descriptors/tonal.chords_changes_rate.png
-        :height: 300px
-
-
-
-tonal.chords_count
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_count
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
-    .. image:: _static/descriptors/tonal.chords_count.png
-        :height: 300px
-
-
-
-tonal.hpcp_crest
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp_crest
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_Crest.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_Entropy.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/tonal.hpcp_crest.mean.png
+    .. image:: _static/descriptors/spectral_entropy.png
         :height: 300px
 
 
-
-tonal.chords_histogram
+spectral_flatness
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_histogram
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/spectral_flatness
 
-**Essentia Algorithm**
+**Description:** Flatness of the spectrum measured as the ratio of its geometric mean to its arithmetic mean (in dB). High values indicate a noise-like, flat spectrum with evenly distributed power, while low values indicate a tone-like, spiky spectrum with power concentrated in a few frequency bands.
 
-http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
+**Mode:** mean
 
+**Type:** numeric
 
+**Values:** 0-1
 
-tonal.chords_key
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_key
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
-
-
-
-tonal.tuning_frequency
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/tuning_frequency
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_TuningFrequency.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_FlatnessDB.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/tonal.tuning_frequency.mean.png
+    .. image:: _static/descriptors/spectral_flatness.png
         :height: 300px
 
 
-
-tonal.hpcp_peak_count
+spectral_rolloff
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp_peak_count
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/spectral_rolloff
 
-**Essentia Algorithm**
+**Description:** Roll-off frequency of the spectrum, defined as the frequency under which some percentage (cutoff) of the total energy of the spectrum is contained. It can be used to distinguish between harmonic (below roll-off) and noisy sounds (above roll-off).
 
-http://essentia.upf.edu/documentation/reference/streaming_PeakDetection.html
-    .. image:: _static/descriptors/tonal.hpcp_peak_count.png
-        :height: 300px
+**Mode:** mean
 
+**Type:** numeric
 
+**Values:** 0-25000
 
-tonal.hpcp
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_HPCP.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_RollOff.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/tonal.hpcp.mean.000.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.001.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.002.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.003.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.004.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.005.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.006.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.007.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.008.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.009.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.010.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.011.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.012.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.013.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.014.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.015.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.016.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.017.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.018.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.019.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.020.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.021.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.022.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.023.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.024.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.025.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.026.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.027.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.028.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.029.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.030.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.031.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.032.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.033.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.034.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.035.png
+    .. image:: _static/descriptors/spectral_rolloff.png
         :height: 300px
 
 
-
-Sfx Descriptors
->>>>>>>>>>>>>>>>>>>>
-
-
-sfx.temporal_decrease
+spectral_skewness
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_decrease
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/spectral_skewness
 
-**Essentia Algorithm**
+**Description:** Skewness of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.
 
-http://essentia.upf.edu/documentation/reference/streaming_Decrease.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/sfx.temporal_decrease.mean.png
+    .. image:: _static/descriptors/spectral_skewness.png
         :height: 300px
 
 
-
-sfx.inharmonicity
+spectral_spread
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/inharmonicity
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/spectral_spread
 
-**Essentia Algorithm**
+**Description:** Spread (variance) of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.
 
-http://essentia.upf.edu/documentation/reference/streaming_ Inharmonicity.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/sfx.inharmonicity.mean.png
+    .. image:: _static/descriptors/spectral_spread.png
         :height: 300px
 
 
-
-sfx.pitch_min_to_total
+temporal_centroid
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_min_to_total
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/temporal_centroid
 
-**Essentia Algorithm**
+**Description:** Temporal centroid of the audio signal, defined as the time point at which the temporal balancing position of the sound event energy.
 
-http://essentia.upf.edu/documentation/reference/streaming_MinToTotal.html
-    .. image:: _static/descriptors/sfx.pitch_min_to_total.png
-        :height: 300px
+**Type:** numeric
 
+**Values:** 0-1
 
-
-sfx.tc_to_total
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/tc_to_total
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_TCToTotal.html
-    .. image:: _static/descriptors/sfx.tc_to_total.png
-        :height: 300px
-
-
-
-sfx.der_av_after_max
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/der_av_after_max
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_DerivativeSFX.html
-
-
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_Centroid.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/sfx.der_av_after_max.mean.png
+    .. image:: _static/descriptors/temporal_centroid.png
         :height: 300px
 
 
-
-sfx.pitch_max_to_total
+temporal_centroid_ratio
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_max_to_total
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/temporal_centroid_ratio
 
-**Essentia Algorithm**
+**Description:** Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is ‘balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).
 
-http://essentia.upf.edu/documentation/reference/streaming_MaxToTotal.html
-    .. image:: _static/descriptors/sfx.pitch_max_to_total.png
-        :height: 300px
+**Type:** numeric
 
-
-
-sfx.temporal_spread
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_spread
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
-
-
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_TCToTotal.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/sfx.temporal_spread.mean.png
+    .. image:: _static/descriptors/temporal_centroid_ratio.png
         :height: 300px
 
 
-
-sfx.temporal_kurtosis
+temporal_decrease
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_kurtosis
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/temporal_decrease
 
-**Essentia Algorithm**
+**Description:** Overall decrease of the audio signal's amplitude over time, computed as the linear regression coefficient.
 
-http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_Decrease.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/sfx.temporal_kurtosis.mean.png
+    .. image:: _static/descriptors/temporal_decrease.png
         :height: 300px
 
 
-
-sfx.logattacktime
+temporal_skewness
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/logattacktime
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/temporal_skewness
 
-**Essentia Algorithm**
+**Description:** Skewness of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.
 
-http://essentia.upf.edu/documentation/reference/streaming_LogAttackTime.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/sfx.logattacktime.mean.png
+    .. image:: _static/descriptors/temporal_skewness.png
         :height: 300px
 
 
-
-sfx.temporal_centroid
+temporal_spread
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_centroid
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/temporal_spread
 
-**Essentia Algorithm**
+**Description:** Spread (variance) of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.
 
-http://essentia.upf.edu/documentation/reference/streaming_Centroid.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
-
-
-/max
-/min
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/sfx.temporal_centroid.mean.png
+    .. image:: _static/descriptors/temporal_spread.png
         :height: 300px
 
 
-
-sfx.tristimulus
+tristimulus
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/tristimulus
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/tristimulus
 
-**Essentia Algorithm**
+**Description:** Tristimulus of the audio signal given its harmonic peaks. It measures the relative contribution of harmonic groups in a signal's spectrum, where the first value captures the first harmonic, the second captures harmonics 2-4, and the third captures all remaining harmonics. It is a timbre equivalent to the color attributes in the vision.
 
-http://essentia.upf.edu/documentation/reference/streaming_ Tristimulus.html
+**Mode:** mean (3)
 
+**Type:** array[numeric]
 
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
+**More information:** https://essentia.upf.edu/reference/streaming_Tristimulus.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/sfx.tristimulus.mean.000.png
-        :height: 300px
-    .. image:: _static/descriptors/sfx.tristimulus.mean.001.png
-        :height: 300px
-    .. image:: _static/descriptors/sfx.tristimulus.mean.002.png
+    .. image:: _static/descriptors/tristimulus.png
         :height: 300px
 
 
-
-sfx.max_der_before_max
+zero_crossing_rate
 -------------------------
 
 ::
 
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/max_der_before_max
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/zero_crossing_rate
 
-**Essentia Algorithm**
+**Description:** Zero-crossing rate of the audio signal. It is the number of sign changes between consecutive samples divided by the total number of samples. Noisy signals tend to have a higher value. For monophonic tonal signals, it can be used as a primitive pitch detection algorithm.
 
-http://essentia.upf.edu/documentation/reference/streaming_DerivativeSFX.html
+**Mode:** mean
 
+**Type:** numeric
 
-**Stats**::
+**Values:** 0-1
 
-
-/max
-/min
-/mean
-
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_ZeroCrossingRate.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/sfx.max_der_before_max.mean.png
+    .. image:: _static/descriptors/zero_crossing_rate.png
         :height: 300px
-
-
-
-sfx.strongdecay
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/strongdecay
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_StrongDecay.html
-    .. image:: _static/descriptors/sfx.strongdecay.png
-        :height: 300px
-
-
-
-sfx.pitch_centroid
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_centroid
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_Centroid.html
-
-
-**Stats**::
-
-
-/max
-/min
-/mean
-
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/sfx.pitch_centroid.mean.png
-        :height: 300px
-
-
-
-sfx.duration
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/duration
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_ Duration.html
-    .. image:: _static/descriptors/sfx.duration.png
-        :height: 300px
-
-
-
-sfx.temporal_skewness
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_skewness
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
-
-
-**Stats**::
-
-
-/max
-/min
-/mean
-
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/sfx.temporal_skewness.mean.png
-        :height: 300px
-
-
-
-sfx.effective_duration
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/effective_duration
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_EffectiveDuration.html
-
-
-**Stats**::
-
-
-/max
-/min
-/mean
-
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/sfx.effective_duration.mean.png
-        :height: 300px
-
-
-
-sfx.max_to_total
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/max_to_total
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_MaxToTotal.html
-    .. image:: _static/descriptors/sfx.max_to_total.png
-        :height: 300px
-
-
-
-sfx.oddtoevenharmonicenergyratio
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/oddtoevenharmonicenergyratio
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_ OddToEvenHarmonicEnergyRatio.html
-
-
-**Stats**::
-
-
-/dmean2
-/dmean
-/mean
-/max
-/min
-
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/sfx.oddtoevenharmonicenergyratio.mean.png
-        :height: 300px
-
-
-
-sfx.pitch_after_max_to_before_max_energy_ratio
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_after_max_to_before_max_energy_ratio
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_AfterMaxToBeforeMaxEnergyRatio.html
-    .. image:: _static/descriptors/sfx.pitch_after_max_to_before_max_energy_ratio.png
-        :height: 300px
-
-
 

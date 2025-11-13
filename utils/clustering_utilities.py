@@ -28,7 +28,7 @@ from django.urls import reverse
 
 from clustering.tasks import cluster_sounds
 import sounds
-from utils.search.search_sounds import get_sound_similarity_from_search_engine_query, get_sound_ids_from_search_engine_query
+from utils.search.search_sounds import get_sound_similarity_vectors_from_search_engine_query, get_sound_ids_from_search_engine_query
 
 
 cache_clustering = caches["clustering"]
@@ -44,9 +44,9 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
     results = cache_clustering.get(cache_key, None)
     if results is None and compute_if_not_in_cache:
         # First get the similarity vectors for the first settings.MAX_RESULTS_FOR_CLUSTERING results from the query
-        similarity_vectors_map = get_sound_similarity_from_search_engine_query(
+        similarity_vectors_map = get_sound_similarity_vectors_from_search_engine_query(
             query_params, 
-            analyzer_name=query_params['similar_to_analyzer'],  # This is the similarity_space param in sqp
+            similarity_space=query_params['similar_to_similarity_space'],  # This is the similarity_space param in sqp
             num_sounds=settings.MAX_RESULTS_FOR_CLUSTERING,
             current_page=1)        
         sound_ids = list(similarity_vectors_map.keys())
@@ -66,6 +66,7 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
             except celery.exceptions.TimeoutError as e:
                 # Cancel the task so it stops running (or it never starts)
                 async_task_result.revoke(terminate=True)
+                return {'clusters': None}
             if results['clusters'] is not None:
                 # Generate cluster summaries (cluster names and sound examples)
                 clusters = results['clusters']

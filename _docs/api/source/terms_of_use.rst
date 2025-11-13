@@ -1,6 +1,6 @@
 ﻿.. _terms_of_use:
 
-Terms of use
+Terms of Use
 >>>>>>>>>>>>
 
 The usage of the api is subject to the Freesound API terms of use which you can be found in https://freesound.org/help/tos_api/.

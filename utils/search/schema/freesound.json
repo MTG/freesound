@@ -464,7 +464,7 @@
       "required": false
     },
     {
-      "name": "analyzer",
+      "name": "similarity_space",
       "type": "string",
       "indexed": true,
       "stored": true,

@@ -716,10 +716,10 @@ You can optionally define the following parameters:
 ======================  =========================  ======================
 Name                    Type                       Description
 ======================  =========================  ======================
-similarity_space        string                     Indicates the similarity space used when performing similarity search. If not defined, the default similarity space is used.
-fields                  strings (comma separated)  Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response` (plus an additional field ``score`` which returns a matching score added by the search engine), and must be separated by commas. By default ``fields=id,name,tags,username,license``. **Use this parameter to optimize request time by only requesting the information you really need.**
-page                    string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
-page_size               string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Note that with bigger ``page_size``, more data will need to be transferred.
+``similarity_space``    string                     Indicates the similarity space used when performing similarity search. If not defined, the default similarity space is used.
+``fields``              strings (comma separated)  Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response` (plus an additional field ``score`` which returns a matching score added by the search engine), and must be separated by commas. By default ``fields=id,name,tags,username,license``. **Use this parameter to optimize request time by only requesting the information you really need.**
+``page``                string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
+``page_size``           string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Note that with bigger ``page_size``, more data will need to be transferred.
 ======================  =========================  ======================
 
 

@@ -1,6 +1,6 @@
 .. _analysis-docs:
 
-Analysis Descriptor Documentation
+Audio Descriptors Documentation
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 .. contents::
@@ -8,12 +8,17 @@ Analysis Descriptor Documentation
     :backlinks: top
 
 
-Analysis Settings
+Analysis settings
 >>>>>>>>>>>>>>>>>
 
-The analysis sample rate is 44100Hz and the audio file's channels are mixed down
-to mono. For the lowlevel namespace the frame size is 2048 samples with a hop
-size of 1024, while for the tonal namespace the frame size is 4096 and the hop size 2048.
+Most of the available descriptors come from Essentia_, while some come from related initiatives such as the AudioCommons_ project.
+
+.. _Essentia: https://essentia.upf.edu/
+.. _AudioCommons: http://www.audiocommons.org/
+
+During analysis, the sample rate is 44,100Hz and the audio file's channels are mixed down
+to mono. For most descriptors, the frame size is 2,048 samples with a hop size of 1,024,
+while for some tonal descriptors, the frame size is 4,096 samples with a hop size of 2,048.
 
 
 Glossary 
@@ -34,13 +39,19 @@ max       The highest (maximum) descriptor value over the entire sound.
 var       The variance of the descriptor values over the entire sound.
 ========= =====================================
 
-If ``Mode`` ends with a number in parentheses (``X``), it indicates that this mode is calculated for a specific number of values.  
-For example, if ``Mode`` is ``mean (36)``, it represents the mean calculated across 36 values.
+Most descriptors have ``fixed length`` and are divided into ``one-dimensional`` (descriptors that consist 
+of a single value, e.g. pitch, note_name) and ``multi-dimensional`` (descriptors with several dimensions, e.g. tristimulus).
+The remaining descriptors have ``variable length``, i.e. their length depends on the analyzed sound (denoted with `VL` in ``mode``).
 
-.. All single-value descriptors with type string or single numeric value can be used for filtering. 
+All ``one-dimensional`` descriptors (regardless their ``type``) can be used in the ``filter`` parameter of the :ref:`sound-search` resource.
+The ``multi-dimensional`` and ``variable-length`` descriptors can be accessed through the sound metadata 
+(use ``fields`` parameter in any API resource that returns a sound list or the :ref:`sound-analysis`).
+If ``mode`` ends with a number in parentheses (``n``), it indicates that this descriptor is ``multi-dimensional``, 
+and this mode is calculated for a specific number of values.  
+For example, if ``mode`` is ``mean (36)``, it represents the mean calculated across 36 values.
 
 
-Descriptors (main)
+Main set of descriptors
 >>>>>>>>>>>>>>>>
 
 beat_count
@@ -669,7 +680,7 @@ warmth
         :height: 300px
 
 
-Descriptors (advanced)
+Advnaced set of descriptors
 >>>>>>>>>>>>>>>>
 
 amplitude_peak_ratio

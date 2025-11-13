@@ -43,7 +43,7 @@ API documentation:
    resources_apiv2.rst
 
 
-Analysis Descriptor Documentation:
+Audio Descriptors Documentation:
 
 .. toctree::
    :maxdepth: 2

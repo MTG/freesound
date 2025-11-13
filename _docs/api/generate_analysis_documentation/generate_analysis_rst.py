@@ -5,7 +5,7 @@ import urllib.request
 header = """
 .. _analysis-docs:
 
-Analysis Descriptor Documentation
+Audio Descriptors Documentation
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 .. contents::
@@ -13,12 +13,17 @@ Analysis Descriptor Documentation
     :backlinks: top
 
 
-Analysis Settings
+Analysis settings
 >>>>>>>>>>>>>>>>>
 
-The analysis sample rate is 44100Hz and the audio file's channels are mixed down
-to mono. For the lowlevel namespace the frame size is 2048 samples with a hop
-size of 1024, while for the tonal namespace the frame size is 4096 and the hop size 2048.
+Most of the available descriptors come from Essentia_, while some come from related initiatives such as the AudioCommons_ project.
+
+.. _Essentia: https://essentia.upf.edu/
+.. _AudioCommons: http://www.audiocommons.org/
+
+During analysis, the sample rate is 44,100Hz and the audio file's channels are mixed down
+to mono. For most descriptors, the frame size is 2,048 samples with a hop size of 1,024,
+while for some tonal descriptors, the frame size is 4,096 samples with a hop size of 2,048.
 
 
 Glossary 
@@ -39,23 +44,22 @@ max       The highest (maximum) descriptor value over the entire sound.
 var       The variance of the descriptor values over the entire sound.
 ========= =====================================
 
-If ``Mode`` ends with a number in parentheses (``X``), it indicates that this mode is calculated for a specific number of values.  
-For example, if ``Mode`` is ``mean (36)``, it represents the mean calculated across 36 values.
+Most descriptors have ``fixed length`` and are divided into ``one-dimensional`` (descriptors that consist 
+of a single value, e.g. pitch, note_name) and ``multi-dimensional`` (descriptors with several dimensions, e.g. tristimulus).
+The remaining descriptors have ``variable length``, i.e. their length depends on the analyzed sound (denoted with `VL` in ``mode``).
 
-.. All single-value descriptors with type string or single numeric value can be used for filtering. 
+All ``one-dimensional`` descriptors (regardless their ``type``) can be used in the ``filter`` parameter of the :ref:`sound-search` resource.
+The ``multi-dimensional`` and ``variable-length`` descriptors can be accessed through the sound metadata 
+(use ``fields`` parameter in any API resource that returns a sound list or the :ref:`sound-analysis`).
+If ``mode`` ends with a number in parentheses (``n``), it indicates that this descriptor is ``multi-dimensional``, 
+and this mode is calculated for a specific number of values.  
+For example, if ``mode`` is ``mean (36)``, it represents the mean calculated across 36 values.
 
 """
 
 curl_str = "    curl https://freesound.org/api/sounds/<sound_id>/analysis/"
 image_str = "    .. image:: _static/descriptors/"
 height_str = "        :height: 300px"
-desc_exceptions = []
-
-example_url = "https://freesound.org/api/sounds/1234/analysis/?api_key=53b80e4d8a674ccaa80b780372103680&all=True"
-
-# req = urllib.request.Request(example_url)
-# resp = urllib.request.urlopen(req)
-# top = json.loads(resp.read())
 
 descriptors = []
 with open("descriptors.csv") as f:
@@ -65,7 +69,7 @@ with open("descriptors.csv") as f:
             "name": row["Descriptor name"].strip(),
             "mode": row["Mode"].strip(),
             "type": row["Type"].strip(),
-            "advanced": row["Complexity"].strip(),
+            "complexity": row["Complexity"].strip(),
             "description": row["Description"].strip(),
             "values": row.get("Range", "").strip(),
             "links": row.get("Links", "").strip()
@@ -101,15 +105,15 @@ def print_descriptor(descriptor):
     print("\n")
 
 # Split descriptors by complexity
-main_descriptors = [d for d in descriptors if d.get("advanced").strip() != "advanced"]
-advanced_descriptors = [d for d in descriptors if d.get("advanced").strip() == "advanced"]
+main_descriptors = [d for d in descriptors if d.get("complexity").strip() != "advanced"]
+advanced_descriptors = [d for d in descriptors if d.get("complexity").strip() == "advanced"]
 
-print("Descriptors (main)")
+print("Main set of descriptors")
 print(">>>>>>>>>>>>>>>>\n")
 for descriptor in main_descriptors:
     print_descriptor(descriptor)
 
-print("Descriptors (advanced)")
+print("Advanced set of descriptors")
 print(">>>>>>>>>>>>>>>>\n")
 for descriptor in advanced_descriptors:
     print_descriptor(descriptor)

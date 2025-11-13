@@ -53,7 +53,14 @@ class Command(LoggingBaseCommand):
             dest='limit',
             default=None,
             help='Maximum number of sounds to process. If not set, all sounds will be processed.')
-
+        
+        parser.add_argument(
+            '--chunk-size',
+            action='store',
+            dest='chunk_size',
+            default=100,
+            help='Number of sounds to process in each chunk (default: 100).')
+        
 
     def handle(self, *args, **options):
         self.log_start()
@@ -72,7 +79,7 @@ class Command(LoggingBaseCommand):
             sound_ids_to_process = sound_ids_to_process[:int(options['limit'])]
 
         console_logger.info(f'Processing {len(sound_ids_to_process)} sounds to create consolidated analysis and similarity vectors.')
-        chunk_size = 100
+        chunk_size = int(options['chunk_size'])
         starttime = time.monotonic()
         total_done = 0
         N = len(sound_ids_to_process)

@@ -29,27 +29,28 @@ Search
 
 This resource allows searching for sounds in Freesound by matching user metadata (e.g. tags, username), precomputed content-based descriptors, and other kinds of metadata.
 
-.. _sound-search-parameters:
 
+.. _sound-search-parameters:
 
 Parameters
 -------------------------------------------
 
 Search queries are defined using the following parameters:
 
+.. rst-class:: fieldstable
 =====================================  =========================  ======================
 Name                                   Type                       Description
 =====================================  =========================  ======================
-``query``                              string                     The query! The ``query`` is the main parameter used to define a query. You can type several terms separated by spaces or phrases wrapped inside quote '"' characters. For every term, you can also use '+' and '-' modifier characters to indicate that a term is "mandatory" or "prohibited" (by default, terms are considered to be "mandatory"). For example, in a query such as ``query=term_a -term_b``, sounds including ``term_b`` will not match the search criteria. The query does a weighted search over some sound properties including sound tags, the sound name, its description, pack name and the sound id. Therefore, searching for ``query=123`` will find you sounds with id 1234, sounds that have 1234 in the description, in the tags, etc. You'll find some examples below. Using an empty query (``query=`` or ``query=""``) will return all Freesound sounds.
+query                                  string                     The query! The ``query`` is the main parameter used to define a query. You can type several terms separated by spaces or phrases wrapped inside quote '"' characters. For every term, you can also use '+' and '-' modifier characters to indicate that a term is "mandatory" or "prohibited" (by default, terms are considered to be "mandatory"). For example, in a query such as ``query=term_a -term_b``, sounds including ``term_b`` will not match the search criteria. The query does a weighted search over some sound properties including sound tags, the sound name, its description, pack name and the sound id. Therefore, searching for ``query=123`` will find you sounds with id 1234, sounds that have 1234 in the description, in the tags, etc. You'll find some examples below. Using an empty query (``query=`` or ``query=""``) will return all Freesound sounds.
 :ref:`filter <search-filter>`          string                     Allows filtering query results. See below for more information.
 :ref:`sort <search-sort>`              string                     Indicates how query results should be sorted. See below for a list of the sorting options. By default ``sort=score``.
-:ref:`similar_to <search-similar>`     integer or array[float]   Allows finding sounds similar to a given sound. You can pass the ID of a sound (integer) or a similarity vector (array of floats separated by commas) and the results will be sorted by their similarity to this sound.
+:ref:`similar_to <search-similar>`     integer or array[float]    Allows finding sounds similar to a given sound. You can pass the ID of a sound (integer) or a similarity vector (array of floats separated by commas) and the results will be sorted by their similarity to this sound.
 :ref:`similar_space <search-similar>`  string                     Indicates the similarity space used when performing similarity search. If not defined, the default similarity space is used.
-``group_by_pack``                      bool (yes=1, no=0)         This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries in the results list. If ``group_by_pack=1`` and search results contain more than one sound that belongs to the same pack, only one sound for each distinct pack is returned (sounds with no packs are returned as well). However, the returned sound will feature two extra properties to access these other sounds omitted from the results list: ``n_from_same_pack``: indicates how many other results belong to the same pack (and have not been returned) ``more_from_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned). See examples below. By default ``group_by_pack=0``.
+group_by_pack                          bool (yes=1, no=0)         This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries in the results list. If ``group_by_pack=1`` and search results contain more than one sound that belongs to the same pack, only one sound for each distinct pack is returned (sounds with no packs are returned as well). However, the returned sound will feature two extra properties to access these other sounds omitted from the results list: ``n_from_same_pack``: indicates how many other results belong to the same pack (and have not been returned) ``more_from_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned). See examples below. By default ``group_by_pack=0``.
 :ref:`weights <search-weights>`        string                     Allows definition of custom weights when matching queries with sound metadata fields. You should most likely never use that :)
 :ref:`fields <search-fields>`          strings (comma separated)  Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response` (plus an additional field ``score`` which returns a matching score added by the search engine), and must be separated by commas. By default ``fields=id,name,tags,username,license``. **Use this parameter to optimize request time by only requesting the information you really need.**
-``page``                               string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
-``page_size``                          string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Note that with bigger ``page_size``, more data will need to be transferred.
+page                                   string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
+page_size                              string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Note that with bigger ``page_size``, more data will need to be transferred.
 =====================================  =========================  ======================
 
 
@@ -61,173 +62,23 @@ The 'filter' parameter
 Search results can be filtered by specifying a series of properties that sounds should match.
 In other words, using the ``filter`` parameter you can specify the value that certain sound fields should have in order to be considered valid search results.
 Filters are defined with a syntax like ``filter=filtername:value filtername:value`` (that is the Solr filter syntax).
-Use double quotes for multi-word queries (``filter=filtername:"val ue"``).
-Filter names can be any of the following:
+For multi-word queries, the values must be enclosed in double quotes and separated by spaces (``filter=filtername:"val ue"``).
 
-======================  =============  ====================================================
-Filter name             Type           Description
-======================  =============  ====================================================
-``id``                  integer        Sound ID on Freesound.
-``username``            string         Username of the sound uploader (not tokenized).
-``created``             date           Date in which the sound was added to Freesound (see date example filters below).
-``original_filename``   string         Name given to the sound (tokenized).
-``category``            string         Category name (top-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "Instrument samples"). 
-``subcategory``         string         Subategory name (second-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "Piano / Keyboard instruments"). For optimal results, it is recommended to use this filter in combination with the ``category`` filter.
-``tag``                 string         Tag of the sound.
-``description``         string         Textual description given to the sound (tokenized).
-``license``             string         Name of the Creative Commons license, one of ["Attribution", "Attribution NonCommercial", "Creative Commons 0"].
-``is_remix``            boolean        Whether the sound is a remix of another Freesound sound.
-``was_remixed``         boolean        Whether the sound has remixes in Freesound.
-``pack``                string         Pack name (not tokenized).
-``pack_tokenized``      string         Pack name (tokenized).
-``is_geotagged``        boolean        Whether the sound has geotag information.
-``type``                string         Original file type, one of ["wav", "aiff", "ogg", "mp3", "m4a", "flac"].
-``duration``            numeric        Duration of sound in seconds.
-``bitdepth``            integer        Encoding bitdepth. WARNING is not to be trusted right now.
-``bitrate``             numeric        Encoding bitrate. WARNING is not to be trusted right now.
-``samplerate``          integer        Samplerate.
-``filesize``            integer        File size in bytes.
-``channels``            integer        Number of channels in sound (mostly 1 or 2).
-``md5``                 string         32-byte md5 hash of file.
-``num_downloads``       integer        Number of times the sound has been downloaded.
-``avg_rating``          numeric        Average rating for the sound in the range [0, 5].
-``num_ratings``         integer        Number of times the sound has been rated.
-``comment``             string         Textual content of the comments of a sound  (tokenized). The filter is satisfied if sound contains the filter value in at least one of its comments.
-``num_comments``        integer        Number of times the sound has been commented.
-======================  =============  ====================================================
+**Filter names** can be any of the ``field names`` listed in the tables of the :ref:`sound-sound` resource that are marked with "yes" in the ``filtering`` column.
+The first table includes fields/filters corresponding to user-provided metadata and general sound metadata.
+Additionally, content-based filters from the second table can be used when narrowing down a query. 
+Using content-based descriptors as filters enables `content-based search` in Freesound.
 
-Additionally, the following content-based filters can be used when narrowing down a query. 
-These filters enable content-based search in Freesound using audio descriptors that mainly come from Essentia_, 
-as well as from related initiatives such as the AudioCommons_ project.
-
-.. _AudioCommons: http://www.audiocommons.org/
-.. _Essentia: https://essentia.upf.edu/
-
-========================  =======  =================================================================================================================================================================================================================================================================================================================
-Filter name               Type     Description                                                                                                                                                                                                                                                                                                      
-========================  =======  =================================================================================================================================================================================================================================================================================================================
-amplitude_peak_ratio_     numeric  Ratio between the position of the peak in the amplitude envelope and the total envelope duration, indicating whether the maximum magnitude of the audio signal occurs early (impulsive or decrescendo) or late (crescendo).                                                                                      
-beat_count_               integer  Number of beats in the audio signal, derived from the total detected beat positions and expresses a measure of rhythmic density or tempo-related activity.                                                                                                                                                       
-beat_loudness_            numeric  Spectral energy measured at the beat positions of the audio signal.                                                                                                                                                                                                                                              
-boominess_                numeric  Boominess of the audio signal. A boomy sound is one that conveys a sense of loudness, depth and resonance.                                                                                                                                                                                                       
-bpm_                      integer  BPM value estimated by beat tracking algorithm.                                                                                                                                                                                                                                                                  
-bpm_confidence_           numeric  Confidence score on how reliable the tempo (BPM) estimation is.                                                                                                                                                                                                                                                  
-brightness_               numeric  Brightness of the audio signal. A bright sound is one that is clear/vibrant and/or contains significant high-pitched elements.                                                                                                                                                                                   
-chord_count_              integer  Number of chords in the audio signal based on the number of detected chords by the chord_progression descriptor.                                                                                                                                                                                                 
-decay_strength_           numeric  Rate at which the audio signal's energy decays (i.e. how quickly it decreases) after the initial attack. It is computed from a non-linear combination of the signal's energy and its temporal centroid (the balance point of the signal's absolute amplitude).                                                   
-depth_                    numeric  Depth of the audio signal. A deep sound is one that conveys the sense of having been made far down below the surface of its source.                                                                                                                                                                              
-dissonance_               numeric  Sensory dissonance of the audio signal given its spectral peaks.                                                                                                                                                                                                                                                 
-duration_                 numeric  Total duration of the audio signal in seconds.                                                                                                                                                                                                                                                                   
-duration_effective_       numeric  Duration of the audio signal (in seconds) during which the envelope amplitude is perceptually significant (above 40% of peak and ?90?dB), e.g. for distinguishing short/percussive from sustained sounds.                                                                                                        
-dynamic_range_            numeric  Loudness range (dB, LU) of the audio signal measured using the EBU R128 standard.                                                                                                                                                                                                                                
-hardness_                 numeric  Hardness of the audio signal. A hard sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.                                                                                                                                          
-hpcp_crest_               numeric  Dominance of the strongest pitch class (crest) compared to the rest, computed as the ratio between the maximum HPCP value and the mean HPCP value (computed by the hpcp descriptor).                                                                                                                             
-hpcp_entropy_             numeric  Uniformity of the pitch-class distribution, computed as the Shannon entropy of the HPCP (computed by the hpcp descriptor).                                                                                                                                                                                       
-inharmonicity_            numeric  Deviation of spectral components from perfect harmonicity, computed as the energy-weighted divergence from their closest multiples of the fundamental frequency.                                                                                                                                                 
-log_attack_time_          numeric  Log (base 10) of the attack time of the audio signal's envelope, where the attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.                                                                                                
-loopable_                 boolean  Whether the audio signal is loopable, i.e. it begins and ends in a way that sounds smooth when repeated.                                                                                                                                                                                                         
-loudness_                 numeric  Overall loudness (LUFS) of the audio signal measured using the EBU R128 standard.                                                                                                                                                                                                                                
-note_confidence_          numeric  Confidence score on how reliable the note name/MIDI estimation is.                                                                                                                                                                                                                                               
-note_midi_                integer  MIDI value corresponding to the estimated note (computed by the note_name descriptor).                                                                                                                                                                                                                           
-note_name_                string   Pitch note name that includes one of the 12 western notes ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"] and the octave number, e.g. "A4", "E#7". It is computed by the median of the estimated fundamental frequency.                                                                        
-onset_count_              integer  Number of detected onsets in the audio signal.                                                                                                                                                                                                                                                                   
-pitch_                    numeric  Mean (average) fundamental frequency derived from the audio signal, computed with the YinFFT algorithm.                                                                                                                                                                                                          
-pitch_max_                numeric  Maximum fundamental frequency observed throughout the audio signal.                                                                                                                                                                                                                                              
-pitch_min_                numeric  Minimum fundamental frequency observed throughout the audio signal.                                                                                                                                                                                                                                              
-pitch_salience_           numeric  Pitch salience (i.e. tone sensation) given by the ratio of the highest auto correlation value of the spectrum to the non-shifted auto correlation value. Unpitched sounds and pure tones have value close to 0.                                                                                                  
-pitch_var_                numeric  Variance of the fundamental frequency of the audio signal.                                                                                                                                                                                                                                                       
-reverbness_               boolean  Whether the signal is reverberated or not.                                                                                                                                                                                                                                                                       
-roughness_                numeric  Roughness of the audio signal. A rough sound is one that has an uneven or irregular sonic texture.                                                                                                                                                                                                               
-sharpness_                numeric  Sharpness of the audio signal. A sharp sound is one that suggests it might cut if it were to take on physical form.                                                                                                                                                                                              
-silence_rate_             numeric  Amount of silence in the audio signal, computed by the fraction of frames with instant power below ?30?dB.                                                                                                                                                                                                       
-single_event_             boolean  Whether the audio signal contains one single audio event or more than one. This computation is based on the loudness of the signal and does not do any frequency analysis.                                                                                                                                       
-spectral_centroid_        numeric  Spectral centroid of the audio signal, indicating where the "center of mass" of the spectrum is. It correlates with the perception of "brightness" of a sound, making it useful for characterizing musical timbre. It is computed as the weighted mean of the signal's frequencies, weighted by their magnitudes.
-spectral_complexity_      numeric  Spectral complexity of the audio signal's spectrum, based on the number of peaks in the spectrum.                                                                                                                                                                                                                
-spectral_crest_           numeric  Dominance of the strongest spectral peak (crest) compared to the rest, computed as the ratio between the maximum and mean spectral magnitudes.                                                                                                                                                                   
-spectral_energy_          numeric  Energy in the spectrum of the audio signal. It represents the total magnitude of all frequency components and indicates how much power is present across the spectrum.                                                                                                                                           
-spectral_entropy_         numeric  Shannon entropy in the frequency domain of the audio signal, measuring the unpredictability in the spectrum.                                                                                                                                                                                                     
-spectral_flatness_        numeric  Flatness of the spectrum measured as the ratio of its geometric mean to its arithmetic mean (in dB). High values indicate a noise-like, flat spectrum with evenly distributed power, while low values indicate a tone-like, spiky spectrum with power concentrated in a few frequency bands.                     
-spectral_rolloff_         numeric  Roll-off frequency of the spectrum, defined as the frequency under which some percentage (cutoff) of the total energy of the spectrum is contained. It can be used to distinguish between harmonic (below roll-off) and noisy sounds (above roll-off).                                                           
-spectral_skewness_        numeric  Skewness of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                                 
-spectral_spread_          numeric  Spread (variance) of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                        
-start_time_               numeric  The moment at which sound begins in seconds, i.e. when the audio signal first rises above silence.                                                                                                                                                                                                               
-temporal_centroid_        numeric  Temporal centroid of the audio signal, defined as the time point at which the temporal balancing position of the sound event energy.                                                                                                                                                                             
-temporal_centroid_ratio_  numeric  Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is �balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).               
-temporal_decrease_        numeric  Overall decrease of the audio signal's amplitude over time, computed as the linear regression coefficient.                                                                                                                                                                                                       
-temporal_skewness_        numeric  Skewness of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                  
-temporal_spread_          numeric  Spread (variance) of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                         
-tonality_                 string   Key (tonality) estimated by a key detection algorithm. The key name includes the root note of the scale, which is one of ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], and the scale mode, which is one of ["major", "minor"], e.g. "C minor", "F# major".                                  
-tonality_confidence_      numeric  Confidence score on how reliable the key estimation is (computed by the tonality descriptor).                                                                                                                                                                                                                    
-warmth_                   numeric  Warmth of the audio signal. A warm sound is one that promotes a sensation analogous to that caused by a physical increase in temperature.                                                                                                                                                                        
-zero_crossing_rate_       numeric  Zero-crossing rate of the audio signal. It is the number of sign changes between consecutive samples divided by the total number of samples. Noisy signals tend to have a higher value. For monophonic tonal signals, it can be used as a primitive pitch detection algorithm.                                   
-========================  =======  =================================================================================================================================================================================================================================================================================================================
-
-.. _amplitude_peak_ratio: https://freesound.org/docs/api/analysis_docs.html#amplitude_peak_ratio
-.. _beat_count: https://freesound.org/docs/api/analysis_docs.html#beat_count
-.. _beat_loudness: https://freesound.org/docs/api/analysis_docs.html#beat_loudness
-.. _boominess: https://freesound.org/docs/api/analysis_docs.html#boominess
-.. _bpm: https://freesound.org/docs/api/analysis_docs.html#bpm
-.. _bpm_confidence: https://freesound.org/docs/api/analysis_docs.html#bpm_confidence
-.. _brightness: https://freesound.org/docs/api/analysis_docs.html#brightness
-.. _chord_count: https://freesound.org/docs/api/analysis_docs.html#chord_count
-.. _decay_strength: https://freesound.org/docs/api/analysis_docs.html#decay_strength
-.. _depth: https://freesound.org/docs/api/analysis_docs.html#depth
-.. _dissonance: https://freesound.org/docs/api/analysis_docs.html#dissonance
-.. _duration: https://freesound.org/docs/api/analysis_docs.html#duration
-.. _duration_effective: https://freesound.org/docs/api/analysis_docs.html#duration_effective
-.. _dynamic_range: https://freesound.org/docs/api/analysis_docs.html#dynamic_range
-.. _hardness: https://freesound.org/docs/api/analysis_docs.html#hardness
-.. _hpcp_crest: https://freesound.org/docs/api/analysis_docs.html#hpcp_crest
-.. _hpcp_entropy: https://freesound.org/docs/api/analysis_docs.html#hpcp_entropy
-.. _inharmonicity: https://freesound.org/docs/api/analysis_docs.html#inharmonicity
-.. _log_attack_time: https://freesound.org/docs/api/analysis_docs.html#log_attack_time
-.. _loopable: https://freesound.org/docs/api/analysis_docs.html#loopable
-.. _loudness: https://freesound.org/docs/api/analysis_docs.html#loudness
-.. _note_confidence: https://freesound.org/docs/api/analysis_docs.html#note_confidence
-.. _note_midi: https://freesound.org/docs/api/analysis_docs.html#note_midi
-.. _note_name: https://freesound.org/docs/api/analysis_docs.html#note_name
-.. _onset_count: https://freesound.org/docs/api/analysis_docs.html#onset_count
-.. _pitch: https://freesound.org/docs/api/analysis_docs.html#pitch
-.. _pitch_max: https://freesound.org/docs/api/analysis_docs.html#pitch_max
-.. _pitch_min: https://freesound.org/docs/api/analysis_docs.html#pitch_min
-.. _pitch_salience: https://freesound.org/docs/api/analysis_docs.html#pitch_salience
-.. _pitch_var: https://freesound.org/docs/api/analysis_docs.html#pitch_var
-.. _reverbness: https://freesound.org/docs/api/analysis_docs.html#reverbness
-.. _roughness: https://freesound.org/docs/api/analysis_docs.html#roughness
-.. _sharpness: https://freesound.org/docs/api/analysis_docs.html#sharpness
-.. _silence_rate: https://freesound.org/docs/api/analysis_docs.html#silence_rate
-.. _single_event: https://freesound.org/docs/api/analysis_docs.html#single_event
-.. _spectral_centroid: https://freesound.org/docs/api/analysis_docs.html#spectral_centroid
-.. _spectral_complexity: https://freesound.org/docs/api/analysis_docs.html#spectral_complexity
-.. _spectral_crest: https://freesound.org/docs/api/analysis_docs.html#spectral_crest
-.. _spectral_energy: https://freesound.org/docs/api/analysis_docs.html#spectral_energy
-.. _spectral_entropy: https://freesound.org/docs/api/analysis_docs.html#spectral_entropy
-.. _spectral_flatness: https://freesound.org/docs/api/analysis_docs.html#spectral_flatness
-.. _spectral_rolloff: https://freesound.org/docs/api/analysis_docs.html#spectral_rolloff
-.. _spectral_skewness: https://freesound.org/docs/api/analysis_docs.html#spectral_skewness
-.. _spectral_spread: https://freesound.org/docs/api/analysis_docs.html#spectral_spread
-.. _start_time: https://freesound.org/docs/api/analysis_docs.html#start_time
-.. _temporal_centroid: https://freesound.org/docs/api/analysis_docs.html#temporal_centroid
-.. _temporal_centroid_ratio: https://freesound.org/docs/api/analysis_docs.html#temporal_centroid_ratio
-.. _temporal_decrease: https://freesound.org/docs/api/analysis_docs.html#temporal_decrease
-.. _temporal_skewness: https://freesound.org/docs/api/analysis_docs.html#temporal_skewness
-.. _temporal_spread: https://freesound.org/docs/api/analysis_docs.html#temporal_spread
-.. _tonality: https://freesound.org/docs/api/analysis_docs.html#tonality
-.. _tonality_confidence: https://freesound.org/docs/api/analysis_docs.html#tonality_confidence
-.. _warmth: https://freesound.org/docs/api/analysis_docs.html#warmth
-.. _zero_crossing_rate: https://freesound.org/docs/api/analysis_docs.html#zero_crossing_rate
-
-
-For numeric or integer filters, a **range can also be specified** using the following syntax (the "TO" must be uppercase!)::
+For numeric or integer filters, rather than specifying a single value, a **range can be used** using the following syntax (the "TO" must be uppercase!)::
 
   filter=filtername:[start TO end]
   filter=filtername:[* TO end]
   filter=filtername:[start to \*]  (NOT valid)
 
-Note: It is recommended to use ranges when dealing with numeric values (which may be floats), as is common for many content-based filters, 
-because matching an exact value is rare.
+Note: It is recommended to use ranges when using filters with numeric values (which may be floats).
+This is especially useful for many content-based filters, as exact value matches for floats are uncommon.
 
-Dates can also have ranges and math expressions (the "TO" must still be uppercase!)::
+Dates can also have ranges and math operations (the "TO" must still be uppercase!)::
 
   filter=created:[* TO NOW]
   filter=created:[1976-03-06T23:59:59.999Z TO *]
@@ -236,7 +87,7 @@ Dates can also have ranges and math expressions (the "TO" must still be uppercas
   filter=created:[1976-03-06T23:59:59.999Z TO 1976-03-06T23:59:59.999Z+1YEAR]
   filter=created:[1976-03-06T23:59:59.999Z/YEAR TO 1976-03-06T23:59:59.999Z]
 
-Simple logic operators can also be used in filters::
+Simple **logic operators** can also be used in filters::
 
   filter=type:(wav OR aiff)
   filter=description:(piano AND note)
@@ -371,7 +222,7 @@ Search resource returns a *sound list response*. Sound list responses have the f
     "previous": <link to the previous page of results (null if none)>
   }
 
-You can use the parameters ``fields``, ``page``, and ``page_size`` some of the contents of the sound list response.
+You can use the :ref:`sound-search-parameters` ``fields``, ``page``, and ``page_size`` in the sound list response.
 
 
 .. _sound-search-examples:
@@ -405,12 +256,13 @@ Parameters (content search parameters)
 
 Content search queries are defined using the following request parameters:
 
+.. rst-class:: fieldstable
 =========================  =========================  ======================
 Name                       Type                       Description
 =========================  =========================  ======================
-``target``                 string or numeric           This parameter defines a target based on content-based descriptors to sort the search results. It can be set as a number of descriptor name and value pairs, or as a sound id. See below.
-``analysis_file``          file                       **Experimental** - Alternatively, targets can be specified by uploading a file with the output of the Essentia Freesound Extractor analysis of any sound that you analyzed locally (see below). This parameter overrides ``target``, and requires the use of POST method.
-``descriptors_filter``     string                     This parameter allows filtering query results by values of the content-based descriptors. See below for more information.
+target                     string or numeric           This parameter defines a target based on content-based descriptors to sort the search results. It can be set as a number of descriptor name and value pairs, or as a sound id. See below.
+analysis_file              file                       **Experimental** - Alternatively, targets can be specified by uploading a file with the output of the Essentia Freesound Extractor analysis of any sound that you analyzed locally (see below). This parameter overrides ``target``, and requires the use of POST method.
+descriptors_filter         string                     This parameter allows filtering query results by values of the content-based descriptors. See below for more information.
 =========================  =========================  ======================
 
 **The 'target' and 'analysis_file' parameters**
@@ -419,7 +271,7 @@ The ``target`` parameter can be used to specify a content-based sorting of your 
 Using ``target`` you can sort the query results so that the first results will be the sounds featuring the most similar descriptors to the given target.
 To specify a target you must use a syntax like ``target=descriptor_name:value``.
 You can also set multiple descriptor/value pairs in a target separating them with spaces (``target=descriptor_name:value descriptor_name:value``).
-Descriptor names must be chosen from those listed in :ref:`available-descriptors`. 
+Descriptor names must be chosen from those listed in :ref:`analysis-docs`.  
 Only numerical descriptors are allowed.
 Multidimensional descriptors with fixed-length (that always have the same number of dimensions) are allowed too (see below).
 Consider the following two ``target`` examples::
@@ -461,7 +313,7 @@ To define ``descriptors_filter`` parameter you can use the same syntax as for th
 For example, ``descriptors_filter=lowlevel.pitch.mean:220`` will only return sounds that have an EXACT pitch mean of 220hz.
 Note that this would probably return no results as a sound will rarely have that exact pitch (might be very close like 219.999 or 220.000001 but not exactly 220).
 For this reason, in general it might be better to indicate ``descriptors_filter`` using ranges.
-Descriptor names must be chosen from those listed in :ref:`available-descriptors`.
+Descriptor names must be chosen from those listed in :ref:`analysis-docs`.
 Note that most of the descriptors provide several statistics (var, mean, min, max...). In that case, the descriptor name must include also the desired statistic (see examples below).
 Non fixed-length descriptors are not allowed.
 Some examples of ``descriptors_filter`` for numerical descriptors::
@@ -604,54 +456,206 @@ This resource allows the retrieval of detailed information about a sound.
 
 .. _sound-instance-response:
 
-
 Response (sound instance)
 -------------------------
 
 The Sound Instance response is a dictionary including the following properties/fields:
 
-==============================  ================  ====================================================================================
-Name                            Type              Description
-==============================  ================  ====================================================================================
-``id``                          numeric           The sound's unique identifier.
-``url``                         URI               The URI for this sound on the Freesound website.
-``name``                        string            The name user gave to the sound.
-``tags``                        array[string]     An array of tags the user gave to the sound.
-``description``                 string            The description the user gave to the sound.
-``category``                    array[string]     A two-element array containing the sound's category and subcategory names from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_. Note that categories are filled-out by an algorithm if not provided by the original author of the sound.
-``category_code``               string            The category ID from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "fx-a", with the prefix indicating the category and the suffix indicating the subcategory). Note that categories are filled-out by an algorithm if not provided by the original author of the sound.
-``category_is_user_provided``   boolean           Whether the ``category`` (and ``category_code``) were provided by the author of the sound or assigned automatically by an algorithm.
-``geotag``                      string            Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
-``created``                     string            The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
-``license``                     string            The license under which the sound is available to you.
-``type``                        string            The type of sound (wav, aif, aiff, mp3, m4a or flac).
-``channels``                    numeric           The number of channels.
-``filesize``                    numeric           The size of the file in bytes.
-``bitrate``                     numeric           The bit rate of the sound in kbps.
-``bitdepth``                    numeric           The bit depth of the sound.
-``duration``                    numeric           The duration of the sound in seconds.
-``samplerate``                  numeric           The samplerate of the sound.
-``username``                    string            The username of the uploader of the sound.
-``pack``                        URI               If the sound is part of a pack, this URI points to that pack's API resource.
-``download``                    URI               The URI for retrieving the original sound.
-``bookmark``                    URI               The URI for bookmarking the sound.
-``previews``                    object            Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively).
-``images``                      object            Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields ``waveform_l`` and ``waveform_m`` (for large and medium waveform images respectively), and ``spectral_l`` and ``spectral_m`` (for large and medium spectrogram images respectively).
-``num_downloads``               numeric           The number of times the sound was downloaded.
-``avg_rating``                  numeric           The average rating of the sound.
-``num_ratings``                 numeric           The number of times the sound was rated.
-``rate``                        URI               The URI for rating the sound.
-``comments``                    URI               The URI of a paginated list of the comments of the sound.
-``num_comments``                numeric           The number of comments.
-``comment``                     URI               The URI to comment the sound.
-``similar_sounds``              URI               URI pointing to the :ref:`similar-sounds` resource (to get a list of similar sounds).
-``analysis_files``              URIs              List of URIs for retrieving files with analysis information for each frame of the sound (see :ref:`analysis-docs`).
-==============================  ================  ====================================================================================
+.. TODO: check correlation of these filters with field names
+.. ======================  =============  ====================================================
+.. Filter name             Type           Description
+.. ======================  =============  ====================================================
+.. ``original_filename``   string         Name given to the sound (tokenized).
+.. ``category``            string         Category name (top-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "Instrument samples"). 
+.. ``subcategory``         string         Subategory name (second-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "Piano / Keyboard instruments"). For optimal results, it is recommended to use this filter in combination with the ``category`` filter.
+.. ``tag``                 string         Tag of the sound.
+.. ``description``         string         Textual description given to the sound (tokenized).
+.. ``is_remix``            boolean        Whether the sound is a remix of another Freesound sound.
+.. ``was_remixed``         boolean        Whether the sound has remixes in Freesound.
+.. ``pack``                string         Pack name (not tokenized).
+.. ``pack_tokenized``      string         Pack name (tokenized).
+.. ``is_geotagged``        boolean        Whether the sound has geotag information.
+.. ``md5``                 string         32-byte md5 hash of file.
+.. ``comment``             string         Textual content of the comments of a sound  (tokenized). The filter is satisfied if sound contains the filter value in at least one of its comments.
 
-The ``fields`` parameter can be used to restrict or expand the set of fields returned in the response. 
-By default, all metadata fields are returned except for descriptors.
-To return information about specific content-based descriptors, their names can be added to ``fields`` (e.g. ``fields=mfcc,bpm``).
-Descriptor names can be any of those listed in :ref:`available-descriptors`.
+.. rst-class:: fieldstable
+=========================  ================  =========  ====================================================================================
+Field name                 Type              Filtering  Description
+=========================  ================  =========  ====================================================================================
+id                         numeric           yes        The sound's unique identifier (ID) on Freesound.
+url                        URI               no         The URI for this sound on the Freesound website.
+name                       string            yes        The name user gave to the sound.
+tags                       array[string]     yes        An array of tags the user gave to the sound.
+description                string            yes        The textual description the user gave to the sound.
+category                   array[string]                A two-element array containing the sound's category and subcategory names from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_. Note that categories are filled-out by an algorithm if not provided by the original author of the sound.
+category_code              string                       The category ID from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "fx-a", with the prefix indicating the category and the suffix indicating the subcategory). Note that categories are filled out by an algorithm if not provided by the original uploader of the sound.
+category_is_user_provided  boolean           no         Whether the ``category`` (and ``category_code``) were provided by the author of the sound or assigned automatically by an algorithm.
+geotag                     string                       Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
+created                    string            yes        The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
+license                    string            yes        The Creative Commons license under which the sound is available to you ("Attribution", "Attribution NonCommercial", "Creative Commons 0").
+type                       string            yes        The original type of the sound (wav, aif, aiff, ogg, mp3, m4a, or flac).
+channels                   integer           yes        The number of sound channels (mostly 1 or 2).
+filesize                   integer           yes        The size of the file in bytes.
+bitrate                    numeric           yes        The encoding bitrate of the sound in kbps. Warning: is not to be trusted right now.
+bitdepth                   integer           yes        The encoding bitdepth of the sound. Warning: is not to be trusted right now.
+duration                   numeric           yes        The duration of the sound in seconds.
+samplerate                 integer           yes        The samplerate of the sound.
+username                   string            yes        The username of the sound uploader.
+pack                       URI               no         If the sound is part of a pack, this URI points to that pack's API resource.
+download                   URI               no         The URI for retrieving the original sound.
+bookmark                   URI               no         The URI for bookmarking the sound.
+previews                   object            no         Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively).
+images                     object            no         Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields ``waveform_l`` and ``waveform_m`` (for large and medium waveform images respectively), and ``spectral_l`` and ``spectral_m`` (for large and medium spectrogram images respectively).
+num_downloads              integer           yes        The number of times the sound was downloaded.
+avg_rating                 numeric           yes        The average rating of the sound (range [0, 5]).
+num_ratings                integer           yes        The number of times the sound was rated.
+rate                       URI               no         The URI for rating the sound.
+comments                   URI                          The URI of a paginated list of the comments of the sound.
+num_comments               integer           yes        The number of times the sound was commented.
+comment                    URI               no         The URI to comment the sound.
+similar_sounds             URI               no         URI pointing to the :ref:`similar-sounds` resource (to get a list of similar sounds).
+analysis_files             URIs              no         List of URIs for retrieving files with analysis information for each frame of the sound (see :ref:`analysis-docs`).
+=========================  ================  =========  ====================================================================================
+
+Additionally, content-based audio descriptors extracted from the sound signal can be used as fields. 
+These descriptors mainly come from Essentia_, as well as from related initiatives such as the AudioCommons_ project.
+The available descriptors, whose names are valid as field names, are:
+
+.. _Essentia: https://essentia.upf.edu/
+.. _AudioCommons: http://www.audiocommons.org/
+
+.. rst-class:: fieldstable
+=========================  ==============  =========  ===============================================================================================================================================================================================================================================================================================================================================================
+Field name                 Type            Filtering  Description                                                                                                                                                                                                                                                                                                                                                    
+=========================  ==============  =========  ===============================================================================================================================================================================================================================================================================================================================================================
+amplitude_peak_ratio_      numeric         yes        Ratio between the position of the peak in the amplitude envelope and the total envelope duration, indicating whether the maximum magnitude of the audio signal occurs early (impulsive or decrescendo) or late (crescendo).                                                                                                                                    
+beat_count_                integer         yes        Number of beats in the audio signal, derived from the total detected beat positions and expresses a measure of rhythmic density or tempo-related activity.                                                                                                                                                                                                     
+beat_loudness_             numeric         yes        Spectral energy measured at the beat positions of the audio signal.                                                                                                                                                                                                                                                                                            
+beat_times_                array[numeric]  no         Beat timestamps (in seconds) for the audio signal, which can vary according to the amount (count) of beats identified in the audio.                                                                                                                                                                                                                            
+boominess_                 numeric         yes        Boominess of the audio signal. A boomy sound is one that conveys a sense of loudness, depth and resonance.                                                                                                                                                                                                                                                     
+bpm_                       integer         yes        BPM value estimated by beat tracking algorithm.                                                                                                                                                                                                                                                                                                                
+bpm_confidence_            numeric         yes        Confidence score on how reliable the tempo (BPM) estimation is.                                                                                                                                                                                                                                                                                                
+brightness_                numeric         yes        Brightness of the audio signal. A bright sound is one that is clear/vibrant and/or contains significant high-pitched elements.                                                                                                                                                                                                                                 
+chord_count_               integer         yes        Number of chords in the audio signal based on the number of detected chords by the chord_progression descriptor.                                                                                                                                                                                                                                               
+chord_progression_         array[string]   no         Chords estimated from the harmonic pitch class profiles (HPCPs) across the audio signal. Using the pitch classes ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], it finds the best-matching major or minor triad and outputs a time-varying chord sequence as a sequence of labels (e.g. A#, Bm). Note, chords are major if no minor symbol.
+decay_strength_            numeric         yes        Rate at which the audio signal's energy decays (i.e. how quickly it decreases) after the initial attack. It is computed from a non-linear combination of the signal's energy and its temporal centroid (the balance point of the signal's absolute amplitude).                                                                                                 
+depth_                     numeric         yes        Depth of the audio signal. A deep sound is one that conveys the sense of having been made far down below the surface of its source.                                                                                                                                                                                                                            
+dissonance_                numeric         yes        Sensory dissonance of the audio signal given its spectral peaks.                                                                                                                                                                                                                                                                                               
+duration_                  numeric         yes        Total duration of the audio signal in seconds.                                                                                                                                                                                                                                                                                                                 
+duration_effective_        numeric         yes        Duration of the audio signal (in seconds) during which the envelope amplitude is perceptually significant (above 40% of peak and ?90?dB), e.g. for distinguishing short/percussive from sustained sounds.                                                                                                                                                      
+dynamic_range_             numeric         yes        Loudness range (dB, LU) of the audio signal measured using the EBU R128 standard.                                                                                                                                                                                                                                                                              
+hardness_                  numeric         yes        Hardness of the audio signal. A hard sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.                                                                                                                                                                                        
+hpcp_                      array[numeric]  no         Harmonic Pitch Class Profile (HPCP) computed from the spectral peaks of the audio signal, representing the energy distribution across 36 pitch classes (3 subdivisions per semitone).                                                                                                                                                                          
+hpcp_crest_                numeric         yes        Dominance of the strongest pitch class (crest) compared to the rest, computed as the ratio between the maximum HPCP value and the mean HPCP value (computed by the hpcp descriptor).                                                                                                                                                                           
+hpcp_entropy_              numeric         yes        Uniformity of the pitch-class distribution, computed as the Shannon entropy of the HPCP (computed by the hpcp descriptor).                                                                                                                                                                                                                                     
+inharmonicity_             numeric         yes        Deviation of spectral components from perfect harmonicity, computed as the energy-weighted divergence from their closest multiples of the fundamental frequency.                                                                                                                                                                                               
+log_attack_time_           numeric         yes        Log (base 10) of the attack time of the audio signal's envelope, where the attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.                                                                                                                                              
+loopable_                  boolean         yes        Whether the audio signal is loopable, i.e. it begins and ends in a way that sounds smooth when repeated.                                                                                                                                                                                                                                                       
+loudness_                  numeric         yes        Overall loudness (LUFS) of the audio signal measured using the EBU R128 standard.                                                                                                                                                                                                                                                                              
+mfcc_                      array[numeric]  no         13 mel-frequency cepstrum coefficients of a spectrum (MFCC-FB40).                                                                                                                                                                                                                                                                                              
+note_confidence_           numeric         yes        Confidence score on how reliable the note name/MIDI estimation is.                                                                                                                                                                                                                                                                                             
+note_midi_                 integer         yes        MIDI value corresponding to the estimated note (computed by the note_name descriptor).                                                                                                                                                                                                                                                                         
+note_name_                 string          yes        Pitch note name that includes one of the 12 western notes ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"] and the octave number, e.g. "A4", "E#7". It is computed by the median of the estimated fundamental frequency.                                                                                                                      
+onset_count_               integer         yes        Number of detected onsets in the audio signal.                                                                                                                                                                                                                                                                                                                 
+onset_times_               array[numeric]  no         Timestamps for the detected onsets in the audio signal in seconds, which can vary according to the amount of onsets (computed by the onset_count descriptor).                                                                                                                                                                                                  
+pitch_                     numeric         yes        Mean (average) fundamental frequency derived from the audio signal, computed with the YinFFT algorithm.                                                                                                                                                                                                                                                        
+pitch_max_                 numeric         yes        Maximum fundamental frequency observed throughout the audio signal.                                                                                                                                                                                                                                                                                            
+pitch_min_                 numeric         yes        Minimum fundamental frequency observed throughout the audio signal.                                                                                                                                                                                                                                                                                            
+pitch_salience_            numeric         yes        Pitch salience (i.e. tone sensation) given by the ratio of the highest auto correlation value of the spectrum to the non-shifted auto correlation value. Unpitched sounds and pure tones have value close to 0.                                                                                                                                                
+pitch_var_                 numeric         yes        Variance of the fundamental frequency of the audio signal.                                                                                                                                                                                                                                                                                                     
+reverbness_                boolean         yes        Whether the signal is reverberated or not.                                                                                                                                                                                                                                                                                                                     
+roughness_                 numeric         yes        Roughness of the audio signal. A rough sound is one that has an uneven or irregular sonic texture.                                                                                                                                                                                                                                                             
+sharpness_                 numeric         yes        Sharpness of the audio signal. A sharp sound is one that suggests it might cut if it were to take on physical form.                                                                                                                                                                                                                                            
+silence_rate_              numeric         yes        Amount of silence in the audio signal, computed by the fraction of frames with instant power below ?30?dB.                                                                                                                                                                                                                                                     
+single_event_              boolean         yes        Whether the audio signal contains one single audio event or more than one. This computation is based on the loudness of the signal and does not do any frequency analysis.                                                                                                                                                                                     
+spectral_centroid_         numeric         yes        Spectral centroid of the audio signal, indicating where the "center of mass" of the spectrum is. It correlates with the perception of "brightness" of a sound, making it useful for characterizing musical timbre. It is computed as the weighted mean of the signal's frequencies, weighted by their magnitudes.                                              
+spectral_complexity_       numeric         yes        Spectral complexity of the audio signal's spectrum, based on the number of peaks in the spectrum.                                                                                                                                                                                                                                                              
+spectral_crest_            numeric         yes        Dominance of the strongest spectral peak (crest) compared to the rest, computed as the ratio between the maximum and mean spectral magnitudes.                                                                                                                                                                                                                 
+spectral_energy_           numeric         yes        Energy in the spectrum of the audio signal. It represents the total magnitude of all frequency components and indicates how much power is present across the spectrum.                                                                                                                                                                                         
+spectral_entropy_          numeric         yes        Shannon entropy in the frequency domain of the audio signal, measuring the unpredictability in the spectrum.                                                                                                                                                                                                                                                   
+spectral_flatness_         numeric         yes        Flatness of the spectrum measured as the ratio of its geometric mean to its arithmetic mean (in dB). High values indicate a noise-like, flat spectrum with evenly distributed power, while low values indicate a tone-like, spiky spectrum with power concentrated in a few frequency bands.                                                                   
+spectral_rolloff_          numeric         yes        Roll-off frequency of the spectrum, defined as the frequency under which some percentage (cutoff) of the total energy of the spectrum is contained. It can be used to distinguish between harmonic (below roll-off) and noisy sounds (above roll-off).                                                                                                         
+spectral_skewness_         numeric         yes        Skewness of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                                                                               
+spectral_spread_           numeric         yes        Spread (variance) of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                                                                      
+start_time_                numeric         yes        The moment at which sound begins in seconds, i.e. when the audio signal first rises above silence.                                                                                                                                                                                                                                                             
+temporal_centroid_         numeric         yes        Temporal centroid of the audio signal, defined as the time point at which the temporal balancing position of the sound event energy.                                                                                                                                                                                                                           
+temporal_centroid_ratio_   numeric         yes        Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is �balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).                                                             
+temporal_decrease_         numeric         yes        Overall decrease of the audio signal's amplitude over time, computed as the linear regression coefficient.                                                                                                                                                                                                                                                     
+temporal_skewness_         numeric         yes        Skewness of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                                                
+temporal_spread_           numeric         yes        Spread (variance) of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                                       
+tonality_                  string          yes        Key (tonality) estimated by a key detection algorithm. The key name includes the root note of the scale, which is one of ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], and the scale mode, which is one of ["major", "minor"], e.g. "C minor", "F# major".                                                                                
+tonality_confidence_       numeric         yes        Confidence score on how reliable the key estimation is (computed by the tonality descriptor).                                                                                                                                                                                                                                                                  
+tristimulus_               array[numeric]  no         Tristimulus of the audio signal given its harmonic peaks. It measures the relative contribution of harmonic groups in a signal's spectrum, where the first value captures the first harmonic, the second captures harmonics 2-4, and the third captures all remaining harmonics. It is a timbre equivalent to the color attributes in the vision.              
+warmth_                    numeric         yes        Warmth of the audio signal. A warm sound is one that promotes a sensation analogous to that caused by a physical increase in temperature.                                                                                                                                                                                                                      
+zero_crossing_rate_        numeric         yes        Zero-crossing rate of the audio signal. It is the number of sign changes between consecutive samples divided by the total number of samples. Noisy signals tend to have a higher value. For monophonic tonal signals, it can be used as a primitive pitch detection algorithm.                                                                                 
+=========================  ==============  =========  ===============================================================================================================================================================================================================================================================================================================================================================
+
+.. _amplitude_peak_ratio: https://freesound.org/docs/api/analysis_docs.html#amplitude-peak-ratio
+.. _beat_count: https://freesound.org/docs/api/analysis_docs.html#beat-count
+.. _beat_loudness: https://freesound.org/docs/api/analysis_docs.html#beat-loudness
+.. _beat_times: https://freesound.org/docs/api/analysis_docs.html#beat-times
+.. _boominess: https://freesound.org/docs/api/analysis_docs.html#boominess
+.. _bpm: https://freesound.org/docs/api/analysis_docs.html#bpm
+.. _bpm_confidence: https://freesound.org/docs/api/analysis_docs.html#bpm-confidence
+.. _brightness: https://freesound.org/docs/api/analysis_docs.html#brightness
+.. _chord_count: https://freesound.org/docs/api/analysis_docs.html#chord-count
+.. _chord_progression: https://freesound.org/docs/api/analysis_docs.html#chord-progression
+.. _decay_strength: https://freesound.org/docs/api/analysis_docs.html#decay-strength
+.. _depth: https://freesound.org/docs/api/analysis_docs.html#depth
+.. _dissonance: https://freesound.org/docs/api/analysis_docs.html#dissonance
+.. _duration: https://freesound.org/docs/api/analysis_docs.html#duration
+.. _duration_effective: https://freesound.org/docs/api/analysis_docs.html#duration-effective
+.. _dynamic_range: https://freesound.org/docs/api/analysis_docs.html#dynamic-range
+.. _hardness: https://freesound.org/docs/api/analysis_docs.html#hardness
+.. _hpcp: https://freesound.org/docs/api/analysis_docs.html#hpcp
+.. _hpcp_crest: https://freesound.org/docs/api/analysis_docs.html#hpcp-crest
+.. _hpcp_entropy: https://freesound.org/docs/api/analysis_docs.html#hpcp-entropy
+.. _inharmonicity: https://freesound.org/docs/api/analysis_docs.html#inharmonicity
+.. _log_attack_time: https://freesound.org/docs/api/analysis_docs.html#log-attack-time
+.. _loopable: https://freesound.org/docs/api/analysis_docs.html#loopable
+.. _loudness: https://freesound.org/docs/api/analysis_docs.html#loudness
+.. _mfcc: https://freesound.org/docs/api/analysis_docs.html#mfcc
+.. _note_confidence: https://freesound.org/docs/api/analysis_docs.html#note-confidence
+.. _note_midi: https://freesound.org/docs/api/analysis_docs.html#note-midi
+.. _note_name: https://freesound.org/docs/api/analysis_docs.html#note-name
+.. _onset_count: https://freesound.org/docs/api/analysis_docs.html#onset-count
+.. _onset_times: https://freesound.org/docs/api/analysis_docs.html#onset-times
+.. _pitch: https://freesound.org/docs/api/analysis_docs.html#pitch
+.. _pitch_max: https://freesound.org/docs/api/analysis_docs.html#pitch-max
+.. _pitch_min: https://freesound.org/docs/api/analysis_docs.html#pitch-min
+.. _pitch_salience: https://freesound.org/docs/api/analysis_docs.html#pitch-salience
+.. _pitch_var: https://freesound.org/docs/api/analysis_docs.html#pitch-var
+.. _reverbness: https://freesound.org/docs/api/analysis_docs.html#reverbness
+.. _roughness: https://freesound.org/docs/api/analysis_docs.html#roughness
+.. _sharpness: https://freesound.org/docs/api/analysis_docs.html#sharpness
+.. _silence_rate: https://freesound.org/docs/api/analysis_docs.html#silence-rate
+.. _single_event: https://freesound.org/docs/api/analysis_docs.html#single-event
+.. _spectral_centroid: https://freesound.org/docs/api/analysis_docs.html#spectral-centroid
+.. _spectral_complexity: https://freesound.org/docs/api/analysis_docs.html#spectral-complexity
+.. _spectral_crest: https://freesound.org/docs/api/analysis_docs.html#spectral-crest
+.. _spectral_energy: https://freesound.org/docs/api/analysis_docs.html#spectral-energy
+.. _spectral_entropy: https://freesound.org/docs/api/analysis_docs.html#spectral-entropy
+.. _spectral_flatness: https://freesound.org/docs/api/analysis_docs.html#spectral-flatness
+.. _spectral_rolloff: https://freesound.org/docs/api/analysis_docs.html#spectral-rolloff
+.. _spectral_skewness: https://freesound.org/docs/api/analysis_docs.html#spectral-skewness
+.. _spectral_spread: https://freesound.org/docs/api/analysis_docs.html#spectral-spread
+.. _start_time: https://freesound.org/docs/api/analysis_docs.html#start-time
+.. _temporal_centroid: https://freesound.org/docs/api/analysis_docs.html#temporal-centroid
+.. _temporal_centroid_ratio: https://freesound.org/docs/api/analysis_docs.html#temporal-centroid-ratio
+.. _temporal_decrease: https://freesound.org/docs/api/analysis_docs.html#temporal-decrease
+.. _temporal_skewness: https://freesound.org/docs/api/analysis_docs.html#temporal-skewness
+.. _temporal_spread: https://freesound.org/docs/api/analysis_docs.html#temporal-spread
+.. _tonality: https://freesound.org/docs/api/analysis_docs.html#tonality
+.. _tonality_confidence: https://freesound.org/docs/api/analysis_docs.html#tonality-confidence
+.. _tristimulus: https://freesound.org/docs/api/analysis_docs.html#tristimulus
+.. _warmth: https://freesound.org/docs/api/analysis_docs.html#warmth
+.. _zero_crossing_rate: https://freesound.org/docs/api/analysis_docs.html#zero-crossing-rate
+
+
+The ``fields`` parameter allows you to restrict or expand the set of fields returned in the response. 
+By default, all metadata fields from the first table are returned, while content-based descriptors from the second table are excluded.
+To return information about specific descriptors, their names can be added to ``fields`` (e.g. ``fields=mfcc,bpm``).
+Descriptor names are also listed in :ref:`analysis-docs`.
 Note that when ``fields`` is explicitly defined, the default fields are not included automatically and all desired fields must be listed explicitly.
 
 
@@ -682,7 +686,7 @@ Response
 
 The response to a Sound Analysis request is a dictionary with the values of all content-based descriptors listed in :ref:`analysis-docs`.
 That dictionary can be filtered using an extra ``fields`` parameter which should include a list of comma separated descriptor names 
-chosen from those listed in :ref:`available-descriptors` (e.g. ``fields=mfcc,bpm``).
+chosen from those listed in :ref:`analysis-docs` (e.g. ``fields=mfcc,bpm``).
 
 
 Examples
@@ -709,13 +713,14 @@ Parameters
 Essentially, the Similar Sounds resource is like the parameter ``similar_to`` in the :ref:`sound-search` resource, but with the sound ID indicated in the URI.
 You can optionally define the following parameters: 
 
+.. rst-class:: fieldstable
 ======================  =========================  ======================
 Name                    Type                       Description
 ======================  =========================  ======================
-``similarity_space``    string                     Indicates the similarity space used when performing similarity search. If not defined, the default similarity space is used.
-``fields``              strings (comma separated)  Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response` (plus an additional field ``score`` which returns a matching score added by the search engine), and must be separated by commas. By default ``fields=id,name,tags,username,license``. **Use this parameter to optimize request time by only requesting the information you really need.**
-``page``                string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
-``page_size``           string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Note that with bigger ``page_size``, more data will need to be transferred.
+similarity_space        string                     Indicates the similarity space used when performing similarity search. If not defined, the default similarity space is used.
+fields                  strings (comma separated)  Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response` (plus an additional field ``score`` which returns a matching score added by the search engine), and must be separated by commas. By default ``fields=id,name,tags,username,license``. **Use this parameter to optimize request time by only requesting the information you really need.**
+page                    string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
+page_size               string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Note that with bigger ``page_size``, more data will need to be transferred.
 ======================  =========================  ======================
 
 
@@ -823,16 +828,17 @@ Supported file formats include .wav, .aif, .flac, .ogg and .mp3.
 
 Additionally, the request can include the following POST parameters to provide a description for the file:
 
+.. rst-class:: fieldstable
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
-``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
-``bst_category``      string            The ID of a category to be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
-``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
-``description``       string            A textual description of the sound.
-``license``           string            The license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
-``pack``              string            (OPTIONAL) The name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
-``geotag``            string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
+name                  string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
+bst_category          string            The ID of a category to be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
+tags                  string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
+description           string            A textual description of the sound.
+license               string            The license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
+pack                  string            (OPTIONAL) The name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
+geotag                string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
 ====================  ================  ====================================================================================
 
 Note that ``bst_category``, ``tags``, ``description`` and ``license`` parameters are REQUIRED when providing a description for the file, but can be omitted if no description is provided.
@@ -896,17 +902,18 @@ Parameters
 
 A request to the Describe Sound resource must include the following POST parameters:
 
+.. rst-class:: fieldstable
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
-``upload_filename``   string            The filename of the sound to describe. Must match with one of the filenames returned in :ref:`sound-pending-uploads` resource.
-``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
-``bst_category``      string            The ID of a category to be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
-``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
-``description``       string            A textual description of the sound.
-``license``           string            The license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
-``pack``              string            (OPTIONAL) The name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
-``geotag``            string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
+upload_filename       string            The filename of the sound to describe. Must match with one of the filenames returned in :ref:`sound-pending-uploads` resource.
+name                  string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
+bst_category          string            The ID of a category to be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
+tags                  string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
+description           string            A textual description of the sound.
+license               string            The license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
+pack                  string            (OPTIONAL) The name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
+geotag                string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
 ====================  ================  ====================================================================================
 
 
@@ -1014,16 +1021,17 @@ Parameters
 
 A request to the Edit Sound Description resource must include mostly the same POST parameters that would be included in a :ref:`sound-describe` request:
 
+.. rst-class:: fieldstable
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
-``name``              string            (OPTIONAL) The new name that will be given to the sound.
-``bst_category``      string            (OPTIONAL) The new category ID that will be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
-``tags``              string            (OPTIONAL) The new tags that will be assigned to the sound. Note that if this parameter is filled, old tags will be deleted. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
-``description``       string            (OPTIONAL) The new textual description for the sound.
-``license``           string            (OPTIONAL) The new license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
-``pack``              string            (OPTIONAL) The new name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
-``geotag``            string            (OPTIONAL) New geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
+name                  string            (OPTIONAL) The new name that will be given to the sound.
+bst_category          string            (OPTIONAL) The new category ID that will be assigned to the sound. Must be one of the subcategory IDs from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_.
+tags                  string            (OPTIONAL) The new tags that will be assigned to the sound. Note that if this parameter is filled, old tags will be deleted. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
+description           string            (OPTIONAL) The new textual description for the sound.
+license               string            (OPTIONAL) The new license of the sound. Must be either "Attribution", "Attribution NonCommercial" or "Creative Commons 0".
+pack                  string            (OPTIONAL) The new name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
+geotag                string            (OPTIONAL) New geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
 ====================  ================  ====================================================================================
 
 Note that for that resource all parameters are optional.
@@ -1055,11 +1063,12 @@ Parameters
 
 A request to the Bookmark Sound resource can include the following POST parameters:
 
+.. rst-class:: fieldstable
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
-``name``              string            (OPTIONAL) The new name that will be given to the bookmark (if not specified, sound name will be used).
-``category``          string            (OPTIONAL) The name of the category under the bookmark will be classified (if not specified, bookmark will have no category). If the specified category does not correspond to any bookmark category of the user, a new one will be created.
+name                  string            (OPTIONAL) The new name that will be given to the bookmark (if not specified, sound name will be used).
+category              string            (OPTIONAL) The name of the category under the bookmark will be classified (if not specified, bookmark will have no category). If the specified category does not correspond to any bookmark category of the user, a new one will be created.
 ====================  ================  ====================================================================================
 
 
@@ -1091,10 +1100,11 @@ Parameters
 
 A request to the Rate Sound resource must only include a single POST parameter:
 
+.. rst-class:: fieldstable
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
-``rating``            integer           Integer between 0 and 5 (both included) representing the rating for the sound (i.e. 5 = maximum rating).
+rating                integer           Integer between 0 and 5 (both included) representing the rating for the sound (i.e. 5 = maximum rating).
 ====================  ================  ====================================================================================
 
 
@@ -1128,10 +1138,11 @@ Parameters
 
 A request to the Comment Sound resource must only include a single POST parameter:
 
+.. rst-class:: fieldstable
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
-``comment``           string            Comment for the sound.
+comment               string            Comment for the sound.
 ====================  ================  ====================================================================================
 
 
@@ -1167,21 +1178,22 @@ Response
 
 The User Instance response is a dictionary including the following properties/fields:
 
+.. rst-class:: fieldstable
 ========================  ================  ====================================================================================
 Name                      Type              Description
 ========================  ================  ====================================================================================
-``url``                   URI               The URI for this users' profile on the Freesound website.
-``username``              string            The username.
-``about``                 string            The 'about' text of users' profile (if indicated).
-``homepage``              URI               The URI of users' homepage outside Freesound (if indicated).
-``avatar``                object            Dictionary including the URIs for the avatar of the user. The avatar is presented in three sizes ``Small``, ``Medium`` and ``Large``, which correspond to the three fields in the dictionary. If user has no avatar, this field is null.
-``date_joined``           string            The date when the user joined Freesound (e.g. "2008-08-07T17:39:00").
-``num_sounds``            numeric           The number of sounds uploaded by the user.
-``sounds``                URI               The URI for a list of sounds by the user.
-``num_packs``             numeric           The number of packs by the user.
-``packs``                 URI               The URI for a list of packs by the user.
-``num_posts``             numeric           The number of forum posts by the user.
-``num_comments``          numeric           The number of comments that user made in other users' sounds.
+url                       URI               The URI for this users' profile on the Freesound website.
+username                  string            The username.
+about                     string            The 'about' text of users' profile (if indicated).
+homepage                  URI               The URI of users' homepage outside Freesound (if indicated).
+avatar                    object            Dictionary including the URIs for the avatar of the user. The avatar is presented in three sizes ``Small``, ``Medium`` and ``Large``, which correspond to the three fields in the dictionary. If user has no avatar, this field is null.
+date_joined               string            The date when the user joined Freesound (e.g. "2008-08-07T17:39:00").
+num_sounds                numeric           The number of sounds uploaded by the user.
+sounds                    URI               The URI for a list of sounds by the user.
+num_packs                 numeric           The number of packs by the user.
+packs                     URI               The URI for a list of packs by the user.
+num_posts                 numeric           The number of forum posts by the user.
+num_comments              numeric           The number of comments that user made in other users' sounds.
 ========================  ================  ====================================================================================
 
 
@@ -1274,18 +1286,19 @@ Response
 
 The Pack Instance response is a dictionary including the following properties/fields:
 
+.. rst-class:: fieldstable
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
-``id``                integer           The unique identifier of this pack.
-``url``               URI               The URI for this pack on the Freesound website.
-``description``       string            The description the user gave to the pack (if any).
-``created``           string            The date when the pack was created (e.g. "2014-04-16T20:07:11.145").
-``name``              string            The name user gave to the pack.
-``username``          string            Username of the creator of the pack.
-``num_sounds``        integer           The number of sounds in the pack.
-``sounds``            URI               The URI for a list of sounds in the pack.
-``num_downloads``     integer           The number of times this pack has been downloaded.
+id                    integer           The unique identifier of this pack.
+url                   URI               The URI for this pack on the Freesound website.
+description           string            The description the user gave to the pack (if any).
+created               string            The date when the pack was created (e.g. "2014-04-16T20:07:11.145").
+name                  string            The name user gave to the pack.
+username              string            Username of the creator of the pack.
+num_sounds            integer           The number of sounds in the pack.
+sounds                URI               The URI for a list of sounds in the pack.
+num_downloads         integer           The number of times this pack has been downloaded.
 ====================  ================  ====================================================================================
 
 
@@ -1424,53 +1437,3 @@ Examples
 --------
 
 {{examples_MeBookmarkCategorySounds}}
-
-
-.. _available-descriptors:
-
-Available Audio Descriptors
-===========================
-
-::
-
-  GET /apiv2/descriptors/
-
-This resource returns information about the available audio descriptors that are extracted from Freesound sounds.
-All descriptors are indexed, and most of them can be used as content-based ``filters`` in :ref:`sound-search`.
-
-Response
---------
-
-The response of the Available Audio Descriptors resource is a dictionary that lists descriptor names, grouped into categories according to their structure:
-
-::
-
-  {
-    "fixed-length": {
-       "one-dimensional": [
-          <descriptor name>,
-          <descriptor name>,
-          ...
-       ],
-       "multi-dimensional": [
-          <descriptor name>,
-          <descriptor name>,
-          ...
-       ]
-    },
-    "variable-length": [
-        <descriptor name>,
-        <descriptor name>,
-        ...
-    ]
-  }
-
-
-Descriptors under the field ``fixed-length`` are divided among ``one-dimensional`` (descriptors that consist in a single value like spectral centroid or pitch)
-and ``multi-dimensional`` (descriptors with several dimensions like mfcc or tristimulus).
-Descriptors under the field ``variable-length`` may have different length depending on the sound.
-
-The ``one-dimensional`` descriptors are those that can be used in the ``filter`` parameter of the :ref:`sound-search` resource.
-The ``multi-dimensional`` and ``variable-length`` descriptors can be accessed through the ``fields`` parameter in any API resource that returns a sound list and the :ref:`sound-analysis`.
-
-For more information check the :ref:`analysis-docs`.

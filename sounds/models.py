@@ -1290,19 +1290,41 @@ class Sound(models.Model):
             # Load analyzer data stored in files in disk
             # Avoid reading the same file multiple times by caching data in tmp_analyzers_data
             analyzer = descriptor['analyzer']
-            try:
-                sa = self.analyses.get(analyzer=analyzer, analysis_status='OK')
-            except SoundAnalysis.DoesNotExist:
-                sa = None
-            if sa is None:
-                # This analyzer has not analyzed the sound successfully, skip descriptor
-                continue
-            if analyzer not in tmp_analyzers_data:
-                analyzer_data = sa.get_analysis_data_from_file()
-                tmp_analyzers_data[analyzer] = analyzer_data
+            if no_db_operations:
+                if analyzer not in tmp_analyzers_data:
+                    id_folder = str(self.id // 1000)
+                    analyzer_file_path = os.path.join(settings.ANALYSIS_PATH, id_folder, f"{self.id}-{analyzer}")
+                    analyzer_data = {}
+                    analyzer_file_path_json = f"{analyzer_file_path}.json"
+                    if os.path.exists(analyzer_file_path_json):
+                        with open(analyzer_file_path_json, 'r') as f:
+                            analyzer_data = json.load(f)
+                            tmp_analyzers_data[analyzer] = analyzer_data
+
+                    analyzer_file_path_yaml = f"{analyzer_file_path}.yaml"
+                    if os.path.exists(analyzer_file_path_yaml):
+                        with open(analyzer_file_path_yaml, 'r') as f:
+                            analyzer_data = yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
+                            tmp_analyzers_data[analyzer] = analyzer_data
+                    if not analyzer_data:
+                        continue
+                else:
+                    analyzer_data = tmp_analyzers_data[analyzer]
+            
             else:
-                analyzer_data = tmp_analyzers_data[analyzer]
- 
+                try:
+                    sa = self.analyses.get(analyzer=analyzer, analysis_status='OK')
+                except SoundAnalysis.DoesNotExist:
+                    sa = None
+                if sa is None:
+                    # This analyzer has not analyzed the sound successfully, skip descriptor
+                    continue
+                if analyzer not in tmp_analyzers_data:
+                    analyzer_data = sa.get_analysis_data_from_file()
+                    tmp_analyzers_data[analyzer] = analyzer_data
+                else:
+                    analyzer_data = tmp_analyzers_data[analyzer]
+    
             name = descriptor['name']
             original_name = descriptor.get('original_name', None)
             get_func = descriptor.get('get_func', None)

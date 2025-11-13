@@ -18,8 +18,11 @@
 #     See AUTHORS file.
 #
 
+import json
 import logging
+import os
 import time
+import yaml
 
 from django.conf import settings
 from django.utils import timezone
@@ -29,6 +32,23 @@ from utils.management_commands import LoggingBaseCommand
 
 
 console_logger = logging.getLogger("console")
+
+
+def load_analyzer_data_from_disk_no_db_operations(sound_id, analyzer):
+        id_folder = str(sound_id // 1000)
+        analyzer_file_path = os.path.join(settings.ANALYSIS_PATH, id_folder, f"{sound_id}-{analyzer}")
+        analyzer_data = {}
+        analyzer_file_path_json = f"{analyzer_file_path}.json"
+        if os.path.exists(analyzer_file_path_json):
+            with open(analyzer_file_path_json, 'r') as f:
+                analyzer_data = json.load(f)
+
+        analyzer_file_path_yaml = f"{analyzer_file_path}.yaml"
+        if os.path.exists(analyzer_file_path_yaml):
+            with open(analyzer_file_path_yaml, 'r') as f:
+                analyzer_data = yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
+        return analyzer_data
+
 
 
 class Command(LoggingBaseCommand):
@@ -60,7 +80,7 @@ class Command(LoggingBaseCommand):
             dest='chunk_size',
             default=100,
             help='Number of sounds to process in each chunk (default: 100).')
-        
+    
 
     def handle(self, *args, **options):
         self.log_start()
@@ -109,10 +129,8 @@ class Command(LoggingBaseCommand):
                 for similarity_space_name, similarity_space in settings.SIMILARITY_SPACES.items():
                     analyzer_data = tmp_analyzers_data.get(similarity_space['analyzer'], {})
                     if not analyzer_data:
-                        try:
-                            sa = SoundAnalysis.objects.get(sound_id=sound.id, analyzer=similarity_space['analyzer'], analysis_status='OK')
-                            analyzer_data = sa.get_analysis_data_from_file()
-                        except SoundAnalysis.DoesNotExist:
+                        analyzer_data = load_analyzer_data_from_disk_no_db_operations(sound.id, similarity_space['analyzer'])
+                        if not analyzer_data:
                             continue
                     try:
                         sim_vector = analyzer_data[similarity_space['vector_property_name']]

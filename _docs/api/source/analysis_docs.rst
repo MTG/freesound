@@ -73,27 +73,6 @@ beat_count
         :height: 300px
 
 
-beat_loudness
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/beat_loudness
-
-**Description:** Spectral energy measured at the beat positions of the audio signal.
-
-**Mode:** mean
-
-**Type:** numeric
-
-**More information:** https://essentia.upf.edu/reference/streaming_BeatsLoudness.html
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/beat_loudness.png
-        :height: 300px
-
-
 beat_times
 -------------------------
 
@@ -228,44 +207,6 @@ dissonance
 **Distribution in Freesound**
 
     .. image:: _static/descriptors/dissonance.png
-        :height: 300px
-
-
-duration
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/duration
-
-**Description:** Total duration of the audio signal in seconds.
-
-**Type:** numeric
-
-**More information:** https://essentia.upf.edu/reference/streaming_Duration.html
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/duration.png
-        :height: 300px
-
-
-duration_effective
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/duration_effective
-
-**Description:** Duration of the audio signal (in seconds) during which the envelope amplitude is perceptually significant (above 40% of peak and ?90?dB), e.g. for distinguishing short/percussive from sustained sounds.
-
-**Type:** numeric
-
-**More information:** https://essentia.upf.edu/reference/streaming_EffectiveDuration.html
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/duration_effective.png
         :height: 300px
 
 
@@ -571,7 +512,7 @@ silence_rate
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/silence_rate
 
-**Description:** Amount of silence in the audio signal, computed by the fraction of frames with instant power below ?30?dB.
+**Description:** Amount of silence in the audio signal, computed by the fraction of frames with instant power below 30dB.
 
 **Mode:** mean
 
@@ -680,7 +621,7 @@ warmth
         :height: 300px
 
 
-Advnaced set of descriptors
+Advanced set of descriptors
 >>>>>>>>>>>>>>>>
 
 amplitude_peak_ratio
@@ -701,6 +642,27 @@ amplitude_peak_ratio
 **Distribution in Freesound**
 
     .. image:: _static/descriptors/amplitude_peak_ratio.png
+        :height: 300px
+
+
+beat_loudness
+-------------------------
+
+::
+
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/beat_loudness
+
+**Description:** Spectral energy measured at the beat positions of the audio signal.
+
+**Mode:** mean
+
+**Type:** numeric
+
+**More information:** https://essentia.upf.edu/reference/streaming_BeatsLoudness.html
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/beat_loudness.png
         :height: 300px
 
 
@@ -760,6 +722,25 @@ decay_strength
 **Distribution in Freesound**
 
     .. image:: _static/descriptors/decay_strength.png
+        :height: 300px
+
+
+duration_effective
+-------------------------
+
+::
+
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/duration_effective
+
+**Description:** Duration of the audio signal (in seconds) during which the envelope amplitude is perceptually significant (above 40% of peak and 90dB), e.g. for distinguishing short/percussive from sustained sounds.
+
+**Type:** numeric
+
+**More information:** https://essentia.upf.edu/reference/streaming_EffectiveDuration.html
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/duration_effective.png
         :height: 300px
 
 
@@ -1152,7 +1133,7 @@ temporal_centroid_ratio
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/temporal_centroid_ratio
 
-**Description:** Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is �balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).
+**Description:** Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is ‘balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).
 
 **Type:** numeric
 
@@ -1269,5 +1250,4 @@ zero_crossing_rate
 
     .. image:: _static/descriptors/zero_crossing_rate.png
         :height: 300px
-
 

@@ -166,7 +166,7 @@ Each similarity space is built using different types of descriptors, ranging fro
 If the ``similarity_space`` parameter is not specified, the default space is used. These are the similarity spaces which are currently available:
 
 =====================  =====================  ====================================================================
-Simialrity space name  Number of dimensions   Explanation
+Similarity space name  Number of dimensions   Explanation
 =====================  =====================  ====================================================================
 laion_clap             512                    This space is built using LAION-CLAP embeddings, which designed to capture both acoustic and semantic properties of sounds. We use L2-normed versions of the embeddings that can be extracted using the standard tools provided by LAION organisation (https://github.com/LAION-AI/CLAP). We use the ``630k-audioset-fusion-best.pt`` pre-trained model.
 freesound_classic      100                    This space is built using a combination of low-level acoustic audio features extracted using the ``FreesoundExtractor`` from the Essentia audio analysis library (https://essentia.upf.edu). We currently don't provide code to extract these features from arbitrary audio, but we might do that in the future.
@@ -602,7 +602,6 @@ zero_crossing_rate_        numeric         yes        Zero-crossing rate of the 
 .. _decay_strength: https://freesound.org/docs/api/analysis_docs.html#decay-strength
 .. _depth: https://freesound.org/docs/api/analysis_docs.html#depth
 .. _dissonance: https://freesound.org/docs/api/analysis_docs.html#dissonance
-.. _duration: https://freesound.org/docs/api/analysis_docs.html#duration
 .. _duration_effective: https://freesound.org/docs/api/analysis_docs.html#duration-effective
 .. _dynamic_range: https://freesound.org/docs/api/analysis_docs.html#dynamic-range
 .. _hardness: https://freesound.org/docs/api/analysis_docs.html#hardness
@@ -716,10 +715,10 @@ You can optionally define the following parameters:
 ======================  =========================  ======================
 Name                    Type                       Description
 ======================  =========================  ======================
-``similarity_space``    string                     Indicates the similarity space used when performing similarity search. If not defined, the default similarity space is used.
-``fields``              strings (comma separated)  Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response` (plus an additional field ``score`` which returns a matching score added by the search engine), and must be separated by commas. By default ``fields=id,name,tags,username,license``. **Use this parameter to optimize request time by only requesting the information you really need.**
-``page``                string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
-``page_size``           string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Note that with bigger ``page_size``, more data will need to be transferred.
+similarity_space        string                     Indicates the similarity space used when performing similarity search. If not defined, the default similarity space is used.
+fields                  strings (comma separated)  Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response` (plus an additional field ``score`` which returns a matching score added by the search engine), and must be separated by commas. By default ``fields=id,name,tags,username,license``. **Use this parameter to optimize request time by only requesting the information you really need.**
+page                    string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
+page_size               string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Note that with bigger ``page_size``, more data will need to be transferred.
 ======================  =========================  ======================
 
 

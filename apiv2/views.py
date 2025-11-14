@@ -1255,33 +1255,6 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
         else:
             raise ServerErrorException(resource=self)
 
-class AvailableAudioDescriptors(GenericAPIView):
-    @classmethod
-    def get_description(cls):
-        return 'Get a list of valid audio descriptor names that can be used in content/combined search, in sound ' \
-               'analysis<br>and in the analysis field of any sound list response. ' \
-               'Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
-               % (prepend_base('/docs/api'), '%s#available-audio-descriptors' % resources_doc_filename)
-
-    def get(self, request,  *args, **kwargs):
-        api_logger.info(self.log_message('available_audio_descriptors'))
-        try:
-            descriptor_names = Similarity.get_descriptor_names()
-            del descriptor_names['all']
-            for key, value in descriptor_names.items():
-                descriptor_names[key] = [item[1:] for item in value]  # remove initial dot from descriptor names
-
-            return Response({
-                'fixed-length': {
-                    'one-dimensional': [item for item in descriptor_names['fixed-length']
-                                        if item not in descriptor_names['multidimensional']],
-                    'multi-dimensional': descriptor_names['multidimensional']
-                },
-                'variable-length': descriptor_names['variable-length']
-            }, status=status.HTTP_200_OK)
-        except Exception as e:
-            raise ServerErrorException(resource=self)
-
 
 class FreesoundApiV2Resources(GenericAPIView):
     @classmethod
@@ -1355,8 +1328,7 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '02 My bookmark categories': prepend_base(reverse('apiv2-me-bookmark-categories')),
                     '03 My bookmark category sounds': prepend_base(
                         reverse('apiv2-me-bookmark-category-sounds', args=[0]).replace('0', '<category_id>'),
-                        request_is_secure=request.is_secure()),
-                    '04 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
+                        request_is_secure=request.is_secure())
                 }.items(), key=lambda t: t[0]))},
             ]
 

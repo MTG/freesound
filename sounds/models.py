@@ -1290,41 +1290,17 @@ class Sound(models.Model):
             # Load analyzer data stored in files in disk
             # Avoid reading the same file multiple times by caching data in tmp_analyzers_data
             analyzer = descriptor['analyzer']
-            if no_db_operations:
-                if analyzer not in tmp_analyzers_data:
-                    id_folder = str(self.id // 1000)
-                    analyzer_file_path = os.path.join(settings.ANALYSIS_PATH, id_folder, f"{self.id}-{analyzer}")
-                    analyzer_data = {}
-                    analyzer_file_path_json = f"{analyzer_file_path}.json"
-                    if os.path.exists(analyzer_file_path_json):
-                        with open(analyzer_file_path_json, 'r') as f:
-                            analyzer_data = json.load(f)
-                            tmp_analyzers_data[analyzer] = analyzer_data
-
-                    analyzer_file_path_yaml = f"{analyzer_file_path}.yaml"
-                    if os.path.exists(analyzer_file_path_yaml):
-                        with open(analyzer_file_path_yaml, 'r') as f:
-                            analyzer_data = yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
-                            tmp_analyzers_data[analyzer] = analyzer_data
-                    if not analyzer_data:
-                        continue
-                else:
-                    analyzer_data = tmp_analyzers_data[analyzer]
-            
-            else:
-                try:
-                    sa = self.analyses.get(analyzer=analyzer, analysis_status='OK')
-                except SoundAnalysis.DoesNotExist:
-                    sa = None
-                if sa is None:
-                    # This analyzer has not analyzed the sound successfully, skip descriptor
+            if analyzer not in tmp_analyzers_data:
+                analyzer_data = SoundAnalysis.get_analysis_data_from_file_without_db(self.id, analyzer)
+                if not analyzer_data:
+                    # Analyzer data could not be loaded from file. That means that the analyzer has not analyzed 
+                    # the sound successfully, skip descriptor
                     continue
-                if analyzer not in tmp_analyzers_data:
-                    analyzer_data = sa.get_analysis_data_from_file()
-                    tmp_analyzers_data[analyzer] = analyzer_data
-                else:
-                    analyzer_data = tmp_analyzers_data[analyzer]
-    
+                # Save the data in tmp dict so it is not loaded again in the future if present
+                tmp_analyzers_data[analyzer] = analyzer_data
+            else:
+                analyzer_data = tmp_analyzers_data[analyzer]
+
             name = descriptor['name']
             original_name = descriptor.get('original_name', None)
             get_func = descriptor.get('get_func', None)
@@ -1348,6 +1324,10 @@ class Sound(models.Model):
             except Exception as e:
                 # If value can't be loaded, continue with next descriptor
                 print(f"Can't get value for descriptor {name}: {e} (sound id: {self.id})")
+                continue
+
+            if value is not None and type(value) == float and math.isnan(value):
+                # If value is float and it is NaN, this can't be saved as JSON data to skip descriptor
                 continue
 
             try:
@@ -2245,6 +2225,26 @@ class SoundAnalysis(models.Model):
             pass
         try:
             with open(self.analysis_filepath_base + '.yaml') as f:
+                return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
+        except Exception:
+            pass
+        return {}
+    
+    @classmethod
+    def get_analysis_data_from_file_without_db(cls, sound_id, analyzer):
+        """Class method to get analysis data from file for a given sound ID and analyzer name, without needing
+        to make a query to get SoundAnalysis object. Returns the analysis data as stored in file or returns empty 
+        dict if no file exists. It tries extensions .json and .yaml as these are the supported formats for 
+        analysis results."""
+        id_folder = str(sound_id // 1000)
+        analysis_filepath_base = os.path.join(settings.ANALYSIS_PATH, id_folder, f"{sound_id}-{analyzer}")
+        try:
+            with open(analysis_filepath_base + '.json') as f:
+                return json.load(f)
+        except Exception:
+            pass
+        try:
+            with open(analysis_filepath_base + '.yaml') as f:
                 return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
         except Exception:
             pass

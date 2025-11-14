@@ -55,6 +55,13 @@ class Command(LoggingBaseCommand):
             dest='names',
             default="*",
             help='Descriptor names, separated by commas. Use * to include all descriptors.')
+        
+        parser.add_argument(
+            '--remove_nones',
+            action='store_true',
+            dest='remove_nones',
+            default=False,
+            help='If set, None values will be removed from the exported lists.')
 
 
     def handle(self, *args, **options):
@@ -74,7 +81,8 @@ class Command(LoggingBaseCommand):
             console_logger.info(f'Exporting values for descriptor: {descriptor_name}')
             descriptor_values = list(SoundAnalysis.objects.filter(analyzer=settings.CONSOLIDATED_ANALYZER_NAME)
                                      .values_list(f'analysis_data__{descriptor_name}', flat=True))
-            descriptor_values = [value for value in descriptor_values if value is not None]
+            if options['remove_nones']:
+                descriptor_values = [value for value in descriptor_values if value is not None]
             if options['limit'] is not None and len(descriptor_values) > int(options['limit']):
                 import random
                 descriptor_values = random.sample(descriptor_values, int(options['limit']))

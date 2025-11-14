@@ -114,6 +114,14 @@ def get_needed_similarity_vectors(fields):
     return similarity_spaces
 
 
+def get_include_remix_subqueries(fields):
+    requested_fields = fields.split(',')
+    if 'is_remix' in requested_fields or 'was_remixed' in requested_fields or fields == '*':
+        return True
+    else:
+        return False
+
+
 class TextSearch(GenericAPIView):
 
     @classmethod
@@ -172,7 +180,8 @@ class TextSearch(GenericAPIView):
         # In search queries, only include audio analyzer's output if requested through the fields parameter
         needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get('fields', ''))
         needs_similarity_vectors = get_needed_similarity_vectors(search_form.cleaned_data.get('fields', ''))
-        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
+        include_remix_subqueries = get_include_remix_subqueries(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=sound_ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
         sounds = []
         for i, sid in enumerate(sound_ids):
             try:
@@ -264,7 +273,8 @@ class ContentSearch(GenericAPIView):
         # In search queries, only include audio analyzer's output if requested through the fields parameter
         needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get('fields', ''))
         needs_similarity_vectors = get_needed_similarity_vectors(search_form.cleaned_data.get('fields', ''))
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
+        include_remix_subqueries = get_include_remix_subqueries(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -384,7 +394,8 @@ class CombinedSearch(GenericAPIView):
         # In search queries, only include audio analyzer's output if requested through the fields parameter
         needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get('fields', ''))
         needs_similarity_vectors = get_needed_similarity_vectors(search_form.cleaned_data.get('fields', ''))
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
+        include_remix_subqueries = get_include_remix_subqueries(search_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -438,13 +449,16 @@ class SoundInstance(RetrieveAPIView):
         fields_request_param_value = self.request.GET.get('fields', '')
         needs_analyzers_output = get_needed_audio_descriptors(fields_request_param_value)
         needs_similarity_vectors = get_needed_similarity_vectors(fields_request_param_value)
+        include_remix_subqueries = get_include_remix_subqueries(fields_request_param_value)
         if fields_request_param_value == '':
             # The "category" field of the single sound instance requires some audio descriptors to avoid making extra queries to the DB
             # However, get_needed_audio_descriptors will return False if fields parameter is not specified. This is ok in the views that
             # return lists of sounds because by default "category" is not included. But for SoundInstance we need to make sure that
             # category field can be populated without making extra queries to the DB when fields are not specified
             needs_analyzers_output = True
-        return Sound.objects.bulk_query(include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
+            # Also, the is_remix and was_remixed fields require remix subqueries
+            include_remix_subqueries = True
+        return Sound.objects.bulk_query(include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
 
     def get(self, request,  *args, **kwargs):
         api_logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))
@@ -533,7 +547,8 @@ class SimilarSounds(GenericAPIView):
         ids = [id for id in page['object_list']]
         needs_analyzers_output = get_needed_audio_descriptors(similarity_sound_form.cleaned_data.get('fields', ''))
         needs_similarity_vectors = get_needed_similarity_vectors(similarity_sound_form.cleaned_data.get('fields', ''))
-        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
+        include_remix_subqueries = get_include_remix_subqueries(similarity_sound_form.cleaned_data.get('fields', ''))
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
 
         sounds = []
         for i, sid in enumerate(ids):
@@ -659,7 +674,8 @@ class UserSounds(ListAPIView):
             raise NotFoundException(resource=self)
         needs_analyzers_output = get_needed_audio_descriptors(self.request.GET.get('fields', ''))
         needs_similarity_vectors = get_needed_similarity_vectors(self.request.GET.get('fields', ''))
-        queryset = Sound.objects.bulk_sounds_for_user(user_id=user.id, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
+        include_remix_subqueries = get_include_remix_subqueries(self.request.GET.get('fields', ''))
+        queryset = Sound.objects.bulk_sounds_for_user(user_id=user.id, include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
         return queryset
 
 
@@ -730,7 +746,8 @@ class PackSounds(ListAPIView):
             raise NotFoundException(resource=self)
         needs_analyzers_output = get_needed_audio_descriptors(self.request.GET.get('fields', ''))
         needs_similarity_vectors = get_needed_similarity_vectors(self.request.GET.get('fields', ''))
-        queryset = Sound.objects.bulk_sounds_for_pack(pack_id=self.kwargs['pk'], include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors)
+        include_remix_subqueries = get_include_remix_subqueries(self.request.GET.get('fields', ''))
+        queryset = Sound.objects.bulk_sounds_for_pack(pack_id=self.kwargs['pk'], include_audio_descriptors=needs_analyzers_output, include_similarity_vectors=needs_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
         return queryset
 
 

@@ -39,10 +39,11 @@ from utils.tags import clean_and_split_tags
 ###################
 
 DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by commas (None = all)
-DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,category_code,category_is_user_provided,geotag,created,license,type,channels,filesize,bitrate,' + \
+DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,category_code,category_is_user_provided,' + \
+'geotag,is_geotagged,created,license,type,channels,filesize,bitrate,' + \
 'bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,' + \
 'num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,' +  \
-'analysis,analysis_files,is_explicit'
+'analysis,analysis_files,is_explicit,is_remix,was_remixed,md5'
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
 
@@ -131,6 +132,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'category_code',
                   'category_is_user_provided',
                   'geotag',
+                  'is_geotagged',
                   'created',
                   'license',
                   'type',
@@ -159,6 +161,9 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'analysis_files',
                   'is_explicit',
                   'score',
+                  'is_remix',
+                  'was_remixed',
+                  'md5'
                   )
 
     url = serializers.SerializerMethodField()
@@ -330,10 +335,32 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             return str(obj.geotag.lat) + " " + str(obj.geotag.lon)
         else:
             return None
+        
+    is_geotagged = serializers.SerializerMethodField()
+    def get_is_geotagged(self, obj):
+        return hasattr(obj, 'geotag')
 
     is_explicit = serializers.SerializerMethodField()
     def get_is_explicit(self, obj):
         return obj.is_explicit
+    
+    is_remix = serializers.SerializerMethodField()
+    def get_is_remix(self, obj):
+        if hasattr(obj, 'is_remix'):
+            return obj.is_remix
+        else:
+            return Sound.objects.filter(remixes=obj.id).exists()
+            
+    was_remixed = serializers.SerializerMethodField()
+    def get_was_remixed(self, obj):
+        if hasattr(obj, 'was_remixed'):
+            return obj.was_remixed
+        else:
+            return obj.remixes.exists()
+    
+    md5 = serializers.SerializerMethodField()
+    def get_md5(self, obj):
+        return obj.md5
 
 
 class SoundListSerializer(AbstractSoundSerializer):

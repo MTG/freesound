@@ -343,7 +343,8 @@ class TestSoundListSerializer(TestCase):
         for field_set in field_sets:
             sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids[0], 
                 include_audio_descriptors=True,
-                include_similarity_vectors=True)
+                include_similarity_vectors=True,
+                include_remix_subqueries=True)
             with self.assertNumQueries(0):
                 dummy_request = self.factory.get(reverse('apiv2-sound-search'), {'fields': field_set})
                 # Call serializer .data to actually get the data and potentially trigger unwanted extra queries
@@ -353,7 +354,8 @@ class TestSoundListSerializer(TestCase):
         for field_set in field_sets:
             sounds_dict = Sound.objects.dict_ids(sound_ids=self.sids, 
                 include_audio_descriptors=True,
-                include_similarity_vectors=True)
+                include_similarity_vectors=True,
+                include_remix_subqueries=True)
             with self.assertNumQueries(0):
                 dummy_request = self.factory.get(reverse('apiv2-sound-search'), {'fields': field_set})
                 for sound in sounds_dict.values():
@@ -379,7 +381,10 @@ class TestSoundSerializer(TestCase):
             # Test that the serialized sound instance includes all fields in the serializer and does not perform any
             # extra query. Because in this test we get sound info using Sound.objects.bulk_query_id, the serializer
             # should perform no extra queries to render the data
-            sound = Sound.objects.bulk_query_id(self.sound_id, include_audio_descriptors=True, include_similarity_vectors=True)[0]
+            sound = Sound.objects.bulk_query_id(self.sound_id, 
+                                                include_audio_descriptors=True, 
+                                                include_similarity_vectors=True, 
+                                                include_remix_subqueries=True)[0]
             dummy_request = self.factory.get(reverse('apiv2-sound-instance', args=[self.sound_id]) + '?fields=*')
             SoundSerializer(sound, context={'request': dummy_request}).data
             

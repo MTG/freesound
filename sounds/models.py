@@ -396,18 +396,14 @@ class SoundManager(models.Manager):
             return None
 
     def bulk_query_solr(self, sound_ids):
-        qs = self.bulk_query_id(sound_ids, include_audio_descriptors=True, include_similarity_vectors=True)
+        qs = self.bulk_query_id(sound_ids, include_audio_descriptors=True, include_similarity_vectors=True, include_remix_subqueries=True)
+        # When indexing in solr, we also want to include comments as a subquery
         comments_subquery = Comment.objects.filter(sound=OuterRef("id")).values("comment")
-        is_remix_subquery = Sound.objects.filter(remixes=OuterRef("id")).values("id")
-        was_remixed_subquery = Sound.objects.filter(sources=OuterRef("id")).values("id")
-
-        qs = qs.annotate(comments_array=ArraySubquery(comments_subquery),
-                         is_remix=Exists(is_remix_subquery),
-                         was_remixed=Exists(was_remixed_subquery))
+        qs = qs.annotate(comments_array=ArraySubquery(comments_subquery))
         return qs
 
 
-    def bulk_query(self, include_audio_descriptors=False, include_similarity_vectors=False):
+    def bulk_query(self, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
         tags_subquery = Tag.objects.filter(soundtag__sound=OuterRef("id")).values("name")
         analysis_subquery = SoundAnalysis.objects.filter(
             sound=OuterRef("id"), analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK"
@@ -459,10 +455,15 @@ class SoundManager(models.Manager):
                 ).values(data=JSONObject(**json_object_args))
             qs = qs.annotate(similarity_vectors=ArraySubquery(similarity_vectors_subquery))
 
+        if include_remix_subqueries:
+            is_remix_subquery = Sound.objects.filter(remixes=OuterRef("id")).values("id")
+            was_remixed_subquery = Sound.objects.filter(sources=OuterRef("id")).values("id")
+            qs = qs.annotate(is_remix=Exists(is_remix_subquery), was_remixed=Exists(was_remixed_subquery))
+
         return qs
 
-    def bulk_sounds_for_user(self, user_id, limit=None, include_audio_descriptors=False, include_similarity_vectors=False):
-        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)
+    def bulk_sounds_for_user(self, user_id, limit=None, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
+        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
         qs = qs.filter(
             moderation_state="OK",
             processing_state="OK",
@@ -473,8 +474,8 @@ class SoundManager(models.Manager):
             qs = qs[:limit]
         return qs
 
-    def bulk_sounds_for_pack(self, pack_id, limit=None, include_audio_descriptors=False, include_similarity_vectors=False):
-        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)
+    def bulk_sounds_for_pack(self, pack_id, limit=None, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
+        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
         qs = qs.filter(
             moderation_state="OK",
             processing_state="OK",
@@ -485,10 +486,10 @@ class SoundManager(models.Manager):
             qs = qs[:limit]
         return qs
 
-    def bulk_query_id(self, sound_ids, limit=None, include_audio_descriptors=False, include_similarity_vectors=False):
+    def bulk_query_id(self, sound_ids, limit=None, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]
-        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)
+        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
         qs = qs.filter(
             id__in=sound_ids
         ).order_by('-created')
@@ -497,19 +498,19 @@ class SoundManager(models.Manager):
             qs = qs[:limit]
         return qs
 
-    def bulk_query_id_public(self, sound_ids, limit=None, include_audio_descriptors=False, include_similarity_vectors=False):
-        qs = self.bulk_query_id(sound_ids, limit=limit, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)
+    def bulk_query_id_public(self, sound_ids, limit=None, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
+        qs = self.bulk_query_id(sound_ids, limit=limit, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
         qs = qs.filter(
             moderation_state="OK",
             processing_state="OK",
         )
         return qs
 
-    def dict_ids(self, sound_ids, include_audio_descriptors=False, include_similarity_vectors=False):
-        return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)}
+    def dict_ids(self, sound_ids, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
+        return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)}
 
-    def ordered_ids(self, sound_ids, include_audio_descriptors=False, include_similarity_vectors=False):
-        sounds = self.dict_ids(sound_ids, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors)
+    def ordered_ids(self, sound_ids, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
+        sounds = self.dict_ids(sound_ids, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
         return [sounds[sound_id] for sound_id in sound_ids if sound_id in sounds]
 
 

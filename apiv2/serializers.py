@@ -39,7 +39,7 @@ from utils.tags import clean_and_split_tags
 ###################
 
 DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by commas (None = all)
-DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,category_code,category_is_user_provided,' + \
+DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,subcategory,category_code,category_is_user_provided,' + \
 'geotag,is_geotagged,created,license,type,channels,filesize,bitrate,' + \
 'bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,' + \
 'num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,' +  \
@@ -129,6 +129,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'tags',
                   'description',
                   'category',
+                  'subcategory',
                   'category_code',
                   'category_is_user_provided',
                   'geotag',
@@ -207,10 +208,13 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     
     category = serializers.SerializerMethodField()
     def get_category(self, obj):
-        category, subcategory = obj.category_names
-        if category is None and subcategory is None:
-            return None
-        return [category, subcategory]
+        category, _ = obj.category_names
+        return category
+
+    subcategory = serializers.SerializerMethodField()
+    def get_subcategory(self, obj):
+        _, subcategory = obj.category_names
+        return subcategory
     
     category_code = serializers.SerializerMethodField()
     def get_category_code(self, obj):

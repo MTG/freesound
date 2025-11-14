@@ -191,7 +191,7 @@
       "required": false
     },
     {
-      "name": "original_filename",
+      "name": "name",
       "type": "freesound_text",
       "indexed": true,
       "stored": true,

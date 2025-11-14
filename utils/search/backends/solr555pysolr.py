@@ -43,7 +43,7 @@ USE_COLLAPSE_AND_EXPAND_QUERY_PARSER = True  # Note that changing this requies a
 # Mapping from freesound sound field names to solr sound field names
 FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_ID: 'id',
-    settings.SEARCH_SOUNDS_FIELD_NAME: 'original_filename',
+    settings.SEARCH_SOUNDS_FIELD_NAME: 'name',
     settings.SEARCH_SOUNDS_FIELD_TAGS: {'field': 'tag', 'facet': 'tagfacet'},
     settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 'description',
     settings.SEARCH_SOUNDS_FIELD_USER_NAME: {'field': 'username', 'facet': 'username_facet'},
@@ -249,15 +249,15 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document = {}
 
         # Basic sound fields
-        keep_fields = ['username', 'created', 'is_explicit', 'is_remix', 'num_ratings', 'channels', 'md5',
-                    'was_remixed', 'original_filename', 'duration', 'num_downloads', 'filesize']
+        keep_fields = ['username', 'created', 'is_explicit', 'is_remix', 'num_ratings', 'channels', 'md5', 
+                       'was_remixed', 'duration', 'num_downloads', 'filesize']
         for key in keep_fields:
             document[key] = getattr(sound, key)
         if sound.type == '':
             document["type"] = "wav"
         else:
             document["type"] = sound.type
-        document["original_filename"] = remove_control_chars(getattr(sound, "original_filename"))
+        document["name"] = remove_control_chars(getattr(sound, "original_filename"))
         document["description"] = remove_control_chars(getattr(sound, "description"))
         document["tag"] = list({t.lower() for t in getattr(sound, "tag_array")})
         document["license"] = sound.license.name

@@ -57,17 +57,28 @@ page_size                              string                     Indicates the 
 .. _search-filter:
 
 The 'filter' parameter
-~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
-Search results can be filtered by specifying a series of properties that sounds should match.
+Search results can be filtered by specifying a series of `properties that sounds should match`.
 In other words, using the ``filter`` parameter you can specify the value that certain sound fields should have in order to be considered valid search results.
-Filters are defined with a syntax like ``filter=filtername:value filtername:value`` (that is the Solr filter syntax).
+Filters are defined with a **syntax** like ``filter=filtername:value filtername:value`` (that is the Solr filter syntax).
 For multi-word queries, the values must be enclosed in double quotes and separated by spaces (``filter=filtername:"val ue"``).
 
-**Filter names** can be any of the ``field names`` listed in the tables of the :ref:`sound-sound` resource that are marked with "yes" in the ``filtering`` column.
+**Available filters**
+
+Filter **names** can be any of the ``field names`` listed in the tables of the :ref:`sound-sound` resource that are marked with "yes" in the ``filtering`` column.
 The first table includes fields/filters corresponding to user-provided metadata and general sound metadata.
-Additionally, content-based filters from the second table can be used when narrowing down a query. 
+Additionally, content-based fields/filters from the second table can be used when narrowing down a query. 
 Using content-based descriptors as filters enables `content-based search` in Freesound.
+
+`Note:` The fields ``tags`` and ``comments`` are named ``tag`` and ``comment`` in filters (singular instead of plural)!
+
+The fields ``pack`` and ``comments`` normally return a URI (type=URI) when accessed as metadata, 
+whereas their corresponding filters expect string values (type=string) and can match individual target words.
+Additioanlly, the filters associated with the fields ``name``, ``description``, ``tags``, and ``comments`` use tokenization.
+This means that these filters accept string values (words), and a match occurs if a sound contains that word anywhere in the corresponding field's data.
+
+**Filtering operators** 
 
 For numeric or integer filters, rather than specifying a single value, a **range can be used** using the following syntax (the "TO" must be uppercase!)::
 
@@ -75,7 +86,7 @@ For numeric or integer filters, rather than specifying a single value, a **range
   filter=filtername:[* TO end]
   filter=filtername:[start to \*]  (NOT valid)
 
-Note: It is recommended to use ranges when using filters with numeric values (which may be floats).
+`Note:` It is recommended to use ranges when using filters with numeric values (which may be floats).
 This is especially useful for many content-based filters, as exact value matches for floats are uncommon.
 
 Dates can also have ranges and math operations (the "TO" must still be uppercase!)::
@@ -128,7 +139,7 @@ Please refer to the Solr documentation on spatial queries for extra information 
 .. _search-sort:
 
 The 'sort' parameter
-~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 The ``sort`` parameter determines how the results are sorted, and can only be one
 of the following.
@@ -151,7 +162,7 @@ rating_asc      Same as above, but lowest rated sounds first.
 .. _search-similar:
 
 The 'similar_to' and 'simiarity_space' parameters
-~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These parameters allow similarity-based search in order to retrieve sounds that are acoustically, semantically, or perceptually similar to a given reference sound.
 The ``similar_to`` parameter takes the ID of a sound (e.g. 1234) or a similarity vector (e.g. [1.36, 2.05, ..]) and returns results sorted by similarity to that sound. For example::
@@ -176,7 +187,7 @@ freesound_classic      100                    This space is built using a combin
 .. _search-weights:
 
 The 'weights' parameter
-~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``weights`` parameter can be used to define custom weights when matching queries with sound metadata fields. You can use any of the field names listed above 
 (although some might not make sense when preparing a query) and specify integer weights for each field using the following syntax::
@@ -190,7 +201,7 @@ The default weights are something like ``id:4,tag:4,description:3,original_filen
 .. _search-fields:
 
 The 'fields' parameter
-~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 The ``fields`` parameter defines the sound information that is returned for every sound in the results.
 If ``fields``  is not specified, a minimal set of information for every sound result is returned by default.
@@ -461,23 +472,6 @@ Response (sound instance)
 
 The Sound Instance response is a dictionary including the following properties/fields:
 
-.. TODO: check correlation of these filters with field names
-.. ======================  =============  ====================================================
-.. Filter name             Type           Description
-.. ======================  =============  ====================================================
-.. ``original_filename``   string         Name given to the sound (tokenized).
-.. ``category``            string         Category name (top-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "Instrument samples"). 
-.. ``subcategory``         string         Subategory name (second-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "Piano / Keyboard instruments"). For optimal results, it is recommended to use this filter in combination with the ``category`` filter.
-.. ``tag``                 string         Tag of the sound.
-.. ``description``         string         Textual description given to the sound (tokenized).
-.. ``is_remix``            boolean        Whether the sound is a remix of another Freesound sound.
-.. ``was_remixed``         boolean        Whether the sound has remixes in Freesound.
-.. ``pack``                string         Pack name (not tokenized).
-.. ``pack_tokenized``      string         Pack name (tokenized).
-.. ``is_geotagged``        boolean        Whether the sound has geotag information.
-.. ``md5``                 string         32-byte md5 hash of file.
-.. ``comment``             string         Textual content of the comments of a sound  (tokenized). The filter is satisfied if sound contains the filter value in at least one of its comments.
-
 .. rst-class:: fieldstable
 =========================  ================  =========  ====================================================================================
 Field name                 Type              Filtering  Description
@@ -485,12 +479,14 @@ Field name                 Type              Filtering  Description
 id                         numeric           yes        The sound's unique identifier (ID) on Freesound.
 url                        URI               no         The URI for this sound on the Freesound website.
 name                       string            yes        The name user gave to the sound.
-tags                       array[string]     yes        An array of tags the user gave to the sound.
+tags                       array[string]     yes*       An array of tags the user gave to the sound.
 description                string            yes        The textual description the user gave to the sound.
-category                   array[string]                A two-element array containing the sound's category and subcategory names from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_. Note that categories are filled-out by an algorithm if not provided by the original author of the sound.
+category                   string            yes        Category name (top-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "Instrument samples"). Note that categories are filled out by an algorithm if not provided by the original uploader of the sound.
+subcategory                string            yes        Subategory name (second-level category) from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "Piano / Keyboard instruments"). For optimal results, it is recommended to use this filter in combination with the ``category`` filter. Note that categories are filled out by an algorithm if not provided by the original uploader of the sound.
 category_code              string                       The category ID from the `Broad Sound Taxonomy <https://freesound.org/help/faq/#the-broad-sound-taxonomy>`_ (e.g. "fx-a", with the prefix indicating the category and the suffix indicating the subcategory). Note that categories are filled out by an algorithm if not provided by the original uploader of the sound.
 category_is_user_provided  boolean           no         Whether the ``category`` (and ``category_code``) were provided by the author of the sound or assigned automatically by an algorithm.
-geotag                     string                       Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
+geotag                     string            yes*       Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
+is_geotagged               boolean           yes        Whether the sound has geotag information.
 created                    string            yes        The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
 license                    string            yes        The Creative Commons license under which the sound is available to you ("Attribution", "Attribution NonCommercial", "Creative Commons 0").
 type                       string            yes        The original type of the sound (wav, aif, aiff, ogg, mp3, m4a, or flac).
@@ -501,7 +497,11 @@ bitdepth                   integer           yes        The encoding bitdepth of
 duration                   numeric           yes        The duration of the sound in seconds.
 samplerate                 integer           yes        The samplerate of the sound.
 username                   string            yes        The username of the sound uploader.
-pack                       URI               no         If the sound is part of a pack, this URI points to that pack's API resource.
+md5                        string            yes        32-byte md5 hash of the sound file.
+is_remix                   boolean           yes        Whether the sound is a remix of another Freesound sound.
+was_remixed                boolean           yes        Whether the sound has remixes in Freesound.
+is explicit                boolean           yes        Whether the sound is marked as explicit.
+pack                       URI               yes*       If the sound is part of a pack, this URI points to that pack's API resource.
 download                   URI               no         The URI for retrieving the original sound.
 bookmark                   URI               no         The URI for bookmarking the sound.
 previews                   object            no         Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively).
@@ -510,7 +510,7 @@ num_downloads              integer           yes        The number of times the 
 avg_rating                 numeric           yes        The average rating of the sound (range [0, 5]).
 num_ratings                integer           yes        The number of times the sound was rated.
 rate                       URI               no         The URI for rating the sound.
-comments                   URI                          The URI of a paginated list of the comments of the sound.
+comments                   URI               yes*       The URI of a paginated list of the comments of the sound.
 num_comments               integer           yes        The number of times the sound was commented.
 comment                    URI               no         The URI to comment the sound.
 similar_sounds             URI               no         URI pointing to the :ref:`similar-sounds` resource (to get a list of similar sounds).

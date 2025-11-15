@@ -356,7 +356,8 @@ def send_activation(user):
     tvars = {
         'user': user,
         'username': username,
-        'hash': token
+        'hash': token,
+        'pw_reset_timeout_days': int(settings.PASSWORD_RESET_TIMEOUT / (60 * 60 * 24)),
     }
     send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'emails/email_activation.txt', tvars, user_to=user)
 

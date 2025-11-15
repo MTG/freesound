@@ -11,7 +11,7 @@ In order to activate your Freesound account, please click this link:
 
 {% absurl 'accounts-activate' username hash %}
 
-The link is only valid for {{ settings.PASSWORD_RESET_TIMEOUT_DAYS }} days.
+The link is only valid for {{ pw_reset_timeout_days }} days.
 
 If for some reason this fails, try copy-pasting the complete link into you browser. Some mail clients break up long lines, or do strange things to URLs!
 {% endblock %}

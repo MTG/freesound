@@ -88,11 +88,6 @@ beat_times
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.html
 
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/beat_times.png
-        :height: 300px
-
 
 boominess
 -------------------------
@@ -120,7 +115,7 @@ bpm
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/bpm
 
-**Description:** BPM value estimated by beat tracking algorithm.
+**Description:** BPM value of the audio estimated by beat tracking algorithm.
 
 **Type:** integer
 
@@ -396,11 +391,6 @@ onset_times
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_OnsetRate.html
 
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/onset_times.png
-        :height: 300px
-
 
 pitch
 -------------------------
@@ -460,11 +450,6 @@ reverbness
 **Type:** boolean
 
 **More information:** https://en.wikipedia.org/wiki/Reverberation
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/reverbness.png
-        :height: 300px
 
 
 roughness
@@ -652,7 +637,7 @@ beat_loudness
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/beat_loudness
 
-**Description:** Spectral energy measured at the beat positions of the audio signal.
+**Description:** Spectral energy measured at the beat positions of the audio signal. It measures the strength of the rhythmic beats of the sound.
 
 **Mode:** mean
 
@@ -699,11 +684,6 @@ chord_progression
 **Type:** array[string]
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_ChordsDetection.html
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/chord_progression.png
-        :height: 300px
 
 
 decay_strength
@@ -763,7 +743,81 @@ hpcp
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/hpcp.png
+    .. image:: _static/descriptors/hpcp_crest.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_entropy.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_0.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_1.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_2.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_3.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_4.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_5.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_6.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_7.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_8.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_9.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_10.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_11.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_12.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_13.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_14.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_15.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_16.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_17.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_18.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_19.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_20.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_21.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_22.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_23.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_24.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_25.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_26.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_27.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_28.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_29.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_30.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_31.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_32.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_33.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_34.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_35.png
         :height: 300px
 
 
@@ -845,7 +899,31 @@ mfcc
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/mfcc.png
+    .. image:: _static/descriptors/mfcc_0.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_1.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_2.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_3.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_4.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_5.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_6.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_7.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_8.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_9.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_10.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_11.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_12.png
         :height: 300px
 
 
@@ -1225,7 +1303,11 @@ tristimulus
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/tristimulus.png
+    .. image:: _static/descriptors/tristimulus_0.png
+        :height: 300px
+    .. image:: _static/descriptors/tristimulus_1.png
+        :height: 300px
+    .. image:: _static/descriptors/tristimulus_2.png
         :height: 300px
 
 

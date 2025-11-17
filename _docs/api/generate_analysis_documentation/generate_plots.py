@@ -3,12 +3,14 @@ from __future__ import print_function
 import csv 
 import json
 import os
+import re
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
+from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
-
 DATA_FOLDER = "descriptors_data"  # json files for each descriptor extracted from DB
-OUT_FOLDER = "out_plots"  # Must be created, transfer diagrams to "_static/descriptors"
+OUT_FOLDER = "../source/_static/descriptors"
 
 with open("descriptors.csv", "r", newline="") as f:
     reader = csv.reader(f)
@@ -17,41 +19,24 @@ with open("descriptors.csv", "r", newline="") as f:
 
 print("Descriptors found:", len(descriptor_names))
 
-#### fake data #######
-# TODO: extract data directly from DB
-# data types: float/int (single number), string, boolean, vector numeric, vector string
-import random
-import string
-NUM_VALUES = 50000
-descriptors = {
-    "d1": lambda: round(random.uniform(0, 500), 2),  # floats
-    "d2": lambda: random.randint(10, 50),  # integers
-    "d3": lambda: random.choice(['aaa', 'bbb', 'ccc']),  # strings
-    "d4": lambda: random.choice([0, 1]),  # boolean
-    "d5": lambda: [round(random.uniform(0.5, 0.75), 2), round(random.uniform(0.9, 1.5), 2)],  # vector of numbers
-    "d6": lambda: [random.choice(string.ascii_letters) for _ in range(3)],  # vector of strings
-}
-for name, generator in descriptors.items():  # each descriptor as its own JSON file
-    data = [generator() for _ in range(NUM_VALUES)]
-    with open(os.path.join(DATA_FOLDER, f"{name}.json"), "w") as f:
-        json.dump(data, f, indent=2)
-    print(f"{name}.json written with {NUM_VALUES} values")
-######################
-
-
-sns.set_theme(style="whitegrid", context="talk", palette="pastel")
-
+def sort_key(s):
+    ''' Sort string labels, and fix note order. '''
+    m = re.match(r"([A-Za-z]+)(#?)(\d+)", s)
+    if m:
+        letter, symbol, number = m.groups()
+        return (int(number), letter.lower(), symbol != "")
+    else:
+        return (float('inf'), s.lower(), False)
+    
 def plot_histogram(data, label, out_folder):
+    sns.set_theme(style="whitegrid", context="talk", palette="pastel")
     plt.figure(figsize=(8,5))
 
     len_vals = len(set(data))
-    if len_vals > 100:
-        bins = 100
-    else:
-        bins = len_vals
+    bins = 100 if len_vals > 100 else len_vals
 
     if all(isinstance(x, (int, float)) for x in data):  # Numeric data
-        if set(data).issubset({0, 1}):  # boolean
+        if set(data).issubset({0, 1}):  # Boolean data
             sns.countplot(
                 x=data,
                 color=sns.color_palette("Set2")[0]
@@ -67,11 +52,25 @@ def plot_histogram(data, label, out_folder):
             )
         
     else:  # Categorical/string data
+        if len_vals > 20: 
+            plt.figure(figsize=(15,5))
+            plt.xticks(rotation=60) 
+        if len_vals > 100: 
+            data = data.value_counts().nlargest(20).index
+        sorted_data = sorted(set(data), key=sort_key)
         sns.countplot(
             x=data,
-            color=sns.color_palette("Set2")[0]
+            color=sns.color_palette("Set2")[0],
+            order=sorted_data
         )
         
+    def thousands_formatter(x, pos):
+        if x >= 1000:
+            return f'{int(x/1000)}k'
+        return int(x)
+    plt.gca().ticklabel_format(style='plain', axis='y')
+    plt.gca().yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
+
     plt.xticks(fontsize=10)
     plt.yticks(fontsize=10)
     plt.title(label, fontsize=11)
@@ -85,7 +84,7 @@ def plot_histogram(data, label, out_folder):
 
 
 # Plot all descriptors
-for descriptor_name in descriptors.keys():  # TODO: plug real data
+for descriptor_name in descriptor_names: 
     json_path = os.path.join(DATA_FOLDER, f"{descriptor_name}.json")
     if not os.path.isfile(json_path):
         print(f"File not found: {json_path}, skipping")
@@ -93,6 +92,7 @@ for descriptor_name in descriptors.keys():  # TODO: plug real data
 
     with open(json_path, "r") as f:
         values = json.load(f)
+    values = [v for v in values if v is not None]
     print(f"Processing {descriptor_name} ..")
 
     if not values:
@@ -103,10 +103,6 @@ for descriptor_name in descriptors.keys():  # TODO: plug real data
 
     # Single-value number descriptor (integer and/or float, boolean)
     if isinstance(first_val, (int, float, str)):
-        if set(values).issubset({0,1}):
-            print(f"Boolean descriptor: {descriptor_name}")
-        else:
-            print(f"Single-number descriptor: {descriptor_name}")
         plot_histogram(values, descriptor_name, OUT_FOLDER)
 
     # Vector descriptor with numbers or strings
@@ -118,5 +114,5 @@ for descriptor_name in descriptors.keys():  # TODO: plug real data
         for i in range(len(first_val)):
             pool = [v[i] for v in values if len(v) > i]
             label = f"{descriptor_name}_{i}"
-            print(f"\tDim. {i} of {descriptor_name}")
+            print(f"\tDim. {i}")
             plot_histogram(pool, label, OUT_FOLDER)

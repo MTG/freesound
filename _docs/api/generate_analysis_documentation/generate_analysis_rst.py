@@ -1,5 +1,8 @@
 import csv
+import glob
 import json
+import os
+import re
 import urllib.request
 
 header = """
@@ -58,6 +61,7 @@ For example, if ``mode`` is ``mean (36)``, it represents the mean calculated acr
 """
 
 curl_str = "    curl https://freesound.org/api/sounds/<sound_id>/analysis/"
+image_folder = '../source/_static/descriptors/'
 image_str = "    .. image:: _static/descriptors/"
 height_str = "        :height: 300px"
 
@@ -99,9 +103,17 @@ def print_descriptor(descriptor):
     if descriptor.get("links"):
         print("\n**More information:** " + descriptor["links"])
 
-    print("\n**Distribution in Freesound**\n")
-    print(image_str + descriptor["name"] + ".png")
-    print(height_str)
+    image_paths = (
+        glob.glob(os.path.join(image_folder, f"{descriptor['name']}.png"))
+        or glob.glob(os.path.join(image_folder, f"{descriptor['name']}_*.png"))  #descriptor_[number]
+    )       
+    if image_paths:
+        image_paths.sort(key=lambda p: int(re.findall(r'\d+', os.path.basename(p))[-1]) if re.findall(r'\d+', os.path.basename(p)) else -1)
+        print("\n**Distribution in Freesound**\n")
+        for image_path in image_paths:
+            print(f"{image_str}{os.path.basename(image_path)}")
+            print(height_str)
+
     print("\n")
 
 # Split descriptors by complexity

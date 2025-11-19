@@ -5,8 +5,6 @@ const handleSimilarSoundsModal = (modalUrl, modalActivationParam) => {
     handleGenericModal(modalUrl, (modalContainer) => {
         // Bind listener to update paginator links if new similarity space is selected
         const currentUrl = new URL(modalUrl, window.location.origin);
-
-        console.log(currentUrl, modalUrl)
         const similaritySpaceSelect = modalContainer.querySelector('#similarity-space-select');
         if (similaritySpaceSelect) {
             similaritySpaceSelect.addEventListener('change', (evt) => {

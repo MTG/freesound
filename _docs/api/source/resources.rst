@@ -237,7 +237,7 @@ Search resource returns a *sound list response*. Sound list responses have the f
     "previous": <link to the previous page of results (null if none)>
   }
 
-You can use the :ref:`sound-search-parameters` ``fields``, ``page``, and ``page_size`` in the sound list response.
+You can use the request parameters ``fields``, ``page``, and ``page_size`` to indicate what information should be returned for any sound in the list and the size/page number (see :ref:`sound-search-parameters`).
 
 
 .. _sound-search-examples:
@@ -1219,7 +1219,7 @@ Response
 --------
 
 User Sounds resource returns a sound list just like :ref:`sound-list-response`.
-The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+The same extra request parameters apply (``page``, ``page_size``, ``fields``).
 
 
 Examples
@@ -1324,7 +1324,7 @@ Response
 --------
 
 Pack Sounds resource returns a sound list just like :ref:`sound-list-response`.
-The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+The same extra request parameters apply (``page``, ``page_size``, ``fields``).
 
 
 Examples
@@ -1432,7 +1432,7 @@ Response
 --------
 
 User Bookmark Category Sounds resource returns a sound list just like :ref:`sound-list-response`.
-The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+The same extra request parameters apply (``page``, ``page_size``, ``fields``).
 
 
 Examples

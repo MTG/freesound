@@ -621,6 +621,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 vector = None
                 if isinstance(similar_to, list):
                     vector = similar_to  # we allow vectors to be passed directly
+                    # If vector needs to be l2 normalized, do it now. Note that if the vector is already normalized, this will have no effect
+                    if config_options.get('l2_norm', False):
+                        vector = SoundSimilarityVector.l2_normalize_vector(vector)
                 else:
                     # similar_to should be a sound_id
                     try:

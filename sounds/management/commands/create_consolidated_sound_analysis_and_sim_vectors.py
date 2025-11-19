@@ -60,13 +60,20 @@ class Command(LoggingBaseCommand):
             dest='chunk_size',
             default=100,
             help='Number of sounds to process in each chunk (default: 100).')
-
+        
         parser.add_argument(
-            '--clear_others',
+            '--skip-consolidated-analysis',
             action='store_true',
-            dest='clear_others',
+            dest='skip_consolidated_analysis',
             default=False,
-            help='If set, clear analysis data from SoundAnalysis obects other than "consolidated" one.')
+            help='If set, skip generating consolidated analysis objects.')
+        
+        parser.add_argument(
+            '--skip-similarity-vectors',
+            action='store_true',
+            dest='skip_similarity_vectors',
+            default=False,
+            help='If set, skip generating similarity vector objects.')
     
 
     def handle(self, *args, **options):
@@ -94,57 +101,58 @@ class Command(LoggingBaseCommand):
         for i in range(0, len(sound_ids_to_process), chunk_size):
             sound_ids = sound_ids_to_process[i:i+chunk_size]
             ss = Sound.objects.filter(id__in=sound_ids)
-            
-            if options['clear_others']:
-                # Clear data from all non-consolidated sound analysis objects related to these sounds
-                ssaa = SoundAnalysis.objects.filter(sound__in=sound_ids).exclude(analyzer=settings.CONSOLIDATED_ANALYZER_NAME)
-                ssaa.update(analysis_data={}) 
 
             # Generate consolidated analyses and load similarity vectors for the chunk of sounds
             consolidated_analyis_objects = []
             similarity_vector_objects = []
             for sound in ss:
-                consolidated_analysis_data, tmp_analyzers_data= sound.consolidate_analysis(no_db_operations=True)
-                
-                consolidated_analyis_objects.append(SoundAnalysis(
-                    sound_id=sound.id,
-                    analyzer=settings.CONSOLIDATED_ANALYZER_NAME,
-                    analysis_data=consolidated_analysis_data,
-                    analysis_status = "OK",
-                    last_analyzer_finished = timezone.now()
-                ))
-
-                for similarity_space_name, similarity_space in settings.SIMILARITY_SPACES.items():
-                    analyzer_data = tmp_analyzers_data.get(similarity_space['analyzer'], {})
-                    if not analyzer_data:
-                        analyzer_data = SoundAnalysis.get_analysis_data_from_file_without_db(sound.id, similarity_space['analyzer'])
-                        if not analyzer_data:
-                            continue
-                    try:
-                        sim_vector = analyzer_data[similarity_space['vector_property_name']]
-                        sim_vector = [float(x) for x in sim_vector] 
-                    except (IndexError, ValueError, KeyError):
-                        continue
-
-                    if len(sim_vector) != similarity_space['vector_size']:
-                        continue
+                if not options['skip_consolidated_analysis']:
+                    consolidated_analysis_data, tmp_analyzers_data= sound.consolidate_analysis(no_db_operations=True)
                     
-                    similarity_vector_objects.append(SoundSimilarityVector(
+                    consolidated_analyis_objects.append(SoundAnalysis(
                         sound_id=sound.id,
-                        similarity_space_name=similarity_space_name,
-                        vector=sim_vector
+                        analyzer=settings.CONSOLIDATED_ANALYZER_NAME,
+                        analysis_data=consolidated_analysis_data,
+                        analysis_status = "OK",
+                        last_analyzer_finished = timezone.now()
                     ))
+
+                if not options['skip_similarity_vectors']:
+                    for similarity_space_name, similarity_space in settings.SIMILARITY_SPACES.items():
+                        analyzer_data = tmp_analyzers_data.get(similarity_space['analyzer'], {})
+                        if not analyzer_data:
+                            analyzer_data = SoundAnalysis.get_analysis_data_from_file_without_db(sound.id, similarity_space['analyzer'])
+                            if not analyzer_data:
+                                continue
+                        try:
+                            sim_vector = analyzer_data[similarity_space['vector_property_name']]
+                            sim_vector = [float(x) for x in sim_vector] 
+                        except (IndexError, ValueError, KeyError):
+                            continue
+
+                        if len(sim_vector) != similarity_space['vector_size']:
+                            continue
+                        
+                        similarity_vector_objects.append(SoundSimilarityVector(
+                            sound_id=sound.id,
+                            similarity_space_name=similarity_space_name,
+                            vector=sim_vector
+                        ))
                     
             # Now that we loaded all the data, create the db objcts in bulk
             if options['force']:
                 # If force is set, we delete any existing consolidated analysis or similarity vector for these sounds
                 # before creating the new ones
                 # NOTE: we used ignore_conflicts=True below to avoid issues force is set to False and some objects already exist
-                SoundAnalysis.objects.filter(sound__in=sound_ids, analyzer=settings.CONSOLIDATED_ANALYZER_NAME).delete()
-                SoundSimilarityVector.objects.filter(sound__in=sound_ids).delete()
+                if not options['skip_consolidated_analysis']:
+                    SoundAnalysis.objects.filter(sound__in=sound_ids, analyzer=settings.CONSOLIDATED_ANALYZER_NAME).delete()
+                if not options['skip_similarity_vectors']:
+                    SoundSimilarityVector.objects.filter(sound__in=sound_ids).delete()
             
-            SoundAnalysis.objects.bulk_create(consolidated_analyis_objects, ignore_conflicts=True)
-            SoundSimilarityVector.objects.bulk_create(similarity_vector_objects, ignore_conflicts=True)
+            if not options['skip_consolidated_analysis']:
+                SoundAnalysis.objects.bulk_create(consolidated_analyis_objects, ignore_conflicts=True)
+            if not options['skip_similarity_vectors']:
+                SoundSimilarityVector.objects.bulk_create(similarity_vector_objects, ignore_conflicts=True)
 
             total_done += chunk_size
             elapsed = time.monotonic() - starttime

@@ -2299,10 +2299,16 @@ class SoundSimilarityVector(models.Model):
     similarity_space_name = models.CharField(max_length=100)
     vector = ArrayField(models.FloatField())
 
-    def apply_l2_normalization(self, commit=True):
-        norm = math.sqrt(sum([v*v for v in self.vector]))
+    @classmethod
+    def l2_normalize_vector(cls, vector):
+        norm = math.sqrt(sum([v*v for v in vector]))
         if norm > 0:
-            self.vector = [v/norm for v in self.vector]
+            return [v/norm for v in vector]
+        else:
+            return vector
+
+    def apply_l2_normalization(self, commit=True):
+        self.vector = self.l2_normalize_vector(self.vector)
         if commit:
             self.save()
 

@@ -183,6 +183,10 @@ laion_clap             512                    This space is built using LAION-CL
 freesound_classic      100                    This space is built using a combination of low-level acoustic audio features extracted using the ``FreesoundExtractor`` from the Essentia audio analysis library (https://essentia.upf.edu). We currently don't provide code to extract these features from arbitrary audio, but we might do that in the future.
 =====================  =====================  ====================================================================
 
+When using vectors as input for the ``similar_to`` parameter, make sure that the vectors are extracted using the same method as the one used to build the similarity space. 
+Note that L2-normalisation is automatically applied to input vectors.
+If the provided vector is already L2-normalized, this will have no effect.
+
 
 .. _search-weights:
 

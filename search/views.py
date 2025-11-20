@@ -172,6 +172,7 @@ def search_view_helper(request):
             'non_grouped_number_of_results': results.non_grouped_number_of_results,
             'show_beta_search_options': allow_beta_search_features(request),
             'experimental_facets': settings.SEARCH_SOUNDS_BETA_FACETS,
+            'enable_collections': settings.ENABLE_COLLECTIONS,
         }
 
     except SearchEngineException as e:

@@ -113,6 +113,17 @@ def update_collection_num_sounds_bulk_changes(**kwargs):
     if collectionsound:
         Collection.objects.filter(collectionsound=collectionsound).update(num_sounds=Greatest(F('num_sounds') - 1, 0))
 
+@receiver(post_save, sender=CollectionSound)
+def mark_sound_dirty_on_collection_add(**kwargs):
+    collectionsound = kwargs.pop('instance', False)
+    if collectionsound:
+        Sound.objects.filter(id=collectionsound.sound_id).update(is_index_dirty=True)
+
+@receiver(post_delete, sender=CollectionSound)
+def mark_sound_dirty_on_collection_remove(**kwargs):
+    collectionsound = kwargs.pop('instance', False)
+    if collectionsound:
+        Sound.objects.filter(id=collectionsound.sound_id).update(is_index_dirty=True)
 
 class CollectionDownload(models.Model):
     user = models.ForeignKey(User, related_name='collection_downloads', on_delete=models.CASCADE)

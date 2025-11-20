@@ -215,6 +215,9 @@
                     {% display_facet "type" %}
                     {% display_facet "channels" %}
                     {% display_facet "samplerate" %}
+                    {% if enable_collections %}
+                        {% display_facet "collection_grouping" %}
+                    {% endif %}
                     {% if not sqp.display_as_packs_active %}
                         {% display_facet "pack_grouping" %}
                     {% endif %}

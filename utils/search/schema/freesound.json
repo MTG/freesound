@@ -259,6 +259,14 @@
       "required": false
     },
     {
+      "name": "collection",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false,
+      "multiValued": true
+    },
+    {
       "name": "is_geotagged",
       "type": "boolean",
       "indexed": true,

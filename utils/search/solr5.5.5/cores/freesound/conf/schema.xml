@@ -236,6 +236,8 @@
 		<field name="grouping_pack" type="string" indexed="true" stored="true" required="false" /> <!-- literal -->
 		<field name="pack_tokenized" type="freesound_text" indexed="true" stored="true" required="false" /> <!-- parsed -->
 
+		<field name="collection" type="string" indexed="true" stored="true" required="false" multiValued="true" /> 
+
 		<field name="is_geotagged" type="boolean" indexed="true" stored="true" required="true" />
 		<field name="geotag" type="location_rpt" indexed="true" stored="true" required="false"  multiValued="true"/>
 

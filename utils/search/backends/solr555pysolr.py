@@ -49,6 +49,7 @@ FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_USER_NAME: 'username',
     settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 'pack_tokenized',
     settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: 'grouping_pack',
+    settings.SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING: 'collection',
     settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: 'samplerate',
     settings.SEARCH_SOUNDS_FIELD_BITRATE: 'bitrate',
     settings.SEARCH_SOUNDS_FIELD_BITDEPTH: 'bitdepth',
@@ -208,6 +209,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             document["grouping_pack"] = str(sound.pack.id) + "_" + remove_control_chars(sound.pack.name)
         else:
             document["grouping_pack"] = str(getattr(sound, "id"))
+
+        collections_array = sound.collections.filter(public=True, collectionsound__status="OK").values_list('id', 'name')
+        if collections_array:
+            document["collection"] = list(str(id)+'_'+name for id, name in collections_array)
 
         document["is_geotagged"] = False
         if hasattr(sound, "geotag"):

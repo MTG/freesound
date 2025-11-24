@@ -21,12 +21,12 @@
 import json
 import logging
 import os
+import random
 
 from django.conf import settings
-from django.utils import timezone
 
-from freesound.celery import get_queues_task_counts
 from sounds.models import SoundAnalysis
+from sounds.templatetags.bst_category import bst_taxonomy_category_names_to_category_key
 from utils.management_commands import LoggingBaseCommand
 
 
@@ -57,12 +57,12 @@ class Command(LoggingBaseCommand):
             help='Descriptor names, separated by commas. Use * to include all descriptors.')
         
         parser.add_argument(
-            '--remove_nones',
+            '--create-codes',
             action='store_true',
-            dest='remove_nones',
+            dest='create_codes',
             default=False,
-            help='If set, None values will be removed from the exported lists.')
-
+            help='If set, create an extra file for "category code" descriptor which is based of a combination of "category" and "subcategory" descriptors.')
+          
 
     def handle(self, *args, **options):
         self.log_start()
@@ -71,6 +71,20 @@ class Command(LoggingBaseCommand):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
+        # First get all SoundAnalysis ids for the consolidated analyzer
+        # In this way if new sound analyses are added while we are exporting we will not include them
+        sound_analysis_objects_ids = SoundAnalysis.objects.filter(analyzer=settings.CONSOLIDATED_ANALYZER_NAME).values_list('id', flat=True)
+        sound_analysis_objects_ids = list(sound_analysis_objects_ids)
+
+
+        if options['limit'] is not None and len(sound_analysis_objects_ids) > int(options['limit']):
+            sound_analysis_objects_ids = random.sample(sound_analysis_objects_ids, int(options['limit']))
+
+        # First of all export sound ID as a "reference" descriptor so we know to which sounds the values correspond to
+        sound_ids = list(SoundAnalysis.objects.filter(id__in=sound_analysis_objects_ids).values_list(f'sound_id', flat=True))
+        json.dump(sound_ids, open(os.path.join(output_dir, 'sound_id.json'), 'w'))
+
+        # Now iterate over all the requested descriptors and export their values
         descriptor_names = options['names'].split(',') if options['names'] != '*' else None
         if descriptor_names is None:
             descriptor_names = settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES
@@ -79,15 +93,21 @@ class Command(LoggingBaseCommand):
 
         for descriptor_name in descriptor_names:
             console_logger.info(f'Exporting values for descriptor: {descriptor_name}')
-            descriptor_values = list(SoundAnalysis.objects.filter(analyzer=settings.CONSOLIDATED_ANALYZER_NAME)
+            descriptor_values = list(SoundAnalysis.objects.filter(id__in=sound_analysis_objects_ids)
                                      .values_list(f'analysis_data__{descriptor_name}', flat=True))
-            if options['remove_nones']:
-                descriptor_values = [value for value in descriptor_values if value is not None]
-            if options['limit'] is not None and len(descriptor_values) > int(options['limit']):
-                import random
-                descriptor_values = random.sample(descriptor_values, int(options['limit']))
+            
             output_file_path = os.path.join(output_dir, f'{descriptor_name}.json')
             json.dump(descriptor_values, open(output_file_path, 'w'))
             console_logger.info(f'Exported {len(descriptor_values)} values for descriptor {descriptor_name} to {output_file_path}')
+
+        if options['create_codes']:
+            categories = list(SoundAnalysis.objects.filter(id__in=sound_analysis_objects_ids)
+                                     .values_list(f'analysis_data__category', flat=True))
+            subcategories = list(SoundAnalysis.objects.filter(id__in=sound_analysis_objects_ids)
+                                     .values_list(f'analysis_data__subcategory', flat=True))
+            category_codes = [bst_taxonomy_category_names_to_category_key(cat, subcat) for cat, subcat in zip(categories, subcategories)]
+            output_file_path = os.path.join(output_dir, f'category_code.json')
+            json.dump(category_codes, open(output_file_path, 'w'))
+            console_logger.info(f'Exported {len(category_codes)} values for category code descriptor to {output_file_path}')
         
         self.log_end()

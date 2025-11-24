@@ -574,7 +574,7 @@ const createCollectionButton = (parentNode, playerImgNode) => {
   if (isTouchEnabledDevice()){
     // For touch-devices (phones, tablets), we keep player controls always visible because hover tips are not that visible
     // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
-    //favoriteButtonContainer.classList.add('opacity-050')
+    //collectionButtonContainer.classList.add('opacity-050')
   }
   collectionButton.setAttribute('data-toggle', 'collection-modal');
   collectionButton.setAttribute('data-modal-content-url', parentNode.dataset.collectionModalContentUrl);

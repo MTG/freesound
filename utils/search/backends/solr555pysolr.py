@@ -281,10 +281,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         collections = [] 
         for collection_data in sound.collections_array:
-            collections.append( (collection_data['collection_id'], remove_control_chars(collection_data['collection_name'])) )
+            collections.append(str(collection_data['collection_id']) + "_" + remove_control_chars(collection_data['collection_name']))
         if collections:
             document["collection"] = collections
-
+        
         document["is_geotagged"] = False
         if hasattr(sound, "geotag"):
             document["is_geotagged"] = True

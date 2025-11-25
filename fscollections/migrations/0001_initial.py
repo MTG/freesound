@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('sounds', '0057_alter_sound_bst_category'),
+        ('sounds', '0056_sound_bst_category'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

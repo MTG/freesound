@@ -18,17 +18,20 @@
 #     See AUTHORS file.
 #
 
+from urllib.parse import quote
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
-from django.template.loader import render_to_string
-from django.utils.text import slugify
-from django.dispatch import receiver
-from django.db.models.signals import post_save, post_delete, m2m_changed
-from django.db.models.functions import Greatest
 from django.db.models import F, Sum
+from django.db.models.functions import Greatest
+from django.db.models.signals import m2m_changed, post_delete, post_save
+from django.dispatch import receiver
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.text import slugify
 
-from sounds.models import Sound, License
+from sounds.models import License, Sound
 
 
 class Collection(models.Model):
@@ -48,6 +51,12 @@ class Collection(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+    
+    def collection_filter_value(self):
+        return f"\"{self.id}_{quote(self.name)}\""
+    
+    def get_collection_sounds_in_search_url(self):
+        return f'{reverse("sounds-search")}?f=collection:{ self.collection_filter_value() }'
     
     def get_attribution(self, sound_qs=None):
         #If no queryset of sounds is provided, take it from the collection

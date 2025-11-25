@@ -66,6 +66,12 @@
             {% endif %}
             {% bw_paginator paginator page current_page request "collection" %}
         </div>
+
+        {% if collection.public and collection.num_sounds > 0 %}
+        <div class="v-spacing-top-4 text-center">
+            <a class="no-hover" href="{{ collection.get_collection_sounds_in_search_url }}"><button class="btn-primary">Browse collections sounds in the search page</button></a>
+        </div>
+        {% endif %}
         
     </div>
 </div>

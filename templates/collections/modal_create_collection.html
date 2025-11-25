@@ -10,7 +10,7 @@
 <div class="col-12">
     <div class="text-center">
         <h4 class="v-spacing-5">Create collection</h4>
-        <form method="post" action="{% url 'create-collection' %}?ajax=1." class = "disable-on-submit">{% csrf_token %}
+        <form method="post" action="{% url 'create-collection' %}?ajax=1" class="bw-form disable-on-submit">{% csrf_token %}
             {{form}}
             <button class="btn-primary v-spacing-top-3">Create collection</button>
         </form>

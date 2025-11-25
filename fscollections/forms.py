@@ -100,7 +100,7 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
                                            ([(collection.id, collection.name) for collection in self.user_available_collections ]
                                             if self.user_available_collections else[])
         
-        self.fields['new_collection_name'].widget.attrs['placeholder'] = "Fill in the name for the new collection"
+        self.fields['new_collection_name'].widget.attrs['placeholder'] = "Write a description for the new collection"
         self.fields['collection'].widget.attrs = {
             'data-grey-items': f'{self.BOOKMARK_COLLECTION_CHOICE_VALUE},{self.NEW_COLLECTION_CHOICE_VALUE}'}
     
@@ -320,8 +320,11 @@ class CreateCollectionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        self.fields['name'].label = False
         self.fields['name'].widget.attrs['placeholder'] = "Fill in the name for the new collection"
-        self.fields['description'].widget.attrs['placeholder'] = "Fill in the description for the new collection"
+        self.fields['name'].widget.attrs['autocomplete'] = "off"
+        self.fields['description'].label = False
+        self.fields['description'].widget.attrs['placeholder'] = "Write a description for the new collection"
 
     def clean(self):
         if Collection.objects.filter(user=self.user, name=self.cleaned_data['name']).exists():

@@ -279,9 +279,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 # precisely treat sounds without packs as a group of their own.
                 document["pack_grouping"] = str(getattr(sound, "id"))
 
-        collections_array = sound.collections.filter(public=True, collectionsound__status="OK").values_list('id', 'name')
-        if collections_array:
-            document["collection"] = list(str(id)+'_'+name for id, name in collections_array)
+        collections = [] 
+        for collection_data in sound.collections_array:
+            collections.append( (collection_data['collection_id'], remove_control_chars(collection_data['collection_name'])) )
+        if collections:
+            document["collection"] = collections
 
         document["is_geotagged"] = False
         if hasattr(sound, "geotag"):

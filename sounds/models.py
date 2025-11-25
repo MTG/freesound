@@ -30,6 +30,7 @@ import zlib
 
 from collections import Counter
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
@@ -397,9 +398,17 @@ class SoundManager(models.Manager):
 
     def bulk_query_solr(self, sound_ids):
         qs = self.bulk_query_id(sound_ids, include_audio_descriptors=True, include_similarity_vectors=True, include_remix_subqueries=True)
+        
         # When indexing in solr, we also want to include comments as a subquery
         comments_subquery = Comment.objects.filter(sound=OuterRef("id")).values("comment")
         qs = qs.annotate(comments_array=ArraySubquery(comments_subquery))
+
+        # We also want to include information about collections so we don't make extra queries later
+        CollectionSound = apps.get_model('fscollections', 'CollectionSound')
+        collections_subquery = CollectionSound.objects.select_related('collection').filter(sound=OuterRef("id"), collection__public=True, status="OK")\
+            .values(data=JSONObject(collection_id="collection__id", collection_name="collection__name"))
+        qs = qs.annotate(collections_array=ArraySubquery(collections_subquery))
+
         return qs
 
 

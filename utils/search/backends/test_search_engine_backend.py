@@ -1197,15 +1197,16 @@ def test_sound_similarity_search_facets(search_engine_sounds_backend,
 def test_sound_collections_filter(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test filtering search query by collection"""
 
-    collection_names = Collection.objects.values_list('name', flat=True).distinct()
-    for collection_name in collection_names:
+    collection_ids = Collection.objects.values_list('id', flat=True).distinct()
+    for collection_id in collection_ids:
+        collection_object = Collection.objects.get(id=collection_id)
         results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-            query_filter=f'collection:"{collection_name}"',
+            query_filter=f'collection:"{collection_object.id}_{collection_object.name}"',
             group_by_pack=False,
         ))
 
-        assert results.num_found == CollectionSound.objects.filter(collection__name=collection_name, status="OK").count(), (
-            f"Filtering by collection '{collection_name}' did not return the expected number of results"
+        assert results.num_found == CollectionSound.objects.filter(collection__id=collection_object.id, status="OK").count(), (
+            f"Filtering by collection '{collection_object.name}' did not return the expected number of results"
         )
     
 

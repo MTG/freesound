@@ -7,7 +7,7 @@ from django.urls import reverse
 from utils.test_helpers import create_user_and_sounds
 from fscollections.models import Collection
 
-# Create your tests here.
+
 class CollectionTest(TestCase):
     
     fixtures = ['licenses', 'sounds']

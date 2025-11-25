@@ -37,6 +37,13 @@
 	},
 	"tasks": {
 		"version": "2.0.0",
+		"inputs": [
+			{
+				"id": "appName",
+				"type": "promptString",
+				"description": "Enter the Django app name or test module name to run tests (leave empty to run all tests)"
+			}
+		],
 		"tasks": [
 	
 			{
@@ -72,13 +79,13 @@
 			{
 				"label": "Run tests",
 				"type": "shell",
-				"command": "docker compose run --rm web pytest",
+				"command": "docker compose run --rm web pytest ${input:appName}",
 				"problemMatcher": []
 			},
 			{
 				"label": "Run tests verbose",
 				"type": "shell",
-				"command": "docker compose run --rm web pytest -vv",
+				"command": "docker compose run --rm web pytest ${input:appName}-vv",
 				"problemMatcher": []
 			},
 			{

@@ -86,10 +86,13 @@ def display_facet(context, facet_name, facet_title=None, beta_facet=False):
     # Remove "no pack" elements form pack facet (no pack elements are those in which "grouping pack" only has the sound id and not any pack id/name)
     if facet_name == "pack_grouping":
         facet = [element for element in facet if '_' in element['value']]
+
     for element in facet:
         # Set display values (the values how they'll be shown in the UI)
         if facet_name == "pack_grouping":
             # Modify the display name to remove the pack id
+            element['display_value'] = element['value'][element['value'].find("_")+1:]
+        elif facet_name == "collection_grouping":
             element['display_value'] = element['value'][element['value'].find("_")+1:]
         elif element['value'] == settings.FCW_FILTER_VALUE:
             element['display_value'] = "Approved for Free Cultural Works"

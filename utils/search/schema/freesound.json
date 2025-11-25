@@ -274,6 +274,14 @@
       "required": false
     },
     {
+      "name": "collection",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false,
+      "multiValued": true
+    },
+    {
       "name": "pack_grouping",
       "type": "string",
       "indexed": true,

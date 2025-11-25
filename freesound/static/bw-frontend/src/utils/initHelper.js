@@ -21,6 +21,7 @@ import { makeSelect } from '../components/select.js';
 import { makeTextareaCharacterCounter } from '../components/textareaCharactersCounter.js';
 import { bindUnsecureImageCheckListeners } from '../components/unsecureImageCheck.js';
 import { initMap } from '../pages/map.js';
+import { bindCollectionModals } from '../components/collectionsModal.js';
 
 
 const initializeStuffInContainer = (container, bindModals, activateModals) => {
@@ -55,6 +56,7 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
         bindBookmarkSoundModals(container);
         bindSimilarSoundsModal(container);
         bindUserAnnotationsModal(container); 
+        bindCollectionModals(container);
     }
     
     // Activate modals if needed (this should only be used the first time initializeStuffInContainer is called)

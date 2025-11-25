@@ -1,0 +1,79 @@
+{% extends "simple_page.html" %}
+{% load static %}
+{% load bw_templatetags %}
+{% load display_sound %}
+{% load display_user %}
+{% load util %}
+
+{% block title%}Collections{%endblock title%}
+{% block page-title%}{{collection.name}}{%endblock page-title%}
+{% block page-content %}
+<div class="v-spacing-top-5">
+    <div class="row no-gutters">
+        <div class="col-lg-3 offset-lg-1 order-lg-last v-spacing-3">
+            <section class="bw-profile__section_stats v-spacing-top-4 async-section"
+            data-async-section-content-url="{% url 'collection-stats-section' collection.id %}?ajax=1">
+            <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
+        </section>
+        <div class="v-spacing-top-4">
+            {% if is_owner or is_maintainer%}
+            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'edit-collection' collection.id %}" title="Edit collection">Edit collection</a>
+            {% endif %}
+            {% if collection.num_sounds > 0%}
+            <a class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'download-collection' collection.id %}" title="Download collection">Download Collection</a> 
+            {% endif %}
+        </div>
+    </div>    
+    <div class="col-lg-8">
+        
+        <div class="middle bw-sound-page__user v-spacing-top-3">
+            <div class="h-spacing-1 ellipsis">
+                {% bw_user_avatar collection.user.profile.locations.avatar.M.url collection.user.username 40 %}
+            </div>
+            <div class="h-spacing-left-1">
+                <a href="{% url 'account' collection.user.username %}">{{ collection.user.username | truncate_string:15 }}</a>
+                <p class="text-grey">{{ collection.created|date:"F jS, Y" }}</p>
+            </div>
+        </div>
+        
+        {% if maintainers %}
+        <div class="text-grey v-spacing-2 v-spacing-top-4">Collection maintainers:</div>
+        <div class="row no-gutters">
+            {% for user in maintainers %}
+            <div class="col-sm-6 col-md-4 col-lg-3">
+                {% display_user user %}  
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if collection.description %}
+        <div class="v-spacing-top-4">{{collection.description}}</div>
+        {% endif %}
+        
+        <div class="v-spacing-top-5">
+            <div class="text-center text-18 text-light-grey v-spacing-3">Sounds in this collection</div>
+            {% if page.object_list %}    
+            <div class = "row">
+                {% for collectionsound, sound in page_collection_and_sound_objects  %}
+                <div class="col-6 col-md-4">
+                    {% display_sound_small sound %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %} 
+            There aren't any sounds in this collection yet &#128543; 
+            {% endif %}
+            {% bw_paginator paginator page current_page request "collection" %}
+        </div>
+
+        {% if collection.public and collection.num_sounds > 0 %}
+        <div class="v-spacing-top-4 text-center">
+            <a class="no-hover" href="{{ collection.get_collection_sounds_in_search_url }}"><button class="btn-primary">Browse collections sounds in the search page</button></a>
+        </div>
+        {% endif %}
+        
+    </div>
+</div>
+</div>         
+{% endblock page-content %}

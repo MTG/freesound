@@ -2,9 +2,15 @@
     class="bw-player"
     data-sound-id="{{ sound.id }}"
     data-size="{% if player_size == 'small' or player_size == 'small_no_info' or player_size == 'middle' or player_size == 'moderation' %}small{% elif player_size == 'big_no_info' %}big{% elif player_size == 'minimal' %}minimal{% endif %}"
+
+    data-collection="{% if show_collection_button %}true{% else %}false{% endif %}"
+    data-collection-modal-content-url="{% if show_collection_button %}{% url 'add-sound-to-collection' sound.id %}{% endif %}" 
+    
+
     data-bookmark="{% if show_bookmark_button %}true{% else %}false{% endif %}"
     data-bookmark-modal-url="{% if show_bookmark_button %}{% url 'bookmarks-add-form-for-sound' sound.id %}{% endif %}"
     data-add-bookmark-url="{% if show_bookmark_button %}{% url 'add-bookmark' sound.id %}{% endif %}"
+
     data-similar-sounds="{% if show_similar_sounds_button and sound.ready_for_similarity %}true{% else %}false{% endif %}"
     data-similar-sounds-modal-url="{% if show_similar_sounds_button %}{% url 'sound-similar' sound.username sound.id %}?ajax=1{% endif %}"
     data-remix-group="{% if show_remix_group_button and sound.remixgroup_id %}true{% else %}false{% endif %}"

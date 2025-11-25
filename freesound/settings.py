@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'silk',
     'django_recaptcha',
     'adminsortable',
+    'fscollections'
 ]
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
@@ -1109,6 +1110,7 @@ SEARCH_SOUNDS_FIELD_CHANNELS = 'channels'
 SEARCH_SOUNDS_FIELD_LICENSE_NAME = 'license'
 SEARCH_SOUNDS_FIELD_CATEGORY = 'category'
 SEARCH_SOUNDS_FIELD_SUBCATEGORY = 'subcategory'
+SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING = 'collection_grouping'
 
 # Default weights for fields to match
 SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS = {
@@ -1154,6 +1156,7 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_TYPE: {'limit': len(SOUND_TYPE_CHOICES)},
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
     SEARCH_SOUNDS_FIELD_CATEGORY: {'limit': 30, 'title': 'Category'},
+    SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING: {'limit': 10, 'title': 'Collections'},
 }
 SEARCH_SOUNDS_SUBCATEGORY_FACET = {SEARCH_SOUNDS_FIELD_SUBCATEGORY: {'limit': 30, 'title': 'Subcategory'}}
 
@@ -1437,6 +1440,10 @@ RABBITMQ_HOST = 'rabbitmq'
 RABBITMQ_PORT = '5672'
 RABBITMQ_API_PORT = '5673'
 
+# -------------------------------------------------------------------------------
+# Collections
+ENABLE_COLLECTIONS = False
+MAX_SOUNDS_PER_COLLECTION = 250
 
 # -------------------------------------------------------------------------------
 # Import local settings
@@ -1467,9 +1474,6 @@ if SENTRY_DSN:
         traces_sample_rate=TRACES_SAMPLE_RATE,
     )
 
-
-# -------------------------------------------------------------------------------
-# Extra Freesound settings
 
 # Paths (depend on DATA_PATH potentially re-defined in local_settings.py)
 # If new paths are added here, remember to add a line for them at general.apps.GeneralConfig. This will ensure

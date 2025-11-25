@@ -76,7 +76,8 @@ def context_extra(request):
             'next_path': request.GET.get('next', request.get_full_path()),
             'login_form': FsAuthenticationForm(),
             'problems_logging_in_form': ProblemsLoggingInForm(),
-            'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', 'no') == 'yes'  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
+            'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', 'no') == 'yes',  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
+            'enable_collections': settings.ENABLE_COLLECTIONS
         })
     
     return tvars

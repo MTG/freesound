@@ -31,18 +31,21 @@ import logging
 import os
 import time
 
-from django.contrib.auth.models import User
 import pytest
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.management import call_command
+from django.db import connection
+from django.test import override_settings
 from django.utils import timezone
 
-
-from forum.models import Post, Forum, Thread
+from forum.models import Forum, Post, Thread
+from fscollections.models import Collection, CollectionSound
 from search import solrapi
 from sounds.models import Download, Sound, SoundAnalysis, SoundSimilarityVector
 from tags.models import SoundTag
 from utils.search import get_search_engine
+from utils.search.search_sounds import add_sounds_to_search_engine, get_all_sound_ids_from_search_engine, delete_sounds_from_search_engine
 
 console_logger = logging.getLogger("console")
 console_logger.setLevel(logging.DEBUG)
@@ -237,7 +240,7 @@ def test_sounds_qs(db, fake_analyzer_settings_for_similarity_tests, fake_audio_d
         )
 
     # Monkey patch SoundAnalysis.get_analysis_data_from_file to return fake data instead of loading it from a file in disk
-    monkeypatch.setattr(SoundAnalysis, 'get_analysis_data_from_file', lambda self: {
+    monkeypatch.setattr(SoundAnalysis, 'get_analysis_data_from_file_without_db', lambda sid, analyzer_name: {
         'feature_float': 1.0,
         'feature_int': 1,
         'feature_string': 'a',
@@ -246,6 +249,14 @@ def test_sounds_qs(db, fake_analyzer_settings_for_similarity_tests, fake_audio_d
         'feature_array_float': [1.0, 2.0, 3.0],
         'feature_json': {'key': 'value'}
     })
+
+    # Create some collections and add sounds to them
+    for i, collection_name in enumerate(['col1', 'col2']):
+        user = User.objects.first()
+        collection = Collection.objects.create(name=collection_name, user=user, public=True)
+        sounds_in_collection = Sound.objects.filter(id__in=sound_ids[i*10:(i+1)*10])
+        for sound in sounds_in_collection:
+            CollectionSound.objects.create(user=user, sound=sound, collection=collection, status="OK")
 
     # Create fake similarity vector objects and fake consolidated audio descriptors for each sound
     for sound in Sound.public.all():
@@ -1179,6 +1190,45 @@ def test_sound_similarity_search_facets(search_engine_sounds_backend,
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
         assert facet_count == expected_license_facet_results_group_counts_as_one_in_facets[facet_name]
 
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_collections_filter(search_engine_sounds_backend, output_file_handle, test_sounds):
+    """Test filtering search query by collection"""
+
+    collection_ids = Collection.objects.values_list('id', flat=True).distinct()
+    for collection_id in collection_ids:
+        collection_object = Collection.objects.get(id=collection_id)
+        results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
+            query_filter=f'collection:"{collection_object.id}_{collection_object.name}"',
+            group_by_pack=False,
+        ))
+
+        assert results.num_found == CollectionSound.objects.filter(collection__id=collection_object.id, status="OK").count(), (
+            f"Filtering by collection '{collection_object.name}' did not return the expected number of results"
+        )
+    
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_num_queries_when_adding_sounds_to_search_index(
+    search_engine_sounds_backend, output_file_handle, test_sounds):
+
+    # Check that sending sounds to search engine works and number of queries is as expected
+    sound_ids = [s.id for s in test_sounds]
+    num_queries_before = len(connection.queries)
+    sound_objects = Sound.objects.bulk_query_solr(sound_ids)
+    search_engine_sounds_backend.add_sounds_to_index(sound_objects, include_similarity_vectors=True)
+    num_queries = len(connection.queries) - num_queries_before
+
+    # We expect 2 queries: one to get the sounds and another to get the similarity vectors. If include_similarity_vectors is set to False, we would expect 1 single query
+    assert num_queries == 2, (
+        "Too many database queries when adding sounds to search engine"
+    )
+    
 
 @pytest.mark.search_engine
 @pytest.mark.forum

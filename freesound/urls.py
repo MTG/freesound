@@ -37,6 +37,7 @@ import comments.views
 import bookmarks.views
 import follow.views
 import donations.views
+import fscollections.views
 import utils.tagrecommendation_utilities as tagrec
 from apiv2.apiv2_utils import apiv1_end_of_life_message
 from utils.converters import MultipleTagsConverter
@@ -122,6 +123,7 @@ urlpatterns = [
     path('tickets/', include('tickets.urls')),
     path('monitor/', include('monitor.urls')),
     path('follow/', include('follow.urls')),
+    path('collections/', include('fscollections.urls')),
 
     path('blog/', RedirectView.as_view(url='https://blog.freesound.org/'), name="blog"),
 

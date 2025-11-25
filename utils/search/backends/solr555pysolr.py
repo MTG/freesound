@@ -46,6 +46,7 @@ FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_NAME: 'name',
     settings.SEARCH_SOUNDS_FIELD_TAGS: {'field': 'tag', 'facet': 'tagfacet'},
     settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 'description',
+    settings.SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING: 'collection',
     settings.SEARCH_SOUNDS_FIELD_USER_NAME: {'field': 'username', 'facet': 'username_facet'},
     settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 'pack',
     settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: 'pack_grouping',
@@ -278,7 +279,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 # precisely treat sounds without packs as a group of their own.
                 document["pack_grouping"] = str(getattr(sound, "id"))
 
-
+        collections = [] 
+        for collection_data in sound.collections_array:
+            collections.append(str(collection_data['collection_id']) + "_" + remove_control_chars(collection_data['collection_name']))
+        if collections:
+            document["collection"] = collections
+        
         document["is_geotagged"] = False
         if hasattr(sound, "geotag"):
             document["is_geotagged"] = True

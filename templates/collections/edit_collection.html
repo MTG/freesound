@@ -1,0 +1,82 @@
+{% extends "simple_page.html" %}
+{% load static %}
+{% load util %}
+{% load bw_templatetags %}
+{% load sounds_selector %}
+{% load users_selector %}
+
+{% block title %}Edit collection - {{ collection.name }}{% endblock %}
+{% block page-title %}Edit collection{% endblock %}
+
+{% block page-content %}
+<div class="v-spacing-5 v-spacing-top-2">
+    <p>You can specify a <b>name</b> for the collection, a <b>description</b>, and the <b>sounds</b> that are part of the it. You can choose a collection to be <b>private</b> or <b>public</b>. Public collections can be <b>collaboratively maintained</b> by multiple users.
+
+    </p>
+</div>
+<div class="row no-gutters">
+    <div class="col-lg-8 offset-lg-2">
+        <h2 class="v-spacing-3">{{ collection.name }}</h2>
+        <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
+            {% if collection.is_default_collection %}
+            <div class="v-spacing-2 text-blue">
+                {% bw_icon "notification" %}This is your <i>default collection</i>. You cannot change its name, description or public/private status.
+            </div>
+            {% endif %}
+            <div>
+                {{ form.name.errors }}
+                {{ form.name.label_tag }}
+                {{ form.name }}
+                    <span class="helptext"><i>{{form.name.help_text|safe}}</i></span>
+            </div>
+            <div>
+                {{ form.description.errors }}
+                {{ form.description.label_tag }}
+                {{ form.description }}
+                    <span class="helptext"><i>{{form.description.help_text|safe}}</i></span>
+            </div>
+            <div>
+                {{ form.public.errors }}
+                {{ form.public.label_tag }}
+                {{ form.public }}
+                    <span class="helptext"><i>{{form.public.help_text|safe}}</i></span>
+            </div>
+            <div class="v-spacing-5 v-spacing-top-3">
+                {{ form.maintainers }}
+                <label>Maintainers ({{ form.collection_maintainers_objects|length }})</label>
+                    {% if form.maintainers.errors %}
+                        <div>{{form.maintainers.errors}}</div>
+                    {% endif %}
+                {% users_selector form.collection_maintainers_objects%}
+                <div class="between v-spacing-top-4">
+                    <button class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.id%}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
+                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
+                </div>
+            </div>
+            <div class="v-spacing-5">
+                {{ form.collection_sounds }}
+                <label>Sounds in collection (<span id="element-count">{{ form.collection_sound_objects|length }}</span>)</label>
+                <div> {{form.collection_sounds.errors}}</div>
+                {% sounds_selector form.collection_sound_objects max_sounds=max_sounds_per_collection%}
+                <div class="between v-spacing-top-4">
+                    <button class="btn-inverse" data-toggle="add-sounds-modal" data-selected-sounds-hidden-input-id="{{ form.collection_sounds.id_for_label }}" data-modal-url="{% url 'add-sounds-modal-collection' collection.id %}">{% bw_icon 'plus' %}Add sounds</button>
+                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from collection</button>
+                </div>
+                <div class="between v-spacing-top-5">
+                    <span class="helptext" style="display:none" ><i>{{form.collection_sounds.help_text|safe}}</i></span>
+                </div>
+            </div>
+            {% if is_owner or is_maintainer%}
+                <button class="btn-primary w-100">Save collection</button>
+            {% endif %}
+        </form>
+        {% if is_owner%}
+            <button class="btn-secondary w-100 v-spacing-top-3" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{% url "delete-collection" collection.id %}">Delete Collection</button>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/collectionEdit.js' %}"></script>
+{% endblock %}

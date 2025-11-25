@@ -122,7 +122,7 @@ class PackEditForm(ModelForm):
                                   required=False)
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}),
                                         help_text=HtmlCleaningCharField.make_help_text(), required=False)
-
+    
     def clean_pack_sounds(self):
         pack_sounds = re.sub("[^0-9,]", "", self.cleaned_data['pack_sounds'])
         pack_sounds = re.sub(",+", ",", pack_sounds)

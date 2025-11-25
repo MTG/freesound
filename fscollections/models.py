@@ -88,7 +88,7 @@ class Collection(models.Model):
         self.num_sounds = CollectionSound.objects.filter(collection=self).count()
         if self.num_sounds > 0:
             # this need to be reviewed, featured_sound feature is not fully developed
-            csound = CollectionSound.objects.filter(collection=self).first()
+            csound = CollectionSound.objects.filter(collection=self, status='OK').first()
             csound.featured_sound = True
             csound.save()
         super().save(*args, **kwargs)

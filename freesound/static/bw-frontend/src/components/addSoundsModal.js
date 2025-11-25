@@ -61,6 +61,8 @@ const prepareAddSoundsModalAndFields = (container) => {
         }
 
         const soundsLabel = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName('label')[0];
+        const itemCountElementInLabel = soundsLabel === null ? null : soundsLabel.querySelector('#element-count');
+        
         const maxSounds = selectedSoundsDestinationElement.dataset.maxElements;
         const maxSoundsHelpText = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByClassName('helptext')[0]
         if(maxSounds !== "None"){
@@ -85,8 +87,8 @@ const prepareAddSoundsModalAndFields = (container) => {
                 addSoundsButton.disabled = false;
                 maxSoundsHelpText.style.display = 'none';
             }
-            if (soundsLabel){
-                soundsLabel.innerHTML = "Sounds in collection (" + selectedSoundsDestinationElement.children.length + ")"}
+            if (itemCountElementInLabel){
+                itemCountElementInLabel.innerHTML = selectedSoundsDestinationElement.children.length}
             removeSoundsButton.disabled = true;
         });
 
@@ -102,8 +104,8 @@ const prepareAddSoundsModalAndFields = (container) => {
                     addSoundsButton.disabled = true;
                     maxSoundsHelpText.style.display = 'block';
                 }
-                if (soundsLabel){
-                    soundsLabel.innerHTML = "Sounds in collection (" + selectedSoundsDestinationElement.children.length + ")"}
+                if (itemCountElementInLabel){
+                    itemCountElementInLabel.innerHTML = selectedSoundsDestinationElement.children.length}
                 initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
                     removeSoundsButton.disabled = element.dataset.selectedIds == ""
                 });

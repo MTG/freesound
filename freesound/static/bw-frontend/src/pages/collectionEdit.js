@@ -1,4 +1,4 @@
-import {prepareAddMaintainersModalAndFields} from "../components/collections"
+import {prepareAddMaintainersModalAndFields} from "../components/collectionsModal"
 import { prepareAddSoundsModalAndFields } from "../components/addSoundsModal";
 
 prepareAddMaintainersModalAndFields(document);

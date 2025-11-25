@@ -21,7 +21,7 @@ import { makeSelect } from '../components/select.js';
 import { makeTextareaCharacterCounter } from '../components/textareaCharactersCounter.js';
 import { bindUnsecureImageCheckListeners } from '../components/unsecureImageCheck.js';
 import { initMap } from '../pages/map.js';
-import { bindCollectionModals } from '../components/collections.js';
+import { bindCollectionModals } from '../components/collectionsModal.js';
 
 
 const initializeStuffInContainer = (container, bindModals, activateModals) => {

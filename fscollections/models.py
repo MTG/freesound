@@ -102,28 +102,24 @@ class CollectionSound(models.Model):
    #sound won't be added to collection until maintainers approve the sound
 
 @receiver(post_save, sender=CollectionSound)
-def update_collection_num_sounds(**kwargs):
-    collectionsound = kwargs.pop('instance', False)
-    if collectionsound:
-        Collection.objects.filter(collectionsound=collectionsound).update(num_sounds=Greatest(F('num_sounds') + 1, 0))
+def update_collection_num_sounds(sender, instance, **kwargs):
+    if instance:
+        Collection.objects.filter(collectionsound=instance).update(num_sounds=Greatest(F('num_sounds') + 1, 0))
 
 @receiver(m2m_changed, sender=CollectionSound)
-def update_collection_num_sounds_bulk_changes(**kwargs):
-    collectionsound = kwargs.pop('instance', False)
-    if collectionsound:
-        Collection.objects.filter(collectionsound=collectionsound).update(num_sounds=Greatest(F('num_sounds') - 1, 0))
+def update_collection_num_sounds_bulk_changes(sender, instance, **kwargs):
+    if instance:
+        Collection.objects.filter(collectionsound=instance).update(num_sounds=Greatest(F('num_sounds') - 1, 0))
 
 @receiver(post_save, sender=CollectionSound)
-def mark_sound_dirty_on_collection_add(**kwargs):
-    collectionsound = kwargs.pop('instance', False)
-    if collectionsound:
-        Sound.objects.filter(id=collectionsound.sound_id).update(is_index_dirty=True)
+def mark_sound_dirty_on_collection_add(sender, instance, **kwargs):
+    if instance:
+        Sound.objects.filter(id=instance.sound_id).update(is_index_dirty=True)
 
 @receiver(post_delete, sender=CollectionSound)
-def mark_sound_dirty_on_collection_remove(**kwargs):
-    collectionsound = kwargs.pop('instance', False)
-    if collectionsound:
-        Sound.objects.filter(id=collectionsound.sound_id).update(is_index_dirty=True)
+def mark_sound_dirty_on_collection_remove(sender, instance, **kwargs):
+    if instance:
+        Sound.objects.filter(id=instance.sound_id).update(is_index_dirty=True)
 
 class CollectionDownload(models.Model):
     user = models.ForeignKey(User, related_name='collection_downloads', on_delete=models.CASCADE)
@@ -139,13 +135,11 @@ class CollectionDownloadSound(models.Model):
     license = models.ForeignKey(License, on_delete=models.CASCADE)
 
 @receiver(post_save, sender=CollectionDownload)
-def update_collection_downloads(**kwargs):
-    download = kwargs.pop('instance', False)
-    if download:
-        Collection.objects.filter(id=download.collection.id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
+def update_collection_downloads(sender, instance, **kwargs):
+    if instance:
+        Collection.objects.filter(id=instance.collection.id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
 
 @receiver(post_delete, sender=CollectionDownload)
-def update_collection_downloads_on_delete(**kwargs):
-    download = kwargs.pop('instance', False)
-    if download:
-        Collection.objects.filter(id=download.collection.id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
+def update_collection_downloads_on_delete(sender, instance, **kwargs):
+    if instance:
+        Collection.objects.filter(id=instance.collection.id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))

@@ -76,7 +76,7 @@ class CollectionTest(TestCase):
         form_data = {'collection': -1, 'new_collection_name': '', 'use_last_collection': False}
         resp = self.client.post(reverse('add-sound-to-collection', args=[self.sound.id]) + '?ajax=1', form_data)
         self.assertEqual(200, resp.status_code)
-        default_collection = Collection.objects.get(user=self.user, name="Bookmarks", is_default_collection=True)
+        default_collection = Collection.objects.get(user=self.user, name="My bookmarks", is_default_collection=True)
         resp = self.client.get(reverse('collection', args=[default_collection.id]))
         self.assertEqual(200, resp.status_code)
 
@@ -160,21 +160,21 @@ class CollectionTest(TestCase):
         edit_collection.refresh_from_db()
         self.assertEqual('edited-collection',edit_collection.name)
 
-        # Test setting 'Bookmarks' as the name for a collection (form should be invalid therefore, the name should not change)
-        form_data = {'name': 'Bookmarks', 'description':'', 'public': False}
+        # Test setting 'My bookmarks' as the name for a collection (form should be invalid therefore, the name should not change)
+        form_data = {'name': 'My bookmarks', 'description':'', 'public': False}
         resp = self.client.post(reverse('edit-collection', args=[edit_collection.id]) + '?ajax=1', form_data)
         self.assertEqual(200, resp.status_code)
         edit_collection.refresh_from_db()
         self.assertEqual('edited-collection',edit_collection.name)
 
         # Test creating the default collection and trying to change its name and public parameters (both are static)
-        default_collection = Collection.objects.create(name='Bookmarks', user=self.user, is_default_collection=True)
+        default_collection = Collection.objects.create(name='My bookmarks', user=self.user, is_default_collection=True)
         form_data = {'name': 'other-name', 'description':'', 'public': True}
         resp = self.client.post(reverse('edit-collection', args=[default_collection.id]) + '?ajax=1', form_data)
         self.assertEqual(302, resp.status_code)
         self.assertEqual(f"/collections/{default_collection.id}/", resp.url)
         default_collection.refresh_from_db()
-        self.assertEqual('Bookmarks', default_collection.name)
+        self.assertEqual('My bookmarks', default_collection.name)
         self.assertEqual('', default_collection.description)
         self.assertEqual(False, default_collection.public)
 

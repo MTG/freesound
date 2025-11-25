@@ -101,6 +101,9 @@ class CollectionSound(models.Model):
    status = models.CharField(db_index=True, max_length=2, choices=STATUS_CHOICES, default="PE")
    #sound won't be added to collection until maintainers approve the sound
 
+   class Meta:
+        unique_together = ('sound', 'collection')
+
 @receiver(post_save, sender=CollectionSound)
 def update_collection_num_sounds(sender, instance, **kwargs):
     if instance:

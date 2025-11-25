@@ -28,7 +28,6 @@ from django.core.management.base import BaseCommand
 from sounds.models import Sound
 from search.management.commands.post_dirty_sounds_to_search_engine import send_sounds_to_search_engine, update_similarity_vectors_in_search_engine
 from utils.search import get_search_engine
-from utils.search.search_sounds import delete_all_sounds_from_search_engine, delete_sounds_from_search_engine, get_all_sound_ids_from_search_engine
 from search import solrapi
 
 console_logger = logging.getLogger("console")
@@ -45,6 +44,12 @@ class Command(BaseCommand):
             default=5000,
             type=int,
             help='How many sounds to add at once')
+        parser.add_argument(
+            '--immediately-create-alias',
+            action='store_true',
+            dest='immediately_create_alias',
+            default=False,
+            help='Immediately create the alias for the new index before indexing')
 
         group = parser.add_mutually_exclusive_group(required=False)
         group.add_argument(
@@ -81,6 +86,10 @@ class Command(BaseCommand):
         solr_api = solrapi.SolrManagementAPI(search_engine.solr_base_url, collection_name)
         if not only_similarity_vectors:
             solr_api.create_collection_and_schema(delete_default_fields_definition, freesound_schema_definition, "username")
+
+        if options['immediately_create_alias']:
+            console_logger.info("Creating the freesound alias to point to the new index")
+            solr_api.create_collection_alias("freesound")
 
         # Get all sounds moderated and processed ok and add them to the search engine
         # Don't delete existing sounds in each loop because we clean up in the final step

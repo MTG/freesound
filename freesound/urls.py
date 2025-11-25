@@ -20,7 +20,7 @@
 
 import os
 
-from django.urls import path, re_path, include
+from django.urls import path, re_path, include, register_converter
 from django.contrib import admin
 from django.contrib.sitemaps.views import index as sitemap_index, sitemap as sitemap_sitemap
 from django.views.decorators.cache import cache_page
@@ -40,9 +40,11 @@ import donations.views
 import fscollections.views
 import utils.tagrecommendation_utilities as tagrec
 from apiv2.apiv2_utils import apiv1_end_of_life_message
+from utils.converters import MultipleTagsConverter
 
 admin.autodiscover()
 
+register_converter(MultipleTagsConverter, 'multitags')
 
 urlpatterns = [
     path('', sounds.views.front_page, name='front-page'),
@@ -95,7 +97,7 @@ urlpatterns = [
 
     path('browse/', sounds.views.sounds, name="sounds"),
     path('browse/tags/', tags.views.tags, name="tags"),
-    re_path(r'^browse/tags/(?P<multiple_tags>[\w//-]+)/$', tags.views.multiple_tags_lookup, name="tags"),
+    path('browse/tags/<multitags:multiple_tags>/', tags.views.multiple_tags_lookup, name="tags"),
     path('browse/packs/', sounds.views.packs, name="packs"),
     path('browse/random/', sounds.views.random, name="sounds-random"),
     re_path(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
@@ -110,7 +112,7 @@ urlpatterns = [
 
     path('add_sounds_modal/sources/', sounds.views.add_sounds_modal_for_edit_sources, name="add-sounds-modal-sources"),
     path('add_sounds_modal/pack/<int:pack_id>/', sounds.views.add_sounds_modal_for_pack_edit, name="add-sounds-modal-pack"),
-    
+
     path('', include('ratings.urls')),
     path('comments/', include('comments.urls')),
     path('help/', include('wiki.urls')),
@@ -144,11 +146,11 @@ urlpatterns = [
     path('p/<int:pack_id>/', sounds.views.pack_short_link, name="short-pack-link"),
 
     # old url format redirects
-    re_path(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
-    re_path(r'^samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),
-    re_path(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
-    re_path(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
-    re_path(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
+    path('usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
+    path('samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),
+    path('packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
+    path('tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
+    path('forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
 
     # sitemaps
     path('sitemap.xml',

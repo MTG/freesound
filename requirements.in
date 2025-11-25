@@ -43,7 +43,7 @@ psycopg~=3.2.4
 PyJWT==2.6.0
 pyparsing==2.4.7
 pysndfile==1.4.4
-pysolr==3.10.0b1
+pysolr==3.10.0
 python-louvain==0.16  # community detection in clustering
 pytest~=8.0.2
 pytest-django~=4.8.0

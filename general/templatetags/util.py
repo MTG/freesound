@@ -19,6 +19,7 @@
 #
 
 import datetime
+import json
 import time
 
 from django.utils.safestring import mark_safe
@@ -125,4 +126,11 @@ def strip_unnecessary_br(value):
     value = value.replace('</li><br>', '</li>')
     value = value.replace('<ul><br>', '<ul>')
     value = value.replace('</ul><br>', '</ul>')
+    return mark_safe(value)
+
+
+@register.filter
+def format_json(value):
+    value = json.dumps(value, indent=4)
+    value = '<pre>' + value + '</pre>'
     return mark_safe(value)

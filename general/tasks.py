@@ -29,7 +29,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from tickets import TICKET_STATUS_CLOSED
-from tickets.models import Ticket, TicketComment
+from tickets.models import Ticket, TicketComment, UserAnnotation
 from utils.audioprocessing.freesound_audio_processing import set_timeout_alarm, check_if_free_space, \
     FreesoundAudioProcessor, WorkerException, cancel_timeout_alarm, FreesoundAudioProcessorBeforeDescription
 from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
@@ -53,26 +53,25 @@ DELETE_USER_KEEP_SOUNDS_ACTION_NAME = 'delete_user_keep_sounds'
 
 
 @shared_task(name=WHITELIST_USER_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
-def whitelist_user(ticket_ids=None, user_id=None):
+def whitelist_user(annotation_sender_id, ticket_ids=None, user_id=None):
     # Whitelist "sender" users from the tickets with given ids
     workers_logger.info("Start whitelisting users from tickets (%s)" % json.dumps({
-        'task_name': WHITELIST_USER_TASK_NAME, 
-        'n_tickets': len(ticket_ids) if ticket_ids is not None else 0, 
-        'user_id': user_id if user_id is not None else ''})) 
+        'task_name': WHITELIST_USER_TASK_NAME,
+        'n_tickets': len(ticket_ids) if ticket_ids is not None else 0,
+        'user_id': user_id if user_id is not None else ''}))
     start_time = time.time()
     count_done = 0
 
-    users_to_whitelist_ids = []
+    users_to_whitelist_ids = set()
 
     if ticket_ids is not None:
         for ticket_id in ticket_ids:
             ticket = Ticket.objects.get(id=ticket_id)
-            users_to_whitelist_ids.append(ticket.sender.id)
+            users_to_whitelist_ids.add(ticket.sender.id)
 
     if user_id is not None:
-        users_to_whitelist_ids.append(user_id)
+        users_to_whitelist_ids.add(user_id)
 
-    users_to_whitelist_ids = list(set(users_to_whitelist_ids))    
     users_to_whitelist = User.objects.filter(id__in=users_to_whitelist_ids).select_related('profile')
     for whitelist_user in users_to_whitelist:
         if not whitelist_user.profile.is_whitelisted:
@@ -94,6 +93,12 @@ def whitelist_user(ticket_ids=None, user_id=None):
 
             # Invalidate template caches for sender user
             invalidate_user_template_caches(whitelist_user.id)
+            UserAnnotation.objects.create(
+                sender_id=annotation_sender_id,
+                user=whitelist_user,
+                text="The user was whitelisted by a moderator",
+                automated=True
+            )
 
             workers_logger.info("Whitelisted user (%s)" % json.dumps(
                 {'user_id': whitelist_user.id,
@@ -316,11 +321,20 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
                  'exception': str(exception), 'work_time': round(time.time() - start_time)}))
         else:
             # Load analysis output to database field (following configuration in settings.ANALYZERS_CONFIGURATION)
+            # NOTE: this features is no longer used as we only load data for the "meta" SoundAnalysis objects with consolidated 
+            # audio descriptors from several analyers. Still we, we leave the feature for possible future use.
             a.load_analysis_data_from_file_to_db()
             
-            if analyzer in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS or analyzer in settings.ANALYZERS_CONFIGURATION:
-                # If the analyzer produces data that should be indexed in the search engine, set sound index to dirty so that the sound gets reindexed soon
-                a.sound.mark_index_dirty(commit=True)
+            if analyzer in settings.CONSOLIDATED_AUDIO_DESCRIPTORS_ANALYZER_NAMES:
+                # If the analyzer produces data that should be loaded in db as consolidated audio descriptors, trigger
+                # function to load it (note that the sound will be marked as index dirty by that method if needed)
+                a.sound.consolidate_analysis()
+
+            if analyzer in settings.SIMILARITY_SPACES_ANALYZER_NAMES:
+                # If the analyzer produces data that should be loaded in db as a similarity vector, trigger
+                # function to load it (note that the sound will be marked as index dirty by that method if needed)
+                a.sound.load_similarity_vectors()
+
             workers_logger.info("Finished processing analysis results (%s)" % json.dumps(
                 {'task_name': PROCESS_ANALYSIS_RESULTS_TASK_NAME, 'sound_id': sound_id, 'analyzer': analyzer, 'status': status,
                  'work_time': round(time.time() - start_time)}))

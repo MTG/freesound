@@ -29,6 +29,7 @@ import luqum.tree
 from luqum.parser import parser
 from luqum.pretty import prettify
 
+from sounds.models import Sound
 from utils.clustering_utilities import get_ids_in_cluster, get_clusters_for_query
 from utils.encryption import create_hash
 from utils.search.backends.solr555pysolr import Solr555PySolrSearchEngine
@@ -43,7 +44,7 @@ def _get_value_to_apply_group_by_pack(self):
     # Force return True if display_as_packs is enabled, and False if map_mode is enabled
     if self.sqp.get_option_value_to_apply('map_mode'):
         return False
-    elif self.sqp.has_filter_with_name('grouping_pack'):
+    elif self.sqp.has_filter_with_name('pack_grouping'):
         return False
     elif self.sqp.get_option_value_to_apply('display_as_packs'):
         return True
@@ -117,8 +118,8 @@ class SearchQueryProcessor:
             query_param_name='dp',
             label='Display results as packs',
             help_text='Display search results as packs rather than individual sounds',
-            get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode') else option.value,
-            should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('map_mode')
+            get_value_to_apply = lambda option: False if option.sqp.has_filter_with_name('pack_grouping') or option.sqp.get_option_value_to_apply('map_mode') else option.value,
+            should_be_disabled = lambda option: option.sqp.has_filter_with_name('pack_grouping') or option.sqp.get_option_value_to_apply('map_mode')
         )),
         ('group_by_pack', SearchOptionBool, dict(
             query_param_name='g',
@@ -126,7 +127,7 @@ class SearchQueryProcessor:
             help_text='Group search results so that multiple sounds of the same pack only represent one item',
             value_default=True,
             get_value_to_apply = _get_value_to_apply_group_by_pack,
-            should_be_disabled = lambda option: option.sqp.has_filter_with_name('grouping_pack') or option.sqp.get_option_value_to_apply('display_as_packs') or option.sqp.get_option_value_to_apply('map_mode')
+            should_be_disabled = lambda option: option.sqp.has_filter_with_name('pack_grouping') or option.sqp.get_option_value_to_apply('display_as_packs') or option.sqp.get_option_value_to_apply('map_mode')
         )),
         ('grid_mode', SearchOptionBool, dict(
             advanced=False,
@@ -163,8 +164,8 @@ class SearchQueryProcessor:
         ('similarity_space', SearchOptionChoice, dict(
             query_param_name='ss',
             label='Similarity space',
-            choices = [(option, option) for option in settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS.keys()],
-            get_default_value = lambda option: settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER
+            choices = [(sim_space_name, sim_space_options.get('display_name', sim_space_name)) for sim_space_name, sim_space_options in settings.SIMILARITY_SPACES.items()],
+            get_default_value = lambda option: settings.SIMILARITY_SPACE_DEFAULT
         )),
         ('field_weights', SearchOptionFieldWeights, dict(
             query_param_name = 'w'
@@ -222,6 +223,13 @@ class SearchQueryProcessor:
                 self.f_parsed = []
         else:
             self.f_parsed = []
+
+        # Handle the special case of old "gropuing_pack" filter which is not valid anymore
+        # Looks like some bots are still using it which results in many errors reported in the logs and
+        # many Solr queries failing. By returning an early error, we avoid the Solr request.
+        if self.has_filter_with_name('grouping_pack'):
+            self.errors = f"Filter parsing error: 'grouping_pack' is not a valid filter name"
+            return
        
         # Remove duplicate filters if any
         nodes_in_filter = []
@@ -350,8 +358,8 @@ class SearchQueryProcessor:
         filters_data = []
         for name, value in self.non_option_filters:
             filter_data = [name, value, self.get_url(remove_filters=[f'{name}:{value}'])]
-            if name == 'grouping_pack':
-                # There is a special case for the grouping_pack filter in which we only want to display the name of the pack and not the ID
+            if name == 'pack_grouping':
+                # There is a special case for the pack_grouping filter in which we only want to display the name of the pack and not the ID
                 filter_data[0] = 'pack'
                 if value.startswith('"'):
                     filter_data[1] = '"'+ value[value.find("_")+1:]
@@ -558,7 +566,7 @@ class SearchQueryProcessor:
             only_sounds_with_pack=self.get_option_value_to_apply('display_as_packs'), 
             only_sounds_within_ids=only_sounds_within_ids, 
             similar_to=similar_to,
-            similar_to_analyzer=self.get_option_value_to_apply('similarity_space')
+            similar_to_similarity_space=self.get_option_value_to_apply('similarity_space')
         )
     
     def get_url(self, add_filters=None, remove_filters=None):
@@ -608,6 +616,22 @@ class SearchQueryProcessor:
     
     def similar_to_active(self):
         return self.options['similar_to'].value_to_apply
+    
+    def similar_to_display_label(self):
+        similar_to = self.options['similar_to'].value_to_apply
+        # If similar_to is a number, we assume it is a sound ID and we return sound's name (we make an extra query...)
+        # Otherwise, we return the raw similar_to value (which will be a vector in serialized format)
+        similar_to_active = self.similar_to_active()
+        if similar_to_active:
+            if str(similar_to).isdigit():
+                sound = Sound.objects.filter(id=int(similar_to)).only('original_filename').first()
+                if sound:
+                    return sound.original_filename
+                else:
+                    return similar_to
+            else:
+                return similar_to
+        return similar_to
 
     def compute_clusters_active(self):
         return self.options['compute_clusters'].value_to_apply

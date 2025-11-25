@@ -55,7 +55,7 @@
     },
     {
         "fields": {
-            "username": "TwistedLemon",
+            "username": "Twisted.Lemon",
             "first_name": "",
             "last_name": "",
             "is_active": true,
@@ -160,8 +160,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.14785,
@@ -201,8 +199,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 6.11535147392,
@@ -242,8 +238,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 3.8814739229,
@@ -283,8 +277,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 4.02299319728,
@@ -324,8 +316,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 5.54931972789,
@@ -365,8 +355,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.0,
@@ -406,8 +394,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.21925170068,
@@ -424,7 +410,7 @@
             "description": "Dirty electric fuzzy sound. Changed with a dynamic delay.",
             "original_path": "/home/fsweb/freesound/freesound-data/sounds/0/12_29.wav",
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "analysis_state": "OK",
             "bitrate": 705,
@@ -447,8 +433,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 9.89166666667,
@@ -488,8 +472,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 88.3628571429,
@@ -529,8 +511,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.57111111111,
@@ -570,8 +550,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.3785625,
@@ -611,8 +589,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.64569160998,
@@ -652,8 +628,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.03329166667,
@@ -693,8 +667,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.0835625,
@@ -734,8 +706,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.22349206349,
@@ -775,8 +745,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.28630385488,
@@ -816,8 +784,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.09772916667,
@@ -857,8 +823,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.75743764172,
@@ -898,8 +862,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.595,
@@ -939,8 +901,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.4120861678,
@@ -980,8 +940,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.91070833333,
@@ -1021,8 +979,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.73365079365,
@@ -1062,8 +1018,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.6363125,
@@ -1103,8 +1057,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.31900226757,
@@ -1144,8 +1096,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.30741496599,
@@ -1185,8 +1135,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.04529166667,
@@ -1226,8 +1174,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.30455782313,
@@ -1267,8 +1213,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.63734693878,
@@ -1308,8 +1252,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.59504166667,
@@ -1349,8 +1291,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.26229024943,
@@ -1390,8 +1330,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.35258503401,
@@ -1431,8 +1369,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.09695833333,
@@ -1472,8 +1408,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.369138322,
@@ -1513,8 +1447,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 0.839916666667,
@@ -1554,8 +1486,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.57528344671,
@@ -1595,8 +1525,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 3.0573015873,
@@ -1636,8 +1564,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.7460625,
@@ -1677,8 +1603,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.815625,
@@ -1718,8 +1642,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.48114583333,
@@ -1759,8 +1681,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.04764583333,
@@ -1800,8 +1720,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 3.00884353741,
@@ -1841,8 +1759,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 2.5774829932,
@@ -1882,8 +1798,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.7235,
@@ -1923,8 +1837,6 @@
     },
     {
         "fields": {
-            "has_bad_description": false,
-            "moderation_note": null,
             "sources": [],
             "uploaded_with_apiv2_client": null,
             "duration": 1.39602083333,
@@ -2258,7 +2170,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 17682,
             "sound_id": 6,
@@ -2270,7 +2182,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 17682,
             "sound_id": 7,
@@ -2282,7 +2194,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 5344,
             "sound_id": 8,
@@ -2294,7 +2206,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 17682,
             "sound_id": 8,
@@ -2306,7 +2218,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 17682,
             "sound_id": 9,
@@ -2498,7 +2410,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 11491,
             "sound_id": 12,
@@ -2510,7 +2422,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 8168,
             "sound_id": 12,
@@ -2522,7 +2434,7 @@
     {
         "fields": {
             "user": [
-                "TwistedLemon"
+                "Twisted.Lemon"
             ],
             "tag": 25688,
             "sound_id": 12,

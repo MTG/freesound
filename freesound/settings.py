@@ -313,7 +313,7 @@ MESSAGES_PER_PAGE = 10
 BOOKMARKS_PER_PAGE = 12 
 SOUNDS_PER_PAGE_PROFILE_PACK_PAGE = 12
 NUM_SIMILAR_SOUNDS_PER_PAGE = 9
-NUM_SIMILAR_SOUNDS_PAGES = 5
+NUM_SIMILAR_SOUNDS_PAGES = 1 # In the modal we only show one page, full results can be seen in search page
 
 
 # Weights using to compute charts
@@ -419,43 +419,199 @@ USER_DOWNLOADS_PUBLIC = True
 ANNOUNCEMENT_CACHE_KEY = 'announcement_cache'
 
 #-------------------------------------------------------------------------------
-# Broad Sound Taxonomy definition
+# Broad Sound Taxonomy definition (internal v1.1 of BST description)
 
 BROAD_SOUND_TAXONOMY = {
-    "m": {"level": 1, "name": "Music", "description": "Music excerpts, including melodies, singing, loops, fillers, drones and short musical snippets."},
-    "m-sp": {"level": 2, "name": "Solo percussion", "description": "Music excerpts with solo percussive instruments."},
-    "m-si": {"level": 2, "name": "Solo instrument", "description": "Music excerpts with only one instrument, excluding percussion."},
-    "m-m": {"level": 2, "name": "Multiple instruments", "description": "Music excerpts with more than one instrument."},
-    "m-other": {"level": 2, "name": "Other", "description": "Music that doesn't belong to any of the above categories."},
-    "is": {"level": 1, "name": "Instrument samples", "description": "Single notes from musical instruments, various versions of the same note, and scales."},
-    "is-p": {"level": 2, "name": "Percussion", "description": "Instrument samples that are percussive (idiophones or membraphones)."},
-    "is-s": {"level": 2, "name": "String", "description": "Instrument samples that belong to the string instrument family."},
-    "is-w": {"level": 2, "name": "Wind", "description": "Instrument samples that belong to the wind instrument family (aerophones)."},
-    "is-k": {"level": 2, "name": "Piano / Keyboard instruments", "description": "Instrument samples of piano or other keyboard instruments, not synthesized."},
-    "is-e": {"level": 2, "name": "Synths / Electronic", "description": "Instrument samples synthesized or produced by electronic means."},
-    "is-other": {"level": 2, "name": "Other", "description": "Instrument samples that don't belong to any of the above categories."},
-    "sp": {"level": 1, "name": "Speech", "description": "Sounds where human voice is prominent."},
-    "sp-s": {"level": 2, "name": "Solo speech", "description": "Recording of a single voice speaking, excluding singing."},
-    "sp-c": {"level": 2, "name": "Conversation / Crowd", "description": "Several people talking, having a conversation or dialogue."},
-    "sp-p": {"level": 2, "name": "Processed / Synthetic", "description": "Voice(s) from an indirect source (e.g. radio), processed or synthesized."},
-    "sp-other": {"level": 2, "name": "Other", "description": "Voice-predominant recordings that don't belong to any of the above categories."},
-    "fx": {"level": 1, "name": "Sound effects", "description": "Isolated sound effects or sound events, each happening one at a time."},
-    "fx-o": {"level": 2, "name": "Objects / House appliances", "description": "Everyday objects, inside the home or smaller in size."},
-    "fx-v": {"level": 2, "name": "Vehicles", "description": "Sounds produced from a vehicle."},
-    "fx-m": {"level": 2, "name": "Other mechanisms, engines, machines", "description": "Machine-like sounds, except vehicles and small house electric devices."},
-    "fx-h": {"level": 2, "name": "Human sounds and actions", "description": "Sounds from the human body, excluding speech."},
-    "fx-a": {"level": 2, "name": "Animals", "description": "Animal vocalizations or sounds."},
-    "fx-n": {"level": 2, "name": "Natural elements and explosions", "description": "Sound events occurring by natural processes."},
-    "fx-ex": {"level": 2, "name": "Experimental", "description": "Experimental sounds or heavily processed audio recordings."},
-    "fx-el": {"level": 2, "name": "Electronic / Design", "description": "Sound effects that are computer-made or designed for user interfaces or animations."},
-    "fx-other": {"level": 2, "name": "Other", "description": "Sound effects that don't belong to any of the above categories."},
-    "ss": {"level": 1, "name": "Soundscapes", "description": "Ambiances, field-recordings with multiple events and sound environments."},
-    "ss-n": {"level": 2, "name": "Nature", "description": "Soundscapes from natural habitats."},
-    "ss-i": {"level": 2, "name": "Indoors", "description": "Soundscapes from closed or indoor spaces."},
-    "ss-u": {"level": 2, "name": "Urban", "description": "Soundscapes from cityscapes or outdoor places with human intervention."},
-    "ss-s": {"level": 2, "name": "Synthetic / Artificial", "description": "Soundscapes that are synthesized or computer-made ambiences."},
-    "ss-other": {"level": 2, "name": "Other", "description": "Soundscapes that don't belong to any of the above categories."}
+  "m": {
+    "level": 1,
+    "name": "Music",
+    "description": "Music excerpts, including melodies, singing, loops, fillers, drones and short musical snippets."
+  },
+  "m-sp": {
+    "level": 2,
+    "name": "Solo percussion",
+    "description": "Music excerpts with solo percussive instruments.",
+    "examples": "rhythmic patterns, unpitched percussion excerpts, drum passages"
+  },
+  "m-si": {
+    "level": 2,
+    "name": "Solo instrument",
+    "description": "Music excerpts with only one instrument, excluding percussion.",
+    "examples": "isolated melody or sequence of notes, solo singing, chords from one instrument"
+  },
+  "m-m": {
+    "level": 2,
+    "name": "Multiple instruments",
+    "description": "Music excerpts with more than one instrument.",
+    "examples": "orchestra, band, dueto, multi-instrument composition, multi-instrument loops"
+  },
+  "m-other": {
+    "level": 2,
+    "name": "Other",
+    "description": "Music that doesn't belong to any of the above categories."
+  },
+  "is": {
+    "level": 1,
+    "name": "Instrument samples",
+    "description": "Single notes from musical instruments, various versions of the same note, and scales."
+  },
+  "is-p": {
+    "level": 2,
+    "name": "Percussion",
+    "description": "Instrument samples that are percussive (idiophones or membraphones).",
+    "examples": "drum, snare, gong, bell, xylophone"
+  },
+  "is-s": {
+    "level": 2,
+    "name": "String",
+    "description": "Instrument samples that belong to the string instrument family.",
+    "examples": "guitar, violin, harp, mandolin"
+  },
+  "is-w": {
+    "level": 2,
+    "name": "Wind",
+    "description": "Instrument samples that belong to the wind instrument family (aerophones).",
+    "examples": "woodwind, brass, flute, trumpet, saxophone"
+  },
+  "is-k": {
+    "level": 2,
+    "name": "Piano / Keyboard instruments",
+    "description": "Instrument samples of piano or other keyboard instruments, not synthesized.",
+    "examples": "piano, harspichord, organ"
+  },
+  "is-e": {
+    "level": 2,
+    "name": "Synths / Electronic",
+    "description": "Instrument samples synthesized or produced by electronic means.",
+    "examples": "synthesizers (analog/digital), synthesized or electronic samples"
+  },
+  "is-other": {
+    "level": 2,
+    "name": "Other",
+    "description": "Instrument samples that don't belong to any of the above categories."
+  },
+  "sp": {
+    "level": 1,
+    "name": "Speech",
+    "description": "Sounds where human voice is prominent."
+  },
+  "sp-s": {
+    "level": 2,
+    "name": "Solo speech",
+    "description": "Recording of a single voice speaking, excluding singing.",
+    "examples": "talking, script reading"
+  },
+  "sp-c": {
+    "level": 2,
+    "name": "Conversation / Crowd",
+    "description": "Several people talking, having a conversation or dialogue.",
+    "examples": "playground, people talking in public places, conversations"
+  },
+  "sp-p": {
+    "level": 2,
+    "name": "Processed / Synthetic",
+    "description": "Voice(s) from an indirect source (e.g. radio), heavily processed, or synthesized.",
+    "examples": "phone/radio recordings, robotic voice, text-to-speech"
+  },
+  "sp-other": {
+    "level": 2,
+    "name": "Other",
+    "description": "Voice-predominant recordings that don't belong to any of the above categories."
+  },
+  "fx": {
+    "level": 1,
+    "name": "Sound effects",
+    "description": "Isolated sound effects or sound events, each happening one at a time."
+  },
+  "fx-o": {
+    "level": 2,
+    "name": "Objects / House appliances",
+    "description": "Everyday objects, inside the home or smaller in size.",
+    "examples": "daily or small objects, tools, weapons, clothes, iron"
+  },
+  "fx-v": {
+    "level": 2,
+    "name": "Vehicles",
+    "description": "Sounds produced from a vehicle.",
+    "examples": "car passing by, car screeching, wiper, car brake, bike, plane, ship"
+  },
+  "fx-m": {
+    "level": 2,
+    "name": "Other mechanisms, engines, machines",
+    "description": "Machine-like sounds, except vehicles and small house electric devices.",
+    "examples": "drill, lawn mower, gear, electric chainsaw"
+  },
+  "fx-h": {
+    "level": 2,
+    "name": "Human sounds and actions",
+    "description": "Sounds from the human body, excluding speech.",
+    "examples": "breath, hearthbeat, sneeze, crying, walking, clapping"
+  },
+  "fx-a": {
+    "level": 2,
+    "name": "Animals",
+    "description": "Animal vocalizations or sounds.",
+    "examples": "cat, insect, sheep, animal walk, growl, purr"
+  },
+  "fx-n": {
+    "level": 2,
+    "name": "Natural elements and explosions",
+    "description": "Sound events occurring by natural processes.",
+    "examples": "wind, fire, ice, rocks, water, stones, explosions"
+  },
+  "fx-ex": {
+    "level": 2,
+    "name": "Experimental",
+    "description": "Experimental sounds or heavily processed audio recordings.",
+    "examples": "reversed sounds, weird effects, unusual recording techniques or processing"
+  },
+  "fx-el": {
+    "level": 2,
+    "name": "Electronic / Design",
+    "description": "Sound effects that are computer-made or designed for user interfaces or animations.",
+    "examples": "sci-fi, laser, whoosh, boink, cartoon, ui, sound alerts or notifications"
+  },
+  "fx-other": {
+    "level": 2,
+    "name": "Other",
+    "description": "Sound effects that don't belong to any of the above categories."
+  },
+  "ss": {
+    "level": 1,
+    "name": "Soundscapes",
+    "description": "Ambiances, field-recordings with multiple events and sound environments."
+  },
+  "ss-n": {
+    "level": 2,
+    "name": "Nature",
+    "description": "Soundscapes from natural habitats.",
+    "examples": "forest ambiance, seaside, river with surrounding nature, farmland"
+  },
+  "ss-i": {
+    "level": 2,
+    "name": "Indoors",
+    "description": "Soundscapes from closed or indoor spaces.",
+    "examples": "closed room ambience, room tone, office, factory, bar"
+  },
+  "ss-u": {
+    "level": 2,
+    "name": "Urban",
+    "description": "Soundscapes from cityscapes or outdoor places with human intervention.",
+    "examples": "city ambience, outside airport, busy road"
+  },
+  "ss-s": {
+    "level": 2,
+    "name": "Synthetic / Artificial",
+    "description": "Soundscapes that are synthesized or computer-made ambiences.",
+    "examples": "artificially-created soundscapes, soundscapes from imaginary places"
+  },
+  "ss-other": {
+    "level": 2,
+    "name": "Other",
+    "description": "Soundscapes that don't belong to any of the above categories."
+  }
 }
+
 BST_CATEGORY_CHOICES = [(key, value['name']) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" not in key]  # Top-level categories
 BST_SUBCATEGORY_CHOICES = [(key, value['name']) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" in key]  # Second-level categories
 
@@ -518,59 +674,420 @@ FSDSINET_ANALYZER_NAME = 'fsd-sinet_v1'
 BST_ANALYZER_NAME = 'bst-extractor_v1'
  
 ANALYZERS_CONFIGURATION = {
-    AUDIOCOMMONS_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('loudness', 'ac_loudness', float),
-            ('dynamic_range', 'ac_dynamic_range', float),
-            ('temporal_centroid', 'ac_temporal_centroid', float),
-            ('log_attack_time', 'ac_log_attack_time', float),
-            ('single_event', 'ac_single_event', bool),
-            ('tonality', 'ac_tonality', str),
-            ('tonality_confidence', 'ac_tonality_confidence', float),
-            ('loop', 'ac_loop', bool),
-            ('tempo', 'ac_tempo', int),
-            ('tempo_confidence', 'ac_tempo_confidence', float),
-            ('note_midi', 'ac_note_midi', int),
-            ('note_name', 'ac_note_name', str),
-            ('note_frequency', 'ac_note_frequency', float),
-            ('note_confidence', 'ac_note_confidence', float),
-            ('brightness', 'ac_brightness', float),
-            ('depth', 'ac_depth', float),
-            ('hardness', 'ac_hardness', float),
-            ('roughness', 'ac_roughness', float),
-            ('boominess', 'ac_boominess', float),
-            ('warmth', 'ac_warmth', float),
-            ('sharpness', 'ac_sharpness', float),
-            ('reverb', 'ac_reverb', bool)
-        ]
-    },
+    AUDIOCOMMONS_ANALYZER_NAME: {},
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
-    AUDIOSET_YAMNET_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('classes', 'yamnet_class', list)
-        ]
-    },
-    BIRDNET_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('detections', 'birdnet_detections', None),  # Use None so detections are not indexed in solr but stored in database
-            ('detected_classes', 'birdnet_detected_class', list),
-            ('num_detections', 'birdnet_detections_count', int),
-        ]
-    },
-    FSDSINET_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('detections', 'fsdsinet_detections', None),  # Use None so detections are not indexed in solr but stored in database
-            ('detected_classes', 'fsdsinet_detected_class', list),
-            ('num_detections', 'fsdsinet_detections_count', int),
-        ]
-    },
-    BST_ANALYZER_NAME: {
-        'descriptors_map': [
-            ('bst_top_level', 'category', str), 
-            ('bst_second_level', 'subcategory', str),
-        ]
-    }
+    AUDIOSET_YAMNET_ANALYZER_NAME: {},
+    BIRDNET_ANALYZER_NAME: {},
+    FSDSINET_ANALYZER_NAME: {},
+    BST_ANALYZER_NAME: {}
 }
+
+AUDIO_DESCRIPTOR_TYPE_FLOAT = 'float'
+AUDIO_DESCRIPTOR_TYPE_INT = 'int'
+AUDIO_DESCRIPTOR_TYPE_BOOL = 'bool'
+AUDIO_DESCRIPTOR_TYPE_STRING = 'string'
+AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS = 'list_of_strings'
+AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY = 'float_array'
+AUDIO_DESCRIPTOR_TYPE_JSON = 'json'  # For complex structures
+DEFAULT_AUDIO_DESCRIPTOR_TYPE = AUDIO_DESCRIPTOR_TYPE_FLOAT
+DEFAULT_AUDIO_DESCRIPTOR_FLOAT_PRECISION = 3  # Number of decimal digits for float audio descriptors
+
+condition_music_or_instrument_samples = lambda s: s.category_names[0] in ["Music", "Instrument samples"]
+condition_instrument_samples = lambda s: s.category_names[0] == "Instrument samples"
+condition_sfx_or_soundscapes = lambda s: s.category_names[0] in ["Sound effects", "Soundscapes"]
+CONSOLIDATED_ANALYZER_NAME = 'consolidated'
+CONSOLIDATED_AUDIO_DESCRIPTORS = [
+    {
+        'name': 'category', 
+        'analyzer': BST_ANALYZER_NAME,
+        'original_name': 'bst_top_level',
+        'type': AUDIO_DESCRIPTOR_TYPE_STRING
+    },
+    {
+        'name': 'subcategory', 
+        'analyzer': BST_ANALYZER_NAME,
+        'original_name': 'bst_second_level',
+        'type': AUDIO_DESCRIPTOR_TYPE_STRING
+    },
+    {
+        'name': 'amplitude_peak_ratio',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['sfx']['max_to_total']
+    },
+    {
+        'name': 'beat_count',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['rhythm']['beats_count'],
+        'type': AUDIO_DESCRIPTOR_TYPE_INT
+    },
+    {
+        'name': 'beat_loudness',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['rhythm']['beats_loudness']['mean']  # Increase precision?
+    },
+    {
+        'name': 'beat_times',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['rhythm']['beats_position'],
+        'type': AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,
+        'index': False
+    },
+    {
+        'name': 'boominess', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'boominess',
+    },
+    {
+        'name': 'bpm', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'tempo',
+    },
+    {
+        'name': 'bpm_confidence', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'tempo_confidence',
+    },
+    {
+        'name': 'brightness', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'brightness',
+    },
+    {
+        'name': 'chord_count',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['tonal']['chords_count'],
+        'type': AUDIO_DESCRIPTOR_TYPE_INT,
+        'condition': condition_music_or_instrument_samples
+    },
+    {
+        'name': 'chord_progression',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['tonal']['chords_progression'],
+        'type': AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
+        'condition': condition_music_or_instrument_samples,
+        'index': False
+    },
+    {
+        'name': 'decay_strength',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['sfx']['strongdecay']
+    },
+    {
+        'name': 'depth', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'depth',
+    },
+    {
+        'name': 'dissonance',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['dissonance']['mean']
+    },
+    {
+        'name': 'duration_effective',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['sfx']['effective_duration']['mean']
+    },
+    {
+        'name': 'dynamic_range',
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'brightness',
+    },
+    {
+        'name': 'hardness', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'hardness',
+    },
+    {
+        'name': 'hpcp',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['tonal']['hpcp']['mean'],
+        'type': AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
+        'index': False,
+    },
+    {
+        'name': 'hpcp_crest',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['tonal']['hpcp_crest']['mean']
+    },
+    {
+        'name': 'hpcp_entropy',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['tonal']['hpcp_entropy']['mean']
+    },
+    {
+        'name': 'inharmonicity',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['sfx']['inharmonicity']['mean']
+    },
+    {
+        'name': 'log_attack_time', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'log_attack_time',
+    },
+    {
+        'name': 'loopable', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'loop',
+        'type': AUDIO_DESCRIPTOR_TYPE_BOOL
+    },
+    {
+        'name': 'loudness', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'loudness',
+    },
+    {
+        'name': 'mfcc',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['mfcc']['mean'],
+        'type': AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
+        'index': False,
+    },
+    {
+        'name': 'note_confidence', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'note_confidence',
+        'condition': condition_instrument_samples
+    },
+    {
+        'name': 'note_midi', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'note_midi',
+        'type': AUDIO_DESCRIPTOR_TYPE_INT,
+        'condition': condition_instrument_samples
+    },
+    {
+        'name': 'note_name', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'note_name',
+        'type': AUDIO_DESCRIPTOR_TYPE_STRING,
+        'condition': condition_instrument_samples
+    },
+    {
+        'name': 'onset_count',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['rhythm']['onset_count'],
+        'type': AUDIO_DESCRIPTOR_TYPE_INT
+    },
+    {
+        'name': 'onset_times',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['rhythm']['onset_times'],
+        'type': AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,
+        'index': False
+    },
+    {
+        'name': 'pitch',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['pitch']['mean']
+    },
+    {
+        'name': 'pitch_max',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['pitch']['max']
+    },
+    {
+        'name': 'pitch_min',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['pitch']['min']
+    },
+    {
+        'name': 'pitch_salience',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['pitch_salience']['mean']
+    },
+    {
+        'name': 'pitch_var',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['pitch']['var']
+    },
+    {
+        'name': 'reverbness', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'reverbness',
+        'type': AUDIO_DESCRIPTOR_TYPE_BOOL
+    },
+    {
+        'name': 'roughness', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'roughness',
+    },
+    {
+        'name': 'sharpness', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'sharpness',
+    },
+    {
+        'name': 'silence_rate', 
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['silence_rate_30dB']['mean']
+    },
+    {
+        'name': 'single_event', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'single_event',
+        'type': AUDIO_DESCRIPTOR_TYPE_BOOL,
+        'transformation': lambda v, d, s: v if s.category_names[0] not in ["Music", "Soundscapes"] else False
+    },
+    {
+        'name': 'spectral_centroid', 
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['spectral_centroid']['mean']
+    },
+    {
+        'name': 'spectral_complexity', 
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['spectral_complexity']['mean']
+    },
+    {
+        'name': 'spectral_crest', 
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['spectral_crest']['mean']
+    },
+    {
+        'name': 'spectral_energy',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['spectral_energy']['mean']
+    },
+    {
+        'name': 'spectral_entropy',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['spectral_entropy']['mean']
+    },
+    {
+        'name': 'spectral_flatness',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['spectral_flatness_db']['mean']
+    },
+    {
+        'name': 'spectral_rolloff',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['spectral_rolloff']['mean']
+    },
+    {
+        'name': 'spectral_skewness',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['spectral_skewness']['mean']
+    },
+    {
+        'name': 'spectral_spread',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['spectral_spread']['mean']
+    },
+    {
+        'name': 'start_time',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['startFrame'],
+        'transformation': lambda v, d, s: (v * 2048.0) / 44100.0   # Convert from frames to seconds
+    },
+    {
+        'name': 'temporal_centroid',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['sfx']['temporal_centroid']['mean']
+    },
+    {
+        'name': 'temporal_centroid_ratio',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['sfx']['tc_to_total']
+    },
+    {
+        'name': 'temporal_decrease',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['sfx']['temporal_decrease']['mean']
+    },
+    {
+        'name': 'temporal_skewness',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['sfx']['temporal_skewness']['mean']
+    },
+    {
+        'name': 'temporal_spread',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['sfx']['temporal_spread']['mean']
+    },
+    {
+        'name': 'tonality', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'tonality',
+        'type': AUDIO_DESCRIPTOR_TYPE_STRING
+    },
+    {
+        'name': 'tonality_confidence', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'tonality_confidence',
+    },
+    {
+        'name': 'tristimulus',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['sfx']['tristimulus']['mean'],
+        'type': AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
+        'index': False,
+    },
+    {
+        'name': 'warmth', 
+        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
+        'original_name': 'warmth',
+    },
+    {
+        'name': 'zero_crossing_rate',
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'get_func': lambda d, s: d['lowlevel']['zerocrossingrate']['mean']
+    },
+    {
+        'name': 'has_audio_problems',
+        'analyzer': "fs-essentia-problem-detection_v1",
+        'original_name': 'has_audio_problems',
+        'type': AUDIO_DESCRIPTOR_TYPE_BOOL
+    },
+    {
+        'name': 'birdnet_detected_class', 
+        'type': AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
+        'analyzer': BIRDNET_ANALYZER_NAME,
+        'original_name': 'detected_classes',
+        'transformation': lambda v, d, s: None if v == [] else v,
+        'condition': condition_sfx_or_soundscapes
+    },
+    {
+        'name': 'birdnet_detections', 
+        'analyzer': BIRDNET_ANALYZER_NAME,
+        'type': AUDIO_DESCRIPTOR_TYPE_JSON,
+        'original_name': 'detections',
+        'transformation': lambda v, d, s: None if v == [] else v,
+        'condition': condition_sfx_or_soundscapes,
+        'index': False
+    },
+    {
+        'name': 'birdnet_detections_count', 
+        'type': AUDIO_DESCRIPTOR_TYPE_INT,
+        'analyzer': BIRDNET_ANALYZER_NAME,
+        'original_name': 'num_detections',
+        'condition': condition_sfx_or_soundscapes
+    },
+    {
+        'name': 'fsdsinet_detected_class', 
+        'type': AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
+        'analyzer': FSDSINET_ANALYZER_NAME,
+        'original_name': 'detected_classes',
+        'transformation': lambda v, d, s: None if v == [] else v,
+    },
+    {
+        'name': 'fsdsinet_detections', 
+        'analyzer': FSDSINET_ANALYZER_NAME,
+        'type': AUDIO_DESCRIPTOR_TYPE_JSON,
+        'original_name': 'detections',
+        'transformation': lambda v, d, s: None if v == [] else v,
+        'index': False
+    },
+    {
+        'name': 'fsdsinet_detections_count', 
+        'type': AUDIO_DESCRIPTOR_TYPE_INT,
+        'analyzer': FSDSINET_ANALYZER_NAME,
+        'original_name': 'num_detections'
+    },
+]
+
+CONSOLIDATED_AUDIO_DESCRIPTORS_ANALYZER_NAMES = list(set([ad['analyzer'] for ad in CONSOLIDATED_AUDIO_DESCRIPTORS]))
+AVAILABLE_AUDIO_DESCRIPTORS_NAMES = [desc['name'] for desc in CONSOLIDATED_AUDIO_DESCRIPTORS]
+
 
 # -------------------------------------------------------------------------------
 # Search engine
@@ -645,11 +1162,11 @@ SEARCH_SOUNDS_SUBCATEGORY_FACET = {SEARCH_SOUNDS_FIELD_SUBCATEGORY: {'limit': 30
 
 SEARCH_SOUNDS_BETA_FACETS = {
     'fsdsinet_detected_class': {'limit': 30, 'title': 'FSD-SINet class'},
-    'ac_brightness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Brightness'},
-    'ac_depth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Depth'},
-    'ac_warmth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Warmth'},
-    'ac_hardness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Hardness'},
-    'ac_boominess': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Boominess'},
+    'brightness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Brightness'},
+    'depth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Depth'},
+    'warmth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Warmth'},
+    'hardness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Hardness'},
+    'boominess': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Boominess'},
 }
 
 SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST = "Thread creation (newest first)"
@@ -664,28 +1181,38 @@ SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr9pysolr.Solr9PySolrSear
 SOLR5_BASE_URL = "http://search:8983/solr"
 SOLR9_BASE_URL = "http://search:8983"
 
-SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
-    BST_ANALYZER_NAME: {
+SIMILARITY_SPACE_LAION_CLAP = 'laion_clap'
+SIMILARITY_FREESOUND_CLASSIC = 'freesound_classic'
+SIMILARITY_SPACES = {
+    SIMILARITY_SPACE_LAION_CLAP: {
         'vector_property_name': 'clap_embedding', 
         'vector_size': 512,
-        'l2_norm': True
+        'l2_norm': True,
+        'analyzer': BST_ANALYZER_NAME,
+        'display_name': 'Acoustic and semantic'
     },
-    FSDSINET_ANALYZER_NAME: {
-        'vector_property_name': 'embeddings', 
-        'vector_size': 512,
-        'l2_norm': True
-    },
-    FREESOUND_ESSENTIA_EXTRACTOR_NAME: {
+    SIMILARITY_FREESOUND_CLASSIC: {
         'vector_property_name': 'sim_vector', 
         'vector_size': 100,
-        'l2_norm': True
+        'l2_norm': True,
+        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        'display_name': 'Acoustic'
     }
 }
-SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = BST_ANALYZER_NAME
-SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY = 500
-USE_SEARCH_ENGINE_SIMILARITY = False
+SIMILARITY_SPACES_NAMES = list(SIMILARITY_SPACES.keys())
+SIMILARITY_SPACES_ANALYZER_NAMES = list(set([ss['analyzer'] for ss in SIMILARITY_SPACES.values()]))
+SIMILARITY_SPACE_DEFAULT = SIMILARITY_SPACE_LAION_CLAP
+SIMILARITY_MIN_THRESHOLD = 0.7
 
 MAX_SEARCH_RESULTS_IN_MAP_DISPLAY = 10000  # This is the maximum number of sounds that will be shown when using "display results in map" mode
+
+SEARCH_CACHE_EMPTY_QUERIES = True
+SEARCH_EMPTY_QUERY_CACHE_KEY = 'search_empty_query_results_paginator'
+SEARCH_EMPTY_QUERY_CACHE_TIME = 60 * 10  # 10 minutes, although we manually invalidate this cache when the search index is updated so this time could theoretically be longer
+
+SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take longer than this threshold in milliseconds. Set it to -1 to disable logging of slow queries.
+SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
+
 
 # -------------------------------------------------------------------------------
 # Similarity client settings
@@ -995,6 +1522,7 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
         'debug_toolbar.panels.cache.CachePanel',
         'debug_toolbar.panels.signals.SignalsPanel',
         'debug_toolbar.panels.redirects.RedirectsPanel',
+        'freesound.panels.SolrDebugPanel',
     ]
 
     DEBUG_TOOLBAR_CONFIG = {

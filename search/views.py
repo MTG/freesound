@@ -22,6 +22,7 @@ import datetime
 import json
 import logging
 import sentry_sdk
+import traceback
 
 from django.core.cache import cache
 from django.conf import settings
@@ -38,15 +39,23 @@ from utils.clustering_utilities import get_clusters_for_query, get_num_sounds_pe
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search import get_search_engine, SearchEngineException, SearchResultsPaginator, search_query_processor
-from utils.search.search_sounds import perform_search_engine_query, allow_beta_search_features
+from utils.search.search_sounds import perform_search_engine_query, allow_beta_search_features, get_empty_query_cache_key
 
 
 search_logger = logging.getLogger("search")
 
 
+def is_empty_query(request):
+    # Check if the request correpsonds to an empty query with all the default parameters. It happens when the user
+    # hits "enter" in the search box without entering any text. This can be used to return cached results for this common 
+    # case which typically produces long queries
+    return len(request.GET) == 0 or (len(request.GET) == 1 and 'q' in request.GET and request.GET['q'] == '')
+
+
 def search_view_helper(request):
     # Process request data with the SearchQueryProcessor
     sqp = search_query_processor.SearchQueryProcessor(request)
+    use_beta_features = allow_beta_search_features(request)
 
     # Check if there was a filter parsing error and return error if so
     if sqp.errors:
@@ -76,7 +85,7 @@ def search_view_helper(request):
     # Prepare variables for clustering
     get_clusters_url = None
     clusters_data = None
-    if sqp.compute_clusters_active() and allow_beta_search_features(request):
+    if sqp.compute_clusters_active() and use_beta_features:
         if cluster_data_is_fully_available(sqp):
             # If clustering data for the current query is fully available, we can get it directly
             clusters_data = _get_clusters_data_helper(sqp)
@@ -92,12 +101,30 @@ def search_view_helper(request):
     # Run the query and post-process the results
     try:
         query_params = sqp.as_query_params()
-        results, paginator = perform_search_engine_query(query_params)
+        
+        empty_query_cache_key = get_empty_query_cache_key(request, use_beta_features=use_beta_features)
+        if is_empty_query(request) and empty_query_cache_key:
+            # This common case produces long queries but the results will change very slowly (only when we index new sounds), 
+            # so we can cache them.
+            results_paginator = cache.get(empty_query_cache_key, None)
+            if results_paginator is not None:
+                # If results are cached, we use them directly
+                results, paginator = results_paginator
+                results.q_time = None  # Set query time to None as we are not actually querying the search engine
+            else:
+                # Perform the query and cache the results
+                results, paginator = perform_search_engine_query(query_params)
+                cache.set(empty_query_cache_key, (results, paginator), settings.SEARCH_EMPTY_QUERY_CACHE_TIME)
+
+        else:
+            # Perform the query normally
+            results, paginator = perform_search_engine_query(query_params)
+
         if sqp.map_mode_active():
             # In map we configure the search query to already return geotags data. Here we collect all this data
             # and save it to the cache so we can collect it in the 'geotags_for_query_barray' view which prepares
             # data points for the map of sounds.
-            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 5 minutes
+            cache.set(map_mode_query_results_cache_key, results.docs, 60 * 15)  # cache for 15 minutes
 
             # Nevertheless we set docs to empty list as we won't display anything in the search results page (the map
             # will make an extra request that will load the cached data and display it in the map)
@@ -120,7 +147,7 @@ def search_view_helper(request):
                 # Add URLs to "more from this pack" in the result object so these are easily accessible in the template
                 for d in docs:
                     if d.get("n_more_in_group") and d["sound"].pack_id is not None:
-                        d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'grouping_pack:"{d["sound"].pack_id}_{d["sound"].pack.name}"'])
+                        d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'pack_grouping:"{d["sound"].pack_id}_{d["sound"].pack.name}"'])
             else:
                 resultspackids = []
                 sound_ids_for_pack_id = {}
@@ -139,7 +166,7 @@ def search_view_helper(request):
                 docs = [d for d in results.docs if int(d.get("group_name").split('_')[0]) in allpacks]
                 for d in docs:
                     d["pack"] = allpacks[int(d.get("group_name").split('_')[0])]
-                    d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'grouping_pack:"{d["pack"].id}_{d["pack"].name}"'])
+                    d["more_from_this_pack_url"] = sqp.get_url(add_filters=[f'pack_grouping:"{d["pack"].id}_{d["pack"].name}"'])
 
         search_logger.info('Search (%s)' % json.dumps({
             'ip': get_client_ip(request),
@@ -170,8 +197,8 @@ def search_view_helper(request):
             'docs': docs,
             'facets': results.facets,
             'non_grouped_number_of_results': results.non_grouped_number_of_results,
-            'show_beta_search_options': allow_beta_search_features(request),
-            'experimental_facets': settings.SEARCH_SOUNDS_BETA_FACETS
+            'show_beta_search_options': use_beta_features,
+            'experimental_facets': settings.SEARCH_SOUNDS_BETA_FACETS,
         }
 
     except SearchEngineException as e:
@@ -179,7 +206,8 @@ def search_view_helper(request):
         sentry_sdk.capture_exception(e)
         return {'error_text': 'There was an error while searching, is your query correct?'}
     except Exception as e:
-        search_logger.info(f'Could probably not connect to Solr - {e}')
+        stack_trace = traceback.format_exc()
+        search_logger.info(f'Could probably not connect to Solr - {e}\n{stack_trace}')
         sentry_sdk.capture_exception(e)
         return {'error_text': 'The search server could not be reached, please try again later.'}
 

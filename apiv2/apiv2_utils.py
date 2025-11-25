@@ -294,11 +294,12 @@ def api_search(
             and search_form.cleaned_data['filter'] is None \
             and not search_form.cleaned_data['descriptors_filter'] \
             and not search_form.cleaned_data['target'] \
+            and not search_form.cleaned_data['similar_to'] \
             and not target_file:
         # No input data for search, return empty results
         return [], 0, None, None, None, None, None
 
-    if search_form.cleaned_data['query'] is None and search_form.cleaned_data['filter'] is None:
+    if search_form.cleaned_data['query'] is None and search_form.cleaned_data['filter'] is None and search_form.cleaned_data['similar_to'] is None:
         # Standard content-based search
         try:
             results, count, note = similarity_api_search(
@@ -349,8 +350,7 @@ def api_search(
                 num_sounds=search_form.cleaned_data['page_size'],
                 group_by_pack=search_form.cleaned_data['group_by_pack'],
                 similar_to=search_form.cleaned_data['similar_to'],
-                similar_to_max_num_sounds=min(search_form.cleaned_data['page'] * search_form.cleaned_data['page_size'], settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY),
-                similar_to_analyzer=search_form.cleaned_data['similarity_space'] or settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER,
+                similar_to_similarity_space=search_form.cleaned_data['similarity_space'] or settings.SIMILARITY_SPACE_DEFAULT,
             )
 
             ids_score = [(int(element['id']), element['score']) for element in result.docs]

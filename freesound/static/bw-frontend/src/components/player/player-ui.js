@@ -635,7 +635,7 @@ const createSimilarSoundsButton = (parentNode, playerImgNode) => {
     // Edit: the bookmark button all alone makes players look ugly, so we don't make them always visible even in touch devices
     //similarSoundsButtonContainer.classList.add('opacity-050')
   }
-  similarSoundsButton.setAttribute('data-toggle', 'modal-default');
+  similarSoundsButton.setAttribute('data-toggle', 'similar-sounds-modal');
   similarSoundsButton.setAttribute('data-modal-content-url', parentNode.dataset.similarSoundsModalUrl);
   similarSoundsButtonContainer.appendChild(similarSoundsButton)
   return similarSoundsButtonContainer

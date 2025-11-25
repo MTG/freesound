@@ -63,7 +63,7 @@ import tickets.views as TicketViews
 import utils.sound_upload
 from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import EmailResetForm, FsPasswordResetForm, FsSetPasswordForm, \
-    UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, \
+    UploadFileForm, FileChoiceForm, RegistrationForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm, BulkDescribeForm, \
     UsernameField, ProblemsLoggingInForm, username_taken_by_other_user, FsPasswordChangeForm
 from general.templatetags.util import license_with_version
@@ -356,7 +356,8 @@ def send_activation(user):
     tvars = {
         'user': user,
         'username': username,
-        'hash': token
+        'hash': token,
+        'pw_reset_timeout_days': int(settings.PASSWORD_RESET_TIMEOUT / (60 * 60 * 24)),
     }
     send_mail_template(settings.EMAIL_SUBJECT_ACTIVATION_LINK, 'emails/email_activation.txt', tvars, user_to=user)
 
@@ -464,58 +465,63 @@ def edit(request):
         'has_granted_permissions': has_granted_permissions,
         'has_old_avatar': has_old_avatar,
         'uploads_enabled': settings.UPLOAD_AND_DESCRIPTION_ENABLED,
-        'activePage': 'profile', 
+        'activePage': 'profile',
     }
     return render(request, 'accounts/edit.html', tvars)
 
 
 @transaction.atomic()
 def handle_uploaded_image(profile, f):
-    upload_logger.info("\thandling profile image upload")
-    os.makedirs(os.path.dirname(profile.locations("avatar.L.path")), exist_ok=True)
+    user_id = profile.user.id
+    upload_logger.info("\thandling profile image upload, user %s, original filename %s", user_id, f.name)
 
+    if not f.content_type.startswith("image"):
+        upload_logger.warning(f"\t{f.name} is not an image, skipping")
+        return
+
+    os.makedirs(os.path.dirname(profile.locations("avatar.L.path")), exist_ok=True)
     ext = os.path.splitext(os.path.basename(f.name))[1]
     tmp_image_path = tempfile.mktemp(suffix=ext, prefix=str(profile.user.id))
     try:
-        upload_logger.info("\topening file: %s", tmp_image_path)
+        upload_logger.info("\timage upload (%s) - opening file: %s", user_id, tmp_image_path)
         destination = open(tmp_image_path, 'wb')
         for chunk in f.chunks():
             destination.write(chunk)
         destination.close()
-        upload_logger.info("\tfile upload done")
+        upload_logger.info("\timage upload (%s) - file upload done", user_id)
     except Exception as e:
-        upload_logger.info("\tfailed writing file error: %s", str(e))
+        upload_logger.warning("\timage upload (%s) - failed writing file error: %s", user_id, str(e))
 
-    upload_logger.info("\tcreating thumbnails")
+    upload_logger.info("\timage upload (%s) - creating thumbnails", user_id)
     path_s = profile.locations("avatar.S.path")
     path_m = profile.locations("avatar.M.path")
     path_l = profile.locations("avatar.L.path")
     path_xl = profile.locations("avatar.XL.path")
     try:
         extract_square(tmp_image_path, path_s, 32)
-        upload_logger.info("\tcreated small thumbnail")
+        upload_logger.info("\timage upload (%s) - created small thumbnail", user_id)
         profile.has_avatar = True
         profile.save()
     except Exception as e:
-        upload_logger.info("\tfailed creating small thumbnails: " + str(e))
+        upload_logger.warning("\timage upload (%s) - failed creating small thumbnails: %s", user_id, str(e))
 
     try:
         extract_square(tmp_image_path, path_m, 40)
-        upload_logger.info("\tcreated medium thumbnail")
+        upload_logger.info("\timage upload (%s) - created medium thumbnail", user_id)
     except Exception as e:
-        upload_logger.info("\tfailed creating medium thumbnails: " + str(e))
+        upload_logger.warning("\timage upload (%s) - failed creating medium thumbnails: %s", user_id, str(e))
 
     try:
         extract_square(tmp_image_path, path_l, 70)
-        upload_logger.info("\tcreated large thumbnail")
+        upload_logger.info("\timage upload (%s) - created large thumbnail", user_id)
     except Exception as e:
-        upload_logger.info("\tfailed creating large thumbnails: " + str(e))
+        upload_logger.warning("\timage upload (%s) - failed creating large thumbnails: %s", user_id, str(e))
 
     try:
         extract_square(tmp_image_path, path_xl, 100)
-        upload_logger.info("\tcreated extra-large thumbnail")
+        upload_logger.info("\timage upload (%s) - created extra-large thumbnail", user_id)
     except Exception as e:
-        upload_logger.info("\tfailed creating extra-large thumbnails: " + str(e))
+        upload_logger.warning("\timage upload (%s) - failed creating extra-large thumbnails: %s", user_id, str(e))
 
     copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)
@@ -541,7 +547,7 @@ def manage_sounds(request, tab):
             'filter_query': filter_query,
             'sort_options': sort_options,
         }, sort_by_db, filter_db
-        
+
 
     # First do some stuff common to all tabs
     sounds_published_base_qs = Sound.public.filter(user=request.user)
@@ -584,7 +590,7 @@ def manage_sounds(request, tab):
             packs = Pack.objects.ordered_ids(pack_ids)
             # Just as a sanity check, filter out packs not owned by the user
             packs = [pack for pack in packs if pack.user == pack.user]
-    
+
             if packs:
                 if 'edit' in request.POST:
                     # There will be only one pack selected (otherwise the button is disabled)
@@ -678,7 +684,7 @@ def manage_sounds(request, tab):
                                          f'sound{ "s" if n_send_to_processing != 1 else "" } '
                                          f'to re-process.{ sounds_skipped_msg_part }')
                     return HttpResponseRedirect(reverse('accounts-manage-sounds', args=[tab]))
-    
+
         # Process query and filter options
         sort_options = [
             ('created_desc', 'Date added (newest first)', '-created'),
@@ -1208,7 +1214,7 @@ def handle_uploaded_file(user_id, f):
     dest_directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
     os.makedirs(dest_directory, exist_ok=True)
     dest_path = os.path.join(dest_directory, os.path.basename(f.name)).encode("utf-8")
-    upload_logger.info(f"handling file upload and saving to {dest_path}")
+    upload_logger.info("handling file upload from user %s, filename %s and saving to %s", user_id, f.name, dest_path.decode("utf-8"))
     starttime = time.time()
     if settings.MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING and isinstance(f, TemporaryUploadedFile):
         # Big files (bigger than ~2MB, this is configured by Django and can be customized) will be delivered via a
@@ -1218,7 +1224,7 @@ def handle_uploaded_file(user_id, f):
             os.rename(f.temporary_file_path(), dest_path)
             os.chmod(dest_path, 0o644)  # Set appropriate permissions so that file can be downloaded from nginx
         except Exception as e:
-            upload_logger.warning("failed moving TemporaryUploadedFile error: %s", str(e))
+            upload_logger.warning("file upload (%s) - failed moving TemporaryUploadedFile error: %s", user_id, str(e))
             return False
     else:
         # Small files will be of type InMemoryUploadedFile instead of TemporaryUploadedFile and will be initially
@@ -1228,80 +1234,40 @@ def handle_uploaded_file(user_id, f):
             for chunk in f.chunks():
                 destination.write(chunk)
         except Exception as e:
-            upload_logger.warning("failed writing uploaded file error: %s", str(e))
+            upload_logger.warning("file upload (%s) - failed writing uploaded file error: %s", user_id, str(e))
             return False
 
     # trigger processing of uploaded files before description
     tasks.process_before_description.delay(audio_file_path=dest_path.decode())
-    upload_logger.info(f"sent uploaded file {dest_path} to processing before description")
+    upload_logger.info("file upload (%s) - sent uploaded file %s to processing before description", user_id, dest_path.decode("utf-8"))
 
     # NOTE: if we enable mirror locations for uploads and the copying below causes problems, we could do it async
     copy_uploaded_file_to_mirror_locations(dest_path)
-    upload_logger.info(f"handling file upload done, took {time.time() - starttime:.2f} seconds")
+    upload_logger.info("file upload (%s) - handling file upload done, took %.2f seconds", user_id, time.time() - starttime)
     return True
 
 
-@csrf_exempt
-def upload_file(request):
-    """ upload a file. This function does something weird: it gets the session id from the
-    POST variables. This is weird but... as far as we know it's not too bad as we only need
-    the user login """
-
-    upload_logger.info("start uploading file")
-    engine = __import__(settings.SESSION_ENGINE, {}, {}, [''])  # get the current session engine
-    session_data = engine.SessionStore(request.POST.get('sessionid', ''))
-    try:
-        user_id = session_data['_auth_user_id']
-        upload_logger.info("\tuser id %s", str(user_id))
-    except KeyError:
-        upload_logger.warning("failed to get user id from session")
-        return HttpResponseBadRequest("You're not logged in. Log in and try again.")
-    try:
-        request.user = User.objects.get(id=user_id)
-        upload_logger.info("\tfound user: %s", request.user.username)
-    except User.DoesNotExist:
-        upload_logger.warning("user with this id does not exist")
-        return HttpResponseBadRequest("user with this ID does not exist.")
-
-    if request.method == 'POST':
-        form = FlashUploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            upload_logger.info("\tform data is valid")
-            if handle_uploaded_file(user_id, request.FILES["file"]):
-                return HttpResponse("File uploaded OK")
-            else:
-                return HttpResponseServerError("Error in file upload")
-        else:
-            upload_logger.warning("form data is invalid: %s", str(form.errors))
-            return HttpResponseBadRequest("Form is not valid.")
-    else:
-        upload_logger.warning("no data in post")
-        return HttpResponseBadRequest("No POST data in request")
-
-
 @login_required
-def upload(request, no_flash=False):
+def upload(request):
     form = UploadFileForm()
     successes = 0
     errors = []
     uploaded_file = None
-    if no_flash:
-        if request.method == 'POST':
-            form = UploadFileForm(request.POST, request.FILES)
-            if form.is_valid():
-                submitted_files = request.FILES.getlist('files')
-                for file_ in submitted_files:
-                    if handle_uploaded_file(request.user.id, file_):
-                        uploaded_file = file_
-                        successes += 1
-                    else:
-                        errors.append(file_)
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            submitted_files = request.FILES.getlist('files')
+            for file_ in submitted_files:
+                if handle_uploaded_file(request.user.id, file_):
+                    uploaded_file = file_
+                    successes += 1
+                else:
+                    errors.append(file_)
     tvars = {
         'form': form,
         'uploaded_file': uploaded_file,
         'successes': successes,
         'errors': errors,
-        'no_flash': no_flash,
         'max_file_size': settings.UPLOAD_MAX_FILE_SIZE_COMBINED,
         'max_file_size_in_MB': int(round(settings.UPLOAD_MAX_FILE_SIZE_COMBINED * 1.0 / (1024 * 1024))),
         'lossless_file_extensions': [ext for ext in settings.ALLOWED_AUDIOFILE_EXTENSIONS if ext not in settings.LOSSY_FILE_EXTENSIONS],

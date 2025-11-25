@@ -77,10 +77,7 @@ urlpatterns = [
     path('download-attribution/', accounts.download_attribution, name="accounts-download-attribution"),
     path('stream/', follow.stream, name='stream'),
 
-    path('upload/', accounts.upload, name="accounts-upload", kwargs=dict(no_flash=True)),
-    path('upload/html/', accounts.upload, name="accounts-upload-html", kwargs=dict(no_flash=True)),
-    path('upload/flash/', accounts.upload, name="accounts-upload-flash"),
-    path('upload/file/', accounts.upload_file, name="accounts-upload-file"),
+    path('upload/', accounts.upload, name="accounts-upload"),
     path('upload/bulk-describe/<int:bulk_id>/', accounts.bulk_describe, name="accounts-bulk-describe"),
 
     path('sounds/manage/<tab>/', accounts.manage_sounds, name="accounts-manage-sounds"),
@@ -88,7 +85,7 @@ urlpatterns = [
     path('describe/license/', accounts.describe_license, name="accounts-describe-license"),
     path('describe/pack/', accounts.describe_pack, name="accounts-describe-pack"),
     path('describe/sounds/', accounts.describe_sounds, name="accounts-describe-sounds"),
-    
+
     path('bookmarks/', bookmarks.bookmarks, name="bookmarks"),
     path('bookmarks/category/<int:category_id>/', bookmarks.bookmarks, name="bookmarks-category"),
     path('bookmarks/add/<int:sound_id>/', bookmarks.add_bookmark, name="add-bookmark"),

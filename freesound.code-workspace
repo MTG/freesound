@@ -89,6 +89,12 @@
 				"problemMatcher": []
 			},
 			{
+				"label": "Run tests for search engine",
+				"type": "shell",
+				"command": "docker compose run --rm web pytest -m \"search_engine\"",
+				"problemMatcher": []
+			},
+			{
 				"label": "Migrate",
 				"type": "shell",
 				"command": "docker compose run --rm web python manage.py migrate",
@@ -113,6 +119,12 @@
 				"problemMatcher": []
 			},
 			{
+				"label": "Reindex search engine (include sim vectors)",
+				"type": "shell",
+				"command": "docker compose run --rm web python manage.py reindex_search_engine_sounds --include-similarity-vectors && docker compose run --rm web python manage.py reindex_search_engine_forum",
+				"problemMatcher": []
+			},
+			{
 				"label": "Post dirty sounds to search engine",
 				"type": "shell",
 				"command": "docker compose run --rm web python manage.py post_dirty_sounds_to_search_engine",
@@ -134,6 +146,12 @@
 				"label": "Start API docs server",
 				"type": "shell",
 				"command": "cd _docs/api/build/html && python -m http.server 8008",
+				"problemMatcher": []
+			},
+			{
+				"label": "Run psql",
+				"type": "shell",
+				"command": "docker compose run --rm db psql -h db -U freesound  -d freesound",
 				"problemMatcher": []
 			}
 		]

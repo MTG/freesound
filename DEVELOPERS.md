@@ -180,10 +180,8 @@ If a new search engine backend class is to be implemented, it must closely follo
 utils.search.SearchEngineBase docstrings. There is a Django management command that can be used in order to test
 the implementation of a search backend. You can run it like:
 
-    docker compose run --rm web python manage.py test_search_engine_backend -fsw --backend utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine
+    docker compose run --rm web pytest -m "search_engine" --search-engine-backend utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine
 
-Please read carefully the documentation of the management command to better understand how it works and how is it
-doing the testing.
 
 ### Freesound analysis pipeline
 
@@ -229,8 +227,11 @@ that will also be reflected in the `SoundAnalysis` object by setting a status of
 `SoundAnalysis` object and will hopefully show deatils about the anlaysis errors. If the analyzer has defined
 a `descriptors_map` property in `settings.ANALYZERS_CONFIGURATION[analyzer_name]`, then the mapping will be used to load some of the
 analysis results from the analysis output file and store them directly in the Freesound database (the `SoundAnalysis` object has a
-JSON field to store `analysis_data`). Analysis results stored in the database can be easily used for indexing sounds and filtering 
-them with the search engine and the Freesound API (for a "how to" see implementation examples for analyzer `ac-extractor_v3`).
+JSON field to store `analysis_data`) (UPDATE: we no longer use `descriptors_map` to load analyzers output data to the DB, although
+the feature is still available. We now use `settings.CONSOLIDATED_AUDIO_DESCRIPTORS` configuration option to determine which combination
+of analyzers' outputs should be loaded into the DB in a new *meta* `SoundAnalysis` object which combines output from all analyzers).
+These new *meta* `SoundAnalysis` objects are created with the method `Sound.consolidate_analysis()` which is automatically triggered from 
+`process_analysis_results` jobs if required.
 
 It is not advised to add more than a *few thousands* of jobs in the Celery/RabbitMQ queue (we've experienced problems with that although
 we never furthe investigated). For this reason, if we want to, e.g. analyze the whole Freesound with a new analyzer, we won't simply
@@ -258,6 +259,49 @@ The new analysis pipeline uses a job queue based on Celery/RabbitMQ. RabbitMQ co
 (e.g. `http://localhost:5673/rabbitmq-admin`) and using `guest` as both username and password. Also, accessing 
 `http://localhost:8000/monitor` will show a summary of the state of different analysis job queues (as well as queues
 for Freesound async tasks other than analysis).
+
+
+### Supported audio descriptors for search and sound metadata
+
+By combining the output of one or several audio analyzers (see the sections below), Freesound has a way to make audio descriptors
+avialable for filtering search queries and as sound metadata fields through the API. In this way, an API user is able to make
+queries and filter by both textual sound properties like tags and audio descriptors. Also, in the search results returned through the API,
+a user can specify which descriptor values should be returned, much like any other standard sound metadata field (see API docs for more info).
+
+The way to specify which audio descriptors should be available as fields/filters, is trhough the `settings.CONSOLIDATED_AUDIO_DESCRIPTORS`
+configuration parameter. There, a list of descriptors is defined together with the way to find their values based on the output of audio
+analyzers. When analyzing sounds with audio analyzers, the results of each analyzer will be saved in disk (either with a .json or .yaml) file.
+Also, a `SoundAnalysis` object for every analyzer/sound pair will be created (see the sections above). Analyzers output will only be saved in disk,
+and will not be loaded in the corresponding `SoundAnalysis` object. The `Sound` model has a `Sound.consoidate_analysis()` method which, when run, will
+create a new `SoundAnalysis` object of analyzer type `consolidated` (`settings.CONSOLIDATED_ANALYZER_NAME`), will collect all the relevant descriptors
+data (following the `settings.CONSOLIDATED_AUDIO_DESCRIPTORS` list) from each individual analyzer output file, and will load the collected data in 
+the `analysis_datya` field of the newly created `SoundAnalysis` object. This is how only the relevant audio descriptors data is load to the DB in the
+consolidated `SoundAnalysis` object. `Sound.consoidate_analysis()` is called every time a new analyzer relevant to `settings.CONSOLIDATED_AUDIO_DESCRIPTORS` 
+finished an analysis task so sounds are updated "automaticlly". Also there is a management command `create_consolidated_sound_analysis_and_sim_vectors` that 
+will help creating these objects in bulk.
+
+For every descriptor defined in `settings.CONSOLIDATED_AUDIO_DESCRIPTORS` there are a number of options that can be set, including some value transformations
+and whether the descriptor should be indexed in the search engine. If no options are set, sensible defaults will be used. The current definition of 
+`settings.CONSOLIDATED_AUDIO_DESCRIPTORS` should hopefully be self-explanatory.
+
+When consolidated analyses are loaded in `SoundAnalysis` objects in the DB, adding sounds to the search engine will also include these
+descriptors and therefore these will be available for filtering in search queries. Note that multi-dimensional descriptors will not be indexed
+(they are not useful for filtering), and also descriptors marked with `index: False` will be skipped.
+
+
+### Similarity search and similarity spaces
+
+Similarly to how audio descriptors work, Freesound can also define a number of "similarity spaces" that can be used for similarity search
+and that are based on the output of audio analyzers. Similarity spaces are defined through `settings.SIMILARITY_SPACES`. The entries
+of `settings.SIMILARITY_SPACES` define a number of properties like from which analyzer/property value the vector should be obtained,
+if the vector should be L2 normalized, etc. Checking the current definition of `settings.SIMILARITY_SPACES` should hopefully be self-explanatory.
+
+The `Sound` model has a `Sound.load_similarity_vectors()` which will create corresponding `SoundSimilarityVector` objects for each pair of
+sound and type of similarity space. Once the vectors are loaded in the DB, they can be indexed in the search engine and also be used as targets
+for a similarity search. `Sound.load_similarity_vectors()` is called when any relevant analyser to `settings.SIMILARITY_SPACES` finished analysing
+a sound, therefore vectors should be automatically loaded (and also indexed in the search engine as sounds will also be marked as "index dirty" when
+new similarity vector objects are created). The management command `create_consolidated_sound_analysis_and_sim_vectors` can be used to help creating 
+`SoundSimilarityVector` objects in bulk.
 
 
 ### Considerations when updating Django version

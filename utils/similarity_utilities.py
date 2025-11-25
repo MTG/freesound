@@ -176,19 +176,3 @@ def get_l2_normalized_vector(vector):
     if norm > 0:
         vector = [v/norm for v in vector]
     return vector
-
-
-def get_similarity_search_target_vector(sound_id, analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
-    # If the sound has been analyzed for similarity, returns the vector to be used for similarity search
-    sa = sounds.models.SoundAnalysis.objects.filter(sound_id=sound_id, analyzer=analyzer, analysis_status="OK")
-    if sa.exists():
-        config_options = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[analyzer]
-        if sa.exists():
-            data = sa.first().get_analysis_data_from_file()
-            if data is not None:
-                vector_raw = data[config_options['vector_property_name']]
-                if vector_raw is not None:
-                    if config_options['l2_norm']:
-                        vector_raw = get_l2_normalized_vector(vector_raw)
-                    return vector_raw
-    return None

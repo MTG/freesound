@@ -41,7 +41,7 @@ class SearchQueryProcessorTests(TestCase):
         'query_fields': settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS,
         'query_filter': '',
         'similar_to': None,
-        'similar_to_analyzer': settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER,
+        'similar_to_similarity_space': settings.SIMILARITY_SPACE_DEFAULT,
         'sort': settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,  # Empty query should sort by date added, so use this as expected default
         'textual_query': ''}
 
@@ -216,8 +216,8 @@ class SearchQueryProcessorTests(TestCase):
         self.assertGetUrlAsExpected(sqp, url)
 
         # Using a pack filter, sounds should not be grouped by pack
-        sqp, url = self.run_fake_search_query_processor(params={'f': 'grouping_pack:"19894_Clutter"'})
-        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'grouping_pack:"19894_Clutter"', 'group_by_pack': False})
+        sqp, url = self.run_fake_search_query_processor(params={'f': 'pack_grouping:"19894_Clutter"'})
+        self.assertExpectedParams(sqp.as_query_params(), {'query_filter': 'pack_grouping:"19894_Clutter"', 'group_by_pack': False})
         self.assertGetUrlAsExpected(sqp, url)
          
     def test_search_query_processor_disabled_options(self):
@@ -257,7 +257,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertTrue(sqp.options['search_in'].disabled) 
 
         # group_by_pack and display_as_packs if filter contains a pack
-        sqp, _ = self.run_fake_search_query_processor(params={'f': 'grouping_pack:"19894_Clutter"'})
+        sqp, _ = self.run_fake_search_query_processor(params={'f': 'pack_grouping:"19894_Clutter"'})
         self.assertTrue(sqp.options['group_by_pack'].disabled) 
         self.assertTrue(sqp.options['display_as_packs'].disabled) 
         
@@ -387,7 +387,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertEqual(sqp.as_query_params()['textual_query'], query)
 
         # Special chars in filter
-        flt = 'grouping_pack:"32119_Conch Blowing (शङ्ख)"'
+        flt = 'pack_grouping:"32119_Conch Blowing (शङ्ख)"'
         sqp, _ = self.run_fake_search_query_processor(params={'f': flt})
         self.assertEqual(sqp.as_query_params()['query_filter'], flt)
 

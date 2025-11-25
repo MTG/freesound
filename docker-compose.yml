@@ -77,6 +77,7 @@ services:
         build:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
+            target: freesound
         init: true
         command: celery -A freesound worker --concurrency=2 -l info -Q async_tasks_queue,sound_processing_queue,sound_analysis_old_queue,clustering_queue
         volumes:

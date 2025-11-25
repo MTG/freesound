@@ -106,9 +106,7 @@
         "pk": 6,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 135,
-            "moderation_note": null,
             "sources": [],
             "duration": 2.1478458049900002,
             "samplerate": 22050.0,
@@ -140,9 +138,7 @@
         "pk": 7,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 154,
-            "moderation_note": null,
             "sources": [],
             "duration": 6.1153514739199997,
             "samplerate": 44100.0,
@@ -174,9 +170,7 @@
         "pk": 8,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 366,
-            "moderation_note": null,
             "sources": [],
             "duration": 3.8814739229000002,
             "samplerate": 44100.0,
@@ -208,9 +202,7 @@
         "pk": 9,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 1159,
-            "moderation_note": null,
             "sources": [],
             "duration": 4.0229931972799999,
             "samplerate": 44100.0,
@@ -242,9 +234,7 @@
         "pk": 10,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 289,
-            "moderation_note": null,
             "sources": [],
             "duration": 5.5493197278900004,
             "samplerate": 44100.0,
@@ -289,9 +279,7 @@
         "pk": 11,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 1815,
-            "moderation_note": null,
             "sources": [],
             "duration": 2.0,
             "samplerate": 11025.0,
@@ -323,9 +311,7 @@
         "pk": 12,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 115,
-            "moderation_note": null,
             "sources": [],
             "duration": 2.2192517006800001,
             "samplerate": 44100.0,
@@ -357,9 +343,7 @@
         "pk": 13,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 245,
-            "moderation_note": null,
             "sources": [],
             "duration": 9.8916666666699999,
             "samplerate": 48000.0,
@@ -391,9 +375,7 @@
         "pk": 14,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 245,
-            "moderation_note": null,
             "sources": [],
             "duration": 88.362857142899998,
             "samplerate": 44100.0,
@@ -438,9 +420,7 @@
         "pk": 15,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 1405,
-            "moderation_note": null,
             "sources": [],
             "duration": 2.57111111111,
             "samplerate": 44100.0,
@@ -472,9 +452,7 @@
         "pk": 16,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 817,
-            "moderation_note": null,
             "sources": [],
             "duration": 2.2234920634900002,
             "samplerate": 44100.0,
@@ -506,9 +484,7 @@
         "pk": 17,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 942,
-            "moderation_note": null,
             "sources": [],
             "duration": 1.0835625,
             "samplerate": 48000.0,
@@ -540,9 +516,7 @@
         "pk": 18,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 906,
-            "moderation_note": null,
             "sources": [],
             "duration": 2.6456916099800001,
             "samplerate": 44100.0,
@@ -574,9 +548,7 @@
         "pk": 19,
         "model": "sounds.sound",
         "fields": {
-            "has_bad_description": false,
             "num_downloads": 695,
-            "moderation_note": null,
             "sources": [],
             "duration": 2.0332916666699998,
             "samplerate": 48000.0,

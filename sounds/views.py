@@ -67,8 +67,7 @@ from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_d
 from utils.pagination import paginate
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search import get_search_engine, SearchEngineException
-from utils.search.search_sounds import get_random_sound_id_from_search_engine, perform_search_engine_query
-from utils.similarity_utilities import get_similar_sounds
+from utils.search.search_sounds import get_random_sound_id_from_search_engine, perform_search_engine_query, allow_beta_search_features
 from utils.sound_upload import create_sound, NoAudioException, AlreadyExistsException, CantMoveException, \
     clean_processing_before_describe_files, get_processing_before_describe_sound_base_url, \
     get_duration_from_processing_before_describe_files, \
@@ -496,6 +495,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
         sound.set_tags(data["tags"])
         sound.description = remove_control_chars(data["description"])
         sound.original_filename = data["name"]
+        category_has_changed = data["bst_category"] != sound.bst_category
         sound.bst_category = data["bst_category"]
         
         new_license = data["license"]
@@ -542,6 +542,11 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
         sound_sources = data["sources"]
         if sound_sources != sound.get_sound_sources_as_set():
             sound.set_sources(sound_sources)
+
+        if category_has_changed:
+            # Some descriptors in the consolidated analysis change depending on the bst category, so we need to
+            # recalculate the consolidated analysis if the category has changed
+            sound.consolidate_analysis()
         
         sound.mark_index_dirty()  # Sound is saved here
         sound.invalidate_template_caches()
@@ -841,24 +846,25 @@ def similar(request, username, sound_id):
         raise Http404
 
     num_similar_sounds = settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES
-    if not settings.USE_SEARCH_ENGINE_SIMILARITY:
-        # Get similar sounds from similarity service (gaia)
-        similarity_results, _ = get_similar_sounds(
-            sound, request.GET.get('preset', None), num_similar_sounds)
-    else:
-        # Get similar sounds from solr
-        try:
-            results = get_search_engine().search_sounds(similar_to=sound.id,
-                                                        similar_to_max_num_sounds=num_similar_sounds,
-                                                        num_sounds=num_similar_sounds)
-            similarity_results = [(result['id'], result['score']) for result in results.docs]
-        except SearchEngineException:
-            # Search engine not available, return empty list
-            similarity_results = []
+    similarity_space = request.GET.get('similarity_space', settings.SIMILARITY_SPACE_DEFAULT)
+    if similarity_space not in settings.SIMILARITY_SPACES_NAMES:
+        similarity_space = settings.SIMILARITY_SPACE_DEFAULT
+
+    # Get similar sounds from solr
+    try:
+        results = get_search_engine().search_sounds(similar_to=sound.id,
+                                                    similar_to_similarity_space=similarity_space,
+                                                    num_sounds=num_similar_sounds)
+        similarity_results = [(result['id'], result['score']) for result in results.docs]
+    except SearchEngineException:
+        # Search engine not available, return empty list
+        similarity_results = []
         
     paginator = paginate(request, [sound_id for sound_id, _ in similarity_results], settings.NUM_SIMILAR_SOUNDS_PER_PAGE)
     similar_sounds = Sound.objects.ordered_ids(paginator['page'].object_list)
-    tvars = {'similar_sounds': similar_sounds, 'sound': sound}
+    tvars = {'similar_sounds': similar_sounds, 'sound': sound, 'current_page': paginator['page'], 'similarity_space': similarity_space, 
+             'show_similarity_space_selector': len(settings.SIMILARITY_SPACES) > 1 and allow_beta_search_features(request),
+             'similarity_spaces_names': [(sim_space_name, sim_space_options.get('display_name', sim_space_name)) for sim_space_name, sim_space_options in settings.SIMILARITY_SPACES.items()]}
     tvars.update(paginator)
     return render(request, 'sounds/modal_similar_sounds.html', tvars)
 

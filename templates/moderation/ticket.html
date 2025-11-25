@@ -9,7 +9,7 @@
 <div class="row">
     <div class="col-md-6">
         <div class="v-spacing-top-4">
-            <h3 class="text-grey">Ticket details</h3> 
+            <h3 class="text-grey">Ticket details</h3>
             <table class="w-100 v-spacing-top-2 v-spacing-1">
                 <tr><td class="text-grey">Assigned to</td><td>
                     {% if ticket.assignee %}
@@ -68,7 +68,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="offset-md-1 col-md-5">
         <div class="v-spacing-top-4">
             <h3 class="text-grey">Sound {{ sound.id }}</h3>
@@ -82,7 +82,7 @@
         </div>
 
         <div class="v-spacing-top-4">
-            <h3 class="text-grey">Actions</h3> 
+            <h3 class="text-grey">Actions</h3>
             {% if perms.tickets.can_moderate %}
                 {% if sound %}
                 <form action="." method="post" class="bw-form">{% csrf_token %}
@@ -106,13 +106,13 @@
                     {% endif %}
                 {% endif %}
             {% else %}
-                {% if sound %}    
-                    {% if perms.sound.can_edit or sound == request.user %}
+                {% if sound %}
+                    {% if perms.sound.can_edit or sound.user == request.user %}
                         {% if ticket.sound.processing_state == 'OK' %}
                             <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'sound-edit' sound.user.username sound.id %}">Edit sound description</a>
                         {% else %}
                             <div class="v-spacing-top-3 text-grey text-center">{% include 'sounds/sound_state_processing_indicator.html' %} (cannot edit)</div>
-                        {% endif %}   
+                        {% endif %}
                     {% else %}
                         <div class="v-spacing-top-2 text-grey">
                             You do not have permissions to perform any actions.
@@ -125,4 +125,3 @@
 </div>
 {% endblock %}
 
-    

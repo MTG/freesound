@@ -39,22 +39,30 @@ from utils.tags import clean_and_split_tags
 ###################
 
 DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by commas (None = all)
-DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,category_code,category_is_user_provided,geotag,created,license,type,channels,filesize,bitrate,' + \
+DEFAULT_FIELDS_IN_SOUND_DETAIL = 'id,url,name,tags,description,category,subcategory,category_code,category_is_user_provided,' + \
+'geotag,is_geotagged,created,license,type,channels,filesize,bitrate,' + \
 'bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,' + \
 'num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,' +  \
-'analysis,analysis_frames,analysis_stats,is_explicit'  # All except for analyzers
+'analysis,analysis_files,is_explicit,is_remix,was_remixed,md5'
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
 
-def get_sound_analyzers_output_helper(sound):
-    analyzers_output = {}
-    sound_analysis_dict = {an.analyzer: an.analysis_data for an in sound.analyses.all()}
-    for analyzer_name, analyzer_info in settings.ANALYZERS_CONFIGURATION.items():
-        if 'descriptors_map' in analyzer_info:
-            analysis_data = sound_analysis_dict.get(analyzer_name, None)
-            if analysis_data is not None:
-                analyzers_output.update(analysis_data)
-    return analyzers_output
+# Dynamically create accessor functions for all audio descriptors and similarity vectors
+audio_descriptor_accessors = {}
+for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+    field_name = descriptor['name']
+    def get_descriptor_accessor(obj, field_name=field_name):
+        if obj.get_consolidated_analysis_data() is None:
+            return None
+        return obj.get_consolidated_analysis_data().get(field_name, None)
+    audio_descriptor_accessors[field_name] = get_descriptor_accessor
+
+similarity_vectors_accessors = {}
+for sim_space_name in settings.SIMILARITY_SPACES_NAMES:
+    field_name = f'sim_{sim_space_name}'
+    def get_similarity_vector_accessor(obj, field_name=field_name):
+        return obj.get_similarity_vector(similarity_space_name=field_name.replace('sim_', ''))
+    similarity_vectors_accessors[field_name] = get_similarity_vector_accessor
 
 
 class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
@@ -70,17 +78,48 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
         self.sound_analysis_data = kwargs.pop('sound_analysis_data', {})
         super().__init__(*args, **kwargs)
         requested_fields = self.context['request'].GET.get("fields", self.default_fields)
-        if not requested_fields:  # If parameter is in url but parameter is empty, set to default
+        
+        # If parameter is in url but parameter is empty, set to default set of fields
+        if not requested_fields:  
             requested_fields = self.default_fields
 
-        if requested_fields == '*':  # If parameter is *, return all fields
-            requested_fields = ','.join(self.fields.keys())
+        # If parameter is *, return all fields, also include all audio descriptor fields
+        # Remove category and subcategory from descritor names as they are handled separately and should not be obtained from custom descriptor accessors
+        available_audio_descriptor_names = settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES.copy()
+        available_audio_descriptor_names.remove('category')
+        available_audio_descriptor_names.remove('subcategory')
+        available_similarity_space_names = [f'sim_{name}' for name in settings.SIMILARITY_SPACES_NAMES]
+        if requested_fields == '*':  
+            requested_fields = ','.join(list(self.fields.keys()) + available_audio_descriptor_names + available_similarity_space_names)
 
         if requested_fields:
-            allowed = set(requested_fields.split(","))
-            existing = set(self.fields.keys())
-            for field_name in existing - allowed:
-                self.fields.pop(field_name)
+            requested_fields = requested_fields.split(",")
+
+            # If 'all_descriptors' is requested, replace it with all available audio descriptor names
+            if 'all_descriptors' in requested_fields:
+                requested_fields.remove('all_descriptors')
+                requested_fields += available_audio_descriptor_names
+
+            # If 'all_similarity_spaces' is requested, replace it with all available audio descriptor names
+            if 'all_similarity_spaces' in requested_fields:
+                requested_fields.remove('all_similarity_spaces')
+                requested_fields += available_similarity_space_names
+            
+            # Also dynamically create accessors and SerializerMethodFields for the requested audio descriptors and similarity vectors
+            for field_name in requested_fields:
+                if field_name in available_audio_descriptor_names:
+                    self.fields[field_name] = serializers.SerializerMethodField()
+                    setattr(self, 'get_' + field_name, audio_descriptor_accessors[field_name])
+                elif field_name.startswith('sim_'):
+                    self.fields[field_name] = serializers.SerializerMethodField()
+                    setattr(self, 'get_' + field_name, similarity_vectors_accessors[field_name])
+
+            # Make sure that no non-existing field is requested
+            requested = set(requested_fields)
+            existing = set(list(self.fields.keys()) + available_audio_descriptor_names + available_similarity_space_names)
+            for field_name in existing - requested:
+                if field_name in self.fields:
+                    self.fields.pop(field_name)
 
     class Meta:
         model = Sound
@@ -90,9 +129,11 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'tags',
                   'description',
                   'category',
+                  'subcategory',
                   'category_code',
                   'category_is_user_provided',
                   'geotag',
+                  'is_geotagged',
                   'created',
                   'license',
                   'type',
@@ -118,12 +159,12 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'comment',
                   'similar_sounds',
                   'analysis',
-                  'analysis_frames',
-                  'analysis_stats',
-                  'ac_analysis',  # Kept for legacy reasons only as it is also contained in 'analyzers_output'
-                  'analyzers_output',
+                  'analysis_files',
                   'is_explicit',
                   'score',
+                  'is_remix',
+                  'was_remixed',
+                  'md5'
                   )
 
     url = serializers.SerializerMethodField()
@@ -167,10 +208,13 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     
     category = serializers.SerializerMethodField()
     def get_category(self, obj):
-        category, subcategory = obj.category_names
-        if category is None and subcategory is None:
-            return None
-        return [category, subcategory]
+        category, _ = obj.category_names
+        return category
+
+    subcategory = serializers.SerializerMethodField()
+    def get_subcategory(self, obj):
+        _, subcategory = obj.category_names
+        return subcategory
     
     category_code = serializers.SerializerMethodField()
     def get_category_code(self, obj):
@@ -239,20 +283,15 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_analysis(self, obj):
         raise NotImplementedError  # Should be implemented in subclasses
 
-    analysis_frames = serializers.SerializerMethodField()
-    def get_analysis_frames(self, obj):
-        if not self.get_or_compute_analysis_state_essentia_exists(obj):
-            return None
-        return prepend_base(obj.locations('analysis.frames.url'),
-                            request_is_secure=self.context['request'].is_secure())
-
-    analysis_stats = serializers.SerializerMethodField()
-    def get_analysis_stats(self, obj):
-        if not self.get_or_compute_analysis_state_essentia_exists(obj):
-            return None
-        return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]),
-                            request_is_secure=self.context['request'].is_secure())
-
+    analysis_files = serializers.SerializerMethodField()
+    def get_analysis_files(self, obj):
+        return {
+            'essentia_frames': prepend_base(obj.locations("analysis.frames.url"), 
+                request_is_secure=self.context['request'].is_secure()),
+            'essentia_stats': prepend_base(obj.locations("analysis.statistics.url"),
+                request_is_secure=self.context['request'].is_secure()),
+        }
+        
     similar_sounds = serializers.SerializerMethodField()
     def get_similar_sounds(self, obj):
         if obj.similarity_state != 'OK':
@@ -300,18 +339,32 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             return str(obj.geotag.lat) + " " + str(obj.geotag.lon)
         else:
             return None
-
-    ac_analysis = serializers.SerializerMethodField()
-    def get_ac_analysis(self, obj):
-        raise NotImplementedError  # Should be implemented in subclasses
-
-    analyzers_output = serializers.SerializerMethodField()
-    def get_analyzers_output(self, obj):
-        raise NotImplementedError  # Should be implemented in subclasses
+        
+    is_geotagged = serializers.SerializerMethodField()
+    def get_is_geotagged(self, obj):
+        return hasattr(obj, 'geotag')
 
     is_explicit = serializers.SerializerMethodField()
     def get_is_explicit(self, obj):
         return obj.is_explicit
+    
+    is_remix = serializers.SerializerMethodField()
+    def get_is_remix(self, obj):
+        if hasattr(obj, 'is_remix'):
+            return obj.is_remix
+        else:
+            return Sound.objects.filter(remixes=obj.id).exists()
+            
+    was_remixed = serializers.SerializerMethodField()
+    def get_was_remixed(self, obj):
+        if hasattr(obj, 'was_remixed'):
+            return obj.was_remixed
+        else:
+            return obj.remixes.exists()
+    
+    md5 = serializers.SerializerMethodField()
+    def get_md5(self, obj):
+        return obj.md5
 
 
 class SoundListSerializer(AbstractSoundSerializer):
@@ -325,21 +378,6 @@ class SoundListSerializer(AbstractSoundSerializer):
             return None
         # Get descriptors from self.sound_analysis_data (should have been passed to the serializer)
         return self.sound_analysis_data.get(str(obj.id), None)
-
-    def get_ac_analysis(self, obj):
-        analyses = [an for an in obj.analyses.all() if an.analyzer == settings.AUDIOCOMMONS_ANALYZER_NAME and an.analysis_status == "OK"]
-        if analyses:
-            return analyses[0].analysis_data
-        else:
-            return None
-
-    def get_analyzers_output(self, obj):
-        # Get the output of analyzers configured in settings.ANALYZERS_CONFIGURATION.
-        # Analysis data will have been included in the Sound object by SoundManager.bulk_query.
-        # Note that audio commons analyzer data can also be obtained with the ac_analysis field name but all
-        # other analyzers' output is only accessible via analyzers_output field. This is kept like that
-        # for legacy reasons.
-        return get_sound_analyzers_output_helper(obj)
 
 
 class SoundSerializer(AbstractSoundSerializer):
@@ -364,23 +402,6 @@ class SoundSerializer(AbstractSoundSerializer):
                        'the \'descriptors\' request parameter.'
         except Exception as e:
             return None
-
-    def get_ac_analysis(self, obj):
-        # Retrieve analysis data already loaded in the provided object of get it from related SoundAnalysis object
-        # corresponding to the Audio Commons extractor.
-        analyses = [an for an in obj.analyses.all() if an.analyzer == settings.AUDIOCOMMONS_ANALYZER_NAME and an.analysis_status == "OK"]
-        if analyses:
-            return analyses[0].analysis_data
-        else:
-            return None
-
-    def get_analyzers_output(self, obj):
-        # Get the output of analyzers configured in settings.ANALYZERS_CONFIGURATION.
-        # Analysis data will have been included in the Sound object by SoundManager.bulk_query,
-        # otherwise it is loaded from db. Note that audio commons analyzer data can also be
-        # obtained with the ac_analysis field name but all other analyzers' output is only accessible
-        # via analyzers_output field. This is kept like that for legacy reasons.
-        return get_sound_analyzers_output_helper(obj)
 
 
 ##################

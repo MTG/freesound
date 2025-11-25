@@ -59,6 +59,28 @@
       }
     },
     {
+      "name": "lowercase_tokenized",
+      "class": "solr.TextField",
+      "sortMissingLast": true,
+      "omitNorms": true,
+      "analyzer": {
+        "tokenizer": {
+          "class": "solr.LowerCaseTokenizerFactory"
+        },
+        "filters": [
+          {
+            "name": "lowercase"
+          },
+          {
+            "name": "trim"
+          }
+        ]
+      },
+      "similarity": {
+        "class": "solr.BooleanSimilarityFactory"
+      }
+    },
+    {
       "name": "freesound_text",
       "class": "solr.TextField",
       "positionIncrementGap": "100",
@@ -156,13 +178,20 @@
     },
     {
       "name": "username",
-      "type": "alpha_only_sort",
+      "type": "lowercase_tokenized",
       "indexed": true,
       "stored": true,
       "required": false
     },
     {
-      "name": "original_filename",
+      "name": "username_facet",
+      "type": "string",
+      "indexed": true,
+      "stored": false,
+      "required": false
+    },
+    {
+      "name": "name",
       "type": "freesound_text",
       "indexed": true,
       "stored": true,
@@ -239,20 +268,6 @@
     },
     {
       "name": "pack",
-      "type": "string",
-      "indexed": true,
-      "stored": true,
-      "required": false
-    },
-    {
-      "name": "grouping_pack",
-      "type": "string",
-      "indexed": true,
-      "stored": true,
-      "required": false
-    },
-    {
-      "name": "pack_tokenized",
       "type": "freesound_text",
       "indexed": true,
       "stored": true,
@@ -265,6 +280,20 @@
       "stored": true,
       "required": false,
       "multiValued": true
+    },
+    {
+      "name": "pack_grouping",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
+      "name": "pack_grouping_child",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false
     },
     {
       "name": "is_geotagged",
@@ -285,6 +314,13 @@
       "type": "alpha_only_sort",
       "indexed": true,
       "stored": true,
+      "required": false
+    },
+    {
+      "name": "type_facet",
+      "type": "string",
+      "indexed": true,
+      "stored": false,
       "required": false
     },
     {
@@ -436,7 +472,7 @@
       "required": false
     },
     {
-      "name": "analyzer",
+      "name": "similarity_space",
       "type": "string",
       "indexed": true,
       "stored": true,
@@ -455,13 +491,6 @@
       "indexed": true,
       "stored": true,
       "required": false
-    },
-    {
-      "name": "grouping_pack_child",
-      "type": "string",
-      "indexed": true,
-      "stored": true,
-      "required": false
     }
   ],
   "dynamicFields": [
@@ -472,6 +501,10 @@
       "stored": true,
       "multiValued": true,
       "required": false
+    },{
+      "name": "*_ls_f",
+      "type": "strings",
+      "stored": false
     }
   ],
   "copyFields": [
@@ -485,6 +518,18 @@
       "source": "tag",
       "dest": [
         "tagfacet"
+      ]
+    },
+    {
+      "source": "username",
+      "dest": [
+        "username_facet"
+      ]
+    },
+    {
+      "source": "type",
+      "dest": [
+        "type_facet"
       ]
     }
   ]

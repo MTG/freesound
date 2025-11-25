@@ -34,7 +34,7 @@
                                        name="{{ sqp.options.query.query_param_name }}"
                                        type="text"
                                        value="{% if not sqp.similar_to_active %}{{ sqp.options.query.value_to_apply }}{% endif %}"
-                                       placeholder="{% if not sqp.similar_to_active %}Search {% if not sqp.display_as_packs_active %}sounds{% else %}packs{% endif %}...{% else %}Similar to {{ sqp.similar_to_active }}{% endif %}"
+                                       placeholder="{% if not sqp.similar_to_active %}Search {% if not sqp.display_as_packs_active %}sounds{% else %}packs{% endif %}...{% else %}Similar to {{ sqp.similar_to_display_label }}{% endif %}"
                                        autocomplete="off"
                                        {% if sqp.options.query.disabled %}disabled{% endif %}/>
                             </div>
@@ -65,7 +65,7 @@
                             {% comment %}number of results{% endcomment %}
                             <div class="col-4">
                                 {% if not sqp.display_as_packs_active %}
-                                    {% if non_grouped_number_of_results > 0 %} {{ non_grouped_number_of_results|bw_intcomma }}{% else %} {{ paginator.count|bw_intcomma }}{% endif %} sound{{ non_grouped_number_of_results|pluralize }}
+                                    {% if non_grouped_number_of_results %} {{ non_grouped_number_of_results|bw_intcomma }}{% else %} {{ paginator.count|bw_intcomma }}{% endif %} sound{{ non_grouped_number_of_results|pluralize }}
                                 {% else %}
                                     {{ paginator.count|bw_intcomma }} pack{{ paginator.count|pluralize }}
                                 {% endif %}

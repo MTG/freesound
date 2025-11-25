@@ -59,7 +59,7 @@ def tag_cloud(request):
                     num_sounds=1,
                     facets={settings.SEARCH_SOUNDS_FIELD_TAGS: {"limit": 200}},
                     group_by_pack=True,
-                    group_counts_as_one_in_facets=False,
+                    group_counts_as_one_in_facets=True,
                 )
             )
         except SearchEngineException as e:
@@ -96,8 +96,8 @@ def multiple_tags_lookup(request, multiple_tags):
         search_filter += f"+username:{username_flt}"
     pack_flt = request.GET.get("pack_flt", None)
     if pack_flt is not None:
-        # If username is passed as a GET parameter, add it as well to the filter
-        search_filter += f"+grouping_pack:{pack_flt}"
+        # If pack is passed as a GET parameter, add it as well to the filter
+        search_filter += f"+pack_grouping:{pack_flt}"
 
     return HttpResponseRedirect(f"{reverse('tags')}?f={search_filter}")
 

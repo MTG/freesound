@@ -38,10 +38,8 @@ urlpatterns = [
     path('me/bookmark_categories/', views.MeBookmarkCategories.as_view(), name='apiv2-me-bookmark-categories'),
     path('me/bookmark_categories/<int:category_id>/sounds/', views.MeBookmarkCategorySounds.as_view(), name='apiv2-me-bookmark-category-sounds'),
 
-    # Available audio descriptors
-    path('descriptors/', views.AvailableAudioDescriptors.as_view(), name="apiv2-available-descriptors"),
-
     # Text/content/combined search
+    path('search/', views.TextSearch.as_view(), name="apiv2-sound-search"),
     path('search/text/', views.TextSearch.as_view(), name="apiv2-sound-text-search"),
     path('search/content/', views.ContentSearch.as_view(), name="apiv2-sound-content-search"),
     path('search/combined/', views.CombinedSearch.as_view(), name="apiv2-sound-combined-search"),

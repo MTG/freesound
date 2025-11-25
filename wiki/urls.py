@@ -25,7 +25,7 @@ import wiki.views as wiki
 
 urlpatterns = [
     path('', RedirectView.as_view(url="/help/main/"), name="wiki"),
-    re_path(r'^(?P<name>[//\w_-]+)/history/$', wiki.history, name="wiki-page-history"),
-    re_path(r'^(?P<name>[//\w_-]+)/edit/$', wiki.editpage, name="wiki-page-edit"),
-    re_path(r'^(?P<name>[//\w_-]+)/$', wiki.page, name="wiki-page"),
+    path('<multitags:name>/history/', wiki.history, name="wiki-page-history"),
+    path('<multitags:name>/edit/', wiki.editpage, name="wiki-page-edit"),
+    path('<multitags:name>/', wiki.page, name="wiki-page"),
 ]

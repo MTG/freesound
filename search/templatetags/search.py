@@ -24,7 +24,7 @@ from django.conf import settings
 
 from sounds.models import License
 from utils.search import search_query_processor_options
-from utils.search.backends.solr555pysolr import FIELD_NAMES_MAP
+from utils.search.backends.solr555pysolr import get_solr_fieldname_from_freesound_fieldname
 from utils.tags import annotate_tags
 
 register = template.Library()
@@ -34,7 +34,11 @@ register = template.Library()
 def display_facet(context, facet_name, facet_title=None, beta_facet=False):
     sqp = context['sqp']
     facets = context['facets']
-    solr_fieldname = FIELD_NAMES_MAP.get(facet_name, facet_name)
+    solr_fieldname = get_solr_fieldname_from_freesound_fieldname(facet_name, skip_dynamic_field_suffix=True)  
+    # Note that this version of solr_fieldname does not need the dynamic field suffix because it is used for filtering and the dynamic
+    # field suffix will be applied at a later time if a facet filter is added to the search query processor.
+
+    # Note that "solr_fieldname" does not need the facet version of solr fieldname, but the normal one that can be used for filtering
     if facet_name in facets:
         facet_title = sqp.facets[facet_name].get('title', facet_name.capitalize())
         facet_type = sqp.facets[facet_name].get('widget', 'list')
@@ -57,12 +61,6 @@ def display_facet(context, facet_name, facet_title=None, beta_facet=False):
         # Return "empty" data (facet will not be displayed)
         return {'type': 'list', 'title': facet_name, 'facet': []}
 
-    # If the filter is grouping_pack and there are elements which do not contain the character "_" means that
-    # these sounds do not belong to any pack (as grouping pack values should by "packId_packName" if there is a pack
-    # or "soundId" if there is no pack assigned. We did this to be able to filter properly in the facets, as pack names
-    # are not unique!. What we do then is filter out the facet elements where, only for the case of grouping_pack,
-    # the element name is a single number that does not contain the character "_"
-
     # We add the extra Free Cultural Works license facet
     if facet_name == 'license':
         fcw_count = 0
@@ -79,17 +77,19 @@ def display_facet(context, facet_name, facet_title=None, beta_facet=False):
                     'size': 1.0,
                 }] + facet
 
+    # If the filter is pack_grouping and there are elements which do not contain the character "_" means that
+    # these sounds do not belong to any pack (as grouping pack values should by "packId_packName" if there is a pack
+    # or "soundId" if there is no pack assigned. We did this to be able to filter properly in the facets, as pack names
+    # are not unique!. What we do then is filter out the facet elements where, only for the case of pack_grouping,
+    # the element name is a single number that does not contain the character "_"
+
     # Remove "no pack" elements form pack facet (no pack elements are those in which "grouping pack" only has the sound id and not any pack id/name)
-    if facet_name == "grouping_pack":
-        facet = [element for element in facet if '_' in element['value']]
-    
-    # Remove "no collection" elements (similar to packs)
-    if facet_name == "collection_grouping":
+    if facet_name == "pack_grouping":
         facet = [element for element in facet if '_' in element['value']]
 
     for element in facet:
         # Set display values (the values how they'll be shown in the UI)
-        if facet_name == "grouping_pack":
+        if facet_name == "pack_grouping":
             # Modify the display name to remove the pack id
             element['display_value'] = element['value'][element['value'].find("_")+1:]
         elif facet_name == "collection_grouping":

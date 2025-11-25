@@ -1,6 +1,6 @@
 # --- build stereofy static binary
 
-FROM debian:10 AS stereofy
+FROM debian:bullseye AS stereofy
 
 RUN apt-get update && apt-get install -y build-essential libsndfile-dev
 

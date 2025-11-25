@@ -173,7 +173,7 @@ class TicketTestsFromQueue(TicketTests):
     """Ticket state changes in a response to actions from moderation queue"""
 
     def setUp(self):
-        TicketTests.setUp(self)
+        super().setUp()
         self.ticket = self._create_assigned_ticket()
 
     @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
@@ -196,7 +196,7 @@ class TicketTestsFromQueue(TicketTests):
     @mock.patch('general.tasks.whitelist_user.delay')
     def test_whitelist_from_queue(self, whitelist_task):
         self._perform_action('Whitelist')
-        whitelist_task.assert_called_once_with(ticket_ids=[self.ticket.id])
+        whitelist_task.assert_called_once_with(annotation_sender_id=self.test_moderator.id, ticket_ids=[self.ticket.id])
 
     def _assert_ticket_and_sound_fields(self, status, assignee, moderation_state):
         self.ticket.refresh_from_db()
@@ -226,7 +226,7 @@ class TicketTestsFromQueue(TicketTests):
 
 class TicketTestsFromTicketViewOwn(TicketTestsFromQueue):
     """Ticket state changes in a response to actions from ticket inspection page for own ticket"""
-    
+
     @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
     def _perform_action(self, action, post_moderation_assigned_tickets):
         return self.client.post(reverse('tickets-ticket', args=[self.ticket.key]), {
@@ -236,6 +236,7 @@ class TicketTestsFromTicketViewOwn(TicketTestsFromQueue):
 class TicketTestsFromTicketViewNew(TicketTestsFromQueue):
     """Ticket state changes in a response to actions from ticket inspection page for new ticket"""
     def setUp(self):
+        # Explicitly TicketTests.setup, as we don't want to call TicketTestsFromQueue.setUp
         TicketTests.setUp(self)
         self.ticket = self._create_ticket(self.sound, self.test_user)
 
@@ -249,7 +250,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
     """Test that the is_explicit flag of moderated sounds changes in accordance to moderator's choices"""
 
     def setUp(self):
-        TicketTests.setUp(self)
+        super().setUp()
         self.ticket = self._create_assigned_ticket()
 
     @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')

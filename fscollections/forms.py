@@ -95,7 +95,7 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
             pass
 
         super().__init__(*args, **kwargs)
-        self.fields['collection'].choices = ([(self.BOOKMARK_COLLECTION_CHOICE_VALUE, 'Bookmarks')] if display_bookmark_collection else []) + \
+        self.fields['collection'].choices = ([(self.BOOKMARK_COLLECTION_CHOICE_VALUE, 'My bookmarks')] if display_bookmark_collection else []) + \
                                            [(self.NEW_COLLECTION_CHOICE_VALUE, 'Create a new collection...')] + \
                                            ([(collection.id, collection.name) for collection in self.user_available_collections ]
                                             if self.user_available_collections else[])
@@ -110,7 +110,7 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
 
         if not self.cleaned_data['use_last_collection']:
             if self.cleaned_data['collection'] == self.BOOKMARK_COLLECTION_CHOICE_VALUE:
-                collection_to_use, _ = Collection.objects.get_or_create(name="Bookmarks", user=self.user_saving_sound, is_default_collection=True)
+                collection_to_use, _ = Collection.objects.get_or_create(name="My bookmarks", user=self.user_saving_sound, is_default_collection=True)
                 # TODO: what happens if user has more than one is_default_collection? Shouldn't happen but this needs a RESTRICTION
             elif self.cleaned_data['collection'] == self.NEW_COLLECTION_CHOICE_VALUE:
                 if self.cleaned_data['new_collection_name'] != "":
@@ -195,9 +195,8 @@ class CollectionEditForm(forms.ModelForm):
 
         if self.instance.is_default_collection:
             self.fields['name'].disabled = True
-            self.fields['name'].help_text = "Your personal bookmarks collection's name can't be edited."
             self.fields['public'].disabled = True
-            self.fields['public'].help_text = "Your personal bookmarks collection is private."
+            self.fields['description'].disabled = True
         
         if not self.is_owner and not self.is_maintainer:
             for field in self.fields:
@@ -211,8 +210,8 @@ class CollectionEditForm(forms.ModelForm):
             if cleaned_data['name'] != self.instance.name:
                 if Collection.objects.filter(user=self.instance.user, name=cleaned_data['name']).exists():
                     self.add_error('name', forms.ValidationError("You already have a collection with this name"))
-                elif cleaned_data['name'].lower() == 'bookmarks' or cleaned_data['name'].lower() == 'bookmark':
-                    self.add_error('name', forms.ValidationError("This collection name is booked for your personal default collection. Please choose another one."))
+                elif cleaned_data['name'].lower() == 'my bookmarks':
+                    self.add_error('name', forms.ValidationError("This collection name is reserved for your personal default collection. Please choose another one."))
         collection_sounds = self.cleaned_data.get('collection_sounds').split(',')    
         if len(collection_sounds) > settings.MAX_SOUNDS_PER_COLLECTION:
             self.add_error('collection_sounds', forms.ValidationError(f'You have exceeded the maximum number of sounds for a collection ({settings.MAX_SOUNDS_PER_COLLECTION}).'))

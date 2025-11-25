@@ -41,11 +41,12 @@ def collection(request, collection_id):
     user = request.user
     is_owner = False
     is_maintainer = False
-    maintainers = []
     collection = get_object_or_404(Collection, id=collection_id)
+    maintainers = []
     
     is_maintainer = collection.maintainers.filter(username=user.username).exists()
     is_owner = user == collection.user
+    maintainers = collection.maintainers.all()
 
     tvars = {'collection': collection,
              'is_owner': is_owner,
@@ -256,7 +257,7 @@ def add_maintainer_modal(request, collection_id):
     # TODO: the below statements exclude users with whitespaces in their usernames (and they still exist)
     usernames = request.GET.get('q','').split(',')
     usernames = [u.strip() for u in usernames]
-    new_maintainers = User.objects.filter(username__in=usernames)
+    new_maintainers = User.objects.filter(is_active=True, username__in=usernames)
     not_found_users = []
     not_found_message = False
     for usr in usernames:
@@ -264,7 +265,7 @@ def add_maintainer_modal(request, collection_id):
             not_found_users.append(usr)
     
     if len(not_found_users)>0:
-        not_found_message = "The following users don't exist: "
+        not_found_message = "The following users could not be found: "
         for usr in not_found_users:
             if usr == not_found_users[-1]:
                 not_found_message += usr + "."

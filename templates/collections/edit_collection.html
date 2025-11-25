@@ -36,17 +36,14 @@
                 {{ form.public }}
                     <span class="helptext"><i>{{form.public.help_text|safe}}</i></span>
             </div>
-            <div class="v-spacing-2 v-spacing-top-3">
+            <div class="v-spacing-5 v-spacing-top-3">
                 {{ form.maintainers }}
                 <label>Maintainers ({{ form.collection_maintainers_objects|length }})</label>
                     {% if form.maintainers.errors %}
                         <div>{{form.maintainers.errors}}</div>
                     {% endif %}
-                {% if form.collection_maintainers_objects|length == 0 %}
-                <div class="v-spacing-4 v-spacing-top-2">This collection has no maintainers</div>
-                {% endif %}
                 {% users_selector form.collection_maintainers_objects%}
-                <div class="between v-spacing-2">
+                <div class="between v-spacing-top-4">
                     <button class="btn-inverse" data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.id%}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
                     <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
                 </div>

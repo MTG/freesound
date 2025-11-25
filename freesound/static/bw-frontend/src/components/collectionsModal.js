@@ -115,7 +115,6 @@ const prepareAddMaintainersModalAndFields = (container) => {
             removeMaintainersButton.disabled = element.dataset.selectedIds == "" 
         })
 
-
         const maintainersInput = selectedMaintainersDestinationElement.parentNode.parentNode.getElementsByTagName('input')[0];
         if(maintainersInput.disabled !== false){
             addMaintainersButton.disabled = true;

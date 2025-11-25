@@ -331,14 +331,12 @@ class CreateCollectionForm(forms.ModelForm):
             raise forms.ValidationError("You already have a collection with this name")
         return super().clean()
 
+
 class MaintainerForm(forms.Form):
-    # NOTE: this field got autocompleted with the users' email, and setting autocomplete to 'off' did not work
-    # from field widget set up, nor from modal html file, nor from javascript handlers, so apparently the 
-    # suitable way to trick the browser into not autocompleting the field is giving the 'autocomplete' 
-    # attribute the "new-password" value
     maintainer = forms.CharField(
-        widget=TextInput(attrs={'placeholder': "Fill in the usernames separated by commas",
-                                'autocomplete':'new-password'}),
+        widget=TextInput(attrs={
+            'placeholder': "Please type the exact usernames separated by commas, then press Enter to search",
+            'autocomplete': 'off'}),
         label=False, 
         help_text=None, 
         max_length=128, 
@@ -349,6 +347,7 @@ class MaintainerForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.collection = kwargs.pop('collection', False)
         super().__init__(*args, **kwargs)
+
     def clean(self):
         new_maintainers = self.cleaned_data['maintainer'].split(',').replace(" ","")
         for username in new_maintainers:

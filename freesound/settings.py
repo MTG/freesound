@@ -1440,6 +1440,10 @@ RABBITMQ_HOST = 'rabbitmq'
 RABBITMQ_PORT = '5672'
 RABBITMQ_API_PORT = '5673'
 
+# -------------------------------------------------------------------------------
+# Collections
+ENABLE_COLLECTIONS = False
+MAX_SOUNDS_PER_COLLECTION = 250
 
 # -------------------------------------------------------------------------------
 # Import local settings
@@ -1470,12 +1474,6 @@ if SENTRY_DSN:
         traces_sample_rate=TRACES_SAMPLE_RATE,
     )
 
-
-# -------------------------------------------------------------------------------
-# Extra Freesound settings
-
-ENABLE_COLLECTIONS = False
-MAX_SOUNDS_PER_COLLECTION = 250
 
 # Paths (depend on DATA_PATH potentially re-defined in local_settings.py)
 # If new paths are added here, remember to add a line for them at general.apps.GeneralConfig. This will ensure

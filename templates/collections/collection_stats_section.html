@@ -3,6 +3,9 @@
 <div>
     <ol>
         <li class="v-spacing-3">
+            {% if collection.public %} {% bw_icon 'eye' 'text-light-grey' %} <span class="text-19 bw-link--black">Public {% else %} {% bw_icon 'eye-blocked' 'text-light-grey' %} <span class="text-19 bw-link--black">Private {% endif %}collection</span>
+        </li>
+        <li class="v-spacing-3">
             {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black"> {{ collection.num_sounds|formatnumber }} sound{{ collection.num_sounds|pluralize }}</a>
         </li>
         <li class="v-spacing-3">

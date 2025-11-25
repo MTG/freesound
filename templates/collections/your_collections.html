@@ -16,7 +16,7 @@
             <div class="v-spacing-top-3">
                 <div>
                     <a class="cursor-pointer" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'create-collection' %}?ajax=1" data-reload-on-success= "true" title="Create new collection" aria-label="Create new collection">
-                        Create a new collection <span style="margin-left: 5px">{% bw_icon 'bookmark' %}</span></a>
+                        Create a new collection</a>
                 </div>
                 {% if user_collections %}
                     <div class="v-spacing-top-2">Your collections: {{user_collections|length}} </div>

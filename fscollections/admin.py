@@ -6,9 +6,9 @@ from .models import Collection, CollectionSound
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
 
-    fields = ["user","name", "num_sounds", "public","get_sounds"]
+    fields = ["user","name", "num_sounds", "public"]
     filter_horizontal =  ["sounds"]
-    list_display = ("name", "user", "num_sounds", "public","get_sounds")
+    list_display = ("name", "user", "num_sounds", "public", "get_sounds")
     readonly_fields = ["created"]
     actions = ["make_public", "make_private"]
 
@@ -28,3 +28,11 @@ class CollectionAdmin(admin.ModelAdmin):
     @admin.action(description="Make selected collection private")
     def make_private(self, request, queryset):
         queryset.update(public=False)
+
+
+@admin.register(CollectionSound)
+class CollectionSoundAdmin(admin.ModelAdmin):
+    list_display = ("collection", "sound", "status")
+    list_filter = ("status",)  
+    search_fields = ("collection__name", "sound__id")
+    raw_id_fields = ("collection", "sound")

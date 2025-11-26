@@ -65,12 +65,12 @@ class SearchQueryProcessorTests(TestCase):
         self.assertEqual(ComparableUrl(sqp_url), ComparableUrl(expected_url))
 
     def run_fake_search_query_processor(self, base_url=None, url=None, params={}, user=None):
+        if base_url is None:
+            base_url = reverse("sounds-search")
         if url is None:
             request = self.factory.get(base_url, params)
         else:
             request = self.factory.get(url)
-        if base_url is None:
-            base_url = reverse("sounds-search")
         request.user = user if user is not None else self.user
         return search_query_processor.SearchQueryProcessor(request), request.get_full_path()
 

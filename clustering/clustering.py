@@ -22,7 +22,6 @@ from __future__ import absolute_import, division
 
 import json
 import logging
-import os
 from builtins import object, range, str, zip
 from time import time
 
@@ -31,7 +30,7 @@ import networkx as nx
 import numpy as np
 import six
 from django.conf import settings
-from networkx.algorithms.community import greedy_modularity_communities, k_clique_communities
+from networkx.algorithms.community import k_clique_communities
 from networkx.readwrite import json_graph
 from past.utils import old_div
 from sklearn import metrics

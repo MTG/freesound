@@ -68,7 +68,7 @@ class Command(LoggingBaseCommand):
             "SIGNATURE": settings.PAYPAL_SIGNATURE,
         }
         while stop_date >= start:
-            req = requests.post(settings.PAYPAL_PAYMENTS_API_URL, data=params)
+            req = requests.post(settings.PAYPAL_PAYMENTS_API_URL, data=params, timeout=10)
             raw_rsp = parse_qs(req.text)
             if raw_rsp["ACK"] == ["Success"]:
                 campaign = DonationCampaign.objects.order_by("date_start").last()

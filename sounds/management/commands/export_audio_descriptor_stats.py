@@ -82,7 +82,7 @@ class Command(LoggingBaseCommand):
 
         # First of all export sound ID as a "reference" descriptor so we know to which sounds the values correspond to
         sound_ids = list(
-            SoundAnalysis.objects.filter(id__in=sound_analysis_objects_ids).values_list(f"sound_id", flat=True)
+            SoundAnalysis.objects.filter(id__in=sound_analysis_objects_ids).values_list("sound_id", flat=True)
         )
         json.dump(sound_ids, open(os.path.join(output_dir, "sound_id.json"), "w"))
 
@@ -110,19 +110,19 @@ class Command(LoggingBaseCommand):
         if options["create_codes"]:
             categories = list(
                 SoundAnalysis.objects.filter(id__in=sound_analysis_objects_ids).values_list(
-                    f"analysis_data__category", flat=True
+                    "analysis_data__category", flat=True
                 )
             )
             subcategories = list(
                 SoundAnalysis.objects.filter(id__in=sound_analysis_objects_ids).values_list(
-                    f"analysis_data__subcategory", flat=True
+                    "analysis_data__subcategory", flat=True
                 )
             )
             category_codes = [
                 bst_taxonomy_category_names_to_category_key(cat, subcat)
                 for cat, subcat in zip(categories, subcategories)
             ]
-            output_file_path = os.path.join(output_dir, f"category_code.json")
+            output_file_path = os.path.join(output_dir, "category_code.json")
             json.dump(category_codes, open(output_file_path, "w"))
             console_logger.info(
                 f"Exported {len(category_codes)} values for category code descriptor to {output_file_path}"

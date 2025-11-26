@@ -98,7 +98,7 @@ class Command(LoggingBaseCommand):
             ).order_by("id")[:max_sounds_to_send]
             if sound_ids_to_reprocess == 0:
                 # All sounds have been reprocessed!
-                console_logger.info(f"Not sending any sounds to the queue as all sounds have been reprocessed!")
+                console_logger.info("Not sending any sounds to the queue as all sounds have been reprocessed!")
             else:
                 # Send sounds to processing
                 console_logger.info(f"Will send {sound_ids_to_reprocess.count()} sounds to processing queue...")

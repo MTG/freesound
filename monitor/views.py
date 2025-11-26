@@ -200,7 +200,9 @@ def queries_stats_ajax(request):
             "filter": f"streams:{settings.GRAYLOG_SEARCH_STREAM_ID}",
             "field": "query",
         }
-        req = requests.get(settings.GRAYLOG_DOMAIN + "/api/search/universal/relative/terms", auth=auth, params=params)
+        req = requests.get(
+            settings.GRAYLOG_DOMAIN + "/api/search/universal/relative/terms", auth=auth, params=params, timeout=10
+        )
         req.raise_for_status()
         return JsonResponse(req.json())
     except requests.HTTPError:

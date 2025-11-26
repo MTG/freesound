@@ -183,7 +183,7 @@ class Command(BaseCommand):
             user.first_name = ""
             user.last_name = ""
             # this password is 'freesound'
-            user.password = "pbkdf2_sha256$36000$PJRTmkaiwSEC$a8+HUj33133PZX7ToOuypT/CfLKNwMeJMXqBJ4QbQPg="
+            user.password = "pbkdf2_sha256$36000$PJRTmkaiwSEC$a8+HUj33133PZX7ToOuypT/CfLKNwMeJMXqBJ4QbQPg="  # noqa: S105
             user.is_staff = False
             user.is_superuser = False
             users_to_update.append(user)

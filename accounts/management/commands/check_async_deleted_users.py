@@ -72,7 +72,6 @@ class Command(LoggingBaseCommand):
                     user_deletion_request.user_to.username,
                     user_deletion_request.user_to.id,
                     user_deletion_request.triggered_deletion_action,
-                    user_deletion_request.triggered_deletion_reason,
                 )
             )
 

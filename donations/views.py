@@ -91,10 +91,10 @@ def donation_complete_stripe(request):
 
         try:
             event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
-        except ValueError as e:
+        except ValueError:
             # Invalid payload
             return HttpResponse(status=400)
-        except stripe.error.SignatureVerificationError as e:
+        except stripe.error.SignatureVerificationError:
             # Invalid signature
             return HttpResponse(status=400)
 
@@ -143,7 +143,7 @@ def donation_complete_paypal(request):
         params.update({"cmd": "_notify-validate"})
 
         try:
-            req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
+            req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params, timeout=10)
         except requests.exceptions.Timeout:
             web_logger.info("Can't verify donations information with paypal")
             return HttpResponse("FAIL")

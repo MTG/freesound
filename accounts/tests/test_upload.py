@@ -359,7 +359,7 @@ class BulkDescribe(TestCase):
         self.assertContains(resp, "Your sounds are being described and processed")
 
         # Test that when both description and processing have finished we show correct info to users
-        for i in range(0, 5):  # First create the sound objects so BulkUploadProgress can properly compute progress
+        for i in range(5):  # First create the sound objects so BulkUploadProgress can properly compute progress
             Sound.objects.create(
                 user=user,
                 original_filename="Test sound %i" % i,

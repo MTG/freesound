@@ -29,7 +29,6 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.cache import cache, caches
 from django.http import HttpResponseRedirect, JsonResponse
-from django.urls import resolve
 from django.utils import timezone
 from django.utils.encoding import smart_str
 from oauth2_provider.generators import BaseHashGenerator
@@ -45,7 +44,6 @@ from rest_framework.generics import (
     RetrieveAPIView as RestFrameworkRetrieveAPIView,
 )
 from rest_framework.renderers import BrowsableAPIRenderer
-from rest_framework.response import Response
 from rest_framework.utils import formatting
 
 from apiv2.authentication import OAuth2Authentication, SessionAuthentication, TokenAuthentication
@@ -359,7 +357,7 @@ def api_search(
                 raise NotFoundException(msg=str(e), resource=resource)
             else:
                 raise ServerErrorException(msg=f"Similarity server error: {str(e)}", resource=resource)
-        except Exception as e:
+        except Exception:
             raise ServerErrorException(
                 msg="The similarity server could not be reached or some unexpected error occurred.", resource=resource
             )

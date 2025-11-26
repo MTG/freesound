@@ -25,7 +25,7 @@ def size_generator(small_size: float, large_size: float, num_items: int):
     if num_items <= 1:
         yield (small_size + large_size) * 0.5
     else:
-        for i in range(0, num_items):
+        for i in range(num_items):
             yield ((i * (large_size - small_size)) / (num_items - 1)) + small_size
 
 

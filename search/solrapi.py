@@ -11,8 +11,6 @@ logger = logging.getLogger("console")
 class SolrAPIError(Exception):
     """Base exception for SolrAPI errors"""
 
-    pass
-
 
 def get_target_for_collection_alias(base_url, collection_alias):
     url = urljoin(base_url, "api/aliases")
@@ -24,7 +22,7 @@ def get_target_for_collection_alias(base_url, collection_alias):
             return aliases[collection_alias]
         else:
             return None
-    except (RequestException, JSONDecodeError) as e:
+    except (RequestException, JSONDecodeError):
         return None
 
 

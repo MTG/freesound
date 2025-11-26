@@ -23,7 +23,7 @@ import re
 
 from django import forms
 from django.conf import settings
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.core.signing import BadSignature, SignatureExpired
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput

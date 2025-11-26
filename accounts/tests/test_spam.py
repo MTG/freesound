@@ -41,7 +41,7 @@ class ReportSpamOffensive(TestCase):
     def setUp(self):
         # Create users reporting spam
         self.reporters = []
-        for i in range(0, settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
+        for i in range(settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
             reporter = User.objects.create_user(username=f"reporter_{i}", email=f"reporter_{i}@example.com")
             self.reporters.append(reporter)
 
@@ -163,7 +163,7 @@ class ReportSpamOffensive(TestCase):
 
         # Flag the comment many times by the same user (no email to admins should be sent yet as only one reporter)
         reporter = self.get_reporter_as_logged_in_user(0)
-        for i in range(0, settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
+        for i in range(settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
             resp = self.client.post(
                 reverse("flag-user", kwargs={"username": self.spammer.username}),
                 data={
@@ -200,7 +200,7 @@ class ReportSpamOffensive(TestCase):
         ]
 
         # Report objects by distinct users
-        for i in range(0, settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
+        for i in range(settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
             reporter = self.get_reporter_as_logged_in_user(i)
             object, flag_type = objects_flag_types[i % len(objects_flag_types)]
             resp = self.client.post(

@@ -59,7 +59,6 @@ def on_delete_comment(sender, instance, **kwargs):
         If this comment is deleted as a result of its parent sound being deleted, the
         sound will no longer exist so we don't need to update it
         """
-        pass
 
 
 @receiver(pre_save, sender=Comment)

@@ -12,7 +12,7 @@ from sentry_sdk.integrations.django import DjangoIntegration
 DEBUG = False
 DISPLAY_DEBUG_TOOLBAR = False
 
-DEBUGGER_HOST = "0.0.0.0"
+DEBUGGER_HOST = "0.0.0.0"  # noqa: S104
 DEBUGGER_PORT = 3000  # This port should match the one in docker compose
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "___this_is_a_secret_key_that_should_not_be_used___")
@@ -623,7 +623,7 @@ DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../frees
 # You can overwrite this to point to production data ("https://freesound.org/data/")
 DATA_URL = "/data/"
 
-SENDFILE_SECRET_URL = "/secret/"
+SENDFILE_SECRET_URL = "/secret/"  # noqa: S105
 SOUNDS_SENDFILE_URL = SENDFILE_SECRET_URL + "sounds/"
 PACKS_SENDFILE_URL = SENDFILE_SECRET_URL + "packs/"
 
@@ -1433,7 +1433,7 @@ PLAUSIBLE_AGGREGATE_PAGEVIEWS = True
 # -------------------------------------------------------------------------------
 # Rabbit MQ
 RABBITMQ_USER = "guest"
-RABBITMQ_PASS = "guest"
+RABBITMQ_PASS = "guest"  # noqa: S105
 RABBITMQ_HOST = "rabbitmq"
 RABBITMQ_PORT = "5672"
 RABBITMQ_API_PORT = "5673"
@@ -1446,7 +1446,7 @@ MAX_SOUNDS_PER_COLLECTION = 250
 # -------------------------------------------------------------------------------
 # Import local settings
 # Important: place settings which depend on other settings potentially modified in local_settings.py BELOW the import
-from .local_settings import *
+from .local_settings import *  # noqa: F403
 
 # -------------------------------------------------------------------------------
 # Celery
@@ -1529,4 +1529,3 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
 # -------------------------------------------------------------------------------
 # Import logging settings
-from .logger import LOGGING

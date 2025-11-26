@@ -83,14 +83,12 @@ def _create_nodes(dg):
         sound = Sound.objects.get(id=node)
         dg.add_node(
             node,
-            **{
-                "date": sound.created,
-                "nodeName": sound.original_filename,
-                "username": sound.user.username,
-                "sound_url_mp3": sound.locations()["preview"]["LQ"]["mp3"]["url"],
-                "sound_url_ogg": sound.locations()["preview"]["LQ"]["ogg"]["url"],
-                "waveform_url": sound.locations()["display"]["wave"]["M"]["url"],
-            },
+            date=sound.created,
+            nodeName=sound.original_filename,
+            username=sound.user.username,
+            sound_url_mp3=sound.locations()["preview"]["LQ"]["mp3"]["url"],
+            sound_url_ogg=sound.locations()["preview"]["LQ"]["ogg"]["url"],
+            waveform_url=sound.locations()["display"]["wave"]["M"]["url"],
         )
     return dg
 

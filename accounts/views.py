@@ -33,7 +33,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import (
     LoginView,
@@ -53,10 +53,8 @@ from django.db.models.fields import CharField
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseBadRequest,
     HttpResponsePermanentRedirect,
     HttpResponseRedirect,
-    HttpResponseServerError,
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404, render
@@ -64,10 +62,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import base36_to_int, int_to_base36
 from django.views.decorators.cache import never_cache
-from django.views.decorators.csrf import csrf_exempt
 from oauth2_provider.models import AccessToken
 
-import tickets.views as TicketViews
 import utils.sound_upload
 from accounts.forms import (
     AvatarForm,
@@ -87,7 +83,7 @@ from accounts.forms import (
     UsernameField,
     username_taken_by_other_user,
 )
-from accounts.models import DeletedUser, Profile, ResetEmailRequest, UserDeletionRequest, UserFlag
+from accounts.models import DeletedUser, ResetEmailRequest, UserDeletionRequest, UserFlag
 from bookmarks.models import Bookmark
 from comments.models import Comment
 from follow import follow_utils
@@ -512,7 +508,7 @@ def handle_uploaded_image(profile, f):
 
     os.makedirs(os.path.dirname(profile.locations("avatar.L.path")), exist_ok=True)
     ext = os.path.splitext(os.path.basename(f.name))[1]
-    tmp_image_path = tempfile.mktemp(suffix=ext, prefix=str(profile.user.id))
+    tmp_image_path = tempfile.mktemp(suffix=ext, prefix=str(profile.user.id))  # noqa: S306
     try:
         upload_logger.info("\timage upload (%s) - opening file: %s", user_id, tmp_image_path)
         destination = open(tmp_image_path, "wb")
@@ -1751,7 +1747,7 @@ def flag_user(request, username):
                     flagged_object = Comment.objects.get(id=object_id, user=flagged_user)
                 else:
                     return HttpResponse(json.dumps({"errors": True}), content_type="application/javascript")
-            except (Message.DoesNotExist, Post.DoesNotExist, Comment.DoesNotExist) as e:
+            except (Message.DoesNotExist, Post.DoesNotExist, Comment.DoesNotExist):
                 return HttpResponse(json.dumps({"errors": True}), content_type="application/javascript")
         else:
             return HttpResponse(json.dumps({"errors": True}), content_type="application/javascript")

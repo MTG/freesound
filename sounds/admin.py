@@ -20,7 +20,6 @@
 
 import json
 
-from django.conf import settings
 from django.contrib import admin, messages
 from django.core.cache import cache
 from django.core.management import call_command
@@ -411,9 +410,6 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
             + [field.name for field in obj._meta.many_to_many]
             + ["analysis_logs", "analysis_data_file"]
         )
-
-    def has_add_permission(self, request, obj=None):
-        return False
 
     @admin.action(description="Re-run analysis with same analyzer")
     def re_run_analysis(self, request, queryset_or_object):

@@ -36,4 +36,4 @@ class ContentForm(forms.ModelForm):
 
     class Meta:
         model = models.Content
-        exclude = ("author", "page", "created")
+        fields = ["title", "body"]

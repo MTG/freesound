@@ -29,7 +29,7 @@ import pysolr
 from django.conf import settings
 
 from forum.models import Post
-from sounds.models import Sound, SoundAnalysis, SoundSimilarityVector
+from sounds.models import Sound, SoundSimilarityVector
 from utils.search import SearchEngineBase, SearchEngineException, SearchResults
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
 from utils.text import remove_control_chars
@@ -259,13 +259,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             document["type"] = "wav"
         else:
             document["type"] = sound.type
-        document["name"] = remove_control_chars(getattr(sound, "original_filename"))
-        document["description"] = remove_control_chars(getattr(sound, "description"))
-        document["tag"] = list({t.lower() for t in getattr(sound, "tag_array")})
+        document["name"] = remove_control_chars(sound.original_filename)
+        document["description"] = remove_control_chars(sound.description)
+        document["tag"] = list({t.lower() for t in sound.tag_array})
         document["license"] = sound.license.name
 
         if document["num_ratings"] >= settings.MIN_NUMBER_RATINGS:
-            document["avg_rating"] = getattr(sound, "avg_rating")
+            document["avg_rating"] = sound.avg_rating
         else:
             document["avg_rating"] = 0
 
@@ -278,7 +278,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 # for sounds that don't have a pack. This is so that we get the correct total count of packs/individual sounds
                 # when grouping by pack. With the collapse query parser, this is not needed because the nullPolicy=expand will
                 # precisely treat sounds without packs as a group of their own.
-                document["pack_grouping"] = str(getattr(sound, "id"))
+                document["pack_grouping"] = str(sound.id)
 
         collections = []
         for collection_data in sound.collections_array:
@@ -294,14 +294,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             if not math.isnan(sound.geotag.lon) and not math.isnan(sound.geotag.lat):
                 document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)
 
-        document["in_remix_group"] = getattr(sound, "was_remixed") or getattr(sound, "is_remix")
+        document["in_remix_group"] = sound.was_remixed or sound.is_remix
 
-        document["bitdepth"] = getattr(sound, "bitdepth") if getattr(sound, "bitdepth") else 0
-        document["bitrate"] = getattr(sound, "bitrate") if getattr(sound, "bitrate") else 0
-        document["samplerate"] = int(getattr(sound, "samplerate")) if getattr(sound, "samplerate") else 0
+        document["bitdepth"] = sound.bitdepth if sound.bitdepth else 0
+        document["bitrate"] = sound.bitrate if sound.bitrate else 0
+        document["samplerate"] = int(sound.samplerate) if sound.samplerate else 0
 
-        document["comment"] = [remove_control_chars(comment_text) for comment_text in getattr(sound, "comments_array")]
-        document["num_comments"] = getattr(sound, "num_comments")
+        document["comment"] = [remove_control_chars(comment_text) for comment_text in sound.comments_array]
+        document["num_comments"] = sound.num_comments
 
         locations = sound.locations()
         document["waveform_path_m"] = locations["display"]["wave"]["M"]["path"]
@@ -391,16 +391,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 # Because we still want to be able to group by pack when matching sim vector documents (sound child documents),
                 # we add the pack_grouping field here as well. In the future we might be able to optimize this if we can tell solr
                 # to group results by the field value of a parent document (just like we do to compute facets)
-                if getattr(sound_objects_dict[ssv.sound_id], "pack_id"):
+                if sound_objects_dict[ssv.sound_id].pack_id:
                     sim_vector_document_data["pack_grouping_child"] = (
-                        str(getattr(sound_objects_dict[ssv.sound_id], "pack_id"))
+                        str(sound_objects_dict[ssv.sound_id].pack_id)
                         + "_"
-                        + remove_control_chars(getattr(sound_objects_dict[ssv.sound_id], "pack_name"))
+                        + remove_control_chars(sound_objects_dict[ssv.sound_id].pack_name)
                     )
                 else:
-                    sim_vector_document_data["pack_grouping_child"] = str(
-                        getattr(sound_objects_dict[ssv.sound_id], "id")
-                    )
+                    sim_vector_document_data["pack_grouping_child"] = str(sound_objects_dict[ssv.sound_id].id)
 
                 # NOTE: if there were multiple vectors per sound per similarity space, we would add them all here
                 similairty_vectors_per_space_per_sound.append(sim_vector_document_data)
@@ -845,7 +843,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     def get_random_sound_id(self):
         query = SolrQuery()
-        rand_key = random.randint(1, 10000000)
+        rand_key = random.randint(1, 10000000)  # noqa: S311
         sort = ["random_%d asc" % rand_key]
         filter_query = "is_explicit:0"
         query.set_query("*:*")

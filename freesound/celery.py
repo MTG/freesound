@@ -23,6 +23,7 @@ def get_queues_task_counts():
     raw_data = requests.get(
         f"http://{settings.RABBITMQ_HOST}:{settings.RABBITMQ_API_PORT}/rabbitmq-admin/api/queues",
         auth=(settings.RABBITMQ_USER, settings.RABBITMQ_PASS),
+        timeout=10,
     ).json()
     data = []
     if "error" not in raw_data:

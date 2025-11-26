@@ -109,7 +109,7 @@ def get_ip_or_random_ip(request):
     if ip == "-":
         # If for some reason an ip is not returned by get_client_ip, we generate a random number to avoid putting all
         # requests in the same key
-        ip = str(random.random())
+        ip = str(random.random())  # noqa: S311
     return ip
 
 

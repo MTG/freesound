@@ -24,7 +24,7 @@ import pprint
 from collections import defaultdict
 
 from django.contrib.auth.models import User
-from django.db.models import Avg, Count, Value
+from django.db.models import Avg, Count
 from django.db.models.functions import Coalesce
 
 from accounts.models import Profile

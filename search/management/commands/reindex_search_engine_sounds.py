@@ -82,7 +82,7 @@ class Command(BaseCommand):
 
         # If we update existing documents, we send to the freesound collection alias, otherwise we create a new collection
         if only_similarity_vectors:
-            collection_name = f"freesound"
+            collection_name = "freesound"
         else:
             collection_name = f"freesound_{current_date}"
         collection_url = f"{search_engine.solr_base_url}/solr/{collection_name}"

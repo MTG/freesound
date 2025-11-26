@@ -25,7 +25,7 @@ import shutil
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -33,8 +33,6 @@ import utils.downloads
 from donations.models import Donation, DonationsModalSettings
 from geotags.models import GeoTag
 from sounds.models import Download, License, Pack, Sound
-from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
-from utils.audioprocessing.processing import AudioProcessingException
 from utils.sound_upload import (
     AlreadyExistsException,
     NoAudioException,
@@ -46,12 +44,7 @@ from utils.sound_upload import (
 from utils.tags import clean_and_split_tags
 from utils.test_helpers import (
     create_test_files,
-    create_user_and_sounds,
     override_csv_path_with_temp_directory,
-    override_displays_path_with_temp_directory,
-    override_previews_path_with_temp_directory,
-    override_processing_tmp_path_with_temp_directory,
-    override_sounds_path_with_temp_directory,
     override_uploads_path_with_temp_directory,
 )
 
@@ -62,7 +55,7 @@ class UtilsTest(TestCase):
     def test_download_sounds(self):
         user = User.objects.create_user("testuser", password="testpass")
         pack = Pack.objects.create(user=user, name="Test pack")
-        for i in range(0, 5):
+        for i in range(5):
             Sound.objects.create(
                 user=user,
                 original_filename="Test sound %i" % i,
@@ -152,7 +145,7 @@ class ShouldSuggestDonationTest(TestCase):
         sound = Sound.objects.create(
             user=user, original_filename="Test sound", license=License.objects.all()[0], md5="fakemd5_10"
         )
-        for i in range(0, donations_settings.downloads_in_period):
+        for i in range(donations_settings.downloads_in_period):
             Download.objects.create(user=user, sound=sound, license=License.objects.first())
             self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
         Download.objects.create(
@@ -204,7 +197,7 @@ class ShouldSuggestDonationTest(TestCase):
         sound = Sound.objects.create(
             user=user, original_filename="Test sound", license=License.objects.all()[0], md5="fakemd5_10"
         )
-        for i in range(0, donations_settings.downloads_in_period):
+        for i in range(donations_settings.downloads_in_period):
             Download.objects.create(user=user, sound=sound, license=License.objects.first())
             self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
         Download.objects.create(
@@ -251,13 +244,13 @@ class BulkDescribeUtils(TestCase):
         header_xls, lines_xls = get_csv_lines(sample_xls_path)
         header_xlsx, lines_xlsx = get_csv_lines(sample_xlsx_path)
 
-        for i in range(0, len(header_csv)):
+        for i in range(len(header_csv)):
             # Check headers have the same value
             self.assertTrue(header_csv[i] == header_xls[i] == header_xlsx[i])
 
             # Check lines from all formats parse same value for specific header value
             header_value = header_csv[i]
-            for j in range(0, len(lines_csv)):
+            for j in range(len(lines_csv)):
                 if header_value == "is_explicit":
                     # NOTE: Excel treats all numbers as floats, therefore for comparing rows that have numbers we
                     # first convert them all to float.

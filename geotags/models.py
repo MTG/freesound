@@ -20,7 +20,6 @@
 import logging
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 from django.utils.encoding import smart_str
@@ -57,7 +56,7 @@ class GeoTag(models.Model):
                 self.information = response.json()
                 self.should_update_information = False
                 self.save()
-            except Exception as e:
+            except Exception:
                 pass
 
         if self.information is not None:

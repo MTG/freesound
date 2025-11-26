@@ -45,7 +45,7 @@ class Command(LoggingBaseCommand):
 
         n_days_back = 2
         now = timezone.now().date()
-        for i in range(0, n_days_back):
+        for i in range(n_days_back):
             date_filter = now - datetime.timedelta(days=i)
 
             # Get cache keys that match a pattern. Note that using Django's default redis client, this requires some special trickery

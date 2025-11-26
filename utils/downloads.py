@@ -93,6 +93,6 @@ def should_suggest_donation(user, times_shown_in_last_day):
         ).count()
         num_downloads_in_period = num_sound_downloads + num_pack_downloads
         if num_downloads_in_period > donation_modal_settings.downloads_in_period:
-            if random.random() <= donation_modal_settings.display_probability:
+            if random.random() <= donation_modal_settings.display_probability:  # noqa: S311
                 return True
     return False

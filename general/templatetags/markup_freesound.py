@@ -3,8 +3,6 @@ This was copied directly from django, but a small hack was added to allow differ
 markdown. It uses MARKDOWN_FILTER_SETTINGS from settings.py
 """
 
-import re
-
 import markdown as markdown_package
 from django import template
 from django.utils.encoding import force_str

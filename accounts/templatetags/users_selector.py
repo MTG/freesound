@@ -20,7 +20,6 @@
 
 
 from django import template
-from django.conf import settings
 
 from accounts.models import User
 

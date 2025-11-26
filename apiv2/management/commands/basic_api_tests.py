@@ -53,9 +53,9 @@ def api_request(full_url, type="GET", post_data=None, auth="token", token=None):
         headers = {"Authorization": f"Token {token}"}
 
     if type == "GET":
-        r = requests.get(url, params=params, headers=headers)
+        r = requests.get(url, params=params, headers=headers, timeout=10)
     elif type == "POST":
-        r = requests.post(url, params=params, data=data, headers=headers)
+        r = requests.post(url, params=params, data=data, headers=headers, timeout=10)
 
     return r
 

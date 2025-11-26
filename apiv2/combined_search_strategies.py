@@ -293,7 +293,7 @@ def merge_optimized(search_form, target_file=None, extra_parameters=None):
             new_last_retrieved_solr_id_pos = last_retrieved_solr_id_pos
             stop_main_for_loop = False
             n_requests_made = 0
-            for i in range(0, solr_max_requests):
+            for i in range(solr_max_requests):
                 if stop_main_for_loop:
                     continue
                 offset = last_retrieved_solr_id_pos + i * solr_page_size
@@ -365,7 +365,7 @@ def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=
             raise NotFoundException(msg=str(e))
         else:
             raise ServerErrorException(msg=f"Similarity server error: {str(e)}")
-    except Exception as e:
+    except Exception:
         raise ServerErrorException(msg="The similarity server could not be reached or some unexpected error occurred.")
 
     return gaia_ids, gaia_count, distance_to_target_data, note
@@ -413,6 +413,6 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
 
     except SearchEngineException as e:
         raise ServerErrorException(msg=f"Search server error: {str(e)}")
-    except Exception as e:
+    except Exception:
         raise ServerErrorException(msg="The search server could not be reached or some unexpected error occurred.")
     return solr_ids, solr_count

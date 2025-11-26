@@ -31,7 +31,6 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.urls import reverse
-from django.utils.text import slugify
 
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
@@ -90,7 +89,7 @@ def get_duration_from_processing_before_describe_files(audio_file_path):
     try:
         with open(info_file_path) as f:
             return float(json.load(f)["duration"])
-    except Exception as e:
+    except Exception:
         return 0.0
 
 
@@ -99,7 +98,7 @@ def get_samplerate_from_processing_before_describe_files(audio_file_path):
     try:
         with open(info_file_path) as f:
             return float(json.load(f)["samplerate"])
-    except Exception as e:
+    except Exception:
         return 44100.0
 
 
@@ -204,7 +203,7 @@ def create_sound(user, sound_fields, apiv2_client=None, bulk_upload_progress=Non
             remove_uploaded_file_from_mirror_locations(sound.original_path)
             _remove_user_uploads_folder_if_empty(sound.user)
 
-        except OSError as e:
+        except OSError:
             raise CantMoveException(f"Failed to move file from {sound.original_path} to {new_original_path}")
         sound.original_path = new_original_path
         sound.save()

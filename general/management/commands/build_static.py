@@ -40,4 +40,4 @@ class Command(BaseCommand):
         variables_for_command = " ".join([f"{key}={value}" for key, value in variables.items()])
         build_static_command = variables_for_command + " npm run build"
         console_logger.info("Building static files with command:\n" + build_static_command)
-        os.system(build_static_command)
+        os.system(build_static_command)  # noqa: S605

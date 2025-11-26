@@ -31,7 +31,6 @@ from django.urls import reverse
 from freezegun import freeze_time
 
 import accounts
-from accounts.models import EmailPreferenceType
 from sounds.models import Flag, Sound, SoundOfTheDay
 from sounds.views import get_sound_of_the_day_id
 from utils.test_helpers import create_user_and_sounds

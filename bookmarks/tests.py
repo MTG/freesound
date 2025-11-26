@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 from django.contrib.auth.models import User
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 import bookmarks.models

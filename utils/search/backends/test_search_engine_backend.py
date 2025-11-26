@@ -270,7 +270,7 @@ def test_sounds_qs(
         SoundSimilarityVector.objects.create(
             sound=sound,
             similarity_space_name=settings.SIMILARITY_SPACE_DEFAULT,
-            vector=[sound.id for i in range(0, vector_size)],
+            vector=[sound.id for i in range(vector_size)],
         )
 
         SoundAnalysis.objects.create(sound=sound, analysis_status="OK", analyzer="test_analyzer")

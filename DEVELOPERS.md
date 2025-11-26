@@ -1,9 +1,20 @@
 # Freesound Developer notes
 
-## Code layout
-Where possible, use consistent formatting for file layout. In pycharm take advantage of the 
-`Code`→`Optimize imports` and `Code`→`Reformat code` menu items in order to have a consistent 
-code layout.
+## Code formatting
+
+We use Ruff to automatically format the code in Black-style. You should automatically format your code before
+committing it, either using an IDE extension or a git pre-commit hook.
+Pycharm has [Black integration built-in](https://blog.jetbrains.com/pycharm/2023/07/2023-2-eap-5/), and
+VS Code has [an extension](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff) for ruff.
+
+We have configuration for pre-commit to check linting and formatting at commit time, run
+
+    uvx pre-commit install
+
+one time to install the hooks if you use the commandline git client.
+
+See also a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=elagil.pre-commit-helper) for pre-commit. 
+
 
 ## Code documentation
 We use Google-style docstrings.

@@ -30,6 +30,8 @@ services:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
             target: freesound
+            platforms:
+              - linux/amd64
         command: python manage.py runserver 0.0.0.0:8000
         volumes:
             - .:/code
@@ -78,6 +80,8 @@ services:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
             target: freesound
+            platforms:
+              - linux/amd64
         init: true
         command: celery -A freesound worker --concurrency=2 -l info -Q async_tasks_queue,sound_processing_queue,sound_analysis_old_queue,clustering_queue
         volumes:
@@ -166,6 +170,8 @@ services:
         build:
             context: ./similarity
             dockerfile: ../docker/Dockerfile.similarity
+            platforms:
+              - linux/amd64
         init: true
         command: python similarity_server.py
         volumes:
@@ -183,6 +189,8 @@ services:
         build:
             context: ./tagrecommendation
             dockerfile: ../docker/Dockerfile.tagrecommendation
+            platforms:
+              - linux/amd64
         init: true
         command: python tagrecommendation_server.py
         volumes:

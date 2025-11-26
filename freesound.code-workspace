@@ -160,6 +160,10 @@
 		"python.defaultInterpreterPath": ".venv/bin/python",
 		"files.associations": {
 			"*.html": "django-html"
+		},
+		"[python]": {
+			"editor.formatOnSave": true,
+			"editor.defaultFormatter": "charliermarsh.ruff"
 		}
 	}
 }

@@ -68,10 +68,11 @@ class Command(LoggingBaseCommand):
             # It could be that there are several requests per user, just display info about the first one
             user_deletion_request = UserDeletionRequest.objects.filter(user_to_id=user_id).first()
             console_logger.info(
-                '- User "{0}" with id {1} should have been deleted. Action: "{2}". Reason: "{2}".'.format(
+                '- User "{0}" with id {1} should have been deleted. Action: "{2}". Reason: "{3}".'.format(
                     user_deletion_request.user_to.username,
                     user_deletion_request.user_to.id,
                     user_deletion_request.triggered_deletion_action,
+                    user_deletion_request.triggered_deletion_reason,
                 )
             )
 

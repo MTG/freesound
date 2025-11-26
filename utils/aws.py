@@ -25,7 +25,7 @@ from botocore.exceptions import EndpointConnectionError
 
 
 class AwsCredentialsNotConfigured(Exception):
-    message = 'AWS credentials are not configured'
+    message = "AWS credentials are not configured"
 
 
 class AwsConnectionError(Exception):
@@ -42,9 +42,12 @@ def init_client(service):
     if not settings.AWS_REGION or not settings.AWS_SECRET_ACCESS_KEY or not settings.AWS_SECRET_ACCESS_KEY:
         raise AwsCredentialsNotConfigured()
 
-    return client(service, region_name=settings.AWS_SQS_REGION,
-                  aws_access_key_id=settings.AWS_SQS_ACCESS_KEY_ID,
-                  aws_secret_access_key=settings.AWS_SQS_SECRET_ACCESS_KEY)
+    return client(
+        service,
+        region_name=settings.AWS_SQS_REGION,
+        aws_access_key_id=settings.AWS_SQS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SQS_SECRET_ACCESS_KEY,
+    )
 
 
 class EmailStats:
@@ -58,20 +61,20 @@ class EmailStats:
 
     def render(self, prefix):
         return {
-            prefix + 'Total': self.total,
-            prefix + 'Bounces': self.bounces,
-            prefix + 'Complaints': self.complaints,
-            prefix + 'Rejects': self.rejects,
-            prefix + 'BounceRate': self._rate(self.bounces),
-            prefix + 'ComplaintRate': self._rate(self.complaints),
-            prefix + 'RejectRate': self._rate(self.rejects)
+            prefix + "Total": self.total,
+            prefix + "Bounces": self.bounces,
+            prefix + "Complaints": self.complaints,
+            prefix + "Rejects": self.rejects,
+            prefix + "BounceRate": self._rate(self.bounces),
+            prefix + "ComplaintRate": self._rate(self.complaints),
+            prefix + "RejectRate": self._rate(self.rejects),
         }
 
     def aggregate(self, data):
-        self.total += data['DeliveryAttempts']
-        self.complaints += data['Complaints']
-        self.bounces += data['Bounces']
-        self.rejects += data['Rejects']
+        self.total += data["DeliveryAttempts"]
+        self.complaints += data["Complaints"]
+        self.bounces += data["Bounces"]
+        self.rejects += data["Rejects"]
 
 
 def get_ses_stats(sample_size, n_points):
@@ -83,15 +86,15 @@ def get_ses_stats(sample_size, n_points):
     :raises AwsCredentialsNotConfigured: missing or not filled in credentials in config file
     :raises AwsConnectionError: connection problems with AWS server
     """
-    ses = init_client('ses')
+    ses = init_client("ses")
 
     try:
         response = ses.get_send_statistics()
     except EndpointConnectionError as e:
         raise AwsConnectionError(e)
 
-    data = response['SendDataPoints']
-    data.sort(key=lambda x: x['Timestamp'], reverse=True)  # array of datapoints is not sorted originally
+    data = response["SendDataPoints"]
+    data.sort(key=lambda x: x["Timestamp"], reverse=True)  # array of datapoints is not sorted originally
 
     email_stats = EmailStats()
     count = 0
@@ -101,10 +104,10 @@ def get_ses_stats(sample_size, n_points):
         email_stats.aggregate(data_point)
         count += 1
         if count == n_points:
-            result.update(email_stats.render('shortTerm'))
+            result.update(email_stats.render("shortTerm"))
         if sample_size and email_stats.total >= sample_size:
             break
 
-    result.update(email_stats.render('longTerm'))
+    result.update(email_stats.render("longTerm"))
 
     return result

@@ -5,7 +5,7 @@ requires-python = "==3.10"
 
 [tool.ruff]
 line-length = 120
-exclude = ["**/migrations", "_docs/**/*"]
+exclude = ["**/migrations", "_docs/**/*", "tagrecommendation/**", "similarity/**"]
 
 [tool.ruff.lint]
 select = [

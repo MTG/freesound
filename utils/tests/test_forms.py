@@ -44,22 +44,22 @@ class TagFieldTest(TestCase):
         f = TagField()
         # Split on spaces
         self.assertEqual({"One", "two2", "3three"}, f.clean("3three One two2"))
-        
+
         # Split on commas
         self.assertEqual({"one", "two", "three"}, f.clean("three, one,two"))
-        
+
         # Funny characters not allowed
         err_message = "Tags must contain only letters a-z, digits 0-9 and hyphen."
         with self.assertRaisesMessage(ValidationError, err_message):
             f.clean("One t%wo")
-        
+
         # accents not allowed
         with self.assertRaisesMessage(ValidationError, err_message):
             f.clean("One twó")
-        
+
         # hyphens allowed
         self.assertEqual({"tag", "tag-name", "another-name"}, f.clean("tag-name tag another-name"))
-        
+
         # multiple hyphens cut down to one
         self.assertEqual({"tag", "tag-name", "another-name"}, f.clean("tag--name tag another----name"))
 

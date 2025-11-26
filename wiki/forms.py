@@ -23,15 +23,16 @@ from wiki import models
 
 
 class ContentForm(forms.ModelForm):
-    title = forms.CharField(widget=forms.TextInput(attrs={'size': '100'}), label=False)
-    body = forms.CharField(widget=forms.Textarea(attrs={'rows': '40', 'cols': '100'}), label=False)
+    title = forms.CharField(widget=forms.TextInput(attrs={"size": "100"}), label=False)
+    body = forms.CharField(widget=forms.Textarea(attrs={"rows": "40", "cols": "100"}), label=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['title'].widget.attrs['placeholder'] = 'Title of the page'
-        self.fields['body'].widget.attrs['placeholder'] = 'Contents of the page. ' \
-                                                          'You can use Markdown formatting and HTML.'
+        self.fields["title"].widget.attrs["placeholder"] = "Title of the page"
+        self.fields["body"].widget.attrs["placeholder"] = (
+            "Contents of the page. You can use Markdown formatting and HTML."
+        )
 
     class Meta:
         model = models.Content
-        exclude = ('author', 'page', 'created')
+        exclude = ("author", "page", "created")

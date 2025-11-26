@@ -24,8 +24,8 @@ from forum.models import Post
 
 
 class Command(BaseCommand):
-    args = ''
-    help = 'Fill first_post field in every Thread object'
+    args = ""
+    help = "Fill first_post field in every Thread object"
 
     def handle(self, *args, **options):
         thread_qs = Thread.objects.all()

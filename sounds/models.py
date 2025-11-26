@@ -62,7 +62,10 @@ from general.templatetags.absurl import url2absurl
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from general.templatetags.util import formatnumber
-from sounds.templatetags.bst_category import bst_taxonomy_category_key_to_category_names, bst_taxonomy_category_names_to_category_key
+from sounds.templatetags.bst_category import (
+    bst_taxonomy_category_key_to_category_names,
+    bst_taxonomy_category_names_to_category_key,
+)
 from tags.models import SoundTag, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, TicketComment
@@ -74,12 +77,13 @@ from utils.search.search_sounds import delete_sounds_from_search_engine
 from utils.similarity_utilities import delete_sound_from_gaia
 from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
 
-web_logger = logging.getLogger('web')
-sounds_logger = logging.getLogger('sounds')
+web_logger = logging.getLogger("web")
+sounds_logger = logging.getLogger("sounds")
 
 
 class License(models.Model):
     """A creative commons license model"""
+
     name = models.CharField(max_length=512)
     abbreviation = models.CharField(max_length=8, db_index=True)
     summary = models.TextField()
@@ -90,20 +94,23 @@ class License(models.Model):
     is_public = models.BooleanField(default=True)
 
     def get_short_summary(self):
-        return self.short_summary if self.short_summary is not None else Truncator(self.summary)\
-            .words(20, html=True, truncate='...')
+        return (
+            self.short_summary
+            if self.short_summary is not None
+            else Truncator(self.summary).words(20, html=True, truncate="...")
+        )
 
     @staticmethod
     def bw_cc_icon_name_from_license_name(license_name):
-        if '0' in license_name.lower():
-            return 'zero'
-        elif 'noncommercial' in license_name.lower():
-            return 'by-nc'
-        elif 'attribution' in license_name.lower():
-            return 'by'
-        elif 'sampling' in license_name.lower():
-            return 'splus'
-        return 'cc'
+        if "0" in license_name.lower():
+            return "zero"
+        elif "noncommercial" in license_name.lower():
+            return "by-nc"
+        elif "attribution" in license_name.lower():
+            return "by"
+        elif "sampling" in license_name.lower():
+            return "splus"
+        return "cc"
 
     @property
     def icon_name(self):
@@ -111,26 +118,26 @@ class License(models.Model):
 
     @property
     def name_with_version(self):
-        version_label = ''
-        if '3.0' in self.deed_url:
-            version_label = ' 3.0'
-        elif '4.0' in self.deed_url:
-            version_label = ' 4.0'
+        version_label = ""
+        if "3.0" in self.deed_url:
+            version_label = " 3.0"
+        elif "4.0" in self.deed_url:
+            version_label = " 4.0"
         name = self.name
-        return f'{name}{version_label}'
+        return f"{name}{version_label}"
 
     @property
     def abbreviated_name_with_version(self):
-        version_label = ''
-        if '3.0' in self.deed_url:
-            version_label = ' 3.0'
-        elif '4.0' in self.deed_url:
-            version_label = ' 4.0'
+        version_label = ""
+        if "3.0" in self.deed_url:
+            version_label = " 3.0"
+        elif "4.0" in self.deed_url:
+            version_label = " 4.0"
         name = self.abbreviation.upper()
-        if name != 'CC0' and 'SAMP+' not in name:
-            name = 'CC ' + name
-        name = name.replace('SAMP+', 'Sampling Plus 1.0')
-        return f'{name}{version_label}'
+        if name != "CC0" and "SAMP+" not in name:
+            name = "CC " + name
+        name = name.replace("SAMP+", "Sampling Plus 1.0")
+        return f"{name}{version_label}"
 
     def __str__(self):
         return self.name_with_version
@@ -142,12 +149,12 @@ class BulkUploadProgress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     CSV_CHOICES = (
-        ("N", 'Not yet validated'),  # linked CSV file has not yet been validated
-        ("F", 'Finished description'),   # All sounds have been described/created (but some might still be in
-                                         # processing/moderation stage)
-        ("S", 'Sounds being described and processed'),  # Description (and processing) process has started
-        ("V", 'Finished validation'),  # CSV file has been validated (might have errors)
-        ("C", 'Closed'),  # Process has finished and has been closes
+        ("N", "Not yet validated"),  # linked CSV file has not yet been validated
+        ("F", "Finished description"),  # All sounds have been described/created (but some might still be in
+        # processing/moderation stage)
+        ("S", "Sounds being described and processed"),  # Description (and processing) process has started
+        ("V", "Finished validation"),  # CSV file has been validated (might have errors)
+        ("C", "Closed"),  # Process has finished and has been closes
     )
     progress_type = models.CharField(max_length=1, choices=CSV_CHOICES, default="N")
     csv_filename = models.CharField(max_length=512, null=True, blank=True, default=None)
@@ -163,11 +170,11 @@ class BulkUploadProgress(models.Model):
 
     def get_bulk_upload_basic_data_for_log(self):
         return {
-            'bulk_upload_id': self.id,
-            'user_id': self.user_id,
-            'username': self.user.username,
-            'original_csv_filename': self.original_csv_filename,
-            'csv_path': self.csv_path
+            "bulk_upload_id": self.id,
+            "user_id": self.user_id,
+            "username": self.user.username,
+            "original_csv_filename": self.original_csv_filename,
+            "csv_path": self.csv_path,
         }
 
     def get_csv_lines(self):
@@ -187,45 +194,49 @@ class BulkUploadProgress(models.Model):
                 csv_header=header,
                 csv_lines=lines,
                 sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
-                username=self.user.username)
+                username=self.user.username,
+            )
         except Exception:
             # This is a broad exception clause intentionally placed here to make sure that BulkUploadProgress is
             # updated with a global error. Otherwise it will appear to the user that the object is permanently being
             # validated. After we update the object with the "unexpected error" message, we log the exception and
             # continue with execution
             lines_validated = []
-            global_errors = ['An unexpected error occurred while validating your data file']
+            global_errors = ["An unexpected error occurred while validating your data file"]
 
         self.validation_output = {
-            'lines_ok': [line for line in lines_validated if not line['line_errors']],
-            'lines_with_errors': [line for line in lines_validated if line['line_errors']],
-            'global_errors': global_errors,
+            "lines_ok": [line for line in lines_validated if not line["line_errors"]],
+            "lines_with_errors": [line for line in lines_validated if line["line_errors"]],
+            "global_errors": global_errors,
         }
-        self.progress_type = 'V'  # Set progress to 'validated'
+        self.progress_type = "V"  # Set progress to 'validated'
         self.save()
 
         # Log information about the process
-        bulk_upload_basic_data.update({
-            'n_lines_ok': len(self.validation_output['lines_ok']),
-            'n_lines_with_errors': len(self.validation_output['lines_with_errors']),
-            'n_global_errors': len(self.validation_output['global_errors']),
-        })
-        web_logger.info(f'Validated data file for bulk upload ({json.dumps(bulk_upload_basic_data)})')
+        bulk_upload_basic_data.update(
+            {
+                "n_lines_ok": len(self.validation_output["lines_ok"]),
+                "n_lines_with_errors": len(self.validation_output["lines_with_errors"]),
+                "n_global_errors": len(self.validation_output["global_errors"]),
+            }
+        )
+        web_logger.info(f"Validated data file for bulk upload ({json.dumps(bulk_upload_basic_data)})")
 
     def describe_sounds(self):
         """
         Start the actual description of the sounds and add them to Freesound.
         """
         bulk_upload_basic_data = self.get_bulk_upload_basic_data_for_log()
-        web_logger.info(f'Started creating sound objects for bulk upload ({json.dumps(bulk_upload_basic_data)})')
+        web_logger.info(f"Started creating sound objects for bulk upload ({json.dumps(bulk_upload_basic_data)})")
         bulk_describe_from_csv(
             self.csv_path,
             delete_already_existing=False,
             force_import=True,
             sounds_base_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id)),
             username=self.user.username,
-            bulkupload_progress_id=self.id)
-        web_logger.info(f'Finished creating sound objects for bulk upload ({json.dumps(bulk_upload_basic_data)})')
+            bulkupload_progress_id=self.id,
+        )
+        web_logger.info(f"Finished creating sound objects for bulk upload ({json.dumps(bulk_upload_basic_data)})")
 
     def store_progress_for_line(self, line_no, message):
         """
@@ -253,28 +264,37 @@ class BulkUploadProgress(models.Model):
                     sound_errors.append((line_no, value))
         n_sounds_described_ok = len(sound_ids_described_ok)
         n_sounds_error = len(sound_errors)
-        n_lines_validated_ok = len(self.validation_output['lines_ok']) if self.validation_output is not None else 0
+        n_lines_validated_ok = len(self.validation_output["lines_ok"]) if self.validation_output is not None else 0
         n_sounds_remaining_to_describe = n_lines_validated_ok - n_sounds_described_ok - n_sounds_error
 
         n_sounds_published = Sound.objects.filter(
-            id__in=sound_ids_described_ok, processing_state="OK", moderation_state="OK").count()
-        n_sounds_moderation = Sound.objects.filter(
-            id__in=sound_ids_described_ok, processing_state="OK").exclude(moderation_state="OK").count()
+            id__in=sound_ids_described_ok, processing_state="OK", moderation_state="OK"
+        ).count()
+        n_sounds_moderation = (
+            Sound.objects.filter(id__in=sound_ids_described_ok, processing_state="OK")
+            .exclude(moderation_state="OK")
+            .count()
+        )
         n_sounds_currently_processing = Sound.objects.filter(
-            id__in=sound_ids_described_ok, processing_state="PE", processing_ongoing_state="PR").count()
-        n_sounds_pending_processing = Sound.objects.filter(
-            id__in=sound_ids_described_ok, processing_state="PE").exclude(processing_ongoing_state="PR").count()
-        n_sounds_failed_processing = Sound.objects.filter(
-            id__in=sound_ids_described_ok, processing_state="FA").count()
+            id__in=sound_ids_described_ok, processing_state="PE", processing_ongoing_state="PR"
+        ).count()
+        n_sounds_pending_processing = (
+            Sound.objects.filter(id__in=sound_ids_described_ok, processing_state="PE")
+            .exclude(processing_ongoing_state="PR")
+            .count()
+        )
+        n_sounds_failed_processing = Sound.objects.filter(id__in=sound_ids_described_ok, processing_state="FA").count()
 
         # The remaining sounds that have been described ok but do not appear in any of the sets above are sounds with
         # an unknown state. This could happen if sounds get deleted (e.g. as part of the moderation process or because
         # a sound fails processing and the user deletes it).
-        n_sounds_unknown = n_sounds_described_ok - (n_sounds_published +
-                                                    n_sounds_moderation +
-                                                    n_sounds_currently_processing +
-                                                    n_sounds_pending_processing +
-                                                    n_sounds_failed_processing)
+        n_sounds_unknown = n_sounds_described_ok - (
+            n_sounds_published
+            + n_sounds_moderation
+            + n_sounds_currently_processing
+            + n_sounds_pending_processing
+            + n_sounds_failed_processing
+        )
 
         progress = 0
         if n_lines_validated_ok == 0:
@@ -282,14 +302,16 @@ class BulkUploadProgress(models.Model):
             progress = 100
         else:
             if self.description_output is not None:
-                progress = (100.0 * (n_sounds_published +
-                                     n_sounds_moderation +
-                                     n_sounds_failed_processing +
-                                     n_sounds_error +
-                                     n_sounds_unknown)
-                            ) / (n_sounds_described_ok +
-                                 n_sounds_error +
-                                 n_sounds_remaining_to_describe)
+                progress = (
+                    100.0
+                    * (
+                        n_sounds_published
+                        + n_sounds_moderation
+                        + n_sounds_failed_processing
+                        + n_sounds_error
+                        + n_sounds_unknown
+                    )
+                ) / (n_sounds_described_ok + n_sounds_error + n_sounds_remaining_to_describe)
                 progress = int(progress)
                 # NOTE: progress percentage is determined as the total number of sounds "that won't change" vs the total
                 # number of sounds that should have been described and processed. Sounds that fail processing or description
@@ -297,18 +319,18 @@ class BulkUploadProgress(models.Model):
                 # After the 'describe_sounds' method finishes, progress should always be 100.
 
         return {
-            'n_sounds_remaining_to_describe': n_sounds_remaining_to_describe,
-            'n_sounds_described_ok': n_sounds_described_ok,
-            'sound_errors': sound_errors,
-            'n_sounds_error': n_sounds_error,
-            'n_sounds_published': n_sounds_published,
-            'n_sounds_moderation': n_sounds_moderation,
-            'n_sounds_pending_processing': n_sounds_pending_processing,
-            'n_sounds_currently_processing': n_sounds_currently_processing,
-            'n_sounds_processing': n_sounds_pending_processing + n_sounds_currently_processing,
-            'n_sounds_failed_processing': n_sounds_failed_processing,
-            'n_sounds_unknown': n_sounds_unknown,
-            'progress_percentage': progress,
+            "n_sounds_remaining_to_describe": n_sounds_remaining_to_describe,
+            "n_sounds_described_ok": n_sounds_described_ok,
+            "sound_errors": sound_errors,
+            "n_sounds_error": n_sounds_error,
+            "n_sounds_published": n_sounds_published,
+            "n_sounds_moderation": n_sounds_moderation,
+            "n_sounds_pending_processing": n_sounds_pending_processing,
+            "n_sounds_currently_processing": n_sounds_currently_processing,
+            "n_sounds_processing": n_sounds_pending_processing + n_sounds_currently_processing,
+            "n_sounds_failed_processing": n_sounds_failed_processing,
+            "n_sounds_unknown": n_sounds_unknown,
+            "progress_percentage": progress,
         }
 
     def has_global_validation_errors(self):
@@ -316,7 +338,7 @@ class BulkUploadProgress(models.Model):
         Returns True if the validation finished with global errors
         """
         if self.validation_output is not None:
-            return len(self.validation_output['global_errors']) > 0
+            return len(self.validation_output["global_errors"]) > 0
         return False
 
     def has_line_validation_errors(self):
@@ -324,22 +346,19 @@ class BulkUploadProgress(models.Model):
         Returns True if some errors were found in line validation
         """
         if self.validation_output is not None:
-            return len(self.validation_output['lines_with_errors']) > 0
+            return len(self.validation_output["lines_with_errors"]) > 0
         return False
 
     class Meta:
-        permissions = (
-            ("can_describe_in_bulk", "Can use the Bulk Describe feature."),
-        )
+        permissions = (("can_describe_in_bulk", "Can use the Bulk Describe feature."),)
 
 
 class SoundManager(models.Manager):
-
     def latest_additions(self, num_sounds, period_days=2):
         if settings.DEBUG:
             # In DEBUG mode we probably won't have any sounds from the requested period, so we
             # see what the most recent sound and go back from then instead
-            latest_sound = Sound.public.order_by('-created').first()
+            latest_sound = Sound.public.order_by("-created").first()
             date_threshold = latest_sound.created
         else:
             date_threshold = timezone.now()
@@ -373,7 +392,7 @@ class SoundManager(models.Manager):
         return self.raw(query, (date_threshold.isoformat(), num_sounds))
 
     def random(self, excludes=None):
-        """ Select a random sound from the database which is suitable for display.
+        """Select a random sound from the database which is suitable for display.
         Random sounds must fall under the following criteria:
            - Not Explicit
            - Moderated and processed
@@ -381,12 +400,9 @@ class SoundManager(models.Manager):
            - At least 3 ratings and an average rating of >6
         Additionally, an optional set of `excludes` can be specified
         to disallow sounds which match this criteria."""
-        query_sounds = self.exclude(is_explicit=True)\
-            .filter(moderation_state="OK",
-                    processing_state="OK",
-                    flag=None,
-                    avg_rating__gt=6,
-                    num_ratings__gt=3)
+        query_sounds = self.exclude(is_explicit=True).filter(
+            moderation_state="OK", processing_state="OK", flag=None, avg_rating__gt=6, num_ratings__gt=3
+        )
         if excludes:
             query_sounds = query_sounds.exclude(**excludes)
         sound_count = query_sounds.count()
@@ -397,41 +413,45 @@ class SoundManager(models.Manager):
             return None
 
     def bulk_query_solr(self, sound_ids):
-        qs = self.bulk_query_id(sound_ids, include_audio_descriptors=True, include_similarity_vectors=True, include_remix_subqueries=True)
-        
+        qs = self.bulk_query_id(
+            sound_ids, include_audio_descriptors=True, include_similarity_vectors=True, include_remix_subqueries=True
+        )
+
         # When indexing in solr, we also want to include comments as a subquery
         comments_subquery = Comment.objects.filter(sound=OuterRef("id")).values("comment")
         qs = qs.annotate(comments_array=ArraySubquery(comments_subquery))
 
         # We also want to include information about collections so we don't make extra queries later
-        CollectionSound = apps.get_model('fscollections', 'CollectionSound')
-        collections_subquery = CollectionSound.objects.select_related('collection').filter(sound=OuterRef("id"), collection__public=True, status="OK")\
+        CollectionSound = apps.get_model("fscollections", "CollectionSound")
+        collections_subquery = (
+            CollectionSound.objects.select_related("collection")
+            .filter(sound=OuterRef("id"), collection__public=True, status="OK")
             .values(data=JSONObject(collection_id="collection__id", collection_name="collection__name"))
+        )
         qs = qs.annotate(collections_array=ArraySubquery(collections_subquery))
 
         return qs
 
-
-    def bulk_query(self, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
+    def bulk_query(
+        self, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False
+    ):
         tags_subquery = Tag.objects.filter(soundtag__sound=OuterRef("id")).values("name")
         analysis_subquery = SoundAnalysis.objects.filter(
             sound=OuterRef("id"), analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK"
         )
-        default_similarity_space_analyzer = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]['analyzer']
+        default_similarity_space_analyzer = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]["analyzer"]
         ready_for_similarity_subquery = SoundAnalysis.objects.filter(
             sound=OuterRef("id"), analyzer=default_similarity_space_analyzer, analysis_status="OK"
         )
 
-        qs = self.select_related(
-            'user', 'user__profile', 'license', 'ticket', 'pack', 'geotag'
-            ).annotate(
-                username=F("user__username"),
-                pack_name=F("pack__name"),
-                remixgroup_id=F("remix_group__id"),
-                tag_array=ArraySubquery(tags_subquery),
-                analysis_state_essentia_exists=Exists(analysis_subquery),
-                ready_for_similarity_precomputed=Exists(ready_for_similarity_subquery)
-            )
+        qs = self.select_related("user", "user__profile", "license", "ticket", "pack", "geotag").annotate(
+            username=F("user__username"),
+            pack_name=F("pack__name"),
+            remixgroup_id=F("remix_group__id"),
+            tag_array=ArraySubquery(tags_subquery),
+            analysis_state_essentia_exists=Exists(analysis_subquery),
+            ready_for_similarity_precomputed=Exists(ready_for_similarity_subquery),
+        )
 
         if include_audio_descriptors:
             # By default include all consolidated audio descriptors, but if include_audio_descriptors is a list, then only include those specified
@@ -442,13 +462,17 @@ class SoundManager(models.Manager):
 
             # We need to split the query in two subqueries because Postgres has a limit of 100 function arguments
             # this needs to be taken into account later to join the data again
-            json_object_args1 = {descriptor_name: f'analysis_data__' + descriptor_name for descriptor_name in descriptor_names[0:50]} 
-            json_object_args2 = {descriptor_name: f'analysis_data__' + descriptor_name for descriptor_name in descriptor_names[50:100]} 
+            json_object_args1 = {
+                descriptor_name: f"analysis_data__" + descriptor_name for descriptor_name in descriptor_names[0:50]
+            }
+            json_object_args2 = {
+                descriptor_name: f"analysis_data__" + descriptor_name for descriptor_name in descriptor_names[50:100]
+            }
             if len(descriptor_names) > 100:
                 raise ValueError("Cannot include more than 100 audio descriptors in bulk query")
             consolidated_audio_descriptors_subquery = SoundAnalysis.objects.filter(
                 sound=OuterRef("id"), analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status="OK"
-                ).values(data=JSONObject(part1=JSONObject(**json_object_args1), part2=JSONObject(**json_object_args2)))
+            ).values(data=JSONObject(part1=JSONObject(**json_object_args1), part2=JSONObject(**json_object_args2)))
             qs = qs.annotate(consolidated_audio_descriptors=ArraySubquery(consolidated_audio_descriptors_subquery))
 
         if include_similarity_vectors:
@@ -458,10 +482,10 @@ class SoundManager(models.Manager):
             else:
                 similarity_spaces = settings.SIMILARITY_SPACES_NAMES
 
-            json_object_args = {'similarity_space_name': 'similarity_space_name', 'vector': 'vector'} 
+            json_object_args = {"similarity_space_name": "similarity_space_name", "vector": "vector"}
             similarity_vectors_subquery = SoundSimilarityVector.objects.filter(
                 sound=OuterRef("id"), similarity_space_name__in=similarity_spaces
-                ).values(data=JSONObject(**json_object_args))
+            ).values(data=JSONObject(**json_object_args))
             qs = qs.annotate(similarity_vectors=ArraySubquery(similarity_vectors_subquery))
 
         if include_remix_subqueries:
@@ -471,71 +495,140 @@ class SoundManager(models.Manager):
 
         return qs
 
-    def bulk_sounds_for_user(self, user_id, limit=None, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
-        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
-        qs = qs.filter(
-            moderation_state="OK",
-            processing_state="OK",
-            user_id=user_id
-        ).order_by('-created')
+    def bulk_sounds_for_user(
+        self,
+        user_id,
+        limit=None,
+        include_audio_descriptors=False,
+        include_similarity_vectors=False,
+        include_remix_subqueries=False,
+    ):
+        qs = self.bulk_query(
+            include_audio_descriptors=include_audio_descriptors,
+            include_similarity_vectors=include_similarity_vectors,
+            include_remix_subqueries=include_remix_subqueries,
+        )
+        qs = qs.filter(moderation_state="OK", processing_state="OK", user_id=user_id).order_by("-created")
 
         if limit:
             qs = qs[:limit]
         return qs
 
-    def bulk_sounds_for_pack(self, pack_id, limit=None, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
-        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
-        qs = qs.filter(
-            moderation_state="OK",
-            processing_state="OK",
-            pack_id=pack_id
-        ).order_by('-created')
+    def bulk_sounds_for_pack(
+        self,
+        pack_id,
+        limit=None,
+        include_audio_descriptors=False,
+        include_similarity_vectors=False,
+        include_remix_subqueries=False,
+    ):
+        qs = self.bulk_query(
+            include_audio_descriptors=include_audio_descriptors,
+            include_similarity_vectors=include_similarity_vectors,
+            include_remix_subqueries=include_remix_subqueries,
+        )
+        qs = qs.filter(moderation_state="OK", processing_state="OK", pack_id=pack_id).order_by("-created")
 
         if limit:
             qs = qs[:limit]
         return qs
 
-    def bulk_sounds_for_collection(self, collection_id, limit=None, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
-        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
-        qs = qs.filter(
-            moderation_state="OK",
-            processing_state="OK",
-            collections=collection_id
-        ).order_by('-created')
+    def bulk_sounds_for_collection(
+        self,
+        collection_id,
+        limit=None,
+        include_audio_descriptors=False,
+        include_similarity_vectors=False,
+        include_remix_subqueries=False,
+    ):
+        qs = self.bulk_query(
+            include_audio_descriptors=include_audio_descriptors,
+            include_similarity_vectors=include_similarity_vectors,
+            include_remix_subqueries=include_remix_subqueries,
+        )
+        qs = qs.filter(moderation_state="OK", processing_state="OK", collections=collection_id).order_by("-created")
         if limit:
             qs = qs[:limit]
         return qs
 
-    def bulk_query_id(self, sound_ids, limit=None, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
+    def bulk_query_id(
+        self,
+        sound_ids,
+        limit=None,
+        include_audio_descriptors=False,
+        include_similarity_vectors=False,
+        include_remix_subqueries=False,
+    ):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]
-        qs = self.bulk_query(include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
-        qs = qs.filter(
-            id__in=sound_ids
-        ).order_by('-created')
+        qs = self.bulk_query(
+            include_audio_descriptors=include_audio_descriptors,
+            include_similarity_vectors=include_similarity_vectors,
+            include_remix_subqueries=include_remix_subqueries,
+        )
+        qs = qs.filter(id__in=sound_ids).order_by("-created")
 
         if limit:
             qs = qs[:limit]
         return qs
 
-    def bulk_query_id_public(self, sound_ids, limit=None, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
-        qs = self.bulk_query_id(sound_ids, limit=limit, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
+    def bulk_query_id_public(
+        self,
+        sound_ids,
+        limit=None,
+        include_audio_descriptors=False,
+        include_similarity_vectors=False,
+        include_remix_subqueries=False,
+    ):
+        qs = self.bulk_query_id(
+            sound_ids,
+            limit=limit,
+            include_audio_descriptors=include_audio_descriptors,
+            include_similarity_vectors=include_similarity_vectors,
+            include_remix_subqueries=include_remix_subqueries,
+        )
         qs = qs.filter(
             moderation_state="OK",
             processing_state="OK",
         )
         return qs
 
-    def dict_ids(self, sound_ids, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
-        return {sound_obj.id: sound_obj for sound_obj in self.bulk_query_id(sound_ids, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)}
+    def dict_ids(
+        self,
+        sound_ids,
+        include_audio_descriptors=False,
+        include_similarity_vectors=False,
+        include_remix_subqueries=False,
+    ):
+        return {
+            sound_obj.id: sound_obj
+            for sound_obj in self.bulk_query_id(
+                sound_ids,
+                include_audio_descriptors=include_audio_descriptors,
+                include_similarity_vectors=include_similarity_vectors,
+                include_remix_subqueries=include_remix_subqueries,
+            )
+        }
 
-    def ordered_ids(self, sound_ids, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False):
-        sounds = self.dict_ids(sound_ids, include_audio_descriptors=include_audio_descriptors, include_similarity_vectors=include_similarity_vectors, include_remix_subqueries=include_remix_subqueries)
+    def ordered_ids(
+        self,
+        sound_ids,
+        include_audio_descriptors=False,
+        include_similarity_vectors=False,
+        include_remix_subqueries=False,
+    ):
+        sounds = self.dict_ids(
+            sound_ids,
+            include_audio_descriptors=include_audio_descriptors,
+            include_similarity_vectors=include_similarity_vectors,
+            include_remix_subqueries=include_remix_subqueries,
+        )
         return [sounds[sound_id] for sound_id in sound_ids if sound_id in sounds]
 
 
 class PublicSoundManager(models.Manager):
-    """ a class which only returns public sounds """
+    """a class which only returns public sounds"""
+
     def get_queryset(self):
         return super().get_queryset().filter(moderation_state="OK", processing_state="OK")
 
@@ -559,19 +652,25 @@ class Sound(models.Model):
     date_recorded = models.DateField(null=True, blank=True, default=None)
 
     # Broad Sound Taxonomy (BST) category
-    bst_category = models.CharField(max_length=8, null=True, blank=True, default=None, choices=settings.BST_SUBCATEGORY_CHOICES)
+    bst_category = models.CharField(
+        max_length=8, null=True, blank=True, default=None, choices=settings.BST_SUBCATEGORY_CHOICES
+    )
 
     # The history of licenses for a sound is stored on SoundLicenseHistory 'license' references the last one
     license = models.ForeignKey(License, on_delete=models.CASCADE)
-    sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
-    pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name='sounds')
+    sources = models.ManyToManyField("self", symmetrical=False, related_name="remixes", blank=True)
+    pack = models.ForeignKey(
+        "Pack", null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name="sounds"
+    )
     tags = models.ManyToManyField(Tag, through=SoundTag)
 
     # fields for specifying if the sound was uploaded via API or via bulk upload process (or none)
     uploaded_with_apiv2_client = models.ForeignKey(
-        ApiV2Client, null=True, blank=True, default=None, on_delete=models.SET_NULL)
+        ApiV2Client, null=True, blank=True, default=None, on_delete=models.SET_NULL
+    )
     uploaded_with_bulk_upload_progress = models.ForeignKey(
-        BulkUploadProgress, null=True, blank=True, default=None, on_delete=models.SET_NULL)
+        BulkUploadProgress, null=True, blank=True, default=None, on_delete=models.SET_NULL
+    )
 
     # file properties
     type = models.CharField(db_index=True, max_length=4, choices=settings.SOUND_TYPE_CHOICES)
@@ -586,9 +685,9 @@ class Sound(models.Model):
 
     # moderation and index
     MODERATION_STATE_CHOICES = (
-        ("PE", 'Pending'),
-        ("OK", 'OK'),
-        ("DE", 'Deferred'),
+        ("PE", "Pending"),
+        ("OK", "OK"),
+        ("DE", "Deferred"),
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="PE")
     moderation_date = models.DateTimeField(null=True, blank=True, default=None)  # Set at last moderation state change
@@ -596,29 +695,35 @@ class Sound(models.Model):
 
     # processing
     PROCESSING_STATE_CHOICES = (
-        ("PE", 'Pending'),  # Sounds will only be in "PE" before the very first time they are processed
-        ("OK", 'OK'),
-        ("FA", 'Failed'),
+        ("PE", "Pending"),  # Sounds will only be in "PE" before the very first time they are processed
+        ("OK", "OK"),
+        ("FA", "Failed"),
     )
     PROCESSING_ONGOING_STATE_CHOICES = (
-        ("NO", 'None'),
-        ("QU", 'Queued'),
-        ("PR", 'Processing'),
-        ("FI", 'Finished'),
+        ("NO", "None"),
+        ("QU", "Queued"),
+        ("PR", "Processing"),
+        ("FI", "Finished"),
     )
-    ANALYSIS_STATE_CHOICES = PROCESSING_STATE_CHOICES + (("SK", 'Skipped'), ("QU", 'Queued'),)
+    ANALYSIS_STATE_CHOICES = PROCESSING_STATE_CHOICES + (
+        ("SK", "Skipped"),
+        ("QU", "Queued"),
+    )
     SIMILARITY_STATE_CHOICES = PROCESSING_STATE_CHOICES
 
     processing_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
-    processing_ongoing_state = models.CharField(db_index=True, max_length=2,
-                                                choices=PROCESSING_ONGOING_STATE_CHOICES, default="NO")
+    processing_ongoing_state = models.CharField(
+        db_index=True, max_length=2, choices=PROCESSING_ONGOING_STATE_CHOICES, default="NO"
+    )
     processing_date = models.DateTimeField(null=True, blank=True, default=None)  # Set at last processing attempt
     processing_log = models.TextField(null=True, blank=True, default=None)
 
     # state
     is_index_dirty = models.BooleanField(null=False, default=True)
     similarity_state = models.CharField(db_index=True, max_length=2, choices=SIMILARITY_STATE_CHOICES, default="PE")
-    analysis_state = models.CharField(db_index=True, max_length=2, choices=ANALYSIS_STATE_CHOICES, default="PE")  # This field is no longer used and should be removed
+    analysis_state = models.CharField(
+        db_index=True, max_length=2, choices=ANALYSIS_STATE_CHOICES, default="PE"
+    )  # This field is no longer used and should be removed
 
     # counts, updated by django signals
     num_comments = models.PositiveIntegerField(default=0)
@@ -664,7 +769,7 @@ class Sound(models.Model):
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.ogg" % (self.id, sound_user_id)),
                         url=previews_url + "%s/%d_%d-hq.ogg" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-hq.ogg" % (self.id, sound_user_id),
-                    )
+                    ),
                 ),
                 LQ=dict(
                     mp3=dict(
@@ -677,91 +782,105 @@ class Sound(models.Model):
                         url=previews_url + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-lq.ogg" % (self.id, sound_user_id),
                     ),
-                )
+                ),
             ),
             display=dict(
                 spectral=dict(
                     M=dict(
-                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_M.jpg" % (self.id,
-                                                                                                   sound_user_id)),
-                        url=displays_url + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, sound_user_id)
+                        path=os.path.join(
+                            settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_M.jpg" % (self.id, sound_user_id)
+                        ),
+                        url=displays_url + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, sound_user_id),
                     ),
                     L=dict(
-                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_L.jpg" % (self.id,
-                                                                                                   sound_user_id)),
-                        url=displays_url + "%s/%d_%d_spec_L.jpg" % (id_folder, self.id, sound_user_id)
-                    )
+                        path=os.path.join(
+                            settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_L.jpg" % (self.id, sound_user_id)
+                        ),
+                        url=displays_url + "%s/%d_%d_spec_L.jpg" % (id_folder, self.id, sound_user_id),
+                    ),
                 ),
                 wave=dict(
                     M=dict(
-                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.png" % (self.id,
-                                                                                                   sound_user_id)),
-                        url=displays_url + "%s/%d_%d_wave_M.png" % (id_folder, self.id, sound_user_id)
+                        path=os.path.join(
+                            settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.png" % (self.id, sound_user_id)
+                        ),
+                        url=displays_url + "%s/%d_%d_wave_M.png" % (id_folder, self.id, sound_user_id),
                     ),
                     L=dict(
-                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.png" % (self.id,
-                                                                                                   sound_user_id)),
-                        url=displays_url + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id)
-                    )
+                        path=os.path.join(
+                            settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.png" % (self.id, sound_user_id)
+                        ),
+                        url=displays_url + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id),
+                    ),
                 ),
                 spectral_bw=dict(
                     M=dict(
-                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_M.jpg" % (self.id,
-                                                                                                   sound_user_id)),
-                        url=displays_url + "%s/%d_%d_spec_bw_M.jpg" % (id_folder, self.id, sound_user_id)
+                        path=os.path.join(
+                            settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_M.jpg" % (self.id, sound_user_id)
+                        ),
+                        url=displays_url + "%s/%d_%d_spec_bw_M.jpg" % (id_folder, self.id, sound_user_id),
                     ),
                     L=dict(
-                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_L.jpg" % (self.id,
-                                                                                                   sound_user_id)),
-                        url=displays_url + "%s/%d_%d_spec_bw_L.jpg" % (id_folder, self.id, sound_user_id)
-                    )
+                        path=os.path.join(
+                            settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_L.jpg" % (self.id, sound_user_id)
+                        ),
+                        url=displays_url + "%s/%d_%d_spec_bw_L.jpg" % (id_folder, self.id, sound_user_id),
+                    ),
                 ),
                 wave_bw=dict(
                     M=dict(
-                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_M.png" % (self.id,
-                                                                                                   sound_user_id)),
-                        url=displays_url + "%s/%d_%d_wave_bw_M.png" % (id_folder, self.id, sound_user_id)
+                        path=os.path.join(
+                            settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_M.png" % (self.id, sound_user_id)
+                        ),
+                        url=displays_url + "%s/%d_%d_wave_bw_M.png" % (id_folder, self.id, sound_user_id),
                     ),
                     L=dict(
-                        path=os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_L.png" % (self.id,
-                                                                                                   sound_user_id)),
-                        url=displays_url + "%s/%d_%d_wave_bw_L.png" % (id_folder, self.id, sound_user_id)
-                    )
-                )
+                        path=os.path.join(
+                            settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_L.png" % (self.id, sound_user_id)
+                        ),
+                        url=displays_url + "%s/%d_%d_wave_bw_L.png" % (id_folder, self.id, sound_user_id),
+                    ),
+                ),
             ),
             analysis=dict(
                 base_path=os.path.join(settings.ANALYSIS_PATH, id_folder),
                 statistics=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d-%s.yaml" % (
-                        self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)),
-                    url=settings.ANALYSIS_URL + "%s/%d-%s.yaml" % (
-                        id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)
+                    path=os.path.join(
+                        settings.ANALYSIS_PATH,
+                        id_folder,
+                        "%d-%s.yaml" % (self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
+                    ),
+                    url=settings.ANALYSIS_URL
+                    + "%s/%d-%s.yaml" % (id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
                 ),
                 frames=dict(
-                    path=os.path.join(settings.ANALYSIS_PATH, id_folder, "%d-%s_frames.json" % (
-                        self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)),
-                    url=settings.ANALYSIS_URL + "%s/%d-%s_frames.json" % (
-                        id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME)
-                )
-            )
+                    path=os.path.join(
+                        settings.ANALYSIS_PATH,
+                        id_folder,
+                        "%d-%s_frames.json" % (self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
+                    ),
+                    url=settings.ANALYSIS_URL
+                    + "%s/%d-%s_frames.json" % (id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
+                ),
+            ),
         )
 
     def get_preview_abs_url(self):
-        preview_url = self.locations()['preview']['LQ']['mp3']['url']
-        if (preview_url.startswith('http')):
+        preview_url = self.locations()["preview"]["LQ"]["mp3"]["url"]
+        if preview_url.startswith("http"):
             # If we're serving previews from a CDN, then the URL returned from locations will already include the full URL
             return preview_url
-        return f'https://{Site.objects.get_current().domain}{preview_url}'
+        return f"https://{Site.objects.get_current().domain}{preview_url}"
 
-    def get_thumbnail_abs_url(self, size='M'):
-        thumbnail_url = self.locations()['display']['wave'][size]['url']
-        if (thumbnail_url.startswith('http')):
+    def get_thumbnail_abs_url(self, size="M"):
+        thumbnail_url = self.locations()["display"]["wave"][size]["url"]
+        if thumbnail_url.startswith("http"):
             # If we're serving previews from a CDN, then the URL returned from locations will already include the full URL
             return thumbnail_url
-        return f'https://{Site.objects.get_current().domain}{thumbnail_url}'
+        return f"https://{Site.objects.get_current().domain}{thumbnail_url}"
 
     def get_large_thumbnail_abs_url(self):
-        return self.get_thumbnail_abs_url(size='L')
+        return self.get_thumbnail_abs_url(size="L")
 
     def get_channels_display(self):
         if self.channels == 1:
@@ -776,7 +895,7 @@ class Sound(models.Model):
 
     def duration_warning(self):
         # warn from 5 minutes and more
-        return self.duration > 60*5
+        return self.duration > 60 * 5
 
     def filesize_warning(self):
         # warn for 50MB and up
@@ -801,7 +920,7 @@ class Sound(models.Model):
     def rating_percent(self):
         if self.num_ratings < settings.MIN_NUMBER_RATINGS:
             return 0
-        return int(self.avg_rating*10)
+        return int(self.avg_rating * 10)
 
     @property
     def avg_rating_0_5(self):
@@ -810,18 +929,18 @@ class Sound(models.Model):
 
     def get_ratings_count_text(self):
         if self.num_ratings >= settings.MIN_NUMBER_RATINGS:
-            return f'Overall rating ({ formatnumber(self.num_ratings) } rating{"s" if self.num_ratings != 1 else ""})'
+            return f"Overall rating ({formatnumber(self.num_ratings)} rating{'s' if self.num_ratings != 1 else ''})"
         else:
-            return 'Not enough ratings'
+            return "Not enough ratings"
 
     def get_ratings_count_text_short(self):
         if self.num_ratings >= settings.MIN_NUMBER_RATINGS:
-            return f'({ formatnumber(self.num_ratings) })'
+            return f"({formatnumber(self.num_ratings)})"
         else:
-            return ''
+            return ""
 
     def get_absolute_url(self):
-        return reverse('sound', args=[self.user.username, smart_str(self.id)])
+        return reverse("sound", args=[self.user.username, smart_str(self.id)])
 
     @property
     def should_display_small_icons_in_second_line(self):
@@ -833,14 +952,14 @@ class Sound(models.Model):
         icons_count = 1
         if self.pack_id:
             icons_count += 1
-        if hasattr(self, 'geotag'):
+        if hasattr(self, "geotag"):
             icons_count += 1
         if self.num_downloads:
-            icons_count +=2  # Counts double as it takes more width
+            icons_count += 2  # Counts double as it takes more width
         if self.num_comments:
-            icons_count +=2  # Counts double as it takes more width
+            icons_count += 2  # Counts double as it takes more width
         if self.num_ratings > settings.MIN_NUMBER_RATINGS:
-            icons_count +=2  # Counts double as it takes more width
+            icons_count += 2  # Counts double as it takes more width
         title_num_chars = len(self.original_filename)
         if icons_count >= 6:
             return title_num_chars >= 15
@@ -862,39 +981,48 @@ class Sound(models.Model):
         If a sound never had a license changed, then the list will have a single element.
         List is sorted with the newest license at the top.
         """
-        return [(slh.created, slh.license) for slh in
-                self.soundlicensehistory_set.select_related('license').order_by('-created')]
+        return [
+            (slh.created, slh.license)
+            for slh in self.soundlicensehistory_set.select_related("license").order_by("-created")
+        ]
 
     @cached_property
     def attribution_texts(self):
         attribution_texts = {
-                'plain_text': f'{self.original_filename} by {self.user.username} -- {url2absurl(reverse("short-sound-link", args=[self.id]))} -- License: {self.license.name_with_version}',
-                'html': f'<a href="{url2absurl(self.get_absolute_url())}">{self.original_filename}</a> by <a href="{url2absurl(reverse("account", args=[self.user.username]))}">{self.user.username}</a> | License: <a href="{ self.license.deed_url }">{self.license.name_with_version}</a>',
-                'json': json.dumps({
-                    'sound_url': url2absurl(self.get_absolute_url()),
-                    'sound_name': self.original_filename,
-                    'author_url': url2absurl(reverse("account", args=[self.user.username])),
-                    'author_name': self.user.username,
-                    'license_url': self.license.deed_url,
-                    'license_name': self.license.name_with_version,
-                })
-            }
+            "plain_text": f"{self.original_filename} by {self.user.username} -- {url2absurl(reverse('short-sound-link', args=[self.id]))} -- License: {self.license.name_with_version}",
+            "html": f'<a href="{url2absurl(self.get_absolute_url())}">{self.original_filename}</a> by <a href="{url2absurl(reverse("account", args=[self.user.username]))}">{self.user.username}</a> | License: <a href="{self.license.deed_url}">{self.license.name_with_version}</a>',
+            "json": json.dumps(
+                {
+                    "sound_url": url2absurl(self.get_absolute_url()),
+                    "sound_name": self.original_filename,
+                    "author_url": url2absurl(reverse("account", args=[self.user.username])),
+                    "author_name": self.user.username,
+                    "license_url": self.license.deed_url,
+                    "license_name": self.license.name_with_version,
+                }
+            ),
+        }
         if not self.sources.exists():
             return attribution_texts
         else:
             sources_attribution_texts = [s.attribution_texts for s in self.sources.all()]
-            attribution_texts['plain_text'] = "\n\n".join([attribution_texts['plain_text']] + [st['plain_text'] for st in sources_attribution_texts])
-            attribution_texts['html'] = "<br>\n".join([attribution_texts['html']] + [st['html'] for st in sources_attribution_texts])
-            attribution_texts['json'] = json.dumps([json.loads(attribution_texts['json'])] + [json.loads(st['json']) for st in sources_attribution_texts])
+            attribution_texts["plain_text"] = "\n\n".join(
+                [attribution_texts["plain_text"]] + [st["plain_text"] for st in sources_attribution_texts]
+            )
+            attribution_texts["html"] = "<br>\n".join(
+                [attribution_texts["html"]] + [st["html"] for st in sources_attribution_texts]
+            )
+            attribution_texts["json"] = json.dumps(
+                [json.loads(attribution_texts["json"])] + [json.loads(st["json"]) for st in sources_attribution_texts]
+            )
             return attribution_texts
-
 
     def get_sound_tags(self, limit=None):
         """
         Returns the tags assigned to the sound as a list of strings, e.g. ["tag1", "tag2", "tag3"]
         :param limit: The maximum number of tags to return
         """
-        return [t.name for t in self.tags.all().order_by('name')[0:limit]]
+        return [t.name for t in self.tags.all().order_by("name")[0:limit]]
 
     def get_sound_tags_string(self, limit=None):
         """
@@ -910,7 +1038,7 @@ class Sound(models.Model):
         :param list tags: list of strings representing the new tags that the Sound object should be assigned
         """
         # remove tags that are not in the list
-        for tagged_item in self.soundtag_set.select_related('tag').all():
+        for tagged_item in self.soundtag_set.select_related("tag").all():
             if tagged_item.tag.name not in tags:
                 tagged_item.delete()
 
@@ -959,9 +1087,12 @@ class Sound(models.Model):
             source.invalidate_template_caches()
             self.sources.add(source)
             send_mail_template(
-                settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX, 'emails/email_remix_update.txt',
-                {'source': source, 'action': 'added', 'remix': self},
-                user_to=source.user, email_type_preference_check='new_remix')
+                settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX,
+                "emails/email_remix_update.txt",
+                {"source": source, "action": "added", "remix": self},
+                user_to=source.user,
+                email_type_preference_check="new_remix",
+            )
 
         if old_sources != new_sources:
             self.invalidate_template_caches()
@@ -977,7 +1108,7 @@ class Sound(models.Model):
         :param str state: new state to which self.processing_ongoing_state should be set
         """
         self.processing_ongoing_state = state
-        self.save(update_fields=['processing_ongoing_state'])
+        self.save(update_fields=["processing_ongoing_state"])
 
     def set_similarity_state(self, state):
         """
@@ -987,7 +1118,7 @@ class Sound(models.Model):
         :param str state: new state to which self.similarity_state should be set
         """
         self.similarity_state = state
-        self.save(update_fields=['similarity_state'])
+        self.save(update_fields=["similarity_state"])
 
     def set_audio_info_fields(self, samplerate=None, bitrate=None, bitdepth=None, channels=None, duration=None):
         """
@@ -1003,19 +1134,19 @@ class Sound(models.Model):
         update_fields = []
         if samplerate is not None:
             self.samplerate = samplerate
-            update_fields.append('samplerate')
+            update_fields.append("samplerate")
         if bitrate is not None:
             self.bitrate = bitrate
-            update_fields.append('bitrate')
+            update_fields.append("bitrate")
         if bitdepth is not None:
             self.bitdepth = bitdepth
-            update_fields.append('bitdepth')
+            update_fields.append("bitdepth")
         if channels is not None:
             self.channels = channels
-            update_fields.append('channels')
+            update_fields.append("channels")
         if duration is not None:
             self.duration = duration
-            update_fields.append('duration')
+            update_fields.append("duration")
         self.save(update_fields=update_fields)
 
     def change_moderation_state(self, new_state):
@@ -1031,11 +1162,11 @@ class Sound(models.Model):
             self.moderation_date = timezone.now()
             self.save()
 
-            if new_state != 'OK':
+            if new_state != "OK":
                 # If the moderation state changed and now the sound is not moderated OK, delete it from indexes
                 self.delete_from_indexes()
 
-            if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
+            if (current_state == "OK" and new_state != "OK") or (current_state != "OK" and new_state == "OK"):
                 # Sound either passed from being approved to not being approved, or from not being approved to
                 # being approved. In that case we need to update num_sounds counts of sound's author and pack (if any)
                 self.user.profile.update_num_sounds()
@@ -1063,11 +1194,11 @@ class Sound(models.Model):
             self.processing_state = new_state
             self.processing_date = timezone.now()
             if self.processing_log is None:
-                self.processing_log = ''
-            self.processing_log += f'----Processed sound {timezone.now()} - {self.id}\n{processing_log}'
-            self.save(update_fields=['processing_state', 'processing_date', 'processing_log', 'is_index_dirty'])
+                self.processing_log = ""
+            self.processing_log += f"----Processed sound {timezone.now()} - {self.id}\n{processing_log}"
+            self.save(update_fields=["processing_state", "processing_date", "processing_log", "is_index_dirty"])
 
-            if new_state == 'FA':
+            if new_state == "FA":
                 # Sound became processing failed, delete it from indexes
                 self.delete_from_indexes()
 
@@ -1080,9 +1211,9 @@ class Sound(models.Model):
             # If processing state has not changed, only update the processing date and log
             self.processing_date = timezone.now()
             if self.processing_log is None:
-                self.processing_log = ''
-            self.processing_log += f'----Processed sound {timezone.now()} - {self.id}\n{processing_log}'
-            self.save(update_fields=['processing_date', 'processing_log'])
+                self.processing_log = ""
+            self.processing_log += f"----Processed sound {timezone.now()} - {self.id}\n{processing_log}"
+            self.save(update_fields=["processing_date", "processing_log"])
 
         self.invalidate_template_caches()
 
@@ -1097,34 +1228,36 @@ class Sound(models.Model):
         """
 
         def replace_user_id_in_path(path, old_owner_id, new_owner_id):
-            old_path_beginning = '%i_%i' % (self.id, old_owner_id)
-            new_path_beginning = '%i_%i' % (self.id, new_owner_id)
+            old_path_beginning = "%i_%i" % (self.id, old_owner_id)
+            new_path_beginning = "%i_%i" % (self.id, new_owner_id)
             return path.replace(old_path_beginning, new_path_beginning)
 
         # Rename related files in disk
         paths_to_rename = [
-            self.locations('path'),  # original file path
-            self.locations('analysis.frames.path'),  # analysis frames file
-            self.locations('analysis.statistics.path'),  # analysis statistics file
-            self.locations('display.spectral.L.path'),  # spectrogram L
-            self.locations('display.spectral.M.path'),  # spectrogram M
-            self.locations('display.wave_bw.L.path'),  # waveform BW L
-            self.locations('display.wave_bw.M.path'),  # waveform BW M
-            self.locations('display.spectral_bw.L.path'),  # spectrogram BW L
-            self.locations('display.spectral_bw.M.path'),  # spectrogram BW M
-            self.locations('display.wave.L.path'),  # waveform L
-            self.locations('display.wave.M.path'),  # waveform M
-            self.locations('preview.HQ.mp3.path'),  # preview HQ mp3
-            self.locations('preview.HQ.ogg.path'),  # preview HQ ogg
-            self.locations('preview.LQ.mp3.path'),  # preview LQ mp3
-            self.locations('preview.LQ.ogg.path'),  # preview LQ ogg
+            self.locations("path"),  # original file path
+            self.locations("analysis.frames.path"),  # analysis frames file
+            self.locations("analysis.statistics.path"),  # analysis statistics file
+            self.locations("display.spectral.L.path"),  # spectrogram L
+            self.locations("display.spectral.M.path"),  # spectrogram M
+            self.locations("display.wave_bw.L.path"),  # waveform BW L
+            self.locations("display.wave_bw.M.path"),  # waveform BW M
+            self.locations("display.spectral_bw.L.path"),  # spectrogram BW L
+            self.locations("display.spectral_bw.M.path"),  # spectrogram BW M
+            self.locations("display.wave.L.path"),  # waveform L
+            self.locations("display.wave.M.path"),  # waveform M
+            self.locations("preview.HQ.mp3.path"),  # preview HQ mp3
+            self.locations("preview.HQ.ogg.path"),  # preview HQ ogg
+            self.locations("preview.LQ.mp3.path"),  # preview LQ mp3
+            self.locations("preview.LQ.ogg.path"),  # preview LQ ogg
         ]
         for path in paths_to_rename:
             try:
                 os.rename(path, replace_user_id_in_path(path, self.user.id, new_owner.id))
             except OSError:
-                web_logger.info('WARNING changing owner of sound %i: Could not rename file %s because '
-                                 'it does not exist.\n' % (self.id, path))
+                web_logger.info(
+                    "WARNING changing owner of sound %i: Could not rename file %s because "
+                    "it does not exist.\n" % (self.id, path)
+                )
 
         # Deal with pack
         # If sound is in pack, replicate pack in new user.
@@ -1167,35 +1300,35 @@ class Sound(models.Model):
     def add_comment(self, user, comment):
         comment = Comment(sound=self, user=user, comment=comment)
         comment.save()
-        self.num_comments = F('num_comments') + 1
+        self.num_comments = F("num_comments") + 1
         self.mark_index_dirty(commit=False)
         self.save()
 
     def post_delete_comment(self, commit=True):
-        """ When a comment is deleted this method is called to update num_comments """
-        self.num_comments = F('num_comments') - 1
+        """When a comment is deleted this method is called to update num_comments"""
+        self.num_comments = F("num_comments") - 1
         self.mark_index_dirty(commit=False)
         if commit:
             self.save()
 
     def compute_crc(self, commit=True):
         crc = 0
-        sound_path = self.locations('path')
+        sound_path = self.locations("path")
         if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
             sound_path = self.locations("preview.LQ.mp3.path")
 
-        with open(sound_path, 'rb') as fp:
-            for data in iter(lambda: fp.read(settings.CRC_BUFFER_SIZE), b''):
+        with open(sound_path, "rb") as fp:
+            for data in iter(lambda: fp.read(settings.CRC_BUFFER_SIZE), b""):
                 crc = zlib.crc32(data, crc)
 
-        self.crc = f'{crc & 0xffffffff:0>8x}'  # right aligned with zero-padding, width of 8 chars
+        self.crc = f"{crc & 0xFFFFFFFF:0>8x}"  # right aligned with zero-padding, width of 8 chars
 
         if commit:
             self.save()
 
     def create_moderation_ticket(self):
         ticket = Ticket.objects.create(
-            title=f'Moderate sound {self.original_filename}',
+            title=f"Moderate sound {self.original_filename}",
             status=TICKET_STATUS_NEW,
             sender=self.user,
             sound=self,
@@ -1236,22 +1369,28 @@ class Sound(models.Model):
         The countdown parameter will add some delay before the task is executed (in seconds).
         NOTE: high_priority is not implemented and setting it has no effect
         """
-        if force or ((self.processing_state != "OK" or self.processing_ongoing_state != "FI")
-                     and self.estimate_num_processing_attempts() <= 3):
+        if force or (
+            (self.processing_state != "OK" or self.processing_ongoing_state != "FI")
+            and self.estimate_num_processing_attempts() <= 3
+        ):
             self.set_processing_ongoing_state("QU")
-            tasks.process_sound.apply_async(kwargs=dict(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays), countdown=countdown)
+            tasks.process_sound.apply_async(
+                kwargs=dict(sound_id=self.id, skip_previews=skip_previews, skip_displays=skip_displays),
+                countdown=countdown,
+            )
             sounds_logger.info(f"Send sound with id {self.id} to queue 'process'")
             return True
 
     def estimate_num_processing_attempts(self):
         # Estimates how many processing attempts have been made by looking at the processing logs
         if self.processing_log is not None:
-            return max(1, self.processing_log.count('----Processed sound'))
+            return max(1, self.processing_log.count("----Processed sound"))
         else:
             return 0
 
-    def analyze(self, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, force=False, verbose=True, high_priority=False):
-
+    def analyze(
+        self, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, force=False, verbose=True, high_priority=False
+    ):
         if analyzer == settings.CONSOLIDATED_ANALYZER_NAME:
             # Special case for consolidated analysis
             return self.consolidate_analysis()
@@ -1270,28 +1409,38 @@ class Sound(models.Model):
             sa.analysis_status = "QU"
             sa.analysis_time = 0
             sa.last_sent_to_queue = timezone.now()
-            sa.save(update_fields=['num_analysis_attempts', 'analysis_status', 'last_sent_to_queue', 'analysis_time'])
-            sound_path = self.locations('path')
+            sa.save(update_fields=["num_analysis_attempts", "analysis_status", "last_sent_to_queue", "analysis_time"])
+            sound_path = self.locations("path")
             if settings.USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING and not os.path.exists(sound_path):
                 sound_path = self.locations("preview.LQ.mp3.path")
-            celery_app.send_task(analyzer, kwargs={'sound_id': self.id, 'sound_path': sound_path,
-                        'analysis_folder': self.locations('analysis.base_path'), 'metadata':json.dumps({
-                            'duration': self.duration,
-                            'tags': self.get_sound_tags(),
-                            'geotag': [self.geotag.lat, self.geotag.lon] if hasattr(self, 'geotag') else None,
-                        })}, queue=analyzer)
+            celery_app.send_task(
+                analyzer,
+                kwargs={
+                    "sound_id": self.id,
+                    "sound_path": sound_path,
+                    "analysis_folder": self.locations("analysis.base_path"),
+                    "metadata": json.dumps(
+                        {
+                            "duration": self.duration,
+                            "tags": self.get_sound_tags(),
+                            "geotag": [self.geotag.lat, self.geotag.lon] if hasattr(self, "geotag") else None,
+                        }
+                    ),
+                },
+                queue=analyzer,
+            )
             if verbose:
                 sounds_logger.info(f"Sending sound {self.id} to analyzer {analyzer}")
         else:
             if verbose:
                 sounds_logger.info(f"Not sending sound {self.id} to analyzer {analyzer} as is already queued")
         return sa
-    
+
     def consolidate_analysis(self, no_db_operations=False):
         """
         This method post-processes the analysis results of all analyzers for this sound and consolidates them into a new
-        SoundAnalysis object with analyzer name settings.CONSOLIDATED_ANALYZER_NAME. This consolidated analysis contains 
-        audio descriptors data from various analyzers that will be stored in the DB and also used for indexing in the 
+        SoundAnalysis object with analyzer name settings.CONSOLIDATED_ANALYZER_NAME. This consolidated analysis contains
+        audio descriptors data from various analyzers that will be stored in the DB and also used for indexing in the
         search engine.
 
         :param bool no_db_operations: If True, the method only computes the data but does not save it in the DB. Also it returns
@@ -1302,19 +1451,19 @@ class Sound(models.Model):
         tmp_analyzers_data = {}
         consolidated_analysis_data = {}
         for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
-            condition = descriptor.get('condition', None)
+            condition = descriptor.get("condition", None)
             if condition is not None:
                 if not condition(self):
                     # If condition is defined and not met, skip descriptor
                     continue
-            
+
             # Load analyzer data stored in files in disk
             # Avoid reading the same file multiple times by caching data in tmp_analyzers_data
-            analyzer = descriptor['analyzer']
+            analyzer = descriptor["analyzer"]
             if analyzer not in tmp_analyzers_data:
                 analyzer_data = SoundAnalysis.get_analysis_data_from_file_without_db(self.id, analyzer)
                 if not analyzer_data:
-                    # Analyzer data could not be loaded from file. That means that the analyzer has not analyzed 
+                    # Analyzer data could not be loaded from file. That means that the analyzer has not analyzed
                     # the sound successfully, skip descriptor
                     continue
                 # Save the data in tmp dict so it is not loaded again in the future if present
@@ -1322,24 +1471,24 @@ class Sound(models.Model):
             else:
                 analyzer_data = tmp_analyzers_data[analyzer]
 
-            name = descriptor['name']
-            original_name = descriptor.get('original_name', None)
-            get_func = descriptor.get('get_func', None)
-            transformation = descriptor.get('transformation', None)
-            descriptor_type = descriptor.get('type', settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
-            
+            name = descriptor["name"]
+            original_name = descriptor.get("original_name", None)
+            get_func = descriptor.get("get_func", None)
+            transformation = descriptor.get("transformation", None)
+            descriptor_type = descriptor.get("type", settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
+
             if original_name is not None and get_func is not None:
                 raise Exception(f"Descriptor {name} cannot have both original_name and get_func defined")
 
             if original_name is None and get_func is None:
                 raise Exception(f"Descriptor {name} must have either original_name or get_func defined")
-            
+
             value = None
             try:
                 if original_name is not None:
                     if original_name in analyzer_data:
                         value = analyzer_data[original_name]
-                    
+
                 if get_func is not None:
                     value = get_func(analyzer_data, self)
             except Exception as e:
@@ -1354,8 +1503,13 @@ class Sound(models.Model):
             try:
                 # Reduce float precision to avoid storing very long floats in the DB
                 # This could be implemented in a transformation but we assume it is common enough to be part of the main code
-                if value is not None and (descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT or descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY):    
-                    float_precision = descriptor.get('float_precision', settings.DEFAULT_AUDIO_DESCRIPTOR_FLOAT_PRECISION)
+                if value is not None and (
+                    descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT
+                    or descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY
+                ):
+                    float_precision = descriptor.get(
+                        "float_precision", settings.DEFAULT_AUDIO_DESCRIPTOR_FLOAT_PRECISION
+                    )
                     if descriptor_type == settings.AUDIO_DESCRIPTOR_TYPE_FLOAT:
                         value = round(value, float_precision)
                     else:
@@ -1366,7 +1520,9 @@ class Sound(models.Model):
 
             except Exception as e:
                 # If value can't be transformed, continue with next descriptor
-                print(f"Can't transform or adjust precision of value {value} for descriptor {name}: {e} (sound id: {self.id})")
+                print(
+                    f"Can't transform or adjust precision of value {value} for descriptor {name}: {e} (sound id: {self.id})"
+                )
                 continue
 
             if value is not None:
@@ -1378,7 +1534,9 @@ class Sound(models.Model):
             # analysis and then load similarity vectors without having to read again the analyzer data from disk.
             return consolidated_analysis_data, tmp_analyzers_data
 
-        consolidated_analysis_object, _ = SoundAnalysis.objects.get_or_create(sound=self, analyzer=settings.CONSOLIDATED_ANALYZER_NAME)
+        consolidated_analysis_object, _ = SoundAnalysis.objects.get_or_create(
+            sound=self, analyzer=settings.CONSOLIDATED_ANALYZER_NAME
+        )
         current_consolidated_analysis_data = consolidated_analysis_object.analysis_data
 
         if current_consolidated_analysis_data != consolidated_analysis_data:
@@ -1396,22 +1554,22 @@ class Sound(models.Model):
         return consolidated_analysis_object
 
     def get_consolidated_analysis_data(self):
-        if hasattr(self, 'consolidated_audio_descriptors'):
+        if hasattr(self, "consolidated_audio_descriptors"):
             # The sound object was retrieved using bulk_query and consolidated analysis data is pre-fetched
             # Because of a limitation with postgress max number of function arguments, we need to split the
             # prefetched descriptors in two dictionaries, which are then merged here
             try:
                 combined_descriptors = {}
-                if 'part1' in self.consolidated_audio_descriptors[0]:
-                    combined_descriptors.update(self.consolidated_audio_descriptors[0]['part1'])
-                if 'part2' in self.consolidated_audio_descriptors[0]:
-                    combined_descriptors.update(self.consolidated_audio_descriptors[0]['part2'])
+                if "part1" in self.consolidated_audio_descriptors[0]:
+                    combined_descriptors.update(self.consolidated_audio_descriptors[0]["part1"])
+                if "part2" in self.consolidated_audio_descriptors[0]:
+                    combined_descriptors.update(self.consolidated_audio_descriptors[0]["part2"])
                 return combined_descriptors
             except (IndexError, KeyError):
                 return None
         else:
             try:
-                sa = self.analyses.get(analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status='OK')
+                sa = self.analyses.get(analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status="OK")
                 return sa.analysis_data
             except SoundAnalysis.DoesNotExist:
                 return None
@@ -1425,40 +1583,45 @@ class Sound(models.Model):
         if n_loaded:
             self.mark_index_dirty(commit=True)
         return n_loaded
-    
+
     def load_similarity_vector(self, similarity_space_name, force=False):
-        if not force and SoundSimilarityVector.objects.filter(sound=self, similarity_space_name=similarity_space_name).exists():
+        if (
+            not force
+            and SoundSimilarityVector.objects.filter(sound=self, similarity_space_name=similarity_space_name).exists()
+        ):
             # Similarity vector already exists, do nothing
             return False
 
         similarity_space = settings.SIMILARITY_SPACES[similarity_space_name]
         try:
-            sa = self.analyses.get(analyzer=similarity_space['analyzer'], analysis_status='OK')
+            sa = self.analyses.get(analyzer=similarity_space["analyzer"], analysis_status="OK")
             analyzer_data = sa.get_analysis_data_from_file()
-            sim_vector = analyzer_data[similarity_space['vector_property_name']]
-            sim_vector = [float(x) for x in sim_vector] 
+            sim_vector = analyzer_data[similarity_space["vector_property_name"]]
+            sim_vector = [float(x) for x in sim_vector]
         except (SoundAnalysis.DoesNotExist, KeyError, ValueError) as e:
             return False
 
-        if len(sim_vector) != similarity_space['vector_size']:
+        if len(sim_vector) != similarity_space["vector_size"]:
             return False
-        
+
         try:
-            sound_sim_vector = SoundSimilarityVector.objects.get(sound=self, similarity_space_name=similarity_space_name)
+            sound_sim_vector = SoundSimilarityVector.objects.get(
+                sound=self, similarity_space_name=similarity_space_name
+            )
         except SoundSimilarityVector.DoesNotExist:
             sound_sim_vector = SoundSimilarityVector(sound=self, similarity_space_name=similarity_space_name)
         sound_sim_vector.vector = sim_vector
-        if similarity_space['l2_norm']:
+        if similarity_space["l2_norm"]:
             sound_sim_vector.apply_l2_normalization()
         sound_sim_vector.save()
 
         return True
 
     def get_similarity_vector(self, similarity_space_name=settings.SIMILARITY_SPACE_DEFAULT):
-        if hasattr(self, 'similarity_vectors'):
+        if hasattr(self, "similarity_vectors"):
             # The sound object was retrieved using bulk_query and similarity vectors were pre-fetched
             try:
-                vectors_dict = {sv['similarity_space_name']: sv['vector'] for sv in self.similarity_vectors}
+                vectors_dict = {sv["similarity_space_name"]: sv["vector"] for sv in self.similarity_vectors}
                 return vectors_dict[similarity_space_name]
             except KeyError:
                 return None
@@ -1485,31 +1648,33 @@ class Sound(models.Model):
             for is_explicit in [True, False]:
                 invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
 
-        for player_size in ['small', 'middle', 'big_no_info', 'small_no_info', 'minimal', 'moderation']:
-             for is_authenticated in [True, False]:
+        for player_size in ["small", "middle", "big_no_info", "small_no_info", "minimal", "moderation"]:
+            for is_authenticated in [True, False]:
                 invalidate_template_cache("bw_display_sound", self.id, player_size, is_authenticated)
 
         invalidate_template_cache("bw_sound_page", self.id)
         invalidate_template_cache("bw_sound_page_sidebar", self.id)
 
     def get_geotag_name(self):
-        if hasattr(self, 'geotag'):
+        if hasattr(self, "geotag"):
             name = self.geotag.location_name
             if name:
                 return name
-            return f'{self.geotag.lat:.2f}, {self.geotag.lon:.3f}'
+            return f"{self.geotag.lat:.2f}, {self.geotag.lon:.3f}"
         return None
 
     @property
     def ready_for_similarity(self):
         # Returns True if the sound has been analyzed for similarity and should be available for similarity queries
-        if hasattr(self, 'ready_for_similarity_precomputed'):
+        if hasattr(self, "ready_for_similarity_precomputed"):
             # If attribute is precomputed from query (because Sound was retrieved using bulk_query), no need to perform extra queries
             return self.ready_for_similarity_precomputed
         else:
             # Otherwise, check if there is a SoundAnalysis object for this sound with the correct analyzer and status
-            analyzer_for_default_sim_space = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]['analyzer']
-            return SoundAnalysis.objects.filter(sound_id=self.id, analyzer=analyzer_for_default_sim_space, analysis_status='OK').exists()
+            analyzer_for_default_sim_space = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]["analyzer"]
+            return SoundAnalysis.objects.filter(
+                sound_id=self.id, analyzer=analyzer_for_default_sim_space, analysis_status="OK"
+            ).exists()
 
     @property
     def category_names(self):
@@ -1518,12 +1683,12 @@ class Sound(models.Model):
             consolidated_analysis_data = self.get_consolidated_analysis_data()
             if consolidated_analysis_data is not None:
                 try:
-                    return [consolidated_analysis_data['category'], consolidated_analysis_data['subcategory']]
+                    return [consolidated_analysis_data["category"], consolidated_analysis_data["subcategory"]]
                 except KeyError:
                     pass
             return [None, None]
-        return bst_taxonomy_category_key_to_category_names(self.bst_category)    
-    
+        return bst_taxonomy_category_key_to_category_names(self.bst_category)
+
     @property
     def category_code(self):
         return bst_taxonomy_category_names_to_category_key(*self.category_names)
@@ -1532,22 +1697,22 @@ class Sound(models.Model):
     def get_top_level_category_search_url(self):
         top_level_name, _ = self.category_names
         if top_level_name is not None:
-            cat_filter = urlencode({'f': f'category:"{top_level_name}"'})
-            return f'{reverse("sounds-search")}?{cat_filter}'
+            cat_filter = urlencode({"f": f'category:"{top_level_name}"'})
+            return f"{reverse('sounds-search')}?{cat_filter}"
         else:
             return None
 
     @property
     def get_second_level_category_search_url(self):
-        top_level_name, second_level_name = self.category_names 
+        top_level_name, second_level_name = self.category_names
         if second_level_name is not None:
-            cat_filter = urlencode({'f': f'category:"{top_level_name}" subcategory:"{second_level_name}"'})
-            return f'{reverse("sounds-search")}?{cat_filter}'
+            cat_filter = urlencode({"f": f'category:"{top_level_name}" subcategory:"{second_level_name}"'})
+            return f"{reverse('sounds-search')}?{cat_filter}"
         else:
             return None
 
     class Meta:
-        ordering = ("-created", )
+        ordering = ("-created",)
 
 
 class SoundOfTheDayManager(models.Manager):
@@ -1566,12 +1731,14 @@ class SoundOfTheDayManager(models.Manager):
 
         days_for_user = settings.NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS
         date_from = date_display - datetime.timedelta(days=days_for_user)
-        users = self.model.objects.filter(
-                date_display__lt=date_display,
-                date_display__gte=date_from).distinct().values_list('sound__user_id', flat=True)
-        used_sounds = self.model.objects.values_list('sound_id', flat=True)
+        users = (
+            self.model.objects.filter(date_display__lt=date_display, date_display__gte=date_from)
+            .distinct()
+            .values_list("sound__user_id", flat=True)
+        )
+        used_sounds = self.model.objects.values_list("sound_id", flat=True)
 
-        sound = Sound.objects.random(excludes={'user__id__in': users, 'id__in': used_sounds})
+        sound = Sound.objects.random(excludes={"user__id__in": users, "id__in": used_sounds})
         if sound:
             rnd = self.model.objects.create(sound=sound, date_display=date_display)
         else:
@@ -1598,7 +1765,7 @@ class SoundOfTheDay(models.Model):
     objects = SoundOfTheDayManager()
 
     def __str__(self):
-        return f'Random sound of the day {self.date_display}'
+        return f"Random sound of the day {self.date_display}"
 
     def notify_by_email(self):
         """Notify the user of this sound by email that their sound has been chosen
@@ -1616,14 +1783,18 @@ class SoundOfTheDay(models.Model):
             return False
 
         send_mail_template(
-            settings.EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN, 'emails/email_random_sound.txt',
-            {'sound': self.sound, 'user': self.sound.user},
-            user_to=self.sound.user, email_type_preference_check="random_sound")
+            settings.EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN,
+            "emails/email_random_sound.txt",
+            {"sound": self.sound, "user": self.sound.user},
+            user_to=self.sound.user,
+            email_type_preference_check="random_sound",
+        )
         self.email_sent = True
         self.save()
 
-        sounds_logger.info("Finished sending mail to user %s of random sound of the day %s" %
-                          (self.sound.user, self.sound))
+        sounds_logger.info(
+            "Finished sending mail to user %s of random sound of the day %s" % (self.sound.user, self.sound)
+        )
 
         return True
 
@@ -1636,10 +1807,7 @@ class DeletedSound(models.Model):
 
 
 def on_delete_sound(sender, instance, **kwargs):
-
-    ds, create = DeletedSound.objects.get_or_create(
-        sound_id=instance.id,
-        defaults={'data': {}})
+    ds, create = DeletedSound.objects.get_or_create(sound_id=instance.id, defaults={"data": {}})
     ds.user = instance.user
 
     # Copy relevant data to DeletedSound for future research
@@ -1658,45 +1826,45 @@ def on_delete_sound(sender, instance, **kwargs):
     username = None
     if instance.user:
         username = instance.user.username
-    data['username'] = username
+    data["username"] = username
 
     pack = None
     if instance.pack:
         pack = list(Pack.objects.filter(pk=instance.pack.pk).values())[0]
-    data['pack'] = pack
+    data["pack"] = pack
 
     geotag = None
-    if hasattr(instance, 'geotag'):
+    if hasattr(instance, "geotag"):
         geotag = list(GeoTag.objects.filter(pk=instance.geotag.pk).values())[0]
-    data['geotag'] = geotag
+    data["geotag"] = geotag
 
     license = None
     if instance.license:
         license = list(License.objects.filter(pk=instance.license.pk).values())[0]
-    data['license'] = license
+    data["license"] = license
 
-    data['comments'] = list(instance.comments.values())
-    data['tags'] = list(instance.soundtag_set.values())
-    data['sources'] = list(instance.sources.values('id'))
+    data["comments"] = list(instance.comments.values())
+    data["tags"] = list(instance.soundtag_set.values())
+    data["sources"] = list(instance.sources.values("id"))
 
     # Alter datetime objects in data to avoid serialization problems
-    data['created'] = str(data['created'])
-    data['moderation_date'] = str(data['moderation_date'])
-    data['processing_date'] = str(data['processing_date'])
-    data['date_recorded'] = str(data['date_recorded'])  # This field is not used
+    data["created"] = str(data["created"])
+    data["moderation_date"] = str(data["moderation_date"])
+    data["processing_date"] = str(data["processing_date"])
+    data["date_recorded"] = str(data["date_recorded"])  # This field is not used
     if instance.pack:
-        data['pack']['created'] = str(data['pack']['created'])
-        data['pack']['last_updated'] = str(data['pack']['last_updated'])
-    for tag in data['tags']:
-        tag['created'] = str(tag['created'])
-    for comment in data['comments']:
-        comment['created'] = str(comment['created'])
-    if hasattr(instance, 'geotag'):
-        geotag['created'] = str(geotag['created'])
+        data["pack"]["created"] = str(data["pack"]["created"])
+        data["pack"]["last_updated"] = str(data["pack"]["last_updated"])
+    for tag in data["tags"]:
+        tag["created"] = str(tag["created"])
+    for comment in data["comments"]:
+        comment["created"] = str(comment["created"])
+    if hasattr(instance, "geotag"):
+        geotag["created"] = str(geotag["created"])
     ds.data = data
     ds.save()
 
-    if hasattr(instance, 'geotag'):
+    if hasattr(instance, "geotag"):
         instance.geotag.delete()
 
     instance.delete_from_indexes()
@@ -1725,7 +1893,6 @@ post_delete.connect(post_delete_sound, sender=Sound)
 
 
 class PackManager(models.Manager):
-
     def bulk_query_id(self, pack_ids, sound_ids_for_pack_id=dict(), exclude_deleted=True):
         """
         Returns a list of Pack with some added data properties that are used in display_pack. In this way,
@@ -1736,11 +1903,15 @@ class PackManager(models.Manager):
         """
         if not isinstance(pack_ids, list):
             pack_ids = [pack_ids]
-        packs = Pack.objects.prefetch_related(
-            Prefetch('sounds', queryset=Sound.public.select_related('license', 'geotag').order_by('-created')),
-            Prefetch('sounds__tags'),
-            Prefetch('sounds__license'),
-        ).select_related('user', 'user__profile').filter(id__in=pack_ids)
+        packs = (
+            Pack.objects.prefetch_related(
+                Prefetch("sounds", queryset=Sound.public.select_related("license", "geotag").order_by("-created")),
+                Prefetch("sounds__tags"),
+                Prefetch("sounds__license"),
+            )
+            .select_related("user", "user__profile")
+            .filter(id__in=pack_ids)
+        )
         if exclude_deleted:
             packs = packs.exclude(is_deleted=True)
         num_sounds_selected_per_pack = 3
@@ -1756,7 +1927,7 @@ class PackManager(models.Manager):
                 licenses.append((s.license.name, s.license.id))
                 if s.num_ratings >= settings.MIN_NUMBER_RATINGS:
                     ratings.append(s.avg_rating)
-                if not has_geotags and hasattr(s, 'geotag'):
+                if not has_geotags and hasattr(s, "geotag"):
                     has_geotags = True
                 should_add_sound_to_selected_sounds = False
                 if sound_ids_pre_selected is None:
@@ -1766,22 +1937,26 @@ class PackManager(models.Manager):
                     if s.id in sound_ids_pre_selected:
                         should_add_sound_to_selected_sounds = True
                 if should_add_sound_to_selected_sounds:
-                    selected_sounds_data.append({
-                            'id': s.id,
-                            'username': p.user.username,  # Packs have same username as sounds inside pack
-                            'ready_for_similarity': None,  # If using search engine-based similarity, this needs to be retrieved later (see below)
-                            'duration': s.duration,
-                            'preview_mp3': s.locations('preview.LQ.mp3.url'),
-                            'preview_ogg': s.locations('preview.LQ.ogg.url'),
-                            'wave': s.locations('display.wave_bw.L.url'),
-                            'spectral': s.locations('display.spectral_bw.L.url'),
-                            'num_ratings': s.num_ratings,
-                            'avg_rating': s.avg_rating
-                        })
+                    selected_sounds_data.append(
+                        {
+                            "id": s.id,
+                            "username": p.user.username,  # Packs have same username as sounds inside pack
+                            "ready_for_similarity": None,  # If using search engine-based similarity, this needs to be retrieved later (see below)
+                            "duration": s.duration,
+                            "preview_mp3": s.locations("preview.LQ.mp3.url"),
+                            "preview_ogg": s.locations("preview.LQ.ogg.url"),
+                            "wave": s.locations("display.wave_bw.L.url"),
+                            "spectral": s.locations("display.spectral_bw.L.url"),
+                            "num_ratings": s.num_ratings,
+                            "avg_rating": s.avg_rating,
+                        }
+                    )
             p.num_sounds_unpublished_precomputed = p.sounds.count() - p.num_sounds
             p.licenses_data_precomputed = ([lid for _, lid in licenses], [lname for lname, _ in licenses])
-            p.pack_tags = [{'name': tag, 'count': count, 'browse_url': p.browse_pack_tag_url(tag)}
-                for tag, count in Counter(tags).most_common(10)]  # See pack.get_pack_tags_bw
+            p.pack_tags = [
+                {"name": tag, "count": count, "browse_url": p.browse_pack_tag_url(tag)}
+                for tag, count in Counter(tags).most_common(10)
+            ]  # See pack.get_pack_tags_bw
             p.selected_sounds_data = selected_sounds_data
             p.user_profile_locations = p.user.profile.locations()
             p.has_geotags_precomputed = has_geotags
@@ -1791,12 +1966,14 @@ class PackManager(models.Manager):
         # To avoid making an individual query for each selected sound, we get the similarity state of all selected sounds per pack in one single extra query
         selected_sounds_ids = []
         for p in packs:
-            selected_sounds_ids += [s['id'] for s in p.selected_sounds_data]
-        analyzer_for_default_sim_space = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]['analyzer']
-        sound_ids_ready_for_similarity = SoundAnalysis.objects.filter(sound_id__in=selected_sounds_ids, analyzer=analyzer_for_default_sim_space, analysis_status="OK").values_list('sound_id', flat=True)
+            selected_sounds_ids += [s["id"] for s in p.selected_sounds_data]
+        analyzer_for_default_sim_space = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]["analyzer"]
+        sound_ids_ready_for_similarity = SoundAnalysis.objects.filter(
+            sound_id__in=selected_sounds_ids, analyzer=analyzer_for_default_sim_space, analysis_status="OK"
+        ).values_list("sound_id", flat=True)
         for p in packs:
             for s in p.selected_sounds_data:
-                s['ready_for_similarity'] = s['id'] in sound_ids_ready_for_similarity
+                s["ready_for_similarity"] = s["id"] in sound_ids_ready_for_similarity
 
         return packs
 
@@ -1840,7 +2017,7 @@ class Pack(models.Model):
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method
     is_deleted = models.BooleanField(db_index=True, default=False)
 
-    VARIOUS_LICENSES_NAME = 'Various licenses'
+    VARIOUS_LICENSES_NAME = "Various licenses"
 
     objects = PackManager()
 
@@ -1848,13 +2025,13 @@ class Pack(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('pack', args=[self.user.username, smart_str(self.id)])
+        return reverse("pack", args=[self.user.username, smart_str(self.id)])
 
     def get_pack_sounds_in_search_url(self):
-        return f'{reverse("sounds-search")}?f=pack_grouping:{ self.pack_filter_value() }&s=Date+added+(newest+first)&g=1'
+        return f"{reverse('sounds-search')}?f=pack_grouping:{self.pack_filter_value()}&s=Date+added+(newest+first)&g=1"
 
     class Meta:
-        unique_together = ('user', 'name', 'is_deleted')
+        unique_together = ("user", "name", "is_deleted")
         ordering = ("-created",)
 
     def friendly_filename(self):
@@ -1880,26 +2057,28 @@ class Pack(models.Model):
         try:
             pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
             tags = [tag for tag, count in pack_tags_counts]
-            return {'tags': tags, 'num_tags': len(tags)}
+            return {"tags": tags, "num_tags": len(tags)}
         except SearchEngineException as e:
             return False
         except Exception as e:
             return False
 
     def pack_filter_value(self):
-        return f"\"{self.id}_{quote(self.name)}\""
+        return f'"{self.id}_{quote(self.name)}"'
 
     def browse_pack_tag_url(self, tag):
-        return reverse('tags', args=[tag]) + f'?pack_flt={self.pack_filter_value()}'
+        return reverse("tags", args=[tag]) + f"?pack_flt={self.pack_filter_value()}"
 
     def get_pack_tags_bw(self):
         try:
-            if hasattr(self, 'pack_tags'):
+            if hasattr(self, "pack_tags"):
                 return self.pack_tags  # If precomputed from PackManager.bulk_query_id method
             else:
                 pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
-                return [{'name': tag, 'count': count, 'browse_url': self.browse_pack_tag_url(tag)}
-                        for tag, count in pack_tags_counts]
+                return [
+                    {"name": tag, "count": count, "browse_url": self.browse_pack_tag_url(tag)}
+                    for tag, count in pack_tags_counts
+                ]
         except SearchEngineException as e:
             return []
         except Exception as e:
@@ -1925,38 +2104,36 @@ class Pack(models.Model):
     def invalidate_template_caches(self):
         # NOTE: we're currently using no cache on pack_display as it does not seem to speed up responses
         # This might need further investigation
-        for player_size in ['small', 'big']:
+        for player_size in ["small", "big"]:
             invalidate_template_cache("bw_display_pack", self.id, player_size)
         invalidate_template_cache("bw_pack_stats", self.id)
 
     def get_attribution(self, sound_qs=None):
-        #If no queryset of sounds is provided, take it from the pack
+        # If no queryset of sounds is provided, take it from the pack
         if sound_qs is None:
-            sound_qs = self.sounds.filter(processing_state="OK",
-                moderation_state="OK").select_related('user', 'license')
+            sound_qs = self.sounds.filter(processing_state="OK", moderation_state="OK").select_related(
+                "user", "license"
+            )
 
         users = User.objects.filter(sounds__in=sound_qs).distinct()
         # Generate text file with license info
         licenses = License.objects.filter(sound__pack=self).distinct()
-        attribution = render_to_string("sounds/multiple_sounds_attribution.txt",
-            dict(type="Pack",
-                users=users,
-                object=self,
-                licenses=licenses,
-                sound_list=sound_qs))
+        attribution = render_to_string(
+            "sounds/multiple_sounds_attribution.txt",
+            dict(type="Pack", users=users, object=self, licenses=licenses, sound_list=sound_qs),
+        )
         return attribution
 
     @property
     def avg_rating(self):
         """Return average rating of the average ratings of the sounds of the pack that have more than MIN_NUMBER_RATINGS"""
-        if hasattr(self, 'avg_rating_precomputed'):
+        if hasattr(self, "avg_rating_precomputed"):
             return self.avg_rating_precomputed
         else:
-            result = Sound.objects.filter(
-                pack=self,
-                num_ratings__gte=settings.MIN_NUMBER_RATINGS
-            ).aggregate(avg=Avg('avg_rating'))
-            return result['avg'] or 0
+            result = Sound.objects.filter(pack=self, num_ratings__gte=settings.MIN_NUMBER_RATINGS).aggregate(
+                avg=Avg("avg_rating")
+            )
+            return result["avg"] or 0
 
     @property
     def avg_rating_0_5(self):
@@ -1966,28 +2143,28 @@ class Pack(models.Model):
     @property
     def num_ratings(self):
         # The number of ratings for a pack is the number of sounds that have >= 3 ratings
-        if hasattr(self, 'num_ratings_precomputed'):
+        if hasattr(self, "num_ratings_precomputed"):
             # Comes from the bulk_query_id method in PackManager
             return self.num_ratings_precomputed
         else:
             return self.sounds.filter(num_ratings__gte=settings.MIN_NUMBER_RATINGS).count()
 
     def get_total_pack_sounds_length(self):
-        result = self.sounds.aggregate(total_duration=Sum('duration'))
-        return result['total_duration'] or 0
+        result = self.sounds.aggregate(total_duration=Sum("duration"))
+        return result["total_duration"] or 0
 
     def num_sounds_unpublished(self):
-        if hasattr(self, 'num_sounds_unpublished_precomputed'):
+        if hasattr(self, "num_sounds_unpublished_precomputed"):
             return self.num_sounds_unpublished_precomputed
         else:
             return self.sounds.count() - self.num_sounds
 
     @cached_property
     def licenses_data(self):
-        if hasattr(self, 'licenses_data_precomputed'):
+        if hasattr(self, "licenses_data_precomputed"):
             return self.licenses_data_precomputed  # If precomputed from PackManager.bulk_query_id method
         else:
-            licenses_data = list(self.sounds.select_related('license').values_list('license__name', 'license_id'))
+            licenses_data = list(self.sounds.select_related("license").values_list("license__name", "license_id"))
             license_ids = [lid for _, lid in licenses_data]
             license_names = [lname for lname, _ in licenses_data]
             return license_ids, license_names
@@ -2016,9 +2193,11 @@ class Pack(models.Model):
         if license_summary_name != self.VARIOUS_LICENSES_NAME:
             return License.objects.get(id=license_summary_id).get_short_summary
         else:
-            return "This pack contains sounds released under various licenses. Please check every individual sound page " \
-                   "(or the <i>readme</i> file upon downloading the pack) to know under which " \
-                   "license each sound is released."
+            return (
+                "This pack contains sounds released under various licenses. Please check every individual sound page "
+                "(or the <i>readme</i> file upon downloading the pack) to know under which "
+                "license each sound is released."
+            )
 
     @property
     def license_summary_deed_url(self):
@@ -2042,9 +2221,9 @@ class Pack(models.Model):
         if self.has_geotags:
             icons_count += 1
         if self.num_downloads:
-            icons_count +=2  # Counts double as it takes more width
+            icons_count += 2  # Counts double as it takes more width
         if self.num_ratings:
-            icons_count +=2  # Counts double as it takes more width
+            icons_count += 2  # Counts double as it takes more width
         title_num_chars = len(self.name)
         if icons_count >= 6:
             return title_num_chars >= 5
@@ -2059,9 +2238,9 @@ class Flag(models.Model):
     reporting_user = models.ForeignKey(User, null=True, blank=True, default=None, on_delete=models.CASCADE)
     email = models.EmailField()
     REASON_TYPE_CHOICES = (
-        ("O", 'Offending sound'),
-        ("I", 'Illegal sound'),
-        ("T", 'Other problem'),
+        ("O", "Offending sound"),
+        ("I", "Illegal sound"),
+        ("T", "Other problem"),
     )
     reason_type = models.CharField(max_length=1, choices=REASON_TYPE_CHOICES, default="I")
     reason = models.TextField()
@@ -2075,46 +2254,52 @@ class Flag(models.Model):
 
 
 class Download(models.Model):
-    user = models.ForeignKey(User, related_name='sound_downloads', on_delete=models.CASCADE)
-    sound = models.ForeignKey(Sound, related_name='downloads', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name="sound_downloads", on_delete=models.CASCADE)
+    sound = models.ForeignKey(Sound, related_name="downloads", on_delete=models.CASCADE)
     license = models.ForeignKey(License, on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     class Meta:
         ordering = ("-created",)
         indexes = [
-            models.Index(fields=['user', 'sound']),
+            models.Index(fields=["user", "sound"]),
         ]
 
 
 @receiver(post_delete, sender=Download)
 def update_num_downloads_on_delete(**kwargs):
-    download = kwargs['instance']
+    download = kwargs["instance"]
     if download.sound_id:
         Sound.objects.filter(id=download.sound_id).update(
-            is_index_dirty=True, num_downloads=Greatest(F('num_downloads') - 1, 0))
+            is_index_dirty=True, num_downloads=Greatest(F("num_downloads") - 1, 0)
+        )
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-            num_sound_downloads=Greatest(F('num_sound_downloads') - 1, 0))
+            num_sound_downloads=Greatest(F("num_sound_downloads") - 1, 0)
+        )
         accounts.models.Profile.objects.filter(user_id=download.sound.user_id).update(
-            num_user_sounds_downloads=Greatest(F('num_user_sounds_downloads') - 1, 0))
+            num_user_sounds_downloads=Greatest(F("num_user_sounds_downloads") - 1, 0)
+        )
 
 
 @receiver(post_save, sender=Download)
 def update_num_downloads_on_insert(**kwargs):
-    download = kwargs['instance']
-    if kwargs['created']:
+    download = kwargs["instance"]
+    if kwargs["created"]:
         if download.sound_id:
             Sound.objects.filter(id=download.sound_id).update(
-                is_index_dirty=True, num_downloads=Greatest(F('num_downloads') + 1, 0))
+                is_index_dirty=True, num_downloads=Greatest(F("num_downloads") + 1, 0)
+            )
             accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-                num_sound_downloads=Greatest(F('num_sound_downloads') + 1, 0))
+                num_sound_downloads=Greatest(F("num_sound_downloads") + 1, 0)
+            )
             accounts.models.Profile.objects.filter(user_id=download.sound.user_id).update(
-                num_user_sounds_downloads=Greatest(F('num_user_sounds_downloads') + 1, 0))
+                num_user_sounds_downloads=Greatest(F("num_user_sounds_downloads") + 1, 0)
+            )
 
 
 class PackDownload(models.Model):
-    user = models.ForeignKey(User, related_name='pack_downloads', on_delete=models.CASCADE)
-    pack = models.ForeignKey(Pack, related_name='downloads', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name="pack_downloads", on_delete=models.CASCADE)
+    pack = models.ForeignKey(Pack, related_name="downloads", on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     class Meta:
@@ -2129,36 +2314,38 @@ class PackDownloadSound(models.Model):
 
 @receiver(post_delete, sender=PackDownload)
 def update_num_downloads_on_delete_pack(**kwargs):
-    download = kwargs['instance']
-    Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') - 1, 0))
+    download = kwargs["instance"]
+    Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F("num_downloads") - 1, 0))
     accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-        num_pack_downloads=Greatest(F('num_pack_downloads') - 1, 0))
+        num_pack_downloads=Greatest(F("num_pack_downloads") - 1, 0)
+    )
     accounts.models.Profile.objects.filter(user_id=download.pack.user_id).update(
-        num_user_packs_downloads=Greatest(F('num_user_packs_downloads') - 1, 0))
+        num_user_packs_downloads=Greatest(F("num_user_packs_downloads") - 1, 0)
+    )
 
 
 @receiver(post_save, sender=PackDownload)
 def update_num_downloads_on_insert_pack(**kwargs):
-    download = kwargs['instance']
-    if kwargs['created']:
-        Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F('num_downloads') + 1, 0))
+    download = kwargs["instance"]
+    if kwargs["created"]:
+        Pack.objects.filter(id=download.pack_id).update(num_downloads=Greatest(F("num_downloads") + 1, 0))
         accounts.models.Profile.objects.filter(user_id=download.user_id).update(
-            num_pack_downloads=Greatest(F('num_pack_downloads') + 1, 0))
+            num_pack_downloads=Greatest(F("num_pack_downloads") + 1, 0)
+        )
         accounts.models.Profile.objects.filter(user_id=download.pack.user_id).update(
-            num_user_packs_downloads=Greatest(F('num_user_packs_downloads') + 1, 0))
+            num_user_packs_downloads=Greatest(F("num_user_packs_downloads") + 1, 0)
+        )
 
 
 class RemixGroup(models.Model):
     protovis_data = models.TextField(null=True, blank=True, default=None)
-    sounds = models.ManyToManyField(Sound,
-                                    symmetrical=False,
-                                    related_name='remix_group',
-                                    blank=True)
+    sounds = models.ManyToManyField(Sound, symmetrical=False, related_name="remix_group", blank=True)
     group_size = models.PositiveIntegerField(null=False, default=0)
 
 
 class SoundLicenseHistory(models.Model):
     """Store history of licenses related to a sound"""
+
     license = models.ForeignKey(License, on_delete=models.CASCADE)
     sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -2172,14 +2359,15 @@ class SoundAnalysis(models.Model):
     The actual output can be either directly stored in the model (using analysis_data field),
     or can be stored in a JSON/YAML file in disk.
     """
-    STATUS_CHOICES = (
-            ("QU", 'Queued'),
-            ("OK", 'Ok'),
-            ("SK", 'Skipped'),
-            ("FA", 'Failed'),
-        )
 
-    sound = models.ForeignKey(Sound, related_name='analyses', on_delete=models.CASCADE)
+    STATUS_CHOICES = (
+        ("QU", "Queued"),
+        ("OK", "Ok"),
+        ("SK", "Skipped"),
+        ("FA", "Failed"),
+    )
+
+    sound = models.ForeignKey(Sound, related_name="analyses", on_delete=models.CASCADE)
     last_sent_to_queue = models.DateTimeField(auto_now_add=True)
     last_analyzer_finished = models.DateTimeField(null=True)
     analyzer = models.CharField(db_index=True, max_length=255)  # Analyzer name including version
@@ -2191,9 +2379,9 @@ class SoundAnalysis(models.Model):
     @property
     def analysis_filepath_base(self):
         """Returns the absolute path of the analysis files related with this SoundAnalysis object. Related files will
-         include analysis output but also logs. The base filepath should be complemented with the extension, which
-         could be '.json' or '.yaml' (for analysis outputs) or '.log' for log file. The related files should be in
-         the ANALYSIS_PATH and under a sound ID folder structure like sounds and other sound-related files."""
+        include analysis output but also logs. The base filepath should be complemented with the extension, which
+        could be '.json' or '.yaml' (for analysis outputs) or '.log' for log file. The related files should be in
+        the ANALYSIS_PATH and under a sound ID folder structure like sounds and other sound-related files."""
         id_folder = str(self.sound_id // 1000)
         return os.path.join(settings.ANALYSIS_PATH, id_folder, f"{self.sound_id}-{self.analyzer}")
 
@@ -2202,7 +2390,7 @@ class SoundAnalysis(models.Model):
         database using the SoundAnalysis.analysis_data field. The loading of the data into DB only happens if a
         data mapping for the current analyzer has been specified in the Django settings. Note that for some analyzers
         we don't actually want the data to be loaded in the DB as it would take a lot of space.
-        
+
         NOTE: this method is not used much now that we load data to the consolidated SoundAnalysis object only,
         but it might still be used for some specific analyzers in the future."""
 
@@ -2219,10 +2407,10 @@ class SoundAnalysis(models.Model):
             return True
 
         analysis_configuration = settings.ANALYZERS_CONFIGURATION.get(self.analyzer, {})
-        if self.analysis_status == "OK" and 'descriptors_map' in analysis_configuration:
+        if self.analysis_status == "OK" and "descriptors_map" in analysis_configuration:
             analysis_results = self.get_analysis_data_from_file()
             if analysis_results:
-                descriptors_map = analysis_configuration['descriptors_map']
+                descriptors_map = analysis_configuration["descriptors_map"]
                 analysis_data_for_db = {}
                 for file_descriptor_key_path, db_descriptor_key in descriptors_map:
                     # TODO: here we could implement support for nested keys in the analysis file, maybe by accessing
@@ -2234,38 +2422,38 @@ class SoundAnalysis(models.Model):
                 self.analysis_data = analysis_data_for_db
             else:
                 self.analysis_data = None
-        self.save(update_fields=['analysis_data'])
+        self.save(update_fields=["analysis_data"])
 
     def get_analysis_data_from_file(self):
         """Returns the analysis data as stored in file or returns empty dict if no file exists. It tries
         extensions .json and .yaml as these are the supported formats for analysis results"""
         try:
-            with open(self.analysis_filepath_base + '.json') as f:
+            with open(self.analysis_filepath_base + ".json") as f:
                 return json.load(f)
         except Exception:
             pass
         try:
-            with open(self.analysis_filepath_base + '.yaml') as f:
+            with open(self.analysis_filepath_base + ".yaml") as f:
                 return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
         except Exception:
             pass
         return {}
-    
+
     @classmethod
     def get_analysis_data_from_file_without_db(cls, sound_id, analyzer):
         """Class method to get analysis data from file for a given sound ID and analyzer name, without needing
-        to make a query to get SoundAnalysis object. Returns the analysis data as stored in file or returns empty 
-        dict if no file exists. It tries extensions .json and .yaml as these are the supported formats for 
+        to make a query to get SoundAnalysis object. Returns the analysis data as stored in file or returns empty
+        dict if no file exists. It tries extensions .json and .yaml as these are the supported formats for
         analysis results."""
         id_folder = str(sound_id // 1000)
         analysis_filepath_base = os.path.join(settings.ANALYSIS_PATH, id_folder, f"{sound_id}-{analyzer}")
         try:
-            with open(analysis_filepath_base + '.json') as f:
+            with open(analysis_filepath_base + ".json") as f:
                 return json.load(f)
         except Exception:
             pass
         try:
-            with open(analysis_filepath_base + '.yaml') as f:
+            with open(analysis_filepath_base + ".yaml") as f:
                 return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
         except Exception:
             pass
@@ -2283,29 +2471,31 @@ class SoundAnalysis(models.Model):
     def get_analysis_logs(self):
         """Returns the logs of the analysis"""
         try:
-            fid = open(self.analysis_filepath_base + '.log')
+            fid = open(self.analysis_filepath_base + ".log")
             file_contents = fid.read()
             fid.close()
             return file_contents
         except OSError:
-            return 'No logs available...'
+            return "No logs available..."
 
     def re_run_analysis(self, verbose=True):
         self.sound.analyze(self.analyzer, force=True, verbose=verbose)
 
     def __str__(self):
-        return f'Analysis of sound {self.sound_id} with {self.analyzer}'
+        return f"Analysis of sound {self.sound_id} with {self.analyzer}"
 
     class Meta:
-        unique_together = (("sound", "analyzer")) # one sounds.SoundAnalysis object per sound<>analyzer combination
+        unique_together = ("sound", "analyzer")  # one sounds.SoundAnalysis object per sound<>analyzer combination
+
 
 def on_delete_sound_analysis(sender, instance, **kwargs):
     # Right before deleting a SoundAnalysis object, delete also the associated log and analysis files (if any)
-    for filepath in glob.glob(instance.analysis_filepath_base + '*'):
+    for filepath in glob.glob(instance.analysis_filepath_base + "*"):
         try:
             os.remove(filepath)
         except Exception as e:
             pass
+
 
 pre_delete.connect(on_delete_sound_analysis, sender=SoundAnalysis)
 
@@ -2315,15 +2505,16 @@ class SoundSimilarityVector(models.Model):
     disk space. The alternative would be to save similarity vectors in the JSON data fields
     of SoundAnalysis obects, but that would be less optimial.
     """
-    sound = models.ForeignKey(Sound, related_name='sim_vectors', on_delete=models.CASCADE)
+
+    sound = models.ForeignKey(Sound, related_name="sim_vectors", on_delete=models.CASCADE)
     similarity_space_name = models.CharField(max_length=100)
     vector = ArrayField(models.FloatField())
 
     @classmethod
     def l2_normalize_vector(cls, vector):
-        norm = math.sqrt(sum([v*v for v in vector]))
+        norm = math.sqrt(sum([v * v for v in vector]))
         if norm > 0:
-            return [v/norm for v in vector]
+            return [v / norm for v in vector]
         else:
             return vector
 
@@ -2333,4 +2524,7 @@ class SoundSimilarityVector(models.Model):
             self.save()
 
     class Meta:
-        unique_together = (("sound", "similarity_space_name")) # one sounds.SoundSimilarityVector object per sound<>similarity_space_name combination
+        unique_together = (
+            "sound",
+            "similarity_space_name",
+        )  # one sounds.SoundSimilarityVector object per sound<>similarity_space_name combination

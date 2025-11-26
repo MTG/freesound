@@ -24,8 +24,8 @@ from django.views.generic import RedirectView
 import wiki.views as wiki
 
 urlpatterns = [
-    path('', RedirectView.as_view(url="/help/main/"), name="wiki"),
-    path('<multitags:name>/history/', wiki.history, name="wiki-page-history"),
-    path('<multitags:name>/edit/', wiki.editpage, name="wiki-page-edit"),
-    path('<multitags:name>/', wiki.page, name="wiki-page"),
+    path("", RedirectView.as_view(url="/help/main/"), name="wiki"),
+    path("<multitags:name>/history/", wiki.history, name="wiki-page-history"),
+    path("<multitags:name>/edit/", wiki.editpage, name="wiki-page-edit"),
+    path("<multitags:name>/", wiki.page, name="wiki-page"),
 ]

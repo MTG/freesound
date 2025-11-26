@@ -64,6 +64,7 @@ class DeletedUser(models.Model):
     """
     This model is used to store basic information about users that have been deleted/anonymized.
     """
+
     user = models.OneToOneField(User, null=True, on_delete=models.SET_NULL)
     username = models.CharField(max_length=150)
     email = models.CharField(max_length=200)
@@ -72,28 +73,27 @@ class DeletedUser(models.Model):
     deletion_date = models.DateTimeField(auto_now_add=True)
     sounds_were_also_deleted = models.BooleanField(default=False)
 
-    DELETION_REASON_SPAMMER = 'sp'
-    DELETION_REASON_DELETED_BY_ADMIN = 'ad'
-    DELETION_REASON_SELF_DELETED = 'sd'
+    DELETION_REASON_SPAMMER = "sp"
+    DELETION_REASON_DELETED_BY_ADMIN = "ad"
+    DELETION_REASON_SELF_DELETED = "sd"
     DELETION_REASON_CHOICES = (
-        (DELETION_REASON_SPAMMER, 'Spammer'),
-        (DELETION_REASON_DELETED_BY_ADMIN, 'Deleted by an admin'),
-        (DELETION_REASON_SELF_DELETED, 'Self deleted')
+        (DELETION_REASON_SPAMMER, "Spammer"),
+        (DELETION_REASON_DELETED_BY_ADMIN, "Deleted by an admin"),
+        (DELETION_REASON_SELF_DELETED, "Self deleted"),
     )
     reason = models.CharField(max_length=2, choices=DELETION_REASON_CHOICES)
 
     def __str__(self):
-        return f'Deleted user object for: {self.username}'
+        return f"Deleted user object for: {self.username}"
 
 
 class ProfileManager(models.Manager):
-
     @staticmethod
     def random_uploader():
         user_count = User.objects.filter(profile__num_sounds__gte=1).count()
         if user_count:
             offset = random.randint(0, user_count - 1)
-            return User.objects.filter(profile__num_sounds__gte=1)[offset:offset+1][0]
+            return User.objects.filter(profile__num_sounds__gte=1)[offset : offset + 1][0]
         else:
             return None
 
@@ -122,10 +122,18 @@ class Profile(models.Model):
     # The following 4 fields are updated using django signals (methods 'update_num_downloads*')
     num_sounds = models.PositiveIntegerField(editable=False, default=0)
     num_posts = models.PositiveIntegerField(editable=False, default=0)
-    num_sound_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of sounds the user has downloaded
-    num_pack_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of packs the user has downloaded
-    num_user_sounds_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of times user's sounds have been downloaded
-    num_user_packs_downloads = models.PositiveIntegerField(editable=False, default=0)  # Number of times user's packs have been downloaded
+    num_sound_downloads = models.PositiveIntegerField(
+        editable=False, default=0
+    )  # Number of sounds the user has downloaded
+    num_pack_downloads = models.PositiveIntegerField(
+        editable=False, default=0
+    )  # Number of packs the user has downloaded
+    num_user_sounds_downloads = models.PositiveIntegerField(
+        editable=False, default=0
+    )  # Number of times user's sounds have been downloaded
+    num_user_packs_downloads = models.PositiveIntegerField(
+        editable=False, default=0
+    )  # Number of times user's packs have been downloaded
 
     # "is_anonymized_user" indicates that the user account has been anonymized and no longer contains personal data
     # This is what we do when we delete a user to still preserve statistics and information and downloads
@@ -138,11 +146,11 @@ class Profile(models.Model):
     prefer_spectrograms = models.BooleanField(default=False)
     use_compact_mode = models.BooleanField(default=False)
     UI_THEME_CHOICES = (
-        ('f', 'Follow system default'),
-        ('l', 'Light'),
-        ('d', 'Dark'),
+        ("f", "Follow system default"),
+        ("l", "Light"),
+        ("d", "Dark"),
     )
-    ui_theme_preference = models.CharField(max_length=1, choices=UI_THEME_CHOICES, default='f')
+    ui_theme_preference = models.CharField(max_length=1, choices=UI_THEME_CHOICES, default="f")
 
     objects = ProfileManager()
 
@@ -153,7 +161,7 @@ class Profile(models.Model):
         GdprAcceptance.objects.get_or_create(user=self.user)
 
     def has_sounds_with_old_cc_licenses(self):
-        return self.user.sounds.select_related('license').filter(license__deed_url__contains="3.0").count() > 0
+        return self.user.sounds.select_related("license").filter(license__deed_url__contains="3.0").count() > 0
 
     def upgrade_old_cc_licenses_to_new_cc_licenses(self):
         old_cc_by = License.objects.get(name__iexact="Attribution", deed_url__contains="3.0")
@@ -177,7 +185,7 @@ class Profile(models.Model):
 
     def has_shared_email(self):
         """Check if the user account associated with this profile
-           has other accounts with the same email address"""
+        has other accounts with the same email address"""
         try:
             self.get_sameuser_object()
             return True
@@ -200,8 +208,9 @@ class Profile(models.Model):
         NOTE: we don't check that user is_active because we need to send emails to inactive users (activation emails)
         """
         user = self.get_sameuser_main_user_or_self_user()
-        user_has_bounces = \
+        user_has_bounces = (
             user.email_bounces.filter(type__in=(EmailBounce.PERMANENT, EmailBounce.UNDETERMINED)).count() > 0
+        )
         return not user_has_bounces and not user.profile.is_anonymized_user
 
     @property
@@ -219,17 +228,24 @@ class Profile(models.Model):
         return Comment.objects.filter(user=self.user).count()
 
     def get_absolute_url(self):
-        return reverse('account', args=[smart_str(self.user.username)])
+        return reverse("account", args=[smart_str(self.user.username)])
 
     def get_user_sounds_in_search_url(self):
-        return f'{reverse("sounds-search")}?f=username:"{ quote(self.user.username) }"&s=Date+added+(newest+first)&g=0'
-    
+        return f'{reverse("sounds-search")}?f=username:"{quote(self.user.username)}"&s=Date+added+(newest+first)&g=0'
+
     def get_user_packs_in_search_url(self):
-        return f'{reverse("sounds-search")}?f=username:"{ quote(self.user.username) }"&s=Date+added+(newest+first)&g=1&dp=1'
-    
+        return (
+            f'{reverse("sounds-search")}?f=username:"{quote(self.user.username)}"&s=Date+added+(newest+first)&g=1&dp=1'
+        )
+
     def get_latest_packs_for_profile_page(self):
-        latest_pack_ids = Pack.objects.select_related().filter(user=self.user, num_sounds__gt=0).exclude(is_deleted=True) \
-                            .order_by("-last_updated").values_list('id', flat=True)[0:15]
+        latest_pack_ids = (
+            Pack.objects.select_related()
+            .filter(user=self.user, num_sounds__gt=0)
+            .exclude(is_deleted=True)
+            .order_by("-last_updated")
+            .values_list("id", flat=True)[0:15]
+        )
         return Pack.objects.ordered_ids(pack_ids=latest_pack_ids)
 
     @staticmethod
@@ -247,24 +263,12 @@ class Profile(models.Model):
             xl_avatar = None
         return dict(
             avatar=dict(
-                S=dict(
-                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_S.jpg" % user_id),
-                    url=s_avatar
-                ),
-                M=dict(
-                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_M.jpg" % user_id),
-                    url=m_avatar
-                ),
-                L=dict(
-                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % user_id),
-                    url=l_avatar
-                ),
-                XL=dict(
-                    path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_XL.jpg" % user_id),
-                    url=xl_avatar
-                )
+                S=dict(path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_S.jpg" % user_id), url=s_avatar),
+                M=dict(path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_M.jpg" % user_id), url=m_avatar),
+                L=dict(path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % user_id), url=l_avatar),
+                XL=dict(path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_XL.jpg" % user_id), url=xl_avatar),
             ),
-            uploads_dir=os.path.join(settings.UPLOADS_PATH, str(user_id))
+            uploads_dir=os.path.join(settings.UPLOADS_PATH, str(user_id)),
         )
 
     @locations_decorator(cache=False)
@@ -291,11 +295,13 @@ class Profile(models.Model):
         if not isinstance(email_type, EmailPreferenceType):
             email_type = EmailPreferenceType.objects.get(name=email_type)
 
-        email_type_in_user_email_settings = \
-            UserEmailSetting.objects.filter(user=self.user, email_type=email_type).exists()
+        email_type_in_user_email_settings = UserEmailSetting.objects.filter(
+            user=self.user, email_type=email_type
+        ).exists()
 
-        return (email_type.send_by_default and not email_type_in_user_email_settings) or \
-               (not email_type.send_by_default and email_type_in_user_email_settings)
+        return (email_type.send_by_default and not email_type_in_user_email_settings) or (
+            not email_type.send_by_default and email_type_in_user_email_settings
+        )
 
     def get_enabled_email_types(self):
         """
@@ -326,17 +332,19 @@ class Profile(models.Model):
 
         # First get current value of stream_email to know if profile.last_stream_email_sent must be set to
         # now (see below)
-        stream_emails_type = EmailPreferenceType.objects.get(name='stream_emails')
+        stream_emails_type = EmailPreferenceType.objects.get(name="stream_emails")
         had_enabled_stream_emails = self.user.email_settings.filter(email_type=stream_emails_type).exists()
 
         # Now check for which email types we'll need to create UserEmailSetting objects. This will be the email types
         # which either:
         # 1) have send_by_default=False and are in email_type_ids (the object indicates email should be sent)
-        email_preference_types_to_add = \
-            list(EmailPreferenceType.objects.filter(send_by_default=False, id__in=email_type_ids))
+        email_preference_types_to_add = list(
+            EmailPreferenceType.objects.filter(send_by_default=False, id__in=email_type_ids)
+        )
         # 2) have send_by_default=True and are not in email_type_ids  (the object indicates email should not be sent)
-        email_preference_types_to_add += \
-            list(EmailPreferenceType.objects.filter(send_by_default=True).exclude(id__in=email_type_ids))
+        email_preference_types_to_add += list(
+            EmailPreferenceType.objects.filter(send_by_default=True).exclude(id__in=email_type_ids)
+        )
 
         # Now recreate email settings objects. Delete all existing and then create those listed in
         # email_preference_types_to_add
@@ -354,8 +362,14 @@ class Profile(models.Model):
         try:
             search_engine = get_search_engine()
             tags_counts = search_engine.get_user_tags(self.user.username)
-            return [{'name': tag, 'count': count, 'browse_url': reverse('tags', args=[tag]) + f'?username_flt={self.user.username}'} for tag, count in
-                    tags_counts]
+            return [
+                {
+                    "name": tag,
+                    "count": count,
+                    "browse_url": reverse("tags", args=[tag]) + f"?username_flt={self.user.username}",
+                }
+                for tag, count in tags_counts
+            ]
         except SearchEngineException as e:
             return False
         except Exception as e:
@@ -368,18 +382,25 @@ class Profile(models.Model):
         Returns:
             bool: True if the user is trustworthy, False otherwise.
         """
-        return self.num_sounds > 0 or self.num_posts > 5 or self.user.is_superuser or self.user.is_staff or self.is_whitelisted
+        return (
+            self.num_sounds > 0
+            or self.num_posts > 5
+            or self.user.is_superuser
+            or self.user.is_staff
+            or self.is_whitelisted
+        )
 
     def can_post_in_forum(self):
-
         # A forum moderator can always post
-        if self.user.has_perm('forum.can_moderate_forum'):
+        if self.user.has_perm("forum.can_moderate_forum"):
             return True, ""
 
         user_has_posts_pending_to_moderate = self.user.posts.filter(moderation_state="NM").count() > 0
         if user_has_posts_pending_to_moderate:
-            return False, "We're sorry but you can't post to the forum because you have previous posts still " \
-                          "pending to moderate"
+            return (
+                False,
+                "We're sorry but you can't post to the forum because you have previous posts still pending to moderate",
+            )
 
         if self.num_posts >= 1 and self.num_sounds == 0:
             now = timezone.now()
@@ -388,15 +409,22 @@ class Profile(models.Model):
             # Do not allow posts if last post is not older than 5 minutes
             seconds_per_post = settings.LAST_FORUM_POST_MINIMUM_TIME
             if (now - self.user.posts.all().reverse()[0].created).total_seconds() < seconds_per_post:
-                return False, "We're sorry but you can't post to the forum because your last post was less than 5 " \
-                              "minutes ago"
+                return (
+                    False,
+                    "We're sorry but you can't post to the forum because your last post was less than 5 minutes ago",
+                )
 
             # Do not allow posts if user has already posted N posts that day
             max_posts_per_day = settings.BASE_MAX_POSTS_PER_DAY + pow((now - reference_date).days, 2)
-            if self.user.posts.filter(created__range=(now-datetime.timedelta(days=1), now)).count() >= \
-                    max_posts_per_day:
-                return False, "We're sorry but you can't post to the forum because you exceeded your maximum number " \
-                              "of posts per day"
+            if (
+                self.user.posts.filter(created__range=(now - datetime.timedelta(days=1), now)).count()
+                >= max_posts_per_day
+            ):
+                return (
+                    False,
+                    "We're sorry but you can't post to the forum because you exceeded your maximum number "
+                    "of posts per day",
+                )
 
         return True, ""
 
@@ -412,12 +440,16 @@ class Profile(models.Model):
             bool: True if user can do bulk upload, False otherwise.
         """
 
-        return self.num_sounds >= settings.BULK_UPLOAD_MIN_SOUNDS or \
-               self.is_whitelisted or \
-               self.user.has_perm('sounds.can_describe_in_bulk')
+        return (
+            self.num_sounds >= settings.BULK_UPLOAD_MIN_SOUNDS
+            or self.is_whitelisted
+            or self.user.has_perm("sounds.can_describe_in_bulk")
+        )
 
     def is_blocked_for_spam_reports(self):
-        reports_count = UserFlag.objects.filter(user__username=self.user.username).values('reporting_user').distinct().count()
+        reports_count = (
+            UserFlag.objects.filter(user__username=self.user.username).values("reporting_user").distinct().count()
+        )
         if reports_count < settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING or self.user.sounds.all().count() > 0:
             return False
         else:
@@ -435,21 +467,24 @@ class Profile(models.Model):
         if include_sounds:
             sounds = Sound.objects.filter(user=self.user)
             packs = Pack.objects.filter(user=self.user)
-            collector = NestedObjects(using='default')
+            collector = NestedObjects(using="default")
             collector.collect(sounds)
             collector.collect(packs)
-            ret['deleted'] = collector
+            ret["deleted"] = collector
         if include_other_related_objects:
-            collector = NestedObjects(using='default')
+            collector = NestedObjects(using="default")
             collector.collect([self.user])
-            ret['deleted'] = collector
-        ret['profile'] = self
+            ret["deleted"] = collector
+        ret["profile"] = self
         return ret
 
-    def delete_user(self, remove_sounds=False,
-                    delete_user_object_from_db=False,
-                    deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN,
-                    chunk_size=100):
+    def delete_user(
+        self,
+        remove_sounds=False,
+        delete_user_object_from_db=False,
+        deletion_reason=DeletedUser.DELETION_REASON_DELETED_BY_ADMIN,
+        chunk_size=100,
+    ):
         """
         Custom method for deleting a user from Freesound.
 
@@ -478,21 +513,21 @@ class Profile(models.Model):
             chunk_size (int): size of the chunks in which sounds will be deleted inside atomic transactions.
         """
 
-        # If required, start by deleting all user's sounds and packs 
+        # If required, start by deleting all user's sounds and packs
         if remove_sounds:
             Pack.objects.filter(user=self.user).update(is_deleted=True)
             num_sounds = Sound.objects.filter(user=self.user).count()
             num_errors = 0
             max_while_loop_errors = num_sounds // chunk_size + 1
             while num_sounds > 0 and num_errors < max_while_loop_errors:
-                chunk_ids = Sound.objects.filter(user=self.user).values_list('id', flat=True)[0:chunk_size]
+                chunk_ids = Sound.objects.filter(user=self.user).values_list("id", flat=True)[0:chunk_size]
                 with transaction.atomic():
                     try:
                         Sound.objects.filter(id__in=chunk_ids).delete()
                     except (IntegrityError, ForeignKeyViolation) as e:
                         num_errors += 1
                 num_sounds = Sound.objects.filter(user=self.user).count()
-            
+
             if Sound.objects.filter(user=self.user).count() > 0:
                 raise Exception("Could not delete all sounds from user {0}".format(self.user.username))
 
@@ -500,7 +535,6 @@ class Profile(models.Model):
         # Run them in a single transaction so if there is an error we don't create duplicate
         # DeletedUser objects
         with transaction.atomic():
-
             # Create a DeletedUser object to store basic information for the record (first check if it
             # already exists because user was deleted previously but db object preserved
             try:
@@ -513,14 +547,16 @@ class Profile(models.Model):
                     date_joined=self.user.date_joined,
                     last_login=self.user.last_login,
                     sounds_were_also_deleted=remove_sounds,
-                    reason=deletion_reason)
+                    reason=deletion_reason,
+                )
 
             # Before deleting the user from db or anonymizing it, get a list of all UserDeletionRequest that will need
             # to be updated once the user has been deleted (we do that because if the user gets deleted from DB, the
             # 'user_to' field in UserDeletionRequest will be set to null and the therefore query below would not get
             # all UserDeletionRequest that we want
-            udr_to_update_ids = \
-                list(UserDeletionRequest.objects.filter(user_to_id=self.user.id).values_list('id', flat=True))
+            udr_to_update_ids = list(
+                UserDeletionRequest.objects.filter(user_to_id=self.user.id).values_list("id", flat=True)
+            )
 
             if delete_user_object_from_db:
                 # If user is to be completely deleted from the DB, use delete() method. This will remove all
@@ -534,15 +570,15 @@ class Profile(models.Model):
                 # If user object is not to be deleted from DB we need to anonymize it and remove sounds if requested
 
                 # Remove personal data from the user
-                self.user.username = f'deleted_user_{self.user.id}'
-                self.user.email = f'deleted_user_{self.user.id}@freesound.org'
+                self.user.username = f"deleted_user_{self.user.id}"
+                self.user.email = f"deleted_user_{self.user.id}@freesound.org"
                 self.has_avatar = False
                 self.is_anonymized_user = True
                 self.user.set_unusable_password()
 
-                self.about = ''
-                self.home_page = ''
-                self.signature = ''
+                self.about = ""
+                self.home_page = ""
+                self.signature = ""
                 self.geotag = None
 
                 self.save()
@@ -556,7 +592,7 @@ class Profile(models.Model):
 
             # If UserDeletionRequest object(s) exist for that user, update the status and set deleted_user property
             # NOTE: don't use QuerySet.update method because this won't trigger the pre_save/post_save signals
-            for udr in  UserDeletionRequest.objects.filter(id__in=udr_to_update_ids):
+            for udr in UserDeletionRequest.objects.filter(id__in=udr_to_update_ids):
                 udr.status = UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED
                 udr.deleted_user = deleted_user_object
                 udr.save()
@@ -566,18 +602,20 @@ class Profile(models.Model):
         Checks if the user has created any content or used Freesound in any way that leaves any significant data.
         Typically should be used to check if it is safe to hard delete the user.
         """
-        return (Sound.objects.filter(user=self.user).exists() or
-                Pack.objects.filter(user=self.user).exists() or
-                SoundRating.objects.filter(user=self.user).exists() or
-                Download.objects.filter(user=self.user).exists() or
-                PackDownload.objects.filter(user=self.user).exists() or
-                Bookmark.objects.filter(user=self.user).exists() or
-                Post.objects.filter(author=self.user).exists() or
-                Comment.objects.filter(user=self.user).exists() or
-                Donation.objects.filter(user=self.user).exists() or
-                Message.objects.filter(user_from=self.user).exists() or
-                BulkUploadProgress.objects.filter(user=self.user).exists() or
-                ApiV2Client.objects.filter(user=self.user).exists())
+        return (
+            Sound.objects.filter(user=self.user).exists()
+            or Pack.objects.filter(user=self.user).exists()
+            or SoundRating.objects.filter(user=self.user).exists()
+            or Download.objects.filter(user=self.user).exists()
+            or PackDownload.objects.filter(user=self.user).exists()
+            or Bookmark.objects.filter(user=self.user).exists()
+            or Post.objects.filter(author=self.user).exists()
+            or Comment.objects.filter(user=self.user).exists()
+            or Donation.objects.filter(user=self.user).exists()
+            or Message.objects.filter(user_from=self.user).exists()
+            or BulkUploadProgress.objects.filter(user=self.user).exists()
+            or ApiV2Client.objects.filter(user=self.user).exists()
+        )
 
     def update_num_sounds(self, commit=True):
         """
@@ -588,7 +626,7 @@ class Profile(models.Model):
             self.save()
 
     def get_last_latlong(self):
-        lasts_sound_geotagged = Sound.objects.filter(user=self.user).exclude(geotag=None).order_by('-created')
+        lasts_sound_geotagged = Sound.objects.filter(user=self.user).exclude(geotag=None).order_by("-created")
         if lasts_sound_geotagged.count():
             last_sound = lasts_sound_geotagged[0]
             return last_sound.geotag.lat, last_sound.geotag.lon, last_sound.geotag.zoom
@@ -605,7 +643,7 @@ class Profile(models.Model):
     @property
     def avg_rating(self):
         """Returns the average rating from 0 to 10"""
-        avg = SoundRating.objects.filter(sound__user=self.user).aggregate(models.Avg('rating'))['rating__avg']
+        avg = SoundRating.objects.filter(sound__user=self.user).aggregate(models.Avg("rating"))["rating__avg"]
         return avg if avg is not None else 0
 
     @property
@@ -615,39 +653,36 @@ class Profile(models.Model):
 
     def get_total_uploaded_sounds_length(self):
         # NOTE: this only includes duration of sounds that have been processed and moderated
-        durations = list(Sound.public.filter(user=self.user).values_list('duration', flat=True))
+        durations = list(Sound.public.filter(user=self.user).values_list("duration", flat=True))
         return sum(durations)
 
     @property
     def num_packs(self):
         # Return the number of packs for which at least one sound has been published
-        return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by('pack_id').distinct('pack').count()
-    
+        return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by("pack_id").distinct("pack").count()
+
     def get_stats_for_profile_page(self):
         # Return a dictionary of user statistics to show on the user profile page
         # Because some stats are expensive to compute, we cache them
         stats_from_db = {
-                'num_sounds': self.num_sounds,
-                'num_downloads': self.num_downloads_on_sounds_and_packs,
-                'num_posts': self.num_posts
-            }
+            "num_sounds": self.num_sounds,
+            "num_downloads": self.num_downloads_on_sounds_and_packs,
+            "num_posts": self.num_posts,
+        }
         stats_from_cache = cache.get(settings.USER_STATS_CACHE_KEY.format(self.user_id), None)
         if stats_from_cache is None:
             stats_from_cache = {
-                'num_packs': self.num_packs,
-                'total_uploaded_sounds_length': self.get_total_uploaded_sounds_length(),
-                'avg_rating_0_5': self.avg_rating_0_5,
+                "num_packs": self.num_packs,
+                "total_uploaded_sounds_length": self.get_total_uploaded_sounds_length(),
+                "avg_rating_0_5": self.avg_rating_0_5,
             }
-            cache.set(settings.USER_STATS_CACHE_KEY.format(self.user_id), stats_from_cache, 60*60*24)
+            cache.set(settings.USER_STATS_CACHE_KEY.format(self.user_id), stats_from_cache, 60 * 60 * 24)
         stats_from_db.update(stats_from_cache)
         return stats_from_db
 
-
     class Meta:
-        ordering = ('-user__date_joined', )
-        permissions = (
-            ("can_beta_test", "Show beta features to that user."),
-        )
+        ordering = ("-user__date_joined",)
+        permissions = (("can_beta_test", "Show beta features to that user."),)
 
 
 class GdprAcceptance(models.Model):
@@ -662,7 +697,7 @@ class UserFlag(models.Model):
     reporting_user = models.ForeignKey(User, null=True, blank=True, default=None, on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, null=True, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField(null=True)
-    content_object = fields.GenericForeignKey('content_type', 'object_id')
+    content_object = fields.GenericForeignKey("content_type", "object_id")
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):
@@ -742,9 +777,11 @@ class EmailPreferenceType(models.Model):
     description = models.TextField(max_length=1024, null=True, blank=True)
     name = models.CharField(max_length=255, unique=True)
     display_name = models.CharField(max_length=255)
-    send_by_default = models.BooleanField(default=True,
-        help_text="Indicates if the user should receive an email, if " +
-        "UserEmailSetting exists for the user then the behavior is the opposite")
+    send_by_default = models.BooleanField(
+        default=True,
+        help_text="Indicates if the user should receive an email, if "
+        + "UserEmailSetting exists for the user then the behavior is the opposite",
+    )
 
     def __str__(self):
         return self.display_name
@@ -761,21 +798,17 @@ class OldUsername(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.username} > {self.user.username}'
+        return f"{self.username} > {self.user.username}"
 
 
 class EmailBounce(models.Model):
     user = models.ForeignKey(User, related_name="email_bounces", on_delete=models.CASCADE)
 
     # Bounce types
-    UNDETERMINED = 'UD'
-    PERMANENT = 'PE'
-    TRANSIENT = 'TR'
-    TYPE_CHOICES = (
-        (UNDETERMINED, 'Undetermined'),
-        (PERMANENT, 'Permanent'),
-        (TRANSIENT, 'Transient')
-    )
+    UNDETERMINED = "UD"
+    PERMANENT = "PE"
+    TRANSIENT = "TR"
+    TYPE_CHOICES = ((UNDETERMINED, "Undetermined"), (PERMANENT, "Permanent"), (TRANSIENT, "Transient"))
     TYPES_INVALID = [UNDETERMINED, PERMANENT]
     type = models.CharField(db_index=True, max_length=2, choices=TYPE_CHOICES, default=UNDETERMINED)
     type_map = {t[1]: t[0] for t in TYPE_CHOICES}
@@ -784,7 +817,7 @@ class EmailBounce(models.Model):
 
     class Meta:
         ordering = ("-timestamp",)
-        unique_together = ('user', 'type', 'timestamp')
+        unique_together = ("user", "type", "timestamp")
 
     @classmethod
     def type_from_string(cls, value):
@@ -819,29 +852,37 @@ class UserDeletionRequest(models.Model):
 
     NOTE: username_from and username_to are filled in automatically when UserDeletionRequest object is saved.
     """
-    email_from = models.CharField(max_length=200, help_text="The email from which the user deletion request"
-                                                            "was received.")
+
+    email_from = models.CharField(
+        max_length=200, help_text="The email from which the user deletion requestwas received."
+    )
     user_from = models.ForeignKey(
-        User, null=True, on_delete=models.SET_NULL, related_name='deletion_requests_from', blank=True)
+        User, null=True, on_delete=models.SET_NULL, related_name="deletion_requests_from", blank=True
+    )
     username_from = models.CharField(max_length=150, null=True, blank=True)
-    user_to = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='deletion_requests_to',
-                                help_text="The user account that should be deleted if this request proceeds. "
-                                          "Note that you can click on the magnifying glass icon and search by email.")
+    user_to = models.ForeignKey(
+        User,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="deletion_requests_to",
+        help_text="The user account that should be deleted if this request proceeds. "
+        "Note that you can click on the magnifying glass icon and search by email.",
+    )
     username_to = models.CharField(max_length=150, null=True, blank=True)
     deleted_user = models.ForeignKey(DeletedUser, null=True, on_delete=models.SET_NULL)
-    DELETION_REQUEST_STATUS_RECEIVED_REQUEST = 're'
-    DELETION_REQUEST_STATUS_WAITING_FOR_USER = 'wa'
-    DELETION_REQUEST_STATUS_DELETION_CANCELLED = 'ca'
-    DELETION_REQUEST_STATUS_DELETION_TRIGGERED = 'tr'
-    DELETION_REQUEST_STATUS_USER_WAS_DELETED = 'de'
+    DELETION_REQUEST_STATUS_RECEIVED_REQUEST = "re"
+    DELETION_REQUEST_STATUS_WAITING_FOR_USER = "wa"
+    DELETION_REQUEST_STATUS_DELETION_CANCELLED = "ca"
+    DELETION_REQUEST_STATUS_DELETION_TRIGGERED = "tr"
+    DELETION_REQUEST_STATUS_USER_WAS_DELETED = "de"
     DELETION_REQUEST_STATUSES = (
-        (DELETION_REQUEST_STATUS_RECEIVED_REQUEST, 'Received email deletion request'),
-        (DELETION_REQUEST_STATUS_WAITING_FOR_USER, 'Waiting for user action'),
-        (DELETION_REQUEST_STATUS_DELETION_CANCELLED, 'Request was cancelled'),
-        (DELETION_REQUEST_STATUS_DELETION_TRIGGERED, 'Deletion action was triggered'),
-        (DELETION_REQUEST_STATUS_USER_WAS_DELETED, 'User has been deleted or anonymized')
+        (DELETION_REQUEST_STATUS_RECEIVED_REQUEST, "Received email deletion request"),
+        (DELETION_REQUEST_STATUS_WAITING_FOR_USER, "Waiting for user action"),
+        (DELETION_REQUEST_STATUS_DELETION_CANCELLED, "Request was cancelled"),
+        (DELETION_REQUEST_STATUS_DELETION_TRIGGERED, "Deletion action was triggered"),
+        (DELETION_REQUEST_STATUS_USER_WAS_DELETED, "User has been deleted or anonymized"),
     )
-    status = models.CharField(max_length=2, choices=DELETION_REQUEST_STATUSES, db_index=True, default='re')
+    status = models.CharField(max_length=2, choices=DELETION_REQUEST_STATUSES, db_index=True, default="re")
     last_updated = models.DateTimeField(auto_now=True)
 
     # Store history of state changes in a PG ArrayField of strings
@@ -850,6 +891,7 @@ class UserDeletionRequest(models.Model):
     # Store the deletion action and reason triggered for that user to facilitate re-triggering if need be
     triggered_deletion_action = models.CharField(max_length=100)
     triggered_deletion_reason = models.CharField(max_length=100)
+
 
 @receiver(pre_save, sender=UserDeletionRequest)
 def update_status_history(sender, instance, **kwargs):
@@ -864,9 +906,10 @@ def update_status_history(sender, instance, **kwargs):
         should_update_status_history = True
 
     if should_update_status_history:
-        instance.status_history += ['{}: {} ({})'.format(timezone.now(),
-                                                            instance.get_status_display(),
-                                                            instance.status)]
+        instance.status_history += [
+            "{}: {} ({})".format(timezone.now(), instance.get_status_display(), instance.status)
+        ]
+
 
 @receiver(pre_save, sender=UserDeletionRequest)
 def updated_status_history(sender, instance, **kwargs):

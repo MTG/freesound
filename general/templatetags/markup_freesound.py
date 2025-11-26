@@ -30,8 +30,8 @@ def markdown(value, arg=""):
 
     extensions = [e for e in arg.split(",") if e]
     extension_configs = {
-        'wikilinks': [('base_url', '/help/'), ('end_url', '/'), ('html_class', 'wikilink')],
-        'toc': [('anchorlink', True)]
+        "wikilinks": [("base_url", "/help/"), ("end_url", "/"), ("html_class", "wikilink")],
+        "toc": [("anchorlink", True)],
     }
 
     md = markdown_package.Markdown(extensions=extensions, extension_configs=extension_configs)

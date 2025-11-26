@@ -42,20 +42,20 @@ USE_COLLAPSE_AND_EXPAND_QUERY_PARSER = True  # Note that changing this requies a
 
 # Mapping from freesound sound field names to solr sound field names
 FIELD_NAMES_MAP = {
-    settings.SEARCH_SOUNDS_FIELD_ID: 'id',
-    settings.SEARCH_SOUNDS_FIELD_NAME: 'name',
-    settings.SEARCH_SOUNDS_FIELD_TAGS: {'field': 'tag', 'facet': 'tagfacet'},
-    settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 'description',
-    settings.SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING: 'collection',
-    settings.SEARCH_SOUNDS_FIELD_USER_NAME: {'field': 'username', 'facet': 'username_facet'},
-    settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 'pack',
-    settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: 'pack_grouping',
-    settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: 'samplerate',
-    settings.SEARCH_SOUNDS_FIELD_BITRATE: 'bitrate',
-    settings.SEARCH_SOUNDS_FIELD_BITDEPTH: 'bitdepth',
-    settings.SEARCH_SOUNDS_FIELD_TYPE: {'field': 'type', 'facet': 'type_facet'},
-    settings.SEARCH_SOUNDS_FIELD_CHANNELS: 'channels',
-    settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: 'license'
+    settings.SEARCH_SOUNDS_FIELD_ID: "id",
+    settings.SEARCH_SOUNDS_FIELD_NAME: "name",
+    settings.SEARCH_SOUNDS_FIELD_TAGS: {"field": "tag", "facet": "tagfacet"},
+    settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: "description",
+    settings.SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING: "collection",
+    settings.SEARCH_SOUNDS_FIELD_USER_NAME: {"field": "username", "facet": "username_facet"},
+    settings.SEARCH_SOUNDS_FIELD_PACK_NAME: "pack",
+    settings.SEARCH_SOUNDS_FIELD_PACK_GROUPING: "pack_grouping",
+    settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: "samplerate",
+    settings.SEARCH_SOUNDS_FIELD_BITRATE: "bitrate",
+    settings.SEARCH_SOUNDS_FIELD_BITDEPTH: "bitdepth",
+    settings.SEARCH_SOUNDS_FIELD_TYPE: {"field": "type", "facet": "type_facet"},
+    settings.SEARCH_SOUNDS_FIELD_CHANNELS: "channels",
+    settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: "license",
 }
 
 # Create a reverse field name map that will be useful to get the original freesound field name from a solr field name
@@ -63,8 +63,8 @@ FIELD_NAMES_MAP = {
 REVERSE_FIELD_NAMES_MAP = {}
 for key, value in FIELD_NAMES_MAP.items():
     if isinstance(value, dict):
-        REVERSE_FIELD_NAMES_MAP[value['field']] = key
-        REVERSE_FIELD_NAMES_MAP[value['facet']] = key
+        REVERSE_FIELD_NAMES_MAP[value["field"]] = key
+        REVERSE_FIELD_NAMES_MAP[value["facet"]] = key
     else:
         REVERSE_FIELD_NAMES_MAP[value] = key
 
@@ -72,66 +72,66 @@ for key, value in FIELD_NAMES_MAP.items():
 # The dynamic field names we define in Solr schema are '*_b' (for bool), '*_d' (for float), '*_i' (for integer),
 # '*_s' (for string) and '*_ls' (for lists of strings)
 SOLR_DYNAMIC_FIELDS_SUFFIX_MAP = {
-    settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: '_d',
-    settings.AUDIO_DESCRIPTOR_TYPE_INT: '_i',
-    settings.AUDIO_DESCRIPTOR_TYPE_BOOL: '_b',
-    settings.AUDIO_DESCRIPTOR_TYPE_STRING: '_s',
-    settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: '_ls',
+    settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: "_d",
+    settings.AUDIO_DESCRIPTOR_TYPE_INT: "_i",
+    settings.AUDIO_DESCRIPTOR_TYPE_BOOL: "_b",
+    settings.AUDIO_DESCRIPTOR_TYPE_STRING: "_s",
+    settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: "_ls",
 }
 
 # Some dynamic field types need to have alternative field versions that work with facets. In that case an extra suffix is added.
-SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX = '_f'
+SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX = "_f"
 
 # Generate a map of dynamic fields that will be used to index the output of analyzers. In ANALYZERS_CONFIGURATION, a list of descriptors is
 # defined along with their type. This map will be used to generate the dynamic field names that will be used to index the descriptors
 SOLR_DYNAMIC_FIELDS_MAP = {}
 for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
-    index = descriptor.get('index', True)
+    index = descriptor.get("index", True)
     if index:
-        descriptor_name = descriptor['name']
-        descriptor_type = descriptor.get('type', settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
+        descriptor_name = descriptor["name"]
+        descriptor_type = descriptor.get("type", settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
         if descriptor_type is not None:
-            SOLR_DYNAMIC_FIELDS_MAP[descriptor_name] = '{}{}'.format(
-                descriptor_name, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type])
+            SOLR_DYNAMIC_FIELDS_MAP[descriptor_name] = "{}{}".format(
+                descriptor_name, SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]
+            )
 
 
 def get_solr_fieldname_from_freesound_fieldname(field_name, facet=False, skip_dynamic_field_suffix=False):
-    # Get solr field name from the field name map. If the field is to be used for faceting, it is possible that a 
+    # Get solr field name from the field name map. If the field is to be used for faceting, it is possible that a
     # special field name is used
     name_or_dict = FIELD_NAMES_MAP.get(field_name, field_name)
     if isinstance(name_or_dict, dict):
-        if facet and 'facet' in name_or_dict:
-            solr_field_name = name_or_dict['facet']
+        if facet and "facet" in name_or_dict:
+            solr_field_name = name_or_dict["facet"]
         else:
-            solr_field_name = name_or_dict['field']
+            solr_field_name = name_or_dict["field"]
     else:
         solr_field_name = name_or_dict
 
     # Add the suffix to the field name if it is a dynamic field
     if not skip_dynamic_field_suffix:
         solr_field_name = SOLR_DYNAMIC_FIELDS_MAP.get(solr_field_name, solr_field_name)
-    
+
         # If the field is a list of strings and we want to use it for faceting, we need to add the extra suffix
         if solr_field_name.endswith("_ls") and facet:
             solr_field_name += SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX
-    
+
     return solr_field_name
 
 
 def get_solr_facet_fieldname_from_freesound_fieldname(solr_field_name):
     return get_solr_fieldname_from_freesound_fieldname(solr_field_name, facet=True)
-    
+
 
 def get_freesound_fieldname_from_solr_fieldname(solr_field_name):
-
     # Remove special dynamic field faced suffix
     if solr_field_name.endswith(f"_ls{SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX}"):
-        solr_field_name = solr_field_name[:-len(SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX)]
+        solr_field_name = solr_field_name[: -len(SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX)]
 
     # Remove the rest of dynamic field suffixes
     for suffix in SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.values():
         if solr_field_name.endswith(suffix):
-            solr_field_name = solr_field_name[:-len(suffix)]
+            solr_field_name = solr_field_name[: -len(suffix)]
 
     # Now get the original freesound field name using the reserve map
     return REVERSE_FIELD_NAMES_MAP.get(solr_field_name, solr_field_name)
@@ -147,7 +147,7 @@ SORT_OPTIONS_MAP = {
     settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST: "num_downloads desc",
     settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST: "num_downloads asc",
     settings.SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST: "avg_rating desc",
-    settings.SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST: "avg_rating asc"
+    settings.SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST: "avg_rating asc",
 }
 SORT_OPTIONS_MAP_FORUM = {
     settings.SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST: "thread_created desc",
@@ -155,8 +155,8 @@ SORT_OPTIONS_MAP_FORUM = {
 }
 
 SOLR_VECTOR_FIELDS_DIMENSIONS_MAP = {
-    100: 'sim_vector100',
-    512: 'sim_vector512',
+    100: "sim_vector100",
+    512: "sim_vector512",
 }
 
 
@@ -165,30 +165,21 @@ def get_solr_dense_vector_search_field_name(dimensions, l2_norm=False):
     if base_field_name is None:
         return None
     if l2_norm:
-        return f'{base_field_name}_l2'
+        return f"{base_field_name}_l2"
     return base_field_name
 
 
-SOLR_SOUND_FACET_DEFAULT_OPTIONS = {
-    'limit': 5,
-    'type': 'terms',
-    'sort': 'count desc',
-    'mincount': 1,
-    'missing': False
-}
+SOLR_SOUND_FACET_DEFAULT_OPTIONS = {"limit": 5, "type": "terms", "sort": "count desc", "mincount": 1, "missing": False}
 
-SOLR_DOC_CONTENT_TYPES = {
-    'sound': 's',
-    'similarity_vector': 'v'
-}
+SOLR_DOC_CONTENT_TYPES = {"sound": "s", "similarity_vector": "v"}
 
 
 class FreesoundSoundJsonEncoder(json.JSONEncoder):
     def default(self, value):
         if isinstance(value, datetime):
-            return value.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+            return value.strftime("%Y-%m-%dT%H:%M:%S.000Z")
         elif isinstance(value, date):
-            return value.strftime('%Y-%m-%dT00:00:00.000Z')
+            return value.strftime("%Y-%m-%dT00:00:00.000Z")
 
         return json.JSONEncoder.default(self, value)
 
@@ -213,7 +204,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 encoder=FreesoundSoundJsonEncoder(),
                 results_cls=SolrResponseInterpreter,
                 search_handler="fsquery",
-                always_commit=True
+                always_commit=True,
             )
         return self.sounds_index
 
@@ -224,10 +215,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 encoder=FreesoundSoundJsonEncoder(),
                 results_cls=SolrResponseInterpreter,
                 search_handler="fsquery",
-                always_commit=True
+                always_commit=True,
             )
         return self.forum_index
-    
+
     # Util functions
     def transform_document_into_update_document(self, document):
         """
@@ -237,8 +228,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         fields but not remove those not updated. Using this method we can update similarity-related sound fields and the rest of the
         fields independently.
         """
-        new_document = {'id': document['id']}
-        new_document.update({key: {'set': value} for key, value in document.items() if key != 'id'})
+        new_document = {"id": document["id"]}
+        new_document.update({key: {"set": value} for key, value in document.items() if key != "id"})
         return new_document
 
     def convert_sound_to_search_engine_document(self, sound):
@@ -250,11 +241,22 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document = {}
 
         # Basic sound fields
-        keep_fields = ['username', 'created', 'is_explicit', 'is_remix', 'num_ratings', 'channels', 'md5', 
-                       'was_remixed', 'duration', 'num_downloads', 'filesize']
+        keep_fields = [
+            "username",
+            "created",
+            "is_explicit",
+            "is_remix",
+            "num_ratings",
+            "channels",
+            "md5",
+            "was_remixed",
+            "duration",
+            "num_downloads",
+            "filesize",
+        ]
         for key in keep_fields:
             document[key] = getattr(sound, key)
-        if sound.type == '':
+        if sound.type == "":
             document["type"] = "wav"
         else:
             document["type"] = sound.type
@@ -279,12 +281,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 # precisely treat sounds without packs as a group of their own.
                 document["pack_grouping"] = str(getattr(sound, "id"))
 
-        collections = [] 
+        collections = []
         for collection_data in sound.collections_array:
-            collections.append(str(collection_data['collection_id']) + "_" + remove_control_chars(collection_data['collection_name']))
+            collections.append(
+                str(collection_data["collection_id"]) + "_" + remove_control_chars(collection_data["collection_name"])
+            )
         if collections:
             document["collection"] = collections
-        
+
         document["is_geotagged"] = False
         if hasattr(sound, "geotag"):
             document["is_geotagged"] = True
@@ -299,41 +303,45 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
         document["comment"] = [remove_control_chars(comment_text) for comment_text in getattr(sound, "comments_array")]
         document["num_comments"] = getattr(sound, "num_comments")
- 
+
         locations = sound.locations()
         document["waveform_path_m"] = locations["display"]["wave"]["M"]["path"]
         document["waveform_path_l"] = locations["display"]["wave"]["L"]["path"]
         document["spectral_path_m"] = locations["display"]["spectral"]["M"]["path"]
         document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
         document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
-        
+
         # Index consolidated audio descriptors
         descriptors_to_index = {}
         descriptors_data = sound.get_consolidated_analysis_data()
         if descriptors_data is not None:
             for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
-                index = descriptor.get('index', True)
+                index = descriptor.get("index", True)
                 if index:
-                    descriptor_name = descriptor['name']
-                    descriptor_type = descriptor.get('type', settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
+                    descriptor_name = descriptor["name"]
+                    descriptor_type = descriptor.get("type", settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
                     value = descriptors_data.get(descriptor_name, None)
                     if value is not None:
                         if isinstance(value, list):
                             # Make sure that the list is formed by strings
-                            value = [f'{item}' for item in value]
+                            value = [f"{item}" for item in value]
                         suffix = SOLR_DYNAMIC_FIELDS_SUFFIX_MAP.get(descriptor_type, None)
                         if suffix is not None:
-                            descriptors_to_index[f'{descriptor_name}{suffix}'] = value
-                            if suffix == '_ls':
+                            descriptors_to_index[f"{descriptor_name}{suffix}"] = value
+                            if suffix == "_ls":
                                 # For dynamic fields of type "list of strings", we also need to set an extra field that
                                 # will be used for faceting
-                                descriptors_to_index[f'{descriptor_name}{suffix}{SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX}'] = value
+                                descriptors_to_index[
+                                    f"{descriptor_name}{suffix}{SOLR_DYNAMIC_FIELD_FACET_EXTRA_SUFFIX}"
+                                ] = value
         if descriptors_to_index:
             descriptors_to_index_keys = list(descriptors_to_index.keys())
             current_document_keys = list(document.keys())
             if set(descriptors_to_index_keys).intersection(set(current_document_keys)):
-                raise SearchEngineException(f"Trying to index audio descriptors but some of the field names already exist in the document. "
-                                            f"Conflicting keys: {set(descriptors_to_index_keys).intersection(set(current_document_keys))}")
+                raise SearchEngineException(
+                    f"Trying to index audio descriptors but some of the field names already exist in the document. "
+                    f"Conflicting keys: {set(descriptors_to_index_keys).intersection(set(current_document_keys))}"
+                )
             document.update(descriptors_to_index)
 
         # Category and subcategory fields
@@ -343,12 +351,16 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if sound.bst_category is not None:
             user_provided_category, user_provided_subcategory = sound.category_names
             if user_provided_category is not None:
-                document[f'{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}'] = user_provided_category
+                document[
+                    f"{settings.SEARCH_SOUNDS_FIELD_CATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}"
+                ] = user_provided_category
             if user_provided_subcategory is not None:
-                document[f'{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}'] = user_provided_subcategory
+                document[
+                    f"{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}"
+                ] = user_provided_subcategory
 
         # Finally add the sound ID and content type
-        document.update({'id': sound.id, 'content_type': SOLR_DOC_CONTENT_TYPES['sound']})
+        document.update({"id": sound.id, "content_type": SOLR_DOC_CONTENT_TYPES["sound"]})
 
         return document
 
@@ -358,40 +370,49 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         sound_objects_dict = {s.id: s for s in sound_objects}
         for similarity_space_name, similarity_space_options in settings.SIMILARITY_SPACES.items():
             # If we should index similarity data, add it to the documents
-            vector_field_name = get_solr_dense_vector_search_field_name(similarity_space_options['vector_size'], similarity_space_options.get('l2_norm', False))
+            vector_field_name = get_solr_dense_vector_search_field_name(
+                similarity_space_options["vector_size"], similarity_space_options.get("l2_norm", False)
+            )
 
             if vector_field_name is None:
                 # If the vector size is not supported, then we can't index the vectors generated by the requested analyzer
                 continue
 
-            for ssv in SoundSimilarityVector.objects.filter(sound_id__in=sound_ids, similarity_space_name=similarity_space_name):
+            for ssv in SoundSimilarityVector.objects.filter(
+                sound_id__in=sound_ids, similarity_space_name=similarity_space_name
+            ):
                 similairty_vectors_per_space_per_sound = []
                 sim_vector_document_data = {
-                    'content_type': SOLR_DOC_CONTENT_TYPES['similarity_vector'],
-                    'similarity_space': ssv.similarity_space_name,
-                    'timestamp_start': 0,  # This will be used in the future if analyzers generate multiple sound vectors
-                    'timestamp_end': -1,  # This will be used in the future if analyzers generate multiple sound vectors
-                    vector_field_name: ssv.vector
+                    "content_type": SOLR_DOC_CONTENT_TYPES["similarity_vector"],
+                    "similarity_space": ssv.similarity_space_name,
+                    "timestamp_start": 0,  # This will be used in the future if analyzers generate multiple sound vectors
+                    "timestamp_end": -1,  # This will be used in the future if analyzers generate multiple sound vectors
+                    vector_field_name: ssv.vector,
                 }
                 # Because we still want to be able to group by pack when matching sim vector documents (sound child documents),
                 # we add the pack_grouping field here as well. In the future we might be able to optimize this if we can tell solr
                 # to group results by the field value of a parent document (just like we do to compute facets)
                 if getattr(sound_objects_dict[ssv.sound_id], "pack_id"):
-                    sim_vector_document_data['pack_grouping_child'] = str(getattr(sound_objects_dict[ssv.sound_id], "pack_id")) + "_" + remove_control_chars(
-                        getattr(sound_objects_dict[ssv.sound_id], "pack_name"))
+                    sim_vector_document_data["pack_grouping_child"] = (
+                        str(getattr(sound_objects_dict[ssv.sound_id], "pack_id"))
+                        + "_"
+                        + remove_control_chars(getattr(sound_objects_dict[ssv.sound_id], "pack_name"))
+                    )
                 else:
-                    sim_vector_document_data['pack_grouping_child'] = str(getattr(sound_objects_dict[ssv.sound_id], "id"))
+                    sim_vector_document_data["pack_grouping_child"] = str(
+                        getattr(sound_objects_dict[ssv.sound_id], "id")
+                    )
 
                 # NOTE: if there were multiple vectors per sound per similarity space, we would add them all here
                 similairty_vectors_per_space_per_sound.append(sim_vector_document_data)
-            
+
                 if similairty_vectors_per_space_per_sound:
                     similarity_data[ssv.sound_id] += similairty_vectors_per_space_per_sound
-        
+
         # Add collected vectors to the documents created as child documents
         for document in documents:
-            if document['id'] in similarity_data:
-                document['similarity_vectors'] = similarity_data[document['id']]
+            if document["id"] in similarity_data:
+                document["similarity_vectors"] = similarity_data[document["id"]]
 
     def convert_post_to_search_engine_document(self, post):
         body = remove_control_chars(post.body)
@@ -404,31 +425,27 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             "thread_title": remove_control_chars(post.thread.title),
             "thread_author": post.thread.author.username,
             "thread_created": post.thread.created,
-
             "forum_name": post.thread.forum.name,
             "forum_name_slug": post.thread.forum.name_slug,
-
             "post_author": post.author.username,
             "post_created": post.created,
             "post_body": body,
-
             "num_posts": post.thread.num_posts,
-            "has_posts": False if post.thread.num_posts == 0 else True
+            "has_posts": False if post.thread.num_posts == 0 else True,
         }
         return document
 
     def add_solr_suffix_to_dynamic_fieldnames_in_filter(self, query_filter):
         """Processes a filter string containing field names and replaces the occurrences of fieldnames that match with
-        descriptor names from the "consolidated audio descriptors list" (previously added to SOLR_DYNAMIC_FIELDS_MAP) with 
-        updated fieldnames with the required SOLR dynamic field suffix. This is needed because fields from analyzers are 
+        descriptor names from the "consolidated audio descriptors list" (previously added to SOLR_DYNAMIC_FIELDS_MAP) with
+        updated fieldnames with the required SOLR dynamic field suffix. This is needed because fields from analyzers are
         indexed as dynamic fields which need to end with a specific suffix that SOLR uses to learn about the type of the
         field and how it should treat it.
         """
         for raw_fieldname, solr_fieldname in SOLR_DYNAMIC_FIELDS_MAP.items():
-            query_filter = query_filter.replace(
-                f'{raw_fieldname}:', f'{solr_fieldname}:')
+            query_filter = query_filter.replace(f"{raw_fieldname}:", f"{solr_fieldname}:")
         return query_filter
-        
+
     def search_process_sort(self, sort, forum=False):
         """Translates sorting criteria to solr sort criteria and add extra criteria if sorting by ratings.
 
@@ -454,7 +471,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def search_filter_make_intersection(self, query_filter):
         # In solr 4, fq="a:1 b:2" will take the AND of these two filters, but in solr 5+, this will use OR
         # fq=a:1&fq=b:2 can be used to take an AND, however we don't support this syntax
-        # The AND behaviour can be approximated by using fq="+a:1 +b:2", therefore we add a + to the beginning of each 
+        # The AND behaviour can be approximated by using fq="+a:1 +b:2", therefore we add a + to the beginning of each
         # filter item to force AND. Because we use Dismax query parser, if we have a filter like fq="a:1 OR b:2" which will
         # be converted to fq="+a:1 OR +b:2" by this function, this will still correctly use the OR operator (this would not
         # be the case with standard lucene query parser).
@@ -463,10 +480,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # NOTE: in the future filter handling should be refactored and we should use a proper filter parser
         # that allows us to define our own filter syntax and then represent filters as some intermediate structure that can later
         # be converted to valid lucene/dismax syntax.
-        query_filter = re.sub(r'\b([a-zA-Z_]+:)', r'+\1', query_filter)
-        query_filter = re.sub(r'(\+)\1+', r'\1', query_filter)  # This is to avoid having multiple + in a row if user already has added them
-        query_filter = re.sub(r'(-)\+', r'\1', query_filter) # Removes added '+' when user has included a negation '-'
-        if len(query_filter) > 0 and query_filter[-1] == '+':
+        query_filter = re.sub(r"\b([a-zA-Z_]+:)", r"+\1", query_filter)
+        query_filter = re.sub(
+            r"(\+)\1+", r"\1", query_filter
+        )  # This is to avoid having multiple + in a row if user already has added them
+        query_filter = re.sub(r"(-)\+", r"\1", query_filter)  # Removes added '+' when user has included a negation '-'
+        if len(query_filter) > 0 and query_filter[-1] == "+":
             query_filter = query_filter[:-1]
         return query_filter
 
@@ -496,34 +515,36 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         query_filter = self.add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)
 
         # If we only want sounds with packs and there is no pack filter, add one
-        if only_sounds_with_pack and 'pack:' not in query_filter:
-            query_filter += ' pack:*'
+        if only_sounds_with_pack and "pack:" not in query_filter:
+            query_filter += " pack:*"
 
         if 'geotag:"Intersects(' in query_filter:
             # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
             #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LATITUDE> <MAXIMUM_LONGITUDE>"]
-            query_filter = re.sub(r'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+            query_filter = re.sub(
+                r'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter
+            )
 
         query_filter = self.search_filter_make_intersection(query_filter)
 
         # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
         # our query to the sounds in that list of IDs.
         if only_sounds_within_ids:
-            sounds_within_ids_filter = ' OR '.join([f'id:{sound_id}' for sound_id in only_sounds_within_ids])
+            sounds_within_ids_filter = " OR ".join([f"id:{sound_id}" for sound_id in only_sounds_within_ids])
             if query_filter:
-                query_filter += f' AND ({sounds_within_ids_filter})'
+                query_filter += f" AND ({sounds_within_ids_filter})"
             else:
-                query_filter = f'({sounds_within_ids_filter})'
+                query_filter = f"({sounds_within_ids_filter})"
 
         return query_filter
 
     def force_sounds(self, query_dict):
         # Add an extra filter to the query parameters to make sure these return sound documents only
-        current_fq = query_dict['fq']
+        current_fq = query_dict["fq"]
         if isinstance(current_fq, list):
-            query_dict.update({'fq': current_fq + [f'content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}']}) 
+            query_dict.update({"fq": current_fq + [f"content_type:{SOLR_DOC_CONTENT_TYPES['sound']}"]})
         else:
-            query_dict.update({'fq': [current_fq, f'content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}']}) 
+            query_dict.update({"fq": [current_fq, f"content_type:{SOLR_DOC_CONTENT_TYPES['sound']}"]})
         return query_dict
 
     # Sound methods
@@ -542,7 +563,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     def update_similarity_vectors_in_index(self, sound_objects):
         """Create an update document to add only similarity vectors to sounds that already exist in the index"""
-        documents = [{'id': sound.id, 'content_type': SOLR_DOC_CONTENT_TYPES['sound']} for sound in sound_objects]
+        documents = [{"id": sound.id, "content_type": SOLR_DOC_CONTENT_TYPES["sound"]} for sound in sound_objects]
         self.add_similarity_vectors_to_documents(sound_objects, documents)
         documents = [self.transform_document_into_update_document(d) for d in documents]
         try:
@@ -573,36 +594,50 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             sound_id = sound_object_or_id
         else:
             sound_id = sound_object_or_id.id
-        response = self.search_sounds(query_filter=f'id:{sound_id}', offset=0, num_sounds=1)
+        response = self.search_sounds(query_filter=f"id:{sound_id}", offset=0, num_sounds=1)
         return response.num_found > 0
-    
+
     def get_all_sound_ids_from_index(self):
-        page_size=2000
+        page_size = 2000
         solr_ids = []
         solr_count = None
         current_page = 1
         while solr_count is None or len(solr_ids) < solr_count:
-            response = self.search_sounds(sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
-                                          offset=(current_page - 1) * page_size,
-                                          num_sounds=page_size)
-            solr_ids += [int(element['id']) for element in response.docs]
+            response = self.search_sounds(
+                sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
+                offset=(current_page - 1) * page_size,
+                num_sounds=page_size,
+            )
+            solr_ids += [int(element["id"]) for element in response.docs]
             solr_count = response.num_found
             current_page += 1
         return sorted(solr_ids)
 
-    def search_sounds(self, textual_query='', query_fields=None, query_filter='', field_list=['id', 'score'],
-                      offset=0, current_page=None, num_sounds=settings.SOUNDS_PER_PAGE,
-                      sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
-                      group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False,
-                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False,
-                      similar_to=None, similar_to_min_similarity=settings.SIMILARITY_MIN_THRESHOLD,
-                      similar_to_similarity_space=settings.SIMILARITY_SPACE_DEFAULT):
-
+    def search_sounds(
+        self,
+        textual_query="",
+        query_fields=None,
+        query_filter="",
+        field_list=["id", "score"],
+        offset=0,
+        current_page=None,
+        num_sounds=settings.SOUNDS_PER_PAGE,
+        sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+        group_by_pack=False,
+        num_sounds_per_pack_group=1,
+        facets=None,
+        only_sounds_with_pack=False,
+        only_sounds_within_ids=False,
+        group_counts_as_one_in_facets=False,
+        similar_to=None,
+        similar_to_min_similarity=settings.SIMILARITY_MIN_THRESHOLD,
+        similar_to_similarity_space=settings.SIMILARITY_SPACE_DEFAULT,
+    ):
         query = SolrQuery()
 
         if similar_to is None:
             # Usual search query, no similarity search
-        
+
             # Process search fields: replace "db" field names by solr field names and set default weights if needed
             if query_fields is None:
                 # If no fields provided, use the default
@@ -611,8 +646,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 query_fields = [get_solr_fieldname_from_freesound_fieldname(field_name) for field_name in query_fields]
             elif isinstance(query_fields, dict):
                 # Also remove fields with weight <= 0
-                query_fields = [(get_solr_fieldname_from_freesound_fieldname(field_name), weight)
-                    for field_name, weight in query_fields.items() if weight > 0]
+                query_fields = [
+                    (get_solr_fieldname_from_freesound_fieldname(field_name), weight)
+                    for field_name, weight in query_fields.items()
+                    if weight > 0
+                ]
 
             # Set main query options
             query.set_dismax_query(textual_query, query_fields=query_fields)
@@ -620,7 +658,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         else:
             # Similarity search!
             # We fist set an empty query that will return no results and will be used by default if similarity can't be performed
-            query.set_query('')
+            query.set_query("")
             if similar_to_similarity_space in settings.SIMILARITY_SPACES:
                 # Similarity search will find documents close to a target vector. This will match "child" sound documents (of content_type "similarity vector")
                 config_options = settings.SIMILARITY_SPACES[similar_to_similarity_space]
@@ -628,44 +666,55 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 if isinstance(similar_to, list):
                     vector = similar_to  # we allow vectors to be passed directly
                     # If vector needs to be l2 normalized, do it now. Note that if the vector is already normalized, this will have no effect
-                    if config_options.get('l2_norm', False):
+                    if config_options.get("l2_norm", False):
                         vector = SoundSimilarityVector.l2_normalize_vector(vector)
                 else:
                     # similar_to should be a sound_id
                     try:
-                        ss = Sound.objects.bulk_query_id([similar_to], include_similarity_vectors=[similar_to_similarity_space])
+                        ss = Sound.objects.bulk_query_id(
+                            [similar_to], include_similarity_vectors=[similar_to_similarity_space]
+                        )
                         sound = ss[0]
                     except IndexError:
                         # Return no results if sound does not exist
                         return SearchResults(num_found=0, non_grouped_number_of_results=0)
                     vector = sound.get_similarity_vector(similarity_space_name=similar_to_similarity_space)
-                vector_field_name = get_solr_dense_vector_search_field_name(config_options['vector_size'], config_options.get('l2_norm', False))
+                vector_field_name = get_solr_dense_vector_search_field_name(
+                    config_options["vector_size"], config_options.get("l2_norm", False)
+                )
                 if vector is not None and vector_field_name is not None:
-                    serialized_vector = ','.join([str(n) for n in vector])
-                    query.set_query(f'{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} }}[{serialized_vector}]')
+                    serialized_vector = ",".join([str(n) for n in vector])
+                    query.set_query(
+                        f"{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} }}[{serialized_vector}]"
+                    )
 
         # Process filter
-        query_filter = self.search_process_filter(query_filter,
-                                                  only_sounds_within_ids=only_sounds_within_ids,
-                                                  only_sounds_with_pack=only_sounds_with_pack)
-        
+        query_filter = self.search_process_filter(
+            query_filter, only_sounds_within_ids=only_sounds_within_ids, only_sounds_with_pack=only_sounds_with_pack
+        )
+
         if similar_to is not None:
             # If doing a similarity query, the filter needs to be further processed so we perform filters based on parent documents
-            query_filter_modified = [f'content_type:{SOLR_DOC_CONTENT_TYPES["similarity_vector"]}', f'similarity_space:{similar_to_similarity_space}']  # Add basic filter to only get similarity vectors from selected similarity space and from child documents (this is because root documents can also have sim vectors)
-            top_similar_sounds_as_filter = query.as_kwargs()['q']
+            query_filter_modified = [
+                f"content_type:{SOLR_DOC_CONTENT_TYPES['similarity_vector']}",
+                f"similarity_space:{similar_to_similarity_space}",
+            ]  # Add basic filter to only get similarity vectors from selected similarity space and from child documents (this is because root documents can also have sim vectors)
+            top_similar_sounds_as_filter = query.as_kwargs()["q"]
             try:
                 # Also if target is specified as a sound ID, remove it from the list so it is not returned as a result
-                query_filter_modified.append(f'-_nest_parent_:{int(similar_to)}')
+                query_filter_modified.append(f"-_nest_parent_:{int(similar_to)}")
             except TypeError:
                 # Target is not a sound id, so we don't need to add the filter
                 pass
 
             # Also add the NN query as a filter so we don't get past the first similar_to_min_similarity results when applying extra filters
-            query_filter_modified += [top_similar_sounds_as_filter]  
+            query_filter_modified += [top_similar_sounds_as_filter]
 
             # Now add the usual filter, but wrap it in "child of" modifier so it filters on parent documents instead of child documents
             if query_filter:
-                query_filter_modified.append(f'{{!child of=\"content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}\"}}({query_filter})')
+                query_filter_modified.append(
+                    f'{{!child of="content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}"}}({query_filter})'
+                )
 
             # Replace query_filter with the modified version
             query_filter = query_filter_modified
@@ -673,22 +722,26 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # Set query options
         if current_page is not None:
             offset = (current_page - 1) * num_sounds
-        query.set_query_options(start=offset,
-                                rows=num_sounds,
-                                field_list=field_list,  # We generally only want the sound IDs of the results as we load data from DB
-                                filter_query=query_filter,
-                                sort=self.search_process_sort(sort) if not similar_to else ['score desc'])  # In similarity queries, we always sort by distance to target
+        query.set_query_options(
+            start=offset,
+            rows=num_sounds,
+            field_list=field_list,  # We generally only want the sound IDs of the results as we load data from DB
+            filter_query=query_filter,
+            sort=self.search_process_sort(sort) if not similar_to else ["score desc"],
+        )  # In similarity queries, we always sort by distance to target
 
         # Configure facets
         if facets is not None:
             json_facets = {}
-            facet_fields = [get_solr_facet_fieldname_from_freesound_fieldname(field_name) for field_name, _ in facets.items()]
+            facet_fields = [
+                get_solr_facet_fieldname_from_freesound_fieldname(field_name) for field_name, _ in facets.items()
+            ]
             for field in facet_fields:
                 json_facets[field] = SOLR_SOUND_FACET_DEFAULT_OPTIONS.copy()
-                json_facets[field]['field'] = field
+                json_facets[field]["field"] = field
                 if similar_to is not None:
                     # In similarity search we need to set the "domain" facet option to apply them to the parent documents of the child documents we will match
-                    json_facets[field]['domain'] = {'blockParent': f'content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}'}
+                    json_facets[field]["domain"] = {"blockParent": f"content_type:{SOLR_DOC_CONTENT_TYPES['sound']}"}
             for field_name, extra_options in facets.items():
                 json_facets[get_solr_facet_fieldname_from_freesound_fieldname(field_name)].update(extra_options)
             query.set_facet_json_api(json_facets)
@@ -696,21 +749,23 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # Configure grouping
         if group_by_pack:
             if USE_COLLAPSE_AND_EXPAND_QUERY_PARSER:
-                current_filter = query.params.get('fq', '')
+                current_filter = query.params.get("fq", "")
                 field_name = "pack_grouping" if similar_to is None else "pack_grouping_child"
-                group_by_pack_filter = f'{{!collapse field={field_name} nullPolicy=expand}}'
+                group_by_pack_filter = f"{{!collapse field={field_name} nullPolicy=expand}}"
                 if current_filter:
                     if type(current_filter) is list:
-                        query.params['fq'] = current_filter + [group_by_pack_filter]
+                        query.params["fq"] = current_filter + [group_by_pack_filter]
                     else:
-                        query.params['fq'] = [current_filter, group_by_pack_filter]
+                        query.params["fq"] = [current_filter, group_by_pack_filter]
                 else:
-                    query.params['fq'] = [group_by_pack_filter]
-                query.params['fl'] = query.params['fl'] + f',{field_name}'
-                query.params['expand'] = True
-                query.params['expand.rows'] = max(0, num_sounds_per_pack_group - 1)  # We return one less sound per pack group because the first sound is used to represent the pack group
+                    query.params["fq"] = [group_by_pack_filter]
+                query.params["fl"] = query.params["fl"] + f",{field_name}"
+                query.params["expand"] = True
+                query.params["expand.rows"] = max(
+                    0, num_sounds_per_pack_group - 1
+                )  # We return one less sound per pack group because the first sound is used to represent the pack group
             else:
-                query.set_group_field(group_field="pack_grouping" if not similar_to else "pack_grouping_child")  
+                query.set_group_field(group_field="pack_grouping" if not similar_to else "pack_grouping_child")
                 query.set_group_options(
                     group_func=None,
                     group_query=None,
@@ -719,41 +774,42 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     group_offset=0,
                     group_sort=None,
                     group_sort_ingroup=None,
-                    group_format='grouped',
+                    group_format="grouped",
                     group_main=False,
                     group_num_groups=True,  # We need to know the number of groups to be able to paginate
                     group_cache_percent=0,
-                    group_truncate=group_counts_as_one_in_facets)
+                    group_truncate=group_counts_as_one_in_facets,
+                )
 
         # Do the query!
         # Note: we create a SearchResults with the same members as SolrResponseInterpreter (the response from .search()).
         # We do it in this way to conform to SearchEngine.search_sounds definition which must return SearchResults
         try:
-            # Get a dictionary with the query parameters to be sent to SOLR. Take into account that in non-similarity queries, 
+            # Get a dictionary with the query parameters to be sent to SOLR. Take into account that in non-similarity queries,
             # we need to force the content_type to be "sound" so no child documents (similarity vector documents) are returned
             query_as_kwargs = self.force_sounds(query.as_kwargs()) if similar_to is None else query.as_kwargs()
 
-            if  USE_COLLAPSE_AND_EXPAND_QUERY_PARSER and group_by_pack:
+            if USE_COLLAPSE_AND_EXPAND_QUERY_PARSER and group_by_pack:
                 # If we are using collapse and expand query parser and are grouping by pack, we need to make an extra
                 # query to obtain 1) the total number of ungrouped "matches", and 2) facet counts for all sounds and not only
                 # the collapsed groups (except if group_counts_as_one_in_facets is True, in which case we are fine with the
                 # collapsed facet counts). Event hough we are making two queries, this is still more efficient than making
                 # a single query using the "group" method as we were doing before using the collapse and expand query parser.
-                
+
                 # Make the initial query to get the collapsed results. Remove facet computation if needed to save query time.
                 facets_kwarg = None
-                if not group_counts_as_one_in_facets and 'json.facet' in query_as_kwargs:
-                    facets_kwarg = query_as_kwargs['json.facet']
-                    query_as_kwargs['json.facet'] = {}
+                if not group_counts_as_one_in_facets and "json.facet" in query_as_kwargs:
+                    facets_kwarg = query_as_kwargs["json.facet"]
+                    query_as_kwargs["json.facet"] = {}
                 results = self.get_sounds_index().search(**query_as_kwargs)
-               
-                # Now make the second query in which we get the facets and the total number of results, and remove the "collapse" filter.               
-                fq = [fq_element for fq_element in query_as_kwargs['fq'] if 'collapse field' not in fq_element]
-                query_as_kwargs['fq'] = fq
-                query_as_kwargs['rows'] = 0
-                query_as_kwargs['expand'] = False
+
+                # Now make the second query in which we get the facets and the total number of results, and remove the "collapse" filter.
+                fq = [fq_element for fq_element in query_as_kwargs["fq"] if "collapse field" not in fq_element]
+                query_as_kwargs["fq"] = fq
+                query_as_kwargs["rows"] = 0
+                query_as_kwargs["expand"] = False
                 if not group_counts_as_one_in_facets and facets_kwarg is not None:
-                    query_as_kwargs['json.facet'] = facets_kwarg
+                    query_as_kwargs["json.facet"] = facets_kwarg
                 results_extra_query = self.get_sounds_index().search(**query_as_kwargs)
                 if not group_counts_as_one_in_facets:
                     results.facets = results_extra_query.facets
@@ -761,16 +817,19 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             else:
                 # If we are not using collapse and expand query parser (and/or not grouping by pack), just run the query.
                 results = self.get_sounds_index().search(**query_as_kwargs)
-            
+
             # Facets returned in results use the corresponding solr fieldnames as keys. We want to convert them to the
             # original fieldnames so that the rest of the code can use them without knowing about the solr fieldnames.
-            results.facets = {get_freesound_fieldname_from_solr_fieldname(facet_name): data for facet_name, data in results.facets.items()}
+            results.facets = {
+                get_freesound_fieldname_from_solr_fieldname(facet_name): data
+                for facet_name, data in results.facets.items()
+            }
 
             # Solr uses a string for the id field, but django uses an int. Convert the id in all results to int
             # before use to avoid issues
             for d in results.docs:
                 # Get the sound ids from the results
-                d["id"] = int(d["id"] if similar_to is None else d["id"].split('/')[0])
+                d["id"] = int(d["id"] if similar_to is None else d["id"].split("/")[0])
 
             return SearchResults(
                 docs=results.docs,
@@ -780,28 +839,27 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 non_grouped_number_of_results=results.non_grouped_number_of_results,
                 facets=results.facets,
                 highlighting=results.highlighting,
-                q_time=results.q_time
+                q_time=results.q_time,
             )
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
 
-
     def get_random_sound_id(self):
         query = SolrQuery()
         rand_key = random.randint(1, 10000000)
-        sort = ['random_%d asc' % rand_key]
-        filter_query = 'is_explicit:0'
+        sort = ["random_%d asc" % rand_key]
+        filter_query = "is_explicit:0"
         query.set_query("*:*")
         query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query, sort=sort)
         try:
             response = self.get_sounds_index().search(search_handler="select", **self.force_sounds(query.as_kwargs()))
             docs = response.docs
             if docs:
-                return int(docs[0]['id'])
+                return int(docs[0]["id"])
             return 0
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
-        
+
     def get_num_sim_vectors_indexed_per_similarity_space(self):
         results = {}
         for similarity_space_name in settings.SIMILARITY_SPACES.keys():
@@ -814,8 +872,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             try:
                 response = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
                 results[similarity_space_name] = {
-                    'num_sounds': response.num_found,
-                    'num_vectors': response.non_grouped_number_of_results
+                    "num_sounds": response.num_found,
+                    "num_vectors": response.non_grouped_number_of_results,
                 }
             except pysolr.SolrError as e:
                 raise SearchEngineException(e)
@@ -853,41 +911,60 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             post_id = forum_post_object_or_id
         else:
             post_id = forum_post_object_or_id.id
-        response = self.search_forum_posts(query_filter=f'id:{post_id}', offset=0, num_posts=1)
+        response = self.search_forum_posts(query_filter=f"id:{post_id}", offset=0, num_posts=1)
         return response.num_found > 0
 
-    def search_forum_posts(self, textual_query='', query_filter='', sort=settings.SEARCH_FORUM_SORT_DEFAULT, 
-                           offset=0, current_page=None, num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
+    def search_forum_posts(
+        self,
+        textual_query="",
+        query_filter="",
+        sort=settings.SEARCH_FORUM_SORT_DEFAULT,
+        offset=0,
+        current_page=None,
+        num_posts=settings.FORUM_POSTS_PER_PAGE,
+        group_by_thread=True,
+    ):
         query = SolrQuery()
-        query.set_dismax_query(textual_query, query_fields=[("thread_title", 4),
-                                                            ("post_body", 3),
-                                                            ("thread_author", 3),
-                                                            ("post_author", 3),
-                                                            ("forum_name", 2)])
-        query.set_highlighting_options_default(field_list=["post_body"],
-                                               fragment_size=200,
-                                               alternate_field="post_body",
-                                               require_field_match=False,
-                                               pre="<strong>",
-                                               post="</strong>")
+        query.set_dismax_query(
+            textual_query,
+            query_fields=[
+                ("thread_title", 4),
+                ("post_body", 3),
+                ("thread_author", 3),
+                ("post_author", 3),
+                ("forum_name", 2),
+            ],
+        )
+        query.set_highlighting_options_default(
+            field_list=["post_body"],
+            fragment_size=200,
+            alternate_field="post_body",
+            require_field_match=False,
+            pre="<strong>",
+            post="</strong>",
+        )
         if current_page is not None:
             offset = (current_page - 1) * num_posts
-        query.set_query_options(start=offset,
-                                rows=num_posts,
-                                field_list=["id",
-                                            "score",
-                                            "forum_name",
-                                            "forum_name_slug",
-                                            "thread_id",
-                                            "thread_title",
-                                            "thread_author",
-                                            "thread_created",
-                                            "post_body",
-                                            "post_author",
-                                            "post_created",
-                                            "num_posts"],
-                                filter_query=query_filter,
-                                sort=self.search_process_sort(sort, forum=True))
+        query.set_query_options(
+            start=offset,
+            rows=num_posts,
+            field_list=[
+                "id",
+                "score",
+                "forum_name",
+                "forum_name_slug",
+                "thread_id",
+                "thread_title",
+                "thread_author",
+                "thread_created",
+                "post_body",
+                "post_author",
+                "post_created",
+                "num_posts",
+            ],
+            filter_query=query_filter,
+            sort=self.search_process_sort(sort, forum=True),
+        )
 
         if group_by_thread:
             query.set_group_field("thread_title_grouped")
@@ -906,7 +983,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 non_grouped_number_of_results=results.non_grouped_number_of_results,
                 facets=results.facets,
                 highlighting=results.highlighting,
-                q_time=results.q_time
+                q_time=results.q_time,
             )
         except pysolr.SolrError as e:
             raise SearchEngineException(e)
@@ -914,10 +991,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     # Tag clouds methods
     def get_user_tags(self, username):
         query = SolrQuery()
-        query.set_query('*:*')
+        query.set_query("*:*")
         filter_query = f'username:"{username}"'
         query.set_query_options(field_list=["id"], filter_query=filter_query)
-        tag_facet_field_name = get_solr_facet_fieldname_from_freesound_fieldname(get_solr_fieldname_from_freesound_fieldname(settings.SEARCH_SOUNDS_FIELD_TAGS))
+        tag_facet_field_name = get_solr_facet_fieldname_from_freesound_fieldname(
+            get_solr_fieldname_from_freesound_fieldname(settings.SEARCH_SOUNDS_FIELD_TAGS)
+        )
         query.add_facet_fields(tag_facet_field_name)
         query.set_facet_options(tag_facet_field_name, limit=10, mincount=1)
         try:
@@ -928,10 +1007,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
     def get_pack_tags(self, username, pack_name):
         query = SolrQuery()
-        query.set_dismax_query('*:*')
-        filter_query = f'username:\"{username}\" pack:\"{pack_name}\"'
+        query.set_dismax_query("*:*")
+        filter_query = f'username:"{username}" pack:"{pack_name}"'
         query.set_query_options(field_list=["id"], filter_query=filter_query)
-        tag_facet_field_name = get_solr_facet_fieldname_from_freesound_fieldname(get_solr_fieldname_from_freesound_fieldname(settings.SEARCH_SOUNDS_FIELD_TAGS))
+        tag_facet_field_name = get_solr_facet_fieldname_from_freesound_fieldname(
+            get_solr_fieldname_from_freesound_fieldname(settings.SEARCH_SOUNDS_FIELD_TAGS)
+        )
         query.add_facet_fields(tag_facet_field_name)
         query.set_facet_options(tag_facet_field_name, limit=20, mincount=1)
         try:

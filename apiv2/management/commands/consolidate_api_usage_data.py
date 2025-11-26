@@ -29,17 +29,17 @@ from utils.cache import get_all_keys_matching_pattern
 from utils.management_commands import LoggingBaseCommand
 
 
-
 console_logger = logging.getLogger("console")
 cache_api_monitoring = caches["api_monitoring"]
 
 
 class Command(LoggingBaseCommand):
-
-    help = 'Consolidate API usage data stored in cache backend to the database. This command will look for entries in' \
-           ' the cache which correspond to stored "requests per client" counts for the last 2 days. It will update ' \
-           'corresponding APIClientDailyUsageHistory objects in the database so the information is saved permanently' \
-           'before the cache items expire.'
+    help = (
+        "Consolidate API usage data stored in cache backend to the database. This command will look for entries in"
+        ' the cache which correspond to stored "requests per client" counts for the last 2 days. It will update '
+        "corresponding APIClientDailyUsageHistory objects in the database so the information is saved permanently"
+        "before the cache items expire."
+    )
 
     def handle(self, *args, **options):
         self.log_start()
@@ -48,16 +48,17 @@ class Command(LoggingBaseCommand):
         now = timezone.now().date()
         for i in range(0, n_days_back):
             date_filter = now - datetime.timedelta(days=i)
-            
+
             # Get cache keys that match a pattern. Note that using Django's default redis client, this requires some special trickery
-            monitoring_key_pattern = f'*{date_filter.year}-{date_filter.month}-{date_filter.day}_*'
-            cache_keys = get_all_keys_matching_pattern(monitoring_key_pattern, cache_api_monitoring) 
+            monitoring_key_pattern = f"*{date_filter.year}-{date_filter.month}-{date_filter.day}_*"
+            cache_keys = get_all_keys_matching_pattern(monitoring_key_pattern, cache_api_monitoring)
 
             for key, count in cache_api_monitoring.get_many(cache_keys).items():
                 try:
-                    apiv2_client = ApiV2Client.objects.get(oauth_client__client_id=key.split('_')[1])
-                    usage_history, _ = APIClientDailyUsageHistory\
-                        .objects.get_or_create(date=date_filter, apiv2_client=apiv2_client)
+                    apiv2_client = ApiV2Client.objects.get(oauth_client__client_id=key.split("_")[1])
+                    usage_history, _ = APIClientDailyUsageHistory.objects.get_or_create(
+                        date=date_filter, apiv2_client=apiv2_client
+                    )
                     usage_history.number_of_requests = count
                     usage_history.save()
                 except ApiV2Client.DoesNotExist:

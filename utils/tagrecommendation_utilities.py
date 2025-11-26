@@ -32,11 +32,10 @@ from django.http import HttpResponse
 from tagrecommendation.client import TagRecommendation
 from utils.tags import clean_and_split_tags
 
-web_logger = logging.getLogger('web')
+web_logger = logging.getLogger("web")
 
 
 def get_recommended_tags(input_tags, max_number_of_tags=30):
-
     hashed_tags = md5(",".join(sorted(input_tags)).encode())
     cache_key = "recommended-tags-for-%s" % (hashed_tags.hexdigest())
 
@@ -48,29 +47,31 @@ def get_recommended_tags(input_tags, max_number_of_tags=30):
     if not recommended_tags:
         recommended_tags = TagRecommendation.recommend_tags(input_tags)
 
-        if not recommended_tags['tags']:
-            recommended_tags['community'] = "-"
+        if not recommended_tags["tags"]:
+            recommended_tags["community"] = "-"
 
         cache.set(cache_key, recommended_tags, settings.TAGRECOMMENDATION_CACHE_TIME)
 
-    return recommended_tags['tags'][:max_number_of_tags], recommended_tags['community']
+    return recommended_tags["tags"][:max_number_of_tags], recommended_tags["community"]
 
 
 def get_recommended_tags_view(request):
-    if request.method == 'POST':
-        input_tags = request.POST.get('input_tags', False)
+    if request.method == "POST":
+        input_tags = request.POST.get("input_tags", False)
         if input_tags:
             input_tags = list(clean_and_split_tags(input_tags))
             if len(input_tags) > 0:
                 try:
                     tags, community = get_recommended_tags(input_tags)
-                    return HttpResponse(json.dumps([tags, community]), content_type='application/javascript')
+                    return HttpResponse(json.dumps([tags, community]), content_type="application/javascript")
                 except urllib.error.URLError as e:
-                    web_logger.info('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
-                                     (e, traceback.format_exc()))
+                    web_logger.info(
+                        "Could not get a response from the tagrecommendation service (%s)\n\t%s"
+                        % (e, traceback.format_exc())
+                    )
                     return HttpResponseUnavailableError()
 
-    return HttpResponse(json.dumps([[],"-"]), content_type='application/javascript')
+    return HttpResponse(json.dumps([[], "-"]), content_type="application/javascript")
 
 
 def get_id_of_last_indexed_sound():
@@ -85,13 +86,11 @@ def get_id_of_last_indexed_sound():
 def post_sounds_to_tagrecommendation_service(sound_qs):
     data_to_post = []
     N_SOUNDS_PER_CALL = 10
-    total_calls = int(ceil(float(len(sound_qs))/N_SOUNDS_PER_CALL))
+    total_calls = int(ceil(float(len(sound_qs)) / N_SOUNDS_PER_CALL))
     print("Sending recommendation data...")
     idx = 1
     for count, sound in enumerate(sound_qs):
-        data_to_post.append(
-            (sound.id, list(sound.tags.values_list('name', flat=True)))
-        )
+        data_to_post.append((sound.id, list(sound.tags.values_list("name", flat=True))))
         if (count + 1) % N_SOUNDS_PER_CALL == 0:
             ids = [element[0] for element in data_to_post]
             tagss = [element[1] for element in data_to_post]

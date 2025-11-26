@@ -24,34 +24,34 @@ import logging
 import json
 from utils.aws import get_ses_stats, AwsCredentialsNotConfigured, EndpointConnectionError
 
-console_logger = logging.getLogger('console')
-commands_logger = logging.getLogger('commands')
+console_logger = logging.getLogger("console")
+commands_logger = logging.getLogger("commands")
 
 
 class Command(BaseCommand):
-    help = 'Retrieves email stats from AWS SES and reports it to graylog.'
+    help = "Retrieves email stats from AWS SES and reports it to graylog."
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--short-term-datapoints',
+            "--short-term-datapoints",
             type=int,
-            dest='n_datapoints',
+            dest="n_datapoints",
             help="Number of datapoints to aggregate for short-term stats (cronjob interval / aws interval (15mins))",
         )
 
         parser.add_argument(
-            '--long-term-sample-size',
+            "--long-term-sample-size",
             type=int,
-            dest='sample_size',
+            dest="sample_size",
             help="Number of emails to approximate bounce rate from AWS dashboard",
         )
 
     def handle(self, *args, **options):
         try:
-            sample_size = options['sample_size'] or settings.AWS_SES_BOUNCE_RATE_SAMPLE_SIZE
-            n_points = options['n_datapoints'] or settings.AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS
+            sample_size = options["sample_size"] or settings.AWS_SES_BOUNCE_RATE_SAMPLE_SIZE
+            n_points = options["n_datapoints"] or settings.AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS
         except AttributeError:
-            console_logger.info('AWS SES config variables not configured')
+            console_logger.info("AWS SES config variables not configured")
             return
 
         try:
@@ -60,5 +60,5 @@ class Command(BaseCommand):
             console_logger.info(str(e))
             return
 
-        commands_logger.info(f'Reporting AWS email stats ({json.dumps(stats)})')
-        console_logger.info(f'Reporting AWS email stats ({json.dumps(stats)})')
+        commands_logger.info(f"Reporting AWS email stats ({json.dumps(stats)})")
+        console_logger.info(f"Reporting AWS email stats ({json.dumps(stats)})")

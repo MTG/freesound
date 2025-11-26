@@ -22,24 +22,30 @@ from django import forms
 from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
 
+
 class CommentForm(forms.Form):
     comment = HtmlCleaningCharField(
-        widget=forms.Textarea, max_length=4000, label='',
-        help_text='You can add comments with a timestamp using the syntax #minute:second (e.g., "The sound at #1:34 is really neat").')
-    
+        widget=forms.Textarea,
+        max_length=4000,
+        label="",
+        help_text='You can add comments with a timestamp using the syntax #minute:second (e.g., "The sound at #1:34 is really neat").',
+    )
+
     def __init__(self, request, *args, **kwargs):
         self.request = request
-        kwargs.update(dict(label_suffix=''))
+        kwargs.update(dict(label_suffix=""))
         super().__init__(*args, **kwargs)
 
-        self.fields['comment'].widget.attrs['placeholder'] = 'Write your comment here...'
-        self.fields['comment'].widget.attrs['rows'] = False
-        self.fields['comment'].widget.attrs['cols'] = False
-    
+        self.fields["comment"].widget.attrs["placeholder"] = "Write your comment here..."
+        self.fields["comment"].widget.attrs["rows"] = False
+        self.fields["comment"].widget.attrs["cols"] = False
+
     def clean_comment(self):
-        comment = self.cleaned_data['comment']
+        comment = self.cleaned_data["comment"]
 
         if is_spam(self.request, comment):
-            raise forms.ValidationError("Your comment was considered spam, please edit and repost. If it keeps failing please contact the admins.")
-        
+            raise forms.ValidationError(
+                "Your comment was considered spam, please edit and repost. If it keeps failing please contact the admins."
+            )
+
         return comment

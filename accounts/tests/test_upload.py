@@ -32,12 +32,16 @@ from sounds.forms import PackForm
 from sounds.models import License, Sound, Pack, BulkUploadProgress
 from tags.models import Tag
 from utils.filesystem import File
-from utils.test_helpers import create_test_files, override_uploads_path_with_temp_directory, \
-    override_csv_path_with_temp_directory, create_user_and_sounds
+from utils.test_helpers import (
+    create_test_files,
+    override_uploads_path_with_temp_directory,
+    override_csv_path_with_temp_directory,
+    create_user_and_sounds,
+)
 
 
 class UserUploadAndDescribeSounds(TestCase):
-    fixtures = ['licenses', 'user_groups', 'email_preference_type']
+    fixtures = ["licenses", "user_groups", "email_preference_type"]
 
     @skipIf(True, "Test not ready for new uploader")
     @override_uploads_path_with_temp_directory
@@ -49,133 +53,173 @@ class UserUploadAndDescribeSounds(TestCase):
         # Test successful file upload
         filename = "file.wav"
         f = SimpleUploadedFile(filename, b"file_content")
-        resp = self.client.post("/home/upload/html/", {'file': f})
+        resp = self.client.post("/home/upload/html/", {"file": f})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), True)
+        self.assertEqual(os.path.exists(settings.UPLOADS_PATH + "/%i/%s" % (user.id, filename)), True)
 
         # Test file upload that should fail
         filename = "filè.xyz"
         f = SimpleUploadedFile(filename, b"file_content")
-        resp = self.client.post("/home/upload/html/", {'file': f})
+        resp = self.client.post("/home/upload/html/", {"file": f})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), False)
+        self.assertEqual(os.path.exists(settings.UPLOADS_PATH + "/%i/%s" % (user.id, filename)), False)
 
     @override_uploads_path_with_temp_directory
     def test_select_uploaded_files_to_describe(self):
         # Create audio files
-        filenames = ['file1.wav', 'file2.wav', 'file3.wav', 'filè4.wav']
+        filenames = ["file1.wav", "file2.wav", "file3.wav", "filè4.wav"]
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
-        user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
+        user_upload_path = settings.UPLOADS_PATH + "/%i/" % user.id
         os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(filenames, user_upload_path)
 
         # Check that files are displayed in the template
-        resp = self.client.get(reverse('accounts-manage-sounds', args=['pending_description']))
+        resp = self.client.get(reverse("accounts-manage-sounds", args=["pending_description"]))
         self.assertEqual(resp.status_code, 200)
-        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in resp.context['file_structure'].children]), sorted(filenames))
+        self.assertListEqual(
+            sorted([os.path.basename(f.full_path) for f in resp.context["file_structure"].children]), sorted(filenames)
+        )
 
         # Selecting one file redirects to /home/describe/sounds/
         sounds_to_describe_idx = [0]
-        resp = self.client.post(reverse('accounts-manage-sounds', args=['pending_description']), {
-            'describe': 'describe',
-            'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
-        })
-        session_key_prefix = resp.url.split('session=')[1]
-        self.assertRedirects(resp, reverse('accounts-describe-sounds') + f'?session={session_key_prefix}')
-        self.assertEqual(self.client.session[f'{session_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
-        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{session_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
-        
+        resp = self.client.post(
+            reverse("accounts-manage-sounds", args=["pending_description"]),
+            {
+                "describe": "describe",
+                "sound-files": [
+                    f"file{idx}" for idx in sounds_to_describe_idx
+                ],  # Note this is not the filename but the value of the "select" option
+            },
+        )
+        session_key_prefix = resp.url.split("session=")[1]
+        self.assertRedirects(resp, reverse("accounts-describe-sounds") + f"?session={session_key_prefix}")
+        self.assertEqual(
+            self.client.session[f"{session_key_prefix}-len_original_describe_sounds"], len(sounds_to_describe_idx)
+        )
+        self.assertListEqual(
+            sorted(
+                [os.path.basename(f.full_path) for f in self.client.session[f"{session_key_prefix}-describe_sounds"]]
+            ),
+            sorted([filenames[idx] for idx in sounds_to_describe_idx]),
+        )
+
         # Selecting multiple file redirects to /home/describe/license/
         sounds_to_describe_idx = [1, 2, 3]
-        resp = self.client.post(reverse('accounts-manage-sounds', args=['pending_description']), {
-            'describe': 'describe',
-            'sound-files': [f'file{idx}' for idx in sounds_to_describe_idx],  # Note this is not the filename but the value of the "select" option
-        })
-        session_key_prefix = resp.url.split('session=')[1]
-        self.assertRedirects(resp, reverse('accounts-describe-license') + f'?session={session_key_prefix}')
-        self.assertEqual(self.client.session[f'{session_key_prefix}-len_original_describe_sounds'], len(sounds_to_describe_idx))
-        self.assertListEqual(sorted([os.path.basename(f.full_path) for f in self.client.session[f'{session_key_prefix}-describe_sounds']]), sorted([filenames[idx] for idx in sounds_to_describe_idx]))
-        
+        resp = self.client.post(
+            reverse("accounts-manage-sounds", args=["pending_description"]),
+            {
+                "describe": "describe",
+                "sound-files": [
+                    f"file{idx}" for idx in sounds_to_describe_idx
+                ],  # Note this is not the filename but the value of the "select" option
+            },
+        )
+        session_key_prefix = resp.url.split("session=")[1]
+        self.assertRedirects(resp, reverse("accounts-describe-license") + f"?session={session_key_prefix}")
+        self.assertEqual(
+            self.client.session[f"{session_key_prefix}-len_original_describe_sounds"], len(sounds_to_describe_idx)
+        )
+        self.assertListEqual(
+            sorted(
+                [os.path.basename(f.full_path) for f in self.client.session[f"{session_key_prefix}-describe_sounds"]]
+            ),
+            sorted([filenames[idx] for idx in sounds_to_describe_idx]),
+        )
+
         # Selecting files to delete, deletes the files
         sounds_to_delete_idx = [1, 2, 3]
-        resp = self.client.post(reverse('accounts-manage-sounds', args=['pending_description']), {
-            'delete_confirm': 'delete_confirm',
-            'sound-files': [f'file{idx}' for idx in sounds_to_delete_idx],  # Note this is not the filename but the value of the "select" option,
-        })
-        self.assertRedirects(resp, reverse('accounts-manage-sounds', args=['pending_description']))
+        resp = self.client.post(
+            reverse("accounts-manage-sounds", args=["pending_description"]),
+            {
+                "delete_confirm": "delete_confirm",
+                "sound-files": [
+                    f"file{idx}" for idx in sounds_to_delete_idx
+                ],  # Note this is not the filename but the value of the "select" option,
+            },
+        )
+        self.assertRedirects(resp, reverse("accounts-manage-sounds", args=["pending_description"]))
         self.assertEqual(len(os.listdir(user_upload_path)), len(filenames) - len(sounds_to_delete_idx))
 
     @override_uploads_path_with_temp_directory
     def test_describe_selected_files(self):
-
         # Create audio files
-        filenames = ['file1.wav', 'filè2.wav']
+        filenames = ["file1.wav", "filè2.wav"]
         user = User.objects.create_user("testuser", email="1@xmpl.com", password="testpass")
         self.client.force_login(user)
-        user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
+        user_upload_path = settings.UPLOADS_PATH + "/%i/" % user.id
         os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(filenames, user_upload_path)
         _, _, sound_sources = create_user_and_sounds(
-            num_sounds=3, num_packs=0, 
-            user=User.objects.create_user("testuser2", email="2@xmpl.com", password="testpass"))  # These sounds will be used as sources for an uploaded sound
+            num_sounds=3,
+            num_packs=0,
+            user=User.objects.create_user("testuser2", email="2@xmpl.com", password="testpass"),
+        )  # These sounds will be used as sources for an uploaded sound
 
         # Set license and pack data in session
         session = self.client.session
-        session_key_prefix = '304298eb'
-        session[f'{session_key_prefix}-describe_license'] = License.objects.all()[0]
-        session[f'{session_key_prefix}-describe_pack'] = False
-        session[f'{session_key_prefix}-len_original_describe_sounds'] = 2
-        session[f'{session_key_prefix}-describe_sounds'] = [File(1, filenames[0], user_upload_path + filenames[0], False),
-                                      File(2, filenames[1], user_upload_path + filenames[1], False)]
+        session_key_prefix = "304298eb"
+        session[f"{session_key_prefix}-describe_license"] = License.objects.all()[0]
+        session[f"{session_key_prefix}-describe_pack"] = False
+        session[f"{session_key_prefix}-len_original_describe_sounds"] = 2
+        session[f"{session_key_prefix}-describe_sounds"] = [
+            File(1, filenames[0], user_upload_path + filenames[0], False),
+            File(2, filenames[1], user_upload_path + filenames[1], False),
+        ]
         session.save()
 
         # Post description information
-        resp = self.client.post(f'/home/describe/sounds/?session={session_key_prefix}', {
-            '0-audio_filename': filenames[0],
-            '0-lat': '46.31658418182218',
-            '0-lon': '3.515625',
-            '0-zoom': '16',
-            '0-tags': 'testtag1 testtag2 testtag3',
-            '0-pack': PackForm.NO_PACK_CHOICE_VALUE,
-            '0-license': '3',
-            '0-description': 'a test description for the sound file',
-            '0-new_pack': '',
-            '0-bst_category': 'ss-n',
-            '0-name': filenames[0],
-            '1-audio_filename': filenames[1],
-            '1-license': '3',
-            '1-description': 'another test description',
-            '1-lat': '',
-            '1-pack': PackForm.NO_PACK_CHOICE_VALUE,
-            '1-lon': '',
-            '1-bst_category': 'fx-o',
-            '1-name': filenames[1],
-            '1-new_pack': 'Name of a new pack',
-            '1-zoom': '',
-            '1-tags': 'testtag1 testtag4 testtag5',
-            '1-sources': ','.join([f'{s.id}' for s in sound_sources]),
-        }, follow=True)
-        
+        resp = self.client.post(
+            f"/home/describe/sounds/?session={session_key_prefix}",
+            {
+                "0-audio_filename": filenames[0],
+                "0-lat": "46.31658418182218",
+                "0-lon": "3.515625",
+                "0-zoom": "16",
+                "0-tags": "testtag1 testtag2 testtag3",
+                "0-pack": PackForm.NO_PACK_CHOICE_VALUE,
+                "0-license": "3",
+                "0-description": "a test description for the sound file",
+                "0-new_pack": "",
+                "0-bst_category": "ss-n",
+                "0-name": filenames[0],
+                "1-audio_filename": filenames[1],
+                "1-license": "3",
+                "1-description": "another test description",
+                "1-lat": "",
+                "1-pack": PackForm.NO_PACK_CHOICE_VALUE,
+                "1-lon": "",
+                "1-bst_category": "fx-o",
+                "1-name": filenames[1],
+                "1-new_pack": "Name of a new pack",
+                "1-zoom": "",
+                "1-tags": "testtag1 testtag4 testtag5",
+                "1-sources": ",".join([f"{s.id}" for s in sound_sources]),
+            },
+            follow=True,
+        )
+
         # Check that post redirected to first describe page with confirmation message on sounds described
-        self.assertRedirects(resp, '/home/sounds/manage/processing/')
-        self.assertEqual('Successfully finished sound description round' in list(resp.context['messages'])[2].message, True)
+        self.assertRedirects(resp, "/home/sounds/manage/processing/")
+        self.assertEqual(
+            "Successfully finished sound description round" in list(resp.context["messages"])[2].message, True
+        )
 
         # Check that sounds have been created along with related tags, geotags and packs
         self.assertEqual(user.sounds.all().count(), 2)
         self.assertListEqual(
-            sorted(list(user.sounds.values_list('original_filename', flat=True))), 
-            sorted([f for f in filenames]))
-        self.assertEqual(Pack.objects.filter(name='Name of a new pack').exists(), True)
+            sorted(list(user.sounds.values_list("original_filename", flat=True))), sorted([f for f in filenames])
+        )
+        self.assertEqual(Pack.objects.filter(name="Name of a new pack").exists(), True)
         self.assertEqual(Tag.objects.filter(name__contains="testtag").count(), 5)
         self.assertNotEqual(user.sounds.get(original_filename=filenames[0]).geotag, None)
-        self.assertEqual(user.sounds.get(original_filename=filenames[0]).bst_category, 'ss-n')
+        self.assertEqual(user.sounds.get(original_filename=filenames[0]).bst_category, "ss-n")
         sound_with_sources = user.sounds.get(original_filename=filenames[1])
         self.assertEqual(sound_with_sources.sources.all().count(), len(sound_sources))
 
 
 class BulkDescribe(TestCase):
-    fixtures = ['licenses', 'user_groups']
+    fixtures = ["licenses", "user_groups"]
 
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=40)
     def test_can_do_bulk_describe(self):
@@ -205,7 +249,7 @@ class BulkDescribe(TestCase):
 
     @override_csv_path_with_temp_directory
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
-    @mock.patch('general.tasks.validate_bulk_describe_csv.delay')
+    @mock.patch("general.tasks.validate_bulk_describe_csv.delay")
     def test_upload_csv(self, submit_job):
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
@@ -213,9 +257,9 @@ class BulkDescribe(TestCase):
         # Test successful file upload and redirect
         filename = "file.csv"
         f = SimpleUploadedFile(filename, b"file_content")
-        resp = self.client.post(reverse('accounts-manage-sounds', args=['pending_description']), {'bulk-csv_file': f})
+        resp = self.client.post(reverse("accounts-manage-sounds", args=["pending_description"]), {"bulk-csv_file": f})
         bulk = BulkUploadProgress.objects.get(user=user)
-        self.assertRedirects(resp, reverse('accounts-bulk-describe', args=[bulk.id]))
+        self.assertRedirects(resp, reverse("accounts-bulk-describe", args=[bulk.id]))
 
         # Test really file exists
         self.assertEqual(os.path.exists(bulk.csv_path), True)
@@ -228,26 +272,25 @@ class BulkDescribe(TestCase):
         user = User.objects.create_user("testuser", password="testpass")
         bulk = BulkUploadProgress.objects.create(progress_type="N", user=user, original_csv_filename="test.csv")
 
-        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        expected_redirect_url = reverse('login') + '?next=%s' % reverse('accounts-bulk-describe',
-                                                                                 args=[bulk.id])
+        resp = self.client.get(reverse("accounts-bulk-describe", args=[bulk.id]))
+        expected_redirect_url = reverse("login") + "?next=%s" % reverse("accounts-bulk-describe", args=[bulk.id])
         self.assertRedirects(resp, expected_redirect_url)  # If user not logged in, redirect to login page
 
         self.client.force_login(user)
-        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
+        resp = self.client.get(reverse("accounts-bulk-describe", args=[bulk.id]))
         self.assertEqual(resp.status_code, 200)  # After login, page loads normally (200 OK)
 
-        user = User.objects.create_user("testuser2", email='another_email@example.com')
+        user = User.objects.create_user("testuser2", email="another_email@example.com")
         self.client.force_login(user)
-        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
+        resp = self.client.get(reverse("accounts-bulk-describe", args=[bulk.id]))
         self.assertEqual(resp.status_code, 404)  # User without permission (not owner of object) gets 404
 
         with self.settings(BULK_UPLOAD_MIN_SOUNDS=10):
             # Now user is not allowed to load the page as user.profile.can_do_bulk_upload() returns False
             self.client.force_login(user)
-            resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]), follow=True)
-            self.assertRedirects(resp, reverse('accounts-manage-sounds', args=['pending_description']))
-            self.assertContains(resp, 'Your user does not have permission to use the bulk describe')
+            resp = self.client.get(reverse("accounts-bulk-describe", args=[bulk.id]), follow=True)
+            self.assertRedirects(resp, reverse("accounts-manage-sounds", args=["pending_description"]))
+            self.assertContains(resp, "Your user does not have permission to use the bulk describe")
 
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_state_validating(self):
@@ -255,27 +298,29 @@ class BulkDescribe(TestCase):
         user = User.objects.create_user("testuser", password="testpass")
         bulk = BulkUploadProgress.objects.create(progress_type="N", user=user, original_csv_filename="test.csv")
         self.client.force_login(user)
-        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertContains(resp, 'The uploaded data file has not yet been validated')
+        resp = self.client.get(reverse("accounts-bulk-describe", args=[bulk.id]))
+        self.assertContains(resp, "The uploaded data file has not yet been validated")
 
-    @mock.patch('general.tasks.bulk_describe.delay')
+    @mock.patch("general.tasks.bulk_describe.delay")
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_state_finished_validation(self, submit_job):
         # Test that when BulkUploadProgress has finished validation we show correct info to users
         user = User.objects.create_user("testuser", password="testpass")
         bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
         self.client.force_login(user)
-        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertContains(resp, 'Validation results of the data file')
+        resp = self.client.get(reverse("accounts-bulk-describe", args=[bulk.id]))
+        self.assertContains(resp, "Validation results of the data file")
 
         # Test that choosing option to delete existing BulkUploadProgress really does it
-        resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]), data={'delete': True})
-        self.assertRedirects(resp, reverse('accounts-manage-sounds', args=['pending_description']))  # Redirects to describe page after delete
+        resp = self.client.post(reverse("accounts-bulk-describe", args=[bulk.id]), data={"delete": True})
+        self.assertRedirects(
+            resp, reverse("accounts-manage-sounds", args=["pending_description"])
+        )  # Redirects to describe page after delete
         self.assertEqual(BulkUploadProgress.objects.filter(user=user).count(), 0)
 
         # Test that choosing option to start describing files triggers bulk describe job
         bulk = BulkUploadProgress.objects.create(progress_type="V", user=user, original_csv_filename="test.csv")
-        resp = self.client.post(reverse('accounts-bulk-describe', args=[bulk.id]), data={'start': True})
+        resp = self.client.post(reverse("accounts-bulk-describe", args=[bulk.id]), data={"start": True})
         self.assertEqual(resp.status_code, 200)
         submit_job.assert_called_once_with(bulk_upload_progress_object_id=bulk.id)
 
@@ -285,48 +330,52 @@ class BulkDescribe(TestCase):
         user = User.objects.create_user("testuser", password="testpass")
         bulk = BulkUploadProgress.objects.create(progress_type="S", user=user, original_csv_filename="test.csv")
         bulk.validation_output = {
-            'lines_ok': list(range(1, 10)),
-            'lines_with_errors': [],
-            'global_errors': [],
+            "lines_ok": list(range(1, 10)),
+            "lines_with_errors": [],
+            "global_errors": [],
         }
         bulk.save()
         self.client.force_login(user)
-        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertContains(resp, 'Your sounds are being described and processed')
+        resp = self.client.get(reverse("accounts-bulk-describe", args=[bulk.id]))
+        self.assertContains(resp, "Your sounds are being described and processed")
 
         # Test that when BulkUploadProgress has finished describing items but still is processing some sounds, we
         # show that info to the users. First we fake some data for the bulk object
-        bulk.progress_type = 'F'
+        bulk.progress_type = "F"
         bulk.validation_output = {
-            'lines_ok': list(range(5)),  # NOTE: we only use the length of these lists, so we fill them with irrelevant data
-            'lines_with_errors': list(range(2)),
-            'global_errors': [],
+            "lines_ok": list(
+                range(5)
+            ),  # NOTE: we only use the length of these lists, so we fill them with irrelevant data
+            "lines_with_errors": list(range(2)),
+            "global_errors": [],
         }
         bulk.description_output = {
-            '1': 1,  # NOTE: we only use the length of the dict so we fill it with irrelevant values/keys
-            '2': 2,
-            '3': 3,
+            "1": 1,  # NOTE: we only use the length of the dict so we fill it with irrelevant values/keys
+            "2": 2,
+            "3": 3,
         }
         bulk.save()
-        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertContains(resp, 'Your sounds are being described and processed')
+        resp = self.client.get(reverse("accounts-bulk-describe", args=[bulk.id]))
+        self.assertContains(resp, "Your sounds are being described and processed")
 
         # Test that when both description and processing have finished we show correct info to users
         for i in range(0, 5):  # First create the sound objects so BulkUploadProgress can properly compute progress
-            Sound.objects.create(user=user,
-                                 original_filename="Test sound %i" % i,
-                                 license=License.objects.all()[0],
-                                 md5="fakemd5%i" % i,
-                                 moderation_state="OK",
-                                 processing_state="OK")
+            Sound.objects.create(
+                user=user,
+                original_filename="Test sound %i" % i,
+                license=License.objects.all()[0],
+                md5="fakemd5%i" % i,
+                moderation_state="OK",
+                processing_state="OK",
+            )
 
-        bulk.progress_type = 'F'
+        bulk.progress_type = "F"
         bulk.description_output = {}
         for count, sound in enumerate(user.sounds.all()):
             bulk.description_output[count] = sound.id  # Fill bulk.description_output with real sound IDs
         bulk.save()
-        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertContains(resp, 'The bulk description process has finished!')
+        resp = self.client.get(reverse("accounts-bulk-describe", args=[bulk.id]))
+        self.assertContains(resp, "The bulk description process has finished!")
 
     @override_settings(BULK_UPLOAD_MIN_SOUNDS=0)
     def test_bulk_describe_state_closed(self):
@@ -334,5 +383,5 @@ class BulkDescribe(TestCase):
         user = User.objects.create_user("testuser", password="testpass")
         bulk = BulkUploadProgress.objects.create(progress_type="C", user=user, original_csv_filename="test.csv")
         self.client.force_login(user)
-        resp = self.client.get(reverse('accounts-bulk-describe', args=[bulk.id]))
-        self.assertContains(resp, 'This bulk description process is closed')
+        resp = self.client.get(reverse("accounts-bulk-describe", args=[bulk.id]))
+        self.assertContains(resp, "This bulk description process is closed")

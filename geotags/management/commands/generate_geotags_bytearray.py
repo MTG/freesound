@@ -26,13 +26,12 @@ from geotags.views import generate_geotag_bytearray_queryset_fast
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
 
-console_logger = logging.getLogger('console')
+console_logger = logging.getLogger("console")
 
-cache_persistent = caches['persistent']
+cache_persistent = caches["persistent"]
 
 
 class Command(LoggingBaseCommand):
-
     help = 'Generate byetearray for "all geoatgs map page" at cache it'
 
     def handle(self, *args, **options):
@@ -40,9 +39,9 @@ class Command(LoggingBaseCommand):
 
         # Generate the bytearray for all geotagged sounds in Freesound and store it in cache
         # Don't set expiration time because the bytearray will be overwritten everytime this command runs
-        sounds = Sound.objects.select_related('geotag').exclude(geotag=None)
+        sounds = Sound.objects.select_related("geotag").exclude(geotag=None)
         computed_bytearray, num_geotags = generate_geotag_bytearray_queryset_fast(sounds)
         cache_persistent.set(settings.ALL_GEOTAGS_BYTEARRAY_CACHE_KEY, [computed_bytearray, num_geotags], timeout=None)
-        console_logger.info(f'Generated all geotags bytearray with {num_geotags} sounds')
+        console_logger.info(f"Generated all geotags bytearray with {num_geotags} sounds")
 
-        self.log_end({'all_geotags_bytearray_n_sounds': num_geotags})
+        self.log_end({"all_geotags_bytearray_n_sounds": num_geotags})

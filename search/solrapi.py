@@ -9,6 +9,7 @@ logger = logging.getLogger("console")
 
 class SolrAPIError(Exception):
     """Base exception for SolrAPI errors"""
+
     pass
 
 
@@ -48,9 +49,9 @@ class SolrManagementAPI:
 
     def check_collection_has_field(self, field):
         schema = self.get_collection_schema()
-        fields = schema['schema']['fields']
+        fields = schema["schema"]["fields"]
         for f in fields:
-            if f['name'] == field:
+            if f["name"] == field:
                 return True
         return False
 
@@ -160,7 +161,9 @@ class SolrManagementAPI:
                 return
             else:
                 if self.logging_verbose >= 1:
-                    logger.info(f"Collection {self.collection} already exists, but no field {test_field_name}, going ahead with schema creation")
+                    logger.info(
+                        f"Collection {self.collection} already exists, but no field {test_field_name}, going ahead with schema creation"
+                    )
 
         if self.logging_verbose >= 1:
             logger.info("Delete unneeded fields")

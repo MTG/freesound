@@ -22,12 +22,11 @@ from django.urls import path
 from donations import views
 
 urlpatterns = [
-    path('donate/', views.donate, name="donate"),
-    path('donors/', views.DonationsList.as_view(), name="donors"),
-    path('donation-session-stripe/', views.donation_session_stripe, name="donation-session-stripe"),
-    path('donation-session-paypal/', views.donation_session_paypal, name="donation-session-paypal"),
-    path('donation-success/', views.donation_success, name="donation-success"),
-    path('donation-complete-stripe/', views.donation_complete_stripe, name="donation-complete-stripe"),
-    path('donation-complete-paypal/', views.donation_complete_paypal, name="donation-complete-paypal"),
-
+    path("donate/", views.donate, name="donate"),
+    path("donors/", views.DonationsList.as_view(), name="donors"),
+    path("donation-session-stripe/", views.donation_session_stripe, name="donation-session-stripe"),
+    path("donation-session-paypal/", views.donation_session_paypal, name="donation-session-paypal"),
+    path("donation-success/", views.donation_success, name="donation-success"),
+    path("donation-complete-stripe/", views.donation_complete_stripe, name="donation-complete-stripe"),
+    path("donation-complete-paypal/", views.donation_complete_paypal, name="donation-complete-paypal"),
 ]

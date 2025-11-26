@@ -15,70 +15,70 @@ DISPLAY_DEBUG_TOOLBAR = False
 DEBUGGER_HOST = "0.0.0.0"
 DEBUGGER_PORT = 3000  # This port should match the one in docker compose
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '___this_is_a_secret_key_that_should_not_be_used___')
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "___this_is_a_secret_key_that_should_not_be_used___")
 
-default_url = 'postgres://postgres@db/postgres'
-DATABASES = {'default': dj_database_url.config('DJANGO_DATABASE_URL', default=default_url)}
+default_url = "postgres://postgres@db/postgres"
+DATABASES = {"default": dj_database_url.config("DJANGO_DATABASE_URL", default=default_url)}
 
-DEFAULT_AUTO_FIELD='django.db.models.AutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'silk.middleware.SilkyMiddleware',
-    'django_ratelimit.middleware.RatelimitMiddleware',
-    'freesound.middleware.TosAcceptanceHandler',
-    'freesound.middleware.BulkChangeLicenseHandler',
-    'freesound.middleware.UpdateEmailHandler',
-    'corsheaders.middleware.CorsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "silk.middleware.SilkyMiddleware",
+    "django_ratelimit.middleware.RatelimitMiddleware",
+    "freesound.middleware.TosAcceptanceHandler",
+    "freesound.middleware.BulkChangeLicenseHandler",
+    "freesound.middleware.UpdateEmailHandler",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 INSTALLED_APPS = [
-    'whitenoise.runserver_nostatic',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.sites',
-    'django.contrib.sitemaps',
-    'django.contrib.admin',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'messages.apps.MessagesConfig',
-    'apiv2',
-    'geotags',
-    'accounts',
-    'ratings',
-    'tags',
-    'general.apps.GeneralConfig',
-    'support',
-    'wiki',
-    'sounds',
-    'comments',
-    'bookmarks',
-    'forum',
-    'search',
-    'clustering',
-    'django_extensions',
-    'tickets',
-    'gunicorn',
-    'oauth2_provider',
-    'rest_framework',
-    'corsheaders',
-    'follow',
-    'utils',
-    'donations',
-    'monitor',
-    'django_object_actions',
-    'silk',
-    'django_recaptcha',
-    'adminsortable',
-    'fscollections'
+    "whitenoise.runserver_nostatic",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.sites",
+    "django.contrib.sitemaps",
+    "django.contrib.admin",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "messages.apps.MessagesConfig",
+    "apiv2",
+    "geotags",
+    "accounts",
+    "ratings",
+    "tags",
+    "general.apps.GeneralConfig",
+    "support",
+    "wiki",
+    "sounds",
+    "comments",
+    "bookmarks",
+    "forum",
+    "search",
+    "clustering",
+    "django_extensions",
+    "tickets",
+    "gunicorn",
+    "oauth2_provider",
+    "rest_framework",
+    "corsheaders",
+    "follow",
+    "utils",
+    "donations",
+    "monitor",
+    "django_object_actions",
+    "silk",
+    "django_recaptcha",
+    "adminsortable",
+    "fscollections",
 ]
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
@@ -90,16 +90,16 @@ SILKY_INTERCEPT_FUNC = lambda request: False
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
+AUTHENTICATION_BACKENDS = ("accounts.modelbackend.CustomModelBackend",)
 
 # This was the default serializer in django 1.6. Now we keep using it because
 # we saw some errors when running tests, in the future we should change to the
 # new one.
-SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
+SESSION_SERIALIZER = "django.contrib.sessions.serializers.PickleSerializer"
 
-TIME_ZONE = 'Europe/Brussels'
+TIME_ZONE = "Europe/Brussels"
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
 SITE_ID = 1
 
@@ -114,7 +114,7 @@ USE_I18N = False
 # Redis and caches
 # NOTE: some of these settings need to be re-defined in local_settings.py (eg to build cache urls)
 # We should optimize that so settings do not need to be re-defined
-REDIS_HOST = 'redis'
+REDIS_HOST = "redis"
 REDIS_PORT = 6379
 API_MONITORING_REDIS_STORE_ID = 0
 CLUSTERING_CACHE_REDIS_STORE_ID = 1
@@ -123,77 +123,79 @@ CELERY_BROKER_REDIS_STORE_ID = 3
 CDN_MAP_STORE_ID = 5
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     },
-    'persistent': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '../freesound-data/')), "_cache/"),
+    "persistent": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": os.path.join(
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "../freesound-data/")), "_cache/"
+        ),
     },
-    'api_monitoring': {
+    "api_monitoring": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{API_MONITORING_REDIS_STORE_ID}",
     },
-    'cdn_map': {
+    "cdn_map": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{CDN_MAP_STORE_ID}",
     },
-    'clustering': {
+    "clustering": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{CLUSTERING_CACHE_REDIS_STORE_ID}",
-    }
+    },
 }
 
 CACHE_MIDDLEWARE_SECONDS = 300
-CACHE_MIDDLEWARE_KEY_PREFIX = 'freesound'
+CACHE_MIDDLEWARE_KEY_PREFIX = "freesound"
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
-ROOT_URLCONF = 'freesound.urls'
+ROOT_URLCONF = "freesound.urls"
 
-WSGI_APPLICATION = 'freesound.wsgi.application'
+WSGI_APPLICATION = "freesound.wsgi.application"
 
-LOGIN_URL = '/home/login/'
-LOGOUT_URL = '/home/logout/'
-LOGIN_REDIRECT_URL = '/home/'
+LOGIN_URL = "/home/login/"
+LOGOUT_URL = "/home/logout/"
+LOGIN_REDIRECT_URL = "/home/"
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTOCOL", "https")
 
 IGNORABLE_404_URLS = (
     # for each <prefix> in IGNORABLE_404_STARTS
-    re.compile(r'^/cgi-bin/'),
-    re.compile(r'^/_vti_bin'),
-    re.compile(r'^/_vti_inf'),
-    re.compile(r'^/favicon'),
+    re.compile(r"^/cgi-bin/"),
+    re.compile(r"^/_vti_bin"),
+    re.compile(r"^/_vti_inf"),
+    re.compile(r"^/favicon"),
     # for each <suffix> in IGNORABLE_404_ENDS
-    re.compile(r'.jsp$'),
-    re.compile(r'mail.pl$'),
-    re.compile(r'mailform.pl$'),
-    re.compile(r'mail.cgi$'),
-    re.compile(r'mailform.cgi$'),
-    re.compile(r'.php$'),
-    re.compile(r'similar$'),
+    re.compile(r".jsp$"),
+    re.compile(r"mail.pl$"),
+    re.compile(r"mailform.pl$"),
+    re.compile(r"mail.cgi$"),
+    re.compile(r"mailform.cgi$"),
+    re.compile(r".php$"),
+    re.compile(r"similar$"),
 )
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 # Silence Django system check urls.W002 "Your URL pattern '/$' has a regex beginning with a '/'.
 # Remove this slash as it is unnecessary." triggered in API urls. Although the check claims the last
 # slash is not necessary, it is in our case as otherwise it breaks some API urls when these don't end
 # with slash.
-SILENCED_SYSTEM_CHECKS = ['urls.W002']
+SILENCED_SYSTEM_CHECKS = ["urls.W002"]
 
-INTERNAL_IPS = ['127.0.0.1']
+INTERNAL_IPS = ["127.0.0.1"]
 
-MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+MESSAGE_STORAGE = "django.contrib.messages.storage.cookie.CookieStorage"
 
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
-    'django.contrib.auth.hashers.Argon2PasswordHasher',
-    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
-    'django.contrib.auth.hashers.BCryptPasswordHasher',
-    'django.contrib.auth.hashers.SHA1PasswordHasher',
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.BCryptPasswordHasher",
+    "django.contrib.auth.hashers.SHA1PasswordHasher",
 ]
 
 # Password validation
@@ -201,37 +203,37 @@ PASSWORD_HASHERS = [
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 # -------------------------------------------------------------------------------
 # Email settings
 
-SERVER_EMAIL = 'noreply@freesound.org'
-DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
-EMAIL_HOST = 'localhost'
+SERVER_EMAIL = "noreply@freesound.org"
+DEFAULT_FROM_EMAIL = "Freesound NoReply <noreply@freesound.org>"
+EMAIL_HOST = "localhost"
 EMAIL_PORT = 25
 
 # AWS credentials for sending email (SES)
-AWS_REGION = ''
-AWS_ACCESS_KEY_ID = ''
-AWS_SECRET_ACCESS_KEY = ''
+AWS_REGION = ""
+AWS_ACCESS_KEY_ID = ""
+AWS_SECRET_ACCESS_KEY = ""
 
 # AWS credentials for accessing bounces queue (SQS)
-AWS_SQS_REGION = ''
-AWS_SQS_ACCESS_KEY_ID = ''
-AWS_SQS_SECRET_ACCESS_KEY = ''
-AWS_SQS_QUEUE_URL = ''
+AWS_SQS_REGION = ""
+AWS_SQS_ACCESS_KEY_ID = ""
+AWS_SQS_SECRET_ACCESS_KEY = ""
+AWS_SQS_QUEUE_URL = ""
 AWS_SQS_MESSAGES_PER_CALL = 1  # between 1 and 10, see accounts management command `process_email_bounces` for more
 
 # Email stats retrieval parameters (see utils.aws.report_ses_stats for more details)
@@ -242,32 +244,32 @@ AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period
 ALLOWED_EMAILS = []
 
 # Email subjects
-EMAIL_SUBJECT_PREFIX = '[freesound]'
-EMAIL_SUBJECT_ACTIVATION_LINK = 'Your activation link'
-EMAIL_SUBJECT_USERNAME_REMINDER = 'Username reminder'
-EMAIL_SUBJECT_EMAIL_CHANGED = 'Email address changed'
-EMAIL_SUBJECT_USER_SPAM_REPORT = 'Spam/offensive report for user'
-EMAIL_SUBJECT_DONATION_THANK_YOU = 'Thanks for your donation!'
-EMAIL_SUBJECT_DONATION_REMINDER = 'Thanks for contributing to Freesound'
-EMAIL_SUBJECT_DONATION_REQUEST = 'Have you considered making a donation?'
-EMAIL_SUBJECT_STREAM_EMAILS = 'New sounds from users and tags you are following'
-EMAIL_SUBJECT_TOPIC_REPLY = 'Topic reply notification'
-EMAIL_SUBJECT_PRIVATE_MESSAGE = 'You have a private message'
-EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX = 'Sound added as remix source'
-EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN = 'One of your sounds has been chosen as random sound of the day!'
-EMAIL_SUBJECT_NEW_COMMENT = 'You have a new comment'
-EMAIL_SUBJECT_SOUND_FLAG = 'Sound flag'
-EMAIL_SUBJECT_SUPPORT_EMAIL = '[support]'
-EMAIL_SUBJECT_MODERATION_HANDLED = 'A Freesound moderator handled your upload'
+EMAIL_SUBJECT_PREFIX = "[freesound]"
+EMAIL_SUBJECT_ACTIVATION_LINK = "Your activation link"
+EMAIL_SUBJECT_USERNAME_REMINDER = "Username reminder"
+EMAIL_SUBJECT_EMAIL_CHANGED = "Email address changed"
+EMAIL_SUBJECT_USER_SPAM_REPORT = "Spam/offensive report for user"
+EMAIL_SUBJECT_DONATION_THANK_YOU = "Thanks for your donation!"
+EMAIL_SUBJECT_DONATION_REMINDER = "Thanks for contributing to Freesound"
+EMAIL_SUBJECT_DONATION_REQUEST = "Have you considered making a donation?"
+EMAIL_SUBJECT_STREAM_EMAILS = "New sounds from users and tags you are following"
+EMAIL_SUBJECT_TOPIC_REPLY = "Topic reply notification"
+EMAIL_SUBJECT_PRIVATE_MESSAGE = "You have a private message"
+EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX = "Sound added as remix source"
+EMAIL_SUBJECT_RANDOM_SOUND_OF_THE_SAY_CHOOSEN = "One of your sounds has been chosen as random sound of the day!"
+EMAIL_SUBJECT_NEW_COMMENT = "You have a new comment"
+EMAIL_SUBJECT_SOUND_FLAG = "Sound flag"
+EMAIL_SUBJECT_SUPPORT_EMAIL = "[support]"
+EMAIL_SUBJECT_MODERATION_HANDLED = "A Freesound moderator handled your upload"
 
 # -------------------------------------------------------------------------------
 # Static settings
 
 # Add freesound/static/ to STATICFILES_DIRS as it won't be added by default (freesound/ is not an installed Django app)
-STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), 'static')]
-STATIC_URL = '/static/'
-STATIC_ROOT = 'bw_static'
-WHITENOISE_ROOT = os.path.join(os.path.dirname(__file__), '../webroot')
+STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), "static")]
+STATIC_URL = "/static/"
+STATIC_ROOT = "bw_static"
+WHITENOISE_ROOT = os.path.join(os.path.dirname(__file__), "../webroot")
 
 STORAGES = {
     "default": {
@@ -283,14 +285,9 @@ STORAGES = {
 
 SUPPORT = ()
 
-IFRAME_PLAYER_SIZE = {
-    'large': [920, 245],
-    'medium': [481, 86],
-    'small': [375, 30],
-    'twitter_card': [440, 132]
-}
+IFRAME_PLAYER_SIZE = {"large": [920, 245], "medium": [481, 86], "small": [375, 30], "twitter_card": [440, 132]}
 
-FREESOUND_RSS = ''
+FREESOUND_RSS = ""
 
 # Number of things per page
 FORUM_POSTS_PER_PAGE = 20
@@ -301,7 +298,7 @@ SOUNDS_PER_PAGE_COMPACT_MODE = 30  # In search page
 PACKS_PER_PAGE = 15  # In search page
 DOWNLOADED_SOUNDS_PACKS_PER_PAGE = 12
 USERS_PER_DOWNLOADS_MODAL_PAGE = 15
-COMMENTS_IN_MODAL_PER_PAGE = 15 
+COMMENTS_IN_MODAL_PER_PAGE = 15
 REMIXES_PER_PAGE = 10
 MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 60
 SOUNDS_PER_DESCRIBE_ROUND = 10
@@ -310,18 +307,18 @@ MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 DONATIONS_PER_PAGE = 40
 FOLLOW_ITEMS_PER_PAGE = 5
 MESSAGES_PER_PAGE = 10
-BOOKMARKS_PER_PAGE = 12 
+BOOKMARKS_PER_PAGE = 12
 SOUNDS_PER_PAGE_PROFILE_PACK_PAGE = 12
 NUM_SIMILAR_SOUNDS_PER_PAGE = 9
-NUM_SIMILAR_SOUNDS_PAGES = 1 # In the modal we only show one page, full results can be seen in search page
+NUM_SIMILAR_SOUNDS_PAGES = 1  # In the modal we only show one page, full results can be seen in search page
 
 
 # Weights using to compute charts
-BW_CHARTS_ACTIVE_USERS_WEIGHTS = {'upload': 1, 'post': 0.8, 'comment': 0.05}
-CHARTS_DATA_CACHE_KEY = 'bw-charts-data'
+BW_CHARTS_ACTIVE_USERS_WEIGHTS = {"upload": 1, "post": 0.8, "comment": 0.05}
+CHARTS_DATA_CACHE_KEY = "bw-charts-data"
 
 # User profile page cache key templates
-USER_STATS_CACHE_KEY = 'user_stats_{}'
+USER_STATS_CACHE_KEY = "user_stats_{}"
 
 # User flagging notification thresholds
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
@@ -333,22 +330,22 @@ USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 # - see if utils.audioprocessing.get_sound_type needs to be updated
 # - add corresponding decoder to utils.audioprocessing.processing.convert_to_pcm (and of course add it to the docker image as well)
 # - the audio analyzers will not need to be updated if the format is supported by ffmpeg
-ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3', 'm4a', 'wv']
-LOSSY_FILE_EXTENSIONS = ['ogg', 'mp3', 'm4a']
+ALLOWED_AUDIOFILE_EXTENSIONS = ["wav", "aiff", "aif", "ogg", "flac", "mp3", "m4a", "wv"]
+LOSSY_FILE_EXTENSIONS = ["ogg", "mp3", "m4a"]
 # Note that some SOUND_TYPE_CHOICES below might correspond to multiple extensions (aiff/aif > aiff)
 SOUND_TYPE_CHOICES = (
-    ('wav', 'Wave'),
-    ('ogg', 'Ogg Vorbis'),
-    ('aiff', 'AIFF'),
-    ('mp3', 'Mp3'),
-    ('flac', 'Flac'),
-    ('m4a', 'M4a'),
-    ('wv', 'WavPack'),
+    ("wav", "Wave"),
+    ("ogg", "Ogg Vorbis"),
+    ("aiff", "AIFF"),
+    ("mp3", "Mp3"),
+    ("flac", "Flac"),
+    ("m4a", "M4a"),
+    ("wv", "WavPack"),
 )
 COMMON_BITRATES = [32, 64, 96, 128, 160, 192, 224, 256, 320]
 
 # Allowed data file extensions for bulk upload
-ALLOWED_CSVFILE_EXTENSIONS = ['csv', 'xls', 'xlsx']
+ALLOWED_CSVFILE_EXTENSIONS = ["csv", "xls", "xlsx"]
 
 # Maximum number of times changing the username is allowed
 USERNAME_CHANGE_MAX_TIMES = 3
@@ -370,14 +367,15 @@ NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 30
 NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 5
 RANDOM_SOUND_OF_THE_DAY_CACHE_KEY = "random_sound"
 
-#Geotags  stuff
+# Geotags  stuff
 # Cache key for storing "all geotags" bytearray
 ALL_GEOTAGS_BYTEARRAY_CACHE_KEY = "geotags_bytearray"
 
 # Avatar background colors (only BW)
 from utils.audioprocessing.processing import interpolate_colors
 from utils.audioprocessing.color_schemes import BEASTWHOOSH_COLOR_SCHEME, COLOR_SCHEMES
-AVATAR_BG_COLORS = interpolate_colors(COLOR_SCHEMES[BEASTWHOOSH_COLOR_SCHEME]['wave_colors'][1:], num_colors=10)
+
+AVATAR_BG_COLORS = interpolate_colors(COLOR_SCHEMES[BEASTWHOOSH_COLOR_SCHEME]["wave_colors"][1:], num_colors=10)
 
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3
@@ -402,9 +400,9 @@ LOG_DOWNLOADS = False
 USE_CDN_FOR_DOWNLOADS = False
 USE_CDN_FOR_PREVIEWS = False
 USE_CDN_FOR_DISPLAYS = False
-CDN_DOWNLOADS_TEMPLATE_URL = 'https://cdn.freesound.org/sounds/{}/{}?filename={}'
-CDN_PREVIEWS_URL = 'https://cdn.freesound.org/previews/'
-CDN_DISPLAYS_URL = 'https://cdn.freesound.org/displays/'
+CDN_DOWNLOADS_TEMPLATE_URL = "https://cdn.freesound.org/sounds/{}/{}?filename={}"
+CDN_PREVIEWS_URL = "https://cdn.freesound.org/previews/"
+CDN_DISPLAYS_URL = "https://cdn.freesound.org/displays/"
 
 # Followers notifications
 MAX_EMAILS_PER_COMMAND_RUN = 5000
@@ -416,210 +414,210 @@ ENABLE_POPULAR_SEARCHES_IN_FRONTPAGE = False
 ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD = True
 USER_DOWNLOADS_PUBLIC = True
 
-ANNOUNCEMENT_CACHE_KEY = 'announcement_cache'
+ANNOUNCEMENT_CACHE_KEY = "announcement_cache"
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # Broad Sound Taxonomy definition (internal v1.1 of BST description)
 
 BROAD_SOUND_TAXONOMY = {
-  "m": {
-    "level": 1,
-    "name": "Music",
-    "description": "Music excerpts, including melodies, singing, loops, fillers, drones and short musical snippets."
-  },
-  "m-sp": {
-    "level": 2,
-    "name": "Solo percussion",
-    "description": "Music excerpts with solo percussive instruments.",
-    "examples": "rhythmic patterns, unpitched percussion excerpts, drum passages"
-  },
-  "m-si": {
-    "level": 2,
-    "name": "Solo instrument",
-    "description": "Music excerpts with only one instrument, excluding percussion.",
-    "examples": "isolated melody or sequence of notes, solo singing, chords from one instrument"
-  },
-  "m-m": {
-    "level": 2,
-    "name": "Multiple instruments",
-    "description": "Music excerpts with more than one instrument.",
-    "examples": "orchestra, band, dueto, multi-instrument composition, multi-instrument loops"
-  },
-  "m-other": {
-    "level": 2,
-    "name": "Other",
-    "description": "Music that doesn't belong to any of the above categories."
-  },
-  "is": {
-    "level": 1,
-    "name": "Instrument samples",
-    "description": "Single notes from musical instruments, various versions of the same note, and scales."
-  },
-  "is-p": {
-    "level": 2,
-    "name": "Percussion",
-    "description": "Instrument samples that are percussive (idiophones or membraphones).",
-    "examples": "drum, snare, gong, bell, xylophone"
-  },
-  "is-s": {
-    "level": 2,
-    "name": "String",
-    "description": "Instrument samples that belong to the string instrument family.",
-    "examples": "guitar, violin, harp, mandolin"
-  },
-  "is-w": {
-    "level": 2,
-    "name": "Wind",
-    "description": "Instrument samples that belong to the wind instrument family (aerophones).",
-    "examples": "woodwind, brass, flute, trumpet, saxophone"
-  },
-  "is-k": {
-    "level": 2,
-    "name": "Piano / Keyboard instruments",
-    "description": "Instrument samples of piano or other keyboard instruments, not synthesized.",
-    "examples": "piano, harspichord, organ"
-  },
-  "is-e": {
-    "level": 2,
-    "name": "Synths / Electronic",
-    "description": "Instrument samples synthesized or produced by electronic means.",
-    "examples": "synthesizers (analog/digital), synthesized or electronic samples"
-  },
-  "is-other": {
-    "level": 2,
-    "name": "Other",
-    "description": "Instrument samples that don't belong to any of the above categories."
-  },
-  "sp": {
-    "level": 1,
-    "name": "Speech",
-    "description": "Sounds where human voice is prominent."
-  },
-  "sp-s": {
-    "level": 2,
-    "name": "Solo speech",
-    "description": "Recording of a single voice speaking, excluding singing.",
-    "examples": "talking, script reading"
-  },
-  "sp-c": {
-    "level": 2,
-    "name": "Conversation / Crowd",
-    "description": "Several people talking, having a conversation or dialogue.",
-    "examples": "playground, people talking in public places, conversations"
-  },
-  "sp-p": {
-    "level": 2,
-    "name": "Processed / Synthetic",
-    "description": "Voice(s) from an indirect source (e.g. radio), heavily processed, or synthesized.",
-    "examples": "phone/radio recordings, robotic voice, text-to-speech"
-  },
-  "sp-other": {
-    "level": 2,
-    "name": "Other",
-    "description": "Voice-predominant recordings that don't belong to any of the above categories."
-  },
-  "fx": {
-    "level": 1,
-    "name": "Sound effects",
-    "description": "Isolated sound effects or sound events, each happening one at a time."
-  },
-  "fx-o": {
-    "level": 2,
-    "name": "Objects / House appliances",
-    "description": "Everyday objects, inside the home or smaller in size.",
-    "examples": "daily or small objects, tools, weapons, clothes, iron"
-  },
-  "fx-v": {
-    "level": 2,
-    "name": "Vehicles",
-    "description": "Sounds produced from a vehicle.",
-    "examples": "car passing by, car screeching, wiper, car brake, bike, plane, ship"
-  },
-  "fx-m": {
-    "level": 2,
-    "name": "Other mechanisms, engines, machines",
-    "description": "Machine-like sounds, except vehicles and small house electric devices.",
-    "examples": "drill, lawn mower, gear, electric chainsaw"
-  },
-  "fx-h": {
-    "level": 2,
-    "name": "Human sounds and actions",
-    "description": "Sounds from the human body, excluding speech.",
-    "examples": "breath, hearthbeat, sneeze, crying, walking, clapping"
-  },
-  "fx-a": {
-    "level": 2,
-    "name": "Animals",
-    "description": "Animal vocalizations or sounds.",
-    "examples": "cat, insect, sheep, animal walk, growl, purr"
-  },
-  "fx-n": {
-    "level": 2,
-    "name": "Natural elements and explosions",
-    "description": "Sound events occurring by natural processes.",
-    "examples": "wind, fire, ice, rocks, water, stones, explosions"
-  },
-  "fx-ex": {
-    "level": 2,
-    "name": "Experimental",
-    "description": "Experimental sounds or heavily processed audio recordings.",
-    "examples": "reversed sounds, weird effects, unusual recording techniques or processing"
-  },
-  "fx-el": {
-    "level": 2,
-    "name": "Electronic / Design",
-    "description": "Sound effects that are computer-made or designed for user interfaces or animations.",
-    "examples": "sci-fi, laser, whoosh, boink, cartoon, ui, sound alerts or notifications"
-  },
-  "fx-other": {
-    "level": 2,
-    "name": "Other",
-    "description": "Sound effects that don't belong to any of the above categories."
-  },
-  "ss": {
-    "level": 1,
-    "name": "Soundscapes",
-    "description": "Ambiances, field-recordings with multiple events and sound environments."
-  },
-  "ss-n": {
-    "level": 2,
-    "name": "Nature",
-    "description": "Soundscapes from natural habitats.",
-    "examples": "forest ambiance, seaside, river with surrounding nature, farmland"
-  },
-  "ss-i": {
-    "level": 2,
-    "name": "Indoors",
-    "description": "Soundscapes from closed or indoor spaces.",
-    "examples": "closed room ambience, room tone, office, factory, bar"
-  },
-  "ss-u": {
-    "level": 2,
-    "name": "Urban",
-    "description": "Soundscapes from cityscapes or outdoor places with human intervention.",
-    "examples": "city ambience, outside airport, busy road"
-  },
-  "ss-s": {
-    "level": 2,
-    "name": "Synthetic / Artificial",
-    "description": "Soundscapes that are synthesized or computer-made ambiences.",
-    "examples": "artificially-created soundscapes, soundscapes from imaginary places"
-  },
-  "ss-other": {
-    "level": 2,
-    "name": "Other",
-    "description": "Soundscapes that don't belong to any of the above categories."
-  }
+    "m": {
+        "level": 1,
+        "name": "Music",
+        "description": "Music excerpts, including melodies, singing, loops, fillers, drones and short musical snippets.",
+    },
+    "m-sp": {
+        "level": 2,
+        "name": "Solo percussion",
+        "description": "Music excerpts with solo percussive instruments.",
+        "examples": "rhythmic patterns, unpitched percussion excerpts, drum passages",
+    },
+    "m-si": {
+        "level": 2,
+        "name": "Solo instrument",
+        "description": "Music excerpts with only one instrument, excluding percussion.",
+        "examples": "isolated melody or sequence of notes, solo singing, chords from one instrument",
+    },
+    "m-m": {
+        "level": 2,
+        "name": "Multiple instruments",
+        "description": "Music excerpts with more than one instrument.",
+        "examples": "orchestra, band, dueto, multi-instrument composition, multi-instrument loops",
+    },
+    "m-other": {
+        "level": 2,
+        "name": "Other",
+        "description": "Music that doesn't belong to any of the above categories.",
+    },
+    "is": {
+        "level": 1,
+        "name": "Instrument samples",
+        "description": "Single notes from musical instruments, various versions of the same note, and scales.",
+    },
+    "is-p": {
+        "level": 2,
+        "name": "Percussion",
+        "description": "Instrument samples that are percussive (idiophones or membraphones).",
+        "examples": "drum, snare, gong, bell, xylophone",
+    },
+    "is-s": {
+        "level": 2,
+        "name": "String",
+        "description": "Instrument samples that belong to the string instrument family.",
+        "examples": "guitar, violin, harp, mandolin",
+    },
+    "is-w": {
+        "level": 2,
+        "name": "Wind",
+        "description": "Instrument samples that belong to the wind instrument family (aerophones).",
+        "examples": "woodwind, brass, flute, trumpet, saxophone",
+    },
+    "is-k": {
+        "level": 2,
+        "name": "Piano / Keyboard instruments",
+        "description": "Instrument samples of piano or other keyboard instruments, not synthesized.",
+        "examples": "piano, harspichord, organ",
+    },
+    "is-e": {
+        "level": 2,
+        "name": "Synths / Electronic",
+        "description": "Instrument samples synthesized or produced by electronic means.",
+        "examples": "synthesizers (analog/digital), synthesized or electronic samples",
+    },
+    "is-other": {
+        "level": 2,
+        "name": "Other",
+        "description": "Instrument samples that don't belong to any of the above categories.",
+    },
+    "sp": {"level": 1, "name": "Speech", "description": "Sounds where human voice is prominent."},
+    "sp-s": {
+        "level": 2,
+        "name": "Solo speech",
+        "description": "Recording of a single voice speaking, excluding singing.",
+        "examples": "talking, script reading",
+    },
+    "sp-c": {
+        "level": 2,
+        "name": "Conversation / Crowd",
+        "description": "Several people talking, having a conversation or dialogue.",
+        "examples": "playground, people talking in public places, conversations",
+    },
+    "sp-p": {
+        "level": 2,
+        "name": "Processed / Synthetic",
+        "description": "Voice(s) from an indirect source (e.g. radio), heavily processed, or synthesized.",
+        "examples": "phone/radio recordings, robotic voice, text-to-speech",
+    },
+    "sp-other": {
+        "level": 2,
+        "name": "Other",
+        "description": "Voice-predominant recordings that don't belong to any of the above categories.",
+    },
+    "fx": {
+        "level": 1,
+        "name": "Sound effects",
+        "description": "Isolated sound effects or sound events, each happening one at a time.",
+    },
+    "fx-o": {
+        "level": 2,
+        "name": "Objects / House appliances",
+        "description": "Everyday objects, inside the home or smaller in size.",
+        "examples": "daily or small objects, tools, weapons, clothes, iron",
+    },
+    "fx-v": {
+        "level": 2,
+        "name": "Vehicles",
+        "description": "Sounds produced from a vehicle.",
+        "examples": "car passing by, car screeching, wiper, car brake, bike, plane, ship",
+    },
+    "fx-m": {
+        "level": 2,
+        "name": "Other mechanisms, engines, machines",
+        "description": "Machine-like sounds, except vehicles and small house electric devices.",
+        "examples": "drill, lawn mower, gear, electric chainsaw",
+    },
+    "fx-h": {
+        "level": 2,
+        "name": "Human sounds and actions",
+        "description": "Sounds from the human body, excluding speech.",
+        "examples": "breath, hearthbeat, sneeze, crying, walking, clapping",
+    },
+    "fx-a": {
+        "level": 2,
+        "name": "Animals",
+        "description": "Animal vocalizations or sounds.",
+        "examples": "cat, insect, sheep, animal walk, growl, purr",
+    },
+    "fx-n": {
+        "level": 2,
+        "name": "Natural elements and explosions",
+        "description": "Sound events occurring by natural processes.",
+        "examples": "wind, fire, ice, rocks, water, stones, explosions",
+    },
+    "fx-ex": {
+        "level": 2,
+        "name": "Experimental",
+        "description": "Experimental sounds or heavily processed audio recordings.",
+        "examples": "reversed sounds, weird effects, unusual recording techniques or processing",
+    },
+    "fx-el": {
+        "level": 2,
+        "name": "Electronic / Design",
+        "description": "Sound effects that are computer-made or designed for user interfaces or animations.",
+        "examples": "sci-fi, laser, whoosh, boink, cartoon, ui, sound alerts or notifications",
+    },
+    "fx-other": {
+        "level": 2,
+        "name": "Other",
+        "description": "Sound effects that don't belong to any of the above categories.",
+    },
+    "ss": {
+        "level": 1,
+        "name": "Soundscapes",
+        "description": "Ambiances, field-recordings with multiple events and sound environments.",
+    },
+    "ss-n": {
+        "level": 2,
+        "name": "Nature",
+        "description": "Soundscapes from natural habitats.",
+        "examples": "forest ambiance, seaside, river with surrounding nature, farmland",
+    },
+    "ss-i": {
+        "level": 2,
+        "name": "Indoors",
+        "description": "Soundscapes from closed or indoor spaces.",
+        "examples": "closed room ambience, room tone, office, factory, bar",
+    },
+    "ss-u": {
+        "level": 2,
+        "name": "Urban",
+        "description": "Soundscapes from cityscapes or outdoor places with human intervention.",
+        "examples": "city ambience, outside airport, busy road",
+    },
+    "ss-s": {
+        "level": 2,
+        "name": "Synthetic / Artificial",
+        "description": "Soundscapes that are synthesized or computer-made ambiences.",
+        "examples": "artificially-created soundscapes, soundscapes from imaginary places",
+    },
+    "ss-other": {
+        "level": 2,
+        "name": "Other",
+        "description": "Soundscapes that don't belong to any of the above categories.",
+    },
 }
 
-BST_CATEGORY_CHOICES = [(key, value['name']) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" not in key]  # Top-level categories
-BST_SUBCATEGORY_CHOICES = [(key, value['name']) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" in key]  # Second-level categories
+BST_CATEGORY_CHOICES = [
+    (key, value["name"]) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" not in key
+]  # Top-level categories
+BST_SUBCATEGORY_CHOICES = [
+    (key, value["name"]) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" in key
+]  # Second-level categories
 
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls
 
 # Base data path. Note that further data subdirectories are defined after the local_settings import
-DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/'))
+DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../freesound-data/"))
 
 # Base data URL. Note that further data sub-urls are defined after the local_settings import
 # You can overwrite this to point to production data ("https://freesound.org/data/")
@@ -643,450 +641,450 @@ LOG_START_AND_END_COPYING_FILES = True
 # -------------------------------------------------------------------------------
 # Donations
 
-DONATION_AMOUNT_REQUEST_PARAM = 'dda'
+DONATION_AMOUNT_REQUEST_PARAM = "dda"
 
 # Stripe
-STRIPE_PUBLIC_KEY = 'pk_test_4w86cbKHcPs2G2kDqNdKd5u2'
-STRIPE_PRIVATE_KEY = 'sk_test_D4u7pcSnUSXtY4GAwDMmSFVZ'
-STRIPE_WEBHOOK_SECRET = ''
+STRIPE_PUBLIC_KEY = "pk_test_4w86cbKHcPs2G2kDqNdKd5u2"
+STRIPE_PRIVATE_KEY = "sk_test_D4u7pcSnUSXtY4GAwDMmSFVZ"
+STRIPE_WEBHOOK_SECRET = ""
 
 # Paypal
 PAYPAL_EMAIL = "fs@freesound.org"
-PAYPAL_VALIDATION_URL = ''
-PAYPAL_PAYMENTS_API_URL = ''
-PAYPAL_PASSWORD = ''
-PAYPAL_USERNAME = ''
-PAYPAL_SIGNATURE = ''
+PAYPAL_VALIDATION_URL = ""
+PAYPAL_PAYMENTS_API_URL = ""
+PAYPAL_PASSWORD = ""
+PAYPAL_USERNAME = ""
+PAYPAL_SIGNATURE = ""
 
 
 # -------------------------------------------------------------------------------
 # Sound Analysis configuration
 ORCHESTRATE_ANALYSIS_MAX_JOBS_PER_QUEUE_DEFAULT = 500
 ORCHESTRATE_ANALYSIS_MAX_NUM_ANALYSIS_ATTEMPTS = 3
-ORCHESTRATE_ANALYSIS_MAX_TIME_IN_QUEUED_STATUS = 24 * 2 # in hours
-ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7 # in hours
+ORCHESTRATE_ANALYSIS_MAX_TIME_IN_QUEUED_STATUS = 24 * 2  # in hours
+ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7  # in hours
 
-AUDIOCOMMONS_ANALYZER_NAME = 'ac-extractor_v3'
-FREESOUND_ESSENTIA_EXTRACTOR_NAME = 'fs-essentia-extractor_legacy'
-AUDIOSET_YAMNET_ANALYZER_NAME = 'audioset-yamnet_v1'
-BIRDNET_ANALYZER_NAME = 'birdnet_v1'
-FSDSINET_ANALYZER_NAME = 'fsd-sinet_v1'
-BST_ANALYZER_NAME = 'bst-extractor_v1'
- 
+AUDIOCOMMONS_ANALYZER_NAME = "ac-extractor_v3"
+FREESOUND_ESSENTIA_EXTRACTOR_NAME = "fs-essentia-extractor_legacy"
+AUDIOSET_YAMNET_ANALYZER_NAME = "audioset-yamnet_v1"
+BIRDNET_ANALYZER_NAME = "birdnet_v1"
+FSDSINET_ANALYZER_NAME = "fsd-sinet_v1"
+BST_ANALYZER_NAME = "bst-extractor_v1"
+
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {},
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
     AUDIOSET_YAMNET_ANALYZER_NAME: {},
     BIRDNET_ANALYZER_NAME: {},
     FSDSINET_ANALYZER_NAME: {},
-    BST_ANALYZER_NAME: {}
+    BST_ANALYZER_NAME: {},
 }
 
-AUDIO_DESCRIPTOR_TYPE_FLOAT = 'float'
-AUDIO_DESCRIPTOR_TYPE_INT = 'int'
-AUDIO_DESCRIPTOR_TYPE_BOOL = 'bool'
-AUDIO_DESCRIPTOR_TYPE_STRING = 'string'
-AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS = 'list_of_strings'
-AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY = 'float_array'
-AUDIO_DESCRIPTOR_TYPE_JSON = 'json'  # For complex structures
+AUDIO_DESCRIPTOR_TYPE_FLOAT = "float"
+AUDIO_DESCRIPTOR_TYPE_INT = "int"
+AUDIO_DESCRIPTOR_TYPE_BOOL = "bool"
+AUDIO_DESCRIPTOR_TYPE_STRING = "string"
+AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS = "list_of_strings"
+AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY = "float_array"
+AUDIO_DESCRIPTOR_TYPE_JSON = "json"  # For complex structures
 DEFAULT_AUDIO_DESCRIPTOR_TYPE = AUDIO_DESCRIPTOR_TYPE_FLOAT
 DEFAULT_AUDIO_DESCRIPTOR_FLOAT_PRECISION = 3  # Number of decimal digits for float audio descriptors
 
 condition_music_or_instrument_samples = lambda s: s.category_names[0] in ["Music", "Instrument samples"]
 condition_instrument_samples = lambda s: s.category_names[0] == "Instrument samples"
 condition_sfx_or_soundscapes = lambda s: s.category_names[0] in ["Sound effects", "Soundscapes"]
-CONSOLIDATED_ANALYZER_NAME = 'consolidated'
+CONSOLIDATED_ANALYZER_NAME = "consolidated"
 CONSOLIDATED_AUDIO_DESCRIPTORS = [
     {
-        'name': 'category', 
-        'analyzer': BST_ANALYZER_NAME,
-        'original_name': 'bst_top_level',
-        'type': AUDIO_DESCRIPTOR_TYPE_STRING
+        "name": "category",
+        "analyzer": BST_ANALYZER_NAME,
+        "original_name": "bst_top_level",
+        "type": AUDIO_DESCRIPTOR_TYPE_STRING,
     },
     {
-        'name': 'subcategory', 
-        'analyzer': BST_ANALYZER_NAME,
-        'original_name': 'bst_second_level',
-        'type': AUDIO_DESCRIPTOR_TYPE_STRING
+        "name": "subcategory",
+        "analyzer": BST_ANALYZER_NAME,
+        "original_name": "bst_second_level",
+        "type": AUDIO_DESCRIPTOR_TYPE_STRING,
     },
     {
-        'name': 'amplitude_peak_ratio',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['sfx']['max_to_total']
+        "name": "amplitude_peak_ratio",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["sfx"]["max_to_total"],
     },
     {
-        'name': 'beat_count',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['rhythm']['beats_count'],
-        'type': AUDIO_DESCRIPTOR_TYPE_INT
+        "name": "beat_count",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["rhythm"]["beats_count"],
+        "type": AUDIO_DESCRIPTOR_TYPE_INT,
     },
     {
-        'name': 'beat_loudness',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['rhythm']['beats_loudness']['mean']  # Increase precision?
+        "name": "beat_loudness",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["rhythm"]["beats_loudness"]["mean"],  # Increase precision?
     },
     {
-        'name': 'beat_times',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['rhythm']['beats_position'],
-        'type': AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,
-        'index': False
+        "name": "beat_times",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["rhythm"]["beats_position"],
+        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,
+        "index": False,
     },
     {
-        'name': 'boominess', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'boominess',
+        "name": "boominess",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "boominess",
     },
     {
-        'name': 'bpm', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'tempo',
+        "name": "bpm",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "tempo",
     },
     {
-        'name': 'bpm_confidence', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'tempo_confidence',
+        "name": "bpm_confidence",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "tempo_confidence",
     },
     {
-        'name': 'brightness', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'brightness',
+        "name": "brightness",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "brightness",
     },
     {
-        'name': 'chord_count',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['tonal']['chords_count'],
-        'type': AUDIO_DESCRIPTOR_TYPE_INT,
-        'condition': condition_music_or_instrument_samples
+        "name": "chord_count",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["tonal"]["chords_count"],
+        "type": AUDIO_DESCRIPTOR_TYPE_INT,
+        "condition": condition_music_or_instrument_samples,
     },
     {
-        'name': 'chord_progression',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['tonal']['chords_progression'],
-        'type': AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
-        'condition': condition_music_or_instrument_samples,
-        'index': False
+        "name": "chord_progression",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["tonal"]["chords_progression"],
+        "type": AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
+        "condition": condition_music_or_instrument_samples,
+        "index": False,
     },
     {
-        'name': 'decay_strength',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['sfx']['strongdecay']
+        "name": "decay_strength",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["sfx"]["strongdecay"],
     },
     {
-        'name': 'depth', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'depth',
+        "name": "depth",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "depth",
     },
     {
-        'name': 'dissonance',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['dissonance']['mean']
+        "name": "dissonance",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["dissonance"]["mean"],
     },
     {
-        'name': 'duration_effective',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['sfx']['effective_duration']['mean']
+        "name": "duration_effective",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["sfx"]["effective_duration"]["mean"],
     },
     {
-        'name': 'dynamic_range',
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'brightness',
+        "name": "dynamic_range",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "brightness",
     },
     {
-        'name': 'hardness', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'hardness',
+        "name": "hardness",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "hardness",
     },
     {
-        'name': 'hpcp',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['tonal']['hpcp']['mean'],
-        'type': AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
-        'index': False,
+        "name": "hpcp",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["tonal"]["hpcp"]["mean"],
+        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
+        "index": False,
     },
     {
-        'name': 'hpcp_crest',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['tonal']['hpcp_crest']['mean']
+        "name": "hpcp_crest",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["tonal"]["hpcp_crest"]["mean"],
     },
     {
-        'name': 'hpcp_entropy',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['tonal']['hpcp_entropy']['mean']
+        "name": "hpcp_entropy",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["tonal"]["hpcp_entropy"]["mean"],
     },
     {
-        'name': 'inharmonicity',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['sfx']['inharmonicity']['mean']
+        "name": "inharmonicity",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["sfx"]["inharmonicity"]["mean"],
     },
     {
-        'name': 'log_attack_time', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'log_attack_time',
+        "name": "log_attack_time",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "log_attack_time",
     },
     {
-        'name': 'loopable', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'loop',
-        'type': AUDIO_DESCRIPTOR_TYPE_BOOL
+        "name": "loopable",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "loop",
+        "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
     },
     {
-        'name': 'loudness', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'loudness',
+        "name": "loudness",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "loudness",
     },
     {
-        'name': 'mfcc',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['mfcc']['mean'],
-        'type': AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
-        'index': False,
+        "name": "mfcc",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["mfcc"]["mean"],
+        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
+        "index": False,
     },
     {
-        'name': 'note_confidence', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'note_confidence',
-        'condition': condition_instrument_samples
+        "name": "note_confidence",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "note_confidence",
+        "condition": condition_instrument_samples,
     },
     {
-        'name': 'note_midi', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'note_midi',
-        'type': AUDIO_DESCRIPTOR_TYPE_INT,
-        'condition': condition_instrument_samples
+        "name": "note_midi",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "note_midi",
+        "type": AUDIO_DESCRIPTOR_TYPE_INT,
+        "condition": condition_instrument_samples,
     },
     {
-        'name': 'note_name', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'note_name',
-        'type': AUDIO_DESCRIPTOR_TYPE_STRING,
-        'condition': condition_instrument_samples
+        "name": "note_name",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "note_name",
+        "type": AUDIO_DESCRIPTOR_TYPE_STRING,
+        "condition": condition_instrument_samples,
     },
     {
-        'name': 'onset_count',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['rhythm']['onset_count'],
-        'type': AUDIO_DESCRIPTOR_TYPE_INT
+        "name": "onset_count",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["rhythm"]["onset_count"],
+        "type": AUDIO_DESCRIPTOR_TYPE_INT,
     },
     {
-        'name': 'onset_times',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['rhythm']['onset_times'],
-        'type': AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,
-        'index': False
+        "name": "onset_times",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["rhythm"]["onset_times"],
+        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,
+        "index": False,
     },
     {
-        'name': 'pitch',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['pitch']['mean']
+        "name": "pitch",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["pitch"]["mean"],
     },
     {
-        'name': 'pitch_max',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['pitch']['max']
+        "name": "pitch_max",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["pitch"]["max"],
     },
     {
-        'name': 'pitch_min',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['pitch']['min']
+        "name": "pitch_min",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["pitch"]["min"],
     },
     {
-        'name': 'pitch_salience',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['pitch_salience']['mean']
+        "name": "pitch_salience",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["pitch_salience"]["mean"],
     },
     {
-        'name': 'pitch_var',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['pitch']['var']
+        "name": "pitch_var",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["pitch"]["var"],
     },
     {
-        'name': 'reverbness', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'reverbness',
-        'type': AUDIO_DESCRIPTOR_TYPE_BOOL
+        "name": "reverbness",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "reverbness",
+        "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
     },
     {
-        'name': 'roughness', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'roughness',
+        "name": "roughness",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "roughness",
     },
     {
-        'name': 'sharpness', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'sharpness',
+        "name": "sharpness",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "sharpness",
     },
     {
-        'name': 'silence_rate', 
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['silence_rate_30dB']['mean']
+        "name": "silence_rate",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["silence_rate_30dB"]["mean"],
     },
     {
-        'name': 'single_event', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'single_event',
-        'type': AUDIO_DESCRIPTOR_TYPE_BOOL,
-        'transformation': lambda v, d, s: v if s.category_names[0] not in ["Music", "Soundscapes"] else False
+        "name": "single_event",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "single_event",
+        "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
+        "transformation": lambda v, d, s: v if s.category_names[0] not in ["Music", "Soundscapes"] else False,
     },
     {
-        'name': 'spectral_centroid', 
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['spectral_centroid']['mean']
+        "name": "spectral_centroid",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["spectral_centroid"]["mean"],
     },
     {
-        'name': 'spectral_complexity', 
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['spectral_complexity']['mean']
+        "name": "spectral_complexity",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["spectral_complexity"]["mean"],
     },
     {
-        'name': 'spectral_crest', 
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['spectral_crest']['mean']
+        "name": "spectral_crest",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["spectral_crest"]["mean"],
     },
     {
-        'name': 'spectral_energy',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['spectral_energy']['mean']
+        "name": "spectral_energy",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["spectral_energy"]["mean"],
     },
     {
-        'name': 'spectral_entropy',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['spectral_entropy']['mean']
+        "name": "spectral_entropy",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["spectral_entropy"]["mean"],
     },
     {
-        'name': 'spectral_flatness',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['spectral_flatness_db']['mean']
+        "name": "spectral_flatness",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["spectral_flatness_db"]["mean"],
     },
     {
-        'name': 'spectral_rolloff',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['spectral_rolloff']['mean']
+        "name": "spectral_rolloff",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["spectral_rolloff"]["mean"],
     },
     {
-        'name': 'spectral_skewness',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['spectral_skewness']['mean']
+        "name": "spectral_skewness",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["spectral_skewness"]["mean"],
     },
     {
-        'name': 'spectral_spread',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['spectral_spread']['mean']
+        "name": "spectral_spread",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["spectral_spread"]["mean"],
     },
     {
-        'name': 'start_time',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['startFrame'],
-        'transformation': lambda v, d, s: (v * 2048.0) / 44100.0   # Convert from frames to seconds
+        "name": "start_time",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["startFrame"],
+        "transformation": lambda v, d, s: (v * 2048.0) / 44100.0,  # Convert from frames to seconds
     },
     {
-        'name': 'temporal_centroid',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['sfx']['temporal_centroid']['mean']
+        "name": "temporal_centroid",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["sfx"]["temporal_centroid"]["mean"],
     },
     {
-        'name': 'temporal_centroid_ratio',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['sfx']['tc_to_total']
+        "name": "temporal_centroid_ratio",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["sfx"]["tc_to_total"],
     },
     {
-        'name': 'temporal_decrease',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['sfx']['temporal_decrease']['mean']
+        "name": "temporal_decrease",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["sfx"]["temporal_decrease"]["mean"],
     },
     {
-        'name': 'temporal_skewness',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['sfx']['temporal_skewness']['mean']
+        "name": "temporal_skewness",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["sfx"]["temporal_skewness"]["mean"],
     },
     {
-        'name': 'temporal_spread',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['sfx']['temporal_spread']['mean']
+        "name": "temporal_spread",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["sfx"]["temporal_spread"]["mean"],
     },
     {
-        'name': 'tonality', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'tonality',
-        'type': AUDIO_DESCRIPTOR_TYPE_STRING
+        "name": "tonality",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "tonality",
+        "type": AUDIO_DESCRIPTOR_TYPE_STRING,
     },
     {
-        'name': 'tonality_confidence', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'tonality_confidence',
+        "name": "tonality_confidence",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "tonality_confidence",
     },
     {
-        'name': 'tristimulus',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['sfx']['tristimulus']['mean'],
-        'type': AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
-        'index': False,
+        "name": "tristimulus",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["sfx"]["tristimulus"]["mean"],
+        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
+        "index": False,
     },
     {
-        'name': 'warmth', 
-        'analyzer': AUDIOCOMMONS_ANALYZER_NAME,
-        'original_name': 'warmth',
+        "name": "warmth",
+        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
+        "original_name": "warmth",
     },
     {
-        'name': 'zero_crossing_rate',
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'get_func': lambda d, s: d['lowlevel']['zerocrossingrate']['mean']
+        "name": "zero_crossing_rate",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel"]["zerocrossingrate"]["mean"],
     },
     {
-        'name': 'has_audio_problems',
-        'analyzer': "fs-essentia-problem-detection_v1",
-        'original_name': 'has_audio_problems',
-        'type': AUDIO_DESCRIPTOR_TYPE_BOOL
+        "name": "has_audio_problems",
+        "analyzer": "fs-essentia-problem-detection_v1",
+        "original_name": "has_audio_problems",
+        "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
     },
     {
-        'name': 'birdnet_detected_class', 
-        'type': AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
-        'analyzer': BIRDNET_ANALYZER_NAME,
-        'original_name': 'detected_classes',
-        'transformation': lambda v, d, s: None if v == [] else v,
-        'condition': condition_sfx_or_soundscapes
+        "name": "birdnet_detected_class",
+        "type": AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
+        "analyzer": BIRDNET_ANALYZER_NAME,
+        "original_name": "detected_classes",
+        "transformation": lambda v, d, s: None if v == [] else v,
+        "condition": condition_sfx_or_soundscapes,
     },
     {
-        'name': 'birdnet_detections', 
-        'analyzer': BIRDNET_ANALYZER_NAME,
-        'type': AUDIO_DESCRIPTOR_TYPE_JSON,
-        'original_name': 'detections',
-        'transformation': lambda v, d, s: None if v == [] else v,
-        'condition': condition_sfx_or_soundscapes,
-        'index': False
+        "name": "birdnet_detections",
+        "analyzer": BIRDNET_ANALYZER_NAME,
+        "type": AUDIO_DESCRIPTOR_TYPE_JSON,
+        "original_name": "detections",
+        "transformation": lambda v, d, s: None if v == [] else v,
+        "condition": condition_sfx_or_soundscapes,
+        "index": False,
     },
     {
-        'name': 'birdnet_detections_count', 
-        'type': AUDIO_DESCRIPTOR_TYPE_INT,
-        'analyzer': BIRDNET_ANALYZER_NAME,
-        'original_name': 'num_detections',
-        'condition': condition_sfx_or_soundscapes
+        "name": "birdnet_detections_count",
+        "type": AUDIO_DESCRIPTOR_TYPE_INT,
+        "analyzer": BIRDNET_ANALYZER_NAME,
+        "original_name": "num_detections",
+        "condition": condition_sfx_or_soundscapes,
     },
     {
-        'name': 'fsdsinet_detected_class', 
-        'type': AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
-        'analyzer': FSDSINET_ANALYZER_NAME,
-        'original_name': 'detected_classes',
-        'transformation': lambda v, d, s: None if v == [] else v,
+        "name": "fsdsinet_detected_class",
+        "type": AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
+        "analyzer": FSDSINET_ANALYZER_NAME,
+        "original_name": "detected_classes",
+        "transformation": lambda v, d, s: None if v == [] else v,
     },
     {
-        'name': 'fsdsinet_detections', 
-        'analyzer': FSDSINET_ANALYZER_NAME,
-        'type': AUDIO_DESCRIPTOR_TYPE_JSON,
-        'original_name': 'detections',
-        'transformation': lambda v, d, s: None if v == [] else v,
-        'index': False
+        "name": "fsdsinet_detections",
+        "analyzer": FSDSINET_ANALYZER_NAME,
+        "type": AUDIO_DESCRIPTOR_TYPE_JSON,
+        "original_name": "detections",
+        "transformation": lambda v, d, s: None if v == [] else v,
+        "index": False,
     },
     {
-        'name': 'fsdsinet_detections_count', 
-        'type': AUDIO_DESCRIPTOR_TYPE_INT,
-        'analyzer': FSDSINET_ANALYZER_NAME,
-        'original_name': 'num_detections'
+        "name": "fsdsinet_detections_count",
+        "type": AUDIO_DESCRIPTOR_TYPE_INT,
+        "analyzer": FSDSINET_ANALYZER_NAME,
+        "original_name": "num_detections",
     },
 ]
 
-CONSOLIDATED_AUDIO_DESCRIPTORS_ANALYZER_NAMES = list(set([ad['analyzer'] for ad in CONSOLIDATED_AUDIO_DESCRIPTORS]))
-AVAILABLE_AUDIO_DESCRIPTORS_NAMES = [desc['name'] for desc in CONSOLIDATED_AUDIO_DESCRIPTORS]
+CONSOLIDATED_AUDIO_DESCRIPTORS_ANALYZER_NAMES = list(set([ad["analyzer"] for ad in CONSOLIDATED_AUDIO_DESCRIPTORS]))
+AVAILABLE_AUDIO_DESCRIPTORS_NAMES = [desc["name"] for desc in CONSOLIDATED_AUDIO_DESCRIPTORS]
 
 
 # -------------------------------------------------------------------------------
@@ -1095,22 +1093,22 @@ AVAILABLE_AUDIO_DESCRIPTORS_NAMES = [desc['name'] for desc in CONSOLIDATED_AUDIO
 FCW_FILTER_VALUE = '("Attribution" OR "Creative Commons 0")'
 
 # Define the names of some of the indexed sound fields which are to be used later
-SEARCH_SOUNDS_FIELD_ID = 'sound_id'
-SEARCH_SOUNDS_FIELD_NAME = 'name'
-SEARCH_SOUNDS_FIELD_TAGS = 'tags'
-SEARCH_SOUNDS_FIELD_DESCRIPTION = 'description'
-SEARCH_SOUNDS_FIELD_USER_NAME = 'username'
-SEARCH_SOUNDS_FIELD_PACK_NAME = 'packname'
-SEARCH_SOUNDS_FIELD_PACK_GROUPING = 'pack_grouping'
-SEARCH_SOUNDS_FIELD_SAMPLERATE = 'samplerate'
-SEARCH_SOUNDS_FIELD_BITRATE = 'bitrate'
-SEARCH_SOUNDS_FIELD_BITDEPTH = 'bitdepth'
-SEARCH_SOUNDS_FIELD_TYPE = 'type'
-SEARCH_SOUNDS_FIELD_CHANNELS = 'channels'
-SEARCH_SOUNDS_FIELD_LICENSE_NAME = 'license'
-SEARCH_SOUNDS_FIELD_CATEGORY = 'category'
-SEARCH_SOUNDS_FIELD_SUBCATEGORY = 'subcategory'
-SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING = 'collection_grouping'
+SEARCH_SOUNDS_FIELD_ID = "sound_id"
+SEARCH_SOUNDS_FIELD_NAME = "name"
+SEARCH_SOUNDS_FIELD_TAGS = "tags"
+SEARCH_SOUNDS_FIELD_DESCRIPTION = "description"
+SEARCH_SOUNDS_FIELD_USER_NAME = "username"
+SEARCH_SOUNDS_FIELD_PACK_NAME = "packname"
+SEARCH_SOUNDS_FIELD_PACK_GROUPING = "pack_grouping"
+SEARCH_SOUNDS_FIELD_SAMPLERATE = "samplerate"
+SEARCH_SOUNDS_FIELD_BITRATE = "bitrate"
+SEARCH_SOUNDS_FIELD_BITDEPTH = "bitdepth"
+SEARCH_SOUNDS_FIELD_TYPE = "type"
+SEARCH_SOUNDS_FIELD_CHANNELS = "channels"
+SEARCH_SOUNDS_FIELD_LICENSE_NAME = "license"
+SEARCH_SOUNDS_FIELD_CATEGORY = "category"
+SEARCH_SOUNDS_FIELD_SUBCATEGORY = "subcategory"
+SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING = "collection_grouping"
 
 # Default weights for fields to match
 SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS = {
@@ -1119,7 +1117,7 @@ SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS = {
     SEARCH_SOUNDS_FIELD_DESCRIPTION: 3,
     SEARCH_SOUNDS_FIELD_USER_NAME: 1,
     SEARCH_SOUNDS_FIELD_PACK_NAME: 2,
-    SEARCH_SOUNDS_FIELD_NAME: 2
+    SEARCH_SOUNDS_FIELD_NAME: 2,
 }
 
 SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC = "Automatic by relevance"
@@ -1146,69 +1144,70 @@ SEARCH_SOUNDS_SORT_OPTIONS_WEB = [
 SEARCH_SOUNDS_SORT_DEFAULT = SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC
 
 SEARCH_SOUNDS_DEFAULT_FACETS = {
-    SEARCH_SOUNDS_FIELD_SAMPLERATE: {'resort_by_value_as_int': True, 'skip_value_0': True},
-    SEARCH_SOUNDS_FIELD_BITRATE: {'resort_by_value_as_int': True, 'skip_value_0': True},
-    SEARCH_SOUNDS_FIELD_BITDEPTH: {'resort_by_value_as_int': True, 'skip_value_0': True},
-    SEARCH_SOUNDS_FIELD_CHANNELS: {'resort_by_value_as_int': True, 'skip_value_0': True, 'limit': 10},
-    SEARCH_SOUNDS_FIELD_PACK_GROUPING: {'limit': 10, 'title': 'Packs'},
-    SEARCH_SOUNDS_FIELD_USER_NAME: {'limit': 10, 'widget': 'cloud', 'title': 'Users'},
-    SEARCH_SOUNDS_FIELD_TAGS: {'limit': 30, 'widget': 'cloud'},
-    SEARCH_SOUNDS_FIELD_TYPE: {'limit': len(SOUND_TYPE_CHOICES)},
-    SEARCH_SOUNDS_FIELD_LICENSE_NAME: {'limit': 10},
-    SEARCH_SOUNDS_FIELD_CATEGORY: {'limit': 30, 'title': 'Category'},
-    SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING: {'limit': 10, 'title': 'Collections'},
+    SEARCH_SOUNDS_FIELD_SAMPLERATE: {"resort_by_value_as_int": True, "skip_value_0": True},
+    SEARCH_SOUNDS_FIELD_BITRATE: {"resort_by_value_as_int": True, "skip_value_0": True},
+    SEARCH_SOUNDS_FIELD_BITDEPTH: {"resort_by_value_as_int": True, "skip_value_0": True},
+    SEARCH_SOUNDS_FIELD_CHANNELS: {"resort_by_value_as_int": True, "skip_value_0": True, "limit": 10},
+    SEARCH_SOUNDS_FIELD_PACK_GROUPING: {"limit": 10, "title": "Packs"},
+    SEARCH_SOUNDS_FIELD_USER_NAME: {"limit": 10, "widget": "cloud", "title": "Users"},
+    SEARCH_SOUNDS_FIELD_TAGS: {"limit": 30, "widget": "cloud"},
+    SEARCH_SOUNDS_FIELD_TYPE: {"limit": len(SOUND_TYPE_CHOICES)},
+    SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10},
+    SEARCH_SOUNDS_FIELD_CATEGORY: {"limit": 30, "title": "Category"},
+    SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING: {"limit": 10, "title": "Collections"},
 }
-SEARCH_SOUNDS_SUBCATEGORY_FACET = {SEARCH_SOUNDS_FIELD_SUBCATEGORY: {'limit': 30, 'title': 'Subcategory'}}
+SEARCH_SOUNDS_SUBCATEGORY_FACET = {SEARCH_SOUNDS_FIELD_SUBCATEGORY: {"limit": 30, "title": "Subcategory"}}
 
 SEARCH_SOUNDS_BETA_FACETS = {
-    'fsdsinet_detected_class': {'limit': 30, 'title': 'FSD-SINet class'},
-    'brightness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Brightness'},
-    'depth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Depth'},
-    'warmth': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Warmth'},
-    'hardness': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Hardness'},
-    'boominess': {'type': 'range', 'start': 0, 'end': 100, 'gap': 20, 'widget': 'range', 'title': 'Boominess'},
+    "fsdsinet_detected_class": {"limit": 30, "title": "FSD-SINet class"},
+    "brightness": {"type": "range", "start": 0, "end": 100, "gap": 20, "widget": "range", "title": "Brightness"},
+    "depth": {"type": "range", "start": 0, "end": 100, "gap": 20, "widget": "range", "title": "Depth"},
+    "warmth": {"type": "range", "start": 0, "end": 100, "gap": 20, "widget": "range", "title": "Warmth"},
+    "hardness": {"type": "range", "start": 0, "end": 100, "gap": 20, "widget": "range", "title": "Hardness"},
+    "boominess": {"type": "range", "start": 0, "end": 100, "gap": 20, "widget": "range", "title": "Boominess"},
 }
 
 SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST = "Thread creation (newest first)"
 SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST = "Post creation (newest first)"
-SEARCH_FORUM_SORT_OPTIONS_WEB = [
-    SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST,
-    SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST
-]
+SEARCH_FORUM_SORT_OPTIONS_WEB = [SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST, SEARCH_FORUM_SORT_OPTION_DATE_NEW_FIRST]
 SEARCH_FORUM_SORT_DEFAULT = SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST
 
-SEARCH_ENGINE_BACKEND_CLASS = 'utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine'
+SEARCH_ENGINE_BACKEND_CLASS = "utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine"
 SOLR5_BASE_URL = "http://search:8983/solr"
 SOLR9_BASE_URL = "http://search:8983"
 
-SIMILARITY_SPACE_LAION_CLAP = 'laion_clap'
-SIMILARITY_FREESOUND_CLASSIC = 'freesound_classic'
+SIMILARITY_SPACE_LAION_CLAP = "laion_clap"
+SIMILARITY_FREESOUND_CLASSIC = "freesound_classic"
 SIMILARITY_SPACES = {
     SIMILARITY_SPACE_LAION_CLAP: {
-        'vector_property_name': 'clap_embedding', 
-        'vector_size': 512,
-        'l2_norm': True,
-        'analyzer': BST_ANALYZER_NAME,
-        'display_name': 'Acoustic and semantic'
+        "vector_property_name": "clap_embedding",
+        "vector_size": 512,
+        "l2_norm": True,
+        "analyzer": BST_ANALYZER_NAME,
+        "display_name": "Acoustic and semantic",
     },
     SIMILARITY_FREESOUND_CLASSIC: {
-        'vector_property_name': 'sim_vector', 
-        'vector_size': 100,
-        'l2_norm': True,
-        'analyzer': FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        'display_name': 'Acoustic'
-    }
+        "vector_property_name": "sim_vector",
+        "vector_size": 100,
+        "l2_norm": True,
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "display_name": "Acoustic",
+    },
 }
 SIMILARITY_SPACES_NAMES = list(SIMILARITY_SPACES.keys())
-SIMILARITY_SPACES_ANALYZER_NAMES = list(set([ss['analyzer'] for ss in SIMILARITY_SPACES.values()]))
+SIMILARITY_SPACES_ANALYZER_NAMES = list(set([ss["analyzer"] for ss in SIMILARITY_SPACES.values()]))
 SIMILARITY_SPACE_DEFAULT = SIMILARITY_SPACE_LAION_CLAP
 SIMILARITY_MIN_THRESHOLD = 0.7
 
-MAX_SEARCH_RESULTS_IN_MAP_DISPLAY = 10000  # This is the maximum number of sounds that will be shown when using "display results in map" mode
+MAX_SEARCH_RESULTS_IN_MAP_DISPLAY = (
+    10000  # This is the maximum number of sounds that will be shown when using "display results in map" mode
+)
 
 SEARCH_CACHE_EMPTY_QUERIES = True
-SEARCH_EMPTY_QUERY_CACHE_KEY = 'search_empty_query_results_paginator'
-SEARCH_EMPTY_QUERY_CACHE_TIME = 60 * 10  # 10 minutes, although we manually invalidate this cache when the search index is updated so this time could theoretically be longer
+SEARCH_EMPTY_QUERY_CACHE_KEY = "search_empty_query_results_paginator"
+SEARCH_EMPTY_QUERY_CACHE_TIME = (
+    60 * 10
+)  # 10 minutes, although we manually invalidate this cache when the search index is updated so this time could theoretically be longer
 
 SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take longer than this threshold in milliseconds. Set it to -1 to disable logging of slow queries.
 SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
@@ -1216,14 +1215,14 @@ SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/s
 
 # -------------------------------------------------------------------------------
 # Similarity client settings
-SIMILARITY_ADDRESS = 'similarity'
+SIMILARITY_ADDRESS = "similarity"
 SIMILARITY_PORT = 8008
 SIMILARITY_INDEXING_SERVER_PORT = 8009
 SIMILARITY_TIMEOUT = 10
 
 # -------------------------------------------------------------------------------
 # Tag recommendation client settings
-TAGRECOMMENDATION_ADDRESS = 'tagrecommendation'
+TAGRECOMMENDATION_ADDRESS = "tagrecommendation"
 TAGRECOMMENDATION_PORT = 8010
 TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
 TAGRECOMMENDATION_TIMEOUT = 10
@@ -1236,22 +1235,22 @@ TRACES_SAMPLE_RATE = 0.1
 # -------------------------------------------------------------------------------
 # Zendesk settings
 USE_ZENDESK_FOR_SUPPORT_REQUESTS = False
-ZENDESK_EMAIL = ''
-ZENDESK_TOKEN = ''
+ZENDESK_EMAIL = ""
+ZENDESK_TOKEN = ""
 
 # -------------------------------------------------------------------------------
 # Graylog settings
 
-GRAYLOG_API_STREAM_ID = '530f2ec5e4b0f124869546d0'
-GRAYLOG_SEARCH_STREAM_ID = '531051bee4b0f1248696785a'
-GRAYLOG_DOMAIN = ''
-GRAYLOG_USERNAME = ''
-GRAYLOG_PASSWORD = ''
+GRAYLOG_API_STREAM_ID = "530f2ec5e4b0f124869546d0"
+GRAYLOG_SEARCH_STREAM_ID = "531051bee4b0f1248696785a"
+GRAYLOG_DOMAIN = ""
+GRAYLOG_USERNAME = ""
+GRAYLOG_PASSWORD = ""
 
 # -------------------------------------------------------------------------------
 # Mapbox
 
-MAPBOX_ACCESS_TOKEN = ''
+MAPBOX_ACCESS_TOKEN = ""
 MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 
 
@@ -1267,18 +1266,18 @@ MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 # To bypass the security check that prevents the test keys from being used unknowingly add
 # SILENCED_SYSTEM_CHECKS = [..., 'captcha.recaptcha_test_key_error', ...] to your settings.
 
-SILENCED_SYSTEM_CHECKS += ['django_recaptcha.recaptcha_test_key_error']
+SILENCED_SYSTEM_CHECKS += ["django_recaptcha.recaptcha_test_key_error"]
 
 
 # -------------------------------------------------------------------------------
 # Akismet
 
-AKISMET_KEY = ''
+AKISMET_KEY = ""
 
 # -------------------------------------------------------------------------------
 # Processing and analysis settings
 
-STEREOFY_PATH = '/usr/local/bin/stereofy'
+STEREOFY_PATH = "/usr/local/bin/stereofy"
 
 # Min free disk space percentage for worker (worker will raise exception if not enough free disk space is available)
 WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.05
@@ -1287,7 +1286,9 @@ WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.05
 WORKER_TIMEOUT = 60 * 60
 
 # Used to configure output formats in newer FreesoundExtractor versions
-ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils/audioprocessing/essentia_profile.yaml'))
+ESSENTIA_PROFILE_FILE_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../utils/audioprocessing/essentia_profile.yaml")
+)
 
 # Sound previews quality (for mp3, quality is in bitrate, for ogg, quality is in a number from 1 to 10  )
 MP3_LQ_PREVIEW_QUALITY = 70
@@ -1301,10 +1302,10 @@ OGG_HQ_PREVIEW_QUALITY = 6
 
 MAX_RESULTS_FOR_CLUSTERING = 1000
 
-# One day timeout for keeping clustering results. The cache timer is reset when the clustering is 
+# One day timeout for keeping clustering results. The cache timer is reset when the clustering is
 # requested so that popular queries that are performed once a day minimum will always stay in cache
 # and won't be recomputed.
-CLUSTERING_CACHE_TIME = 24*60*60*1
+CLUSTERING_CACHE_TIME = 24 * 60 * 60 * 1
 
 # Limit of distance when creating Nearest Neighbors graph
 CLUSTERING_MAX_NEIGHBORS_DISTANCE = 20
@@ -1324,16 +1325,13 @@ CLUSTERING_TASK_TIMEOUT = 30
 # -------------------------------------------------------------------------------
 # Rate limiting
 
-RATELIMIT_VIEW = 'accounts.views.ratelimited_error'
-RATELIMIT_SEARCH_GROUP = 'search'
-RATELIMIT_SIMILARITY_GROUP = 'similarity'
-RATELIMIT_DEFAULT_GROUP_RATELIMIT = '2/s'
-RATELIMITS = {
-    RATELIMIT_SEARCH_GROUP: '2/s',
-    RATELIMIT_SIMILARITY_GROUP: '2/s'
-}
+RATELIMIT_VIEW = "accounts.views.ratelimited_error"
+RATELIMIT_SEARCH_GROUP = "search"
+RATELIMIT_SIMILARITY_GROUP = "similarity"
+RATELIMIT_DEFAULT_GROUP_RATELIMIT = "2/s"
+RATELIMITS = {RATELIMIT_SEARCH_GROUP: "2/s", RATELIMIT_SIMILARITY_GROUP: "2/s"}
 BLOCKED_IPS = []
-CACHED_BLOCKED_IPS_KEY = 'cached_blocked_ips'
+CACHED_BLOCKED_IPS_KEY = "cached_blocked_ips"
 CACHED_BLOCKED_IPS_TIME = 60 * 5  # 5 minutes
 
 # -------------------------------------------------------------------------------
@@ -1342,42 +1340,42 @@ CACHED_BLOCKED_IPS_TIME = 60 * 5  # 5 minutes
 ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False
 
 APIV2 = {
-    'PAGE_SIZE': 15,
-    'PAGE_SIZE_QUERY_PARAM': 'page_size',
-    'MAX_PAGE_SIZE': 150,
+    "PAGE_SIZE": 15,
+    "PAGE_SIZE_QUERY_PARAM": "page_size",
+    "MAX_PAGE_SIZE": 150,
 }
 
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'apiv2.pagination.CustomPagination',
-    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
-    'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-        'rest_framework_yaml.renderers.YAMLRenderer',
-        'rest_framework_jsonp.renderers.JSONPRenderer',
-        'rest_framework_xml.renderers.XMLRenderer',
+    "DEFAULT_PAGINATION_CLASS": "apiv2.pagination.CustomPagination",
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+        "rest_framework_yaml.renderers.YAMLRenderer",
+        "rest_framework_jsonp.renderers.JSONPRenderer",
+        "rest_framework_xml.renderers.XMLRenderer",
     ),
-    'DEFAULT_THROTTLE_CLASSES': (
-        'apiv2.throttling.ClientBasedThrottlingBurst',
-        'apiv2.throttling.ClientBasedThrottlingSustained',
-        'apiv2.throttling.IpBasedThrottling',
+    "DEFAULT_THROTTLE_CLASSES": (
+        "apiv2.throttling.ClientBasedThrottlingBurst",
+        "apiv2.throttling.ClientBasedThrottlingSustained",
+        "apiv2.throttling.IpBasedThrottling",
     ),
-    'VIEW_DESCRIPTION_FUNCTION': 'apiv2.apiv2_utils.get_view_description',
+    "VIEW_DESCRIPTION_FUNCTION": "apiv2.apiv2_utils.get_view_description",
 }
 
-API_DOWNLOAD_TOKEN_LIFETIME = 60*60  # 1 hour
+API_DOWNLOAD_TOKEN_LIFETIME = 60 * 60  # 1 hour
 
 OAUTH2_PROVIDER = {
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 60*60*24,
-    'CLIENT_SECRET_GENERATOR_LENGTH': 40,
-    'AUTHORIZATION_CODE_EXPIRE_SECONDS': 10*60,
-    'OAUTH2_VALIDATOR_CLASS': 'apiv2.oauth2_validators.OAuth2Validator',
-    'REQUEST_APPROVAL_PROMPT': 'auto',
-    'CLIENT_ID_GENERATOR_CLASS': 'apiv2.apiv2_utils.FsClientIdGenerator',
-    'PKCE_REQUIRED': False,
-    'APPLICATION_ADMIN_CLASS': 'apiv2.oauth2_admin.ApplicationAdmin'
+    "ACCESS_TOKEN_EXPIRE_SECONDS": 60 * 60 * 24,
+    "CLIENT_SECRET_GENERATOR_LENGTH": 40,
+    "AUTHORIZATION_CODE_EXPIRE_SECONDS": 10 * 60,
+    "OAUTH2_VALIDATOR_CLASS": "apiv2.oauth2_validators.OAuth2Validator",
+    "REQUEST_APPROVAL_PROMPT": "auto",
+    "CLIENT_ID_GENERATOR_CLASS": "apiv2.apiv2_utils.FsClientIdGenerator",
+    "PKCE_REQUIRED": False,
+    "APPLICATION_ADMIN_CLASS": "apiv2.oauth2_admin.ApplicationAdmin",
 }
-OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+OAUTH2_PROVIDER_APPLICATION_MODEL = "oauth2_provider.Application"
 
 # APIv2 throttling limits
 # Define API usage limit rates per defined throttling levels
@@ -1387,17 +1385,17 @@ OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 # Sustained limit sets the maximum number of requests that an api client can do in a day
 # Ip limit sets the maximum number of requests from different ips that a client can do in an hour
 APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
-    0: ['0/minute', '0/day', '0/hour'],  # Client 'disabled'
-    1: ['60/minute', '2000/day', None],  # Ip limit not yet enabled
-    2: ['300/minute', '5000/day', None],  # Ip limit not yet enabled
-    3: ['300/minute', '15000/day', None],  # Ip limit not yet enabled
+    0: ["0/minute", "0/day", "0/hour"],  # Client 'disabled'
+    1: ["60/minute", "2000/day", None],  # Ip limit not yet enabled
+    2: ["300/minute", "5000/day", None],  # Ip limit not yet enabled
+    3: ["300/minute", "15000/day", None],  # Ip limit not yet enabled
     99: [],  # No limit of requests
 }
 APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
-    0: ['0/minute', '0/day',  '0/hour'],  # Client 'disabled'
-    1: ['30/minute', '500/day', None],  # Ip limit not yet enabled
-    2: ['60/minute', '1000/day', None],  # Ip limit not yet enabled
-    3: ['60/minute', '3000/day', None],  # Ip limit not yet enabled
+    0: ["0/minute", "0/day", "0/hour"],  # Client 'disabled'
+    1: ["30/minute", "500/day", None],  # Ip limit not yet enabled
+    2: ["60/minute", "1000/day", None],  # Ip limit not yet enabled
+    3: ["60/minute", "3000/day", None],  # Ip limit not yet enabled
     99: [],  # No limit of requests
 }
 
@@ -1407,24 +1405,24 @@ APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(os.path.dirname(__file__), '../templates'),
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            os.path.join(os.path.dirname(__file__), "../templates"),
         ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.contrib.auth.context_processors.auth',
-                'django.template.context_processors.debug',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'django.template.context_processors.tz',
-                'django.template.context_processors.request',
-                'django.contrib.messages.context_processors.messages',
-                'freesound.context_processor.context_extra',
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.contrib.auth.context_processors.auth",
+                "django.template.context_processors.debug",
+                "django.template.context_processors.i18n",
+                "django.template.context_processors.media",
+                "django.template.context_processors.static",
+                "django.template.context_processors.tz",
+                "django.template.context_processors.request",
+                "django.contrib.messages.context_processors.messages",
+                "freesound.context_processor.context_extra",
             ],
-        }
+        },
     },
 ]
 
@@ -1433,12 +1431,12 @@ TEMPLATES = [
 PLAUSIBLE_AGGREGATE_PAGEVIEWS = True
 
 # -------------------------------------------------------------------------------
-# Rabbit MQ 
+# Rabbit MQ
 RABBITMQ_USER = "guest"
 RABBITMQ_PASS = "guest"
-RABBITMQ_HOST = 'rabbitmq'
-RABBITMQ_PORT = '5672'
-RABBITMQ_API_PORT = '5673'
+RABBITMQ_HOST = "rabbitmq"
+RABBITMQ_PORT = "5672"
+RABBITMQ_API_PORT = "5673"
 
 # -------------------------------------------------------------------------------
 # Collections
@@ -1453,14 +1451,14 @@ from .local_settings import *
 
 # -------------------------------------------------------------------------------
 # Celery
-CELERY_BROKER_URL = f'amqp://{RABBITMQ_USER}:{RABBITMQ_PASS}@{RABBITMQ_HOST}:{RABBITMQ_PORT}//'
-CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/{CELERY_BROKER_REDIS_STORE_ID}'
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_ASYNC_TASKS_QUEUE_NAME = 'async_tasks_queue'
-CELERY_SOUND_PROCESSING_QUEUE_NAME = 'sound_processing_queue'
-CELERY_CLUSTERING_TASK_QUEUE_NAME = 'clustering_queue'
+CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASS}@{RABBITMQ_HOST}:{RABBITMQ_PORT}//"
+CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{CELERY_BROKER_REDIS_STORE_ID}"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_ASYNC_TASKS_QUEUE_NAME = "async_tasks_queue"
+CELERY_SOUND_PROCESSING_QUEUE_NAME = "sound_processing_queue"
+CELERY_CLUSTERING_TASK_QUEUE_NAME = "clustering_queue"
 
 
 # -------------------------------------------------------------------------------
@@ -1503,31 +1501,31 @@ PROCESSING_BEFORE_DESCRIPTION_URL = DATA_URL + "processing_before_description/"
 USE_PREVIEWS_WHEN_ORIGINAL_FILES_MISSING = DEBUG
 
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
-    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
-    INSTALLED_APPS += ['debug_toolbar']
+    MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+    INSTALLED_APPS += ["debug_toolbar"]
 
     DEBUG_TOOLBAR_PANELS = [
-        'debug_toolbar.panels.history.HistoryPanel',
-        'debug_toolbar.panels.versions.VersionsPanel',
-        'debug_toolbar.panels.timer.TimerPanel',
-        'debug_toolbar.panels.settings.SettingsPanel',
-        'debug_toolbar.panels.headers.HeadersPanel',
-        'debug_toolbar.panels.request.RequestPanel',
-        'debug_toolbar.panels.sql.SQLPanel',
-        'debug_toolbar.panels.staticfiles.StaticFilesPanel',
-        'debug_toolbar.panels.templates.TemplatesPanel',
-        'debug_toolbar.panels.alerts.AlertsPanel',
-        'debug_toolbar.panels.cache.CachePanel',
-        'debug_toolbar.panels.signals.SignalsPanel',
-        'debug_toolbar.panels.redirects.RedirectsPanel',
-        'freesound.panels.SolrDebugPanel',
+        "debug_toolbar.panels.history.HistoryPanel",
+        "debug_toolbar.panels.versions.VersionsPanel",
+        "debug_toolbar.panels.timer.TimerPanel",
+        "debug_toolbar.panels.settings.SettingsPanel",
+        "debug_toolbar.panels.headers.HeadersPanel",
+        "debug_toolbar.panels.request.RequestPanel",
+        "debug_toolbar.panels.sql.SQLPanel",
+        "debug_toolbar.panels.staticfiles.StaticFilesPanel",
+        "debug_toolbar.panels.templates.TemplatesPanel",
+        "debug_toolbar.panels.alerts.AlertsPanel",
+        "debug_toolbar.panels.cache.CachePanel",
+        "debug_toolbar.panels.signals.SignalsPanel",
+        "debug_toolbar.panels.redirects.RedirectsPanel",
+        "freesound.panels.SolrDebugPanel",
     ]
 
     DEBUG_TOOLBAR_CONFIG = {
-        'INTERCEPT_REDIRECTS': False,
+        "INTERCEPT_REDIRECTS": False,
         # This normally checks the running host with the request url, but this doesn't
         # work in docker. Unconditionally show the toolbar when DEBUG is True
-        'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG
+        "SHOW_TOOLBAR_CALLBACK": lambda request: DEBUG,
     }
 
 # -------------------------------------------------------------------------------

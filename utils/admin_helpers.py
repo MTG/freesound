@@ -29,23 +29,25 @@ class NoPkDescOrderedChangeList(ChangeList):
     def get_ordering(self, request, queryset):
         rv = super().get_ordering(request, queryset)
         rv = list(rv)
-        rv.remove('-pk') if '-pk' in rv else None
+        rv.remove("-pk") if "-pk" in rv else None
         return tuple(rv)
-    
+
 
 class LargeTablePaginator(Paginator):
-    """ We use the information on postgres table 'reltuples' to avoid using count(*) for performance. """
+    """We use the information on postgres table 'reltuples' to avoid using count(*) for performance."""
+
     @cached_property
     def count(self):
         try:
             if not self.object_list.query.where:
                 cursor = connection.cursor()
-                cursor.execute("SELECT reltuples FROM pg_class WHERE relname = %s",
-                    [self.object_list.query.model._meta.db_table])
+                cursor.execute(
+                    "SELECT reltuples FROM pg_class WHERE relname = %s", [self.object_list.query.model._meta.db_table]
+                )
                 ret = int(cursor.fetchone()[0])
                 return ret
-            else :
+            else:
                 return self.object_list.count()
-        except :
+        except:
             # AttributeError if object_list has no count() method.
             return len(self.object_list)

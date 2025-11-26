@@ -25,34 +25,37 @@ from django.core.management.base import BaseCommand
 
 from accounts.models import EmailBounce
 
-console_logger = logging.getLogger('console')
+console_logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
-    help = 'Removes users that entered invalid email address during registration, thus having the activation email ' \
-           'bounced and thus never logged in or being activated'
+    help = (
+        "Removes users that entered invalid email address during registration, thus having the activation email "
+        "bounced and thus never logged in or being activated"
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--fast',
-            action='store_true',
-            dest='fast',
+            "--fast",
+            action="store_true",
+            dest="fast",
             default=False,
             help="Skip extra safety check for deletion of users",
         )
 
     def handle(self, *args, **options):
-        bounces = EmailBounce.objects.filter(type__in=EmailBounce.TYPES_INVALID, user__is_active=False,
-                                             user__last_login=None)
-        users = User.objects.filter(id__in=bounces.values_list('user', flat=True))
+        bounces = EmailBounce.objects.filter(
+            type__in=EmailBounce.TYPES_INVALID, user__is_active=False, user__last_login=None
+        )
+        users = User.objects.filter(id__in=bounces.values_list("user", flat=True))
 
-        if not options['fast']:
+        if not options["fast"]:
             for user in users:
                 if user.profile.has_content():
-                    console_logger.info('User {} is not expected to have content, aborting!')
+                    console_logger.info("User {} is not expected to have content, aborting!")
                     return
 
         total, details = users.delete()
 
-        deleted_users = details.get('auth.User', 0)
-        console_logger.info(f'Deleted {deleted_users} users')
+        deleted_users = details.get("auth.User", 0)
+        console_logger.info(f"Deleted {deleted_users} users")

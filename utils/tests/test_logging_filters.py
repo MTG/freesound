@@ -29,6 +29,7 @@ from utils.test_helpers import create_user_and_sounds
 
 class DummyRequest:
     """A dummy request to check the X-Forwarded-For header in logging_filters.get_client_ip"""
+
     def __init__(self, xforwardedfor):
         self.headers = {"x-forwarded-for": xforwardedfor}
 
@@ -38,6 +39,7 @@ class LogRecordsStoreHandler(logging.Handler):
     A logger handler class which stores LogRecord entries in a list
     Inspiration from: https://stackoverflow.com/questions/57420008/python-after-logging-debug-how-to-view-its-logrecord
     """
+
     def __init__(self, records_list):
         self.records_list = records_list
         super().__init__()
@@ -47,35 +49,35 @@ class LogRecordsStoreHandler(logging.Handler):
 
 
 class LoggingFiltersTest(TestCase):
-    fixtures = ['licenses']
+    fixtures = ["licenses"]
 
     def test_get_client_ip_valid(self):
-        req = DummyRequest('127.0.0.1,10.10.10.10')
+        req = DummyRequest("127.0.0.1,10.10.10.10")
         ip = get_client_ip(req)
-        self.assertEqual(ip, '127.0.0.1')
+        self.assertEqual(ip, "127.0.0.1")
 
         # It doesn't matter if any further items are invalid, we only use the first
-        req = DummyRequest('127.0.0.1,foo')
+        req = DummyRequest("127.0.0.1,foo")
         ip = get_client_ip(req)
-        self.assertEqual(ip, '127.0.0.1')
+        self.assertEqual(ip, "127.0.0.1")
 
     def test_get_client_ip_empty(self):
         req = DummyRequest(None)
         ip = get_client_ip(req)
-        self.assertEqual(ip, '-')
+        self.assertEqual(ip, "-")
 
-        req = DummyRequest('')
+        req = DummyRequest("")
         ip = get_client_ip(req)
-        self.assertEqual(ip, '-')
+        self.assertEqual(ip, "-")
 
     def test_get_client_ip_invalid(self):
-        req = DummyRequest('foo')
+        req = DummyRequest("foo")
         ip = get_client_ip(req)
-        self.assertEqual(ip, '-')
+        self.assertEqual(ip, "-")
 
-        req = DummyRequest('foo,127.0.0.1')
+        req = DummyRequest("foo,127.0.0.1")
         ip = get_client_ip(req)
-        self.assertEqual(ip, '-')
+        self.assertEqual(ip, "-")
 
     def test_generic_log_data_filter(self):
         logs_list = []
@@ -84,14 +86,19 @@ class LoggingFiltersTest(TestCase):
         logger.addFilter(GenericDataFilter())
         logger.addHandler(LogRecordsStoreHandler(logs_list))
 
-        for count, (log_message, properties_to_check_in_output) in enumerate([
-            ("Simple message without json-formatted part", {}),
-            ("Simple message with nòn-ascií characters", {}),
-            (f"Rate limited IP ({json.dumps({'ip': '1.1.1.1', 'path': 'testPath/'})})", {
-                'ip': '1.1.1.1',
-                'path': 'testPath/',
-            }),
-        ]):
+        for count, (log_message, properties_to_check_in_output) in enumerate(
+            [
+                ("Simple message without json-formatted part", {}),
+                ("Simple message with nòn-ascií characters", {}),
+                (
+                    f"Rate limited IP ({json.dumps({'ip': '1.1.1.1', 'path': 'testPath/'})})",
+                    {
+                        "ip": "1.1.1.1",
+                        "path": "testPath/",
+                    },
+                ),
+            ]
+        ):
             logger.debug(log_message)
             log_record = logs_list[count]
             self.assertEqual(log_message, log_record.msg)
@@ -106,20 +113,25 @@ class LoggingFiltersTest(TestCase):
         logger.addFilter(APILogsFilter())
         logger.addHandler(LogRecordsStoreHandler(logs_list))
 
-        for count, (log_message, properties_to_check_in_output) in enumerate([
-            ('410 API error: End of life', {}),
-            ('sound:376958 instance #!# {"fields": "id,url,name,duration,download,previews", '
-             '"filter": "license:%22Creative%20Commons%200%22"} #!# {"api_version": "v2", "api_auth_type": "Token", '
-             '"api_client_username": "test_uname", "api_enduser_username": "None", "api_client_id": '
-             '"fake_id", "api_client_name": "Test àpp", "ip": "1.1.1.1", '
-             '"api_request_protocol": "https", "api_www": "none"}', {
-                'api_resource': 'sound instance',
-                'fields': 'id,url,name,duration,download,previews',
-                'filter': 'license:"Creative Commons 0"',
-                'api_client_username': 'test_uname',
-                'api_client_name': 'Test àpp'
-            }),  # Note: I'm only testing a couple of fields as the test is complete enough with that
-        ]):
+        for count, (log_message, properties_to_check_in_output) in enumerate(
+            [
+                ("410 API error: End of life", {}),
+                (
+                    'sound:376958 instance #!# {"fields": "id,url,name,duration,download,previews", '
+                    '"filter": "license:%22Creative%20Commons%200%22"} #!# {"api_version": "v2", "api_auth_type": "Token", '
+                    '"api_client_username": "test_uname", "api_enduser_username": "None", "api_client_id": '
+                    '"fake_id", "api_client_name": "Test àpp", "ip": "1.1.1.1", '
+                    '"api_request_protocol": "https", "api_www": "none"}',
+                    {
+                        "api_resource": "sound instance",
+                        "fields": "id,url,name,duration,download,previews",
+                        "filter": 'license:"Creative Commons 0"',
+                        "api_client_username": "test_uname",
+                        "api_client_name": "Test àpp",
+                    },
+                ),  # Note: I'm only testing a couple of fields as the test is complete enough with that
+            ]
+        ):
             logger.debug(log_message)
             log_record = logs_list[count]
             self.assertEqual(log_message, log_record.msg)
@@ -135,17 +147,14 @@ class LoggingFiltersTest(TestCase):
         logger.addHandler(LogRecordsStoreHandler(logs_list))
         logger.addFilter(APILogsFilter())
         query_params = {
-            'query': 'dogs',
-            'fields': 'id,url,name,duration,download,previews',
-            'filter': 'license:"Creative Commons 0"'
+            "query": "dogs",
+            "fields": "id,url,name,duration,download,previews",
+            "filter": 'license:"Creative Commons 0"',
         }
-        params = '&'.join([f'{key}={value}' for key, value in query_params.items()])
-        self.client.get(reverse('apiv2-sound-search') + f'?{params}')
+        params = "&".join([f"{key}={value}" for key, value in query_params.items()])
+        self.client.get(reverse("apiv2-sound-search") + f"?{params}")
         log_record = logs_list[0]
 
         for prop, value in query_params.items():
             self.assertTrue(hasattr(log_record, prop))
             self.assertEqual(getattr(log_record, prop), value)
-
-
-

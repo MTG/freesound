@@ -23,18 +23,20 @@ from functools import wraps
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
+
 def login_redirect(function=None):
     """
     Decorator for views that checks that the user is not logged in,
     redirecting to the home page if necessary.
     """
+
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 return view_func(request, *args, **kwargs)
-            return HttpResponseRedirect(reverse('accounts-home'))
+            return HttpResponseRedirect(reverse("accounts-home"))
+
         return _wrapped_view
+
     return decorator(function)
-
-

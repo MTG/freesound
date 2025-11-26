@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-import json 
+import json
 
 from django.conf import settings
 from django.urls import path
@@ -31,13 +31,27 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django_object_actions import DjangoObjectActions
 
-from sounds.models import License, Sound, Pack, Flag, DeletedSound, SoundOfTheDay, BulkUploadProgress, SoundAnalysis, SoundSimilarityVector
+from sounds.models import (
+    License,
+    Sound,
+    Pack,
+    Flag,
+    DeletedSound,
+    SoundOfTheDay,
+    BulkUploadProgress,
+    SoundAnalysis,
+    SoundSimilarityVector,
+)
 from utils.search.search_sounds import add_sounds_to_search_engine
 
 
 @admin.register(License)
 class LicenseAdmin(admin.ModelAdmin):
-    list_display = ('name', 'deed_url', 'legal_code_url', )
+    list_display = (
+        "name",
+        "deed_url",
+        "legal_code_url",
+    )
 
     def has_add_permission(self, request):
         return False
@@ -48,117 +62,154 @@ class LicenseAdmin(admin.ModelAdmin):
 
 @admin.register(Sound)
 class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
-    fieldsets = ((None, {'fields': ('user', 'num_downloads' )}),
-                 ('Filenames', {'fields': ('get_filename',)}),
-                 ('User defined fields', {'fields': ('description', 'license', 'original_filename', 'bst_category', 'sources', 'pack')}),
-                 ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate',
-                                                 'filesize', 'channels', 'date_recorded')}),
-                 ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'is_explicit')}),
-                 ('Processing', {'fields': ('processing_state', 'processing_date', 'processing_ongoing_state', 'processing_log', 'similarity_state')}),
-                 ('Analysis', {'fields': ('get_consolidated_analysis',)}),
-                 )
-    raw_id_fields = ('user', 'pack', 'sources')
-    list_display = ('id', 'user', 'get_sound_name', 'created', 'moderation_state', 'get_processing_state')
-    list_filter = ('moderation_state', 'processing_state')
-    ordering = ['id']
-    search_fields = ('=id', '=user__username')
-    readonly_fields = ('num_downloads', 'get_filename', 'get_consolidated_analysis')
-    actions = ('reprocess_sound', 'consolidate_analysis', 'load_similarity_vectors', 'reindex_sound', 'clear_caches')
-    change_actions = ('reprocess_sound', 'consolidate_analysis', 'load_similarity_vectors', 'reindex_sound', 'clear_caches')
+    fieldsets = (
+        (None, {"fields": ("user", "num_downloads")}),
+        ("Filenames", {"fields": ("get_filename",)}),
+        (
+            "User defined fields",
+            {"fields": ("description", "license", "original_filename", "bst_category", "sources", "pack")},
+        ),
+        (
+            "File properties",
+            {
+                "fields": (
+                    "md5",
+                    "type",
+                    "duration",
+                    "bitrate",
+                    "bitdepth",
+                    "samplerate",
+                    "filesize",
+                    "channels",
+                    "date_recorded",
+                )
+            },
+        ),
+        ("Moderation", {"fields": ("moderation_state", "moderation_date", "is_explicit")}),
+        (
+            "Processing",
+            {
+                "fields": (
+                    "processing_state",
+                    "processing_date",
+                    "processing_ongoing_state",
+                    "processing_log",
+                    "similarity_state",
+                )
+            },
+        ),
+        ("Analysis", {"fields": ("get_consolidated_analysis",)}),
+    )
+    raw_id_fields = ("user", "pack", "sources")
+    list_display = ("id", "user", "get_sound_name", "created", "moderation_state", "get_processing_state")
+    list_filter = ("moderation_state", "processing_state")
+    ordering = ["id"]
+    search_fields = ("=id", "=user__username")
+    readonly_fields = ("num_downloads", "get_filename", "get_consolidated_analysis")
+    actions = ("reprocess_sound", "consolidate_analysis", "load_similarity_vectors", "reindex_sound", "clear_caches")
+    change_actions = (
+        "reprocess_sound",
+        "consolidate_analysis",
+        "load_similarity_vectors",
+        "reindex_sound",
+        "clear_caches",
+    )
 
     def has_add_permission(self, request):
         return False
 
-    @admin.display(description='Processing state')
+    @admin.display(description="Processing state")
     def get_processing_state(self, obj):
-        processing_state = f'{obj.get_processing_state_display()}'
+        processing_state = f"{obj.get_processing_state_display()}"
         ongoing_state_display = obj.get_processing_ongoing_state_display()
-        if ongoing_state_display == 'Processing' or ongoing_state_display == 'Queued':
-            processing_state += f' ({ongoing_state_display})'
+        if ongoing_state_display == "Processing" or ongoing_state_display == "Queued":
+            processing_state += f" ({ongoing_state_display})"
         return processing_state
 
-    @admin.display(description='Name')
+    @admin.display(description="Name")
     def get_sound_name(self, obj):
         max_len = 15
         return f"{obj.original_filename[:max_len]}{'...' if len(obj.original_filename) > max_len else ''}"
 
-    @admin.action(description='Re-process and re-analyze sounds')
+    @admin.action(description="Re-process and re-analyze sounds")
     def reprocess_sound(self, request, queryset_or_object):
         if isinstance(queryset_or_object, Sound):
             queryset_or_object.process(force=True, high_priority=True)
-            messages.add_message(request, messages.INFO,
-                                 f'Sound {queryset_or_object.id} was sent to re-process.')
+            messages.add_message(request, messages.INFO, f"Sound {queryset_or_object.id} was sent to re-process.")
         else:
             for sound in queryset_or_object:
                 sound.process(force=True, high_priority=True)
-            messages.add_message(request, messages.INFO,
-                                 f'{queryset_or_object.count()} sounds were send to re-process.')
-    reprocess_sound.label = 'Re-process sound'
-            
-    @admin.action(description='Consolidate analysis')
+            messages.add_message(
+                request, messages.INFO, f"{queryset_or_object.count()} sounds were send to re-process."
+            )
+
+    reprocess_sound.label = "Re-process sound"
+
+    @admin.action(description="Consolidate analysis")
     def consolidate_analysis(self, request, queryset_or_object):
         if isinstance(queryset_or_object, Sound):
             queryset_or_object.consolidate_analysis()
-            messages.add_message(request, messages.INFO,
-                                 f'Sound {queryset_or_object.id} analysis data was consolidated.')
+            messages.add_message(
+                request, messages.INFO, f"Sound {queryset_or_object.id} analysis data was consolidated."
+            )
         else:
             for sound in queryset_or_object:
                 sound.consolidate_analysis()
-            messages.add_message(request, messages.INFO,
-                                 f'{queryset_or_object.count()} sounds analysis data were consolidated.')
+            messages.add_message(
+                request, messages.INFO, f"{queryset_or_object.count()} sounds analysis data were consolidated."
+            )
 
-    @admin.action(description='Load sim vectors')
+    @admin.action(description="Load sim vectors")
     def load_similarity_vectors(self, request, queryset_or_object):
         if isinstance(queryset_or_object, Sound):
             n_loaded = queryset_or_object.load_similarity_vectors(force=True)
-            messages.add_message(request, messages.INFO,
-                                 f'Loaded {n_loaded} sim vectors for sound {queryset_or_object.id}.')
+            messages.add_message(
+                request, messages.INFO, f"Loaded {n_loaded} sim vectors for sound {queryset_or_object.id}."
+            )
         else:
             n_loaded = sum(sound.load_similarity_vectors(force=True) for sound in queryset_or_object)
-            messages.add_message(request, messages.INFO,
-                                 f'Loaded {n_loaded} sim vectors for {queryset_or_object.count()} sounds.')
-            
-    @admin.action(description='Clear caches')
+            messages.add_message(
+                request, messages.INFO, f"Loaded {n_loaded} sim vectors for {queryset_or_object.count()} sounds."
+            )
+
+    @admin.action(description="Clear caches")
     def clear_caches(self, request, queryset_or_object):
         if isinstance(queryset_or_object, Sound):
             queryset_or_object.invalidate_template_caches()
-            messages.add_message(request, messages.INFO,
-                                 f'Sound {queryset_or_object.id} caches were cleared.')
+            messages.add_message(request, messages.INFO, f"Sound {queryset_or_object.id} caches were cleared.")
         else:
             for sound in queryset_or_object:
                 sound.invalidate_template_caches()
-            messages.add_message(request, messages.INFO,
-                                 f'{queryset_or_object.count()} sounds caches were cleared.')
-            
-    @admin.action(description='Reindex sound')
+            messages.add_message(request, messages.INFO, f"{queryset_or_object.count()} sounds caches were cleared.")
+
+    @admin.action(description="Reindex sound")
     def reindex_sound(self, request, queryset_or_object):
         if isinstance(queryset_or_object, Sound):
             sound_objects = Sound.objects.bulk_query_solr([queryset_or_object.id])
         else:
             sound_objects = Sound.objects.bulk_query_solr([s.id for s in queryset_or_object])
         n_indexed = add_sounds_to_search_engine(sound_objects, update=True, include_similarity_vectors=True)
-        messages.add_message(request, messages.INFO,
-                                 f'{n_indexed} sounds were re-indexed.')
+        messages.add_message(request, messages.INFO, f"{n_indexed} sounds were re-indexed.")
 
-    @admin.display(description='Download filename')
+    @admin.display(description="Download filename")
     def get_filename(self, obj):
         return obj.friendly_filename()
-    
-    @admin.display(description='Consolidated analysis')
+
+    @admin.display(description="Consolidated analysis")
     def get_consolidated_analysis(self, obj):
         data = obj.get_consolidated_analysis_data()
         if data is None:
-            return 'No consolidated analysis available'
+            return "No consolidated analysis available"
         else:
             str_data = json.dumps(data, indent=4, sort_keys=True)
-            return mark_safe(f'<pre>{str_data}</pre>')
+            return mark_safe(f"<pre>{str_data}</pre>")
 
 
 @admin.register(DeletedSound)
 class DeletedSoundAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',)
-    list_display = ('sound_id', 'user_link', 'created')
-    readonly_fields = ('data', 'sound_id', 'user')
+    raw_id_fields = ("user",)
+    list_display = ("sound_id", "user_link", "created")
+    readonly_fields = ("data", "sound_id", "user")
 
     def has_add_permission(self, request):
         return False
@@ -172,26 +223,31 @@ class DeletedSoundAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         # Override 'get_queryset' to optimize query by using select_related on appropriate fields
         qs = super().get_queryset(request)
-        qs = qs.select_related('user')
+        qs = qs.select_related("user")
         return qs
 
     @admin.display(
-        description='User',
-        ordering='user',
+        description="User",
+        ordering="user",
     )
     def user_link(self, obj):
         if obj.user is None:
-            return '-'
-        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
-            reverse('admin:auth_user_change', args=[obj.user.id]),
-            f'{obj.user.username}'))
+            return "-"
+        return mark_safe(
+            '<a href="{}" target="_blank">{}</a>'.format(
+                reverse("admin:auth_user_change", args=[obj.user.id]), f"{obj.user.username}"
+            )
+        )
 
 
 @admin.register(Pack)
 class PackAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',)
-    list_display = ('user', 'name', 'created')
-    search_fields = ('=user__username', '=name', )
+    raw_id_fields = ("user",)
+    list_display = ("user", "name", "created")
+    search_fields = (
+        "=user__username",
+        "=name",
+    )
 
     def has_change_permission(self, request, obj=None):
         return False
@@ -199,10 +255,18 @@ class PackAdmin(admin.ModelAdmin):
 
 @admin.register(Flag)
 class FlagAdmin(admin.ModelAdmin):
-    raw_id_fields = ('reporting_user', 'sound')
-    list_display = ('id', 'reporting_user_link', 'email_link', 'sound_link', 'sound_uploader_link', 'sound_is_explicit',
-                    'reason_type', 'reason_summary', )
-    list_filter = ('reason_type', 'sound__is_explicit')
+    raw_id_fields = ("reporting_user", "sound")
+    list_display = (
+        "id",
+        "reporting_user_link",
+        "email_link",
+        "sound_link",
+        "sound_uploader_link",
+        "sound_is_explicit",
+        "reason_type",
+        "reason_summary",
+    )
+    list_filter = ("reason_type", "sound__is_explicit")
 
     def has_add_permission(self, request):
         return False
@@ -212,92 +276,100 @@ class FlagAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        qs = qs.select_related('sound', 'sound__user', 'reporting_user')
+        qs = qs.select_related("sound", "sound__user", "reporting_user")
         return qs
 
     @admin.display(
-        description='Reporting User',
-        ordering='reporting_user__username',
+        description="Reporting User",
+        ordering="reporting_user__username",
     )
     def reporting_user_link(self, obj):
-        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(
-            reverse('account', args=[obj.reporting_user.username]), obj.reporting_user.username)) \
-            if obj.reporting_user else '-'
+        return (
+            mark_safe(
+                '<a href="{}" target="_blank">{}</a>'.format(
+                    reverse("account", args=[obj.reporting_user.username]), obj.reporting_user.username
+                )
+            )
+            if obj.reporting_user
+            else "-"
+        )
 
     @admin.display(
-        description='Email',
-        ordering='email',
+        description="Email",
+        ordering="email",
     )
     def email_link(self, obj):
-        return mark_safe(f'<a href="mailto:{obj.email}" target="_blank">{obj.email}</a>') \
-            if obj.email else '-'
+        return mark_safe(f'<a href="mailto:{obj.email}" target="_blank">{obj.email}</a>') if obj.email else "-"
 
     @admin.display(
-        description='Uploader',
-        ordering='sound__user__username',
+        description="Uploader",
+        ordering="sound__user__username",
     )
     def sound_uploader_link(self, obj):
-        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(reverse('account', args=[obj.sound.user.username]),
-                                                              obj.sound.user.username))
+        return mark_safe(
+            '<a href="{}" target="_blank">{}</a>'.format(
+                reverse("account", args=[obj.sound.user.username]), obj.sound.user.username
+            )
+        )
 
     @admin.display(
-        description='Sound',
-        ordering='sound__original_filename',
+        description="Sound",
+        ordering="sound__original_filename",
     )
     def sound_link(self, obj):
-        return mark_safe('<a href="{}" target="_blank">{}</a>'.format(reverse('short-sound-link', args=[obj.sound_id]),
-                                                              truncatechars(obj.sound.friendly_filename(), 50)))
+        return mark_safe(
+            '<a href="{}" target="_blank">{}</a>'.format(
+                reverse("short-sound-link", args=[obj.sound_id]), truncatechars(obj.sound.friendly_filename(), 50)
+            )
+        )
 
     def reason_summary(self, obj):
-        reason_no_newlines = obj.reason.replace('\n', '|')
+        reason_no_newlines = obj.reason.replace("\n", "|")
         return truncatechars(reason_no_newlines, 100)
 
-    @admin.display(
-        description='Is Explicit'
-    )
+    @admin.display(description="Is Explicit")
     def sound_is_explicit(self, obj):
         return obj.sound.is_explicit
-
-
 
 
 @admin.register(SoundOfTheDay)
 class SoundOfTheDayAdmin(admin.ModelAdmin):
     change_list_template = "admin_custom/sound_of_the_day_changelist.html"
-    raw_id_fields = ('sound',)
-    list_display = ('date_display', 'sound', 'email_sent')
-    ordering = ('-date_display', )
+    raw_id_fields = ("sound",)
+    list_display = ("date_display", "sound", "email_sent")
+    ordering = ("-date_display",)
 
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            path('generate_new_sounds/', self.generate_new_sounds),
-            path('clear_sound_of_the_day_cache/', self.clear_sound_of_the_day_cache),
+            path("generate_new_sounds/", self.generate_new_sounds),
+            path("clear_sound_of_the_day_cache/", self.clear_sound_of_the_day_cache),
         ]
         return my_urls + urls
 
     def generate_new_sounds(self, request):
-        call_command('create_random_sounds')
-        messages.add_message(request, messages.INFO, 'New random sounds of the dat have been generated!')
-        return HttpResponseRedirect(reverse('admin:sounds_soundoftheday_changelist'))
+        call_command("create_random_sounds")
+        messages.add_message(request, messages.INFO, "New random sounds of the dat have been generated!")
+        return HttpResponseRedirect(reverse("admin:sounds_soundoftheday_changelist"))
 
     def clear_sound_of_the_day_cache(self, request):
         try:
-            for key in cache.keys('*random_sound*'):
+            for key in cache.keys("*random_sound*"):
                 cache.delete(key)
-            messages.add_message(request, messages.INFO, 'Current cache for sound of the day has been cleared!')
+            messages.add_message(request, messages.INFO, "Current cache for sound of the day has been cleared!")
         except AttributeError:
-             messages.add_message(request, messages.WARNING, 'Could not empty cache for sound of the day as selected cache backend is not compatible')
-        return HttpResponseRedirect(reverse('admin:sounds_soundoftheday_changelist'))
-
-
-
+            messages.add_message(
+                request,
+                messages.WARNING,
+                "Could not empty cache for sound of the day as selected cache backend is not compatible",
+            )
+        return HttpResponseRedirect(reverse("admin:sounds_soundoftheday_changelist"))
 
 
 @admin.register(BulkUploadProgress)
 class BulkUploadProgressAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',)
-    list_display = ('user', 'created', 'progress_type', 'sounds_valid')
+    raw_id_fields = ("user",)
+    list_display = ("user", "created", "progress_type", "sounds_valid")
 
     def has_add_permission(self, request):
         return False
@@ -311,13 +383,20 @@ class BulkUploadProgressAdmin(admin.ModelAdmin):
 
 @admin.register(SoundAnalysis)
 class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
-    list_display = ('analyzer', 'sound_id',  'analysis_status', 'last_sent_to_queue', 'last_analyzer_finished',
-                    'num_analysis_attempts', 'analysis_time')
-    ordering = ('-last_analyzer_finished',)
-    list_filter = ('analyzer', 'analysis_status')
-    search_fields = ('=sound__id',)
-    actions = ('re_run_analysis',)
-    change_actions = ('re_run_analysis',)
+    list_display = (
+        "analyzer",
+        "sound_id",
+        "analysis_status",
+        "last_sent_to_queue",
+        "last_analyzer_finished",
+        "num_analysis_attempts",
+        "analysis_time",
+    )
+    ordering = ("-last_analyzer_finished",)
+    list_filter = ("analyzer", "analysis_status")
+    search_fields = ("=sound__id",)
+    actions = ("re_run_analysis",)
+    change_actions = ("re_run_analysis",)
     readonly_fields = []
 
     def has_add_permission(self, request):
@@ -327,39 +406,46 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
         return False
 
     def get_readonly_fields(self, request, obj=None):
-        return list(self.readonly_fields) + \
-               [field.name for field in obj._meta.fields] + \
-               [field.name for field in obj._meta.many_to_many] + ['analysis_logs', 'analysis_data_file']
+        return (
+            list(self.readonly_fields)
+            + [field.name for field in obj._meta.fields]
+            + [field.name for field in obj._meta.many_to_many]
+            + ["analysis_logs", "analysis_data_file"]
+        )
 
     def has_add_permission(self, request, obj=None):
         return False
 
-    @admin.action(
-        description='Re-run analysis with same analyzer'
-    )
+    @admin.action(description="Re-run analysis with same analyzer")
     def re_run_analysis(self, request, queryset_or_object):
         if isinstance(queryset_or_object, SoundAnalysis):
             queryset_or_object.re_run_analysis()
-            messages.add_message(request, messages.INFO,
-                                 'Sound {} was sent to re-analyze with analyzer {}.'
-                                 .format(queryset_or_object.sound_id, queryset_or_object.analyzer))
+            messages.add_message(
+                request,
+                messages.INFO,
+                "Sound {} was sent to re-analyze with analyzer {}.".format(
+                    queryset_or_object.sound_id, queryset_or_object.analyzer
+                ),
+            )
         else:
             for sound_analysis in queryset_or_object:
                 sound_analysis.re_run_analysis()
-            messages.add_message(request, messages.INFO,
-                                 f'{queryset_or_object.count()} sounds were send to re-analyze.')
-    re_run_analysis.label = 'Re-run analysis'
+            messages.add_message(
+                request, messages.INFO, f"{queryset_or_object.count()} sounds were send to re-analyze."
+            )
+
+    re_run_analysis.label = "Re-run analysis"
 
     @admin.display(
-        description='Analysis logs',
-        ordering='Analysis logs',
+        description="Analysis logs",
+        ordering="Analysis logs",
     )
     def analysis_logs(self, obj):
         return obj.get_analysis_logs()
 
     @admin.display(
-        description='Analysis data file',
-        ordering='Analysis data file',
+        description="Analysis data file",
+        ordering="Analysis data file",
     )
     def analysis_data_file(self, obj):
         return obj.get_analysis_data_from_file()
@@ -367,7 +453,7 @@ class SoundAnalysisAdmin(DjangoObjectActions, admin.ModelAdmin):
 
 @admin.register(SoundSimilarityVector)
 class SoundSimilarityVectorAdmin(DjangoObjectActions, admin.ModelAdmin):
-    list_display = ('sound', 'similarity_space_name')
-    list_filter = ('similarity_space_name', )
-    search_fields = ('=sound__id',)
-    raw_id_fields = ('sound',)
+    list_display = ("sound", "similarity_space_name")
+    list_filter = ("similarity_space_name",)
+    search_fields = ("=sound__id",)
+    raw_id_fields = ("sound",)

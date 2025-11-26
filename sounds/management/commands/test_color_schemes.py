@@ -32,46 +32,53 @@ from utils.audioprocessing import color_schemes
 
 
 class Command(BaseCommand):
-
     def add_arguments(self, parser):
-        parser.add_argument('sound_ids', type=str, help='Comma-separated list of sound ids')
+        parser.add_argument("sound_ids", type=str, help="Comma-separated list of sound ids")
 
     def handle(self, *args, **options):
-        sound_ids = [int(sid) for sid in options['sound_ids'].split(',')]
+        sound_ids = [int(sid) for sid in options["sound_ids"].split(",")]
         sounds = Sound.objects.filter(id__in=sound_ids)
-        BASE_DIR = os.path.join(settings.DATA_PATH, 'test_color_schemes')
+        BASE_DIR = os.path.join(settings.DATA_PATH, "test_color_schemes")
         try:
             os.mkdir(BASE_DIR)
         except:
             pass
 
-        html_output = '<html>'
+        html_output = "<html>"
         for sound in sounds:
             print(sound)
-            html_output += f'<div><h3>{sound.id} - {sound.original_filename}</h3>' 
-            wav_file = os.path.join(BASE_DIR, f'{sound.id}.wav')
-            wav_file_st = os.path.join(BASE_DIR, f'{sound.id}.st.wav')
+            html_output += f"<div><h3>{sound.id} - {sound.original_filename}</h3>"
+            wav_file = os.path.join(BASE_DIR, f"{sound.id}.wav")
+            wav_file_st = os.path.join(BASE_DIR, f"{sound.id}.st.wav")
 
             if not os.path.exists(wav_file_st):
-                if os.path.exists(sound.locations('path')):
-                    audioprocessing.convert_using_ffmpeg(sound.locations('path'), wav_file)
+                if os.path.exists(sound.locations("path")):
+                    audioprocessing.convert_using_ffmpeg(sound.locations("path"), wav_file)
                 else:
-                    audioprocessing.convert_to_pcm(sound.locations('preview.LQ.mp3.path'), wav_file)
+                    audioprocessing.convert_to_pcm(sound.locations("preview.LQ.mp3.path"), wav_file)
                 audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, wav_file, wav_file_st)
 
-            for count, color_scheme in enumerate([color_schemes.FREESOUND2_COLOR_SCHEME, color_schemes.OLD_BEASTWHOOSH_COLOR_SCHEME, color_schemes.BEASTWHOOSH_COLOR_SCHEME]):
+            for count, color_scheme in enumerate(
+                [
+                    color_schemes.FREESOUND2_COLOR_SCHEME,
+                    color_schemes.OLD_BEASTWHOOSH_COLOR_SCHEME,
+                    color_schemes.BEASTWHOOSH_COLOR_SCHEME,
+                ]
+            ):
                 width = 195
                 height = 101
                 fft_size = 2048
-                waveform_filename = f'{sound.id}-{count}-wave.png'
-                spectral_filename = f'{sound.id}-{count}-spec.jpg'
+                waveform_filename = f"{sound.id}-{count}-wave.png"
+                spectral_filename = f"{sound.id}-{count}-spec.jpg"
                 waveform_path = os.path.join(BASE_DIR, waveform_filename)
                 spectral_path = os.path.join(BASE_DIR, spectral_filename)
-                audioprocessing.create_wave_images(wav_file_st, waveform_path, spectral_path, width, height, fft_size, color_scheme=color_scheme)
+                audioprocessing.create_wave_images(
+                    wav_file_st, waveform_path, spectral_path, width, height, fft_size, color_scheme=color_scheme
+                )
                 html_output += f'<img src="{spectral_filename}"> <img src="{waveform_filename}">{count}<br>'
-            html_output += '</div>'
-            
-        html_output += '</html>'
-        fid = open(os.path.join(BASE_DIR, '_generated_images.html'), 'w')
+            html_output += "</div>"
+
+        html_output += "</html>"
+        fid = open(os.path.join(BASE_DIR, "_generated_images.html"), "w")
         fid.write(html_output)
         fid.close()

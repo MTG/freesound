@@ -40,81 +40,80 @@ from utils.username import redirect_if_old_username, get_parameter_user_or_404, 
 @redirect_if_old_username
 @raise_404_if_user_is_deleted
 def following_users(request, username):
-    """List of users that are being followed by user with "username"
-    """
-    if not request.GET.get('ajax'):
+    """List of users that are being followed by user with "username" """
+    if not request.GET.get("ajax"):
         # If not loaded as a modal, redirect to account page with parameter to open modal
-        return HttpResponseRedirect(reverse('account', args=[username]) + '?following=1')
+        return HttpResponseRedirect(reverse("account", args=[username]) + "?following=1")
 
     user = get_parameter_user_or_404(request)
     following = follow_utils.get_users_following_qs(user)
-    tvars = {
-        'user': user
-    }
+    tvars = {"user": user}
 
     # NOTE: 'next_path' tvar below is used for follow/unfollow buttons. We overwrite default value of next_path
     # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
     # body content URL
     paginator = paginate(request, following, settings.FOLLOW_ITEMS_PER_PAGE)
     tvars.update(paginator)
-    tvars.update({
-        'next_path': reverse('account', args=[username]) + f"?following={paginator['current_page']}",
-        'follow_page': 'following'
-    })
-    return render(request, 'accounts/modal_follow.html', tvars)
+    tvars.update(
+        {
+            "next_path": reverse("account", args=[username]) + f"?following={paginator['current_page']}",
+            "follow_page": "following",
+        }
+    )
+    return render(request, "accounts/modal_follow.html", tvars)
 
 
 @redirect_if_old_username
 @raise_404_if_user_is_deleted
 def followers(request, username):
-    """List of users that are following user with "username"
-    """
-    if not request.GET.get('ajax'):
+    """List of users that are following user with "username" """
+    if not request.GET.get("ajax"):
         # If not loaded as a modal, redirect to account page with parameter to open modal
-        return HttpResponseRedirect(reverse('account', args=[username]) + '?followers=1')
+        return HttpResponseRedirect(reverse("account", args=[username]) + "?followers=1")
 
     user = get_parameter_user_or_404(request)
     followers = follow_utils.get_users_followers_qs(user)
-    tvars = {
-        'user': user
-    }
+    tvars = {"user": user}
 
     # NOTE: 'next_path' tvar below is used for follow/unfollow buttons. We overwrite default value of next_path
     # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
     # body content URL
     paginator = paginate(request, followers, settings.FOLLOW_ITEMS_PER_PAGE)
     tvars.update(paginator)
-    tvars.update({
-        'next_path': reverse('account', args=[username]) + f"?followers={paginator['current_page']}",
-        'follow_page': 'followers'
-    })
-    return render(request, 'accounts/modal_follow.html', tvars)
+    tvars.update(
+        {
+            "next_path": reverse("account", args=[username]) + f"?followers={paginator['current_page']}",
+            "follow_page": "followers",
+        }
+    )
+    return render(request, "accounts/modal_follow.html", tvars)
 
 
 @redirect_if_old_username
 @raise_404_if_user_is_deleted
 def following_tags(request, username):
-    """List of tags that are being followed by user with "username"
-    """
-    if not request.GET.get('ajax'):
+    """List of tags that are being followed by user with "username" """
+    if not request.GET.get("ajax"):
         # If not loaded as a modal, redirect to account page with parameter to open modal
-        return HttpResponseRedirect(reverse('account', args=[username]) + '?followingTags=1')
+        return HttpResponseRedirect(reverse("account", args=[username]) + "?followingTags=1")
 
     user = get_parameter_user_or_404(request)
     following_tags = follow_utils.get_tags_following_qs(user)
     tvars = {
-        'user': user,
+        "user": user,
     }
     # NOTE: 'next_path' tvar below is used for follow/unfollow buttons. We overwrite default value of next_path
     # given by the context processor so the redirects go to the user profile page URL instead of the follow modal
     # body content URL
     paginator = paginate(request, following_tags, settings.FOLLOW_ITEMS_PER_PAGE)
     tvars.update(paginator)
-    tvars.update({
-        'next_path': reverse('account', args=[username]) + f"?followingTags={paginator['current_page']}",
-        'follow_page': 'tags' # Used in BW
-    })
-    return render(request, 'accounts/modal_follow.html', tvars)
+    tvars.update(
+        {
+            "next_path": reverse("account", args=[username]) + f"?followingTags={paginator['current_page']}",
+            "follow_page": "tags",  # Used in BW
+        }
+    )
+    return render(request, "accounts/modal_follow.html", tvars)
 
 
 @login_required
@@ -128,7 +127,7 @@ def follow_user(request, username):
 
     # Check if there's next parameter, and if there is we redirect to it
     # This is to implement follow/unfollow without Javascript
-    redirect_to = request.GET.get('next', None)
+    redirect_to = request.GET.get("next", None)
     if redirect_to is not None:
         return HttpResponseRedirect(redirect_to)
 
@@ -149,7 +148,7 @@ def unfollow_user(request, username):
 
     # Check if there's next parameter, and if there is we redirect to it
     # This is to implement follow/unfollow without Javascript
-    redirect_to = request.GET.get('next', None)
+    redirect_to = request.GET.get("next", None)
     if redirect_to is not None:
         return HttpResponseRedirect(redirect_to)
 
@@ -165,7 +164,7 @@ def follow_tags(request, slash_tags):
 
     # Check if there's next parameter, and if there is we redirect to it
     # This is to implement follow/unfollow without Javascript
-    redirect_to = request.GET.get('next', None)
+    redirect_to = request.GET.get("next", None)
     if redirect_to is not None:
         return HttpResponseRedirect(redirect_to)
 
@@ -185,7 +184,7 @@ def unfollow_tags(request, slash_tags):
 
     # Check if there's next parameter, and if there is we redirect to it
     # This is to implement follow/unfollow without Javascript
-    redirect_to = request.GET.get('next', None)
+    redirect_to = request.GET.get("next", None)
     if redirect_to is not None:
         return HttpResponseRedirect(redirect_to)
 
@@ -195,18 +194,11 @@ def unfollow_tags(request, slash_tags):
 @login_required
 @transaction.atomic()
 def stream(request):
+    SELECT_OPTIONS = OrderedDict(
+        [("last_week", "Last week"), ("last_month", "Last month"), ("specific_dates", "Specific dates...")]
+    )
 
-    SELECT_OPTIONS = OrderedDict([
-        ("last_week", "Last week"),
-        ("last_month", "Last month"),
-        ("specific_dates", "Specific dates...")
-    ])
-
-    SELECT_OPTIONS_DAYS = {
-        "last_week": 7,
-        "last_month": 30,
-        "specific_dates": 0
-    }
+    SELECT_OPTIONS_DAYS = {"last_week": 7, "last_month": 30, "specific_dates": 0}
 
     user = request.user
 
@@ -222,19 +214,23 @@ def stream(request):
             date_from = request.POST.get("date_from")
             date_to = request.POST.get("date_to")
             if not date_from or not date_to:
-                if not date_from and not date_to: # Set it to last week (default)
+                if not date_from and not date_to:  # Set it to last week (default)
                     date_to = timezone.now().strftime("%Y-%m-%d")
                     date_from = (timezone.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
                 else:
                     if not date_from:
-                        date_from = (datetime.strptime(date_to,"%Y-%m-%d") - datetime.timedelta(days=7)).strftime("%Y-%m-%d") # A week before date to
+                        date_from = (datetime.strptime(date_to, "%Y-%m-%d") - datetime.timedelta(days=7)).strftime(
+                            "%Y-%m-%d"
+                        )  # A week before date to
                     if not date_to:
-                        date_to = (datetime.strptime(date_from,"%Y-%m-%d") + datetime.timedelta(days=7)).strftime("%Y-%m-%d") # A week after date from
+                        date_to = (datetime.strptime(date_from, "%Y-%m-%d") + datetime.timedelta(days=7)).strftime(
+                            "%Y-%m-%d"
+                        )  # A week after date from
             time_lapse = f'["{date_from}T00:00:00Z" TO "{date_to}T23:59:59.999Z"]'
 
     # if first time going into the page, the default is last week
     else:
-        select_value = ''
+        select_value = ""
         date_from = timezone.now() - datetime.timedelta(days=SELECT_OPTIONS_DAYS["last_week"])
         date_to = timezone.now()
         time_lapse = follow_utils.build_time_lapse(date_from, date_to)
@@ -251,12 +247,12 @@ def stream(request):
         tags_sounds = list()
 
     tvars = {
-        'SELECT_OPTIONS': SELECT_OPTIONS,
-        'date_to': date_to,
-        'date_from': date_from,
-        'select_value': select_value,
-        'errors_getting_data': errors_getting_data,
-        'users_sounds': users_sounds,
-        'tags_sounds': tags_sounds,
+        "SELECT_OPTIONS": SELECT_OPTIONS,
+        "date_to": date_to,
+        "date_from": date_from,
+        "select_value": select_value,
+        "errors_getting_data": errors_getting_data,
+        "users_sounds": users_sounds,
+        "tags_sounds": tags_sounds,
     }
-    return render(request, 'follow/stream.html', tvars)
+    return render(request, "follow/stream.html", tvars)

@@ -30,11 +30,10 @@ from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILARITY_C
 import sounds
 from utils.encryption import create_hash
 
-web_logger = logging.getLogger('web')
+web_logger = logging.getLogger("web")
 
 
 def get_similar_sounds(sound, preset=DEFAULT_PRESET, num_results=settings.SOUNDS_PER_PAGE, offset=0):
-
     if preset not in PRESETS:
         preset = DEFAULT_PRESET
 
@@ -47,8 +46,8 @@ def get_similar_sounds(sound, preset=DEFAULT_PRESET, num_results=settings.SOUNDS
     else:
         result = cache.get(cache_key)
         if result:
-            similar_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
-            count = result['count']
+            similar_sounds = [[int(x[0]), float(x[1])] for x in result["results"]]
+            count = result["count"]
         else:
             similar_sounds = False
             count = False
@@ -56,11 +55,12 @@ def get_similar_sounds(sound, preset=DEFAULT_PRESET, num_results=settings.SOUNDS
     if not similar_sounds:
         try:
             result = Similarity.search(sound.id, preset=preset, num_results=num_results, offset=offset)
-            similar_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
-            count = result['count']
+            similar_sounds = [[int(x[0]), float(x[1])] for x in result["results"]]
+            count = result["count"]
         except Exception as e:
-            web_logger.info('Could not get a response from the similarity service (%s)\n\t%s' % \
-                             (e, traceback.format_exc()))
+            web_logger.info(
+                "Could not get a response from the similarity service (%s)\n\t%s" % (e, traceback.format_exc())
+            )
             result = False
             similar_sounds = []
             count = 0
@@ -71,13 +71,23 @@ def get_similar_sounds(sound, preset=DEFAULT_PRESET, num_results=settings.SOUNDS
     return similar_sounds[0:num_results], count
 
 
-def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, target_file=None, in_ids=None):
-
-    cache_key = 'api-search-t-{}-f-{}-nr-{}-o-{}'.format(str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results, offset)
+def api_search(
+    target=None,
+    filter=None,
+    preset=None,
+    metric_descriptor_names=None,
+    num_results=None,
+    offset=None,
+    target_file=None,
+    in_ids=None,
+):
+    cache_key = "api-search-t-{}-f-{}-nr-{}-o-{}".format(
+        str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results, offset
+    )
     cache_key = hash_cache_key(cache_key)
     note = False
     if in_ids:
-        in_ids = ','.join([str(sid) for sid in in_ids if sid])
+        in_ids = ",".join([str(sid) for sid in in_ids if sid])
 
     # Don't use the cache when we're debugging
     if settings.DEBUG or len(cache_key) >= 250 or in_ids:
@@ -86,8 +96,8 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
     else:
         result = cache.get(cache_key)
         if result:
-            returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
-            count = result['count']
+            returned_sounds = [[int(x[0]), float(x[1])] for x in result["results"]]
+            count = result["count"]
         else:
             returned_sounds = False
             count = False
@@ -95,14 +105,14 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
     if not returned_sounds or target_file:
         if target_file:
             # If there is a file attached, set the file as the target
-            target_type = 'file'
+            target_type = "file"
             target = None  # If target is given as a file, we set target to None (just in case)
         else:
             # In case there is no file, if the string target represents an integer value, then target is a sound_id, otherwise target is descriptor_values
             if target.isdigit():
-                target_type = 'sound_id'
+                target_type = "sound_id"
             else:
-                target_type = 'descriptor_values'
+                target_type = "descriptor_values"
 
         result = Similarity.api_search(
             target_type=target_type,
@@ -113,12 +123,12 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
             num_results=num_results,
             offset=offset,
             file=target_file,
-            in_ids=in_ids
+            in_ids=in_ids,
         )
 
-        returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
-        count = result['count']
-        note = result['note']
+        returned_sounds = [[int(x[0]), float(x[1])] for x in result["results"]]
+        count = result["count"]
+        note = result["note"]
 
         if not target_file and not in_ids:
             if len(returned_sounds) > 0 and len(cache_key) < 250 and not settings.DEBUG:
@@ -134,25 +144,34 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
     # Check if at least some sound analysis data is already on cache
     not_cached_sound_ids = sound_ids[:]
     for id in sound_ids:
-        analysis_data = cache.get(hash_cache_key(cache_key % (str(id), ",".join(sorted(descriptor_names)), str(normalization))))
+        analysis_data = cache.get(
+            hash_cache_key(cache_key % (str(id), ",".join(sorted(descriptor_names)), str(normalization)))
+        )
         if analysis_data:
             cached_data[str(id)] = analysis_data
             # remove id form list so it is not included in similarity request
             not_cached_sound_ids.remove(id)
     if not_cached_sound_ids:
         try:
-            returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors)
+            returned_data = Similarity.get_sounds_descriptors(
+                not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors
+            )
         except Exception as e:
-            web_logger.info('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
-                            (e, traceback.format_exc()))
+            web_logger.info(
+                'Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s'
+                % (e, traceback.format_exc())
+            )
             raise
     else:
         returned_data = {}
 
     # save sound analysis information in cache
     for key, item in returned_data.items():
-        cache.set(hash_cache_key(cache_key % (key, ",".join(sorted(descriptor_names)), str(normalization))),
-                  item, SIMILARITY_CACHE_TIME)
+        cache.set(
+            hash_cache_key(cache_key % (key, ",".join(sorted(descriptor_names)), str(normalization))),
+            item,
+            SIMILARITY_CACHE_TIME,
+        )
 
     returned_data.update(cached_data)
 
@@ -164,7 +183,7 @@ def delete_sound_from_gaia(sound_id):
     try:
         Similarity.delete(sound_id)
     except Exception as e:
-       web_logger.warning("Could not delete sound from gaia with id %d (%s)" % (sound_id, str(e)))
+        web_logger.warning("Could not delete sound from gaia with id %d (%s)" % (sound_id, str(e)))
 
 
 def hash_cache_key(key):
@@ -172,7 +191,7 @@ def hash_cache_key(key):
 
 
 def get_l2_normalized_vector(vector):
-    norm = math.sqrt(sum([v*v for v in vector]))
+    norm = math.sqrt(sum([v * v for v in vector]))
     if norm > 0:
-        vector = [v/norm for v in vector]
+        vector = [v / norm for v in vector]
     return vector

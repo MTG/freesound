@@ -33,25 +33,26 @@ class SoundRating(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     rating = models.IntegerField()
-    sound = models.ForeignKey('sounds.Sound', null=True, related_name='ratings', on_delete=models.CASCADE)
+    sound = models.ForeignKey("sounds.Sound", null=True, related_name="ratings", on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __str__(self):
         return "%s rated %s: %d" % (self.user, self.sound, self.rating)
 
     class Meta:
-        unique_together = (('user', 'sound'),)
-        ordering = ('-created',)
+        unique_together = (("user", "sound"),)
+        ordering = ("-created",)
 
 
 @receiver(post_delete, sender=SoundRating)
 def post_delete_rating(sender, instance, **kwargs):
     try:
         with transaction.atomic():
-            instance.sound.num_ratings = F('num_ratings') - 1
-            avg_rating = SoundRating.objects.filter(
-                    sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0.0))
-            rating = avg_rating['average_rating']
+            instance.sound.num_ratings = F("num_ratings") - 1
+            avg_rating = SoundRating.objects.filter(sound_id=instance.sound_id).aggregate(
+                average_rating=Coalesce(Avg("rating"), 0.0)
+            )
+            rating = avg_rating["average_rating"]
             instance.sound.avg_rating = rating
             instance.sound.save()
     except ObjectDoesNotExist:
@@ -64,10 +65,11 @@ def update_num_ratings_on_post_save(sender, instance, created, **kwargs):
         # Increase the number of ratings only on insert, but recompute the average
         # after update as well
         if created:
-            instance.sound.num_ratings = F('num_ratings') + 1
+            instance.sound.num_ratings = F("num_ratings") + 1
 
-        avg_rating = SoundRating.objects.filter(
-            sound_id=instance.sound_id).aggregate(average_rating=Coalesce(Avg('rating'), 0.0))
-        rating = avg_rating['average_rating']
+        avg_rating = SoundRating.objects.filter(sound_id=instance.sound_id).aggregate(
+            average_rating=Coalesce(Avg("rating"), 0.0)
+        )
+        rating = avg_rating["average_rating"]
         instance.sound.avg_rating = rating
         instance.sound.save()

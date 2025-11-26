@@ -78,5 +78,7 @@ def clean_and_split_tags(tags):
 
     tags = alphanum_only.sub(" ", tags)
     tags = multi_dashes.sub("-", tags)
-    common_words = "the of to and an in is it you that he was for on are with as i his they be at".split() #@UnusedVariable
-    return {tag for tag in [tag.strip('-') for tag in tags.split()] if tag and tag not in common_words}
+    common_words = (
+        "the of to and an in is it you that he was for on are with as i his they be at".split()
+    )  # @UnusedVariable
+    return {tag for tag in [tag.strip("-") for tag in tags.split()] if tag and tag not in common_words}

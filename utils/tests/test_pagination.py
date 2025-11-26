@@ -28,12 +28,11 @@ from general.templatetags.bw_templatetags import bw_paginator
 
 
 class PaginationTest(TestCase):
-
-    fixtures = ['licenses.json', 'sounds.json']
+    fixtures = ["licenses.json", "sounds.json"]
 
     def test_pagination_cache_count(self):
         """If you create a paginator, it'll call .count() once on the queryset
-         to get the length, but not again when needing to use the number of items"""
+        to get the length, but not again when needing to use the number of items"""
 
         sounds = Sound.objects.all()
 
@@ -69,11 +68,14 @@ class PaginationTest(TestCase):
         all GET parameters and values. This test checks that if non-ascii characters are passed as GET parameter names
         or values, paginator does not break.
         """
-        text_with_non_ascii = '�textèé'
-        dummy_request = RequestFactory().get(reverse('sounds'), {
-            text_with_non_ascii: '1',
-            'param_name': text_with_non_ascii,
-            'param2_name': 'ok_value',
-        })
+        text_with_non_ascii = "�textèé"
+        dummy_request = RequestFactory().get(
+            reverse("sounds"),
+            {
+                text_with_non_ascii: "1",
+                "param_name": text_with_non_ascii,
+                "param2_name": "ok_value",
+            },
+        )
         paginator = paginate(dummy_request, Sound.objects.all(), 10)
-        bw_paginator({}, paginator['paginator'], paginator['page'], paginator['current_page'], dummy_request)
+        bw_paginator({}, paginator["paginator"], paginator["page"], paginator["current_page"], dummy_request)

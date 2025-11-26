@@ -25,30 +25,26 @@ from django.db import transaction
 from geotags.models import GeoTag
 from utils.management_commands import LoggingBaseCommand
 
-console_logger = logging.getLogger('console')
+console_logger = logging.getLogger("console")
 
 
 class Command(LoggingBaseCommand):
-
-    help = 'Retrieve geotag names using the mapbox API for geotags that have no information'
+    help = "Retrieve geotag names using the mapbox API for geotags that have no information"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-l', '--limit',
-            action='store',
-            dest='limit',
-            default=5000,
-            help='Maximum number of geotags to update')
+            "-l", "--limit", action="store", dest="limit", default=5000, help="Maximum number of geotags to update"
+        )
 
     def handle(self, *args, **options):
         self.log_start()
 
-        limit = int(options['limit'])
+        limit = int(options["limit"])
         geotags = GeoTag.objects.filter(should_update_information=True)[:limit]
         total = geotags.count()
         with transaction.atomic():
             for count, geotag in enumerate(geotags):
                 geotag.retrieve_location_information()
-                console_logger.info(f'Retrieved information for geotag {count + 1} of {total}')
+                console_logger.info(f"Retrieved information for geotag {count + 1} of {total}")
 
-        self.log_end({'num_geotags': total})
+        self.log_end({"num_geotags": total})

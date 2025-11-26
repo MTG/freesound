@@ -4,13 +4,12 @@ from oauth2_provider.oauth2_validators import OAuth2Validator as ProviderOauth2V
 
 
 class OAuth2Validator(ProviderOauth2Validator):
-
     def confirm_redirect_uri(self, client_id, code, redirect_uri, client, *args, **kwargs):
         """
         We overwrite this method to make sure that default redirect_uri is taken if no
         redirect_uri is specified in the access token request
         """
-        grant = Grant.objects.select_related('application').get(code=code, application=client)
+        grant = Grant.objects.select_related("application").get(code=code, application=client)
         if redirect_uri is None:
             redirect_uri = grant.application.default_redirect_uri
         return grant.redirect_uri_allowed(redirect_uri)
@@ -22,7 +21,7 @@ class OAuth2Validator(ProviderOauth2Validator):
         you to define one allowed authorization grant type per client. Therefore we need to customise
         this method.
         """
-        assert (grant_type in GRANT_TYPE_MAPPING)  # mapping misconfiguration
+        assert grant_type in GRANT_TYPE_MAPPING  # mapping misconfiguration
         if grant_type == AbstractApplication.GRANT_PASSWORD:
             if request.client.apiv2_client.allow_oauth_password_grant:
                 return True

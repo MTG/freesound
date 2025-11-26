@@ -12,25 +12,28 @@ def bst_taxonomy_category_key_to_category_names(category_key):
     """
     if category_key is None:
         return (None, None)
-    if '-' in category_key:
+    if "-" in category_key:
         # Second-level category key
-        top_level_key = category_key.split('-')[0]
+        top_level_key = category_key.split("-")[0]
         second_level_key = category_key
     else:
         # Only top-level category spcifcied, second-level is unknown
         top_level_key = category_key
         second_level_key = None
     try:
-        top_level_category_name = settings.BROAD_SOUND_TAXONOMY[top_level_key]['name']
+        top_level_category_name = settings.BROAD_SOUND_TAXONOMY[top_level_key]["name"]
     except IndexError:
         # If for some reason we change category keys and some sounds are outdated, let's not crash
         top_level_category_name = None
     try:
-        second_level_category_name = settings.BROAD_SOUND_TAXONOMY[second_level_key]['name'] if second_level_key is not None else None
+        second_level_category_name = (
+            settings.BROAD_SOUND_TAXONOMY[second_level_key]["name"] if second_level_key is not None else None
+        )
     except IndexError:
         # If for some reason we change category keys and some sounds are outdated, let's not crash
         second_level_category_name = None
     return (top_level_category_name, second_level_category_name)
+
 
 def bst_taxonomy_category_names_to_category_key(top_level_name, second_level_name):
     """
@@ -42,7 +45,11 @@ def bst_taxonomy_category_names_to_category_key(top_level_name, second_level_nam
         return None
 
     try:
-        top_level_code = [key for key, value in settings.BROAD_SOUND_TAXONOMY.items() if value['level'] == 1 and value['name'] == top_level_name][0]
+        top_level_code = [
+            key
+            for key, value in settings.BROAD_SOUND_TAXONOMY.items()
+            if value["level"] == 1 and value["name"] == top_level_name
+        ][0]
     except IndexError:
         return None
 
@@ -50,11 +57,16 @@ def bst_taxonomy_category_names_to_category_key(top_level_name, second_level_nam
         return top_level_code
 
     try:
-        second_level_code = [key for key, value in settings.BROAD_SOUND_TAXONOMY.items() if value['level'] == 2 and value['name'] == second_level_name and key.startswith(f'{top_level_code}-')][0]
+        second_level_code = [
+            key
+            for key, value in settings.BROAD_SOUND_TAXONOMY.items()
+            if value["level"] == 2 and value["name"] == second_level_name and key.startswith(f"{top_level_code}-")
+        ][0]
     except IndexError:
         return None
 
     return second_level_code
+
 
 @register.filter
 def get_bst_taxonomy_top_level_category_key(value):
@@ -63,12 +75,13 @@ def get_bst_taxonomy_top_level_category_key(value):
     The top level category is the part before the '-' in value.
     E.g.: "m-sp" -> "m"
     """
-    return value.split('-')[0] if '-' in value else value
+    return value.split("-")[0] if "-" in value else value
+
 
 @register.filter
 def get_bst_taxonomy_description(value):
     """
-    Return BST taxonomy class description for a given taxonomy 
+    Return BST taxonomy class description for a given taxonomy
     cateogory/subcategory key.
     """
-    return settings.BROAD_SOUND_TAXONOMY[value]['description'] 
+    return settings.BROAD_SOUND_TAXONOMY[value]["description"]

@@ -23,33 +23,33 @@ from django.conf import settings
 
 
 class SoundSearchForm(forms.Form):
-    q    = forms.CharField(required=False, label='query')
-    p    = forms.CharField(required=False, label='page')
-    f    = forms.CharField(required=False, label='filter')
-    s    = forms.CharField(required=False, label='sort')
-    
+    q = forms.CharField(required=False, label="query")
+    p = forms.CharField(required=False, label="page")
+    f = forms.CharField(required=False, label="filter")
+    s = forms.CharField(required=False, label="sort")
+
     def clean_q(self):
-        q = self.cleaned_data['q'] 
-        return q if q != None else ""  
-    
+        q = self.cleaned_data["q"]
+        return q if q != None else ""
+
     def clean_f(self):
-        f = self.cleaned_data['f'] 
-        return f if f != None else ""  
-            
+        f = self.cleaned_data["f"]
+        return f if f != None else ""
+
     def clean_p(self):
         try:
-            p = int(self.cleaned_data['p'])
+            p = int(self.cleaned_data["p"])
         except:
-            return 1 
+            return 1
         return p if p >= 1 else 1
-    
+
     def clean_s(self):
-        s = self.cleaned_data['s']
+        s = self.cleaned_data["s"]
         for option in self.sort_options:
             if option[0] == s:
                 return option[1]
         return settings.SEARCH_SOUNDS_SORT_DEFAULT
-        
+
     def __init__(self, sort_options, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sort_options = sort_options

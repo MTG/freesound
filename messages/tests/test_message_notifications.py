@@ -33,21 +33,24 @@ class MessageReceivedEmailNotification(TestCase):
     Test that email notifications are sent correctly when a message is received
     """
 
-    fixtures = ['email_preference_type']
+    fixtures = ["email_preference_type"]
 
     def setUp(self):
-        self.sender = User.objects.create_user(username='sender', email='sender@example.com')
-        self.receiver = User.objects.create_user(username='receiver', email='receiver@example.com')
+        self.sender = User.objects.create_user(username="sender", email="sender@example.com")
+        self.receiver = User.objects.create_user(username="receiver", email="receiver@example.com")
 
     @mock.patch("django_recaptcha.fields.ReCaptchaField.validate")
     def test_message_email_preference_enabled(self, magic_mock):
         self.client.force_login(user=self.sender)
-        resp = self.client.post(reverse('messages-new'), data={
-            'body': ['test message body'],
-            'to': ['receiver'],
-            'subject': ['test message'],
-        })
-        self.assertRedirects(resp, reverse('messages'))
+        resp = self.client.post(
+            reverse("messages-new"),
+            data={
+                "body": ["test message body"],
+                "to": ["receiver"],
+                "subject": ["test message"],
+            },
+        )
+        self.assertRedirects(resp, reverse("messages"))
         self.assertEqual(len(mail.outbox), 1)
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_PRIVATE_MESSAGE in mail.outbox[0].subject)
@@ -60,10 +63,13 @@ class MessageReceivedEmailNotification(TestCase):
         UserEmailSetting.objects.create(user=self.receiver, email_type=email_pref)
 
         self.client.force_login(user=self.sender)
-        resp = self.client.post(reverse('messages-new'), data={
-            'body': ['test message body'],
-            'to': ['receiver'],
-            'subject': ['test message'],
-        })
-        self.assertRedirects(resp, reverse('messages'))
+        resp = self.client.post(
+            reverse("messages-new"),
+            data={
+                "body": ["test message body"],
+                "to": ["receiver"],
+                "subject": ["test message"],
+            },
+        )
+        self.assertRedirects(resp, reverse("messages"))
         self.assertEqual(len(mail.outbox), 0)

@@ -26,8 +26,11 @@ from django.conf import settings
 
 
 def get_users_following_qs(user):
-    return FollowingUserItem.objects.select_related('user_to__profile')\
-        .filter(user_from=user).order_by('user_to__username')
+    return (
+        FollowingUserItem.objects.select_related("user_to__profile")
+        .filter(user_from=user)
+        .order_by("user_to__username")
+    )
 
 
 def get_users_following(user):
@@ -35,8 +38,11 @@ def get_users_following(user):
 
 
 def get_users_followers_qs(user):
-    return FollowingUserItem.objects.select_related('user_from__profile')\
-        .filter(user_to=user).order_by('user_from__username')
+    return (
+        FollowingUserItem.objects.select_related("user_from__profile")
+        .filter(user_to=user)
+        .order_by("user_from__username")
+    )
 
 
 def get_users_followers(user):
@@ -44,7 +50,7 @@ def get_users_followers(user):
 
 
 def get_tags_following_qs(user):
-    return FollowingQueryItem.objects.filter(user=user).order_by('query')
+    return FollowingQueryItem.objects.filter(user=user).order_by("query")
 
 
 def get_tags_following(user):
@@ -60,7 +66,6 @@ def is_user_following_tag(user, slash_tag):
 
 
 def get_stream_sounds(user, time_lapse, num_results_per_group=3, search_engine_backend=None):
-
     if search_engine_backend is None:
         search_engine = get_search_engine()
     else:
@@ -74,10 +79,9 @@ def get_stream_sounds(user, time_lapse, num_results_per_group=3, search_engine_b
 
     users_sounds = []
     for user_following in users_following:
-
-        filter_str = "username:\"" + user_following.username + "\" created:" + time_lapse
+        filter_str = 'username:"' + user_following.username + '" created:' + time_lapse
         result = search_engine.search_sounds(
-            textual_query='',
+            textual_query="",
             query_filter=filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
@@ -86,18 +90,20 @@ def get_stream_sounds(user, time_lapse, num_results_per_group=3, search_engine_b
         )
 
         if result.num_rows != 0:
-
             more_count = max(0, result.num_found - num_results_per_group)
 
             # the sorting only works if done like this!
-            more_url_params = [urllib.parse.quote(filter_str), urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
+            more_url_params = [
+                urllib.parse.quote(filter_str),
+                urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST),
+            ]
 
             # this is the same link but for the email has to be "quoted"
             more_url = "?f=" + filter_str + "&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
             # more_url_quoted = urllib.quote(more_url)
 
-            sound_ids = [element['id'] for element in result.docs]
-            #sound_objs = sounds.models.Sound.objects.ordered_ids(sound_ids)
+            sound_ids = [element["id"] for element in result.docs]
+            # sound_objs = sounds.models.Sound.objects.ordered_ids(sound_ids)
             # NOTE: for now we add sound_ids in users_sounds instead of the actual sound object. We retrieve sound objs later in a single query.
             new_count = more_count + len(sound_ids)
             users_sounds.append((user_following, sound_ids, more_url_params, more_count, new_count))
@@ -110,7 +116,6 @@ def get_stream_sounds(user, time_lapse, num_results_per_group=3, search_engine_b
 
     tags_sounds = []
     for tag_following in tags_following:
-
         tags = tag_following.split(" ")
         tag_filter_query = ""
         for tag in tags:
@@ -119,7 +124,7 @@ def get_stream_sounds(user, time_lapse, num_results_per_group=3, search_engine_b
         tag_filter_str = tag_filter_query + " created:" + time_lapse
 
         result = search_engine.search_sounds(
-            textual_query='',
+            textual_query="",
             query_filter=tag_filter_str,
             sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
             offset=0,
@@ -128,17 +133,19 @@ def get_stream_sounds(user, time_lapse, num_results_per_group=3, search_engine_b
         )
 
         if result.num_rows != 0:
-
             more_count = max(0, result.num_found - num_results_per_group)
 
             # the sorting only works if done like this!
-            more_url_params = [urllib.parse.quote(tag_filter_str), urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)]
+            more_url_params = [
+                urllib.parse.quote(tag_filter_str),
+                urllib.parse.quote(settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST),
+            ]
 
             # this is the same link but for the email has to be "quoted"
             more_url = "?f=" + tag_filter_str + "&s=" + settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
             # more_url_quoted = urllib.quote(more_url)
 
-            sound_ids = [element['id'] for element in result.docs]
+            sound_ids = [element["id"] for element in result.docs]
             # NOTE: for now we add sound_ids in users_sounds instead of the actual sound objetcs. We retrieve sound
             # objs later in a single query.
             new_count = more_count + len(sound_ids)

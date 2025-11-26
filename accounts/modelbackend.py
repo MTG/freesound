@@ -25,9 +25,8 @@ UserModel = get_user_model()
 
 
 class CustomModelBackend(ModelBackend):
-
     def authenticate(self, request, username=None, password=None, **kwargs):
-        """ authenticate against case insensitive username or email
+        """authenticate against case insensitive username or email
 
         In case there is an @ sign in the provided username field, it is likely that
         the user is trying to authenticate by providing an email+password pair (rather than
@@ -38,7 +37,7 @@ class CustomModelBackend(ModelBackend):
         be able to login using email.
         """
 
-        if '@' in username:
+        if "@" in username:
             # In this case, user is most probably using email+password pair to login
             # Try to get user object from email and check password
             try:

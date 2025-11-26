@@ -26,7 +26,7 @@ from django.core.mail import get_connection
 from django.core.mail.message import EmailMessage
 from django.template.loader import render_to_string
 
-emails_logger = logging.getLogger('emails')
+emails_logger = logging.getLogger("emails")
 
 
 def transform_unique_email(email):
@@ -44,8 +44,16 @@ def _ensure_list(item):
     return item
 
 
-def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None, reply_to=None,
-              email_type_preference_check=None, extra_subject=''):
+def send_mail(
+    subject,
+    email_body,
+    user_to=None,
+    email_to=None,
+    email_from=None,
+    reply_to=None,
+    email_type_preference_check=None,
+    extra_subject="",
+):
     """Sends email with a lot of defaults.
 
     The function will check if user's email is valid based on bounce info. The function will also check email
@@ -79,10 +87,12 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
         user_to = _ensure_list(user_to)
         email_to = []
         for user in user_to:
-
             # Check that user has preference enabled for that type of email
-            email_type_enabled = user.profile.email_type_enabled(email_type_preference_check) \
-                if email_type_preference_check is not None else True
+            email_type_enabled = (
+                user.profile.email_type_enabled(email_type_preference_check)
+                if email_type_preference_check is not None
+                else True
+            )
 
             # Check if user's email is valid for delivery and add a tuple with (username, correct email  address)
             # to the list of email_to
@@ -99,66 +109,95 @@ def send_mail(subject, email_body, user_to=None, email_to=None, email_from=None,
             # If no user_to was provided, we know the email address but we don't know the corresponding users. email_to
             # is supposed to be a list of (username, email  address) tuples. We make this list of tuples setting
             # usernames to '-'
-            email_to = [('-', email) for email in email_to]
+            email_to = [("-", email) for email in email_to]
 
     if settings.ALLOWED_EMAILS:  # for testing purposes, so we don't accidentally send emails to users
         email_to = [(username, email) for username, email in email_to if email in settings.ALLOWED_EMAILS]
 
-    full_subject = f'{settings.EMAIL_SUBJECT_PREFIX} {subject}'
+    full_subject = f"{settings.EMAIL_SUBJECT_PREFIX} {subject}"
     if extra_subject:
-        full_subject = f'{full_subject} - {extra_subject}'
+        full_subject = f"{full_subject} - {extra_subject}"
 
     try:
-        emails = tuple(((full_subject, email_body, email_from, [email])
-                        for _, email in email_to))
+        emails = tuple(((full_subject, email_body, email_from, [email]) for _, email in email_to))
 
         # Replicating send_mass_mail functionality and adding reply-to header if requires
         connection = get_connection(username=None, password=None, fail_silently=False)
         headers = None
         if reply_to:
-            headers = {'Reply-To': reply_to}
+            headers = {"Reply-To": reply_to}
 
-        messages = [EmailMessage(email_subject, message, sender, recipient, headers=headers)
-                    for email_subject, message, sender, recipient in emails]
+        messages = [
+            EmailMessage(email_subject, message, sender, recipient, headers=headers)
+            for email_subject, message, sender, recipient in emails
+        ]
 
         connection.send_messages(messages)
 
         # Log emails being sent
         for username, email in email_to:
-            emails_logger.info('Email sent (%s)' % json.dumps({
-                'subject': subject,
-                'extra_subject': extra_subject,
-                'email_from': email_from,
-                'email_to': email,
-                'email_to_username': username,
-            }))
+            emails_logger.info(
+                "Email sent (%s)"
+                % json.dumps(
+                    {
+                        "subject": subject,
+                        "extra_subject": extra_subject,
+                        "email_from": email_from,
+                        "email_to": email,
+                        "email_to_username": username,
+                    }
+                )
+            )
 
         return True
 
     except Exception as e:
-        emails_logger.info('Error in send_mail (%s)' % json.dumps({
-            'subject': subject,
-            'extra_subject': extra_subject,
-            'email_to': str(email_to),
-            'error': str(e)
-        }))
+        emails_logger.info(
+            "Error in send_mail (%s)"
+            % json.dumps(
+                {"subject": subject, "extra_subject": extra_subject, "email_to": str(email_to), "error": str(e)}
+            )
+        )
         return False
 
 
-def send_mail_template(subject, template, context, user_to=None, email_to=None, email_from=None, reply_to=None,
-                       email_type_preference_check=None, extra_subject=''):
+def send_mail_template(
+    subject,
+    template,
+    context,
+    user_to=None,
+    email_to=None,
+    email_from=None,
+    reply_to=None,
+    email_type_preference_check=None,
+    extra_subject="",
+):
     context["settings"] = settings
-    return send_mail(subject, render_to_string(template, context), user_to=user_to, email_to=email_to,
-                     email_from=email_from, reply_to=reply_to, email_type_preference_check=email_type_preference_check,
-                     extra_subject=extra_subject)
+    return send_mail(
+        subject,
+        render_to_string(template, context),
+        user_to=user_to,
+        email_to=email_to,
+        email_from=email_from,
+        reply_to=reply_to,
+        email_type_preference_check=email_type_preference_check,
+        extra_subject=extra_subject,
+    )
 
 
-def send_mail_template_to_support(subject, template, context, email_from=None, reply_to=None, extra_subject=''):
+def send_mail_template_to_support(subject, template, context, email_from=None, reply_to=None, extra_subject=""):
     email_to = []
     for email in settings.SUPPORT:
         email_to.append(email[1])
-    return send_mail_template(subject, template, context, email_to=email_to, email_from=email_from, reply_to=reply_to,
-                              extra_subject=extra_subject)
+    return send_mail_template(
+        subject,
+        template,
+        context,
+        email_to=email_to,
+        email_from=email_from,
+        reply_to=reply_to,
+        extra_subject=extra_subject,
+    )
 
 
 def render_mail_template(template, context):

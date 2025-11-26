@@ -40,7 +40,7 @@ def tags(request):
     tvars = search_view_helper(request)
 
     # If there are no tags in filter, get display initial tag cloud
-    if 'sqp' in tvars and not tvars["sqp"].get_tags_in_filters():
+    if "sqp" in tvars and not tvars["sqp"].get_tags_in_filters():
         return tag_cloud(request)
 
     return render(request, "search/search.html", tvars)

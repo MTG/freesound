@@ -37,12 +37,19 @@ def progress_callback(position, width):
 def main(args):
     # process all files so the user can use wildcards like *.wav
     for input_file in args.files:
-
         output_file_w = input_file + "_w.png"
         output_file_s = input_file + "_s.jpg"
 
-        this_args = (input_file, output_file_w, output_file_s, args.width, args.height, args.fft_size,
-                     progress_callback, args.color_scheme)
+        this_args = (
+            input_file,
+            output_file_w,
+            output_file_s,
+            args.width,
+            args.height,
+            args.fft_size,
+            progress_callback,
+            args.color_scheme,
+        )
 
         print(f"processing file {input_file}:\n\t", end="")
 
@@ -67,20 +74,24 @@ def main(args):
         print("")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("files", help="files to process", nargs="+")
-    parser.add_argument("-w", "--width", type=int, default=500, dest="width",
-                        help="image width in pixels")
-    parser.add_argument("-H", "--height", type=int, default=171, dest="height",
-                        help="image height in pixels")
-    parser.add_argument("-f", "--fft", type=int, default=2048, dest="fft_size",
-                        help="fft size, power of 2 for increased performance")
-    parser.add_argument("-c", "--color_scheme", type=str, default='Freesound2', dest="color_scheme",
-                        help="name of the color scheme to use (one of: 'Freesound2' (default), 'FreesoundBeastWhoosh', "
-                             "'Cyberpunk', 'Rainforest')")
-    parser.add_argument("-p", "--profile", action="store_true",
-                        help="run profiler and output profiling information")
+    parser.add_argument("-w", "--width", type=int, default=500, dest="width", help="image width in pixels")
+    parser.add_argument("-H", "--height", type=int, default=171, dest="height", help="image height in pixels")
+    parser.add_argument(
+        "-f", "--fft", type=int, default=2048, dest="fft_size", help="fft size, power of 2 for increased performance"
+    )
+    parser.add_argument(
+        "-c",
+        "--color_scheme",
+        type=str,
+        default="Freesound2",
+        dest="color_scheme",
+        help="name of the color scheme to use (one of: 'Freesound2' (default), 'FreesoundBeastWhoosh', "
+        "'Cyberpunk', 'Rainforest')",
+    )
+    parser.add_argument("-p", "--profile", action="store_true", help="run profiler and output profiling information")
 
     args = parser.parse_args()
     main(args)

@@ -27,7 +27,7 @@ from accounts.models import User
 register = template.Library()
 
 
-@register.inclusion_tag('molecules/object_selector.html', takes_context=True)
+@register.inclusion_tag("molecules/object_selector.html", takes_context=True)
 def users_selector(context, users, selected_user_ids=None, show_select_all_buttons=False):
     if users:
         if not isinstance(users[0], User):
@@ -37,8 +37,8 @@ def users_selector(context, users, selected_user_ids=None, show_select_all_butto
             for user in users:
                 user.selected = user.id in selected_user_ids
     return {
-        'objects': users,
-        'type': 'users',
-        'show_select_all_buttons': show_select_all_buttons,
-        'original_context': context 
+        "objects": users,
+        "type": "users",
+        "show_select_all_buttons": show_select_all_buttons,
+        "original_context": context,
     }

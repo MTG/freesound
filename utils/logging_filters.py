@@ -33,18 +33,18 @@ def get_client_ip(request):
     is added by nginx). If in DEBUG mode, a fake test IP will be returned.
     """
     if settings.DEBUG:
-        return '1.2.3.4'
+        return "1.2.3.4"
 
-    x_forwarded_for = request.headers.get('x-forwarded-for')
+    x_forwarded_for = request.headers.get("x-forwarded-for")
     if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0].strip()
+        ip = x_forwarded_for.split(",")[0].strip()
         try:
             ipaddress.ip_network(str(ip))
         except ValueError:
             # Not a valid ip address
-            ip = '-'
+            ip = "-"
     else:
-        ip = '-'
+        ip = "-"
     return ip
 
 
@@ -57,10 +57,11 @@ class GenericDataFilter(logging.Filter):
     properties of the message so graylog can process them. If the parsing does not succeed, the
     message is sent as is.
     """
+
     def filter(self, record):
         try:
             message = record.getMessage()
-            json_part = message[message.find('(') + 1:-1]
+            json_part = message[message.find("(") + 1 : -1]
             fields = json.loads(json_part)
             for key, value in fields.items():
                 setattr(record, key, value)
@@ -70,14 +71,13 @@ class GenericDataFilter(logging.Filter):
 
 
 class APILogsFilter(logging.Filter):
-
     def filter(self, record):
         message = record.getMessage()
-        if '#!#' in message:
+        if "#!#" in message:
             try:
-                (message, data, info) = message.split(' #!# ')
-                if ':' in message:
-                    message = ' '.join([item.split(':')[0] for item in message.split(' ')])
+                (message, data, info) = message.split(" #!# ")
+                if ":" in message:
+                    message = " ".join([item.split(":")[0] for item in message.split(" ")])
                 record.api_resource = message
                 info_dict = json.loads(info)
                 if info_dict is not None:

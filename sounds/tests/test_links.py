@@ -25,52 +25,50 @@ from sounds.models import Pack, Sound
 
 
 class OldSoundLinksRedirectTestCase(TestCase):
-
-    fixtures = ['licenses', 'sounds']
+    fixtures = ["licenses", "sounds"]
 
     def setUp(self):
         self.sound = Sound.objects.all()[0]
 
     def test_old_sound_link_redirect_ok(self):
         # 301 permanent redirect, result exists
-        response = self.client.get(reverse('old-sound-page'), data={'id': self.sound.id})
+        response = self.client.get(reverse("old-sound-page"), data={"id": self.sound.id})
         self.assertEqual(response.status_code, 301)
 
         # id is valid but has a space after it
-        response = self.client.get(reverse('old-sound-page'), data={'id': '%d ' % self.sound.id})
+        response = self.client.get(reverse("old-sound-page"), data={"id": "%d " % self.sound.id})
         self.assertEqual(response.status_code, 301)
 
     def test_old_sound_link_redirect_not_exists_id(self):
         # 404 id does not exist
-        response = self.client.get(reverse('old-sound-page'), data={'id': 0}, follow=True)
+        response = self.client.get(reverse("old-sound-page"), data={"id": 0}, follow=True)
         self.assertEqual(response.status_code, 404)
 
     def test_old_sound_link_redirect_invalid_id(self):
         # 404 invalid id
-        response = self.client.get(reverse('old-sound-page'), data={'id': 'invalid_id'}, follow=True)
+        response = self.client.get(reverse("old-sound-page"), data={"id": "invalid_id"}, follow=True)
         self.assertEqual(response.status_code, 404)
 
 
 class OldPackLinksRedirectTestCase(TestCase):
-
-    fixtures = ['packs']
+    fixtures = ["packs"]
 
     def setUp(self):
         self.client = Client()
         self.pack = Pack.objects.all()[0]
 
     def test_old_pack_link_redirect_ok(self):
-        response = self.client.get(reverse('old-pack-page'), data={'id': self.pack.id})
+        response = self.client.get(reverse("old-pack-page"), data={"id": self.pack.id})
         self.assertEqual(response.status_code, 301)
 
         # id is valid but has a space after it
-        response = self.client.get(reverse('old-pack-page'), data={'id': '%d ' % self.pack.id})
+        response = self.client.get(reverse("old-pack-page"), data={"id": "%d " % self.pack.id})
         self.assertEqual(response.status_code, 301)
 
     def test_old_pack_link_redirect_not_exists_id(self):
-        response = self.client.get(reverse('old-pack-page'), data={'id': 0}, follow=True)
+        response = self.client.get(reverse("old-pack-page"), data={"id": 0}, follow=True)
         self.assertEqual(response.status_code, 404)
 
     def test_old_pack_link_redirect_invalid_id(self):
-        response = self.client.get(reverse('old-pack-page'), data={'id': 'invalid_id'}, follow=True)
+        response = self.client.get(reverse("old-pack-page"), data={"id": "invalid_id"}, follow=True)
         self.assertEqual(response.status_code, 404)

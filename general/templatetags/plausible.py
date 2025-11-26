@@ -24,7 +24,7 @@ from django.conf import settings
 register = template.Library()
 
 
-@register.inclusion_tag('templatetags/plausible_scripts.html', takes_context=False)
+@register.inclusion_tag("templatetags/plausible_scripts.html", takes_context=False)
 def plausible_scripts():
     aggregate_pageviews = settings.PLAUSIBLE_AGGREGATE_PAGEVIEWS
-    return {'aggregate_pageviews': aggregate_pageviews}
+    return {"aggregate_pageviews": aggregate_pageviews}

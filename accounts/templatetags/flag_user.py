@@ -27,26 +27,25 @@ register = template.Library()
 
 @register.inclusion_tag("accounts/flag_user.html", takes_context=True)
 def flag_user(context, flag_type, username, content_id, text=None, user_sounds=None):
-
     no_show = False
     link_text = "Report spam/offensive"
 
     has_sounds = user_sounds is not None and user_sounds > 0
-    if not context['request'].user.is_authenticated or has_sounds:
+    if not context["request"].user.is_authenticated or has_sounds:
         no_show = True
         flagged = False
     else:
         flagged = UserFlag.objects.filter(
-            user__username=username, reporting_user=context['request'].user, object_id=content_id
+            user__username=username, reporting_user=context["request"].user, object_id=content_id
         ).exists()
         if text:
             link_text = text
 
     return {
-        'flagged': flagged,
-        'flag_type': flag_type,
-        'username': username,
-        'content_obj_id': content_id,
-        'link_text': link_text,
-        'no_show': no_show
+        "flagged": flagged,
+        "flag_type": flag_type,
+        "username": username,
+        "content_obj_id": content_id,
+        "link_text": link_text,
+        "no_show": no_show,
     }

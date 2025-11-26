@@ -45,7 +45,7 @@ from utils.test_helpers import create_user_and_sounds
 
 
 class UserRegistrationAndActivation(TestCase):
-    fixtures = ['users']
+    fixtures = ["users"]
 
     def test_user_save(self):
         u = User.objects.create_user("testuser2", password="testpass")
@@ -54,139 +54,163 @@ class UserRegistrationAndActivation(TestCase):
 
     @mock.patch("django_recaptcha.fields.ReCaptchaField.validate")
     def test_user_registration(self, magic_mock_function):
-        username = 'new_user'
+        username = "new_user"
 
         # Try registration without accepting tos
-        resp = self.client.post(reverse('accounts-registration-modal'), data={
-            'username': [username],
-            'password1': ['123456!@'],
-            'accepted_tos': [''],
-            'email1': ['example@email.com'],
-            'email2': ['example@email.com']
-        })
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": [username],
+                "password1": ["123456!@"],
+                "accepted_tos": [""],
+                "email1": ["example@email.com"],
+                "email2": ["example@email.com"],
+            },
+        )
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'You must accept the terms of use')
+        self.assertContains(resp, "You must accept the terms of use")
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
         # Try registration with bad email
-        resp = self.client.post(reverse('accounts-registration-modal'), data={
-            'username': [username],
-            'password1': ['12345678'],
-            'accepted_tos': ['on'],
-            'email1': ['example@email.com'],
-            'email2': ['example@email.com']
-        })
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": [username],
+                "password1": ["12345678"],
+                "accepted_tos": ["on"],
+                "email1": ["example@email.com"],
+                "email2": ["example@email.com"],
+            },
+        )
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'This password is entirely numeric')
+        self.assertContains(resp, "This password is entirely numeric")
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
         # Try registration with bad password
-        resp = self.client.post(reverse('accounts-registration-modal'), data={
-            'username': [username],
-            'password1': ['123456!@'],
-            'accepted_tos': ['on'],
-            'email1': ['exampleemail.com'],
-            'email2': ['exampleemail.com']
-        })
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": [username],
+                "password1": ["123456!@"],
+                "accepted_tos": ["on"],
+                "email1": ["exampleemail.com"],
+                "email2": ["exampleemail.com"],
+            },
+        )
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Enter a valid email')
+        self.assertContains(resp, "Enter a valid email")
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
         # Try registration with no username
-        resp = self.client.post(reverse('accounts-registration-modal'), data={
-            'username': [''],
-            'password1': ['123456!@'],
-            'accepted_tos': ['on'],
-            'email1': ['example@email.com'],
-            'email2': ['example@email.com']
-        })
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": [""],
+                "password1": ["123456!@"],
+                "accepted_tos": ["on"],
+                "email1": ["example@email.com"],
+                "email2": ["example@email.com"],
+            },
+        )
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'This field is required')
+        self.assertContains(resp, "This field is required")
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
         # Try registration with different email addresses
-        resp = self.client.post(reverse('accounts-registration-modal'), data={
-            'username': [''],
-            'password1': ['123456!@'],
-            'accepted_tos': ['on'],
-            'email1': ['example@email.com'],
-            'email2': ['exampl@email.net']
-        })
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": [""],
+                "password1": ["123456!@"],
+                "accepted_tos": ["on"],
+                "email1": ["example@email.com"],
+                "email2": ["exampl@email.net"],
+            },
+        )
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Please confirm that your email address is the same')
+        self.assertContains(resp, "Please confirm that your email address is the same")
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
         # Try successful registration
-        resp = self.client.post(reverse('accounts-registration-modal'), data={
-            'username': [username],
-            'password1': ['123456!@'],
-            'accepted_tos': ['on'],
-            'email1': ['example@email.com'],
-            'email2': ['example@email.com']
-        })
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": [username],
+                "password1": ["123456!@"],
+                "accepted_tos": ["on"],
+                "email1": ["example@email.com"],
+                "email2": ["example@email.com"],
+            },
+        )
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'feedbackRegistration=1')
+        self.assertContains(resp, "feedbackRegistration=1")
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # An email was sent!
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
         # Try register again with same username
-        resp = self.client.post(reverse('accounts-registration-modal'), data={
-            'username': [username],
-            'password1': ['123456!@'],
-            'accepted_tos': ['on'],
-            'email1': ['example@email.com'],
-            'email2': ['example@email.com']
-        })
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": [username],
+                "password1": ["123456!@"],
+                "accepted_tos": ["on"],
+                "email1": ["example@email.com"],
+                "email2": ["example@email.com"],
+            },
+        )
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'You cannot use this username to create an account')
+        self.assertContains(resp, "You cannot use this username to create an account")
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # No new email sent
 
         # Try with repeated email address
-        resp = self.client.post(reverse('accounts-registration-modal'), data={
-            'username': ['a_different_username'],
-            'password1': ['123456!@'],
-            'accepted_tos': ['on'],
-            'email1': ['example@email.com'],
-            'email2': ['example@email.com']
-        })
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": ["a_different_username"],
+                "password1": ["123456!@"],
+                "accepted_tos": ["on"],
+                "email1": ["example@email.com"],
+                "email2": ["example@email.com"],
+            },
+        )
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'You cannot use this email address to create an account')
+        self.assertContains(resp, "You cannot use this email address to create an account")
         self.assertEqual(User.objects.filter(username=username).count(), 1)
         self.assertEqual(len(mail.outbox), 1)  # No new email sent
 
         activation_code = re.search(r"home/activate/.+/(.+)/", mail.outbox[0].body).group(1)
         # Test calling accounts-activate with good hash, user should be activated
-        resp = self.client.get(reverse('accounts-activate', args=[username, activation_code]))
+        resp = self.client.get(reverse("accounts-activate", args=[username, activation_code]))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['all_ok'], True)
+        self.assertEqual(resp.context["all_ok"], True)
         self.assertEqual(User.objects.get(username=username).is_active, True)
 
     def test_user_activation_fails(self):
         user = User.objects.get(username="User6Inactive")  # Inactive user in fixture
 
         # Test calling accounts-activate with wrong hash, user should not be activated
-        bad_hash = '4dad3dft'
-        resp = self.client.get(reverse('accounts-activate', args=[user.username, bad_hash]))
+        bad_hash = "4dad3dft"
+        resp = self.client.get(reverse("accounts-activate", args=[user.username, bad_hash]))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['decode_error'], True)
+        self.assertEqual(resp.context["decode_error"], True)
         self.assertEqual(User.objects.get(username="User6Inactive").is_active, False)
 
         # Test calling accounts-activate for a user that does not exist
-        resp = self.client.get(reverse('accounts-activate', args=["noone", hash]))
+        resp = self.client.get(reverse("accounts-activate", args=["noone", hash]))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['user_does_not_exist'], True)
+        self.assertEqual(resp.context["user_does_not_exist"], True)
 
 
 class UserDelete(TestCase):
-    fixtures = ['licenses', 'sounds']
+    fixtures = ["licenses", "sounds"]
 
     def create_user_and_content(self, username="testuser", is_index_dirty=True):
         user = User.objects.create_user(username, password="testpass", email=f"{username}@freesound.org")
@@ -196,7 +220,7 @@ class UserDelete(TestCase):
         target_sound = Sound.objects.all()[0]
         for i in range(0, 3):
             target_sound.add_comment(user, f"{username} comment {i}")
-        # Create threads and posts 
+        # Create threads and posts
         forum, _ = Forum.objects.get_or_create(name="Test forum")
         self.forum = forum
         thread = Thread.objects.create(author=user, title=f"Test thread by {username}", forum=forum)
@@ -205,14 +229,16 @@ class UserDelete(TestCase):
         # Create sounds and packs
         pack = Pack.objects.create(user=user, name=f"Test pack by {username}")
         for i in range(0, 3):
-            Sound.objects.create(user=user,
-                                 original_filename=f"Test sound {i} by {username}",
-                                 pack=pack,
-                                 is_index_dirty=is_index_dirty,
-                                 license=License.objects.all()[0],
-                                 md5=f"fake_unique_md5_{i}_{username}",
-                                 moderation_state="OK",
-                                 processing_state="OK")
+            Sound.objects.create(
+                user=user,
+                original_filename=f"Test sound {i} by {username}",
+                pack=pack,
+                is_index_dirty=is_index_dirty,
+                license=License.objects.all()[0],
+                md5=f"fake_unique_md5_{i}_{username}",
+                moderation_state="OK",
+                processing_state="OK",
+            )
         return user
 
     def test_user_delete_make_invalid_password(self):
@@ -228,9 +254,9 @@ class UserDelete(TestCase):
         self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, True)
 
         self.assertEqual(user.username, f"deleted_user_{user.id}")
-        self.assertEqual(user.profile.about, '')
-        self.assertEqual(user.profile.home_page, '')
-        self.assertEqual(user.profile.signature, '')
+        self.assertEqual(user.profile.about, "")
+        self.assertEqual(user.profile.home_page, "")
+        self.assertEqual(user.profile.signature, "")
         self.assertEqual(user.profile.geotag, None)
         self.assertTrue(DeletedUser.objects.filter(user_id=user.id).exists())
         self.assertFalse(OldUsername.objects.filter(user__id=user.id).exists())
@@ -243,8 +269,8 @@ class UserDelete(TestCase):
         self.assertTrue(Sound.objects.filter(user__id=user.id).exists())
         self.assertTrue(Sound.objects.filter(user__id=user.id)[0].is_index_dirty)
 
-    @mock.patch('sounds.models.delete_sound_from_gaia')
-    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    @mock.patch("sounds.models.delete_sound_from_gaia")
+    @mock.patch("sounds.models.delete_sounds_from_search_engine")
     def test_user_delete_include_sounds(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
         # This should set user's attribute deleted_user to True and anonymize it
         # Sounds and Packs should be deleted (creating DeletedSound objects), but other user content should be preserved
@@ -255,9 +281,9 @@ class UserDelete(TestCase):
 
         self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, True)
         self.assertEqual(user.username, f"deleted_user_{user.id}")
-        self.assertEqual(user.profile.about, '')
-        self.assertEqual(user.profile.home_page, '')
-        self.assertEqual(user.profile.signature, '')
+        self.assertEqual(user.profile.about, "")
+        self.assertEqual(user.profile.home_page, "")
+        self.assertEqual(user.profile.signature, "")
         self.assertEqual(user.profile.geotag, None)
         self.assertTrue(DeletedUser.objects.filter(user_id=user.id).exists())
         self.assertFalse(OldUsername.objects.filter(user__id=user.id).exists())
@@ -273,8 +299,8 @@ class UserDelete(TestCase):
         delete_sounds_from_search_engine.assert_has_calls([mock.call([i]) for i in user_sound_ids], any_order=True)
         delete_sound_from_gaia.assert_has_calls([mock.call(i) for i in user_sound_ids], any_order=True)
 
-    @mock.patch('sounds.models.delete_sound_from_gaia')
-    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    @mock.patch("sounds.models.delete_sound_from_gaia")
+    @mock.patch("sounds.models.delete_sounds_from_search_engine")
     def test_user_delete_sounds_and_user_object(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
         # This should delete all user content, including the User object, and create a DeletedUser object. This will
         # create DeletedSound objects.
@@ -297,8 +323,8 @@ class UserDelete(TestCase):
         delete_sound_from_gaia.assert_has_calls([mock.call(i) for i in user_sound_ids], any_order=True)
 
     @skipIf(True, "This tests a method that should never be called")
-    @mock.patch('sounds.models.delete_sound_from_gaia')
-    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    @mock.patch("sounds.models.delete_sound_from_gaia")
+    @mock.patch("sounds.models.delete_sounds_from_search_engine")
     def test_user_full_delete(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
         # This should delete all user content, including the User object and without creating DeletedUser. It does
         # create however DeletedSound objects.
@@ -325,66 +351,87 @@ class UserDelete(TestCase):
         delete_sounds_from_search_engine.assert_has_calls(calls, any_order=True)
         delete_sound_from_gaia.assert_has_calls(calls, any_order=True)
 
-
-    @mock.patch('general.tasks.delete_user.delay')
+    @mock.patch("general.tasks.delete_user.delay")
     def test_user_delete_include_sounds_using_web_form(self, submit_job):
         # Test user's option to delete user account including the sounds
 
         user = self.create_user_and_content(is_index_dirty=False)
         self.client.force_login(user)
         form = DeleteUserForm(user_id=user.id)
-        encr_link = form.initial['encrypted_link']
+        encr_link = form.initial["encrypted_link"]
         resp = self.client.post(
-            reverse('accounts-delete'),
-            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'delete_sounds'},
+            reverse("accounts-delete"),
+            {"encrypted_link": encr_link, "password": "testpass", "delete_sounds": "delete_sounds"},
             follow=True,
         )
 
         # Test job is triggered
-        data = json.dumps({'user_id': user.id, 'action': DELETE_USER_DELETE_SOUNDS_ACTION_NAME,
-                    'deletion_reason': DeletedUser.DELETION_REASON_SELF_DELETED})
-        submit_job.assert_called_once_with(user_id=user.id, deletion_action=DELETE_USER_DELETE_SOUNDS_ACTION_NAME, deletion_reason=DeletedUser.DELETION_REASON_SELF_DELETED)
+        data = json.dumps(
+            {
+                "user_id": user.id,
+                "action": DELETE_USER_DELETE_SOUNDS_ACTION_NAME,
+                "deletion_reason": DeletedUser.DELETION_REASON_SELF_DELETED,
+            }
+        )
+        submit_job.assert_called_once_with(
+            user_id=user.id,
+            deletion_action=DELETE_USER_DELETE_SOUNDS_ACTION_NAME,
+            deletion_reason=DeletedUser.DELETION_REASON_SELF_DELETED,
+        )
 
         # Test UserDeletionRequest object is created with status "tr" (Deletion action was triggered)
-        self.assertTrue(UserDeletionRequest.objects.filter(
-            user_from=user, user_to=user,
-            status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED).exists())
+        self.assertTrue(
+            UserDeletionRequest.objects.filter(
+                user_from=user, user_to=user, status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED
+            ).exists()
+        )
 
         # Assert user is redirected to front page
-        self.assertRedirects(resp, reverse('front-page'))
+        self.assertRedirects(resp, reverse("front-page"))
 
         # Check loaded page contains message about user deletion
-        self.assertContains(resp, 'Your user account will be deleted in a few moments')
+        self.assertContains(resp, "Your user account will be deleted in a few moments")
 
-    @mock.patch('general.tasks.delete_user.delay')
+    @mock.patch("general.tasks.delete_user.delay")
     def test_user_delete_keep_sounds_using_web_form(self, submit_job):
         # Test user's option to delete user account but preserving the sounds
 
         user = self.create_user_and_content(is_index_dirty=False)
         self.client.force_login(user)
         form = DeleteUserForm(user_id=user.id)
-        encr_link = form.initial['encrypted_link']
+        encr_link = form.initial["encrypted_link"]
         resp = self.client.post(
-            reverse('accounts-delete'),
-            {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'},
+            reverse("accounts-delete"),
+            {"encrypted_link": encr_link, "password": "testpass", "delete_sounds": "only_user"},
             follow=True,
         )
 
         # Test job is triggered
-        data = json.dumps({'user_id': user.id, 'action': DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
-                           'deletion_reason': DeletedUser.DELETION_REASON_SELF_DELETED})
-        submit_job.assert_called_once_with(user_id=user.id, deletion_action=DELETE_USER_KEEP_SOUNDS_ACTION_NAME, deletion_reason=DeletedUser.DELETION_REASON_SELF_DELETED)
-        
+        data = json.dumps(
+            {
+                "user_id": user.id,
+                "action": DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
+                "deletion_reason": DeletedUser.DELETION_REASON_SELF_DELETED,
+            }
+        )
+        submit_job.assert_called_once_with(
+            user_id=user.id,
+            deletion_action=DELETE_USER_KEEP_SOUNDS_ACTION_NAME,
+            deletion_reason=DeletedUser.DELETION_REASON_SELF_DELETED,
+        )
+
         # Test UserDeletionRequest object is created with status "tr" (Deletion action was triggered)
-        self.assertTrue(UserDeletionRequest.objects.filter(
-            user_from=user, user_to=user,
-            status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED).exists())
+        self.assertTrue(
+            UserDeletionRequest.objects.filter(
+                user_from=user, user_to=user, status=UserDeletionRequest.DELETION_REQUEST_STATUS_DELETION_TRIGGERED
+            ).exists()
+        )
 
         # Assert user is redirected to front page
-        self.assertRedirects(resp, reverse('front-page'))
+        self.assertRedirects(resp, reverse("front-page"))
 
         # Check loaded page contains message about user deletion
-        self.assertContains(resp, 'Your user account will be deleted in a few moments')
+        self.assertContains(resp, "Your user account will be deleted in a few moments")
 
     def test_fail_user_delete_include_sounds_using_web_form(self):
         # Test delete user account form with wrong password does not delete
@@ -393,13 +440,14 @@ class UserDelete(TestCase):
         user = self.create_user_and_content(is_index_dirty=False)
         self.client.force_login(user)
         form = DeleteUserForm(user_id=user.id)
-        encr_link = form.initial['encrypted_link']
+        encr_link = form.initial["encrypted_link"]
         resp = self.client.post(
-            reverse('accounts-delete'),
-            {'encrypted_link': encr_link, 'password': 'wrong_pass', 'delete_sounds': 'delete_sounds'})
+            reverse("accounts-delete"),
+            {"encrypted_link": encr_link, "password": "wrong_pass", "delete_sounds": "delete_sounds"},
+        )
 
         # Check user is reported incorrect password
-        self.assertContains(resp, 'Incorrect password')
+        self.assertContains(resp, "Incorrect password")
 
         # Check user is not marked as anonymized
         self.assertEqual(User.objects.get(id=user.id).profile.is_anonymized_user, False)
@@ -412,18 +460,21 @@ class UserDelete(TestCase):
 
     def test_delete_user_reasons(self):
         # Tests that the reasons passed to Profile.delete_user() are effectively added to the created DeletedUser object
-        for reason in [DeletedUser.DELETION_REASON_SELF_DELETED,
-                       DeletedUser.DELETION_REASON_DELETED_BY_ADMIN,
-                       DeletedUser.DELETION_REASON_SPAMMER]:
-            user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
+        for reason in [
+            DeletedUser.DELETION_REASON_SELF_DELETED,
+            DeletedUser.DELETION_REASON_DELETED_BY_ADMIN,
+            DeletedUser.DELETION_REASON_SPAMMER,
+        ]:
+            user = User.objects.create_user("testuser", password="testpass", email="email@freesound.org")
             user.profile.delete_user(deletion_reason=reason)
             self.assertEqual(DeletedUser.objects.get(user_id=user.id).reason, reason)
 
-    @mock.patch('sounds.models.delete_sound_from_gaia')
-    @mock.patch('sounds.models.delete_sounds_from_search_engine')
-    @mock.patch('forum.models.delete_posts_from_search_engine')
-    def test_delete_user_with_count_fields_out_of_sync(self, delete_posts_from_search_engine, delete_sounds_from_search_engine,
-                                                       delete_sound_from_gaia):
+    @mock.patch("sounds.models.delete_sound_from_gaia")
+    @mock.patch("sounds.models.delete_sounds_from_search_engine")
+    @mock.patch("forum.models.delete_posts_from_search_engine")
+    def test_delete_user_with_count_fields_out_of_sync(
+        self, delete_posts_from_search_engine, delete_sounds_from_search_engine, delete_sound_from_gaia
+    ):
         # Test that deleting a user work properly even when the profile count fields (num_sounds, num_posts,
         # num_sound_downloads and num_pack_downloads) are out of sync. This is a potential issue because if the
         # count fields are not right, deleting sound/download/post objects related to that user might trigger
@@ -464,20 +515,20 @@ class UserDelete(TestCase):
         user.profile.delete_user(remove_sounds=True, delete_user_object_from_db=True)
 
     @override_settings(CHECK_ASYNC_DELETED_USERS_HOURS_BACK=0)
-    @mock.patch('general.tasks.delete_user.delay')
+    @mock.patch("general.tasks.delete_user.delay")
     def test_check_async_deleted_users_command(self, submit_job):
-
         def delete_user_using_web_view(user):
             self.client.force_login(user)
             form = DeleteUserForm(user_id=user.id)
-            encr_link = form.initial['encrypted_link']
+            encr_link = form.initial["encrypted_link"]
             resp = self.client.post(
-                reverse('accounts-delete'),
-                {'encrypted_link': encr_link, 'password': 'testpass', 'delete_sounds': 'only_user'})
-            self.assertRedirects(resp, reverse('front-page'))
+                reverse("accounts-delete"),
+                {"encrypted_link": encr_link, "password": "testpass", "delete_sounds": "only_user"},
+            )
+            self.assertRedirects(resp, reverse("front-page"))
 
         def call_command_get_console_log_output(command):
-            with self.assertLogs('console', 'INFO') as cm:
+            with self.assertLogs("console", "INFO") as cm:
                 call_command(command)
                 return "\n".join(cm.output)
 
@@ -488,7 +539,7 @@ class UserDelete(TestCase):
         # Run command, it should say that there are 0 users that should have been deleted
         cmd_output = call_command_get_console_log_output("check_async_deleted_users")
         self.assertEqual(UserDeletionRequest.objects.all().count(), 0)
-        self.assertIn('Found 0 users that should have been deleted and were not', cmd_output)
+        self.assertIn("Found 0 users that should have been deleted and were not", cmd_output)
 
         # Now delete user1 using the web form to trigger async download. submit_job function is mocked so the user
         # will not be deleted in practice, but UserDeletionRequest object should have been created
@@ -501,7 +552,7 @@ class UserDelete(TestCase):
 
         # Run the command again, it should say that there is 1 user that should have been deleted
         cmd_output = call_command_get_console_log_output("check_async_deleted_users")
-        self.assertIn('Found 1 users that should have been deleted and were not', cmd_output)
+        self.assertIn("Found 1 users that should have been deleted and were not", cmd_output)
 
         # Now delete user2 using the web form to trigger async download. submit_job function is mocked so the user
         # will not be deleted in practice, but UserDeletionRequest object should have been created
@@ -511,19 +562,21 @@ class UserDelete(TestCase):
 
         # Run the command again, it should say that there are 2 users that should have been deleted
         cmd_output = call_command_get_console_log_output("check_async_deleted_users")
-        self.assertIn('Found 2 users that should have been deleted and were not', cmd_output)
+        self.assertIn("Found 2 users that should have been deleted and were not", cmd_output)
 
         # Do the actual deletion of the user as if the async task was triggered
         # Check that user was deleted and UserDeletionRequest status was also updated
         user2.profile.delete_user()
         user2.refresh_from_db()
         self.assertEqual(user2.profile.is_anonymized_user, True)
-        self.assertEqual(UserDeletionRequest.objects.get(user_to=user2).status,
-                         UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED)
+        self.assertEqual(
+            UserDeletionRequest.objects.get(user_to=user2).status,
+            UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED,
+        )
 
         # Run the command again, it should say that there is 1 user that should have been deleted
         cmd_output = call_command_get_console_log_output("check_async_deleted_users")
-        self.assertIn('Found 1 users that should have been deleted and were not', cmd_output)
+        self.assertIn("Found 1 users that should have been deleted and were not", cmd_output)
 
         # Now for user1, mark it as having been anonymized but without updating UserDeletionRequest status
         user1.profile.is_anonymized_user = True
@@ -532,20 +585,21 @@ class UserDelete(TestCase):
         # Run the command again, it should say that there are 0 user that should have been deleted, and it should
         # have updated the UserDeletionRequest status for user 1
         cmd_output = call_command_get_console_log_output("check_async_deleted_users")
-        self.assertIn('Found 0 users that should have been deleted and were not', cmd_output)
-        self.assertEqual(UserDeletionRequest.objects.get(user_to=user1).status,
-                         UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED)
+        self.assertIn("Found 0 users that should have been deleted and were not", cmd_output)
+        self.assertEqual(
+            UserDeletionRequest.objects.get(user_to=user1).status,
+            UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED,
+        )
 
 
 class UserDeletionRequestTestCase(TestCase):
-
     def test_deleting_user_updates_existing_deletion_request_objects(self):
         # Tests that when a user is deleted which had existing UserDeletionRequest objects assigned, these objects
         # get the status updated and the DeletedUser object is added to them
         username = "testuser"
 
         # Test when deleting a user but preserving the user object in DB (anonymizing)
-        user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
+        user = User.objects.create_user(username, password="testpass", email="email@freesound.org")
         UserDeletionRequest.objects.create(user_to=user, username_to=username)
         user.profile.delete_user()
         deletion_request = UserDeletionRequest.objects.get(username_to=username)
@@ -556,7 +610,7 @@ class UserDeletionRequestTestCase(TestCase):
         deleted_user.delete()
 
         # Test when deleting a user and also deleting the user object in DB
-        user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
+        user = User.objects.create_user(username, password="testpass", email="email@freesound.org")
         UserDeletionRequest.objects.create(user_to=user, username_to=username)
         user.profile.delete_user(delete_user_object_from_db=True)
         deletion_request = UserDeletionRequest.objects.get(username_to=username)
@@ -567,7 +621,7 @@ class UserDeletionRequestTestCase(TestCase):
         deleted_user.delete()
 
         # Test with multiple requests
-        user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
+        user = User.objects.create_user(username, password="testpass", email="email@freesound.org")
         UserDeletionRequest.objects.create(user_to=user, username_to=username)
         UserDeletionRequest.objects.create(user_to=user, username_to=username)
         user.profile.delete_user()
@@ -580,53 +634,61 @@ class UserDeletionRequestTestCase(TestCase):
         # Test that when updating a UserDeletionRequest object and changing the status, the change gets recorded
         # in the status_history field
         username = "testusername"
-        user = User.objects.create_user(username, password="testpass", email='email@freesound.org')
+        user = User.objects.create_user(username, password="testpass", email="email@freesound.org")
         deletion_request = UserDeletionRequest.objects.create(user_to=user, username_to=username, status="re")
         self.assertEqual(deletion_request.status, UserDeletionRequest.DELETION_REQUEST_STATUS_RECEIVED_REQUEST)
         self.assertEqual(len(deletion_request.status_history), 1)
-        self.assertTrue(UserDeletionRequest.DELETION_REQUEST_STATUS_RECEIVED_REQUEST in
-                        deletion_request.status_history[0])
+        self.assertTrue(
+            UserDeletionRequest.DELETION_REQUEST_STATUS_RECEIVED_REQUEST in deletion_request.status_history[0]
+        )
 
         # Change status: status history should be updated
         deletion_request.status = UserDeletionRequest.DELETION_REQUEST_STATUS_WAITING_FOR_USER
         deletion_request.save()
         self.assertEqual(deletion_request.status, UserDeletionRequest.DELETION_REQUEST_STATUS_WAITING_FOR_USER)
         self.assertEqual(len(deletion_request.status_history), 2)
-        self.assertTrue(UserDeletionRequest.DELETION_REQUEST_STATUS_RECEIVED_REQUEST in
-                        deletion_request.status_history[0])
-        self.assertTrue(UserDeletionRequest.DELETION_REQUEST_STATUS_WAITING_FOR_USER in
-                        deletion_request.status_history[1])
+        self.assertTrue(
+            UserDeletionRequest.DELETION_REQUEST_STATUS_RECEIVED_REQUEST in deletion_request.status_history[0]
+        )
+        self.assertTrue(
+            UserDeletionRequest.DELETION_REQUEST_STATUS_WAITING_FOR_USER in deletion_request.status_history[1]
+        )
 
         # Now save again, but don't change status: status history should not be updated
         deletion_request.save()
         self.assertEqual(deletion_request.status, UserDeletionRequest.DELETION_REQUEST_STATUS_WAITING_FOR_USER)
         self.assertEqual(len(deletion_request.status_history), 2)
-        self.assertTrue(UserDeletionRequest.DELETION_REQUEST_STATUS_RECEIVED_REQUEST in
-                        deletion_request.status_history[0])
-        self.assertTrue(UserDeletionRequest.DELETION_REQUEST_STATUS_WAITING_FOR_USER in
-                        deletion_request.status_history[1])
+        self.assertTrue(
+            UserDeletionRequest.DELETION_REQUEST_STATUS_RECEIVED_REQUEST in deletion_request.status_history[0]
+        )
+        self.assertTrue(
+            UserDeletionRequest.DELETION_REQUEST_STATUS_WAITING_FOR_USER in deletion_request.status_history[1]
+        )
 
         # Now change status again: status history should be updated
         deletion_request.status = UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED
         deletion_request.save()
         self.assertEqual(deletion_request.status, UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED)
         self.assertEqual(len(deletion_request.status_history), 3)
-        self.assertTrue(UserDeletionRequest.DELETION_REQUEST_STATUS_RECEIVED_REQUEST in
-                        deletion_request.status_history[0])
-        self.assertTrue(UserDeletionRequest.DELETION_REQUEST_STATUS_WAITING_FOR_USER in
-                        deletion_request.status_history[1])
-        self.assertTrue(UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED in
-                        deletion_request.status_history[2])
+        self.assertTrue(
+            UserDeletionRequest.DELETION_REQUEST_STATUS_RECEIVED_REQUEST in deletion_request.status_history[0]
+        )
+        self.assertTrue(
+            UserDeletionRequest.DELETION_REQUEST_STATUS_WAITING_FOR_USER in deletion_request.status_history[1]
+        )
+        self.assertTrue(
+            UserDeletionRequest.DELETION_REQUEST_STATUS_USER_WAS_DELETED in deletion_request.status_history[2]
+        )
 
 
 class UserEmailsUniqueTestCase(TestCase):
-
     def setUp(self):
-        self.user_a = User.objects.create_user("user_a", password="12345", email='a@b.com')
-        self.original_shared_email = 'c@d.com'
+        self.user_a = User.objects.create_user("user_a", password="12345", email="a@b.com")
+        self.original_shared_email = "c@d.com"
         self.user_b = User.objects.create_user("user_b", password="12345", email=self.original_shared_email)
-        self.user_c = User.objects.create_user("user_c", password="12345",
-                                               email=transform_unique_email(self.original_shared_email))
+        self.user_c = User.objects.create_user(
+            "user_c", password="12345", email=transform_unique_email(self.original_shared_email)
+        )
         SameUser.objects.create(
             main_user=self.user_b,
             main_orig_email=self.user_b.email,
@@ -641,58 +703,71 @@ class UserEmailsUniqueTestCase(TestCase):
         # User a is not in same users table, so redirect should be plain and simple to messages
         # NOTE: in the following tests we don't use `self.client.login` because what we want to test
         # is in fact in the login view logic.
-        resp = self.client.post(reverse('login'),
-                                {'username': self.user_a, 'password': '12345', 'next': reverse('messages')})
-        self.assertRedirects(resp, reverse('messages'))
+        resp = self.client.post(
+            reverse("login"), {"username": self.user_a, "password": "12345", "next": reverse("messages")}
+        )
+        self.assertRedirects(resp, reverse("messages"))
 
         self.client.logout()
         # Now try with user_b and user_c. User b had a shared email with user_c. Even if user_b's email was
         # not changed, he is still redirected to the duplicate email cleanup page
-        resp = self.client.post(reverse('login'),
-                                {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
-        self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
+        resp = self.client.post(
+            reverse("login"), {"username": self.user_b, "password": "12345", "next": reverse("messages")}
+        )
+        self.assertRedirects(resp, reverse("accounts-multi-email-cleanup") + f"?next={reverse('messages')}")
         self.client.logout()
-        resp = self.client.post(reverse('login'),
-                                {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
-        self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
+        resp = self.client.post(
+            reverse("login"), {"username": self.user_c, "password": "12345", "next": reverse("messages")}
+        )
+        self.assertRedirects(resp, reverse("accounts-multi-email-cleanup") + f"?next={reverse('messages')}")
 
     def test_fix_email_issues_with_secondary_user_email_change(self):
         # user_c changes his email and tries to login, redirect should go to email cleanup page and from there
         # directly to messages (2 redirect steps)
-        self.user_c.email = 'new@email.com'  # Must be different than transform_unique_email('c@d.com')
+        self.user_c.email = "new@email.com"  # Must be different than transform_unique_email('c@d.com')
         self.user_c.save()
-        resp = self.client.post(reverse('login'), follow=True,
-                                data={'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
-        self.assertEqual(resp.redirect_chain[0][0],
-                          reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
-        self.assertEqual(resp.redirect_chain[1][0], reverse('messages'))
+        resp = self.client.post(
+            reverse("login"),
+            follow=True,
+            data={"username": self.user_c, "password": "12345", "next": reverse("messages")},
+        )
+        self.assertEqual(
+            resp.redirect_chain[0][0], reverse("accounts-multi-email-cleanup") + f"?next={reverse('messages')}"
+        )
+        self.assertEqual(resp.redirect_chain[1][0], reverse("messages"))
 
         # Also check that related SameUser objects have been removed
         self.assertEqual(SameUser.objects.all().count(), 0)
 
         self.client.logout()
         # Now next time user_c tries to go to messages again, there is only one redirect (like for user_a)
-        resp = self.client.post(reverse('login'),
-                                {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
-        self.assertRedirects(resp, reverse('messages'))
+        resp = self.client.post(
+            reverse("login"), {"username": self.user_c, "password": "12345", "next": reverse("messages")}
+        )
+        self.assertRedirects(resp, reverse("messages"))
 
         self.client.logout()
         # Also if user_b logs in, redirect goes straight to messages
-        resp = self.client.post(reverse('login'),
-                                {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
-        self.assertRedirects(resp, reverse('messages'))
+        resp = self.client.post(
+            reverse("login"), {"username": self.user_b, "password": "12345", "next": reverse("messages")}
+        )
+        self.assertRedirects(resp, reverse("messages"))
 
     def test_fix_email_issues_with_main_user_email_change(self):
         # user_b changes his email and tries to login, redirect should go to email cleanup page and from there
         # directly to messages (2 redirect steps). Also user_c email should be changed to the original email of
         # both users
-        self.user_b.email = 'new@email.com'  # Must be different than transform_unique_email('c@d.com')
+        self.user_b.email = "new@email.com"  # Must be different than transform_unique_email('c@d.com')
         self.user_b.save()
-        resp = self.client.post(reverse('login'), follow=True,
-                                data={'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
-        self.assertEqual(resp.redirect_chain[0][0],
-                          reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
-        self.assertEqual(resp.redirect_chain[1][0], reverse('messages'))
+        resp = self.client.post(
+            reverse("login"),
+            follow=True,
+            data={"username": self.user_b, "password": "12345", "next": reverse("messages")},
+        )
+        self.assertEqual(
+            resp.redirect_chain[0][0], reverse("accounts-multi-email-cleanup") + f"?next={reverse('messages')}"
+        )
+        self.assertEqual(resp.redirect_chain[1][0], reverse("messages"))
 
         # Check that user_c email was changed
         self.user_c = User.objects.get(id=self.user_c.id)  # Reload user from db
@@ -703,47 +778,55 @@ class UserEmailsUniqueTestCase(TestCase):
 
         self.client.logout()
         # Now next time user_b tries to go to messages again, there is only one redirect (like for user_a)
-        resp = self.client.post(reverse('login'),
-                                {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
-        self.assertRedirects(resp, reverse('messages'))
+        resp = self.client.post(
+            reverse("login"), {"username": self.user_b, "password": "12345", "next": reverse("messages")}
+        )
+        self.assertRedirects(resp, reverse("messages"))
 
         self.client.logout()
         # Also if user_c logs in, redirect goes straight to messages
-        resp = self.client.post(reverse('login'),
-                                {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
-        self.assertRedirects(resp, reverse('messages'))
+        resp = self.client.post(
+            reverse("login"), {"username": self.user_c, "password": "12345", "next": reverse("messages")}
+        )
+        self.assertRedirects(resp, reverse("messages"))
 
     def test_fix_email_issues_with_both_users_email_change(self):
         # If both users have changed email, we should make sure that user_c email is not overwritten before
         # SameUser object is deleted
-        self.user_b.email = 'new@email.com'
+        self.user_b.email = "new@email.com"
         self.user_b.save()
-        self.user_c.email = 'new2w@email.com'
+        self.user_c.email = "new2w@email.com"
         self.user_c.save()
-        resp = self.client.post(reverse('login'), follow=True,
-                                data={'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
-        self.assertEqual(resp.redirect_chain[0][0],
-                          reverse('accounts-multi-email-cleanup') + f"?next={reverse('messages')}")
-        self.assertEqual(resp.redirect_chain[1][0], reverse('messages'))
+        resp = self.client.post(
+            reverse("login"),
+            follow=True,
+            data={"username": self.user_b, "password": "12345", "next": reverse("messages")},
+        )
+        self.assertEqual(
+            resp.redirect_chain[0][0], reverse("accounts-multi-email-cleanup") + f"?next={reverse('messages')}"
+        )
+        self.assertEqual(resp.redirect_chain[1][0], reverse("messages"))
 
         # Check that user_c email was not changed
         self.user_c = User.objects.get(id=self.user_c.id)  # Reload user from db
-        self.assertEqual(self.user_c.email, 'new2w@email.com')
+        self.assertEqual(self.user_c.email, "new2w@email.com")
 
         # Also check that related SameUser objects have been removed
         self.assertEqual(SameUser.objects.all().count(), 0)
 
         self.client.logout()
         # Now next time user_b tries to go to messages again, there is only one redirect (like for user_a)
-        resp = self.client.post(reverse('login'),
-                                {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
-        self.assertRedirects(resp, reverse('messages'))
+        resp = self.client.post(
+            reverse("login"), {"username": self.user_b, "password": "12345", "next": reverse("messages")}
+        )
+        self.assertRedirects(resp, reverse("messages"))
 
         self.client.logout()
         # Also if user_c logs in, redirect goes straight to messages
-        resp = self.client.post(reverse('login'),
-                                {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
-        self.assertRedirects(resp, reverse('messages'))
+        resp = self.client.post(
+            reverse("login"), {"username": self.user_c, "password": "12345", "next": reverse("messages")}
+        )
+        self.assertRedirects(resp, reverse("messages"))
 
     def test_user_profile_get_email(self):
         # Here we test that when we send an email to users that have SameUser objects we chose the right email address
@@ -801,45 +884,54 @@ class PasswordReset(TestCase):
 
 class EmailResetTestCase(TestCase):
     def test_reset_email_form(self):
-        """ Check that reset email with the right parameters """
+        """Check that reset email with the right parameters"""
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        user.set_password('12345')
+        user.set_password("12345")
         user.save()
         self.client.force_login(user)
-        resp = self.client.post(reverse('accounts-email-reset'), {
-            'email': 'new_email@freesound.org',
-            'password': '12345',
-        })
-        self.assertRedirects(resp, reverse('accounts-email-reset-done'))
+        resp = self.client.post(
+            reverse("accounts-email-reset"),
+            {
+                "email": "new_email@freesound.org",
+                "password": "12345",
+            },
+        )
+        self.assertRedirects(resp, reverse("accounts-email-reset-done"))
         self.assertEqual(ResetEmailRequest.objects.filter(user=user, email="new_email@freesound.org").count(), 1)
 
     def test_reset_email_form_existing_email(self):
-        """ Check that reset email with an existing email address """
+        """Check that reset email with an existing email address"""
         user = User.objects.create_user("new_user", email="new_email@freesound.org")
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        user.set_password('12345')
+        user.set_password("12345")
         user.save()
         self.client.force_login(user)
-        resp = self.client.post(reverse('accounts-email-reset'), {
-            'email': 'new_email@freesound.org',
-            'password': '12345',
-        })
-        self.assertRedirects(resp, reverse('accounts-email-reset-done'))
+        resp = self.client.post(
+            reverse("accounts-email-reset"),
+            {
+                "email": "new_email@freesound.org",
+                "password": "12345",
+            },
+        )
+        self.assertRedirects(resp, reverse("accounts-email-reset-done"))
         self.assertEqual(ResetEmailRequest.objects.filter(user=user, email="new_email@freesound.org").count(), 0)
 
     def test_reset_long_email(self):
-        """ Check reset email with a long email address """
-        long_mail = ('1' * 255) + '@freesound.org'
+        """Check reset email with a long email address"""
+        long_mail = ("1" * 255) + "@freesound.org"
         user = User.objects.create_user("testuser", email="testuser@freesound.org")
-        user.set_password('12345')
+        user.set_password("12345")
         user.save()
         self.client.force_login(user)
-        resp = self.client.post(reverse('accounts-email-reset'), {
-            'email': long_mail,
-            'password': '12345',
-        })
+        resp = self.client.post(
+            reverse("accounts-email-reset"),
+            {
+                "email": long_mail,
+                "password": "12345",
+            },
+        )
 
-        self.assertNotEqual(resp.context['form'].errors, None)
+        self.assertNotEqual(resp.context["form"].errors, None)
 
 
 class ReSendActivationTestCase(TestCase):
@@ -848,17 +940,23 @@ class ReSendActivationTestCase(TestCase):
         Check that resend activation code doesn't return an error with post request (use email to identify user)
         """
         user = User.objects.create_user("testuser", email="testuser@freesound.org", is_active=False)
-        resp = self.client.post(reverse('problems-logging-in'), {
-            'username_or_email': 'testuser@freesound.org',
-        })
+        resp = self.client.post(
+            reverse("problems-logging-in"),
+            {
+                "username_or_email": "testuser@freesound.org",
+            },
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check email was sent
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
-        resp = self.client.post(reverse('problems-logging-in'), {
-            'username_or_email': 'new_email@freesound.org',
-        })
+        resp = self.client.post(
+            reverse("problems-logging-in"),
+            {
+                "username_or_email": "new_email@freesound.org",
+            },
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
 
@@ -867,101 +965,120 @@ class ReSendActivationTestCase(TestCase):
         Check that resend activation code doesn't return an error with post request (use username to identify user)
         """
         user = User.objects.create_user("testuser", email="testuser@freesound.org", is_active=False)
-        resp = self.client.post(reverse('problems-logging-in'), {
-            'username_or_email': 'testuser',
-        })
+        resp = self.client.post(
+            reverse("problems-logging-in"),
+            {
+                "username_or_email": "testuser",
+            },
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check email was sent
         self.assertTrue(settings.EMAIL_SUBJECT_PREFIX in mail.outbox[0].subject)
         self.assertTrue(settings.EMAIL_SUBJECT_ACTIVATION_LINK in mail.outbox[0].subject)
 
-        resp = self.client.post(reverse('problems-logging-in'), {
-            'username_or_email': 'testuser_does_not_exist',
-        })
+        resp = self.client.post(
+            reverse("problems-logging-in"),
+            {
+                "username_or_email": "testuser_does_not_exist",
+            },
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)  # Check no new email was sent (len() is same as before)
 
 
 class ChangeUsernameTest(TestCase):
-
-    fixtures = ['licenses']
+    fixtures = ["licenses"]
 
     def test_change_username_creates_old_username(self):
         # Create user and check no OldUsername objects exist
-        userA = User.objects.create_user('userA', email='userA@freesound.org')
+        userA = User.objects.create_user("userA", email="userA@freesound.org")
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
 
         # Change username and check a OldUsername is created
-        userA.username = 'userANewUsername'
+        userA.username = "userANewUsername"
         userA.save()
-        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 1)
+        self.assertEqual(OldUsername.objects.filter(username="userA", user=userA).count(), 1)
 
         # Save again user and check no new OldUsername are created
         userA.save()
-        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 1)
+        self.assertEqual(OldUsername.objects.filter(username="userA", user=userA).count(), 1)
 
         # Change username again and check a new OldUsername has been created
-        userA.username = 'userANewNewUsername'
+        userA.username = "userANewNewUsername"
         userA.save()
-        self.assertEqual(OldUsername.objects.filter(username='userANewUsername', user=userA).count(), 1)
+        self.assertEqual(OldUsername.objects.filter(username="userANewUsername", user=userA).count(), 1)
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
 
         # Change username back to the previous one (won't be allowed in admin or profile form) and check that a new
         # OldUsername object has been created for the last username
         userA.username = "userANewUsername"
         userA.save()
-        self.assertEqual(OldUsername.objects.filter(username='userANewNewUsername', user=userA).count(), 1)
+        self.assertEqual(OldUsername.objects.filter(username="userANewNewUsername", user=userA).count(), 1)
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 3)
 
         # Change again the username to another previously used username and check that no new OldUsername is created
-        userA.username = 'userA'
+        userA.username = "userA"
         userA.save()
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 3)
 
     @override_settings(USERNAME_CHANGE_MAX_TIMES=2)
     def test_change_username_form_profile_page(self):
         # Create user and login
-        userA = User.objects.create_user('userA', email='userA@freesound.org')
+        userA = User.objects.create_user("userA", email="userA@freesound.org")
         self.client.force_login(userA)
 
         # Test save profile without changing username (note we set all mandatory fields)
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userA'], 'profile-ui_theme_preference': 'f'})
-        self.assertRedirects(resp, reverse('accounts-edit'))
+        resp = self.client.post(
+            reverse("accounts-edit"), data={"profile-username": ["userA"], "profile-ui_theme_preference": "f"}
+        )
+        self.assertRedirects(resp, reverse("accounts-edit"))
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
 
         # Try rename user with an existing username from another user
-        userB = User.objects.create_user('userB', email='userB@freesound.org')
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': [userB.username], 'profile-ui_theme_preference': 'f'})
+        userB = User.objects.create_user("userB", email="userB@freesound.org")
+        resp = self.client.post(
+            reverse("accounts-edit"), data={"profile-username": [userB.username], "profile-ui_theme_preference": "f"}
+        )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
-        self.assertIn('This username is already taken or has been in used in the past',
-                      str(resp.context['profile_form']['username'].errors))
+        self.assertEqual(resp.context["profile_form"].has_error("username"), True)  # Error in username field
+        self.assertIn(
+            "This username is already taken or has been in used in the past",
+            str(resp.context["profile_form"]["username"].errors),
+        )
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userA')  # Username has not changed
+        self.assertEqual(userA.username, "userA")  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
 
         # Now rename user for the first time
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewName'], 'profile-ui_theme_preference': 'f'})
-        self.assertRedirects(resp, reverse('accounts-edit'))
+        resp = self.client.post(
+            reverse("accounts-edit"), data={"profile-username": ["userANewName"], "profile-ui_theme_preference": "f"}
+        )
+        self.assertRedirects(resp, reverse("accounts-edit"))
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewName')
+        self.assertEqual(userA.username, "userANewName")
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
 
         # Try rename again user with a username that was already used by the same user in the past
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userA'], 'profile-ui_theme_preference': 'f'})
+        resp = self.client.post(
+            reverse("accounts-edit"), data={"profile-username": ["userA"], "profile-ui_theme_preference": "f"}
+        )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['profile_form'].has_error('username'), True)  # Error in username field
-        self.assertIn('This username is already taken or has been in used in the past',
-                      str(resp.context['profile_form']['username'].errors))
+        self.assertEqual(resp.context["profile_form"].has_error("username"), True)  # Error in username field
+        self.assertIn(
+            "This username is already taken or has been in used in the past",
+            str(resp.context["profile_form"]["username"].errors),
+        )
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewName')  # Username has not changed
+        self.assertEqual(userA.username, "userANewName")  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
 
         # Now rename user for the second time
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewNewName'], 'profile-ui_theme_preference': 'f'})
-        self.assertRedirects(resp, reverse('accounts-edit'))
+        resp = self.client.post(
+            reverse("accounts-edit"), data={"profile-username": ["userANewNewName"], "profile-ui_theme_preference": "f"}
+        )
+        self.assertRedirects(resp, reverse("accounts-edit"))
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewNewName')
+        self.assertEqual(userA.username, "userANewNewName")
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
 
         # Try to rename for a third time to a valid username but it won't rename anymore because exceeded maximum
@@ -969,10 +1086,13 @@ class ChangeUsernameTest(TestCase):
         # NOTE: when USERNAME_CHANGE_MAX_TIMES is reached, the form renders the "username" field as "disabled" and
         # therefore the username can't be changed. Other than that the form behaves normally, therefore no
         # form errors will be raised because the field is ignored
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewNewNewName'], 'profile-ui_theme_preference': 'f'})
-        self.assertRedirects(resp, reverse('accounts-edit'))  # Successful edit redirects to home but...
+        resp = self.client.post(
+            reverse("accounts-edit"),
+            data={"profile-username": ["userANewNewNewName"], "profile-ui_theme_preference": "f"},
+        )
+        self.assertRedirects(resp, reverse("accounts-edit"))  # Successful edit redirects to home but...
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewNewName')  # ...username has not changed...
+        self.assertEqual(userA.username, "userANewNewName")  # ...username has not changed...
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)  # ...and no new OldUsername objects created
 
     def test_change_username_mark_sounds_dirty(self):
@@ -980,86 +1100,94 @@ class ChangeUsernameTest(TestCase):
         user, _, _ = create_user_and_sounds(num_sounds=3, num_packs=0)
         Sound.objects.filter(user=user).update(is_index_dirty=False)
         self.client.force_login(user)
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewNewName'], 'profile-ui_theme_preference': 'f'})
-        self.assertRedirects(resp, reverse('accounts-edit'))
+        resp = self.client.post(
+            reverse("accounts-edit"), data={"profile-username": ["userANewNewName"], "profile-ui_theme_preference": "f"}
+        )
+        self.assertRedirects(resp, reverse("accounts-edit"))
         user.refresh_from_db()
-        self.assertEqual(user.username, 'userANewNewName')
+        self.assertEqual(user.username, "userANewNewName")
         self.assertEqual(OldUsername.objects.filter(user=user).count(), 1)
         ss = Sound.objects.filter(user=user, is_index_dirty=True)
         self.assertEqual(ss.count(), 3)
 
     @override_settings(USERNAME_CHANGE_MAX_TIMES=2)
     def test_change_username_form_admin(self):
-        superuser = User.objects.create_user('superuser', is_superuser=True, is_staff=True)
+        superuser = User.objects.create_user("superuser", is_superuser=True, is_staff=True)
         self.client.force_login(superuser)
 
         # Create user and get admin change url
-        userA = User.objects.create_user('userA', email='userA@freesound.org')
-        admin_change_url = reverse('admin:auth_user_change', args=[userA.id])
+        userA = User.objects.create_user("userA", email="userA@freesound.org")
+        admin_change_url = reverse("admin:auth_user_change", args=[userA.id])
 
-        post_data = {'username': 'userA',
-                     'email': userA.email,  # Required to avoid breaking unique constraint with empty email
-                     'date_joined_0': "2015-10-06", 'date_joined_1': "16:42:00"}  # date_joined required
+        post_data = {
+            "username": "userA",
+            "email": userA.email,  # Required to avoid breaking unique constraint with empty email
+            "date_joined_0": "2015-10-06",
+            "date_joined_1": "16:42:00",
+        }  # date_joined required
 
         # Test save user without changing username
         resp = self.client.post(admin_change_url, data=post_data)
-        self.assertRedirects(resp, reverse('admin:auth_user_changelist'))  # Successful edit redirects to users list
+        self.assertRedirects(resp, reverse("admin:auth_user_changelist"))  # Successful edit redirects to users list
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
 
         # Now rename user for the first time
-        post_data.update({'username': 'userANewName'})
+        post_data.update({"username": "userANewName"})
         resp = self.client.post(admin_change_url, data=post_data)
-        self.assertRedirects(resp, reverse('admin:auth_user_changelist'))  # Successful edit redirects to users list
-        self.assertEqual(OldUsername.objects.filter(username='userA', user=userA).count(), 1)
+        self.assertRedirects(resp, reverse("admin:auth_user_changelist"))  # Successful edit redirects to users list
+        self.assertEqual(OldUsername.objects.filter(username="userA", user=userA).count(), 1)
 
         # Now rename user for the second time
-        post_data.update({'username': 'userANewNewName'})
+        post_data.update({"username": "userANewNewName"})
         resp = self.client.post(admin_change_url, data=post_data)
-        self.assertRedirects(resp, reverse('admin:auth_user_changelist'))  # Successful edit redirects to users list
-        self.assertEqual(OldUsername.objects.filter(username='userANewName', user=userA).count(), 1)
+        self.assertRedirects(resp, reverse("admin:auth_user_changelist"))  # Successful edit redirects to users list
+        self.assertEqual(OldUsername.objects.filter(username="userANewName", user=userA).count(), 1)
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
 
         # Try rename user with an existing username from another user
-        userB = User.objects.create_user('userB', email='userB@freesound.org')
-        post_data.update({'username': userB.username})
+        userB = User.objects.create_user("userB", email="userB@freesound.org")
+        post_data.update({"username": userB.username})
         resp = self.client.post(admin_change_url, data=post_data)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in username field
-        self.assertIn('This username is already taken or has been in used in the past',
-                      str(resp.context['adminform'].errors))
+        self.assertEqual(bool(resp.context["adminform"].errors), True)  # Error in username field
+        self.assertIn(
+            "This username is already taken or has been in used in the past", str(resp.context["adminform"].errors)
+        )
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(userA.username, "userANewNewName")  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
 
         # Try rename user with a username that was already used by the same user in the past
-        post_data.update({'username': 'userA'})
+        post_data.update({"username": "userA"})
         resp = self.client.post(admin_change_url, data=post_data)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in username field
-        self.assertIn('This username is already taken or has been in used in the past',
-                      str(resp.context['adminform'].errors))
+        self.assertEqual(bool(resp.context["adminform"].errors), True)  # Error in username field
+        self.assertIn(
+            "This username is already taken or has been in used in the past", str(resp.context["adminform"].errors)
+        )
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(userA.username, "userANewNewName")  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
 
         # Try rename user with a username that was already used by the same user in the past, but using different
         # case for some characters
-        post_data.update({'username': 'uSeRA'})
+        post_data.update({"username": "uSeRA"})
         resp = self.client.post(admin_change_url, data=post_data)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in username field
-        self.assertIn('This username is already taken or has been in used in the past',
-                      str(resp.context['adminform'].errors))
+        self.assertEqual(bool(resp.context["adminform"].errors), True)  # Error in username field
+        self.assertIn(
+            "This username is already taken or has been in used in the past", str(resp.context["adminform"].errors)
+        )
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewNewName')  # Username has not changed
+        self.assertEqual(userA.username, "userANewNewName")  # Username has not changed
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)
 
         # Try to rename for a third time to a valid username. Because we are in admin now, the USERNAME_CHANGE_MAX_TIMES
         # restriction does not apply so rename should work correctly
-        post_data.update({'username': 'userANewNewNewName'})
+        post_data.update({"username": "userANewNewNewName"})
         resp = self.client.post(admin_change_url, data=post_data)
-        self.assertRedirects(resp, reverse('admin:auth_user_changelist'))  # Successful edit redirects to users list
-        self.assertEqual(OldUsername.objects.filter(username='userANewNewName', user=userA).count(), 1)
+        self.assertRedirects(resp, reverse("admin:auth_user_changelist"))  # Successful edit redirects to users list
+        self.assertEqual(OldUsername.objects.filter(username="userANewNewName", user=userA).count(), 1)
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 3)
 
     def test_change_username_case_insensitiveness(self):
@@ -1068,104 +1196,117 @@ class ChangeUsernameTest(TestCase):
         OldUsername entry because usernames should be treated as case insensitive.
         """
         # Create user and login
-        userA = User.objects.create_user('userA', email='userA@freesound.org')
+        userA = User.objects.create_user("userA", email="userA@freesound.org")
         self.client.force_login(userA)
 
         # Rename "userA" to "UserA", should not create OldUsername object
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['UserA'], 'profile-ui_theme_preference': 'f'})
-        self.assertRedirects(resp, reverse('accounts-edit'))
+        resp = self.client.post(
+            reverse("accounts-edit"), data={"profile-username": ["UserA"], "profile-ui_theme_preference": "f"}
+        )
+        self.assertRedirects(resp, reverse("accounts-edit"))
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'UserA')  # Username capitalization was changed ...
+        self.assertEqual(userA.username, "UserA")  # Username capitalization was changed ...
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)  # ... but not OldUsername was created
 
     def test_oldusername_username_unique_case_insensitiveness(self):
         """Test that OldUsername.username is case insensitive at the DB level, and that we can't create objects
         with different "capitalizations" of username property"""
-        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
-        OldUsername.objects.create(user=userA, username='newUserAUsername')
+        userA = User.objects.create_user("userA", email="userA@freesound.org", password="testpass")
+        OldUsername.objects.create(user=userA, username="newUserAUsername")
         with self.assertRaises(IntegrityError):
-            OldUsername.objects.create(user=userA, username='NewUserAUsername')
-    
+            OldUsername.objects.create(user=userA, username="NewUserAUsername")
+
     def test_username_whitespace(self):
         """Test that for usernames created before stronger validation was applied, whitespaces are a valid character
         but for new edited ones they are not."""
-        userA = User.objects.create_user('user A', email='userA@freesound.org', password='testpass')
+        userA = User.objects.create_user("user A", email="userA@freesound.org", password="testpass")
         self.client.force_login(userA)
 
         # Test save profile without changing username with whitespaces
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['user A'], 'profile-ui_theme_preference': 'f'})
-        self.assertRedirects(resp, reverse('accounts-edit'))
+        resp = self.client.post(
+            reverse("accounts-edit"), data={"profile-username": ["user A"], "profile-ui_theme_preference": "f"}
+        )
+        self.assertRedirects(resp, reverse("accounts-edit"))
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 0)
 
         # Test save profile changing username (no whitespaces)
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userANewName'], 'profile-ui_theme_preference': 'f'})
-        self.assertRedirects(resp, reverse('accounts-edit'))
+        resp = self.client.post(
+            reverse("accounts-edit"), data={"profile-username": ["userANewName"], "profile-ui_theme_preference": "f"}
+        )
+        self.assertRedirects(resp, reverse("accounts-edit"))
         userA.refresh_from_db()
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
 
         # Test save profile changing username (whitespaces -> fail)
-        resp = self.client.post(reverse('accounts-edit'), data={'profile-username': ['userA SpaceName'], 'profile-ui_theme_preference': 'f'})
+        resp = self.client.post(
+            reverse("accounts-edit"), data={"profile-username": ["userA SpaceName"], "profile-ui_theme_preference": "f"}
+        )
         self.assertEqual(resp.status_code, 200)
         userA.refresh_from_db()
-        self.assertEqual(userA.username, 'userANewName')
+        self.assertEqual(userA.username, "userANewName")
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 1)
 
-class ChangeEmailViaAdminTestCase(TestCase):
 
+class ChangeEmailViaAdminTestCase(TestCase):
     def test_change_email_form_admin(self):
-        superuser = User.objects.create_user('superuser', is_superuser=True, is_staff=True)
+        superuser = User.objects.create_user("superuser", is_superuser=True, is_staff=True)
         self.client.force_login(superuser)
 
         # Create user and get admin change url
-        userA = User.objects.create_user('userA', email='userA@freesound.org', password='testpass')
-        admin_change_url = reverse('admin:auth_user_change', args=[userA.id])
-
+        userA = User.objects.create_user("userA", email="userA@freesound.org", password="testpass")
+        admin_change_url = reverse("admin:auth_user_change", args=[userA.id])
 
         # Try to change email to some other (unused email)
-        new_email = 'aNewEmail@freesound.org'
-        post_data = {'username': userA.username,
-                     'email': new_email,
-                     'date_joined_0': "2015-10-06", 'date_joined_1': "16:42:00"}  # date_joined required
+        new_email = "aNewEmail@freesound.org"
+        post_data = {
+            "username": userA.username,
+            "email": new_email,
+            "date_joined_0": "2015-10-06",
+            "date_joined_1": "16:42:00",
+        }  # date_joined required
         resp = self.client.post(admin_change_url, data=post_data)
-        self.assertRedirects(resp, reverse('admin:auth_user_changelist'))  # Successful edit redirects to users list
+        self.assertRedirects(resp, reverse("admin:auth_user_changelist"))  # Successful edit redirects to users list
         userA.refresh_from_db()
         self.assertEqual(userA.email, new_email)
 
         # Now create another user with a different email, and try to change userA email to the email of the new user
-        userB = User.objects.create_user('userB', email='userBA@freesound.org', password='testpass')
-        post_data = {'username': userA.username,
-                     'email': userB.email,
-                     'date_joined_0': "2015-10-06", 'date_joined_1': "16:42:00"}  # date_joined required
+        userB = User.objects.create_user("userB", email="userBA@freesound.org", password="testpass")
+        post_data = {
+            "username": userA.username,
+            "email": userB.email,
+            "date_joined_0": "2015-10-06",
+            "date_joined_1": "16:42:00",
+        }  # date_joined required
         resp = self.client.post(admin_change_url, data=post_data)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(bool(resp.context['adminform'].errors), True)  # Error in email field
-        self.assertIn('This email is already being used by another user', str(resp.context['adminform'].errors))
+        self.assertEqual(bool(resp.context["adminform"].errors), True)  # Error in email field
+        self.assertIn("This email is already being used by another user", str(resp.context["adminform"].errors))
         userA.refresh_from_db()
         self.assertEqual(userA.email, new_email)  # Email has not been changed
 
 
 class UsernameValidatorTest(TestCase):
-    """ Makes sure that username validation works as intended """
+    """Makes sure that username validation works as intended"""
 
     class TestForm(forms.Form):
         username = UsernameField()
 
     def test_valid(self):
-        """ Alphanumerics, _, - and + are ok"""
-        form = self.TestForm(data={'username': 'normal_user.name+'})
+        """Alphanumerics, _, - and + are ok"""
+        form = self.TestForm(data={"username": "normal_user.name+"})
         self.assertTrue(form.is_valid())
 
     def test_email_like_invalid(self):
-        """ We don't allow @ character """
-        form = self.TestForm(data={'username': 'email@username'})
+        """We don't allow @ character"""
+        form = self.TestForm(data={"username": "email@username"})
         self.assertFalse(form.is_valid())
 
     def test_short_invalid(self):
-        """ Should be longer than 3 characters """
-        form = self.TestForm(data={'username': 'a'})
+        """Should be longer than 3 characters"""
+        form = self.TestForm(data={"username": "a"})
         self.assertFalse(form.is_valid())
 
     def test_long_invalid(self):
-        """ Should be shorter than 30 characters """
-        form = self.TestForm(data={'username': 'a' * 31})
+        """Should be shorter than 30 characters"""
+        form = self.TestForm(data={"username": "a" * 31})
         self.assertFalse(form.is_valid())

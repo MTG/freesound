@@ -27,7 +27,7 @@ from sounds.models import Sound, Pack
 register = template.Library()
 
 
-@register.inclusion_tag('molecules/object_selector.html', takes_context=True)
+@register.inclusion_tag("molecules/object_selector.html", takes_context=True)
 def sounds_selector(context, sounds, max_sounds=None, selected_sound_ids=[], show_select_all_buttons=False):
     if sounds:
         if not isinstance(sounds[0], Sound):
@@ -35,21 +35,22 @@ def sounds_selector(context, sounds, max_sounds=None, selected_sound_ids=[], sho
             sounds = Sound.objects.ordered_ids(sounds)
         for sound in sounds:
             sound.selected = sound.id in selected_sound_ids
-            
+
     return {
-        'objects': sounds,
-        'type': 'sounds',
-        'show_select_all_buttons': show_select_all_buttons,
-        'original_context': context,  # This will be used so a nested inclusion tag can get the original context
-        'max_elements': max_sounds,
+        "objects": sounds,
+        "type": "sounds",
+        "show_select_all_buttons": show_select_all_buttons,
+        "original_context": context,  # This will be used so a nested inclusion tag can get the original context
+        "max_elements": max_sounds,
     }
 
-@register.inclusion_tag('molecules/object_selector.html', takes_context=True)
+
+@register.inclusion_tag("molecules/object_selector.html", takes_context=True)
 def sounds_selector_with_select_buttons(context, sounds, selected_sound_ids=[]):
     return sounds_selector(context, sounds, selected_sound_ids=selected_sound_ids, show_select_all_buttons=True)
 
 
-@register.inclusion_tag('molecules/object_selector.html', takes_context=True)
+@register.inclusion_tag("molecules/object_selector.html", takes_context=True)
 def packs_selector_with_select_buttons(context, packs, selected_pack_ids=[]):
     if packs:
         if not isinstance(packs[0], Pack):
@@ -58,8 +59,8 @@ def packs_selector_with_select_buttons(context, packs, selected_pack_ids=[]):
         for pack in packs:
             pack.selected = pack.id in selected_pack_ids
     return {
-        'objects': packs,
-        'type': 'packs',
-        'show_select_all_buttons': True,
-        'original_context': context  # This will be used so a nested inclusion tag can get the original context
+        "objects": packs,
+        "type": "packs",
+        "show_select_all_buttons": True,
+        "original_context": context,  # This will be used so a nested inclusion tag can get the original context
     }

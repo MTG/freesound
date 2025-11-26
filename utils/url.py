@@ -24,12 +24,14 @@ from urllib.parse import urlparse, parse_qsl, unquote_plus
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
-def redirect_inline(function=None, redirect_url_name='front-page', kwarg_keys=None, query_string=''):
+
+def redirect_inline(function=None, redirect_url_name="front-page", kwarg_keys=None, query_string=""):
     """
     Redirects to a specific view, can be used inline when defining urlpatterns.
 
     > redirect_inline(PasswordResetView.as_view(form_class=FsPasswordResetForm))
     """
+
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
@@ -39,16 +41,19 @@ def redirect_inline(function=None, redirect_url_name='front-page', kwarg_keys=No
                 new_args = []
             url = reverse(redirect_url_name, args=new_args)
             if query_string:
-                url += f'?{query_string}'
+                url += f"?{query_string}"
             return HttpResponseRedirect(url)
+
         return _wrapped_view
+
     return decorator(function)
 
 
 class ComparableUrl:
-    '''A url object that can be compared with other url objects
+    """A url object that can be compared with other url objects
     without regard to the vagaries of encoding, escaping, and ordering
-    of parameters in query strings.'''
+    of parameters in query strings."""
+
     # NOTE: from https://stackoverflow.com/questions/5371992/comparing-two-urls-in-python
 
     def __init__(self, url):

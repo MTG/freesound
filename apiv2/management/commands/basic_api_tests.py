@@ -32,61 +32,53 @@ from apiv2.models import ApiV2Client
 from apiv2.examples import examples
 
 
-def api_request(full_url, type='GET', post_data=None, auth='token', token=None):
-
-    if '?' not in full_url:
+def api_request(full_url, type="GET", post_data=None, auth="token", token=None):
+    if "?" not in full_url:
         url = full_url
         params = dict()
     else:
-        url = full_url.split('?')[0]
+        url = full_url.split("?")[0]
         params = dict()
-        for param in full_url.split('?')[1].split('&'):
-            name = param.split('=')[0]
-            value = '='.join(param.split('=')[1:])
+        for param in full_url.split("?")[1].split("&"):
+            name = param.split("=")[0]
+            value = "=".join(param.split("=")[1:])
             params[name] = value
 
     if post_data:
         data = json.dumps(post_data)
 
-    if auth == 'token':
-        headers = {'Authorization': f'Token {token}' }
+    if auth == "token":
+        headers = {"Authorization": f"Token {token}"}
 
-    if type == 'GET':
+    if type == "GET":
         r = requests.get(url, params=params, headers=headers)
-    elif type == 'POST':
+    elif type == "POST":
         r = requests.post(url, params=params, data=data, headers=headers)
 
     return r
 
 
 class Command(BaseCommand):
-    help = "Test apiv2 with examples from apiv2/examples.py. " \
-           "Usage: python manage.py basic_api_tests [custom_base_url] [token] [section]"
+    help = (
+        "Test apiv2 with examples from apiv2/examples.py. "
+        "Usage: python manage.py basic_api_tests [custom_base_url] [token] [section]"
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--base_url',
-            action='store',
-            dest='base_url',
-            default=False,
-            help='base url where to run the tests')
+            "--base_url", action="store", dest="base_url", default=False, help="base url where to run the tests"
+        )
         parser.add_argument(
-            '--token',
-            action='store',
-            dest='token',
-            default=False,
-            help='api token (client secret) to use')
+            "--token", action="store", dest="token", default=False, help="api token (client secret) to use"
+        )
         parser.add_argument(
-            '--section',
-            action='store',
-            dest='section',
-            default=False,
-            help='section of the tests to run')
+            "--section", action="store", dest="section", default=False, help="section of the tests to run"
+        )
 
-    def handle(self,  *args, **options):
-        base_url = options['base_url']
-        token = options['token']
-        section = options['section']
+    def handle(self, *args, **options):
+        base_url = options["base_url"]
+        token = options["token"]
+        section = options["section"]
 
         if not base_url:
             base_url = f"https://{Site.objects.get_current().domain}/"
@@ -103,42 +95,42 @@ class Command(BaseCommand):
         failed = list()
         error = list()
 
-        print('')
+        print("")
         for key, items in examples.items():
-            if 'Download' not in key:
+            if "Download" not in key:
                 if section:
                     if section not in key:
                         continue
 
-                print(f'Testing {key}')
-                print('--------------------------------------')
+                print(f"Testing {key}")
+                print("--------------------------------------")
 
                 for desc, urls in items:
                     for url in urls:
-                        if url[0:4] != 'curl':
+                        if url[0:4] != "curl":
                             prepended_url = base_url + url
-                            print(f'- {prepended_url}', end=' ')
+                            print(f"- {prepended_url}", end=" ")
                             try:
                                 r = api_request(prepended_url, token=token)
                                 if r.status_code == 200:
-                                    print('OK')
+                                    print("OK")
                                     ok.append(prepended_url)
                                 else:
-                                    print('FAIL! (%i)' % r.status_code)
+                                    print("FAIL! (%i)" % r.status_code)
                                     failed.append((prepended_url, r.status_code))
                             except Exception as e:
-                                print(f'ERROR ({str(e)})')
+                                print(f"ERROR ({str(e)})")
                                 error.append(prepended_url)
 
-                print('')
+                print("")
 
-        print('\nRUNNING TESTS FINISHED:')
-        print(f'\t{len(ok)} tests completed successfully')
+        print("\nRUNNING TESTS FINISHED:")
+        print(f"\t{len(ok)} tests completed successfully")
         if error:
-            print(f'\t{len(error)} tests gave errors (connection, etc...)')
-        print(f'\t{len(failed)} tests failed')
+            print(f"\t{len(error)} tests gave errors (connection, etc...)")
+        print(f"\t{len(failed)} tests failed")
         for url, status_code in failed:
-            print('\t\t- %s (%i)' % (url, status_code))
+            print("\t\t- %s (%i)" % (url, status_code))
 
         if test_client is not None:
             test_client.delete()

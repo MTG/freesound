@@ -34,7 +34,7 @@ from comments.models import Comment
 from support.forms import ContactForm
 from utils.mail import send_mail_template_to_support
 
-web_logger = logging.getLogger('web')
+web_logger = logging.getLogger("web")
 
 
 def create_zendesk_ticket(request_email, subject, message, user=None):
@@ -45,7 +45,7 @@ def create_zendesk_ticket(request_email, subject, message, user=None):
             pass
 
     requester = zendesk_api.User(email=request_email)
-    requester.name = 'Unknown username'
+    requester.name = "Unknown username"
     custom_fields = []
 
     if user:
@@ -66,34 +66,22 @@ def create_zendesk_ticket(request_email, subject, message, user=None):
             zendesk_api.CustomField(id=30153729, value=num_comments),
         ]
 
-        user_url = "https://{}{}".format(
-            Site.objects.get_current().domain,
-            reverse('account', args=[user.username])
-        )
+        user_url = "https://{}{}".format(Site.objects.get_current().domain, reverse("account", args=[user.username]))
 
         message += f"\n\n-- \n{user_url}"
 
         requester.name = user.username
 
-    return zendesk_api.Ticket(
-        requester=requester,
-        subject=subject,
-        description=message,
-        custom_fields=custom_fields
-    )
+    return zendesk_api.Ticket(requester=requester, subject=subject, description=message, custom_fields=custom_fields)
 
 
 def send_to_zendesk(request_email, subject, message, user=None):
     ticket = create_zendesk_ticket(request_email, subject, message, user)
-    zenpy = Zenpy(
-        email=settings.ZENDESK_EMAIL,
-        token=settings.ZENDESK_TOKEN,
-        subdomain='freesound'
-    )
+    zenpy = Zenpy(email=settings.ZENDESK_EMAIL, token=settings.ZENDESK_TOKEN, subdomain="freesound")
     try:
         zenpy.tickets.create(ticket)
     except (ZendeskAPIException, HTTPError, ZenpyException) as e:
-        web_logger.info(f'Error creating Zendesk ticket: {str(e)}')
+        web_logger.info(f"Error creating Zendesk ticket: {str(e)}")
 
 
 def send_email_to_support(request_email, subject, message, user=None):
@@ -103,8 +91,13 @@ def send_email_to_support(request_email, subject, message, user=None):
         except User.DoesNotExist:
             pass
 
-    send_mail_template_to_support(settings.EMAIL_SUBJECT_SUPPORT_EMAIL, "emails/email_support.txt",
-                                  {'message': message, 'user': user}, extra_subject=subject, reply_to=request_email)
+    send_mail_template_to_support(
+        settings.EMAIL_SUBJECT_SUPPORT_EMAIL,
+        "emails/email_support.txt",
+        {"message": message, "user": user},
+        extra_subject=subject,
+        reply_to=request_email,
+    )
 
 
 def contact(request):
@@ -114,20 +107,20 @@ def contact(request):
     if request.user.is_authenticated:
         user = request.user
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = ContactForm(request.POST)
         if form.is_valid():
-            subject = form.cleaned_data['subject']
-            message = form.cleaned_data['message']
-            if getattr(settings, 'USE_ZENDESK_FOR_SUPPORT_REQUESTS', False):
-                send_to_zendesk(form.cleaned_data['your_email'], subject, message)
+            subject = form.cleaned_data["subject"]
+            message = form.cleaned_data["message"]
+            if getattr(settings, "USE_ZENDESK_FOR_SUPPORT_REQUESTS", False):
+                send_to_zendesk(form.cleaned_data["your_email"], subject, message)
             else:
-                send_email_to_support(form.cleaned_data['your_email'], subject, message)
+                send_email_to_support(form.cleaned_data["your_email"], subject, message)
             request_sent = True
     else:
         if user:
             form = ContactForm(initial={"your_email": user.profile.get_email_for_delivery()})
         else:
             form = ContactForm()
-    tvars = {'form': form, 'request_sent': request_sent}
-    return render(request, 'support/contact.html', tvars)
+    tvars = {"form": form, "request_sent": request_sent}
+    return render(request, "support/contact.html", tvars)

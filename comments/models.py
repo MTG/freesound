@@ -29,10 +29,11 @@ from utils.text import text_has_hyperlink
 
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    sound = models.ForeignKey('sounds.Sound', null=True, related_name='comments', on_delete=models.CASCADE)
+    sound = models.ForeignKey("sounds.Sound", null=True, related_name="comments", on_delete=models.CASCADE)
     comment = models.TextField()
     parent = models.ForeignKey(
-        'self', null=True, blank=True, related_name='replies', default=None, on_delete=models.SET_NULL)
+        "self", null=True, blank=True, related_name="replies", default=None, on_delete=models.SET_NULL
+    )
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     contains_hyperlink = models.BooleanField(db_index=True, default=False)
 
@@ -40,7 +41,7 @@ class Comment(models.Model):
         return f"{self.user} comment on {self.sound}"
 
     class Meta:
-        ordering = ('-created', )
+        ordering = ("-created",)
 
     def set_has_hyperlink(self, commit=False):
         if text_has_hyperlink(self.comment):

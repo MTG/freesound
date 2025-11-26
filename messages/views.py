@@ -29,7 +29,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render 
+from django.shortcuts import render
 from django.urls import reverse
 
 from messages.forms import MessageReplyForm, MessageReplyFormWithCaptcha
@@ -43,10 +43,11 @@ from utils.pagination import paginate
 def messages_change_state(request):
     if request.method == "POST":
         choice = request.POST.get("choice", False)
-        message_ids = [int(mid) for mid in request.POST.get("ids", "").split(',')]
+        message_ids = [int(mid) for mid in request.POST.get("ids", "").split(",")]
         if choice and message_ids:
-            fs_messages = Message.objects.filter(Q(user_to=request.user, is_sent=False) |
-                                              Q(user_from=request.user, is_sent=True)).filter(id__in=message_ids)
+            fs_messages = Message.objects.filter(
+                Q(user_to=request.user, is_sent=False) | Q(user_from=request.user, is_sent=True)
+            ).filter(id__in=message_ids)
             if choice == "a":
                 for message in fs_messages:
                     message.is_archived = not message.is_archived
@@ -62,41 +63,31 @@ def messages_change_state(request):
 
 
 # base query object
-base_qs = Message.objects.select_related('body', 'user_from', 'user_from__profile', 'user_to', 'user_to__profile')
+base_qs = Message.objects.select_related("body", "user_from", "user_from__profile", "user_to", "user_to__profile")
 
 
 @login_required
 def inbox(request):
     qs = base_qs.filter(user_to=request.user, is_archived=False, is_sent=False)
-    tvars = {'list_type': 'inbox'} 
-    tvars.update(paginate(
-        request, qs,
-        items_per_page=settings.MESSAGES_PER_PAGE))
-    return render(request, 'messages/inbox.html', tvars)
+    tvars = {"list_type": "inbox"}
+    tvars.update(paginate(request, qs, items_per_page=settings.MESSAGES_PER_PAGE))
+    return render(request, "messages/inbox.html", tvars)
 
 
 @login_required
 def sent_messages(request):
     qs = base_qs.filter(user_from=request.user, is_archived=False, is_sent=True)
-    tvars = {
-        'list_type': 'sent',
-        'hide_toggle_read_unread': True,
-        'hide_archive_unarchive': True 
-    } 
-    tvars.update(paginate(
-        request, qs,
-        items_per_page=settings.MESSAGES_PER_PAGE))
-    return render(request, 'messages/sent.html', tvars)
+    tvars = {"list_type": "sent", "hide_toggle_read_unread": True, "hide_archive_unarchive": True}
+    tvars.update(paginate(request, qs, items_per_page=settings.MESSAGES_PER_PAGE))
+    return render(request, "messages/sent.html", tvars)
 
 
 @login_required
 def archived_messages(request):
     qs = base_qs.filter(user_to=request.user, is_archived=True, is_sent=False)
-    tvars = {'list_type': 'archived'}
-    tvars.update(paginate(
-        request, qs,
-        items_per_page=settings.MESSAGES_PER_PAGE))
-    return render(request, 'messages/archived.html', tvars)
+    tvars = {"list_type": "archived"}
+    tvars.update(paginate(request, qs, items_per_page=settings.MESSAGES_PER_PAGE))
+    return render(request, "messages/archived.html", tvars)
 
 
 @login_required
@@ -115,25 +106,28 @@ def message(request, message_id):
         invalidate_user_template_caches(request.user.id)
         message.save()
 
-    tvars = {'message': message}
-    return render(request, 'messages/message.html', tvars)
+    tvars = {"message": message}
+    return render(request, "messages/message.html", tvars)
 
 
 @login_required
 @transaction.atomic()
 def new_message(request, username=None, message_id=None):
-
     if request.user.profile.is_trustworthy():
         form_class = MessageReplyForm
     else:
         form_class = MessageReplyFormWithCaptcha
-    
-    if request.method == 'POST':
+
+    if request.method == "POST":
         form = form_class(request, request.POST)
 
         if request.user.profile.is_blocked_for_spam_reports():
-            messages.add_message(request, messages.INFO, "You're not allowed to send the message because your account "
-                                                         "has been temporally blocked after multiple spam reports")
+            messages.add_message(
+                request,
+                messages.INFO,
+                "You're not allowed to send the message because your account "
+                "has been temporally blocked after multiple spam reports",
+            )
         else:
             if form.is_valid():
                 user_from = request.user
@@ -141,19 +135,37 @@ def new_message(request, username=None, message_id=None):
                 subject = form.cleaned_data["subject"]
                 body = MessageBody.objects.create(body=form.cleaned_data["body"])
 
-                Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=True,
-                                       is_archived=False, is_read=False)
-                Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=False,
-                                       is_archived=False, is_read=False)
+                Message.objects.create(
+                    user_from=user_from,
+                    user_to=user_to,
+                    subject=subject,
+                    body=body,
+                    is_sent=True,
+                    is_archived=False,
+                    is_read=False,
+                )
+                Message.objects.create(
+                    user_from=user_from,
+                    user_to=user_to,
+                    subject=subject,
+                    body=body,
+                    is_sent=False,
+                    is_archived=False,
+                    is_read=False,
+                )
 
                 invalidate_user_template_caches(user_to.id)
 
                 try:
                     # send the user an email to notify him of the sent message!
-                    tvars = {'user_to': user_to,
-                             'user_from': user_from}
-                    send_mail_template(settings.EMAIL_SUBJECT_PRIVATE_MESSAGE, 'emails/email_new_message.txt', tvars,
-                                       user_to=user_to, email_type_preference_check="private_message")
+                    tvars = {"user_to": user_to, "user_from": user_from}
+                    send_mail_template(
+                        settings.EMAIL_SUBJECT_PRIVATE_MESSAGE,
+                        "emails/email_new_message.txt",
+                        tvars,
+                        user_to=user_to,
+                        email_type_preference_check="private_message",
+                    )
                 except:
                     # if the email sending fails, ignore...
                     pass
@@ -185,23 +197,26 @@ def new_message(request, username=None, message_id=None):
         else:
             form = form_class(request)
 
-    tvars = {'form': form}
-    return render(request, 'messages/new.html', tvars)
+    tvars = {"form": form}
+    return render(request, "messages/new.html", tvars)
 
 
 def quote_message_for_reply(body, username):
-    body = ''.join(BeautifulSoup(body, "html.parser").find_all(string=True))
-    body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60))
-                        for line in body.split("\n")])
+    body = "".join(BeautifulSoup(body, "html.parser").find_all(string=True))
+    body = "\n".join(
+        [(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(), 60)) for line in body.split("\n")]
+    )
     body = "> --- " + username + " wrote:\n>\n" + body
     return body
 
 
 def get_previously_contacted_usernames(user):
     # Get a list of previously contacted usernames (in no particular order)
-    usernames = list(Message.objects.select_related('user_from', 'user_to')
-                     .filter(Q(user_from=user) | Q(user_to=user))
-                     .values_list('user_to__username', 'user_from__username'))
+    usernames = list(
+        Message.objects.select_related("user_from", "user_to")
+        .filter(Q(user_from=user) | Q(user_to=user))
+        .values_list("user_to__username", "user_from__username")
+    )
     return list({item for sublist in usernames for item in sublist})
 
 
@@ -214,4 +229,4 @@ def username_lookup(request):
             results = get_previously_contacted_usernames(request.user)
             results = [result for result in results if query in result]
     json_resp = json.dumps(results)
-    return HttpResponse(json_resp, content_type='application/json')
+    return HttpResponse(json_resp, content_type="application/json")

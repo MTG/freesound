@@ -28,15 +28,13 @@ from django.shortcuts import get_object_or_404
 register = template.Library()
 
 
-@register.inclusion_tag('collections/display_collection.html', takes_context=True)
+@register.inclusion_tag("collections/display_collection.html", takes_context=True)
 def display_collection(context, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
-    request = context.get('request')
-    try: 
+    request = context.get("request")
+    try:
         sound = Sound.objects.get(collections=collection, collectionsound__featured_sound=True)
     except Sound.DoesNotExist:
         sound = None
-    tvars = {'collection': collection,
-             'ft_sound': sound,
-             'request': request}
+    tvars = {"collection": collection, "ft_sound": sound, "request": request}
     return tvars

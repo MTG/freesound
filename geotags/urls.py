@@ -23,11 +23,15 @@ from django.urls import path, re_path
 import geotags.views as geotags
 
 urlpatterns = [
-    path('sounds_barray/user/<str:username>/', geotags.geotags_for_user_barray, name="geotags-for-user-barray"),
-    path('sounds_barray/user_latest/<str:username>/', geotags.geotags_for_user_latest_barray, name="geotags-for-user-latest-barray"),
-    path('sounds_barray/pack/<int:pack_id>/', geotags.geotags_for_pack_barray, name="geotags-for-pack-barray"),
-    path('sounds_barray/sound/<int:sound_id>/', geotags.geotag_for_sound_barray, name="geotags-for-sound-barray"),
-    path('sounds_barray/query/', geotags.geotags_for_query_barray, name="geotags-for-query-barray"),
-    re_path(r'^sounds_barray/(?P<tag>[\w-]+)?/?$', geotags.geotags_barray, name="geotags-barray"),
-    path('infowindow/<int:sound_id>/', geotags.infowindow, name="geotags-infowindow"),
+    path("sounds_barray/user/<str:username>/", geotags.geotags_for_user_barray, name="geotags-for-user-barray"),
+    path(
+        "sounds_barray/user_latest/<str:username>/",
+        geotags.geotags_for_user_latest_barray,
+        name="geotags-for-user-latest-barray",
+    ),
+    path("sounds_barray/pack/<int:pack_id>/", geotags.geotags_for_pack_barray, name="geotags-for-pack-barray"),
+    path("sounds_barray/sound/<int:sound_id>/", geotags.geotag_for_sound_barray, name="geotags-for-sound-barray"),
+    path("sounds_barray/query/", geotags.geotags_for_query_barray, name="geotags-for-query-barray"),
+    re_path(r"^sounds_barray/(?P<tag>[\w-]+)?/?$", geotags.geotags_barray, name="geotags-barray"),
+    path("infowindow/<int:sound_id>/", geotags.infowindow, name="geotags-infowindow"),
 ]

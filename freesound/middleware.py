@@ -27,19 +27,21 @@ from django.contrib import messages
 
 from accounts.models import GdprAcceptance
 
-web_logger = logging.getLogger('web')
+web_logger = logging.getLogger("web")
 
 
 def dont_redirect(path):
-    return 'bulklicensechange' not in path \
-        and 'admin' not in path \
-        and 'logout' not in path \
-        and 'tosacceptance' not in path \
-        and 'tos_api' not in path \
-        and 'tos_web' not in path \
-        and 'privacy' not in path \
-        and 'cookies' not in path \
-        and 'contact' not in path
+    return (
+        "bulklicensechange" not in path
+        and "admin" not in path
+        and "logout" not in path
+        and "tosacceptance" not in path
+        and "tos_api" not in path
+        and "tos_web" not in path
+        and "privacy" not in path
+        and "cookies" not in path
+        and "contact" not in path
+    )
 
 
 class BulkChangeLicenseHandler:
@@ -52,9 +54,7 @@ class BulkChangeLicenseHandler:
         # allow user to logout (maybe a bit too much...)
         # don't run it for media URLs
         # N.B. probably better just to check for login in the URL
-        if request.user.is_authenticated \
-                and dont_redirect(request.get_full_path()):
-
+        if request.user.is_authenticated and dont_redirect(request.get_full_path()):
             user = request.user
             if user.profile.has_old_license:
                 return HttpResponseRedirect(reverse("bulk-license-change"))
@@ -74,9 +74,7 @@ class TosAcceptanceHandler:
         self.get_response = get_response
 
     def __call__(self, request):
-
-        if request.user.is_authenticated \
-                and dont_redirect(request.get_full_path()):
+        if request.user.is_authenticated and dont_redirect(request.get_full_path()):
             try:
                 request.user.gdpracceptance
             except GdprAcceptance.DoesNotExist:
@@ -87,23 +85,27 @@ class TosAcceptanceHandler:
 
 
 class UpdateEmailHandler:
-    message = "We have identified that some emails that we have sent to you didn't go through, thus it appears that " \
-              "your email address is not valid. Please update your email address to a working one to continue using " \
-              "Freesound"
+    message = (
+        "We have identified that some emails that we have sent to you didn't go through, thus it appears that "
+        "your email address is not valid. Please update your email address to a working one to continue using "
+        "Freesound"
+    )
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.user.is_authenticated \
-                and 'tosacceptance' not in request.get_full_path() \
-                and 'logout' not in request.get_full_path() \
-                and 'tos_api' not in request.get_full_path() \
-                and 'tos_web' not in request.get_full_path() \
-                and 'contact' not in request.get_full_path() \
-                and 'bulklicensechange' not in request.get_full_path() \
-                and 'resetemail' not in request.get_full_path():
-                # replace with dont_redirect() and add resetemail to it after merge with gdpr_acceptance pr
+        if (
+            request.user.is_authenticated
+            and "tosacceptance" not in request.get_full_path()
+            and "logout" not in request.get_full_path()
+            and "tos_api" not in request.get_full_path()
+            and "tos_web" not in request.get_full_path()
+            and "contact" not in request.get_full_path()
+            and "bulklicensechange" not in request.get_full_path()
+            and "resetemail" not in request.get_full_path()
+        ):
+            # replace with dont_redirect() and add resetemail to it after merge with gdpr_acceptance pr
 
             user = request.user
 

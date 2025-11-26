@@ -26,23 +26,29 @@ from utils.tagrecommendation_utilities import get_id_of_last_indexed_sound, post
 
 
 class Command(BaseCommand):
-    args = ''
-    help = 'Get the id of the last indexed sound in tag recommendation service and send tag information of the older ones'
+    args = ""
+    help = (
+        "Get the id of the last indexed sound in tag recommendation service and send tag information of the older ones"
+    )
+
     def add_arguments(self, parser):
         parser.add_argument(
-            '-a','--all',
-            action='store_true',
-            dest='all',
+            "-a",
+            "--all",
+            action="store_true",
+            dest="all",
             default=False,
-            help='Repost all sounds to tag recommendation even if they were already indexed')
+            help="Repost all sounds to tag recommendation even if they were already indexed",
+        )
 
     def handle(self, *args, **options):
-
-        if options['all']:
+        if options["all"]:
             last_indexed_id = 0
         else:
             last_indexed_id = get_id_of_last_indexed_sound()
 
         print("Starting at id %i" % last_indexed_id)
-        sound_qs = Sound.objects.filter(moderation_state='OK', processing_state='OK', id__gt=last_indexed_id).order_by("id")
+        sound_qs = Sound.objects.filter(moderation_state="OK", processing_state="OK", id__gt=last_indexed_id).order_by(
+            "id"
+        )
         post_sounds_to_tagrecommendation_service(sound_qs)

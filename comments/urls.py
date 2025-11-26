@@ -22,5 +22,5 @@ from django.urls import path
 import comments.views as comments
 
 urlpatterns = [
-    path('delete/<int:comment_id>/', comments.delete, name="comment-delete"),
+    path("delete/<int:comment_id>/", comments.delete, name="comment-delete"),
 ]

@@ -11,40 +11,47 @@ from django.utils.http import http_date
 
 from sounds.models import Sound, Pack
 
+
 class SoundSitemap(Sitemap):
     limit = 20000
 
     def get_latest_lastmod(self):
-        latest_sound = Sound.public.order_by('-created').first()
+        latest_sound = Sound.public.order_by("-created").first()
         if latest_sound:
             return latest_sound.created
         return None
 
     def items(self):
-        return Sound.public.select_related('user').all()
+        return Sound.public.select_related("user").all()
 
     def lastmod(self, obj: Sound):
         return obj.created
-    
+
+
 class PackSitemap(Sitemap):
     limit = 20000
 
     def get_latest_lastmod(self):
-        latest_pack = Pack.objects.filter(is_deleted=False).order_by('-last_updated').first()
+        latest_pack = Pack.objects.filter(is_deleted=False).order_by("-last_updated").first()
         if latest_pack:
             return latest_pack.last_updated
         return None
 
     def items(self):
-        return Pack.objects.filter(is_deleted=False).select_related('user').only('id', 'last_updated', 'user__username').all()
+        return (
+            Pack.objects.filter(is_deleted=False)
+            .select_related("user")
+            .only("id", "last_updated", "user__username")
+            .all()
+        )
 
     def lastmod(self, obj: Pack):
         return obj.last_updated
 
 
 sitemaps = {
-    'sounds': SoundSitemap,
-    'packs': PackSitemap,
+    "sounds": SoundSitemap,
+    "packs": PackSitemap,
 }
 
 
@@ -93,16 +100,16 @@ def sitemap_view(
     else:
         headers = None
 
-    urlset = ET.Element('urlset', {
-        'xmlns': 'http://www.sitemaps.org/schemas/sitemap/0.9',
-        'xmlns:xhtml': 'http://www.w3.org/1999/xhtml'
-    })
-    
+    urlset = ET.Element(
+        "urlset",
+        {"xmlns": "http://www.sitemaps.org/schemas/sitemap/0.9", "xmlns:xhtml": "http://www.w3.org/1999/xhtml"},
+    )
+
     for url_info in urls:
-        url = ET.SubElement(urlset, 'url')
+        url = ET.SubElement(urlset, "url")
         # We know that these are the only fields we want to add
-        ET.SubElement(url, 'loc').text = url_info['location']
-        ET.SubElement(url, 'lastmod').text = url_info['lastmod'].strftime('%Y-%m-%d')
-            
-    xml_str = '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(urlset, encoding='unicode')
+        ET.SubElement(url, "loc").text = url_info["location"]
+        ET.SubElement(url, "lastmod").text = url_info["lastmod"].strftime("%Y-%m-%d")
+
+    xml_str = '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(urlset, encoding="unicode")
     return HttpResponse(xml_str, content_type=content_type, headers=headers)

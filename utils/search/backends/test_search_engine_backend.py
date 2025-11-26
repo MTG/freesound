@@ -1180,9 +1180,9 @@ def test_sound_similarity_search_facets(search_engine_sounds_backend,
         output_file_handle,
         dict(
             similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
-            similar_to_max_num_sounds=100,  # Will return all test sounds
+            similar_to_min_similarity=0.0,  # Will return all test sounds
             num_sounds=100,
-            similar_to_analyzer="test_sim_space",
+            similar_to_similarity_space="test_sim_space",
             facets=test_facet_options,
             group_by_pack=True,
             group_counts_as_one_in_facets=True,

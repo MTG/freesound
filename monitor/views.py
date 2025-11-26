@@ -38,8 +38,6 @@ from sounds.models import Sound, SoundAnalysis, SoundSimilarityVector
 from tickets import TICKET_STATUS_CLOSED
 from utils.search import SearchEngineException, get_search_engine
 
-cache_persistent = caches["persistent"]
-
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url="/")
@@ -212,37 +210,37 @@ def queries_stats_ajax(request):
 
 
 def tags_stats_ajax(request):
-    tags_stats = cache_persistent.get("tags_stats")
+    tags_stats = caches["persistent"].get("tags_stats")
     return JsonResponse(tags_stats or {})
 
 
 def sounds_stats_ajax(request):
-    sounds_stats = cache_persistent.get("sounds_stats")
+    sounds_stats = caches["persistent"].get("sounds_stats")
     return JsonResponse(sounds_stats or {})
 
 
 def active_users_stats_ajax(request):
-    active_users_stats = cache_persistent.get("active_users_stats")
+    active_users_stats = caches["persistent"].get("active_users_stats")
     return JsonResponse(active_users_stats or {})
 
 
 def users_stats_ajax(request):
-    users_stats = cache_persistent.get("users_stats")
+    users_stats = caches["persistent"].get("users_stats")
     return JsonResponse(users_stats or {})
 
 
 def downloads_stats_ajax(request):
-    downloads_stats = cache_persistent.get("downloads_stats")
+    downloads_stats = caches["persistent"].get("downloads_stats")
     return JsonResponse(downloads_stats or {})
 
 
 def donations_stats_ajax(request):
-    donations_stats = cache_persistent.get("donations_stats")
+    donations_stats = caches["persistent"].get("donations_stats")
     return JsonResponse(donations_stats or {})
 
 
 def totals_stats_ajax(request):
-    totals_stats = cache_persistent.get("totals_stats")
+    totals_stats = caches["persistent"].get("totals_stats")
     return JsonResponse(totals_stats or {})
 
 

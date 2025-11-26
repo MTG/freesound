@@ -90,7 +90,6 @@ web_logger = logging.getLogger("web")
 sounds_logger = logging.getLogger("sounds")
 upload_logger = logging.getLogger("file_upload")
 cache_cdn_map = caches["cdn_map"]
-cache_persistent = caches["persistent"]
 
 
 def get_n_weeks_back_datetime(n_weeks):
@@ -167,6 +166,7 @@ def packs(request):
 
 
 def front_page(request):
+    cache_persistent = caches["persistent"]
     rss_cache = cache_persistent.get("rss_cache", None)
     trending_sound_ids = cache_persistent.get("trending_sound_ids", None)
     trending_new_sound_ids = cache_persistent.get("trending_new_sound_ids", None)

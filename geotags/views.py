@@ -42,7 +42,6 @@ from utils.search.search_sounds import perform_search_engine_query
 from utils.username import raise_404_if_user_is_deleted, redirect_if_old_username
 
 web_logger = logging.getLogger("web")
-cache_persistent = caches["persistent"]
 
 
 def log_map_load(map_type, num_geotags, request):
@@ -90,6 +89,7 @@ def generate_geotag_bytearray_dict(sound_list):
 
 
 def geotags_barray(request, tag=None):
+    cache_persistent = caches["persistent"]
     is_embed = request.GET.get("embed", "0") == "1"
     if tag is not None:
         sounds = Sound.objects.select_related("geotag").filter(tags__name__iexact=tag).exclude(geotag=None)

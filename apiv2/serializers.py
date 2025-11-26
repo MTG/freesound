@@ -25,14 +25,14 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import serializers
 
-from .apiv2_utils import prepend_base
-from bookmarks.models import BookmarkCategory, Bookmark
+from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
-from sounds.models import Sound, Pack, SoundAnalysis
+from sounds.models import Pack, Sound, SoundAnalysis
 from utils.forms import filename_has_valid_extension
 from utils.similarity_utilities import get_sounds_descriptors
 from utils.tags import clean_and_split_tags
 
+from .apiv2_utils import prepend_base
 
 ###################
 # SOUND SERIALIZERS

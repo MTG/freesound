@@ -24,12 +24,12 @@ import pprint
 from collections import defaultdict
 
 from django.contrib.auth.models import User
-from django.db.models import Count, Avg, Value
+from django.db.models import Avg, Count, Value
 from django.db.models.functions import Coalesce
 
 from accounts.models import Profile
 from forum.models import Post
-from sounds.models import Sound, Pack, Download, PackDownload
+from sounds.models import Download, Pack, PackDownload, Sound
 from utils.management_commands import LoggingBaseCommand
 
 console_logger = logging.getLogger("console")

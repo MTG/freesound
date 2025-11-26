@@ -22,9 +22,9 @@
 
 
 import argparse
-
-from utils.audioprocessing.processing import create_wave_images, AudioProcessingException
 import sys
+
+from utils.audioprocessing.processing import AudioProcessingException, create_wave_images
 
 
 def progress_callback(position, width):
@@ -59,8 +59,8 @@ def main(args):
             except AudioProcessingException as e:
                 print(f"Error running wav2png: {e}")
         else:
-            from hotshot import stats
             import hotshot
+            from hotshot import stats
 
             prof = hotshot.Profile("stats")
             prof.runcall(create_wave_images, *this_args)

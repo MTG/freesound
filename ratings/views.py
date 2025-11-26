@@ -20,7 +20,7 @@
 
 from django.conf import settings
 from django.db import transaction
-from django.http import JsonResponse, Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 
 from ratings.models import SoundRating

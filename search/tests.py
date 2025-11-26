@@ -18,15 +18,17 @@
 #     See AUTHORS file.
 #
 
-from django.core.cache import cache
+from unittest import mock
+
 from django.conf import settings
+from django.core.cache import cache
 from django.test import TestCase
-from django.test.utils import skipIf, override_settings
+from django.test.utils import override_settings, skipIf
 from django.urls import reverse
+
 from sounds.models import Sound
 from utils.search import SearchResults, SearchResultsPaginator
 from utils.test_helpers import create_user_and_sounds
-from unittest import mock
 
 
 def create_fake_search_engine_results():

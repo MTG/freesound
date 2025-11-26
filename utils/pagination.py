@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.core.paginator import Paginator, InvalidPage
+from django.core.paginator import InvalidPage, Paginator
 from django.utils.functional import cached_property
 
 

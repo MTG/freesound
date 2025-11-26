@@ -18,15 +18,15 @@
 #     See AUTHORS file.
 #
 
-from apiv2.views import AuthorizationView
-from oauth2_provider import views
-from django.urls import re_path
 from django.conf import settings
-from django.contrib.auth import logout, REDIRECT_FIELD_NAME
+from django.contrib.auth import REDIRECT_FIELD_NAME, logout
 from django.contrib.auth.views import redirect_to_login
-from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-from django.urls import reverse
+from django.urls import re_path, reverse
+from django.views.decorators.csrf import csrf_exempt
+from oauth2_provider import views
+
+from apiv2.views import AuthorizationView
 
 
 def https_required(view_func):

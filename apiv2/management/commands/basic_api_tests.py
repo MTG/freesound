@@ -25,11 +25,13 @@ except:
     # into unit tests using the standard django framework.
     pass
 import json
-from django.core.management.base import BaseCommand
+
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from apiv2.models import ApiV2Client
+from django.core.management.base import BaseCommand
+
 from apiv2.examples import examples
+from apiv2.models import ApiV2Client
 
 
 def api_request(full_url, type="GET", post_data=None, auth="token", token=None):

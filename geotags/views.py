@@ -24,6 +24,7 @@ import logging
 import math
 import struct
 import urllib.parse
+from urllib.parse import quote
 
 from django.conf import settings
 from django.core.cache import cache, caches
@@ -32,14 +33,13 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
-from urllib.parse import quote
-from accounts.models import Profile
 
-from sounds.models import Sound, Pack
+from accounts.models import Profile
+from sounds.models import Pack, Sound
 from utils.logging_filters import get_client_ip
 from utils.search.search_query_processor import SearchQueryProcessor
 from utils.search.search_sounds import perform_search_engine_query
-from utils.username import redirect_if_old_username, raise_404_if_user_is_deleted
+from utils.username import raise_404_if_user_is_deleted, redirect_if_old_username
 
 web_logger = logging.getLogger("web")
 cache_persistent = caches["persistent"]

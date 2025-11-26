@@ -3,9 +3,9 @@ This was copied directly from django, but a small hack was added to allow differ
 markdown. It uses MARKDOWN_FILTER_SETTINGS from settings.py
 """
 
-import markdown as markdown_package
 import re
 
+import markdown as markdown_package
 from django import template
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe

@@ -19,8 +19,8 @@
 #
 
 import ipaddress
-import logging
 import json
+import logging
 import urllib
 
 import sentry_sdk

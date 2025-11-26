@@ -22,9 +22,9 @@ import datetime
 import json
 import time
 
-from django.utils.safestring import mark_safe
 from django.template import Library
 from django.template.defaultfilters import stringfilter
+from django.utils.safestring import mark_safe
 
 register = Library()
 

@@ -18,11 +18,12 @@
 #     See AUTHORS file.
 #
 
-from django.urls import include, path, re_path
 from django.contrib.auth.views import LogoutView
-from apiv2 import views
-from accounts.views import login
+from django.urls import include, path, re_path
+
 from accounts.forms import FsAuthenticationForm
+from accounts.views import login
+from apiv2 import views
 
 #
 # WATCH OUT! if changing url pattern names these should be changed in views __doc__ too (to make sure examples work properly)

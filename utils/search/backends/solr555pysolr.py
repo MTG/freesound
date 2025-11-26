@@ -19,21 +19,20 @@
 #
 
 import json
+import math
 import random
 import re
-import math
-from datetime import date, datetime
 from collections import defaultdict
+from datetime import date, datetime
 
 import pysolr
 from django.conf import settings
 
 from forum.models import Post
 from sounds.models import Sound, SoundAnalysis, SoundSimilarityVector
-from utils.text import remove_control_chars
-from utils.search import SearchEngineBase, SearchResults, SearchEngineException
+from utils.search import SearchEngineBase, SearchEngineException, SearchResults
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
-
+from utils.text import remove_control_chars
 
 SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
 SOLR_SOUNDS_URL = f"{settings.SOLR5_BASE_URL}/freesound"

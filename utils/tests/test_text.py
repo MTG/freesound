@@ -22,7 +22,7 @@
 from django.test import TestCase
 
 from utils.forms import HtmlCleaningCharField
-from utils.text import clean_html, is_shouting, text_may_be_spam, remove_control_chars
+from utils.text import clean_html, is_shouting, remove_control_chars, text_may_be_spam
 
 
 class TextUtilTest(TestCase):

@@ -18,13 +18,13 @@
 #     See AUTHORS file.
 #
 from django.conf import settings
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import EmailPreferenceType, UserEmailSetting
-from forum.models import Forum, Thread, Post, Subscription
+from forum.models import Forum, Post, Subscription, Thread
 
 
 class ForumPostSignalTestCase(TestCase):

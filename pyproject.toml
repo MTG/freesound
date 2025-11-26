@@ -13,6 +13,7 @@ select = [
     "F6",  # Pyflakes
     "F7",
     "PLE",  # Pylint Error
+    "I",  # Imports
 ]
 ignore = ["E501", "E7", "E4"]
 

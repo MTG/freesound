@@ -18,13 +18,12 @@
 #     See AUTHORS file.
 #
 
-from django.http import HttpResponseRedirect, Http404
-
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
-from wiki.models import Content, Page
 from wiki.forms import ContentForm
+from wiki.models import Content, Page
 
 
 def page(request, name):

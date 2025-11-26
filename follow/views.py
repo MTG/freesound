@@ -17,8 +17,8 @@
 # Authors:
 #     See AUTHORS file.
 #
-from collections import OrderedDict
 import datetime
+from collections import OrderedDict
 from socket import error as socket_error
 
 from django.conf import settings
@@ -29,12 +29,12 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
+
 from follow import follow_utils
-from follow.models import FollowingQueryItem
-from follow.models import FollowingUserItem
+from follow.models import FollowingQueryItem, FollowingUserItem
 from utils.cache import invalidate_user_template_caches
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username, get_parameter_user_or_404, raise_404_if_user_is_deleted
+from utils.username import get_parameter_user_or_404, raise_404_if_user_is_deleted, redirect_if_old_username
 
 
 @redirect_if_old_username

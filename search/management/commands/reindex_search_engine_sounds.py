@@ -18,20 +18,20 @@
 #     See AUTHORS file.
 #
 
-import logging
-import json
 import datetime
+import json
+import logging
 import os
 
 from django.core.management.base import BaseCommand
 
-from sounds.models import Sound
+from search import solrapi
 from search.management.commands.post_dirty_sounds_to_search_engine import (
     send_sounds_to_search_engine,
     update_similarity_vectors_in_search_engine,
 )
+from sounds.models import Sound
 from utils.search import get_search_engine
-from search import solrapi
 
 console_logger = logging.getLogger("console")
 

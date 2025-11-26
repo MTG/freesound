@@ -19,6 +19,7 @@
 #
 
 from django.contrib import admin
+
 from messages.models import Message, MessageBody
 
 

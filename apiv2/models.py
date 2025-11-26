@@ -21,13 +21,13 @@
 import datetime
 import random
 
-from django.db import models
-from django.contrib.auth.models import User
-from oauth2_provider.models import Application
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
+from django.db import models
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.sites.models import Site
+from oauth2_provider.models import Application
 
 
 class ApiV2Client(models.Model):

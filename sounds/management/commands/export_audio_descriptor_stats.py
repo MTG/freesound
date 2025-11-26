@@ -29,7 +29,6 @@ from sounds.models import SoundAnalysis
 from sounds.templatetags.bst_category import bst_taxonomy_category_names_to_category_key
 from utils.management_commands import LoggingBaseCommand
 
-
 console_logger = logging.getLogger("console")
 
 

@@ -19,6 +19,7 @@
 #
 
 from django import forms
+
 from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
 

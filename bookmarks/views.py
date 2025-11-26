@@ -27,12 +27,12 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonRespons
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from bookmarks.forms import BookmarkForm, BookmarkCategoryForm
+from bookmarks.forms import BookmarkCategoryForm, BookmarkForm
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
 from utils.downloads import download_sounds
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username, get_parameter_user_or_404, raise_404_if_user_is_deleted
+from utils.username import get_parameter_user_or_404, raise_404_if_user_is_deleted, redirect_if_old_username
 
 
 @login_required

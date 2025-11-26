@@ -18,14 +18,16 @@
 #     See AUTHORS file.
 #
 
+import uuid
+
 from django.conf import settings
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes.models import ContentType
-from django.urls import reverse
 from django.db import models
 from django.db.models.signals import post_save
+from django.urls import reverse
 from django.utils.encoding import smart_str
-import uuid
+
 from utils.mail import send_mail_template
 
 

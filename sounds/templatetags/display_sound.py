@@ -19,9 +19,10 @@
 #
 
 
+from random import randint
+
 from django import template
 from django.conf import settings
-from random import randint
 
 from accounts.models import Profile
 from sounds.models import Sound

@@ -21,13 +21,13 @@
 
 from unittest import mock
 
+import pytest
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
-import pytest
 
 from general.templatetags.filter_img import replace_img
 from sounds.models import Pack, Sound

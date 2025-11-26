@@ -1,7 +1,8 @@
-import datetime
-from unittest import mock
 import base64
+import datetime
 import json
+from collections import namedtuple
+from unittest import mock
 
 from django.contrib.auth.models import User
 from django.core import mail
@@ -14,7 +15,6 @@ import donations.models
 import sounds.models
 from accounts.models import EmailPreferenceType, UserEmailSetting
 from sounds.models import License
-from collections import namedtuple
 
 
 class DonationTest(TestCase):

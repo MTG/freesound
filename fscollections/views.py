@@ -19,27 +19,27 @@
 #
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound, CollectionSound
 from fscollections.forms import (
-    SelectCollectionOrNewCollectionForm,
     CollectionEditForm,
     CollectionEditFormAsMaintainer,
     CreateCollectionForm,
     MaintainerForm,
+    SelectCollectionOrNewCollectionForm,
 )
+from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound, CollectionSound
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
-from utils.pagination import paginate
 from utils.downloads import download_sounds
+from utils.pagination import paginate
 
 
 @login_required

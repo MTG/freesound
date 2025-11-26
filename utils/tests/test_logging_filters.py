@@ -23,7 +23,7 @@ import logging
 from django.test import TestCase
 from django.urls import reverse
 
-from utils.logging_filters import get_client_ip, APILogsFilter, GenericDataFilter
+from utils.logging_filters import APILogsFilter, GenericDataFilter, get_client_ip
 from utils.test_helpers import create_user_and_sounds
 
 

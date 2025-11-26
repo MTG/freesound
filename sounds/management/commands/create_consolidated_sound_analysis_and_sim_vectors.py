@@ -24,9 +24,8 @@ import time
 from django.conf import settings
 from django.utils import timezone
 
-from sounds.models import SoundAnalysis, SoundSimilarityVector, Sound
+from sounds.models import Sound, SoundAnalysis, SoundSimilarityVector
 from utils.management_commands import LoggingBaseCommand
-
 
 console_logger = logging.getLogger("console")
 

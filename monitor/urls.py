@@ -19,6 +19,7 @@
 #
 
 from django.urls import path
+
 import monitor.views
 
 urlpatterns = [

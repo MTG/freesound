@@ -33,77 +33,78 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.db.models import Exists, OuterRef
-from django.http import HttpResponseRedirect, Http404
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
-from oauth2_provider.models import Grant, AccessToken
+from oauth2_provider.models import AccessToken, Grant
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from rest_framework import status
-from rest_framework.decorators import api_view, authentication_classes, throttle_classes, permission_classes
+from rest_framework.decorators import api_view, authentication_classes, permission_classes, throttle_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
 import utils.sound_upload
 from accounts.views import handle_uploaded_file
-from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
+from apiv2.authentication import OAuth2Authentication, SessionAuthentication, TokenAuthentication
 from apiv2.exceptions import (
-    NotFoundException,
-    InvalidUrlException,
+    APIException,
     BadRequestException,
     ConflictException,
-    UnauthorizedException,
-    ServerErrorException,
+    InvalidUrlException,
+    NotFoundException,
     OtherException,
-    APIException,
+    ServerErrorException,
+    UnauthorizedException,
 )
 from apiv2.forms import (
     ApiV2ClientForm,
-    SoundCombinedSearchFormAPI,
-    SoundTextSearchFormAPI,
-    SoundContentSearchFormAPI,
     SimilarityFormAPI,
+    SoundCombinedSearchFormAPI,
+    SoundContentSearchFormAPI,
+    SoundTextSearchFormAPI,
 )
 from apiv2.models import ApiV2Client
 from apiv2.serializers import (
-    SimilarityFileSerializer,
-    UploadAndDescribeAudioFileSerializer,
-    EditSoundDescriptionSerializer,
-    SoundDescriptionSerializer,
-    CreateCommentSerializer,
-    SoundCommentsSerializer,
-    CreateRatingSerializer,
-    CreateBookmarkSerializer,
     BookmarkCategorySerializer,
+    CreateBookmarkSerializer,
+    CreateCommentSerializer,
+    CreateRatingSerializer,
+    EditSoundDescriptionSerializer,
     PackSerializer,
-    UserSerializer,
-    SoundSerializer,
+    SimilarityFileSerializer,
+    SoundCommentsSerializer,
+    SoundDescriptionSerializer,
     SoundListSerializer,
-)
-from .apiv2_utils import (
-    GenericAPIView,
-    ListAPIView,
-    RetrieveAPIView,
-    WriteRequiredGenericAPIView,
-    OauthRequiredAPIView,
-    DownloadAPIView,
-    get_analysis_data_for_sound_ids,
-    api_search,
-    ApiSearchPaginator,
-    get_sounds_descriptors,
-    prepend_base,
-    get_formatted_examples_for_view,
+    SoundSerializer,
+    UploadAndDescribeAudioFileSerializer,
+    UserSerializer,
 )
 from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from similarity.client import Similarity
-from sounds.models import Sound, Pack, License
+from sounds.models import License, Pack, Sound
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
-from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
+from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
 from utils.tags import clean_and_split_tags
+
+from .apiv2_utils import (
+    ApiSearchPaginator,
+    DownloadAPIView,
+    GenericAPIView,
+    ListAPIView,
+    OauthRequiredAPIView,
+    RetrieveAPIView,
+    WriteRequiredGenericAPIView,
+    api_search,
+    get_analysis_data_for_sound_ids,
+    get_formatted_examples_for_view,
+    get_sounds_descriptors,
+    prepend_base,
+)
 
 api_logger = logging.getLogger("api")
 resources_doc_filename = "resources_apiv2.html"

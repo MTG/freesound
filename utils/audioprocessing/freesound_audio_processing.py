@@ -25,15 +25,16 @@ import os
 import signal
 import tempfile
 from tempfile import TemporaryDirectory
-import sentry_sdk
 
+import sentry_sdk
 from django.apps import apps
 from django.conf import settings
 
 import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing.processing import AudioProcessingException
-from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
+from utils.mirror_files import copy_displays_to_mirror_locations, copy_previews_to_mirror_locations
 from utils.sound_upload import get_processing_before_describe_sound_folder
+
 from . import color_schemes
 
 console_logger = logging.getLogger("console")

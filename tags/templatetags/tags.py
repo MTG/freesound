@@ -20,6 +20,7 @@
 
 from django import template
 from django.urls import reverse
+
 from follow import follow_utils
 from utils.tags import annotate_tags
 

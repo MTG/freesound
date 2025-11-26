@@ -21,11 +21,11 @@
 from django.conf import settings
 from django.test import TestCase
 
-from sounds.models import Sound, Pack
+from sounds.models import Pack, Sound
 from tickets.models import Ticket
 from utils.test_helpers import (
-    create_user_and_sounds,
     create_consolidated_audio_descriptors_and_similarity_vectors_for_sound,
+    create_user_and_sounds,
 )
 
 

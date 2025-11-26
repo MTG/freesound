@@ -25,33 +25,32 @@ import logging
 import math
 import os
 import random
-import yaml
 import zlib
-
 from collections import Counter
+from urllib.parse import quote
 
+import yaml
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.sites.models import Site
 from django.contrib.postgres.expressions import ArraySubquery
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Sum
 from django.db.models.functions import Greatest, JSONObject
-from django.db.models.signals import pre_delete, post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_delete
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.encoding import smart_str
-from django.utils.http import urlencode
-from django.utils.functional import cached_property
-from django.utils.text import Truncator, slugify
 from django.utils import timezone
-from urllib.parse import quote
+from django.utils.encoding import smart_str
+from django.utils.functional import cached_property
+from django.utils.http import urlencode
+from django.utils.text import Truncator, slugify
 
 import accounts.models
 from apiv2.models import ApiV2Client
@@ -59,9 +58,9 @@ from comments.models import Comment
 from freesound.celery import app as celery_app
 from general import tasks
 from general.templatetags.absurl import url2absurl
+from general.templatetags.util import formatnumber
 from geotags.models import GeoTag
 from ratings.models import SoundRating
-from general.templatetags.util import formatnumber
 from sounds.templatetags.bst_category import (
     bst_taxonomy_category_key_to_category_names,
     bst_taxonomy_category_names_to_category_key,
@@ -72,10 +71,10 @@ from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_template_cache, invalidate_user_template_caches
 from utils.locations import locations_decorator
 from utils.mail import send_mail_template
-from utils.search import get_search_engine, SearchEngineException
+from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_sounds import delete_sounds_from_search_engine
 from utils.similarity_utilities import delete_sound_from_gaia
-from utils.sound_upload import get_csv_lines, validate_input_csv_file, bulk_describe_from_csv
+from utils.sound_upload import bulk_describe_from_csv, get_csv_lines, validate_input_csv_file
 
 web_logger = logging.getLogger("web")
 sounds_logger = logging.getLogger("sounds")

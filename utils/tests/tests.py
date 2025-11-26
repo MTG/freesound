@@ -29,30 +29,30 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from geotags.models import GeoTag
 import utils.downloads
 from donations.models import Donation, DonationsModalSettings
-from sounds.models import Sound, Pack, License, Download
+from geotags.models import GeoTag
+from sounds.models import Download, License, Pack, Sound
 from utils.audioprocessing.freesound_audio_processing import FreesoundAudioProcessor
 from utils.audioprocessing.processing import AudioProcessingException
 from utils.sound_upload import (
-    get_csv_lines,
-    validate_input_csv_file,
+    AlreadyExistsException,
+    NoAudioException,
     bulk_describe_from_csv,
     create_sound,
-    NoAudioException,
-    AlreadyExistsException,
+    get_csv_lines,
+    validate_input_csv_file,
 )
 from utils.tags import clean_and_split_tags
 from utils.test_helpers import (
     create_test_files,
     create_user_and_sounds,
-    override_uploads_path_with_temp_directory,
     override_csv_path_with_temp_directory,
-    override_sounds_path_with_temp_directory,
-    override_previews_path_with_temp_directory,
     override_displays_path_with_temp_directory,
+    override_previews_path_with_temp_directory,
     override_processing_tmp_path_with_temp_directory,
+    override_sounds_path_with_temp_directory,
+    override_uploads_path_with_temp_directory,
 )
 
 

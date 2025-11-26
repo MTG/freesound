@@ -19,8 +19,8 @@
 #
 
 from django.core.management.base import BaseCommand
-from forum.models import Thread
-from forum.models import Post
+
+from forum.models import Post, Thread
 
 
 class Command(BaseCommand):

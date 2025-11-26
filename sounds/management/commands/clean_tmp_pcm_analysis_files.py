@@ -28,7 +28,6 @@ from django.utils import timezone
 
 from utils.management_commands import LoggingBaseCommand
 
-
 console_logger = logging.getLogger("console")
 
 

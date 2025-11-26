@@ -17,14 +17,13 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.test import TestCase
 from django.core.management import call_command
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
+from general.templatetags.bw_templatetags import bw_paginator
 from sounds.models import Sound
 from utils.pagination import CountProvidedPaginator, paginate
-from general.templatetags.bw_templatetags import bw_paginator
 
 
 class PaginationTest(TestCase):

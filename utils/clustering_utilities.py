@@ -18,21 +18,20 @@
 #     See AUTHORS file.
 #
 
-from collections import defaultdict, Counter
 import random
+from collections import Counter, defaultdict
 
 import celery
 from django.conf import settings
 from django.core.cache import caches
 from django.urls import reverse
 
-from clustering.tasks import cluster_sounds
 import sounds
+from clustering.tasks import cluster_sounds
 from utils.search.search_sounds import (
-    get_sound_similarity_vectors_from_search_engine_query,
     get_sound_ids_from_search_engine_query,
+    get_sound_similarity_vectors_from_search_engine_query,
 )
-
 
 cache_clustering = caches["clustering"]
 

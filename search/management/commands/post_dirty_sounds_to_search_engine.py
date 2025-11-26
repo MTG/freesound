@@ -30,8 +30,8 @@ from utils.management_commands import LoggingBaseCommand
 from utils.search import get_search_engine
 from utils.search.search_sounds import (
     add_sounds_to_search_engine,
-    send_update_similarity_vectors_in_search_engine,
     delete_sounds_from_search_engine,
+    send_update_similarity_vectors_in_search_engine,
 )
 
 console_logger = logging.getLogger("console")

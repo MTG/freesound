@@ -20,10 +20,10 @@
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils.text import slugify
 
-from sounds.models import Sound, License
-from django.template.loader import render_to_string
+from sounds.models import License, Sound
 
 
 class BookmarkCategory(models.Model):

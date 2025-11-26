@@ -27,8 +27,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count
 from django.utils import timezone
 
-from donations.models import Donation
-from donations.models import DonationsEmailSettings
+from donations.models import Donation, DonationsEmailSettings
 from sounds.models import Download, PackDownload
 from utils.mail import send_mail_template
 from utils.management_commands import LoggingBaseCommand

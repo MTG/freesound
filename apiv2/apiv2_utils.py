@@ -28,33 +28,35 @@ from urllib.parse import unquote
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.cache import cache, caches
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import resolve
-from django.utils.encoding import smart_str
 from django.utils import timezone
+from django.utils.encoding import smart_str
 from oauth2_provider.generators import BaseHashGenerator
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
 from oauthlib.common import generate_client_id as oauthlib_generate_client_id
 from rest_framework.generics import (
     GenericAPIView as RestFrameworkGenericAPIView,
+)
+from rest_framework.generics import (
     ListAPIView as RestFrameworkListAPIView,
+)
+from rest_framework.generics import (
     RetrieveAPIView as RestFrameworkRetrieveAPIView,
 )
 from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.response import Response
 from rest_framework.utils import formatting
 
-from . import combined_search_strategies
-from apiv2.forms import API_SORT_OPTIONS_MAP
-from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
+from apiv2.authentication import OAuth2Authentication, SessionAuthentication, TokenAuthentication
 from apiv2.exceptions import (
-    RequiresHttpsException,
-    UnauthorizedException,
-    ServerErrorException,
     BadRequestException,
     NotFoundException,
+    RequiresHttpsException,
+    ServerErrorException,
+    UnauthorizedException,
 )
-from .examples import examples
+from apiv2.forms import API_SORT_OPTIONS_MAP
 from similarity.client import SimilarityException
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
@@ -62,6 +64,9 @@ from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_sounds import parse_weights_parameter
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.similarity_utilities import get_sounds_descriptors
+
+from . import combined_search_strategies
+from .examples import examples
 
 error_logger = logging.getLogger("api_errors")
 cache_api_monitoring = caches["api_monitoring"]

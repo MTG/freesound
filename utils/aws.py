@@ -18,10 +18,9 @@
 #     See AUTHORS file.
 #
 
-from django.conf import settings
-
 from boto3 import client
 from botocore.exceptions import EndpointConnectionError
+from django.conf import settings
 
 
 class AwsCredentialsNotConfigured(Exception):

@@ -34,7 +34,9 @@
 #   # if you want to get all info:
 #   paypal.get_transaction_details(response['transactionid'])
 
-import urllib.request, urllib.parse, urllib.error
+import urllib.error
+import urllib.parse
+import urllib.request
 
 
 class Paypal:

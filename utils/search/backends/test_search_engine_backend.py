@@ -40,14 +40,14 @@ from django.db import connection
 from django.test import override_settings
 from django.utils import timezone
 
+from follow import follow_utils
+from follow.models import FollowingQueryItem, FollowingUserItem
 from forum.models import Forum, Post, Thread
 from fscollections.models import Collection, CollectionSound
 from search import solrapi
 from sounds.models import Download, Sound, SoundAnalysis, SoundSimilarityVector
 from tags.models import SoundTag
 from utils.search import get_search_engine
-from follow.models import FollowingUserItem, FollowingQueryItem
-from follow import follow_utils
 
 console_logger = logging.getLogger("console")
 console_logger.setLevel(logging.DEBUG)

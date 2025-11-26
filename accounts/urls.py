@@ -18,17 +18,17 @@
 #     See AUTHORS file.
 #
 
-from django.urls import path, re_path
 from django.contrib.auth import views as auth_views
-from utils.session_checks import login_redirect
-import messages.views as messages
+from django.urls import path, re_path
+
 import accounts.views as accounts
-from accounts.forms import FsAuthenticationForm, FsPasswordResetForm
+import apiv2.views as api
 import bookmarks.views as bookmarks
 import follow.views as follow
-import apiv2.views as api
+import messages.views as messages
+from accounts.forms import FsAuthenticationForm, FsPasswordResetForm
+from utils.session_checks import login_redirect
 from utils.url import redirect_inline
-
 
 # By putting some URLs at the top that are the same as the ones listed in
 # django.contrib.auth.urls, we can override some configuration:

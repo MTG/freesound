@@ -19,11 +19,10 @@
 #
 
 from django.contrib.auth.models import User
-
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
-from django.db.models import F, Avg
+from django.db.models import Avg, F
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver

@@ -18,11 +18,10 @@
 #     See AUTHORS file.
 #
 
-import os
 import logging
+import os
 
 from django.core.management.base import BaseCommand
-
 
 console_logger = logging.getLogger("console")
 

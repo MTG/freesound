@@ -28,7 +28,6 @@ from bookmarks.models import Bookmark, BookmarkCategory
 from fscollections.models import Collection, CollectionSound
 from utils.management_commands import LoggingBaseCommand
 
-
 console_logger = logging.getLogger("console")
 
 

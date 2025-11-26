@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from sounds.models import Pack, Sound

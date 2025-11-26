@@ -21,7 +21,9 @@
 import json
 import logging
 import traceback
-import urllib.request, urllib.error, urllib.parse
+import urllib.error
+import urllib.parse
+import urllib.request
 from hashlib import md5
 from math import ceil
 

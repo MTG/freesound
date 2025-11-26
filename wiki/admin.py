@@ -19,7 +19,8 @@
 #
 
 from django.contrib import admin
-from wiki.models import Page, Content
+
+from wiki.models import Content, Page
 
 
 @admin.register(Page)

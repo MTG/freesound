@@ -22,7 +22,7 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
-from forum.models import Thread, Post, Forum
+from forum.models import Forum, Post, Thread
 from ratings.models import SoundRating
 from utils.test_helpers import create_user_and_sounds
 

@@ -21,7 +21,8 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
-from follow.models import FollowingUserItem, FollowingQueryItem
+
+from follow.models import FollowingQueryItem, FollowingUserItem
 
 
 class FollowTestCase(TestCase):

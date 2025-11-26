@@ -20,15 +20,15 @@
 
 import logging
 
+import sentry_sdk
 from django.conf import settings
 from django.core.cache import cache
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-import sentry_sdk
 
 from search.views import search_view_helper
-from tags.models import Tag, FS1Tag
+from tags.models import FS1Tag, Tag
 from utils.search import SearchEngineException
 from utils.search.search_sounds import perform_search_engine_query
 

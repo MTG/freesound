@@ -21,6 +21,7 @@
 #
 
 import re
+
 import pysolr
 from django.conf import settings
 

@@ -18,12 +18,12 @@
 #     See AUTHORS file.
 #
 
-import sounds
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
 
+import sounds
 from utils.text import text_has_hyperlink
 
 

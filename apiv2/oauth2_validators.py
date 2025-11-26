@@ -1,4 +1,4 @@
-from oauth2_provider.models import Grant, AbstractApplication
+from oauth2_provider.models import AbstractApplication, Grant
 from oauth2_provider.oauth2_validators import GRANT_TYPE_MAPPING
 from oauth2_provider.oauth2_validators import OAuth2Validator as ProviderOauth2Validator
 

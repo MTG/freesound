@@ -23,7 +23,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 
-from sounds.models import Sound, Download
+from sounds.models import Download, Sound
 
 
 class DBTime:

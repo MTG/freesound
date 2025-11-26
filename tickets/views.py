@@ -24,43 +24,45 @@ import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 from django.db import transaction
-from django.db.models import Count, Min, Q, F, OuterRef
+from django.db.models import Count, F, Min, OuterRef, Q
 from django.db.models.functions import JSONObject
-from django.http import HttpResponseRedirect, JsonResponse, Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.shortcuts import render
+
 from general.tasks import (
-    whitelist_user as whitelist_user_task,
     post_moderation_assigned_tickets as post_moderation_assigned_tickets_task,
 )
-
-from .models import Ticket, TicketComment, UserAnnotation
+from general.tasks import (
+    whitelist_user as whitelist_user_task,
+)
 from sounds.models import Sound
 from tickets import (
+    MODERATION_TEXTS,
     TICKET_STATUS_ACCEPTED,
     TICKET_STATUS_CLOSED,
     TICKET_STATUS_DEFERRED,
     TICKET_STATUS_NEW,
-    MODERATION_TEXTS,
 )
 from tickets.forms import (
-    UserMessageForm,
-    ModeratorMessageForm,
-    SoundStateForm,
-    SoundModerationForm,
-    ModerationMessageForm,
-    UserAnnotationForm,
     IS_EXPLICIT_ADD_FLAG_KEY,
     IS_EXPLICIT_REMOVE_FLAG_KEY,
+    ModerationMessageForm,
+    ModeratorMessageForm,
+    SoundModerationForm,
+    SoundStateForm,
+    UserAnnotationForm,
+    UserMessageForm,
 )
-from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
-from utils.username import redirect_if_old_username, get_parameter_user_or_404
+from utils.cache import invalidate_all_moderators_header_cache, invalidate_user_template_caches
 from utils.pagination import paginate
+from utils.username import get_parameter_user_or_404, redirect_if_old_username
 from wiki.models import Content, Page
+
+from .models import Ticket, TicketComment, UserAnnotation
 
 
 def _get_tc_form(request, use_post=True):

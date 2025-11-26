@@ -25,10 +25,9 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from accounts.models import Profile, EmailPreferenceType
+from accounts.models import EmailPreferenceType, Profile
 from follow import follow_utils
-from utils.mail import render_mail_template
-from utils.mail import send_mail
+from utils.mail import render_mail_template, send_mail
 from utils.management_commands import LoggingBaseCommand
 
 commands_logger = logging.getLogger("commands")

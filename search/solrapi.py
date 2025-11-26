@@ -1,8 +1,9 @@
-import requests
-from urllib.parse import urljoin
 import logging
-from requests.exceptions import RequestException
 from json.decoder import JSONDecodeError
+from urllib.parse import urljoin
+
+import requests
+from requests.exceptions import RequestException
 
 logger = logging.getLogger("console")
 

@@ -20,24 +20,26 @@
 
 import os
 
-from django.urls import path, re_path, include, register_converter
 from django.contrib import admin
-from django.contrib.sitemaps.views import index as sitemap_index, sitemap as sitemap_sitemap
+from django.contrib.sitemaps.views import index as sitemap_index
+from django.contrib.sitemaps.views import sitemap as sitemap_sitemap
+from django.urls import include, path, re_path, register_converter
 from django.views.decorators.cache import cache_page
 from django.views.generic import RedirectView
+
 import accounts.views
+import bookmarks.views
+import comments.views
+import donations.views
+import follow.views
+import forum.views
+import fscollections.views
 import geotags.views
 import search.views
 import sounds.sitemaps as sound_sitemaps
 import sounds.views
 import support.views
 import tags.views
-import forum.views
-import comments.views
-import bookmarks.views
-import follow.views
-import donations.views
-import fscollections.views
 import utils.tagrecommendation_utilities as tagrec
 from apiv2.apiv2_utils import apiv1_end_of_life_message
 from utils.converters import MultipleTagsConverter

@@ -22,9 +22,8 @@ import json
 import logging
 import time
 
+from celery import Task, shared_task
 from django.conf import settings
-from celery import shared_task
-from celery import Task
 
 from .clustering import ClusteringEngine
 

@@ -21,9 +21,9 @@
 
 import os
 
+from django.conf import settings
 from django.db.models.signals import post_syncdb
 from django.dispatch import receiver
-from django.conf import settings
 
 
 @receiver(post_syncdb)

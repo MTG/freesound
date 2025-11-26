@@ -19,6 +19,7 @@
 #
 
 from django.urls import path
+
 from donations import views
 
 urlpatterns = [

@@ -17,22 +17,22 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.test import TestCase, SimpleTestCase, RequestFactory
-from django.urls import reverse
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
+from django.test import RequestFactory, SimpleTestCase, TestCase
+from django.urls import reverse
 
-from apiv2.models import ApiV2Client
 from apiv2.apiv2_utils import ApiSearchPaginator
-from apiv2.serializers import SoundListSerializer, DEFAULT_FIELDS_IN_SOUND_LIST, SoundSerializer
-from bookmarks.models import BookmarkCategory, Bookmark
-from .forms import SoundCombinedSearchFormAPI
+from apiv2.models import ApiV2Client
+from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer
+from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
 from utils.test_helpers import create_user_and_sounds
 
 from .exceptions import BadRequestException
+from .forms import SoundCombinedSearchFormAPI
 
 
 class TestAPiViews(TestCase):

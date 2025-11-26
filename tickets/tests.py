@@ -29,10 +29,11 @@ from django.urls import reverse
 
 import sounds
 import tickets
-from .models import Ticket
 from sounds.models import Sound
-from tickets import TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED
-from tickets.forms import IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
+from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW
+from tickets.forms import IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
+
+from .models import Ticket
 
 
 class NewTicketTests(TestCase):

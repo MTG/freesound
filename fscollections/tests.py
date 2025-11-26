@@ -1,11 +1,11 @@
 from django.conf import settings
-from django.test import TestCase
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
+from django.test import TestCase
 from django.urls import reverse
 
-from utils.test_helpers import create_user_and_sounds
 from fscollections.models import Collection
+from utils.test_helpers import create_user_and_sounds
 
 
 class CollectionTest(TestCase):

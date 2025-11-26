@@ -20,7 +20,7 @@
 
 from django import forms
 
-from bookmarks.models import BookmarkCategory, Bookmark
+from bookmarks.models import Bookmark, BookmarkCategory
 
 
 class BookmarkCategoryForm(forms.ModelForm):

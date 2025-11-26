@@ -32,7 +32,7 @@ from django.core.cache import cache
 from django.core.cache.backends import locmem
 from django.core.management import call_command
 from django.http import HttpResponse
-from django.test import TestCase, RequestFactory, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 import accounts
@@ -41,7 +41,7 @@ from comments.models import Comment
 from general.templatetags.filter_img import replace_img
 from geotags.models import GeoTag
 from sounds.forms import PackForm
-from sounds.models import Download, PackDownload, PackDownloadSound, SoundAnalysis, Pack, Sound, License, DeletedSound
+from sounds.models import DeletedSound, Download, License, Pack, PackDownload, PackDownloadSound, Sound, SoundAnalysis
 from utils.cache import get_template_cache_key
 from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
 

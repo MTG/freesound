@@ -19,7 +19,7 @@
 #
 
 from functools import wraps
-from urllib.parse import urlparse, parse_qsl, unquote_plus
+from urllib.parse import parse_qsl, unquote_plus, urlparse
 
 from django.http import HttpResponseRedirect
 from django.urls import reverse

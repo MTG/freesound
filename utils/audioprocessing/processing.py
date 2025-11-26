@@ -30,8 +30,9 @@ import numpy
 import pysndfile
 from PIL import Image, ImageDraw
 
-from .color_schemes import COLOR_SCHEMES, DEFAULT_COLOR_SCHEME_KEY
 from utils.audioprocessing import get_sound_type
+
+from .color_schemes import COLOR_SCHEMES, DEFAULT_COLOR_SCHEME_KEY
 
 
 class AudioProcessingException(Exception):

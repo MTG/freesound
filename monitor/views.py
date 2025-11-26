@@ -27,15 +27,16 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.core.cache import caches
 from django.db.models import Count
-from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
+
 import tickets
 from freesound.celery import get_queues_task_counts
 from sounds.models import Sound, SoundAnalysis, SoundSimilarityVector
 from tickets import TICKET_STATUS_CLOSED
-from utils.search import get_search_engine, SearchEngineException
+from utils.search import SearchEngineException, get_search_engine
 
 cache_persistent = caches["persistent"]
 

@@ -18,8 +18,8 @@
 #     See AUTHORS file.
 #
 import datetime
-import logging
 import json
+import logging
 
 from django.conf import settings
 from django.utils import timezone
@@ -27,7 +27,6 @@ from django.utils import timezone
 from freesound.celery import get_queues_task_counts
 from sounds.models import Sound, SoundAnalysis
 from utils.management_commands import LoggingBaseCommand
-
 
 console_logger = logging.getLogger("console")
 commands_logger = logging.getLogger("commands")

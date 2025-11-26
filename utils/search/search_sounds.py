@@ -20,12 +20,11 @@
 
 import logging
 
-from django.db.models.query import RawQuerySet
 from django.conf import settings
+from django.db.models.query import RawQuerySet
 
-from utils.search import SearchEngineException, get_search_engine, SearchResultsPaginator
 import utils.search
-
+from utils.search import SearchEngineException, SearchResultsPaginator, get_search_engine
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")

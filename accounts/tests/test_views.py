@@ -19,17 +19,17 @@
 #
 
 import datetime
+from unittest import mock
 
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import Permission, User
 from django.test import TestCase
 from django.urls import reverse
-from unittest import mock
 
 from accounts.models import OldUsername
 from geotags.models import GeoTag
-from sounds.models import SoundOfTheDay, Download, PackDownload
+from sounds.models import Download, PackDownload, SoundOfTheDay
 from utils.search import SearchResultsPaginator
-from utils.test_helpers import create_user_and_sounds, create_fake_perform_search_engine_query_results_tags_mode
+from utils.test_helpers import create_fake_perform_search_engine_query_results_tags_mode, create_user_and_sounds
 
 
 class SimpleUserTest(TestCase):

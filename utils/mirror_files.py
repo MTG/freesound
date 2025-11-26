@@ -1,8 +1,10 @@
-from django.conf import settings
+import logging
 import os
 import shutil
 import subprocess
-import logging
+
+from django.conf import settings
+
 from utils.filesystem import remove_directory_if_empty
 
 web_logger = logging.getLogger("web")

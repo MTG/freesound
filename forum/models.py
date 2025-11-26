@@ -26,7 +26,7 @@ from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.db.models import F
 from django.db.models.functions import Greatest
-from django.db.models.signals import post_delete, pre_save, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.encoding import smart_str

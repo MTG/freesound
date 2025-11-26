@@ -19,7 +19,9 @@
 #
 
 import math
-import urllib.request, urllib.parse, urllib.error
+import urllib.error
+import urllib.parse
+import urllib.request
 
 from django import template
 from django.conf import settings

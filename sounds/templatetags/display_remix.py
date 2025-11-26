@@ -19,9 +19,9 @@
 #
 
 # avoid namespace clash with 'tags' templatetag
-from django import template
 import json
 
+from django import template
 
 register = template.Library()
 

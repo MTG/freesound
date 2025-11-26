@@ -31,7 +31,7 @@ import donations.views
 import forum.models
 import ratings.models
 import sounds.views
-from tags.models import Tag, SoundTag
+from tags.models import SoundTag, Tag
 from utils.management_commands import LoggingBaseCommand
 
 cache_persistent = caches["persistent"]

@@ -1,5 +1,5 @@
-from rest_framework import pagination
 from django.conf import settings
+from rest_framework import pagination
 
 
 class CustomPagination(pagination.PageNumberPagination):

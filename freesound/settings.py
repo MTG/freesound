@@ -372,8 +372,8 @@ RANDOM_SOUND_OF_THE_DAY_CACHE_KEY = "random_sound"
 ALL_GEOTAGS_BYTEARRAY_CACHE_KEY = "geotags_bytearray"
 
 # Avatar background colors (only BW)
-from utils.audioprocessing.processing import interpolate_colors
 from utils.audioprocessing.color_schemes import BEASTWHOOSH_COLOR_SCHEME, COLOR_SCHEMES
+from utils.audioprocessing.processing import interpolate_colors
 
 AVATAR_BG_COLORS = interpolate_colors(COLOR_SCHEMES[BEASTWHOOSH_COLOR_SCHEME]["wave_colors"][1:], num_colors=10)
 
@@ -1447,7 +1447,6 @@ MAX_SOUNDS_PER_COLLECTION = 250
 # Import local settings
 # Important: place settings which depend on other settings potentially modified in local_settings.py BELOW the import
 from .local_settings import *
-
 
 # -------------------------------------------------------------------------------
 # Celery

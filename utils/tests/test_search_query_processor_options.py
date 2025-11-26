@@ -1,6 +1,7 @@
-from django.test import RequestFactory, TestCase
 from django.contrib.auth.models import AnonymousUser
-from utils.search import search_query_processor_options, search_query_processor
+from django.test import RequestFactory, TestCase
+
+from utils.search import search_query_processor, search_query_processor_options
 
 
 class SearchQueryProcessorOptionsTest(TestCase):

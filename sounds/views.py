@@ -24,25 +24,23 @@ import math
 import os
 import time
 import uuid
-from builtins import map
-from builtins import str
+from builtins import map, str
 from operator import itemgetter
 from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 from django.core.cache import cache, caches
 from django.core.exceptions import PermissionDenied
 from django.core.signing import BadSignature, SignatureExpired
 from django.db import transaction
 from django.db.models.functions import Greatest
-from django.http import HttpResponse
-from django.http import HttpResponseRedirect, Http404, HttpResponsePermanentRedirect, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
-from django.urls import reverse, resolve
+from django.urls import resolve, reverse
 from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django_ratelimit.decorators import ratelimit
@@ -55,34 +53,42 @@ from follow import follow_utils
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
 from sounds.forms import FlagForm, PackEditForm, SoundEditAndDescribeForm
-from sounds.models import PackDownload, PackDownloadSound
-from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound, SoundOfTheDay
+from sounds.models import (
+    DeletedSound,
+    Download,
+    Pack,
+    PackDownload,
+    PackDownloadSound,
+    RemixGroup,
+    Sound,
+    SoundOfTheDay,
+)
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_user_template_caches
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.mail import send_mail_template, send_mail_template_to_support
-from utils.nginxsendfile import sendfile, prepare_sendfile_arguments_for_sound_download
+from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
 from utils.pagination import paginate
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
-from utils.search import get_search_engine, SearchEngineException
+from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_sounds import (
+    allow_beta_search_features,
     get_random_sound_id_from_search_engine,
     perform_search_engine_query,
-    allow_beta_search_features,
 )
 from utils.sound_upload import (
-    create_sound,
-    NoAudioException,
     AlreadyExistsException,
     CantMoveException,
+    NoAudioException,
     clean_processing_before_describe_files,
-    get_processing_before_describe_sound_base_url,
+    create_sound,
     get_duration_from_processing_before_describe_files,
+    get_processing_before_describe_sound_base_url,
     get_samplerate_from_processing_before_describe_files,
 )
 from utils.text import remove_control_chars
-from utils.username import redirect_if_old_username, get_parameter_user_or_404
+from utils.username import get_parameter_user_or_404, redirect_if_old_username
 
 web_logger = logging.getLogger("web")
 sounds_logger = logging.getLogger("sounds")

@@ -18,8 +18,8 @@
 #     See AUTHORS file.
 #
 
-import logging
 import json
+import logging
 
 from django.conf import settings
 from django.core.mail import get_connection

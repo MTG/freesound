@@ -20,8 +20,8 @@
 import json
 import logging
 import time
-import sentry_sdk
 
+import sentry_sdk
 from celery import shared_task
 from django.apps import apps
 from django.conf import settings
@@ -31,15 +31,14 @@ from django.utils import timezone
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment, UserAnnotation
 from utils.audioprocessing.freesound_audio_processing import (
-    set_timeout_alarm,
-    check_if_free_space,
     FreesoundAudioProcessor,
+    FreesoundAudioProcessorBeforeDescription,
     WorkerException,
     cancel_timeout_alarm,
-    FreesoundAudioProcessorBeforeDescription,
+    check_if_free_space,
+    set_timeout_alarm,
 )
-from utils.cache import invalidate_user_template_caches, invalidate_all_moderators_header_cache
-
+from utils.cache import invalidate_all_moderators_header_cache, invalidate_user_template_caches
 
 workers_logger = logging.getLogger("workers")
 

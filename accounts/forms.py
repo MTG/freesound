@@ -20,11 +20,10 @@
 
 import logging
 
-from django_recaptcha.fields import ReCaptchaField
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm, SetPasswordForm, PasswordChangeForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
@@ -37,9 +36,10 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
+from django_recaptcha.fields import ReCaptchaField
 from multiupload_plus.fields import MultiFileField
 
-from accounts.models import Profile, EmailPreferenceType, OldUsername, DeletedUser
+from accounts.models import DeletedUser, EmailPreferenceType, OldUsername, Profile
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import HtmlCleaningCharField, HtmlCleaningCharFieldWithCenterTag, filename_has_valid_extension
 from utils.spam import is_spam

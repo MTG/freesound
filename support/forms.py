@@ -18,8 +18,8 @@
 #     See AUTHORS file.
 #
 
-from django_recaptcha.fields import ReCaptchaField
 from django import forms
+from django_recaptcha.fields import ReCaptchaField
 
 
 class ContactForm(forms.Form):

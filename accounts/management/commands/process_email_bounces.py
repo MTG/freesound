@@ -18,20 +18,20 @@
 #     See AUTHORS file.
 #
 
-from django.conf import settings
-from django.contrib.auth.models import User
-from django.utils.dateparse import parse_datetime
-from django.db import IntegrityError
-from accounts.models import EmailBounce
-
-from utils.aws import init_client, AwsCredentialsNotConfigured
-from utils.management_commands import LoggingBaseCommand
-from botocore.exceptions import EndpointConnectionError
-
 import json
 import logging
-import time
 import os
+import time
+
+from botocore.exceptions import EndpointConnectionError
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db import IntegrityError
+from django.utils.dateparse import parse_datetime
+
+from accounts.models import EmailBounce
+from utils.aws import AwsCredentialsNotConfigured, init_client
+from utils.management_commands import LoggingBaseCommand
 
 console_logger = logging.getLogger("console")
 

@@ -22,17 +22,16 @@ import os
 import pickle
 from functools import partial, wraps
 from itertools import count
+from tempfile import TemporaryDirectory
 
 import numpy as np
 import pysndfile
-
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test.utils import override_settings
 
-from sounds.models import Sound, Pack, License, SoundAnalysis, SoundSimilarityVector
 from geotags.models import GeoTag
-from tempfile import TemporaryDirectory
+from sounds.models import License, Pack, Sound, SoundAnalysis, SoundSimilarityVector
 from utils.tags import clean_and_split_tags
 
 

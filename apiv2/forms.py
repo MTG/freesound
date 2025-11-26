@@ -19,12 +19,13 @@
 #
 
 import json
+from urllib.parse import quote, unquote
 
 import django.forms as forms
 from django.conf import settings
-from django.utils.safestring import mark_safe
-from urllib.parse import quote, unquote
 from django.contrib.sites.models import Site
+from django.utils.safestring import mark_safe
+
 from .exceptions import BadRequestException
 
 

@@ -21,25 +21,24 @@
 import json
 
 from django.conf import settings
-from django.urls import path
 from django.contrib import admin, messages
 from django.core.cache import cache
 from django.core.management import call_command
 from django.http import HttpResponseRedirect
 from django.template.defaultfilters import truncatechars
-from django.urls import reverse
+from django.urls import path, reverse
 from django.utils.safestring import mark_safe
 from django_object_actions import DjangoObjectActions
 
 from sounds.models import (
-    License,
-    Sound,
-    Pack,
-    Flag,
-    DeletedSound,
-    SoundOfTheDay,
     BulkUploadProgress,
+    DeletedSound,
+    Flag,
+    License,
+    Pack,
+    Sound,
     SoundAnalysis,
+    SoundOfTheDay,
     SoundSimilarityVector,
 )
 from utils.search.search_sounds import add_sounds_to_search_engine

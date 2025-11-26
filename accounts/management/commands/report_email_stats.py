@@ -18,11 +18,13 @@
 #     See AUTHORS file.
 #
 
-from django.core.management.base import BaseCommand
-from django.conf import settings
-import logging
 import json
-from utils.aws import get_ses_stats, AwsCredentialsNotConfigured, EndpointConnectionError
+import logging
+
+from django.conf import settings
+from django.core.management.base import BaseCommand
+
+from utils.aws import AwsCredentialsNotConfigured, EndpointConnectionError, get_ses_stats
 
 console_logger = logging.getLogger("console")
 commands_logger = logging.getLogger("commands")

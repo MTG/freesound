@@ -18,11 +18,15 @@
 #     See AUTHORS file.
 #
 
-from follow.models import FollowingUserItem, FollowingQueryItem
-import sounds
-from utils.search import get_search_engine
-import urllib.request, urllib.parse, urllib.error
+import urllib.error
+import urllib.parse
+import urllib.request
+
 from django.conf import settings
+
+import sounds
+from follow.models import FollowingQueryItem, FollowingUserItem
+from utils.search import get_search_engine
 
 
 def get_users_following_qs(user):

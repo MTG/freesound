@@ -23,14 +23,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.http import HttpResponseRedirect, Http404
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from comments.models import Comment
 from sounds.models import Sound
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username, get_parameter_user_or_404, raise_404_if_user_is_deleted
+from utils.username import get_parameter_user_or_404, raise_404_if_user_is_deleted, redirect_if_old_username
 
 
 @login_required

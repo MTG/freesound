@@ -20,8 +20,9 @@
 
 from django.test import TestCase
 from django.test.utils import override_settings
-from support.views import send_email_to_support, create_zendesk_ticket
 from zenpy.lib.api import serialize
+
+from support.views import create_zendesk_ticket, send_email_to_support
 
 
 class SupportRequestsTest(TestCase):

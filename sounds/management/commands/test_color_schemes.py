@@ -27,7 +27,6 @@ import utils.audioprocessing.processing as audioprocessing
 from sounds.models import Sound
 from utils.audioprocessing import color_schemes
 
-
 # docker compose run --rm web python manage.py test_color_schemes 415154,415144,413973,402737,403343,194761
 
 

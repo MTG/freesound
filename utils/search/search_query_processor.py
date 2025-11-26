@@ -22,29 +22,30 @@
 import json
 import urllib
 
+import luqum.tree
 from django.conf import settings
 from django.urls import reverse
 from django.utils.http import urlencode
-import luqum.tree
 from luqum.parser import parser
 from luqum.pretty import prettify
 
 from sounds.models import Sound
-from utils.clustering_utilities import get_ids_in_cluster, get_clusters_for_query
+from utils.clustering_utilities import get_clusters_for_query, get_ids_in_cluster
 from utils.encryption import create_hash
 from utils.search.backends.solr555pysolr import Solr555PySolrSearchEngine
 from utils.search.search_sounds import allow_beta_search_features
+
 from .search_query_processor_options import (
-    SearchOptionStr,
-    SearchOptionChoice,
-    SearchOptionInt,
-    SearchOptionBool,
-    SearchOptionRange,
-    SearchOptionMultipleChoice,
     SearchOption,
+    SearchOptionBool,
     SearchOptionBoolElementInPath,
-    SearchOptionFieldWeights,
     SearchOptionBoolFilterInverted,
+    SearchOptionChoice,
+    SearchOptionFieldWeights,
+    SearchOptionInt,
+    SearchOptionMultipleChoice,
+    SearchOptionRange,
+    SearchOptionStr,
 )
 
 

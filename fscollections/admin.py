@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import Collection, CollectionSound
 
 # Register your models here.

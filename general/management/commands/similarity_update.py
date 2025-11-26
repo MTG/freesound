@@ -19,8 +19,8 @@
 #
 
 import logging
-import sentry_sdk
 
+import sentry_sdk
 from django.conf import settings
 
 from similarity.client import Similarity

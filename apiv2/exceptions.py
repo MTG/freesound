@@ -20,8 +20,8 @@
 
 
 import logging
-import sentry_sdk
 
+import sentry_sdk
 from rest_framework import status
 from rest_framework.exceptions import APIException
 

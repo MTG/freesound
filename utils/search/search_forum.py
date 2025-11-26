@@ -19,7 +19,7 @@
 #
 import logging
 
-from utils.search import get_search_engine, SearchEngineException
+from utils.search import SearchEngineException, get_search_engine
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")

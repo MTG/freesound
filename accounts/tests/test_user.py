@@ -20,7 +20,7 @@
 
 import json
 import re
-from unittest import skipIf, mock
+from unittest import mock, skipIf
 
 from django import forms
 from django.conf import settings
@@ -34,12 +34,12 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 
-from accounts.forms import FsPasswordResetForm, DeleteUserForm, UsernameField
-from accounts.models import Profile, SameUser, ResetEmailRequest, OldUsername, DeletedUser, UserDeletionRequest
+from accounts.forms import DeleteUserForm, FsPasswordResetForm, UsernameField
+from accounts.models import DeletedUser, OldUsername, Profile, ResetEmailRequest, SameUser, UserDeletionRequest
 from comments.models import Comment
-from forum.models import Thread, Post, Forum
+from forum.models import Forum, Post, Thread
 from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
-from sounds.models import License, Sound, Pack, DeletedSound, Download, PackDownload
+from sounds.models import DeletedSound, Download, License, Pack, PackDownload, Sound
 from utils.mail import transform_unique_email
 from utils.test_helpers import create_user_and_sounds
 

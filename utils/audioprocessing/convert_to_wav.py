@@ -21,7 +21,8 @@
 #
 
 import sys
-from .processing import convert_to_wav, audio_info, AudioProcessingException
+
+from .processing import AudioProcessingException, audio_info, convert_to_wav
 
 convert_to_wav(sys.argv[1], sys.argv[2])
 

@@ -19,10 +19,10 @@
 #
 
 import os
-
-from django.http import HttpResponse, Http404
-from django.conf import settings
 from wsgiref.util import FileWrapper
+
+from django.conf import settings
+from django.http import Http404, HttpResponse
 
 
 def prepare_sendfile_arguments_for_sound_download(sound):

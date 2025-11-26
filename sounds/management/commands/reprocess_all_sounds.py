@@ -29,7 +29,6 @@ from freesound.celery import get_queues_task_counts
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
 
-
 console_logger = logging.getLogger("console")
 
 

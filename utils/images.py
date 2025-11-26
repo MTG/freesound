@@ -51,8 +51,8 @@ def extract_square(input_filename, output_filename, size: int):
 
 
 if __name__ == "__main__":
-    import sys
     import os.path
+    import sys
 
     input_filename = sys.argv[1]
     size = int(sys.argv[2])

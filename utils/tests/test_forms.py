@@ -20,7 +20,7 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from utils.forms import filename_has_valid_extension, TagField
+from utils.forms import TagField, filename_has_valid_extension
 
 
 class UtilsTest(TestCase):

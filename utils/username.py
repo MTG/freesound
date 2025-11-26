@@ -20,10 +20,11 @@
 
 
 from django.contrib.auth.models import User
-from accounts.models import OldUsername
 from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse
+
+from accounts.models import OldUsername
 
 
 def get_user_from_username_or_oldusername(username):

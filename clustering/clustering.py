@@ -18,30 +18,25 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
-from __future__ import division
+from __future__ import absolute_import, division
 
-from builtins import str
-from builtins import zip
-from builtins import range
-from builtins import object
-from past.utils import old_div
 import json
 import logging
 import os
-from django.conf import settings
-import six
+from builtins import object, range, str, zip
 from time import time
 
 import community as com
-import numpy as np
 import networkx as nx
+import numpy as np
+import six
+from django.conf import settings
+from networkx.algorithms.community import greedy_modularity_communities, k_clique_communities
 from networkx.readwrite import json_graph
-from networkx.algorithms.community import k_clique_communities, greedy_modularity_communities
+from past.utils import old_div
 from sklearn import metrics
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.neighbors import kneighbors_graph
-
 
 logger = logging.getLogger("clustering")
 

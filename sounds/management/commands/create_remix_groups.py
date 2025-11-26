@@ -22,11 +22,11 @@
 import json
 import logging
 
+import networkx as nx
 from django.core.management.base import BaseCommand
 from django.db import connection
-import networkx as nx
 
-from sounds.models import Sound, RemixGroup
+from sounds.models import RemixGroup, Sound
 
 web_logger = logging.getLogger("web")
 

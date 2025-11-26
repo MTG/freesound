@@ -20,8 +20,7 @@
 
 import logging
 
-from django.contrib import admin
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.models import User
@@ -34,14 +33,14 @@ from django_object_actions import DjangoObjectActions
 
 from accounts.forms import username_taken_by_other_user
 from accounts.models import (
-    Profile,
-    UserFlag,
-    EmailPreferenceType,
-    OldUsername,
     DeletedUser,
-    UserDeletionRequest,
     EmailBounce,
+    EmailPreferenceType,
     GdprAcceptance,
+    OldUsername,
+    Profile,
+    UserDeletionRequest,
+    UserFlag,
 )
 from general import tasks
 from utils.admin_helpers import LargeTablePaginator

@@ -18,12 +18,14 @@
 #     See AUTHORS file.
 #
 
+import urllib.error
+import urllib.parse
+import urllib.request
+
+import feedparser
+from bs4 import BeautifulSoup
 from django import template
 from django.utils.text import Truncator
-from bs4 import BeautifulSoup
-import feedparser
-import urllib.request, urllib.error, urllib.parse
-
 
 register = template.Library()
 

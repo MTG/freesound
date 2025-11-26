@@ -22,9 +22,10 @@ import os
 from unittest import mock
 
 import freezegun
+import pytest
 from dateutil.parser import parse as parse_date
 from django.conf import settings
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import Permission, User
 from django.contrib.auth.tokens import default_token_generator
 from django.core.cache import cache
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -32,17 +33,16 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import int_to_base36
-import pytest
 
 import accounts.models
-from accounts.management.commands.process_email_bounces import process_message, decode_idna_email
-from accounts.models import EmailPreferenceType, EmailBounce, UserEmailSetting
+from accounts.management.commands.process_email_bounces import decode_idna_email, process_message
+from accounts.models import EmailBounce, EmailPreferenceType, UserEmailSetting
 from accounts.views import handle_uploaded_image
-from forum.models import Forum, Thread, Post
-from sounds.models import Pack, Download, PackDownload
+from forum.models import Forum, Post, Thread
+from sounds.models import Download, Pack, PackDownload
 from tags.models import SoundTag
 from utils.mail import send_mail
-from utils.test_helpers import override_avatars_path_with_temp_directory, create_user_and_sounds
+from utils.test_helpers import create_user_and_sounds, override_avatars_path_with_temp_directory
 
 
 @pytest.mark.django_db

@@ -23,15 +23,22 @@ import logging
 import os
 import random
 
-from django.contrib.auth.models import User, Group
 from django.contrib.admin.models import LogEntry
+from django.contrib.auth.models import Group, User
 from django.contrib.sessions.models import Session
-from django.core.management.base import BaseCommand
 from django.core.management import call_command
+from django.core.management.base import BaseCommand
 from django.db import connection
-from django.db.models.signals import post_delete, pre_delete, pre_save, post_save
+from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.utils import timezone
+from oauth2_provider.models import AccessToken, Application, Grant, RefreshToken
 from silk.models import Request
+
+import comments
+import forum
+import ratings
+import sounds
+import tickets
 from accounts.models import (
     DeletedUser,
     EmailBounce,
@@ -49,14 +56,7 @@ from donations.models import Donation
 from forum.models import Subscription
 from general.models import AkismetSpam
 from messages.models import MessageBody
-from oauth2_provider.models import AccessToken, Application, Grant, RefreshToken
-
-import comments
-import forum
-import ratings
-import sounds
 from sounds.models import BulkUploadProgress, DeletedSound, Flag
-import tickets
 from tickets.models import Ticket, TicketComment
 from utils.chunks import chunks
 

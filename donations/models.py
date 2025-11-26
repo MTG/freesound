@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
-from django.db import models
 from django.core.cache import cache
+from django.db import models
 
 
 class DonationCampaign(models.Model):

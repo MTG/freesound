@@ -24,7 +24,7 @@ from django.conf import settings
 
 from sounds.models import Sound, SoundAnalysis
 from utils.management_commands import LoggingBaseCommand
-from utils.search.search_sounds import get_all_sound_ids_from_search_engine, delete_sounds_from_search_engine
+from utils.search.search_sounds import delete_sounds_from_search_engine, get_all_sound_ids_from_search_engine
 from utils.similarity_utilities import Similarity
 
 console_logger = logging.getLogger("console")

@@ -1,15 +1,15 @@
 from xml.etree import ElementTree as ET
 
-from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.sitemaps import Sitemap
 from django.contrib.sitemaps.views import _get_latest_lastmod, x_robots_tag
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.db import connection
 from django.http import Http404, HttpResponse
 from django.urls import reverse
 from django.utils.http import http_date
 
-from sounds.models import Sound, Pack
+from sounds.models import Pack, Sound
 
 
 class SoundSitemap(Sitemap):

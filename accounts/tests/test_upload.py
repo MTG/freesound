@@ -22,21 +22,21 @@ import os
 from unittest import mock
 
 from django.conf import settings
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.utils import override_settings, skipIf
 from django.urls import reverse
 
 from sounds.forms import PackForm
-from sounds.models import License, Sound, Pack, BulkUploadProgress
+from sounds.models import BulkUploadProgress, License, Pack, Sound
 from tags.models import Tag
 from utils.filesystem import File
 from utils.test_helpers import (
     create_test_files,
-    override_uploads_path_with_temp_directory,
-    override_csv_path_with_temp_directory,
     create_user_and_sounds,
+    override_csv_path_with_temp_directory,
+    override_uploads_path_with_temp_directory,
 )
 
 

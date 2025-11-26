@@ -22,7 +22,7 @@
 from django import template
 from django.conf import settings
 
-from sounds.models import Sound, Pack
+from sounds.models import Pack, Sound
 
 register = template.Library()
 

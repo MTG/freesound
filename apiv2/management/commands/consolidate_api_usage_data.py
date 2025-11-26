@@ -24,10 +24,9 @@ import logging
 from django.core.cache import caches
 from django.utils import timezone
 
-from apiv2.models import ApiV2Client, APIClientDailyUsageHistory
+from apiv2.models import APIClientDailyUsageHistory, ApiV2Client
 from utils.cache import get_all_keys_matching_pattern
 from utils.management_commands import LoggingBaseCommand
-
 
 console_logger = logging.getLogger("console")
 cache_api_monitoring = caches["api_monitoring"]

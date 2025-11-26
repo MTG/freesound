@@ -25,7 +25,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import UserFlag
-from forum.models import Thread, Post, Forum
+from forum.models import Forum, Post, Thread
 from messages.models import Message, MessageBody
 from sounds.models import Sound
 

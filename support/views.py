@@ -28,7 +28,8 @@ from django.urls import reverse
 from requests.exceptions import HTTPError
 from zenpy import Zenpy
 from zenpy.lib import api_objects as zendesk_api
-from zenpy.lib.exception import APIException as ZendeskAPIException, ZenpyException
+from zenpy.lib.exception import APIException as ZendeskAPIException
+from zenpy.lib.exception import ZenpyException
 
 from comments.models import Comment
 from support.forms import ContactForm

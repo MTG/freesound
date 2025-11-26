@@ -20,29 +20,29 @@
 
 
 import datetime
-import re
 import functools
+import re
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
-from django.http import HttpResponseRedirect, Http404, HttpResponsePermanentRedirect
-from django.shortcuts import render, get_object_or_404, redirect
-from django.template import loader
-from django.urls import reverse
 from django.db import transaction
 from django.db.models import Prefetch
+from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template import loader
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import DeletedUser
-from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
-from forum.models import Forum, Thread, Post, Subscription
-from utils.cache import invalidate_template_cache, invalidate_all_moderators_header_cache
+from forum.forms import NewThreadForm, PostModerationForm, PostReplyForm
+from forum.models import Forum, Post, Subscription, Thread
+from utils.cache import invalidate_all_moderators_header_cache, invalidate_template_cache
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.search.search_forum import add_posts_to_search_engine
-from utils.text import text_may_be_spam, remove_control_chars
+from utils.text import remove_control_chars, text_may_be_spam
 
 
 def deactivate_spammer(user_id):

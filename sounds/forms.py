@@ -21,18 +21,18 @@
 
 import re
 
-from django_recaptcha.fields import ReCaptchaField
 from django import forms
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.signing import BadSignature, SignatureExpired
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
-from django.core.signing import BadSignature, SignatureExpired
 from django.utils.timezone import now
+from django_recaptcha.fields import ReCaptchaField
 
-from sounds.models import License, Flag, Pack, Sound
+from sounds.models import Flag, License, Pack, Sound
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
-from utils.forms import TagField, HtmlCleaningCharField
+from utils.forms import HtmlCleaningCharField, TagField
 
 
 def _remix_form_clean_sources_helper(cleaned_data):

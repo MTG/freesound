@@ -17,13 +17,15 @@
 # Authors:
 #     See AUTHORS file.
 #
+from urllib.parse import unquote
+
 from apiv2.forms import API_SORT_OPTIONS_MAP
-from utils.similarity_utilities import api_search as similarity_api_search
+from similarity.client import SimilarityException
 from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_sounds import parse_weights_parameter
-from similarity.client import SimilarityException
-from .exceptions import ServerErrorException, BadRequestException, NotFoundException
-from urllib.parse import unquote
+from utils.similarity_utilities import api_search as similarity_api_search
+
+from .exceptions import BadRequestException, NotFoundException, ServerErrorException
 
 
 def merge_all(search_form, target_file=None, extra_parameters=None):

@@ -21,6 +21,7 @@
 import datetime
 import os
 import random
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib.admin.utils import NestedObjects
@@ -29,16 +30,15 @@ from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
-from django.db import models, transaction, IntegrityError
+from django.db import IntegrityError, models, transaction
 from django.db.models import Q
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.templatetags.static import static
 from django.urls import reverse
-from django.utils.encoding import smart_str
 from django.utils import timezone
+from django.utils.encoding import smart_str
 from psycopg.errors import ForeignKeyViolation
-from urllib.parse import quote
 
 import tickets.models
 from apiv2.models import ApiV2Client
@@ -49,10 +49,10 @@ from forum.models import Post, Thread
 from geotags.models import GeoTag
 from messages.models import Message
 from ratings.models import SoundRating
-from sounds.models import DeletedSound, License, Sound, Pack, Download, PackDownload, BulkUploadProgress
+from sounds.models import BulkUploadProgress, DeletedSound, Download, License, Pack, PackDownload, Sound
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
-from utils.search import get_search_engine, SearchEngineException
+from utils.search import SearchEngineException, get_search_engine
 
 
 class ResetEmailRequest(models.Model):

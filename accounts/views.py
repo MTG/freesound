@@ -18,10 +18,10 @@
 #     See AUTHORS file.
 #
 
-import io
 import csv
 import datetime
 import errno
+import io
 import json
 import logging
 import os
@@ -32,78 +32,75 @@ import uuid
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.models import Group
-from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import Group, User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import (
     LoginView,
+    PasswordChangeDoneView,
+    PasswordChangeView,
     PasswordResetCompleteView,
     PasswordResetConfirmView,
-    PasswordChangeView,
-    PasswordChangeDoneView,
 )
 from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.core.cache import caches
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.db import transaction
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Q, Sum
 from django.db.models.expressions import Value
 from django.db.models.fields import CharField
 from django.http import (
-    HttpResponseRedirect,
+    Http404,
     HttpResponse,
     HttpResponseBadRequest,
-    Http404,
     HttpResponsePermanentRedirect,
+    HttpResponseRedirect,
     HttpResponseServerError,
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-from django.utils.http import base36_to_int
-from django.utils.http import int_to_base36
 from django.utils import timezone
+from django.utils.http import base36_to_int, int_to_base36
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
-from general.templatetags.absurl import url2absurl
 from oauth2_provider.models import AccessToken
 
 import tickets.views as TicketViews
 import utils.sound_upload
-from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
 from accounts.forms import (
+    AvatarForm,
+    BulkDescribeForm,
+    DeleteUserForm,
     EmailResetForm,
+    EmailSettingsForm,
+    FileChoiceForm,
+    FsPasswordChangeForm,
     FsPasswordResetForm,
     FsSetPasswordForm,
-    UploadFileForm,
-    FileChoiceForm,
-    RegistrationForm,
-    ProfileForm,
-    AvatarForm,
-    TermsOfServiceForm,
-    DeleteUserForm,
-    EmailSettingsForm,
-    BulkDescribeForm,
-    UsernameField,
     ProblemsLoggingInForm,
+    ProfileForm,
+    RegistrationForm,
+    TermsOfServiceForm,
+    UploadFileForm,
+    UsernameField,
     username_taken_by_other_user,
-    FsPasswordChangeForm,
 )
-from general.templatetags.util import license_with_version
-from accounts.models import Profile, ResetEmailRequest, UserFlag, DeletedUser, UserDeletionRequest
+from accounts.models import DeletedUser, Profile, ResetEmailRequest, UserDeletionRequest, UserFlag
 from bookmarks.models import Bookmark
 from comments.models import Comment
 from follow import follow_utils
 from forum.models import Post
 from general import tasks
+from general.tasks import DELETE_USER_DELETE_SOUNDS_ACTION_NAME, DELETE_USER_KEEP_SOUNDS_ACTION_NAME
+from general.templatetags.absurl import url2absurl
+from general.templatetags.util import license_with_version
 from messages.models import Message
 from sounds.forms import LicenseForm, PackForm
-from sounds.models import Sound, Pack, Download, SoundLicenseHistory, BulkUploadProgress, PackDownload
+from sounds.models import BulkUploadProgress, Download, Pack, PackDownload, Sound, SoundLicenseHistory
 from sounds.views import edit_and_describe_sounds_helper
-from tickets.models import TicketComment, Ticket, UserAnnotation
+from tickets.models import Ticket, TicketComment, UserAnnotation
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
 from utils.filesystem import generate_tree, remove_directory_if_empty
@@ -113,11 +110,11 @@ from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.mirror_files import (
     copy_avatar_to_mirror_locations,
     copy_uploaded_file_to_mirror_locations,
-    remove_uploaded_file_from_mirror_locations,
     remove_empty_user_directory_from_mirror_locations,
+    remove_uploaded_file_from_mirror_locations,
 )
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username, get_parameter_user_or_404, raise_404_if_user_is_deleted
+from utils.username import get_parameter_user_or_404, raise_404_if_user_is_deleted, redirect_if_old_username
 
 sounds_logger = logging.getLogger("sounds")
 upload_logger = logging.getLogger("file_upload")

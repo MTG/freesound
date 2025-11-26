@@ -20,8 +20,8 @@
 
 from functools import cached_property
 
-from django.core.paginator import Paginator
 from django.contrib.admin.views.main import ChangeList
+from django.core.paginator import Paginator
 from django.db import connection
 
 

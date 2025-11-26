@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import DonationCampaign, DonationsModalSettings, DonationsEmailSettings, Donation
+
+from .models import Donation, DonationCampaign, DonationsEmailSettings, DonationsModalSettings
 
 admin.site.register(DonationCampaign)
 

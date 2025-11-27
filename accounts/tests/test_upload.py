@@ -29,9 +29,8 @@ from django.test.utils import override_settings
 from django.urls import reverse
 
 from sounds.forms import PackForm
-from sounds.models import BulkUploadProgress, License, Pack, Sound
+from sounds.models import BulkUploadProgress, License, Pack, PendingSound, PendingSoundAnalysis, Sound
 from tags.models import Tag
-from utils.filesystem import File
 from utils.test_helpers import (
     create_test_files,
     create_user_and_sounds,
@@ -73,12 +72,29 @@ class UserUploadAndDescribeSounds(TestCase):
         user_upload_path = settings.UPLOADS_PATH + "/%i/" % user.id
         os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(filenames, user_upload_path)
+        pending_objects = []
+        for filename in filenames:
+            pending_objects.append(
+                PendingSound.objects.create(
+                    user=user,
+                    filename=filename,
+                    path=os.path.join(user_upload_path, filename),
+                    filesize=100,
+                )
+            )
+        for pending in pending_objects:
+            PendingSoundAnalysis.objects.create(
+                pending_sound=pending,
+                processing_state=PendingSoundAnalysis.ProcessingState.OK,
+                duration=1.0,
+                samplerate=44100.0,
+            )
 
         # Check that files are displayed in the template
         resp = self.client.get(reverse("accounts-manage-sounds", args=["pending_description"]))
         self.assertEqual(resp.status_code, 200)
         self.assertListEqual(
-            sorted([os.path.basename(f.full_path) for f in resp.context["file_structure"].children]), sorted(filenames)
+            sorted([child.name for child in resp.context["file_structure"].children]), sorted(filenames)
         )
 
         # Selecting one file redirects to /home/describe/sounds/
@@ -87,9 +103,7 @@ class UserUploadAndDescribeSounds(TestCase):
             reverse("accounts-manage-sounds", args=["pending_description"]),
             {
                 "describe": "describe",
-                "sound-files": [
-                    f"file{idx}" for idx in sounds_to_describe_idx
-                ],  # Note this is not the filename but the value of the "select" option
+                "sound-files": [f"file{pending_objects[idx].id}" for idx in sounds_to_describe_idx],
             },
         )
         session_key_prefix = resp.url.split("session=")[1]
@@ -98,10 +112,8 @@ class UserUploadAndDescribeSounds(TestCase):
             self.client.session[f"{session_key_prefix}-len_original_describe_sounds"], len(sounds_to_describe_idx)
         )
         self.assertListEqual(
-            sorted(
-                [os.path.basename(f.full_path) for f in self.client.session[f"{session_key_prefix}-describe_sounds"]]
-            ),
-            sorted([filenames[idx] for idx in sounds_to_describe_idx]),
+            sorted(self.client.session[f"{session_key_prefix}-describe_pending_ids"]),
+            sorted([pending_objects[idx].id for idx in sounds_to_describe_idx]),
         )
 
         # Selecting multiple file redirects to /home/describe/license/
@@ -110,9 +122,7 @@ class UserUploadAndDescribeSounds(TestCase):
             reverse("accounts-manage-sounds", args=["pending_description"]),
             {
                 "describe": "describe",
-                "sound-files": [
-                    f"file{idx}" for idx in sounds_to_describe_idx
-                ],  # Note this is not the filename but the value of the "select" option
+                "sound-files": [f"file{pending_objects[idx].id}" for idx in sounds_to_describe_idx],
             },
         )
         session_key_prefix = resp.url.split("session=")[1]
@@ -121,10 +131,8 @@ class UserUploadAndDescribeSounds(TestCase):
             self.client.session[f"{session_key_prefix}-len_original_describe_sounds"], len(sounds_to_describe_idx)
         )
         self.assertListEqual(
-            sorted(
-                [os.path.basename(f.full_path) for f in self.client.session[f"{session_key_prefix}-describe_sounds"]]
-            ),
-            sorted([filenames[idx] for idx in sounds_to_describe_idx]),
+            sorted(self.client.session[f"{session_key_prefix}-describe_pending_ids"]),
+            sorted([pending_objects[idx].id for idx in sounds_to_describe_idx]),
         )
 
         # Selecting files to delete, deletes the files
@@ -133,13 +141,11 @@ class UserUploadAndDescribeSounds(TestCase):
             reverse("accounts-manage-sounds", args=["pending_description"]),
             {
                 "delete_confirm": "delete_confirm",
-                "sound-files": [
-                    f"file{idx}" for idx in sounds_to_delete_idx
-                ],  # Note this is not the filename but the value of the "select" option,
+                "sound-files": [f"file{pending_objects[idx].id}" for idx in sounds_to_delete_idx],
             },
         )
         self.assertRedirects(resp, reverse("accounts-manage-sounds", args=["pending_description"]))
-        self.assertEqual(len(os.listdir(user_upload_path)), len(filenames) - len(sounds_to_delete_idx))
+        self.assertEqual(PendingSound.objects.filter(user=user).count(), len(filenames) - len(sounds_to_delete_idx))
 
     @override_uploads_path_with_temp_directory
     def test_describe_selected_files(self):
@@ -159,13 +165,29 @@ class UserUploadAndDescribeSounds(TestCase):
         # Set license and pack data in session
         session = self.client.session
         session_key_prefix = "304298eb"
-        session[f"{session_key_prefix}-describe_license"] = License.objects.all()[0]
-        session[f"{session_key_prefix}-describe_pack"] = False
         session[f"{session_key_prefix}-len_original_describe_sounds"] = 2
-        session[f"{session_key_prefix}-describe_sounds"] = [
-            File(1, filenames[0], user_upload_path + filenames[0], False),
-            File(2, filenames[1], user_upload_path + filenames[1], False),
+        pending_objects = [
+            PendingSound.objects.create(
+                user=user,
+                filename=filename,
+                path=os.path.join(user_upload_path, filename),
+                filesize=100,
+            )
+            for filename in filenames
         ]
+        for pending in pending_objects:
+            PendingSoundAnalysis.objects.create(
+                pending_sound=pending,
+                processing_state=PendingSoundAnalysis.ProcessingState.OK,
+                duration=1.0,
+                samplerate=44100.0,
+            )
+        license_obj = License.objects.all()[0]
+        for pending in pending_objects:
+            pending.license = license_obj
+            pending.pack = None
+            pending.save()
+        session[f"{session_key_prefix}-describe_pending_ids"] = [pending_objects[0].id, pending_objects[1].id]
         session.save()
 
         # Post description information
@@ -173,6 +195,7 @@ class UserUploadAndDescribeSounds(TestCase):
             f"/home/describe/sounds/?session={session_key_prefix}",
             {
                 "0-audio_filename": filenames[0],
+                "0-pending_sound_id": pending_objects[0].id,
                 "0-lat": "46.31658418182218",
                 "0-lon": "3.515625",
                 "0-zoom": "16",
@@ -184,6 +207,7 @@ class UserUploadAndDescribeSounds(TestCase):
                 "0-bst_category": "ss-n",
                 "0-name": filenames[0],
                 "1-audio_filename": filenames[1],
+                "1-pending_sound_id": pending_objects[1].id,
                 "1-license": "3",
                 "1-description": "another test description",
                 "1-lat": "",

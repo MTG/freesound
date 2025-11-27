@@ -38,7 +38,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Sum
+from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Sum, TextChoices
 from django.db.models.functions import Greatest, JSONObject
 from django.db.models.signals import post_delete, post_save, pre_delete
 from django.dispatch import receiver
@@ -75,6 +75,52 @@ from utils.sound_upload import bulk_describe_from_csv, get_csv_lines, validate_i
 
 web_logger = logging.getLogger("web")
 sounds_logger = logging.getLogger("sounds")
+
+
+class PendingSound(models.Model):
+    """Tracks uploaded audio files awaiting description."""
+
+    class Status(TextChoices):
+        UPLOADED = "UP", "Uploaded"
+        DESCRIBED = "DE", "Described"
+        DELETED = "DL", "Deleted"
+
+    user = models.ForeignKey(User, related_name="pending_sounds", on_delete=models.CASCADE)
+    filename = models.CharField(max_length=512)
+    path = models.CharField(max_length=1024)
+    filesize = models.PositiveIntegerField()
+    created = models.DateTimeField(auto_now_add=True)
+    license = models.ForeignKey("License", null=True, blank=True, on_delete=models.SET_NULL)
+    pack = models.ForeignKey("Pack", null=True, blank=True, on_delete=models.SET_NULL)
+    sound = models.OneToOneField(
+        "Sound", null=True, blank=True, on_delete=models.SET_NULL, related_name="pending_sound"
+    )
+    status = models.CharField(max_length=2, choices=Status.choices, default=Status.UPLOADED)
+
+    def __str__(self):
+        return f"{self.filename} uploaded by {self.user} at {self.created} (Status={self.status})"
+
+
+class PendingSoundAnalysis(models.Model):
+    """Stores processing results for PendingSound instances."""
+
+    class ProcessingState(TextChoices):
+        PENDING = "PE", "Pending"
+        PROCESSING = "PR", "Processing"
+        OK = "OK", "OK"
+        FAILED = "FA", "Failed"
+
+    pending_sound = models.OneToOneField(PendingSound, related_name="analysis", on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    processing_state = models.CharField(max_length=2, choices=ProcessingState.choices, default=ProcessingState.PENDING)
+    duration = models.FloatField(null=True, blank=True)
+    samplerate = models.FloatField(null=True, blank=True)
+    channels = models.IntegerField(null=True, blank=True)
+    bitdepth = models.IntegerField(null=True, blank=True)
+    md5 = models.CharField(max_length=32, null=True, blank=True, db_index=True)
+
+    def __str__(self):
+        return f"Analysis for pending sound {self.pending_sound_id}"
 
 
 class License(models.Model):

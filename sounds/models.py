@@ -2430,7 +2430,7 @@ class SoundAnalysis(models.Model):
             pass
         try:
             with open(self.analysis_filepath_base + ".yaml") as f:
-                return yaml.safe_load(f, Loader=yaml.cyaml.CSafeLoader)
+                return yaml.load(f, Loader=yaml.CSafeLoader)
         except Exception:
             pass
         return {}
@@ -2450,7 +2450,7 @@ class SoundAnalysis(models.Model):
             pass
         try:
             with open(analysis_filepath_base + ".yaml") as f:
-                return yaml.safe_load(f, Loader=yaml.cyaml.CSafeLoader)
+                return yaml.load(f, Loader=yaml.CSafeLoader)
         except Exception:
             pass
         return {}

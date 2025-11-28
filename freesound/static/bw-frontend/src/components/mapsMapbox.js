@@ -5,8 +5,8 @@ import { stopAllPlayers } from '../components/player/utils'
 var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';
 var FREESOUND_STREETS_STYLE_ID = 'cjkmk0h7p79z32spe9j735hrd';
 var MIN_INPUT_CHARACTERS_FOR_GEOCODER =  3; // From mapbox docs: "Minimum number of characters to enter before [geocoder] results are shown"
-var MAP_MARKER_URL = '/static/bw-frontend/dist/map_marker_v2.png'; 
-var MAP_MARKER_2X_URL = '/static/bw-frontend/dist/map_marker_v2_2x.png';
+var MAP_MARKER_URL = '/static/bw-frontend/public/map_marker_v2.png';
+var MAP_MARKER_2X_URL = '/static/bw-frontend/public/map_marker_v2_2x.png';
 
 function setMaxZoomCenter(lat, lng, zoom) {
     window.map.flyTo({'center': [lng, lat], 'zoom': zoom - 1});  // Subtract 1 for compatibility with gmaps zoom levels
@@ -261,7 +261,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                             if (map.popups.hasOwnProperty(sound_id) === false){
                                 return;
                             }
-                            
+
                             // Ensure that if the map is zoomed out such that multiple
                             // copies of the feature are visible, the popup appears
                             // over the copy being pointed to.
@@ -276,7 +276,7 @@ function makeSoundsMap(geotags_url, map_element_id, on_built_callback, on_bounds
                                 delete map.popups[sound_id];
                             })
                             map.popups[sound_id] = popup;
-                            
+
                             // Zoom to position on "zoom in" click
                             const zoomLinkElement = document.getElementById('infoWindowZoomLink-' + sound_id);
                             zoomLinkElement.onclick = () => {setMaxZoomCenter(zoomLinkElement.dataset.lat, zoomLinkElement.dataset.lon, zoomLinkElement.dataset.zoom)};

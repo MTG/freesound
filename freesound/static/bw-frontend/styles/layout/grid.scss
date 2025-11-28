@@ -2,6 +2,7 @@
 @import '~bootstrap/scss/mixins/_breakpoints';
 @import '~bootstrap/scss/mixins/_grid-framework';
 @import '~bootstrap/scss/utilities/_display';
+@import '../mixins/grid-compat';
 
 .container {
   @include make-container();

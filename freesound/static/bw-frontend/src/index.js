@@ -6,7 +6,7 @@ import 'classlist-polyfill'
 import 'element-closest'
 import 'normalize.css'
 
-import '../styles/index.scss'
+import '../styles/index-light.scss'
 
 import './components'
 import './utils/polyfills'

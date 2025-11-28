@@ -10,6 +10,7 @@ _docs/api/build/
 
 # BW frontend
 .cache
+.parcel-cache
 node_modules
 freesound/static/bw-frontend/dist/
 bw_static/

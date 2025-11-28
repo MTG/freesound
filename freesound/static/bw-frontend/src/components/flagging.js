@@ -2,7 +2,7 @@ import {makePostRequest} from '../utils/postRequest';
 
 function post_flag(div_id, flag_type, object_id, url) {
     const wheelElement = document.getElementById(div_id + "_wheel");
-    wheelElement.innerHTML = '<img width="12px" height="12px" src="/static/bw-frontend/dist/bw_indicator.gif"/>';
+    wheelElement.innerHTML = '<img width="12px" height="12px" src="/static/bw-frontend/public/bw_indicator.gif"/>';
     makePostRequest(url, {'flag_type': flag_type, 'object_id': object_id}, () => {
         const linkElement = document.getElementById(div_id.toString() + "_link");
         const wheelElement = document.getElementById(div_id.toString() + "_wheel");

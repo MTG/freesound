@@ -22,11 +22,11 @@ MODERATION_TEXTS = [
         "Music",
         "Hey there. Thanks for contributing to Freesound.\n"
         "Unfortunately, you've uploaded some music which doesn't fit with the content we want on the site. "
-		"\n"
+        "\n"
         "However, there are some types of musical content we do allow.\n"
         "For more information on what is acceptable and examples of alternative platforms please visit the FAQ section here:\n"
         "https://freesound.org/help/faq/#can-i-upload-music-or-songs\n"
-        \n"
+        "\n"
         "Thanks for understanding!",
     ),
     (
@@ -81,7 +81,7 @@ MODERATION_TEXTS = [
         "Here is an example of crediting sounds within your description:\n"
         "https://freesound.org/s/544453\n"
         "\n"
-       "If you don't know how to edit your sound, it's easiest from the manage sounds section:\n"
+        "If you don't know how to edit your sound, it's easiest from the manage sounds section:\n"
         "https://freesound.org/home/sounds/manage/pending_moderation\n"
         "\n"
         "Many thanks!",

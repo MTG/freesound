@@ -34,7 +34,7 @@ if (
       if (styleLink.dataset.forcedTheme === undefined) {
         if (newColorScheme == 'dark') {
           switchToDarkMode();
-        } else if (newColorScheme == 'dark') {
+        } else if (newColorScheme == 'light') {
           switchToLightMode();
         }
       }

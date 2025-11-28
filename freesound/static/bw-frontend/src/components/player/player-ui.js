@@ -7,6 +7,7 @@ import {
   getAudioElementDurationOrDurationProperty,
   stopAllPlayers,
   simultaneousPlaybackDisallowed,
+  rulerFrequencyMapping,
 } from './utils';
 import { createIconElement } from '../../utils/icons';
 import {
@@ -14,7 +15,6 @@ import {
   setProgressIndicator,
   onPlayerTimeUpdate,
 } from './audio-element';
-import { rulerFrequencyMapping } from './utils';
 import {
   isDesktopMacOSWithSafari,
   isTouchEnabledDevice,
@@ -384,7 +384,9 @@ const toggleSpectrogramWaveform = (
     spectrogramButton = controlsElement.querySelector(
       'i.bw-icon-spectrogram'
     ).parentElement;
-  } catch (error) {}
+  } catch (error) {
+    console.warn('Spectrogram button not found', error);
+  }
   const hasWaveform = playerImgNode.src.indexOf(waveform) > -1;
   if (hasWaveform) {
     playerImgNode.src = spectrum;

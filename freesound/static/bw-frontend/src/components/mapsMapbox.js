@@ -120,11 +120,13 @@ function ajaxLoad(url, callback, postData, plain) {
   } else if (window.ActiveXObject) {
     // IE
     try {
-      http_request = new ActiveXObject('Msxml2.XMLHTTP');
+      http_request = new window.ActiveXObject('Msxml2.XMLHTTP');
     } catch (e) {
       try {
-        http_request = new ActiveXObject('Microsoft.XMLHTTP');
-      } catch (e) {}
+        http_request = new window.ActiveXObject('Microsoft.XMLHTTP');
+      } catch (error) {
+        console.error(error);
+      }
     }
   }
   if (!http_request) {
@@ -136,7 +138,7 @@ function ajaxLoad(url, callback, postData, plain) {
       if (http_request.status == 200) {
         eval(callback(http_request));
       } else {
-        conosle.log('Request Failed: ' + http_request.status);
+        console.log('Request Failed: ' + http_request.status);
       }
     }
   };
@@ -276,7 +278,9 @@ function makeSoundsMap(
         map.popups = {};
         map.on('click', 'sounds-unclustered', function (e) {
           var sound_id = e.features[0].properties.id;
-          if (map.popups.hasOwnProperty(sound_id) === false) {
+          if (
+            Object.prototype.hasOwnProperty.call(map.popups, sound_id) === false
+          ) {
             // Close all other popups and set new popup as loading
             closeAllMapPopups(map);
             map.popups[sound_id] = undefined;
@@ -289,7 +293,10 @@ function makeSoundsMap(
             }
             ajaxLoad(url, function (data, responseCode) {
               // Check if the popup should still be shown (it might have been cancelled if another one is loading)
-              if (map.popups.hasOwnProperty(sound_id) === false) {
+              if (
+                Object.prototype.hasOwnProperty.call(map.popups, sound_id) ===
+                false
+              ) {
                 return;
               }
 

@@ -96,8 +96,8 @@ var addErrorListElement = function addErrorListElement() {
 
 var showListOfSounds = function showListOfSounds() {
   fileList.innerHTML = '';
-  if (!!dragTip) {
-    if (!!soundsQueue.length) {
+  if (dragTip) {
+    if (soundsQueue.length) {
       dragTip.style.display = 'none';
     } else {
       dragTip.style.display = 'block';
@@ -127,7 +127,7 @@ var resetForm = function resetForm(error) {
   addFilesButton.disabled = false;
   abortButton.style.display = 'none';
   showListOfSounds();
-  if (!!error) {
+  if (error) {
     errorList.innerHTML = '';
     var node = document.createElement('li');
     var textNode = document.createTextNode(error);

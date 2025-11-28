@@ -14,11 +14,12 @@ function makeSelect(container) {
     const alreadyWrapped =
       selectElement.parentElement.classList.contains('select-dropdown');
     if (!alreadyWrapped) {
+      let selected_index_text = '';
       if (selectElement.selectedIndex > -1) {
-        var selected_index_text =
+        selected_index_text =
           selectElement.options[selectElement.selectedIndex].text;
       } else {
-        var selected_index_text = selectElement.options[0].text;
+        selected_index_text = selectElement.options[0].text;
       }
 
       selectElement.style.display = 'none';
@@ -236,11 +237,15 @@ function makeSelect(container) {
   }
 
   var buttonSelect = document.getElementsByClassName('select-dropdown__button');
-  for (var i = 0, len = buttonSelect.length; i < len; i++) {
-    if (!buttonSelect[i].hasAttribute('data-listener-added')) {
+  for (
+    var buttonIndex = 0, buttonLen = buttonSelect.length;
+    buttonIndex < buttonLen;
+    buttonIndex++
+  ) {
+    if (!buttonSelect[buttonIndex].hasAttribute('data-listener-added')) {
       // Only add the listener if it has not already been added
-      buttonSelect[i].setAttribute('data-listener-added', true);
-      buttonSelect[i].addEventListener(
+      buttonSelect[buttonIndex].setAttribute('data-listener-added', true);
+      buttonSelect[buttonIndex].addEventListener(
         'click',
         function (e) {
           e.preventDefault();

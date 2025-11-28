@@ -101,7 +101,7 @@ export const getAudioElementDurationOrDurationProperty = (
     return parseFloat(parentNode.dataset.duration, 10); // Prioritize duraiton provided from database
   }
   if (audioElement.readyState > 0) {
-    audioDuration = audioElement.duration;
+    return audioElement.duration;
   }
   return 0;
 };

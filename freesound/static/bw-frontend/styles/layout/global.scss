@@ -1,3 +1,4 @@
+@use "sass:list";
 * {
   box-sizing: border-box;
 }
@@ -38,13 +39,13 @@ body {
   h#{$i} {
     margin-top: 0;
     margin-bottom: 0;
-    font-size: nth(nth($list: $headers-list, $n: $i), 3);
-    line-height: nth(nth($list: $headers-list, $n: $i), 4);
+    font-size: list.nth(list.nth($list: $headers-list, $n: $i), 3);
+    line-height: list.nth(list.nth($list: $headers-list, $n: $i), 4);
     letter-spacing: -1px;
 
     @include md-and-above {
-      font-size: nth(nth($list: $headers-list, $n: $i), 1);
-      line-height: nth(nth($list: $headers-list, $n: $i), 2);
+      font-size: list.nth(list.nth($list: $headers-list, $n: $i), 1);
+      line-height: list.nth(list.nth($list: $headers-list, $n: $i), 2);
     }
   }
 }

@@ -21,15 +21,11 @@ MODERATION_TEXTS = [
     (
         "Music",
         "Hey there. Thanks for contributing to Freesound.\n"
-        "Unfortunately, you've uploaded some music which doesn't fit with the content we allow onto the site. "
-        "We do however generally allow music samples that are under 1 minute long, not songs.\n"
+        "Unfortunately, you've uploaded some music which doesn't fit with the content we want on the site. "
         "\n"
-        "Some recommended sites for sharing produced music/songs: "
-        "Soundcloud, Bandcamp, CCMixter and The Free Music Archive\n"
-        "\n"
-        "By the way, we welcome material such as loops, riffs, melodies etc. So you could try cutting up your "
-        "music into short instrumental loops and uploading them that way. In fact, music and drum loops "
-        "are some of the most searched and downloaded sounds on Freesound!\n"
+        "However, there are some types of musical content we do allow.\n"
+        "For more information on what is acceptable and examples of alternative platforms please visit the FAQ section here:\n"
+        "https://freesound.org/help/faq/#can-i-upload-music-or-songs\n"
         "\n"
         "Thanks for understanding!",
     ),
@@ -54,8 +50,8 @@ MODERATION_TEXTS = [
         "\n"
         "Also, please include as much detail as you can in the description.\n"
         "\n"
-        "If you can't find how to edit your sound here's a little visual guide:\n"
-        "https://i.imgur.com/s4w2ysv.jpg\n"
+        "If you don't know how to edit your sound, it's easiest from the manage sounds section:\n"
+        "https://freesound.org/home/sounds/manage/pending_moderation\n"
         "\n"
         "Many thanks!",
     ),
@@ -69,8 +65,8 @@ MODERATION_TEXTS = [
         "If you need some guidance on describing please see the following FAQ page:\n"
         "https://freesound.org/help/faq/#how-should-i-describe-my-sounds\n"
         "\n"
-        "Also, if you can't find how to edit your sound, here's a little visual guide:\n"
-        "https://i.imgur.com/s4w2ysv.jpg\n"
+        "Also, If you don't know how to edit your sound, it's easiest from the manage sounds section:\n"
+        "https://freesound.org/home/sounds/manage/pending_moderation\n"
         "\n"
         "Thanks!",
     ),
@@ -85,8 +81,8 @@ MODERATION_TEXTS = [
         "Here is an example of crediting sounds within your description:\n"
         "https://freesound.org/s/544453\n"
         "\n"
-        "If you can't find how to edit your sound, here's a little visual guide:\n"
-        "https://i.imgur.com/s4w2ysv.jpg\n"
+        "If you don't know how to edit your sound, it's easiest from the manage sounds section:\n"
+        "https://freesound.org/home/sounds/manage/pending_moderation\n"
         "\n"
         "Many thanks!",
     ),
@@ -98,8 +94,8 @@ MODERATION_TEXTS = [
         "Any details such as how it was created, recording device, software used, date/location etc- "
         "-are extremely useful.\n"
         "\n"
-        "If you can't find how to edit your sound, here's a little visual guide:\n"
-        "https://i.imgur.com/s4w2ysv.jpg\n"
+        "If you don't know how to edit your sound, it's easiest from the manage sounds section:\n"
+        "https://freesound.org/home/sounds/manage/pending_moderation\n"
         "\n"
         "Many thanks!\n"
         "\n"

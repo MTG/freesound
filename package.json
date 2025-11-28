@@ -8,8 +8,12 @@
     "build": "npm run clean && node freesound/static/bw-frontend/build.js",
     "build:stats": "npm run build && ls -lh freesound/static/bw-frontend/dist/",
     "dev": "parcel watch freesound/static/bw-frontend/src/index.js freesound/static/bw-frontend/src/index-dark.js freesound/static/bw-frontend/src/pages/*.js --dist-dir freesound/static/bw-frontend/dist --public-url /static/bw-frontend/dist",
-    "prettier": "prettier freesound/static/bw-frontend/src/**/**.js freesound/static/bw-frontend/styles/**/**.scss --write",
-    "eslint": "eslint freesound/static/bw-frontend/src"
+    "format": "prettier --write \"freesound/static/bw-frontend/src/**/*.{js,jsx}\" \"freesound/static/bw-frontend/styles/**/*.{scss,css}\"",
+    "format:check": "prettier --check \"freesound/static/bw-frontend/src/**/*.{js,jsx}\" \"freesound/static/bw-frontend/styles/**/*.{scss,css}\"",
+    "prettier": "npm run format",
+    "lint": "eslint freesound/static/bw-frontend/src",
+    "lint:fix": "eslint freesound/static/bw-frontend/src --fix",
+    "eslint": "npm run lint"
   },
   "repository": {
     "type": "git",
@@ -24,10 +28,11 @@
   "devDependencies": {
     "@parcel/core": "^2.13.3",
     "@parcel/transformer-sass": "^2.13.3",
-    "eslint": "^6.8.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-config-prettier": "^6.0.0",
-    "prettier": "^1.18.2",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "prettier": "^3.3.3",
     "sass": "^1.85.1",
     "svgo": "^3.3.2"
   },

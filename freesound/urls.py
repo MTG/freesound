@@ -22,7 +22,6 @@ import os
 
 from django.contrib import admin
 from django.contrib.sitemaps.views import index as sitemap_index
-from django.contrib.sitemaps.views import sitemap as sitemap_sitemap
 from django.urls import include, path, re_path, register_converter
 from django.views.decorators.cache import cache_page
 from django.views.generic import RedirectView
@@ -33,7 +32,6 @@ import comments.views
 import donations.views
 import follow.views
 import forum.views
-import fscollections.views
 import geotags.views
 import search.views
 import sounds.sitemaps as sound_sitemaps

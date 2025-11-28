@@ -590,12 +590,7 @@ class FsPasswordResetForm(forms.Form):
                     "is_active": True,
                 }
             )
-            | Q(
-                **{
-                    "username__iexact": username_or_email,
-                    "is_active": True,
-                }
-            )
+            | Q(username__iexact=username_or_email, is_active=True)
         )
         return (u for u in active_users)
 

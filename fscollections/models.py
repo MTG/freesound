@@ -20,7 +20,6 @@
 
 from urllib.parse import quote
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import F, Sum

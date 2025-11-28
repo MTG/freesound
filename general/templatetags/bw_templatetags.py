@@ -123,7 +123,7 @@ def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=Fa
 
     # Pre process rating values to do less work in the template
     stars_10 = []
-    for i in range(0, 10):
+    for i in range(10):
         if sound_rating >= i + 1:
             stars_10.append(True)
         else:
@@ -155,7 +155,7 @@ def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=Fa
 def bw_generic_stars(context, rating_0_10):
     # Expects rating in 0-10 scale
     stars_10 = []
-    for i in range(0, 10):
+    for i in range(10):
         if rating_0_10 >= i + 1:
             stars_10.append(True)
         else:

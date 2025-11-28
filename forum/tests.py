@@ -288,13 +288,13 @@ class ForumTestCase(TestCase):
 
 
 def _create_forums_threads_posts(author, n_forums=1, n_threads=1, n_posts=5):
-    for i in range(0, n_forums):
+    for i in range(n_forums):
         forum = Forum.objects.create(
             name="Forum %i" % i, name_slug="forum_%i" % i, description="Description of forum %i" % i
         )
-        for j in range(0, n_threads):
+        for j in range(n_threads):
             thread = Thread.objects.create(author=author, title="Thread %i of forum %i" % (j, i), forum=forum)
-            for k in range(0, n_posts):
+            for k in range(n_posts):
                 post = Post.objects.create(
                     author=author, thread=thread, body="Text of the post %i for thread %i and forum %i" % (k, j, i)
                 )
@@ -693,8 +693,8 @@ class ForumModerationTestCase(TestCase):
         resp = self.client.post(
             reverse("forums-moderate"),
             data={
-                f"1234-action": ["Delete Post"],
-                f"1234-post": [f"1234"],
+                "1234-action": ["Delete Post"],
+                "1234-post": ["1234"],
             },
         )
         self.assertEqual(resp.status_code, 200)

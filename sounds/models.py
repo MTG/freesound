@@ -33,8 +33,6 @@ import yaml
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.contenttypes import fields
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.expressions import ArraySubquery
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
@@ -60,7 +58,6 @@ from general import tasks
 from general.templatetags.absurl import url2absurl
 from general.templatetags.util import formatnumber
 from geotags.models import GeoTag
-from ratings.models import SoundRating
 from sounds.templatetags.bst_category import (
     bst_taxonomy_category_key_to_category_names,
     bst_taxonomy_category_names_to_category_key,
@@ -406,7 +403,7 @@ class SoundManager(models.Manager):
             query_sounds = query_sounds.exclude(**excludes)
         sound_count = query_sounds.count()
         if sound_count:
-            offset = random.randint(0, sound_count - 1)
+            offset = random.randint(0, sound_count - 1)  # noqa: S311
             return query_sounds.all()[offset]
         else:
             return None
@@ -462,10 +459,10 @@ class SoundManager(models.Manager):
             # We need to split the query in two subqueries because Postgres has a limit of 100 function arguments
             # this needs to be taken into account later to join the data again
             json_object_args1 = {
-                descriptor_name: f"analysis_data__" + descriptor_name for descriptor_name in descriptor_names[0:50]
+                descriptor_name: "analysis_data__" + descriptor_name for descriptor_name in descriptor_names[0:50]
             }
             json_object_args2 = {
-                descriptor_name: f"analysis_data__" + descriptor_name for descriptor_name in descriptor_names[50:100]
+                descriptor_name: "analysis_data__" + descriptor_name for descriptor_name in descriptor_names[50:100]
             }
             if len(descriptor_names) > 100:
                 raise ValueError("Cannot include more than 100 audio descriptors in bulk query")
@@ -1597,7 +1594,7 @@ class Sound(models.Model):
             analyzer_data = sa.get_analysis_data_from_file()
             sim_vector = analyzer_data[similarity_space["vector_property_name"]]
             sim_vector = [float(x) for x in sim_vector]
-        except (SoundAnalysis.DoesNotExist, KeyError, ValueError) as e:
+        except (SoundAnalysis.DoesNotExist, KeyError, ValueError):
             return False
 
         if len(sim_vector) != similarity_space["vector_size"]:
@@ -2057,9 +2054,9 @@ class Pack(models.Model):
             pack_tags_counts = get_search_engine().get_pack_tags(self.user.username, self.name)
             tags = [tag for tag, count in pack_tags_counts]
             return {"tags": tags, "num_tags": len(tags)}
-        except SearchEngineException as e:
+        except SearchEngineException:
             return False
-        except Exception as e:
+        except Exception:
             return False
 
     def pack_filter_value(self):
@@ -2078,9 +2075,9 @@ class Pack(models.Model):
                     {"name": tag, "count": count, "browse_url": self.browse_pack_tag_url(tag)}
                     for tag, count in pack_tags_counts
                 ]
-        except SearchEngineException as e:
+        except SearchEngineException:
             return []
-        except Exception as e:
+        except Exception:
             return []
 
     def remove_sounds_from_pack(self):
@@ -2433,7 +2430,7 @@ class SoundAnalysis(models.Model):
             pass
         try:
             with open(self.analysis_filepath_base + ".yaml") as f:
-                return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
+                return yaml.load(f, Loader=yaml.CSafeLoader)
         except Exception:
             pass
         return {}
@@ -2453,7 +2450,7 @@ class SoundAnalysis(models.Model):
             pass
         try:
             with open(analysis_filepath_base + ".yaml") as f:
-                return yaml.load(f, Loader=yaml.cyaml.CSafeLoader)
+                return yaml.load(f, Loader=yaml.CSafeLoader)
         except Exception:
             pass
         return {}
@@ -2492,7 +2489,7 @@ def on_delete_sound_analysis(sender, instance, **kwargs):
     for filepath in glob.glob(instance.analysis_filepath_base + "*"):
         try:
             os.remove(filepath)
-        except Exception as e:
+        except Exception:
             pass
 
 

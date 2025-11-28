@@ -80,7 +80,7 @@ class Paypal:
         params_string = urllib.parse.urlencode(params)
 
         # get the response and parse it
-        response = urllib.parse.parse_qs(urllib.request.urlopen(self.API_ENDPOINT, params_string).read())
+        response = urllib.parse.parse_qs(urllib.request.urlopen(self.API_ENDPOINT, params_string).read())  # noqa: S310
 
         # the parsed dict has a list for each value, but all Paypal replies are unique
         return {key.lower(): value[0] for (key, value) in response.items()}

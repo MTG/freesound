@@ -36,7 +36,6 @@ from accounts.models import (
     DeletedUser,
     EmailBounce,
     EmailPreferenceType,
-    GdprAcceptance,
     OldUsername,
     Profile,
     UserDeletionRequest,

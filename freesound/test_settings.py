@@ -1,4 +1,4 @@
-from .settings import *
+from .settings import *  # noqa: F403
 
 postgres_username = os.getenv("FS_TEST_PG_USERNAME", None)
 if postgres_username is not None:
@@ -6,7 +6,7 @@ if postgres_username is not None:
     DATABASES["default"]["USER"] = postgres_username
 
 AKISMET_KEY = ""  # Avoid making requests to "real" Akismet server if running
-SECRET_KEY = "testsecretwhichhastobeatleast16characterslong"
+SECRET_KEY = "testsecretwhichhastobeatleast16characterslong"  # noqa: S105
 SUPPORT = (("Name Surname", "support@freesound.org"),)
 STORAGES = {
     **STORAGES,

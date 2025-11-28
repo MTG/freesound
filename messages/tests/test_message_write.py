@@ -102,7 +102,7 @@ class UsernameLookup(TestCase):
 
         # Send 1 message to receiver1, 2 messages to receiver2 and 3 messages to receiver3
         for count, receiver in enumerate([self.receiver1, self.receiver2, self.receiver3]):
-            for _ in range(0, count + 1):
+            for _ in range(count + 1):
                 Message.objects.create(
                     user_from=self.sender,
                     user_to=receiver,

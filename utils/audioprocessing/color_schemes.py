@@ -87,8 +87,8 @@ COLOR_SCHEMES = {
         "wave_zero_line_alpha": 12,
     },
     CYBERPUNK_COLOR_SCHEME: {
-        "wave_colors": [(0, 0, 0)] + [color_from_value(value / 29.0) for value in range(0, 30)],
-        "spec_colors": [(0, 0, 0)] + [color_from_value(value / 29.0) for value in range(0, 30)],
+        "wave_colors": [(0, 0, 0)] + [color_from_value(value / 29.0) for value in range(30)],
+        "spec_colors": [(0, 0, 0)] + [color_from_value(value / 29.0) for value in range(30)],
     },
     RAINFOREST_COLOR_SCHEME: {
         "wave_colors": [(213, 217, 221)]

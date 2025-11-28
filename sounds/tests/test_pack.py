@@ -22,17 +22,13 @@
 from unittest import mock
 
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
-from general.templatetags.filter_img import replace_img
 from sounds.models import Pack, Sound
-from utils.cache import get_template_cache_key
-from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
+from utils.test_helpers import create_user_and_sounds
 
 
 class PackNumSoundsTestCase(TestCase):

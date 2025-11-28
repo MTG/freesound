@@ -23,6 +23,7 @@ import logging
 from django.conf import settings
 from django.db.models.query import RawQuerySet
 
+import sounds
 import utils.search
 from utils.search import SearchEngineException, SearchResultsPaginator, get_search_engine
 

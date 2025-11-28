@@ -20,7 +20,6 @@
 
 from django.core.management import call_command
 from django.test import TestCase
-from django.urls import reverse
 
 from forum.models import Forum, Post, Thread
 from ratings.models import SoundRating

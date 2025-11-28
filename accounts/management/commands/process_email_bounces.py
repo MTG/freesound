@@ -112,7 +112,7 @@ class Command(LoggingBaseCommand):
 
         messages_per_call = settings.AWS_SQS_MESSAGES_PER_CALL
         if not 1 <= settings.AWS_SQS_MESSAGES_PER_CALL <= 10:
-            console_logger.warn(
+            console_logger.warning(
                 "Invalid value for number messages to process per call: {}, using 1".format(messages_per_call)
             )
             messages_per_call = 1

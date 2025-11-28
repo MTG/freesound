@@ -218,17 +218,17 @@ class UserDelete(TestCase):
 
         # Create comments
         target_sound = Sound.objects.all()[0]
-        for i in range(0, 3):
+        for i in range(3):
             target_sound.add_comment(user, f"{username} comment {i}")
         # Create threads and posts
         forum, _ = Forum.objects.get_or_create(name="Test forum")
         self.forum = forum
         thread = Thread.objects.create(author=user, title=f"Test thread by {username}", forum=forum)
-        for i in range(0, 3):
+        for i in range(3):
             Post.objects.create(author=user, thread=thread, body="Post %i body" % i)
         # Create sounds and packs
         pack = Pack.objects.create(user=user, name=f"Test pack by {username}")
-        for i in range(0, 3):
+        for i in range(3):
             Sound.objects.create(
                 user=user,
                 original_filename=f"Test sound {i} by {username}",

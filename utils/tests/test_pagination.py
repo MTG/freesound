@@ -17,7 +17,6 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.core.management import call_command
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 

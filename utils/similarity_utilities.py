@@ -25,7 +25,6 @@ import traceback
 from django.conf import settings
 from django.core.cache import cache
 
-import sounds
 from similarity.client import Similarity
 from similarity.similarity_settings import DEFAULT_PRESET, PRESETS, SIMILARITY_CACHE_TIME
 from utils.encryption import create_hash

@@ -21,7 +21,6 @@
 
 import json
 import os
-import time
 from unittest import mock
 
 from bs4 import BeautifulSoup
@@ -36,7 +35,6 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 import accounts
-from accounts.models import EmailPreferenceType
 from comments.models import Comment
 from general.templatetags.filter_img import replace_img
 from geotags.models import GeoTag

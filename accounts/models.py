@@ -34,7 +34,6 @@ from django.db import IntegrityError, models, transaction
 from django.db.models import Q
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import smart_str
@@ -45,11 +44,11 @@ from apiv2.models import ApiV2Client
 from bookmarks.models import Bookmark
 from comments.models import Comment
 from donations.models import Donation
-from forum.models import Post, Thread
+from forum.models import Post
 from geotags.models import GeoTag
 from messages.models import Message
 from ratings.models import SoundRating
-from sounds.models import BulkUploadProgress, DeletedSound, Download, License, Pack, PackDownload, Sound
+from sounds.models import BulkUploadProgress, Download, License, Pack, PackDownload, Sound
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from utils.search import SearchEngineException, get_search_engine
@@ -92,7 +91,7 @@ class ProfileManager(models.Manager):
     def random_uploader():
         user_count = User.objects.filter(profile__num_sounds__gte=1).count()
         if user_count:
-            offset = random.randint(0, user_count - 1)
+            offset = random.randint(0, user_count - 1)  # noqa: S311
             return User.objects.filter(profile__num_sounds__gte=1)[offset : offset + 1][0]
         else:
             return None
@@ -370,9 +369,9 @@ class Profile(models.Model):
                 }
                 for tag, count in tags_counts
             ]
-        except SearchEngineException as e:
+        except SearchEngineException:
             return False
-        except Exception as e:
+        except Exception:
             return False
 
     def is_trustworthy(self):
@@ -524,7 +523,7 @@ class Profile(models.Model):
                 with transaction.atomic():
                     try:
                         Sound.objects.filter(id__in=chunk_ids).delete()
-                    except (IntegrityError, ForeignKeyViolation) as e:
+                    except (IntegrityError, ForeignKeyViolation):
                         num_errors += 1
                 num_sounds = Sound.objects.filter(user=self.user).count()
 
@@ -738,9 +737,7 @@ class SameUser(models.Model):
 
 
 def create_user_profile(sender, instance, created, **kwargs):
-    try:
-        instance.profile
-    except Profile.DoesNotExist:
+    if not hasattr(instance, "profile"):
         profile = Profile.objects.create(user=instance, accepted_tos=True)
         profile.agree_to_gdpr()
 

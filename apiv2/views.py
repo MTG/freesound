@@ -32,7 +32,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from django.db.models import Exists, OuterRef
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -84,7 +83,6 @@ from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
 from geotags.models import GeoTag
 from ratings.models import SoundRating
-from similarity.client import Similarity
 from sounds.models import License, Pack, Sound
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
@@ -102,7 +100,6 @@ from .apiv2_utils import (
     api_search,
     get_analysis_data_for_sound_ids,
     get_formatted_examples_for_view,
-    get_sounds_descriptors,
     prepend_base,
 )
 
@@ -203,7 +200,7 @@ class TextSearch(GenericAPIView):
             )
         except APIException as e:
             raise e
-        except Exception as e:
+        except Exception:
             raise ServerErrorException(msg="Unexpected error", resource=self)
 
         # Paginate results
@@ -317,7 +314,7 @@ class ContentSearch(GenericAPIView):
             )
         except APIException as e:
             raise e  # TODO pass correct exception message
-        except Exception as e:
+        except Exception:
             raise ServerErrorException(msg="Unexpected error", resource=self)
 
         # Paginate results
@@ -450,7 +447,7 @@ class CombinedSearch(GenericAPIView):
             )
         except APIException as e:
             raise e  # TODO pass correct resource parameter
-        except Exception as e:
+        except Exception:
             raise ServerErrorException(msg="Unexpected error", resource=self)
 
         if params_for_next_page:
@@ -1050,7 +1047,7 @@ class UploadSound(WriteRequiredGenericAPIView):
 
                     except APIException as e:
                         raise e  # TODO pass correct resource variable
-                    except Exception as e:
+                    except Exception:
                         raise ServerErrorException(msg="Unexpected error", resource=self)
 
                     return Response(

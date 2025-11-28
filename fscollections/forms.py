@@ -23,11 +23,10 @@ import re
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.forms import ModelForm, SelectMultiple, Textarea, TextInput
+from django.forms import Textarea, TextInput
 
 from fscollections.models import Collection, CollectionSound
 from sounds.models import Sound
-from utils.forms import HtmlCleaningCharField
 
 
 class SelectCollectionOrNewCollectionForm(forms.Form):

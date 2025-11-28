@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-import json
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -471,7 +470,7 @@ class SoundSerializer(AbstractSoundSerializer):
                     "No descriptors specified. You should indicate which descriptors you want with "
                     "the 'descriptors' request parameter."
                 )
-        except Exception as e:
+        except Exception:
             return None
 
 

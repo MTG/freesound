@@ -32,11 +32,9 @@ from luqum.pretty import prettify
 from sounds.models import Sound
 from utils.clustering_utilities import get_clusters_for_query, get_ids_in_cluster
 from utils.encryption import create_hash
-from utils.search.backends.solr555pysolr import Solr555PySolrSearchEngine
 from utils.search.search_sounds import allow_beta_search_features
 
 from .search_query_processor_options import (
-    SearchOption,
     SearchOptionBool,
     SearchOptionBoolElementInPath,
     SearchOptionBoolFilterInverted,
@@ -312,7 +310,7 @@ class SearchQueryProcessor:
         # Looks like some bots are still using it which results in many errors reported in the logs and
         # many Solr queries failing. By returning an early error, we avoid the Solr request.
         if self.has_filter_with_name("grouping_pack"):
-            self.errors = f"Filter parsing error: 'grouping_pack' is not a valid filter name"
+            self.errors = "Filter parsing error: 'grouping_pack' is not a valid filter name"
             return
 
         # Remove duplicate filters if any

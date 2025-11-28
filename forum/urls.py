@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.urls import path, re_path
+from django.urls import path
 
 import forum.views as forum_views
 import search.views as search_views

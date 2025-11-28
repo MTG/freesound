@@ -389,7 +389,12 @@ class TestSoundSerializer(TestCase):
                 include_remix_subqueries=True,
             )[0]
             dummy_request = self.factory.get(reverse("apiv2-sound-instance", args=[self.sound_id]) + "?fields=*")
-            SoundSerializer(sound, context={"request": dummy_request}).data
+            serialized_sound = SoundSerializer(sound, context={"request": dummy_request}).data
+            # Check that at least all fields in the serializer Meta are present in the serialized data
+            self.assertTrue(
+                len(set(serialized_sound.keys()).intersection(set(SoundSerializer.Meta.fields)))
+                == len(SoundSerializer.Meta.fields)
+            )
 
 
 class TestApiV2Client(TestCase):
@@ -423,7 +428,7 @@ class TestMeResources(TestCase):
 
     def setUp(self):
         # Create users
-        self.end_user_password = "endpass"
+        self.end_user_password = "endpass"  # noqa: S105
         self.end_user = User.objects.create_user("end_user", password=self.end_user_password, email="enduser@mail.com")
         self.dev_user = User.objects.create_user("dev_user", password="devpass", email="devuser@mail.com")
 
@@ -492,7 +497,7 @@ class TestMeResources(TestCase):
 class APIAuthenticationTestCase(TestCase):
     def setUp(self):
         # Create users
-        self.end_user_password = "endpass"
+        self.end_user_password = "endpass"  # noqa: S105
         self.end_user = User.objects.create_user("end_user", password=self.end_user_password, email="enduser@mail.com")
         self.dev_user = User.objects.create_user("dev_user", password="devpass", email="devuser@mail.com")
 

@@ -20,10 +20,8 @@
 
 from unittest import mock
 
-from django.conf import settings
 from django.core.cache import cache
 from django.test import TestCase
-from django.test.utils import override_settings, skipIf
 from django.urls import reverse
 
 from sounds.models import Sound

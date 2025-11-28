@@ -2,7 +2,6 @@ import json
 
 from debug_toolbar.panels import Panel
 from django.core.cache import cache
-from django.template.loader import render_to_string
 
 
 class SolrDebugPanel(Panel):

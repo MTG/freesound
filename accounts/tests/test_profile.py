@@ -589,7 +589,7 @@ class ProfileTestDownloadCountFields(TestCase):
     @mock.patch("sounds.models.delete_sounds_from_search_engine")
     def test_download_sound_count_field_is_updated(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
         # Test downloading sounds increases the "num_sound_downloads" field
-        for i in range(0, len(self.sounds)):
+        for i in range(len(self.sounds)):
             Download.objects.create(user=self.user, sound=self.sounds[i], license_id=self.sounds[i].license_id)
             self.user.profile.refresh_from_db()
             self.assertEqual(self.user.profile.num_sound_downloads, i + 1)
@@ -597,7 +597,7 @@ class ProfileTestDownloadCountFields(TestCase):
 
         # Test deleting downloaded sounds decreases the "num_sound_downloads" field
         # Delete 2 of the 3 downloaded sounds
-        for i in range(0, len(self.sounds) - 1):
+        for i in range(len(self.sounds) - 1):
             self.sounds[i].delete()  # This should decrease "num_sound_downloads" field
             self.user.profile.refresh_from_db()
             self.assertEqual(self.user.profile.num_sound_downloads, len(self.sounds) - 1 - i)
@@ -614,7 +614,7 @@ class ProfileTestDownloadCountFields(TestCase):
 
     def test_download_pack_count_field_is_updated(self):
         # Test downloading packs increases the "num_pack_downloads" field
-        for i in range(0, len(self.packs)):
+        for i in range(len(self.packs)):
             PackDownload.objects.create(user=self.user, pack=self.packs[i])
             self.user.profile.refresh_from_db()
             self.assertEqual(self.user.profile.num_pack_downloads, i + 1)
@@ -622,7 +622,7 @@ class ProfileTestDownloadCountFields(TestCase):
 
         # Test deleting downloaded packs decreases the "num_pack_downloads" field
         # Delete 2 of the 3 downloaded packs
-        for i in range(0, len(self.packs) - 1):
+        for i in range(len(self.packs) - 1):
             self.packs[i].delete()  # This should decrease "num_sound_downloads" field
             self.user.profile.refresh_from_db()
             self.assertEqual(self.user.profile.num_pack_downloads, len(self.packs) - 1 - i)

@@ -18,7 +18,7 @@ def copy_files(source_destination_tuples):
         if "@" in destination_path:
             # The destination path is in a remote server, use scp
             try:
-                subprocess.check_output(
+                subprocess.check_output(  # noqa: S602
                     f'rsync -e "ssh -o StrictHostKeyChecking=no  -i /ssh_fsweb/cdn-ssh-key-fsweb" -aq --rsync-path="mkdir -p {os.path.dirname(destination_path)} && rsync" {source_path} {os.path.dirname(destination_path)}/',
                     stderr=subprocess.STDOUT,
                     shell=True,

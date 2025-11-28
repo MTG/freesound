@@ -24,7 +24,6 @@ import math
 import os
 import time
 import uuid
-from builtins import map, str
 from operator import itemgetter
 from urllib.parse import urlparse
 
@@ -34,12 +33,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from django.core.cache import cache, caches
 from django.core.exceptions import PermissionDenied
-from django.core.signing import BadSignature, SignatureExpired
 from django.db import transaction
-from django.db.models.functions import Greatest
 from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template import loader
 from django.urls import resolve, reverse
 from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -94,7 +90,6 @@ web_logger = logging.getLogger("web")
 sounds_logger = logging.getLogger("sounds")
 upload_logger = logging.getLogger("file_upload")
 cache_cdn_map = caches["cdn_map"]
-cache_persistent = caches["persistent"]
 
 
 def get_n_weeks_back_datetime(n_weeks):
@@ -171,6 +166,7 @@ def packs(request):
 
 
 def front_page(request):
+    cache_persistent = caches["persistent"]
     rss_cache = cache_persistent.get("rss_cache", None)
     trending_sound_ids = cache_persistent.get("trending_sound_ids", None)
     trending_new_sound_ids = cache_persistent.get("trending_new_sound_ids", None)
@@ -352,10 +348,10 @@ def sound_download(request, username, sound_id):
 
     if "range" not in request.headers:
         """
-        Download managers and some browsers use the range header to download files in multiple parts. We have observed 
-        that all clients first make a GET with no range header (to get the file length) and then make multiple other 
-        requests. We ignore all requests that have range header because we assume that a first query has already been 
-        made. We additionally guard against users clicking on download multiple times by storing a sentinel in the 
+        Download managers and some browsers use the range header to download files in multiple parts. We have observed
+        that all clients first make a GET with no range header (to get the file length) and then make multiple other
+        requests. We ignore all requests that have range header because we assume that a first query has already been
+        made. We additionally guard against users clicking on download multiple times by storing a sentinel in the
         cache for 5 minutes.
         """
         cache_key = "sdwn_%s_%d" % (sound_id, request.user.id)
@@ -387,10 +383,10 @@ def pack_download(request, username, pack_id):
 
     if "range" not in request.headers:
         """
-        Download managers and some browsers use the range header to download files in multiple parts. We have observed 
-        that all clients first make a GET with no range header (to get the file length) and then make multiple other 
-        requests. We ignore all requests that have range header because we assume that a first query has already been 
-        made. We additionally guard against users clicking on download multiple times by storing a sentinel in the 
+        Download managers and some browsers use the range header to download files in multiple parts. We have observed
+        that all clients first make a GET with no range header (to get the file length) and then make multiple other
+        requests. We ignore all requests that have range header because we assume that a first query has already been
+        made. We additionally guard against users clicking on download multiple times by storing a sentinel in the
         cache for 5 minutes.
         """
         cache_key = "pdwn_%s_%d" % (pack_id, request.user.id)
@@ -600,8 +596,8 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
             f'Sound <a href="{sound.get_absolute_url()}">{sound.original_filename}</a> successfully edited!',
         )
 
-        for packs_to_process in packs_to_process:
-            packs_to_process.process()
+        for pack_to_process in packs_to_process:
+            pack_to_process.process()
 
     files = request.session.get(
         f"{session_key_prefix}-describe_sounds", None

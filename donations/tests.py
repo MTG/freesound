@@ -336,7 +336,7 @@ class DonationTest(TestCase):
         self.assertIsNone(self.user_b.profile.last_donation_email_sent)
 
         # Simulate uploads from user_c
-        for i in range(0, TEST_DOWNLOADS_IN_PERIOD + 1):
+        for i in range(TEST_DOWNLOADS_IN_PERIOD + 1):
             sounds.models.Sound.objects.create(
                 user=self.user_c,
                 original_filename="Test sound %i" % i,
@@ -516,7 +516,7 @@ class DonationTest(TestCase):
         donations.models.Donation.objects.filter(pk=donation.pk).update(created=old_donation_date)
 
         # Simulate uploads from user_c
-        for i in range(0, TEST_DOWNLOADS_IN_PERIOD + 1):
+        for i in range(TEST_DOWNLOADS_IN_PERIOD + 1):
             sounds.models.Sound.objects.create(
                 user=self.user_c,
                 original_filename="Test sound %i" % i,

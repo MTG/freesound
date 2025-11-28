@@ -70,7 +70,7 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
                 results = async_task_result.get(
                     timeout=settings.CLUSTERING_TASK_TIMEOUT
                 )  # Will raise exception if task takes too long
-            except celery.exceptions.TimeoutError as e:
+            except celery.exceptions.TimeoutError:
                 # Cancel the task so it stops running (or it never starts)
                 async_task_result.revoke(terminate=True)
                 return {"clusters": None}
@@ -118,7 +118,7 @@ def get_clusters_for_query(sqp, compute_if_not_in_cache=True):
                 results["example_sounds_data"] = example_sounds_data
 
                 # Generate random IDs for the clusters that will be used to identify them
-                cluster_ids = [random.randint(0, 99999) for _ in range(len(clusters))]
+                cluster_ids = [random.randint(0, 99999) for _ in range(len(clusters))]  # noqa: S311
                 results["cluster_ids"] = cluster_ids
         else:
             # If no sounds to cluster, set to None
@@ -220,6 +220,6 @@ def get_ids_in_cluster(cache_key, cluster_id):
         try:
             cluster_index = results["cluster_ids"].index(cluster_id)
             return results["clusters"][cluster_index]
-        except (IndexError, ValueError, KeyError) as e:
+        except (IndexError, ValueError, KeyError):
             pass
     return []

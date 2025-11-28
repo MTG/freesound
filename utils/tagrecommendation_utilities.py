@@ -81,7 +81,7 @@ def get_id_of_last_indexed_sound():
         result = TagRecommendation.get_last_indexed_id()
         return result
 
-    except Exception as e:
+    except Exception:
         return -1
 
 

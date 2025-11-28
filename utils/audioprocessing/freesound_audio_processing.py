@@ -26,7 +26,6 @@ import signal
 import tempfile
 from tempfile import TemporaryDirectory
 
-import sentry_sdk
 from django.apps import apps
 from django.conf import settings
 
@@ -46,8 +45,6 @@ class WorkerException(Exception):
     i) the analysis/processing function takes longer than the timeout specified in settings.WORKER_TIMEOUT
     ii) the check for free disk space  before running the analysis/processing function fails
     """
-
-    pass
 
 
 def set_timeout_alarm(time, msg):
@@ -124,7 +121,7 @@ class FreesoundAudioProcessorBase:
             return Sound.objects.get(id=sound_id)
         except Sound.DoesNotExist:
             raise AudioProcessingException(f"did not find Sound object with id {sound_id}")
-        except Exception as e:
+        except Exception:
             raise AudioProcessingException(f"unexpected error getting Sound {sound_id} from DB")
 
     def get_sound_path(self):
@@ -165,7 +162,7 @@ class FreesoundAudioProcessorBase:
                 f"could not create tmp_wavefile file, make sure that format conversion executables exist: {str(e)}"
             )
 
-        except AudioProcessingException as e:
+        except AudioProcessingException:
             # Conversion with format codecs has failed (or skipped using 'force_use_ffmpeg' argument)
             self.log_info("conversion to PCM failed or skipped, now trying conversion with ffmpeg")
             try:

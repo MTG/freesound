@@ -20,7 +20,7 @@
 
 from django.core.management.base import BaseCommand
 
-from forum.models import Post, Thread
+from forum.models import Thread
 
 
 class Command(BaseCommand):

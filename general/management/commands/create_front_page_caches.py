@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-import datetime
 import logging
 import random
 

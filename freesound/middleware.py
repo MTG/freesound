@@ -20,12 +20,9 @@
 
 import logging
 
-from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-
-from accounts.models import GdprAcceptance
 
 web_logger = logging.getLogger("web")
 
@@ -75,9 +72,7 @@ class TosAcceptanceHandler:
 
     def __call__(self, request):
         if request.user.is_authenticated and dont_redirect(request.get_full_path()):
-            try:
-                request.user.gdpracceptance
-            except GdprAcceptance.DoesNotExist:
+            if not hasattr(request.user, "gdpracceptance"):
                 return HttpResponseRedirect(reverse("tos-acceptance"))
 
         response = self.get_response(request)

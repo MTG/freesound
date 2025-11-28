@@ -111,10 +111,10 @@ class ApiV2Client(models.Model):
             n_days_back = 365
         else:
             end_date = timezone.now().date()
-        for i in range(0, n_days_back):
+        for i in range(n_days_back):
             date_filter = end_date - datetime.timedelta(days=i)
             if settings.DEBUG:
-                number_of_requests = random.randint(0, 1000)
+                number_of_requests = random.randint(0, 1000)  # noqa: S311
             else:
                 try:
                     number_of_requests = self.usage.get(date=date_filter).number_of_requests

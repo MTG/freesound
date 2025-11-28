@@ -21,8 +21,6 @@
 
 from django import template
 
-from messages.models import Message
-
 register = template.Library()
 
 

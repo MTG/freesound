@@ -164,7 +164,7 @@ def display_sound(
             else "false",  # Only BW
             "show_timesince": show_timesince,
             "min_num_ratings": settings.MIN_NUMBER_RATINGS,
-            "random_number": randint(
+            "random_number": randint(  # noqa: S311
                 1, 1000000
             ),  # Used to generate IDs for HTML elements that need to be unique per sound/player instance
         }

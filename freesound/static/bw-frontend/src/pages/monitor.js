@@ -136,7 +136,7 @@ function displayCharts(selectClass, data, options, exclude) {
       data[selected] = [];
     }
     for (var key in exclude) {
-      if (exclude.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(exclude, key)) {
         data[key] = exclude[key];
       }
     }
@@ -574,7 +574,7 @@ if (document.getElementById('global-stats') !== null) {
       var tags = [];
       var max = 0;
       for (var key in d.terms) {
-        if (d.terms.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(d.terms, key)) {
           max = Math.max(d.terms[key], max);
           tags.push([key, d.terms[key]]);
         }

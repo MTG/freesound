@@ -77,7 +77,7 @@ const prepareCategoryFormFields = mainContainer => {
         });
         this.classList.remove('btn-inverse');
         this.classList.add('btn-primary');
-        btn.setAttribute('aria-selected', 'true');
+        this.setAttribute('aria-selected', 'true');
       });
     });
 

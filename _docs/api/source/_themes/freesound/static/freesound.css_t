@@ -303,3 +303,7 @@ tt {
 .note tt {
     background: #d6d6d6;
 }
+
+.fieldstable tr td:first-child  {
+  font-family: monospace;
+}

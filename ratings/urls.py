@@ -23,5 +23,9 @@ from django.urls import path
 import ratings.views
 
 urlpatterns = [
-    path('people/<str:username>/sounds/<int:sound_id>/rate/<int:rating>/', ratings.views.rate_sound, name="sound-rating-add"),
+    path(
+        "people/<str:username>/sounds/<int:sound_id>/rate/<int:rating>/",
+        ratings.views.rate_sound,
+        name="sound-rating-add",
+    ),
 ]

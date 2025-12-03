@@ -16,10 +16,12 @@ import { bindUserAnnotationsModal, activateUserAnnotationsModalIfParameters} fro
 import { makeRadios } from '../components/radio.js';
 import { makeRatingWidgets } from '../components/rating.js';
 import { bindRemixGroupModals, activateRemixGroupModalsIfParameters } from '../components/remixGroupModal.js';
+import { bindSimilarSoundsModal, activateSimilarSoundsModalIfParameters } from '../components/similarSoundsModal.js';
 import { makeSelect } from '../components/select.js';
 import { makeTextareaCharacterCounter } from '../components/textareaCharactersCounter.js';
 import { bindUnsecureImageCheckListeners } from '../components/unsecureImageCheck.js';
 import { initMap } from '../pages/map.js';
+import { bindCollectionModals } from '../components/collectionsModal.js';
 
 
 const initializeStuffInContainer = (container, bindModals, activateModals) => {
@@ -52,7 +54,9 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
         bindDefaultModals(container);
         bindRemixGroupModals(container);
         bindBookmarkSoundModals(container);
+        bindSimilarSoundsModal(container);
         bindUserAnnotationsModal(container); 
+        bindCollectionModals(container);
     }
     
     // Activate modals if needed (this should only be used the first time initializeStuffInContainer is called)
@@ -60,6 +64,7 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
         activateDefaultModalsIfParameters();
         activateUserAnnotationsModalIfParameters();
         activateRemixGroupModalsIfParameters();
+        activateSimilarSoundsModalIfParameters();
     }
 
     // Init maps (note that already initialized maps won't be re-initialized)

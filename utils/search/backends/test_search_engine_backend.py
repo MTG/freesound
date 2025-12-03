@@ -29,20 +29,23 @@ import datetime
 import json
 import logging
 import os
-from unittest import mock
 import time
-from contextlib import contextmanager
+import urllib
 
-from django.contrib.auth.models import User
 import pytest
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.management import call_command
+from django.db import connection
+from django.test import override_settings
 from django.utils import timezone
 
-
-from forum.models import Post, Forum, Thread
+from follow import follow_utils
+from follow.models import FollowingQueryItem, FollowingUserItem
+from forum.models import Forum, Post, Thread
+from fscollections.models import Collection, CollectionSound
 from search import solrapi
-from sounds.models import Download, Sound, SoundAnalysis
+from sounds.models import Download, Sound, SoundAnalysis, SoundSimilarityVector
 from tags.models import SoundTag
 from utils.search import get_search_engine
 
@@ -69,8 +72,7 @@ def _setup_search_engine_backend(collection_type, schema_filename, unique_field,
         search_engine = get_search_engine(backend_class=backend_class_name)
     except ValueError:
         pytest.fail(
-            "Wrong backend name format. Should be a path like "
-            "utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine"
+            "Wrong backend name format. Should be a path like utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine"
         )
     except ImportError as e:
         pytest.fail(f"Backend class to test could not be imported: {e}")
@@ -78,23 +80,15 @@ def _setup_search_engine_backend(collection_type, schema_filename, unique_field,
     today = datetime.datetime.now().strftime("%Y%m%d")
     temp_collection_name = f"engine_test_{collection_type}_{today}"
 
-    api = solrapi.SolrManagementAPI(
-        search_engine.solr_base_url, temp_collection_name
-    )
+    api = solrapi.SolrManagementAPI(search_engine.solr_base_url, temp_collection_name)
 
     # Create new collection
     schema_directory = os.path.join(".", "utils", "search", "schema")
-    schema_definition = json.load(
-        open(os.path.join(schema_directory, schema_filename))
-    )
-    delete_default_fields_definition = json.load(
-        open(os.path.join(schema_directory, "delete_default_fields.json"))
-    )
+    schema_definition = json.load(open(os.path.join(schema_directory, schema_filename)))
+    delete_default_fields_definition = json.load(open(os.path.join(schema_directory, "delete_default_fields.json")))
 
     print(f"Creating collection {temp_collection_name} with schema {schema_filename}")
-    api.create_collection_and_schema(
-        delete_default_fields_definition, schema_definition, unique_field
-    )
+    api.create_collection_and_schema(delete_default_fields_definition, schema_definition, unique_field)
 
     index_url = f"{search_engine.solr_base_url}/solr/{temp_collection_name}"
     backend_kwargs = {"backend_class": backend_class_name, "sounds_index_url": None, "forum_index_url": None}
@@ -150,85 +144,156 @@ def search_engine_forum_backend(request, test_posts):
 
 @pytest.fixture()
 def fake_analyzer_settings_for_similarity_tests(settings):
-    settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS = {
-        "test_analyzer": {
-            'vector_property_name': 'embeddings', 
-            'vector_size': 100,
-            'l2_norm': False
-        }}
-    settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER = 'test_analyzer'
+    settings.SIMILARITY_SPACES = {
+        "test_sim_space": {
+            "vector_property_name": "embeddings",
+            "vector_size": 100,
+            "l2_norm": False,
+            "analyzer": "test_analyzer",
+        }
+    }
+    settings.SIMILARITY_SPACE_NAMES = ["test_sim_space"]
+    settings.SIMILARITY_SPACE_DEFAULT = "test_sim_space"
+    settings.SIMILARITY_SPACES_ANALYZER_NAMES = list(
+        set([ss["analyzer"] for ss in settings.SIMILARITY_SPACES.values()])
+    )
 
 
 @pytest.fixture()
-def test_sounds_qs(db):
-    call_command('loaddata', 'sounds/fixtures/licenses.json', 'sounds/fixtures/sounds_with_tags.json', verbosity=0)
-    sound_ids = Sound.public.filter(
-            is_index_dirty=False, num_ratings__gte=settings.MIN_NUMBER_RATINGS
-        ).values_list('id', flat=True)
+def fake_audio_descriptor_settings_for_tests(settings, monkeypatch):
+    settings.CONSOLIDATED_AUDIO_DESCRIPTORS = [
+        {
+            "name": "test_feature_float",
+            "original_name": "feature_float",
+            "analyzer": "test_analyzer",
+            "type": settings.AUDIO_DESCRIPTOR_TYPE_FLOAT,
+        },
+        {
+            "name": "test_feature_int",
+            "original_name": "feature_int",
+            "analyzer": "test_analyzer",
+            "type": settings.AUDIO_DESCRIPTOR_TYPE_INT,
+        },
+        {
+            "name": "test_feature_string",
+            "original_name": "feature_string",
+            "analyzer": "test_analyzer",
+            "type": settings.AUDIO_DESCRIPTOR_TYPE_STRING,
+        },
+        {
+            "name": "test_feature_list_string",
+            "original_name": "feature_list_string",
+            "analyzer": "test_analyzer",
+            "type": settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
+        },
+        {
+            "name": "test_feature_bool",
+            "original_name": "feature_bool",
+            "analyzer": "test_analyzer",
+            "type": settings.AUDIO_DESCRIPTOR_TYPE_BOOL,
+        },
+        {
+            "name": "test_feature_array_float",
+            "original_name": "feature_array_float",
+            "analyzer": "test_analyzer",
+            "type": settings.AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,
+            "index": False,
+        },
+        {
+            "name": "test_feature_json",
+            "original_name": "feature_json",
+            "analyzer": "test_analyzer",
+            "type": settings.AUDIO_DESCRIPTOR_TYPE_JSON,
+            "index": False,
+        },
+    ]
+    settings.AVAILABLE_AUDIO_DESCRIPTORS_NAMES = [desc["name"] for desc in settings.CONSOLIDATED_AUDIO_DESCRIPTORS]
+    settings.CONSOLIDATED_AUDIO_DESCRIPTORS_ANALYZER_NAMES = list(
+        set([ad["analyzer"] for ad in settings.CONSOLIDATED_AUDIO_DESCRIPTORS])
+    )
+
+    # Patch solr555pysolr.SOLR_DYNAMIC_FIELDS_MAP to include the descriptors defined above, otherwise query filter processing will fail
+    from utils.search.backends import solr555pysolr
+
+    PATCHED_SOLR_DYNAMIC_FIELDS_MAP = {}
+    for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+        index = descriptor.get("index", True)
+        if index:
+            descriptor_name = descriptor["name"]
+            descriptor_type = descriptor.get("type", settings.DEFAULT_AUDIO_DESCRIPTOR_TYPE)
+            if descriptor_type is not None:
+                PATCHED_SOLR_DYNAMIC_FIELDS_MAP[descriptor_name] = "{}{}".format(
+                    descriptor_name, solr555pysolr.SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[descriptor_type]
+                )
+    monkeypatch.setattr(solr555pysolr, "SOLR_DYNAMIC_FIELDS_MAP", PATCHED_SOLR_DYNAMIC_FIELDS_MAP)
+
+
+@pytest.fixture()
+def test_sounds_qs(
+    db, fake_analyzer_settings_for_similarity_tests, fake_audio_descriptor_settings_for_tests, monkeypatch
+):
+    call_command("loaddata", "sounds/fixtures/licenses.json", "sounds/fixtures/sounds_with_tags.json", verbosity=0)
+    sound_ids = Sound.public.filter(is_index_dirty=False, num_ratings__gte=settings.MIN_NUMBER_RATINGS).values_list(
+        "id", flat=True
+    )
     if len(sound_ids) < 20:
         pytest.fail(
-            f"Can't test search engine backend as there are not enough sounds for testing: {len(sounds)}, needed: 20"
+            f"Can't test search engine backend as there are not enough sounds for testing: {len(sound_ids)}, needed: 20"
         )
+
+    # Monkey patch SoundAnalysis.get_analysis_data_from_file to return fake data instead of loading it from a file in disk
+    monkeypatch.setattr(
+        SoundAnalysis,
+        "get_analysis_data_from_file_without_db",
+        lambda sid, analyzer_name: {
+            "feature_float": 1.0,
+            "feature_int": 1,
+            "feature_string": "a",
+            "feature_list_string": ["a", "b", "c"],
+            "feature_bool": True,
+            "feature_array_float": [1.0, 2.0, 3.0],
+            "feature_json": {"key": "value"},
+        },
+    )
+
+    # Create some collections and add sounds to them
+    for i, collection_name in enumerate(["col1", "col2"]):
+        user = User.objects.first()
+        collection = Collection.objects.create(name=collection_name, user=user, public=True)
+        sounds_in_collection = Sound.objects.filter(id__in=sound_ids[i * 10 : (i + 1) * 10])
+        for sound in sounds_in_collection:
+            CollectionSound.objects.create(user=user, sound=sound, collection=collection, status="OK")
+
+    # Create fake similarity vector objects and fake consolidated audio descriptors for each sound
+    for sound in Sound.public.all():
+        vector_size = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]["vector_size"]
+        SoundSimilarityVector.objects.create(
+            sound=sound,
+            similarity_space_name=settings.SIMILARITY_SPACE_DEFAULT,
+            vector=[sound.id for i in range(vector_size)],
+        )
+
+        SoundAnalysis.objects.create(sound=sound, analysis_status="OK", analyzer="test_analyzer")
+
+        # Load the similarity space vectors and consolidated descriptors to db
+        sound.load_similarity_vectors()
+        sound.consolidate_analysis()
+
+        # Set sound as index dirty false as consolidate_analysis would have changed that
+        sound.is_index_dirty = False
+        sound.save()
+
     return Sound.objects.bulk_query_solr(sound_ids)
 
 
 @pytest.fixture()
-def test_sounds(db, test_sounds_qs, fake_analyzer_settings_for_similarity_tests):
-    
-    # Create fake SoundAnalysis objects for each sound
-    for sound in test_sounds_qs:
-        vector_size = settings.SEARCH_ENGINE_SIMILARITY_ANALYZERS[settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER]['vector_size']
-        SoundAnalysis.objects.create(
-            sound=sound,
-            analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER,
-            analysis_status="OK",
-            analysis_data={
-                "embeddings": [sound.id for i in range(0, vector_size)],  # Fake embeddings used for testing
-            }
-        )
-
+def test_sounds(db, test_sounds_qs):
     return list(test_sounds_qs)
-
-@pytest.fixture()
-def expected_license_facet_results_all_sounds(test_sounds):
-    """
-    Fixture to provide expected facet counts for the license field based on test sounds.
-    """
-    expected_license_facet_results_all_sounds = {}
-    for sound in test_sounds:
-        license_name = sound.license.name
-        if license_name not in expected_license_facet_results_all_sounds:
-            expected_license_facet_results_all_sounds[license_name] = 1
-        else:
-            expected_license_facet_results_all_sounds[license_name] += 1
-    return expected_license_facet_results_all_sounds
-
-
-
-@pytest.fixture()
-def expected_license_facet_results_group_counts_as_one_in_facets(test_sounds):
-    """
-    Fixture to provide expected facet counts for the license field based on test sounds when
-    grouped sounds should count as 1 for facet count.
-    """
-    expected_license_facet_results_group_counts_as_one_in_facets = {}
-    packs_already_considered = list()
-    for sound in test_sounds:
-        if sound.pack is not None and sound.pack.id in packs_already_considered:
-            continue
-        if sound.pack is not None:
-            packs_already_considered.append(sound.pack.id)
-        license_name = sound.license.name
-        if license_name not in expected_license_facet_results_group_counts_as_one_in_facets:
-            expected_license_facet_results_group_counts_as_one_in_facets[license_name] = 1
-        else:
-            expected_license_facet_results_group_counts_as_one_in_facets[license_name] += 1
-    return expected_license_facet_results_group_counts_as_one_in_facets
 
 
 @pytest.fixture()
 def test_users(db):
-    call_command('loaddata', 'accounts/fixtures/users.json', verbosity=0)
+    call_command("loaddata", "accounts/fixtures/users.json", verbosity=0)
     users = User.objects.all()
     return users
 
@@ -243,49 +308,19 @@ def test_posts(test_users, db):
 
     forums = []
     for i, (name, slug, description) in enumerate(forum_data):
-        forums.append(Forum(
-            name=name,
-            name_slug=slug,
-            description=description,
-            order=i
-        ))
+        forums.append(Forum(name=name, name_slug=slug, description=description, order=i))
 
     Forum.objects.bulk_create(forums)
     for forum in forums:
         forum.refresh_from_db()
 
     threads = [
-        Thread(
-            forum=forums[0],
-            author=test_users[1],
-            title="Welcome to the community!",
-            status=2
-        ),
-        Thread(
-            forum=forums[1],
-            author=test_users[2],
-            title="Foley recording techniques"
-        ),
-        Thread(
-            forum=forums[2],
-            author=test_users[3],
-            title="DAW compatibility issues"
-        ),
-        Thread(
-            forum=forums[0],
-            author=test_users[1],
-            title="Best headphones for mixing?"
-        ),
-        Thread(
-            forum=forums[0],
-            author=test_users[2],
-            title="Best field recording locations"
-        ),
-        Thread(
-            forum=forums[2],
-            author=test_users[4],
-            title="Sound effect processing techniques"
-        ),
+        Thread(forum=forums[0], author=test_users[1], title="Welcome to the community!", status=2),
+        Thread(forum=forums[1], author=test_users[2], title="Foley recording techniques"),
+        Thread(forum=forums[2], author=test_users[3], title="DAW compatibility issues"),
+        Thread(forum=forums[0], author=test_users[1], title="Best headphones for mixing?"),
+        Thread(forum=forums[0], author=test_users[2], title="Best field recording locations"),
+        Thread(forum=forums[2], author=test_users[4], title="Sound effect processing techniques"),
     ]
 
     Thread.objects.bulk_create(threads)
@@ -304,13 +339,15 @@ def test_posts(test_users, db):
     ]
 
     for i, content in enumerate(post_content):
-        all_posts.append(Post(
-            thread=threads[0],
-            author=test_users[i % len(test_users)],
-            body=content,
-            moderation_state="OK",
-            created=base_time + timezone.timedelta(hours=i*2)
-        ))
+        all_posts.append(
+            Post(
+                thread=threads[0],
+                author=test_users[i % len(test_users)],
+                body=content,
+                moderation_state="OK",
+                created=base_time + timezone.timedelta(hours=i * 2),
+            )
+        )
 
     # Thread 2 posts
     foley_content = [
@@ -321,13 +358,15 @@ def test_posts(test_users, db):
     ]
 
     for i, content in enumerate(foley_content):
-        all_posts.append(Post(
-            thread=threads[1],
-            author=test_users[(i + 2) % len(test_users)],
-            body=content,
-            moderation_state="OK",
-            created=base_time + timezone.timedelta(hours=24 + i*3)
-        ))
+        all_posts.append(
+            Post(
+                thread=threads[1],
+                author=test_users[(i + 2) % len(test_users)],
+                body=content,
+                moderation_state="OK",
+                created=base_time + timezone.timedelta(hours=24 + i * 3),
+            )
+        )
 
     # Thread 3 posts
     tech_content = [
@@ -338,13 +377,15 @@ def test_posts(test_users, db):
     ]
 
     for i, content in enumerate(tech_content):
-        all_posts.append(Post(
-            thread=threads[2],
-            author=test_users[(i + 1) % len(test_users)],
-            body=content,
-            moderation_state="OK",
-            created=base_time + timezone.timedelta(hours=48 + i*2.5)
-        ))
+        all_posts.append(
+            Post(
+                thread=threads[2],
+                author=test_users[(i + 1) % len(test_users)],
+                body=content,
+                moderation_state="OK",
+                created=base_time + timezone.timedelta(hours=48 + i * 2.5),
+            )
+        )
 
     # Thread 4 posts
     headphone_content = [
@@ -355,13 +396,15 @@ def test_posts(test_users, db):
     ]
 
     for i, content in enumerate(headphone_content):
-        all_posts.append(Post(
-            thread=threads[3],
-            author=test_users[i % len(test_users)],
-            body=content,
-            moderation_state="OK",
-            created=base_time + timezone.timedelta(hours=72 + i*1.8)
-        ))
+        all_posts.append(
+            Post(
+                thread=threads[3],
+                author=test_users[i % len(test_users)],
+                body=content,
+                moderation_state="OK",
+                created=base_time + timezone.timedelta(hours=72 + i * 1.8),
+            )
+        )
 
     # Thread 5 posts
     field_recording_content = [
@@ -373,13 +416,15 @@ def test_posts(test_users, db):
     ]
 
     for i, content in enumerate(field_recording_content):
-        all_posts.append(Post(
-            thread=threads[4],
-            author=test_users[(i + 1) % len(test_users)],
-            body=content,
-            moderation_state="OK",
-            created=base_time + timezone.timedelta(hours=96 + i*2.2)
-        ))
+        all_posts.append(
+            Post(
+                thread=threads[4],
+                author=test_users[(i + 1) % len(test_users)],
+                body=content,
+                moderation_state="OK",
+                created=base_time + timezone.timedelta(hours=96 + i * 2.2),
+            )
+        )
 
     # Thread 6 posts
     sound_effects_content = [
@@ -391,13 +436,15 @@ def test_posts(test_users, db):
     ]
 
     for i, content in enumerate(sound_effects_content):
-        all_posts.append(Post(
-            thread=threads[5],
-            author=test_users[(i + 2) % len(test_users)],
-            body=content,
-            moderation_state="OK",
-            created=base_time + timezone.timedelta(hours=120 + i*1.5)
-        ))
+        all_posts.append(
+            Post(
+                thread=threads[5],
+                author=test_users[(i + 2) % len(test_users)],
+                body=content,
+                moderation_state="OK",
+                created=base_time + timezone.timedelta(hours=120 + i * 1.5),
+            )
+        )
 
     Post.objects.bulk_create(all_posts)
     for post in all_posts:
@@ -417,16 +464,16 @@ def test_posts(test_users, db):
 @pytest.fixture(scope="session")
 def output_file_handle(request):
     """Session-scoped fixture that provides a file handler for writing search backend test results, using the backend name from pytest options."""
-    base_dir = os.path.join(settings.DATA_PATH, 'search_backend_tests')
+    base_dir = os.path.join(settings.DATA_PATH, "search_backend_tests")
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
-    date_label = timezone.now().strftime('%Y%m%d_%H%M')
+    date_label = timezone.now().strftime("%Y%m%d_%H%M")
     backend_name = request.config.option.search_engine_backend
     write_output = request.config.option.write_search_engine_output
-    file_path = os.path.join(base_dir, f'{date_label}_test_results_{backend_name}.txt')
+    file_path = os.path.join(base_dir, f"{date_label}_test_results_{backend_name}.txt")
     if write_output:
-        with open(file_path, 'w') as f:
-            f.write(f'TESTING SEARCH ENGINE BACKEND: {backend_name}\n')
+        with open(file_path, "w") as f:
+            f.write(f"TESTING SEARCH ENGINE BACKEND: {backend_name}\n")
             yield f
     else:
         yield None
@@ -443,10 +490,10 @@ def write_search_results_to_file(f, results, query_params=None, query_type=None,
         elapsed_time: float, seconds (optional)
     """
     if query_type or query_params or elapsed_time is not None:
-        f.write(f'\n* QUERY {query_type or ""}: {str(query_params) if query_params else ""}')
+        f.write(f"\n* QUERY {query_type or ''}: {str(query_params) if query_params else ''}")
         if elapsed_time is not None:
-            f.write(f' (took {elapsed_time:.2f} seconds)')
-        f.write('\n')
+            f.write(f" (took {elapsed_time:.2f} seconds)")
+        f.write("\n")
     f.write(
         f"num_found: {results.num_found}\n"
         f"non_grouped_number_of_results: {results.non_grouped_number_of_results}\n"
@@ -460,21 +507,54 @@ def write_search_results_to_file(f, results, query_params=None, query_type=None,
 
 
 def run_sounds_query_and_save_results(search_engine_backend, output_file_handle, query_params):
-        start = time.monotonic()
-        results = search_engine_backend.search_sounds(**query_params)
-        end = time.monotonic()
-        if output_file_handle is not None:
-            write_search_results_to_file(output_file_handle, results, query_params=query_params, elapsed_time=end - start, query_type="SOUNDS")
-        return results
+    start = time.monotonic()
+    results = search_engine_backend.search_sounds(**query_params)
+    end = time.monotonic()
+    if output_file_handle is not None:
+        write_search_results_to_file(
+            output_file_handle, results, query_params=query_params, elapsed_time=end - start, query_type="SOUNDS"
+        )
+    return results
 
 
 def run_forum_posts_query_and_save_results(search_engine_backend, output_file_handle, query_params):
-        start = time.monotonic()
-        results = search_engine_backend.search_forum_posts(**query_params)
-        end = time.monotonic()
-        if output_file_handle is not None:
-            write_search_results_to_file(output_file_handle, results, query_params=query_params, elapsed_time=end - start, query_type="FORUM POSTS")
-        return results
+    start = time.monotonic()
+    results = search_engine_backend.search_forum_posts(**query_params)
+    end = time.monotonic()
+    if output_file_handle is not None:
+        write_search_results_to_file(
+            output_file_handle, results, query_params=query_params, elapsed_time=end - start, query_type="FORUM POSTS"
+        )
+    return results
+
+
+def expected_license_facet_results_all_sounds(test_sounds):
+    """Get expected facet counts for the license field based on test sounds."""
+    expected_license_facet_results_all_sounds = {}
+    for sound in test_sounds:
+        license_name = sound.license.name
+        if license_name not in expected_license_facet_results_all_sounds:
+            expected_license_facet_results_all_sounds[license_name] = 1
+        else:
+            expected_license_facet_results_all_sounds[license_name] += 1
+    return expected_license_facet_results_all_sounds
+
+
+def expected_license_facet_results_group_counts_as_one_in_facets(test_sounds):
+    """Get expected facet counts for the license field based on test sounds when grouped sounds should count as 1 for facet count."""
+    expected_license_facet_results_group_counts_as_one_in_facets = {}
+    packs_already_considered = list()
+    for sound in test_sounds:
+        if sound.pack is not None and sound.pack.id in packs_already_considered:
+            continue
+        if sound.pack is not None:
+            packs_already_considered.append(sound.pack.id)
+        license_name = sound.license.name
+        if license_name not in expected_license_facet_results_group_counts_as_one_in_facets:
+            expected_license_facet_results_group_counts_as_one_in_facets[license_name] = 1
+        else:
+            expected_license_facet_results_group_counts_as_one_in_facets[license_name] += 1
+    return expected_license_facet_results_group_counts_as_one_in_facets
 
 
 @pytest.mark.search_engine
@@ -484,25 +564,25 @@ def test_sound_mandatory_doc_fields(search_engine_sounds_backend, output_file_ha
     """Test that returned sounds include mandatory fields"""
     # Check non-grouped search results
     mandatory_fields = ["id", "score"]
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(num_sounds=1, group_by_pack=False))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend, output_file_handle, dict(num_sounds=1, group_by_pack=False)
+    )
     assert results.num_found > 0, "No results returned"
     for result in results.docs:
         for field in mandatory_fields:
-            assert field in result, (
-                f"Mandatory field {field} not present in result when not grouping"
-            )
+            assert field in result, f"Mandatory field {field} not present in result when not grouping"
 
     # Check grouped search results
     mandatory_fields = ["id", "score", "group_name", "n_more_in_group", "group_docs"]
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-        num_sounds=1, group_by_pack=True, only_sounds_with_pack=True
-    ))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(num_sounds=1, group_by_pack=True, only_sounds_with_pack=True),
+    )
     assert results.num_found > 0, "No results returned"
     for result in results.docs:
         for field in mandatory_fields:
-            assert field in result, (
-                f"Mandatory field {field} not present in result when grouping by pack"
-            )
+            assert field in result, f"Mandatory field {field} not present in result when grouping by pack"
 
 
 @pytest.mark.search_engine
@@ -518,7 +598,9 @@ def test_sound_random_sound(search_engine_sounds_backend):
     assert len(random_ids) == 10, "Didn't get enough random sound IDs"
     # Because we have few sounds in the test database, we might sometimes get repeated IDs
     # Check that we have "enough" ids, might not always be 10 different ones
-    assert len(set(random_ids)) >= 7, "Got more repeated sound IDs in subsequent calls to 'get random sound id' than expected"
+    assert len(set(random_ids)) >= 7, (
+        "Got more repeated sound IDs in subsequent calls to 'get random sound id' than expected"
+    )
 
 
 @pytest.mark.search_engine
@@ -526,21 +608,29 @@ def test_sound_random_sound(search_engine_sounds_backend):
 @pytest.mark.django_db
 def test_sound_offsets(search_engine_sounds_backend, output_file_handle):
     """Test pagination and offset functionality"""
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(num_sounds=10, offset=0))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend, output_file_handle, dict(num_sounds=10, offset=0)
+    )
     offset_0_ids = [r["id"] for r in results.docs]
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(num_sounds=10, offset=1))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend, output_file_handle, dict(num_sounds=10, offset=1)
+    )
     offset_1_ids = [r["id"] for r in results.docs]
 
     assert len(offset_0_ids) == 10
     assert len(offset_1_ids) == 10
     assert offset_0_ids[1:] == offset_1_ids[:-1]
 
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(num_sounds=1, offset=4))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend, output_file_handle, dict(num_sounds=1, offset=4)
+    )
     offset_4_num_sounds_1_ids = [r["id"] for r in results.docs]
     assert len(offset_4_num_sounds_1_ids) == 1
     assert offset_0_ids[4] == offset_4_num_sounds_1_ids[0]
 
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(num_sounds=5, current_page=2))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend, output_file_handle, dict(num_sounds=5, current_page=2)
+    )
     page_2_num_sounds_5_ids = [r["id"] for r in results.docs]
     assert len(page_2_num_sounds_5_ids) == 5
     assert page_2_num_sounds_5_ids == offset_0_ids[5:]
@@ -551,7 +641,9 @@ def test_sound_offsets(search_engine_sounds_backend, output_file_handle):
 @pytest.mark.django_db
 def test_sound_empty_query(search_engine_sounds_backend, output_file_handle):
     """Test empty query returns results"""
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=""))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend, output_file_handle, dict(textual_query="")
+    )
     assert results.num_found > 0, "Empty query returned no results"
 
 
@@ -561,64 +653,42 @@ def test_sound_empty_query(search_engine_sounds_backend, output_file_handle):
 def test_sound_sort_parameter(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test sorting functionality"""
     for sort_option_web in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB:
-        results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-            sort=sort_option_web,
-            num_sounds=len(test_sounds),
-            only_sounds_within_ids=[s.id for s in test_sounds],
-        ))
+        results = run_sounds_query_and_save_results(
+            search_engine_sounds_backend,
+            output_file_handle,
+            dict(
+                sort=sort_option_web,
+                num_sounds=len(test_sounds),
+                only_sounds_within_ids=[s.id for s in test_sounds],
+            ),
+        )
         result_ids = [r["id"] for r in results.docs]
         sounds = Sound.objects.ordered_ids(result_ids)
-        assert sorted([s.id for s in test_sounds]) == sorted(result_ids), (
-            "only_sounds_within_ids not respected"
-        )
+        assert sorted([s.id for s in test_sounds]) == sorted(result_ids), "only_sounds_within_ids not respected"
 
         # Assert sorting criteria is preserved
         for sound1, sound2 in zip(sounds[:-1], sounds[1:]):
             if sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC:
                 pass  # Nothing to test here as there's no expected result
-            elif (
-                sort_option_web
-                == settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST
-            ):
-                assert (
-                    Download.objects.filter(sound=sound1).count()
-                    >= Download.objects.filter(sound=sound2).count()
-                )
-            elif (
-                sort_option_web
-                == settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST
-            ):
-                assert (
-                    Download.objects.filter(sound=sound1).count()
-                    <= Download.objects.filter(sound=sound2).count()
-                )
+            elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_MOST_FIRST:
+                assert Download.objects.filter(sound=sound1).count() >= Download.objects.filter(sound=sound2).count()
+            elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DOWNLOADS_LEAST_FIRST:
+                assert Download.objects.filter(sound=sound1).count() <= Download.objects.filter(sound=sound2).count()
             elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DATE_OLD_FIRST:
                 assert sound1.created <= sound2.created
             elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST:
                 assert sound1.created >= sound2.created
-            elif (
-                sort_option_web
-                == settings.SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST
-            ):
+            elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_RATING_LOWEST_FIRST:
                 assert sound1.avg_rating <= sound2.avg_rating
                 if sound1.avg_rating == sound2.avg_rating:
                     assert sound1.num_ratings >= sound2.num_ratings
-            elif (
-                sort_option_web
-                == settings.SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST
-            ):
+            elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_RATING_HIGHEST_FIRST:
                 assert sound1.avg_rating >= sound2.avg_rating
                 if sound1.avg_rating == sound2.avg_rating:
                     assert sound1.num_ratings >= sound2.num_ratings
-            elif (
-                sort_option_web
-                == settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST
-            ):
+            elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_LONG_FIRST:
                 assert sound1.duration >= sound2.duration
-            elif (
-                sort_option_web
-                == settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST
-            ):
+            elif sort_option_web == settings.SEARCH_SOUNDS_SORT_OPTION_DURATION_SHORT_FIRST:
                 assert sound1.duration <= sound2.duration
 
 
@@ -627,36 +697,39 @@ def test_sound_sort_parameter(search_engine_sounds_backend, output_file_handle, 
 @pytest.mark.django_db
 def test_sound_group_by_pack(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test grouping by pack functionality including different values for num_sounds_per_pack_group"""
-    
+
     # Collect data from existing packs so we can later compare with search results
     expected_pack_data = {}
     for sound in test_sounds:
         if sound.pack is not None:
-            pack_grouping_field = f'{sound.pack.id}_{sound.pack.name}'
+            pack_grouping_field = f"{sound.pack.id}_{sound.pack.name}"
             if pack_grouping_field not in expected_pack_data:
                 expected_pack_data[pack_grouping_field] = {
-                    'num_sounds': 0,
+                    "num_sounds": 0,
                 }
-            expected_pack_data[pack_grouping_field]['num_sounds'] += 1
-    
+            expected_pack_data[pack_grouping_field]["num_sounds"] += 1
+
     # Check that the number of sounds per pack and the number of docs returned per pack is correct
     for num_sounds_per_pack_group in [1, 3]:
-        results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
-                                                    dict(group_by_pack=True,
-                                                        num_sounds_per_pack_group=num_sounds_per_pack_group))
+        results = run_sounds_query_and_save_results(
+            search_engine_sounds_backend,
+            output_file_handle,
+            dict(group_by_pack=True, num_sounds_per_pack_group=num_sounds_per_pack_group),
+        )
         num_packs_assessed = 0
         for result in results.docs:
             assert "id" in result, "No ID field in doc from results"
             assert "group_name" in result, "No group_name field in doc from results"
             assert "group_docs" in result, "No group_docs field in doc from results"
-            assert "n_more_in_group" in result, (
-                "No n_more_in_group field in doc from results"
-            )
+            assert "n_more_in_group" in result, "No n_more_in_group field in doc from results"
             expected_data = expected_pack_data.get(result["group_name"], None)
             if expected_data is not None:
-                assert result["n_more_in_group"] == expected_data["num_sounds"] - 1, \
+                assert result["n_more_in_group"] == expected_data["num_sounds"] - 1, (
                     "n_more_in_group does not match expected number of sounds in pack group"
-                assert len(result["group_docs"]) == min(num_sounds_per_pack_group, expected_data["num_sounds"]), "Unexpected number of sounds in group docs"
+                )
+                assert len(result["group_docs"]) == min(num_sounds_per_pack_group, expected_data["num_sounds"]), (
+                    "Unexpected number of sounds in group docs"
+                )
                 num_packs_assessed += 1
 
     assert num_packs_assessed > 0, "Results returned no sounds with packs so no packs were assessed"
@@ -667,27 +740,28 @@ def test_sound_group_by_pack(search_engine_sounds_backend, output_file_handle, t
 @pytest.mark.django_db
 def test_sound_sounds_with_pack(search_engine_sounds_backend, output_file_handle):
     """Test filtering sounds with pack"""
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
-                                                dict(only_sounds_with_pack=True, num_sounds=50))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend, output_file_handle, dict(only_sounds_with_pack=True, num_sounds=50)
+    )
     sounds = Sound.objects.bulk_query_id(sound_ids=[r["id"] for r in results.docs])
     for sound in sounds:
-        assert sound.pack is not None, (
-            'Sound without pack when using "only_sounds_with_pack"'
-        )
+        assert sound.pack is not None, 'Sound without pack when using "only_sounds_with_pack"'
 
 
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
-def test_sound_facets(search_engine_sounds_backend, output_file_handle, expected_license_facet_results_all_sounds):
+def test_sound_facets(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test faceting functionality"""
     test_facet_options = {
         settings.SEARCH_SOUNDS_FIELD_USER_NAME: {"limit": 3},
         settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: {"limit": 1},
         settings.SEARCH_SOUNDS_FIELD_TYPE: {},
-        settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}
+        settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10},
     }
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(facets=test_facet_options))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend, output_file_handle, dict(facets=test_facet_options)
+    )
     assert len(results.facets) == 4, "Wrong number of facets returned"
     for facet_field, facet_options in test_facet_options.items():
         assert facet_field in results.facets, f"Facet {facet_field} not found in facets"
@@ -695,10 +769,11 @@ def test_sound_facets(search_engine_sounds_backend, output_file_handle, expected
             assert len(results.facets[facet_field]) <= facet_options["limit"], (
                 f"Wrong number of items in facet {facet_field}"
             )
-    
+
+    expected_factets = expected_license_facet_results_all_sounds(test_sounds)
     # Assert count results for one of the facets
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
+        assert facet_count == expected_factets[facet_name]
 
     # Test if no facets requested, no facets returned
     results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict())
@@ -708,28 +783,36 @@ def test_sound_facets(search_engine_sounds_backend, output_file_handle, expected
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
-def test_sound_facets_group_counts_as_one_in_facets(search_engine_sounds_backend, 
-                                                    output_file_handle, 
-                                                    expected_license_facet_results_all_sounds,
-                                                    expected_license_facet_results_group_counts_as_one_in_facets
-                                                    ):
+def test_sound_facets_group_counts_as_one_in_facets(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test how grouping by pack affets facet counts when considering the group_counts_as_one_in_facets option"""
 
+    expected_factets = expected_license_facet_results_all_sounds(test_sounds)
     # Check that facet counts are not collapsed to packs when group_counts_as_one_in_facets is False
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
-                                                dict(group_by_pack=True,
-                                                        facets={settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}},
-                                                        group_counts_as_one_in_facets=False))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            group_by_pack=True,
+            facets={settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}},
+            group_counts_as_one_in_facets=False,
+        ),
+    )
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
+        assert facet_count == expected_factets[facet_name]
 
     # Check that facet counts are collapsed to packs when group_counts_as_one_in_facets is True
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, 
-                                                dict(group_by_pack=True,
-                                                        facets={settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}},
-                                                        group_counts_as_one_in_facets=True))
+    expected_license_facets = expected_license_facet_results_group_counts_as_one_in_facets(test_sounds)
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            group_by_pack=True,
+            facets={settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}},
+            group_counts_as_one_in_facets=True,
+        ),
+    )
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_group_counts_as_one_in_facets[facet_name]
+        assert facet_count == expected_license_facets[facet_name]
 
 
 @pytest.mark.search_engine
@@ -738,27 +821,37 @@ def test_sound_facets_group_counts_as_one_in_facets(search_engine_sounds_backend
 def test_sound_search_query_fields_parameter(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test that query_fields parameter works as expected matching only in the specified fields.
     This is used for the advanced search "SEARCH IN" functionality."""
-    
+
     # Test that searching using the ID field only, returns exact match by ID
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=f"{test_sounds[0].id}", query_fields={settings.SEARCH_SOUNDS_FIELD_ID: 1}))
-    assert results.docs[0]["id"] == test_sounds[0].id, (
-        "Searching in the ID field did not return the expected sound"
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(textual_query=f"{test_sounds[0].id}", query_fields={settings.SEARCH_SOUNDS_FIELD_ID: 1}),
     )
+    assert results.docs[0]["id"] == test_sounds[0].id, "Searching in the ID field did not return the expected sound"
 
     # Test searching with a filename but only matching on ID does not return any results
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=f"{test_sounds[0].original_filename}", query_fields={settings.SEARCH_SOUNDS_FIELD_ID: 1}))
-    assert results.num_found == 0, (
-        "Searching in the 'ID' field did not return the expected number of results"
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(textual_query=f"{test_sounds[0].original_filename}", query_fields={settings.SEARCH_SOUNDS_FIELD_ID: 1}),
     )
+    assert results.num_found == 0, "Searching in the 'ID' field did not return the expected number of results"
 
     # Test matching on the original_filename field only
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=f"{test_sounds[0].original_filename}", query_fields={settings.SEARCH_SOUNDS_FIELD_NAME: 1}))
-    assert results.docs[0]["id"] == test_sounds[0].id, (
-        "Searching in the 'name' field did not return the expected sound"
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(textual_query=f"{test_sounds[0].original_filename}", query_fields={settings.SEARCH_SOUNDS_FIELD_NAME: 1}),
     )
+    assert results.docs[0]["id"] == test_sounds[0].id, "Searching in the 'name' field did not return the expected sound"
 
     # Test partial matching in the original_filename also works
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query="Glass E1", query_fields={settings.SEARCH_SOUNDS_FIELD_NAME: 1}))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(textual_query="Glass E1", query_fields={settings.SEARCH_SOUNDS_FIELD_NAME: 1}),
+    )
     assert results.docs[0]["id"] == test_sounds[0].id, (
         "Searching in the 'name' field (partial match) did not return the expected sound"
     )
@@ -766,30 +859,45 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
     # Test searching in the tags field...
     sound_with_tags = [s for s in test_sounds if s.get_sound_tags()][0]
     sound_tags = sound_with_tags.get_sound_tags()
-    
+
     # ...first with all tags
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=" ".join(sound_tags), query_fields={settings.SEARCH_SOUNDS_FIELD_TAGS: 1}))
-    result_sids = [s["id"] for s in results.docs]
-    assert sound_with_tags.id in result_sids, (
-        "Searching in the 'tags' field did not return the expected sound"
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(textual_query=" ".join(sound_tags), query_fields={settings.SEARCH_SOUNDS_FIELD_TAGS: 1}),
     )
+    result_sids = [s["id"] for s in results.docs]
+    assert sound_with_tags.id in result_sids, "Searching in the 'tags' field did not return the expected sound"
 
     # ...then with only one of the tags
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=sound_tags[0], query_fields={settings.SEARCH_SOUNDS_FIELD_TAGS: 1}))
-    result_sids = [s["id"] for s in results.docs]
-    assert sound_with_tags.id in result_sids, (
-        "Searching in the 'tags' field did not return the expected sound"
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(textual_query=sound_tags[0], query_fields={settings.SEARCH_SOUNDS_FIELD_TAGS: 1}),
     )
+    result_sids = [s["id"] for s in results.docs]
+    assert sound_with_tags.id in result_sids, "Searching in the 'tags' field did not return the expected sound"
 
     # Test searching in the description field...
     # ...first with full description
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=test_sounds[0].description, query_fields={settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 1}))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(textual_query=test_sounds[0].description, query_fields={settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 1}),
+    )
     assert results.docs[0]["id"] == test_sounds[0].id, (
         "Searching in the 'description' field did not return the expected sound"
     )
 
     # ...then with a partial description
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=" ".join(test_sounds[0].description.split(" ")[0:5]), query_fields={settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 1}))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            textual_query=" ".join(test_sounds[0].description.split(" ")[0:5]),
+            query_fields={settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 1},
+        ),
+    )
     assert results.docs[0]["id"] == test_sounds[0].id, (
         "Searching in the 'description' field (partial match) did not return the expected sound"
     )
@@ -797,7 +905,11 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
     # Test searching in the username field...
     username = "Twisted.Lemon"  # Known to be in the fixture data
     # ...first with full username
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=username, query_fields={settings.SEARCH_SOUNDS_FIELD_USER_NAME: 1}))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(textual_query=username, query_fields={settings.SEARCH_SOUNDS_FIELD_USER_NAME: 1}),
+    )
     results_first_sound = Sound.objects.get(id=results.docs[0]["id"])
     assert results_first_sound.user.username == username, (
         "Searching in the 'username' field did not return the expected sound"
@@ -805,7 +917,11 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
 
     # ...then with a partial username (note that the tokenizer splits on spaces and other punctuaiton symbols)
     partial_username = "Twisted"  # Partial username to test
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=partial_username, query_fields={settings.SEARCH_SOUNDS_FIELD_USER_NAME: 1}))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(textual_query=partial_username, query_fields={settings.SEARCH_SOUNDS_FIELD_USER_NAME: 1}),
+    )
     results_first_sound = Sound.objects.get(id=results.docs[0]["id"])
     assert results_first_sound.user.username == username, (
         "Searching in the 'username' field (partial match) did not return the expected sound"
@@ -814,7 +930,11 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
     # Test searching in the pack name field...
     pack_name = "sinusoid pack"  # Known to be in the fixture data
     # ...first with full username
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=pack_name, query_fields={settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 1}))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(textual_query=pack_name, query_fields={settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 1}),
+    )
     results_first_sound = Sound.objects.get(id=results.docs[0]["id"])
     assert results_first_sound.pack.name == pack_name, (
         "Searching in the 'pack name' field did not return the expected sound"
@@ -822,7 +942,11 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
 
     # ...then with a partial pack name
     partial_pack_name = "sinusoid"  # Partial pack name to test
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(textual_query=partial_pack_name, query_fields={settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 1}))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(textual_query=partial_pack_name, query_fields={settings.SEARCH_SOUNDS_FIELD_PACK_NAME: 1}),
+    )
     results_first_sound = Sound.objects.get(id=results.docs[0]["id"])
     assert results_first_sound.pack.name == pack_name, (
         "Searching in the 'pack name' field (partial match) did not return the expected sound"
@@ -832,23 +956,66 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
+def test_sound_search_query_audio_descriptors(search_engine_sounds_backend, output_file_handle, test_sounds):
+    """Test that audio descriptors are properly indexed and can be searched"""
+
+    expected_feature_values = {
+        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: 1.0,
+        settings.AUDIO_DESCRIPTOR_TYPE_INT: 1,
+        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: True,
+        settings.AUDIO_DESCRIPTOR_TYPE_STRING: "a",
+        settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: "a",  # filter by the first element of the list
+    }
+
+    non_expected_feature_values = {
+        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: 0.5,
+        settings.AUDIO_DESCRIPTOR_TYPE_INT: 5,
+        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: False,
+        settings.AUDIO_DESCRIPTOR_TYPE_STRING: "nonexistent_value",
+        settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: "z",  # filter by a non-existing first element of the list
+    }
+
+    for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+        if descriptor.get("index", True):
+            name = descriptor["name"]
+
+            # All the sounds have the same value for every descriptor in our test dataset, so the query should return them all
+            expected_value = expected_feature_values[descriptor["type"]]
+            results = run_sounds_query_and_save_results(
+                search_engine_sounds_backend, output_file_handle, dict(query_filter=f'{name}:"{expected_value}"')
+            )
+            assert results.num_found == len(test_sounds), (
+                f"Searching for audio descriptor {name} with value {expected_value} did not return the expected number of results"
+            )
+
+            # Now try with a value that is not present and should return 0 results
+            non_expected_value = non_expected_feature_values[descriptor["type"]]
+            results = run_sounds_query_and_save_results(
+                search_engine_sounds_backend, output_file_handle, dict(query_filter=f'{name}:"{non_expected_value}"')
+            )
+            assert results.num_found == 0, (
+                f"Searching for audio descriptor {name} with value {non_expected_value} returned results but none were expected"
+            )
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
 def test_sound_user_tags(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test user tags functionality"""
     sound = test_sounds[0]
-    user_tagged_items = (
-        SoundTag.objects.filter(user=sound.user).select_related("tag").all()
-    )
+    user_tagged_items = SoundTag.objects.filter(user=sound.user).select_related("tag").all()
     all_user_tags = [ti.tag.name for ti in user_tagged_items]
     tags_and_counts = search_engine_sounds_backend.get_user_tags(sound.user.username)
     search_engine_tags = [t[0] for t in tags_and_counts]
 
     remaining_tags = set(search_engine_tags) - set(all_user_tags)
-    assert len(remaining_tags) == 0, (
-        "get_user_tags returned tags which the user hasn't tagged"
-    )
-    
+    assert len(remaining_tags) == 0, "get_user_tags returned tags which the user hasn't tagged"
+
     if output_file_handle is not None:
-        output_file_handle.write(f'\n* USER "{sound.user.username}" TOP TAGS FROM SEARCH ENGINE: {search_engine_tags}\n')
+        output_file_handle.write(
+            f'\n* USER "{sound.user.username}" TOP TAGS FROM SEARCH ENGINE: {search_engine_tags}\n'
+        )
 
 
 @pytest.mark.search_engine
@@ -863,23 +1030,17 @@ def test_sound_pack_tags(search_engine_sounds_backend, output_file_handle, test_
             target_sound = sound
             break
 
-    assert target_sound is not None, (
-        "Sample sounds dataset doesn't have any sounds with a pack and tags"
-    )
+    assert target_sound is not None, "Sample sounds dataset doesn't have any sounds with a pack and tags"
 
     pack = target_sound.pack
     all_sound_tags = []
     for s in pack.sounds.all():
         all_sound_tags.extend([t.lower() for t in s.get_sound_tags()])
 
-    tags_and_counts = search_engine_sounds_backend.get_pack_tags(
-        target_sound.user.username, pack.name
-    )
+    tags_and_counts = search_engine_sounds_backend.get_pack_tags(target_sound.user.username, pack.name)
     search_engine_tags = [t[0].lower() for t in tags_and_counts]
     remaining_tags = set(search_engine_tags) - set(all_sound_tags)
-    assert len(remaining_tags) == 0, (
-        "get_pack_tags returned tags which the user hasn't tagged"
-    )
+    assert len(remaining_tags) == 0, "get_pack_tags returned tags which the user hasn't tagged"
 
     if output_file_handle is not None:
         output_file_handle.write(f'\n* PACK "{pack.id}" TOP TAGS FROM SEARCH ENGINE: {search_engine_tags}\n')
@@ -895,14 +1056,18 @@ def test_sound_similarity_search(search_engine_sounds_backend, output_file_handl
     test_sounds = sorted(test_sounds, key=lambda x: x.id)
 
     # Make a query for target sound 0 and check that results are sorted by ID
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-        similar_to=test_sounds[0].id,
-        similar_to_max_num_sounds=10,
-        similar_to_analyzer="test_analyzer",
-        group_by_pack=False,
-    ))
-    
-    results_ids = [r["id"] for r in results.docs]
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            similar_to=test_sounds[0].id,
+            similar_to_min_similarity=0.0,  # Return all sounds
+            similar_to_similarity_space="test_sim_space",
+            group_by_pack=False,
+        ),
+    )
+
+    results_ids = [r["id"] for r in results.docs][0:10]
     # Because in our testing environment the similarity vector for each sound is its sound ID * num dimensions (e.g. [6, 6, 6, ...]),
     # if we make a query starting from the lowest sound ID, the results should be the following existing IDs in proper order.
     expected_result_ids = [s.id for s in test_sounds][1:11]
@@ -912,14 +1077,18 @@ def test_sound_similarity_search(search_engine_sounds_backend, output_file_handl
 
     # Now make the same query but passing an arbitrary vector
     target_sound_vector = [test_sounds[0].id for _ in range(100)]
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-        similar_to=target_sound_vector,
-        similar_to_max_num_sounds=10,
-        similar_to_analyzer="test_analyzer",
-        group_by_pack=False,
-    ))
-    results_ids = [r["id"] for r in results.docs]
-    # In that case, the target vector is [6, 6, 6, ...] which corresponds to the lowest sound ID. However, 
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            similar_to=target_sound_vector,
+            similar_to_min_similarity=0.0,  # Return all sounds
+            similar_to_similarity_space="test_sim_space",
+            group_by_pack=False,
+        ),
+    )
+    results_ids = [r["id"] for r in results.docs][0:10]
+    # In that case, the target vector is [6, 6, 6, ...] which corresponds to the lowest sound ID. However,
     # unlike the previous case, now sound ID 6 will also be included in the results because we are not using it
     # as target for the the query, we're only using a vector which happens to be the same as that of sound ID 6.
     expected_result_ids = [s.id for s in test_sounds][0:10]  # target sound is expected to be in results
@@ -928,35 +1097,56 @@ def test_sound_similarity_search(search_engine_sounds_backend, output_file_handl
     )
 
     # Check requesting sounds for an analyzer that doesn't exist
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-        similar_to=target_sound_vector,
-        similar_to_max_num_sounds=10,
-        similar_to_analyzer="test_analyzer2",
-        group_by_pack=False,
-    ))
-    assert len(results.docs) == 0, (
-        "Similarity search returned results for an analyzer that doesn't exist"
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            similar_to=target_sound_vector,
+            similar_to_similarity_space="test_sim_space2",
+            group_by_pack=False,
+        ),
     )
+    assert len(results.docs) == 0, "Similarity search returned results for an analyzer that doesn't exist"
 
-    # Check limiting the similar_to_max_num_sounds parameter
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-        similar_to=target_sound_vector,
-        similar_to_max_num_sounds=5,
-        similar_to_analyzer="test_analyzer",
-        group_by_pack=False,
-    ))
-    assert len(results.docs) == 5, (
+    # Check limiting results using the similar_to_min_similarity parameter
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            similar_to=target_sound_vector,
+            similar_to_min_similarity=1.1,  # Higher than max possible similarity, should return 0 results
+            similar_to_similarity_space="test_sim_space",
+            group_by_pack=False,
+        ),
+    )
+    assert len(results.docs) == 0, "Similarity search returned unexpected number of results"
+
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            similar_to=target_sound_vector,
+            similar_to_min_similarity=0.0,  # We get all sounds
+            similar_to_similarity_space="test_sim_space",
+            group_by_pack=False,
+        ),
+    )
+    assert len(results.docs) == 15, (  # 15 is all sounds in the test dataset
         "Similarity search returned unexpected number of results"
     )
 
     # Check that group by pack also works when doing similarity search
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-        similar_to=test_sounds[0].id,
-        similar_to_max_num_sounds=100,  # Use a larger number to ensure we get multiple packs
-        num_sounds=100,
-        similar_to_analyzer="test_analyzer",
-        group_by_pack=True,
-    ))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            similar_to=test_sounds[0].id,
+            similar_to_min_similarity=0.0,  # Get all results to ensure we get multiple packs
+            num_sounds=100,
+            similar_to_similarity_space="test_sim_space",
+            group_by_pack=True,
+        ),
+    )
 
     all_packs = list()
     for result in results.docs:
@@ -975,21 +1165,28 @@ def test_sound_similarity_search_filter(search_engine_sounds_backend, output_fil
     """Test filtering when using similarity search functionality"""
 
     for fq, expected_results_count in [
-        ("username:\"Anton\"", test_sounds_qs.filter(user__username="Anton").count()),
-        ("license:\"Attribution\"", test_sounds_qs.filter(license__name="Attribution").count()),
-        ("license:\"CC0\"", test_sounds_qs.filter(license__name="CC0").count()),  
+        ('username:"Anton"', test_sounds_qs.filter(user__username="Anton").count()),
+        ('license:"Attribution"', test_sounds_qs.filter(license__name="Attribution").count()),
+        ('license:"CC0"', test_sounds_qs.filter(license__name="CC0").count()),
         ("type:wav", test_sounds_qs.filter(type="wav").count()),
         ("type:non_existing", test_sounds_qs.filter(type="non_existing").count()),
-        ("username:Anton license:Attribution", test_sounds_qs.filter(user__username="Anton", license__name="Attribution").count())
+        (
+            "username:Anton license:Attribution",
+            test_sounds_qs.filter(user__username="Anton", license__name="Attribution").count(),
+        ),
     ]:
         # Make a query for target sound 0 and check that results are sorted by ID
-        results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-            similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
-            similar_to_max_num_sounds=100,
-            num_sounds=100,
-            similar_to_analyzer="test_analyzer",
-            query_filter=fq
-        ))
+        results = run_sounds_query_and_save_results(
+            search_engine_sounds_backend,
+            output_file_handle,
+            dict(
+                similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
+                similar_to_min_similarity=0.0,
+                num_sounds=100,
+                similar_to_similarity_space="test_sim_space",
+                query_filter=fq,
+            ),
+        )
         assert expected_results_count == results.num_found, (
             f"Similarity search with filter did not return the expected number of results for {fq}"
         )
@@ -998,48 +1195,247 @@ def test_sound_similarity_search_filter(search_engine_sounds_backend, output_fil
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
-def test_sound_similarity_search_facets(search_engine_sounds_backend, 
-                                        output_file_handle, 
-                                        expected_license_facet_results_all_sounds,
-                                        expected_license_facet_results_group_counts_as_one_in_facets):
-    
+def test_sound_similarity_search_facets(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test that faceting works as expected in combination wih the similarity search functionality"""
     # Check that faceting also work when doing similarity search queries
     test_facet_options = {
         settings.SEARCH_SOUNDS_FIELD_USER_NAME: {"limit": 3},
         settings.SEARCH_SOUNDS_FIELD_SAMPLERATE: {"limit": 1},
         settings.SEARCH_SOUNDS_FIELD_TYPE: {},
-        settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10}
+        settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10},
     }
 
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-        similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
-        similar_to_max_num_sounds=100,  # Will return all test sounds
-        num_sounds=100,
-        similar_to_analyzer="test_analyzer",
-        facets=test_facet_options,
-        group_by_pack=True,
-        group_counts_as_one_in_facets=False,
-    ))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
+            similar_to_min_similarity=0.0,  # Will return all test sounds
+            num_sounds=100,
+            similar_to_similarity_space="test_sim_space",
+            facets=test_facet_options,
+            group_by_pack=True,
+            group_counts_as_one_in_facets=False,
+        ),
+    )
     assert len(results.facets) == 4, "Wrong number of facets returned"
 
+    expected_factets = expected_license_facet_results_all_sounds(test_sounds)
     # Assess the counts for one of the facets
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_all_sounds[facet_name]
+        assert facet_count == expected_factets[facet_name]
 
     # Now repeat the experiment, for the case in which group_counts_as_one_in_facets is True
-    results = run_sounds_query_and_save_results(search_engine_sounds_backend, output_file_handle, dict(
-        similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
-        similar_to_max_num_sounds=100,  # Will return all test sounds
-        num_sounds=100,
-        similar_to_analyzer="test_analyzer",
-        facets=test_facet_options,
-        group_by_pack=True,
-        group_counts_as_one_in_facets=True,
-    ))
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(
+            similar_to=[0 for _ in range(100)],  # Should return sounds sorted by ID
+            similar_to_min_similarity=0.0,  # Will return all test sounds
+            num_sounds=100,
+            similar_to_similarity_space="test_sim_space",
+            facets=test_facet_options,
+            group_by_pack=True,
+            group_counts_as_one_in_facets=True,
+        ),
+    )
     assert len(results.facets) == 4, "Wrong number of facets returned"
+    expected_license_facets = expected_license_facet_results_group_counts_as_one_in_facets(test_sounds)
     for facet_name, facet_count in results.facets[settings.SEARCH_SOUNDS_FIELD_LICENSE_NAME]:
-        assert facet_count == expected_license_facet_results_group_counts_as_one_in_facets[facet_name]
+        assert facet_count == expected_license_facets[facet_name]
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_collections_filter(search_engine_sounds_backend, output_file_handle, test_sounds):
+    """Test filtering search query by collection"""
+
+    collection_ids = Collection.objects.values_list("id", flat=True).distinct()
+    for collection_id in collection_ids:
+        collection_object = Collection.objects.get(id=collection_id)
+        results = run_sounds_query_and_save_results(
+            search_engine_sounds_backend,
+            output_file_handle,
+            dict(
+                query_filter=f'collection:"{collection_object.id}_{collection_object.name}"',
+                group_by_pack=False,
+            ),
+        )
+
+        assert (
+            results.num_found
+            == CollectionSound.objects.filter(collection__id=collection_object.id, status="OK").count()
+        ), f"Filtering by collection '{collection_object.name}' did not return the expected number of results"
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_num_queries_when_adding_sounds_to_search_index(search_engine_sounds_backend, output_file_handle, test_sounds):
+    # Check that sending sounds to search engine works and number of queries is as expected
+    sound_ids = [s.id for s in test_sounds]
+    num_queries_before = len(connection.queries)
+    sound_objects = Sound.objects.bulk_query_solr(sound_ids)
+    search_engine_sounds_backend.add_sounds_to_index(sound_objects, include_similarity_vectors=True)
+    num_queries = len(connection.queries) - num_queries_before
+
+    # We expect 2 queries: one to get the sounds and another to get the similarity vectors. If include_similarity_vectors is set to False, we would expect 1 single query
+    assert num_queries == 2, "Too many database queries when adding sounds to search engine"
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_follow_utils_get_stream_sounds(search_engine_sounds_backend, output_file_handle, test_sounds):
+    users = User.objects.all()
+    test_user = users[0]
+
+    user_to_follow_1 = User.objects.get(username="xserra")
+    user_to_follow_2 = User.objects.get(username="Anton")
+
+    # Create following relationships
+    FollowingUserItem.objects.create(user_from=test_user, user_to=user_to_follow_1)
+    FollowingUserItem.objects.create(user_from=test_user, user_to=user_to_follow_2)
+
+    # we know these tags exist in the test data
+    FollowingQueryItem.objects.create(user=test_user, query="voice")
+    FollowingQueryItem.objects.create(user=test_user, query="conversation")
+
+    date_from = datetime.datetime(2005, 3, 1, tzinfo=datetime.timezone.utc)
+    date_to = datetime.datetime(2005, 3, 31, tzinfo=datetime.timezone.utc)
+    time_lapse = follow_utils.build_time_lapse(date_from, date_to)
+
+    users_sounds, tags_sounds = follow_utils.get_stream_sounds(
+        test_user, time_lapse, num_results_per_group=3, search_engine_backend=search_engine_sounds_backend
+    )
+    assert len(users_sounds) == 2, "Should have sounds from 2 followed users"
+
+    user_following, sound_objects, more_url_params, more_count, new_count = users_sounds[0]
+
+    # We can't be sure which order solr will return this in, but we know it's one of these two
+    assert user_following in [user_to_follow_1, user_to_follow_2]
+    # Check that all sounds belong to the followed user
+    for sound in sound_objects:
+        assert sound.user == user_following
+
+    assert len(more_url_params) == 2, "more_url_params should have 2 elements"
+    decoded_filter = urllib.parse.unquote(more_url_params[0])
+    assert f'username:"{user_following.username}"' in decoded_filter, "Filter should contain the followed username"
+    assert "created:" in decoded_filter, "Filter should contain created date filter"
+
+    # Check counts
+    assert more_count >= 0, "more_count should be non-negative"
+    assert len(sound_objects) <= 3, "Should not return more than num_results_per_group sounds"
+
+    # We expect sounds with "voice" tag (5 sounds) and "conversation" tag (1 sound)
+    assert len(tags_sounds) == 2, "Should have sounds from 2 followed tag queries"
+
+    tags, sound_objects, more_url_params, more_count, new_count = tags_sounds[0]
+    tags1, _, _, _, _ = tags_sounds[1]
+
+    assert (tags == ["voice"] and tags1 == ["conversation"]) or (tags == ["conversation"] and tags1 == ["voice"]), (
+        "Unexpected tags"
+    )
+
+    # Check that sounds have the expected tags
+    expected_tag = tags[0]
+    for sound in sound_objects:
+        sound_tags = [tag.name for tag in sound.tags.all()]
+        assert expected_tag in sound_tags, f"Sound {sound.id} should have '{expected_tag}' tag"
+
+    assert len(more_url_params) == 2, "more_url_params should have 2 elements"
+    decoded_filter = urllib.parse.unquote(more_url_params[0])
+    for tag in tags:
+        assert f"tag:{tag}" in decoded_filter, f"Filter should contain tag:{tag}"
+    assert "created:" in decoded_filter, "Filter should contain created date filter"
+
+    decoded_sort = urllib.parse.unquote(more_url_params[1])
+    assert decoded_sort == settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST, "Sort should be date newest first"
+
+    assert more_count >= 0, "more_count should be non-negative"
+    assert len(sound_objects) <= 3, "Should not return more than num_results_per_group sounds"
+
+    # No sounds in this range
+    old_date_from = datetime.datetime(2004, 1, 1, tzinfo=datetime.timezone.utc)
+    old_date_to = datetime.datetime(2004, 12, 31, tzinfo=datetime.timezone.utc)
+    old_time_lapse = follow_utils.build_time_lapse(old_date_from, old_date_to)
+
+    old_users_sounds, old_tags_sounds = follow_utils.get_stream_sounds(
+        test_user, old_time_lapse, num_results_per_group=3, search_engine_backend=search_engine_sounds_backend
+    )
+    assert len(old_users_sounds) == 0
+    assert len(old_tags_sounds) == 0
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_geotag_queries(search_engine_sounds_backend, output_file_handle):
+    """Test geotag query functionality with both Intersects and range query formats"""
+
+    # Test 1: Using geotag:"Intersects()" format - should be converted to range format
+    # Query for sounds in a bounding box around Barcelona (includes Sagrada Familia)
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(query_filter='geotag:"Intersects(2.0 41.0 2.5 42.0)"', num_sounds=10),
+    )
+
+    # Should find the Barcelona sound (ID 40) at lat=41.4036, lon=2.1744
+    result_ids = [r["id"] for r in results.docs]
+    assert 40 in result_ids, "Barcelona sound should be found in the bounding box query"
+    assert 41 not in result_ids, "Madrid sound should not be found in the bounding box query"
+
+    # Test 2: Using geotag range format directly
+    # Query for sounds in a bounding box around Madrid (includes Plaza Mayor)
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(query_filter='geotag:["40.0,-4.0" TO "41.0,-3.0"]', num_sounds=10),
+    )
+
+    # Should find the Madrid sound (ID 41) at lat=40.4155, lon=-3.7074
+    result_ids = [r["id"] for r in results.docs]
+    print(result_ids)
+    assert 41 in result_ids, "Madrid sound should be found in the range query"
+    assert 40 not in result_ids, "Barcelona sound should not be found in the range query"
+
+    # Test 3: Query for sounds in Andalusia region (includes Seville and Granada)
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(query_filter='geotag:"Intersects(-6.5 36.0 -3.0 38.0)"', num_sounds=10),
+    )
+
+    # Should find Seville (ID 42) at lat=37.3891, lon=-5.9845 and Granada (ID 44) at lat=37.1760, lon=-3.5976
+    result_ids = [r["id"] for r in results.docs]
+    assert 42 in result_ids, "Seville sound should be found in Andalusia query"
+    assert 44 in result_ids, "Granada sound should be found in Andalusia query"
+    assert 40 not in result_ids, "Barcelona sound should not be found in Andalusia query"
+
+    # Test 4: Query that should return no results (area with no sounds)
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(query_filter='geotag:"Intersects(0.0 0.0 1.0 1.0)"', num_sounds=10),
+    )
+
+    # Should find no sounds in this area
+    assert results.num_found == 0, "No sounds should be found in the middle of the ocean"
+
+    # Test 5: Query for sounds with geotags (should return all 5 sounds)
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend, output_file_handle, dict(query_filter="is_geotagged:true", num_sounds=10)
+    )
+
+    # Should find all 5 sounds with geotags
+    assert results.num_found == 5, "All 5 sounds with geotags should be found"
+    result_ids = [r["id"] for r in results.docs]
+    expected_ids = [40, 41, 42, 43, 44]
+    for expected_id in expected_ids:
+        assert expected_id in result_ids, f"Sound {expected_id} should be found when querying for geotagged sounds"
 
 
 @pytest.mark.search_engine
@@ -1056,25 +1452,21 @@ def test_forum_mandatory_doc_fields(search_engine_forum_backend, output_file_han
         "forum_name",
         "forum_name_slug",
     ]
-    results = run_forum_posts_query_and_save_results(search_engine_forum_backend, output_file_handle, dict(
-        num_posts=1, group_by_thread=False)
+    results = run_forum_posts_query_and_save_results(
+        search_engine_forum_backend, output_file_handle, dict(num_posts=1, group_by_thread=False)
     )
     for result in results.docs:
         for field in mandatory_fields:
-            assert field in result, (
-                f"Mandatory field {field} not present in result when not grouping by thread"
-            )
+            assert field in result, f"Mandatory field {field} not present in result when not grouping by thread"
 
     # Check grouped search results
     mandatory_fields = ["id", "score", "group_name", "n_more_in_group", "group_docs"]
-    results = run_forum_posts_query_and_save_results(search_engine_forum_backend, output_file_handle, dict(
-        num_posts=1, group_by_thread=True
-    ))
+    results = run_forum_posts_query_and_save_results(
+        search_engine_forum_backend, output_file_handle, dict(num_posts=1, group_by_thread=True)
+    )
     for result in results.docs:
         for field in mandatory_fields:
-            assert field in result, (
-                f"Mandatory field {field} not present in result when grouping by thread"
-            )
+            assert field in result, f"Mandatory field {field} not present in result when grouping by thread"
 
 
 @pytest.mark.search_engine
@@ -1084,22 +1476,30 @@ def test_forum_offsets(search_engine_forum_backend, output_file_handle):
     """Test forum post pagination and offset functionality"""
 
     # This groups by thread. We only have 6 test threads, so limit to 5
-    results = run_forum_posts_query_and_save_results(search_engine_forum_backend, output_file_handle, dict(num_posts=5, offset=0))
+    results = run_forum_posts_query_and_save_results(
+        search_engine_forum_backend, output_file_handle, dict(num_posts=5, offset=0)
+    )
     offset_0_ids = [r["id"] for r in results.docs]
-    results = run_forum_posts_query_and_save_results(search_engine_forum_backend, output_file_handle, dict(num_posts=5, offset=1))
+    results = run_forum_posts_query_and_save_results(
+        search_engine_forum_backend, output_file_handle, dict(num_posts=5, offset=1)
+    )
     offset_1_ids = [r["id"] for r in results.docs]
 
     assert len(offset_0_ids) == 5
     assert len(offset_1_ids) == 5
     assert offset_0_ids[1:] == offset_1_ids[:-1]
 
-    results = run_forum_posts_query_and_save_results(search_engine_forum_backend, output_file_handle, dict(num_posts=1, offset=3))
+    results = run_forum_posts_query_and_save_results(
+        search_engine_forum_backend, output_file_handle, dict(num_posts=1, offset=3)
+    )
     offset_4_num_posts_1_ids = [r["id"] for r in results.docs]
     assert len(offset_4_num_posts_1_ids) == 1
     assert offset_0_ids[3] == offset_4_num_posts_1_ids[0]
 
     # With 6 threads, we should get 1 result on page 2 if we show 5 posts per page
-    results = run_forum_posts_query_and_save_results(search_engine_forum_backend, output_file_handle, dict(num_posts=5, current_page=2))
+    results = run_forum_posts_query_and_save_results(
+        search_engine_forum_backend, output_file_handle, dict(num_posts=5, current_page=2)
+    )
     page_2_num_posts_5_ids = [r["id"] for r in results.docs]
     assert len(page_2_num_posts_5_ids) == 1
     assert page_2_num_posts_5_ids == offset_1_ids[-1:]
@@ -1118,13 +1518,13 @@ def test_forum_offsets(search_engine_forum_backend, output_file_handle):
         "post_created",
         "num_posts",
     ]
-    results = run_forum_posts_query_and_save_results(search_engine_forum_backend, output_file_handle, dict(group_by_thread=False))
+    results = run_forum_posts_query_and_save_results(
+        search_engine_forum_backend, output_file_handle, dict(group_by_thread=False)
+    )
     for result1, result2 in zip(results.docs[:-1], results.docs[1:]):
         for field in expected_fields:
             assert field in result1, f"{field} not present in result ID {result1['id']}"
-        assert result1["thread_created"] >= result2["thread_created"], (
-            "Wrong sorting in query results"
-        )
+        assert result1["thread_created"] >= result2["thread_created"], "Wrong sorting in query results"
 
 
 @pytest.mark.search_engine
@@ -1132,7 +1532,9 @@ def test_forum_offsets(search_engine_forum_backend, output_file_handle):
 @pytest.mark.django_db
 def test_forum_empty_query(search_engine_forum_backend, output_file_handle):
     """Test empty forum query returns results"""
-    results = run_forum_posts_query_and_save_results(search_engine_forum_backend, output_file_handle, dict(textual_query=""))
+    results = run_forum_posts_query_and_save_results(
+        search_engine_forum_backend, output_file_handle, dict(textual_query="")
+    )
     assert results.num_found > 0, "Empty query returned no results"
 
 
@@ -1146,15 +1548,11 @@ def test_forum_group_by_thread(search_engine_forum_backend, output_file_handle):
         assert "id" in result, "No ID field in doc from results"
         assert "group_name" in result, "No group_name field in doc from results"
         assert "group_docs" in result, "No group_docs field in doc from results"
-        assert "n_more_in_group" in result, (
-            "No n_more_in_group field in doc from results"
-        )
+        assert "n_more_in_group" in result, "No n_more_in_group field in doc from results"
 
         first_post_thread = result["group_docs"][0]["thread_title"]
         for doc in result["group_docs"]:
-            assert doc["thread_title"] == first_post_thread, (
-                "Different threads in thread group"
-            )
+            assert doc["thread_title"] == first_post_thread, "Different threads in thread group"
 
 
 @pytest.mark.search_engine
@@ -1162,10 +1560,9 @@ def test_forum_group_by_thread(search_engine_forum_backend, output_file_handle):
 @pytest.mark.django_db
 def test_forum_highlighting(search_engine_forum_backend, output_file_handle):
     """Test forum post highlighting"""
-    results = run_forum_posts_query_and_save_results(search_engine_forum_backend, output_file_handle, dict(textual_query="microphone"))
+    results = run_forum_posts_query_and_save_results(
+        search_engine_forum_backend, output_file_handle, dict(textual_query="microphone")
+    )
     assert results.highlighting != dict(), "No highlighting entries returned"
     for highlighting_content in results.highlighting.values():
-        assert "post_body" in highlighting_content, (
-            "Highlighting data without expected fields"
-        )
-
+        assert "post_body" in highlighting_content, "Highlighting data without expected fields"

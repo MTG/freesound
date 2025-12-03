@@ -21,16 +21,14 @@
 
 from django import template
 
-from messages.models import Message
-
 register = template.Library()
 
 
-@register.inclusion_tag('messages/display_message.html', takes_context=True)
+@register.inclusion_tag("messages/display_message.html", takes_context=True)
 def display_message(context, message):
     return {
-        'message': message,
-        'hide_toggle_read_unread': context.get('hide_toggle_read_unread', False),
-        'hide_archive_unarchive': context.get('hide_archive_unarchive', False),
-        'list_type': context['list_type']
+        "message": message,
+        "hide_toggle_read_unread": context.get("hide_toggle_read_unread", False),
+        "hide_archive_unarchive": context.get("hide_archive_unarchive", False),
+        "list_type": context["list_type"],
     }

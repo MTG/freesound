@@ -19,7 +19,7 @@
 #
 import logging
 
-from utils.search import get_search_engine, SearchEngineException
+from utils.search import SearchEngineException, get_search_engine
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
@@ -83,9 +83,10 @@ def get_all_post_ids_from_search_engine(solr_collection_url=None, page_size=2000
     current_page = 1
     try:
         while solr_count is None or len(solr_ids) < solr_count:
-            response = search_engine.search_forum_posts(query_filter='*:*', group_by_thread=False,
-                                                        offset=(current_page - 1) * page_size, num_posts=page_size)
-            solr_ids += [int(element['id']) for element in response.docs]
+            response = search_engine.search_forum_posts(
+                query_filter="*:*", group_by_thread=False, offset=(current_page - 1) * page_size, num_posts=page_size
+            )
+            solr_ids += [int(element["id"]) for element in response.docs]
             solr_count = response.num_found
             current_page += 1
     except SearchEngineException as e:

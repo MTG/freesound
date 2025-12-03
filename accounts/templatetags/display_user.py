@@ -28,8 +28,8 @@ from follow import follow_utils
 register = template.Library()
 
 
-@register.inclusion_tag('accounts/display_user.html', takes_context=True)
-def display_user(context, user, size='basic', comment_created=None, donated_amount=None):
+@register.inclusion_tag("accounts/display_user.html", takes_context=True)
+def display_user(context, user, size="basic", comment_created=None, donated_amount=None):
     """This templatetag is used to display a user with some information next to it. It prepares some variables that
     are then passed to the display_user.html template to show user information.
 
@@ -58,38 +58,51 @@ def display_user(context, user, size='basic', comment_created=None, donated_amou
 
     if user_obj is None:
         return {
-            'user': None,
+            "user": None,
         }
     else:
-        request = context['request']
+        request = context["request"]
 
         is_followed_by_request_user = None
-        if size == 'follow_lists':
-            is_followed_by_request_user = request.user.is_authenticated \
-                                          and follow_utils.is_user_following_user(request.user, user_obj)
+        if size == "follow_lists":
+            is_followed_by_request_user = request.user.is_authenticated and follow_utils.is_user_following_user(
+                request.user, user_obj
+            )
 
         return {
-            'user': user_obj,
-            'user_profile_locations': Profile.locations_static(user_obj.id, user_obj.profile.has_avatar),
-            'request': request,
-            'is_followed_by_request_user': is_followed_by_request_user,
-            'comment_created': comment_created,
-            'donated_amount': donated_amount,
-            'next_path': context['next_path'],
-            'size': size,
+            "user": user_obj,
+            "user_profile_locations": Profile.locations_static(user_obj.id, user_obj.profile.has_avatar),
+            "request": request,
+            "is_followed_by_request_user": is_followed_by_request_user,
+            "comment_created": comment_created,
+            "donated_amount": donated_amount,
+            "next_path": context["next_path"],
+            "size": size,
         }
 
 
-@register.inclusion_tag('accounts/display_user.html', takes_context=True)
+@register.inclusion_tag("accounts/display_user.html", takes_context=True)
 def display_user_follow_lists(context, user):
-    return display_user(context, user, size='follow_lists')
+    return display_user(context, user, size="follow_lists")
 
 
-@register.inclusion_tag('accounts/display_user.html', takes_context=True)
+@register.inclusion_tag("accounts/display_user.html", takes_context=True)
 def display_user_top_donor(context, user, donated_amount):
-    return display_user(context, user, size='top_donor', donated_amount=donated_amount)
+    return display_user(context, user, size="top_donor", donated_amount=donated_amount)
 
 
-@register.inclusion_tag('accounts/display_user.html', takes_context=True)
+@register.inclusion_tag("accounts/display_user.html", takes_context=True)
 def display_user_comment(context, user, comment_created):
-    return display_user(context, user, size='comment', comment_created=comment_created)
+    return display_user(context, user, size="comment", comment_created=comment_created)
+
+
+@register.inclusion_tag("accounts/display_user_selectable.html", takes_context=True)
+def display_user_small_selectable(context, user, selected=False):
+    context = context.get("original_context", context)
+    tvars = display_user(context, user, size="basic")
+    tvars.update(
+        {
+            "selected": selected,
+        }
+    )
+    return tvars

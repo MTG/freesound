@@ -24,7 +24,7 @@ from django import template
 register = template.Library()
 
 
-@register.inclusion_tag('forum/display_forum.html', takes_context=True)
+@register.inclusion_tag("forum/display_forum.html", takes_context=True)
 def display_forum(context, forum):
     """This templatetag is used to display a forum in a list of forums. It prepares some variables that are then passed
     to the display_forum.html template to show forum information.
@@ -39,13 +39,10 @@ def display_forum(context, forum):
         dict: dictionary with the variables needed for rendering the forum with the display_forum.html template
 
     """
-    return {
-        'forum': forum,
-        'request': context['request']
-    }
+    return {"forum": forum, "request": context["request"]}
 
 
-@register.inclusion_tag('forum/display_thread.html', takes_context=True)
+@register.inclusion_tag("forum/display_thread.html", takes_context=True)
 def display_thread(context, thread):
     """This templatetag is used to display a thread in a list of threads. It prepares some variables that are then
     passed to the display_thread.html template to show thread information.
@@ -61,15 +58,20 @@ def display_thread(context, thread):
         dict: dictionary with the variables needed for rendering the thread with the display_thread.html template
 
     """
-    return {
-        'thread': thread,
-        'request': context['request']
-    }
+    return {"thread": thread, "request": context["request"]}
 
 
-@register.inclusion_tag('forum/display_post.html', takes_context=True)
-def display_post(context, post, forloop_counter=0, post_number_offset=0, show_post_location=False,
-                 show_action_icons=True, show_report_actions=True, results_highlighted=None):
+@register.inclusion_tag("forum/display_post.html", takes_context=True)
+def display_post(
+    context,
+    post,
+    forloop_counter=0,
+    post_number_offset=0,
+    show_post_location=False,
+    show_action_icons=True,
+    show_report_actions=True,
+    results_highlighted=None,
+):
     """This templatetag is used to display a post in a list of posts. It prepares some variables that are then
     passed to the display_post.html template to show post information.
 
@@ -92,18 +94,18 @@ def display_post(context, post, forloop_counter=0, post_number_offset=0, show_po
     """
     if results_highlighted is not None and str(post.id) in results_highlighted:
         try:
-            highlighted_content = results_highlighted[str(post.id)]['post_body'][0]
+            highlighted_content = results_highlighted[str(post.id)]["post_body"][0]
         except KeyError:
-            highlighted_content = False    
+            highlighted_content = False
     else:
         highlighted_content = False
     return {
-        'post': post,
-        'highlighted_content': highlighted_content,
-        'post_number': forloop_counter + post_number_offset,
-        'show_post_location': show_post_location,
-        'show_action_icons': show_action_icons,
-        'show_report_actions': show_report_actions,
-        'perms': context['perms'],
-        'request': context['request']
+        "post": post,
+        "highlighted_content": highlighted_content,
+        "post_number": forloop_counter + post_number_offset,
+        "show_post_location": show_post_location,
+        "show_action_icons": show_action_icons,
+        "show_report_actions": show_report_actions,
+        "perms": context["perms"],
+        "request": context["request"],
     }

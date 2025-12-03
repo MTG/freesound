@@ -18,12 +18,13 @@
 #     See AUTHORS file.
 #
 
-from django.urls import path, re_path
+from django.urls import path
+
 from follow import views
 
 urlpatterns = [
-    path('follow_user/<username>/', views.follow_user, name='follow-user'),
-    path('unfollow_user/<username>/', views.unfollow_user, name='unfollow-user'),
-    path('follow_tags/<multitags:slash_tags>/', views.follow_tags, name='follow-tags'),
-    path('unfollow_tags/<multitags:slash_tags>/', views.unfollow_tags, name='unfollow-tags'),
+    path("follow_user/<username>/", views.follow_user, name="follow-user"),
+    path("unfollow_user/<username>/", views.unfollow_user, name="unfollow-user"),
+    path("follow_tags/<multitags:slash_tags>/", views.follow_tags, name="follow-tags"),
+    path("unfollow_tags/<multitags:slash_tags>/", views.unfollow_tags, name="unfollow-tags"),
 ]

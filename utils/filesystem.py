@@ -26,7 +26,6 @@ import zlib
 
 
 class File:
-
     def __init__(self, id, name, full_path, is_dir):
         self.name = name
         self.full_path = full_path
@@ -46,7 +45,7 @@ def generate_tree(path):
     lookups = {path: File(counter, path, path, True)}
     files = {}
 
-    for (root, dirnames, filenames) in os.walk(path):
+    for root, dirnames, filenames in os.walk(path):
         parent = lookups[root]
         for dirname in sorted(dirnames):
             full_path = os.path.join(root, dirname)

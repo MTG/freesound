@@ -26,8 +26,8 @@ from sounds.models import Pack
 register = template.Library()
 
 
-@register.inclusion_tag('sounds/display_pack.html', takes_context=True)
-def display_pack(context, pack, size='small', show_bookmark_similarity_buttons=True):
+@register.inclusion_tag("sounds/display_pack.html", takes_context=True)
+def display_pack(context, pack, size="small", show_bookmark_similarity_buttons=True):
     """This templatetag is used to display a pack with some randomly selected sound players.
 
     Args:
@@ -35,7 +35,7 @@ def display_pack(context, pack, size='small', show_bookmark_similarity_buttons=T
           argument is automatically added by Django when calling the templatetag inside a template.
         pack (int or Pack): pack ID or Pack object of the pack that will be shown. If no pack exists for the
           given ID, the display_pack.html will be rendered with empty HTML.
-        size (str, optional): size of the "info" to display. Must be one of ['small' (default), 'big']. 
+        size (str, optional): size of the "info" to display. Must be one of ['small' (default), 'big'].
           Information about the contents of each size is given in the display_pack.html template code.
 
     Returns:
@@ -50,33 +50,35 @@ def display_pack(context, pack, size='small', show_bookmark_similarity_buttons=T
         except IndexError:
             pack = None
 
-    request = context.get('request')
+    request = context.get("request")
 
     # Add 'request' to the returned context dictionary below so when the display_sound templatetag is called inside
     # display_pack templatetag it is given request in the context as well.
     return {
-        'pack': pack,
-        'size': size,
-        'request': request,
-        'show_bookmark_similarity_buttons': show_bookmark_similarity_buttons,
+        "pack": pack,
+        "size": size,
+        "request": request,
+        "show_bookmark_similarity_buttons": show_bookmark_similarity_buttons,
     }
 
 
-@register.inclusion_tag('sounds/display_pack.html', takes_context=True)
+@register.inclusion_tag("sounds/display_pack.html", takes_context=True)
 def display_pack_small_no_bookmark(context, pack):
-    return display_pack(context, pack, size='small', show_bookmark_similarity_buttons=False)
+    return display_pack(context, pack, size="small", show_bookmark_similarity_buttons=False)
 
 
-@register.inclusion_tag('sounds/display_pack.html', takes_context=True)
+@register.inclusion_tag("sounds/display_pack.html", takes_context=True)
 def display_pack_big(context, pack):
-    return display_pack(context, pack, size='big')
+    return display_pack(context, pack, size="big")
 
 
-@register.inclusion_tag('sounds/display_pack_selectable.html', takes_context=True)
+@register.inclusion_tag("sounds/display_pack_selectable.html", takes_context=True)
 def display_pack_small_selectable(context, pack, selected=False):
-    context = context.get('original_context', context)  # This is to allow passing context in nested inclusion tags
-    tvars = display_pack(context, pack, size='small')
-    tvars.update({
-        'selected': selected,
-    })
+    context = context.get("original_context", context)  # This is to allow passing context in nested inclusion tags
+    tvars = display_pack(context, pack, size="small")
+    tvars.update(
+        {
+            "selected": selected,
+        }
+    )
     return tvars

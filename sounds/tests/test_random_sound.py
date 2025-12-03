@@ -31,15 +31,13 @@ from django.urls import reverse
 from freezegun import freeze_time
 
 import accounts
-from accounts.models import EmailPreferenceType
-from sounds.models import Sound, SoundOfTheDay, Flag
+from sounds.models import Flag, Sound, SoundOfTheDay
 from sounds.views import get_sound_of_the_day_id
 from utils.test_helpers import create_user_and_sounds
 
 
 class RandomSoundAndUploaderTestCase(TestCase):
-
-    fixtures = ['licenses', 'sounds']
+    fixtures = ["licenses", "sounds"]
 
     def test_random_sound(self):
         sound_obj = Sound.objects.random()
@@ -47,51 +45,50 @@ class RandomSoundAndUploaderTestCase(TestCase):
 
 
 class RandomSoundViewTestCase(TestCase):
+    fixtures = ["licenses"]
 
-    fixtures = ['licenses']
-
-    @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
+    @mock.patch("sounds.views.get_random_sound_id_from_search_engine")
     def test_random_sound_view(self, random_sound):
-        """ Get a sound from solr and redirect to it. """
+        """Get a sound from solr and redirect to it."""
         _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
 
         # We only use the ID field from solr
         random_sound.return_value = sound.id
 
-        response = self.client.get(reverse('sounds-random'))
+        response = self.client.get(reverse("sounds-random"))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, f'/people/testuser/sounds/{sound.id}/?random_browsing=true')
+        self.assertEqual(response.url, f"/people/testuser/sounds/{sound.id}/?random_browsing=true")
 
-    @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
+    @mock.patch("sounds.views.get_random_sound_id_from_search_engine")
     def test_random_sound_view_bad_solr(self, random_sound):
-        """ Solr may send us a sound id which no longer exists (index hasn't been updated).
-        In this case, use the database access """
+        """Solr may send us a sound id which no longer exists (index hasn't been updated).
+        In this case, use the database access"""
         _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
         # Update sound attributes to be selected by Sound.objects.random
-        sound.moderation_state = sound.processing_state = 'OK'
+        sound.moderation_state = sound.processing_state = "OK"
         sound.is_explicit = False
         sound.avg_rating = 8
         sound.num_ratings = 5
         sound.save()
 
         # We only use the ID field from solr
-        random_sound.return_value = sound.id+100
+        random_sound.return_value = sound.id + 100
 
         # Even though solr returns sound.id+100, we find we are redirected to the db sound, because
         # we call Sound.objects.random
-        response = self.client.get(reverse('sounds-random'))
+        response = self.client.get(reverse("sounds-random"))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, f'/people/testuser/sounds/{sound.id}/?random_browsing=true')
+        self.assertEqual(response.url, f"/people/testuser/sounds/{sound.id}/?random_browsing=true")
 
-    @mock.patch('sounds.views.get_random_sound_id_from_search_engine')
+    @mock.patch("sounds.views.get_random_sound_id_from_search_engine")
     def test_random_sound_view_no_solr(self, random_sound):
-        """ If solr is down, get a random sound from the database and redirect to it. """
+        """If solr is down, get a random sound from the database and redirect to it."""
         _, _, sounds = create_user_and_sounds(num_sounds=1)
         sound = sounds[0]
         # Update sound attributes to be selected by Sound.objects.random
-        sound.moderation_state = sound.processing_state = 'OK'
+        sound.moderation_state = sound.processing_state = "OK"
         sound.is_explicit = False
         sound.avg_rating = 8
         sound.num_ratings = 5
@@ -101,16 +98,16 @@ class RandomSoundViewTestCase(TestCase):
         random_sound.return_value = 0
 
         # we find the sound due to Sound.objects.random
-        response = self.client.get(reverse('sounds-random'))
+        response = self.client.get(reverse("sounds-random"))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, f'/people/testuser/sounds/{sound.id}/?random_browsing=true')
+        self.assertEqual(response.url, f"/people/testuser/sounds/{sound.id}/?random_browsing=true")
 
 
 class RandomSoundTestCase(TestCase):
-    """ Test that sounds that don't fall under our criteria don't get selected
-        as a random sound."""
+    """Test that sounds that don't fall under our criteria don't get selected
+    as a random sound."""
 
-    fixtures = ['licenses']
+    fixtures = ["licenses"]
 
     def _create_test_sound(self):
         """Create a sound which is suitable for being chosen as a random sound"""
@@ -121,8 +118,8 @@ class RandomSoundTestCase(TestCase):
         user, packs, sounds = create_user_and_sounds(num_sounds=1, user=user)
         sound = sounds[0]
         sound.is_explicit = False
-        sound.moderation_state = 'OK'
-        sound.processing_state = 'OK'
+        sound.moderation_state = "OK"
+        sound.processing_state = "OK"
         sound.avg_rating = 8
         sound.num_ratings = 5
         sound.save()
@@ -148,7 +145,7 @@ class RandomSoundTestCase(TestCase):
     def test_not_processed(self):
         """Doesn't select a sound if it isn't processed"""
         sound = self._create_test_sound()
-        sound.processing_state = 'PE'
+        sound.processing_state = "PE"
         sound.save()
 
         random = Sound.objects.random()
@@ -156,7 +153,7 @@ class RandomSoundTestCase(TestCase):
 
         # or isn't moderated
         sound = self._create_test_sound()
-        sound.moderation_state = 'PE'
+        sound.moderation_state = "PE"
         sound.save()
 
         random = Sound.objects.random()
@@ -175,16 +172,20 @@ class RandomSoundTestCase(TestCase):
         """Doesn't select a sound if it's flagged"""
         sound = self._create_test_sound()
         sound.save()
-        Flag.objects.create(sound=sound, reporting_user=User.objects.all()[0], email="testemail@freesound.org",
-            reason_type="O", reason="Not a good sound")
+        Flag.objects.create(
+            sound=sound,
+            reporting_user=User.objects.all()[0],
+            email="testemail@freesound.org",
+            reason_type="O",
+            reason="Not a good sound",
+        )
 
         random = Sound.objects.random()
         self.assertIsNone(random)
 
 
 class SoundOfTheDayTestCase(TestCase):
-
-    fixtures = ['licenses', 'sounds', 'email_preference_type']
+    fixtures = ["licenses", "sounds", "email_preference_type"]
 
     def setUp(self):
         cache.clear()
@@ -203,7 +204,7 @@ class SoundOfTheDayTestCase(TestCase):
 
     @freeze_time("2017-06-20", tz_offset=0)
     def test_create_enough_new_sounds(self):
-        """ If we have some random sounds selected for the future, make sure
+        """If we have some random sounds selected for the future, make sure
         that we always have at least settings.NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE sounds
         waiting in the future."""
 
@@ -258,7 +259,7 @@ class SoundOfTheDayTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     @freeze_time("2017-06-20 10:30:00", tz_offset=0)
-    @mock.patch('django.core.cache.cache.set')
+    @mock.patch("django.core.cache.cache.set")
     def test_expire_cache_at_end_of_day(self, cache_set):
         """When we cache today's random sound, expire the cache at midnight today"""
 

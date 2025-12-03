@@ -191,7 +191,7 @@
       "required": false
     },
     {
-      "name": "original_filename",
+      "name": "name",
       "type": "freesound_text",
       "indexed": true,
       "stored": true,
@@ -272,6 +272,14 @@
       "indexed": true,
       "stored": true,
       "required": false
+    },
+    {
+      "name": "collection",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false,
+      "multiValued": true
     },
     {
       "name": "pack_grouping",
@@ -464,7 +472,7 @@
       "required": false
     },
     {
-      "name": "analyzer",
+      "name": "similarity_space",
       "type": "string",
       "indexed": true,
       "stored": true,

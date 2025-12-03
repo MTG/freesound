@@ -48,18 +48,18 @@ def is_spam(request, comment):
             return False
 
         try:
-            x_forwarded_for = request.headers.get('x-forwarded-for')
+            x_forwarded_for = request.headers.get("x-forwarded-for")
             if x_forwarded_for:
-                user_ip = x_forwarded_for.split(',')[0].strip()
+                user_ip = x_forwarded_for.split(",")[0].strip()
             else:
-                user_ip = '127.0.0.1'
+                user_ip = "127.0.0.1"
             if api.comment_check(
-                    user_ip=user_ip,
-                    user_agent=request.headers.get("user-agent", None),
-                    referrer=request.headers.get("referer", None),
-                    comment_type="comment",
-                    comment_author=request.user.username.encode("utf-8") if request.user.is_authenticated else None,
-                    comment_content=comment.encode("utf-8"),
+                user_ip=user_ip,
+                user_agent=request.headers.get("user-agent", None),
+                referrer=request.headers.get("referer", None),
+                comment_type="comment",
+                comment_author=request.user.username.encode("utf-8") if request.user.is_authenticated else None,
+                comment_content=comment.encode("utf-8"),
             ):
                 if request.user.is_authenticated:
                     AkismetSpam.objects.create(user=request.user, spam=comment)

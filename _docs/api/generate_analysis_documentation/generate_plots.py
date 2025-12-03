@@ -1,115 +1,118 @@
-from __future__ import print_function
+from __future__ import print_function  
 
-from builtins import range
-import gaia2
-import pylab as pl
+import csv 
+import json
+import os
+import re
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
+from matplotlib.ticker import FuncFormatter
+import seaborn as sns
 
-OUT_FOLDER = 'out_plots' # Must be created
-GAIA_INDEX_FILE = 'fs_index.db' # File with gaia index
-BINS = 100 # Bins per histogram plot
+DATA_FOLDER = "descriptors_data"  # json files for each descriptor extracted from DB
+OUT_FOLDER = "../source/_static/descriptors"
 
+with open("descriptors.csv", "r", newline="") as f:
+    reader = csv.reader(f)
+    next(reader)
+    descriptor_names = [row[0] for row in reader]
 
-def plot_histogram(pool, label,  x_label_ticks = False):
-    fig = pl.figure()
-    ax = fig.add_subplot(111)
+print("Descriptors found:", len(descriptor_names))
 
-    if not x_label_ticks:
-        range_min = min(pool) #percentile(pool, 10)
-        range_max = max(pool) #percentile(pool, 90)
+def sort_key(s):
+    ''' Sort string labels, and fix note order. '''
+    m = re.match(r"([A-Za-z]+)(#?)(\d+)", s)
+    if m:
+        letter, symbol, number = m.groups()
+        return (int(number), letter.lower(), symbol != "")
     else:
-        range_min = min(pool)
-        range_max = max(pool) + 1
+        return (float('inf'), s.lower(), False)
+    
+def plot_histogram(data, label, out_folder):
+    sns.set_theme(style="whitegrid", context="talk", palette="pastel")
+    plt.figure(figsize=(8,5))
 
-    n_bins = BINS
-    if x_label_ticks:
-        n_bins = len(x_label_ticks)
-    n, bins, patches = ax.hist(pool, bins=n_bins, range=(float(range_min), float(range_max)), log=False, histtype='stepfilled')
-    pl.title('Distribution: %s' % label)
-    if not x_label_ticks:
-        ax.ticklabel_format(axis='x', style='sci', scilimits=(-3,3))
-    else:
-        pl.xticks(list(range(0, len(x_label_ticks))),['           %s'%tick for tick in x_label_ticks])
-    ax.ticklabel_format(axis='y', style='sci', scilimits=(-2,2))
-    ax.set_xlabel('Value')
-    ax.set_ylabel('Frequency of occurrence')
-    ax.grid(True)
-    pl.savefig('%s/%s.png' % (OUT_FOLDER, label[1:]))
-    pl.close()
+    len_vals = len(set(data))
+    bins = 100 if len_vals > 100 else len_vals
 
-ds = gaia2.DataSet()
-dataset_path = GAIA_INDEX_FILE
-ds.load(dataset_path)
-transformation_history = ds.history().toPython()
-normalization_coeffs = None
-for i in range(0,len(transformation_history)):
-    if transformation_history[-(i+1)]['Analyzer name'] == 'normalize':
-        normalization_coeffs = transformation_history[-(i+1)]['Applier parameters']['coeffs']
-print([x for x in normalization_coeffs.keys() if (".tonal" in x and "chords" in x)])
-descriptor_names = ds.layout().descriptorNames()
-point_names = ds.pointNames()
-example_point = ds.point(point_names[0])
-reject_stats = ['dmean', 'dmean2', 'dvar', 'dvar2', 'max',  'min', 'var']
+    if all(isinstance(x, (int, float)) for x in data):  # Numeric data
+        if set(data).issubset({0, 1}):  # Boolean data
+            sns.countplot(
+                x=data,
+                color=sns.color_palette("Set2")[0]
+            )
+            plt.xticks(ticks=[0, 1], labels=["no (0)", "yes (1)"])
+        else:
+            sns.histplot(
+                data,
+                bins=bins,
+                kde=True,
+                color=sns.color_palette("Set2")[0],
+                discrete=False,
+            )
+        
+    else:  # Categorical/string data
+        if len_vals > 20: 
+            plt.figure(figsize=(15,5))
+            plt.xticks(rotation=60) 
+        if len_vals > 100: 
+            data = data.value_counts().nlargest(20).index
+        sorted_data = sorted(set(data), key=sort_key)
+        sns.countplot(
+            x=data,
+            color=sns.color_palette("Set2")[0],
+            order=sorted_data
+        )
+        
+    def thousands_formatter(x, pos):
+        if x >= 1000:
+            return f'{int(x/1000)}k'
+        return int(x)
+    plt.gca().ticklabel_format(style='plain', axis='y')
+    plt.gca().yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
+
+    plt.xticks(fontsize=10)
+    plt.yticks(fontsize=10)
+    plt.title(label, fontsize=11)
+    plt.xlabel("Value", fontsize=10)
+    plt.ylabel("Frequency (sound count)", fontsize=10)
+    plt.grid(True, linestyle='--', alpha=0.2)
+    plt.tight_layout()
+    
+    plt.savefig(f"{out_folder}/{label}.png", dpi=150)
+    plt.close()
 
 
-for descriptor_name in descriptor_names:
-    region = ds.layout().descriptorLocation(descriptor_name)
-    if region.lengthType() == gaia2.VariableLength or descriptor_name.split('.')[-1] in reject_stats:
+# Plot all descriptors
+for descriptor_name in descriptor_names: 
+    json_path = os.path.join(DATA_FOLDER, f"{descriptor_name}.json")
+    if not os.path.isfile(json_path):
+        print(f"File not found: {json_path}, skipping")
         continue
 
-    try:
-        example_value = example_point.value(descriptor_name)
-    except:
-        try:
-            example_value = example_point.label(descriptor_name)
-        except:
-            print("ERROR: %s could not be processed" % descriptor_name)
+    with open(json_path, "r") as f:
+        values = json.load(f)
+    values = [v for v in values if v is not None]
+    print(f"Processing {descriptor_name} ..")
+
+    if not values:
+        print(f"Skipping {descriptor_name} (empty)")
+        continue
+
+    first_val = values[0]
+
+    # Single-value number descriptor (integer and/or float, boolean)
+    if isinstance(first_val, (int, float, str)):
+        plot_histogram(values, descriptor_name, OUT_FOLDER)
+
+    # Vector descriptor with numbers or strings
+    elif isinstance(first_val, (list, tuple)):
+        if len({len(v) for v in values}) != 1:  # skip varying-length ones
+            print(f"Skipping {descriptor_name}: varying-length descriptor")
             continue
 
-    print("Histogram for descriptor: %s" % descriptor_name)
-    if isinstance(example_value, float):
-        pool = []
-        for point_name in point_names:
-            point = ds.point(point_name)
-            normalized_value = point.value(descriptor_name)
-            if not normalization_coeffs:
-                value = normalized_value
-            else:
-                a = normalization_coeffs[descriptor_name]['a']
-                b = normalization_coeffs[descriptor_name]['b']
-                value = float(normalized_value - b[0]) / a[0]
-            pool.append(value)
-
-        plot_histogram(pool, descriptor_name)
-
-    elif isinstance(example_value, tuple):
-        for i in range(0, len(example_value)):
-            label = descriptor_name + '.%.3i' % i
-            print("\tDimension %i" % i)
-            pool = []
-            for point_name in point_names:
-                point = ds.point(point_name)
-                normalized_value = point.value(descriptor_name)[i]
-                if not normalization_coeffs or descriptor_name not in normalization_coeffs.keys():
-                    value = normalized_value
-                else:
-                    a = normalization_coeffs[descriptor_name]['a']
-                    b = normalization_coeffs[descriptor_name]['b']
-                    value = float(normalized_value - b[i]) / a[i]
-                pool.append(value)
-
-            plot_histogram(pool, label)
-
-    elif isinstance(example_value, str):
-        pool = []
-        for point_name in point_names:
-            point = ds.point(point_name)
-            value = point.label(descriptor_name)
-            pool.append(value)
-
-        keys = sorted(list(set(pool)))
-        key_ids = dict()
-        for j, key in enumerate(keys):
-            key_ids[key] = j
-        pool = [key_ids[value] for value in pool]
-
-        plot_histogram(pool, descriptor_name,  x_label_ticks = keys)
+        for i in range(len(first_val)):
+            pool = [v[i] for v in values if len(v) > i]
+            label = f"{descriptor_name}_{i}"
+            print(f"\tDim. {i}")
+            plot_histogram(pool, label, OUT_FOLDER)

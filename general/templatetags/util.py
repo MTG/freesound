@@ -22,9 +22,9 @@ import datetime
 import json
 import time
 
-from django.utils.safestring import mark_safe
 from django.template import Library
 from django.template.defaultfilters import stringfilter
+from django.utils.safestring import mark_safe
 
 register = Library()
 
@@ -34,11 +34,11 @@ def tuple_to_time(t):
     return datetime.datetime(*t[0:6]) + datetime.timedelta(seconds=time.timezone)
 
 
-@register.filter(name='truncate_string')
+@register.filter(name="truncate_string")
 @stringfilter
 def truncate_string(value, length):
     if len(value) > length:
-        return value[:length-3] + "..."
+        return value[: length - 3] + "..."
     else:
         return value
 
@@ -55,7 +55,7 @@ def duration(value):
 def duration_hours(total_seconds):
     hours = int(total_seconds // 3600)
     minutes = int((total_seconds % 3600) // 60)
-    return f'{hours}:{minutes:02d}'
+    return f"{hours}:{minutes:02d}"
 
 
 @register.filter
@@ -67,27 +67,28 @@ def smart_duration_with_units(total_seconds):
     if total_seconds < 3600:
         minutes = int(total_seconds // 60)
         seconds = int(total_seconds % 60)
-        formatted_length = f'{minutes}:{seconds:02d}'
-        length_text = 'minutes'
+        formatted_length = f"{minutes}:{seconds:02d}"
+        length_text = "minutes"
     else:
         hours = int(total_seconds // 3600)
         minutes = int((total_seconds % 3600) // 60)
-        formatted_length = f'{hours}:{minutes:02d}'
-        length_text = 'hours'
-    return f'{formatted_length} {length_text}'
+        formatted_length = f"{hours}:{minutes:02d}"
+        length_text = "hours"
+    return f"{formatted_length} {length_text}"
+
 
 @register.filter
 def formatnumber(number):
     if 1000 <= number < 1000000:
-        return f'{number/1000:.1f}K'
+        return f"{number / 1000:.1f}K"
     elif 1000000 <= number:
-        return f'{number/1000000:.1f}M'
+        return f"{number / 1000000:.1f}M"
     else:
-        return f'{number}'
+        return f"{number}"
 
 
 @register.filter
-def in_list(value,arg):
+def in_list(value, arg):
     return value in arg
 
 
@@ -101,15 +102,15 @@ def chunks(l, n):
     """
     if not isinstance(l, list):
         l = list(l)
-    return [l[i:i + n] for i in range(0, len(l), n)]
+    return [l[i : i + n] for i in range(0, len(l), n)]
 
 
 @register.filter
 def license_with_version(license_name, license_deed_url):
-    if '3.0' in license_deed_url:
-        return f'{license_name} 3.0'
-    elif '4.0' in license_deed_url:
-        return f'{license_name} 4.0'
+    if "3.0" in license_deed_url:
+        return f"{license_name} 3.0"
+    elif "4.0" in license_deed_url:
+        return f"{license_name} 4.0"
     return license_name
 
 
@@ -123,14 +124,14 @@ def strip_unnecessary_br(value):
     # In HTMLCleaningFields some HTML tags are allowed. When the contents of these fields are passed to Django's |linebreaks
     # templatetag, <br> tags can be inserted between other HTML tags (linebreaks is not HTML-aware). This templatetag
     # implements a hacky fix for the most common issue which is the unnecessary br elements introduced after ul and li elements.
-    value = value.replace('</li><br>', '</li>')
-    value = value.replace('<ul><br>', '<ul>')
-    value = value.replace('</ul><br>', '</ul>')
+    value = value.replace("</li><br>", "</li>")
+    value = value.replace("<ul><br>", "<ul>")
+    value = value.replace("</ul><br>", "</ul>")
     return mark_safe(value)
 
 
 @register.filter
 def format_json(value):
     value = json.dumps(value, indent=4)
-    value = '<pre>' + value + '</pre>'
+    value = "<pre>" + value + "</pre>"
     return mark_safe(value)

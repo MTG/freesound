@@ -26,7 +26,7 @@ from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.db.models import F
 from django.db.models.functions import Greatest
-from django.db.models.signals import post_delete, pre_save, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.encoding import smart_str
@@ -37,7 +37,7 @@ from utils.cache import invalidate_template_cache
 from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_forum import delete_posts_from_search_engine
 
-web_logger = logging.getLogger('web')
+web_logger = logging.getLogger("web")
 
 
 class Forum(SortableMixin):
@@ -50,9 +50,9 @@ class Forum(SortableMixin):
     num_threads = models.PositiveIntegerField(default=0)
     num_posts = models.PositiveIntegerField(default=0)
 
-    last_post = models.OneToOneField('Post', null=True, blank=True, default=None,
-                                     related_name="latest_in_forum",
-                                     on_delete=models.SET_NULL)
+    last_post = models.OneToOneField(
+        "Post", null=True, blank=True, default=None, related_name="latest_in_forum", on_delete=models.SET_NULL
+    )
 
     def set_last_post(self, commit=False):
         """
@@ -60,8 +60,8 @@ class Forum(SortableMixin):
         written OK moderated Post.
         NOTE: this does not save the current Forum object unless commit is set to True.
         """
-        qs = Post.objects.filter(thread__forum=self, moderation_state='OK')
-        qs = qs.order_by('-created')
+        qs = Post.objects.filter(thread__forum=self, moderation_state="OK")
+        qs = qs.order_by("-created")
         if qs.exists():
             self.last_post = qs[0]
         else:
@@ -81,16 +81,7 @@ class Forum(SortableMixin):
 
 @receiver(pre_save, sender=Forum)
 def forum_pre_save_set_slug(sender, instance, **kwargs):
-    """If a forum has a name set but not a slug, automatically generate the slug
-    """
-    if not instance.id and not instance.name_slug:
-        instance.name_slug = slugify(instance.name)
-
-
-@receiver(pre_save, sender=Forum)
-def forum_pre_save_set_slug(sender, instance, **kwargs):
-    """If a forum has a name set but not a slug, automatically generate the slug
-    """
+    """If a forum has a name set but not a slug, automatically generate the slug"""
     if not instance.id and not instance.name_slug:
         instance.name_slug = slugify(instance.name)
 
@@ -108,31 +99,31 @@ class Thread(models.Model):
     status = models.PositiveSmallIntegerField(choices=THREAD_STATUS_CHOICES, default=1, db_index=True)
 
     num_posts = models.PositiveIntegerField(default=0)
-    last_post = models.OneToOneField('Post', null=True, blank=True, default=None,
-                                     related_name="latest_in_thread",
-                                     on_delete=models.SET_NULL)
-    first_post = models.OneToOneField('Post', null=True, blank=True, default=None,
-                                      related_name="first_in_thread",
-                                      on_delete=models.SET_NULL)
+    last_post = models.OneToOneField(
+        "Post", null=True, blank=True, default=None, related_name="latest_in_thread", on_delete=models.SET_NULL
+    )
+    first_post = models.OneToOneField(
+        "Post", null=True, blank=True, default=None, related_name="first_in_thread", on_delete=models.SET_NULL
+    )
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def set_last_post(self, commit=False):
         has_posts = self.post_set.exists()
-        moderated_post = self.post_set.filter(moderation_state='OK').order_by('-created').first()
+        moderated_post = self.post_set.filter(moderation_state="OK").order_by("-created").first()
         self.last_post = moderated_post
         if commit:
-            self.save(update_fields=['last_post'])
+            self.save(update_fields=["last_post"])
 
         # Invalidate the thread common commenters cache as it could have changed
-        invalidate_template_cache('bw_thread_common_commenters', self.id)
+        invalidate_template_cache("bw_thread_common_commenters", self.id)
 
         return has_posts
 
     def set_first_post(self, commit=False):
         self.first_post = self.post_set.first()
         if commit:
-            self.save(update_fields=['first_post'])
+            self.save(update_fields=["first_post"])
 
     def get_absolute_url(self):
         return reverse("forums-thread", args=[smart_str(self.forum.name_slug), self.id])
@@ -146,8 +137,10 @@ class Thread(models.Model):
         most_common_authors = [author for author, _ in Counter(thread_authors).most_common(6)]
         num_distinct_authors = len(set([a.id for a in thread_authors]))
         info_to_return = {
-            'common_commenters': [(author.profile.locations('avatar.S.url'), author.username) for author in most_common_authors],
-            'num_extra_commenters': num_distinct_authors - len(most_common_authors)
+            "common_commenters": [
+                (author.profile.locations("avatar.S.url"), author.username) for author in most_common_authors
+            ],
+            "num_extra_commenters": num_distinct_authors - len(most_common_authors),
         }
         return info_to_return
 
@@ -156,7 +149,7 @@ class Thread(models.Model):
         return self.num_posts - 1
 
     class Meta:
-        ordering = ('-status', '-last_post__created')
+        ordering = ("-status", "-last_post__created")
 
     def __str__(self):
         return self.title
@@ -167,7 +160,7 @@ def update_num_threads_on_thread_insert(sender, instance, created, **kwargs):
     """Increase the number of threads when a new thread is created in a Forum."""
     thread = instance
     if created:
-        thread.forum.num_threads = F('num_threads') + 1
+        thread.forum.num_threads = F("num_threads") + 1
         thread.forum.save()
         thread.forum.refresh_from_db()
 
@@ -181,9 +174,9 @@ def update_num_threads_on_thread_update(sender, instance, **kwargs):
         with transaction.atomic():
             old_thread = Thread.objects.get(pk=instance.id)
             if old_thread.forum_id != instance.forum_id:
-                old_thread.forum.num_threads = Greatest(F('num_threads') - 1, 0)
+                old_thread.forum.num_threads = Greatest(F("num_threads") - 1, 0)
                 old_thread.forum.save()
-                instance.forum.num_threads = F('num_threads') + 1
+                instance.forum.num_threads = F("num_threads") + 1
                 instance.forum.save()
 
 
@@ -207,7 +200,7 @@ def update_last_post_on_thread_delete(sender, instance, **kwargs):
     try:
         with transaction.atomic():
             thread.forum.refresh_from_db()
-            thread.forum.num_threads = Greatest(F('num_threads') - 1, 0)
+            thread.forum.num_threads = Greatest(F("num_threads") - 1, 0)
             thread.forum.set_last_post()
             thread.forum.save()
     except Forum.DoesNotExist:
@@ -216,23 +209,21 @@ def update_last_post_on_thread_delete(sender, instance, **kwargs):
 
 class Post(models.Model):
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, related_name='posts', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, related_name="posts", on_delete=models.CASCADE)
     body = models.TextField()
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
     MODERATION_STATE_CHOICES = (
-        ("NM", 'NEEDS_MODERATION'),
-        ("OK", 'OK'),
+        ("NM", "NEEDS_MODERATION"),
+        ("OK", "OK"),
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="OK")
 
     class Meta:
-        ordering = ('created',)
-        permissions = (
-            ("can_moderate_forum", "Can moderate posts."),
-        )
+        ordering = ("created",)
+        permissions = (("can_moderate_forum", "Can moderate posts."),)
 
     def __str__(self):
         return f"Post by {self.author} in {self.thread}"
@@ -250,17 +241,17 @@ def update_num_posts_on_save_if_moderation_changes(sender, instance, **kwargs):
         with transaction.atomic():
             old = Post.objects.get(pk=post.pk)
             change = 0
-            if old.moderation_state == 'NM' and instance.moderation_state == 'OK':
+            if old.moderation_state == "NM" and instance.moderation_state == "OK":
                 change = 1
-            elif old.moderation_state == 'OK' and instance.moderation_state == 'NM':
+            elif old.moderation_state == "OK" and instance.moderation_state == "NM":
                 change = -1
             if change != 0:
-                post.author.profile.num_posts = F('num_posts') + change
+                post.author.profile.num_posts = F("num_posts") + change
                 post.author.profile.save()
-                post.thread.forum.num_posts = F('num_posts') + change
-                post.thread.forum.save(update_fields=['num_posts'])
-                post.thread.num_posts = F('num_posts') + change
-                post.thread.save(update_fields=['num_posts'])
+                post.thread.forum.num_posts = F("num_posts") + change
+                post.thread.forum.save(update_fields=["num_posts"])
+                post.thread.num_posts = F("num_posts") + change
+                post.thread.save(update_fields=["num_posts"])
 
 
 @receiver(post_save, sender=Post)
@@ -274,20 +265,20 @@ def update_num_posts_on_post_insert(sender, instance, created, **kwargs):
     post = instance
     if created and post.moderation_state == "OK":
         with transaction.atomic():
-            post.author.profile.num_posts = F('num_posts') + 1
+            post.author.profile.num_posts = F("num_posts") + 1
             post.author.profile.save()
-            post.thread.forum.num_posts = F('num_posts') + 1
+            post.thread.forum.num_posts = F("num_posts") + 1
             post.thread.forum.last_post = post
             post.thread.forum.save()
-            post.thread.num_posts = F('num_posts') + 1
+            post.thread.num_posts = F("num_posts") + 1
             post.thread.last_post = post
             post.thread.save()
-        invalidate_template_cache('latest_posts')
+        invalidate_template_cache("latest_posts")
     elif not created:
         post.thread.forum.set_last_post()
-        post.thread.forum.save(update_fields=['last_post'])
+        post.thread.forum.save(update_fields=["last_post"])
         post.thread.set_last_post()
-        post.thread.save(update_fields=['last_post'])
+        post.thread.save(update_fields=["last_post"])
 
 
 @receiver(post_delete, sender=Post)
@@ -317,15 +308,15 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
     elif post.moderation_state == "OK":
         try:
             with transaction.atomic():
-                post.author.profile.num_posts = F('num_posts') - 1
+                post.author.profile.num_posts = F("num_posts") - 1
                 post.author.profile.save()
                 post.thread.forum.refresh_from_db()
-                post.thread.forum.num_posts = F('num_posts') - 1
+                post.thread.forum.num_posts = F("num_posts") - 1
                 post.thread.forum.set_last_post()
                 post.thread.forum.save()
                 thread_has_posts = post.thread.set_last_post()
                 if thread_has_posts:
-                    post.thread.num_posts = F('num_posts') - 1
+                    post.thread.num_posts = F("num_posts") - 1
                     post.thread.save()
 
                     # If this post was the first post in the thread then we should set it to the next one
@@ -340,13 +331,13 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
             # when a user is deleted through the admin interface. We don't need
             # to update the thread, but it would be nice to get to the forum object
             # somehow and update that one....
-            web_logger.info('Tried setting last posts for thread and forum, but the thread has already been deleted?')
+            web_logger.info("Tried setting last posts for thread and forum, but the thread has already been deleted?")
         except accounts.models.Profile.DoesNotExist:
             # When a user is deleted using the admin, is possible that his posts are deleted after the profile has been
             # deleted. In that case we shouldn't update the value of num_posts because the profile doesn't exists
             # anymore, here it's safe to ignore the exception since we are deleting all the objects.
-            web_logger.info('Tried setting last posts for thread and forum, but the profile has already been deleted?')
-    invalidate_template_cache('latest_posts')
+            web_logger.info("Tried setting last posts for thread and forum, but the profile has already been deleted?")
+    invalidate_template_cache("latest_posts")
 
 
 class Subscription(models.Model):

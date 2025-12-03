@@ -25,27 +25,30 @@ class SearchOption(object):
     """Base class to process and hold information about a search option (e.g. a filter or a sort option) of a search query.
     SearchOption objects parse option data from a request object, and are later able to translate such data into a search
     engine filter and/or a request parameter depending on the type of option. The class is meant to be subclassed to implement
-    particular types of search options (e.g. boolean, integer, string, etc.). The SearchOption object can also include logic 
+    particular types of search options (e.g. boolean, integer, string, etc.). The SearchOption object can also include logic
     for determining when a specific option should be enabled or disabled based on the data of the search query (including the
     values of other search options).
     """
+
     sqp = None  # SearchQueryProcessor object that holds this option object
     value = None  # Value of the option as a valid Python type (e.g. bool, int, str, list, etc.)
     set_in_request = None  # Stores whether or not the option data is present in the search request
-    
-    def __init__(self, 
-                 advanced=True, 
-                 label='',
-                 help_text='',
-                 placeholder='',
-                 search_engine_field_name=None, 
-                 query_param_name=None,
-                 value_default=None,
-                 get_default_value=None,
-                 should_be_disabled=None,
-                 get_value_to_apply=None):
-        """Initialize the SearchOption object. 
-        
+
+    def __init__(
+        self,
+        advanced=True,
+        label="",
+        help_text="",
+        placeholder="",
+        search_engine_field_name=None,
+        query_param_name=None,
+        value_default=None,
+        get_default_value=None,
+        should_be_disabled=None,
+        get_value_to_apply=None,
+    ):
+        """Initialize the SearchOption object.
+
         Args:
             advanced (bool, optional): Whether this option is part of the advanced search options (defaults to True).
             label (str, optional): Label to be used in the frontend template when displaying the option.
@@ -76,9 +79,9 @@ class SearchOption(object):
             self.should_be_disabled = should_be_disabled
         if get_value_to_apply is not None:
             self.get_value_to_apply = get_value_to_apply
-    
+
     def set_search_query_processor(self, sqp):
-        """Set the SearchQueryProcessor object that holds this option object. The sqp parameter is a SearchQueryProcessor object 
+        """Set the SearchQueryProcessor object that holds this option object. The sqp parameter is a SearchQueryProcessor object
         that allows SearchOption objects to access the request object and the value of other search options."""
         self.sqp = sqp
 
@@ -99,40 +102,40 @@ class SearchOption(object):
         else:
             self.set_in_request = False
             self.value = self.default_value
-    
+
     def get_value_from_request(self):
         """Return the value of the option as a valid Python type (e.g. bool, int, str, list, etc.) based on the data present
         in the search request. Must return None if the option is not passed in the request. This method is expected to be
         implemented in the subclasses of SearchOption."""
         raise NotImplementedError
-    
+
     @property
     def default_value(self):
         """Returns the default value of the search option as a valid Python type (e.g. bool, int, str, list, etc.) using the
         self.get_default_value member passed as an argument to SearchOption or the existing self.value_default property."""
-        if hasattr(self, 'get_default_value'):
+        if hasattr(self, "get_default_value"):
             return self.get_default_value(self)
         else:
             return self.value_default
-    
+
     @property
     def is_default_value(self):
         """Returns True if the parsed value of the option is the same as the default value, returns False otherwise."""
         return self.value == self.default_value
-    
+
     @property
     def disabled(self):
-        """Returns True if the search option is disabled and false otherwise. If the method self.should_be_disabled has been set in 
-        the object constructor, then it is used to compute the disabled property. When a search option is disabled, users will not 
+        """Returns True if the search option is disabled and false otherwise. If the method self.should_be_disabled has been set in
+        the object constructor, then it is used to compute the disabled property. When a search option is disabled, users will not
         be able to edit their values when rendered in the search form. Other than that, the SearchOption is treated as any other
         option and will be used when computing query params for the search engine."""
-        if hasattr(self, 'should_be_disabled'):
+        if hasattr(self, "should_be_disabled"):
             return self.should_be_disabled(self)
         else:
             return False
-        
+
     def format_value(self, value):
-        """Returns a string representation of the value passed as argument to be used in search engine parameters or as a URL parameter. 
+        """Returns a string representation of the value passed as argument to be used in search engine parameters or as a URL parameter.
         This method must be subclassed to implement meaningful conversions from the passed Python-type value to a string.
         """
         raise NotImplementedError
@@ -143,83 +146,86 @@ class SearchOption(object):
         the same value which is stored after reading the SearchOption value from the request, but some SearchOptions might use this
         method to implement additional logic for computing the value to be used in the search engine (for example, if the actual value
         to be used should change depending on the value of other search options)."""
-        if hasattr(self, 'get_value_to_apply'):
+        if hasattr(self, "get_value_to_apply"):
             return self.get_value_to_apply(self)
         else:
             return self.value
-    
+
     def as_filter(self):
-        """Returns a string to be used as a search engine filter for applying the search option. If this method returns None, then it 
+        """Returns a string to be used as a search engine filter for applying the search option. If this method returns None, then it
         will not be applied as a filter. The filter will be applied if the option is expected to be applied as a filter (if it has
         self.search_engine_field_name set) and if it is set in the request or the self.value_to_apply is different than the default
         value."""
         if self.search_engine_field_name is not None:
             if self.set_in_request or (self.value_to_apply != self.default_value):
-                return f'{self.search_engine_field_name}:{self.format_value(self.value_to_apply)}'
-    
+                return f"{self.search_engine_field_name}:{self.format_value(self.value_to_apply)}"
+
     def as_URL_params(self):
         """Returns a dictionary with the URL parameters to be used when rendering the search option in a URL. Most search options
         will be rendered as a single URL parameter, but some subclasses might override this method to implement more complex logic
         using multiple parameters or other types of calculations. If the option should not be rendered in the URL, return None. Note
-        that unlike the value we use to send to the search engine, here we want to use the value as it is set in the original request, 
+        that unlike the value we use to send to the search engine, here we want to use the value as it is set in the original request,
         without including any additional post-processing from self.value_to_apply. This is because we want the URL parameters
         generated by a search option to be equivalent to the parameters of that option passed in the original request.
         """
         if self.query_param_name is not None:
             return {self.query_param_name: self.format_value(self.value)}
-        
+
     @property
     def value_formatted(self):
         """Returns the value of the option formatted to be used in search engine parameters or as a URL parameter. This method is
         convenient in the search frontend templates to set the request value of the option in the search form."""
         return self.format_value(self.value)
-    
+
     def __str__(self):
         return f"{self.label}={self.value}, apply: {self.value_to_apply} ({'in request' if self.set_in_request else 'not in request'}, {'disabled' if self.disabled else 'enabled'})"
-    
+
     def __copy2__(self):
         newone = type(self)()
         newone.__dict__.update(self.__dict__)
         return newone
-    
+
 
 class SearchOptionBool(SearchOption):
-    """SearchOption class to represent bool options.
-    """
+    """SearchOption class to represent bool options."""
+
     value_default = False
-    
+
     def get_value_from_request(self):
         if self.query_param_name is not None:
             if self.query_param_name in self.request.GET:
-                return self.request.GET.get(self.query_param_name) == '1' or self.request.GET.get(self.query_param_name) == 'on'
-    
+                return (
+                    self.request.GET.get(self.query_param_name) == "1"
+                    or self.request.GET.get(self.query_param_name) == "on"
+                )
+
     def format_value(self, value):
-        return '1' if value else '0'
-    
+        return "1" if value else "0"
+
     def as_filter(self):
-        """Boolean search options are only added to the filter if they set to True. In this way, when set to False, we return the 
+        """Boolean search options are only added to the filter if they set to True. In this way, when set to False, we return the
         whole set of results without filtering by this option, but when the option is set, we filter results by this option. It
         might happen that boolean search options added in the future require a different logic and then we should consider
         updating this class to support a different behavior."""
         if self.value_to_apply == True:
             return super().as_filter()
-        
+
 
 class SearchOptionBoolFilterInverted(SearchOptionBool):
     """SearchOption class to represent bool options which should have the filter value inverted.
-    For example, an "exclude some sounds" option which, when set to "on", the filter in the search 
+    For example, an "exclude some sounds" option which, when set to "on", the filter in the search
     engine should be inverted, e.g. "sound_has_property:0".
     """
-    
+
     def format_value(self, value):
-        return '0' if value else '1'    
+        return "0" if value else "1"
 
 
 class SearchOptionInt(SearchOption):
-    """SearchOption class to represent integer options.
-    """
+    """SearchOption class to represent integer options."""
+
     value_default = -1
-    
+
     def get_value_from_request(self):
         if self.query_param_name is not None:
             if self.query_param_name in self.request.GET:
@@ -227,15 +233,15 @@ class SearchOptionInt(SearchOption):
                     return int(self.request.GET.get(self.query_param_name))
                 except ValueError:
                     return None
-            
+
     def format_value(self, value):
         return str(value)
 
 
 class SearchOptionStr(SearchOption):
-    """SearchOption class to represent string options.
-    """
-    value_default = ''
+    """SearchOption class to represent string options."""
+
+    value_default = ""
 
     def get_value_from_request(self):
         if self.query_param_name is not None:
@@ -247,19 +253,20 @@ class SearchOptionStr(SearchOption):
 
 
 class SearchOptionChoice(SearchOptionStr):
-    """SearchOption class to represent choice options in which one string option is selected 
+    """SearchOption class to represent choice options in which one string option is selected
     from a list of available choices. Choices must have the format [(value, label), ...], typical from
     Django forms.
     """
+
     def __init__(self, choices=[], **kwargs):
         """Args:
-            choices (list): List of available choices in the format [(value, label), ...].
+        choices (list): List of available choices in the format [(value, label), ...].
         """
-        self.choices =choices
+        self.choices = choices
         super().__init__(**kwargs)
 
     def get_choices_annotated_with_selection(self):
-        """Returns the list of available choices annotated with a boolean indicating whether the choice 
+        """Returns the list of available choices annotated with a boolean indicating whether the choice
         is selected or not. This is useful in search templates.
         """
         choices_annotated = []
@@ -269,65 +276,66 @@ class SearchOptionChoice(SearchOptionStr):
 
 
 class SearchOptionMultipleChoice(SearchOption):
-    """SearchOption class to represent choice options in which multiple string options are selected 
+    """SearchOption class to represent choice options in which multiple string options are selected
     from a list of available choices. Choices must have the format [(value, label), ...], typical from
     Django forms. Multiple choices are expected to be passed in the request as multiple URL parameters
     with a common prefix such as "&{prefix}_{value}=1".
     """
+
     value_default = []
 
-    def __init__(self, choices=[], query_param_name_prefix='', **kwargs):
+    def __init__(self, choices=[], query_param_name_prefix="", **kwargs):
         """Args:
-            choices (list): List of available choices in the format [(value, label), ...].
-            query_param_name_prefix (str): Prefix to be used in the URL parameters to represent the multiple choices.
+        choices (list): List of available choices in the format [(value, label), ...].
+        query_param_name_prefix (str): Prefix to be used in the URL parameters to represent the multiple choices.
         """
         self.choices = choices
         self.query_param_name_prefix = query_param_name_prefix
         super().__init__(**kwargs)
 
     def get_query_param_name(self, value):
-        return f'{self.query_param_name_prefix}_{value}'
+        return f"{self.query_param_name_prefix}_{value}"
 
     def get_value_from_request(self):
         selected_values = []
         for value, _ in self.choices:
             query_param_name = self.get_query_param_name(value)
             if query_param_name in self.request.GET:
-                if self.request.GET.get(query_param_name) == '1' or self.request.GET.get(query_param_name) == 'on':
+                if self.request.GET.get(query_param_name) == "1" or self.request.GET.get(query_param_name) == "on":
                     selected_values.append(value)
         return selected_values
-    
+
     def format_value(self, value):
         return "[" + " OR ".join([str(v) for v in value]) + "]"
-    
+
     def get_choices_annotated_with_selection(self):
-        """Returns the list of available choices annotated with a boolean indicating whether the choice 
+        """Returns the list of available choices annotated with a boolean indicating whether the choice
         is selected or not. This is useful in search templates.
         """
         choices_annotated = []
         for value, label in self.choices:
             choices_annotated.append((self.get_query_param_name(value), label, value in self.value))
         return choices_annotated
-    
+
     def as_URL_params(self):
-        params = {self.get_query_param_name(value): '1' for value, _ in self.choices if value in self.value}
+        params = {self.get_query_param_name(value): "1" for value, _ in self.choices if value in self.value}
         return params
-    
+
 
 class SearchOptionRange(SearchOption):
-    value_default = ['*', '*']
+    value_default = ["*", "*"]
     query_param_min = None
     query_param_max = None
 
     def __init__(self, query_param_min=None, query_param_max=None, **kwargs):
         """Args:
-            query_param_min (str, optional): Name of the URL parameter to represent the minimum value of the range.
-            query_param_max (str, optional): Name of the URL parameter to represent the maximum value of the range.
+        query_param_min (str, optional): Name of the URL parameter to represent the minimum value of the range.
+        query_param_max (str, optional): Name of the URL parameter to represent the maximum value of the range.
         """
         self.query_param_min = query_param_min
         self.query_param_max = query_param_max
         super().__init__(**kwargs)
-    
+
     def get_value_from_request(self):
         if self.query_param_min is not None and self.query_param_max is not None:
             if self.query_param_min in self.request.GET or self.query_param_max in self.request.GET:
@@ -335,30 +343,29 @@ class SearchOptionRange(SearchOption):
                 if self.query_param_min in self.request.GET:
                     value_from_param = str(self.request.GET[self.query_param_min])
                     if value_from_param:
-                        if value_from_param != '*':
+                        if value_from_param != "*":
                             # A common user mistake is to write the number next to the * character, so we remove if it is not the only character
-                            value_from_param = value_from_param.replace('*', '')
+                            value_from_param = value_from_param.replace("*", "")
                         value[0] = value_from_param
                 if self.query_param_max in self.request.GET:
                     value_from_param = str(self.request.GET[self.query_param_max])
                     if value_from_param:
-                        if value_from_param != '*':
+                        if value_from_param != "*":
                             # A common user mistake is to write the number next to the * character, so we remove if it is not the only character
-                            value_from_param = value_from_param.replace('*', '')
+                            value_from_param = value_from_param.replace("*", "")
                         value[1] = value_from_param
                 return value
-            
+
     def format_value(self, value):
-        return f'[{value[0]} TO {value[1]}]'
-    
+        return f"[{value[0]} TO {value[1]}]"
+
     def as_URL_params(self):
-        return {self.query_param_min: self.value[0], 
-                self.query_param_max: self.value[1]}
-    
+        return {self.query_param_min: self.value[0], self.query_param_max: self.value[1]}
+
     def as_filter(self):
-        """SearchOptionRange search options are only added to the filter if the specified range is not covering all possible 
+        """SearchOptionRange search options are only added to the filter if the specified range is not covering all possible
         field values. The defined self.default_value for a range option is expected to include all results, therefore if the
-        value is the same as the default value, we don't need to include this option as a filter. It might happen that range 
+        value is the same as the default value, we don't need to include this option as a filter. It might happen that range
         search options added in the future require a different logic and then we should consider updating this class to support
         a different behavior."""
         if not self.is_default_value:
@@ -370,9 +377,9 @@ class SearchOptionBoolElementInPath(SearchOptionBool):
     The "element_in_path" is compared with the request path and the value of the option is set to True if the element is present.
     """
 
-    def __init__(self, element_in_path='', **kwargs):
+    def __init__(self, element_in_path="", **kwargs):
         """Args:
-            element_in_path (str): Element to be checked in the request path.
+        element_in_path (str): Element to be checked in the request path.
         """
         self.element_in_path = element_in_path
         super().__init__(**kwargs)
@@ -386,10 +393,11 @@ class SearchOptionFieldWeights(SearchOptionStr):
     way which requires further customisation of SearchOption object and therefore can't be implemented with another generic
     SearchOptionX class.
     """
+
     value_default = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
 
     def get_value_from_request(self):
-        """param weights can be used to specify custom field weights with this format 
+        """param weights can be used to specify custom field weights with this format
         w=field_name1:integer_weight1,field_name2:integer_weight2, eg: w=name:4,tags:1
         ideally, field names should any of those specified in settings.SEARCH_SOUNDS_FIELD_*
         so the search engine can implement ways to translate the "web names" to "search engine"
@@ -398,11 +406,11 @@ class SearchOptionFieldWeights(SearchOptionStr):
         weights_param = self.request.GET.get(self.query_param_name, None)
         parsed_field_weights = {}
         if weights_param:
-            for part in weights_param.split(','):
-                if ':' in part:
+            for part in weights_param.split(","):
+                if ":" in part:
                     try:
-                        field_name = part.split(':')[0]
-                        weight = int(part.split(':')[1])
+                        field_name = part.split(":")[0]
+                        weight = int(part.split(":")[1])
                         parsed_field_weights[field_name] = weight
                     except Exception:
                         # If format is wrong, ignore parameter
@@ -411,11 +419,11 @@ class SearchOptionFieldWeights(SearchOptionStr):
             return parsed_field_weights
         else:
             return None
-        
+
     def as_URL_params(self):
-        value_for_url = ''
+        value_for_url = ""
         for field, weight in self.value.items():
-            value_for_url += f'{field}:{weight},'
-        if value_for_url.endswith(','):
+            value_for_url += f"{field}:{weight},"
+        if value_for_url.endswith(","):
             value_for_url = value_for_url[:-1]
-        return {self.query_param_name : value_for_url}
+        return {self.query_param_name: value_for_url}

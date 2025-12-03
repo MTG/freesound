@@ -18,22 +18,26 @@
 #     See AUTHORS file.
 #
 
-from rest_framework import exceptions
-from rest_framework.authentication import get_authorization_header
-from rest_framework.authentication import BaseAuthentication, SessionAuthentication as DjangoRestFrameworkSessionAuthentication
 from oauth2_provider.contrib.rest_framework import OAuth2Authentication as Oauth2ProviderOauth2Authentication
+from rest_framework import exceptions
+from rest_framework.authentication import (
+    BaseAuthentication,
+    get_authorization_header,
+)
+from rest_framework.authentication import (
+    SessionAuthentication as DjangoRestFrameworkSessionAuthentication,
+)
+
 from apiv2.models import ApiV2Client
 
 
 class SessionAuthentication(DjangoRestFrameworkSessionAuthentication):
-
     @property
     def authentication_method_name(self):
         return "Session"
 
 
 class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
-
     @property
     def authentication_method_name(self):
         return "OAuth2"
@@ -54,8 +58,9 @@ class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
         if super_response is not None:
             # super_response[1] -> access_token
             if super_response[1].application.apiv2_client.status != "OK":
-                raise exceptions.AuthenticationFailed('Suspended token or token pending for approval')
+                raise exceptions.AuthenticationFailed("Suspended token or token pending for approval")
         return super_response
+
 
 class TokenAuthentication(BaseAuthentication):
     """
@@ -78,18 +83,18 @@ class TokenAuthentication(BaseAuthentication):
         auth = get_authorization_header(request).split()
         # If the token is not provided through the header check if it is provided as a query parameter
         if not auth:
-            token = request.GET.get('token', None)
+            token = request.GET.get("token", None)
             if token:
-                auth = [b'Token', token.encode()]
+                auth = [b"Token", token.encode()]
 
-        if not auth or auth[0].lower() != b'token':
+        if not auth or auth[0].lower() != b"token":
             return None
 
         if len(auth) == 1:
-            msg = 'Invalid token header. No credentials provided.'
+            msg = "Invalid token header. No credentials provided."
             raise exceptions.AuthenticationFailed(msg)
         elif len(auth) > 2:
-            msg = 'Invalid token header. Token string should not contain spaces.'
+            msg = "Invalid token header. Token string should not contain spaces."
             raise exceptions.AuthenticationFailed(msg)
 
         return self.authenticate_credentials(auth[1])
@@ -100,15 +105,15 @@ class TokenAuthentication(BaseAuthentication):
                 key = key.decode()
             token = self.model.objects.get(key=key)
         except self.model.DoesNotExist:
-            raise exceptions.AuthenticationFailed('Invalid token')
+            raise exceptions.AuthenticationFailed("Invalid token")
 
         if not token.user.is_active:
-            raise exceptions.AuthenticationFailed('User inactive or deleted')
+            raise exceptions.AuthenticationFailed("User inactive or deleted")
 
-        if not token.status == 'OK':
-            raise exceptions.AuthenticationFailed('Suspended token or token pending for approval')
+        if not token.status == "OK":
+            raise exceptions.AuthenticationFailed("Suspended token or token pending for approval")
 
         return (token.user, token)
 
     def authenticate_header(self, request):
-        return 'Token'
+        return "Token"

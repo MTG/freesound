@@ -23,12 +23,12 @@ import logging
 import random
 import time
 
-from django.core.cache import cache
 from django.conf import settings
+from django.core.cache import cache
 
 from utils.logging_filters import get_client_ip
 
-console_logger = logging.getLogger('console')
+console_logger = logging.getLogger("console")
 
 last_cached_blocked_ips = []
 last_cached_blocked_ips_timestamp = 0
@@ -75,7 +75,7 @@ def add_new_ip_to_block(ip):
     try:
         ipaddress.ip_network(str(ip))
     except ValueError as e:
-        console_logger.info(f'The provided IP {ip} is not valid: {e}')
+        console_logger.info(f"The provided IP {ip} is not valid: {e}")
         return
 
     cached_ips_to_block = cache.get(settings.CACHED_BLOCKED_IPS_KEY, None)
@@ -106,19 +106,19 @@ def ip_is_blocked(ip):
 
 def get_ip_or_random_ip(request):
     ip = get_client_ip(request)
-    if ip == '-':
+    if ip == "-":
         # If for some reason an ip is not returned by get_client_ip, we generate a random number to avoid putting all
         # requests in the same key
-        ip = str(random.random())
+        ip = str(random.random())  # noqa: S311
     return ip
 
 
 def key_for_ratelimiting(group, request):
-    return f'{group}-{get_ip_or_random_ip(request)}'
+    return f"{group}-{get_ip_or_random_ip(request)}"
 
 
 def rate_per_ip(group, request):
     ip = get_ip_or_random_ip(request)
     if ip_is_blocked(ip):
-        return '0/s'
+        return "0/s"
     return settings.RATELIMITS.get(group, settings.RATELIMIT_DEFAULT_GROUP_RATELIMIT)

@@ -18,14 +18,17 @@
 #     See AUTHORS file.
 #
 
+import urllib.error
+import urllib.parse
+import urllib.request
+
+import feedparser
+from bs4 import BeautifulSoup
 from django import template
 from django.utils.text import Truncator
-from bs4 import BeautifulSoup
-import feedparser
-import urllib.request, urllib.error, urllib.parse
-
 
 register = template.Library()
+
 
 class RssParserNode(template.Node):
     def __init__(self, var_name, url=None, url_var_name=None):
@@ -45,14 +48,16 @@ class RssParserNode(template.Node):
 
         # Add custom-made summaries with a specific length of 300 chars which are slightly longer that those auto-generated
         # by feedparser.
-        for entry in context[self.var_name]['entries']:
-            soup = BeautifulSoup(entry['content'][0]['value'], features="html.parser")
+        for entry in context[self.var_name]["entries"]:
+            soup = BeautifulSoup(entry["content"][0]["value"], features="html.parser")
             text_without_html_tags = soup.get_text()
             truncated_text = Truncator(text_without_html_tags).chars(300, truncate="...")
-            entry['summary_custom'] = truncated_text
-        return ''
+            entry["summary_custom"] = truncated_text
+        return ""
+
 
 import re
+
 
 @register.tag(name="get_rss")
 def get_rss(parser, token):
@@ -62,12 +67,12 @@ def get_rss(parser, token):
         tag_name, arg = token.contents.split(None, 1)
     except ValueError:
         raise template.TemplateSyntaxError(f"{token.contents.split()[0]!r} tag requires arguments")
-    
-    m = re.search(r'(.*?) as (\w+)', arg)
+
+    m = re.search(r"(.*?) as (\w+)", arg)
     if not m:
         raise template.TemplateSyntaxError(f"{tag_name!r} tag had invalid arguments")
     url, var_name = m.groups()
-    
+
     if url[0] == url[-1] and url[0] in ('"', "'"):
         return RssParserNode(var_name, url=url[1:-1])
     else:

@@ -28,8 +28,7 @@ console_logger = logging.getLogger("console")
 
 
 class Command(LoggingBaseCommand):
-
-    help = 'Update Profile num_sound_downloads and num_pack_downloads fields for all users'
+    help = "Update Profile num_sound_downloads and num_pack_downloads fields for all users"
 
     def handle(self, *args, **options):
         self.log_start()

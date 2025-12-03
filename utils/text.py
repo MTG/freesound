@@ -24,8 +24,10 @@ from functools import partial
 import bleach
 from bleach.html5lib_shim import Filter
 
-from sounds.templatetags.sound_signature import SOUND_SIGNATURE_SOUND_ID_PLACEHOLDER, \
-    SOUND_SIGNATURE_SOUND_URL_PLACEHOLDER
+from sounds.templatetags.sound_signature import (
+    SOUND_SIGNATURE_SOUND_ID_PLACEHOLDER,
+    SOUND_SIGNATURE_SOUND_URL_PLACEHOLDER,
+)
 
 
 def shout_percentage(string):
@@ -46,7 +48,7 @@ url_regex = re.compile(r"(https?://\S+)", re.IGNORECASE)
 
 
 def nofollow(attrs, new=False):
-    attrs[(None, 'rel')] = 'nofollow'
+    attrs[(None, "rel")] = "nofollow"
     return attrs
 
 
@@ -60,15 +62,15 @@ class EmptyLinkFilter(Filter):
         remove_end_tag = False
         for token in Filter.__iter__(self):
             # only check anchor tags
-            if 'name' in token and token['name'] == 'a' and token['type'] in ['StartTag', 'EndTag']:
-                if token['type'] == 'StartTag':
+            if "name" in token and token["name"] == "a" and token["type"] in ["StartTag", "EndTag"]:
+                if token["type"] == "StartTag":
                     remove_end_tag = True
-                    for attr, value in token['data'].items():
-                        if attr == (None, 'href') and value != '' and is_valid_url(value):
+                    for attr, value in token["data"].items():
+                        if attr == (None, "href") and value != "" and is_valid_url(value):
                             remove_end_tag = False
                     if remove_end_tag:
                         continue
-                elif token['type'] == 'EndTag' and remove_end_tag:
+                elif token["type"] == "EndTag" and remove_end_tag:
                     remove_end_tag = False
                     continue
             yield token
@@ -85,22 +87,23 @@ def clean_html(input, ok_tags=[], ok_attributes={}):
 
     # If input contains link in the format: <http://> then convert it to < http:// >
     # This is because otherwise the library recognizes it as a tag and breaks the link.
-    input = re.sub(r"\<(http\S+?)\>", r'< \1 >', input)
+    input = re.sub(r"\<(http\S+?)\>", r"< \1 >", input)
 
     cleaner = bleach.Cleaner(
-            filters=[
-                EmptyLinkFilter,
-                partial(bleach.linkifier.LinkifyFilter, callbacks=[nofollow]),
-                ],
-            attributes=ok_attributes,
-            tags=ok_tags,
-            strip=True)
+        filters=[
+            EmptyLinkFilter,
+            partial(bleach.linkifier.LinkifyFilter, callbacks=[nofollow]),
+        ],
+        attributes=ok_attributes,
+        tags=ok_tags,
+        strip=True,
+    )
     output = cleaner.clean(input)
     return output
 
 
 def remove_control_chars(text):
-    return ''.join(c for c in text if (ord(c) >= 32 or ord(c) in [9, 10, 13]))
+    return "".join(c for c in text if (ord(c) >= 32 or ord(c) in [9, 10, 13]))
 
 
 def text_has_hyperlink(text):
@@ -115,7 +118,7 @@ def text_may_be_spam(text):
     """
 
     # If empty text
-    if text.strip() == '':
+    if text.strip() == "":
         return False
 
     # If link in text
@@ -123,11 +126,11 @@ def text_may_be_spam(text):
         return True
 
     # If emails or short urls
-    if re.search(r"[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\s|$|\/|\]|\.)",  text):
+    if re.search(r"[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\s|$|\/|\]|\.)", text):
         return True
 
     # If consecutive numbers
-    if re.search(r"\(|\)|\d{7}",  text):
+    if re.search(r"\(|\)|\d{7}", text):
         return True
 
     # If non ascii characters
@@ -135,7 +138,7 @@ def text_may_be_spam(text):
         return True
 
     # Love, marriage and other everyday topics ;)
-    if any([element in text.lower() for element in ['love', 'marriage', 'black magic']]):
+    if any([element in text.lower() for element in ["love", "marriage", "black magic"]]):
         return True
 
     # Suspicious text

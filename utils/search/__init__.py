@@ -23,7 +23,9 @@ import math
 from django.conf import settings
 
 
-def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds_index_url=None, forum_index_url=None) -> "SearchEngineBase":
+def get_search_engine(
+    backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds_index_url=None, forum_index_url=None
+) -> "SearchEngineBase":
     """Return SearchEngine class instance to carry out search engine actions
 
     Args:
@@ -34,15 +36,23 @@ def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds
     Returns:
         utils.search.SearchEngineBase: search engine backend class instance
     """
-    module_name, class_name = backend_class.rsplit('.', 1)
+    module_name, class_name = backend_class.rsplit(".", 1)
     module = importlib.import_module(module_name)
     return getattr(module, class_name)(sounds_index_url, forum_index_url)
 
 
 class SearchResults:
-
-    def __init__(self, docs=None, num_found=-1, start=-1, num_rows=-1, non_grouped_number_of_results=-1,
-                 facets=None, highlighting=None, q_time=-1):
+    def __init__(
+        self,
+        docs=None,
+        num_found=-1,
+        start=-1,
+        num_rows=-1,
+        non_grouped_number_of_results=-1,
+        facets=None,
+        highlighting=None,
+        q_time=-1,
+    ):
         """
         Class that holds the results of a search query. It must contain the fields defined below.
 
@@ -140,11 +150,10 @@ class SearchResults:
         self.q_time = q_time
 
     def __str__(self):
-        return f'<SearchResults with {self.num_found} results found>'
+        return f"<SearchResults with {self.num_found} results found>"
 
 
 class SearchResultsPaginator:
-
     def __init__(self, search_results, num_per_page):
         """Paginator object for search results which has a similar API to django.core.paginator.Paginator
 
@@ -165,12 +174,12 @@ class SearchResultsPaginator:
         has_next = page_num < self.num_pages
         has_previous = 1 < page_num <= self.num_pages
         return {
-            'object_list': self.results,
-            'has_next': has_next,
-            'has_previous': has_previous,
-            'has_other_pages': has_next or has_previous,
-            'next_page_number': page_num + 1,
-            'previous_page_number': page_num - 1
+            "object_list": self.results,
+            "has_next": has_next,
+            "has_previous": has_previous,
+            "has_other_pages": has_next or has_previous,
+            "next_page_number": page_num + 1,
+            "previous_page_number": page_num - 1,
         }
 
 
@@ -179,7 +188,6 @@ class SearchEngineException(Exception):
 
 
 class SearchEngineBase:
-
     solr_base_url = None
 
     # Test SearchEngineBase with `pytest -m "search_engine" utils/search/backends/test_search_engine_backend.py`
@@ -233,13 +241,26 @@ class SearchEngineBase:
         """
         raise NotImplementedError
 
-    def search_sounds(self, textual_query='', query_fields=None, query_filter='', field_list=['id', 'score'],
-                      offset=0, current_page=None, num_sounds=settings.SOUNDS_PER_PAGE,
-                      sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
-                      group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False,
-                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False,
-                      similar_to=None, similar_to_max_num_sounds=settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY,
-                      similar_to_analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
+    def search_sounds(
+        self,
+        textual_query="",
+        query_fields=None,
+        query_filter="",
+        field_list=["id", "score"],
+        offset=0,
+        current_page=None,
+        num_sounds=settings.SOUNDS_PER_PAGE,
+        sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+        group_by_pack=False,
+        num_sounds_per_pack_group=1,
+        facets=None,
+        only_sounds_with_pack=False,
+        only_sounds_within_ids=False,
+        group_counts_as_one_in_facets=False,
+        similar_to=None,
+        similar_to_min_similarity=settings.SIMILARITY_MIN_THRESHOLD,
+        similar_to_similarity_space=settings.SIMILARITY_SPACE_DEFAULT,
+    ):
         """Search for sounds that match specific criteria and return them in a SearchResults object
 
         Args:
@@ -284,10 +305,10 @@ class SearchEngineBase:
                 search. Note that when this parameter is passed, some of the other parameters will be ignored
                 ('textual_query', 'facets', 'group_by_pack', 'num_sounds_per_pack_group', 'group_counts_as_one_in_facets').
                 'query_filter' should still be usable, although this remains to be thoroughly tested.
-            similar_to_max_num_sounds (int, optional): max number of sounds to return in a similarity search query.
-            similar_to_analyzer (str, optional): analyzer name from which to select similarity vectors for similarity search.
-                It defaults to settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, but it could be change to something else
-                if we want to use a different type of similarity vectors for a similarity search query.
+            similar_to_min_similarity (float, optional): min similarity score to consider a sound as similar.
+            similar_to_similarity_space (str, optional): similarity space from which to select similarity vectors for
+                similarity search. It defaults to settings.SIMILARITY_SPACE_DEFAULT, but it can be changed to something
+                else if we want to use a different type of similarity vectors for a similarity search query.
 
         Returns:
             SearchResults: SearchResults object containing the results of the query
@@ -304,18 +325,17 @@ class SearchEngineBase:
         """
         raise NotImplementedError
 
-    def get_num_sim_vectors_indexed_per_analyzer(self):
+    def get_num_sim_vectors_indexed_per_similarity_space(self):
         """Returns the number of similarity vectors indexed in the search engine for each
-        analyzer. Because there might be several similarity vectors per sound, we distinguish
-        between the total number of similarity vectors and the total number of sounds per analyzer.
+        similarity space. Because there might be several similarity vectors per sound, we distinguish
+        between the total number of similarity vectors and the total number of sounds per similarity space.
 
         Returns:
-            dict: dictionary with the number of similarity vectors and number of sounds indexed per analyzer.
-                E.g.: {'fsd-sinet_v1': {'num_sounds': 0, 'num_vectors': 0},
-                       'fs-essentia-extractor_legacy': {'num_sounds': 15876, 'num_vectors': 25448}}
+            dict: dictionary with the number of similarity vectors and number of sounds indexed per similarity space.
+                E.g.: {'freesound_classic': {'num_sounds': 0, 'num_vectors': 0},
+                       'laion_clap': {'num_sounds': 15876, 'num_vectors': 25448}}
         """
         raise NotImplementedError
-
 
     # Forum search related methods
 
@@ -350,9 +370,16 @@ class SearchEngineBase:
         """
         raise NotImplementedError
 
-
-    def search_forum_posts(self, textual_query='', query_filter='', offset=0, sort=None, current_page=None,
-                           num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
+    def search_forum_posts(
+        self,
+        textual_query="",
+        query_filter="",
+        offset=0,
+        sort=None,
+        current_page=None,
+        num_posts=settings.FORUM_POSTS_PER_PAGE,
+        group_by_thread=True,
+    ):
         """Search for forum posts that match specific criteria and return them in a SearchResults object
 
         Args:
@@ -373,7 +400,6 @@ class SearchEngineBase:
 
         """
         raise NotImplementedError
-
 
     # Tag clouds methods
 

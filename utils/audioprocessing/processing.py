@@ -30,8 +30,9 @@ import numpy
 import pysndfile
 from PIL import Image, ImageDraw
 
-from .color_schemes import COLOR_SCHEMES, DEFAULT_COLOR_SCHEME_KEY
 from utils.audioprocessing import get_sound_type
+
+from .color_schemes import COLOR_SCHEMES, DEFAULT_COLOR_SCHEME_KEY
 
 
 class AudioProcessingException(Exception):
@@ -41,7 +42,7 @@ class AudioProcessingException(Exception):
 def get_max_level(filename):
     max_value = 0
     buffer_size = 4096
-    audio_file = pysndfile.PySndfile(filename, 'r')
+    audio_file = pysndfile.PySndfile(filename, "r")
     n_samples_left = audio_file.frames()
 
     while n_samples_left:
@@ -74,7 +75,7 @@ class AudioProcessor:
 
     def __init__(self, input_filename, fft_size, window_function=numpy.hanning):
         max_level = get_max_level(input_filename)
-        self.audio_file = pysndfile.PySndfile(input_filename, 'r')
+        self.audio_file = pysndfile.PySndfile(input_filename, "r")
         self.nframes = self.audio_file.frames()
         self.samplerate = self.audio_file.samplerate()
         self.fft_size = fft_size
@@ -93,8 +94,8 @@ class AudioProcessor:
         self.scale = (1.0 / max_level) / max_fft if max_level > 0 else 1
 
     def read(self, start, size, resize_if_less=False):
-        """ read size samples starting at start, if resize_if_less is True and less than size
-        samples are read, resize the array to size and fill with zeros """
+        """read size samples starting at start, if resize_if_less is True and less than size
+        samples are read, resize the array to size and fill with zeros"""
 
         # number of zeros to add to start and end of the buffer
         add_to_start = 0
@@ -137,12 +138,12 @@ class AudioProcessor:
 
             if add_to_end > 0:
                 samples = numpy.resize(samples, size)
-                samples[size - add_to_end:] = 0
+                samples[size - add_to_end :] = 0
 
         return samples
 
     def spectral_centroid(self, seek_point, spec_range=110.0):
-        """ starting at seek_point read fft_size samples, and calculate the spectral centroid """
+        """starting at seek_point read fft_size samples, and calculate the spectral centroid"""
 
         samples = self.read(seek_point - self.fft_size // 2, self.fft_size, True)
 
@@ -152,7 +153,7 @@ class AudioProcessor:
         length = numpy.float64(spectrum.shape[0])
 
         # scale the db spectrum from [- spec_range db ... 0 db] > [0..1]
-        db_spectrum = ((20 * (numpy.log10(spectrum + 1e-60))).clip(-spec_range, 0.0) + spec_range)
+        db_spectrum = (20 * (numpy.log10(spectrum + 1e-60))).clip(-spec_range, 0.0) + spec_range
         db_spectrum = db_spectrum / spec_range
 
         energy = spectrum.sum()
@@ -164,19 +165,21 @@ class AudioProcessor:
             if self.spectrum_range is None:
                 self.spectrum_range = numpy.arange(length)
 
-            spectral_centroid = ((spectrum * self.spectrum_range).sum() / (
-                        energy * (length - 1))) * self.samplerate * 0.5
+            spectral_centroid = (
+                ((spectrum * self.spectrum_range).sum() / (energy * (length - 1))) * self.samplerate * 0.5
+            )
 
             # clip > log10 > scale between 0 and 1
             spectral_centroid = (math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log) / (
-                        self.higher_log - self.lower_log)
+                self.higher_log - self.lower_log
+            )
 
         return spectral_centroid, db_spectrum
 
     def peaks(self, start_seek, end_seek):
-        """ read all samples between start_seek and end_seek, then find the minimum and maximum peak
+        """read all samples between start_seek and end_seek, then find the minimum and maximum peak
         in that range. Returns that pair in the order they were found. So if min was found first,
-        it returns (min, max) else the other way around. """
+        it returns (min, max) else the other way around."""
 
         # larger blocksizes are faster but take more mem...
         # Aha, Watson, a clue, a tradeoff!
@@ -221,10 +224,10 @@ class AudioProcessor:
 
 
 def interpolate_colors(colors, flat=False, num_colors=256):
-    """ given a list of colors, create a larger list of colors interpolating
+    """given a list of colors, create a larger list of colors interpolating
     the first one. If flatten is True, a list of numbers will be returned. If
     False, a list of (r,g,b) tuples. num_colors is the number of colors wanted
-    in the final list """
+    in the final list"""
 
     palette = []
 
@@ -264,13 +267,15 @@ class WaveformImage:
             self.color_scheme_to_use = color_scheme
         else:
             self.color_scheme_to_use = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])
-        
-        self.transparent_background = self.color_scheme_to_use.get('wave_transparent_background', False)
+
+        self.transparent_background = self.color_scheme_to_use.get("wave_transparent_background", False)
         if self.transparent_background:
             self.image = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
         else:
-            background_color = self.color_scheme_to_use['wave_colors'][0]  # Only used if transparent_background is False
-            self.image = Image.new("RGB", (image_width, image_height),  background_color)
+            background_color = self.color_scheme_to_use["wave_colors"][
+                0
+            ]  # Only used if transparent_background is False
+            self.image = Image.new("RGB", (image_width, image_height), background_color)
 
         self.image_width = image_width
         self.image_height = image_height
@@ -278,12 +283,12 @@ class WaveformImage:
         self.draw = ImageDraw.Draw(self.image)
         self.previous_x, self.previous_y = None, None
 
-        colors = self.color_scheme_to_use['wave_colors'][1:]
+        colors = self.color_scheme_to_use["wave_colors"][1:]
         self.color_lookup = interpolate_colors(colors)
         self.pix = self.image.load()
 
     def draw_peaks(self, x, peaks, spectral_centroid):
-        """ draw 2 peaks at x using the spectral_centroid for color """
+        """draw 2 peaks at x using the spectral_centroid for color"""
 
         y1 = self.image_height * 0.5 - peaks[0] * (self.image_height - 4) * 0.5
         y2 = self.image_height * 0.5 - peaks[1] * (self.image_height - 4) * 0.5
@@ -300,8 +305,8 @@ class WaveformImage:
         self.draw_anti_aliased_pixels(x, y1, y2, line_color)
 
     def draw_anti_aliased_pixels(self, x, y1, y2, color):
-        """ vertical anti-aliasing at y1 and y2 """
-        
+        """vertical anti-aliasing at y1 and y2"""
+
         y_max = max(y1, y2)
         y_max_int = int(y_max)
         alpha = y_max - y_max_int
@@ -316,7 +321,6 @@ class WaveformImage:
             else:
                 # If using transparent background, don't do anti-aliasing
                 self.pix[x, y_max_int + 1] = (color[0], color[1], color[2], 255)
-                
 
         y_min = min(y1, y2)
         y_min_int = int(y_min)
@@ -334,7 +338,7 @@ class WaveformImage:
 
     def save(self, filename):
         # draw a zero "zero" line
-        a = self.color_scheme_to_use.get('wave_zero_line_alpha', 0)
+        a = self.color_scheme_to_use.get("wave_zero_line_alpha", 0)
         if a:
             for x in range(self.image_width):
                 center = self.image_height // 2
@@ -356,9 +360,9 @@ class SpectrogramImage:
 
         self.image = Image.new("RGB", (image_height, image_width))
         if isinstance(color_scheme, dict):
-            spectrogram_colors = color_scheme['spec_colors']
+            spectrogram_colors = color_scheme["spec_colors"]
         else:
-            spectrogram_colors = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])['spec_colors']
+            spectrogram_colors = COLOR_SCHEMES.get(color_scheme, COLOR_SCHEMES[DEFAULT_COLOR_SCHEME_KEY])["spec_colors"]
         self.palette = interpolate_colors(spectrogram_colors)
 
         # generate the lookup which translates y-coordinate to fft-bin
@@ -383,7 +387,7 @@ class SpectrogramImage:
 
     def draw_spectrum(self, x, spectrum):
         # for all frequencies, draw the pixels
-        for (index, alpha) in self.y_to_bin:
+        for index, alpha in self.y_to_bin:
             self.pixels.append(self.palette[int((255.0 - alpha) * spectrum[index] + alpha * spectrum[index + 1])])
 
         # if the FFT is too small to fill up the image, fill with black to the top
@@ -395,8 +399,17 @@ class SpectrogramImage:
         self.image.transpose(Image.ROTATE_90).save(filename, quality=quality)
 
 
-def create_wave_images(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size,
-                       progress_callback=None, color_scheme=None, use_transparent_background=False):
+def create_wave_images(
+    input_filename,
+    output_filename_w,
+    output_filename_s,
+    image_width,
+    image_height,
+    fft_size,
+    progress_callback=None,
+    color_scheme=None,
+    use_transparent_background=False,
+):
     """
     Utility function for creating both wavefile and spectrum images from an audio input file.
     :param input_filename: input audio filename (must be PCM)
@@ -416,7 +429,6 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
     spectrogram = SpectrogramImage(image_width, image_height, fft_size, color_scheme)
 
     for x in range(image_width):
-
         if progress_callback and x % (image_width // 100) == 0:
             progress_callback(x, image_width)
 
@@ -460,31 +472,35 @@ def convert_to_pcm(input_filename, output_filename, use_ffmpeg_for_unknown_type=
             error_messages = []
         elif sound_type == "m4a":
             cmd = ["faad", "-o", output_filename, input_filename]
-            error_messages = ["Unable to find correct AAC sound track in the MP4 file",
-                            "Error: Bitstream value not allowed by specification",
-                            "Error opening file"]
+            error_messages = [
+                "Unable to find correct AAC sound track in the MP4 file",
+                "Error: Bitstream value not allowed by specification",
+                "Error opening file",
+            ]
         elif sound_type == "wv":
             cmd = ["wvunpack", input_filename, "-o", output_filename]
             error_messages = []
-   
+
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = process.communicate()
-        stdout = stdout.decode(errors='ignore')
-        stderr = stderr.decode(errors='ignore')
-        
+        stdout = stdout.decode(errors="ignore")
+        stderr = stderr.decode(errors="ignore")
+
         # If external process returned an error (return code != 0) or the expected PCM file does not
         # exist, raise exception
         if process.returncode != 0 or not os.path.exists(output_filename):
             if "No space left on device" in stderr + " " + stdout:
                 raise NoSpaceLeftException
-            raise AudioProcessingException("failed converting to pcm data:\n"
-                                        + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
-        
+            raise AudioProcessingException(
+                "failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout
+            )
+
         # If external process apparently returned no error (return code = 0) but we see some errors from our list of
         # known errors have been printed in stderr, raise an exception as well
         if any([error_message in stderr for error_message in error_messages]):
-            raise AudioProcessingException("failed converting to pcm data:\n"
-                                        + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+            raise AudioProcessingException(
+                "failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout
+            )
     else:
         if use_ffmpeg_for_unknown_type:
             convert_using_ffmpeg(input_filename, output_filename)
@@ -505,14 +521,15 @@ def stereofy_and_find_info(stereofy_executable_path, input_filename, output_file
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
-    stdout = stdout.decode(errors='ignore')
-    stderr = stderr.decode(errors='ignore')
+    stdout = stdout.decode(errors="ignore")
+    stderr = stderr.decode(errors="ignore")
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
             raise NoSpaceLeftException
         raise AudioProcessingException(
-            "failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+            "failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout
+        )
 
     stdout = (stdout + " " + stderr).replace("\n", " ")
 
@@ -552,7 +569,7 @@ def convert_to_mp3(input_filename, output_filename, quality=70):
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, _) = process.communicate()
-    stdout = stdout.decode(errors='ignore')
+    stdout = stdout.decode(errors="ignore")
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException(stdout)
@@ -570,8 +587,8 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, _) = process.communicate()
-    stdout = stdout.decode(errors='ignore')
-    
+    stdout = stdout.decode(errors="ignore")
+
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException(stdout)
 
@@ -590,12 +607,12 @@ def convert_using_ffmpeg(input_filename, output_filename, force_output_format=Fa
     if force_output_format:
         command += ["-acodec", "pcm_s16le", "-ar", "44100"]
     if mono_out:
-        command += ['-ac', '1']
+        command += ["-ac", "1"]
     command += [output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
-    stdout = stdout.decode(errors='ignore')
-    stderr = stderr.decode(errors='ignore')
+    stdout = stdout.decode(errors="ignore")
+    stderr = stderr.decode(errors="ignore")
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException(f"ffmpeg returned an error\nstdout: {stdout} \nstderr: {stderr}")

@@ -33,8 +33,8 @@ def extract_square(input_filename, output_filename, size: int):
     """
     im = Image.open(input_filename)
 
-    if im.mode not in ('L', 'RGB'):
-        im = im.convert('RGB')
+    if im.mode not in ("L", "RGB"):
+        im = im.convert("RGB")
 
     if im.size[0] < size and im.size[1] < size:
         im = ImageOps.pad(im, (size, size), method=Resampling.LANCZOS, color="#fff")
@@ -51,8 +51,8 @@ def extract_square(input_filename, output_filename, size: int):
 
 
 if __name__ == "__main__":
-    import sys
     import os.path
+    import sys
 
     input_filename = sys.argv[1]
     size = int(sys.argv[2])

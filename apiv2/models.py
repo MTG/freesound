@@ -21,28 +21,25 @@
 import datetime
 import random
 
-from django.db import models
-from django.contrib.auth.models import User
-from oauth2_provider.models import Application
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
+from django.db import models
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.sites.models import Site
+from oauth2_provider.models import Application
 
 
 class ApiV2Client(models.Model):
+    STATUS_CHOICES = (("OK", "Approved"), ("REJ", "Rejected"), ("REV", "Revoked"), ("PEN", "Pending"))
 
-    STATUS_CHOICES = (('OK',  'Approved'),
-                      ('REJ', 'Rejected'),
-                      ('REV', 'Revoked'),
-                      ('PEN', 'Pending'))
-
-    DEFAULT_STATUS = 'OK'
+    DEFAULT_STATUS = "OK"
 
     oauth_client = models.OneToOneField(
-        Application, related_name='apiv2_client', default=None, null=True, blank=True, on_delete=models.CASCADE)
+        Application, related_name="apiv2_client", default=None, null=True, blank=True, on_delete=models.CASCADE
+    )
     key = models.CharField(max_length=40, blank=True)
-    user = models.ForeignKey(User, related_name='apiv2_client', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name="apiv2_client", on_delete=models.CASCADE)
     status = models.CharField(max_length=3, default=DEFAULT_STATUS, choices=STATUS_CHOICES)
     name = models.CharField(max_length=64)
     url = models.URLField(blank=True)
@@ -57,7 +54,6 @@ class ApiV2Client(models.Model):
         return f"credentials for developer {self.user.username}"
 
     def save(self, *args, **kwargs):
-
         # If oauth client does not exist create a new one (that means ApiV2Client is being saved for the first time)
         # Otherwise update existing client
 
@@ -98,8 +94,8 @@ class ApiV2Client(models.Model):
         super().delete(*args, **kwargs)
 
     def get_usage_history(self, n_days_back=30, year=None):
-        """Returns the total number of daily requests made per day for the current API client during the last 
-        N days or during the indicated year. The result is a list of tuples with the date and the count, 
+        """Returns the total number of daily requests made per day for the current API client during the last
+        N days or during the indicated year. The result is a list of tuples with the date and the count,
         sorted by date (older first).
 
         Args:
@@ -115,29 +111,31 @@ class ApiV2Client(models.Model):
             n_days_back = 365
         else:
             end_date = timezone.now().date()
-        for i in range(0, n_days_back):
+        for i in range(n_days_back):
             date_filter = end_date - datetime.timedelta(days=i)
             if settings.DEBUG:
-                number_of_requests = random.randint(0, 1000)
+                number_of_requests = random.randint(0, 1000)  # noqa: S311
             else:
                 try:
                     number_of_requests = self.usage.get(date=date_filter).number_of_requests
                 except APIClientDailyUsageHistory.DoesNotExist:
-                    number_of_requests = 0    
+                    number_of_requests = 0
             usage.append((date_filter, number_of_requests))
         return sorted(usage, reverse=True)
 
     def get_usage_history_total(self, n_days_back=30, year=None, discard_per_day=0):
         """Returns the total number of API requests carried out by the API client in the last
-        n_days_back or in the specified year (see self.get_usage_history for more details). 
+        n_days_back or in the specified year (see self.get_usage_history for more details).
         Additionally, a number of "discard_per_day" requests can set to ignore that amount of
         daily requests when computing the total.
         """
         return sum([max(u - discard_per_day, 0) for _, u in self.get_usage_history(n_days_back=n_days_back, year=year)])
 
     def get_default_redirect_uri(self):
-        return f"http{'s' if not settings.DEBUG else ''}://" \
-               f"{Site.objects.get_current().domain}{reverse('permission-granted')}"
+        return (
+            f"http{'s' if not settings.DEBUG else ''}://"
+            f"{Site.objects.get_current().domain}{reverse('permission-granted')}"
+        )
 
     @property
     def client_id(self):
@@ -146,17 +144,17 @@ class ApiV2Client(models.Model):
     @property
     def client_secret(self):
         return self.key  # We can't use self.oauth_client.client_secret as it is hashed
-    
+
     @property
     def version(self):
         return "V2"
 
 
 class APIClientDailyUsageHistory(models.Model):
-    apiv2_client = models.ForeignKey(ApiV2Client, related_name='usage', on_delete=models.CASCADE)
+    apiv2_client = models.ForeignKey(ApiV2Client, related_name="usage", on_delete=models.CASCADE)
     number_of_requests = models.PositiveIntegerField(default=0)
     date = models.DateField()
 
     class Meta:
         ordering = ("-date",)
-        unique_together = ('apiv2_client', 'date')
+        unique_together = ("apiv2_client", "date")

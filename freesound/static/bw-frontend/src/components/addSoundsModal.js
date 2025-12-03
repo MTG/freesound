@@ -46,10 +46,31 @@ const prepareAddSoundsModalAndFields = (container) => {
         const removeSoundsButton = addSoundsButton.nextElementSibling;
         removeSoundsButton.disabled = true;
 
-        const selectedSoundsDestinationElement = addSoundsButton.parentNode.parentNode.getElementsByClassName('bw-object-selector-container')[0];
+        const selectedSoundsDestinationElement = addSoundsButton.parentNode.parentNode.querySelector('.bw-object-selector-container[data-type="sounds"]');
         initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
             removeSoundsButton.disabled = element.dataset.selectedIds == ""
         });
+
+        const soundsInput = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName('input')[0];
+        if(soundsInput.disabled){
+            addSoundsButton.disabled = true
+            const checkboxes = selectedSoundsDestinationElement.querySelectorAll('span.bw-checkbox-container');
+            checkboxes.forEach(checkbox => {
+                checkbox.remove()
+            })
+        }
+
+        const soundsLabel = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName('label')[0];
+        const itemCountElementInLabel = soundsLabel === null ? null : soundsLabel.querySelector('#element-count');
+        
+        const maxSounds = selectedSoundsDestinationElement.dataset.maxElements;
+        const maxSoundsHelpText = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByClassName('helptext')[0]
+        if(maxSounds !== "None"){
+            if (soundsInput.value.split(',').length >= maxSounds){
+                addSoundsButton.disabled = true
+                maxSoundsHelpText.style.display = 'block';
+            }
+        }
 
         removeSoundsButton.addEventListener('click', (evt) => {
             evt.preventDefault();
@@ -62,6 +83,12 @@ const prepareAddSoundsModalAndFields = (container) => {
             updateObjectSelectorDataProperties(selectedSoundsDestinationElement);
             const selectedSoundsHiddenInput = document.getElementById(addSoundsButton.dataset.selectedSoundsHiddenInputId);
             selectedSoundsHiddenInput.value = selectedSoundsDestinationElement.dataset.unselectedIds;
+            if(maxSounds !== "None" && selectedSoundsHiddenInput.value.split(',').length < maxSounds){
+                addSoundsButton.disabled = false;
+                maxSoundsHelpText.style.display = 'none';
+            }
+            if (itemCountElementInLabel){
+                itemCountElementInLabel.innerHTML = selectedSoundsDestinationElement.children.length}
             removeSoundsButton.disabled = true;
         });
 
@@ -73,11 +100,17 @@ const prepareAddSoundsModalAndFields = (container) => {
                 const newSoundIds = serializedIdListToIntList(selectedSoundIds);
                 const combinedIds = combineIdsLists(currentSoundIds, newSoundIds);
                 selectedSoundsHiddenInput.value = combinedIds.join(',');
+                if(maxSounds !== "None" && selectedSoundsHiddenInput.value.split(',').length >= maxSounds){
+                    addSoundsButton.disabled = true;
+                    maxSoundsHelpText.style.display = 'block';
+                }
+                if (itemCountElementInLabel){
+                    itemCountElementInLabel.innerHTML = selectedSoundsDestinationElement.children.length}
                 initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
                     removeSoundsButton.disabled = element.dataset.selectedIds == ""
                 });
-        
             });
+            
         }); 
     });
 }

@@ -25,7 +25,8 @@ class ApplicationAdmin(ProviderApplicationAdmin):
     """
     Override the default admin class for oauth2_provider.Application to add a custom queryset
     """
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        qs = qs.select_related('user')
+        qs = qs.select_related("user")
         return qs

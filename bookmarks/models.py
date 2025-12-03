@@ -20,36 +20,36 @@
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils.text import slugify
 
-from sounds.models import Sound, License
-from django.template.loader import render_to_string
+from sounds.models import License, Sound
 
 
 class BookmarkCategory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=128, default="")
-    
+
     def __str__(self):
         return f"{self.name}"
-    
+
     def get_attribution(self, sound_qs=None):
-        #If no queryset of sounds is provided, take it from the bookmark category
+        # If no queryset of sounds is provided, take it from the bookmark category
         if sound_qs is None:
             bookmarked_sounds = Bookmark.objects.filter(category_id=self.id).values("sound_id")
-            sound_qs = Sound.objects.filter(id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
-        
+            sound_qs = Sound.objects.filter(
+                id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK"
+            ).select_related("user", "license")
+
         users = User.objects.filter(sounds__in=sound_qs).distinct()
         # Generate text file with license info
         licenses = License.objects.filter(sound__id__in=sound_qs).distinct()
-        attribution = render_to_string(("sounds/multiple_sounds_attribution.txt"),
-            dict(type="Bookmark Category",
-                users=users,
-                object=self,
-                licenses=licenses,
-                sound_list=sound_qs))
+        attribution = render_to_string(
+            ("sounds/multiple_sounds_attribution.txt"),
+            dict(type="Bookmark Category", users=users, object=self, licenses=licenses, sound_list=sound_qs),
+        )
         return attribution
-    
+
     @property
     def download_filename(self):
         name_slug = slugify(self.name)
@@ -60,17 +60,18 @@ class BookmarkCategory(models.Model):
 class Bookmark(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     category = models.ForeignKey(
-        BookmarkCategory, blank=True, null=True, default=None, related_name='bookmarks', on_delete=models.SET_NULL)
+        BookmarkCategory, blank=True, null=True, default=None, related_name="bookmarks", on_delete=models.SET_NULL
+    )
     sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    
+
     def __str__(self):
         return f"Bookmark: {self.sound} by {self.user}"
 
     @property
     def category_name_or_uncategorized(self):
         if self.category is None:
-            return 'Uncategorized'
+            return "Uncategorized"
         else:
             return self.category.name
 
@@ -79,5 +80,5 @@ class Bookmark(models.Model):
         return self.sound.original_filename
 
     class Meta:
-        ordering = ("-created", )
-        unique_together = (('user_id', 'category_id', 'sound_id'),)
+        ordering = ("-created",)
+        unique_together = (("user_id", "category_id", "sound_id"),)

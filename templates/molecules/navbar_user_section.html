@@ -18,9 +18,15 @@
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
                 </li>
+                {% if enable_collections %}
+                <li class="bw-nav__action dropdown-item">
+                    <a class="bw-link--black" href="{% url 'your-collections' %}">Collections</a>
+                </li>
+                {% else %}
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'bookmarks' %}">Bookmarks</a>
                 </li>
+                {% endif %}
                 <li class="bw-nav__action dropdown-item">
                     <a class="bw-link--black" href="{% url 'stream' %}">Sound stream</a>
                 </li>

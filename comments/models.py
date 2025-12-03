@@ -18,21 +18,22 @@
 #     See AUTHORS file.
 #
 
-import sounds
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
 
+import sounds
 from utils.text import text_has_hyperlink
 
 
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    sound = models.ForeignKey('sounds.Sound', null=True, related_name='comments', on_delete=models.CASCADE)
+    sound = models.ForeignKey("sounds.Sound", null=True, related_name="comments", on_delete=models.CASCADE)
     comment = models.TextField()
     parent = models.ForeignKey(
-        'self', null=True, blank=True, related_name='replies', default=None, on_delete=models.SET_NULL)
+        "self", null=True, blank=True, related_name="replies", default=None, on_delete=models.SET_NULL
+    )
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     contains_hyperlink = models.BooleanField(db_index=True, default=False)
 
@@ -40,7 +41,7 @@ class Comment(models.Model):
         return f"{self.user} comment on {self.sound}"
 
     class Meta:
-        ordering = ('-created', )
+        ordering = ("-created",)
 
     def set_has_hyperlink(self, commit=False):
         if text_has_hyperlink(self.comment):
@@ -58,7 +59,6 @@ def on_delete_comment(sender, instance, **kwargs):
         If this comment is deleted as a result of its parent sound being deleted, the
         sound will no longer exist so we don't need to update it
         """
-        pass
 
 
 @receiver(pre_save, sender=Comment)

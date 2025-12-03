@@ -18,12 +18,12 @@
 #     See AUTHORS file.
 #
 
-from django_recaptcha.fields import ReCaptchaField
 from django import forms
+from django_recaptcha.fields import ReCaptchaField
 
 
 class ContactForm(forms.Form):
     your_email = forms.EmailField()
     subject = forms.CharField()
-    message = forms.CharField(widget=forms.Textarea(attrs={'rows': 10, 'cols': 50}))
+    message = forms.CharField(widget=forms.Textarea(attrs={"rows": 10, "cols": 50}))
     recaptcha = ReCaptchaField(label="")

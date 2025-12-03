@@ -21,25 +21,20 @@
 
 from unittest import mock
 
-from django.conf import settings
+import pytest
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
-import pytest
 
-from general.templatetags.filter_img import replace_img
 from sounds.models import Pack, Sound
-from utils.cache import get_template_cache_key
-from utils.test_helpers import create_user_and_sounds, override_analysis_path_with_temp_directory
+from utils.test_helpers import create_user_and_sounds
 
 
 class PackNumSoundsTestCase(TestCase):
+    fixtures = ["licenses"]
 
-    fixtures = ['licenses']
-
-    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    @mock.patch("sounds.models.delete_sounds_from_search_engine")
     def test_create_and_delete_sounds(self, delete_sounds_from_search_engine):
         N_SOUNDS = 5
         user, packs, sounds = create_user_and_sounds(num_sounds=N_SOUNDS, num_packs=1)
@@ -67,17 +62,20 @@ class PackNumSoundsTestCase(TestCase):
         self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, 1)  # Check pack has all sounds
 
         self.client.force_login(user)
-        resp = self.client.post(reverse('sound-edit', args=[sound.user.username, sound.id]), {
-            '0-sound_id': sound.id,
-            '0-bst_category': 'ss-n',
-            '0-description': 'this is a description for the sound',
-            '0-name': sound.original_filename,
-            '0-tags': 'tag1 tag2 tag3',
-            '0-license': '3',
-            '0-new_pack': 'new pack name',
-            '0-pack': ''
-        })
-        self.assertRedirects(resp, reverse('sound', args=[sound.user.username, sound.id]))
+        resp = self.client.post(
+            reverse("sound-edit", args=[sound.user.username, sound.id]),
+            {
+                "0-sound_id": sound.id,
+                "0-bst_category": "ss-n",
+                "0-description": "this is a description for the sound",
+                "0-name": sound.original_filename,
+                "0-tags": "tag1 tag2 tag3",
+                "0-license": "3",
+                "0-new_pack": "new pack name",
+                "0-pack": "",
+            },
+        )
+        self.assertRedirects(resp, reverse("sound", args=[sound.user.username, sound.id]))
         self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, 0)  # Sound changed from pack
 
     def test_edit_pack(self):
@@ -95,12 +93,15 @@ class PackNumSoundsTestCase(TestCase):
         sound_ids_pack2 = [s.id for s in pack2.sounds.all()]
         sound_ids_pack2.append(sound_ids_pack1.pop())
         self.client.force_login(user)
-        resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
-            'pack_sounds': ','.join([str(sid) for sid in sound_ids_pack2]),
-            'name': 'Test pack 1 (edited)',
-            'description': 'A new description'
-        })
-        self.assertRedirects(resp, reverse('pack', args=[pack2.user.username, pack2.id]))
+        resp = self.client.post(
+            reverse("pack-edit", args=[pack2.user.username, pack2.id]),
+            {
+                "pack_sounds": ",".join([str(sid) for sid in sound_ids_pack2]),
+                "name": "Test pack 1 (edited)",
+                "description": "A new description",
+            },
+        )
+        self.assertRedirects(resp, reverse("pack", args=[pack2.user.username, pack2.id]))
         self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 1)
         self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 3)
 
@@ -109,24 +110,28 @@ class PackNumSoundsTestCase(TestCase):
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
-        resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
-            'pack_sounds':
-                ','.join([str(snd.id) for snd in Pack.objects.get(id=pack2.id).sounds.all()] + [str(sound.id)]),
-            'name': 'Test pack 1 (edited again)',
-            'description': 'A new description'
-        })
-        self.assertRedirects(resp, reverse('pack', args=[pack2.user.username, pack2.id]))
+        resp = self.client.post(
+            reverse("pack-edit", args=[pack2.user.username, pack2.id]),
+            {
+                "pack_sounds": ",".join(
+                    [str(snd.id) for snd in Pack.objects.get(id=pack2.id).sounds.all()] + [str(sound.id)]
+                ),
+                "name": "Test pack 1 (edited again)",
+                "description": "A new description",
+            },
+        )
+        self.assertRedirects(resp, reverse("pack", args=[pack2.user.username, pack2.id]))
         self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 1)
         self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 4)
         self.assertEqual(Sound.objects.get(id=sound.id).pack.id, pack2.id)
 
-class PackViewsTestCase(TestCase):
 
-    fixtures = ['licenses', 'sounds_with_tags']
+class PackViewsTestCase(TestCase):
+    fixtures = ["licenses", "sounds_with_tags"]
 
     def test_pack_view(self):
         pack = Pack.objects.get(id=5103)
-        resp = self.client.get(reverse('pack', args=[pack.user.username, pack.id]))
+        resp = self.client.get(reverse("pack", args=[pack.user.username, pack.id]))
         assert resp.status_code == 200
 
     def test_pack_bad_username_in_url(self):
@@ -134,36 +139,39 @@ class PackViewsTestCase(TestCase):
 
         pack = Pack.objects.get(id=5103)
         # user needs to exist anyway, for the redirect_if_old_username_or_404 decorator
-        username = pack.user.username + 'xxxx'
+        username = pack.user.username + "xxxx"
         User.objects.create_user(username=username)
-        url = reverse('pack', args=[username, pack.id])
+        url = reverse("pack", args=[username, pack.id])
         resp = self.client.get(url)
         assert resp.status_code == 404
 
     def test_pack_view_no_pack(self):
         """pack id does not exist"""
-        
+
         # user needs to exist anyway, for the redirect_if_old_username_or_404 decorator
-        username = 'user'
+        username = "user"
         User.objects.create_user(username=username)
-        url = reverse('pack', args=[username, 9999999])
+        url = reverse("pack", args=[username, 9999999])
         resp = self.client.get(url)
         assert resp.status_code == 404
 
 
 @pytest.mark.django_db
 class PackStatsSectionTest:
-
     def test_get_total_pack_sounds_length(self, use_dummy_cache_backend, client):
-        call_command('loaddata', 'licenses', 'sounds')
+        call_command("loaddata", "licenses", "sounds")
         pack = Pack.objects.all()[0]
 
-        response = client.get(reverse('pack-stats-section', kwargs={'username': pack.user.username, 'pack_id': pack.id}) + '?ajax=1')
+        response = client.get(
+            reverse("pack-stats-section", kwargs={"username": pack.user.username, "pack_id": pack.id}) + "?ajax=1"
+        )
         assert response.status_code == 200
-        assert "0:21 minutes" in response.content.decode('utf-8')
+        assert "0:21 minutes" in response.content.decode("utf-8")
 
         sound = pack.sounds.all()[0]
         sound.duration = 1260
         sound.save()
-        response = client.get(reverse('pack-stats-section', kwargs={'username': pack.user.username, 'pack_id': pack.id}) + '?ajax=1')
-        assert "21:16 minutes" in response.content.decode('utf-8')
+        response = client.get(
+            reverse("pack-stats-section", kwargs={"username": pack.user.username, "pack_id": pack.id}) + "?ajax=1"
+        )
+        assert "21:16 minutes" in response.content.decode("utf-8")

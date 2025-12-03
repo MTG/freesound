@@ -20,15 +20,15 @@
 
 import logging
 
+import sentry_sdk
 from django.conf import settings
 from django.core.cache import cache
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-import sentry_sdk
 
 from search.views import search_view_helper
-from tags.models import Tag, FS1Tag
+from tags.models import FS1Tag, Tag
 from utils.search import SearchEngineException
 from utils.search.search_sounds import perform_search_engine_query
 
@@ -40,7 +40,7 @@ def tags(request):
     tvars = search_view_helper(request)
 
     # If there are no tags in filter, get display initial tag cloud
-    if 'sqp' in tvars and not tvars["sqp"].get_tags_in_filters():
+    if "sqp" in tvars and not tvars["sqp"].get_tags_in_filters():
         return tag_cloud(request)
 
     return render(request, "search/search.html", tvars)

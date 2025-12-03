@@ -23,35 +23,44 @@ import logging
 import os
 import random
 
-from django.contrib.auth.models import User, Group
 from django.contrib.admin.models import LogEntry
+from django.contrib.auth.models import Group, User
 from django.contrib.sessions.models import Session
-from django.core.management.base import BaseCommand
 from django.core.management import call_command
+from django.core.management.base import BaseCommand
 from django.db import connection
-from django.db.models.signals import post_delete, pre_delete, pre_save, post_save
+from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.utils import timezone
-from silk.models import Request
-from accounts.models import DeletedUser, EmailBounce, GdprAcceptance, OldUsername, Profile, ResetEmailRequest, SameUser, UserDeletionRequest, UserEmailSetting, UserFlag
-from apiv2.models import ApiV2Client
-from donations.models import Donation
-from forum.models import Subscription
-from general.models import AkismetSpam
-from messages.models import MessageBody
 from oauth2_provider.models import AccessToken, Application, Grant, RefreshToken
+from silk.models import Request
 
 import comments
 import forum
 import ratings
 import sounds
-from sounds.models import BulkUploadProgress, DeletedSound, Flag
 import tickets
+from accounts.models import (
+    DeletedUser,
+    EmailBounce,
+    GdprAcceptance,
+    OldUsername,
+    Profile,
+    ResetEmailRequest,
+    SameUser,
+    UserDeletionRequest,
+    UserEmailSetting,
+    UserFlag,
+)
+from apiv2.models import ApiV2Client
+from donations.models import Donation
+from forum.models import Subscription
+from general.models import AkismetSpam
+from messages.models import MessageBody
+from sounds.models import BulkUploadProgress, DeletedSound, Flag
 from tickets.models import Ticket, TicketComment
 from utils.chunks import chunks
 
-console_logger = logging.getLogger('console')
-
-
+console_logger = logging.getLogger("console")
 
 
 class Command(BaseCommand):
@@ -59,18 +68,16 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-d', '--keep-downloaders',
-            dest='downloaders',
+            "-d",
+            "--keep-downloaders",
+            dest="downloaders",
             default=100000,
             type=int,
-            help='The number of downloaders to keep')
+            help="The number of downloaders to keep",
+        )
 
         parser.add_argument(
-            '-s', '--keep-sounds',
-            dest='sounds',
-            default=5000,
-            type=int,
-            help='Number of sounds to keep'
+            "-s", "--keep-sounds", dest="sounds", default=5000, type=int, help="Number of sounds to keep"
         )
 
     def disconnect_signals(self):
@@ -97,36 +104,39 @@ class Command(BaseCommand):
         post_save.disconnect(tickets.models.create_ticket_message, sender=tickets.models.TicketComment)
 
     def delete_some_users(self, userids):
-        console_logger.info(f'  Deleting {len(userids)} users')
-        console_logger.info('   - downloads')
+        console_logger.info(f"  Deleting {len(userids)} users")
+        console_logger.info("   - downloads")
         # Do a bulk delete because it's faster than django deleting download rows individually for each user
         # TODO: This could be faster by making new download tables for only
         # the users that we are going to keep, and then remove the original
         # table and rename.
         with connection.cursor() as cursor:
             cursor.execute("delete from sounds_download where user_id in %s", [tuple(userids)])
-            cursor.execute("delete from sounds_packdownloadsound where pack_download_id in (select id from sounds_packdownload where user_id in %s)", [tuple(userids)])
+            cursor.execute(
+                "delete from sounds_packdownloadsound where pack_download_id in (select id from sounds_packdownload where user_id in %s)",
+                [tuple(userids)],
+            )
             cursor.execute("delete from sounds_packdownload where user_id in %s", [tuple(userids)])
-        console_logger.info('   - done, user objects')
+        console_logger.info("   - done, user objects")
         User.objects.filter(id__in=userids).delete()
-        console_logger.info('   - done')
+        console_logger.info("   - done")
 
     def delete_sound_uploaders(self, numkeep):
         """Delete users who have uploaded sounds, keeping at least `numkeep` sounds.
-           Don't consider users who have uploaded more than 1000 sounds.
-           Arguments:
-              numkeep: the number of sounds to keep
+        Don't consider users who have uploaded more than 1000 sounds.
+        Arguments:
+           numkeep: the number of sounds to keep
         """
-        console_logger.info('Deleting some uploaders')
+        console_logger.info("Deleting some uploaders")
         # If a user has more than this number of sounds then don't add them
         # (we want the number of users with sounds to be varied)
         max_number_of_sounds_per_user = 100
-        users = User.objects.values_list('id', 'profile__num_sounds').filter(profile__num_sounds__gt=0)
+        users = User.objects.values_list("id", "profile__num_sounds").filter(profile__num_sounds__gt=0)
         users = list(users)
         all_users_with_sounds = [u[0] for u in users]
         random.shuffle(users)
         numusers = len(users)
-        console_logger.info(f'Number of uploaders: {numusers}')
+        console_logger.info(f"Number of uploaders: {numusers}")
 
         totalsounds = 0
         userids = []
@@ -139,51 +149,57 @@ class Command(BaseCommand):
                 break
 
         console_logger.info(f"Keeping {len(userids)} users with {totalsounds} sounds")
-        
+
         users_not_in_userids = list(set(all_users_with_sounds) - set(userids))
         ch = [c for c in chunks(sorted(list(users_not_in_userids)), 1000)]
         tot = len(ch)
         for i, c in enumerate(ch, 1):
-            console_logger.info(f' {i}/{tot}')
+            console_logger.info(f" {i}/{tot}")
             self.delete_some_users(c)
 
     def delete_downloaders(self, numkeep):
         """Delete users who have only downloaded sounds
-           Arguments:
-               numkeep: the number of users to keep (all others are removed)
+        Arguments:
+            numkeep: the number of users to keep (all others are removed)
         """
-        console_logger.info('Deleting some downloaders')
-        userids = User.objects.values_list('id', flat=True).filter(profile__num_sounds=0)
+        console_logger.info("Deleting some downloaders")
+        userids = User.objects.values_list("id", flat=True).filter(profile__num_sounds=0)
         userids = list(userids)
         numusers = len(userids)
-        console_logger.info(f'Number of downloaders: {numusers}')
+        console_logger.info(f"Number of downloaders: {numusers}")
         random.shuffle(userids)
         # Keep `numkeep` users, and delete the rest
         randusers = sorted(userids[numkeep:])
         ch = [c for c in chunks(randusers, 10000)]
         tot = len(ch)
         for i, c in enumerate(ch, 1):
-            console_logger.info(f' {i}/{tot}')
+            console_logger.info(f" {i}/{tot}")
             self.delete_some_users(c)
 
     def anonymise_database(self):
         users_to_update = []
         for user in User.objects.all():
-            user.email = str(user.id) + '@freesound.org'
-            user.first_name = ''
-            user.last_name = ''
+            user.email = str(user.id) + "@freesound.org"
+            user.first_name = ""
+            user.last_name = ""
             # this password is 'freesound'
-            user.password = 'pbkdf2_sha256$36000$PJRTmkaiwSEC$a8+HUj33133PZX7ToOuypT/CfLKNwMeJMXqBJ4QbQPg='
+            user.password = "pbkdf2_sha256$36000$PJRTmkaiwSEC$a8+HUj33133PZX7ToOuypT/CfLKNwMeJMXqBJ4QbQPg="  # noqa: S105
             user.is_staff = False
             user.is_superuser = False
             users_to_update.append(user)
-        User.objects.bulk_update(users_to_update, ['email', 'first_name', 'last_name', 'password', 'is_staff', 'is_superuser'])
+        User.objects.bulk_update(
+            users_to_update, ["email", "first_name", "last_name", "password", "is_staff", "is_superuser"]
+        )
 
-        MessageBody.objects.all().update(body='(message body) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.')
-        TicketComment.objects.all().update(text='(ticket comment) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.')
+        MessageBody.objects.all().update(
+            body="(message body) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        )
+        TicketComment.objects.all().update(
+            text="(ticket comment) Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        )
 
         GdprAcceptance.objects.all().update(date_accepted=timezone.now())
-        
+
         Profile.objects.all().update(
             is_whitelisted=False,
             not_shown_in_online_users_list=False,
@@ -233,17 +249,19 @@ class Command(BaseCommand):
         Flag.objects.all().delete()
 
     def handle(self, *args, **options):
-        if os.environ.get('FREESOUND_PRUNE_DATABASE') != '1':
-            raise Exception('Run this command with env FREESOUND_PRUNE_DATABASE=1 to confirm you want to prune the database')
+        if os.environ.get("FREESOUND_PRUNE_DATABASE") != "1":
+            raise Exception(
+                "Run this command with env FREESOUND_PRUNE_DATABASE=1 to confirm you want to prune the database"
+            )
 
         self.disconnect_signals()
         self.delete_unneeded_tables()
         # Delete downloaders first, this will remove the majority of the download table
         # so that when we delete uploaders, there are not as many download rows for other
         # users who have downloaded these uploaders' sounds
-        self.delete_downloaders(options['downloaders'])
-        self.delete_sound_uploaders(options['sounds'])
+        self.delete_downloaders(options["downloaders"])
+        self.delete_sound_uploaders(options["sounds"])
         self.anonymise_database()
         # Update counts
-        call_command('report_count_statuses')
-        call_command('set_first_post_in_threads')
+        call_command("report_count_statuses")
+        call_command("set_first_post_in_threads")

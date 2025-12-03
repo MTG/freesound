@@ -8,7 +8,7 @@
 
 {% block main_content %}
 
-    <h1>Sound Analysis</h1>
+    <h1>Sound analyzers</h1>
     <div class="v-spacing-4">
         <table class="v-spacing-top-4" style="min-width:500px;">
         {% for analyzer_name, analyzer_data in analyzers_data %}
@@ -20,14 +20,20 @@
         </table>
     </div>
 
-    <h1>Similarity vectors</h1>
+    <h1>Consolidated sound analysis</h1>
+    <table class="v-spacing-top-4" style="min-width:500px;">
+        <tr><td><b>ok</b></td><td><b>skipped</b></td><td><b>failed</b></td><td><b>queued</b></td></tr>
+        <tr><td>{{ consolidated.ok }} ({{ consolidated.percentage_ok|floatformat:3 }}%)</td><td>{{ consolidated.sk }}</td><td>{{ consolidated.fa }}</td><td>{{ consolidated.qu }}</td></tr>
+    </table>
+
+    <h1>Similarity spaces</h1>
     <div class="v-spacing-4">
         <table class="v-spacing-top-4" style="min-width:500px;">
-        {% for analyzer_name, analyzer_data in sim_vector_stats.items %}
+        {% for similarity_space_name, similarity_space_data in sim_vector_stats.items %}
             {% if forloop.counter0 == 0 %}
-                <tr><td><b>analyzer</b></td><td><b>num sounds</b></td><td><b>num vectors</b></td></tr>
+                <tr><td><b>similarity space</b></td><td><b>num sounds (solr)</b></td><td><b>num vectors (solr)</b></td><td><b>num vectors (db)</b></td></tr>
             {% endif %}
-            <tr><td>{{ analyzer_name }}</td><td>{{ analyzer_data.num_sounds }}</td><td>{{ analyzer_data.num_sounds  }}</td></tr>
+            <tr><td>{{ similarity_space_name }}</td><td>{{ similarity_space_data.num_sounds }}</td><td>{{ similarity_space_data.num_sounds  }}</td><td>{{ similarity_space_data.num_vectors_in_db }}</td></tr>
         {% endfor %} 
         </table>
     </div>

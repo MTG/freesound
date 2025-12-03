@@ -19,7 +19,9 @@
 #
 
 import math
-import urllib.request, urllib.parse, urllib.error
+import urllib.error
+import urllib.parse
+import urllib.request
 
 from django import template
 from django.conf import settings
@@ -33,38 +35,40 @@ from ratings.models import SoundRating
 register = template.Library()
 
 
-@register.inclusion_tag('atoms/icon.html')
-def bw_icon(name, class_name=''):
+@register.inclusion_tag("atoms/icon.html")
+def bw_icon(name, class_name=""):
     """
     Displays a BW icon with the given name
     """
-    return {'name': name, 'class_name': class_name}
+    return {"name": name, "class_name": class_name}
 
 
-@register.inclusion_tag('atoms/tag.html')
+@register.inclusion_tag("atoms/tag.html")
 def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
     """
     Displays a BW tag with the given name
     """
     if url is None:
-        url = reverse('tags', args=[tag_name])
+        url = reverse("tags", args=[tag_name])
     if weight is None:
-        opacity_class = 'opacity-050'
+        opacity_class = "opacity-050"
     else:
-        opacity_class = 'opacity-' + str(int(math.ceil(pow(weight, 0.6) * 10) * 10)).zfill(3)
+        opacity_class = "opacity-" + str(int(math.ceil(pow(weight, 0.6) * 10) * 10)).zfill(3)
 
-    line_height_class = 'line-height-38' if size < 4 else 'line-height-fs-1'
+    line_height_class = "line-height-38" if size < 4 else "line-height-fs-1"
 
-    return {'tag_name': tag_name,
-            'size': size,
-            'class_name': class_name,
-            'line_height_class': line_height_class,
-            'url': url,
-            'opacity_class': opacity_class}
+    return {
+        "tag_name": tag_name,
+        "size": size,
+        "class_name": class_name,
+        "line_height_class": line_height_class,
+        "url": url,
+        "opacity_class": opacity_class,
+    }
 
 
-@register.inclusion_tag('atoms/avatar.html')
-def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
+@register.inclusion_tag("atoms/avatar.html")
+def bw_user_avatar(avatar_url, username, size=40, extra_class=""):
     """
     Displays a BW user avatar or no avatar if user has none
     We check if user has custom avatar by checking if the given avatar URL contains the filename of the default
@@ -72,33 +76,36 @@ def bw_user_avatar(avatar_url, username, size=40, extra_class=''):
     decorator of the Profile model might return something different if user has no avatar.
     """
     if len(username) > 1:
-        no_avatar_bg_color = settings.AVATAR_BG_COLORS[(ord(username[0]) + ord(username[1])) % len(settings.AVATAR_BG_COLORS)]
+        no_avatar_bg_color = settings.AVATAR_BG_COLORS[
+            (ord(username[0]) + ord(username[1])) % len(settings.AVATAR_BG_COLORS)
+        ]
     else:
         no_avatar_bg_color = settings.AVATAR_BG_COLORS[ord(username[0]) % len(settings.AVATAR_BG_COLORS)]
 
     return {
-        'size': size,
-        'avatar_url':avatar_url,
-        'username': username,
-        'font_size': int(size * 0.4),
-        'extra_class': extra_class,
-        'no_avatar_bg_color': no_avatar_bg_color}
+        "size": size,
+        "avatar_url": avatar_url,
+        "username": username,
+        "font_size": int(size * 0.4),
+        "extra_class": extra_class,
+        "no_avatar_bg_color": no_avatar_bg_color,
+    }
 
 
-@register.inclusion_tag('atoms/stars.html', takes_context=True)
+@register.inclusion_tag("atoms/stars.html", takes_context=True)
 def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=False, show_added_rating_on_save=False):
     if isinstance(sound, dict):
-        sound_user = sound['username']
-        sound_avg_rating = sound['avg_rating']
-        sound_num_ratings = sound['num_ratings']
+        sound_user = sound["username"]
+        sound_avg_rating = sound["avg_rating"]
+        sound_num_ratings = sound["num_ratings"]
     else:
-        if hasattr(sound, 'username'):
+        if hasattr(sound, "username"):
             sound_user = sound.username
         else:
             sound_user = sound.user.username
         sound_avg_rating = sound.avg_rating
         sound_num_ratings = sound.num_ratings
-    request = context['request']
+    request = context["request"]
 
     user_has_rated_this_sound = False
     if not use_request_user_rating:
@@ -116,7 +123,7 @@ def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=Fa
 
     # Pre process rating values to do less work in the template
     stars_10 = []
-    for i in range(0, 10):
+    for i in range(10):
         if sound_rating >= i + 1:
             stars_10.append(True)
         else:
@@ -124,29 +131,31 @@ def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=Fa
     stars_5 = []
     for i in range(0, 10, 2):
         if stars_10[i] and stars_10[i + 1]:
-            stars_5.append('full')
+            stars_5.append("full")
         elif not stars_10[i] and not stars_10[i + 1]:
-            stars_5.append('empty')
+            stars_5.append("empty")
         else:
-            stars_5.append('half')
+            stars_5.append("half")
 
-    return {'sound_user': sound_user,
-            'allow_rating': allow_rating,
-            'sound': sound,
-            'sound_rating_0_5': sound_rating/2,
-            'user_has_rated_this_sound': user_has_rated_this_sound,
-            'has_min_ratings': has_min_ratings,
-            'show_added_rating_on_save': show_added_rating_on_save,
-            'use_request_user_rating': use_request_user_rating,
-            'fill_class': 'text-red' if not use_request_user_rating else 'text-yellow',
-            'stars_range': list(zip(stars_5, list(range(1, 6))))}
+    return {
+        "sound_user": sound_user,
+        "allow_rating": allow_rating,
+        "sound": sound,
+        "sound_rating_0_5": sound_rating / 2,
+        "user_has_rated_this_sound": user_has_rated_this_sound,
+        "has_min_ratings": has_min_ratings,
+        "show_added_rating_on_save": show_added_rating_on_save,
+        "use_request_user_rating": use_request_user_rating,
+        "fill_class": "text-red" if not use_request_user_rating else "text-yellow",
+        "stars_range": list(zip(stars_5, list(range(1, 6)))),
+    }
 
 
-@register.inclusion_tag('atoms/stars.html', takes_context=True)
+@register.inclusion_tag("atoms/stars.html", takes_context=True)
 def bw_generic_stars(context, rating_0_10):
     # Expects rating in 0-10 scale
     stars_10 = []
-    for i in range(0, 10):
+    for i in range(10):
         if rating_0_10 >= i + 1:
             stars_10.append(True)
         else:
@@ -154,24 +163,24 @@ def bw_generic_stars(context, rating_0_10):
     stars_5 = []
     for i in range(0, 10, 2):
         if stars_10[i] and stars_10[i + 1]:
-            stars_5.append('full')
+            stars_5.append("full")
         elif not stars_10[i] and not stars_10[i + 1]:
-            stars_5.append('empty')
+            stars_5.append("empty")
         else:
-            stars_5.append('half')
+            stars_5.append("half")
 
     has_min_ratings = rating_0_10 > 0
 
     return {
-        'allow_rating': False,
-        'show_added_rating_on_save': False,
-        'fill_class': 'text-red',
-        'has_min_ratings': has_min_ratings,
-        'stars_range': list(zip(stars_5, list(range(1, 6))))
+        "allow_rating": False,
+        "show_added_rating_on_save": False,
+        "fill_class": "text-red",
+        "has_min_ratings": has_min_ratings,
+        "stars_range": list(zip(stars_5, list(range(1, 6)))),
     }
 
 
-@register.inclusion_tag('molecules/paginator.html', takes_context=True)
+@register.inclusion_tag("molecules/paginator.html", takes_context=True)
 def bw_paginator(context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results=-1):
     """
     Adds pagination context variables for use in displaying first, adjacent and
@@ -182,7 +191,7 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
         # If paginator object is None, don't go ahead as below calculations will fail. This can happen if show_paginator
         # is called and no paginator object is present in view
         return {}
- 
+
     adjacent_pages = 3
     total_wanted = adjacent_pages * 2 + 1
     min_page_num = max(current_page - adjacent_pages, 1)
@@ -200,8 +209,9 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
 
     # although paginator objects are 0-based, we use 1-based paging
     page_numbers = [n for n in range(min_page_num, max_page_num) if 0 < n <= paginator.num_pages]
-    params = urllib.parse.urlencode([(key.encode('utf-8'), value.encode('utf-8')) for (key, value) in request.GET.items()
-                               if key.lower() != "page"])
+    params = urllib.parse.urlencode(
+        [(key.encode("utf-8"), value.encode("utf-8")) for (key, value) in request.GET.items() if key.lower() != "page"]
+    )
 
     if params == "":
         url = request.path + "?page="
@@ -211,17 +221,17 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
     # The pagination could be over a queryset or over the result of a query to solr, so 'page' could be an object
     # if it's the case a query to the DB or a dict if it's the case of a query to solr
     if isinstance(page, dict):
-        url_prev_page = url + str(page['previous_page_number'])
-        url_next_page =  url + str(page['next_page_number'])
-        url_first_page = url + '1'
+        url_prev_page = url + str(page["previous_page_number"])
+        url_next_page = url + str(page["next_page_number"])
+        url_first_page = url + "1"
     else:
         url_prev_page = None
         if page.has_previous():
-             url_prev_page = url + str(page.previous_page_number())
+            url_prev_page = url + str(page.previous_page_number())
         url_next_page = None
         if page.has_next():
-             url_next_page = url + str(page.next_page_number())
-        url_first_page = url + '1'
+            url_next_page = url + str(page.next_page_number())
+        url_first_page = url + "1"
     url_last_page = url + str(paginator.num_pages)
 
     if page_numbers:
@@ -237,19 +247,19 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
         "show_first": 1 not in page_numbers,
         "show_last": paginator.num_pages not in page_numbers,
         "last_is_next": last_is_next,
-        "url" : url,
+        "url": url,
         "url_prev_page": url_prev_page,
         "url_next_page": url_next_page,
         "url_first_page": url_first_page,
         "url_last_page": url_last_page,
         "anchor": anchor,
-        "non_grouped_number_of_results": non_grouped_number_of_results
+        "non_grouped_number_of_results": non_grouped_number_of_results,
     }
 
 
-@register.inclusion_tag('molecules/maps_js_scripts.html', takes_context=True)
+@register.inclusion_tag("molecules/maps_js_scripts.html", takes_context=True)
 def bw_maps_js_scripts(context):
-    return {'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN}
+    return {"mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN}
 
 
 @register.filter
@@ -260,7 +270,7 @@ def user_following_tags(user, tags_slash):
         return False
 
 
-@register.inclusion_tag('molecules/plausible_scripts.html', takes_context=False)
+@register.inclusion_tag("molecules/plausible_scripts.html", takes_context=False)
 def bw_plausible_scripts():
     return plausible_scripts()
 
@@ -270,20 +280,20 @@ def bw_intcomma(value):
     return intcomma(value)
 
 
-@register.inclusion_tag('molecules/carousel.html', takes_context=True)
+@register.inclusion_tag("molecules/carousel.html", takes_context=True)
 def sound_carousel(context, sounds, show_timesince=False):
     # Update context and pass it to templatetag so nested template tags also have it
-    context.update({'elements': sounds, 'type': 'sound', 'show_timesince': show_timesince})  
+    context.update({"elements": sounds, "type": "sound", "show_timesince": show_timesince})
     return context
 
 
-@register.inclusion_tag('molecules/carousel.html', takes_context=True)
+@register.inclusion_tag("molecules/carousel.html", takes_context=True)
 def sound_carousel_with_timesince(context, sounds):
     return sound_carousel(context, sounds, show_timesince=True)
 
 
-@register.inclusion_tag('molecules/carousel.html', takes_context=True)
+@register.inclusion_tag("molecules/carousel.html", takes_context=True)
 def pack_carousel(context, packs):
     # Update context and pass it to templatetag so nested template tags also have it
-    context.update({'elements': packs, 'type': 'pack'})
+    context.update({"elements": packs, "type": "pack"})
     return context

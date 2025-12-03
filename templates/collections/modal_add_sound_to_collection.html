@@ -1,0 +1,56 @@
+{% extends "molecules/modal_base.html" %}
+{% load static %}
+{% load bw_templatetags %}
+
+{% block id %}addSoundToCollectionModal{% endblock %}
+{% block extra-class %}{% if request.user.is_authenticated %}modal-width-60{% endif %}{% endblock %}
+{% block aria-label %}Add sound to collection modal{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    {% if not request.user.is_authenticated %}
+        <div class="text-center">
+            <h4 class="v-spacing-5">Can't add sound to collection</h4>
+        </div>
+        <div class="v-spacing-4 text-center">
+            <div class="v-spacing-4">To add sounds, you need to be logged in with your Freesound account.</div>
+            <button class="btn-primary" data-dismiss="modal">Ok</button>
+        </div>
+    {% elif not sound_is_moderated_and_processed_ok %}
+        <div class="text-center">
+            <h4 class="v-spacing-5">Can't add sound to collection</h4>
+        </div>
+        <div class="v-spacing-4 text-center">
+            <div class="v-spacing-4">This sound can't be collected because it has not yet been processed or moderated.</div>
+            <button class="btn-primary" data-dismiss="modal">Ok</button>
+        </div>
+    {% else %}
+    <div class="center">
+        <h4 class="v-spacing-5">Add sound to collection</h4>
+    </div>
+    <div class="v-spacing-4">
+        {% if collections_with_sound%}
+            <div class="v-spacing-4">
+            {% bw_icon 'bookmark-filled' %}This sound is already in your collections under:
+            {% for col in collections_with_sound %}
+            <span class="text-black font-weight-bold">{{col.name}}</span>{% if not forloop.last%},{% endif %}
+            {% endfor %}
+            </div>
+        {% endif %}
+        {% if full_collections%}
+            <div class="v-spacing-2">
+            {% bw_icon 'atom' %}The following collections have reached the maximum number of sounds allowed ({{max_sounds_per_collection}}):
+            {% for col in full_collections %}
+            <span class="text-black font-weight-bold">{{col.name}}</span>{% if not forloop.last%},{% endif %}
+            {% endfor %}
+            </div>
+        {% endif %}
+        <form method="post" action="{% url 'add-sound-to-collection' sound.id %}?ajax=1." class = "disable-on-submit">{% csrf_token %}
+            {{ form }}
+            <button class = "btn-primary v-spacing-top-2">Add sound to collection</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

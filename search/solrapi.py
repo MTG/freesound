@@ -1,15 +1,15 @@
-import requests
-from urllib.parse import urljoin
 import logging
-from requests.exceptions import RequestException
 from json.decoder import JSONDecodeError
+from urllib.parse import urljoin
+
+import requests
+from requests.exceptions import RequestException
 
 logger = logging.getLogger("console")
 
 
 class SolrAPIError(Exception):
     """Base exception for SolrAPI errors"""
-    pass
 
 
 def get_target_for_collection_alias(base_url, collection_alias):
@@ -22,7 +22,7 @@ def get_target_for_collection_alias(base_url, collection_alias):
             return aliases[collection_alias]
         else:
             return None
-    except (RequestException, JSONDecodeError) as e:
+    except (RequestException, JSONDecodeError):
         return None
 
 
@@ -48,9 +48,9 @@ class SolrManagementAPI:
 
     def check_collection_has_field(self, field):
         schema = self.get_collection_schema()
-        fields = schema['schema']['fields']
+        fields = schema["schema"]["fields"]
         for f in fields:
-            if f['name'] == field:
+            if f["name"] == field:
                 return True
         return False
 
@@ -160,7 +160,9 @@ class SolrManagementAPI:
                 return
             else:
                 if self.logging_verbose >= 1:
-                    logger.info(f"Collection {self.collection} already exists, but no field {test_field_name}, going ahead with schema creation")
+                    logger.info(
+                        f"Collection {self.collection} already exists, but no field {test_field_name}, going ahead with schema creation"
+                    )
 
         if self.logging_verbose >= 1:
             logger.info("Delete unneeded fields")

@@ -106,7 +106,6 @@ const activateDefaultModalsIfParameters = () => {
   activateModalsIfParameters('[data-toggle="modal-default-with-form"]', handleDefaultModalWithForm);
 }
 
-
 // Generic modals logic
 const genericModalWrapper = document.getElementById('genericModalWrapper');
 

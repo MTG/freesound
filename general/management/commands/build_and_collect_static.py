@@ -26,6 +26,5 @@ class Command(BaseCommand):
     help = "Build Beast Whoosh UI static files and then run collectstatic to put files in place"
 
     def handle(self, **options):
-
-        call_command('build_static')
-        call_command('collectstatic', '--noinput')
+        call_command("build_static")
+        call_command("collectstatic", "--noinput")

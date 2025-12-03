@@ -20,19 +20,16 @@
 
 from django.core.management import call_command
 from django.test import TestCase
-from django.urls import reverse
 
-from forum.models import Thread, Post, Forum
+from forum.models import Forum, Post, Thread
 from ratings.models import SoundRating
 from utils.test_helpers import create_user_and_sounds
 
 
 class ReportCountStatusesManagementCommandTestCase(TestCase):
-
-    fixtures = ['licenses']
+    fixtures = ["licenses"]
 
     def test_report_count_statuses(self):
-
         # Create some initial data
         user, pp, ss = create_user_and_sounds(num_sounds=1, num_packs=1)
         pack = pp[0]
@@ -60,7 +57,7 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         self.assertEqual(sound.num_downloads, 0)
 
         # Run command and assert counts are still ok
-        call_command('report_count_statuses')
+        call_command("report_count_statuses")
         self.assertEqual(user.profile.num_sounds, 1)
         self.assertEqual(user.profile.num_posts, 1)
         self.assertEqual(pack.num_sounds, 1)
@@ -84,7 +81,7 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         sound.save()
 
         # Re-run command with -n and assert counts are still wrong
-        call_command('report_count_statuses', '--no-changes')
+        call_command("report_count_statuses", "--no-changes")
         user.profile.refresh_from_db()
         sound.refresh_from_db()
         pack.refresh_from_db()
@@ -98,7 +95,7 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         self.assertNotEqual(sound.num_downloads, 0)
 
         # Re-run command with -d and assert that all counts are ok except for download counts
-        call_command('report_count_statuses', '--skip-downloads')
+        call_command("report_count_statuses", "--skip-downloads")
         user.profile.refresh_from_db()
         sound.refresh_from_db()
         pack.refresh_from_db()
@@ -112,7 +109,7 @@ class ReportCountStatusesManagementCommandTestCase(TestCase):
         self.assertNotEqual(sound.num_downloads, 0)
 
         # Re-run command with no options set and check that all counts are ok now
-        call_command('report_count_statuses')
+        call_command("report_count_statuses")
         user.profile.refresh_from_db()
         sound.refresh_from_db()
         pack.refresh_from_db()

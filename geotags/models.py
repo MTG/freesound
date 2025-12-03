@@ -20,7 +20,6 @@
 import logging
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 from django.utils.encoding import smart_str
@@ -43,7 +42,7 @@ class GeoTag(models.Model):
         return f"({self.lat:f},{self.lon:f})"
 
     def get_absolute_url(self):
-        return reverse('geotag', args=[smart_str(self.id)])
+        return reverse("geotag", args=[smart_str(self.id)])
 
     def retrieve_location_information(self):
         """Use the mapbox API to retrieve information about the latitude and longitude of this geotag.
@@ -51,29 +50,35 @@ class GeoTag(models.Model):
         store that information. Then, pre-process that information to save a place name for display purposes.
         """
         if settings.MAPBOX_ACCESS_TOKEN and (self.information is None or self.should_update_information):
-            perm_geocoder = Geocoder(name='mapbox.places-permanent', access_token=settings.MAPBOX_ACCESS_TOKEN)
+            perm_geocoder = Geocoder(name="mapbox.places-permanent", access_token=settings.MAPBOX_ACCESS_TOKEN)
             try:
                 response = perm_geocoder.reverse(lon=self.lon, lat=self.lat)
                 self.information = response.json()
                 self.should_update_information = False
                 self.save()
-            except Exception as e:
+            except Exception:
                 pass
-                
+
         if self.information is not None:
-            features = self.information.get('features', [])
+            features = self.information.get("features", [])
             if features:
                 try:
                     # Try with "place" feature
-                    self.location_name = [feature for feature in features if 'place' in feature['place_type']][0]['place_name']
+                    self.location_name = [feature for feature in features if "place" in feature["place_type"]][0][
+                        "place_name"
+                    ]
                 except IndexError:
                     # If "place" feature is not available, use "locality" feature
                     try:
-                        self.location_name = [feature for feature in features if 'locality' in feature['place_type']][0]['place_name']
+                        self.location_name = [feature for feature in features if "locality" in feature["place_type"]][
+                            0
+                        ]["place_name"]
                     except IndexError:
                         # If "place" nor "locality" features are available, use "region"
                         try:
-                            self.location_name = [feature for feature in features if 'region' in feature['place_type']][0]['place_name']
+                            self.location_name = [feature for feature in features if "region" in feature["place_type"]][
+                                0
+                            ]["place_name"]
                         except:
                             # It is not possible to derive a name...
                             pass

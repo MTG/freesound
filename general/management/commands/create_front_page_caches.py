@@ -18,15 +18,14 @@
 #     See AUTHORS file.
 #
 
-import datetime
 import logging
 import random
 
 from django.conf import settings
+from django.core.cache import caches
 from django.db.models import Count, Sum
 from django.db.models.functions import Greatest
 from django.template.loader import render_to_string
-from django.core.cache import caches
 from django.utils import timezone
 
 from donations.models import Donation
@@ -35,7 +34,7 @@ from sounds.views import get_n_weeks_back_datetime
 from utils.management_commands import LoggingBaseCommand
 
 commands_logger = logging.getLogger("commands")
-cache_persistent = caches['persistent']
+cache_persistent = caches["persistent"]
 
 
 class Command(LoggingBaseCommand):
@@ -55,7 +54,7 @@ class Command(LoggingBaseCommand):
 
         # Generate cache for the blog news from blog's RSS feed
         # Create one for Freeesound Nightingale frontend and one for BeastWhoosh
-        rss_cache_bw = render_to_string('molecules/news_cache.html', {'rss_url': settings.FREESOUND_RSS})
+        rss_cache_bw = render_to_string("molecules/news_cache.html", {"rss_url": settings.FREESOUND_RSS})
         if len(rss_cache_bw.strip()):
             cache_persistent.set("rss_cache", rss_cache_bw, cache_time)
         else:
@@ -63,49 +62,82 @@ class Command(LoggingBaseCommand):
 
         # Generate popular searches cache
         # TODO: implement this properly if we want to add this functionality
-        popular_searches = ['wind', 'music', 'footsteps', 'woosh', 'explosion', 'scream', 'click', 'whoosh', 'piano',
-                            'swoosh', 'rain', 'fire']
-        cache_persistent.set("popular_searches", popular_searches,  cache_time)
+        popular_searches = [
+            "wind",
+            "music",
+            "footsteps",
+            "woosh",
+            "explosion",
+            "scream",
+            "click",
+            "whoosh",
+            "piano",
+            "swoosh",
+            "rain",
+            "fire",
+        ]
+        cache_persistent.set("popular_searches", popular_searches, cache_time)
 
         # Generate trending sounds cache (most downloaded sounds during last week)
-        trending_sound_ids = Download.objects \
-            .filter(created__gte=last_week).exclude(sound__is_explicit=True) \
-            .values('sound_id').annotate(n_downloads=Count('sound_id')) \
-            .order_by('-n_downloads').values_list('sound_id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
+        trending_sound_ids = (
+            Download.objects.filter(created__gte=last_week)
+            .exclude(sound__is_explicit=True)
+            .values("sound_id")
+            .annotate(n_downloads=Count("sound_id"))
+            .order_by("-n_downloads")
+            .values_list("sound_id", flat=True)[0 : NUM_ITEMS_PER_SECTION * 5]
+        )
         trending_sound_ids = list(trending_sound_ids)
         random.shuffle(trending_sound_ids)  # Randomize the order of the sounds
-        cache_persistent.set("trending_sound_ids", trending_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
+        cache_persistent.set("trending_sound_ids", trending_sound_ids[0:NUM_ITEMS_PER_SECTION], cache_time)
 
         # Generate trending new sounds cache (most downloaded sounds from those created last week)
-        trending_new_sound_ids = Sound.public.select_related('license', 'user') \
-            .annotate(greatest_date=Greatest('created', 'moderation_date')) \
-            .filter(greatest_date__gte=last_week).exclude(is_explicit=True) \
-            .order_by("-num_downloads").values_list('id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
+        trending_new_sound_ids = (
+            Sound.public.select_related("license", "user")
+            .annotate(greatest_date=Greatest("created", "moderation_date"))
+            .filter(greatest_date__gte=last_week)
+            .exclude(is_explicit=True)
+            .order_by("-num_downloads")
+            .values_list("id", flat=True)[0 : NUM_ITEMS_PER_SECTION * 5]
+        )
         trending_new_sound_ids = list(trending_new_sound_ids)
         random.shuffle(trending_new_sound_ids)  # Randomize the order of the sounds
-        cache_persistent.set("trending_new_sound_ids", trending_new_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
+        cache_persistent.set("trending_new_sound_ids", trending_new_sound_ids[0:NUM_ITEMS_PER_SECTION], cache_time)
 
         # Generate trending new packs cache (most downloaded packs from those created last week)
-        trending_new_pack_ids = Pack.objects.select_related('user') \
-            .filter(created__gte=last_week,  num_sounds__gt=0).exclude(is_deleted=True) \
-            .order_by("-num_downloads").values_list('id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
+        trending_new_pack_ids = (
+            Pack.objects.select_related("user")
+            .filter(created__gte=last_week, num_sounds__gt=0)
+            .exclude(is_deleted=True)
+            .order_by("-num_downloads")
+            .values_list("id", flat=True)[0 : NUM_ITEMS_PER_SECTION * 5]
+        )
         trending_new_pack_ids = list(trending_new_pack_ids)
         random.shuffle(trending_new_pack_ids)  # Randomize the order of the packs
         cache_persistent.set("trending_new_pack_ids", trending_new_pack_ids[0:NUM_ITEMS_PER_SECTION], cache_time)
 
         # Generate top rated new sounds cache (top rated sounds from those created last two weeks)
         # Note we use two weeks here instead of one to make sure we have enough sounds to choose from
-        top_rated_new_sound_ids = Sound.public.select_related('license', 'user') \
-            .annotate(greatest_date=Greatest('created', 'moderation_date')) \
-            .filter(greatest_date__gte=last_two_weeks).exclude(is_explicit=True) \
-            .filter(num_ratings__gt=settings.MIN_NUMBER_RATINGS) \
-            .order_by("-avg_rating", "-num_ratings").values_list('id', flat=True)[0:NUM_ITEMS_PER_SECTION * 5]
+        top_rated_new_sound_ids = (
+            Sound.public.select_related("license", "user")
+            .annotate(greatest_date=Greatest("created", "moderation_date"))
+            .filter(greatest_date__gte=last_two_weeks)
+            .exclude(is_explicit=True)
+            .filter(num_ratings__gt=settings.MIN_NUMBER_RATINGS)
+            .order_by("-avg_rating", "-num_ratings")
+            .values_list("id", flat=True)[0 : NUM_ITEMS_PER_SECTION * 5]
+        )
         top_rated_new_sound_ids = list(top_rated_new_sound_ids)
         random.shuffle(top_rated_new_sound_ids)  # Randomize the order of the sounds
-        cache_persistent.set("top_rated_new_sound_ids", top_rated_new_sound_ids[0:NUM_ITEMS_PER_SECTION],  cache_time)
-        
+        cache_persistent.set("top_rated_new_sound_ids", top_rated_new_sound_ids[0:NUM_ITEMS_PER_SECTION], cache_time)
+
         # Generate latest "random sound of the day" ids
-        recent_random_sound_ids = [sd.sound_id for sd in SoundOfTheDay.objects.filter(date_display__lt=timezone.now()).order_by('-date_display')[:NUM_ITEMS_PER_SECTION]]
+        recent_random_sound_ids = [
+            sd.sound_id
+            for sd in SoundOfTheDay.objects.filter(date_display__lt=timezone.now()).order_by("-date_display")[
+                :NUM_ITEMS_PER_SECTION
+            ]
+        ]
         cache_persistent.set("recent_random_sound_ids", list(recent_random_sound_ids), cache_time)
 
         # Add total number of sounds in Freesound to the cache
@@ -114,12 +146,14 @@ class Command(LoggingBaseCommand):
 
         # Calculate top donor
         try:
-            top_donor_user_data = Donation.objects \
-                .filter(created__gt=last_week) \
-                .exclude(user=None, is_anonymous=True) \
-                .values('user_id').annotate(total_donations=Sum('amount')) \
-                .order_by('-total_donations')[0]
-            top_donor_user_id = top_donor_user_data['user_id']
+            top_donor_user_data = (
+                Donation.objects.filter(created__gt=last_week)
+                .exclude(user=None, is_anonymous=True)
+                .values("user_id")
+                .annotate(total_donations=Sum("amount"))
+                .order_by("-total_donations")[0]
+            )
+            top_donor_user_id = top_donor_user_data["user_id"]
             top_donor_donation_amount = f"{top_donor_user_data['total_donations']:.2f} eur"
         except IndexError:
             top_donor_user_id = None

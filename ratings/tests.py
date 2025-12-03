@@ -28,8 +28,7 @@ from utils.test_helpers import create_user_and_sounds
 
 
 class RatingsTestCase(TestCase):
-
-    fixtures = ['licenses', 'sounds']
+    fixtures = ["licenses", "sounds"]
 
     def setUp(self):
         self.sound = sounds.models.Sound.objects.get(pk=16)
@@ -38,7 +37,7 @@ class RatingsTestCase(TestCase):
         self.user3 = User.objects.create_user("testuser3", email="testuser3@freesound.org", password="testpass")
 
     def test_rating_normal(self):
-        """ Add a rating """
+        """Add a rating"""
         self.assertEqual(self.sound.num_ratings, 0)
         self.client.force_login(self.user1)
 
@@ -57,7 +56,7 @@ class RatingsTestCase(TestCase):
         self.assertEqual(ratings.models.SoundRating.objects.count(), 2)
         r = ratings.models.SoundRating.objects.get(sound_id=self.sound.id, user_id=self.user1.id)
         # Ratings in the database are 2x the value from the web call
-        self.assertEqual(r.rating, 2*RATING_VALUE)
+        self.assertEqual(r.rating, 2 * RATING_VALUE)
 
         # Check that signal updated sound.avg_rating and sound.num_ratings
         self.sound.refresh_from_db()
@@ -71,7 +70,7 @@ class RatingsTestCase(TestCase):
         self.assertEqual(self.sound.num_ratings, 1)
 
     def test_rating_change(self):
-        """ Change your existing rating. """
+        """Change your existing rating."""
         self.client.force_login(self.user1)
 
         r = ratings.models.SoundRating.objects.create(sound_id=self.sound.id, user_id=self.user1.id, rating=4)
@@ -88,7 +87,7 @@ class RatingsTestCase(TestCase):
         self.assertEqual(self.sound.num_ratings, 1)
 
     def test_rating_out_of_range(self):
-        """ Change rating by a value which is not 1-5. """
+        """Change rating by a value which is not 1-5."""
         self.client.force_login(self.user1)
 
         resp = self.client.get(f"/people/Anton/sounds/{self.sound.id}/rate/{0}/")
@@ -108,8 +107,8 @@ class RatingsTestCase(TestCase):
 
     def test_rating_no_sound(self):
         """Test behaviour if the sound id doesn't exist"""
-        max_id = sounds.models.Sound.objects.all().aggregate(Max('id'))
-        max_id = max_id['id__max']
+        max_id = sounds.models.Sound.objects.all().aggregate(Max("id"))
+        max_id = max_id["id__max"]
         no_id = max_id + 20
 
         self.client.force_login(self.user1)
@@ -123,7 +122,6 @@ class RatingsTestCase(TestCase):
 
     @override_settings(MIN_NUMBER_RATINGS=3)
     def test_avg_rating_pack_model(self):
-    
         _, packs, sound = create_user_and_sounds(num_sounds=3, num_packs=1)
         pack = packs[0]
 
@@ -143,14 +141,13 @@ class RatingsTestCase(TestCase):
         ratings.models.SoundRating.objects.create(user=self.user3, sound=sound[0], rating=4)
         ratings.models.SoundRating.objects.create(user=self.user3, sound=sound[1], rating=6)
         ratings.models.SoundRating.objects.create(user=self.user3, sound=sound[2], rating=5)
-        
+
         # Finally pack avg rating should be the avg of the avg_rating of each individual sound
         self.assertEqual(pack.avg_rating, 5)
 
     def test_avg_rating_profile_model(self):
-    
         user, _, sound = create_user_and_sounds(num_sounds=3)
-        
+
         # Check that the average rating is 0 when there are no ratings for the sounds of the user
         self.assertEqual(user.profile.avg_rating, 0)
 
@@ -161,17 +158,22 @@ class RatingsTestCase(TestCase):
         self.assertEqual(user.profile.avg_rating, 5)
 
         # Check that avg rating is updated when sounds get more ratings
-        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[0], rating=2)  # sound will have avg_rating 3
-        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[1], rating=8)  # sound will have avg_rating 7
-        ratings.models.SoundRating.objects.create(user=self.user2, sound=sound[2], rating=10)  # sound will have avg_rating 7.5
-        
+        ratings.models.SoundRating.objects.create(
+            user=self.user2, sound=sound[0], rating=2
+        )  # sound will have avg_rating 3
+        ratings.models.SoundRating.objects.create(
+            user=self.user2, sound=sound[1], rating=8
+        )  # sound will have avg_rating 7
+        ratings.models.SoundRating.objects.create(
+            user=self.user2, sound=sound[2], rating=10
+        )  # sound will have avg_rating 7.5
+
         # Finally user avg rating should be the avg of the avg_rating of each individual sound
         self.assertEqual(round(user.profile.avg_rating, 2), 5.83)
 
 
 class RatingsPageTestCase(TestCase):
-
-    fixtures = ['licenses', 'sounds', 'user_groups']
+    fixtures = ["licenses", "sounds", "user_groups"]
 
     def setUp(self):
         self.sound = sounds.models.Sound.objects.get(pk=16)
@@ -182,15 +184,19 @@ class RatingsPageTestCase(TestCase):
         self.client.force_login(self.user1)
         resp = self.client.get(self.sound.get_absolute_url())
         self.assertContains(resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">')
-        
+
     def test_no_rating_link_logged_out(self):
         """A logged out user doesn't see links to rate a sound"""
         resp = self.client.get(self.sound.get_absolute_url())
-        self.assertNotContains(resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">')
+        self.assertNotContains(
+            resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">'
+        )
 
     def test_no_rating_link_own_sound(self):
         """A user doesn't see links to rate their own sound"""
         user = User.objects.get(username="Anton")
         self.client.force_login(user)
         resp = self.client.get(self.sound.get_absolute_url())
-        self.assertNotContains(resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">')
+        self.assertNotContains(
+            resp, f'<label for="rate-{self.sound.id}-1" data-value="1" aria-label="Rate sound 1 star">'
+        )

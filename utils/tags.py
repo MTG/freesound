@@ -25,7 +25,7 @@ def size_generator(small_size: float, large_size: float, num_items: int):
     if num_items <= 1:
         yield (small_size + large_size) * 0.5
     else:
-        for i in range(0, num_items):
+        for i in range(num_items):
             yield ((i * (large_size - small_size)) / (num_items - 1)) + small_size
 
 
@@ -78,5 +78,7 @@ def clean_and_split_tags(tags):
 
     tags = alphanum_only.sub(" ", tags)
     tags = multi_dashes.sub("-", tags)
-    common_words = "the of to and an in is it you that he was for on are with as i his they be at".split() #@UnusedVariable
-    return {tag for tag in [tag.strip('-') for tag in tags.split()] if tag and tag not in common_words}
+    common_words = (
+        "the of to and an in is it you that he was for on are with as i his they be at".split()
+    )  # @UnusedVariable
+    return {tag for tag in [tag.strip("-") for tag in tags.split()] if tag and tag not in common_words}

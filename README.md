@@ -45,7 +45,7 @@ Below are instructions for setting up a local Freesound installation for develop
        freesound-data/previews/
        freesound-data/analysis/
 
-4. Download [Freesound development similarity index](https://drive.google.com/file/d/1ydJUUXbQZbHrva4UZd3C05wDcOXI7v1m/view?usp=sharing) and the [Freesound tag recommendation models](https://drive.google.com/file/d/1snaktMysCXdThWKkYuKWoGc_Hk2BElmz/view?usp=sharing) and place their contents under `freesound-data/similarity_index/` and `freesound-data/tag_recommendation_models` directories respectively (you'll need to create the directories). 
+4. Download the [Freesound tag recommendation models](https://drive.google.com/file/d/1snaktMysCXdThWKkYuKWoGc_Hk2BElmz/view?usp=sharing) and place the contents under `freesound-data/tag_recommendation_models` directory (you'll need to create that directory). 
 
 5. Rename `freesound/local_settings.example.py` file, so you can customise Django settings if needed and create a `.env` file with your local user UID and other useful settings. These other settings include `COMPOSE_PROJECT_NAME` and `LOCAL_PORT_PREFIX` which can be used to allow parallel local installations running on the same machine (provided that these to variables are different in the local installations), and `FS_BIND_HOST` which you should set to `0.0.0.0` if you need to access your local Freesound services from a remote machine.
 
@@ -115,7 +115,16 @@ If you a prompted for a password, use `localfreesoundpgpassword`, this is define
 
     Because the `web` container mounts a named volume for the home folder of the user running the shell plus process, command history should be kept between container runs :)
 
-16. (extra step) The steps above will get Freesound running, but to save resources in your local machine some non-essential services will not be started by default. If you look at the `docker-compose.yml` file, you'll see that some services are marked with the profile `analyzers` or `all`. These services include sound similarity, search results clustering and the audio analyzers. To run these services you need to explicitly tell `docker compose` using the `--profile` (note that some services need additional configuration steps (see *Freesound analysis pipeline* section in `DEVELOPERS.md`):
+16. (extra) Load audio descriptors and similarity vectors to the database and reindex the search index. This is necessary to make audio descriptors available thorugh the API and to make similarity search work. Note that for this to work, you need to have properly set the development data folder, and you should see some files inside the `freesound-data/analysis` folders which store the (previously computed) results of Freesound audio analysers. 
+
+        # First run the following command which will create relevant objects in the DB. Note that this can take some minutes.
+        docker compose run --rm web python manage.py create_consolidated_sound_analysis_and_sim_vectors --force   
+
+        # Then re-create the search engine sounds index after audio descriptors data has been loaded in the DB. You need to specifically indicate that similarity vectors should be added.
+        docker compose run --rm web python manage.py reindex_search_engine_sounds --include-similarity-vectors
+
+
+The steps above will get Freesound running, but to save resources in your local machine some non-essential services will not be started by default. If you look at the `docker-compose.yml` file, you'll see that some services are marked with the profile `analyzers` or `all`. These services include sound tag recommendation and the audio analyzers. To run these services you need to explicitly tell `docker compose` using the `--profile` (note that some services need additional configuration steps (see *Freesound analysis pipeline* section in `DEVELOPERS.md`):
 
         docker compose --profile analyzers up   # To run all basic services + sound analyzers
         docker compose --profile all up         # To run all services

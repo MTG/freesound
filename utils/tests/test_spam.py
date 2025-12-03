@@ -9,9 +9,7 @@ from utils.spam import is_spam
 
 class SpamTest(TestCase):
     def setUp(self):
-        spam_user = User.objects.create_user(
-            username="viagra-test-123", email="akismet-guaranteed-spam@example.com"
-        )
+        spam_user = User.objects.create_user(username="viagra-test-123", email="akismet-guaranteed-spam@example.com")
         self.client.force_login(spam_user)
         rf = RequestFactory()
         self.spam_request = rf.post("/some_form/")

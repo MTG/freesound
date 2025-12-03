@@ -23,8 +23,8 @@ from django.db import models
 
 
 class FollowingUserItem(models.Model):
-    user_from = models.ForeignKey(User, related_name='following_items', on_delete=models.CASCADE)
-    user_to = models.ForeignKey(User, related_name='follower_items', on_delete=models.CASCADE)
+    user_from = models.ForeignKey(User, related_name="following_items", on_delete=models.CASCADE)
+    user_to = models.ForeignKey(User, related_name="follower_items", on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -54,5 +54,5 @@ class FollowingQueryItem(models.Model):
         return self.query
 
     class Meta:
-        verbose_name_plural = 'Tags'
+        verbose_name_plural = "Tags"
         unique_together = ("user", "query")

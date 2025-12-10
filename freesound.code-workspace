@@ -42,6 +42,11 @@
 				"id": "appName",
 				"type": "promptString",
 				"description": "Enter the Django app name or test module name to run tests (leave empty to run all tests)"
+			},
+			{
+				"id": "commandName",
+				"type": "promptString",
+				"description": "Enter the Django management command name to be run (leave empty to print list of available commands)"
 			}
 		],
 		"tasks": [
@@ -134,6 +139,12 @@
 				"label": "Orchestrate analysis",
 				"type": "shell",
 				"command": "docker compose run --rm web python manage.py orchestrate_analysis",
+				"problemMatcher": []
+			},
+			{
+				"label": "Run management command",
+				"type": "shell",
+				"command": "docker compose run --rm web python manage.py ${input:commandName}",
 				"problemMatcher": []
 			},
 			{

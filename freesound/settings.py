@@ -1154,7 +1154,6 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_TYPE: {"limit": len(SOUND_TYPE_CHOICES)},
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10},
     SEARCH_SOUNDS_FIELD_CATEGORY: {"limit": 30, "title": "Category"},
-    SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING: {"limit": 10, "title": "Collections"},
 }
 SEARCH_SOUNDS_SUBCATEGORY_FACET = {SEARCH_SOUNDS_FIELD_SUBCATEGORY: {"limit": 30, "title": "Subcategory"}}
 
@@ -1447,6 +1446,12 @@ MAX_SOUNDS_PER_COLLECTION = 250
 # Import local settings
 # Important: place settings which depend on other settings potentially modified in local_settings.py BELOW the import
 from .local_settings import *  # noqa: F403
+
+# -------------------------------------------------------------------------------
+# More collections stuff
+
+if ENABLE_COLLECTIONS:
+    SEARCH_SOUNDS_DEFAULT_FACETS[SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING] = {"limit": 10, "title": "Collections"}
 
 # -------------------------------------------------------------------------------
 # Celery

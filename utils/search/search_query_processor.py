@@ -117,6 +117,15 @@ class SearchQueryProcessor:
                     (settings.SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING, "Collections"),
                     (settings.SEARCH_SOUNDS_FIELD_ID, "Sound ID"),
                     (settings.SEARCH_SOUNDS_FIELD_USER_NAME, "Username"),
+                ]
+                if settings.ENABLE_COLLECTIONS
+                else [
+                    (settings.SEARCH_SOUNDS_FIELD_TAGS, "Tags"),
+                    (settings.SEARCH_SOUNDS_FIELD_NAME, "Sound name"),
+                    (settings.SEARCH_SOUNDS_FIELD_DESCRIPTION, "Description"),
+                    (settings.SEARCH_SOUNDS_FIELD_PACK_NAME, "Pack name"),
+                    (settings.SEARCH_SOUNDS_FIELD_ID, "Sound ID"),
+                    (settings.SEARCH_SOUNDS_FIELD_USER_NAME, "Username"),
                 ],
                 should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("tags_mode")
                 or bool(option.sqp.get_option_value_to_apply("similar_to")),

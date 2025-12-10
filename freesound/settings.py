@@ -1534,3 +1534,4 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
 # -------------------------------------------------------------------------------
 # Import logging settings
+from .logger import LOGGING  # noqa: F401

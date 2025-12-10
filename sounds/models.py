@@ -2381,6 +2381,10 @@ class SoundAnalysis(models.Model):
         id_folder = str(self.sound_id // 1000)
         return os.path.join(settings.ANALYSIS_PATH, id_folder, f"{self.sound_id}-{self.analyzer}")
 
+    @property
+    def analysis_log_filepath(self):
+        return self.analysis_filepath_base + ".log"
+
     def load_analysis_data_from_file_to_db(self):
         """This method checks the analysis output data which has been written to a file, and loads it to the
         database using the SoundAnalysis.analysis_data field. The loading of the data into DB only happens if a
@@ -2467,7 +2471,7 @@ class SoundAnalysis(models.Model):
     def get_analysis_logs(self):
         """Returns the logs of the analysis"""
         try:
-            fid = open(self.analysis_filepath_base + ".log")
+            fid = open(self.analysis_log_filepath)
             file_contents = fid.read()
             fid.close()
             return file_contents

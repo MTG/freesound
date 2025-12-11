@@ -105,8 +105,9 @@ def message(request, message_id):
         invalidate_user_template_caches(request.user.id)
         message.save()
 
-    tvars = {"message": message}
-    return render(request, "messages/message.html", tvars)
+    tvars = {'message': message,
+             'hide_archive_unarchive': message.is_sent}
+    return render(request, 'messages/message.html', tvars)
 
 
 @login_required

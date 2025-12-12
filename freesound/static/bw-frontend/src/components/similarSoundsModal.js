@@ -20,10 +20,6 @@ const handleSimilarSoundsModal = (modalUrl, modalActivationParam) => {
 }
 
 const bindSimilarSoundsModal = (container) => {
-    console.log('Binding similar sounds modal in container:')
-    console.log(container, document)
-    console.log(document.querySelectorAll('[data-toggle="similar-sounds-modal"]'))
-    console.log(container.querySelectorAll('[data-toggle="similar-sounds-modal"]'))
     bindModalActivationElements('[data-toggle="similar-sounds-modal"]', handleSimilarSoundsModal, container);
 }
 

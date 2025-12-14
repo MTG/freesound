@@ -26,6 +26,7 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.utils.text import slugify
 
 from fscollections.forms import (
     CollectionEditForm,
@@ -34,7 +35,7 @@ from fscollections.forms import (
     MaintainerForm,
     SelectCollectionOrNewCollectionForm,
 )
-from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound, CollectionSound
+from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound, CollectionSound, order_sounds_by_featured
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
 from utils.downloads import download_sounds
@@ -42,7 +43,7 @@ from utils.pagination import paginate
 
 
 @login_required
-def collection(request, collection_id):
+def collection(request, collection_id, collection_name):
     user = request.user
     is_owner = False
     is_maintainer = False
@@ -57,6 +58,7 @@ def collection(request, collection_id):
     # one URL needed to display all collections and one URL to display ONE collection at a time
     # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display
     collection_sounds = Sound.objects.prefetch_related("collections").filter(collections=collection)
+    collection_sounds = order_sounds_by_featured(collection_sounds, collection.featured_sound_ids)
     paginator = paginate(request, collection_sounds, settings.BOOKMARKS_PER_PAGE)
     page_sounds = Sound.objects.ordered_ids([sound.id for sound in paginator["page"].object_list])
     tvars.update(paginator)
@@ -76,7 +78,7 @@ def collections_for_user(request):
 
 
 @login_required
-def collection_stats_section(request, collection_id):
+def collection_stats_section(request, collection_id, collection_name):
     # TODO: this tries to imitate the pack_stats_section behaviour despite a lack of comprehension
     # on cache behaviour, so the stats shown by this are not properly updated
     if not request.GET.get("ajax"):
@@ -152,7 +154,7 @@ def create_collection(request):
 
 
 @login_required
-def delete_collection(request, collection_id):
+def delete_collection(request, collection_id, collection_name):
     collection = get_object_or_404(Collection, id=collection_id)
 
     if request.method == "POST" and request.user == collection.user:
@@ -166,11 +168,11 @@ def delete_collection(request, collection_id):
             messages.INFO,
             "You're not allowed to delete this collection.In order to delete a collection you must be the owner.",
         )
-        return HttpResponseRedirect(reverse("collection", args=[collection.id]))
+        return HttpResponseRedirect(reverse("collection", args=[collection.id, slugify(collection.name)]))
 
 
 @login_required
-def edit_collection(request, collection_id):
+def edit_collection(request, collection_id, collection_name):
     collection = get_object_or_404(Collection, id=collection_id)
     collection_sounds = ",".join([str(s.id) for s in Sound.objects.filter(collections=collection)])
     maintainers_query = User.objects.filter(collection_maintainer=collection.id)
@@ -182,7 +184,7 @@ def edit_collection(request, collection_id):
     elif request.user in maintainers_query:
         is_maintainer = True
     else:
-        return HttpResponseRedirect(reverse("collection", args=[collection_id]))
+        return HttpResponseRedirect(reverse("collection", args=[collection_id, slugify(collection.name)]))
 
     current_sounds = list()
     if request.method == "POST":
@@ -195,11 +197,11 @@ def edit_collection(request, collection_id):
                 request.POST, instance=collection, label_suffix="", is_owner=is_owner, is_maintainer=is_maintainer
             )
         else:
-            return HttpResponseRedirect(reverse("collection", collection_id))
+            return HttpResponseRedirect(reverse("collection", args=[collection_id, slugify(collection.name)]))
 
         if form.is_valid():
             form.save(user_adding_sound=request.user)
-            return HttpResponseRedirect(reverse("collection", args=[collection.id]))
+            return HttpResponseRedirect(reverse("collection", args=[collection.id, slugify(collection.name)]))
         else:
             # NOTE: in this form's validation, errors are raised for each speific field, so when there is a submission attempt the error
             # is displayed within it. However, fields containing errors are removed from the clean data but we are still interested in
@@ -244,6 +246,7 @@ def edit_collection(request, collection_id):
                 is_maintainer=is_maintainer,
             )
     current_sounds = Sound.objects.bulk_sounds_for_collection(collection_id=collection.id)
+    current_sounds = order_sounds_by_featured(current_sounds, collection.featured_sound_ids)
     current_maintainers = User.objects.filter(collection_maintainer=collection.id)
     form.collection_sound_objects = current_sounds
     form.collection_maintainers_objects = current_maintainers
@@ -259,7 +262,7 @@ def edit_collection(request, collection_id):
 
 
 @login_required
-def download_collection(request, collection_id):
+def download_collection(request, collection_id, collection_name):
     collection = get_object_or_404(Collection, id=collection_id)
     collection_sounds = CollectionSound.objects.filter(collection=collection).values("sound_id")
     sounds_list = Sound.objects.filter(
@@ -279,12 +282,12 @@ def download_collection(request, collection_id):
             cds.append(CollectionDownloadSound(sound=sound, collection_download=cd, license=sound.license))
         CollectionDownloadSound.objects.bulk_create(cds)
 
-    licenses_url = reverse("collection-licenses", args=[collection_id])
+    licenses_url = reverse("collection-licenses", args=[collection_id, collection_name])
     licenses_content = collection.get_attribution(sound_qs=sounds_list)
     return download_sounds(licenses_url, licenses_content, sounds_list, collection.download_filename)
 
 
-def collection_licenses(request, collection_id):
+def collection_licenses(request, collection_id, collection_name):
     collection = get_object_or_404(Collection, id=collection_id)
     attribution = collection.get_attribution()
     return HttpResponse(attribution, content_type="text/plain")
@@ -296,7 +299,7 @@ def add_sounds_modal_for_collection_edit(request, collection_id):
     return render(request, "sounds/modal_add_sounds.html", tvars)
 
 
-def add_maintainer_modal(request, collection_id):
+def add_maintainer_modal(request, collection_id, collection_name):
     collection = get_object_or_404(Collection, id=collection_id)
     form = MaintainerForm()
     # TODO: the below statements exclude users with whitespaces in their usernames (and they still exist)

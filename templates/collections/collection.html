@@ -2,6 +2,7 @@
 {% load static %}
 {% load bw_templatetags %}
 {% load display_sound %}
+{% load display_collections %}
 {% load display_user %}
 {% load util %}
 
@@ -12,15 +13,15 @@
     <div class="row no-gutters">
         <div class="col-lg-3 offset-lg-1 order-lg-last v-spacing-3">
             <section class="bw-profile__section_stats v-spacing-top-4 async-section"
-            data-async-section-content-url="{% url 'collection-stats-section' collection.id %}?ajax=1">
+            data-async-section-content-url="{% url 'collection-stats-section' collection.id collection.name|slugify %}?ajax=1">
             <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
         </section>
         <div class="v-spacing-top-4">
             {% if is_owner or is_maintainer%}
-            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'edit-collection' collection.id %}" title="Edit collection">Edit collection</a>
+            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'edit-collection' collection.id collection.name|slugify %}" title="Edit collection">Edit collection</a>
             {% endif %}
             {% if collection.num_sounds > 0%}
-            <a class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'download-collection' collection.id %}" title="Download collection">Download Collection</a> 
+            <a class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'download-collection' collection.id collection.name|slugify %}" title="Download collection">Download Collection</a> 
             {% endif %}
         </div>
     </div>    
@@ -54,10 +55,14 @@
         <div class="v-spacing-top-5">
             <div class="text-center text-18 text-light-grey v-spacing-3">Sounds in this collection</div>
             {% if page.object_list %}    
-            <div class = "row">
-                {% for collectionsound, sound in page_collection_and_sound_objects  %}
+            <div class="row">
+                {% for collectionsound, sound in page_collection_and_sound_objects %}
                 <div class="col-6 col-md-4">
+                    {% if sound.id in collection.featured_sound_ids %}
+                    {% display_featured_sound sound %}
+                    {% else %}
                     {% display_sound_small sound %}
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>

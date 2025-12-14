@@ -21,10 +21,11 @@
 from urllib.parse import quote
 
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import F, Sum
+from django.db.models import Case, F, IntegerField, Sum, Value, When
 from django.db.models.functions import Greatest
-from django.db.models.signals import m2m_changed, post_delete, post_save
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -46,6 +47,7 @@ class Collection(models.Model):
     num_downloads = models.PositiveIntegerField(default=0)
     public = models.BooleanField(default=False)
     is_default_collection = models.BooleanField(default=False)
+    featured_sound_ids = ArrayField(models.IntegerField(), size=3, blank=True, default=list)
 
     def __str__(self):
         return f"{self.name}"
@@ -83,13 +85,42 @@ class Collection(models.Model):
         return result["total_duration"] or 0
 
     def save(self, *args, **kwargs):
-        self.num_sounds = CollectionSound.objects.filter(collection=self).count()
-        if self.num_sounds > 0:
-            # this need to be reviewed, featured_sound feature is not fully developed
-            csound = CollectionSound.objects.filter(collection=self, status="OK").first()
-            csound.featured_sound = True
-            csound.save()
+        # Update num_sounds count
+        if self.pk:  # Only count if collection already exists
+            self.num_sounds = CollectionSound.objects.filter(collection=self).count()
+            
+            # Auto-populate featured_sound_ids if empty but collection has sounds
+            if not self.featured_sound_ids and self.num_sounds > 0:
+                # Get up to 3 approved sound IDs
+                sound_ids = list(
+                    CollectionSound.objects.filter(
+                        collection=self, 
+                        sound__processing_state="OK",
+                        sound__moderation_state="OK"
+                    ).values_list('sound_id', flat=True)[:3]
+                )
+                if sound_ids:
+                    self.featured_sound_ids = sound_ids
+        
         super().save(*args, **kwargs)
+
+    def get_featured_sounds(self, num_sounds=1):
+        approved_sounds = self.sounds.filter(processing_state="OK", moderation_state="OK")
+        approved_sounds = order_sounds_by_featured(approved_sounds, self.featured_sound_ids)
+        return approved_sounds[:num_sounds]
+
+
+def order_sounds_by_featured(sounds, featured_sound_ids=None):
+    """Return all sounds with featured sounds moved to the front."""
+    if not featured_sound_ids:
+        return sounds
+    
+    ordering = Case(
+        *[When(id=sound_id, then=Value(i)) for i, sound_id in enumerate(featured_sound_ids)],
+        default=Value(len(featured_sound_ids)),
+        output_field=IntegerField()
+    )
+    return sounds.annotate(featured_order=ordering).order_by('featured_order')
 
 
 class CollectionSound(models.Model):
@@ -97,7 +128,6 @@ class CollectionSound(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
     collection = models.ForeignKey(Collection, related_name="collectionsound", on_delete=models.CASCADE)
-    featured_sound = models.BooleanField(default=False)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     STATUS_CHOICES = (
@@ -124,16 +154,37 @@ def update_collection_num_sounds_bulk_changes(sender, instance, **kwargs):
         Collection.objects.filter(collectionsound=instance).update(num_sounds=Greatest(F("num_sounds") - 1, 0))
 
 
-@receiver(post_save, sender=CollectionSound)
-def mark_sound_dirty_on_collection_add(sender, instance, **kwargs):
+@receiver([post_save, post_delete], sender=CollectionSound)
+def remove_not_valid_featured_sounds(sender, instance, **kwargs):
+    """Remove featured_sound_ids that are no longer part of the collection."""
+    if instance and instance.collection_id:
+        collection = instance.collection
+        if collection.featured_sound_ids:
+            # Get current sound IDs in the collection
+            valid_sound_ids = set(
+                CollectionSound.objects.filter(collection=collection).values_list('sound_id', flat=True)
+            )
+            # Filter out any featured_sound_ids that are not in the collection
+            valid_featured_ids = [sid for sid in collection.featured_sound_ids if sid in valid_sound_ids]
+            if valid_featured_ids != collection.featured_sound_ids:
+                Collection.objects.filter(id=collection.id).update(featured_sound_ids=valid_featured_ids)
+
+
+@receiver([post_save, post_delete], sender=CollectionSound)
+def mark_sound_dirty_on_collection_change(sender, instance, **kwargs):
     if instance:
+        print(f"----------coll change: marking {instance.sound} dirty!!!!!!!!!!!!")
         Sound.objects.filter(id=instance.sound_id).update(is_index_dirty=True)
 
 
-@receiver(post_delete, sender=CollectionSound)
-def mark_sound_dirty_on_collection_remove(sender, instance, **kwargs):
-    if instance:
-        Sound.objects.filter(id=instance.sound_id).update(is_index_dirty=True)
+@receiver(pre_save, sender=Collection)
+def mark_sounds_dirty_on_public_change(sender, instance, **kwargs):
+    if instance and instance.pk:
+        old_instance = Collection.objects.get(pk=instance.pk)
+        if old_instance.public != instance.public:
+            print("----------public changed !!!!!!!!!!!!")
+            # Update all sounds in this collection
+            instance.sounds.update(is_index_dirty=True)
 
 
 class CollectionDownload(models.Model):

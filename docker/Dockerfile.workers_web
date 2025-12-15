@@ -68,3 +68,12 @@ RUN python manage.py collectstatic --noinput
 
 # Build API docs
 RUN cd _docs/api && make html
+
+
+FROM freesound_prod AS freesound_console
+
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		screen \
+		nano \
+	&& rm -rf /var/lib/apt/lists/*

@@ -117,18 +117,6 @@ services:
         depends_on:
             - rabbitmq
 
-    # Audioset-YAMNet extractor - needs image to be built from freesound-audio-analyzers repository
-    # Note this worker must be run with --pool=threads in order for tensorflow predictions to work inside celery
-    worker_analyzer3:
-        profiles: ["analyzers", "all"]
-        image: audioset-yamnet_v1
-        volumes:
-            - ./freesound-data/:/freesound-data
-        init: true
-        command: celery -A main worker --pool=threads --concurrency=1 -l info -Q audioset-yamnet_v1
-        depends_on:
-            - rabbitmq
-
     # BirdNET analyzer - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer4:
         profiles: ["analyzers", "all"]

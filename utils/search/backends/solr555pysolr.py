@@ -876,6 +876,27 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 raise SearchEngineException(e)
         return results
 
+    def get_all_sim_vector_document_ids_per_similarity_space(self):
+        page_size = 2000
+        results = {}
+        for similarity_space_name in settings.SIMILARITY_SPACES.keys():
+            solr_ids = []
+            solr_count = None
+            current_page = 1
+            while solr_count is None or len(solr_ids) < solr_count:
+                query = SolrQuery()
+                filter_query = f'similarity_space:"{similarity_space_name}" content_type:"v"'
+                query.set_query("*:*")
+                query.set_query_options(
+                    start=(current_page - 1) * page_size, rows=page_size, field_list=["id"], filter_query=filter_query
+                )
+                response = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
+                solr_ids += [element["id"] for element in response.docs]
+                solr_count = response.num_found
+                current_page += 1
+            results[similarity_space_name] = solr_ids
+        return results
+
     # Forum posts methods
     def add_forum_posts_to_index(self, forum_post_objects):
         documents = [self.convert_post_to_search_engine_document(p) for p in forum_post_objects]

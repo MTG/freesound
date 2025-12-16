@@ -1288,6 +1288,35 @@ def test_num_queries_when_adding_sounds_to_search_index(search_engine_sounds_bac
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
+def test_remove_sounds(search_engine_sounds_backend, test_sounds):
+    """Test removing sounds does indeed remove the sounds"""
+
+    # Check that initially, sound objects are in the search engine
+    results = search_engine_sounds_backend.search_sounds()
+    assert results.num_found == len(test_sounds), "Initial number of sounds in search engine is incorrect"
+
+    # Also check that similarity vectors are returned as expected
+    sim_vector_ids = search_engine_sounds_backend.get_all_sim_vector_document_ids_per_similarity_space()
+    sim_space_name = list(sim_vector_ids.keys())[0]
+    vector_document_ids = sim_vector_ids[sim_space_name]
+    assert len(vector_document_ids) == len(test_sounds), (
+        "Initial number of similarity vectors in search engine is incorrect"
+    )
+
+    # Now remove sounds and check that they are no longer in the search engine
+    search_engine_sounds_backend.remove_sounds_from_index([s.id for s in test_sounds])
+    results_after_removal = search_engine_sounds_backend.search_sounds()
+    assert results_after_removal.num_found == 0, "Sounds were not removed from search engine"
+
+    # Also check that similarity vectors were removed
+    sim_vector_ids_after_removal = search_engine_sounds_backend.get_all_sim_vector_document_ids_per_similarity_space()
+    vector_document_ids_after_removal = sim_vector_ids_after_removal[sim_space_name]
+    assert len(vector_document_ids_after_removal) == 0, "Similarity vectors were not removed from search engine"
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
 def test_follow_utils_get_stream_sounds(search_engine_sounds_backend, output_file_handle, test_sounds):
     users = User.objects.all()
     test_user = users[0]

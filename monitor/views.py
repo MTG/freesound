@@ -126,7 +126,11 @@ def monitor_analysis(request):
 
     # Add sim vector stats from DB
     for similarity_space_name in settings.SIMILARITY_SPACES_NAMES:
-        num_vectors_in_db = SoundSimilarityVector.objects.filter(similarity_space_name=similarity_space_name).count()
+        num_vectors_in_db = SoundSimilarityVector.objects.filter(
+            similarity_space_name=similarity_space_name,
+            sound__processing_state="OK",
+            sound__moderation_state="OK",
+        ).count()
         if similarity_space_name not in sim_vector_stats:
             sim_vector_stats[similarity_space_name] = {}
         sim_vector_stats[similarity_space_name]["num_vectors_in_db"] = num_vectors_in_db

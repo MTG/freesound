@@ -243,7 +243,7 @@ def for_user(request, username):
 @redirect_if_old_username
 def for_sound(request, username, sound_id):
     sound = get_object_or_404(Sound.objects.select_related("geotag", "user"), id=sound_id)
-    if sound.user.username.lower() != username.lower() or sound.geotag is None:
+    if sound.user.username.lower() != username.lower() or not hasattr(sound, "geotag"):
         raise Http404
     tvars = _get_geotags_query_params(request)
     tvars.update(

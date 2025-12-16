@@ -17,11 +17,14 @@
 # Authors:
 #     See AUTHORS file.
 #
+
 from django.contrib.auth.models import User
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
 
 import bookmarks.models
+from sounds.models import Sound
 
 
 class BookmarksTest(TestCase):
@@ -79,3 +82,12 @@ class BookmarksTest(TestCase):
         # Test category does not exist
         response = self.client.get(reverse("bookmarks-category", kwargs={"category_id": 1234}))
         self.assertEqual(404, response.status_code)
+
+    def test_cannot_create_duplicate_uncategorized_bookmark(self):
+        user = User.objects.get(username="Anton")
+        sound = Sound.objects.first()
+        bookmarks.models.Bookmark.objects.create(user=user, sound=sound)
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                bookmarks.models.Bookmark.objects.create(user=user, sound=sound)

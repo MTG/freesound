@@ -39,6 +39,7 @@ from accounts.management.commands.process_email_bounces import decode_idna_email
 from accounts.models import EmailBounce, EmailPreferenceType, UserEmailSetting
 from accounts.views import handle_uploaded_image
 from forum.models import Forum, Post, Thread
+from geotags.models import GeoTag
 from sounds.models import Download, Pack, PackDownload
 from tags.models import SoundTag
 from utils.mail import send_mail
@@ -98,6 +99,42 @@ class ProfileGetUserTags(TestCase):
         conf = {"get_user_tags.side_effect": Exception}
         mock_search_engine.return_value.configure_mock(**conf)
         self.assertEqual(user.profile.get_user_tags(), False)
+
+
+class ProfileGetLastLatlongTest(TestCase):
+    fixtures = ["licenses"]
+
+    def test_get_last_latlong_without_sounds(self):
+        user = User.objects.create_user("testuser")
+        self.assertIsNone(user.profile.get_last_latlong())
+
+    def test_get_last_latlong_only_sounds_without_geotags(self):
+        user, _, sounds = create_user_and_sounds(num_sounds=1, processing_state="OK", moderation_state="OK")
+        self.assertIsNone(user.profile.get_last_latlong())
+
+    def test_get_last_latlong_returns_latest_geotag(self):
+        user, _, sounds = create_user_and_sounds(num_sounds=2, processing_state="OK", moderation_state="OK")
+        sounds[0].created = parse_date("2019-01-01 10:00:00 UTC")
+        sounds[0].save()
+
+        sounds[1].created = parse_date("2020-01-01 10:00:00 UTC")
+        sounds[1].save()
+
+        GeoTag.objects.create(sound=sounds[0], lat=10.0, lon=20.0, zoom=5)
+        GeoTag.objects.create(sound=sounds[1], lat=30.0, lon=40.0, zoom=6)
+
+        self.assertEqual(user.profile.get_last_latlong(), (30.0, 40.0, 6))
+
+    def test_get_last_latlong_skips_latest_sound_without_geotag(self):
+        user, _, sounds = create_user_and_sounds(num_sounds=2, processing_state="OK", moderation_state="OK")
+        GeoTag.objects.create(sound=sounds[0], lat=11.0, lon=22.0, zoom=7)
+        sounds[0].created = parse_date("2019-01-01 10:00:00 UTC")
+        sounds[0].save()
+
+        sounds[1].created = parse_date("2020-01-01 10:00:00 UTC")
+        sounds[1].save()
+
+        self.assertEqual(user.profile.get_last_latlong(), (11.0, 22.0, 7))
 
 
 class UserEditProfile(TestCase):

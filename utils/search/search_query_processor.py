@@ -677,10 +677,16 @@ class SearchQueryProcessor:
         if similar_to != "":
             # If it stars with '[', then we assume this is a serialized vector passed as target for similarity
             if similar_to.startswith("["):
-                similar_to = json.loads(similar_to)
+                try:
+                    similar_to = json.loads(similar_to)
+                except json.JSONDecodeError:
+                    similar_to = None
             else:
                 # Otherwise, we assume it is a sound id and we pass it as integer
-                similar_to = int(similar_to)
+                try:
+                    similar_to = int(similar_to)
+                except ValueError:
+                    similar_to = None
         else:
             similar_to = None
 

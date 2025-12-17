@@ -20,6 +20,7 @@
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.text import slugify
 
@@ -82,3 +83,10 @@ class Bookmark(models.Model):
     class Meta:
         ordering = ("-created",)
         unique_together = (("user_id", "category_id", "sound_id"),)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "sound"],
+                condition=Q(category__isnull=True),
+                name="bookmarks_unique_uncategorized",
+            )
+        ]

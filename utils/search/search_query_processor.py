@@ -32,6 +32,7 @@ from luqum.pretty import prettify
 from sounds.models import Sound
 from utils.clustering_utilities import get_clusters_for_query, get_ids_in_cluster
 from utils.encryption import create_hash
+from utils.search import SearchEngineException
 from utils.search.search_sounds import allow_beta_search_features
 
 from .search_query_processor_options import (
@@ -680,13 +681,13 @@ class SearchQueryProcessor:
                 try:
                     similar_to = json.loads(similar_to)
                 except json.JSONDecodeError:
-                    similar_to = None
+                    raise SearchEngineException("The 'similar_to' parameter is not a valid serialized vector")
             else:
                 # Otherwise, we assume it is a sound id and we pass it as integer
                 try:
                     similar_to = int(similar_to)
                 except ValueError:
-                    similar_to = None
+                    raise SearchEngineException("The 'similar_to' parameter is not a valid sound ID")
         else:
             similar_to = None
 

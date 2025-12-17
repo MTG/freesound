@@ -221,10 +221,16 @@ class SoundCombinedSearchFormAPI(forms.Form):
         if similar_to != "":
             # If it stars with '[', then we assume this is a serialized vector passed as target for similarity
             if similar_to.startswith("["):
-                similar_to = json.loads(similar_to)
+                try:
+                    similar_to = json.loads(similar_to)
+                except json.JSONDecodeError:
+                    raise BadRequestException("The 'similar_to' parameter is not a valid serialized vector")
             else:
                 # Otherwise, we assume it is a sound id and we pass it as integer
-                similar_to = int(similar_to)
+                try:
+                    similar_to = int(similar_to)
+                except ValueError:
+                    raise BadRequestException("The 'similar_to' parameter is not a valid sound ID")
         else:
             similar_to = None
         return similar_to

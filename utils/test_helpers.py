@@ -30,7 +30,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.test.utils import override_settings
 
-from geotags.models import GeoTag
 from sounds.models import License, Pack, Sound, SoundAnalysis, SoundSimilarityVector
 from utils.tags import clean_and_split_tags
 
@@ -128,8 +127,6 @@ def create_user_and_sounds(
         if tags is not None:
             sound.set_tags(clean_and_split_tags(tags))
         sounds.append(sound)
-    if len(sounds) > 1:
-        GeoTag.objects.create(sound=sounds[1], lon=1.0, lat=1.0, zoom=1)
     return user, packs, sounds
 
 

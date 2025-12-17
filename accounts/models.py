@@ -625,9 +625,8 @@ class Profile(models.Model):
             self.save()
 
     def get_last_latlong(self):
-        lasts_sound_geotagged = Sound.objects.filter(user=self.user).exclude(geotag=None).order_by("-created")
-        if lasts_sound_geotagged.count():
-            last_sound = lasts_sound_geotagged[0]
+        last_sound = Sound.objects.filter(user=self.user).exclude(geotag=None).order_by("-created").first()
+        if last_sound:
             return last_sound.geotag.lat, last_sound.geotag.lon, last_sound.geotag.zoom
         return None
 

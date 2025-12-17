@@ -26,18 +26,6 @@
         <tr><td>{{ consolidated.ok }} ({{ consolidated.percentage_ok|floatformat:3 }}%)</td><td>{{ consolidated.sk }}</td><td>{{ consolidated.fa }}</td><td>{{ consolidated.qu }}</td></tr>
     </table>
 
-    <h1>Similarity spaces</h1>
-    <div class="v-spacing-4">
-        <table class="v-spacing-top-4" style="min-width:500px;">
-        {% for similarity_space_name, similarity_space_data in sim_vector_stats.items %}
-            {% if forloop.counter0 == 0 %}
-                <tr><td><b>similarity space</b></td><td><b>num sounds (solr)</b></td><td><b>num vectors (solr)</b></td><td><b>num vectors (db, public sounds only)</b></td></tr>
-            {% endif %}
-            <tr><td>{{ similarity_space_name }}</td><td>{{ similarity_space_data.num_sounds }}</td><td>{{ similarity_space_data.num_sounds  }}</td><td>{{ similarity_space_data.num_vectors_in_db }}</td></tr>
-        {% endfor %} 
-        </table>
-    </div>
-
     <h1>RabbitMQ queue status</h1>
     <div class="v-spacing-4">
         <div id="queuesStatus" data-url="{{ queues_stats_url }}"></div>

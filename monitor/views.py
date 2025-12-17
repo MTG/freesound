@@ -118,6 +118,24 @@ def monitor_analysis(request):
         analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status="QU"
     ).count()
 
+    tvars = {
+        "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
+        "queues_stats_url": reverse("queues-stats"),
+        "activePage": "analysis",
+        "consolidated": {
+            "ok": consolidated_ok,
+            "sk": consolidated_sk,
+            "fa": consolidated_fa,
+            "qu": consolidated_qu,
+            "percentage_ok": consolidated_ok * 100.0 / n_sounds,
+        },
+    }
+    return render(request, "monitor/analysis.html", tvars)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url="/")
+def monitor_similarity(request):
     # Get stats about similarity vectors indexed in Solr
     try:
         sim_vector_stats = get_search_engine().get_num_sim_vectors_indexed_per_similarity_space()
@@ -136,19 +154,10 @@ def monitor_analysis(request):
         sim_vector_stats[similarity_space_name]["num_vectors_in_db"] = num_vectors_in_db
 
     tvars = {
-        "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
         "sim_vector_stats": sim_vector_stats,
-        "queues_stats_url": reverse("queues-stats"),
-        "activePage": "analysis",
-        "consolidated": {
-            "ok": consolidated_ok,
-            "sk": consolidated_sk,
-            "fa": consolidated_fa,
-            "qu": consolidated_qu,
-            "percentage_ok": consolidated_ok * 100.0 / n_sounds,
-        },
+        "activePage": "similarity",
     }
-    return render(request, "monitor/analysis.html", tvars)
+    return render(request, "monitor/similarity.html", tvars)
 
 
 @login_required

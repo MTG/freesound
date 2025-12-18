@@ -24,8 +24,8 @@ from wiki import models
 
 
 class ContentForm(forms.ModelForm):
-    title = forms.CharField(widget=forms.TextInput(attrs={"size": "100"}), label=False)
-    body = forms.CharField(widget=forms.Textarea(attrs={"rows": "40", "cols": "100"}), label=False)
+    title = forms.CharField(widget=forms.TextInput(attrs={"size": "100"}), label=None)
+    body = forms.CharField(widget=forms.Textarea(attrs={"rows": "40", "cols": "100"}), label=None)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -208,9 +208,9 @@ def username_taken_by_other_user(username):
 
 class RegistrationForm(forms.Form):
     username = UsernameField()
-    email1 = forms.EmailField(label=False, help_text=False, max_length=254)
-    email2 = forms.EmailField(label=False, help_text=False, max_length=254)
-    password1 = forms.CharField(label=False, help_text=False, widget=forms.PasswordInput)
+    email1 = forms.EmailField(label=None, max_length=254)
+    email2 = forms.EmailField(label=None, max_length=254)
+    password1 = forms.CharField(label=None, widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
         label=mark_safe(
             'Check this box to accept our <a href="/help/tos_web/" target="_blank" class="bw-link--grey">terms of '
@@ -336,16 +336,16 @@ class ProfileForm(forms.ModelForm):
     sound_signature = HtmlCleaningCharField(
         label="Sound signature",
         widget=forms.Textarea(attrs=dict(rows=10, cols=70)),
-        help_text="""Your sound signature is added to the end of each of your sound 
-            descriptions. If you change the sound signature it will be automatically updated on all of your sounds. 
-            Use the special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed 
+        help_text="""Your sound signature is added to the end of each of your sound
+            descriptions. If you change the sound signature it will be automatically updated on all of your sounds.
+            Use the special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed
             and <code>${sound_id}</code> to refer to the id of the current sound. """
         + HtmlCleaningCharField.make_help_text(),
         required=False,
         max_length=256,
     )
     is_adult = forms.BooleanField(
-        label="I'm an adult, I don't want to see inappropriate content warnings", help_text=False, required=False
+        label="I'm an adult, I don't want to see inappropriate content warnings", required=False
     )
     not_shown_in_online_users_list = forms.BooleanField(
         help_text='Hide from "users currently online" list in the People page', label="", required=False
@@ -510,7 +510,7 @@ DELETE_CHOICES = [
 
 class DeleteUserForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())
-    delete_sounds = forms.ChoiceField(label=False, choices=DELETE_CHOICES, widget=forms.RadioSelect())
+    delete_sounds = forms.ChoiceField(label=None, choices=DELETE_CHOICES, widget=forms.RadioSelect())
     password = forms.CharField(label="Confirm your password", widget=forms.PasswordInput)
 
     def clean_password(self):
@@ -553,7 +553,7 @@ class DeleteUserForm(forms.Form):
 
 class EmailSettingsForm(forms.Form):
     email_types = forms.ModelMultipleChoiceField(
-        queryset=EmailPreferenceType.objects.all(), widget=forms.CheckboxSelectMultiple, required=False, label=False
+        queryset=EmailPreferenceType.objects.all(), widget=forms.CheckboxSelectMultiple, required=False, label=None
     )
 
     def __init__(self, *args, **kwargs):

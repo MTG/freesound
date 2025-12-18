@@ -20,7 +20,7 @@
 
 
 import json
-import urllib
+import urllib.parse
 
 import luqum.tree
 from django.conf import settings

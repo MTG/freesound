@@ -31,7 +31,7 @@ import logging
 import os
 import random
 import time
-import urllib
+import urllib.parse
 
 import pytest
 from django.conf import settings

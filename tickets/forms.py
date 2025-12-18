@@ -25,7 +25,7 @@ from utils.forms import HtmlCleaningCharField
 
 
 class ModeratorMessageForm(forms.Form):
-    message = HtmlCleaningCharField(widget=forms.Textarea, label=False)
+    message = HtmlCleaningCharField(widget=forms.Textarea, label=None)
     moderator_only = forms.BooleanField(required=False, label="Make this message only visible to other moderators")
 
     def __init__(self, *args, **kwargs):
@@ -72,7 +72,7 @@ class SoundModerationForm(forms.Form):
 
 
 class ModerationMessageForm(forms.Form):
-    message = HtmlCleaningCharField(widget=forms.Textarea, required=False, label=False)
+    message = HtmlCleaningCharField(widget=forms.Textarea, required=False, label=None)
     moderator_only = forms.BooleanField(required=False, label="Make this message only visible to moderators")
 
     def __init__(self, *args, **kwargs):

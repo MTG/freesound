@@ -216,16 +216,15 @@ class LicenseForm(forms.Form):
 
 class FlagForm(forms.Form):
     email = forms.EmailField(
-        label=False,
+        label=None,
         required=True,
-        help_text=False,
         error_messages={
             "required": "Required, please enter your email address.",
             "invalid": "Your email address appears to be invalid, please check if it's correct.",
         },
     )
-    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES, required=True, label=False)
-    reason = forms.CharField(widget=forms.Textarea, label=False)
+    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES, required=True, label=None)
+    reason = forms.CharField(widget=forms.Textarea, label=None)
     recaptcha = ReCaptchaField(label="")
 
     def __init__(self, *args, **kwargs):

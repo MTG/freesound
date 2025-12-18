@@ -78,7 +78,6 @@ class ApiV2ClientForm(forms.Form):
         label=mark_safe(
             'Check this box to accept the <a href="/help/tos_api/" target="_blank">terms of use</a> of the Freesound API'
         ),
-        help_text=False,
         required=True,
         error_messages={"required": "You must accept the terms of use in order to get access to the API."},
     )

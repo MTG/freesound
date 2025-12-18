@@ -54,9 +54,9 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
         save: returns the selected collection object to be used
     """
 
-    collection = forms.ChoiceField(label=False, choices=[], required=True)
+    collection = forms.ChoiceField(label=None, choices=[], required=True)
 
-    new_collection_name = forms.CharField(label=False, help_text=None, max_length=128, required=False)
+    new_collection_name = forms.CharField(label=None, max_length=128, required=False)
 
     use_last_collection = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     user_collections = None
@@ -369,8 +369,7 @@ class MaintainerForm(forms.Form):
                 "autocomplete": "off",
             }
         ),
-        label=False,
-        help_text=None,
+        label=None,
         max_length=128,
         required=False,
     )

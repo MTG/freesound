@@ -69,7 +69,6 @@ def _save_donation(encoded_data, email, amount, currency, transaction_id, source
         log_data = donation_data
         log_data.update({"user_id": user_id})
         log_data.update({"timestamp": str(donation.created)})
-        del log_data["created"]  # Seems to cause issues with gelf processor and we already log it separately
         del log_data["user"]  # Don't want to serialize user
         del log_data["campaign"]  # Don't want to serialize campaign
         log_data["amount_float"] = float(log_data["amount"])

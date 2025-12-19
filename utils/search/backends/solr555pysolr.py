@@ -443,7 +443,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             query_filter = query_filter.replace(f"{raw_fieldname}:", f"{solr_fieldname}:")
         return query_filter
 
-    def search_process_sort(self, sort, forum=False):
+    def search_process_sort(self, sort, forum=False, sorting_target=None):
         """Translates sorting criteria to solr sort criteria and add extra criteria if sorting by ratings.
 
         If order by rating, when rating is the same sort also by number of ratings.
@@ -451,18 +451,40 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         Args:
             sort (str): sorting criteria as defined in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB.
             forum (bool, optional): use the forum sort options map instead of the standard sort map
+            sorting_target (str, optional): target field for sorting (not used currently).
 
         Returns:
             List[str]: list containing the sorting field names list for the search engine.
         """
-        search_map = SORT_OPTIONS_MAP_FORUM if forum else SORT_OPTIONS_MAP
-        if sort in [sort_web_name for sort_web_name, _ in search_map.items()]:
-            if search_map[sort] == "avg_rating desc" or search_map[sort] == "avg_rating asc":
-                sort = [search_map[sort], "num_ratings desc"]
-            else:
-                sort = [search_map[sort]]
+        if sorting_target is not None and not forum:
+            try:
+                # We are sorting by distance to a number of numeric fields
+                sorting_target_elements = sorting_target.split(",")
+                solr_dist_sort_field_names = []
+                solr_dist_sort_field_values = []
+                for element in sorting_target_elements:
+                    name = element.split(":")[0]
+                    value = float(element.split(":")[1])
+                    solr_field_name = get_solr_fieldname_from_freesound_fieldname(name)
+                    solr_dist_sort_field_names.append(solr_field_name)
+                    solr_dist_sort_field_values.append(value)
+                    # TODO: check if the field name exists?
+                sort = [
+                    f"dist(2,{','.join(solr_dist_sort_field_names)},{','.join([str(v) for v in solr_dist_sort_field_values])}) asc"
+                ]
+            except (ValueError, IndexError):
+                raise SearchEngineException("Error processing sorting target for distance-based sorting.")
         else:
-            sort = [search_map[settings.SEARCH_FORUM_SORT_DEFAULT if forum else settings.SEARCH_SOUNDS_SORT_DEFAULT]]
+            search_map = SORT_OPTIONS_MAP_FORUM if forum else SORT_OPTIONS_MAP
+            if sort in [sort_web_name for sort_web_name, _ in search_map.items()]:
+                if search_map[sort] == "avg_rating desc" or search_map[sort] == "avg_rating asc":
+                    sort = [search_map[sort], "num_ratings desc"]
+                else:
+                    sort = [search_map[sort]]
+            else:
+                sort = [
+                    search_map[settings.SEARCH_FORUM_SORT_DEFAULT if forum else settings.SEARCH_SOUNDS_SORT_DEFAULT]
+                ]
         return sort
 
     def search_filter_make_intersection(self, query_filter):
@@ -620,6 +642,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         current_page=None,
         num_sounds=settings.SOUNDS_PER_PAGE,
         sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+        sorting_target=None,
         group_by_pack=False,
         num_sounds_per_pack_group=1,
         facets=None,
@@ -724,7 +747,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             rows=num_sounds,
             field_list=field_list,  # We generally only want the sound IDs of the results as we load data from DB
             filter_query=query_filter,
-            sort=self.search_process_sort(sort) if not similar_to else ["score desc"],
+            sort=self.search_process_sort(sort, sorting_target=sorting_target) if not similar_to else ["score desc"],
         )  # In similarity queries, we always sort by distance to target
 
         # Configure facets

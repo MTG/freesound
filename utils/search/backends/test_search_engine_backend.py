@@ -1468,6 +1468,23 @@ def test_sound_geotag_queries(search_engine_sounds_backend, output_file_handle):
 
 
 @pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_sorting_target(search_engine_sounds_backend, output_file_handle):
+    """Test sorting target functionality works as exptected"""
+
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(sorting_target="test_feature_float:0.5", num_sounds=10),
+    )
+    import pprint
+
+    pprint.pprint(results.docs)
+    raise Exception("Test not implemented yet")
+
+
+@pytest.mark.search_engine
 @pytest.mark.forum
 @pytest.mark.django_db
 def test_forum_mandatory_doc_fields(search_engine_forum_backend, output_file_handle):

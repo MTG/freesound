@@ -29,6 +29,7 @@ import datetime
 import json
 import logging
 import os
+import random
 import time
 import urllib
 
@@ -246,7 +247,7 @@ def test_sounds_qs(
         SoundAnalysis,
         "get_analysis_data_from_file_without_db",
         lambda sid, analyzer_name: {
-            "feature_float": 1.0,
+            "feature_float": random.random(),  # noqa: S311
             "feature_int": 1,
             "feature_string": "a",
             "feature_list_string": ["a", "b", "c"],
@@ -959,18 +960,18 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
 def test_sound_search_query_audio_descriptors(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test that audio descriptors are properly indexed and can be searched"""
 
-    expected_feature_values = {
-        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: 1.0,
-        settings.AUDIO_DESCRIPTOR_TYPE_INT: 1,
-        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: True,
+    feature_match_all_filter_values = {
+        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: "[0.0 TO 1.0]",
+        settings.AUDIO_DESCRIPTOR_TYPE_INT: "1",
+        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: "True",
         settings.AUDIO_DESCRIPTOR_TYPE_STRING: "a",
         settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: "a",  # filter by the first element of the list
     }
 
-    non_expected_feature_values = {
-        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: 0.5,
-        settings.AUDIO_DESCRIPTOR_TYPE_INT: 5,
-        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: False,
+    feature_no_match_filter_values = {
+        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: "[1.1 TO *]",
+        settings.AUDIO_DESCRIPTOR_TYPE_INT: "5",
+        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: "False",
         settings.AUDIO_DESCRIPTOR_TYPE_STRING: "nonexistent_value",
         settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: "z",  # filter by a non-existing first element of the list
     }
@@ -980,21 +981,23 @@ def test_sound_search_query_audio_descriptors(search_engine_sounds_backend, outp
             name = descriptor["name"]
 
             # All the sounds have the same value for every descriptor in our test dataset, so the query should return them all
-            expected_value = expected_feature_values[descriptor["type"]]
+            filter_value = feature_match_all_filter_values[descriptor["type"]]
             results = run_sounds_query_and_save_results(
-                search_engine_sounds_backend, output_file_handle, dict(query_filter=f'{name}:"{expected_value}"')
+                search_engine_sounds_backend, output_file_handle, dict(query_filter=f"{name}:{filter_value}")
             )
             assert results.num_found == len(test_sounds), (
-                f"Searching for audio descriptor {name} with value {expected_value} did not return the expected number of results"
+                f"Searching for audio descriptor {name} with filter value {filter_value} did not return the expected number of results"
             )
 
             # Now try with a value that is not present and should return 0 results
-            non_expected_value = non_expected_feature_values[descriptor["type"]]
+            non_matching_filter_value = feature_no_match_filter_values[descriptor["type"]]
             results = run_sounds_query_and_save_results(
-                search_engine_sounds_backend, output_file_handle, dict(query_filter=f'{name}:"{non_expected_value}"')
+                search_engine_sounds_backend,
+                output_file_handle,
+                dict(query_filter=f"{name}:{non_matching_filter_value}"),
             )
             assert results.num_found == 0, (
-                f"Searching for audio descriptor {name} with value {non_expected_value} returned results but none were expected"
+                f"Searching for audio descriptor {name} with filter value {non_matching_filter_value} returned results but none were expected"
             )
 
 
@@ -1465,6 +1468,27 @@ def test_sound_geotag_queries(search_engine_sounds_backend, output_file_handle):
     expected_ids = [40, 41, 42, 43, 44]
     for expected_id in expected_ids:
         assert expected_id in result_ids, f"Sound {expected_id} should be found when querying for geotagged sounds"
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_sorting_target(search_engine_sounds_backend, output_file_handle):
+    """Test sorting target functionality works as exptected. This also tests that a "dist" field is returned in results when sorting with a target."""
+
+    target_value = 0.5
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(sorting_target=f"test_feature_float:{target_value},test_feature_int:1", num_sounds=10),
+    )
+    previous_distance = None
+    for result in results.docs:
+        if previous_distance is not None:
+            assert result["dist"] >= previous_distance, (
+                "Results are not sorted correctly by distance to the sorting target value"
+            )
+        previous_distance = result["dist"]
 
 
 @pytest.mark.search_engine

@@ -172,9 +172,14 @@ class SoundCombinedSearchFormAPI(forms.Form):
         return page
 
     def clean_sort(self):
+        sort = str(self.cleaned_data["sort"])
+        if ":" in sort:
+            # The sort uses a custom sorting target, therefore we return it as is
+            self.original_url_sort_value = sort
+            return sort
         sort_option = None
         for option in SEARCH_SORT_OPTIONS_API:
-            if option[0] == str(self.cleaned_data["sort"]):
+            if option[0] == sort:
                 sort_option = option[1]
                 self.original_url_sort_value = option[0]
         if not sort_option:

@@ -468,7 +468,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     solr_field_name = get_solr_fieldname_from_freesound_fieldname(name)
                     solr_dist_sort_field_names.append(solr_field_name)
                     solr_dist_sort_field_values.append(value)
-                    # TODO: check if the field name exists?
                 sort = [
                     f"dist(2,{','.join(solr_dist_sort_field_names)},{','.join([str(v) for v in solr_dist_sort_field_values])}) asc"
                 ]

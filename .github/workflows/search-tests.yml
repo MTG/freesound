@@ -3,12 +3,12 @@ name: Freesound Search Tests
 on:
   push:
     branches: [ master ]
-    paths: 
+    paths:
       - 'utils/search/**'
       - 'freesound/settings.py'
   pull_request:
     branches: [ '*' ]
-    paths: 
+    paths:
       - 'utils/search/**'
       - 'freesound/settings.py'
 
@@ -50,9 +50,6 @@ jobs:
 
     - name: Pull docker images
       run: docker compose -f docker-compose.test.yml pull
-
-    - name: Build base image
-      run: make -C docker py3
 
     - name: Build images
       run: docker compose -f docker-compose.test.yml build db search test_runner_search

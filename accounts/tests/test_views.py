@@ -112,12 +112,14 @@ class SimpleUserTest(TestCase):
         # Packs for user
         resp = self.client.get(reverse("packs-for-user", kwargs={"username": self.user.username}))
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(reverse("sounds-search") in resp.url and self.user.username in resp.url)
+        resp_url = resp["Location"]
+        self.assertTrue(reverse("sounds-search") in resp_url and self.user.username in resp_url)
 
         # Sounds for user
         resp = self.client.get(reverse("sounds-for-user", kwargs={"username": self.user.username}))
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(reverse("sounds-search") in resp.url and self.user.username in resp.url)
+        resp_url = resp["Location"]
+        self.assertTrue(reverse("sounds-search") in resp_url and self.user.username in resp_url)
 
         self.client.force_login(self.user)
 
@@ -247,7 +249,8 @@ class SimpleUserTest(TestCase):
         # 302 response on sounds page access (since BW, there is a redirect to the search page)
         resp = self.client.get(reverse("sounds"))
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(reverse("sounds-search") in resp.url)
+        resp_url = resp["Location"]
+        self.assertTrue(reverse("sounds-search") in resp_url)
 
         # Test other sound related views. Nota that since BW many of these will include redirects
         user = self.sound.user
@@ -301,7 +304,8 @@ class SimpleUserTest(TestCase):
         # 302 response (note that since BW, there will be a redirect to the search page in between)
         resp = self.client.get(reverse("packs"))
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(reverse("sounds-search") in resp.url)
+        resp_url = resp["Location"]
+        self.assertTrue(reverse("sounds-search") in resp_url)
 
     def test_contact_response(self):
         # 200 response on contact page access
@@ -349,7 +353,8 @@ class SimpleUserTest(TestCase):
         # In BW, home page does not really exist
         resp = self.client.get(reverse("accounts-home"))
         self.assertEqual(resp.status_code, 302)
-        self.assertEqual(resp.url, reverse("account", args=[user.username]))
+        resp_url = resp["Location"]
+        self.assertEqual(resp_url, reverse("account", args=[user.username]))
 
         # 200 response on Account edit page
         resp = self.client.get(reverse("accounts-edit"))

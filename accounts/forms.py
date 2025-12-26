@@ -227,8 +227,8 @@ class RegistrationForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         # Customize some placeholders and classes, remove labels and help texts
-        self.fields["username"].label = False
-        self.fields["username"].help_text = False
+        self.fields["username"].label = None
+        self.fields["username"].help_text = ""
         self.fields["username"].widget.attrs["placeholder"] = "Username (30 characters maximum)"
         self.fields["email1"].widget.attrs["placeholder"] = "Email"
         self.fields["email2"].widget.attrs["placeholder"] = "Email confirmation"
@@ -309,9 +309,9 @@ class FsAuthenticationForm(AuthenticationForm):
                 "Note that passwords are case-sensitive.",
             }
         )
-        self.fields["username"].label = False
+        self.fields["username"].label = None
         self.fields["username"].widget.attrs["placeholder"] = "Enter your email or username"
-        self.fields["password"].label = False
+        self.fields["password"].label = None
         self.fields["password"].widget.attrs["placeholder"] = "Enter your password"
 
 
@@ -648,11 +648,11 @@ class FsSetPasswordForm(SetPasswordForm):
         super().__init__(*args, **kwargs)
 
         # Customize some placeholders and classes, remove labels and help texts
-        self.fields["new_password1"].label = False
-        self.fields["new_password1"].help_text = False
+        self.fields["new_password1"].label = None
+        self.fields["new_password1"].help_text = ""
         self.fields["new_password1"].widget.attrs["placeholder"] = "New password"
-        self.fields["new_password2"].label = False
-        self.fields["new_password2"].help_text = False
+        self.fields["new_password2"].label = None
+        self.fields["new_password2"].help_text = ""
         self.fields["new_password2"].widget.attrs["placeholder"] = "New password confirmation"
 
 

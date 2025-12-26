@@ -348,8 +348,7 @@ class SearchQueryProcessor:
         field_name = self.options["duration"].search_engine_field_name
         for node in self.f_parsed:
             if type(node) == luqum.tree.SearchField:
-                if node.name == field_name:
-                    # node.expr is expected to be of type luqum.tree.Range
+                if node.name == field_name and isinstance(node.expr, luqum.tree.Range):
                     values_to_update[field_name] = [str(node.expr.low), str(node.expr.high)]
                     self.f_parsed = [f for f in self.f_parsed if f != node]
 

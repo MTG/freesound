@@ -91,3 +91,46 @@ class BookmarksTest(TestCase):
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
                 bookmarks.models.Bookmark.objects.create(user=user, sound=sound)
+
+    def test_delete_category_with_existing_uncategorized_bookmark(self):
+        user = User.objects.get(username="Anton")
+        sound = Sound.objects.first()
+        category = bookmarks.models.BookmarkCategory.objects.create(name="Category1", user=user)
+        # Create bookmarks both uncategorized and within the category for the same sound.
+        uncategorized = bookmarks.models.Bookmark.objects.create(user=user, sound=sound)
+        categorized = bookmarks.models.Bookmark.objects.create(user=user, sound=sound, category=category)
+
+        self.client.force_login(user)
+        response = self.client.post(reverse("delete-bookmark-category", kwargs={"category_id": category.id}))
+        self.assertEqual(302, response.status_code)
+
+        self.assertFalse(bookmarks.models.BookmarkCategory.objects.filter(id=category.id).exists())
+        # the once-categorized bookmark should be deleted but the uncategorized one should remain.
+        self.assertFalse(bookmarks.models.Bookmark.objects.filter(id=categorized.id).exists())
+        self.assertTrue(bookmarks.models.Bookmark.objects.filter(id=uncategorized.id).exists())
+
+    def test_delete_category_only_removes_conflicting_bookmarks(self):
+        user = User.objects.get(username="Anton")
+        sounds = list(Sound.objects.order_by("id")[:2])
+        category = bookmarks.models.BookmarkCategory.objects.create(name="Category1", user=user)
+
+        # Existing uncategorized bookmark for first sound.
+        conflict_sound_bookmark = bookmarks.models.Bookmark.objects.create(user=user, sound=sounds[0])
+        conflicting_categorized = bookmarks.models.Bookmark.objects.create(
+            user=user, sound=sounds[0], category=category
+        )
+        non_conflicting_categorized = bookmarks.models.Bookmark.objects.create(
+            user=user, sound=sounds[1], category=category
+        )
+
+        self.client.force_login(user)
+        self.assertEqual(
+            302, self.client.post(reverse("delete-bookmark-category", kwargs={"category_id": category.id})).status_code
+        )
+
+        self.assertFalse(bookmarks.models.BookmarkCategory.objects.filter(id=category.id).exists())
+        # Only the conflicting bookmark is deleted.
+        self.assertFalse(bookmarks.models.Bookmark.objects.filter(id=conflicting_categorized.id).exists())
+        self.assertTrue(bookmarks.models.Bookmark.objects.filter(id=conflict_sound_bookmark.id).exists())
+        non_conflict = bookmarks.models.Bookmark.objects.get(id=non_conflicting_categorized.id)
+        self.assertIsNone(non_conflict.category)

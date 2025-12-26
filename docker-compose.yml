@@ -35,6 +35,7 @@ services:
         command: python manage.py runserver 0.0.0.0:8000
         volumes:
             - .:/code
+            - /code/.venv
             - ./freesound-data/:/freesound-data
             - fswebhome:/home/fsweb
         ports:
@@ -86,6 +87,7 @@ services:
         command: celery -A freesound worker --concurrency=2 -l info -Q async_tasks_queue,sound_processing_queue,sound_analysis_old_queue,clustering_queue
         volumes:
             - .:/code
+            - /code/.venv
             - ./freesound-data/:/freesound-data
         env_file:
             - environment

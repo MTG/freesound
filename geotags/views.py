@@ -175,6 +175,8 @@ def geotags_for_query_barray(request):
         results, _ = perform_search_engine_query(query_params)
         results_docs = results.docs
 
+    if results_docs is None:
+        results_docs = []
     generated_bytearray, num_geotags = generate_geotag_bytearray_dict(results_docs)
     if num_geotags > 0:
         log_map_load("query", num_geotags, request)

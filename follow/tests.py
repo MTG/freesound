@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -152,3 +154,85 @@ class FollowTestCase(TestCase):
         # Stream should return OK
         resp = self.client.get(reverse("stream"))
         self.assertEqual(resp.status_code, 200)
+
+
+class StreamViewTestCase(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create_user(username="stream-user", password="pwd12345")
+        self.client.force_login(self.user)
+        self.more_params = ["filter", "sort"]
+        self.tags = ["field-recording"]
+        self.stream_response = (
+            [(self.user, [], self.more_params, 0, 0)],
+            [(self.tags, [], self.more_params, 0, 0)],
+        )
+        self.build_patcher = patch("follow.views.follow_utils.build_time_lapse", return_value="MOCK_TIME_LAPSE")
+        self.get_patcher = patch("follow.views.follow_utils.get_stream_sounds", return_value=self.stream_response)
+        self.mock_build_time_lapse = self.build_patcher.start()
+        self.mock_get_stream_sounds = self.get_patcher.start()
+
+    def tearDown(self):
+        self.build_patcher.stop()
+        self.get_patcher.stop()
+        super().tearDown()
+
+    def _reset_mocks(self):
+        self.mock_build_time_lapse.reset_mock()
+        self.mock_get_stream_sounds.reset_mock()
+        self.mock_get_stream_sounds.return_value = self.stream_response
+
+    def test_stream_get_uses_default_range(self):
+        self._reset_mocks()
+        response = self.client.get(reverse("stream"))
+
+        self.assertEqual(response.status_code, 200)
+        context = response.context[-1]
+        self.mock_build_time_lapse.assert_called_once()
+        self.mock_get_stream_sounds.assert_called_once_with(self.user, "MOCK_TIME_LAPSE", num_results_per_group=4)
+        self.assertEqual(response.context["select_value"], "")
+        self.assertEqual(response.context["users_sounds"][0][0], self.user)
+        self.assertEqual(response.context["tags_sounds"][0][0], self.tags)
+
+    def test_stream_post_time_lapse_option(self):
+        self._reset_mocks()
+        response = self.client.post(reverse("stream"), {"time_lapse": "last_week"})
+
+        self.assertEqual(response.status_code, 200)
+        self.mock_build_time_lapse.assert_called_once()
+        self.mock_get_stream_sounds.assert_called_once_with(self.user, "MOCK_TIME_LAPSE", num_results_per_group=4)
+        self.assertEqual(response.context["select_value"], "last_week")
+        self.assertEqual(response.context["users_sounds"][0][0], self.user)
+
+    def test_stream_post_specific_dates_option(self):
+        self._reset_mocks()
+        payload = {
+            "time_lapse": "specific_dates",
+            "date_from": "2024-01-02",
+            "date_to": "2024-01-05",
+        }
+        response = self.client.post(reverse("stream"), payload)
+
+        self.assertEqual(response.status_code, 200)
+        self.mock_build_time_lapse.assert_not_called()
+        expected_time_lapse = '["2024-01-02T00:00:00Z" TO "2024-01-05T23:59:59.999Z"]'
+        self.mock_get_stream_sounds.assert_called_once_with(self.user, expected_time_lapse, num_results_per_group=4)
+        self.assertEqual(response.context["date_from"], "2024-01-02")
+        self.assertEqual(response.context["date_to"], "2024-01-05")
+
+    def test_stream_post_specific_dates_missing_from(self):
+        self._reset_mocks()
+        payload = {
+            "time_lapse": "specific_dates",
+            "date_from": "",
+            "date_to": "2024-01-05",
+        }
+        response = self.client.post(reverse("stream"), payload)
+
+        self.assertEqual(response.status_code, 200)
+        self.mock_build_time_lapse.assert_not_called()
+        expected_date_from = "2023-12-29"
+        expected_time_lapse = f'["{expected_date_from}T00:00:00Z" TO "2024-01-05T23:59:59.999Z"]'
+        self.mock_get_stream_sounds.assert_called_once_with(self.user, expected_time_lapse, num_results_per_group=4)
+        self.assertEqual(response.context["date_from"], expected_date_from)
+        self.assertEqual(response.context["date_to"], "2024-01-05")

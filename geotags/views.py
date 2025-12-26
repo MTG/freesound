@@ -296,6 +296,23 @@ def for_pack(request, username, pack_id):
 def for_query(request):
     tvars = _get_geotags_query_params(request)
     request_parameters_string = request.get_full_path().split("?")[-1]
+    sqp = SearchQueryProcessor(request, request_params=request.GET)
+    if sqp.errors:
+        tvars.update(
+            {
+                "tag": None,
+                "username": None,
+                "pack": None,
+                "sound": None,
+                "query_params": None,
+                "query_params_encoded": None,
+                "query_search_page_url": None,
+                "query_description": None,
+                "url": None,
+                "error_text": "There was an error while searching, is your query correct?",
+            }
+        )
+        return render(request, "geotags/geotags.html", tvars)
     tvars.update(
         {
             "tag": None,
@@ -305,7 +322,7 @@ def for_query(request):
             "query_params": request_parameters_string,
             "query_params_encoded": urllib.parse.quote(request_parameters_string),
             "query_search_page_url": reverse("sounds-search") + f"?{request_parameters_string}",
-            "query_description": SearchQueryProcessor(request).get_textual_description(),
+            "query_description": sqp.get_textual_description(),
             "url": reverse("geotags-for-query-barray") + f"?{request_parameters_string}",
         }
     )

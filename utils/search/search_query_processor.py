@@ -24,12 +24,14 @@ import urllib
 
 import luqum.tree
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.http import urlencode
 from luqum.parser import parser
 from luqum.pretty import prettify
 
 from sounds.models import Sound
+from tags.models import Tag
 from utils.clustering_utilities import get_clusters_for_query, get_ids_in_cluster
 from utils.encryption import create_hash
 from utils.search import SearchEngineException
@@ -322,6 +324,19 @@ class SearchQueryProcessor:
         if self.has_filter_with_name("grouping_pack"):
             self.errors = "Filter parsing error: 'grouping_pack' is not a valid filter name"
             return
+
+        # Validate tag filters to match tag naming rules. You can't add a tag that doesn't match our validation regex
+        # and the tag is used in the follow_tags url. If the tag is invalid, just return an error.
+        for node in self.f_parsed:
+            if type(node) == luqum.tree.SearchField and node.name == "tag":
+                tag_value = str(node.expr)
+                if tag_value.startswith('"') and tag_value.endswith('"'):
+                    tag_value = tag_value[1:-1]
+                try:
+                    Tag._meta.get_field("name").clean(tag_value, None)
+                except ValidationError:
+                    self.errors = f"Filter parsing error: invalid tag value '{tag_value}'"
+                    return
 
         # Remove duplicate filters if any
         nodes_in_filter = []

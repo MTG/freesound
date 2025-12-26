@@ -26,6 +26,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import Site
 from django.core import mail
 from django.core.management import call_command
@@ -33,6 +34,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
+from django.utils.http import int_to_base36
 
 from accounts.forms import DeleteUserForm, FsPasswordResetForm, UsernameField
 from accounts.models import DeletedUser, OldUsername, Profile, ResetEmailRequest, SameUser, UserDeletionRequest
@@ -208,6 +210,25 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context["all_ok"], True)
         self.assertEqual(User.objects.get(username=username).is_active, True)
+
+    @mock.patch("django_recaptcha.fields.ReCaptchaField.validate")
+    def test_user_registration_handles_integrity_error(self, magic_mock_function):
+        username = "race_user"
+        with mock.patch("accounts.forms.User.save", side_effect=IntegrityError):
+            resp = self.client.post(
+                reverse("accounts-registration-modal"),
+                data={
+                    "username": [username],
+                    "password1": ["GoodPass123!"],
+                    "accepted_tos": ["on"],
+                    "email1": ["race@example.com"],
+                    "email2": ["race@example.com"],
+                },
+            )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Unable to create this account. Please try again.")
+        self.assertEqual(User.objects.filter(username=username).count(), 0)
+        self.assertEqual(len(mail.outbox), 0)  # No email sent
 
     def test_user_activation_fails(self):
         user = User.objects.get(username="User6Inactive")  # Inactive user in fixture
@@ -949,6 +970,22 @@ class EmailResetTestCase(TestCase):
 
         self.assertNotEqual(resp.context["form"].errors, None)
 
+    def test_reset_email_complete_handles_integrity_error(self):
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        self.client.force_login(user)
+        ResetEmailRequest.objects.create(user=user, email="new_email@freesound.org")
+        uidb36 = int_to_base36(user.id)
+        token = default_token_generator.make_token(user)
+        with mock.patch("django.contrib.auth.models.User.save", side_effect=IntegrityError):
+            resp = self.client.get(
+                reverse("accounts-email-reset-complete", kwargs={"uidb36": uidb36, "token": token}),
+                follow=True,
+            )
+        self.assertEqual(resp.redirect_chain[-1][0], reverse("accounts-email-reset"))
+        self.assertContains(resp, "Unable to update your email address. Please try again.")
+        user.refresh_from_db()
+        self.assertEqual(user.email, "testuser@freesound.org")
+
 
 class ReSendActivationTestCase(TestCase):
     def test_resend_activation_code_from_email(self):
@@ -1110,6 +1147,23 @@ class ChangeUsernameTest(TestCase):
         userA.refresh_from_db()
         self.assertEqual(userA.username, "userANewNewName")  # ...username has not changed...
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)  # ...and no new OldUsername objects created
+
+    def test_change_username_handles_integrity_error(self):
+        userA = User.objects.create_user("userA", email="userA@freesound.org")
+        self.client.force_login(userA)
+        with mock.patch("django.contrib.auth.models.User.save", side_effect=IntegrityError):
+            resp = self.client.post(
+                reverse("accounts-edit"),
+                data={"profile-username": ["userANewName"], "profile-ui_theme_preference": "f"},
+            )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context["profile_form"].has_error("username"), True)
+        self.assertIn(
+            "This username is already taken or has been in used in the past",
+            str(resp.context["profile_form"]["username"].errors),
+        )
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, "userA")
 
     def test_change_username_mark_sounds_dirty(self):
         # Thest that changing username of a user that has sounds marks her sounds as dirty

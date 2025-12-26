@@ -46,7 +46,7 @@ from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.core.cache import caches
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import TemporaryUploadedFile
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Sum
 from django.db.models.expressions import Value
 from django.db.models.fields import CharField
@@ -321,12 +321,19 @@ def update_old_cc_licenses(request):
         return HttpResponseRedirect(reverse("accounts-home"))
 
 
-@transaction.atomic()
 def registration_modal(request):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            try:
+                user = form.save()
+            except IntegrityError:
+                form.add_error(None, "Unable to create this account. Please try again.")
+                if form.has_error("email1") and "email2" in form.data:
+                    post_data = form.data.copy()
+                    post_data["email2"] = ""
+                    form.data = post_data
+                return render(request, "accounts/modal_registration.html", {"registration_form": form})
             send_activation(user)
             # If the form is valid we will return a JSON response with the URL where
             # the user should be redirected (a URL which will include the "Almost done" message). The browser
@@ -447,14 +454,22 @@ def edit(request):
         if profile_form.is_valid():
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data["username"]
-            request.user.save()
-            invalidate_user_template_caches(request.user.id)
-            profile.save()
-            msg_txt = "Your profile has been updated correctly."
-            if old_sound_signature != profile.sound_signature:
-                msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
-            messages.add_message(request, messages.INFO, msg_txt)
-            return HttpResponseRedirect(reverse("accounts-edit"))
+            try:
+                request.user.save()
+            except IntegrityError:
+                profile_form.add_error(
+                    "username",
+                    "This username is already taken or has been in used in the past by another user",
+                )
+                request.user.refresh_from_db(fields=["username"])
+            else:
+                invalidate_user_template_caches(request.user.id)
+                profile.save()
+                msg_txt = "Your profile has been updated correctly."
+                if old_sound_signature != profile.sound_signature:
+                    msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
+                messages.add_message(request, messages.INFO, msg_txt)
+                return HttpResponseRedirect(reverse("accounts-edit"))
     else:
         profile_form = ProfileForm(request, instance=profile, prefix="profile")
 
@@ -1678,7 +1693,11 @@ def email_reset_complete(request, uidb36=None, token=None):
     # Change the mail in the DB
     old_email = user.email
     user.email = rer.email
-    user.save()
+    try:
+        user.save()
+    except IntegrityError:
+        messages.add_message(request, messages.ERROR, "Unable to update your email address. Please try again.")
+        return HttpResponseRedirect(reverse("accounts-email-reset"))
 
     # Remove temporal mail change information from the DB
     ResetEmailRequest.objects.get(user=user).delete()

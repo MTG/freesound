@@ -32,6 +32,7 @@ import os
 import random
 import time
 import urllib.parse
+from datetime import timedelta
 
 import pytest
 from django.conf import settings
@@ -329,7 +330,7 @@ def test_posts(test_users, db):
         thread.refresh_from_db()
 
     all_posts = []
-    base_time = timezone.now() - timezone.timedelta(days=30)
+    base_time = timezone.now() - timedelta(days=30)
 
     post_content = [
         "Welcome everyone! This is a great place to discuss audio and sound design.",
@@ -346,7 +347,7 @@ def test_posts(test_users, db):
                 author=test_users[i % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=i * 2),
+                created=base_time + timedelta(hours=i * 2),
             )
         )
 
@@ -365,7 +366,7 @@ def test_posts(test_users, db):
                 author=test_users[(i + 2) % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=24 + i * 3),
+                created=base_time + timedelta(hours=24 + i * 3),
             )
         )
 
@@ -384,7 +385,7 @@ def test_posts(test_users, db):
                 author=test_users[(i + 1) % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=48 + i * 2.5),
+                created=base_time + timedelta(hours=48 + i * 2.5),
             )
         )
 
@@ -403,7 +404,7 @@ def test_posts(test_users, db):
                 author=test_users[i % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=72 + i * 1.8),
+                created=base_time + timedelta(hours=72 + i * 1.8),
             )
         )
 
@@ -423,7 +424,7 @@ def test_posts(test_users, db):
                 author=test_users[(i + 1) % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=96 + i * 2.2),
+                created=base_time + timedelta(hours=96 + i * 2.2),
             )
         )
 
@@ -443,7 +444,7 @@ def test_posts(test_users, db):
                 author=test_users[(i + 2) % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=120 + i * 1.5),
+                created=base_time + timedelta(hours=120 + i * 1.5),
             )
         )
 

@@ -108,7 +108,8 @@ def ticket(request, ticket_key):
         raise Http404
 
     if request.method == "POST":
-        invalidate_user_template_caches(ticket.sender.id)
+        if ticket.sender:
+            invalidate_user_template_caches(ticket.sender.id)
         invalidate_all_moderators_header_cache()
 
         # Left ticket message
@@ -207,7 +208,7 @@ def ticket(request, ticket_key):
     if clean_comment_form:
         tc_form = _get_tc_form(request, False)
 
-    if request.user.has_perm("tickets.can_moderate"):
+    if request.user.has_perm("tickets.can_moderate") and ticket.sender:
         num_mod_annotations = UserAnnotation.objects.filter(user=ticket.sender).count()
     else:
         num_mod_annotations = None
@@ -218,7 +219,7 @@ def ticket(request, ticket_key):
         "sound_form": sound_form,
         "num_mod_annotations": num_mod_annotations,
         "can_view_moderator_only_messages": can_view_moderator_only_messages,
-        "num_sounds_pending": ticket.sender.profile.num_sounds_pending_moderation(),
+        "num_sounds_pending": ticket.sender.profile.num_sounds_pending_moderation() if ticket.sender else None,
     }
 
     sound_object = Sound.objects.bulk_query_id(sound_ids=[ticket.sound_id])[0] if ticket.sound_id is not None else None

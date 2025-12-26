@@ -296,7 +296,7 @@ def for_pack(request, username, pack_id):
 def for_query(request):
     tvars = _get_geotags_query_params(request)
     request_parameters_string = request.get_full_path().split("?")[-1]
-    sqp = SearchQueryProcessor(request, request_params=request.GET)
+    sqp = SearchQueryProcessor(request)
     if sqp.errors:
         tvars.update(
             {

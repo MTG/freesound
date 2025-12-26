@@ -349,9 +349,11 @@ class SearchQueryProcessor:
         for node in self.f_parsed:
             if type(node) == luqum.tree.SearchField:
                 if node.name == field_name:
-                    # node.expr is expected to be of type luqum.tree.Range
-                    values_to_update[field_name] = [str(node.expr.low), str(node.expr.high)]
-                    self.f_parsed = [f for f in self.f_parsed if f != node]
+                    if isinstance(node.expr, luqum.tree.Range):
+                        values_to_update[field_name] = [str(node.expr.low), str(node.expr.high)]
+                        self.f_parsed = [f for f in self.f_parsed if f != node]
+                    else:
+                        self.errors = f"Filter parsing error: '{field_name}' filter value must be a range (e.g., {field_name}:[0 TO 100])"
 
         if values_to_update:
             self.request.GET = self.request.GET.copy()

@@ -26,7 +26,7 @@
                     <span class="h-spacing-1">·</span><a class="bw-link--grey" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);">Mod annotations (<span class="annotation-counter-{{ ticket.sender.id }}">{{ num_mod_annotations }}</span>)</a>
                     {% endif %}
                     {% else %}
-                    anonymous
+                    User deleted
                     {% endif %}
                 </td></tr>
                 <tr><td class="text-grey">Created on</td><td>{{ ticket.created }} ({{ ticket.created|timesince }} ago)</td></tr>
@@ -124,4 +124,3 @@
     </div>
 </div>
 {% endblock %}
-

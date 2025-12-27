@@ -1,4 +1,4 @@
-FROM debian:10
+FROM debian:11
 
 LABEL org.opencontainers.image.authors="support@freesound.org"
 
@@ -19,7 +19,7 @@ RUN apt-get update \
                        wget \
     && rm -rf /var/lib/apt/lists/*
 
-# pip
+# pip, last supported version for python 2.7
 ENV PYTHON_PIP_VERSION=20.0.2
 RUN set -ex; \
 	\

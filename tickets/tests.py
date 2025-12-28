@@ -31,7 +31,11 @@ import sounds
 import tickets
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW
-from tickets.forms import IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
+from tickets.forms import (
+    IS_EXPLICIT_ADD_FLAG_KEY,
+    IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY,
+    IS_EXPLICIT_REMOVE_FLAG_KEY,
+)
 
 from .models import Ticket
 
@@ -204,11 +208,6 @@ class TicketTestsFromQueue(TicketTests):
         self.ticket.refresh_from_db()
         self.assertEqual(self.ticket.status, TICKET_STATUS_CLOSED)
         self.assertIsNone(self.ticket.sound)
-
-    @mock.patch("general.tasks.whitelist_user.delay")
-    def test_whitelist_from_queue(self, whitelist_task):
-        self._perform_action("Whitelist")
-        whitelist_task.assert_called_once_with(annotation_sender_id=self.test_moderator.id, ticket_ids=[self.ticket.id])
 
     def _assert_ticket_and_sound_fields(self, status, assignee, moderation_state):
         self.ticket.refresh_from_db()

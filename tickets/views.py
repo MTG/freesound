@@ -50,6 +50,7 @@ from tickets import (
 from tickets.forms import (
     IS_EXPLICIT_ADD_FLAG_KEY,
     IS_EXPLICIT_REMOVE_FLAG_KEY,
+    ModerationChoices,
     ModerationMessageForm,
     ModeratorMessageForm,
     SoundModerationForm,
@@ -153,7 +154,7 @@ def ticket(request, ticket_key):
                 if ticket.assignee is None:
                     ticket.assignee = request.user
 
-                if sound_action == "Delete":
+                if sound_action == ModerationChoices.DELETE:
                     if ticket.sound:
                         ticket.sound.delete()
                         ticket.sound = None
@@ -161,27 +162,22 @@ def ticket(request, ticket_key):
                     comment += "deleted the sound and closed the ticket"
                     notification = ticket.NOTIFICATION_DELETED
 
-                elif sound_action == "Defer":
+                elif sound_action == ModerationChoices.DEFER:
                     ticket.status = TICKET_STATUS_DEFERRED
                     ticket.sound.change_moderation_state("PE")  # not sure if this state have been used before
                     comment += "deferred the ticket"
 
-                elif sound_action == "Return":
+                elif sound_action == ModerationChoices.RETURN:
                     ticket.status = TICKET_STATUS_NEW
                     ticket.assignee = None
                     ticket.sound.change_moderation_state("PE")
                     comment += "returned the ticket to new sounds queue"
 
-                elif sound_action == "Approve":
+                elif sound_action == ModerationChoices.APPROVE:
                     ticket.status = TICKET_STATUS_CLOSED
                     ticket.sound.change_moderation_state("OK")
                     comment += "approved the sound and closed the ticket"
                     notification = ticket.NOTIFICATION_APPROVED
-
-                elif sound_action == "Whitelist":
-                    whitelist_user_task.delay(annotation_sender_id=request.user.id, ticket_ids=[ticket.id])
-                    comment += f"whitelisted all sounds from user {ticket.sender}"
-                    notification = ticket.NOTIFICATION_WHITELISTED
 
                 elif sound_action == "Close":
                     # This option in never shown in the form, but used when needing to close a ticket which has no sound associated (see ticket.html)
@@ -203,7 +199,11 @@ def ticket(request, ticket_key):
         return redirect(reverse("tickets-ticket", args=[ticket.key]))
 
     if clean_status_forms:
-        default_action = "Return" if ticket.sound and ticket.sound.moderation_state == "OK" else "Approve"
+        default_action = (
+            ModerationChoices.RETURN
+            if ticket.sound and ticket.sound.moderation_state == "OK"
+            else ModerationChoices.APPROVE
+        )
         sound_form = SoundStateForm(initial={"action": default_action}, prefix="ss")
     if clean_comment_form:
         tc_form = _get_tc_form(request, False)
@@ -542,7 +542,7 @@ def moderation_assigned(request, user_id):
                 sounds_update_params["is_explicit"] = is_explicit_choice_key == IS_EXPLICIT_ADD_FLAG_KEY
                 sounds_update_params["is_index_dirty"] = True
 
-            if action == "Approve":
+            if action == ModerationChoices.APPROVE:
                 tickets.update(status=TICKET_STATUS_CLOSED)
                 sounds_update_params.update(
                     {
@@ -558,7 +558,7 @@ def moderation_assigned(request, user_id):
                 else:
                     notification = Ticket.NOTIFICATION_APPROVED
 
-            elif action == "Defer":
+            elif action == ModerationChoices.DEFER:
                 tickets.update(status=TICKET_STATUS_DEFERRED)
                 if sounds_update_params:
                     Sound.objects.filter(ticket__in=tickets).update(**sounds_update_params)
@@ -567,11 +567,11 @@ def moderation_assigned(request, user_id):
                 if msg:
                     notification = Ticket.NOTIFICATION_QUESTION
 
-            elif action == "Return":
+            elif action == ModerationChoices.RETURN:
                 tickets.update(status=TICKET_STATUS_NEW, assignee=None)
                 # no notification here
 
-            elif action == "Delete":
+            elif action == ModerationChoices.DELETE:
                 # to prevent a crash if the form is resubmitted
                 tickets.update(status=TICKET_STATUS_CLOSED)
                 # if tickets are being deleted we have to fill users_to_update
@@ -587,24 +587,6 @@ def moderation_assigned(request, user_id):
                 # not affect the TicketComment post_save trigger
                 tickets = Ticket.objects.filter(id__in=ticket_ids)
                 notification = Ticket.NOTIFICATION_DELETED
-
-            elif action == "Whitelist":
-                ticket_ids = list(tickets.values_list("id", flat=True))
-                whitelist_user_task.delay(
-                    annotation_sender_id=request.user.id, ticket_ids=ticket_ids
-                )  # async job should take care of whitelisting
-                notification = Ticket.NOTIFICATION_WHITELISTED
-
-                users = set(tickets.values_list("sender__username", flat=True))
-                messages.add_message(
-                    request,
-                    messages.INFO,
-                    """User(s) %s has/have been whitelisted. Some of tickets might
-                    still appear on this list for some time. Please reload the
-                    page in a few seconds to see the updated list of pending
-                    tickets"""
-                    % ", ".join(users),
-                )
 
             # Trigger some async tasks to update user and pack counts, clear caches, send email notifications, etc.
             if msg:
@@ -637,7 +619,7 @@ def moderation_assigned(request, user_id):
         else:
             clear_forms = False
     if clear_forms:
-        mod_sound_form = SoundModerationForm(initial={"action": "Approve"})
+        mod_sound_form = SoundModerationForm(initial={"action": ModerationChoices.APPROVE})
         msg_form = ModerationMessageForm()
 
     qs = (

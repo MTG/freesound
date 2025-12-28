@@ -630,6 +630,7 @@ class PublicSoundManager(models.Manager):
 
 
 class Sound(models.Model):
+    id: int
     user = models.ForeignKey(User, related_name="sounds", on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 

@@ -21,6 +21,7 @@
 import datetime
 import os
 import random
+import typing
 from urllib.parse import quote
 
 from django.conf import settings
@@ -39,7 +40,7 @@ from django.utils import timezone
 from django.utils.encoding import smart_str
 from psycopg.errors import ForeignKeyViolation
 
-import tickets.models
+import tickets
 from apiv2.models import ApiV2Client
 from bookmarks.models import Bookmark
 from comments.models import Comment
@@ -52,6 +53,9 @@ from sounds.models import BulkUploadProgress, Download, License, Pack, PackDownl
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from utils.search import SearchEngineException, get_search_engine
+
+if typing.TYPE_CHECKING:
+    import tickets.views
 
 
 class ResetEmailRequest(models.Model):
@@ -99,6 +103,7 @@ class ProfileManager(models.Manager):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
+    user_id: int
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
     signature = models.TextField(max_length=256, null=True, blank=True)
@@ -657,7 +662,7 @@ class Profile(models.Model):
     @property
     def num_packs(self):
         # Return the number of packs for which at least one sound has been published
-        return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by("pack_id").distinct("pack").count()
+        return Sound.public.filter(user=self.user).exclude(pack=None).order_by("pack_id").distinct("pack").count()
 
     def get_stats_for_profile_page(self):
         # Return a dictionary of user statistics to show on the user profile page

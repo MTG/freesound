@@ -106,6 +106,7 @@
                     <h4 id="moderate-form-title-label"></h4>
                     <div>
                         <form action="." method="post" class="bw-form disable-on-submit do-not-submit-on-enter">{% csrf_token %}
+                            <input type="hidden" name="page" value="{{ current_page }}" />
                             <div class="bw-inline-radio">
                             {{ mod_sound_form.as_p }}
                             </div>

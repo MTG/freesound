@@ -138,7 +138,9 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
             collection, _ = Collection.objects.get_or_create(name=collection_to_use.name, id=collection_to_use.id)
         elif self.user_saving_sound.id in maintainers_list:
             collection, _ = Collection.objects.get_or_create(name=collection_to_use.name, id=collection_to_use.id)
-        CollectionSound.objects.create(user=self.user_saving_sound, collection=collection, sound=sound, status="OK")
+        CollectionSound.objects.get_or_create(
+            user=self.user_saving_sound, collection=collection, sound=sound, defaults={"status": "OK"}
+        )
         return collection
 
     def clean(self):
@@ -275,7 +277,9 @@ class CollectionEditForm(forms.ModelForm):
         for snd in new_sounds:
             if snd not in current_sounds:
                 sound = Sound.objects.get(id=snd)
-                CollectionSound.objects.create(user=user_adding_sound, sound=sound, collection=collection, status="OK")
+                CollectionSound.objects.get_or_create(
+                    user=user_adding_sound, sound=sound, collection=collection, defaults={"status": "OK"}
+                )
 
             else:
                 current_sounds.remove(snd)

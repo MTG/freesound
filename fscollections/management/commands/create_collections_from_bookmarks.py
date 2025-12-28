@@ -49,8 +49,10 @@ class Command(LoggingBaseCommand):
                 collection, created = Collection.objects.get_or_create(user=user, name=collection_name, public=False)
                 if created:
                     for bookmark in bookmark_category_sounds:
-                        CollectionSound.objects.create(
-                            collection=collection, sound=bookmark.sound, status="OK", user=collection.user
+                        CollectionSound.objects.get_or_create(
+                            collection=collection,
+                            sound=bookmark.sound,
+                            defaults={"status": "OK", "user": collection.user},
                         )
                     # No need to manually set num_sounds as it is set on save()
                     collection.save()
@@ -74,8 +76,10 @@ class Command(LoggingBaseCommand):
                 )
                 if created:
                     for bookmark in bookmark_category_sounds:
-                        CollectionSound.objects.create(
-                            collection=collection, sound=bookmark.sound, status="OK", user=collection.user
+                        CollectionSound.objects.get_or_create(
+                            collection=collection,
+                            sound=bookmark.sound,
+                            defaults={"status": "OK", "user": collection.user},
                         )
                     # No need to manually set num_sounds as it is set on save()
                     collection.save()

@@ -316,13 +316,6 @@ class SearchQueryProcessor:
         else:
             self.f_parsed = []
 
-        # Handle the special case of old "gropuing_pack" filter which is not valid anymore
-        # Looks like some bots are still using it which results in many errors reported in the logs and
-        # many Solr queries failing. By returning an early error, we avoid the Solr request.
-        if self.has_filter_with_name("grouping_pack"):
-            self.errors = "Filter parsing error: 'grouping_pack' is not a valid filter name"
-            return
-
         # Remove duplicate filters if any
         nodes_in_filter = []
         f_parsed_no_duplicates = []
@@ -355,8 +348,7 @@ class SearchQueryProcessor:
         field_name = self.options["duration"].search_engine_field_name
         for node in self.f_parsed:
             if type(node) == luqum.tree.SearchField:
-                if node.name == field_name:
-                    # node.expr is expected to be of type luqum.tree.Range
+                if node.name == field_name and isinstance(node.expr, luqum.tree.Range):
                     values_to_update[field_name] = [str(node.expr.low), str(node.expr.high)]
                     self.f_parsed = [f for f in self.f_parsed if f != node]
 
@@ -399,8 +391,13 @@ class SearchQueryProcessor:
                 if node.name not in search_engine_field_names_used_in_options:
                     self.non_option_filters.append((node.name, str(node.expr)))
 
-    # Filter-related methods
+        # Handle the special case of old "gropuing_pack" filter which is not valid anymore
+        # Looks like some bots are still using it which results in many errors reported in the logs and
+        # many Solr queries failing.
+        if self.has_filter_with_name("grouping_pack"):
+            self.errors = "Filter parsing error: 'grouping_pack' is not a valid filter name"
 
+    # Filter-related methods
     def get_active_filters(
         self,
         include_filters_from_options=True,

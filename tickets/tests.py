@@ -24,6 +24,8 @@ from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
@@ -175,6 +177,22 @@ class MiscTicketTests(TicketTests):
             local_vars,
             user_to=ticket.sender,
         )
+
+    def test_ticket_update_notification_uses_min_template_for_moderators(self):
+        ticket = self._create_assigned_ticket()
+        self.client.force_login(self.test_user)
+
+        response = self.client.post(
+            reverse("tickets-ticket", args=[ticket.key]),
+            {"message": "Please review the update"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        domain = Site.objects.get_current().domain
+        ticket_url = f"https://{domain}{reverse('tickets-ticket', args=[ticket.key])}"
+        expected_body = f'Ticket "Moderate sound test_sound.wav" updated: {ticket_url}'
+        self.assertEqual(mail.outbox[0].body.strip(), expected_body)
 
 
 class TicketTestsFromQueue(TicketTests):

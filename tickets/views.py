@@ -125,7 +125,7 @@ def ticket(request, ticket_key):
                     )
                     if request.user == ticket.sender:
                         # If the sender is the same as the user, we send the notification to the moderator
-                        ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED, Ticket.MODERATOR_ONLY)
+                        ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED_MIN, Ticket.MODERATOR_ONLY)
                     else:
                         # If the sender is not the same as the user, then this is a moderator editing the ticket
                         # only send the notification to the user if the message is not moderator only

@@ -96,6 +96,17 @@
     border-radius: 50%;
   }
 
+  &__meta {
+    display: flex;
+    justify-content: space-between;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__edited {
+    text-align: right;
+  }
+
   &__report {
     cursor: pointer;
   }

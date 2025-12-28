@@ -32,7 +32,12 @@
                         > <a class="text-grey h-spacing-left-1" href="{% url "forums-thread" post.thread.forum.name_slug post.thread.id %}">{{ post.thread.title }}</a>
                     </div>
                 {% endif %}
-                <div class="text-light-grey text-14">{{post.created|timesince}} ago</div>
+                <div class="bw-post__meta text-light-grey text-14 h-spacing-2">
+                    <span>{{ post.created|timesince }} ago</span>
+                    {% if show_post_edited %}
+                        <span class="bw-post__edited">Edited: {{ post.modified|timesince }} ago</span>
+                    {% endif %}
+                </div>
                 {% if show_action_icons %}
                 <div class="text-14">
                     <span class="padding-right-2">

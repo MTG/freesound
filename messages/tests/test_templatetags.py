@@ -19,25 +19,10 @@
 #
 
 
-from django import template
-
-from utils.text import clean_html
-
-register = template.Library()
+from messages.templatetags.display_message import message_preview_text
 
 
-@register.inclusion_tag("messages/display_message.html", takes_context=True)
-def display_message(context, message):
-    return {
-        "message": message,
-        "hide_toggle_read_unread": context.get("hide_toggle_read_unread", False),
-        "hide_archive_unarchive": context.get("hide_archive_unarchive", False),
-        "list_type": context["list_type"],
-    }
-
-
-@register.filter(name="message_preview_text")
-def message_preview_text(value):
-    if not value:
-        return ""
-    return clean_html(value, ok_tags=[], ok_attributes={})
+def test_message_preview_text_strips_html():
+    # Message preview shows no html
+    text = 'Test with <a href="https://example.com">link</a> and <strong>bold</strong>.'
+    assert message_preview_text(text) == "Test with link and bold."

@@ -9,9 +9,7 @@
 {% block page-title %}Moderate forum posts ({{ post_list|length }}){% endblock %}
 
 {% block page-content %}
-<div>Below is a list of forum posts that require moderation. You can either approve or reject them individually. Also you have the option to
-    delete the whole corresponding user object if it is believed to be a spammer.
-</div>
+<div>Below is a list of forum posts that require moderation. You can either approve or reject them individually.</div>
 <div class="v-spacing-top-6">
     {% for post in post_list %}
         <div class="row">
@@ -36,5 +34,4 @@
     {% endfor %}
 </div>
 {% endblock %}
-
 

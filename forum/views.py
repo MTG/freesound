@@ -26,7 +26,6 @@ import re
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Prefetch
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
@@ -35,8 +34,7 @@ from django.template import loader
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.models import DeletedUser
-from forum.forms import NewThreadForm, PostModerationForm, PostReplyForm
+from forum.forms import ModerationAction, NewThreadForm, PostModerationForm, PostReplyForm
 from forum.models import Forum, Post, Subscription, Thread
 from utils.cache import invalidate_all_moderators_header_cache, invalidate_template_cache
 from utils.mail import send_mail_template
@@ -524,23 +522,14 @@ def moderate_posts(request):
             post_id = mod_form.cleaned_data.get("post")
             try:
                 post = Post.objects.get(id=post_id)
-                if action == "Approve":
+                if action == ModerationAction.APPROVE:
                     post.moderation_state = "OK"
                     post.save()
 
                     # Invalidate the thread common commenters cache as it could have changed
                     invalidate_template_cache("bw_thread_common_commenters", post.thread.id)
 
-                elif action == "Delete User":
-                    try:
-                        deletion_reason = DeletedUser.DELETION_REASON_SPAMMER
-                        post.author.profile.delete_user(
-                            delete_user_object_from_db=True, deletion_reason=deletion_reason
-                        )
-                        messages.add_message(request, messages.INFO, "The user has been successfully deleted.")
-                    except User.DoesNotExist:
-                        messages.add_message(request, messages.INFO, "The user has already been deleted.")
-                elif action == "Delete Post":
+                elif action == ModerationAction.DELETE_POST:
                     post.delete()
                     messages.add_message(request, messages.INFO, "The post has been successfully deleted.")
             except Post.DoesNotExist:

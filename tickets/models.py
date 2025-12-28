@@ -52,6 +52,7 @@ class Ticket(models.Model):
     NOTIFICATION_APPROVED_BUT = "emails/email_notification_approved_but.txt"
     NOTIFICATION_DELETED = "emails/email_notification_deleted.txt"
     NOTIFICATION_UPDATED = "emails/email_notification_updated.txt"
+    NOTIFICATION_UPDATED_MIN = "emails/email_notification_updated_min.txt"
     NOTIFICATION_WHITELISTED = "emails/email_notification_whitelisted.txt"
 
     MODERATOR_ONLY = 1

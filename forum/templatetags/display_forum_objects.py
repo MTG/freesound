@@ -101,6 +101,9 @@ def display_post(
             highlighted_content = False
     else:
         highlighted_content = False
+    edited_diff = None
+    if post.modified and post.created:
+        edited_diff = abs((post.modified - post.created).total_seconds())
     return {
         "post": post,
         "highlighted_content": highlighted_content,
@@ -109,6 +112,7 @@ def display_post(
         "show_action_icons": show_action_icons,
         "show_report_actions": show_report_actions,
         "show_moderator_info": show_moderator_info,
+        "show_post_edited": edited_diff is not None and edited_diff > 1,
         "perms": context["perms"],
         "request": context["request"],
     }

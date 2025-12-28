@@ -613,7 +613,10 @@ def moderation_assigned(request, user_id):
             )
 
             messages.add_message(request, messages.INFO, f"{len(tickets)} ticket(s) successfully updated")
-            return HttpResponseRedirect(reverse("tickets-moderation-assigned", args=[request.user.id]))
+            redirect_page = request.POST.get("page") or request.GET.get("page") or 1
+            return HttpResponseRedirect(
+                reverse("tickets-moderation-assigned", args=[request.user.id]) + f"?page={redirect_page}"
+            )
         else:
             clear_forms = False
     if clear_forms:

@@ -1323,6 +1323,10 @@ def account(request, username):
     else:
         num_sounds_pending = None
         num_mod_annotations = None
+    if request.user.has_perm("tickets.can_moderate") or request.user.is_staff:
+        old_usernames = list(user.old_usernames.order_by("-created").values_list("username", flat=True))
+    else:
+        old_usernames = None
 
     show_about = (
         (request.user == user)  # user is looking at own page
@@ -1359,6 +1363,7 @@ def account(request, username):
         "following_tags_modal_page": request.GET.get("followingTags", 1),
         "last_geotags_serialized": last_geotags_serialized,
         "user_downloads_public": settings.USER_DOWNLOADS_PUBLIC,
+        "old_usernames": old_usernames,
     }
     return render(request, "accounts/account.html", tvars)
 

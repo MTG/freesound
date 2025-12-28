@@ -9,7 +9,6 @@ services:
             - environment
         volumes:
             - pgdata:/var/lib/postgresql/data
-            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         ports:
             - "5432:5432"
         environment:
@@ -30,9 +29,6 @@ services:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
         init: true
-        volumes:
-            - .:/code
-            - ./freesound-data/:/freesound-data
         env_file:
             - environment
         environment:
@@ -45,9 +41,6 @@ services:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
         init: true
-        volumes:
-            - .:/code
-            - ./freesound-data/:/freesound-data
         env_file:
             - environment
         environment:

@@ -19,6 +19,7 @@
 #
 
 from django import forms
+from django.db import models
 
 from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
@@ -87,11 +88,13 @@ class NewThreadForm(forms.Form):
         self.fields["subscribe"].widget.attrs["class"] = "bw-checkbox"
 
 
-MODERATION_CHOICES = [(x, x) for x in ["Approve", "Delete User", "Delete Post"]]
+class ModerationAction(models.TextChoices):
+    APPROVE = "Approve", "Approve"
+    DELETE_POST = "Delete Post", "Delete Post"
 
 
 class PostModerationForm(forms.Form):
-    action = forms.ChoiceField(choices=MODERATION_CHOICES, required=True, widget=forms.RadioSelect(), label="")
+    action = forms.ChoiceField(choices=ModerationAction.choices, required=True, widget=forms.RadioSelect(), label="")
     post = forms.IntegerField(widget=forms.widgets.HiddenInput)
 
     def __init__(self, *args, **kwargs):

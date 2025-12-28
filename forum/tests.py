@@ -24,6 +24,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import EmailPreferenceType, UserEmailSetting
+from forum.forms import ModerationAction
 from forum.models import Forum, Post, Subscription, Thread
 
 
@@ -635,37 +636,17 @@ class ForumModerationTestCase(TestCase):
 
     def test_approve_post(self):
         """Approve a post"""
-
         self.client.force_login(self.admin_user)
         resp = self.client.post(
             reverse("forums-moderate"),
             data={
-                f"{self.post.id}-action": ["Approve"],
+                f"{self.post.id}-action": [ModerationAction.APPROVE],
                 f"{self.post.id}-post": [f"{self.post.id}"],
             },
         )
         self.assertEqual(resp.status_code, 200)
         self.post.refresh_from_db()
         self.assertEqual(self.post.moderation_state, "OK")
-
-    def test_delete_user(self):
-        """The user is spammy, delete it. The post will also be deleted"""
-        self.client.force_login(self.admin_user)
-
-        resp = self.client.post(
-            reverse("forums-moderate"),
-            data={
-                f"{self.post.id}-action": ["Delete User"],
-                f"{self.post.id}-post": [f"{self.post.id}"],
-            },
-        )
-        self.assertEqual(resp.status_code, 200)
-        with self.assertRaises(Post.DoesNotExist):
-            self.post.refresh_from_db()
-        with self.assertRaises(User.DoesNotExist):
-            self.forum_user.refresh_from_db()
-
-        self.assertEqual(list(resp.context["messages"])[0].message, "The user has been successfully deleted.")
 
     def test_delete_post(self):
         """The post is spammy. Delete it, but keep the user"""
@@ -674,7 +655,7 @@ class ForumModerationTestCase(TestCase):
         resp = self.client.post(
             reverse("forums-moderate"),
             data={
-                f"{self.post.id}-action": ["Delete Post"],
+                f"{self.post.id}-action": [ModerationAction.DELETE_POST],
                 f"{self.post.id}-post": [f"{self.post.id}"],
             },
         )
@@ -693,7 +674,7 @@ class ForumModerationTestCase(TestCase):
         resp = self.client.post(
             reverse("forums-moderate"),
             data={
-                "1234-action": ["Delete Post"],
+                "1234-action": [ModerationAction.DELETE_POST],
                 "1234-post": ["1234"],
             },
         )

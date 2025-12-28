@@ -15,6 +15,11 @@
                     <h6 class="ellipsis"><a href="{% url "account" post.author.username %}">{{ post.author.username }}</a></h6>
                     <p class="text-grey no-margins">{{ post.author.profile.num_sounds|bw_intcomma }} sound{{ post.author.profile.num_sounds|pluralize }}</p>
                     <p class="text-grey no-margins">{{ post.author.profile.num_posts|bw_intcomma }} post{{ post.author.profile.num_posts|pluralize }}</p>
+                    {% if show_moderator_info %}
+                        <p class="text-grey no-margins">{{ post.author.profile.num_comments|bw_intcomma }} comment{{ post.author.profile.num_comments|pluralize }}</p>
+                        <p class="text-grey no-margins">{{ post.author.profile.num_sound_downloads|bw_intcomma }} downloaded</p>
+                        <p class="text-grey no-margins">Account age: {{ post.author.date_joined|timesince }} ago</p>
+                    {% endif %}
                 </div>
             </div>
         </div>

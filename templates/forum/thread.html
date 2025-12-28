@@ -44,7 +44,7 @@
     <div class="v-spacing-top-4">
         {% for post in page.object_list %}
             <a name="post{{ post.id }}"></a>
-            {% display_post post forloop.counter post_counter_offset False True True %}
+            {% display_post post forloop_counter=forloop.counter post_number_offset=post_counter_offset %}
             {% if not forloop.last %}
                 <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
             {% endif %}

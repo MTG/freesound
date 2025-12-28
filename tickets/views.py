@@ -607,11 +607,24 @@ def moderation_assigned(request, user_id):
                 )
 
             # Trigger some async tasks to update user and pack counts, clear caches, send email notifications, etc.
+            if msg:
+                # Add message here and not in the task - if we return a sound then the assignee is removed and we
+                # can't say who a message is from
+                moderator_only = msg_form.cleaned_data.get("moderator_only", False)
+                TicketComment.objects.bulk_create(
+                    [
+                        TicketComment(
+                            sender=request.user,
+                            text=msg,
+                            ticket=ticket,
+                            moderator_only=moderator_only,
+                        )
+                        for ticket in tickets
+                    ]
+                )
             post_moderation_assigned_tickets_task.delay(
                 ticket_ids=ticket_ids,
                 notification=notification,
-                msg=msg,
-                moderator_only=msg_form.cleaned_data.get("moderator_only", False),
                 users_to_update=list(users_to_update),
                 packs_to_update=list(packs_to_update),
             )

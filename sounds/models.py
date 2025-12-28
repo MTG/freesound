@@ -2515,11 +2515,6 @@ class SoundSimilarityVector(models.Model):
         else:
             return vector
 
-    def apply_l2_normalization(self, commit=True):
-        self.vector = self.l2_normalize_vector(self.vector)
-        if commit:
-            self.save()
-
     class Meta:
         unique_together = (
             "sound",

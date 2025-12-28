@@ -641,16 +641,17 @@ def moderation_assigned(request, user_id):
             ticket.status = TICKET_STATUS_CLOSED
             ticket.save()
 
-    # We annotate the tickets with a boolean to indicate if their senders have any mod annotations.
-    # Note that we might be able to optimize this bit with some custom SQL or some django ORM magic
-    users_num_mod_annotations = {}
+    # Pre-compute annotation counts for tickets on this page. Use this data to show
+    # an icon indicating that there are mod annotations for the sender of the ticket.
+    sender_ids = {ticket.sender_id for ticket in pagination_response["page"].object_list}
+    users_num_mod_annotations = dict(
+        UserAnnotation.objects.filter(user_id__in=sender_ids)
+        .values("user_id")
+        .annotate(num_mod_annotations=Count("id"))
+        .values_list("user_id", "num_mod_annotations")
+    )
     for ticket in pagination_response["page"].object_list:
-        if ticket.sender_id not in users_num_mod_annotations:
-            num_mod_annotations = UserAnnotation.objects.filter(user=ticket.sender).count()
-            users_num_mod_annotations[ticket.sender_id] = num_mod_annotations
-        else:
-            num_mod_annotations = users_num_mod_annotations[ticket.sender_id]
-        ticket.num_mod_annotations = num_mod_annotations
+        ticket.num_mod_annotations = users_num_mod_annotations.get(ticket.sender_id, 0)
 
     moderator_tickets_count = qs.count()
     show_pagination = moderator_tickets_count > page_size

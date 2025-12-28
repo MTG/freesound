@@ -64,7 +64,26 @@ const initModalDismissButton = (modalContainerElement) => {
 }
 
 // Confirmation modal logic
+const initConfirmationModalDoubleConfirm = () => {
+  const confirmationModalAcceptForm = document.getElementById('confirmationModalAcceptSubmitForm');
+  if (
+    confirmationModalAcceptForm === null
+    || confirmationModalAcceptForm.dataset.doubleConfirmListenerAdded !== undefined
+  ) {
+    return;
+  }
+
+  confirmationModalAcceptForm.dataset.doubleConfirmListenerAdded = 'true';
+  confirmationModalAcceptForm.addEventListener('submit', (evt) => {
+    const doubleConfirmText = confirmationModalAcceptForm.dataset.doubleConfirmText;
+    if (doubleConfirmText && !confirm(doubleConfirmText)) {
+      evt.preventDefault();
+    }
+  });
+}
+
 const bindConfirmationModalElements = (container) => {
+  initConfirmationModalDoubleConfirm();
   [...container.querySelectorAll('[data-toggle="confirmation-modal"]')].forEach(modalButton => {
     modalButton.addEventListener('click', () => {
       const confirmationModalTitle = document.getElementById('confirmationModalTitle');
@@ -78,6 +97,7 @@ const bindConfirmationModalElements = (container) => {
       }
       const confirmationModalAcceptForm = document.getElementById('confirmationModalAcceptSubmitForm');
       confirmationModalAcceptForm.action = modalButton.dataset.modalConfirmationUrl;
+      confirmationModalAcceptForm.dataset.doubleConfirmText = modalButton.dataset.modalConfirmationDoubleConfirmText || '';
       activateModal('confirmationModal');
     });
   });

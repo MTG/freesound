@@ -49,7 +49,12 @@
                                 </li>
                             {% else %}
                                 <li class="bw-nav__action dropdown-item text-light-grey">
-                                    <a class="bw-link--black" href="{% url 'tickets-whitelist-user' user.id %}?next={{ next_path }}">
+                                    <a class="bw-link--black cursor-pointer"
+                                       data-toggle="confirmation-modal"
+                                       data-modal-confirmation-title="Whitelisting {{ user.username }} will approve all their currently pending sounds and approve future uploads, skipping moderation. Do you want to whitelist this user?"
+                                       data-modal-confirmation-url="{% url 'tickets-whitelist-user' user.id %}?next={{ next_path }}"
+                                       data-modal-confirmation-double-confirm-text="Are you really sure you want to whitelist {{ user.username }}?"
+                                       href="javascript:void(0);">
                                         Whitelist this user
                                     </a>
                                 </li>

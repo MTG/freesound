@@ -120,6 +120,22 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
+        # Try registration with reserved username
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": ["myFreeSoundName"],
+                "password1": ["123456!@"],
+                "accepted_tos": ["on"],
+                "email1": ["example@email.com"],
+                "email2": ["example@email.com"],
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "You cannot use this username to create an account")
+        self.assertEqual(User.objects.filter(username="myFreeSoundName").count(), 0)
+        self.assertEqual(len(mail.outbox), 0)  # No email sent
+
         # Try registration with different email addresses
         resp = self.client.post(
             reverse("accounts-registration-modal"),

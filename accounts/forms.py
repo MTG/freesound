@@ -188,6 +188,9 @@ def username_taken_by_other_user(username):
         bool: True if the username is already taken (not available), False otherwise
 
     """
+    # For security reasons, we don't allow the username "freesound" to be used anywhere in a username.
+    if "freesound" in username.lower():
+        return True
     try:
         User.objects.get(username__iexact=username)
     except User.DoesNotExist:

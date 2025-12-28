@@ -1043,9 +1043,8 @@ class Sound(models.Model):
         current_tags = set([t.name for t in self.tags.all()])
         for tag in tags:
             if tag not in current_tags:
-                (tag_object, created) = Tag.objects.get_or_create(name=tag)
-                tagged_object = SoundTag.objects.create(user=self.user, tag=tag_object, sound=self)
-                tagged_object.save()
+                tag_object, _ = Tag.objects.get_or_create(name=tag)
+                SoundTag.objects.get_or_create(tag=tag_object, sound=self, defaults={"user": self.user})
 
     def set_license(self, new_license):
         """
@@ -1600,16 +1599,14 @@ class Sound(models.Model):
         if len(sim_vector) != similarity_space["vector_size"]:
             return False
 
-        try:
-            sound_sim_vector = SoundSimilarityVector.objects.get(
-                sound=self, similarity_space_name=similarity_space_name
-            )
-        except SoundSimilarityVector.DoesNotExist:
-            sound_sim_vector = SoundSimilarityVector(sound=self, similarity_space_name=similarity_space_name)
-        sound_sim_vector.vector = sim_vector
         if similarity_space["l2_norm"]:
-            sound_sim_vector.apply_l2_normalization()
-        sound_sim_vector.save()
+            sim_vector = SoundSimilarityVector.l2_normalize_vector(sim_vector)
+
+        SoundSimilarityVector.objects.update_or_create(
+            sound=self,
+            similarity_space_name=similarity_space_name,
+            defaults={"vector": sim_vector},
+        )
 
         return True
 

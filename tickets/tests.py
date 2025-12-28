@@ -194,6 +194,39 @@ class MiscTicketTests(TicketTests):
         expected_body = f'Ticket "Moderate sound test_sound.wav" updated: {ticket_url}'
         self.assertEqual(mail.outbox[0].body.strip(), expected_body)
 
+    def test_ticket_update_notification_does_not_escape_title_in_min_template(self):
+        ticket = self._create_assigned_ticket()
+        ticket.title = "Moderate sound Voice Test for 'amp' > 20 & < 30; in \"tranquility\""
+        ticket.save(update_fields=["title"])
+        self.client.force_login(self.test_user)
+
+        response = self.client.post(
+            reverse("tickets-ticket", args=[ticket.key]),
+            {"message": "Please review the update"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        domain = Site.objects.get_current().domain
+        ticket_url = f"https://{domain}{reverse('tickets-ticket', args=[ticket.key])}"
+        expected_body = f'Ticket "{ticket.title}" updated: {ticket_url}'
+        self.assertEqual(mail.outbox[0].body.strip(), expected_body)
+
+    def test_ticket_update_notification_does_not_escape_title_for_user(self):
+        ticket = self._create_assigned_ticket()
+        ticket.title = "Moderate sound Voice Test for 'amp' > 20 & < 30; in \"tranquility\""
+        ticket.save(update_fields=["title"])
+
+        response = self.client.post(
+            reverse("tickets-ticket", args=[ticket.key]),
+            {"message": "Please review the update"},
+        )
+
+        self.assertIn(response.status_code, [200, 302])
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        self.assertIn(f'The ticket "{ticket.title}" has been updated.', body)
+
 
 class TicketTestsFromQueue(TicketTests):
     """Ticket state changes in a response to actions from moderation queue"""

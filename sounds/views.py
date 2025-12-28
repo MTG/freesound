@@ -33,7 +33,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from django.core.cache import cache, caches
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import resolve, reverse
@@ -789,7 +789,6 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
 
 
 @login_required
-@transaction.atomic()
 def pack_edit(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
@@ -803,12 +802,20 @@ def pack_edit(request, username, pack_id):
     if request.method == "POST":
         form = PackEditForm(request.POST, instance=pack, label_suffix="")
         if form.is_valid():
-            form.save()
-            pack.sounds.all().update(is_index_dirty=True)
-            redirect_to = request.GET.get("next", pack.get_absolute_url())
-            return HttpResponseRedirect(redirect_to)
+            try:
+                with transaction.atomic():
+                    form.save()
+                    pack.sounds.all().update(is_index_dirty=True)
+            except IntegrityError:
+                form.add_error("name", "A pack with this name already exists.")
+            else:
+                redirect_to = request.GET.get("next", pack.get_absolute_url())
+                return HttpResponseRedirect(redirect_to)
     else:
         form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds), label_suffix="")
+        current_sounds = Sound.objects.bulk_sounds_for_pack(pack_id=pack.id)
+        form.pack_sound_objects = current_sounds
+    if request.method == "POST":
         current_sounds = Sound.objects.bulk_sounds_for_pack(pack_id=pack.id)
         form.pack_sound_objects = current_sounds
     tvars = {

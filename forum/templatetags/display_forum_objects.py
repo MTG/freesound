@@ -104,6 +104,8 @@ def display_post(
     edited_diff = None
     if post.modified and post.created:
         edited_diff = abs((post.modified - post.created).total_seconds())
+    current_user = context["request"].user
+    can_view_moderator_info = current_user.has_perm("tickets.can_moderate") or current_user.is_staff
     return {
         "post": post,
         "highlighted_content": highlighted_content,
@@ -111,7 +113,7 @@ def display_post(
         "show_post_location": show_post_location,
         "show_action_icons": show_action_icons,
         "show_report_actions": show_report_actions,
-        "show_moderator_info": show_moderator_info,
+        "show_moderator_info": show_moderator_info and can_view_moderator_info,
         "show_post_edited": edited_diff is not None and edited_diff > 1,
         "perms": context["perms"],
         "request": context["request"],

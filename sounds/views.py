@@ -448,7 +448,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
         for ticket in tickets:
             tc = TicketComment(sender=request.user, ticket=ticket, moderator_only=False, text=text)
             tc.save()
-            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED, ticket.MODERATOR_ONLY)
+            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED_MIN, ticket.MODERATOR_ONLY)
 
     def create_sounds(request, forms):
         # Create actual Sound objects, trigger processing of sounds and of affected packs

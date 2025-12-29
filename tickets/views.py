@@ -532,22 +532,24 @@ def moderation_assigned(request, user_id):
             users_to_update = set()
             packs_to_update = set()
 
+            is_explicit_choice_key = mod_sound_form.cleaned_data.get("is_explicit")
+            sounds_update_params = {}
+            if is_explicit_choice_key in (
+                IS_EXPLICIT_ADD_FLAG_KEY,
+                IS_EXPLICIT_REMOVE_FLAG_KEY,
+            ):
+                sounds_update_params["is_explicit"] = is_explicit_choice_key == IS_EXPLICIT_ADD_FLAG_KEY
+                sounds_update_params["is_index_dirty"] = True
+
             if action == "Approve":
                 tickets.update(status=TICKET_STATUS_CLOSED)
-                sounds_update_params = {
-                    "is_index_dirty": True,
-                    "moderation_state": "OK",
-                    "moderation_date": timezone.now(),
-                }
-                is_explicit_choice_key = mod_sound_form.cleaned_data.get("is_explicit")
-                if is_explicit_choice_key == IS_EXPLICIT_ADD_FLAG_KEY:
-                    sounds_update_params["is_explicit"] = True
-                elif is_explicit_choice_key == IS_EXPLICIT_REMOVE_FLAG_KEY:
-                    sounds_update_params["is_explicit"] = False
-
-                # Otherwise is_explicit_choice_key = IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, don't update the
-                # 'is_explicit' field and leave it as the user originally set it
-
+                sounds_update_params.update(
+                    {
+                        "is_index_dirty": True,
+                        "moderation_state": "OK",
+                        "moderation_date": timezone.now(),
+                    }
+                )
                 Sound.objects.filter(ticket__in=tickets).update(**sounds_update_params)
 
                 if msg:
@@ -557,6 +559,8 @@ def moderation_assigned(request, user_id):
 
             elif action == "Defer":
                 tickets.update(status=TICKET_STATUS_DEFERRED)
+                if sounds_update_params:
+                    Sound.objects.filter(ticket__in=tickets).update(**sounds_update_params)
 
                 # only send a notification if a message was added
                 if msg:
@@ -602,11 +606,24 @@ def moderation_assigned(request, user_id):
                 )
 
             # Trigger some async tasks to update user and pack counts, clear caches, send email notifications, etc.
+            if msg:
+                # Add message here and not in the task - if we return a sound then the assignee is removed and we
+                # can't say who a message is from
+                moderator_only = msg_form.cleaned_data.get("moderator_only", False)
+                TicketComment.objects.bulk_create(
+                    [
+                        TicketComment(
+                            sender=request.user,
+                            text=msg,
+                            ticket=ticket,
+                            moderator_only=moderator_only,
+                        )
+                        for ticket in tickets
+                    ]
+                )
             post_moderation_assigned_tickets_task.delay(
                 ticket_ids=ticket_ids,
                 notification=notification,
-                msg=msg,
-                moderator_only=msg_form.cleaned_data.get("moderator_only", False),
                 users_to_update=list(users_to_update),
                 packs_to_update=list(packs_to_update),
             )

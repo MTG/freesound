@@ -29,7 +29,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from tickets import TICKET_STATUS_CLOSED
-from tickets.models import Ticket, TicketComment, UserAnnotation
+from tickets.models import Ticket, UserAnnotation
 from utils.audioprocessing.freesound_audio_processing import (
     FreesoundAudioProcessor,
     FreesoundAudioProcessorBeforeDescription,
@@ -140,9 +140,7 @@ def whitelist_user(annotation_sender_id, ticket_ids=None, user_id=None):
 
 
 @shared_task(name=POST_MODERATION_ASSIGNED_TICKETS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
-def post_moderation_assigned_tickets(
-    ticket_ids=[], notification=None, msg=False, moderator_only=False, users_to_update=None, packs_to_update=None
-):
+def post_moderation_assigned_tickets(ticket_ids=[], notification=None, users_to_update=None, packs_to_update=None):
     # Carry out post-processing tasks for the approved sounds like invalidating caches, sending packs to process, etc...
     # We do that in an async task to avoid moderation requests taking too long when approving sounds
     workers_logger.info(
@@ -170,11 +168,6 @@ def post_moderation_assigned_tickets(
         # Invalidate caches of related objects
         invalidate_user_template_caches(ticket.sender.id)
         invalidate_all_moderators_header_cache()
-
-        # Add new comments to the ticket
-        if msg:
-            tc = TicketComment(sender=ticket.assignee, text=msg, ticket=ticket, moderator_only=moderator_only)
-            tc.save()
 
         # Send notification email to users
         if notification is not None:

@@ -12,7 +12,7 @@
         <form method="post" action="." class="bw-new-thread__form w-100 disable-on-submit">{% csrf_token %}
             <div class="row">
                 <div class=" offset-lg-2 col-lg-8 ">
-                    <h5 class="v-spacing-4">{% if form.initial %}Reply to message{% else %}New message{% endif %}</h5>
+                    <h5 class="v-spacing-4">{% if is_reply %}Reply to message{% else %}New message{% endif %}</h5>
                     {{form.as_p}}
                 </div>
             </div>

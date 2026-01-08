@@ -108,7 +108,8 @@ class SolrQuery:
         self.params["start"] = start
         self.params["rows"] = rows
         self.params["fq"] = filter_query
-        if "dist" in self.params["sort"]:
+        self.params["sort"]
+        if sort is not None and "dist" in self.params["sort"]:
             # If we are sorting by distance, make sure we also get the distance value returned as a field (note we use Solr rename field feature here)
             if field_list is None:
                 field_list = []

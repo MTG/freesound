@@ -6,22 +6,26 @@
 {% load display_user %}
 {% load util %}
 
-{% block title%}Collections{%endblock title%}
-{% block page-title%}{{collection.name}}{%endblock page-title%}
+{% block title%}{{collection.name}} - Collection{%endblock title%}
+{% block page-title-custom %}
+<div class="no-paddings col-12 v-spacing-3">
+    <h1><span class="text-light-grey">Collection: </span>{{ collection.name }}</h1>
+</div>
+{% endblock page-title-custom %}
 {% block page-content %}
 <div class="v-spacing-top-5">
     <div class="row no-gutters">
         <div class="col-lg-3 offset-lg-1 order-lg-last v-spacing-3">
             <section class="bw-profile__section_stats v-spacing-top-4 async-section"
-            data-async-section-content-url="{% url 'collection-stats-section' collection.id collection.name|slugify %}?ajax=1">
+            data-async-section-content-url="{% url 'collection-stats-section' collection.name|slugify collection.id %}?ajax=1">
             <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
         </section>
         <div class="v-spacing-top-4">
             {% if is_owner or is_maintainer%}
-            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'edit-collection' collection.id collection.name|slugify %}" title="Edit collection">Edit collection</a>
+            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'edit-collection' collection.name|slugify collection.id %}" title="Edit collection">Edit collection</a>
             {% endif %}
             {% if collection.num_sounds > 0%}
-            <a class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'download-collection' collection.id collection.name|slugify %}" title="Download collection">Download Collection</a> 
+            <a class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'download-collection' collection.name|slugify collection.id %}" title="Download collection">Download collection</a> 
             {% endif %}
         </div>
     </div>    
@@ -53,21 +57,45 @@
         {% endif %}
         
         <div class="v-spacing-top-5">
-            <div class="text-center text-18 text-light-grey v-spacing-3">Sounds in this collection</div>
+            {% comment %}search and sorting options{% endcomment %}
+            <div class="v-spacing-3">
+                <form method="get" action=".">
+                <div class="row middle">
+                    <div class="col-md-4">
+                        <div class="input-wrapper w-100">
+                            <i class="bw-icon-search input-icon"></i><input name="q" type="search" placeholder="Search in collection..." autocomplete="off" {% if search_query %}value="{{ search_query }}"{% endif %}>
+                        </div>
+                    </div>
+                    <div class="col-md-8 text-right v-spacing-top-2 v-spacing-2">
+                        <span class="text-light-grey"><b>Sort by:</b></span>
+                        <select name="s" onchange="this.form.submit()">
+                            {% for option_label in sort_options.keys %}
+                                <option value="{{ option_label }}" {% if option_label == sort_by %}selected{% endif %}>{{ option_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                </form>
+            </div>
             {% if page.object_list %}    
             <div class="row">
+                {% if sort_by == "Featured first" %}
+                    {% display_featured_sounds featured_sounds_on_page %}
+                {% endif %}
                 {% for collectionsound, sound in page_collection_and_sound_objects %}
+                {% if sort_by != "Featured first" or sound.id not in collection.featured_sound_ids %}
                 <div class="col-6 col-md-4">
-                    {% if sound.id in collection.featured_sound_ids %}
-                    {% display_featured_sound sound %}
-                    {% else %}
                     {% display_sound_small sound %}
-                    {% endif %}
                 </div>
+                {% endif %}
                 {% endfor %}
             </div>
-            {% else %} 
-            There aren't any sounds in this collection yet &#128543; 
+            {% else %}
+            {% if search_query %}
+            No sounds found matching "{{ search_query }}" in this collection. <a href="?s={{ sort_by }}">Clear search</a>
+            {% else %}
+            There aren't any sounds in this collection yet &#128543;
+            {% endif %}
             {% endif %}
             {% bw_paginator paginator page current_page request "collection" %}
         </div>

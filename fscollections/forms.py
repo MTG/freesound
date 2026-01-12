@@ -59,6 +59,8 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
     new_collection_name = forms.CharField(label=False, help_text=None, max_length=128, required=False)
 
     use_last_collection = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
+
+    mark_as_featured = forms.BooleanField(label=False, required=False, initial=False)
     user_collections = None
     user_available_collections = None
     user_full_collections = None
@@ -139,6 +141,13 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
         elif self.user_saving_sound.id in maintainers_list:
             collection, _ = Collection.objects.get_or_create(name=collection_to_use.name, id=collection_to_use.id)
         CollectionSound.objects.create(user=self.user_saving_sound, collection=collection, sound=sound, status="OK")
+
+        # Handle mark as featured
+        if self.cleaned_data.get("mark_as_featured"):
+            if sound.id not in collection.featured_sound_ids:
+                collection.featured_sound_ids = collection.featured_sound_ids + [sound.id]
+                collection.save(update_fields=["featured_sound_ids"])
+
         return collection
 
     def clean(self):
@@ -196,6 +205,11 @@ class CollectionEditForm(forms.ModelForm):
 
     maintainers = forms.CharField(
         min_length=1, widget=forms.widgets.HiddenInput(attrs={"id": "maintainers"}), required=False
+    )
+
+    featured_sounds = forms.CharField(
+        widget=forms.widgets.HiddenInput(attrs={"id": "featured_sounds", "name": "featured_sounds"}),
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -297,6 +311,17 @@ class CollectionEditForm(forms.ModelForm):
         for usr in current_maintainers:
             maintainer = User.objects.get(id=usr)
             collection.maintainers.remove(maintainer)
+
+        # Handle featured sounds
+        featured_sounds_str = self.cleaned_data.get("featured_sounds", "")
+        if featured_sounds_str:
+            featured_ids = [int(sid) for sid in featured_sounds_str.split(",") if sid.strip()]
+            # Only keep featured IDs that are still in the collection
+            featured_ids = [sid for sid in featured_ids if sid in new_sounds]
+            collection.featured_sound_ids = featured_ids
+        else:
+            collection.featured_sound_ids = []
+
         collection.save()
         return collection
 
@@ -329,6 +354,8 @@ class CollectionEditFormAsMaintainer(CollectionEditForm):
         # are retrieved from DB to ensure no changes are applied to this attribute.
         collection_maintainers = list(self.instance.maintainers.values_list("id", flat=True))
         cleaned_data["maintainers"] = (",").join(str(x) for x in collection_maintainers)
+        # Preserve featured_sounds from the original instance (maintainers cannot edit)
+        cleaned_data["featured_sounds"] = ",".join(str(sid) for sid in self.instance.featured_sound_ids)
         for field in CollectionEditForm.Meta.fields:
             if cleaned_data[field] != getattr(self.instance, field):
                 self.add_error(field, forms.ValidationError("You don't have permissions to edit this field"))

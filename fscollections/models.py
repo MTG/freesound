@@ -31,6 +31,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.text import slugify
 
+from freesound import settings
 from sounds.models import License, Sound
 
 
@@ -47,7 +48,7 @@ class Collection(models.Model):
     num_downloads = models.PositiveIntegerField(default=0)
     public = models.BooleanField(default=False)
     is_default_collection = models.BooleanField(default=False)
-    featured_sound_ids = ArrayField(models.IntegerField(), size=3, blank=True, default=list)
+    featured_sound_ids = ArrayField(models.IntegerField(), size=settings.MAX_FEATURED_SOUNDS_PER_COLLECTION, blank=True, default=list)
 
     def __str__(self):
         return f"{self.name}"
@@ -86,41 +87,64 @@ class Collection(models.Model):
 
     def save(self, *args, **kwargs):
         # Update num_sounds count
-        if self.pk:  # Only count if collection already exists
+        if self.pk:
             self.num_sounds = CollectionSound.objects.filter(collection=self).count()
-            
-            # Auto-populate featured_sound_ids if empty but collection has sounds
-            if not self.featured_sound_ids and self.num_sounds > 0:
-                # Get up to 3 approved sound IDs
-                sound_ids = list(
-                    CollectionSound.objects.filter(
-                        collection=self, 
-                        sound__processing_state="OK",
-                        sound__moderation_state="OK"
-                    ).values_list('sound_id', flat=True)[:3]
-                )
-                if sound_ids:
-                    self.featured_sound_ids = sound_ids
         
         super().save(*args, **kwargs)
 
-    def get_featured_sounds(self, num_sounds=1):
-        approved_sounds = self.sounds.filter(processing_state="OK", moderation_state="OK")
-        approved_sounds = order_sounds_by_featured(approved_sounds, self.featured_sound_ids)
-        return approved_sounds[:num_sounds]
+    def get_sounds(
+        self,
+        sort_by=None,
+        limit=None,
+        include_audio_descriptors=False,
+        include_similarity_vectors=False,
+        include_remix_subqueries=False,
+    ):
+        """Get sounds for this collection with sorting.
+        
+        Args:
+            sort_by: Sort option key from settings.COLLECTION_SORT_OPTIONS.
+                    Defaults to settings.COLLECTION_SORT_DEFAULT.
+            limit: Optional limit on number of sounds returned
+            include_audio_descriptors: Include audio descriptor data
+            include_similarity_vectors: Include similarity vector data
+            include_remix_subqueries: Include remix relationship data
+        
+        Returns:
+            Sorted QuerySet of Sound objects
+        """
+        # Validate sort option, defaulting to COLLECTION_SORT_DEFAULT if invalid or None
+        if sort_by not in settings.COLLECTION_SORT_OPTIONS:
+            sort_by = settings.COLLECTION_SORT_DEFAULT
 
+        qs = Sound.objects.bulk_sounds_for_collection(
+            collection_id=self.id,
+            include_audio_descriptors=include_audio_descriptors,
+            include_similarity_vectors=include_similarity_vectors,
+            include_remix_subqueries=include_remix_subqueries,
+        )
 
-def order_sounds_by_featured(sounds, featured_sound_ids=None):
-    """Return all sounds with featured sounds moved to the front."""
-    if not featured_sound_ids:
-        return sounds
-    
-    ordering = Case(
-        *[When(id=sound_id, then=Value(i)) for i, sound_id in enumerate(featured_sound_ids)],
-        default=Value(len(featured_sound_ids)),
-        output_field=IntegerField()
-    )
-    return sounds.annotate(featured_order=ordering).order_by('featured_order')
+        # Get the sort field from settings (value is the sort field directly)
+        sort_field = settings.COLLECTION_SORT_OPTIONS[sort_by]
+
+        # Apply sorting based on sort_by option (featured is when sort_by matches the default)
+        if sort_field == "featured_order":
+            # Featured sorting - direct access to self.featured_sound_ids
+            if self.featured_sound_ids:
+                ordering = Case(
+                    *[When(id=sound_id, then=Value(i)) for i, sound_id in enumerate(self.featured_sound_ids)],
+                    default=Value(len(self.featured_sound_ids)),
+                    output_field=IntegerField()
+                )
+                qs = qs.annotate(featured_order=ordering).order_by(sort_field)
+            # If no featured sounds, keep default queryset order
+        elif sort_field:
+            # Use the sort field from settings for other sort options
+            qs = qs.order_by(sort_field)
+
+        if limit:
+            qs = qs[:limit]
+        return qs
 
 
 class CollectionSound(models.Model):

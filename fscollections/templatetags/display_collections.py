@@ -23,6 +23,7 @@ from django import template
 from django.shortcuts import get_object_or_404
 
 from fscollections.models import Collection
+from sounds.models import Sound
 
 register = template.Library()
 
@@ -31,20 +32,16 @@ register = template.Library()
 def display_collection(context, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
     request = context.get("request")
-    sound = collection.get_featured_sounds().first()
-    tvars = {"collection": collection, "ft_sound": sound, "request": request}
+    if collection.featured_sound_ids:
+        featured_sounds = collection.get_sounds(sort_by="Featured first", limit=len(collection.featured_sound_ids))
+    else:
+        featured_sounds = collection.get_sounds(sort_by="Date added (newest first)", limit=1)
+    
+    tvars = {"collection": collection, "featured_sounds": featured_sounds, "request": request}
     return tvars
 
 
-@register.inclusion_tag("collections/display_featured_sound.html", takes_context=True)
-def display_featured_sound(context, sound):
-    """Display a sound with the 'Featured' highlight styling.
-    
-    Args:
-        context: Template context (automatically passed by Django)
-        sound: Sound object to display with featured styling
-    
-    Returns:
-        dict: Template variables for rendering the featured sound
-    """
-    return {"sound": sound, "request": context.get("request")}
+@register.inclusion_tag("collections/display_featured_sounds.html", takes_context=True)
+def display_featured_sounds(context, sounds):
+    return {"featured_sounds": sounds, "request": context.get("request")}
+

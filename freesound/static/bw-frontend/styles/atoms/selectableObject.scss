@@ -10,4 +10,15 @@
         border:2px solid $navy-light-grey;
         transition: border-color 0.3s linear;
     }
+
+    .featured-label {
+        position: absolute;
+        top: 4px;
+        right: 8px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #f5a623;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
 }

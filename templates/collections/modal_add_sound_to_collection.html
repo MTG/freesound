@@ -46,7 +46,15 @@
             </div>
         {% endif %}
         <form method="post" action="{% url 'add-sound-to-collection' sound.id %}?ajax=1." class = "disable-on-submit">{% csrf_token %}
-            {{ form }}
+            <div class="v-spacing-4">
+                {{ form.collection }}
+                <label for="{{ form.mark_as_featured.id_for_label }}" class="bw-checkbox-label cursor-pointer" style="white-space: nowrap;">
+                    <input type="checkbox" class="bw-checkbox" id="{{ form.mark_as_featured.id_for_label }}" name="mark_as_featured">
+                    Mark as featured
+                </label>
+            </div>
+            {{ form.new_collection_name }}
+            {{ form.use_last_collection }}
             <button class = "btn-primary v-spacing-top-2">Add sound to collection</button>
         </form>
     </div>

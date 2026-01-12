@@ -154,7 +154,7 @@ def delete_all_sounds_from_search_engine(solr_collection_url=None):
         search_logger.info(f"Could not delete sounds: {str(e)}")
 
 
-def get_all_sound_ids_from_search_engine(page_size=2000, solr_collection_url=None):
+def get_all_sound_ids_from_search_engine(solr_collection_url=None):
     """Retrieves the list of all sound IDs currently indexed in the search engine
 
     Args:
@@ -170,6 +170,30 @@ def get_all_sound_ids_from_search_engine(page_size=2000, solr_collection_url=Non
     except SearchEngineException as e:
         search_logger.info(f"Could not retrieve all sound IDs from search engine: {str(e)}")
     return []
+
+
+def get_all_sim_vector_sound_ids_from_search_engine(solr_collection_url=None):
+    """Retrieves the list of all sound IDs with similarity vectors for all similarity spaces currently
+    indexed in the search engine
+
+    Args:
+        page_size: number of sound IDs to retrieve per search engine query
+
+    Returns:
+        dict[list]: list of sound IDs with per similarity space indexed in the search engine
+    """
+    console_logger.info("Getting all sound ids with similarity vectors from search engine")
+    search_engine = get_search_engine(sounds_index_url=solr_collection_url)
+    sim_vector_sound_ids = {}
+    try:
+        sim_vector_document_ids = search_engine.get_all_sim_vector_document_ids_per_similarity_space()
+        for key, document_ids in sim_vector_document_ids.items():
+            sim_vector_sound_ids[key] = list(set([int(doc_id.split("/")[0]) for doc_id in document_ids]))
+    except SearchEngineException as e:
+        search_logger.info(
+            f"Could not retrieve all sound IDs with similarity vectors for similarity space from search engine: {str(e)}"
+        )
+    return sim_vector_sound_ids
 
 
 def get_random_sound_id_from_search_engine(solr_collection_url=None):

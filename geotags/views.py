@@ -118,7 +118,7 @@ def geotags_for_user_barray(request, username):
         {
             "query_filter": f'username:"{username}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
             "field_list": ["id", "score", "geotag"],
-            "num_sounds": profile.num_sounds,
+            "num_sounds": profile.num_sounds if profile.num_sounds else 1,  # Avoid potential 0-sized pagination
         }
     )
     generated_bytearray, num_geotags = generate_geotag_bytearray_dict(results.docs)
@@ -143,7 +143,7 @@ def geotags_for_pack_barray(request, pack_id):
         {
             "query_filter": f'pack_grouping:"{pack.id}_{pack.name}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
             "field_list": ["id", "score", "geotag"],
-            "num_sounds": pack.num_sounds,
+            "num_sounds": pack.num_sounds if pack.num_sounds else 1,  # Avoid potential 0-sized pagination
         }
     )
     generated_bytearray, num_geotags = generate_geotag_bytearray_dict(results.docs)
@@ -175,6 +175,8 @@ def geotags_for_query_barray(request):
         results, _ = perform_search_engine_query(query_params)
         results_docs = results.docs
 
+    if results_docs is None:
+        results_docs = []
     generated_bytearray, num_geotags = generate_geotag_bytearray_dict(results_docs)
     if num_geotags > 0:
         log_map_load("query", num_geotags, request)
@@ -243,7 +245,7 @@ def for_user(request, username):
 @redirect_if_old_username
 def for_sound(request, username, sound_id):
     sound = get_object_or_404(Sound.objects.select_related("geotag", "user"), id=sound_id)
-    if sound.user.username.lower() != username.lower() or sound.geotag is None:
+    if sound.user.username.lower() != username.lower() or not hasattr(sound, "geotag"):
         raise Http404
     tvars = _get_geotags_query_params(request)
     tvars.update(

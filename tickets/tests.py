@@ -24,6 +24,8 @@ from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
@@ -31,7 +33,11 @@ import sounds
 import tickets
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW
-from tickets.forms import IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
+from tickets.forms import (
+    IS_EXPLICIT_ADD_FLAG_KEY,
+    IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY,
+    IS_EXPLICIT_REMOVE_FLAG_KEY,
+)
 
 from .models import Ticket
 
@@ -172,6 +178,55 @@ class MiscTicketTests(TicketTests):
             user_to=ticket.sender,
         )
 
+    def test_ticket_update_notification_uses_min_template_for_moderators(self):
+        ticket = self._create_assigned_ticket()
+        self.client.force_login(self.test_user)
+
+        response = self.client.post(
+            reverse("tickets-ticket", args=[ticket.key]),
+            {"message": "Please review the update"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        domain = Site.objects.get_current().domain
+        ticket_url = f"https://{domain}{reverse('tickets-ticket', args=[ticket.key])}"
+        expected_body = f'Ticket "Moderate sound test_sound.wav" updated: {ticket_url}'
+        self.assertEqual(mail.outbox[0].body.strip(), expected_body)
+
+    def test_ticket_update_notification_does_not_escape_title_in_min_template(self):
+        ticket = self._create_assigned_ticket()
+        ticket.title = "Moderate sound Voice Test for 'amp' > 20 & < 30; in \"tranquility\""
+        ticket.save(update_fields=["title"])
+        self.client.force_login(self.test_user)
+
+        response = self.client.post(
+            reverse("tickets-ticket", args=[ticket.key]),
+            {"message": "Please review the update"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        domain = Site.objects.get_current().domain
+        ticket_url = f"https://{domain}{reverse('tickets-ticket', args=[ticket.key])}"
+        expected_body = f'Ticket "{ticket.title}" updated: {ticket_url}'
+        self.assertEqual(mail.outbox[0].body.strip(), expected_body)
+
+    def test_ticket_update_notification_does_not_escape_title_for_user(self):
+        ticket = self._create_assigned_ticket()
+        ticket.title = "Moderate sound Voice Test for 'amp' > 20 & < 30; in \"tranquility\""
+        ticket.save(update_fields=["title"])
+
+        response = self.client.post(
+            reverse("tickets-ticket", args=[ticket.key]),
+            {"message": "Please review the update"},
+        )
+
+        self.assertIn(response.status_code, [200, 302])
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        self.assertIn(f'The ticket "{ticket.title}" has been updated.', body)
+
 
 class TicketTestsFromQueue(TicketTests):
     """Ticket state changes in a response to actions from moderation queue"""
@@ -204,11 +259,6 @@ class TicketTestsFromQueue(TicketTests):
         self.ticket.refresh_from_db()
         self.assertEqual(self.ticket.status, TICKET_STATUS_CLOSED)
         self.assertIsNone(self.ticket.sound)
-
-    @mock.patch("general.tasks.whitelist_user.delay")
-    def test_whitelist_from_queue(self, whitelist_task):
-        self._perform_action("Whitelist")
-        whitelist_task.assert_called_once_with(annotation_sender_id=self.test_moderator.id, ticket_ids=[self.ticket.id])
 
     def _assert_ticket_and_sound_fields(self, status, assignee, moderation_state):
         self.ticket.refresh_from_db()

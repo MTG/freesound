@@ -44,12 +44,18 @@ examples = {
             ],
         ),
         (
-            "Search with a content-based filter",
+            "Search with a filter on audio descriptors",
             [
                 "apiv2/search/?query=piano&filter=bpm:60",
                 "apiv2/search/?query=piano&filter=pitch:[435 TO 445]",
                 "apiv2/search/?query=piano&filter=note_name:E",
                 "apiv2/search/?query=piano&filter=note_confidence:[0.9 TO *]",
+            ],
+        ),
+        (
+            "Search with a custom sorting target specified",
+            [
+                "apiv2/search/?query=piano&sort=pitch:220,pitch_var:0.0",
             ],
         ),
         (

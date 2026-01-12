@@ -108,6 +108,12 @@ class SolrQuery:
         self.params["start"] = start
         self.params["rows"] = rows
         self.params["fq"] = filter_query
+        self.params["sort"]
+        if sort is not None and "dist" in self.params["sort"]:
+            # If we are sorting by distance, make sure we also get the distance value returned as a field (note we use Solr rename field feature here)
+            if field_list is None:
+                field_list = []
+            field_list.append("dist:" + sort[0].replace(" desc", "").replace(" asc", ""))
         self.params["fl"] = ",".join(field_list) if field_list else field_list
 
     def add_facet_fields(self, *args):

@@ -310,6 +310,18 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
 ##################
 
 
+def api_process_sort_parameter(sort):
+    # We need to convert the sort parameter to standard sorting options from settings.SEARCH_SOUNDS_SORT_OPTION_X,
+    # or pass it as a sorting_target if provided as such.
+    if type(sort) == str:
+        # The sort uses a custom sorting target, therefore we return it as is
+        return None, sort
+
+    # If sort is a sorting option, here we convert to the standard freesound sorting names and later the
+    # get_search_engine().search_sounds() function will convert it back to search engine meaningful names
+    return API_SORT_OPTIONS_MAP[sort[0]], None
+
+
 def api_search(
     search_form, target_file=None, extra_parameters=False, merging_strategy="merge_optimized", resource=None
 ):
@@ -369,15 +381,13 @@ def api_search(
     ):
         # Standard text-based search
         try:
-            # We need to convert the sort parameter to standard sorting options from
-            # settings.SEARCH_SOUNDS_SORT_OPTION_X. Therefore here we convert to the standard names and later
-            # the get_search_engine().search_sounds() function will convert it back to search engine meaningful names
-            processed_sort = API_SORT_OPTIONS_MAP[search_form.cleaned_data["sort"][0]]
+            sort, sorting_target = api_process_sort_parameter(search_form.cleaned_data["sort"])
             result = get_search_engine().search_sounds(
                 textual_query=unquote(search_form.cleaned_data["query"] or ""),
                 query_filter=unquote(search_form.cleaned_data["filter"] or ""),
                 query_fields=parse_weights_parameter(search_form.cleaned_data["weights"]),
-                sort=processed_sort,
+                sort=sort,
+                sorting_target=sorting_target,
                 offset=(search_form.cleaned_data["page"] - 1) * search_form.cleaned_data["page_size"],
                 num_sounds=search_form.cleaned_data["page_size"],
                 group_by_pack=search_form.cleaned_data["group_by_pack"],
@@ -387,6 +397,13 @@ def api_search(
             )
 
             ids_score = [(int(element["id"]), element["score"]) for element in result.docs]
+
+            distance_to_target_data = None
+            if result.docs and "dist" in result.docs[0]:
+                # If field "dist" is returned by solr, we store it in a separate deictionrty so it can be
+                # accessed later when serializing sounds
+                distance_to_target_data = {int(element["id"]): element["dist"] for element in result.docs}
+
             num_found = result.num_found
             more_from_pack_data = None
             if search_form.cleaned_data["group_by_pack"]:
@@ -395,7 +412,7 @@ def api_search(
                     int(group["id"]): [group["n_more_in_group"], group["group_name"]] for group in result.docs
                 }
 
-            return ids_score, num_found, None, more_from_pack_data, None, None, None
+            return ids_score, num_found, distance_to_target_data, more_from_pack_data, None, None, None
 
         except SearchEngineException as e:
             if search_form.cleaned_data["filter"] is not None:

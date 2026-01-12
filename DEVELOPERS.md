@@ -193,6 +193,10 @@ the implementation of a search backend. You can run it like:
 
     docker compose run --rm web pytest -m "search_engine" --search-engine-backend utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine
 
+To run a specific test form the search engine tests suite, you can do something like this:
+
+    docker compose run --rm web pytest -m "search_engine" utils/search/backends/test_search_engine_backend.py::test_remove_sounds
+
 
 ### Freesound analysis pipeline
 

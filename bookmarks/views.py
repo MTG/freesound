@@ -22,7 +22,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Exists, OuterRef
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -83,6 +83,11 @@ def bookmarks_for_user(request, username, category_id=None):
 def delete_bookmark_category(request, category_id):
     if request.method == "POST":
         category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
+        # Remove only the bookmarks that would become duplicates after the category disappears.
+        uncategorized_exists = Bookmark.objects.filter(
+            user=request.user, category__isnull=True, sound_id=OuterRef("sound_id")
+        )
+        Bookmark.objects.filter(category=category, user=request.user).filter(Exists(uncategorized_exists)).delete()
         msg = f"""Removed bookmark category "{category.name}"."""
         category.delete()
         messages.add_message(request, messages.WARNING, msg)

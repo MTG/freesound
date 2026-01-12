@@ -15,7 +15,7 @@ FROM freesound:2025-03 AS freesound
 
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.9.15 /uv /uvx /bin/
 
 # Install specific dependencies needed for processing, building static files and for ssh
 RUN apt-get update \
@@ -68,3 +68,12 @@ RUN python manage.py collectstatic --noinput
 
 # Build API docs
 RUN cd _docs/api && make html
+
+
+FROM freesound_prod AS freesound_console
+
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		screen \
+		nano \
+	&& rm -rf /var/lib/apt/lists/*

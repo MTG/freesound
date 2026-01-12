@@ -24,15 +24,15 @@ import os
 import random
 
 from django.conf import settings
+from django.core.management.base import BaseCommand
 
 from sounds.models import SoundAnalysis
 from sounds.templatetags.bst_category import bst_taxonomy_category_names_to_category_key
-from utils.management_commands import LoggingBaseCommand
 
 console_logger = logging.getLogger("console")
 
 
-class Command(LoggingBaseCommand):
+class Command(BaseCommand):
     help = """This command iterates over the list of all CONSOLIDATED_AUDIO_DESCRIPTORS and exports a list with all values for
     every descriptor in a distinct JSON file. This is used to compute statistics (histograms) for audio descriptors and generate
     plots for the API documentation.

@@ -50,6 +50,7 @@ from tickets import (
 from tickets.forms import (
     IS_EXPLICIT_ADD_FLAG_KEY,
     IS_EXPLICIT_REMOVE_FLAG_KEY,
+    ModerationChoices,
     ModerationMessageForm,
     ModeratorMessageForm,
     SoundModerationForm,
@@ -108,7 +109,8 @@ def ticket(request, ticket_key):
         raise Http404
 
     if request.method == "POST":
-        invalidate_user_template_caches(ticket.sender.id)
+        if ticket.sender:
+            invalidate_user_template_caches(ticket.sender.id)
         invalidate_all_moderators_header_cache()
 
         # Left ticket message
@@ -123,7 +125,7 @@ def ticket(request, ticket_key):
                     )
                     if request.user == ticket.sender:
                         # If the sender is the same as the user, we send the notification to the moderator
-                        ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED, Ticket.MODERATOR_ONLY)
+                        ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED_MIN, Ticket.MODERATOR_ONLY)
                     else:
                         # If the sender is not the same as the user, then this is a moderator editing the ticket
                         # only send the notification to the user if the message is not moderator only
@@ -152,7 +154,7 @@ def ticket(request, ticket_key):
                 if ticket.assignee is None:
                     ticket.assignee = request.user
 
-                if sound_action == "Delete":
+                if sound_action == ModerationChoices.DELETE:
                     if ticket.sound:
                         ticket.sound.delete()
                         ticket.sound = None
@@ -160,27 +162,22 @@ def ticket(request, ticket_key):
                     comment += "deleted the sound and closed the ticket"
                     notification = ticket.NOTIFICATION_DELETED
 
-                elif sound_action == "Defer":
+                elif sound_action == ModerationChoices.DEFER:
                     ticket.status = TICKET_STATUS_DEFERRED
                     ticket.sound.change_moderation_state("PE")  # not sure if this state have been used before
                     comment += "deferred the ticket"
 
-                elif sound_action == "Return":
+                elif sound_action == ModerationChoices.RETURN:
                     ticket.status = TICKET_STATUS_NEW
                     ticket.assignee = None
                     ticket.sound.change_moderation_state("PE")
                     comment += "returned the ticket to new sounds queue"
 
-                elif sound_action == "Approve":
+                elif sound_action == ModerationChoices.APPROVE:
                     ticket.status = TICKET_STATUS_CLOSED
                     ticket.sound.change_moderation_state("OK")
                     comment += "approved the sound and closed the ticket"
                     notification = ticket.NOTIFICATION_APPROVED
-
-                elif sound_action == "Whitelist":
-                    whitelist_user_task.delay(annotation_sender_id=request.user.id, ticket_ids=[ticket.id])
-                    comment += f"whitelisted all sounds from user {ticket.sender}"
-                    notification = ticket.NOTIFICATION_WHITELISTED
 
                 elif sound_action == "Close":
                     # This option in never shown in the form, but used when needing to close a ticket which has no sound associated (see ticket.html)
@@ -202,12 +199,16 @@ def ticket(request, ticket_key):
         return redirect(reverse("tickets-ticket", args=[ticket.key]))
 
     if clean_status_forms:
-        default_action = "Return" if ticket.sound and ticket.sound.moderation_state == "OK" else "Approve"
+        default_action = (
+            ModerationChoices.RETURN
+            if ticket.sound and ticket.sound.moderation_state == "OK"
+            else ModerationChoices.APPROVE
+        )
         sound_form = SoundStateForm(initial={"action": default_action}, prefix="ss")
     if clean_comment_form:
         tc_form = _get_tc_form(request, False)
 
-    if request.user.has_perm("tickets.can_moderate"):
+    if request.user.has_perm("tickets.can_moderate") and ticket.sender:
         num_mod_annotations = UserAnnotation.objects.filter(user=ticket.sender).count()
     else:
         num_mod_annotations = None
@@ -218,7 +219,7 @@ def ticket(request, ticket_key):
         "sound_form": sound_form,
         "num_mod_annotations": num_mod_annotations,
         "can_view_moderator_only_messages": can_view_moderator_only_messages,
-        "num_sounds_pending": ticket.sender.profile.num_sounds_pending_moderation(),
+        "num_sounds_pending": ticket.sender.profile.num_sounds_pending_moderation() if ticket.sender else None,
     }
 
     sound_object = Sound.objects.bulk_query_id(sound_ids=[ticket.sound_id])[0] if ticket.sound_id is not None else None
@@ -532,22 +533,24 @@ def moderation_assigned(request, user_id):
             users_to_update = set()
             packs_to_update = set()
 
-            if action == "Approve":
+            is_explicit_choice_key = mod_sound_form.cleaned_data.get("is_explicit")
+            sounds_update_params = {}
+            if is_explicit_choice_key in (
+                IS_EXPLICIT_ADD_FLAG_KEY,
+                IS_EXPLICIT_REMOVE_FLAG_KEY,
+            ):
+                sounds_update_params["is_explicit"] = is_explicit_choice_key == IS_EXPLICIT_ADD_FLAG_KEY
+                sounds_update_params["is_index_dirty"] = True
+
+            if action == ModerationChoices.APPROVE:
                 tickets.update(status=TICKET_STATUS_CLOSED)
-                sounds_update_params = {
-                    "is_index_dirty": True,
-                    "moderation_state": "OK",
-                    "moderation_date": timezone.now(),
-                }
-                is_explicit_choice_key = mod_sound_form.cleaned_data.get("is_explicit")
-                if is_explicit_choice_key == IS_EXPLICIT_ADD_FLAG_KEY:
-                    sounds_update_params["is_explicit"] = True
-                elif is_explicit_choice_key == IS_EXPLICIT_REMOVE_FLAG_KEY:
-                    sounds_update_params["is_explicit"] = False
-
-                # Otherwise is_explicit_choice_key = IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, don't update the
-                # 'is_explicit' field and leave it as the user originally set it
-
+                sounds_update_params.update(
+                    {
+                        "is_index_dirty": True,
+                        "moderation_state": "OK",
+                        "moderation_date": timezone.now(),
+                    }
+                )
                 Sound.objects.filter(ticket__in=tickets).update(**sounds_update_params)
 
                 if msg:
@@ -555,18 +558,20 @@ def moderation_assigned(request, user_id):
                 else:
                     notification = Ticket.NOTIFICATION_APPROVED
 
-            elif action == "Defer":
+            elif action == ModerationChoices.DEFER:
                 tickets.update(status=TICKET_STATUS_DEFERRED)
+                if sounds_update_params:
+                    Sound.objects.filter(ticket__in=tickets).update(**sounds_update_params)
 
                 # only send a notification if a message was added
                 if msg:
                     notification = Ticket.NOTIFICATION_QUESTION
 
-            elif action == "Return":
+            elif action == ModerationChoices.RETURN:
                 tickets.update(status=TICKET_STATUS_NEW, assignee=None)
                 # no notification here
 
-            elif action == "Delete":
+            elif action == ModerationChoices.DELETE:
                 # to prevent a crash if the form is resubmitted
                 tickets.update(status=TICKET_STATUS_CLOSED)
                 # if tickets are being deleted we have to fill users_to_update
@@ -583,40 +588,38 @@ def moderation_assigned(request, user_id):
                 tickets = Ticket.objects.filter(id__in=ticket_ids)
                 notification = Ticket.NOTIFICATION_DELETED
 
-            elif action == "Whitelist":
-                ticket_ids = list(tickets.values_list("id", flat=True))
-                whitelist_user_task.delay(
-                    annotation_sender_id=request.user.id, ticket_ids=ticket_ids
-                )  # async job should take care of whitelisting
-                notification = Ticket.NOTIFICATION_WHITELISTED
-
-                users = set(tickets.values_list("sender__username", flat=True))
-                messages.add_message(
-                    request,
-                    messages.INFO,
-                    """User(s) %s has/have been whitelisted. Some of tickets might
-                    still appear on this list for some time. Please reload the
-                    page in a few seconds to see the updated list of pending
-                    tickets"""
-                    % ", ".join(users),
-                )
-
             # Trigger some async tasks to update user and pack counts, clear caches, send email notifications, etc.
+            if msg:
+                # Add message here and not in the task - if we return a sound then the assignee is removed and we
+                # can't say who a message is from
+                moderator_only = msg_form.cleaned_data.get("moderator_only", False)
+                TicketComment.objects.bulk_create(
+                    [
+                        TicketComment(
+                            sender=request.user,
+                            text=msg,
+                            ticket=ticket,
+                            moderator_only=moderator_only,
+                        )
+                        for ticket in tickets
+                    ]
+                )
             post_moderation_assigned_tickets_task.delay(
                 ticket_ids=ticket_ids,
                 notification=notification,
-                msg=msg,
-                moderator_only=msg_form.cleaned_data.get("moderator_only", False),
                 users_to_update=list(users_to_update),
                 packs_to_update=list(packs_to_update),
             )
 
             messages.add_message(request, messages.INFO, f"{len(tickets)} ticket(s) successfully updated")
-            return HttpResponseRedirect(reverse("tickets-moderation-assigned", args=[request.user.id]))
+            redirect_page = request.POST.get("page") or request.GET.get("page") or 1
+            return HttpResponseRedirect(
+                reverse("tickets-moderation-assigned", args=[request.user.id]) + f"?page={redirect_page}"
+            )
         else:
             clear_forms = False
     if clear_forms:
-        mod_sound_form = SoundModerationForm(initial={"action": "Approve"})
+        mod_sound_form = SoundModerationForm(initial={"action": ModerationChoices.APPROVE})
         msg_form = ModerationMessageForm()
 
     qs = (
@@ -640,16 +643,17 @@ def moderation_assigned(request, user_id):
             ticket.status = TICKET_STATUS_CLOSED
             ticket.save()
 
-    # We annotate the tickets with a boolean to indicate if their senders have any mod annotations.
-    # Note that we might be able to optimize this bit with some custom SQL or some django ORM magic
-    users_num_mod_annotations = {}
+    # Pre-compute annotation counts for tickets on this page. Use this data to show
+    # an icon indicating that there are mod annotations for the sender of the ticket.
+    sender_ids = {ticket.sender_id for ticket in pagination_response["page"].object_list}
+    users_num_mod_annotations = dict(
+        UserAnnotation.objects.filter(user_id__in=sender_ids)
+        .values("user_id")
+        .annotate(num_mod_annotations=Count("id"))
+        .values_list("user_id", "num_mod_annotations")
+    )
     for ticket in pagination_response["page"].object_list:
-        if ticket.sender_id not in users_num_mod_annotations:
-            num_mod_annotations = UserAnnotation.objects.filter(user=ticket.sender).count()
-            users_num_mod_annotations[ticket.sender_id] = num_mod_annotations
-        else:
-            num_mod_annotations = users_num_mod_annotations[ticket.sender_id]
-        ticket.num_mod_annotations = num_mod_annotations
+        ticket.num_mod_annotations = users_num_mod_annotations.get(ticket.sender_id, 0)
 
     moderator_tickets_count = qs.count()
     show_pagination = moderator_tickets_count > page_size

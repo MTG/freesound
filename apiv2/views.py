@@ -257,6 +257,8 @@ class TextSearch(GenericAPIView):
                             group_by_pack="0",
                         )
                         sound["n_from_same_pack"] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
+                if distance_to_target_data:
+                    sound["distance_to_target"] = distance_to_target_data[sid]
                 sounds.append(sound)
             except KeyError:
                 # This will happen if there are synchronization errors between solr index, gaia and the database.

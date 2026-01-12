@@ -113,6 +113,7 @@ def message(request, message_id):
 @login_required
 @transaction.atomic()
 def new_message(request, username=None, message_id=None):
+    is_reply = bool(message_id)
     if request.user.profile.is_trustworthy():
         form_class = MessageReplyForm
     else:
@@ -197,7 +198,7 @@ def new_message(request, username=None, message_id=None):
         else:
             form = form_class(request)
 
-    tvars = {"form": form}
+    tvars = {"form": form, "is_reply": is_reply}
     return render(request, "messages/new.html", tvars)
 
 

@@ -71,6 +71,7 @@ def display_post(
     show_action_icons=True,
     show_report_actions=True,
     results_highlighted=None,
+    show_moderator_info=False,
 ):
     """This templatetag is used to display a post in a list of posts. It prepares some variables that are then
     passed to the display_post.html template to show post information.
@@ -87,6 +88,7 @@ def display_post(
         show_report_actions (bool): show links to admin pages for post/thread and for reporting post as spam
         results_highlighted (dict): dictionary with highlighted contents of all posts in the current search results
           page (with post IDs as keys of the dictionary). This is returned by the search engine.
+        show_moderator_info (bool): show additional information about the post author for moderator purposes
 
     Returns:
         dict: dictionary with the variables needed for rendering the post with the display_post.html template
@@ -99,6 +101,11 @@ def display_post(
             highlighted_content = False
     else:
         highlighted_content = False
+    edited_diff = None
+    if post.modified and post.created:
+        edited_diff = abs((post.modified - post.created).total_seconds())
+    current_user = context["request"].user
+    can_view_moderator_info = current_user.has_perm("tickets.can_moderate") or current_user.is_staff
     return {
         "post": post,
         "highlighted_content": highlighted_content,
@@ -106,6 +113,8 @@ def display_post(
         "show_post_location": show_post_location,
         "show_action_icons": show_action_icons,
         "show_report_actions": show_report_actions,
+        "show_moderator_info": show_moderator_info and can_view_moderator_info,
+        "show_post_edited": edited_diff is not None and edited_diff > 1,
         "perms": context["perms"],
         "request": context["request"],
     }

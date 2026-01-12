@@ -337,6 +337,18 @@ class SearchEngineBase:
         """
         raise NotImplementedError
 
+    def get_all_sim_vector_document_ids_per_similarity_space(self):
+        """Returns indexed Solr document IDs for all similarity vector documents for each similarity space.
+        Solr document IDs for similarity vector documents have the format:
+            "simvec_<similarity_space>_<sound_id>"
+
+        Returns:
+            dict: dictionary with a list of Solr document IDs per similarity space.
+                E.g.: {'freesound_classic': [693610/similarity_vectors#0, 693610/similarity_vectors#1, ...],
+                       'laion_clap': [1234/similarity_vectors#0, 1235/similarity_vectors#0, ...]}
+        """
+        raise NotImplementedError
+
     # Forum search related methods
 
     def add_forum_posts_to_index(self, forum_post_objects):

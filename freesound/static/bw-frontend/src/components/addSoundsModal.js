@@ -61,7 +61,7 @@ const prepareAddSoundsModalAndFields = (container) => {
         }
 
         const soundsLabel = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName('label')[0];
-        const itemCountElementInLabel = soundsLabel === null ? null : soundsLabel.querySelector('#element-count');
+        const itemCountElementInLabel = soundsLabel === (null || undefined) ? null : soundsLabel.querySelector('#element-count');
         
         const maxSounds = selectedSoundsDestinationElement.dataset.maxElements;
         const maxSoundsHelpText = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByClassName('helptext')[0]

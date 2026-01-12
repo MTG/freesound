@@ -107,6 +107,7 @@ def search_view_helper(request):
 
     # Run the query and post-process the results
     try:
+        query_params = {}  # Initialize to avoid reference before assignment if exception occurs at sqp.as_query_params()
         query_params = sqp.as_query_params()
 
         empty_query_cache_key = get_empty_query_cache_key(request, use_beta_features=use_beta_features)

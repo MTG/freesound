@@ -666,7 +666,6 @@ ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7  # in hours
 
 AUDIOCOMMONS_ANALYZER_NAME = "ac-extractor_v3"
 FREESOUND_ESSENTIA_EXTRACTOR_NAME = "fs-essentia-extractor_legacy"
-AUDIOSET_YAMNET_ANALYZER_NAME = "audioset-yamnet_v1"
 BIRDNET_ANALYZER_NAME = "birdnet_v1"
 FSDSINET_ANALYZER_NAME = "fsd-sinet_v1"
 BST_ANALYZER_NAME = "bst-extractor_v1"
@@ -674,7 +673,6 @@ BST_ANALYZER_NAME = "bst-extractor_v1"
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {},
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
-    AUDIOSET_YAMNET_ANALYZER_NAME: {},
     BIRDNET_ANALYZER_NAME: {},
     FSDSINET_ANALYZER_NAME: {},
     BST_ANALYZER_NAME: {},
@@ -1154,7 +1152,6 @@ SEARCH_SOUNDS_DEFAULT_FACETS = {
     SEARCH_SOUNDS_FIELD_TYPE: {"limit": len(SOUND_TYPE_CHOICES)},
     SEARCH_SOUNDS_FIELD_LICENSE_NAME: {"limit": 10},
     SEARCH_SOUNDS_FIELD_CATEGORY: {"limit": 30, "title": "Category"},
-    SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING: {"limit": 10, "title": "Collections"},
 }
 SEARCH_SOUNDS_SUBCATEGORY_FACET = {SEARCH_SOUNDS_FIELD_SUBCATEGORY: {"limit": 30, "title": "Subcategory"}}
 
@@ -1449,6 +1446,12 @@ MAX_SOUNDS_PER_COLLECTION = 250
 from .local_settings import *  # noqa: F403
 
 # -------------------------------------------------------------------------------
+# More collections stuff
+
+if ENABLE_COLLECTIONS:
+    SEARCH_SOUNDS_DEFAULT_FACETS[SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING] = {"limit": 10, "title": "Collections"}
+
+# -------------------------------------------------------------------------------
 # Celery
 CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASS}@{RABBITMQ_HOST}:{RABBITMQ_PORT}//"
 CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{CELERY_BROKER_REDIS_STORE_ID}"
@@ -1529,3 +1532,4 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
 # -------------------------------------------------------------------------------
 # Import logging settings
+from .logger import LOGGING  # noqa: F401

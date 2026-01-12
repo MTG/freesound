@@ -158,8 +158,8 @@ services:
     similarity:
         profiles: ["all"]
         build:
-            context: ./similarity
-            dockerfile: ../docker/Dockerfile.similarity
+            dockerfile: ./docker/Dockerfile.py2
+            target: similarity
             platforms:
               - linux/amd64
         init: true
@@ -177,8 +177,8 @@ services:
     tagrecommendation:
         profiles: ["all"]
         build:
-            context: ./tagrecommendation
-            dockerfile: ../docker/Dockerfile.tagrecommendation
+            dockerfile: ./docker/Dockerfile.py2
+            target: tagrecommendation
             platforms:
               - linux/amd64
         init: true

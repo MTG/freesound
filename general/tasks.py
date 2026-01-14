@@ -456,7 +456,21 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
                 )
             )
 
-    except (SoundAnalysis.DoesNotExist, Exception) as e:
+    except SoundAnalysis.DoesNotExist as e:
+        workers_logger.info(
+            "Error processing analysis results (%s)"
+            % json.dumps(
+                {
+                    "task_name": PROCESS_ANALYSIS_RESULTS_TASK_NAME,
+                    "sound_id": sound_id,
+                    "analyzer": analyzer,
+                    "status": status,
+                    "error": str(e),
+                    "work_time": round(time.monotonic() - start_time),
+                }
+            )
+        )
+    except Exception as e:
         workers_logger.info(
             "Error processing analysis results (%s)"
             % json.dumps(

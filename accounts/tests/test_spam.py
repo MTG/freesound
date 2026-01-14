@@ -129,6 +129,7 @@ class ReportSpamOffensive(TestCase):
 
     def test_report_sound_comment(self):
         sound = Sound.objects.first()
+        assert sound is not None
         sound.add_comment(self.spammer, "This is a spammy comment")
         comment = self.spammer.comment_set.first()
         self.__test_report_object("SC", comment)
@@ -158,6 +159,7 @@ class ReportSpamOffensive(TestCase):
         # kinds of reports
 
         sound = Sound.objects.first()
+        assert sound is not None
         sound.add_comment(self.spammer, "This is a spammy comment")
         comment = self.spammer.comment_set.first()
 
@@ -178,6 +180,7 @@ class ReportSpamOffensive(TestCase):
     def test_report_multiple_objects(self):
         # Make spammy objects
         sound = Sound.objects.first()
+        assert sound is not None
         sound.add_comment(self.spammer, "This is a spammy comment")
         comment = self.spammer.comment_set.first()
         thread = Thread.objects.create(

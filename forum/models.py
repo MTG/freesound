@@ -41,6 +41,7 @@ web_logger = logging.getLogger("web")
 
 
 class Forum(SortableMixin):
+    id: int
     order = models.PositiveIntegerField(default=0, editable=False)
 
     name = models.CharField(max_length=50)
@@ -87,6 +88,7 @@ def forum_pre_save_set_slug(sender, instance, **kwargs):
 
 
 class Thread(models.Model):
+    id: int
     forum = models.ForeignKey(Forum, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=250)
@@ -208,6 +210,7 @@ def update_last_post_on_thread_delete(sender, instance, **kwargs):
 
 
 class Post(models.Model):
+    id: int
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     author = models.ForeignKey(User, related_name="posts", on_delete=models.CASCADE)
     body = models.TextField()
@@ -341,6 +344,7 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
 
 
 class Subscription(models.Model):
+    id: int
     subscriber = models.ForeignKey(User, on_delete=models.CASCADE)
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     is_active = models.BooleanField(db_index=True, default=True)

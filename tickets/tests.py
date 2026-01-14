@@ -30,7 +30,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 import sounds
-import tickets
+import tickets.models
+import tickets.views
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW
 from tickets.forms import (

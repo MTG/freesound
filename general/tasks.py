@@ -171,7 +171,7 @@ def post_moderation_assigned_tickets(ticket_ids=[], notification=None, users_to_
 
         # Send notification email to users
         if notification is not None:
-            ticket.send_notification_emails(notification, Ticket.USER_ONLY)
+            ticket.send_notification_email_user(notification)
 
     # Update number of sounds for each user
     Profile = apps.get_model("accounts.Profile")

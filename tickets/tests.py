@@ -163,9 +163,7 @@ class MiscTicketTests(TicketTests):
         """Emails should be properly configured and sent with notifications"""
         ticket = self._create_assigned_ticket()
 
-        ticket.send_notification_emails(
-            tickets.models.Ticket.NOTIFICATION_APPROVED_BUT, tickets.models.Ticket.USER_ONLY
-        )
+        ticket.send_notification_email_user(tickets.models.Ticket.NOTIFICATION_APPROVED_BUT)
 
         local_vars = {
             "ticket": ticket,

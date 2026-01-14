@@ -446,9 +446,8 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
     def update_sound_tickets(sound, text):
         tickets = Ticket.objects.filter(sound_id=sound.id).exclude(status=TICKET_STATUS_CLOSED)
         for ticket in tickets:
-            tc = TicketComment(sender=request.user, ticket=ticket, moderator_only=False, text=text)
-            tc.save()
-            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED_MIN, ticket.MODERATOR_ONLY)
+            tc = TicketComment.objects.create(sender=request.user, ticket=ticket, moderator_only=False, text=text)
+            ticket.send_notification_email_moderator(ticket.NOTIFICATION_UPDATED_MIN)
 
     def create_sounds(request, forms):
         # Create actual Sound objects, trigger processing of sounds and of affected packs

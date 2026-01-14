@@ -55,9 +55,6 @@ class Ticket(models.Model):
     NOTIFICATION_UPDATED_MIN = "emails/email_notification_updated_min.txt"
     NOTIFICATION_WHITELISTED = "emails/email_notification_whitelisted.txt"
 
-    MODERATOR_ONLY = 1
-    USER_ONLY = 2
-
     def get_n_last_non_moderator_only_comments(self, n):
         """
         Get the last n comments that are not 'moderator only' from the self ticket
@@ -67,21 +64,19 @@ class Ticket(models.Model):
             :n
         ]  # converting from Django QuerySet to python list in order to use negative indexing
 
-    def send_notification_emails(self, notification_type, send_ticket_to):
-        # send message to assigned moderator
-        if send_ticket_to == Ticket.MODERATOR_ONLY:
-            if self.assignee:
-                tvars = {"ticket": self, "user_to": self.assignee}
-                send_mail_template(
-                    settings.EMAIL_SUBJECT_MODERATION_HANDLED, notification_type, tvars, user_to=self.assignee
-                )
-        # send message to user
-        if send_ticket_to == Ticket.USER_ONLY:
-            if self.sender:
-                tvars = {"ticket": self, "user_to": self.sender}
-                send_mail_template(
-                    settings.EMAIL_SUBJECT_MODERATION_HANDLED, notification_type, tvars, user_to=self.sender
-                )
+    def send_notification_email_moderator(self, notification_type):
+        """Send notification email to the assigned moderator."""
+        if self.assignee:
+            tvars = {"ticket": self, "user_to": self.assignee}
+            send_mail_template(
+                settings.EMAIL_SUBJECT_MODERATION_HANDLED, notification_type, tvars, user_to=self.assignee
+            )
+
+    def send_notification_email_user(self, notification_type):
+        """Send notification email to the ticket sender (user)."""
+        if self.sender:
+            tvars = {"ticket": self, "user_to": self.sender}
+            send_mail_template(settings.EMAIL_SUBJECT_MODERATION_HANDLED, notification_type, tvars, user_to=self.sender)
 
     def get_absolute_url(self):
         return reverse("ticket", args=[smart_str(self.key)])

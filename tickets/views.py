@@ -192,8 +192,9 @@ def ticket(request, ticket_key):
 
                 ticket.save()
                 if comment is not None:
-                    tc = TicketComment(sender=request.user, text=comment, ticket=ticket, moderator_only=False)
-                    tc.save()
+                    tc = TicketComment.objects.create(
+                        sender=request.user, text=comment, ticket=ticket, moderator_only=False
+                    )
 
         # Prevent multiple submissions if a user reloads the page
         return redirect(reverse("tickets-ticket", args=[ticket.key]))

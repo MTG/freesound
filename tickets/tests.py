@@ -63,8 +63,7 @@ class NewTicketTests(TestCase):
         ticket.assignee = User.objects.get(username="test_moderator")
         ticket.save()
         # just to test, this would be a sound object for example
-        s = Sound(description="test sound", license_id=1, user=test_user)
-        s.save()
+        s = Sound.objects.create(description="test sound", license_id=1, user=test_user)
         ticket.sound = s
         ticket.save()
         self.assertEqual(s.id, ticket.sound.id)

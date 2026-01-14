@@ -1295,8 +1295,7 @@ class Sound(models.Model):
             self.save()
 
     def add_comment(self, user, comment):
-        comment = Comment(sound=self, user=user, comment=comment)
-        comment.save()
+        comment = Comment.objects.create(sound=self, user=user, comment=comment)
         self.num_comments = F("num_comments") + 1
         self.mark_index_dirty(commit=False)
         self.save()

@@ -698,13 +698,12 @@ def manage_sounds(request, tab):
                         web_logger.info(f"User {request.user.username} requested to delete sound {sound.id}")
                         try:
                             ticket = sound.ticket
-                            tc = TicketComment(
+                            tc = TicketComment.objects.create(
                                 sender=request.user,
                                 text=f"User {request.user} deleted the sound",
                                 ticket=ticket,
                                 moderator_only=False,
                             )
-                            tc.save()
                         except Ticket.DoesNotExist:
                             pass
                         sound.delete()
@@ -1757,8 +1756,7 @@ def flag_user(request, username):
             return HttpResponse(json.dumps({"errors": True}), content_type="application/javascript")
 
         previous_reports_count = UserFlag.objects.filter(user=flagged_user).values("reporting_user").distinct().count()
-        uflag = UserFlag(user=flagged_user, reporting_user=reporting_user, content_object=flagged_object)
-        uflag.save()
+        uflag = UserFlag.objects.create(user=flagged_user, reporting_user=reporting_user, content_object=flagged_object)
 
         reports_count = UserFlag.objects.filter(user=flagged_user).values("reporting_user").distinct().count()
         if reports_count != previous_reports_count and (

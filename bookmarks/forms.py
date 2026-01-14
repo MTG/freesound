@@ -79,10 +79,9 @@ class BookmarkForm(forms.Form):
                 pass
             elif self.cleaned_data["category"] == self.NEW_CATEGORY_CHOICE_VALUE:
                 if self.cleaned_data["new_category_name"] != "":
-                    category = BookmarkCategory(
+                    category = BookmarkCategory.objects.create(
                         user=self.user_saving_bookmark, name=self.cleaned_data["new_category_name"]
                     )
-                    category.save()
                     category_to_use = category
             else:
                 category_to_use = BookmarkCategory.objects.get(id=self.cleaned_data["category"])

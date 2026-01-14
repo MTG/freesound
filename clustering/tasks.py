@@ -50,7 +50,7 @@ def cluster_sounds(cache_key, sound_ids, similarity_vectors_map=None):
     workers_logger.info(
         "Start clustering sounds (%s)" % json.dumps({"task_name": "cluster_sounds", "num_sounds": len(sound_ids)})
     )
-    start_time = time.time()
+    start_time = time.monotonic()
 
     cluster_points_results = cluster_sounds.engine.cluster_points(
         cache_key, sound_ids, similarity_vectors_map=similarity_vectors_map
@@ -65,7 +65,7 @@ def cluster_sounds(cache_key, sound_ids, similarity_vectors_map=None):
                 "num_clusters": len(cluster_points_results["clusters"])
                 if cluster_points_results["clusters"] is not None
                 else 0,
-                "work_time": round(100 * (time.time() - start_time)) / 100.0,
+                "work_time": round(100 * (time.monotonic() - start_time)) / 100.0,
             }
         )
     )

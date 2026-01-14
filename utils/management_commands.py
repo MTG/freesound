@@ -54,7 +54,7 @@ class LoggingBaseCommand(BaseCommand):
         return None
 
     def log_start(self, data=None):
-        self.start_time = time.time()
+        self.start_time = time.monotonic()
         self.command_name = self.find_command_name()
         if data is None:
             data = {}
@@ -65,6 +65,6 @@ class LoggingBaseCommand(BaseCommand):
         if data is None:
             data = {}
         if self.start_time:
-            data["work_time"] = round(time.time() - self.start_time)
+            data["work_time"] = round(time.monotonic() - self.start_time)
         data["command"] = self.command_name or self.find_command_name()
         commands_logger.info(f"Finished management command ({json.dumps(data)})")

@@ -1416,7 +1416,7 @@ def handle_uploaded_file(user_id, f):
     upload_logger.info(
         "handling file upload from user %s, filename %s and saving to %s", user_id, f.name, dest_path.decode("utf-8")
     )
-    starttime = time.time()
+    starttime = time.monotonic()
     if settings.MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING and isinstance(f, TemporaryUploadedFile):
         # Big files (bigger than ~2MB, this is configured by Django and can be customized) will be delivered via a
         # TemporaryUploadedFile which has already been streamed in disk, so we only need to move the already existing
@@ -1447,7 +1447,7 @@ def handle_uploaded_file(user_id, f):
     # NOTE: if we enable mirror locations for uploads and the copying below causes problems, we could do it async
     copy_uploaded_file_to_mirror_locations(dest_path)
     upload_logger.info(
-        "file upload (%s) - handling file upload done, took %.2f seconds", user_id, time.time() - starttime
+        "file upload (%s) - handling file upload done, took %.2f seconds", user_id, time.monotonic() - starttime
     )
     return True
 

@@ -69,7 +69,7 @@ class Ticket(models.Model):
         if self.assignee:
             tvars = {"ticket": self, "user_to": self.assignee}
             send_mail_template(
-                settings.EMAIL_SUBJECT_MODERATION_HANDLED, notification_type, tvars, user_to=self.assignee
+                settings.EMAIL_SUBJECT_MODERATION_FOR_MODERATOR, notification_type, tvars, user_to=self.assignee
             )
 
     def send_notification_email_user(self, notification_type):

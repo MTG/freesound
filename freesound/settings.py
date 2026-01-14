@@ -261,6 +261,7 @@ EMAIL_SUBJECT_NEW_COMMENT = "You have a new comment"
 EMAIL_SUBJECT_SOUND_FLAG = "Sound flag"
 EMAIL_SUBJECT_SUPPORT_EMAIL = "[support]"
 EMAIL_SUBJECT_MODERATION_HANDLED = "A Freesound moderator handled your upload"
+EMAIL_SUBJECT_MODERATION_FOR_MODERATOR = "Ticket update"
 
 # -------------------------------------------------------------------------------
 # Static settings

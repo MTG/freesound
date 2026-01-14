@@ -42,7 +42,13 @@ from utils.clustering_utilities import (
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
-from utils.search import SearchEngineException, SearchResultsPaginator, get_search_engine, search_query_processor
+from utils.search import (
+    SearchEngineException,
+    SearchEngineTimeoutException,
+    SearchResultsPaginator,
+    get_search_engine,
+    search_query_processor,
+)
 from utils.search.search_sounds import (
     allow_beta_search_features,
     get_empty_query_cache_key,
@@ -220,6 +226,23 @@ def search_view_helper(request):
             "experimental_facets": settings.SEARCH_SOUNDS_BETA_FACETS,
         }
 
+    except SearchEngineTimeoutException as e:
+        search_logger.info(
+            "SearchTimeout (%s)"
+            % json.dumps(
+                {
+                    "ip": get_client_ip(request),
+                    "query": query_params.get("textual_query"),
+                    "filter": query_params.get("query_filter"),
+                    "username": request.user.username,
+                    "page": query_params.get("current_page"),
+                    "sort": query_params.get("sort"),
+                    "url": sqp.get_url(),
+                    "tags_mode": sqp.tags_mode_active(),
+                }
+            )
+        )
+        return {"error_text": "Search is overloaded, please try again later."}
     except SearchEngineException as e:
         search_logger.info(f"Search error: query: {str(query_params)} error {e}")
         sentry_sdk.capture_exception(e)
@@ -355,6 +378,22 @@ def search_forum(request):
             num_results = paginator.count
             page = paginator.page(current_page)
             error = False
+        except SearchEngineTimeoutException as e:
+            search_logger.info(
+                "SearchTimeout (%s)"
+                % json.dumps(
+                    {
+                        "ip": get_client_ip(request),
+                        "query": search_query,
+                        "filter": filter_query,
+                        "page": current_page,
+                        "sort": sort,
+                        "url": request.get_full_path(),
+                    }
+                )
+            )
+            error = True
+            error_text = "Search is overloaded, please try again later."
         except SearchEngineException as e:
             search_logger.info(f"Search error: query: {search_query} error {e}")
             sentry_sdk.capture_exception(e)

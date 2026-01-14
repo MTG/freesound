@@ -187,6 +187,10 @@ class SearchEngineException(Exception):
     pass
 
 
+class SearchEngineTimeoutException(SearchEngineException):
+    pass
+
+
 class SearchEngineBase:
     solr_base_url = None
 

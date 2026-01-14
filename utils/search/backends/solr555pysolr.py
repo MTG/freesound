@@ -30,7 +30,7 @@ from django.conf import settings
 
 from forum.models import Post
 from sounds.models import Sound, SoundSimilarityVector
-from utils.search import SearchEngineBase, SearchEngineException, SearchResults
+from utils.search import SearchEngineBase, SearchEngineException, SearchEngineTimeoutException, SearchResults
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
 from utils.text import remove_control_chars
 
@@ -183,6 +183,14 @@ class FreesoundSoundJsonEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, value)
 
 
+def _raise_search_engine_exception(error: BaseException) -> None:
+    # pysolr swallows exceptions and returns a generic SolrError with some specific text in the message
+    # super annoying but this is the only way to check the type of error.
+    if "timed out" in str(error).lower():
+        raise SearchEngineTimeoutException(error)
+    raise SearchEngineException(error)
+
+
 class Solr555PySolrSearchEngine(SearchEngineBase):
     solr_base_url = settings.SOLR5_BASE_URL
     sounds_index = None
@@ -204,6 +212,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 results_cls=SolrResponseInterpreter,
                 search_handler="fsquery",
                 always_commit=True,
+                timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
             )
         return self.sounds_index
 
@@ -215,6 +224,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 results_cls=SolrResponseInterpreter,
                 search_handler="fsquery",
                 always_commit=True,
+                timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
             )
         return self.forum_index
 
@@ -563,7 +573,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         try:
             self.get_sounds_index().add(documents)
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def update_similarity_vectors_in_index(self, sound_objects):
         """Create an update document to add only similarity vectors to sounds that already exist in the index"""
@@ -573,7 +583,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         try:
             self.get_sounds_index().add(documents)
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def remove_sounds_from_index(self, sound_objects_or_ids):
         try:
@@ -585,13 +595,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     sound_ids.append(str(sound_object_or_id.id))
             self.get_sounds_index().delete(id=sound_ids)
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def remove_all_sounds(self):
         try:
             self.get_sounds_index().delete(q="*:*")
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def sound_exists_in_index(self, sound_object_or_id):
         if not isinstance(sound_object_or_id, Sound):
@@ -861,7 +871,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 q_time=results.q_time,
             )
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def get_random_sound_id(self):
         query = SolrQuery()
@@ -877,7 +887,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 return int(docs[0]["id"])
             return 0
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def get_num_sim_vectors_indexed_per_similarity_space(self):
         results = {}
@@ -895,7 +905,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     "num_vectors": response.non_grouped_number_of_results,
                 }
             except pysolr.SolrError as e:
-                raise SearchEngineException(e)
+                _raise_search_engine_exception(e)
         return results
 
     def get_all_sim_vector_document_ids_per_similarity_space(self):
@@ -926,7 +936,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         try:
             self.get_forum_index().add(documents)
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def remove_forum_posts_from_index(self, forum_post_objects_or_ids):
         try:
@@ -938,13 +948,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
 
                 self.get_forum_index().delete(id=str(post_id))
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def remove_all_forum_posts(self):
         try:
             self.get_forum_index().delete(q="*:*")
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def forum_post_exists_in_index(self, forum_post_object_or_id):
         if not isinstance(forum_post_object_or_id, Post):
@@ -1026,7 +1036,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 q_time=results.q_time,
             )
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     # Tag clouds methods
     def get_user_tags(self, username):
@@ -1043,7 +1053,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             results = self.get_sounds_index().search(**self.force_sounds(query.as_kwargs()))
             return results.facets[tag_facet_field_name]
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def get_pack_tags(self, username, pack_name):
         query = SolrQuery()
@@ -1059,4 +1069,4 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             results = self.get_sounds_index().search(**self.force_sounds(query.as_kwargs()))
             return results.facets[tag_facet_field_name]
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)

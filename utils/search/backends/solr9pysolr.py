@@ -48,6 +48,7 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
                 encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
                 results_cls=solr555pysolr.SolrResponseInterpreter,
                 always_commit=True,
+                timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
             )
         return self.sounds_index
 
@@ -58,6 +59,7 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
                 encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
                 results_cls=solr555pysolr.SolrResponseInterpreter,
                 always_commit=True,
+                timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
             )
         return self.forum_index
 

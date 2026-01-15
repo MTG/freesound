@@ -31,6 +31,7 @@ from django.conf import settings
 
 import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing.processing import AudioProcessingException
+from utils.filesystem import md5file
 from utils.mirror_files import copy_displays_to_mirror_locations, copy_previews_to_mirror_locations
 from utils.sound_upload import get_processing_before_describe_sound_folder
 
@@ -533,4 +534,5 @@ class FreesoundAudioProcessorBeforeDescription(FreesoundAudioProcessorBase):
             info["audio_file_path"] = self.audio_file_path
             with open(self.output_info_file, "w") as f:
                 json.dump(info, f)
-        return True
+        info["md5"] = md5file(self.audio_file_path)
+        return info

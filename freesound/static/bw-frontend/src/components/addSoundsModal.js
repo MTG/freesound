@@ -3,7 +3,7 @@ import {initializeObjectSelector, updateObjectSelectorDataProperties} from '../c
 import {serializedIdListToIntList, combineIdsLists} from "../utils/data"
 
 const handleAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement, onSoundsSelectedCallback) => {
-    handleGenericModal(modalUrl, (modalContainer) => {        
+    handleGenericModal(modalUrl, (modalContainer) => {
         const inputElement = modalContainer.getElementsByTagName('input')[0];
         inputElement.addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
@@ -44,11 +44,22 @@ const prepareAddSoundsModalAndFields = (container) => {
     const addSoundsButtons = [...container.querySelectorAll(`[data-toggle^="add-sounds-modal"]`)];
     addSoundsButtons.forEach(addSoundsButton => {
         const removeSoundsButton = addSoundsButton.nextElementSibling;
-        removeSoundsButton.disabled = true;
+        if (removeSoundsButton) {
+            removeSoundsButton.disabled = true;
+        }
 
-        const selectedSoundsDestinationElement = addSoundsButton.parentNode.parentNode.querySelector('.bw-object-selector-container[data-type="sounds"]');
+        const selectedSoundsDestinationElement = addSoundsButton.parentNode?.parentNode?.querySelector('.bw-object-selector-container[data-type="sounds"]');
+        if (!selectedSoundsDestinationElement) {
+            addSoundsButton.disabled = true;
+            if (removeSoundsButton) {
+                removeSoundsButton.disabled = true;
+            }
+            return;
+        }
         initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
-            removeSoundsButton.disabled = element.dataset.selectedIds == ""
+            if (removeSoundsButton) {
+                removeSoundsButton.disabled = element.dataset.selectedIds == "";
+            }
         });
 
         const soundsInput = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName('input')[0];
@@ -62,7 +73,7 @@ const prepareAddSoundsModalAndFields = (container) => {
 
         const soundsLabel = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName('label')[0];
         const itemCountElementInLabel = soundsLabel === (null || undefined) ? null : soundsLabel.querySelector('#element-count');
-        
+
         const maxSounds = selectedSoundsDestinationElement.dataset.maxElements;
         const maxSoundsHelpText = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByClassName('helptext')[0]
         if(maxSounds !== "None"){
@@ -72,7 +83,8 @@ const prepareAddSoundsModalAndFields = (container) => {
             }
         }
 
-        removeSoundsButton.addEventListener('click', (evt) => {
+        if (removeSoundsButton){
+            removeSoundsButton.addEventListener('click', (evt) => {
             evt.preventDefault();
             const soundCheckboxes = selectedSoundsDestinationElement.querySelectorAll('input.bw-checkbox');
             soundCheckboxes.forEach(checkbox => {
@@ -91,6 +103,7 @@ const prepareAddSoundsModalAndFields = (container) => {
                 itemCountElementInLabel.innerHTML = selectedSoundsDestinationElement.children.length}
             removeSoundsButton.disabled = true;
         });
+        }
 
         addSoundsButton.addEventListener('click', (evt) => {
             evt.preventDefault();
@@ -107,11 +120,13 @@ const prepareAddSoundsModalAndFields = (container) => {
                 if (itemCountElementInLabel){
                     itemCountElementInLabel.innerHTML = selectedSoundsDestinationElement.children.length}
                 initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
-                    removeSoundsButton.disabled = element.dataset.selectedIds == ""
+                    if (removeSoundsButton){
+                        removeSoundsButton.disabled = element.dataset.selectedIds == ""
+                    }
                 });
             });
-            
-        }); 
+
+        });
     });
 }
 

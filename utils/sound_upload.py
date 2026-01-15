@@ -84,24 +84,6 @@ def clean_processing_before_describe_files(audio_file_path):
         remove_directory(directory_path, ignore_errors=True)
 
 
-def get_duration_from_processing_before_describe_files(audio_file_path):
-    info_file_path = os.path.join(get_processing_before_describe_sound_folder(audio_file_path), "info.json")
-    try:
-        with open(info_file_path) as f:
-            return float(json.load(f)["duration"])
-    except Exception:
-        return 0.0
-
-
-def get_samplerate_from_processing_before_describe_files(audio_file_path):
-    info_file_path = os.path.join(get_processing_before_describe_sound_folder(audio_file_path), "info.json")
-    try:
-        with open(info_file_path) as f:
-            return float(json.load(f)["samplerate"])
-    except Exception:
-        return 44100.0
-
-
 def get_processing_before_describe_sound_folder(audio_file_path):
     """
     Get the path to the folder where the sound files generated during processing-before-describe
@@ -115,6 +97,33 @@ def get_processing_before_describe_sound_folder(audio_file_path):
 def get_processing_before_describe_sound_base_url(audio_file_path):
     path = get_processing_before_describe_sound_folder(audio_file_path)
     return settings.PROCESSING_BEFORE_DESCRIPTION_URL + "/".join(path.split("/")[-2:]) + "/"
+
+
+def _get_latest_analysis_for_path(audio_file_path):
+    PendingSoundAnalysis = apps.get_model("sounds", "PendingSoundAnalysis")
+    try:
+        return (
+            PendingSoundAnalysis.objects.select_related("pending_sound")
+            .filter(pending_sound__path=audio_file_path)
+            .order_by("-created")
+            .first()
+        )
+    except PendingSoundAnalysis.DoesNotExist:
+        return None
+
+
+def get_duration_from_processing_before_describe_files(audio_file_path):
+    analysis = _get_latest_analysis_for_path(audio_file_path)
+    if analysis and analysis.duration is not None:
+        return float(analysis.duration)
+    return 0.0
+
+
+def get_samplerate_from_processing_before_describe_files(audio_file_path):
+    analysis = _get_latest_analysis_for_path(audio_file_path)
+    if analysis and analysis.samplerate is not None:
+        return float(analysis.samplerate)
+    return 44100.0
 
 
 def create_sound(user, sound_fields, apiv2_client=None, bulk_upload_progress=None, process=True, remove_exists=False):

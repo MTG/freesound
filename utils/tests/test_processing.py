@@ -312,7 +312,7 @@ class AudioProcessingBeforeDescriptionTestCase(TestCase):
             uploaded_file_path = os.path.join(settings.UPLOADS_PATH, str(self.user.id), filename)
             create_test_files(paths=[uploaded_file_path], make_valid_wav_files=True, duration=2)
             result = FreesoundAudioProcessorBeforeDescription(audio_file_path=uploaded_file_path).process()
-            self.assertTrue(result)
+            self.assertIsInstance(result, dict)
             self.assertListEqual(
                 sorted(os.listdir(get_processing_before_describe_sound_folder(uploaded_file_path))),
                 sorted(["wave.png", "spectral.png", "preview.ogg", "preview.mp3", "info.json"]),

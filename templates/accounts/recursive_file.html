@@ -4,7 +4,16 @@
     <div class="row">
     {% for child in file.children %}
         <div class="col-sm-6">
-            <label for="{{child.id}}"><input class="bw-checkbox" type="checkbox" id="{{ child.id }}" name="{{ child.id }}">{{child.name}}</label>
+            <label for="{{child.id}}">
+                <input class="bw-checkbox" type="checkbox" id="{{ child.id }}" name="{{ child.id }}"
+                       {% if not child.is_ready_for_actions %}disabled{% endif %}>
+                {{child.name}}
+                {% if child.processing_state == 'PR' or child.processing_state == 'PE' %}
+                    <span class="text-grey">(Processing {{ child.processing_state_label|lower }}, please wait)</span>
+                {% elif child.processing_state == 'FA' %}
+                    <span class="text-orange">(Processing failed, you can delete or re-describe)</span>
+                {% endif %}
+            </label>
         </div>
     {% endfor %}
     </div>

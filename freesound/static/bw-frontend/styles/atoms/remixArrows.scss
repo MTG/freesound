@@ -1,11 +1,13 @@
 .remix-group-arrows-panel {
-    g {  // Arrow path
-        stroke: $navy-grey;
-        fill: none;
-        stroke-width: 2px;
-    }
+  g {
+    // Arrow path
+    stroke: $navy-grey;
+    fill: none;
+    stroke-width: 2px;
+  }
 
-    marker {  // Arrow head
-        fill: $navy-grey;
-    }
+  marker {
+    // Arrow head
+    fill: $navy-grey;
+  }
 }

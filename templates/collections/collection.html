@@ -12,15 +12,15 @@
     <div class="row no-gutters">
         <div class="col-lg-3 offset-lg-1 order-lg-last v-spacing-3">
             <section class="bw-profile__section_stats v-spacing-top-4 async-section"
-            data-async-section-content-url="{% url 'collection-stats-section' collection.id %}?ajax=1">
+            data-async-section-content-url="{% url 'collection-stats-section' collection.name|slugify collection.id %}?ajax=1">
             <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}">
         </section>
         <div class="v-spacing-top-4">
             {% if is_owner or is_maintainer%}
-            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'edit-collection' collection.id %}" title="Edit collection">Edit collection</a>
+            <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'edit-collection' collection.name|slugify collection.id %}" title="Edit collection">Edit collection</a>
             {% endif %}
             {% if collection.num_sounds > 0%}
-            <a class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'download-collection' collection.id %}" title="Download collection">Download Collection</a> 
+            <a class="no-hover btn-primary display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'download-collection' collection.name|slugify collection.id %}" title="Download collection">Download Collection</a> 
             {% endif %}
         </div>
     </div>    

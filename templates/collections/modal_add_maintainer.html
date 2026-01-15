@@ -11,7 +11,7 @@
 <div class="col-12">
     <div class="text-center">
         <h4 class="v-spacing-5">Add maintainer to collection</h4>
-        <form method="post" action="{% url 'add-maintainers-modal' collection.id %}?ajax=1" class = "disable-on-submit">{% csrf_token %}
+        <form method="post" action="{% url 'add-maintainers-modal' collection.name|slugify collection.id %}?ajax=1" class = "disable-on-submit">{% csrf_token %}
             {{form}}
             {% if not_found_msg %}
                 <div class="text-grey">{% bw_icon "notification" %}{{not_found_msg}}</div>

@@ -15,5 +15,3 @@ node_modules
 freesound/static/bw-frontend/dist/
 bw_static/
 npm-debug.log
-color-theme.scss
-dist-dark

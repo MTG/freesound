@@ -1,4 +1,4 @@
-@use "sass:color";
+@use 'sass:color';
 .bw-player__img-container {
   position: relative;
   height: 100px;
@@ -75,7 +75,7 @@
   align-items: center;
 
   .loop-button {
-    opacity: 0;  /* loop button is invisible without hovering */
+    opacity: 0; /* loop button is invisible without hovering */
   }
 
   button:focus {
@@ -194,9 +194,7 @@
 }
 
 .bw-player__progress-container--inverted {
-  
   .bw-player__progress {
-    
     span {
       background-color: color.adjust($white, $alpha: -0.3);
     }
@@ -259,19 +257,20 @@
       .bw-player__progress,
       .bw-player__progress-indicator,
       .bw-player__favorite {
-        opacity: 1.0;
-      } 
+        opacity: 1;
+      }
     }
 
     .bw-player-control-btn {
       &:hover {
         color: $red;
       }
-    } 
+    }
   }
 
   &.last-played {
-    &:not(.bw-player--hover-interactions){  // last-played class only affects if player does not have hover interactions enabled
+    &:not(.bw-player--hover-interactions) {
+      // last-played class only affects if player does not have hover interactions enabled
       .bw-player__rate__widget,
       /*.bw-player__controls, */ /* this one no longer needed as player buttons are always visible now */
       .loop-button,  
@@ -280,9 +279,9 @@
       .bw-player__progress,
       .bw-player__progress-indicator,
       .bw-player__favorite {
-        opacity: 1.0;
-      } 
-    } 
+        opacity: 1;
+      }
+    }
   }
 }
 

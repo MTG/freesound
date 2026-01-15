@@ -1,68 +1,69 @@
 /* eslint-disable import/prefer-default-export */
-import {createPlayer} from './player-ui'
+import { createPlayer } from './player-ui';
 
 export const simultaneousPlaybackDisallowed = () => {
   return document.cookie.indexOf('disallowSimultaneousAudioPlayback=yes') > -1;
-}
+};
 
 /**
  * @param {number} value
  */
-const padSingleDigits = value => (value < 10 ? `0${value}` : value)
+const padSingleDigits = value => (value < 10 ? `0${value}` : value);
 
 /**
  * @param {number} value
  */
 const formatMilliseconds = value => {
-  const roundedValue = Math.floor(value * 1000)
+  const roundedValue = Math.floor(value * 1000);
   if (roundedValue < 10) {
-    return `00${roundedValue}`
+    return `00${roundedValue}`;
   }
   if (roundedValue < 100) {
-    return `0${roundedValue}`
+    return `0${roundedValue}`;
   }
-  return roundedValue
-}
+  return roundedValue;
+};
 
 /**
  * @param {number} duration
  * @param {string} showMilliseconds
  */
 export const formatAudioDuration = (duration, showMilliseconds) => {
-  if ((duration === Infinity) || (isNaN(duration))){
-    return `?:?`
+  if (duration === Infinity || isNaN(duration)) {
+    return `?:?`;
   }
-  const minutes = Math.floor(duration / 60)
-  const seconds = Math.floor(duration % 60)
-  const milliseconds = duration - Math.floor(duration)
-  if (showMilliseconds === "true" || showMilliseconds === true){
-    return `${minutes}:${padSingleDigits(seconds)}.${formatMilliseconds(milliseconds)}`
+  const minutes = Math.floor(duration / 60);
+  const seconds = Math.floor(duration % 60);
+  const milliseconds = duration - Math.floor(duration);
+  if (showMilliseconds === 'true' || showMilliseconds === true) {
+    return `${minutes}:${padSingleDigits(seconds)}.${formatMilliseconds(milliseconds)}`;
   } else {
-    return `${minutes}:${padSingleDigits(seconds)}`
+    return `${minutes}:${padSingleDigits(seconds)}`;
   }
-}
-
+};
 
 export const stopAllPlayers = () => {
-  const players = [...document.getElementsByClassName('bw-player')]
+  const players = [...document.getElementsByClassName('bw-player')];
   players.forEach(player => {
-    player.getElementsByTagName('audio').forEach(audioElement=>{audioElement.pause()});
+    player.getElementsByTagName('audio').forEach(audioElement => {
+      audioElement.pause();
+    });
   });
-}
+};
 
-
-export const stopAllPlayersInContainer = (container) => {
-  const players = [...container.getElementsByClassName('bw-player')]
+export const stopAllPlayersInContainer = container => {
+  const players = [...container.getElementsByClassName('bw-player')];
   players.forEach(player => {
-    player.getElementsByTagName('audio').forEach(audioElement=>{audioElement.pause()});
+    player.getElementsByTagName('audio').forEach(audioElement => {
+      audioElement.pause();
+    });
   });
-}
+};
 
-
-export const makeSoundPlayers = (container) => {
-  const players = [...container.getElementsByClassName('bw-player')]
-  players.forEach(createPlayer)  
-}
+export const makeSoundPlayers = container => {
+  const players = [...container.getElementsByClassName('bw-player')];
+  players.forEach(createPlayer);
+};
 
 /**
  * @param {HTMLAudioElement} audioElement
@@ -72,10 +73,10 @@ export const makeSoundPlayers = (container) => {
  * loaded, a load() is triggered and we wait until readyState is > 0 to start playing.
  */
 export const playAtTime = (audioElement, timeInSeconds) => {
-  if (audioElement.readyState > 0){
+  if (audioElement.readyState > 0) {
     // If player is ready to start playing, do it!
     audioElement.currentTime = timeInSeconds;
-    if (simultaneousPlaybackDisallowed()){
+    if (simultaneousPlaybackDisallowed()) {
       stopAllPlayers();
     }
     audioElement.play();
@@ -84,29 +85,31 @@ export const playAtTime = (audioElement, timeInSeconds) => {
     audioElement.load();
     audioElement.addEventListener('loadeddata', () => {
       audioElement.currentTime = timeInSeconds;
-      if (simultaneousPlaybackDisallowed()){
+      if (simultaneousPlaybackDisallowed()) {
         stopAllPlayers();
       }
       audioElement.play();
     });
   }
-}
+};
 
-
-export const getAudioElementDurationOrDurationProperty = (audioElement, parentNode) => {
-    if (parentNode.dataset.duration !== undefined){
-      return parseFloat(parentNode.dataset.duration, 10)  // Prioritize duraiton provided from database
-    }
-    if (audioElement.readyState > 0){
-      audioDuration = audioElement.duration
-    } 
-    return 0;
-}
-
+export const getAudioElementDurationOrDurationProperty = (
+  audioElement,
+  parentNode
+) => {
+  if (parentNode.dataset.duration !== undefined) {
+    return parseFloat(parentNode.dataset.duration, 10); // Prioritize duraiton provided from database
+  }
+  if (audioElement.readyState > 0) {
+    audioDuration = audioElement.duration;
+  }
+  return 0;
+};
 
 export const rulerFrequencyMapping = [];
-var y_min = Math.log(100.0) / Math.LN10;  // See utils.audioprocessing.processing.SpectrogramImage as this must match
+var y_min = Math.log(100.0) / Math.LN10; // See utils.audioprocessing.processing.SpectrogramImage as this must match
 var y_max = Math.log(22050.0) / Math.LN10;
-for (var y = 500;y >= 0; y--)
-  rulerFrequencyMapping.push(Math.pow(10.0, y_min + y / 500.0 * (y_max - y_min)));
-
+for (var y = 500; y >= 0; y--)
+  rulerFrequencyMapping.push(
+    Math.pow(10.0, y_min + (y / 500.0) * (y_max - y_min))
+  );

@@ -1,7 +1,7 @@
 .bw-wiki {
-
   a {
-    &:target {  // This is to make sure wii titles are aligned on top when scrolling
+    &:target {
+      // This is to make sure wii titles are aligned on top when scrolling
       display: block;
       position: relative;
       top: 20px;
@@ -28,12 +28,29 @@
     margin-top: 30px;
   }
 
-  table.diff {font-family:Courier; border:medium;}
-  .diff_header {background-color:$almost-white;color:$black;}
-  td.diff_header {text-align:right;color:$black;}
-  .diff_next {background-color:$almost-white-border;color:$black;}
-  .diff_add {background-color:$green}
-  .diff_chg {background-color:$yellow}
-  .diff_sub {background-color:$red}
-
+  table.diff {
+    font-family: Courier;
+    border: medium;
+  }
+  .diff_header {
+    background-color: $almost-white;
+    color: $black;
+  }
+  td.diff_header {
+    text-align: right;
+    color: $black;
+  }
+  .diff_next {
+    background-color: $almost-white-border;
+    color: $black;
+  }
+  .diff_add {
+    background-color: $green;
+  }
+  .diff_chg {
+    background-color: $yellow;
+  }
+  .diff_sub {
+    background-color: $red;
+  }
 }

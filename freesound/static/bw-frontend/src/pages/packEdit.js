@@ -1,3 +1,3 @@
-import {prepareAddSoundsModalAndFields} from "../components/addSoundsModal"
+import { prepareAddSoundsModalAndFields } from '../components/addSoundsModal';
 
 prepareAddSoundsModalAndFields(document);

@@ -18,4 +18,6 @@ $container-max-widths: (
   xl: 1200px,
 );
 
-$displays: none, inline, inline-block, block, table, table-row, table-cell, flex, inline-flex !default;
+$displays:
+  none, inline, inline-block, block, table, table-row, table-cell, flex,
+  inline-flex !default;

@@ -16,6 +16,14 @@ urlpatterns = [
         views.add_sounds_modal_for_collection_edit,
         name="add-sounds-modal-collection",
     ),
-    path("<str:collection_name>-<int:collection_id>/addmaintainersmodal", views.add_maintainer_modal, name="add-maintainers-modal"),
-    path("<str:collection_name>-<int:collection_id>/section/stats", views.collection_stats_section, name="collection-stats-section"),
+    path(
+        "<str:collection_name>-<int:collection_id>/addmaintainersmodal",
+        views.add_maintainer_modal,
+        name="add-maintainers-modal",
+    ),
+    path(
+        "<str:collection_name>-<int:collection_id>/section/stats",
+        views.collection_stats_section,
+        name="collection-stats-section",
+    ),
 ]

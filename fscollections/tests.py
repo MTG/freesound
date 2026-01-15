@@ -46,7 +46,9 @@ class CollectionTest(TestCase):
         delete_collection = Collection.objects.get(name="tbdcollection")
 
         # Delete collection view
-        resp = self.client.post(reverse("delete-collection", args=[slugify(delete_collection.name), delete_collection.id]))
+        resp = self.client.post(
+            reverse("delete-collection", args=[slugify(delete_collection.name), delete_collection.id])
+        )
         self.assertEqual(resp.status_code, 302)
         self.assertEqual("/collections/", resp.url)
 
@@ -172,14 +174,18 @@ class CollectionTest(TestCase):
 
         # Test setting an already existing name for a collection (form should be invalid therefore, the name should not change)
         form_data = {"name": "testcollection", "description": "", "public": False}
-        resp = self.client.post(reverse("edit-collection", args=[slugify(edit_collection.name), edit_collection.id]) + "?ajax=1", form_data)
+        resp = self.client.post(
+            reverse("edit-collection", args=[slugify(edit_collection.name), edit_collection.id]) + "?ajax=1", form_data
+        )
         self.assertEqual(200, resp.status_code)
         edit_collection.refresh_from_db()
         self.assertEqual("edited-collection", edit_collection.name)
 
         # Test setting 'My bookmarks' as the name for a collection (form should be invalid therefore, the name should not change)
         form_data = {"name": "My bookmarks", "description": "", "public": False}
-        resp = self.client.post(reverse("edit-collection", args=[slugify(edit_collection.name), edit_collection.id]) + "?ajax=1", form_data)
+        resp = self.client.post(
+            reverse("edit-collection", args=[slugify(edit_collection.name), edit_collection.id]) + "?ajax=1", form_data
+        )
         self.assertEqual(200, resp.status_code)
         edit_collection.refresh_from_db()
         self.assertEqual("edited-collection", edit_collection.name)
@@ -187,7 +193,10 @@ class CollectionTest(TestCase):
         # Test creating the default collection and trying to change its name and public parameters (both are static)
         default_collection = Collection.objects.create(name="My bookmarks", user=self.user, is_default_collection=True)
         form_data = {"name": "other-name", "description": "", "public": True}
-        resp = self.client.post(reverse("edit-collection", args=[slugify(default_collection.name), default_collection.id]) + "?ajax=1", form_data)
+        resp = self.client.post(
+            reverse("edit-collection", args=[slugify(default_collection.name), default_collection.id]) + "?ajax=1",
+            form_data,
+        )
         self.assertEqual(302, resp.status_code)
         self.assertEqual(f"/collections/{slugify(default_collection.name)}-{default_collection.id}/", resp.url)
         default_collection.refresh_from_db()
@@ -203,7 +212,9 @@ class CollectionTest(TestCase):
             "public": False,
             "maintainers": f"{self.maintainer.id},{self.external_user.id},{self.maintainer.id}",
         }
-        resp = self.client.post(reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data)
+        resp = self.client.post(
+            reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data
+        )
         self.assertEqual(302, resp.status_code)
         self.assertEqual(f"/collections/{slugify(self.collection.name)}-{self.collection.id}/", resp.url)
         self.collection.refresh_from_db()
@@ -215,7 +226,9 @@ class CollectionTest(TestCase):
             "public": False,
             "maintainers": f"{self.maintainer.id}",
         }
-        resp = self.client.post(reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data)
+        resp = self.client.post(
+            reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data
+        )
         self.assertEqual(302, resp.status_code)
         self.assertEqual(f"/collections/{slugify(self.collection.name)}-{self.collection.id}/", resp.url)
         self.collection.refresh_from_db()
@@ -229,7 +242,9 @@ class CollectionTest(TestCase):
             "public": False,
             "collection_sounds": f"{self.sound.id},{self.sound1.id},{self.sound.id}",
         }
-        resp = self.client.post(reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data)
+        resp = self.client.post(
+            reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data
+        )
         self.assertEqual(302, resp.status_code)
         self.assertEqual(f"/collections/{slugify(self.collection.name)}-{self.collection.id}/", resp.url)
         self.collection.refresh_from_db()
@@ -241,7 +256,9 @@ class CollectionTest(TestCase):
             "public": False,
             "collection_sounds": f"{self.sound.id}",
         }
-        resp = self.client.post(reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data)
+        resp = self.client.post(
+            reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data
+        )
         self.assertEqual(302, resp.status_code)
         self.assertEqual(f"/collections/{slugify(self.collection.name)}-{self.collection.id}/", resp.url)
         self.collection.refresh_from_db()
@@ -257,7 +274,9 @@ class CollectionTest(TestCase):
         )
         sounds_ids = ",".join([str(s.id) for s in added_sounds])
         form_data = {"name": "testcollection", "description": "", "public": False, "collection_sounds": sounds_ids}
-        resp = self.client.post(reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data)
+        resp = self.client.post(
+            reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data
+        )
         self.assertEqual(200, resp.status_code)
         self.collection.refresh_from_db()
         self.assertEqual(1, self.collection.num_sounds)
@@ -276,13 +295,17 @@ class CollectionTest(TestCase):
             "public": False,
             "collection_sounds": str(self.sound.id),
         }
-        resp = self.client.post(reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data)
+        resp = self.client.post(
+            reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data
+        )
         self.assertEqual(302, resp.status_code)
         self.assertEqual(f"/collections/{slugify(self.collection.name)}-{self.collection.id}/", resp.url)
         self.collection.refresh_from_db()
         self.assertEqual(1, self.collection.num_sounds)
         form_data.pop("collection_sounds")
-        resp = self.client.post(reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data)
+        resp = self.client.post(
+            reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data
+        )
         self.assertEqual(302, resp.status_code)
         self.assertEqual(f"/collections/{slugify(self.collection.name)}-{self.collection.id}/", resp.url)
         self.collection.refresh_from_db()
@@ -295,7 +318,9 @@ class CollectionTest(TestCase):
             "public": True,
             "maintainers": str(self.external_user.id),
         }
-        resp = self.client.post(reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data)
+        resp = self.client.post(
+            reverse("edit-collection", args=[slugify(self.collection.name), self.collection.id]) + "?ajax=1", form_data
+        )
         self.assertEqual(302, resp.status_code)
         self.assertEqual(f"/collections/{slugify(self.collection.name)}-{self.collection.id}/", resp.url)
         self.collection.refresh_from_db()

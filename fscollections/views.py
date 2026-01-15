@@ -46,6 +46,7 @@ from utils.pagination import paginate
 
 def resolve_collection_from_url(view_func):
     """Fetches collection, redirects to canonical URL if name doesn't match, passes collection to view."""
+
     @wraps(view_func)
     def _wrapped_view(request, collection_name, collection_id, *args, **kwargs):
         collection = get_object_or_404(Collection, id=collection_id)
@@ -54,6 +55,7 @@ def resolve_collection_from_url(view_func):
             url_name = resolve(request.path).url_name
             return HttpResponseRedirect(reverse(url_name, args=[expected_name, collection.id]))
         return view_func(request, collection, *args, **kwargs)
+
     return _wrapped_view
 
 
@@ -298,16 +300,19 @@ def download_collection(request, collection):
     licenses_content = collection.get_attribution(sound_qs=sounds_list)
     return download_sounds(licenses_url, licenses_content, sounds_list, collection.download_filename)
 
+
 @resolve_collection_from_url
 def collection_licenses(request, collection):
     attribution = collection.get_attribution()
     return HttpResponse(attribution, content_type="text/plain")
+
 
 @resolve_collection_from_url
 def add_sounds_modal_for_collection_edit(request, collection):
     tvars = add_sounds_modal_helper(request)
     tvars.update({"modal_title": "Add sounds to collection", "help_text": "Modal to add sounds to your collection"})
     return render(request, "sounds/modal_add_sounds.html", tvars)
+
 
 @resolve_collection_from_url
 def add_maintainer_modal(request, collection):

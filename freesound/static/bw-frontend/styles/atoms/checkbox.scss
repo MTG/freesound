@@ -1,4 +1,4 @@
-@use "sass:list";
+@use 'sass:list';
 input.bw-checkbox {
   display: none;
 }
@@ -16,7 +16,7 @@ input.bw-checkbox {
 }
 
 .bw-icon-checkbox.disabled:hover {
-  opacity: 1.0!important;
+  opacity: 1 !important;
 }
 
 .bw-checkbox:checked + .bw-checkbox-container .bw-icon-checkbox {
@@ -25,7 +25,6 @@ input.bw-checkbox {
 }
 
 .bw-multiple-checkbox {
-
   ul.bw-checkbox {
     padding: 0;
   }
@@ -37,7 +36,7 @@ input.bw-checkbox {
 }
 
 .bw-checkbox-label {
-  color: $black!important;
+  color: $black !important;
   cursor: pointer;
 
   .bw-checkbox-container {

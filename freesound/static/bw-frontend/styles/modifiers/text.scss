@@ -1,10 +1,10 @@
-@use "sass:map";
+@use 'sass:map';
 .text-red {
   color: $red;
 }
 
 .text-red-important {
-  color: $red!important;
+  color: $red !important;
 }
 
 .text-grey {
@@ -51,9 +51,15 @@
   @include media-breakpoint-up($breakpoint) {
     $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
 
-    .text#{$infix}-left   { text-align: left !important; }
-    .text#{$infix}-right  { text-align: right !important; }
-    .text#{$infix}-center { text-align: center !important; }
+    .text#{$infix}-left {
+      text-align: left !important;
+    }
+    .text#{$infix}-right {
+      text-align: right !important;
+    }
+    .text#{$infix}-center {
+      text-align: center !important;
+    }
   }
 }
 
@@ -91,7 +97,7 @@
   letter-spacing: 0;
 }
 
-.word-wrap-break-word{
+.word-wrap-break-word {
   word-wrap: break-word;
 }
 

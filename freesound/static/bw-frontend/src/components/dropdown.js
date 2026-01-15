@@ -13,18 +13,21 @@ const closeOnClickAway = () => {
 
 const toggleExpandDropdown = toggle => {
   const dropdownContainer = toggle.closest('.dropdown');
-  const isDropdownExpanded = lastOpenedDropdown.toggle && lastOpenedDropdown.toggle === toggle;
+  const isDropdownExpanded =
+    lastOpenedDropdown.toggle && lastOpenedDropdown.toggle === toggle;
   const isSomeOtherDropdownExpanded =
     lastOpenedDropdown.toggle && lastOpenedDropdown.toggle !== toggle;
 
-  const shouldCloseLastOpenedDropdown = isDropdownExpanded || isSomeOtherDropdownExpanded;
+  const shouldCloseLastOpenedDropdown =
+    isDropdownExpanded || isSomeOtherDropdownExpanded;
   if (shouldCloseLastOpenedDropdown) {
     closeOnClickAway();
   }
   if (!dropdownContainer) {
     return;
   }
-  const dropdownOptions = dropdownContainer.getElementsByClassName('dropdown-menu')[0];
+  const dropdownOptions =
+    dropdownContainer.getElementsByClassName('dropdown-menu')[0];
   if (dropdownOptions && !isDropdownExpanded) {
     dropdownOptions.classList.add('show');
     toggle.ariaExpanded = 'true';
@@ -37,19 +40,22 @@ const toggleExpandDropdown = toggle => {
   }
 };
 
-const makeDropdowns = (container) => {
-  const dropdownToggles = [...container.querySelectorAll('[data-toggle="dropdown"]')];
+const makeDropdowns = container => {
+  const dropdownToggles = [
+    ...container.querySelectorAll('[data-toggle="dropdown"]'),
+  ];
   dropdownToggles.forEach(toggle => {
     toggle.ariaExpanded = 'false';
     toggle.ariaHasPopup = 'menu';
     const dropdownContainer = toggle.closest('.dropdown');
-    const dropdownOptions = dropdownContainer.getElementsByClassName('dropdown-menu')[0];
+    const dropdownOptions =
+      dropdownContainer.getElementsByClassName('dropdown-menu')[0];
     dropdownOptions.setAttribute('role', 'menu');
     dropdownOptions.getElementsByClassName('dropdown-item').forEach(item => {
       item.setAttribute('role', 'menuitem');
     });
     toggle.addEventListener('click', () => toggleExpandDropdown(toggle));
   });
-}
+};
 
-export {makeDropdowns};
+export { makeDropdowns };

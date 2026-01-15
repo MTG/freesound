@@ -58,7 +58,7 @@
   }
 
   @include active() {
-    &:not(:disabled){
+    &:not(:disabled) {
       background-color: $hover-color;
     }
   }
@@ -67,7 +67,6 @@
     cursor: default;
     opacity: $disabled-button-opacity;
   }
-
 }
 
 @mixin reset-rounded-button($color, $hover-color) {
@@ -79,7 +78,7 @@
   @include border-bottom-on-hover;
 
   @include active() {
-    &:not(:disabled){
+    &:not(:disabled) {
       color: $hover-color;
     }
 

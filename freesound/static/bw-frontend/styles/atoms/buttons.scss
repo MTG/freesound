@@ -27,10 +27,14 @@ button {
 
 .btn-inverse {
   letter-spacing: -1px;
-  @include rounded-button(transparent, $inverse-button-hover, $inverse-button-font-color);
+  @include rounded-button(
+    transparent,
+    $inverse-button-hover,
+    $inverse-button-font-color
+  );
   color: $navy-grey;
   @include active() {
-    &:not(:disabled){
+    &:not(:disabled) {
       color: $inverse-button-hover-font-color;
     }
   }

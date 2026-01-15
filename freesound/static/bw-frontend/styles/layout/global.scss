@@ -1,20 +1,21 @@
-@use "sass:list";
+@use 'sass:list';
 * {
   box-sizing: border-box;
 }
 
 html {
   background-color: $html-bg;
-  scroll-behavior:smooth;
+  scroll-behavior: smooth;
   scroll-padding-top: 110px;
-  
+
   /* disallow horizontal scrolling */
   max-width: 100%;
   overflow-x: hidden;
 }
 
 body {
-  font-family: BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+  font-family:
+    BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
     'Open Sans', 'Helvetica Neue', sans-serif;
   font-size: $base-size-mobile;
   line-height: $base-line-height-mobile;
@@ -23,7 +24,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-weight: 400; /* designer suggested overall font weight 500, but we're making it 400 as otherwise it felt too heavy */
-  
+
   /* disallow avoid horizontal scrolling */
   max-width: 100%;
   overflow-x: hidden;

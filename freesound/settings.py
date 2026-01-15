@@ -1437,7 +1437,7 @@ RABBITMQ_API_PORT = "5673"
 
 # -------------------------------------------------------------------------------
 # Collections
-ENABLE_COLLECTIONS = True
+ENABLE_COLLECTIONS = False
 MAX_SOUNDS_PER_COLLECTION = 250
 
 # -------------------------------------------------------------------------------

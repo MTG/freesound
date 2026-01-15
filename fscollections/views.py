@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from functools import wraps
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -27,7 +29,6 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import resolve, reverse
 from django.utils.text import slugify
-from functools import wraps
 
 from fscollections.forms import (
     CollectionEditForm,

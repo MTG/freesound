@@ -94,12 +94,21 @@ from general.templatetags.absurl import url2absurl
 from general.templatetags.util import license_with_version
 from messages.models import Message
 from sounds.forms import LicenseForm, PackForm
-from sounds.models import BulkUploadProgress, Download, Pack, PackDownload, Sound, SoundLicenseHistory
-from sounds.views import edit_and_describe_sounds_helper
+from sounds.models import (
+    BulkUploadProgress,
+    Download,
+    Pack,
+    PackDownload,
+    PendingSound,
+    PendingSoundAnalysis,
+    Sound,
+    SoundLicenseHistory,
+)
+from sounds.views import clear_session_describe_data, edit_and_describe_sounds_helper
 from tickets.models import Ticket, TicketComment, UserAnnotation
 from utils.cache import invalidate_user_template_caches
 from utils.dbtime import DBTime
-from utils.filesystem import generate_tree, remove_directory_if_empty
+from utils.filesystem import File, remove_directory_if_empty
 from utils.images import extract_square
 from utils.logging_filters import get_client_ip
 from utils.mail import send_mail_template, send_mail_template_to_support
@@ -604,8 +613,11 @@ def manage_sounds(request, tab):
     sounds_processing_count = sounds_processing_base_qs.count()
     packs_base_qs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     packs_count = packs_base_qs.count()
-    file_structure, files = generate_tree(request.user.profile.locations()["uploads_dir"])
-    sounds_pending_description_count = len(files)
+    pending_sounds_qs = PendingSound.objects.filter(user=request.user, status=PendingSound.Status.UPLOADED).order_by(
+        "-created"
+    )
+    sounds_pending_description_count = pending_sounds_qs.count()
+    pending_sounds = list(pending_sounds_qs) if tab == "pending_description" else []
 
     tvars = {
         "tab": tab,
@@ -620,7 +632,7 @@ def manage_sounds(request, tab):
     if tab == "pending_description":
         unclosed_bulkdescribe = BulkUploadProgress.objects.filter(user=request.user).exclude(progress_type="C")
         tvars.update({"unclosed_bulkdescribe": unclosed_bulkdescribe})
-        tvars_or_redirect = sounds_pending_description_helper(request, file_structure, files)
+        tvars_or_redirect = sounds_pending_description_helper(request, pending_sounds)
         if isinstance(tvars_or_redirect, dict):
             tvars.update(tvars_or_redirect)
         else:
@@ -802,11 +814,47 @@ def edit_sounds(request):
     )  # Note that the list of sounds to describe is stored in the session object
 
 
-def sounds_pending_description_helper(request, file_structure, files):
+def sounds_pending_description_helper(request, pending_sounds):
+    def build_file_structure():
+        root = File(0, "", "", True)
+        files_lookup = {}
+        for index, pending in enumerate(pending_sounds, start=1):
+            file_obj = File(index, pending.filename, pending.path, False)
+            file_obj.id = f"file{pending.id}"
+            try:
+                processing_state = pending.analysis.processing_state  # type: ignore[attr-defined]
+            except PendingSoundAnalysis.DoesNotExist:  # type: ignore[attr-defined]
+                processing_state = PendingSoundAnalysis.ProcessingState.PENDING
+            except AttributeError:
+                processing_state = PendingSoundAnalysis.ProcessingState.PENDING
+            file_obj.processing_state = processing_state
+            file_obj.processing_state_label = PendingSoundAnalysis.ProcessingState(processing_state).label
+            file_obj.is_ready_for_actions = processing_state in [
+                PendingSoundAnalysis.ProcessingState.OK,
+                PendingSoundAnalysis.ProcessingState.FAILED,
+            ]
+            root.children.append(file_obj)
+            files_lookup[file_obj.id] = pending
+        return root, files_lookup
+
+    file_structure, files_lookup = build_file_structure()
     file_structure.name = ""
+    files_for_form = {file_id: file_id for file_id in files_lookup.keys()}
+
+    unavailable_pending_ids = set()
+    for pending in pending_sounds:
+        try:
+            processing_state = pending.analysis.processing_state  # type: ignore[attr-defined]
+        except (PendingSoundAnalysis.DoesNotExist, AttributeError):  # type: ignore[attr-defined]
+            processing_state = PendingSoundAnalysis.ProcessingState.PENDING
+        if processing_state in [
+            PendingSoundAnalysis.ProcessingState.PENDING,
+            PendingSoundAnalysis.ProcessingState.PROCESSING,
+        ]:
+            unavailable_pending_ids.add(pending.id)
 
     if request.method == "POST":
-        form = FileChoiceForm(files, request.POST, prefix="sound")
+        form = FileChoiceForm(files_for_form, request.POST, prefix="sound")
         csv_form = BulkDescribeForm(request.POST, request.FILES, prefix="bulk")
         if csv_form.is_valid():
             directory = os.path.join(settings.CSV_PATH, str(request.user.id))
@@ -827,17 +875,25 @@ def sounds_pending_description_helper(request, file_structure, files):
             tasks.validate_bulk_describe_csv.delay(bulk_upload_progress_object_id=bulk.id)
             return HttpResponseRedirect(reverse("accounts-bulk-describe", args=[bulk.id]))
         elif form.is_valid():
-            if "delete_confirm" in request.POST:
-                for f in form.cleaned_data["files"]:
+            selected_pending = [
+                files_lookup[file_id] for file_id in form.cleaned_data["files"] if file_id in files_lookup
+            ]
+            if not selected_pending:
+                form.add_error(None, "No valid files selected.")
+            elif any(pending.id in unavailable_pending_ids for pending in selected_pending):
+                form.add_error(None, "Some selected files are still being processed. Please try again later.")
+            elif "delete_confirm" in request.POST:
+                for pending in selected_pending:
                     try:
-                        os.remove(files[f].full_path)
-                        utils.sound_upload.clean_processing_before_describe_files(files[f].full_path)
-                        remove_uploaded_file_from_mirror_locations(files[f].full_path)
+                        os.remove(pending.path)
+                        utils.sound_upload.clean_processing_before_describe_files(pending.path)
+                        remove_uploaded_file_from_mirror_locations(pending.path)
                     except OSError as e:
                         if e.errno == errno.ENOENT:
                             upload_logger.info("Failed to remove file %s", str(e))
                         else:
                             raise
+                    pending.delete()
 
                 # Remove user uploads directory if there are no more files to describe
                 user_uploads_dir = request.user.profile.locations()["uploads_dir"]
@@ -848,28 +904,25 @@ def sounds_pending_description_helper(request, file_structure, files):
                 session_key_prefix = str(uuid.uuid4())[
                     0:8
                 ]  # Use a new so we don't interfere with other active description/editing processes
-                request.session[f"{session_key_prefix}-describe_sounds"] = [
-                    files[x] for x in form.cleaned_data["files"]
-                ]
-                request.session[f"{session_key_prefix}-len_original_describe_sounds"] = len(
-                    request.session[f"{session_key_prefix}-describe_sounds"]
-                )
+                pending_ids = [pending.id for pending in selected_pending]
+                request.session[f"{session_key_prefix}-describe_pending_ids"] = pending_ids
+                request.session[f"{session_key_prefix}-len_original_describe_sounds"] = len(pending_ids)
                 # If only one file is chosen, go straight to the last step of the describe process, otherwise go to license selection step
-                if len(request.session[f"{session_key_prefix}-describe_sounds"]) > 1:
+                if len(pending_ids) > 1:
                     return HttpResponseRedirect(reverse("accounts-describe-license") + f"?session={session_key_prefix}")
                 else:
                     return HttpResponseRedirect(reverse("accounts-describe-sounds") + f"?session={session_key_prefix}")
             else:
-                form = FileChoiceForm(files)
+                form = FileChoiceForm(files_for_form)
                 tvars = {"form": form, "file_structure": file_structure}
                 return tvars
     else:
         csv_form = BulkDescribeForm(prefix="bulk")
-        form = FileChoiceForm(files, prefix="sound")
+        form = FileChoiceForm(files_for_form, prefix="sound")
     tvars = {
         "form": form,
         "file_structure": file_structure,
-        "n_files": len(files),
+        "n_files": len(pending_sounds),
         "csv_form": csv_form,
         "describe_enabled": settings.UPLOAD_AND_DESCRIPTION_ENABLED,
     }
@@ -879,16 +932,23 @@ def sounds_pending_description_helper(request, file_structure, files):
 @login_required
 def describe_license(request):
     session_key_prefix = request.GET.get("session", "")
+    pending_ids = request.session.get(f"{session_key_prefix}-describe_pending_ids", [])
+    pending_qs = PendingSound.objects.filter(id__in=pending_ids, user=request.user)
+    if not pending_ids or not pending_qs.exists():
+        clear_session_describe_data(request, session_key_prefix=session_key_prefix)
+        return HttpResponseRedirect(reverse("accounts-manage-sounds", args=["pending_description"]))
     if request.method == "POST":
         form = LicenseForm(request.POST, hide_old_license_versions=True)
         if form.is_valid():
-            request.session[f"{session_key_prefix}-describe_license"] = form.cleaned_data["license"]
+            PendingSound.objects.filter(id__in=pending_ids, user=request.user).update(
+                license=form.cleaned_data["license"]
+            )
             return HttpResponseRedirect(reverse("accounts-describe-pack") + f"?session={session_key_prefix}")
     else:
         form = LicenseForm(hide_old_license_versions=True)
     tvars = {
         "form": form,
-        "num_files": request.session.get(f"{session_key_prefix}-len_original_describe_sounds", 0),
+        "num_files": len(pending_ids),
         "session_key_prefix": session_key_prefix,
     }
     return render(request, "accounts/describe_license.html", tvars)
@@ -898,23 +958,28 @@ def describe_license(request):
 def describe_pack(request):
     packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     session_key_prefix = request.GET.get("session", "")
+    pending_ids = request.session.get(f"{session_key_prefix}-describe_pending_ids", [])
+    pending_qs = PendingSound.objects.filter(id__in=pending_ids, user=request.user)
+    if not pending_ids or not pending_qs.exists():
+        clear_session_describe_data(request, session_key_prefix=session_key_prefix)
+        return HttpResponseRedirect(reverse("accounts-manage-sounds", args=["pending_description"]))
     if request.method == "POST":
         form = PackForm(packs, request.POST, prefix="pack")
         if form.is_valid():
             data = form.cleaned_data
             if data["new_pack"]:
                 pack, created = Pack.objects.get_or_create(user=request.user, name=data["new_pack"])
-                request.session[f"{session_key_prefix}-describe_pack"] = pack
+                PendingSound.objects.filter(id__in=pending_ids, user=request.user).update(pack=pack)
             elif data["pack"]:
-                request.session[f"{session_key_prefix}-describe_pack"] = data["pack"]
+                PendingSound.objects.filter(id__in=pending_ids, user=request.user).update(pack=data["pack"])
             else:
-                request.session[f"{session_key_prefix}-describe_pack"] = False
+                PendingSound.objects.filter(id__in=pending_ids, user=request.user).update(pack=None)
             return HttpResponseRedirect(reverse("accounts-describe-sounds") + f"?session={session_key_prefix}")
     else:
         form = PackForm(packs, prefix="pack")
     tvars = {
         "form": form,
-        "num_files": request.session.get(f"{session_key_prefix}-len_original_describe_sounds", 0),
+        "num_files": len(pending_ids),
         "session_key_prefix": session_key_prefix,
     }
     return render(request, "accounts/describe_pack.html", tvars)
@@ -1412,18 +1477,19 @@ def handle_uploaded_file(user_id, f):
     # Move or copy the uploaded file from the temporary folder created by Django to the /uploads path
     dest_directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
     os.makedirs(dest_directory, exist_ok=True)
-    dest_path = os.path.join(dest_directory, os.path.basename(f.name)).encode("utf-8")
-    upload_logger.info(
-        "handling file upload from user %s, filename %s and saving to %s", user_id, f.name, dest_path.decode("utf-8")
-    )
+    unique_prefix = uuid.uuid4().hex[:8]
+    stored_filename = f"{unique_prefix}_{os.path.basename(f.name)}"
+    dest_path = os.path.join(dest_directory, stored_filename)
+    dest_path_bytes = dest_path.encode("utf-8")
+    upload_logger.info("handling file upload from user %s, filename %s and saving to %s", user_id, f.name, dest_path)
     starttime = time.monotonic()
     if settings.MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING and isinstance(f, TemporaryUploadedFile):
         # Big files (bigger than ~2MB, this is configured by Django and can be customized) will be delivered via a
         # TemporaryUploadedFile which has already been streamed in disk, so we only need to move the already existing
         # file instead of copying it
         try:
-            os.rename(f.temporary_file_path(), dest_path)
-            os.chmod(dest_path, 0o644)  # Set appropriate permissions so that file can be downloaded from nginx
+            os.rename(f.temporary_file_path(), dest_path_bytes)
+            os.chmod(dest_path_bytes, 0o644)  # Set appropriate permissions so that file can be downloaded from nginx
         except Exception as e:
             upload_logger.warning("file upload (%s) - failed moving TemporaryUploadedFile error: %s", user_id, str(e))
             return False
@@ -1431,21 +1497,35 @@ def handle_uploaded_file(user_id, f):
         # Small files will be of type InMemoryUploadedFile instead of TemporaryUploadedFile and will be initially
         # stored in memory, so we need to copy them to the destination
         try:
-            destination = open(dest_path, "wb")
+            destination = open(dest_path_bytes, "wb")
             for chunk in f.chunks():
                 destination.write(chunk)
         except Exception as e:
             upload_logger.warning("file upload (%s) - failed writing uploaded file error: %s", user_id, str(e))
             return False
 
+    try:
+        pending_sound = PendingSound.objects.create(
+            user_id=user_id,
+            filename=f.name,
+            path=dest_path,
+            filesize=f.size,
+        )
+        PendingSoundAnalysis.objects.create(pending_sound=pending_sound)
+    except Exception as e:
+        upload_logger.warning("file upload (%s) - failed creating PendingSound error: %s", user_id, str(e))
+        try:
+            os.remove(dest_path_bytes)
+        except OSError:
+            pass
+        return False
+
     # trigger processing of uploaded files before description
-    tasks.process_before_description.delay(audio_file_path=dest_path.decode())
-    upload_logger.info(
-        "file upload (%s) - sent uploaded file %s to processing before description", user_id, dest_path.decode("utf-8")
-    )
+    tasks.process_before_description.delay(pending_sound_id=pending_sound.id)
+    upload_logger.info("file upload (%s) - sent uploaded file %s to processing before description", user_id, dest_path)
 
     # NOTE: if we enable mirror locations for uploads and the copying below causes problems, we could do it async
-    copy_uploaded_file_to_mirror_locations(dest_path)
+    copy_uploaded_file_to_mirror_locations(dest_path_bytes)
     upload_logger.info(
         "file upload (%s) - handling file upload done, took %.2f seconds", user_id, time.monotonic() - starttime
     )

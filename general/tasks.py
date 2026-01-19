@@ -579,24 +579,56 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
 
 
 @shared_task(name=PROCESS_BEFORE_DESCRIPTION_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
-def process_before_description(audio_file_path):
+def process_before_description(pending_sound_id):
     """Processes an uploaded sound file before the sound is described and saves generated previews
     and wave/spectral images in a specific directory so these can be served in the sound players
     used in the description phase.
 
     Args:
-        audio_file_path (str): path to the uploaded file
+        pending_sound_id (int): ID of PendingSound entry
     """
+    PendingSound = apps.get_model("sounds", "PendingSound")
+    PendingSoundAnalysis = apps.get_model("sounds", "PendingSoundAnalysis")
+
+    pending_sound = None
+    analysis = None
+    try:
+        pending_sound = PendingSound.objects.select_related("analysis").get(id=pending_sound_id)
+    except PendingSound.DoesNotExist:
+        workers_logger.warning(
+            "PendingSound %s does not exist, skipping processing-before-describe task",
+            pending_sound_id,
+        )
+        return
+
+    audio_file_path = pending_sound.path
+    try:
+        analysis = pending_sound.analysis
+    except PendingSound.analysis.RelatedObjectDoesNotExist:  # type: ignore[attr-defined]
+        analysis = PendingSoundAnalysis.objects.create(pending_sound=pending_sound)
     set_timeout_alarm(settings.WORKER_TIMEOUT, f"Processing-before-describe of sound {audio_file_path} timed out")
     workers_logger.info(
         "Starting processing-before-describe of sound (%s)"
         % json.dumps({"task_name": PROCESS_BEFORE_DESCRIPTION_TASK_NAME, "audio_file_path": audio_file_path})
     )
     start_time = time.monotonic()
+    if analysis:
+        analysis.processing_state = PendingSoundAnalysis.ProcessingState.PROCESSING
+        analysis.save(update_fields=["processing_state"])
     try:
         check_if_free_space()
         result = FreesoundAudioProcessorBeforeDescription(audio_file_path=audio_file_path).process()
         if result:
+            if analysis:
+                analysis.duration = result.get("duration")
+                analysis.samplerate = result.get("samplerate")
+                analysis.channels = result.get("channels")
+                analysis.bitdepth = result.get("bitdepth")
+                analysis.md5 = result.get("md5")
+                analysis.processing_state = PendingSoundAnalysis.ProcessingState.OK
+                analysis.save(
+                    update_fields=["duration", "samplerate", "channels", "bitdepth", "md5", "processing_state"]
+                )
             workers_logger.info(
                 "Finished processing-before-describe of sound (%s)"
                 % json.dumps(
@@ -609,6 +641,9 @@ def process_before_description(audio_file_path):
                 )
             )
         else:
+            if analysis:
+                analysis.processing_state = PendingSoundAnalysis.ProcessingState.FAILED
+                analysis.save(update_fields=["processing_state"])
             workers_logger.info(
                 "Finished processing-before-describe of sound (%s)"
                 % json.dumps(
@@ -622,6 +657,9 @@ def process_before_description(audio_file_path):
             )
 
     except WorkerException as e:
+        if analysis:
+            analysis.processing_state = PendingSoundAnalysis.ProcessingState.FAILED
+            analysis.save(update_fields=["processing_state"])
         workers_logger.info(
             "WorkerException while processing-before-describe sound (%s)"
             % json.dumps(
@@ -636,6 +674,9 @@ def process_before_description(audio_file_path):
         sentry_sdk.capture_exception(e)
 
     except Exception as e:
+        if analysis:
+            analysis.processing_state = PendingSoundAnalysis.ProcessingState.FAILED
+            analysis.save(update_fields=["processing_state"])
         workers_logger.info(
             "Unexpected error while processing-before-describe sound (%s)"
             % json.dumps(

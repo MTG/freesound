@@ -15,6 +15,7 @@ services:
             - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5432:5432"
+        command: postgres -c shared_buffers=2048MB -c work_mem=256MB -c maintenance_work_mem=512MB
         environment:
             - POSTGRES_USER=freesound
             - POSTGRES_DB=freesound

@@ -10,9 +10,9 @@
 {% block page-content %}
 
 <div class="v-spacing-5 v-spacing-top-2">
-<p>{% if describing and total_sounds_to_describe > 1  %}This is the last step of the description process. {% endif %}{% if num_rounds > 1%}If you've selected more than {{ sounds_per_round }} sounds, 
+<p>{% if describing and total_sounds_to_describe > 1  %}This is the last step of the description process. {% endif %}{% if num_rounds > 1%}If you've selected more than {{ sounds_per_round }} sounds,
     you will be asked to {%if describe %}describe{% else %}edit{% endif %} them in rounds of {{ sounds_per_round }} sounds until all are done. {% endif %}
-    {% if num_forms > 1 %}For each sound y{% else %}Y{% endif %}ou'll have to at least specify a <b>name</b>, some <b>tags</b>, a <b>description</b> and a <b>license</b>. Additionally, you can also provide a <b>pack</b>, <b>geolocation</b> data (only recommended for 
+    {% if num_forms > 1 %}For each sound y{% else %}Y{% endif %}ou'll have to at least specify a <b>name</b>, some <b>tags</b>, a <b>description</b> and a <b>license</b>. Additionally, you can also provide a <b>pack</b>, <b>geolocation</b> data (only recommended for
     field recordings), and a list of <b>sound sources</b>, that is to say, a list of other Freesound sounds that were used to create this one.
     {% if num_forms > 1%}<strong>Click on the sound filenames below to display the form for {% if describing %}describing{% else %}editing{% endif %} each sound</strong>.{% endif %}</p>
 </div>
@@ -55,14 +55,15 @@
 
                     {% if describing %}
                     <input type="hidden" name="{{ forloop.counter0 }}-audio_filename" value="{{ form.audio_filename }}"/>
+                    <input type="hidden" name="{{ forloop.counter0 }}-pending_sound_id" value="{{ form.pending_sound_id }}">
                     {% else %}
                     <input type="hidden" name="{{ forloop.counter0 }}-sound_id" value="{{ form.sound_id }}"/>
                     {% endif %}
-                    
+
                     <div>
                         {{ form.non_field_errors }}
                     </div>
-                    
+
                     <div class="v-spacing-4">
                         <h5 class="text-light-grey v-spacing-2">Basic information</h5>
                         <div>
@@ -108,7 +109,7 @@
                         <h5 class="text-light-grey v-spacing-2">Sound sources</h5>
                         {% include "molecules/sources_form_field.html" %}
                     </div>
-                        
+
                     </div>
                     {% if not forloop.last %}
                         <hr class="v-spacing-4 v-spacing-top-4" />
@@ -117,7 +118,7 @@
             {% endfor %}
         </div>
         {% if num_forms == 1 %}
-        <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">{% if current_round < num_rounds %}Save sound description{{ num_forms|pluralize }} and continue to next round{% else %}Save sound description{{ num_forms|pluralize }}{% endif %}</button>    
+        <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">{% if current_round < num_rounds %}Save sound description{{ num_forms|pluralize }} and continue to next round{% else %}Save sound description{{ num_forms|pluralize }}{% endif %}</button>
         {% endif %}
     </div>
     <div class="{% if num_forms > 1 %}col-lg-3 offset-lg-1 d-lg-block {% endif %}display-none">
@@ -133,13 +134,13 @@
             </div>
             {% endfor %}
             {% if num_forms > 1 %}
-            <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">{% if current_round < num_rounds %}Save sound description{{ num_forms|pluralize }} and continue to next round{% else %}Save sound description{{ num_forms|pluralize }}{% endif %}</button>    
+            <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">{% if current_round < num_rounds %}Save sound description{{ num_forms|pluralize }} and continue to next round{% else %}Save sound description{{ num_forms|pluralize }}{% endif %}</button>
             {% endif %}
         </div>
     </div>
     <div class="col-12 d-lg-none">
         {% if num_forms > 1 %}
-        <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">{% if current_round < num_rounds %}Save sound description{{ num_forms|pluralize }} and continue to next round{% else %}Save sound description{{ num_forms|pluralize }}{% endif %}</button>    
+        <button type="submit" class="btn-primary v-spacing-top-6 w-100 center">{% if current_round < num_rounds %}Save sound description{{ num_forms|pluralize }} and continue to next round{% else %}Save sound description{{ num_forms|pluralize }}{% endif %}</button>
         {% endif %}
     </div>
 </div>

@@ -159,8 +159,10 @@ if (selectAllButton !== null) {
     selectAllButton.addEventListener('click', evt => {
         const describeFileCheckboxes = describeFileCheckboxesWrapper.querySelectorAll('input');
         describeFileCheckboxes.forEach(checkboxElement => {
-            checkboxElement.checked = true;
-            onCheckboxChanged(checkboxElement, describeFileCheckboxes);
+            if (!checkboxElement.disabled) {
+                checkboxElement.checked = true;
+                onCheckboxChanged(checkboxElement, describeFileCheckboxes);
+            }
         });
     })
 }
@@ -171,7 +173,9 @@ if (selectNoneButton !== null) {
         const describeFileCheckboxes = describeFileCheckboxesWrapper.querySelectorAll('input');
         describeFileCheckboxes.forEach(checkboxElement => {
             checkboxElement.checked = false;
-            onCheckboxChanged(checkboxElement, describeFileCheckboxes);
+            if (!checkboxElement.disabled) {
+                onCheckboxChanged(checkboxElement, describeFileCheckboxes);
+            }
         });
     })
 }

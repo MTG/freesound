@@ -1,33 +1,33 @@
 .csv-validation-table {
-    overflow-y:scroll;
-    max-height:400px;
-    display:block;
-    word-wrap: break-word;
+  overflow-y: scroll;
+  max-height: 400px;
+  display: block;
+  word-wrap: break-word;
 
-    td {
-        padding: 5px;
-    }
-    
-    th {
-        padding: 5px;
-    }
+  td {
+    padding: 5px;
+  }
 
-    tr:nth-child(even) {
-        background: $background-textarea;
-    }
+  th {
+    padding: 5px;
+  }
+
+  tr:nth-child(even) {
+    background: $background-textarea;
+  }
 }
 
 .csv-validation-table-geotag-td {
-    max-width: 80px;
+  max-width: 80px;
 }
 
 .csv-bulk-upload-progress-label {
-    padding: 10px;
-    text-align: center;
-    font-size: 25px;
+  padding: 10px;
+  text-align: center;
+  font-size: 25px;
 }
 
 .csv-bulk-upload-error-cell {
-    background-color: $red;
-    color: $white;
+  background-color: $red;
+  color: $white;
 }

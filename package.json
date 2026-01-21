@@ -2,10 +2,18 @@
   "name": "freesound",
   "version": "0.1.0",
   "description": "Freesound, the cool stuff",
+  "browserslist": "> 0.5%, last 2 versions, not dead",
   "scripts": {
-    "build": "node freesound/static/bw-frontend/build",
-    "prettier": "prettier freesound/static/bw-frontend/src/**/**.js freesound/static/bw-frontend/styles/**/**.scss --write",
-    "eslint": "eslint freesound/static/bw-frontend/src"
+    "clean": "rm -rf freesound/static/bw-frontend/dist",
+    "build": "npm run clean && node freesound/static/bw-frontend/build.js",
+    "build:stats": "npm run build && ls -lh freesound/static/bw-frontend/dist/",
+    "dev": "parcel watch freesound/static/bw-frontend/src/index.js freesound/static/bw-frontend/src/index-dark.js freesound/static/bw-frontend/src/pages/*.js --dist-dir freesound/static/bw-frontend/dist --public-url /static/bw-frontend/dist",
+    "format": "prettier --write \"freesound/static/bw-frontend/src/**/*.{js,jsx}\" \"freesound/static/bw-frontend/styles/**/*.{scss,css}\"",
+    "format:check": "prettier --check \"freesound/static/bw-frontend/src/**/*.{js,jsx}\" \"freesound/static/bw-frontend/styles/**/*.{scss,css}\"",
+    "prettier": "npm run format",
+    "lint": "eslint freesound/static/bw-frontend/src",
+    "lint:fix": "eslint freesound/static/bw-frontend/src --fix",
+    "eslint": "npm run lint"
   },
   "repository": {
     "type": "git",
@@ -18,15 +26,15 @@
   },
   "homepage": "https://github.com/MTG/freesound#readme",
   "devDependencies": {
-    "eslint": "^6.8.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-config-prettier": "^6.0.0",
-    "inquirer": "^6.4.1",
-    "parcel-bundler": "1.10.3",
-    "prettier": "^1.18.2",
-    "react": "^16.8.6",
-    "sass": "^1.22.3",
-    "shelljs": "^0.8.3"
+    "@parcel/core": "^2.13.3",
+    "@parcel/transformer-sass": "^2.13.3",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "prettier": "^3.3.3",
+    "sass": "^1.85.1",
+    "svgo": "^3.3.2"
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",
@@ -37,7 +45,9 @@
     "lodash.debounce": "^4.0.8",
     "lodash.throttle": "^4.1.1",
     "normalize.css": "^8.0.1",
+    "parcel": "^2.13.3",
     "regenerator-runtime": "^0.13.3",
+    "sass-migrator": "^2.3.1",
     "ua-parser-js": "^1.0.37",
     "whatwg-fetch": "^3.0.0"
   }

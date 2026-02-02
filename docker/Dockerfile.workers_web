@@ -99,7 +99,10 @@ RUN cd _docs/api && make html
 
 FROM freesound_prod AS freesound_console
 
-RUN apt-get update \
+# Install a couple extra useful packages for console 
+# Note we need to remove nodesource list to avoid issues with apt update and missing keys
+RUN rm -f /etc/apt/sources.list.d/nodesource.list \ 
+ 	&& apt-get update \
 	&& apt-get install -y --no-install-recommends \
 		screen \
 		nano \

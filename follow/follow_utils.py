@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -69,7 +70,9 @@ def is_user_following_tag(user, slash_tag):
     return FollowingQueryItem.objects.filter(user=user, query=slash_tag.replace("/", " ")).exists()
 
 
-def get_stream_sounds(user, time_lapse, num_results_per_group=3, search_engine_backend=None):
+def get_stream_sounds(
+    user, time_lapse, num_results_per_group=3, search_engine_backend=None, sleep_between_queries=None
+):
     if search_engine_backend is None:
         search_engine = get_search_engine()
     else:
@@ -111,6 +114,10 @@ def get_stream_sounds(user, time_lapse, num_results_per_group=3, search_engine_b
             # NOTE: for now we add sound_ids in users_sounds instead of the actual sound object. We retrieve sound objs later in a single query.
             new_count = more_count + len(sound_ids)
             users_sounds.append((user_following, sound_ids, more_url_params, more_count, new_count))
+
+        # To avoid overwhelming the search engine
+        if sleep_between_queries is not None:
+            time.sleep(sleep_between_queries)
 
     #
     # TAGS FOLLOWING
@@ -154,6 +161,10 @@ def get_stream_sounds(user, time_lapse, num_results_per_group=3, search_engine_b
             # objs later in a single query.
             new_count = more_count + len(sound_ids)
             tags_sounds.append((tags, sound_ids, more_url_params, more_count, new_count))
+
+        # To avoid overwhelming the search engine
+        if sleep_between_queries is not None:
+            time.sleep(sleep_between_queries)
 
     # Now retrieve all sound objects that will be needed
     all_sound_ids_to_retrieve = []

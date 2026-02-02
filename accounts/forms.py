@@ -208,9 +208,9 @@ def username_taken_by_other_user(username):
 
 class RegistrationForm(forms.Form):
     username = UsernameField()
-    email1 = forms.EmailField(label=None, max_length=254)
-    email2 = forms.EmailField(label=None, max_length=254)
-    password1 = forms.CharField(label=None, widget=forms.PasswordInput)
+    email1 = forms.EmailField(label="", max_length=254)
+    email2 = forms.EmailField(label="", max_length=254)
+    password1 = forms.CharField(label="", widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
         label=mark_safe(
             'Check this box to accept our <a href="/help/tos_web/" target="_blank" class="bw-link--grey">terms of '
@@ -227,7 +227,7 @@ class RegistrationForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         # Customize some placeholders and classes, remove labels and help texts
-        self.fields["username"].label = None
+        self.fields["username"].label = ""
         self.fields["username"].help_text = ""
         self.fields["username"].widget.attrs["placeholder"] = "Username (30 characters maximum)"
         self.fields["email1"].widget.attrs["placeholder"] = "Email"

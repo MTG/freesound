@@ -1,9 +1,11 @@
-@import "borders";
-@import "colors";
-@import "grid";
-@import "responsive";
-@import "shadows";
-@import "spacing";
-@import "text";
-@import "logos";
-@import "dark-theme";
+$color-theme: 'light' !default;
+
+@import 'borders';
+@import 'colors';
+@import 'grid';
+@import 'responsive';
+@import 'shadows';
+@import 'spacing';
+@import 'text';
+@import 'logos';
+@import 'dark-theme';

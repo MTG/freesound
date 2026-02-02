@@ -1,7 +1,7 @@
 .input-wrapper {
   background: $search-bg;
   border-radius: 100px;
-  height:46px;
+  height: 46px;
   padding-right: 10px;
   display: flex;
   align-items: center;
@@ -68,7 +68,7 @@ input {
   padding: 2px;
   padding-left: 15px;
   cursor: pointer;
-  
+
   &:focus,
   &:hover,
   &:active,

@@ -12,6 +12,17 @@ RUN make clean && make
 
 # --- main Freesound docker file contents
 
+FROM node:22 AS frontend_build
+
+WORKDIR /code
+
+COPY package.json /code/package.json
+COPY package-lock.json /code/package-lock.json
+COPY freesound/static/bw-frontend /code/freesound/static/bw-frontend
+
+RUN npm install
+RUN npm run build
+
 FROM python:3.10 AS freesound
 
 LABEL org.opencontainers.image.authors="support@freesound.org"
@@ -29,8 +40,6 @@ RUN chmod +x /tini
 COPY --from=ghcr.io/astral-sh/uv:0.9.15 /uv /uvx /bin/
 
 RUN adduser -q --gecos "" --disabled-password fsweb
-
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
@@ -54,7 +63,6 @@ RUN apt-get update \
 		zlib1g-dev \
 		libpng-dev \
 		libyaml-dev \
-		nodejs \
 		ffmpeg \
 		openssh-client \
 		rsync \
@@ -84,13 +92,11 @@ FROM freesound AS freesound_prod
 COPY --chown=fsweb:fsweb package.json /code/package.json
 COPY --chown=fsweb:fsweb package-lock.json /code/package-lock.json
 
-RUN npm install
-
 # Copy source code
 COPY --chown=fsweb:fsweb . /code
 
 # Build static files
-RUN npm run build
+COPY --from=frontend_build /code/freesound/static/bw-frontend/dist /code/freesound/static/bw-frontend/dist
 RUN python manage.py collectstatic --noinput
 
 # Build API docs
@@ -99,10 +105,8 @@ RUN cd _docs/api && make html
 
 FROM freesound_prod AS freesound_console
 
-# Install a couple extra useful packages for console 
-# Note we need to remove nodesource list to avoid issues with apt update and missing keys
-RUN rm -f /etc/apt/sources.list.d/nodesource.list \ 
- 	&& apt-get update \
+# Install a couple extra useful packages for console
+RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
 		screen \
 		nano \

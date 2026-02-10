@@ -56,6 +56,44 @@ class Collection(models.Model):
     def get_collection_sounds_in_search_url(self):
         return f"{reverse('sounds-search')}?f=collection:{self.collection_filter_value()}"
 
+    @property
+    def url_kwargs(self):
+        return {"collection_id": self.id, "collection_name": slugify(self.name)}
+
+    def get_url(self, url_name="collection"):
+        return reverse(url_name, kwargs=self.url_kwargs)
+
+    def get_absolute_url(self):
+        return self.get_url()
+
+    @property
+    def edit_url(self):
+        return self.get_url("edit-collection")
+
+    @property
+    def delete_url(self):
+        return self.get_url("delete-collection")
+
+    @property
+    def download_url(self):
+        return self.get_url("download-collection")
+
+    @property
+    def licenses_url(self):
+        return self.get_url("collection-licenses")
+
+    @property
+    def add_sounds_modal_url(self):
+        return self.get_url("add-sounds-modal-collection")
+
+    @property
+    def add_maintainers_modal_url(self):
+        return self.get_url("add-maintainers-modal")
+
+    @property
+    def stats_section_url(self):
+        return self.get_url("collection-stats-section")
+
     def get_attribution(self, sound_qs=None):
         # If no queryset of sounds is provided, take it from the collection
         if sound_qs is None:

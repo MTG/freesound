@@ -15,7 +15,7 @@
     {% endif %}
     <div class="between v-spacing-top-1">
         <div>
-            <h5><span class="bw-icon-bookmark h-spacing-1 text-light-grey"></span><a class="bw-link--black ellipsis" href="{% url "collection" collection.id %}" title="{{ collection.name }}">{{ collection.name }}</a></h5>
+            <h5><span class="bw-icon-bookmark h-spacing-1 text-light-grey"></span><a class="bw-link--black ellipsis" href="{{ collection.get_absolute_url }}" title="{{ collection.name }}">{{ collection.name }}</a></h5>
         </div>
     </div>
     <div class="between">
@@ -45,7 +45,7 @@
                 <span class="bw-icon-wave"></span> {{ collection.num_sounds|formatnumber }}
             </div>
             <div class="h-spacing-left-2" title="{{ collection.num_downloads|bw_intcomma }} download{{ collection.num_downloads|pluralize }}">
-                <a href="{% url 'download-collection' collection.id %}" class="bw-link--grey-light">
+                <a href="{{ collection.download_url }}" class="bw-link--grey-light">
                     <span class="bw-icon-download"></span> {{ collection.num_downloads|formatnumber }}
                 </a>
             </div>

@@ -60,13 +60,13 @@
 			{
 				"label": "Build static",
 				"type": "shell",
-				"command": "docker compose run --rm web npm run build && docker compose run --rm web python manage.py collectstatic --clear --noinput",
+				"command": "docker compose run --rm frontend_builder npm run build && docker compose run --rm web python manage.py collectstatic --clear --noinput",
 				"problemMatcher": []
 			},
 			{
 				"label": "Install static",
 				"type": "shell",
-				"command": "docker compose run --rm web npm install --force",
+				"command": "docker compose run --rm frontend_builder npm install",
 				"problemMatcher": []
 			},
 			{

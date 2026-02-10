@@ -51,6 +51,20 @@ services:
             - redis
             - search
 
+    # Frontend asset builder
+    frontend_builder:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.workers_web
+            target: frontend_build
+            platforms:
+              - linux/amd64
+        volumes:
+            - .:/code
+            - /code/node_modules
+        command: npm run dev
+        profiles: ["frontend"]
+
     # Search server
     search:
         image: solr:9.8.1

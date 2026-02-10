@@ -27,8 +27,7 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.urls import resolve, reverse
-from django.utils.text import slugify
+from django.urls import reverse
 
 from fscollections.forms import (
     CollectionEditForm,
@@ -48,12 +47,16 @@ def resolve_collection_from_url(view_func):
     """Fetches collection, redirects to canonical URL if name doesn't match, passes collection to view."""
 
     @wraps(view_func)
-    def _wrapped_view(request, collection_name, collection_id, *args, **kwargs):
+    def _wrapped_view(request, collection_id, collection_name, *args, **kwargs):
         collection = get_object_or_404(Collection, id=collection_id)
-        expected_name = slugify(collection.name)
+        expected_name = collection.url_kwargs["collection_name"]
         if collection_name != expected_name:
-            url_name = resolve(request.path).url_name
-            return HttpResponseRedirect(reverse(url_name, args=[expected_name, collection.id]))
+            url_name = request.resolver_match.url_name
+            canonical_url = collection.get_url(url_name)
+            query_params = request.GET.urlencode()
+            if query_params:
+                canonical_url = f"{canonical_url}?{query_params}"
+            return HttpResponseRedirect(canonical_url)
         return view_func(request, collection, *args, **kwargs)
 
     return _wrapped_view
@@ -183,7 +186,7 @@ def delete_collection(request, collection):
             messages.INFO,
             "You're not allowed to delete this collection.In order to delete a collection you must be the owner.",
         )
-        return HttpResponseRedirect(reverse("collection", args=[slugify(collection.name), collection.id]))
+        return HttpResponseRedirect(collection.get_absolute_url())
 
 
 @login_required
@@ -199,7 +202,7 @@ def edit_collection(request, collection):
     elif request.user in maintainers_query:
         is_maintainer = True
     else:
-        return HttpResponseRedirect(reverse("collection", args=[slugify(collection.name), collection.id]))
+        return HttpResponseRedirect(collection.get_absolute_url())
 
     current_sounds = list()
     if request.method == "POST":
@@ -212,11 +215,11 @@ def edit_collection(request, collection):
                 request.POST, instance=collection, label_suffix="", is_owner=is_owner, is_maintainer=is_maintainer
             )
         else:
-            return HttpResponseRedirect(reverse("collection", args=[slugify(collection.name), collection.id]))
+            return HttpResponseRedirect(collection.get_absolute_url())
 
         if form.is_valid():
             form.save(user_adding_sound=request.user)
-            return HttpResponseRedirect(reverse("collection", args=[slugify(collection.name), collection.id]))
+            return HttpResponseRedirect(collection.get_absolute_url())
         else:
             # NOTE: in this form's validation, errors are raised for each speific field, so when there is a submission attempt the error
             # is displayed within it. However, fields containing errors are removed from the clean data but we are still interested in
@@ -296,7 +299,7 @@ def download_collection(request, collection):
             cds.append(CollectionDownloadSound(sound=sound, collection_download=cd, license=sound.license))
         CollectionDownloadSound.objects.bulk_create(cds)
 
-    licenses_url = reverse("collection-licenses", args=[slugify(collection.name), collection.id])
+    licenses_url = collection.licenses_url
     licenses_content = collection.get_attribution(sound_qs=sounds_list)
     return download_sounds(licenses_url, licenses_content, sounds_list, collection.download_filename)
 
@@ -308,7 +311,7 @@ def collection_licenses(request, collection):
 
 
 @resolve_collection_from_url
-def add_sounds_modal_for_collection_edit(request, collection_name, collection_id):
+def add_sounds_modal_for_collection_edit(request, collection):
     tvars = add_sounds_modal_helper(request)
     tvars.update({"modal_title": "Add sounds to collection", "help_text": "Modal to add sounds to your collection"})
     return render(request, "sounds/modal_add_sounds.html", tvars)

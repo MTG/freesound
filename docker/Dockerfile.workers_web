@@ -3,7 +3,7 @@
 # This is the same base image as python:3.10
 FROM debian:trixie AS stereofy
 
-RUN apt-get update && apt-get install -y build-essential libsndfile-dev
+RUN apt-get update && apt-get install -y build-essential libsndfile1-dev
 
 RUN mkdir /code
 COPY ./_sandbox/stereofy /code
@@ -66,6 +66,7 @@ RUN apt-get update \
 		ffmpeg \
 		openssh-client \
 		rsync \
+	&& ln -sf "/usr/lib/$(gcc -print-multiarch)/libsndfile.so" /usr/lib/libsndfile.so \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Make some folders to add code and data

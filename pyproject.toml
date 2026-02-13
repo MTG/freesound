@@ -47,7 +47,7 @@ dependencies = [
     "psycopg~=3.2.4",
     "pyjwt==2.6.0",
     "pyparsing==2.4.7",
-    "pysndfile==1.4.4",
+    "pysndfile==1.5.2",
     "pysolr==3.10.0",
     "pytest~=8.0.2",
     "pytest-django~=4.8.0", # community detection in clustering

@@ -88,9 +88,11 @@ class SearchQueryProcessor:
                 label="Sort",
                 choices=[(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
                 should_be_disabled=lambda option: bool(option.sqp.get_option_value_to_apply("similar_to")),
-                get_default_value=lambda option: settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
-                if option.sqp.get_option_value_to_apply("query") == ""
-                else settings.SEARCH_SOUNDS_SORT_DEFAULT,
+                get_default_value=lambda option: (
+                    settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
+                    if option.sqp.get_option_value_to_apply("query") == ""
+                    else settings.SEARCH_SOUNDS_SORT_DEFAULT
+                ),
             ),
         ),
         (
@@ -100,9 +102,9 @@ class SearchQueryProcessor:
                 advanced=False,
                 query_param_name="page",
                 value_default=1,
-                get_value_to_apply=lambda option: 1
-                if option.sqp.get_option_value_to_apply("map_mode")
-                else option.value,
+                get_value_to_apply=lambda option: (
+                    1 if option.sqp.get_option_value_to_apply("map_mode") else option.value
+                ),
             ),
         ),
         (
@@ -130,8 +132,10 @@ class SearchQueryProcessor:
                     (settings.SEARCH_SOUNDS_FIELD_ID, "Sound ID"),
                     (settings.SEARCH_SOUNDS_FIELD_USER_NAME, "Username"),
                 ],
-                should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("tags_mode")
-                or bool(option.sqp.get_option_value_to_apply("similar_to")),
+                should_be_disabled=lambda option: (
+                    option.sqp.get_option_value_to_apply("tags_mode")
+                    or bool(option.sqp.get_option_value_to_apply("similar_to"))
+                ),
             ),
         ),
         (
@@ -154,9 +158,9 @@ class SearchQueryProcessor:
                 label="Only geotagged sounds",
                 help_text="Only find sounds that have geolocation information",
                 should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("map_mode"),
-                get_value_to_apply=lambda option: True
-                if option.sqp.get_option_value_to_apply("map_mode")
-                else option.value,
+                get_value_to_apply=lambda option: (
+                    True if option.sqp.get_option_value_to_apply("map_mode") else option.value
+                ),
             ),
         ),
         (
@@ -177,11 +181,15 @@ class SearchQueryProcessor:
                 query_param_name="dp",
                 label="Display results as packs",
                 help_text="Display search results as packs rather than individual sounds",
-                get_value_to_apply=lambda option: False
-                if option.sqp.has_filter_with_name("pack_grouping") or option.sqp.get_option_value_to_apply("map_mode")
-                else option.value,
-                should_be_disabled=lambda option: option.sqp.has_filter_with_name("pack_grouping")
-                or option.sqp.get_option_value_to_apply("map_mode"),
+                get_value_to_apply=lambda option: (
+                    False
+                    if option.sqp.has_filter_with_name("pack_grouping")
+                    or option.sqp.get_option_value_to_apply("map_mode")
+                    else option.value
+                ),
+                should_be_disabled=lambda option: (
+                    option.sqp.has_filter_with_name("pack_grouping") or option.sqp.get_option_value_to_apply("map_mode")
+                ),
             ),
         ),
         (
@@ -193,9 +201,11 @@ class SearchQueryProcessor:
                 help_text="Group search results so that multiple sounds of the same pack only represent one item",
                 value_default=True,
                 get_value_to_apply=_get_value_to_apply_group_by_pack,
-                should_be_disabled=lambda option: option.sqp.has_filter_with_name("pack_grouping")
-                or option.sqp.get_option_value_to_apply("display_as_packs")
-                or option.sqp.get_option_value_to_apply("map_mode"),
+                should_be_disabled=lambda option: (
+                    option.sqp.has_filter_with_name("pack_grouping")
+                    or option.sqp.get_option_value_to_apply("display_as_packs")
+                    or option.sqp.get_option_value_to_apply("map_mode")
+                ),
             ),
         ),
         (
@@ -206,9 +216,9 @@ class SearchQueryProcessor:
                 query_param_name="cm",
                 label="Display results in grid",
                 help_text="Display search results in a grid so that more sounds are visible per search results page",
-                get_default_value=lambda option: option.request.user.profile.use_compact_mode
-                if option.request.user.is_authenticated
-                else False,
+                get_default_value=lambda option: (
+                    option.request.user.profile.use_compact_mode if option.request.user.is_authenticated else False
+                ),
                 should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("map_mode"),
             ),
         ),
@@ -235,9 +245,9 @@ class SearchQueryProcessor:
             dict(
                 advanced=False,
                 query_param_name="cid",
-                get_value_to_apply=lambda option: -1
-                if not option.sqp.get_option_value_to_apply("compute_clusters")
-                else option.value,
+                get_value_to_apply=lambda option: (
+                    -1 if not option.sqp.get_option_value_to_apply("compute_clusters") else option.value
+                ),
             ),
         ),
         (

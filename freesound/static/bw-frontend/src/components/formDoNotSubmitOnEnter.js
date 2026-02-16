@@ -8,7 +8,7 @@ const formFieldShouldAllowEnterEvents = element => {
 };
 
 const bindDoNotSubmitOnEnterForms = container => {
-  var formElements = container.getElementsByClassName('do-not-submit-on-enter');
+  var formElements = [...container.getElementsByClassName('do-not-submit-on-enter')];
   formElements.forEach(formElement => {
     formElement.onkeydown = evt => {
       if (evt.key == 'Enter' && !formFieldShouldAllowEnterEvents(evt.target)) {

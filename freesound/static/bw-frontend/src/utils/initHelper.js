@@ -79,7 +79,7 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
   }
 
   // Init maps (note that already initialized maps won't be re-initialized)
-  const maps = document.getElementsByClassName('map');
+  const maps = [...document.getElementsByClassName('map')];
   maps.forEach(map => {
     const staticMapWrapper = document.getElementById('static_map_wrapper');
     const mapIsBehindStaticMap =

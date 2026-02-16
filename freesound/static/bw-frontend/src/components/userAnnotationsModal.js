@@ -19,8 +19,8 @@ const saveAnnotation = (addAnnotationUrl, text, user_id) => {
       // Annotation saved successfully. Close model and show feedback
       dismissModal(`moderationAnnotationsModal`);
       const responseData = JSON.parse(responseText);
-      document
-        .getElementsByClassName('annotation-counter-' + user_id)
+      [...document
+        .getElementsByClassName('annotation-counter-' + user_id)]
         .forEach(element => {
           element.innerText = responseData.num_annotations;
         });

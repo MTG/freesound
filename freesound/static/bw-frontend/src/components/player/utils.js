@@ -45,7 +45,7 @@ export const formatAudioDuration = (duration, showMilliseconds) => {
 export const stopAllPlayers = () => {
   const players = [...document.getElementsByClassName('bw-player')];
   players.forEach(player => {
-    player.getElementsByTagName('audio').forEach(audioElement => {
+    [...player.getElementsByTagName('audio')].forEach(audioElement => {
       audioElement.pause();
     });
   });
@@ -54,7 +54,7 @@ export const stopAllPlayers = () => {
 export const stopAllPlayersInContainer = container => {
   const players = [...container.getElementsByClassName('bw-player')];
   players.forEach(player => {
-    player.getElementsByTagName('audio').forEach(audioElement => {
+    [...player.getElementsByTagName('audio')].forEach(audioElement => {
       audioElement.pause();
     });
   });

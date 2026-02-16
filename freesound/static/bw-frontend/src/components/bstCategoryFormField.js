@@ -25,7 +25,7 @@ const updateSubcategoriesList = (
 
 const prepareCategoryFormFields = mainContainer => {
   const categoryFieldContainers =
-    mainContainer.getElementsByClassName('bst-category-field');
+    [...mainContainer.getElementsByClassName('bst-category-field')];
   categoryFieldContainers.forEach(container => {
     const hiddenField = container.querySelectorAll('input[type=hidden]')[0];
     const topButtons = container.querySelectorAll('.top-buttons .btn');

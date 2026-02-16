@@ -1,6 +1,6 @@
 const bindDisableOnSubmitForms = container => {
   const formElementsWithDisableOnSubmit =
-    container.getElementsByClassName('disable-on-submit');
+    [...container.getElementsByClassName('disable-on-submit')];
   formElementsWithDisableOnSubmit.forEach(formElement => {
     if (formElement.dataset.alreadyBinded !== undefined) {
       return;
@@ -8,7 +8,7 @@ const bindDisableOnSubmitForms = container => {
     formElement.dataset.alreadyBinded = true;
 
     formElement.onsubmit = evt => {
-      var buttonElements = formElement.getElementsByTagName('button');
+      var buttonElements = [...formElement.getElementsByTagName('button')];
       buttonElements.forEach(element => {
         element.disabled = true;
         if (element.name !== undefined && element == evt.submitter) {

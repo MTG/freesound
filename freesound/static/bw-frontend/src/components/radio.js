@@ -21,7 +21,7 @@ const addVisibleRadio = radioEl => {
     radioIcon.setAttribute('role', 'radio');
     radioIcon.setAttribute('aria-checked', radioEl.checked);
     radioEl.addEventListener('change', () => {
-      const radioOptions = document.getElementsByName(radioEl.name);
+      const radioOptions = [...document.getElementsByName(radioEl.name)];
       radioOptions.forEach(option => {
         option.parentNode
           .getElementsByClassName('bw-icon-radio-unchecked')[0]

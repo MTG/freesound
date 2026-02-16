@@ -21,7 +21,7 @@ import {
 } from '../../utils/browser';
 
 const removeAllLastPlayedClasses = () => {
-  document.getElementsByClassName('last-played').forEach(element => {
+  [...document.getElementsByClassName('last-played')].forEach(element => {
     element.classList.remove('last-played');
   });
 };
@@ -40,14 +40,12 @@ const replaceTimesinceIndicators = parentNode => {
   // Checks if timesince information has been added in the player metadata and if so, finds if there are
   // any elements with class timesince-target and replaces their content with the timesince information
   // NOTE: this modifies the sound display UI, not only strictly the "player" UI, but it's here because
-  // because this seems the best place to handle this logic
+  // this seems the best place to handle this logic
   if (parentNode.dataset.timesince !== undefined) {
-    parentNode.parentNode
-      .getElementsByClassName('timesince-target')
-      .forEach(timesinceTargetElement => {
-        timesinceTargetElement.innerHTML =
-          parentNode.dataset.timesince + ' ago';
-      });
+    const timesinceTargetElements = parentNode.parentNode.getElementsByClassName('timesince-target');
+    [...timesinceTargetElements].forEach(timesinceTargetElement => {
+      timesinceTargetElement.innerHTML = parentNode.dataset.timesince + ' ago';
+    });
   }
 };
 

@@ -14,7 +14,7 @@ const moderateFormTitle = document.getElementById('moderate-form-title-label');
 const moderateFormWrapper = document.getElementById('moderate-form-wrapper');
 const moderateForm = moderateFormWrapper.getElementsByTagName('form')[0];
 const ticketsTable = document.getElementById('assigned-tickets-table');
-const ticketCheckboxes = ticketsTable.getElementsByClassName('bw-checkbox');
+const ticketCheckboxes = [...ticketsTable.getElementsByClassName('bw-checkbox')];
 const templateResponses = document
   .getElementById('template-responses')
   .getElementsByTagName('a');

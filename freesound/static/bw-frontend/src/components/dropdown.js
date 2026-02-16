@@ -51,7 +51,7 @@ const makeDropdowns = container => {
     const dropdownOptions =
       dropdownContainer.getElementsByClassName('dropdown-menu')[0];
     dropdownOptions.setAttribute('role', 'menu');
-    dropdownOptions.getElementsByClassName('dropdown-item').forEach(item => {
+    [...dropdownOptions.getElementsByClassName('dropdown-item')].forEach(item => {
       item.setAttribute('role', 'menuitem');
     });
     toggle.addEventListener('click', () => toggleExpandDropdown(toggle));

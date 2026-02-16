@@ -60,7 +60,7 @@ const copyValue = () => {
 document.addEventListener('DOMContentLoaded', () => {
   const showGeotagPickerElements =
     document.getElementsByClassName('show-geotag-picker');
-  showGeotagPickerElements.forEach(element => {
+  [...showGeotagPickerElements].forEach(element => {
     element.setAttribute('onclick', '');
     element.addEventListener('click', () => {
       showGeotagPickerHelpTool(element.dataset.refElementId);

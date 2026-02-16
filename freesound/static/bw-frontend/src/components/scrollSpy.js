@@ -1,7 +1,7 @@
 import { isScrolledIntoView } from '../utils/elementVisibility';
 import debounce from 'lodash.debounce';
 
-const scrollSpyElements = document.getElementsByClassName('scroll-spy');
+const scrollSpyElements = [...document.getElementsByClassName('scroll-spy')];
 
 const addClassToSpiedElement = () => {
   let elementToActivate = undefined;

@@ -333,6 +333,6 @@
     {% if not error_text %}
         {% comment %}If there were errors reaching the search server, don't even load the
 JS bits because we only display the error message{% endcomment %}
-        <script src="{% static 'bw-frontend/dist/search.js' %}"></script>
+        <script src="{% static 'bw-frontend/dist/pages/search.js' %}"></script>
     {% endif %}
 {% endblock %}

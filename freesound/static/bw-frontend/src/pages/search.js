@@ -174,9 +174,8 @@ const onAdvancedSearchOptionsInputsChange = () => {
   });
 });
 
-advancedSearchOptionsDiv
-  .getElementsByTagName('select')
-  .forEach(selectElement => {
+[...advancedSearchOptionsDiv
+  .getElementsByTagName('select')].forEach(selectElement => {
     selectElement.addEventListener('change', evt => {
       onAdvancedSearchOptionsInputsChange();
     });

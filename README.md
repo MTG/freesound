@@ -81,16 +81,11 @@ If you a prompted for a password, use `localfreesoundpgpassword`, this is define
 
         docker compose run --rm web python manage.py createsuperuser
 
-11. Install static build dependencies
+11. Build static files (use this every time you edit a frontend file, or use the frontend profile: see next step)
 
-        docker compose run --rm web npm install
+        docker compose run --rm frontend_builder npm run build
 
-12. Build static files. Note that this step will need to be re-run every time there are changes in Freesound's static code (JS, CSS and static media files).
-
-        docker compose run --rm web npm run build
-        docker compose run --rm web python manage.py collectstatic --noinput
-
-13. Run services 🎉
+12. Run services 🎉
 
         docker compose up
 
@@ -98,7 +93,11 @@ If you a prompted for a password, use `localfreesoundpgpassword`, this is define
     This includes the web application and database, but also the search engine, cache manager, queue manager and asynchronous workers, including audio processing.
     You should be able to point your browser to `http://localhost:8000` and see the Freesound website up and running!
 
-14. Build the search index, so you can search for sounds and forum posts
+    If you are working on frontend assets (JS, CSS, SCSS), use the `frontend` profile to automatically rebuild on changes:
+
+        docker compose --profile frontend up
+
+13. Build the search index, so you can search for sounds and forum posts
 
         # Open a new terminal window so the services started in the previous step keep running
         docker compose run --rm web python manage.py reindex_search_engine_sounds
@@ -111,7 +110,7 @@ If you a prompted for a password, use `localfreesoundpgpassword`, this is define
 
     Because the `web` container mounts a named volume for the home folder of the user running the shell plus process, command history should be kept between container runs :)
 
-15. (extra) Load audio descriptors and similarity vectors to the database and reindex the search index. This is necessary to make audio descriptors available thorugh the API and to make similarity search work. Note that for this to work, you need to have properly set the development data folder, and you should see some files inside the `freesound-data/analysis` folders which store the (previously computed) results of Freesound audio analysers.
+14. (extra) Load audio descriptors and similarity vectors to the database and reindex the search index. This is necessary to make audio descriptors available thorugh the API and to make similarity search work. Note that for this to work, you need to have properly set the development data folder, and you should see some files inside the `freesound-data/analysis` folders which store the (previously computed) results of Freesound audio analysers.
 
         # First run the following command which will create relevant objects in the DB. Note that this can take some minutes.
         docker compose run --rm web python manage.py create_consolidated_sound_analysis_and_sim_vectors --force

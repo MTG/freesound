@@ -853,7 +853,7 @@ requires-dist = [
     { name = "psycopg", specifier = "~=3.2.4" },
     { name = "pyjwt", specifier = "==2.6.0" },
     { name = "pyparsing", specifier = "==2.4.7" },
-    { name = "pysndfile", specifier = "==1.4.4" },
+    { name = "pysndfile", specifier = "==1.5.2" },
     { name = "pysolr", specifier = "==3.10.0" },
     { name = "pytest", specifier = "~=8.0.2" },
     { name = "pytest-django", specifier = "~=4.8.0" },
@@ -1458,12 +1458,12 @@ wheels = [
 
 [[package]]
 name = "pysndfile"
-version = "1.4.4"
+version = "1.5.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e3/d2/4f0ce122aa1fa58a819fde8cbce796a225cba7c32ae32c0dab839c41ebc4/pysndfile-1.4.4.tar.gz", hash = "sha256:78cef2f1da66a4e6ee6cab5f2337f16549be958847dae00e8e2185ee68b8f8bf", size = 380702, upload-time = "2022-03-10T11:19:13.977Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/04/3f/6a76ba4e7f5b8ea7ba480e9c5953c760d609635a32557c902dc050a14de3/pysndfile-1.5.2.tar.gz", hash = "sha256:f794bb368d521d1e6e4b5ede40a185aaeadbc9768ce5310b2bd3acc4b38b086a", size = 63172, upload-time = "2026-02-13T10:59:09.816Z" }
 
 [[package]]
 name = "pysolr"

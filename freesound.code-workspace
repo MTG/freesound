@@ -60,7 +60,7 @@
 			{
 				"label": "Build static",
 				"type": "shell",
-				"command": "docker compose run --rm frontend_builder npm run build && docker compose run --rm web python manage.py collectstatic --clear --noinput --verbosity 0",
+				"command": "docker compose run --rm frontend_builder npm run build",
 				"problemMatcher": []
 			},
 			{

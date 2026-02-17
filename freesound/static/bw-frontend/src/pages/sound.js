@@ -108,7 +108,7 @@ const findTimeLinksAndAddEventListeners = element => {
     playIconHtml
   );
   // Add listener events to each of the created anchors
-  element.getElementsByClassName('play-at-time').forEach(playAyTimeElement => {
+  [...element.getElementsByClassName('play-at-time')].forEach(playAyTimeElement => {
     playAyTimeElement.addEventListener('click', e => {
       if (!e.altKey) {
         const seconds =
@@ -126,7 +126,7 @@ const soundDescriptionElement = document.getElementById(
   'soundDescriptionSection'
 );
 const soundCommentsSection = document.getElementById('soundCommentsSection');
-const soundCommentElements = soundCommentsSection.getElementsByTagName('p');
+const soundCommentElements = [...soundCommentsSection.getElementsByTagName('p')];
 
 soundCommentElements.forEach(element => {
   findTimeLinksAndAddEventListeners(element);

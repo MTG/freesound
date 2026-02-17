@@ -60,13 +60,13 @@ function toggleMapStyle(map) {
   if (map.getStyle().sprite.indexOf(FREESOUND_STREETS_STYLE_ID) !== -1) {
     // Using streets map, switch to satellite
     map.setStyle('mapbox://styles/freesound/' + FREESOUND_SATELLITE_STYLE_ID);
-    mapElement.getElementsByClassName('map_terrain_menu').forEach(element => {
+    [...mapElement.getElementsByClassName('map_terrain_menu')].forEach(element => {
       element.innerText = 'Show streets';
     });
   } else {
     // Using satellite map, switch to streets
     map.setStyle('mapbox://styles/freesound/' + FREESOUND_STREETS_STYLE_ID);
-    mapElement.getElementsByClassName('map_terrain_menu').forEach(element => {
+    [...mapElement.getElementsByClassName('map_terrain_menu')].forEach(element => {
       element.innerText = 'Show terrain';
     });
   }

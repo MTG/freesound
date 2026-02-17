@@ -142,7 +142,7 @@ const handleRatingInput = ratingInput => {
 
 const makeRatingWidgets = container => {
   const ratingInputs = container.getElementsByClassName('bw-rating__input');
-  ratingInputs.forEach(ratingInput => {
+  [...ratingInputs].forEach(ratingInput => {
     ratingInput.addEventListener('click', evt => {
       handleRatingInput(ratingInput);
       evt.stopPropagation();

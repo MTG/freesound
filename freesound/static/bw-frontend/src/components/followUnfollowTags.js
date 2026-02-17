@@ -68,7 +68,7 @@ const followOrUnFollowTags = (tags, button) => {
 
 const bindFollowTagsButtons = container => {
   const followUnfollowButtons =
-    container.getElementsByClassName('follow-tags-button');
+    [...container.getElementsByClassName('follow-tags-button')];
   followUnfollowButtons.forEach(button => {
     const tags = button.dataset.followTagsUrl
       .split('/follow/follow_tags/')[1]

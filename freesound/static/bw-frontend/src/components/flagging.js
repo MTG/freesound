@@ -27,7 +27,7 @@ function post_flag(div_id, flag_type, object_id, url) {
 }
 
 const bindFlagUserButtons = container => {
-  const flagUserElements = container.getElementsByClassName('post-flag');
+  const flagUserElements = [...container.getElementsByClassName('post-flag')];
   flagUserElements.forEach(element => {
     element.addEventListener('click', () => {
       post_flag(

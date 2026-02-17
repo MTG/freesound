@@ -135,8 +135,8 @@ let initialAdvancedSearchInputValues = undefined; // NOTE: this is filled out in
 
 const serializeAdvanceSearchOptionsInputsData = () => {
   const values = [];
-  advancedSearchOptionsDiv
-    .getElementsByTagName('input')
+  [...advancedSearchOptionsDiv
+    .getElementsByTagName('input')]
     .forEach(inputElement => {
       if (inputElement.type == 'hidden') {
         // Don't include hidden elements as only the visible items are necessary
@@ -146,8 +146,8 @@ const serializeAdvanceSearchOptionsInputsData = () => {
         values.push(inputElement.value);
       }
     });
-  advancedSearchOptionsDiv
-    .getElementsByTagName('select')
+  [...advancedSearchOptionsDiv
+    .getElementsByTagName('select')]
     .forEach(selectElement => {
       values.push(selectElement.value);
     });
@@ -165,7 +165,7 @@ const onAdvancedSearchOptionsInputsChange = () => {
     !advancedSearchOptionsHaveChangedSinceLastQuery();
 };
 
-advancedSearchOptionsDiv.getElementsByTagName('input').forEach(inputElement => {
+[...advancedSearchOptionsDiv.getElementsByTagName('input')].forEach(inputElement => {
   inputElement.addEventListener('change', evt => {
     onAdvancedSearchOptionsInputsChange();
   });
@@ -174,9 +174,8 @@ advancedSearchOptionsDiv.getElementsByTagName('input').forEach(inputElement => {
   });
 });
 
-advancedSearchOptionsDiv
-  .getElementsByTagName('select')
-  .forEach(selectElement => {
+[...advancedSearchOptionsDiv
+  .getElementsByTagName('select')].forEach(selectElement => {
     selectElement.addEventListener('change', evt => {
       onAdvancedSearchOptionsInputsChange();
     });
@@ -186,7 +185,7 @@ advancedSearchOptionsDiv
 
 var searchFormElement = document.getElementById('search_form');
 
-searchFormElement.getElementsByClassName('bw-checkbox').forEach(checkbox => {
+[...searchFormElement.getElementsByClassName('bw-checkbox')].forEach(checkbox => {
   const hiddenCheckbox = document.createElement('input');
   hiddenCheckbox.type = 'hidden';
   hiddenCheckbox.name = checkbox.name;
@@ -209,7 +208,7 @@ if (sortByElement !== null) {
 
 // Make radio cluster elements submit the form when changed (also when cluster section is loaded asynchronously)
 export const bindClusteringRadioButtonsSubmit = () => {
-  document.getElementsByName('cid').forEach(radio => {
+  [...document.getElementsByName('cid')].forEach(radio => {
     radio.addEventListener('change', evt => {
       setTimeout(() => {
         searchFormElement.submit();

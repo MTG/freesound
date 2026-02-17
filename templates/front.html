@@ -25,7 +25,7 @@
                 <form method="get" action="/search/">
                     <div class="typeahead-wrapper">
                         <div class="input-wrapper">
-                            <input name="q" type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true" data-typeahead-suggestions-url="{% url 'query-suggestions' %}" autocomplete="off"{% endif %} />
+                            <input name="q" type="search" class="bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true" data-typeahead-suggestions-url="{% url 'query-suggestions' %}" autocomplete="off"{% endif %} />
                         </div>
                     </div>
                 </form>
@@ -218,5 +218,5 @@
 {% endblock %}
 
 {% block extrabody %}
-    <script src="{% static 'bw-frontend/dist/front.js' %}"></script>
+    <script src="{% static 'bw-frontend/dist/pages/front.js' %}"></script>
 {% endblock %}

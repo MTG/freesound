@@ -40,7 +40,7 @@ const handleCollapsable = e => {
 const makeCollapsableBlocks = container => {
   const collapsableToggles =
     container.getElementsByClassName('collapsable-toggle');
-  collapsableToggles.forEach(element => {
+  [...collapsableToggles].forEach(element => {
     if (element.dataset.initialized !== undefined) {
       return;
     }

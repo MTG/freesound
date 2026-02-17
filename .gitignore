@@ -13,5 +13,6 @@ _docs/api/build/
 .parcel-cache
 node_modules
 freesound/static/bw-frontend/dist/
+freesound/static/bw-frontend/dist-dark/
 bw_static/
 npm-debug.log

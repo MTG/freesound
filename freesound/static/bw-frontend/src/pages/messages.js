@@ -2,7 +2,7 @@ import { wrapInDiv } from '../utils/wrap';
 import debounce from 'lodash.debounce';
 
 const checkboxSelectAllElement = document.getElementById('selectAll');
-const messageCheckboxes = document.getElementsByClassName('message-checkbox');
+const messageCheckboxes = [...document.getElementsByClassName('message-checkbox')];
 const actionsMenu = document.getElementsByClassName('actions-menu')[0];
 const messageActionButtons = document.getElementsByClassName('message-action');
 const LastMessageElement = document.getElementById('message-last');
@@ -13,7 +13,7 @@ if (LastMessageElement) {
 }
 
 const handleAllCheckboxes = () => {
-  const allCheckboxes = document.getElementsByClassName('message-checkbox');
+  const allCheckboxes = [...document.getElementsByClassName('message-checkbox')];
 
   allCheckboxes.forEach(checkboxElement => {
     checkboxElement.checked = checkboxSelectAllElement.checked;
@@ -66,8 +66,8 @@ messageCheckboxes.forEach(checkbox =>
 );
 
 if (actionsMenu !== undefined) {
-  actionsMenu
-    .getElementsByClassName('bw-nav__action')
+  [...actionsMenu
+    .getElementsByClassName('bw-nav__action')]
     .forEach(actionElement =>
       actionElement.addEventListener('click', () =>
         applyActionToMessages(

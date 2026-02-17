@@ -20,7 +20,7 @@ var inputTypeSubmitElements = formElement.querySelectorAll(
 );
 inputTypeSubmitElements.forEach(button => {
   button.addEventListener('click', e => {
-    const tagsInputFields = formElement.getElementsByClassName('tags-field');
+    const tagsInputFields = [...formElement.getElementsByClassName('tags-field')];
     tagsInputFields.forEach(tagsFieldElement => {
       const inputElement =
         tagsFieldElement.getElementsByClassName('tags-input')[0];

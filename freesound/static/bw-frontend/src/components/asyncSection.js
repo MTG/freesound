@@ -3,7 +3,7 @@ import { initializeStuffInContainer } from '../utils/initHelper';
 
 const prepareAsyncSections = container => {
   const asyncSectionPlaceholders =
-    container.getElementsByClassName('async-section');
+    [...container.getElementsByClassName('async-section')];
   asyncSectionPlaceholders.forEach(element => {
     const contentUrl = element.dataset.asyncSectionContentUrl;
     const req = new XMLHttpRequest();

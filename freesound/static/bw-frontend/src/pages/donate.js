@@ -10,7 +10,7 @@ const donationButtonPaypalElement = document.getElementById(
   'donation_button_paypal'
 );
 const recurringCheckboxElement = document.getElementById('id_recurring');
-const nameOptionRadioButtons = document.getElementsByName('donation_type');
+const nameOptionRadioButtons = [...document.getElementsByName('donation_type')];
 const nameOptionOtherInputElement = document.getElementById('id_name_option');
 
 // Make "other" input appear or disappear accordingly

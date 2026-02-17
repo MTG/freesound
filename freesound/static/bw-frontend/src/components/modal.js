@@ -261,11 +261,11 @@ const handleGenericModal = (
         });
 
         // Make paginator update modal (if any)
-        modalContainer
-          .getElementsByClassName('bw-pagination_container')
+        [...modalContainer
+          .getElementsByClassName('bw-pagination_container')]
           .forEach(paginationContainer => {
-            paginationContainer
-              .getElementsByTagName('a')
+            [...paginationContainer
+              .getElementsByTagName('a')]
               .forEach(paginatorLinkElement => {
                 const loadPageUrl = paginatorLinkElement.href;
                 paginatorLinkElement.href = 'javascript:void(0);';

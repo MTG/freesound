@@ -5,9 +5,9 @@ import { setURLHash, hashEquals } from '../utils/urls';
 // Latest sounds/Latest tags taps
 
 const taps = [...document.querySelectorAll('[data-toggle="tap"]')];
-const tapsElements = document.getElementsByClassName(
+const tapsElements = [...document.getElementsByClassName(
   'bw-profile__tap_container'
-);
+)];
 
 const cleanActiveClass = () => {
   taps.forEach(tap => tap.classList.remove('active'));
@@ -66,8 +66,8 @@ const setFollowModalUrlParamToCurrentPage = modalActivationParam => {
   const genericModalWrapperElement = document.getElementById(
     'genericModalWrapper'
   );
-  genericModalWrapperElement
-    .getElementsByClassName('bw-pagination_selected')
+  [...genericModalWrapperElement
+    .getElementsByClassName('bw-pagination_selected')]
     .forEach(element => {
       page = parseInt(element.firstChild.innerHTML, 10);
     });

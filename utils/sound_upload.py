@@ -17,6 +17,8 @@
 # Authors:
 #     See AUTHORS file.
 #
+from __future__ import annotations
+
 import csv
 import hashlib
 import json
@@ -24,6 +26,7 @@ import logging
 import os
 import shutil
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
 import openpyxl
 import xlrd
@@ -44,6 +47,10 @@ from utils.mirror_files import (
     remove_uploaded_file_from_mirror_locations,
 )
 from utils.text import remove_control_chars
+
+if TYPE_CHECKING:
+    from apiv2.models import ApiV2Client
+    from sounds.models import BulkUploadProgress, Sound
 
 console_logger = logging.getLogger("console")
 sounds_logger = logging.getLogger("sounds")
@@ -119,26 +126,33 @@ def get_processing_before_describe_sound_base_url(audio_file_path):
     return settings.PROCESSING_BEFORE_DESCRIPTION_URL + relative + "/"
 
 
-def create_sound(user, sound_fields, apiv2_client=None, bulk_upload_progress=None, process=True, remove_exists=False):
+def create_sound(
+    user: User,
+    sound_fields: dict,
+    apiv2_client: ApiV2Client | None = None,
+    bulk_upload_progress: BulkUploadProgress | None = None,
+    process: bool = True,
+    remove_exists: bool = False,
+) -> Sound:
     """
     This function is used to create sound objects uploaded via the sound describe form, the API or the bulk describe
     feature.
 
     Args:
-        user (User): user that will appear as the uploader of the sound (author)
-        sound_fields (dict): dictionary with data to populate the different fields of the sound object. Check example
+        user: user that will appear as the uploader of the sound (author)
+        sound_fields: dictionary with data to populate the different fields of the sound object. Check example
             usages of create_sound for more information about what are these fields and their expected format
-        apiv2_client (ApiV2Client): ApiV2Client object corresponding to the API account that triggered the creation
+        apiv2_client: ApiV2Client object corresponding to the API account that triggered the creation
             of that sound object (if not provided, will be set to None)
-        bulk_upload_progress (BulkUploadProgress): BulkUploadProgress object corresponding to the bulk upload progress
+        bulk_upload_progress: BulkUploadProgress object corresponding to the bulk upload progress
             that triggered the creation of this sound object (if not provided, will be set to None)
-        process (bool): whether to trigger processing and analysis of the sound object after being created
+        process: whether to trigger processing and analysis of the sound object after being created
             (defaults to True)
-        remove_exists (bool): if the sound we're trying to create an object for already exists (according to
+        remove_exists: if the sound we're trying to create an object for already exists (according to
             md5 check), delete it (defaults to False)
 
     Returns:
-        Sound: returns the created Sound object
+        The created Sound object.
     """
 
     # Import models using apps.get_model (to avoid circular dependencies)

@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
 import os
 import pickle
 from functools import partial, wraps
@@ -65,18 +67,18 @@ sound_counter = count()  # Used in create_user_and_sounds to avoid repeating sou
 
 
 def create_user_and_sounds(
-    num_sounds=1,
-    num_packs=0,
-    user=None,
-    count_offset=0,
-    bst_category="ss-n",
-    tags=None,
-    description=None,
-    processing_state="PE",
-    moderation_state="PE",
-    type="wav",
-    username="testuser",
-):
+    num_sounds: int = 1,
+    num_packs: int = 0,
+    user: User | None = None,
+    count_offset: int = 0,
+    bst_category: str | None = "ss-n",
+    tags: str | None = None,
+    description: str | None = None,
+    processing_state: str = "PE",
+    moderation_state: str = "PE",
+    type: str = "wav",
+    username: str = "testuser",
+) -> tuple[User, list[Pack], list[Sound]]:
     """Creates User, Sound and Pack objects useful for testing.
 
     A counter is used to make sound names unique as well as other fields like md5 (see `sound_counter` variable).
@@ -84,19 +86,19 @@ def create_user_and_sounds(
     'licenses' fixture, i.e. "fixtures = ['licenses']".
 
     Args:
-        num_sounds (int): N sounds to generate.
-        num_packs (int): N packs in which the sounds above will be grouped.
-        user (User): user owner of the created sounds (if not provided, a new user will be created).
-        count_offset (int): start counting sounds at X.
-        bst_category (str or None): category code to be added to the sounds (all sounds will have the same category)
-        tags (str or None): string of tags to be added to the sounds (all sounds will have the same tags).
-        description (str or None): description to be added to the sounds (all sounds will have the same description).
-        processing_state (str): processing state of the created sounds.
-        moderation_state (str): moderation state of the created sounds.
-        type (str): type of the sounds to be created (e.g. 'wav').
+        num_sounds: N sounds to generate.
+        num_packs: N packs in which the sounds above will be grouped.
+        user: user owner of the created sounds (if not provided, a new user will be created).
+        count_offset: start counting sounds at X.
+        bst_category: category code to be added to the sounds (all sounds will have the same category)
+        tags: string of tags to be added to the sounds (all sounds will have the same tags).
+        description: description to be added to the sounds (all sounds will have the same description).
+        processing_state: processing state of the created sounds.
+        moderation_state: moderation state of the created sounds.
+        type: type of the sounds to be created (e.g. 'wav').
 
     Returns:
-        (Tuple(User, List[Pack], List[Sound]): 3-element tuple containing the user owning the sounds,
+        3-element tuple containing the user owning the sounds,
             a list of the packs created and a list of the sounds created.
     """
     count_offset = count_offset + next(sound_counter)
@@ -130,11 +132,11 @@ def create_user_and_sounds(
     return user, packs, sounds
 
 
-def create_consolidated_audio_descriptors_and_similarity_vectors_for_sound(sound):
+def create_consolidated_audio_descriptors_and_similarity_vectors_for_sound(sound: Sound) -> None:
     """Creates fake consolidated audio descriptors and similarity vectors for a given sound.
 
     Args:
-        sound (Sound): Sound object for which to create the descriptors and vectors.
+        sound: Sound object for which to create the descriptors and vectors.
     """
     # Create fake consolidated audio descriptors
     # The value that the feature takes is the idx of the feature in the provided list of feature names

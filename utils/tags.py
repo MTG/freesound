@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
 import re
 
 
@@ -35,18 +37,20 @@ def annotate(dictionary, **kwargs):
     return x
 
 
-def annotate_tags(tags, sort=None, small_size=0.7, large_size=1.8):
+def annotate_tags(
+    tags: list[dict], sort: str | None = None, small_size: float = 0.7, large_size: float = 1.8
+) -> list[dict]:
     """
     Process a list of tags with counts and annotate it with computed size. Size will be proportional to count.
 
     Args:
-        tags (List[dict]): list of dictionaries with the tag "name" and "count" (see example below)
-        sort (str or None): whether to sort the annotated list by "name", "count" or None
-        small_size (float): smallest annotated size
-        large_size (float): highest annotated range
+        tags: list of dictionaries with the tag "name" and "count" (see example below)
+        sort: whether to sort the annotated list by "name", "count" or None
+        small_size: smallest annotated size
+        large_size: highest annotated range
 
     Returns:
-        List[dict]: list of dictionaries with the tag "name", "count" and "size"
+        list of dictionaries with the tag "name", "count" and "size"
 
     For example, if tags are given as:
     [ {"name": "tag1", "count": 1}, {"name": "tag2", "count": 200}, {"name": "tag3", "count": 200}]

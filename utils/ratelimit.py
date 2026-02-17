@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
 import enum
 import ipaddress
 import logging
@@ -36,7 +38,7 @@ last_cached_blocked_ips = []
 last_cached_blocked_ips_timestamp = 0
 
 
-def get_ips_to_block():
+def get_ips_to_block() -> list[str]:
     """
     Get a list of IPs to block. Returned IPs include a combination of the IPs listed in settings.BLOCKED_IPS and
     a list of IPs cached with the key settings.CACHED_BLOCKED_IPS_KEY. To avoid many queries to the cache, this
@@ -45,7 +47,7 @@ def get_ips_to_block():
     adds a 2nd layer of cache.
 
     Returns:
-        List[str]: List of IPs to block
+        List of IPs to block
     """
     global last_cached_blocked_ips, last_cached_blocked_ips_timestamp
     now = time.time()
@@ -58,7 +60,7 @@ def get_ips_to_block():
         return settings.BLOCKED_IPS
 
 
-def add_new_ip_to_block(ip):
+def add_new_ip_to_block(ip: str) -> None:
     """
     Add a new IP to the cached list of IPs to block so that further requests to that IP will get blocked.
     Note that it might take up to settings.CACHED_BLOCKED_IPS_TIME before that IP actually starts to
@@ -72,7 +74,7 @@ def add_new_ip_to_block(ip):
         add_new_ip_to_block("1.2.3.4")
 
     Args:
-        ip (str): IP to block. Can also specify a range as described in ipaddress.IPv4Network docs.
+        ip: IP to block. Can also specify a range as described in ipaddress.IPv4Network docs.
     """
     try:
         ipaddress.ip_network(str(ip))
@@ -88,16 +90,16 @@ def add_new_ip_to_block(ip):
     cache.set(settings.CACHED_BLOCKED_IPS_KEY, cached_ips_to_block)
 
 
-def ip_is_blocked(ip):
+def ip_is_blocked(ip: str) -> bool:
     """
     Determines whether an IP should be blocked. To do that, it uses ipaddress.ip_network objects which support
     IP comparison using ranges.
 
     Args:
-        ip (str): IP to check. Can also specify a range as described in ipaddress.IPv4Network docs.
+        ip: IP to check. Can also specify a range as described in ipaddress.IPv4Network docs.
 
     Returns:
-        bool: True if the IP should be blocked, False otherwise.
+        True if the IP should be blocked, False otherwise.
 
     """
     for ip_to_block in get_ips_to_block():

@@ -15,9 +15,9 @@ const moderateFormWrapper = document.getElementById('moderate-form-wrapper');
 const moderateForm = moderateFormWrapper.getElementsByTagName('form')[0];
 const ticketsTable = document.getElementById('assigned-tickets-table');
 const ticketCheckboxes = [...ticketsTable.getElementsByClassName('bw-checkbox')];
-const templateResponses = document
+const templateResponses = [...document
   .getElementById('template-responses')
-  .getElementsByTagName('a');
+  .getElementsByTagName('a')];
 const messageTextArea = document.getElementsByName('message')[0];
 const ticketIdsInput = document.getElementsByName('ticket')[0];
 const soundInfoElementsPool = document.getElementById('sound-info-elements');
@@ -81,7 +81,7 @@ const postTicketsSelected = () => {
   }
 
   // Make ticket comments visible if only one ticket is selected
-  ticketCommentsSection.children.forEach(commentElement => {
+  [...ticketCommentsSection.children].forEach(commentElement => {
     commentElement.classList.add('display-none');
   });
   if (selectedTicketsData.length === 1) {
@@ -351,4 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const whitelistOptionLabelElement = document.querySelector(
   "[for='id_action_4']"
 );
-whitelistOptionLabelElement.style = 'color:#0064af!important;';
+if (whitelistOptionLabelElement !== null) {
+  whitelistOptionLabelElement.style = 'color:#0064af!important;';
+}
+

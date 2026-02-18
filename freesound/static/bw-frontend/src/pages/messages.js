@@ -4,7 +4,7 @@ import debounce from 'lodash.debounce';
 const checkboxSelectAllElement = document.getElementById('selectAll');
 const messageCheckboxes = [...document.getElementsByClassName('message-checkbox')];
 const actionsMenu = document.getElementsByClassName('actions-menu')[0];
-const messageActionButtons = document.getElementsByClassName('message-action');
+const messageActionButtons = [...document.getElementsByClassName('message-action')];
 const LastMessageElement = document.getElementById('message-last');
 const usernameToFormField = document.getElementById('username-to-field');
 

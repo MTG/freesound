@@ -8,7 +8,7 @@ from .models import DonationCampaign
 
 
 class DonateForm(forms.Form):
-    RADIO_CHOICES = []
+    RADIO_CHOICES: list[tuple[str, str]] = []
 
     donation_type = forms.ChoiceField(
         widget=forms.RadioSelect(),

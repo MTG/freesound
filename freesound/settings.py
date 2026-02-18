@@ -246,7 +246,7 @@ AWS_SES_BOUNCE_RATE_SAMPLE_SIZE = 10500  # should be ~ 10000-11000
 AWS_SES_SHORT_BOUNCE_RATE_DATAPOINTS = 4  # cron period (1hr) / AWS stats period (15min)
 
 # If ALLOWED emails is not empty, only emails going to these destinations will be actually sent
-ALLOWED_EMAILS = []
+ALLOWED_EMAILS: list[str] = []
 
 # Email subjects
 EMAIL_SUBJECT_PREFIX = "[freesound]"
@@ -292,7 +292,7 @@ STORAGES = {
 # -------------------------------------------------------------------------------
 # Freesound miscellaneous settings
 
-SUPPORT = ()
+SUPPORT: tuple[tuple[str, str], ...] = ()
 
 IFRAME_PLAYER_SIZE = {"large": [920, 245], "medium": [481, 86], "small": [375, 30], "twitter_card": [440, 132]}
 
@@ -352,7 +352,7 @@ DOWNLOAD_LIMIT_MESSAGE = "You have reached the download limit. Come back tomorro
 ALLOWED_AUDIOFILE_EXTENSIONS = ["wav", "aiff", "aif", "ogg", "flac", "mp3", "m4a", "wv"]
 LOSSY_FILE_EXTENSIONS = ["ogg", "mp3", "m4a"]
 # Note that some SOUND_TYPE_CHOICES below might correspond to multiple extensions (aiff/aif > aiff)
-SOUND_TYPE_CHOICES = (
+SOUND_TYPE_CHOICES: tuple[tuple[str, str], ...] = (
     ("wav", "Wave"),
     ("ogg", "Ogg Vorbis"),
     ("aiff", "AIFF"),
@@ -378,7 +378,7 @@ CHECK_ASYNC_DELETED_USERS_HOURS_BACK = 1
 # Time since last post (in seconds) and maximum number of posts per day
 LAST_FORUM_POST_MINIMUM_TIME = 60 * 5
 BASE_MAX_POSTS_PER_DAY = 5
-SPAM_BLACKLIST = []
+SPAM_BLACKLIST: list[str] = []
 MIN_DAYS_FOR_COMMENTING_WITH_LINKS = 10
 
 # Random Sound of the day settings
@@ -470,7 +470,7 @@ BROAD_SOUND_TAXONOMY = load_broad_sound_taxonomy_from_csv(BROAD_SOUND_TAXONOMY_C
 BST_CATEGORY_CHOICES = [
     (key, value["name"]) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" not in key
 ]  # Top-level categories
-BST_SUBCATEGORY_CHOICES = [
+BST_SUBCATEGORY_CHOICES: list = [
     (key, value["name"]) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" in key
 ]  # Second-level categories
 
@@ -532,7 +532,7 @@ FSDSINET_ANALYZER_NAME = "fsd-sinet_v1"
 BST_ANALYZER_NAME = "bst-extractor_v1"
 BSTV2_ANALYZER_NAME = "bst-extractor_v2"
 
-ANALYZERS_CONFIGURATION = {
+ANALYZERS_CONFIGURATION: dict[str, dict] = {
     AUDIOCOMMONS_ANALYZER_NAME: {},
     FREESOUND_ESSENTIA_EXTRACTOR_NAME: {},
     BIRDNET_ANALYZER_NAME: {},
@@ -644,7 +644,7 @@ SEARCH_SOLR_SIMILARITY_TIME_ALLOWED_MS = 3000
 
 SIMILARITY_SPACE_LAION_CLAP = "laion_clap"
 SIMILARITY_FREESOUND_CLASSIC = "freesound_classic"
-SIMILARITY_SPACES = {
+SIMILARITY_SPACES: dict[str, dict] = {
     SIMILARITY_SPACE_LAION_CLAP: {
         "vector_property_name": "clap_embedding",
         "vector_size": 512,
@@ -662,7 +662,7 @@ SIMILARITY_SPACES = {
 }
 SIMILARITY_SPACES_NAMES = list(SIMILARITY_SPACES.keys())
 SIMILARITY_SPACES_ANALYZER_NAMES = list(set([ss["analyzer"] for ss in SIMILARITY_SPACES.values()]))
-SIMILARITY_SPACE_DEFAULT = SIMILARITY_SPACE_LAION_CLAP
+SIMILARITY_SPACE_DEFAULT: str = SIMILARITY_SPACE_LAION_CLAP
 SIMILARITY_MIN_THRESHOLD = 0.7
 
 MAX_SEARCH_RESULTS_IN_MAP_DISPLAY = (
@@ -704,7 +704,7 @@ TEXTENCODER_TIMEOUT = 10
 
 # -------------------------------------------------------------------------------
 # Sentry settings
-SENTRY_DSN = None
+SENTRY_DSN: str | None = None
 TRACES_SAMPLE_RATE = 0.1
 
 # -------------------------------------------------------------------------------
@@ -814,7 +814,7 @@ RATELIMITS = {
     RATELIMIT_SIMILARITY_GROUP: "2/s",
     RATELIMIT_REGISTRATION_GROUP: "5/m",
 }
-BLOCKED_IPS = []
+BLOCKED_IPS: list[str] = []
 CACHED_BLOCKED_IPS_KEY = "cached_blocked_ips"
 CACHED_BLOCKED_IPS_TIME = 60 * 5  # 5 minutes
 
@@ -993,7 +993,7 @@ UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
 CSV_PATH = os.path.join(DATA_PATH, "csv/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
-PROCESSING_TEMP_DIR = os.path.join(DATA_PATH, "tmp_processing/")
+PROCESSING_TEMP_DIR: str = os.path.join(DATA_PATH, "tmp_processing/")
 PROCESSING_BEFORE_DESCRIPTION_DIR = os.path.join(DATA_PATH, "processing_before_description/")
 
 # URLs (depend on DATA_URL potentially re-defined in local_settings.py)

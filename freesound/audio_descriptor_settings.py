@@ -5,14 +5,14 @@ AUDIO_DESCRIPTOR_TYPE_STRING = "string"
 AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS = "list_of_strings"
 AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY = "float_array"
 AUDIO_DESCRIPTOR_TYPE_JSON = "json"  # For complex structures
-DEFAULT_AUDIO_DESCRIPTOR_TYPE = AUDIO_DESCRIPTOR_TYPE_FLOAT
+DEFAULT_AUDIO_DESCRIPTOR_TYPE: str = AUDIO_DESCRIPTOR_TYPE_FLOAT
 DEFAULT_AUDIO_DESCRIPTOR_FLOAT_PRECISION = 3  # Number of decimal digits for float audio descriptors
 
 condition_music_or_instrument_samples = lambda s: s.category_names[0] in ["Music", "Instrument samples"]
 condition_instrument_samples = lambda s: s.category_names[0] == "Instrument samples"
 condition_sfx_or_soundscapes = lambda s: s.category_names[0] in ["Sound effects", "Soundscapes"]
 CONSOLIDATED_ANALYZER_NAME = "consolidated"
-CONSOLIDATED_AUDIO_DESCRIPTORS = [
+CONSOLIDATED_AUDIO_DESCRIPTORS: list[dict] = [
     {
         "name": "category",
         "analyzer": "bst-extractor_v2",

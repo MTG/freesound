@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
 from urllib.parse import quote
 
 from django.contrib.auth.models import User
@@ -45,7 +47,9 @@ class Collection(LicenseSummaryMixin, models.Model):
     # TODO: description should be required (check how to display it in edit form + collectionsound form)
     description = models.TextField(blank=True)
     maintainers = models.ManyToManyField(User, related_name="collection_maintainer")
-    sounds = models.ManyToManyField(Sound, through="CollectionSound", related_name="collections", blank=True)
+    sounds: models.ManyToManyField[Sound, "CollectionSound"] = models.ManyToManyField(
+        Sound, through="CollectionSound", related_name="collections", blank=True
+    )
     num_sounds = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0)
     public = models.BooleanField(default=False)

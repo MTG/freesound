@@ -90,7 +90,7 @@ function makeSelect(container) {
               }
             } else {
               currentKeysPressed += evt.key;
-              Array.from(ulElement.children).every(liElement => {
+              [...ulElement.children].every(liElement => {
                 if (
                   liElement.innerHTML
                     .toLowerCase()
@@ -176,7 +176,7 @@ function makeSelect(container) {
   }
 
   function removeActiveClassFromAllLiElements(ulElement) {
-    Array.from(ulElement.children).forEach(liElement => {
+    [...ulElement.children].forEach(liElement => {
       liElement.classList.remove('active');
     });
   }
@@ -189,7 +189,7 @@ function makeSelect(container) {
     if (liElement === undefined) {
       return ulElement.children[ulElement.children.length - 1];
     }
-    const index = Array.from(ulElement.children).indexOf(liElement);
+    const index = [...ulElement.children].indexOf(liElement);
     if (index > 0) {
       return ulElement.children[index - 1];
     } else {
@@ -201,8 +201,8 @@ function makeSelect(container) {
     if (liElement === undefined) {
       return ulElement.children[0];
     }
-    const index = Array.from(ulElement.children).indexOf(liElement);
-    if (Array.from(ulElement.children).length > index + 1) {
+    const index = [...ulElement.children].indexOf(liElement);
+    if ([...ulElement.children].length > index + 1) {
       return ulElement.children[index + 1];
     } else {
       return ulElement.children[index];

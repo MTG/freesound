@@ -134,10 +134,12 @@
 </div>
 <div id="sound-info-elements" class="col-lg-5" style="max-height:0px;overflow:hidden;">{% comment %}Need this strategy for hiding the contents so that collapsable block logic for sound descriptions work properly and does not return 0 height values{% endcomment %}
     {% for ticket in page.object_list %}
-    <div class="sound-info-element" data-sound-id="{{ticket.sound_obj.id}}">
-        {% display_sound_moderation ticket.sound_obj %}
-        <div class="divider-light v-spacing-top-2 v-spacing-2"></div>
-    </div>
+        {% if ticket.sound_obj %}
+        <div class="sound-info-element" data-sound-id="{{ticket.sound_obj.id}}">
+            {% display_sound_moderation ticket.sound_obj %}
+            <div class="divider-light v-spacing-top-2 v-spacing-2"></div>
+        </div>
+        {% endif %}
     {% endfor %}
 </div>
 {% endblock %}

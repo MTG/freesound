@@ -363,7 +363,7 @@ class ProfileForm(forms.ModelForm):
     )
     ai_sound_usage_preference = forms.ChoiceField(
         label=mark_safe(
-            '<div class="v-spacing-1 text-grey">I agree with my sounds being used to train generative AI models provided that:</div>'
+            '<div class="v-spacing-1 text-grey" id="ai-section">I agree with my sounds being used to train generative AI models provided that:</div>'
         ),
         choices=AIPreference.AI_PREFERENCE_CHOICES,
         required=False,
@@ -372,7 +372,7 @@ class ProfileForm(forms.ModelForm):
             "preference regarding the usage of your sounds for training generative Artificial Intelligence models. "
             "This preference <b>applies to all your uploaded sounds</b>. Please, read the <a href="
             "><i>Usage of my sounds for "
-            "training genrative AI models</i> help section</a> to learn more about the details and implications of the available options.</div> "
+            "training generative AI models</i> help section</a> to learn more about the details and implications of the available options.</div> "
         ),
     )
 

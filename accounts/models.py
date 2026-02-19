@@ -683,12 +683,14 @@ class Profile(models.Model):
         stats_from_db.update(stats_from_cache)
         return stats_from_db
 
-    def get_ai_preference(self):
+    def get_ai_preference(self, default_if_not_set=True):
         try:
             return self.user.ai_preference.preference
         except AIPreference.DoesNotExist:
             # If no preference is set, return the default one
-            return AIPreference.DEFAULT_AI_PREFERENCE
+            if default_if_not_set:
+                return AIPreference.DEFAULT_AI_PREFERENCE
+            return None
 
     def set_ai_preference(self, preference_value):
         num_updated = AIPreference.objects.update(user=self.user, preference=preference_value)

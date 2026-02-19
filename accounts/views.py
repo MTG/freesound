@@ -618,6 +618,7 @@ def manage_sounds(request, tab):
         "sounds_processing_count": sounds_processing_count,
         "sounds_pending_description_count": sounds_pending_description_count,
         "packs_count": packs_count,
+        "user_has_ai_preference_unset": request.user.profile.get_ai_preference(default_if_not_set=False) is None,
     }
 
     # Then do dedicated processing for each tab

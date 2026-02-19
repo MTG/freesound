@@ -43,7 +43,7 @@ DEFAULT_FIELDS_IN_SOUND_DETAIL = (
     + "geotag,is_geotagged,created,license,type,channels,filesize,bitrate,"
     + "bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,"
     + "num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,"
-    + "analysis,analysis_files,is_explicit,is_remix,was_remixed,md5,author_ai_preference"
+    + "analysis,analysis_files,is_explicit,is_remix,was_remixed,md5,ai_preference"
 )
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
@@ -147,7 +147,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             "is_geotagged",
             "created",
             "license",
-            "author_ai_preference",
+            "ai_preference",
             "type",
             "channels",
             "filesize",
@@ -226,9 +226,9 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_license(self, obj):
         return obj.license.deed_url
 
-    author_ai_preference = serializers.SerializerMethodField()
+    ai_preference = serializers.SerializerMethodField()
 
-    def get_author_ai_preference(self, obj):
+    def get_ai_preference(self, obj):
         return obj.user.profile.get_ai_preference()
 
     category = serializers.SerializerMethodField()

@@ -129,7 +129,7 @@
     </div>
     <div class="col-lg-4 col-extra-left-padding-large-md d-lg-block">
         <div class="bw-sticky-top">
-            {% if not user_has_ai_preference_unset %}
+            {% if user_has_ai_preference_unset %}
                 <div class="v-spacing-5 text-blue">
                     {% bw_icon 'notification' %} Hi! We noticed you haven't set your preference regarding the usage of your sounds in generative AI models. 
                     Please take a moment to set your preference in your <a href="{% url 'accounts-edit' %}#ai-section" class="bw-link--black">account settings page</a>.

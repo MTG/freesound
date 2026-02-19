@@ -24,7 +24,7 @@ from django import template
 register = template.Library()
 
 
-@register.inclusion_tag('forum/display_forum.html', takes_context=True)
+@register.inclusion_tag("forum/display_forum.html", takes_context=True)
 def display_forum(context, forum):
     """This templatetag is used to display a forum in a list of forums. It prepares some variables that are then passed
     to the display_forum.html template to show forum information.
@@ -39,13 +39,10 @@ def display_forum(context, forum):
         dict: dictionary with the variables needed for rendering the forum with the display_forum.html template
 
     """
-    return {
-        'forum': forum,
-        'request': context['request']
-    }
+    return {"forum": forum, "request": context["request"]}
 
 
-@register.inclusion_tag('forum/display_thread.html', takes_context=True)
+@register.inclusion_tag("forum/display_thread.html", takes_context=True)
 def display_thread(context, thread):
     """This templatetag is used to display a thread in a list of threads. It prepares some variables that are then
     passed to the display_thread.html template to show thread information.
@@ -61,15 +58,21 @@ def display_thread(context, thread):
         dict: dictionary with the variables needed for rendering the thread with the display_thread.html template
 
     """
-    return {
-        'thread': thread,
-        'request': context['request']
-    }
+    return {"thread": thread, "request": context["request"]}
 
 
-@register.inclusion_tag('forum/display_post.html', takes_context=True)
-def display_post(context, post, forloop_counter=0, post_number_offset=0, show_post_location=False,
-                 show_action_icons=True, show_report_actions=True, results_highlighted=None):
+@register.inclusion_tag("forum/display_post.html", takes_context=True)
+def display_post(
+    context,
+    post,
+    forloop_counter=0,
+    post_number_offset=0,
+    show_post_location=False,
+    show_action_icons=True,
+    show_report_actions=True,
+    results_highlighted=None,
+    show_moderator_info=False,
+):
     """This templatetag is used to display a post in a list of posts. It prepares some variables that are then
     passed to the display_post.html template to show post information.
 
@@ -85,6 +88,7 @@ def display_post(context, post, forloop_counter=0, post_number_offset=0, show_po
         show_report_actions (bool): show links to admin pages for post/thread and for reporting post as spam
         results_highlighted (dict): dictionary with highlighted contents of all posts in the current search results
           page (with post IDs as keys of the dictionary). This is returned by the search engine.
+        show_moderator_info (bool): show additional information about the post author for moderator purposes
 
     Returns:
         dict: dictionary with the variables needed for rendering the post with the display_post.html template
@@ -92,18 +96,25 @@ def display_post(context, post, forloop_counter=0, post_number_offset=0, show_po
     """
     if results_highlighted is not None and str(post.id) in results_highlighted:
         try:
-            highlighted_content = results_highlighted[str(post.id)]['post_body'][0]
+            highlighted_content = results_highlighted[str(post.id)]["post_body"][0]
         except KeyError:
-            highlighted_content = False    
+            highlighted_content = False
     else:
         highlighted_content = False
+    edited_diff = None
+    if post.modified and post.created:
+        edited_diff = abs((post.modified - post.created).total_seconds())
+    current_user = context["request"].user
+    can_view_moderator_info = current_user.has_perm("tickets.can_moderate") or current_user.is_staff
     return {
-        'post': post,
-        'highlighted_content': highlighted_content,
-        'post_number': forloop_counter + post_number_offset,
-        'show_post_location': show_post_location,
-        'show_action_icons': show_action_icons,
-        'show_report_actions': show_report_actions,
-        'perms': context['perms'],
-        'request': context['request']
+        "post": post,
+        "highlighted_content": highlighted_content,
+        "post_number": forloop_counter + post_number_offset,
+        "show_post_location": show_post_location,
+        "show_action_icons": show_action_icons,
+        "show_report_actions": show_report_actions,
+        "show_moderator_info": show_moderator_info and can_view_moderator_info,
+        "show_post_edited": edited_diff is not None and edited_diff > 1,
+        "perms": context["perms"],
+        "request": context["request"],
     }

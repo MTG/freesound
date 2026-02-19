@@ -24,39 +24,46 @@ from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
 import sounds
-import tickets
-from .models import Ticket
+import tickets.models
+import tickets.views
 from sounds.models import Sound
-from tickets import TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED
-from tickets.forms import IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY, IS_EXPLICIT_ADD_FLAG_KEY, IS_EXPLICIT_REMOVE_FLAG_KEY
+from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW
+from tickets.forms import (
+    IS_EXPLICIT_ADD_FLAG_KEY,
+    IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY,
+    IS_EXPLICIT_REMOVE_FLAG_KEY,
+)
+
+from .models import Ticket
 
 
 class NewTicketTests(TestCase):
-    fixtures = ['licenses', 'user_groups', 'moderation_test_users']
+    fixtures = ["licenses", "user_groups", "moderation_test_users"]
 
     def test_new_ticket(self):
         """New tickets shouldn't have an assignee"""
         ticket = Ticket()
-        ticket.status = 'new'
-        ticket.sender = User.objects.get(username='test_user')
+        ticket.status = "new"
+        ticket.sender = User.objects.get(username="test_user")
         ticket.save()
         self.assertEqual(ticket.assignee, None)
 
     def test_new_ticket_linked_sound(self):
         """Sound should be properly linked to the ticket"""
-        test_user = User.objects.get(username='test_user')
+        test_user = User.objects.get(username="test_user")
         ticket = Ticket()
-        ticket.status = 'new'
-        ticket.sender = User.objects.get(username='test_user')
-        ticket.assignee = User.objects.get(username='test_moderator')
+        ticket.status = "new"
+        ticket.sender = User.objects.get(username="test_user")
+        ticket.assignee = User.objects.get(username="test_moderator")
         ticket.save()
         # just to test, this would be a sound object for example
-        s = Sound(description='test sound', license_id=1, user=test_user)
-        s.save()
+        s = Sound.objects.create(description="test sound", license_id=1, user=test_user)
         ticket.sound = s
         ticket.save()
         self.assertEqual(s.id, ticket.sound.id)
@@ -64,10 +71,11 @@ class NewTicketTests(TestCase):
 
 class TicketTests(TestCase):
     """Superclass that has several helper methods"""
-    fixtures = ['licenses', 'user_groups', 'moderation_test_users']
+
+    fixtures = ["licenses", "user_groups", "moderation_test_users"]
 
     @staticmethod
-    def _create_test_sound(user, filename='test_sound.wav', moderation_state='PE', processing_state='OK'):
+    def _create_test_sound(user, filename="test_sound.wav", moderation_state="PE", processing_state="OK"):
         """Creates a sound with specified states"""
         sound = sounds.models.Sound.objects.create(
             moderation_state=moderation_state,
@@ -75,32 +83,34 @@ class TicketTests(TestCase):
             license=sounds.models.License.objects.get(pk=1),
             user=user,
             md5=hashlib.md5(filename.encode()).hexdigest(),
-            original_filename=filename)
+            original_filename=filename,
+        )
         return sound
 
     @staticmethod
     def _create_ticket(sound, user, ticket_status=TICKET_STATUS_NEW, ticket_assignee=None):
         """Creates a ticket with specified parameters"""
         ticket = tickets.models.Ticket.objects.create(
-            title='Moderate sound test_sound.wav',
+            title="Moderate sound test_sound.wav",
             status=ticket_status,
             sender=user,
             sound=sound,
-            assignee=ticket_assignee
+            assignee=ticket_assignee,
         )
         return ticket
 
     def setUp(self):
         """Gets references to user and moderator, creates a sound and logs in as moderator"""
-        self.test_user = User.objects.get(username='test_user')
-        self.test_moderator = User.objects.get(username='test_moderator')
+        self.test_user = User.objects.get(username="test_user")
+        self.test_moderator = User.objects.get(username="test_moderator")
         self.sound = self._create_test_sound(self.test_user)
         self.client.force_login(self.test_moderator)
 
     def _create_assigned_ticket(self):
         """Creates ticket that is already assigned to the moderator"""
-        return self._create_ticket(self.sound, self.test_user, ticket_status=TICKET_STATUS_ACCEPTED,
-                                   ticket_assignee=self.test_moderator)
+        return self._create_ticket(
+            self.sound, self.test_user, ticket_status=TICKET_STATUS_ACCEPTED, ticket_assignee=self.test_moderator
+        )
 
 
 class TicketAccessTest(TicketTests):
@@ -111,92 +121,142 @@ class TicketAccessTest(TicketTests):
         but not by anyone else."""
         ticket = self._create_assigned_ticket()
         self.client.force_login(self.test_user)
-        resp = self.client.get(reverse('tickets-ticket', args=[ticket.key]))
+        resp = self.client.get(reverse("tickets-ticket", args=[ticket.key]))
         self.assertEqual(resp.status_code, 200)
 
         self.client.force_login(self.test_moderator)
-        resp = self.client.get(reverse('tickets-ticket', args=[ticket.key]))
+        resp = self.client.get(reverse("tickets-ticket", args=[ticket.key]))
         self.assertEqual(resp.status_code, 200)
 
-        self.client.force_login(User.objects.get(username='second_test_user'))
-        resp = self.client.get(reverse('tickets-ticket', args=[ticket.key]))
+        self.client.force_login(User.objects.get(username="second_test_user"))
+        resp = self.client.get(reverse("tickets-ticket", args=[ticket.key]))
         self.assertEqual(resp.status_code, 404)
 
         self.client.logout()
-        resp = self.client.get(reverse('tickets-ticket', args=[ticket.key]))
+        resp = self.client.get(reverse("tickets-ticket", args=[ticket.key]))
         self.assertEqual(resp.status_code, 302)
 
 
 class MiscTicketTests(TicketTests):
-
     def test_new_sound_tickets_count(self):
         """New ticket count should only include new tickets without an assignee"""
         # Normal ticket that is new and unassigned
         self.ticket = self._create_ticket(self.sound, self.test_user)
 
         # New ticket for a moderated sound doesn't count
-        moderated_sound = self._create_test_sound(self.test_user, filename='test_sound2.wav', moderation_state='OK')
+        moderated_sound = self._create_test_sound(self.test_user, filename="test_sound2.wav", moderation_state="OK")
         self._create_ticket(moderated_sound, self.test_user)
 
         # Accepted ticket doesn't count
-        accepted_sound = self._create_test_sound(self.test_user, filename='test_sound3.wav')
+        accepted_sound = self._create_test_sound(self.test_user, filename="test_sound3.wav")
         self._create_ticket(accepted_sound, self.test_user, ticket_status=TICKET_STATUS_ACCEPTED)
 
         # Ticket with an assigned moderator doesn't count
-        assigned_sound = self._create_test_sound(self.test_user, filename='test_sound4.wav')
+        assigned_sound = self._create_test_sound(self.test_user, filename="test_sound4.wav")
         self._create_ticket(assigned_sound, self.test_user, ticket_assignee=self.test_moderator)
 
         count = tickets.views.new_sound_tickets_count()
         self.assertEqual(1, count)
 
-    @mock.patch('tickets.models.send_mail_template')
+    @mock.patch("tickets.models.send_mail_template")
     def test_send_notification_user(self, send_mail_mock):
         """Emails should be properly configured and sent with notifications"""
         ticket = self._create_assigned_ticket()
 
-        ticket.send_notification_emails(
-                tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
-                tickets.models.Ticket.USER_ONLY)
+        ticket.send_notification_email_user(tickets.models.Ticket.NOTIFICATION_APPROVED_BUT)
 
         local_vars = {
-                'ticket': ticket,
-                'user_to': ticket.sender,
-                }
+            "ticket": ticket,
+            "user_to": ticket.sender,
+        }
         send_mail_mock.assert_called_once_with(
-                settings.EMAIL_SUBJECT_MODERATION_HANDLED,
-                tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
-                local_vars,
-                user_to=ticket.sender)
+            settings.EMAIL_SUBJECT_MODERATION_HANDLED,
+            tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
+            local_vars,
+            user_to=ticket.sender,
+        )
+
+    def test_ticket_update_notification_uses_min_template_for_moderators(self):
+        ticket = self._create_assigned_ticket()
+        self.client.force_login(self.test_user)
+
+        response = self.client.post(
+            reverse("tickets-ticket", args=[ticket.key]),
+            {"message": "Please review the update"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        domain = Site.objects.get_current().domain
+        ticket_url = f"https://{domain}{reverse('tickets-ticket', args=[ticket.key])}"
+        expected_body = f'Ticket "Moderate sound test_sound.wav" updated: {ticket_url}'
+        self.assertEqual(mail.outbox[0].body.strip(), expected_body)
+
+    def test_ticket_update_notification_does_not_escape_title_in_min_template(self):
+        ticket = self._create_assigned_ticket()
+        ticket.title = "Moderate sound Voice Test for 'amp' > 20 & < 30; in \"tranquility\""
+        ticket.save(update_fields=["title"])
+        self.client.force_login(self.test_user)
+
+        response = self.client.post(
+            reverse("tickets-ticket", args=[ticket.key]),
+            {"message": "Please review the update"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        domain = Site.objects.get_current().domain
+        ticket_url = f"https://{domain}{reverse('tickets-ticket', args=[ticket.key])}"
+        expected_body = f'Ticket "{ticket.title}" updated: {ticket_url}'
+        self.assertEqual(mail.outbox[0].body.strip(), expected_body)
+
+    def test_ticket_update_notification_does_not_escape_title_for_user(self):
+        ticket = self._create_assigned_ticket()
+        ticket.title = "Moderate sound Voice Test for 'amp' > 20 & < 30; in \"tranquility\""
+        ticket.save(update_fields=["title"])
+
+        response = self.client.post(
+            reverse("tickets-ticket", args=[ticket.key]),
+            {"message": "Please review the update"},
+        )
+
+        self.assertIn(response.status_code, [200, 302])
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        self.assertIn(f'The ticket "{ticket.title}" has been updated.', body)
 
 
 class TicketTestsFromQueue(TicketTests):
     """Ticket state changes in a response to actions from moderation queue"""
 
     def setUp(self):
-        TicketTests.setUp(self)
+        super().setUp()
         self.ticket = self._create_assigned_ticket()
 
-    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
+    @mock.patch("general.tasks.post_moderation_assigned_tickets.delay")
     def _perform_action(self, action, post_moderation_assigned_tickets_task):
-        return self.client.post(reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
-            'action': action, 'message': '', 'ticket': self.ticket.id,
-            'is_explicit': IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY})
+        return self.client.post(
+            reverse("tickets-moderation-assigned", args=[self.test_moderator.id]),
+            {
+                "action": action,
+                "message": "",
+                "ticket": self.ticket.id,
+                "is_explicit": IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY,
+            },
+        )
 
-    @mock.patch('sounds.models.delete_sounds_from_search_engine')
+    @mock.patch("sounds.models.delete_sounds_from_search_engine")
     def test_delete_ticket_from_queue(self, delete_sound_solr):
-        resp = self._perform_action('Delete')
+        resp = self._perform_action("Delete")
 
-        self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
+        self.assertIn(
+            resp.status_code, [200, 302]
+        )  # This test is reused, and the response code is different in each case
         delete_sound_solr.assert_called_once_with([self.sound.id])
 
         self.ticket.refresh_from_db()
         self.assertEqual(self.ticket.status, TICKET_STATUS_CLOSED)
         self.assertIsNone(self.ticket.sound)
-
-    @mock.patch('general.tasks.whitelist_user.delay')
-    def test_whitelist_from_queue(self, whitelist_task):
-        self._perform_action('Whitelist')
-        whitelist_task.assert_called_once_with(ticket_ids=[self.ticket.id])
 
     def _assert_ticket_and_sound_fields(self, status, assignee, moderation_state):
         self.ticket.refresh_from_db()
@@ -209,62 +269,69 @@ class TicketTestsFromQueue(TicketTests):
             self.assertEqual(self.ticket.assignee, assignee)
 
     def test_approve_ticket_from_queue(self):
-        resp = self._perform_action('Approve')
-        self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
-        self._assert_ticket_and_sound_fields(TICKET_STATUS_CLOSED, self.test_moderator, 'OK')
+        resp = self._perform_action("Approve")
+        self.assertIn(
+            resp.status_code, [200, 302]
+        )  # This test is reused, and the response code is different in each case
+        self._assert_ticket_and_sound_fields(TICKET_STATUS_CLOSED, self.test_moderator, "OK")
 
     def test_return_ticket_from_queue(self):
-        resp = self._perform_action('Return')
-        self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
-        self._assert_ticket_and_sound_fields(TICKET_STATUS_NEW, None, 'PE')
+        resp = self._perform_action("Return")
+        self.assertIn(
+            resp.status_code, [200, 302]
+        )  # This test is reused, and the response code is different in each case
+        self._assert_ticket_and_sound_fields(TICKET_STATUS_NEW, None, "PE")
 
     def test_defer_ticket_from_queue(self):
-        resp = self._perform_action('Defer')
-        self.assertIn(resp.status_code, [200, 302])  # This test is reused, and the response code is different in each case
-        self._assert_ticket_and_sound_fields(TICKET_STATUS_DEFERRED, self.test_moderator, 'PE')
+        resp = self._perform_action("Defer")
+        self.assertIn(
+            resp.status_code, [200, 302]
+        )  # This test is reused, and the response code is different in each case
+        self._assert_ticket_and_sound_fields(TICKET_STATUS_DEFERRED, self.test_moderator, "PE")
 
 
 class TicketTestsFromTicketViewOwn(TicketTestsFromQueue):
     """Ticket state changes in a response to actions from ticket inspection page for own ticket"""
-    
-    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
+
+    @mock.patch("general.tasks.post_moderation_assigned_tickets.delay")
     def _perform_action(self, action, post_moderation_assigned_tickets):
-        return self.client.post(reverse('tickets-ticket', args=[self.ticket.key]), {
-            'ss-action': action})
+        return self.client.post(reverse("tickets-ticket", args=[self.ticket.key]), {"ss-action": action})
 
 
 class TicketTestsFromTicketViewNew(TicketTestsFromQueue):
     """Ticket state changes in a response to actions from ticket inspection page for new ticket"""
+
     def setUp(self):
+        # Explicitly TicketTests.setup, as we don't want to call TicketTestsFromQueue.setUp
         TicketTests.setUp(self)
         self.ticket = self._create_ticket(self.sound, self.test_user)
 
-    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
+    @mock.patch("general.tasks.post_moderation_assigned_tickets.delay")
     def _perform_action(self, action, post_moderation_assigned_tickets):
-        return self.client.post(reverse('tickets-ticket', args=[self.ticket.key]), {
-            'ss-action': action})
+        return self.client.post(reverse("tickets-ticket", args=[self.ticket.key]), {"ss-action": action})
 
 
 class TicketTestsIsExplicitFlagFromQueue(TicketTests):
     """Test that the is_explicit flag of moderated sounds changes in accordance to moderator's choices"""
 
     def setUp(self):
-        TicketTests.setUp(self)
+        super().setUp()
         self.ticket = self._create_assigned_ticket()
 
-    @mock.patch('general.tasks.post_moderation_assigned_tickets.delay')
+    @mock.patch("general.tasks.post_moderation_assigned_tickets.delay")
     def _perform_action(self, action, is_explicit_flag_key, post_moderation_assigned_tickets):
-        return self.client.post(reverse('tickets-moderation-assigned', args=[self.test_moderator.id]), {
-            'action': action, 'message': '', 'ticket': self.ticket.id, 'is_explicit': is_explicit_flag_key})
+        return self.client.post(
+            reverse("tickets-moderation-assigned", args=[self.test_moderator.id]),
+            {"action": action, "message": "", "ticket": self.ticket.id, "is_explicit": is_explicit_flag_key},
+        )
 
-    
     def test_keep_is_explicit_preference_for_explicit_sound(self):
         """Test that when approving a sound marked as 'is_explicit' it continues to be marked as such the moderator
         chooses to preserve author's preference on the flag
         """
         self.ticket.sound.is_explicit = True
         self.ticket.sound.save()
-        self._perform_action('Approve', IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
+        self._perform_action("Approve", IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertEqual(self.ticket.sound.is_explicit, True)
 
@@ -274,7 +341,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = False
         self.ticket.sound.save()
-        self._perform_action('Approve', IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
+        self._perform_action("Approve", IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertEqual(self.ticket.sound.is_explicit, False)
 
@@ -284,7 +351,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = True
         self.ticket.sound.save()
-        self._perform_action('Approve', IS_EXPLICIT_ADD_FLAG_KEY)
+        self._perform_action("Approve", IS_EXPLICIT_ADD_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertTrue(self.ticket.sound.is_explicit)
 
@@ -294,7 +361,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = False
         self.ticket.sound.save()
-        self._perform_action('Approve', IS_EXPLICIT_ADD_FLAG_KEY)
+        self._perform_action("Approve", IS_EXPLICIT_ADD_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertTrue(self.ticket.sound.is_explicit)
 
@@ -304,7 +371,7 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = False
         self.ticket.sound.save()
-        self._perform_action('Approve', IS_EXPLICIT_REMOVE_FLAG_KEY)
+        self._perform_action("Approve", IS_EXPLICIT_REMOVE_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertFalse(self.ticket.sound.is_explicit)
 
@@ -314,6 +381,6 @@ class TicketTestsIsExplicitFlagFromQueue(TicketTests):
         """
         self.ticket.sound.is_explicit = True
         self.ticket.sound.save()
-        self._perform_action('Approve', IS_EXPLICIT_REMOVE_FLAG_KEY)
+        self._perform_action("Approve", IS_EXPLICIT_REMOVE_FLAG_KEY)
         self.ticket.sound.refresh_from_db()
         self.assertFalse(self.ticket.sound.is_explicit)

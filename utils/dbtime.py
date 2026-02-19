@@ -23,7 +23,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 
-from sounds.models import Sound, Download
+from sounds.models import Download, Sound
 
 
 class DBTime:
@@ -38,7 +38,7 @@ class DBTime:
             last_time = cache.get(cache_key)
             if not last_time:
                 try:
-                    last_time = Sound.objects.order_by('-created')[0].created
+                    last_time = Sound.objects.order_by("-created")[0].created
                 except Download.DoesNotExist:
                     last_time = timezone.now()
             cache.set(cache_key, DBTime.last_time, 60 * 60 * 24)

@@ -1,7 +1,8 @@
-import datetime
-from unittest import mock
 import base64
+import datetime
 import json
+from collections import namedtuple
+from unittest import mock
 
 from django.contrib.auth.models import User
 from django.core import mail
@@ -14,270 +15,286 @@ import donations.models
 import sounds.models
 from accounts.models import EmailPreferenceType, UserEmailSetting
 from sounds.models import License
-from collections import namedtuple
 
 
 class DonationTest(TestCase):
-
-    fixtures = ['licenses', 'email_preference_type']
+    fixtures = ["licenses", "email_preference_type"]
 
     def test_non_anon_donation_with_name_paypal(self):
-        donations.models.DonationCampaign.objects.create(
-                goal=200, date_start=timezone.now(), id=1)
-        self.user = User.objects.create_user(
-                username='jacob', email='j@test.com', password='top', id='46280')
-        custom = base64.b64encode(json.dumps({'display_amount': True, 'user_id': 46280, 'campaign_id': 1, 'name': 'test'}).encode()).decode()
-        params = {'txn_id': '8B703020T00352816',
-                'payer_email': 'fs@freesound.org',
-                'custom': custom,
-                'mc_currency': 'EUR',
-                'mc_gross': '1.00'}
+        donations.models.DonationCampaign.objects.create(goal=200, date_start=timezone.now(), id=1)
+        self.user = User.objects.create_user(username="jacob", email="j@test.com", password="top", id="46280")
+        custom = base64.b64encode(
+            json.dumps({"display_amount": True, "user_id": 46280, "campaign_id": 1, "name": "test"}).encode()
+        ).decode()
+        params = {
+            "txn_id": "8B703020T00352816",
+            "payer_email": "fs@freesound.org",
+            "custom": custom,
+            "mc_currency": "EUR",
+            "mc_gross": "1.00",
+        }
 
-        with mock.patch('donations.views.requests') as mock_requests:
-            mock_response = mock.Mock(text='VERIFIED')
+        with mock.patch("donations.views.requests") as mock_requests:
+            mock_response = mock.Mock(text="VERIFIED")
             mock_requests.post.return_value = mock_response
-            resp = self.client.post(reverse('donation-complete-paypal'), params)
+            resp = self.client.post(reverse("donation-complete-paypal"), params)
             self.assertEqual(resp.status_code, 200)
-            donations_query = donations.models.Donation.objects.filter(
-                transaction_id='8B703020T00352816')
+            donations_query = donations.models.Donation.objects.filter(transaction_id="8B703020T00352816")
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].campaign_id, 1)
-            self.assertEqual(donations_query[0].display_name, 'test')
+            self.assertEqual(donations_query[0].display_name, "test")
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, True)
-            self.assertEqual(donations_query[0].source, 'p')
+            self.assertEqual(donations_query[0].source, "p")
 
     def test_non_anon_donation_paypal(self):
-        donations.models.DonationCampaign.objects.create(
-                goal=200, date_start=timezone.now(), id=1)
-        self.user = User.objects.create_user(
-                username='jacob', email='j@test.com', password='top', id='46280')
-        custom = base64.b64encode(json.dumps({'campaign_id': 1, 'user_id': 46280, 'display_amount': True}).encode()).decode()
-        params = {'txn_id': '8B703020T00352816',
-                'payer_email': 'fs@freesound.org',
-                'custom': custom,
-                'mc_currency': 'EUR',
-                'mc_gross': '1.00'}
+        donations.models.DonationCampaign.objects.create(goal=200, date_start=timezone.now(), id=1)
+        self.user = User.objects.create_user(username="jacob", email="j@test.com", password="top", id="46280")
+        custom = base64.b64encode(
+            json.dumps({"campaign_id": 1, "user_id": 46280, "display_amount": True}).encode()
+        ).decode()
+        params = {
+            "txn_id": "8B703020T00352816",
+            "payer_email": "fs@freesound.org",
+            "custom": custom,
+            "mc_currency": "EUR",
+            "mc_gross": "1.00",
+        }
 
-        with mock.patch('donations.views.requests') as mock_requests:
-            mock_response = mock.Mock(text='VERIFIED')
+        with mock.patch("donations.views.requests") as mock_requests:
+            mock_response = mock.Mock(text="VERIFIED")
             mock_requests.post.return_value = mock_response
-            resp = self.client.post(reverse('donation-complete-paypal'), params)
+            resp = self.client.post(reverse("donation-complete-paypal"), params)
             self.assertEqual(resp.status_code, 200)
-            donations_query = donations.models.Donation.objects.filter(
-                transaction_id='8B703020T00352816')
+            donations_query = donations.models.Donation.objects.filter(transaction_id="8B703020T00352816")
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].campaign_id, 1)
             self.assertEqual(donations_query[0].display_name, None)
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, False)
-            self.assertEqual(donations_query[0].source, 'p')
+            self.assertEqual(donations_query[0].source, "p")
 
     def test_anon_donation_paypal(self):
-        donations.models.DonationCampaign.objects.create(
-                goal=200, date_start=timezone.now(), id=1)
+        donations.models.DonationCampaign.objects.create(goal=200, date_start=timezone.now(), id=1)
 
-        custom = base64.b64encode(json.dumps({'campaign_id': 1, 'name': 'Anonymous', 'display_amount': True}).encode()).decode()
-        params = {'txn_id': '8B703020T00352816',
-                'payer_email': 'fs@freesound.org',
-                'custom': custom,
-                'mc_currency': 'EUR',
-                'mc_gross': '1.00'}
+        custom = base64.b64encode(
+            json.dumps({"campaign_id": 1, "name": "Anonymous", "display_amount": True}).encode()
+        ).decode()
+        params = {
+            "txn_id": "8B703020T00352816",
+            "payer_email": "fs@freesound.org",
+            "custom": custom,
+            "mc_currency": "EUR",
+            "mc_gross": "1.00",
+        }
 
-        with mock.patch('donations.views.requests') as mock_requests:
-            mock_response = mock.Mock(text='VERIFIED')
+        with mock.patch("donations.views.requests") as mock_requests:
+            mock_response = mock.Mock(text="VERIFIED")
             mock_requests.post.return_value = mock_response
-            resp = self.client.post(reverse('donation-complete-paypal'), params)
+            resp = self.client.post(reverse("donation-complete-paypal"), params)
             self.assertEqual(resp.status_code, 200)
-            donations_query = donations.models.Donation.objects.filter(
-                transaction_id='8B703020T00352816')
+            donations_query = donations.models.Donation.objects.filter(transaction_id="8B703020T00352816")
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].is_anonymous, True)
-            self.assertEqual(donations_query[0].source, 'p')
+            self.assertEqual(donations_query[0].source, "p")
 
     def test_non_anon_donation_with_name_stripe(self):
-        donations.models.DonationCampaign.objects.create(
-            goal=200, date_start=timezone.now(), id=1)
-        self.user = User.objects.create_user(
-            username='fsuser', email='j@test.com', password='top', id='46280')
+        donations.models.DonationCampaign.objects.create(goal=200, date_start=timezone.now(), id=1)
+        self.user = User.objects.create_user(username="fsuser", email="j@test.com", password="top", id="46280")
         self.client.force_login(self.user)
-        custom = base64.b64encode(json.dumps({'display_amount': True, 'user_id': 46280, 'campaign_id': 1, 'name': 'test'}).encode()).decode()
-        params = {"data": {"object" :{"id": "txn123",
-                  "customer_email": "donor@freesound.org",
-                  "display_items": [{
-                      "amount": 1510,
-                      "currency": "eur",
-                  }],
-                  "success_url": "https://example.com/success?token="+custom
-            }},
-            "type": "checkout.session.completed"
+        custom = base64.b64encode(
+            json.dumps({"display_amount": True, "user_id": 46280, "campaign_id": 1, "name": "test"}).encode()
+        ).decode()
+        params = {
+            "data": {
+                "object": {
+                    "id": "txn123",
+                    "customer_email": "donor@freesound.org",
+                    "display_items": [
+                        {
+                            "amount": 1510,
+                            "currency": "eur",
+                        }
+                    ],
+                    "success_url": "https://example.com/success?token=" + custom,
+                }
+            },
+            "type": "checkout.session.completed",
         }
-        with mock.patch('stripe.Webhook.construct_event') as mock_create:
+        with mock.patch("stripe.Webhook.construct_event") as mock_create:
             mock_create.return_value = params
-            resp = self.client.post(reverse('donation-complete-stripe'), params, headers={"stripe-signature": "1"})
-            donations_query = donations.models.Donation.objects.filter(\
-                transaction_id='txn123')
+            resp = self.client.post(reverse("donation-complete-stripe"), params, headers={"stripe-signature": "1"})
+            donations_query = donations.models.Donation.objects.filter(transaction_id="txn123")
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].campaign_id, 1)
-            self.assertEqual(donations_query[0].display_name, 'test')
+            self.assertEqual(donations_query[0].display_name, "test")
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, True)
-            self.assertEqual(donations_query[0].source, 's')
-            self.assertEqual(donations_query[0].amount*100, 1510)
+            self.assertEqual(donations_query[0].source, "s")
+            self.assertEqual(donations_query[0].amount * 100, 1510)
 
     def test_non_anon_donation_stripe(self):
-        donations.models.DonationCampaign.objects.create(
-            goal=200, date_start=timezone.now(), id=1)
-        self.user = User.objects.create_user(
-            username='fsuser', email='j@test.com', password='top', id='46280')
+        donations.models.DonationCampaign.objects.create(goal=200, date_start=timezone.now(), id=1)
+        self.user = User.objects.create_user(username="fsuser", email="j@test.com", password="top", id="46280")
         self.client.force_login(self.user)
-        custom = base64.b64encode(json.dumps({'campaign_id': 1, 'user_id': 46280, 'display_amount': True}).encode()).decode()
-        params = {"data": {"object" :{"id": "txn123",
-                  "customer_email": "donor@freesound.org",
-                  "display_items": [{
-                      "amount": 1500,
-                      "currency": "eur",
-                  }],
-                  "success_url": "https://example.com/success?token="+custom
-            }},
-            "type": "checkout.session.completed"
+        custom = base64.b64encode(
+            json.dumps({"campaign_id": 1, "user_id": 46280, "display_amount": True}).encode()
+        ).decode()
+        params = {
+            "data": {
+                "object": {
+                    "id": "txn123",
+                    "customer_email": "donor@freesound.org",
+                    "display_items": [
+                        {
+                            "amount": 1500,
+                            "currency": "eur",
+                        }
+                    ],
+                    "success_url": "https://example.com/success?token=" + custom,
+                }
+            },
+            "type": "checkout.session.completed",
         }
-        with mock.patch('stripe.Webhook.construct_event') as mock_create:
+        with mock.patch("stripe.Webhook.construct_event") as mock_create:
             mock_create.return_value = params
-            resp = self.client.post(reverse('donation-complete-stripe'), params, headers={"stripe-signature": "1"})
-            donations_query = donations.models.Donation.objects.filter(\
-                transaction_id='txn123')
+            resp = self.client.post(reverse("donation-complete-stripe"), params, headers={"stripe-signature": "1"})
+            donations_query = donations.models.Donation.objects.filter(transaction_id="txn123")
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].campaign_id, 1)
             self.assertEqual(donations_query[0].display_name, None)
             self.assertEqual(donations_query[0].user_id, 46280)
             self.assertEqual(donations_query[0].is_anonymous, False)
-            self.assertEqual(donations_query[0].source, 's')
+            self.assertEqual(donations_query[0].source, "s")
             self.assertEqual(donations_query[0].amount, 15.0)
 
     def test_anon_donation_stripe(self):
-        donations.models.DonationCampaign.objects.create(
-                goal=200, date_start=timezone.now(), id=1)
-        custom = base64.b64encode(json.dumps({'campaign_id': 1, 'name': 'Anonymous', 'display_amount': True}).encode()).decode()
-        params = {"data": {"object" :{"id": "txn123",
-                  "customer_email": "donor@freesound.org",
-                  "display_items": [{
-                      "amount": 1500,
-                      "currency": "eur",
-                  }],
-                  "success_url": "https://example.com/success?token="+custom
-            }},
-            "type": "checkout.session.completed"
+        donations.models.DonationCampaign.objects.create(goal=200, date_start=timezone.now(), id=1)
+        custom = base64.b64encode(
+            json.dumps({"campaign_id": 1, "name": "Anonymous", "display_amount": True}).encode()
+        ).decode()
+        params = {
+            "data": {
+                "object": {
+                    "id": "txn123",
+                    "customer_email": "donor@freesound.org",
+                    "display_items": [
+                        {
+                            "amount": 1500,
+                            "currency": "eur",
+                        }
+                    ],
+                    "success_url": "https://example.com/success?token=" + custom,
+                }
+            },
+            "type": "checkout.session.completed",
         }
-        with mock.patch('stripe.Webhook.construct_event') as mock_create:
+        with mock.patch("stripe.Webhook.construct_event") as mock_create:
             mock_create.return_value = params
-            resp = self.client.post(reverse('donation-complete-stripe'), params, headers={"stripe-signature": "1"})
-            donations_query = donations.models.Donation.objects.filter(\
-                transaction_id='txn123')
+            resp = self.client.post(reverse("donation-complete-stripe"), params, headers={"stripe-signature": "1"})
+            donations_query = donations.models.Donation.objects.filter(transaction_id="txn123")
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].is_anonymous, True)
-            self.assertEqual(donations_query[0].source, 's')
+            self.assertEqual(donations_query[0].source, "s")
             self.assertEqual(donations_query[0].amount, 15.0)
 
     def test_donation_form_stripe(self):
-        donations.models.DonationCampaign.objects.create(\
-                goal=200, date_start=timezone.now(), id=1)
+        donations.models.DonationCampaign.objects.create(goal=200, date_start=timezone.now(), id=1)
 
-        Session = namedtuple('Session', 'id')
+        Session = namedtuple("Session", "id")
         session = Session(id=1)
         data = {
-            'amount': '0,1',
-            'show_amount': True,
-            'donation_type': '1',
+            "amount": "0,1",
+            "show_amount": True,
+            "donation_type": "1",
         }
 
-        with mock.patch('stripe.checkout.Session.create') as mock_create:
+        with mock.patch("stripe.checkout.Session.create") as mock_create:
             mock_create.return_value = session
             ret = self.client.get("/donations/donation-session-stripe/", data)
             #  If GET return error 400
             self.assertEqual(ret.status_code, 400)
 
-        with mock.patch('stripe.checkout.Session.create') as mock_create:
+        with mock.patch("stripe.checkout.Session.create") as mock_create:
             mock_create.return_value = session
             ret = self.client.post("/donations/donation-session-stripe/", data)
-            response =  ret.json()
+            response = ret.json()
             # Decimals must have '.' and not ','
-            self.assertTrue('errors' in response)
+            self.assertTrue("errors" in response)
 
-        with mock.patch('stripe.checkout.Session.create') as mock_create:
+        with mock.patch("stripe.checkout.Session.create") as mock_create:
             mock_create.return_value = session
-            data['amount'] = '5.1'
+            data["amount"] = "5.1"
             ret = self.client.post("/donations/donation-session-stripe/", data)
             response = ret.json()
             _, mock_kargs = mock_create.call_args
-            self.assertEqual(mock_kargs['customer_email'], None)
-            self.assertEqual(mock_kargs['payment_method_types'], ['card'])
-            self.assertEqual(len(mock_kargs['line_items']), 1)
-            self.assertIsNotNone(mock_kargs['success_url'])
-            self.assertIsNotNone(mock_kargs['cancel_url'])
+            self.assertEqual(mock_kargs["customer_email"], None)
+            self.assertEqual(mock_kargs["payment_method_types"], ["card"])
+            self.assertEqual(len(mock_kargs["line_items"]), 1)
+            self.assertIsNotNone(mock_kargs["success_url"])
+            self.assertIsNotNone(mock_kargs["cancel_url"])
 
-        with mock.patch('stripe.checkout.Session.create') as mock_create:
+        with mock.patch("stripe.checkout.Session.create") as mock_create:
             mock_create.return_value = session
-            data['amount'] = '0.1'
+            data["amount"] = "0.1"
             ret = self.client.post("/donations/donation-session-stripe/", data)
-            response =  ret.json()
+            response = ret.json()
             # amount must be greater than 1
-            self.assertTrue('errors' in response)
+            self.assertTrue("errors" in response)
 
-        with mock.patch('stripe.checkout.Session.create') as mock_create:
+        with mock.patch("stripe.checkout.Session.create") as mock_create:
             mock_create.return_value = session
-            data['amount'] = '5.1'
+            data["amount"] = "5.1"
             ret = self.client.post("/donations/donation-session-stripe/", data)
-            response =  ret.json()
-            self.assertFalse('errors' in response)
+            response = ret.json()
+            self.assertFalse("errors" in response)
 
-        with mock.patch('stripe.checkout.Session.create') as mock_create:
+        with mock.patch("stripe.checkout.Session.create") as mock_create:
             mock_create.return_value = session
-            long_mail = ('1'*256) + '@freesound.org'
-            data['name_option'] = long_mail
-            data['donation_type'] = '2'
+            long_mail = ("1" * 256) + "@freesound.org"
+            data["name_option"] = long_mail
+            data["donation_type"] = "2"
             ret = self.client.post("/donations/donation-session-stripe/", data)
-            response =  ret.json()
-            self.assertTrue('errors' in response)
+            response = ret.json()
+            self.assertTrue("errors" in response)
 
     def test_donation_form_paypal(self):
-        donations.models.DonationCampaign.objects.create(\
-                goal=200, date_start=timezone.now(), id=1)
+        donations.models.DonationCampaign.objects.create(goal=200, date_start=timezone.now(), id=1)
         data = {
-            'amount': '0,1',
-            'show_amount': True,
-            'donation_type': '1',
+            "amount": "0,1",
+            "show_amount": True,
+            "donation_type": "1",
         }
         ret = self.client.post("/donations/donation-session-paypal/", data)
-        response =  ret.json()
+        response = ret.json()
         # Decimals must have '.' and not ','
-        self.assertTrue('errors' in response)
+        self.assertTrue("errors" in response)
 
-        data['amount'] = '0.1'
+        data["amount"] = "0.1"
         ret = self.client.post("/donations/donation-session-paypal/", data)
-        response =  ret.json()
+        response = ret.json()
         # amount must be greater than 1
-        self.assertTrue('errors' in response)
+        self.assertTrue("errors" in response)
 
-        data['amount'] = '5.1'
+        data["amount"] = "5.1"
         ret = self.client.post("/donations/donation-session-paypal/", data)
-        response =  ret.json()
-        self.assertFalse('errors' in response)
+        response = ret.json()
+        self.assertFalse("errors" in response)
 
-        long_mail = ('1'*256) + '@freesound.org'
-        data['name_option'] = long_mail
-        data['donation_type'] = '2'
+        long_mail = ("1" * 256) + "@freesound.org"
+        data["name_option"] = long_mail
+        data["donation_type"] = "2"
         ret = self.client.post("/donations/donation-session-paypal/", data)
-        response =  ret.json()
-        self.assertTrue('errors' in response)
+        response = ret.json()
+        self.assertTrue("errors" in response)
 
     def test_donation_response(self):
         # 200 response on donate page
-        resp = self.client.get(reverse('donate'))
+        resp = self.client.get(reverse("donate"))
         self.assertEqual(resp.status_code, 200)
 
         # 200 response on donors page
-        resp = self.client.get(reverse('donors'))
+        resp = self.client.get(reverse("donors"))
         self.assertEqual(resp.status_code, 200)
 
     def test_donation_emails(self):
@@ -288,27 +305,29 @@ class DonationTest(TestCase):
         donation_settings.save()
 
         # Create user a
-        self.user_a = User.objects.create_user(username='user_a', email='user_a@test.com')
+        self.user_a = User.objects.create_user(username="user_a", email="user_a@test.com")
         self.assertIsNone(self.user_a.profile.last_donation_email_sent)
 
         # Create user b
-        self.user_b = User.objects.create_user(username='user_b', email='user_b@test.com')
+        self.user_b = User.objects.create_user(username="user_b", email="user_b@test.com")
         self.assertIsNone(self.user_b.profile.last_donation_email_sent)
 
         # Create user c (uploader)
-        self.user_c = User.objects.create_user(username='user_c', email='user_c@test.com')
+        self.user_c = User.objects.create_user(username="user_c", email="user_c@test.com")
         self.assertIsNone(self.user_c.profile.last_donation_email_sent)
 
         # Simulate a donation from the user (older than donation_settings.minimum_days_since_last_donation)
         old_donation_date = timezone.now() - datetime.timedelta(
-            days=donation_settings.minimum_days_since_last_donation + 100)
+            days=donation_settings.minimum_days_since_last_donation + 100
+        )
         donation = donations.models.Donation.objects.create(
-            user=self.user_a, amount=50.25, email=self.user_a.email, currency='EUR')
+            user=self.user_a, amount=50.25, email=self.user_a.email, currency="EUR"
+        )
         # NOTE: use .update(created=...) to avoid field auto_now to take over
         donations.models.Donation.objects.filter(pk=donation.pk).update(created=old_donation_date)
 
         # Run command for sending donation emails
-        call_command('send_donation_request_emails')
+        call_command("send_donation_request_emails")
 
         # Check that user_a has been sent a reminder email and user_b has not been sent any email
         self.user_a.profile.refresh_from_db()
@@ -317,12 +336,13 @@ class DonationTest(TestCase):
         self.assertIsNone(self.user_b.profile.last_donation_email_sent)
 
         # Simulate uploads from user_c
-        for i in range(0, TEST_DOWNLOADS_IN_PERIOD + 1):
+        for i in range(TEST_DOWNLOADS_IN_PERIOD + 1):
             sounds.models.Sound.objects.create(
                 user=self.user_c,
                 original_filename="Test sound %i" % i,
                 license=sounds.models.License.objects.all()[0],
-                md5="fakemd5_%i" % i)
+                md5="fakemd5_%i" % i,
+            )
         self.user_c.profile.num_sounds = TEST_DOWNLOADS_IN_PERIOD + 1
         self.user_c.profile.save()
 
@@ -334,7 +354,7 @@ class DonationTest(TestCase):
         sounds.models.PackDownload.objects.create(user=self.user_b, pack=pack)
 
         # Now run the command for sending donation emails again
-        call_command('send_donation_request_emails')
+        call_command("send_donation_request_emails")
 
         # Check that user_a has not received any new email
         self.user_a.profile.refresh_from_db()
@@ -354,7 +374,7 @@ class DonationTest(TestCase):
             sounds.models.Download.objects.create(user=self.user_c, sound=sound, license=License.objects.first())
 
         # Run the command for sending donation emails again
-        call_command('send_donation_request_emails')
+        call_command("send_donation_request_emails")
 
         # Check that user_a has not received any new email
         self.user_a.profile.refresh_from_db()
@@ -373,7 +393,7 @@ class DonationTest(TestCase):
         donation_settings.save()
 
         # Run the command for sending donation emails again
-        call_command('send_donation_request_emails')
+        call_command("send_donation_request_emails")
 
         # Check that user_a has not received any new email
         self.user_a.profile.refresh_from_db()
@@ -413,7 +433,7 @@ class DonationTest(TestCase):
 
         # Now that time has passed (bigger than minimum_days_since_last_donation_email), we check again if
         # emails are sent
-        call_command('send_donation_request_emails')
+        call_command("send_donation_request_emails")
 
         # Check that user_a has not received any new email (no new downloads)
         self.user_a.profile.refresh_from_db()
@@ -434,7 +454,7 @@ class DonationTest(TestCase):
             sounds.models.Download.objects.create(user=self.user_c, sound=sound, license=License.objects.first())
 
         # Run command again
-        call_command('send_donation_request_emails')
+        call_command("send_donation_request_emails")
 
         # Check that user_a has received new email
         self.user_a.profile.refresh_from_db()
@@ -451,7 +471,8 @@ class DonationTest(TestCase):
 
         # Simulate user_a makes a new donation and then downloads some sounds
         donations.models.Donation.objects.create(
-            user=self.user_a, amount=50.25, email=self.user_a.email, currency='EUR')
+            user=self.user_a, amount=50.25, email=self.user_a.email, currency="EUR"
+        )
         # Reset the reminder flag to False so that in a year time user is reminded to donate
         self.user_a.profile.donations_reminder_email_sent = False
         self.user_a.profile.save()
@@ -459,7 +480,7 @@ class DonationTest(TestCase):
             sounds.models.Download.objects.create(user=self.user_a, sound=sound, license=License.objects.first())
 
         # Run command again
-        call_command('send_donation_request_emails')
+        call_command("send_donation_request_emails")
 
         # Check that now user_a does not receive an email because he donated recently
         self.user_a.profile.refresh_from_db()
@@ -473,32 +494,35 @@ class DonationTest(TestCase):
         donation_settings.save()
 
         # Create user a
-        self.user_a = User.objects.create_user(username='user_a', email='user_a@test.com')
+        self.user_a = User.objects.create_user(username="user_a", email="user_a@test.com")
         self.assertIsNone(self.user_a.profile.last_donation_email_sent)
 
         # Create user b
-        self.user_b = User.objects.create_user(username='user_b', email='user_b@test.com')
+        self.user_b = User.objects.create_user(username="user_b", email="user_b@test.com")
         self.assertIsNone(self.user_b.profile.last_donation_email_sent)
 
         # Create user c (uploader)
-        self.user_c = User.objects.create_user(username='user_c', email='user_c@test.com')
+        self.user_c = User.objects.create_user(username="user_c", email="user_c@test.com")
         self.assertIsNone(self.user_c.profile.last_donation_email_sent)
 
         # Simulate a donation from the user (older than donation_settings.minimum_days_since_last_donation)
         old_donation_date = timezone.now() - datetime.timedelta(
-            days=donation_settings.minimum_days_since_last_donation + 100)
+            days=donation_settings.minimum_days_since_last_donation + 100
+        )
         donation = donations.models.Donation.objects.create(
-            user=self.user_a, amount=50.25, email=self.user_a.email, currency='EUR')
+            user=self.user_a, amount=50.25, email=self.user_a.email, currency="EUR"
+        )
         # NOTE: use .update(created=...) to avoid field auto_now to take over
         donations.models.Donation.objects.filter(pk=donation.pk).update(created=old_donation_date)
 
         # Simulate uploads from user_c
-        for i in range(0, TEST_DOWNLOADS_IN_PERIOD + 1):
+        for i in range(TEST_DOWNLOADS_IN_PERIOD + 1):
             sounds.models.Sound.objects.create(
                 user=self.user_c,
                 original_filename="Test sound %i" % i,
                 license=sounds.models.License.objects.all()[0],
-                md5="fakemd5_%i" % i)
+                md5="fakemd5_%i" % i,
+            )
         self.user_c.profile.num_sounds = TEST_DOWNLOADS_IN_PERIOD + 1
         self.user_c.profile.save()
 
@@ -514,7 +538,7 @@ class DonationTest(TestCase):
         UserEmailSetting.objects.create(user=self.user_b, email_type=email_pref)
 
         # Run command for sending donation emails
-        call_command('send_donation_request_emails')
+        call_command("send_donation_request_emails")
 
         # Check that both user_a and user_b have not received any email because their preferences are set to none
         self.user_a.profile.refresh_from_db()

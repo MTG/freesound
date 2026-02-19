@@ -1,68 +1,69 @@
+@use 'sass:list';
 @for $i from 1 through 7 {
   .h-spacing-#{$i} {
-    margin-right: nth($spacing-values-list, $i);
+    margin-right: list.nth($spacing-values-list, $i);
   }
 
   .h-spacing-left-#{$i} {
-    margin-left: nth($spacing-values-list, $i);
+    margin-left: list.nth($spacing-values-list, $i);
   }
 
   .v-spacing-#{$i} {
-    margin-bottom: nth($spacing-values-list, $i);
+    margin-bottom: list.nth($spacing-values-list, $i);
   }
 
   .v-spacing-negative-#{$i} {
-    margin-bottom: -#{nth($spacing-values-list, $i)};
+    margin-bottom: -#{list.nth($spacing-values-list, $i)};
   }
 
   .v-spacing-top-#{$i} {
-    margin-top: nth($spacing-values-list, $i);
+    margin-top: list.nth($spacing-values-list, $i);
   }
 
   .v-spacing-top-negative-#{$i} {
-    margin-top: -#{nth($spacing-values-list, $i)};
+    margin-top: -#{list.nth($spacing-values-list, $i)};
   }
 
   .spacing-#{$i} {
-    margin-right: nth($spacing-values-list, $i);
-    margin-bottom: nth($spacing-values-list, $i);
+    margin-right: list.nth($spacing-values-list, $i);
+    margin-bottom: list.nth($spacing-values-list, $i);
   }
 
   .padding-left-#{$i} {
-    padding-left: nth($spacing-values-list, $i);
+    padding-left: list.nth($spacing-values-list, $i);
   }
 
   .padding-right-#{$i} {
-    padding-right: nth($spacing-values-list, $i);
+    padding-right: list.nth($spacing-values-list, $i);
   }
 
   .h-padding-#{$i} {
-    padding-left: nth($spacing-values-list, $i);
-    padding-right: nth($spacing-values-list, $i);
+    padding-left: list.nth($spacing-values-list, $i);
+    padding-right: list.nth($spacing-values-list, $i);
   }
 
   .padding-top-#{$i} {
-    padding-top: nth($spacing-values-list, $i);
+    padding-top: list.nth($spacing-values-list, $i);
   }
 
   .padding-bottom-#{$i} {
-    padding-bottom: nth($spacing-values-list, $i);
+    padding-bottom: list.nth($spacing-values-list, $i);
   }
 
   .v-padding-#{$i} {
-    padding-top: nth($spacing-values-list, $i);
-    padding-bottom: nth($spacing-values-list, $i);
+    padding-top: list.nth($spacing-values-list, $i);
+    padding-bottom: list.nth($spacing-values-list, $i);
   }
 
   .v-padding-bottom-#{$i} {
-    padding-bottom: nth($spacing-values-list, $i);
+    padding-bottom: list.nth($spacing-values-list, $i);
   }
 
   .padding-#{$i} {
-    padding-left: nth($spacing-values-list, $i);
-    padding-right: nth($spacing-values-list, $i);
-    padding-top: nth($spacing-values-list, $i);
-    padding-bottom: nth($spacing-values-list, $i);
+    padding-left: list.nth($spacing-values-list, $i);
+    padding-right: list.nth($spacing-values-list, $i);
+    padding-top: list.nth($spacing-values-list, $i);
+    padding-bottom: list.nth($spacing-values-list, $i);
   }
 }
 

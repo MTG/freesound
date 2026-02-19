@@ -19,28 +19,26 @@
 #
 
 from django.urls import path
+
 import monitor.views
 
 urlpatterns = [
-
-    path('', monitor.views.monitor_home, name='monitor-home'),
-
-    
-    path('stats/', monitor.views.monitor_stats, name='monitor-stats'),
-    path('analysis/', monitor.views.monitor_analysis, name='monitor-analysis'),
-    path('processing/', monitor.views.monitor_processing, name='monitor-processing'),
-    path('moderation/', monitor.views.monitor_moderation, name='monitor-moderation'),
-    path('processing/process_sounds/', monitor.views.process_sounds, name='monitor-processing-process'),
-    path('queues_stats/', monitor.views.get_queues_status, name='queues-stats'),
-    path('moderators_stats/', monitor.views.moderators_stats, name='monitor-moderators-stats'),
-    path('totals_stats_ajax/', monitor.views.totals_stats_ajax, name='monitor-totals-stats-ajax'),
-    path('ajax_tags_stats/', monitor.views.tags_stats_ajax, name='monitor-tags-stats-ajax'),
-    path('ajax_queries_stats/', monitor.views.queries_stats_ajax, name='monitor-queries-stats-ajax'),
-    path('ajax_downloads_stats/', monitor.views.downloads_stats_ajax, name='monitor-downloads-stats-ajax'),
-    path('ajax_donations_stats/', monitor.views.donations_stats_ajax, name='monitor-donations-stats-ajax'),
-    path('ajax_sounds_stats/', monitor.views.sounds_stats_ajax, name='monitor-sounds-stats-ajax'),
-    path('ajax_users_stats/', monitor.views.users_stats_ajax, name='monitor-users-stats-ajax'),
-    path('ajax_active_users_stats/', monitor.views.active_users_stats_ajax, name='monitor-active-users-stats-ajax'),
-    path('ajax_moderator_stats/', monitor.views.moderator_stats_ajax, name='monitor-moderator-stats-ajax'),
-
+    path("", monitor.views.monitor_home, name="monitor-home"),
+    path("stats/", monitor.views.monitor_stats, name="monitor-stats"),
+    path("analysis/", monitor.views.monitor_analysis, name="monitor-analysis"),
+    path("similarity/", monitor.views.monitor_similarity, name="monitor-similarity"),
+    path("processing/", monitor.views.monitor_processing, name="monitor-processing"),
+    path("moderation/", monitor.views.monitor_moderation, name="monitor-moderation"),
+    path("processing/process_sounds/", monitor.views.process_sounds, name="monitor-processing-process"),
+    path("queues_stats/", monitor.views.get_queues_status, name="queues-stats"),
+    path("moderators_stats/", monitor.views.moderators_stats, name="monitor-moderators-stats"),
+    path("totals_stats_ajax/", monitor.views.totals_stats_ajax, name="monitor-totals-stats-ajax"),
+    path("ajax_tags_stats/", monitor.views.tags_stats_ajax, name="monitor-tags-stats-ajax"),
+    path("ajax_queries_stats/", monitor.views.queries_stats_ajax, name="monitor-queries-stats-ajax"),
+    path("ajax_downloads_stats/", monitor.views.downloads_stats_ajax, name="monitor-downloads-stats-ajax"),
+    path("ajax_donations_stats/", monitor.views.donations_stats_ajax, name="monitor-donations-stats-ajax"),
+    path("ajax_sounds_stats/", monitor.views.sounds_stats_ajax, name="monitor-sounds-stats-ajax"),
+    path("ajax_users_stats/", monitor.views.users_stats_ajax, name="monitor-users-stats-ajax"),
+    path("ajax_active_users_stats/", monitor.views.active_users_stats_ajax, name="monitor-active-users-stats-ajax"),
+    path("ajax_moderator_stats/", monitor.views.moderator_stats_ajax, name="monitor-moderator-stats-ajax"),
 ]

@@ -34,7 +34,7 @@
                                        name="{{ sqp.options.query.query_param_name }}"
                                        type="text"
                                        value="{% if not sqp.similar_to_active %}{{ sqp.options.query.value_to_apply }}{% endif %}"
-                                       placeholder="{% if not sqp.similar_to_active %}Search {% if not sqp.display_as_packs_active %}sounds{% else %}packs{% endif %}...{% else %}Similar to {{ sqp.similar_to_active }}{% endif %}"
+                                       placeholder="{% if not sqp.similar_to_active %}Search {% if not sqp.display_as_packs_active %}sounds{% else %}packs{% endif %}...{% else %}Similar to {{ sqp.similar_to_display_label }}{% endif %}"
                                        autocomplete="off"
                                        {% if sqp.options.query.disabled %}disabled{% endif %}/>
                             </div>
@@ -65,7 +65,7 @@
                             {% comment %}number of results{% endcomment %}
                             <div class="col-4">
                                 {% if not sqp.display_as_packs_active %}
-                                    {% if non_grouped_number_of_results > 0 %} {{ non_grouped_number_of_results|bw_intcomma }}{% else %} {{ paginator.count|bw_intcomma }}{% endif %} sound{{ non_grouped_number_of_results|pluralize }}
+                                    {% if non_grouped_number_of_results %} {{ non_grouped_number_of_results|bw_intcomma }}{% else %} {{ paginator.count|bw_intcomma }}{% endif %} sound{{ non_grouped_number_of_results|pluralize }}
                                 {% else %}
                                     {{ paginator.count|bw_intcomma }} pack{{ paginator.count|pluralize }}
                                 {% endif %}
@@ -215,6 +215,9 @@
                     {% display_facet "type" %}
                     {% display_facet "channels" %}
                     {% display_facet "samplerate" %}
+                    {% if enable_collections %}
+                        {% display_facet "collection_grouping" %}
+                    {% endif %}
                     {% if not sqp.display_as_packs_active %}
                         {% display_facet "pack_grouping" %}
                     {% endif %}
@@ -248,7 +251,6 @@
                             <div id="mapCanvas" class="map main-map"
                                  data-map-show-search="{% if sound %}false{% else %}true{% endif %}"
                                  data-geotags-url="{{ map_bytearray_url }}"
-                                 data-access-token="pk.eyJ1IjoiZnJlZXNvdW5kIiwiYSI6ImNrd3E0Mm9lbjBqM2Qyb2wwdmwxaWI3a3oifQ.MZkgLSByRuk_Xql67CySAg"
                             ><span id="mapLoadingIndicator">Loading map... <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"></span> </div>
                         </div>
                         <div class="row middle">
@@ -330,6 +332,6 @@
     {% if not error_text %}
         {% comment %}If there were errors reaching the search server, don't even load the
 JS bits because we only display the error message{% endcomment %}
-        <script src="{% static 'bw-frontend/dist/search.js' %}"></script>
+        <script src="{% static 'bw-frontend/dist/pages/search.js' %}"></script>
     {% endif %}
 {% endblock %}

@@ -21,13 +21,14 @@
 #
 
 import re
+
 import pysolr
 from django.conf import settings
 
 from utils.search.backends import solr555pysolr
 
-SOLR_FORUM_URL = f"{settings.SOLR9_BASE_URL}/forum"
-SOLR_SOUNDS_URL = f"{settings.SOLR9_BASE_URL}/freesound"
+SOLR_FORUM_URL = f"{settings.SOLR9_BASE_URL}/solr/forum"
+SOLR_SOUNDS_URL = f"{settings.SOLR9_BASE_URL}/solr/freesound"
 
 
 class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
@@ -38,7 +39,7 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
             forum_index_url = SOLR_FORUM_URL
         self.sounds_index_url = sounds_index_url
         self.forum_index_url = forum_index_url
-
+        self.solr_base_url = settings.SOLR9_BASE_URL
 
     def get_sounds_index(self):
         if self.sounds_index is None:
@@ -46,7 +47,8 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
                 self.sounds_index_url,
                 encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
                 results_cls=solr555pysolr.SolrResponseInterpreter,
-                always_commit=True
+                always_commit=True,
+                timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
             )
         return self.sounds_index
 
@@ -56,10 +58,10 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
                 self.forum_index_url,
                 encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
                 results_cls=solr555pysolr.SolrResponseInterpreter,
-                always_commit=True
+                always_commit=True,
+                timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
             )
         return self.forum_index
-
 
     def search_process_filter(self, query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
         """Process the filter to make a number of adjustments
@@ -88,27 +90,29 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
 
         # When filtering by the created field, use the `created_range` DateRangeType field instead
         # which include the ability to filter on exact values and ranges of values.
-        if 'created:' in query_filter:
-            query_filter = query_filter.replace('created:', 'created_range:')
+        if "created:" in query_filter:
+            query_filter = query_filter.replace("created:", "created_range:")
 
         # If we only want sounds with packs and there is no pack filter, add one
-        if only_sounds_with_pack and not 'pack:' in query_filter:
-            query_filter += ' pack:*'
+        if only_sounds_with_pack and not "pack:" in query_filter:
+            query_filter += " pack:*"
 
         if 'geotag:"Intersects(' in query_filter:
             # Replace geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
             #    with geotag:["<MINIMUM_LATITUDE>, <MINIMUM_LONGITUDE>" TO "<MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>"]
-            query_filter = re.sub('geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter)
+            query_filter = re.sub(
+                'geotag:"Intersects\((.+?) (.+?) (.+?) (.+?)\)"', r'geotag:["\2,\1" TO "\4,\3"]', query_filter
+            )
 
         query_filter = self.search_filter_make_intersection(query_filter)
 
         # When calculating results form clustering, the "only_sounds_within_ids" argument is passed and we filter
         # our query to the sounds in that list of IDs.
         if only_sounds_within_ids:
-            sounds_within_ids_filter = ' OR '.join(['id:{}'.format(sound_id) for sound_id in only_sounds_within_ids])
+            sounds_within_ids_filter = " OR ".join(["id:{}".format(sound_id) for sound_id in only_sounds_within_ids])
             if query_filter:
-                query_filter += ' AND ({})'.format(sounds_within_ids_filter)
+                query_filter += " AND ({})".format(sounds_within_ids_filter)
             else:
-                query_filter = '({})'.format(sounds_within_ids_filter)
+                query_filter = "({})".format(sounds_within_ids_filter)
 
         return query_filter

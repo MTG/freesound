@@ -64,7 +64,7 @@
                                     {% endfor %}
                                 </div>
                                 <div class="v-spacing-top-4 text-center">
-                                    <a class="no-hover" href="{% url "sounds-search" %}?f=grouping_pack:{{ pack.pack_filter_value }}&s=Date+added+(newest+first)&g=1"><button class="btn-primary">See all sounds in this pack</button></a>
+                                    <a class="no-hover" href="{{ pack.get_pack_sounds_in_search_url }}"><button class="btn-primary">See all sounds in this pack</button></a>
                                 </div>
                             {% else %}
                                 <div class="text-center v-spacing-top-4">
@@ -128,5 +128,5 @@
 {% endblock %}
 
 {% block extrabody %}
-    <script src="{% static 'bw-frontend/dist/pack.js' %}"></script>
+    <script src="{% static 'bw-frontend/dist/pages/pack.js' %}"></script>
 {% endblock %}

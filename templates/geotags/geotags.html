@@ -3,7 +3,9 @@
 {% load bw_templatetags %}
 
 {% block title %}
-    {% if username %}
+    {% if error_text %}
+        Map error
+    {% elif username %}
         Map of sounds for user {{ username }}
     {% elif tag %}
         Map of sounds with tag {{ tag }}
@@ -18,6 +20,7 @@
     {% endif %}
 {% endblock %}
 {% block page-title-custom %}
+    {% if not error_text %}
     <div class="col-11 no-paddings">
         <h1 class="line-height-percentage-140 ellipsis">
             {% if username %}
@@ -38,12 +41,19 @@
     <div class="col-12 no-paddings v-spacing-top-negative-4 text-right text-grey d-none d-md-block">
         <span id="mapLoadingIndicator">Loading sounds... <img width="12px" height="12px" src="{% static 'bw-frontend/public/bw_indicator.gif' %}"></span>
     </div>
+    {% endif %}
 {% endblock %}
 
 {% block page-content %}
+    {% if error_text %}
+    <div class="col-12 v-spacing-top-4 no-paddings">{{ error_text }}</div>
+    {% else %}
     {% include 'geotags/geotags_content.html' %}
+    {% endif %}
 {% endblock %}
 
 {% block extrabody %}
-    <script src="{% static 'bw-frontend/dist/map.js' %}"></script>
+    {% if not error_text %}
+    <script src="{% static 'bw-frontend/dist/pages/map.js' %}"></script>
+    {% endif %}
 {% endblock %}

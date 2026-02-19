@@ -19,11 +19,10 @@
 #
 
 from django.contrib.auth.models import User
-from django.contrib.contenttypes import fields
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.utils.encoding import smart_str
 from django.urls import reverse
+from django.utils.encoding import smart_str
+
 
 class Tag(models.Model):
     name = models.SlugField(unique=True, db_index=True, max_length=100)
@@ -32,7 +31,7 @@ class Tag(models.Model):
         return self.name
 
     def get_browse_tag_url(self):
-        return reverse('tags', self.name)
+        return reverse("tags", self.name)
 
     class Meta:
         ordering = ("name",)
@@ -49,11 +48,12 @@ class SoundTag(models.Model):
         return f"{self.user} tagged {self.sound} - {self.tag}"
 
     def get_absolute_url(self):
-        return reverse('tag', args=[smart_str(self.tag.id)])
+        return reverse("tag", args=[smart_str(self.tag.id)])
 
     class Meta:
         ordering = ("-created",)
-        unique_together = (('tag', 'sound_id'),)
+        unique_together = (("tag", "sound_id"),)
+
 
 # Class to get old tags ids linked to new tag ids
 # The goal is to at some point deprecate the old tag ids completely

@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "batisteo.vscode-django",
+    "ms-azuretools.vscode-docker",
+    "elagil.pre-commit-helper",
+    "ms-python.python",
+    "ms-python.debugpy",
+    "charliermarsh.ruff"
+  ]
+}

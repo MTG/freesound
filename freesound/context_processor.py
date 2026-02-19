@@ -32,18 +32,20 @@ from tickets.views import new_sound_tickets_count
 def context_extra(request):
     # Add extra "global" context that we can use in templates
     tvars = {
-        'request': request,
+        "request": request,
     }
-    
+
     # Determine if extra context needs to be computed (this will allways be true expect for most of api calls and embeds)
     # There'll be other places in which the extra context is not needed, but this will serve as an approximation
-    should_compute_extra_context = True    
-    if request.path.startswith('/apiv2/') and \
-        'apply' not in request.path and \
-        'login' not in request.path and \
-        'logout' not in request.path:
+    should_compute_extra_context = True
+    if (
+        request.path.startswith("/apiv2/")
+        and "apply" not in request.path
+        and "login" not in request.path
+        and "logout" not in request.path
+    ):
         should_compute_extra_context = False
-    if request.path.startswith('/embed/'):
+    if request.path.startswith("/embed/"):
         should_compute_extra_context = False
 
     if should_compute_extra_context:
@@ -53,30 +55,39 @@ def context_extra(request):
         new_posts_pending_moderation = 0
 
         if request.user.is_authenticated:
-            if request.user.has_perm('tickets.can_moderate'):
+            if request.user.has_perm("tickets.can_moderate"):
                 new_tickets_count = new_sound_tickets_count()
-            if request.user.has_perm('forum.can_moderate_forum'):
-                new_posts_pending_moderation = Post.objects.filter(moderation_state='NM').count()
+            if request.user.has_perm("forum.can_moderate_forum"):
+                new_posts_pending_moderation = Post.objects.filter(moderation_state="NM").count()
             num_pending_sounds = request.user.profile.num_sounds_pending_moderation()
-            num_messages = Message.objects.filter(user_to=request.user, is_archived=False, is_sent=False, is_read=False).count()
+            num_messages = Message.objects.filter(
+                user_to=request.user, is_archived=False, is_sent=False, is_read=False
+            ).count()
 
         # Determine if anniversary special css and js content should be loaded
         # Animations will only be shown during the day of the anniversary
         # Special logo will be shown during 2 weeks after the anniversary
-        load_anniversary_content = \
-            datetime.datetime(2020, 4, 5, 0, 0, tzinfo=datetime.timezone.utc) <= timezone.now() <= datetime.datetime(2020, 4, 20, tzinfo=datetime.timezone.utc) or \
-            request.GET.get('anniversary', '0') == '1'
+        load_anniversary_content = (
+            datetime.datetime(2020, 4, 5, 0, 0, tzinfo=datetime.timezone.utc)
+            <= timezone.now()
+            <= datetime.datetime(2020, 4, 20, tzinfo=datetime.timezone.utc)
+            or request.GET.get("anniversary", "0") == "1"
+        )
 
-        tvars.update({
-            'new_tickets_count': new_tickets_count,
-            'new_posts_pending_moderation': new_posts_pending_moderation,
-            'num_pending_sounds': num_pending_sounds,
-            'num_messages': num_messages,
-            'load_anniversary_content': load_anniversary_content,
-            'next_path': request.GET.get('next', request.get_full_path()),
-            'login_form': FsAuthenticationForm(),
-            'problems_logging_in_form': ProblemsLoggingInForm(),
-            'system_prefers_dark_theme': request.COOKIES.get('systemPrefersDarkTheme', 'no') == 'yes'  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
-        })
-    
+        tvars.update(
+            {
+                "new_tickets_count": new_tickets_count,
+                "new_posts_pending_moderation": new_posts_pending_moderation,
+                "num_pending_sounds": num_pending_sounds,
+                "num_messages": num_messages,
+                "load_anniversary_content": load_anniversary_content,
+                "next_path": request.GET.get("next", request.get_full_path()),
+                "login_form": FsAuthenticationForm(),
+                "problems_logging_in_form": ProblemsLoggingInForm(),
+                "system_prefers_dark_theme": request.COOKIES.get("systemPrefersDarkTheme", "no")
+                == "yes",  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
+                "enable_collections": settings.ENABLE_COLLECTIONS,
+            }
+        )
+
     return tvars

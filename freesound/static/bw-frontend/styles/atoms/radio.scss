@@ -1,5 +1,12 @@
+@use 'sass:list';
 input.bw-radio {
   display: none;
+}
+
+input.bw-radio:disabled ~ .bw-radio-container {
+  cursor: not-allowed;
+  opacity: $disabled-input-opacity;
+  color: gray;
 }
 
 .bw-icon-radio-unchecked {
@@ -28,8 +35,7 @@ input.bw-radio {
 }
 
 .bw-radio-label {
-
-  color: $black!important;
+  color: $black !important;
 
   cursor: pointer;
 
@@ -40,14 +46,13 @@ input.bw-radio {
 }
 
 .bw-multiple-radio {
-
   ul.bw-radio {
     padding: 0;
   }
 
   ul.bw-radio li {
     list-style: none;
-    margin-bottom: nth($spacing-values-list, 2);
+    margin-bottom: list.nth($spacing-values-list, 2);
   }
 }
 
@@ -59,12 +64,11 @@ input.bw-radio {
   ul.bw-radio li {
     display: inline;
     list-style: none;
-    margin-bottom: nth($spacing-values-list, 1);
-    margin-right: nth($spacing-values-list, 3);
+    margin-bottom: list.nth($spacing-values-list, 1);
+    margin-right: list.nth($spacing-values-list, 3);
   }
 
   .bw-radio-container {
     margin-right: 5px; /* Reduce margin as it expects space between icon and label text */
   }
-  
 }

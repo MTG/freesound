@@ -1,0 +1,27 @@
+{% extends "molecules/modal_base.html" %}
+{% load static %}
+{% load bw_templatetags %}
+{% load users_selector %}
+
+{% block id %}addMaintainersModal{% endblock %}
+{% block extra-class %}{% if request.user.is_authenticated %}modal-width-60{% endif %}{% endblock %}
+{% block aria-label %}Add maintainer modal{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        <h4 class="v-spacing-5">Add maintainer to collection</h4>
+        <form method="post" action="{{ collection.add_maintainers_modal_url }}?ajax=1" class = "disable-on-submit">{% csrf_token %}
+            {{form}}
+            {% if not_found_msg %}
+                <div class="text-grey">{% bw_icon "notification" %}{{not_found_msg}}</div>
+            {% endif %}
+            <div>
+                {% users_selector new_maintainers %}
+            </div>
+            <button class="btn-primary v-spacing-top-2">Add maintainer</button>
+        </form>
+    </div>
+    
+</div>
+{% endblock %}

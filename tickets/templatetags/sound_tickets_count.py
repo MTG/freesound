@@ -19,9 +19,11 @@
 #
 
 from django import template
+
 import tickets.views as TicketViews
 
 register = template.Library()
+
 
 @register.simple_tag
 def new_sound_tickets_count():

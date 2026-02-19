@@ -30,9 +30,13 @@ services:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
             target: freesound
+            platforms:
+              - linux/amd64
+        image: freesound
         command: python manage.py runserver 0.0.0.0:8000
         volumes:
             - .:/code
+            - /code/.venv
             - ./freesound-data/:/freesound-data
             - fswebhome:/home/fsweb
         ports:
@@ -48,15 +52,25 @@ services:
             - redis
             - search
 
-    # Search server
-    search:
+    # Frontend asset builder
+    frontend_builder:
         build:
             context: ./
-            dockerfile: ./docker/Dockerfile.solr
+            dockerfile: ./docker/Dockerfile.workers_web
+            target: frontend_build
+            platforms:
+              - linux/amd64
         volumes:
-            - ./utils/search/solr9/cores:/var/solr/data/configsets
+            - .:/code
+            - /code/node_modules
+        command: npm run dev
+
+    # Search server
+    search:
+        image: solr:9.8.1
+        command: ["-c"]
+        volumes:
             - solr9data:/var/solr
-            - ./utils/search/solr9/docker-entrypoint:/docker-entrypoint-initdb.d
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8983:8983"
 
@@ -77,13 +91,12 @@ services:
 
     # Worker for async tasks and sound processing
     worker_celery:
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.workers_web
+        image: freesound
         init: true
         command: celery -A freesound worker --concurrency=2 -l info -Q async_tasks_queue,sound_processing_queue,sound_analysis_old_queue,clustering_queue
         volumes:
             - .:/code
+            - /code/.venv
             - ./freesound-data/:/freesound-data
         env_file:
             - environment
@@ -112,18 +125,6 @@ services:
             - ./freesound-data/:/freesound-data
         init: true
         command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_legacy
-        depends_on:
-            - rabbitmq
-
-    # Audioset-YAMNet extractor - needs image to be built from freesound-audio-analyzers repository
-    # Note this worker must be run with --pool=threads in order for tensorflow predictions to work inside celery
-    worker_analyzer3:
-        profiles: ["analyzers", "all"]
-        image: audioset-yamnet_v1
-        volumes:
-            - ./freesound-data/:/freesound-data
-        init: true
-        command: celery -A main worker --pool=threads --concurrency=1 -l info -Q audioset-yamnet_v1
         depends_on:
             - rabbitmq
 
@@ -166,8 +167,10 @@ services:
     similarity:
         profiles: ["all"]
         build:
-            context: ./similarity
-            dockerfile: ../docker/Dockerfile.similarity
+            dockerfile: ./docker/Dockerfile.py2
+            target: similarity
+            platforms:
+              - linux/amd64
         init: true
         command: python similarity_server.py
         volumes:
@@ -183,8 +186,10 @@ services:
     tagrecommendation:
         profiles: ["all"]
         build:
-            context: ./tagrecommendation
-            dockerfile: ../docker/Dockerfile.tagrecommendation
+            dockerfile: ./docker/Dockerfile.py2
+            target: tagrecommendation
+            platforms:
+              - linux/amd64
         init: true
         command: python tagrecommendation_server.py
         volumes:

@@ -37,6 +37,18 @@
 	},
 	"tasks": {
 		"version": "2.0.0",
+		"inputs": [
+			{
+				"id": "appName",
+				"type": "promptString",
+				"description": "Enter the Django app name or test module name to run tests (leave empty to run all tests)"
+			},
+			{
+				"id": "commandName",
+				"type": "promptString",
+				"description": "Enter the Django management command name to be run (leave empty to print list of available commands)"
+			}
+		],
 		"tasks": [
 	
 			{
@@ -48,13 +60,7 @@
 			{
 				"label": "Build static",
 				"type": "shell",
-				"command": "docker compose run --rm web npm run build && docker compose run --rm web python manage.py collectstatic --clear --noinput",
-				"problemMatcher": []
-			},
-			{
-				"label": "Install static",
-				"type": "shell",
-				"command": "docker compose run --rm web npm install --force",
+				"command": "docker compose run --rm frontend_builder npm run build",
 				"problemMatcher": []
 			},
 			{
@@ -72,13 +78,19 @@
 			{
 				"label": "Run tests",
 				"type": "shell",
-				"command": "docker compose run --rm web pytest",
+				"command": "docker compose run --rm web pytest ${input:appName}",
 				"problemMatcher": []
 			},
 			{
 				"label": "Run tests verbose",
 				"type": "shell",
-				"command": "docker compose run --rm web pytest -vv",
+				"command": "docker compose run --rm web pytest ${input:appName}-vv",
+				"problemMatcher": []
+			},
+			{
+				"label": "Run tests for search engine",
+				"type": "shell",
+				"command": "docker compose run --rm web pytest -m \"search_engine\"",
 				"problemMatcher": []
 			},
 			{
@@ -106,6 +118,12 @@
 				"problemMatcher": []
 			},
 			{
+				"label": "Reindex search engine (include sim vectors)",
+				"type": "shell",
+				"command": "docker compose run --rm web python manage.py reindex_search_engine_sounds --include-similarity-vectors && docker compose run --rm web python manage.py reindex_search_engine_forum",
+				"problemMatcher": []
+			},
+			{
 				"label": "Post dirty sounds to search engine",
 				"type": "shell",
 				"command": "docker compose run --rm web python manage.py post_dirty_sounds_to_search_engine",
@@ -115,6 +133,12 @@
 				"label": "Orchestrate analysis",
 				"type": "shell",
 				"command": "docker compose run --rm web python manage.py orchestrate_analysis",
+				"problemMatcher": []
+			},
+			{
+				"label": "Run management command",
+				"type": "shell",
+				"command": "docker compose run --rm web python manage.py ${input:commandName}",
 				"problemMatcher": []
 			},
 			{
@@ -128,6 +152,12 @@
 				"type": "shell",
 				"command": "cd _docs/api/build/html && python -m http.server 8008",
 				"problemMatcher": []
+			},
+			{
+				"label": "Run psql",
+				"type": "shell",
+				"command": "docker compose run --rm db psql -h db -U freesound  -d freesound",
+				"problemMatcher": []
 			}
 		]
 	},
@@ -135,6 +165,10 @@
 		"python.defaultInterpreterPath": ".venv/bin/python",
 		"files.associations": {
 			"*.html": "django-html"
+		},
+		"[python]": {
+			"editor.formatOnSave": true,
+			"editor.defaultFormatter": "charliermarsh.ruff"
 		}
 	}
 }

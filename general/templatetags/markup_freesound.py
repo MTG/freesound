@@ -4,8 +4,6 @@ markdown. It uses MARKDOWN_FILTER_SETTINGS from settings.py
 """
 
 import markdown as markdown_package
-import re
-
 from django import template
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
@@ -30,8 +28,8 @@ def markdown(value, arg=""):
 
     extensions = [e for e in arg.split(",") if e]
     extension_configs = {
-        'wikilinks': [('base_url', '/help/'), ('end_url', '/'), ('html_class', 'wikilink')],
-        'toc': [('anchorlink', True)]
+        "wikilinks": [("base_url", "/help/"), ("end_url", "/"), ("html_class", "wikilink")],
+        "toc": [("anchorlink", True)],
     }
 
     md = markdown_package.Markdown(extensions=extensions, extension_configs=extension_configs)

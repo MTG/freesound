@@ -27,7 +27,8 @@ from accounts.views import compute_charts_stats
 from utils.management_commands import LoggingBaseCommand
 
 commands_logger = logging.getLogger("commands")
-cache_persistent = caches['persistent']
+cache_persistent = caches["persistent"]
+
 
 class Command(LoggingBaseCommand):
     help = "Create caches needed for the charts page"

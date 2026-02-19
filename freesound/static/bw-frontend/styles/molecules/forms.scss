@@ -1,127 +1,129 @@
 .bw-form {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-    p {
-      margin-bottom: 0;
-    }
-
-    label {
-      width: 100%;
-      color: $navy-grey;
-    }
-
-    span.bw-checkbox-container + label {
-      color: $black;
-    }
-
-    input,
-    textarea {
-      &:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
-        margin-top: 12px;
-        margin-bottom: 30px;
-        width: 100%;
-        border: 1px solid $border-input;
-        color: $black;
-        background-color: $background-input;
-        padding: 10px 20px;
-        border-radius: 5px;
-
-        &::placeholder {
-          color: $navy-light-grey;
-        }
-
-        &:focus {
-          background-color: $white;
-          border: 1px solid $black;
-        }
-      }
-    }
-    
-    textarea {
-      min-height: 150px;
-      resize: vertical;
-
-      &:focus {
-        background-color: $white;
-        border: 1px solid $black;
-        outline: none;
-      }
-    }
-
-    button {
-      font-size: 100%;
-    }
-
-    .checkboxNotification {
-      margin-bottom: 28px;
-
-      .bw-search__filter-name {
-        line-height: 20px;
-      }
-    }
-
-    .radioAccount {
-      margin-bottom: 28px;
-      color: $navy-grey;
-    }
-
-    .helptext {
-      color: $navy-light-grey;
-      margin-top: -15px;
-      margin-bottom: 18px;
-      display: block;
-    }
+  p {
+    margin-bottom: 0;
   }
 
-  .form-activity-stream {
-    display: inline;
+  label {
+    width: 100%;
+    color: $navy-grey;
+  }
 
-    button {
-        margin-right: 15px;
-    }
-    div {
-        display:inline;
-        white-space:nowrap;
-    }        
-    
-    input {
-        height: 48px;
-        margin-right: 15px;
-        border-radius: 5px;
-        padding: 14px 21px;
-        margin-bottom: 12px;
-        margin-top: 12px;
-        background-color: $background-input;
-        border: 1px solid transparent;
-
-        &:focus {
-        border: 1px solid $black;
-        background-color: $white;
-        }
-
-        &::placeholder {
-        color: $navy-grey;
-        }
-    }
-
-    label {
-      color: $navy-grey;
-    }
-}
-
-.bw-form-less-spacing {
-  
-  p {
-    margin-top: 0!important;
+  span.bw-checkbox-container + label {
+    color: $black;
   }
 
   input,
   textarea {
     &:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
-      margin-top: 10px!important;
-      margin-bottom: 15px!important;
+      margin-top: 12px;
+      margin-bottom: 30px;
+      width: 100%;
+      border: 1px solid $border-input;
+      color: $black;
+      background-color: $background-input;
+      padding: 10px 20px;
+      border-radius: 5px;
+
+      &::placeholder {
+        color: $navy-light-grey;
+      }
+
+      &:focus {
+        background-color: $white;
+        border: 1px solid $black;
+      }
     }
   }
-  
+
+  textarea {
+    min-height: 150px;
+    resize: vertical;
+
+    &:focus {
+      background-color: $white;
+      border: 1px solid $black;
+      outline: none;
+    }
+
+    &:disabled {
+      opacity: $disabled-input-opacity;
+    }
+  }
+
+  button {
+    font-size: 100%;
+  }
+
+  .checkboxNotification {
+    margin-bottom: 28px;
+
+    .bw-search__filter-name {
+      line-height: 20px;
+    }
+  }
+
+  .radioAccount {
+    margin-bottom: 28px;
+    color: $navy-grey;
+  }
+
+  .helptext {
+    color: $navy-light-grey;
+    margin-top: -15px;
+    margin-bottom: 18px;
+    display: block;
+  }
+}
+
+.form-activity-stream {
+  display: inline;
+
+  button {
+    margin-right: 15px;
+  }
+  div {
+    display: inline;
+    white-space: nowrap;
+  }
+
+  input {
+    height: 48px;
+    margin-right: 15px;
+    border-radius: 5px;
+    padding: 14px 21px;
+    margin-bottom: 12px;
+    margin-top: 12px;
+    background-color: $background-input;
+    border: 1px solid transparent;
+
+    &:focus {
+      border: 1px solid $black;
+      background-color: $white;
+    }
+
+    &::placeholder {
+      color: $navy-grey;
+    }
+  }
+
+  label {
+    color: $navy-grey;
+  }
+}
+
+.bw-form-less-spacing {
+  p {
+    margin-top: 0 !important;
+  }
+
+  input,
+  textarea {
+    &:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
+      margin-top: 10px !important;
+      margin-bottom: 15px !important;
+    }
+  }
 }

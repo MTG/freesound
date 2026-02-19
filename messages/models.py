@@ -82,24 +82,24 @@ class Message(models.Model):
     etc...
     """
 
-    user_from = models.ForeignKey(User, related_name='messages_sent', on_delete=models.CASCADE)
-    user_to = models.ForeignKey(User, related_name='messages_received', on_delete=models.CASCADE)
-    
+    user_from = models.ForeignKey(User, related_name="messages_sent", on_delete=models.CASCADE)
+    user_to = models.ForeignKey(User, related_name="messages_received", on_delete=models.CASCADE)
+
     subject = models.CharField(max_length=128)
-    
+
     body = models.ForeignKey(MessageBody, on_delete=models.CASCADE)
 
     is_sent = models.BooleanField(default=True, db_index=True)
     is_read = models.BooleanField(default=False, db_index=True)
     is_archived = models.BooleanField(default=False, db_index=True)
-    
+
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    
+
     def get_absolute_url(self):
         return "message", (smart_str(self.id),)
 
     def __str__(self):
         return f"from: [{self.user_from}] to: [{self.user_to}]"
-    
+
     class Meta:
-        ordering = ('-created',)
+        ordering = ("-created",)

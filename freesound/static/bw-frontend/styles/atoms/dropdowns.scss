@@ -32,7 +32,8 @@
   }
 }
 
-.dropdown-menu-left {  /* used for dropdown menus on the left side of the screen, the menu will open aligned left */
+.dropdown-menu-left {
+  /* used for dropdown menus on the left side of the screen, the menu will open aligned left */
   top: calc(100%);
   text-align: left;
   transform: translateX(-2px);
@@ -46,7 +47,7 @@
   padding-top: 12px;
   padding-bottom: 12px;
   font-weight: 500;
-  
+
   &:last-child {
     padding-bottom: 0;
   }

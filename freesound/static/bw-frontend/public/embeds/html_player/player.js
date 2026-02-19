@@ -1,15 +1,4 @@
 soundManager.useHTML5Audio = true;
-soundManager.url = '/media/html_player/swf/';
-//flash 9 doesn't have weird artifacts at the beginning of sounds.
-soundManager.flashVersion = 9;
-soundManager.debugMode = false;
-//soundManager.preferFlash = true;
-// If the player is used in an embed, it uses HTML5 so it is lighter (althogh playbar position is not updated as fast as with flash)
-//if (typeof isEmbed!="undefined"){
-//    soundManager.preferFlash = false;
-//}
-//if you have a stricter test than 'maybe' SM will switch back to flash.
-//soundManager.html5Test = /^maybe$/i
 
 $(function()
 {

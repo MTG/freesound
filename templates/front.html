@@ -25,7 +25,7 @@
                 <form method="get" action="/search/">
                     <div class="typeahead-wrapper">
                         <div class="input-wrapper">
-                            <input name="q" type="search" class="bw-nav__search bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true" data-typeahead-suggestions-url="{% url 'query-suggestions' %}" autocomplete="off"{% endif %} />
+                            <input name="q" type="search" class="bw-front__hero-search" placeholder="Search sounds..." id="search-sounds" {% if enable_query_suggestions %}data-typeahead="true" data-typeahead-suggestions-url="{% url 'query-suggestions' %}" autocomplete="off"{% endif %} />
                         </div>
                     </div>
                 </form>
@@ -169,7 +169,7 @@
                 <section class="v-spacing-3">
                     <h4 class="v-spacing-1">Enjoying Freesound?</h4>
                     <p class="text-grey v-spacing-2">Please consider donating some money. It doesn't take a large donation to help us!</p>
-                    <div class="no-paddings offset-3 col-6 offset-lg-2 col-lg-8 offset-xl-0 col-xl-12">
+                    <div class="no-paddings offset-2 col-8 offset-md-3 col-md-6 offset-lg-2 col-lg-8 offset-xl-0 col-xl-12">
                         <div class="between v-spacing-2 wrap">
                             <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=5">5€</a>
                             <a class="no-hover btn-inverse bw-front__donate-amount-button v-spacing-1" href="{% url 'donate' %}?{{ donation_amount_request_param }}=10">10€</a>
@@ -209,8 +209,8 @@
                     <hr class="v-spacing-3" />
                 {% endcache %}
                 <section class="v-spacing-top-2">
-                    <div class="bw-front__freesound_labs_logo v-spacing-3"></div>
-                    <p class="text-grey v-spacing-2">Freesound Labs is a directory of apps, hacks, projects, and research using Freesound. <a class="bw-link--grey" href="https://labs.freesound.org" target="_blank">Click here to learn more!</a></p>
+                    <a href="https://labs.freesound.org" target="_blank"><div class="bw-front__freesound_labs_logo v-spacing-3"></div></a>
+                    <p class="text-grey v-spacing-2"><a class="bw-link--black" href="https://labs.freesound.org" target="_blank">Freesound Labs</a> is a directory of apps, hacks, projects, and research that uses Freesound. Do you have something to add? Tell us by <a class="bw-link--black" class href="https://docs.google.com/forms/d/e/1FAIpQLSfrGrGX_U249qzogGhStj9LcsJVMRwwakSGxG-hW_RmWZW3jw/viewform" target="_blank">filling out this form</a>.</p>
                 </section>
             </aside>
         </div>
@@ -218,5 +218,5 @@
 {% endblock %}
 
 {% block extrabody %}
-    <script src="{% static 'bw-frontend/dist/front.js' %}"></script>
+    <script src="{% static 'bw-frontend/dist/pages/front.js' %}"></script>
 {% endblock %}

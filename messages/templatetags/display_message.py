@@ -21,16 +21,23 @@
 
 from django import template
 
-from messages.models import Message
+from utils.text import clean_html
 
 register = template.Library()
 
 
-@register.inclusion_tag('messages/display_message.html', takes_context=True)
+@register.inclusion_tag("messages/display_message.html", takes_context=True)
 def display_message(context, message):
     return {
-        'message': message,
-        'hide_toggle_read_unread': context.get('hide_toggle_read_unread', False),
-        'hide_archive_unarchive': context.get('hide_archive_unarchive', False),
-        'list_type': context['list_type']
+        "message": message,
+        "hide_toggle_read_unread": context.get("hide_toggle_read_unread", False),
+        "hide_archive_unarchive": context.get("hide_archive_unarchive", False),
+        "list_type": context["list_type"],
     }
+
+
+@register.filter(name="message_preview_text")
+def message_preview_text(value):
+    if not value:
+        return ""
+    return clean_html(value, ok_tags=[], ok_attributes={})

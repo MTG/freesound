@@ -25,8 +25,7 @@ import time
 
 from django.core.management.base import BaseCommand
 
-
-commands_logger = logging.getLogger('commands')
+commands_logger = logging.getLogger("commands")
 
 
 class LoggingBaseCommand(BaseCommand):
@@ -50,22 +49,22 @@ class LoggingBaseCommand(BaseCommand):
 
     def find_command_name(self):
         for count, arg in enumerate(sys.argv):
-            if 'manage.py' in arg:
+            if "manage.py" in arg:
                 return sys.argv[count + 1]
         return None
 
     def log_start(self, data=None):
-        self.start_time = time.time()
+        self.start_time = time.monotonic()
         self.command_name = self.find_command_name()
         if data is None:
             data = {}
-        data['command'] = self.command_name
-        commands_logger.info(f'Started management command ({json.dumps(data)})')
+        data["command"] = self.command_name
+        commands_logger.info(f"Started management command ({json.dumps(data)})")
 
     def log_end(self, data=None):
         if data is None:
             data = {}
         if self.start_time:
-            data['work_time'] = round(time.time() - self.start_time)
-        data['command'] = self.command_name or self.find_command_name()
-        commands_logger.info(f'Finished management command ({json.dumps(data)})')
+            data["work_time"] = round(time.monotonic() - self.start_time)
+        data["command"] = self.command_name or self.find_command_name()
+        commands_logger.info(f"Finished management command ({json.dumps(data)})")

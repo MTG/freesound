@@ -1,0 +1,81 @@
+name: Freesound Search Tests
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'utils/search/**'
+      - 'freesound/settings.py'
+  pull_request:
+    branches: [ '*' ]
+    paths:
+      - 'utils/search/**'
+      - 'freesound/settings.py'
+
+jobs:
+
+  test-search:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      with:
+        install: true
+        driver: docker
+
+    #- name: Notify workflow starting
+    #  uses: voxmedia/github-action-slack-notify-build@v1
+    #  continue-on-error: true
+    #  if: success()
+    #  id: slack
+    #  with:
+    #    channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
+    #    status: STARTING
+    #    color: warning
+    #  env:
+    #    SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
+
+    - name: Setup
+      run: bash -c 'mkdir -p ./freesound-data/{packs,uploads,avatars} && echo FS_USER_ID_FROM_ENV=$(id -u) > .env && cp freesound/local_settings.example.py freesound/local_settings.py'
+
+    - name: update settings file
+      run: sed -i 's#^DISPLAY_DEBUG_TOOLBAR.*#DISPLAY_DEBUG_TOOLBAR = False#' freesound/local_settings.py
+
+    - name: Login to Docker Hub
+      run: echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+      continue-on-error: true
+
+    - name: Pull docker images
+      run: docker compose -f docker-compose.test.yml pull
+
+    - name: Build images
+      run: docker compose -f docker-compose.test.yml build db search test_runner_search
+
+    - name: Run tests
+      run: docker compose -f docker-compose.test.yml run --rm test_runner_search pytest -m "search_engine"
+
+    #- name: Notify success
+    #  uses: voxmedia/github-action-slack-notify-build@v1
+    #  continue-on-error: true
+    #  if: success()
+    #  with:
+    #    message_id: ${{ steps.slack.outputs.message_id }}
+    #    channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
+    #    status: SUCCESS
+    #    color: good
+    #  env:
+    #    SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
+
+    #- name: Notify failure
+    #  uses: voxmedia/github-action-slack-notify-build@v1
+    #  if: failure()
+    #  with:
+    #    message_id: ${{ steps.slack.outputs.message_id }}
+    #    channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
+    #    status: FAILED
+    #    color: danger
+    #  env:
+    #    SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}

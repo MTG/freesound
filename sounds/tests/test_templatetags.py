@@ -29,8 +29,7 @@ from sounds.models import Sound
 
 
 class DisplaySoundTemplatetagTestCase(TestCase):
-
-    fixtures = ['licenses', 'sounds_with_tags']
+    fixtures = ["licenses", "sounds_with_tags"]
 
     def setUp(self):
         # A sound which has tags
@@ -44,10 +43,14 @@ class DisplaySoundTemplatetagTestCase(TestCase):
         request = HttpRequest()
         request.user = AnonymousUser()
         with self.assertNumQueries(1):
-            Template("{% load display_sound %}{% display_sound sound %}").render(Context({
-                'sound': self.sound.id,
-                'request': request,
-            }))
+            Template("{% load display_sound %}{% display_sound sound %}").render(
+                Context(
+                    {
+                        "sound": self.sound.id,
+                        "request": request,
+                    }
+                )
+            )
             #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
     @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
@@ -58,10 +61,14 @@ class DisplaySoundTemplatetagTestCase(TestCase):
         request = HttpRequest()
         request.user = AnonymousUser()
         with self.assertNumQueries(1):
-            Template("{% load display_sound %}{% display_sound sound %}").render(Context({
-                'sound': self.sound,
-                'request': request,
-            }))
+            Template("{% load display_sound %}{% display_sound sound %}").render(
+                Context(
+                    {
+                        "sound": self.sound,
+                        "request": request,
+                    }
+                )
+            )
             #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
     @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
@@ -74,10 +81,14 @@ class DisplaySoundTemplatetagTestCase(TestCase):
         request = HttpRequest()
         request.user = AnonymousUser()
         with self.assertNumQueries(0):
-            Template("{% load display_sound %}{% display_sound sound %}").render(Context({
-                'sound': self.sound,
-                'request': request,
-            }))
+            Template("{% load display_sound %}{% display_sound sound %}").render(
+                Context(
+                    {
+                        "sound": self.sound,
+                        "request": request,
+                    }
+                )
+            )
             #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
     @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
@@ -88,10 +99,14 @@ class DisplaySoundTemplatetagTestCase(TestCase):
         request = HttpRequest()
         request.user = AnonymousUser()
         with self.assertNumQueries(0):
-            Template("{% load display_sound %}{% display_sound sound %}").render(Context({
-                'sound': 'not_an_integer',
-                'request': request,
-            }))
+            Template("{% load display_sound %}{% display_sound sound %}").render(
+                Context(
+                    {
+                        "sound": "not_an_integer",
+                        "request": request,
+                    }
+                )
+            )
             #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
     @override_settings(TEMPLATES=[settings.TEMPLATES[0]])
@@ -102,15 +117,19 @@ class DisplaySoundTemplatetagTestCase(TestCase):
         request = HttpRequest()
         request.user = AnonymousUser()
         with self.assertNumQueries(1):
-            Template("{% load display_sound %}{% display_sound sound %}").render(Context({
-                'sound': -1,
-                'request': request,
-            }))
+            Template("{% load display_sound %}{% display_sound sound %}").render(
+                Context(
+                    {
+                        "sound": -1,
+                        "request": request,
+                    }
+                )
+            )
             #  If the template could not be rendered, the test will have failed by that time, no need to assert anything
 
     def test_display_sound_wrapper_view(self):
-        response = self.client.get(reverse('sound-display', args=[self.sound.user.username, 921]))  # Non existent ID
+        response = self.client.get(reverse("sound-display", args=[self.sound.user.username, 921]))  # Non existent ID
         self.assertEqual(response.status_code, 404)
 
-        response = self.client.get(reverse('sound-display', args=[self.sound.user.username, self.sound.id]))
+        response = self.client.get(reverse("sound-display", args=[self.sound.user.username, self.sound.id]))
         self.assertEqual(response.status_code, 200)

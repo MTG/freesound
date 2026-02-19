@@ -23,7 +23,9 @@ import math
 from django.conf import settings
 
 
-def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds_index_url=None, forum_index_url=None):
+def get_search_engine(
+    backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds_index_url=None, forum_index_url=None
+) -> "SearchEngineBase":
     """Return SearchEngine class instance to carry out search engine actions
 
     Args:
@@ -34,15 +36,23 @@ def get_search_engine(backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds
     Returns:
         utils.search.SearchEngineBase: search engine backend class instance
     """
-    module_name, class_name = backend_class.rsplit('.', 1)
+    module_name, class_name = backend_class.rsplit(".", 1)
     module = importlib.import_module(module_name)
     return getattr(module, class_name)(sounds_index_url, forum_index_url)
 
 
 class SearchResults:
-
-    def __init__(self, docs=None, num_found=-1, start=-1, num_rows=-1, non_grouped_number_of_results=-1,
-                 facets=None, highlighting=None, q_time=-1):
+    def __init__(
+        self,
+        docs=None,
+        num_found=-1,
+        start=-1,
+        num_rows=-1,
+        non_grouped_number_of_results=-1,
+        facets=None,
+        highlighting=None,
+        q_time=-1,
+    ):
         """
         Class that holds the results of a search query. It must contain the fields defined below.
 
@@ -140,11 +150,10 @@ class SearchResults:
         self.q_time = q_time
 
     def __str__(self):
-        return f'<SearchResults with {self.num_found} results found>'
+        return f"<SearchResults with {self.num_found} results found>"
 
 
 class SearchResultsPaginator:
-
     def __init__(self, search_results, num_per_page):
         """Paginator object for search results which has a similar API to django.core.paginator.Paginator
 
@@ -165,12 +174,12 @@ class SearchResultsPaginator:
         has_next = page_num < self.num_pages
         has_previous = 1 < page_num <= self.num_pages
         return {
-            'object_list': self.results,
-            'has_next': has_next,
-            'has_previous': has_previous,
-            'has_other_pages': has_next or has_previous,
-            'next_page_number': page_num + 1,
-            'previous_page_number': page_num - 1
+            "object_list": self.results,
+            "has_next": has_next,
+            "has_previous": has_previous,
+            "has_other_pages": has_next or has_previous,
+            "next_page_number": page_num + 1,
+            "previous_page_number": page_num - 1,
         }
 
 
@@ -178,23 +187,31 @@ class SearchEngineException(Exception):
     pass
 
 
-class SearchEngineBase:
+class SearchEngineTimeoutException(SearchEngineException):
+    pass
 
-    # Test subclasses of SearchEngineBase with the test_search_engine_backend management command
+
+class SearchEngineBase:
+    solr_base_url = None
+
+    # Test SearchEngineBase with `pytest -m "search_engine" utils/search/backends/test_search_engine_backend.py`
 
     # Sound search related methods
 
-    def add_sounds_to_index(self, sound_objects, fields_to_include=[], update=False):
+    def add_sounds_to_index(self, sound_objects, update=False, include_similarity_vectors=False):
         """Indexes the provided sound objects in the search index
 
         Args:
             sound_objects (list[sounds.models.Sound]): Sound objects of the sounds to index
-            fields_to_include (list[str]): Specific sound fields that will be included in the document to
-                be indexed. If empty, all available sound fields will be included.
-            update (bool): Whether to perform an update of the existing documents in the index or to 
-                completely replace them. An update is useful so that fields not included in the document are 
+            update (bool): Whether to perform an update of the existing documents in the index or to
+                completely replace them. An update is useful so that fields not included in the document are
                 not removed from the index.
+            include_similarity_vectors (bool): Whether to include similarity vectors in the index.
         """
+        raise NotImplementedError
+
+    def update_similarity_vectors_in_index(self, sound_objects):
+        """Create an update document to add only similarity vectors to sounds that already exist in the index"""
         raise NotImplementedError
 
     def remove_sounds_from_index(self, sound_objects_or_ids):
@@ -219,7 +236,7 @@ class SearchEngineBase:
             bool: whether the sound is indexed in the search engine
         """
         raise NotImplementedError
-    
+
     def get_all_sound_ids_from_index(self):
         """Return a list of all sound IDs indexed in the search engine
 
@@ -228,13 +245,26 @@ class SearchEngineBase:
         """
         raise NotImplementedError
 
-    def search_sounds(self, textual_query='', query_fields=None, query_filter='', field_list=['id', 'score'], 
-                      offset=0, current_page=None, num_sounds=settings.SOUNDS_PER_PAGE, 
-                      sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
-                      group_by_pack=False, num_sounds_per_pack_group=1, facets=None, only_sounds_with_pack=False, 
-                      only_sounds_within_ids=False, group_counts_as_one_in_facets=False, 
-                      similar_to=None, similar_to_max_num_sounds=settings.SEARCH_ENGINE_NUM_SIMILAR_SOUNDS_PER_QUERY, 
-                      similar_to_analyzer=settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER):
+    def search_sounds(
+        self,
+        textual_query="",
+        query_fields=None,
+        query_filter="",
+        field_list=None,
+        offset=0,
+        current_page=None,
+        num_sounds=settings.SOUNDS_PER_PAGE,
+        sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+        group_by_pack=False,
+        num_sounds_per_pack_group=1,
+        facets=None,
+        only_sounds_with_pack=False,
+        only_sounds_within_ids=False,
+        group_counts_as_one_in_facets=False,
+        similar_to=None,
+        similar_to_min_similarity=settings.SIMILARITY_MIN_THRESHOLD,
+        similar_to_similarity_space=settings.SIMILARITY_SPACE_DEFAULT,
+    ):
         """Search for sounds that match specific criteria and return them in a SearchResults object
 
         Args:
@@ -246,7 +276,7 @@ class SearchEngineBase:
                     query_fields = {settings.SEARCH_SOUNDS_FIELD_ID:1 , settings.SEARCH_SOUNDS_FIELD_USER_NAME: 4}
             query_filter (str, optional): filter expression following lucene filter syntax
             field_list (List[str], optional): list of fields to return by the search engine. Typically we're only interested
-                in sound IDs because we don't use data form the search engine to display sounds, but in some cases it can 
+                in sound IDs because we don't use data form the search engine to display sounds, but in some cases it can
                 be necessary to return further data.
             offset (int, optional): offset for the returned results
             current_page (int, optional): alternative way to set offset using page numbers. Using current_page will
@@ -254,9 +284,9 @@ class SearchEngineBase:
             num_sounds (int, optional): number of sounds to return
             sort (str, optional): sorting criteria. should be one of settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB
             group_by_pack (bool, optional): whether the search results should be grouped by sound pack. When grouped
-                by pack, only "num_sounds_per_pack_group" sounds per pack will be returned, together with additional 
+                by pack, only "num_sounds_per_pack_group" sounds per pack will be returned, together with additional
                 information about the number of other sounds in the pack that would be i the same group.
-            num_sounds_per_pack_group (int, optional): number of sounds to return per pack group
+            num_sounds_per_pack_group (int, optional): number of sounds to return per pack group (minimum one)
             facets (Dict{str: Dict}, optional): information about facets to be returned. Can be None if no faceting
                 information is required. Facets should be specified as a dictionary with the "db" field names to be
                 included in the faceting as keys, and a dictionary as values with optional specific parameters for
@@ -275,14 +305,14 @@ class SearchEngineBase:
                 large groups in facets. We use it for computing the main tag cloud and avoiding a large packs of sounds
                 with the same tags to largely influence the general tag cloud (only one sound of the pack will be
                 counted)
-            similar_to (int or List[float], optional): sound ID or similarity vector to be used as target for similarity 
-                search. Note that when this parameter is passed, some of the other parameters will be ignored 
-                ('textual_query', 'facets', 'group_by_pack', 'num_sounds_per_pack_group', 'group_counts_as_one_in_facets'). 
+            similar_to (int or List[float], optional): sound ID or similarity vector to be used as target for similarity
+                search. Note that when this parameter is passed, some of the other parameters will be ignored
+                ('textual_query', 'facets', 'group_by_pack', 'num_sounds_per_pack_group', 'group_counts_as_one_in_facets').
                 'query_filter' should still be usable, although this remains to be thoroughly tested.
-            similar_to_max_num_sounds (int, optional): max number of sounds to return in a similarity search query.
-            similar_to_analyzer (str, optional): analyzer name from which to select similarity vectors for similarity search.
-                It defaults to settings.SEARCH_ENGINE_DEFAULT_SIMILARITY_ANALYZER, but it could be change to something else
-                if we want to use a different type of similarity vectors for a similarity search query.
+            similar_to_min_similarity (float, optional): min similarity score to consider a sound as similar.
+            similar_to_similarity_space (str, optional): similarity space from which to select similarity vectors for
+                similarity search. It defaults to settings.SIMILARITY_SPACE_DEFAULT, but it can be changed to something
+                else if we want to use a different type of similarity vectors for a similarity search query.
 
         Returns:
             SearchResults: SearchResults object containing the results of the query
@@ -298,19 +328,30 @@ class SearchEngineBase:
             int: the ID of the selected random sound (or 0 if there were errors)
         """
         raise NotImplementedError
-    
-    def get_num_sim_vectors_indexed_per_analyzer(self):
-        """Returns the number of similarity vectors indexed in the search engine for each 
-        analyzer. Because there might be several similarity vectors per sound, we distinguish 
-        between the total number of similarity vectors and the total number of sounds per analyzer.
+
+    def get_num_sim_vectors_indexed_per_similarity_space(self):
+        """Returns the number of similarity vectors indexed in the search engine for each
+        similarity space. Because there might be several similarity vectors per sound, we distinguish
+        between the total number of similarity vectors and the total number of sounds per similarity space.
 
         Returns:
-            dict: dictionary with the number of similarity vectors and number of sounds indexed per analyzer.
-                E.g.: {'fsd-sinet_v1': {'num_sounds': 0, 'num_vectors': 0}, 
-                       'fs-essentia-extractor_legacy': {'num_sounds': 15876, 'num_vectors': 25448}}
+            dict: dictionary with the number of similarity vectors and number of sounds indexed per similarity space.
+                E.g.: {'freesound_classic': {'num_sounds': 0, 'num_vectors': 0},
+                       'laion_clap': {'num_sounds': 15876, 'num_vectors': 25448}}
         """
         raise NotImplementedError
 
+    def get_all_sim_vector_document_ids_per_similarity_space(self):
+        """Returns indexed Solr document IDs for all similarity vector documents for each similarity space.
+        Solr document IDs for similarity vector documents have the format:
+            "simvec_<similarity_space>_<sound_id>"
+
+        Returns:
+            dict: dictionary with a list of Solr document IDs per similarity space.
+                E.g.: {'freesound_classic': [693610/similarity_vectors#0, 693610/similarity_vectors#1, ...],
+                       'laion_clap': [1234/similarity_vectors#0, 1235/similarity_vectors#0, ...]}
+        """
+        raise NotImplementedError
 
     # Forum search related methods
 
@@ -345,9 +386,16 @@ class SearchEngineBase:
         """
         raise NotImplementedError
 
-
-    def search_forum_posts(self, textual_query='', query_filter='', offset=0, sort=None, current_page=None,
-                           num_posts=settings.FORUM_POSTS_PER_PAGE, group_by_thread=True):
+    def search_forum_posts(
+        self,
+        textual_query="",
+        query_filter="",
+        offset=0,
+        sort=None,
+        current_page=None,
+        num_posts=settings.FORUM_POSTS_PER_PAGE,
+        group_by_thread=True,
+    ):
         """Search for forum posts that match specific criteria and return them in a SearchResults object
 
         Args:
@@ -368,7 +416,6 @@ class SearchEngineBase:
 
         """
         raise NotImplementedError
-
 
     # Tag clouds methods
 

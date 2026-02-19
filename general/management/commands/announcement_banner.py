@@ -1,4 +1,33 @@
-"""Custom management command to set/clear announcement_cache for front page announcements banner.
+#
+# Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
+#
+# Freesound is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# Freesound is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Authors:
+#     See AUTHORS file.
+#
+
+from django.conf import settings
+from django.core.cache import caches
+from django.core.management.base import BaseCommand
+from django.template.loader import render_to_string
+
+cache_persistent = caches["persistent"]
+
+
+class Command(BaseCommand):
+    help = """Custom management command to set/clear announcement_cache for front page announcements banner.
 
 The announcement banner is a simple HTML snippet cached in the Django cache. It is formed by a title and a text
 that are passed as arguments to the command. The command can be used to set the cache, clear it, or show the current
@@ -12,15 +41,6 @@ Example usage:
     python manage.py announcement_banner show
 
 """
-from django.conf import settings
-from django.core.cache import caches
-from django.core.management.base import BaseCommand
-from django.template.loader import render_to_string
-
-cache_persistent = caches['persistent']
-
-class Command(BaseCommand):
-    help = 'Set/clear "announcement_cache" for front page announcements banner'
 
     def add_arguments(self, parser):
         subparsers = parser.add_subparsers(title="action", dest="action", required=True)

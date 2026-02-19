@@ -18,10 +18,14 @@
 #     See AUTHORS file.
 #
 
-from django.urls import re_path
+from django.urls import path
 
 import ratings.views
 
 urlpatterns = [
-    re_path(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/rate/(?P<rating>\d)/$', ratings.views.rate_sound, name="sound-rating-add"),
+    path(
+        "people/<str:username>/sounds/<int:sound_id>/rate/<int:rating>/",
+        ratings.views.rate_sound,
+        name="sound-rating-add",
+    ),
 ]

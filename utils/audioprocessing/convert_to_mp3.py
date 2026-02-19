@@ -21,6 +21,7 @@
 #
 
 import sys
+
 from .processing import convert_to_mp3
 
 for filename in sys.argv[1:]:

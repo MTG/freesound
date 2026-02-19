@@ -76,7 +76,7 @@
     &.active {
       color: $black;
       background-color: $background-textarea;
-    }  
+    }
 
     &:hover {
       color: $red;
@@ -86,5 +86,5 @@
 }
 
 select {
-  display: none;  /* Make "original" select's globally invisible so they don't show up before bw-select-forum is created */
+  display: none; /* Make "original" select's globally invisible so they don't show up before bw-select-forum is created */
 }

@@ -5,7 +5,7 @@
 {% block salutation %}{{user_to.username}}{% endblock %}
 
 {% block body %}
-The ticket "{{ ticket.title }}" has been updated.
+The ticket "{{ ticket.title|safe }}" has been updated.
 
 To see the update see the following link:
 

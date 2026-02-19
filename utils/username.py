@@ -20,17 +20,18 @@
 
 
 from django.contrib.auth.models import User
-from accounts.models import OldUsername
 from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse
+
+from accounts.models import OldUsername
 
 
 def get_user_from_username_or_oldusername(username):
     # Helper to get the user from a username that could have changed
     user = None
     try:
-        user = User.objects.select_related('profile').get(username__iexact=username)
+        user = User.objects.select_related("profile").get(username__iexact=username)
     except User.DoesNotExist:
         try:
             user = OldUsername.objects.get(username__iexact=username).user
@@ -61,16 +62,16 @@ def redirect_if_old_username(func):
     """
 
     def inner(request, *args, **kwargs):
-        if hasattr(request, 'parameter_user'):
+        if hasattr(request, "parameter_user"):
             # If request.parameter_user already exists because it was added by some other decorator, reuse it
-            user = request.parameter_user 
+            user = request.parameter_user
         else:
             # Otherwise get the corresponding user (considering OldUsernames) object or raise 404
-            user = get_user_or_404(kwargs['username'])
+            user = get_user_or_404(kwargs["username"])
 
-        if user and kwargs['username'] != user.username:
+        if user and kwargs["username"] != user.username:
             # If the the username is an old username of the user, do redirect
-            kwargs['username'] = user.username
+            kwargs["username"] = user.username
 
             return redirect(reverse(inner, args=args, kwargs=kwargs), permanent=True)
 
@@ -89,12 +90,12 @@ def raise_404_if_user_is_deleted(func):
     """
 
     def inner(request, *args, **kwargs):
-        if hasattr(request, 'parameter_user'):
+        if hasattr(request, "parameter_user"):
             # If request.parameter_user already exists because it was added by some other decorator, reuse it
             user = request.parameter_user
         else:
             # Otherwise get the corresponding user object (considering OldUsernames) or raise 404
-            user = get_user_or_404(kwargs['username'])
+            user = get_user_or_404(kwargs["username"])
 
         if user is None or user.profile.is_anonymized_user:
             raise Http404

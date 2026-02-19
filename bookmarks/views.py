@@ -22,17 +22,17 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Exists, OuterRef
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from bookmarks.forms import BookmarkForm, BookmarkCategoryForm
+from bookmarks.forms import BookmarkCategoryForm, BookmarkForm
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
 from utils.downloads import download_sounds
 from utils.pagination import paginate
-from utils.username import redirect_if_old_username, get_parameter_user_or_404, raise_404_if_user_is_deleted
+from utils.username import get_parameter_user_or_404, raise_404_if_user_is_deleted, redirect_if_old_username
 
 
 @login_required
@@ -46,18 +46,21 @@ def bookmarks(request, category_id=None):
     else:
         category = get_object_or_404(BookmarkCategory, id=category_id, user=user)
         bookmarked_sounds = category.bookmarks.all()
-    bookmark_categories = BookmarkCategory.objects.filter(user=user).annotate(num_bookmarks=Count('bookmarks'))
-    tvars = {'user': user,
-             'is_owner': is_owner,
-             'n_uncat': n_uncat,
-             'category': category,
-             'bookmark_categories': bookmark_categories}
-    
+    bookmark_categories = BookmarkCategory.objects.filter(user=user).annotate(num_bookmarks=Count("bookmarks"))
+    tvars = {
+        "user": user,
+        "is_owner": is_owner,
+        "n_uncat": n_uncat,
+        "category": category,
+        "bookmark_categories": bookmark_categories,
+    }
+
     paginator = paginate(request, bookmarked_sounds, settings.BOOKMARKS_PER_PAGE)
-    page_sounds = Sound.objects.ordered_ids([bookmark.sound_id for bookmark in paginator['page'].object_list])
+    page_sounds = Sound.objects.ordered_ids([bookmark.sound_id for bookmark in paginator["page"].object_list])
     tvars.update(paginator)
-    tvars['page_bookmarks_and_sound_objects'] = zip(paginator['page'].object_list, page_sounds)
-    return render(request, 'bookmarks/bookmarks.html', tvars)
+    tvars["page_bookmarks_and_sound_objects"] = zip(paginator["page"].object_list, page_sounds)
+    return render(request, "bookmarks/bookmarks.html", tvars)
+
 
 @redirect_if_old_username
 @raise_404_if_user_is_deleted
@@ -67,9 +70,9 @@ def bookmarks_for_user(request, username, category_id=None):
     if is_owner:
         # If accessing own bookmarks using the people/xx/bookmarks URL, redirect to the /home/bookmarks URL
         if category_id:
-            return HttpResponseRedirect(reverse('bookmarks-category', args=[category_id]))
+            return HttpResponseRedirect(reverse("bookmarks-category", args=[category_id]))
         else:
-            return HttpResponseRedirect(reverse('bookmarks'))
+            return HttpResponseRedirect(reverse("bookmarks"))
     else:
         # We only make bookmarks available to bookmark owners (bookmarks are not public)
         raise Http404
@@ -80,6 +83,11 @@ def bookmarks_for_user(request, username, category_id=None):
 def delete_bookmark_category(request, category_id):
     if request.method == "POST":
         category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
+        # Remove only the bookmarks that would become duplicates after the category disappears.
+        uncategorized_exists = Bookmark.objects.filter(
+            user=request.user, category__isnull=True, sound_id=OuterRef("sound_id")
+        )
+        Bookmark.objects.filter(category=category, user=request.user).filter(Exists(uncategorized_exists)).delete()
         msg = f"""Removed bookmark category "{category.name}"."""
         category.delete()
         messages.add_message(request, messages.WARNING, msg)
@@ -91,13 +99,16 @@ def delete_bookmark_category(request, category_id):
     else:
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
-@login_required    
+
+@login_required
 @transaction.atomic()
 def download_bookmark_category(request, category_id):
     category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
     bookmarked_sounds = Bookmark.objects.filter(category_id=category.id).values("sound_id")
-    sounds_list = Sound.objects.filter(id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK").select_related('user','license')
-    licenses_url = (reverse('category-licenses', args=[category_id]))
+    sounds_list = Sound.objects.filter(
+        id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK"
+    ).select_related("user", "license")
+    licenses_url = reverse("category-licenses", args=[category_id])
     licenses_content = category.get_attribution(sound_qs=sounds_list)
     # NOTE: unlike pack downloads, here we are not doing any cache check to avoid consecutive downloads
     return download_sounds(licenses_url, licenses_content, sounds_list, category.download_filename)
@@ -112,51 +123,51 @@ def bookmark_category_licenses(request, category_id):
 @login_required
 @transaction.atomic()
 def edit_bookmark_category(request, category_id):
-
-    if not request.GET.get('ajax'):
+    if not request.GET.get("ajax"):
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
-    
+
     category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
-    
+
     if request.method == "POST":
         edit_form = BookmarkCategoryForm(request.POST, instance=category)
-        
-        if edit_form.is_valid():      
+
+        if edit_form.is_valid():
             category.name = edit_form.cleaned_data["name"]
             category.save()
-            return JsonResponse({"success":True})
-        
-    else:
-        initial = {"name":category.name}
-        edit_form = BookmarkCategoryForm(initial=initial)
-   
-    tvars = {"category": category,
-            "form": edit_form}
-    return render(request, 'bookmarks/modal_edit_bookmark_category.html', tvars)
+            return JsonResponse({"success": True})
 
-    
+    else:
+        initial = {"name": category.name}
+        edit_form = BookmarkCategoryForm(initial=initial)
+
+    tvars = {"category": category, "form": edit_form}
+    return render(request, "bookmarks/modal_edit_bookmark_category.html", tvars)
+
+
 @login_required
 @transaction.atomic()
 def add_bookmark(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
-    msg_to_return = ''
-    if request.method == 'POST':
+    msg_to_return = ""
+    if request.method == "POST":
         user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
-        form = BookmarkForm(request.POST,
-                         user_bookmark_categories=user_bookmark_categories,
-                         sound_id=sound_id,
-                         user_saving_bookmark=request.user)
+        form = BookmarkForm(
+            request.POST,
+            user_bookmark_categories=user_bookmark_categories,
+            sound_id=sound_id,
+            user_saving_bookmark=request.user,
+        )
         if form.is_valid():
             saved_bookmark = form.save()
             msg_to_return = f'Bookmark created with name "{saved_bookmark.sound_name}"'
             if saved_bookmark.category:
                 msg_to_return += f' under category "{saved_bookmark.category.name}".'
             else:
-                msg_to_return += '.'
+                msg_to_return += "."
         else:
             raise Exception()
 
-    return JsonResponse({'message': msg_to_return})
+    return JsonResponse({"message": msg_to_return})
 
 
 @login_required
@@ -171,40 +182,47 @@ def delete_bookmark(request, bookmark_id):
         if next:
             return HttpResponseRedirect(next + "?page=" + str(page))
         else:
-            return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]) + "?page=" + str(page))
+            return HttpResponseRedirect(
+                reverse("bookmarks-for-user", args=[request.user.username]) + "?page=" + str(page)
+            )
     else:
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
 
 def get_form_for_sound(request, sound_id):
     if not request.user.is_authenticated:
-        return render(request, 'bookmarks/modal_bookmark_sound.html', {})
+        return render(request, "bookmarks/modal_bookmark_sound.html", {})
 
     sound = Sound.objects.get(id=sound_id)
     try:
-        last_user_bookmark = \
-            Bookmark.objects.filter(user=request.user).order_by('-created')[0]
+        last_user_bookmark = Bookmark.objects.filter(user=request.user).order_by("-created")[0]
         # If user has a previous bookmark, use the same category by default (or use none if no category used in last
         # bookmark)
         last_category = last_user_bookmark.category
     except IndexError:
         last_category = None
     user_bookmark_categories = BookmarkCategory.objects.filter(user=request.user)
-    form = BookmarkForm(initial={'category': last_category.id if last_category else BookmarkForm.NO_CATEGORY_CHOICE_VALUE},
-                     prefix=sound.id,
-                     user_bookmark_categories=user_bookmark_categories)
-    categories_already_containing_sound = BookmarkCategory.objects.filter(user=request.user,
-                                                                          bookmarks__sound=sound).distinct()
-    sound_has_bookmark_without_category = Bookmark.objects.filter(user=request.user, sound=sound, category=None).exists()
-    add_bookmark_url = '/'.join(
-        request.build_absolute_uri(reverse('add-bookmark', args=[sound_id])).split('/')[:-2]) + '/'
+    form = BookmarkForm(
+        initial={"category": last_category.id if last_category else BookmarkForm.NO_CATEGORY_CHOICE_VALUE},
+        prefix=sound.id,
+        user_bookmark_categories=user_bookmark_categories,
+    )
+    categories_already_containing_sound = BookmarkCategory.objects.filter(
+        user=request.user, bookmarks__sound=sound
+    ).distinct()
+    sound_has_bookmark_without_category = Bookmark.objects.filter(
+        user=request.user, sound=sound, category=None
+    ).exists()
+    add_bookmark_url = (
+        "/".join(request.build_absolute_uri(reverse("add-bookmark", args=[sound_id])).split("/")[:-2]) + "/"
+    )
     tvars = {
-        'bookmarks': Bookmark.objects.filter(user=request.user, sound=sound).exists(),
-        'sound_id': sound.id,
-        'sound_is_moderated_and_processed_ok': sound.moderated_and_processed_ok,
-        'form': form,
-        'sound_has_bookmark_without_category': sound_has_bookmark_without_category,
-        'categories_aready_containing_sound': categories_already_containing_sound,
-        'add_bookmark_url': add_bookmark_url
+        "bookmarks": Bookmark.objects.filter(user=request.user, sound=sound).exists(),
+        "sound_id": sound.id,
+        "sound_is_moderated_and_processed_ok": sound.moderated_and_processed_ok,
+        "form": form,
+        "sound_has_bookmark_without_category": sound_has_bookmark_without_category,
+        "categories_aready_containing_sound": categories_already_containing_sound,
+        "add_bookmark_url": add_bookmark_url,
     }
-    return render(request, 'bookmarks/modal_bookmark_sound.html', tvars)
+    return render(request, "bookmarks/modal_bookmark_sound.html", tvars)

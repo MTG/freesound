@@ -693,10 +693,7 @@ class Profile(models.Model):
             return None
 
     def set_ai_preference(self, preference_value):
-        num_updated = AIPreference.objects.update(user=self.user, preference=preference_value)
-        if num_updated == 0:
-            # If no AIPreference object was updated, it means no AIPreference object exister for that user. Create a new one.
-            AIPreference.objects.create(user=self.user, preference=preference_value)
+        AIPreference.objects.update_or_create(user=self.user, defaults={"preference": preference_value})
 
     class Meta:
         ordering = ("-user__date_joined",)

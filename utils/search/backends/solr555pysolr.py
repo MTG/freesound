@@ -320,6 +320,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
         document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
 
+        # Index uploader AI preference
+        document["ai_preference"] = sound.user.profile.get_ai_preference()
+
         # Index consolidated audio descriptors
         descriptors_to_index = {}
         descriptors_data = sound.get_consolidated_analysis_data()

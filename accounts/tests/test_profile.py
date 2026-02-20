@@ -241,6 +241,22 @@ class UserEditProfile(TestCase):
         self.assertEqual(user.profile.get_ai_preference(), new_preference)
         self.assertEqual(Sound.objects.filter(user=user, is_index_dirty=True).count(), len(sounds))
 
+        # Now that there's an AI preference object already existing, try to change preference again and check that it works as expected
+        even_newer_preference = "freesound-cc-recommendation"
+        self.client.post(
+            "/home/edit/",
+            {
+                "profile-home_page": "http://www.example.com/",
+                "profile-username": "testuser",
+                "profile-about": "About test text",
+                "profile-signature": "Signature test text",
+                "profile-ui_theme_preference": "d",
+                "profile-ai_sound_usage_preference": even_newer_preference,
+            },
+        )
+        user = User.objects.select_related("profile").get(username="testuser")
+        self.assertEqual(user.profile.get_ai_preference(), even_newer_preference)
+
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")
         user = User.objects.create_user("testuser")

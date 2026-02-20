@@ -450,6 +450,10 @@ def edit(request):
 
     if is_selected("profile"):
         profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
+        # Save a couple of variables that we will need later to check if they have changed and we need
+        # to mark user sounds as index dirty or show some messages to the user
+        old_ai_preference = str(profile.get_ai_preference(default_if_not_set=False))
+        old_username = request.user.username
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
             # Update AI sound usage preference, only if field present in the form
@@ -467,6 +471,11 @@ def edit(request):
                 )
                 request.user.refresh_from_db(fields=["username"])
             else:
+                profile.refresh_from_db()  # Refresh profile to get updated ai preference when calling get_ai_preference
+                if old_username != request.user.username or old_ai_preference != profile.get_ai_preference(
+                    default_if_not_set=False
+                ):
+                    Sound.objects.filter(user=request.user).update(is_index_dirty=True)
                 invalidate_user_template_caches(request.user.id)
                 profile.save()
                 msg_txt = "Your profile has been updated correctly."

@@ -712,17 +712,17 @@ class AIPreference(models.Model):
     date_updated = models.DateTimeField(auto_now=True)
     AI_PREFERENCE_CHOICES = (
         (
-            "fr",
+            "freesound-cc-recommendation",
             "My sounds are used following Freesound's recommendations for interpreting Creative Commons licenses in a generative AI training context",
         ),
-        ("o", "My sounds are used to train open models that are freely available to the public"),
+        ("open-models", "My sounds are used to train open models that are freely available to the public"),
         (
-            "on",
+            "open-noncommercial-models",
             "My sounds are used to train open models that are freely available to the public and that do not allow a commercial use",
         ),
     )
-    DEFAULT_AI_PREFERENCE = "fr"
-    preference = models.CharField(max_length=2, choices=AI_PREFERENCE_CHOICES, default=DEFAULT_AI_PREFERENCE)
+    DEFAULT_AI_PREFERENCE = "freesound-cc-recommendation"
+    preference = models.CharField(choices=AI_PREFERENCE_CHOICES, default=DEFAULT_AI_PREFERENCE)
 
 
 class UserFlag(models.Model):

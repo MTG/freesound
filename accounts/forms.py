@@ -370,8 +370,8 @@ class ProfileForm(forms.ModelForm):
         help_text=mark_safe(
             '<div class="v-spacing-top-3 text-light-grey">Use the setting above to express a '
             "preference regarding the usage of your sounds for training generative Artificial Intelligence models. "
-            "This preference <b>applies to all your uploaded sounds</b>. Please, read the <a href="
-            "><i>Usage of my sounds for "
+            'This preference <b>applies to all your uploaded sounds</b>. Please, read the <a href="/help/faq/#can-my-sounds-be-used-to-train-artificial-intelligence-ai-models">'
+            "<i>Usage of my sounds for "
             "training generative AI models</i> help section</a> to learn more about the details and implications of the available options.</div> "
         ),
     )

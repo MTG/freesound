@@ -471,13 +471,15 @@ def edit(request):
                 )
                 request.user.refresh_from_db(fields=["username"])
             else:
-                profile.refresh_from_db()  # Refresh profile to get updated ai preference when calling get_ai_preference
+                profile.save()
+
+                # profile.refresh_from_db()  # Refresh profile to get updated ai preference when calling get_ai_preference
                 if old_username != request.user.username or old_ai_preference != profile.get_ai_preference(
                     default_if_not_set=False
                 ):
                     Sound.objects.filter(user=request.user).update(is_index_dirty=True)
                 invalidate_user_template_caches(request.user.id)
-                profile.save()
+
                 msg_txt = "Your profile has been updated correctly."
                 if old_sound_signature != profile.sound_signature:
                     msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
@@ -492,6 +494,7 @@ def edit(request):
             if image_form.cleaned_data["remove"]:
                 profile.has_avatar = False
                 profile.save()
+
             else:
                 handle_uploaded_image(profile, image_form.cleaned_data["file"])
                 profile.has_avatar = True

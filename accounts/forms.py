@@ -350,7 +350,6 @@ class ProfileForm(forms.ModelForm):
     not_shown_in_online_users_list = forms.BooleanField(
         help_text='Hide from "users currently online" list in the People page', label="", required=False
     )
-
     allow_simultaneous_playback = forms.BooleanField(
         label="Allow simultaneous audio playback",
         required=False,

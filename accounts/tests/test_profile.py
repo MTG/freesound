@@ -36,11 +36,11 @@ from django.utils.http import int_to_base36
 
 import accounts.models
 from accounts.management.commands.process_email_bounces import decode_idna_email, process_message
-from accounts.models import EmailBounce, EmailPreferenceType, UserEmailSetting
+from accounts.models import AIPreference, EmailBounce, EmailPreferenceType, UserEmailSetting
 from accounts.views import handle_uploaded_image
 from forum.models import Forum, Post, Thread
 from geotags.models import GeoTag
-from sounds.models import Download, Pack, PackDownload
+from sounds.models import Download, Pack, PackDownload, Sound
 from tags.models import SoundTag
 from utils.mail import send_mail
 from utils.test_helpers import create_user_and_sounds, override_avatars_path_with_temp_directory
@@ -138,7 +138,7 @@ class ProfileGetLastLatlongTest(TestCase):
 
 
 class UserEditProfile(TestCase):
-    fixtures = ["email_preference_type"]
+    fixtures = ["email_preference_type", "licenses"]
 
     @override_avatars_path_with_temp_directory
     def test_handle_uploaded_image(self):
@@ -157,7 +157,7 @@ class UserEditProfile(TestCase):
     def test_edit_user_profile(self):
         user = User.objects.create_user("testuser")
         self.client.force_login(user)
-        resp = self.client.post(
+        self.client.post(
             "/home/edit/",
             {
                 "profile-home_page": "http://www.example.com/",
@@ -205,6 +205,41 @@ class UserEditProfile(TestCase):
         )
         user.refresh_from_db()
         self.assertEqual(user.old_usernames.count(), settings.USERNAME_CHANGE_MAX_TIMES)
+
+    def test_edit_user_profile_ai_preference(self):
+        # Create a user that has some sounds
+        user, _, sounds = create_user_and_sounds(num_sounds=3, processing_state="OK", moderation_state="OK")
+        for sound in sounds:
+            sound.is_index_dirty = False
+            sound.save()
+        user.profile.num_sounds = len(sounds)
+        user.profile.save()
+
+        # Check that user does not start with any preference set
+        self.assertEqual(user.profile.get_ai_preference(default_if_not_set=False), None)
+
+        # Check that "get_ai_preference" returns the default one when no preference is set and default_if_not_set is True (default)
+        self.assertEqual(user.profile.get_ai_preference(), AIPreference.DEFAULT_AI_PREFERENCE)
+
+        # Now user edits preference in profile page
+        self.client.force_login(user)
+        new_preference = "open-models"
+        self.client.post(
+            "/home/edit/",
+            {
+                "profile-home_page": "http://www.example.com/",
+                "profile-username": "testuser",
+                "profile-about": "About test text",
+                "profile-signature": "Signature test text",
+                "profile-ui_theme_preference": "d",
+                "profile-ai_sound_usage_preference": new_preference,
+            },
+        )
+
+        # Check that new preference is set and that sounds were marked as dirty
+        user = User.objects.select_related("profile").get(username="testuser")
+        self.assertEqual(user.profile.get_ai_preference(), new_preference)
+        self.assertEqual(Sound.objects.filter(user=user, is_index_dirty=True).count(), len(sounds))
 
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")

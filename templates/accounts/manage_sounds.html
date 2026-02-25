@@ -129,6 +129,13 @@
     </div>
     <div class="col-lg-4 col-extra-left-padding-large-md d-lg-block">
         <div class="bw-sticky-top">
+            {% if user_has_ai_preference_unset %}
+                <div class="v-spacing-5 text-blue">
+                    {% bw_icon 'notification' %} You haven't set your preference regarding the usage of your sounds for training generative AI models.
+                    While no preference is set, the <b>default option will be used</b>.
+                    To disable this warning, please set your preference in your <a href="{% url 'accounts-edit' %}#ai-section" class="bw-link--black">account settings page</a> and <b>save profile settings</b>.
+                </div>
+            {% endif %}
             {% if tab == 'published' or tab == 'pending_moderation' %}
                 <form action="." method="post">{% csrf_token %}
                     <input type="hidden" name="object-ids" value="">

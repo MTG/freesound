@@ -450,8 +450,16 @@ def edit(request):
 
     if is_selected("profile"):
         profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
+        # Save a couple of variables that we will need later to check if they have changed and we need
+        # to mark user sounds as index dirty or show some messages to the user
+        old_ai_preference = str(profile.get_ai_preference(default_if_not_set=False))
+        old_username = request.user.username
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
+            # Update AI sound usage preference, only if field present in the form
+            if "ai_sound_usage_preference" in profile_form.cleaned_data:
+                profile.set_ai_preference(profile_form.cleaned_data["ai_sound_usage_preference"])
+
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data["username"]
             try:
@@ -463,8 +471,15 @@ def edit(request):
                 )
                 request.user.refresh_from_db(fields=["username"])
             else:
-                invalidate_user_template_caches(request.user.id)
                 profile.save()
+
+                # profile.refresh_from_db()  # Refresh profile to get updated ai preference when calling get_ai_preference
+                if old_username != request.user.username or old_ai_preference != profile.get_ai_preference(
+                    default_if_not_set=False
+                ):
+                    Sound.objects.filter(user=request.user).update(is_index_dirty=True)
+                invalidate_user_template_caches(request.user.id)
+
                 msg_txt = "Your profile has been updated correctly."
                 if old_sound_signature != profile.sound_signature:
                     msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
@@ -479,6 +494,7 @@ def edit(request):
             if image_form.cleaned_data["remove"]:
                 profile.has_avatar = False
                 profile.save()
+
             else:
                 handle_uploaded_image(profile, image_form.cleaned_data["file"])
                 profile.has_avatar = True
@@ -614,6 +630,7 @@ def manage_sounds(request, tab):
         "sounds_processing_count": sounds_processing_count,
         "sounds_pending_description_count": sounds_pending_description_count,
         "packs_count": packs_count,
+        "user_has_ai_preference_unset": request.user.profile.get_ai_preference(default_if_not_set=False) is None,
     }
 
     # Then do dedicated processing for each tab

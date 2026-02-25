@@ -440,7 +440,9 @@ class SoundManager(models.Manager):
             sound=OuterRef("id"), analyzer=default_similarity_space_analyzer, analysis_status="OK"
         )
 
-        qs = self.select_related("user", "user__profile", "license", "ticket", "pack", "geotag").annotate(
+        qs = self.select_related(
+            "user", "user__profile", "user__ai_preference", "license", "ticket", "pack", "geotag"
+        ).annotate(
             username=F("user__username"),
             pack_name=F("pack__name"),
             remixgroup_id=F("remix_group__id"),

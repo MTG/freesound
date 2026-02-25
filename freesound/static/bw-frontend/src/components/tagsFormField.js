@@ -126,6 +126,14 @@ const allowedTagCharactersTestRegex = new RegExp('^[a-zA-Z0-9-]$');
 const notAlphanumericDashOrSpaceRegex = new RegExp('[^a-zA-Z0-9- ]', 'g');
 const multiDashesRegex = new RegExp('-+', 'g');
 
+
+const tagAlreadtyExistsInCurrentTagsOfInputElement = (inputElement, tagToCheck) => {
+  const currentTagsStr = inputElement.parentNode.dataset.currentTags;
+  const currentTagsArray = currentTagsStr.split(' ');
+  return currentTagsArray.includes(tagToCheck);
+}
+
+
 const updateTags = (inputElement, newTagsStr) => {
   const inputWrapperElement = inputElement.parentNode;
   const tagsHiddenInput =
@@ -186,6 +194,8 @@ const prepareTagsFormFields = container => {
       }
     });
 
+    
+
     inputElement.addEventListener('keydown', evt => {
       if (evt.key == 'Backspace' && inputElement.value.length == 0) {
         // Backspace can only be detected in "keydown" events
@@ -235,6 +245,16 @@ const prepareTagsFormFields = container => {
         inputElement.value = '';
         updateTags(inputElement, newTagsStr);
       }, 200);
+    });
+
+    // Add click event listeners to the "add tag buttons" (if any). When clicked, these buttons will automatically add the tag to tge list
+    [...tagsFieldElement.getElementsByClassName('add-tag-button')].forEach(button => {
+        button.addEventListener('click', evt => {
+          const tag = button.innerText  
+          if (!tagAlreadtyExistsInCurrentTagsOfInputElement(inputElement, tag)) {
+            updateTags(inputElement, tag);
+          } 
+        });
     });
   });
 };

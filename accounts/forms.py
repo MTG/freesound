@@ -39,7 +39,7 @@ from django.utils.safestring import mark_safe
 from django_recaptcha.fields import ReCaptchaField
 from multiupload_plus.fields import MultiFileField
 
-from accounts.models import DeletedUser, EmailPreferenceType, OldUsername, Profile
+from accounts.models import AIPreference, DeletedUser, EmailPreferenceType, OldUsername, Profile
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import HtmlCleaningCharField, HtmlCleaningCharFieldWithCenterTag, filename_has_valid_extension
 from utils.spam import is_spam
@@ -350,7 +350,6 @@ class ProfileForm(forms.ModelForm):
     not_shown_in_online_users_list = forms.BooleanField(
         help_text='Hide from "users currently online" list in the People page', label="", required=False
     )
-
     allow_simultaneous_playback = forms.BooleanField(
         label="Allow simultaneous audio playback",
         required=False,
@@ -361,10 +360,30 @@ class ProfileForm(forms.ModelForm):
         required=False,
         widget=forms.CheckboxInput(attrs={"class": "bw-checkbox"}),
     )
+    ai_sound_usage_preference = forms.ChoiceField(
+        label=mark_safe(
+            '<div class="v-spacing-1 text-grey" id="ai-section">I agree with my sounds being used to train generative AI models provided that:</div>'
+        ),
+        choices=AIPreference.AI_PREFERENCE_CHOICES,
+        required=False,
+        help_text=mark_safe(
+            '<div class="v-spacing-top-3 text-light-grey">Use the setting above to express a '
+            "preference regarding the usage of your sounds for training generative Artificial Intelligence models. "
+            'This preference <b>applies to all your uploaded sounds</b>. Please, read the <a href="/help/faq/#can-my-sounds-be-used-to-train-artificial-intelligence-ai-models">'
+            "<i>Usage of my sounds for "
+            "training generative AI models</i> help section</a> to learn more about the details and implications of the available options.</div> "
+        ),
+    )
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
-        kwargs.update(initial={"username": request.user.username})
+        initial_kwargs = {
+            "username": request.user.username,
+        }
+        ai_preference = request.user.profile.get_ai_preference()
+        if ai_preference:
+            initial_kwargs["ai_sound_usage_preference"] = ai_preference
+        kwargs.update(initial=initial_kwargs)
         kwargs.update(dict(label_suffix=""))
         super().__init__(*args, **kwargs)
 
@@ -410,6 +429,10 @@ class ProfileForm(forms.ModelForm):
         self.fields["sound_signature"].widget.attrs["class"] = "unsecure-image-check"
         self.fields["is_adult"].widget.attrs["class"] = "bw-checkbox"
         self.fields["not_shown_in_online_users_list"].widget = forms.HiddenInput()
+
+        # If user has no sounds, do not show the AI sound usage preference field
+        if request.user.profile.num_sounds == 0:
+            self.fields.pop("ai_sound_usage_preference")
 
     def clean_username(self):
         username = self.cleaned_data["username"]

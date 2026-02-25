@@ -683,6 +683,18 @@ class Profile(models.Model):
         stats_from_db.update(stats_from_cache)
         return stats_from_db
 
+    def get_ai_preference(self, default_if_not_set=True):
+        try:
+            return self.user.ai_preference.preference
+        except AIPreference.DoesNotExist:
+            # If no preference is set, return the default one
+            if default_if_not_set:
+                return AIPreference.DEFAULT_AI_PREFERENCE
+            return None
+
+    def set_ai_preference(self, preference_value):
+        AIPreference.objects.update_or_create(user=self.user, defaults={"preference": preference_value})
+
     class Meta:
         ordering = ("-user__date_joined",)
         permissions = (("can_beta_test", "Show beta features to that user."),)
@@ -693,6 +705,24 @@ class GdprAcceptance(models.Model):
     # Automatically add the date because the presence of this field means that
     # the user accepted the terms
     date_accepted = models.DateTimeField(auto_now_add=True)
+
+
+class AIPreference(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="ai_preference")
+    date_updated = models.DateTimeField(auto_now=True)
+    AI_PREFERENCE_CHOICES = (
+        (
+            "freesound-cc-recommendation",
+            "My sounds are used following Freesound's recommendations for interpreting Creative Commons licenses in a generative AI training context",
+        ),
+        ("open-models", "My sounds are used to train open source models that are freely available to the public"),
+        (
+            "open-noncommercial-models",
+            "My sounds are used to train open source models that are freely available to the public and that do not allow a commercial use",
+        ),
+    )
+    DEFAULT_AI_PREFERENCE = "freesound-cc-recommendation"
+    preference = models.CharField(choices=AI_PREFERENCE_CHOICES, default=DEFAULT_AI_PREFERENCE)
 
 
 class UserFlag(models.Model):

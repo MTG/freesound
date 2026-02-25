@@ -715,10 +715,10 @@ class AIPreference(models.Model):
             "freesound-cc-recommendation",
             "My sounds are used following Freesound's recommendations for interpreting Creative Commons licenses in a generative AI training context",
         ),
-        ("open-models", "My sounds are used to train open models that are freely available to the public"),
+        ("open-models", "My sounds are used to train open source models that are freely available to the public"),
         (
             "open-noncommercial-models",
-            "My sounds are used to train open models that are freely available to the public and that do not allow a commercial use",
+            "My sounds are used to train open source models that are freely available to the public and that do not allow a commercial use",
         ),
     )
     DEFAULT_AI_PREFERENCE = "freesound-cc-recommendation"

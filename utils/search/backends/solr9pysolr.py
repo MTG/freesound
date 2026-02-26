@@ -41,7 +41,7 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
         self.forum_index_url = forum_index_url
         self.solr_base_url = settings.SOLR9_BASE_URL
 
-    def get_sounds_index(self, timeout=settings):
+    def get_sounds_index(self, timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS):
         if self.sounds_index is None:
             self.sounds_index = pysolr.Solr(
                 self.sounds_index_url,

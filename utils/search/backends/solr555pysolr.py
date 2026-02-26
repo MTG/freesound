@@ -574,7 +574,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if update:
             documents = [self.transform_document_into_update_document(d) for d in documents]
         try:
-            self.get_sounds_index().add(documents)
+            self.get_sounds_index(timeout=60).add(documents)
         except pysolr.SolrError as e:
             _raise_search_engine_exception(e)
 
@@ -584,7 +584,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         self.add_similarity_vectors_to_documents(sound_objects, documents)
         documents = [self.transform_document_into_update_document(d) for d in documents]
         try:
-            self.get_sounds_index().add(documents)
+            self.get_sounds_index(timeout=60).add(documents)
         except pysolr.SolrError as e:
             _raise_search_engine_exception(e)
 
@@ -596,13 +596,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     sound_ids.append(str(sound_object_or_id))
                 else:
                     sound_ids.append(str(sound_object_or_id.id))
-            self.get_sounds_index().delete(id=sound_ids)
+            self.get_sounds_index(timeout=60).delete(id=sound_ids)
         except pysolr.SolrError as e:
             _raise_search_engine_exception(e)
 
     def remove_all_sounds(self):
         try:
-            self.get_sounds_index().delete(q="*:*")
+            self.get_sounds_index(timeout=60).delete(q="*:*")
         except pysolr.SolrError as e:
             _raise_search_engine_exception(e)
 
@@ -624,6 +624,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
                 offset=(current_page - 1) * page_size,
                 num_sounds=page_size,
+                timeout=60,
             )
             solr_ids += [int(element["id"]) for element in response.docs]
             solr_count = response.num_found
@@ -650,6 +651,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         similar_to=None,
         similar_to_min_similarity=settings.SIMILARITY_MIN_THRESHOLD,
         similar_to_similarity_space=settings.SIMILARITY_SPACE_DEFAULT,
+        timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
     ):
         query = SolrQuery()
 
@@ -833,7 +835,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 if not group_counts_as_one_in_facets and "json.facet" in query_as_kwargs:
                     facets_kwarg = query_as_kwargs["json.facet"]
                     query_as_kwargs["json.facet"] = {}
-                results = self.get_sounds_index().search(**query_as_kwargs)
+                results = self.get_sounds_index(timeout=timeout).search(**query_as_kwargs)
 
                 # Now make the second query in which we get the facets and the total number of results, and remove the "collapse" filter.
                 fq = [fq_element for fq_element in query_as_kwargs["fq"] if "collapse field" not in fq_element]
@@ -842,13 +844,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 query_as_kwargs["expand"] = False
                 if not group_counts_as_one_in_facets and facets_kwarg is not None:
                     query_as_kwargs["json.facet"] = facets_kwarg
-                results_extra_query = self.get_sounds_index().search(**query_as_kwargs)
+                results_extra_query = self.get_sounds_index(timeout=timeout).search(**query_as_kwargs)
                 if not group_counts_as_one_in_facets:
                     results.facets = results_extra_query.facets
                 results.non_grouped_number_of_results = results_extra_query.num_found
             else:
                 # If we are not using collapse and expand query parser (and/or not grouping by pack), just run the query.
-                results = self.get_sounds_index().search(**query_as_kwargs)
+                results = self.get_sounds_index(timeout=timeout).search(**query_as_kwargs)
 
             # Facets returned in results use the corresponding solr fieldnames as keys. We want to convert them to the
             # original fieldnames so that the rest of the code can use them without knowing about the solr fieldnames.
@@ -902,7 +904,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             query.set_group_field("_nest_parent_")
             query.set_group_options()
             try:
-                response = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
+                response = self.get_sounds_index(timeout=60).search(search_handler="select", **query.as_kwargs())
                 results[similarity_space_name] = {
                     "num_sounds": response.num_found,
                     "num_vectors": response.non_grouped_number_of_results,
@@ -925,7 +927,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 query.set_query_options(
                     start=(current_page - 1) * page_size, rows=page_size, field_list=["id"], filter_query=filter_query
                 )
-                response = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
+                response = self.get_sounds_index(timeout=60).search(search_handler="select", **query.as_kwargs())
                 solr_ids += [element["id"] for element in response.docs]
                 solr_count = response.num_found
                 current_page += 1
@@ -937,7 +939,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         documents = [self.convert_post_to_search_engine_document(p) for p in forum_post_objects]
         documents = [d for d in documents if d is not None]
         try:
-            self.get_forum_index().add(documents)
+            self.get_forum_index(timeout=60).add(documents)
         except pysolr.SolrError as e:
             _raise_search_engine_exception(e)
 
@@ -949,13 +951,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 else:
                     post_id = post_object_or_id.id
 
-                self.get_forum_index().delete(id=str(post_id))
+                self.get_forum_index(timeout=60).delete(id=str(post_id))
         except pysolr.SolrError as e:
             _raise_search_engine_exception(e)
 
     def remove_all_forum_posts(self):
         try:
-            self.get_forum_index().delete(q="*:*")
+            self.get_forum_index(timeout=60).delete(q="*:*")
         except pysolr.SolrError as e:
             _raise_search_engine_exception(e)
 

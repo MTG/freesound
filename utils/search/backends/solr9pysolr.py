@@ -41,25 +41,25 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
         self.forum_index_url = forum_index_url
         self.solr_base_url = settings.SOLR9_BASE_URL
 
-    def get_sounds_index(self):
+    def get_sounds_index(self, timeout=settings):
         if self.sounds_index is None:
             self.sounds_index = pysolr.Solr(
                 self.sounds_index_url,
                 encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
                 results_cls=solr555pysolr.SolrResponseInterpreter,
                 always_commit=True,
-                timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
+                timeout=timeout,
             )
         return self.sounds_index
 
-    def get_forum_index(self):
+    def get_forum_index(self, timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS):
         if self.forum_index is None:
             self.forum_index = pysolr.Solr(
                 self.forum_index_url,
                 encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
                 results_cls=solr555pysolr.SolrResponseInterpreter,
                 always_commit=True,
-                timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
+                timeout=timeout,
             )
         return self.forum_index
 

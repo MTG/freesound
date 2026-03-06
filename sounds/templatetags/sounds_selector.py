@@ -27,18 +27,21 @@ register = template.Library()
 
 
 @register.inclusion_tag("molecules/object_selector.html", takes_context=True)
-def sounds_selector(context, sounds, max_sounds=None, selected_sound_ids=[], show_select_all_buttons=False):
+def sounds_selector(context, sounds, max_sounds=None, selected_sound_ids=[], show_select_all_buttons=False,
+                    featured_sound_ids=[], show_actions=False):
     if sounds:
         if not isinstance(sounds[0], Sound):
             # sounds are passed as a list of sound ids, retrieve the Sound objects from DB
             sounds = Sound.objects.ordered_ids(sounds)
         for sound in sounds:
             sound.selected = sound.id in selected_sound_ids
+            sound.is_featured = sound.id in featured_sound_ids
 
     return {
         "objects": sounds,
         "type": "sounds",
         "show_select_all_buttons": show_select_all_buttons,
+        "show_actions": show_actions,
         "original_context": context,  # This will be used so a nested inclusion tag can get the original context
         "max_elements": max_sounds,
     }
@@ -63,3 +66,10 @@ def packs_selector_with_select_buttons(context, packs, selected_pack_ids=[]):
         "show_select_all_buttons": True,
         "original_context": context,  # This will be used so a nested inclusion tag can get the original context
     }
+
+
+@register.inclusion_tag("molecules/object_selector.html", takes_context=True)
+def sounds_selector_with_actions(context, sounds, featured_sound_ids=[], max_sounds=None):
+    """Displays sounds with featured and remove toggle buttons below each sound."""
+    return sounds_selector(context, sounds, max_sounds=max_sounds, featured_sound_ids=featured_sound_ids,
+                           show_actions=True)

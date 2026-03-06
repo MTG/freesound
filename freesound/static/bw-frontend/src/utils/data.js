@@ -1,26 +1,6 @@
-const serializedIdListToIntList = serializedIdList => {
-    const outputList = [];
-    if (serializedIdList !== '' && serializedIdList !== undefined){
-        serializedIdList.split(',').forEach(splitPart => {
-            outputList.push(parseInt(splitPart, 10));
-        });
-    }
-    return outputList;
-}
+const serializedIdListToIntList = value =>
+    value ? value.split(',').map(s => parseInt(s, 10)) : [];
 
-const combineIdsLists = (list1, list2) => {
-    const outputList = [];
-    list1.forEach(listItem => {
-        if (outputList.indexOf(listItem) == -1){
-            outputList.push(listItem);
-        }
-    });
-    list2.forEach(listItem => {
-        if (outputList.indexOf(listItem) == -1){
-            outputList.push(listItem);
-        }
-    });
-    return outputList;
-}
+const combineIdsLists = (list1, list2) => [...new Set([...list1, ...list2])];
 
-export {serializedIdListToIntList, combineIdsLists};
+export { serializedIdListToIntList, combineIdsLists };

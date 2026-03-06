@@ -181,11 +181,15 @@ def bw_generic_stars(context, rating_0_10):
 
 
 @register.inclusion_tag("molecules/paginator.html", takes_context=True)
-def bw_paginator(context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results=-1):
+def bw_paginator(
+    context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results=-1, hx_target=""
+):
     """
     Adds pagination context variables for use in displaying first, adjacent and
     last page links in addition to those created by the object_list generic
     view.
+
+    Optional hx_target parameter enables htmx AJAX pagination (e.g. hx_target="#sounds-section").
     """
     if paginator is None:
         # If paginator object is None, don't go ahead as below calculations will fail. This can happen if show_paginator
@@ -254,6 +258,7 @@ def bw_paginator(context, paginator, page, current_page, request, anchor="", non
         "url_last_page": url_last_page,
         "anchor": anchor,
         "non_grouped_number_of_results": non_grouped_number_of_results,
+        "hx_target": hx_target,
     }
 
 

@@ -1443,13 +1443,12 @@ ENABLE_COLLECTIONS = True
 MAX_SOUNDS_PER_COLLECTION = 250
 MAX_FEATURED_SOUNDS_PER_COLLECTION = 250
 COLLECTION_SORT_OPTIONS = {
-    "Featured first": "featured_order",
-    "Date added (newest first)": "-collectionsound__created",
-    "Date added (oldest first)": "collectionsound__created",
-    "Duration (longest first)": "-duration",
-    "Duration (shortest first)": "duration",
+    "featured": ("Featured first", "featured_order"),
+    "created_desc": ("Date added (newest first)", "-collectionsound__created"),
+    "created_asc": ("Date added (oldest first)", "collectionsound__created"),
+    "name": ("Name", "original_filename"),
 }
-COLLECTION_SORT_DEFAULT = "Featured first"
+COLLECTION_SORT_DEFAULT = "featured"
 
 # -------------------------------------------------------------------------------
 # Import local settings

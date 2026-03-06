@@ -171,6 +171,54 @@ class SoundManagerQueryMethods(TestCase):
                 pack_sound_ids_bulk_query.append(sound.id)
         self.assertCountEqual(pack_sound_ids, pack_sound_ids_bulk_query)
 
+    def test_bulk_sounds_for_collection(self):
+        # This method uses SoundManager.bulk_query internally to retrieve sounds of a collection.
+        # We check filtering by collection, only_featured filtering, and sort_by ordering.
+        from fscollections.models import Collection, CollectionSound
+
+        # Create a collection and add sounds to it
+        collection = Collection.objects.create(user=self.user, name="Test Collection")
+        sounds = list(Sound.objects.filter(user=self.user))
+        for sound in sounds:
+            CollectionSound.objects.create(user=self.user, sound=sound, collection=collection)
+
+        # Created sounds are not yet moderated and processed ok, so should return no sounds
+        self.assertEqual(len(list(Sound.objects.bulk_sounds_for_collection(collection_id=collection.id))), 0)
+
+        # Now we set sounds to moderated and processed ok
+        collection_sound_ids = []
+        for sound in sounds:
+            sound.moderation_state = "OK"
+            sound.processing_state = "OK"
+            sound.save()
+            collection_sound_ids.append(sound.id)
+
+        # Check that sounds returned by bulk_sounds_for_collection are correct
+        result_ids = [s.id for s in Sound.objects.bulk_sounds_for_collection(collection_id=collection.id)]
+        self.assertCountEqual(collection_sound_ids, result_ids)
+
+        # Test featured_sound_ids filtering
+        featured_ids = collection_sound_ids[:2]
+        featured_result_ids = [
+            s.id for s in Sound.objects.bulk_sounds_for_collection(
+                collection_id=collection.id,
+                featured_sound_ids=featured_ids,
+                sort_by="featured",
+            )
+        ]
+        # All collection sounds should be returned but featured ones ordered first
+        self.assertEqual(len(featured_result_ids), len(collection_sound_ids))
+
+        # Test sort_by ordering with a non-featured sort option
+        sorted_result = list(
+            Sound.objects.bulk_sounds_for_collection(
+                collection_id=collection.id,
+                sort_by="name",
+            )
+        )
+        for i in range(len(sorted_result) - 1):
+            self.assertLessEqual(sorted_result[i].original_filename, sorted_result[i + 1].original_filename)
+
 
 class PublicSoundManagerTest(TestCase):
     fixtures = ["licenses", "sounds"]

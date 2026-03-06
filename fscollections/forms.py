@@ -197,9 +197,13 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
 
 
 class CollectionEditForm(forms.ModelForm):
-    collection_sounds = forms.CharField(
-        min_length=1,
-        widget=forms.widgets.HiddenInput(attrs={"id": "collection_sounds", "name": "collection_sounds"}),
+    added_sounds = forms.CharField(
+        widget=forms.widgets.HiddenInput(attrs={"id": "added_sound_ids"}),
+        required=False,
+    )
+
+    removed_sounds = forms.CharField(
+        widget=forms.widgets.HiddenInput(attrs={"id": "removed_sound_ids"}),
         required=False,
     )
 
@@ -218,7 +222,7 @@ class CollectionEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["public"].label = "Visibility"
 
-        self.fields["collection_sounds"].help_text = (
+        self.fields["added_sounds"].help_text = (
             f"You have reached the maximum number of sounds available for a collection ({settings.MAX_SOUNDS_PER_COLLECTION}). "
             "In order to add new sounds, first remove some of the current ones."
         )
@@ -231,6 +235,22 @@ class CollectionEditForm(forms.ModelForm):
         if not self.is_owner and not self.is_maintainer:
             for field in self.fields:
                 self.fields[field].disabled = True
+
+    @staticmethod
+    def _parse_id_set(value):
+        return {int(i) for i in value.replace(" ", "").split(",") if i.isdigit()} if value else set()
+
+    def clean_added_sounds(self):
+        return self._parse_id_set(self.cleaned_data.get("added_sounds", ""))
+
+    def clean_removed_sounds(self):
+        return self._parse_id_set(self.cleaned_data.get("removed_sounds", ""))
+
+    def clean_maintainers(self):
+        return self._parse_id_set(self.cleaned_data.get("maintainers", ""))
+
+    def clean_featured_sounds(self):
+        return list(self._parse_id_set(self.cleaned_data.get("featured_sounds", "")))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -249,78 +269,53 @@ class CollectionEditForm(forms.ModelForm):
                             "This collection name is reserved for your personal default collection. Please choose another one."
                         ),
                     )
-        collection_sounds = self.cleaned_data.get("collection_sounds").split(",")
-        if len(collection_sounds) > settings.MAX_SOUNDS_PER_COLLECTION:
+        added = cleaned_data.get("added_sounds", set())
+        removed = cleaned_data.get("removed_sounds", set())
+        # A sound that was added and then removed in the same session cancels out
+        cancelled = added & removed
+        cleaned_data["added_sounds"] = added = added - cancelled
+        cleaned_data["removed_sounds"] = removed = removed - cancelled
+        net_count = self.instance.num_sounds + len(added) - len(removed)
+        if net_count > settings.MAX_SOUNDS_PER_COLLECTION:
             self.add_error(
-                "collection_sounds",
+                "added_sounds",
                 forms.ValidationError(
                     f"You have exceeded the maximum number of sounds for a collection ({settings.MAX_SOUNDS_PER_COLLECTION})."
                 ),
             )
-            cleaned_data["collection_sounds"] = collection_sounds[: self.instance.num_sounds]
         return cleaned_data
 
-    def clean_ids_field(self, field):
-        # this function cleans the sounds and maintainers fields which store temporary changes on the edit URL
-        new_field = re.sub("[^0-9,]", "", self.cleaned_data[field])
-        new_field = re.sub(",+", ",", new_field)
-        new_field = re.sub("^,+", "", new_field)
-        new_field = re.sub(",+$", "", new_field)
-        if len(new_field) > 0:
-            new_field = {int(usr) for usr in new_field.split(",")}
-        else:
-            new_field = set()
-        return new_field
-
     def save(self, user_adding_sound):
-        """This method is used to apply the temporary changes from the edit URL to the DB.
-        Useful for maintainers and sounds, where several objects are added to the Collection attrs.
-        This way, the server side does not change until the Save Collection button is clicked.
+        """Apply the pending delta (added/removed sounds and featured list) to the DB.
 
         Args:
             user_adding_sound (User): the user modifying the collection
 
         Returns:
-            collection (Collection): the saved collection with proper modficiations
+            collection (Collection): the saved collection
         """
         collection = super().save(commit=False)
-        new_sounds = self.clean_ids_field("collection_sounds")
-        current_sounds = list(Sound.objects.filter(collections=collection).values_list("id", flat=True))
-        for snd in new_sounds:
-            if snd not in current_sounds:
-                sound = Sound.objects.get(id=snd)
-                CollectionSound.objects.create(user=user_adding_sound, sound=sound, collection=collection, status="OK")
+        sounds_to_add = self.cleaned_data["added_sounds"]
+        sounds_to_remove = self.cleaned_data["removed_sounds"]
 
-            else:
-                current_sounds.remove(snd)
+        if sounds_to_add:
+            CollectionSound.objects.bulk_create(
+                [CollectionSound(user=user_adding_sound, sound_id=snd, collection=collection, status="OK")
+                 for snd in sounds_to_add],
+                ignore_conflicts=True,
+            )
 
-        sounds = Sound.objects.filter(id__in=current_sounds)
-        CollectionSound.objects.filter(collection=collection, sound__in=sounds).delete()
+        if sounds_to_remove:
+            CollectionSound.objects.filter(collection=collection, sound_id__in=sounds_to_remove).delete()
 
-        new_maintainers = set(self.clean_ids_field("maintainers"))
-        # if the owner of the collection has been added as a maintainer, discard it
-        if collection.user.id in new_maintainers:
-            new_maintainers.remove(collection.user.id)
-        current_maintainers = list(self.instance.maintainers.values_list("id", flat=True))
-        for usr in new_maintainers:
-            if usr not in current_maintainers:
-                maintainer = User.objects.get(id=usr)
-                collection.maintainers.add(maintainer)
-            else:
-                current_maintainers.remove(usr)
-        for usr in current_maintainers:
-            maintainer = User.objects.get(id=usr)
-            collection.maintainers.remove(maintainer)
+        new_maintainers = self.cleaned_data["maintainers"]
+        new_maintainers.discard(collection.user.id)
+        collection.maintainers.set(new_maintainers)
 
-        # Handle featured sounds
-        featured_sounds_str = self.cleaned_data.get("featured_sounds", "")
-        if featured_sounds_str:
-            featured_ids = [int(sid) for sid in featured_sounds_str.split(",") if sid.strip()]
-            # Only keep featured IDs that are still in the collection
-            featured_ids = [sid for sid in featured_ids if sid in new_sounds]
-            collection.featured_sound_ids = featured_ids
-        else:
-            collection.featured_sound_ids = []
+        # Filter featured IDs to only sounds currently in the collection
+        featured_ids = self.cleaned_data["featured_sounds"]
+        final_sound_ids = set(Sound.objects.filter(collections=collection).values_list("id", flat=True))
+        collection.featured_sound_ids = [sid for sid in featured_ids if sid in final_sound_ids]
 
         collection.save()
         return collection
@@ -337,12 +332,12 @@ class CollectionEditForm(forms.ModelForm):
 
 class CollectionEditFormAsMaintainer(CollectionEditForm):
     class Meta(CollectionEditForm.Meta):
-        fields = CollectionEditForm.Meta.fields + ["collection_sounds"] + ["maintainers"]
+        fields = CollectionEditForm.Meta.fields + ["added_sounds", "removed_sounds"] + ["maintainers"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields:
-            if field != "collection_sounds":
+            if field not in ("added_sounds", "removed_sounds"):
                 self.fields[field].disabled = True
 
     def clean(self):
@@ -352,10 +347,9 @@ class CollectionEditFormAsMaintainer(CollectionEditForm):
         # and if any change in these is found, an error is raised. To prevent changes in "maintainers" even though it is included
         # in the form but disabled (to allow the user to view but not to modify the field), the original collection maintainers
         # are retrieved from DB to ensure no changes are applied to this attribute.
-        collection_maintainers = list(self.instance.maintainers.values_list("id", flat=True))
-        cleaned_data["maintainers"] = (",").join(str(x) for x in collection_maintainers)
+        cleaned_data["maintainers"] = set(self.instance.maintainers.values_list("id", flat=True))
         # Preserve featured_sounds from the original instance (maintainers cannot edit)
-        cleaned_data["featured_sounds"] = ",".join(str(sid) for sid in self.instance.featured_sound_ids)
+        cleaned_data["featured_sounds"] = list(self.instance.featured_sound_ids)
         for field in CollectionEditForm.Meta.fields:
             if cleaned_data[field] != getattr(self.instance, field):
                 self.add_error(field, forms.ValidationError("You don't have permissions to edit this field"))

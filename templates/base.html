@@ -71,6 +71,7 @@
         document.cookie = "disallowSimultaneousAudioPlayback=no;path=/"
         {% endif %}
         const userIsAuthenticated = {{ request.user.is_authenticated|yesno:'true,false' }};
+        document.body.setAttribute('data-csrf-token', '{{ csrf_token }}');
     </script>
     <script src="{% static 'bw-frontend/dist/index.js' %}"></script>
     {% block extrabody %}

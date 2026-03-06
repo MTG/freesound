@@ -34,6 +34,7 @@
     "classlist-polyfill": "^1.2.0",
     "core-js": "^3.6.1",
     "element-closest": "^3.0.1",
+    "htmx.org": "^1.9.12",
     "lodash.debounce": "^4.0.8",
     "lodash.throttle": "^4.1.1",
     "normalize.css": "^8.0.1",

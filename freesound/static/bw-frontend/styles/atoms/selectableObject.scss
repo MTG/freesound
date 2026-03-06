@@ -1,24 +1,162 @@
 .bw-selectable-object {
-    margin:8px;
+    margin: 8px;
     padding: 6px;
-    border:2px solid rgba(0,0,0,0); 
+    border: 2px solid rgba(0, 0, 0, 0);
     border-radius: 4px;
 
     &.selected {
         background-color: $search-bg;
         outline-color: $navy-light-grey;
-        border:2px solid $navy-light-grey;
+        border: 2px solid $navy-light-grey;
         transition: border-color 0.3s linear;
     }
 
-    .featured-label {
-        position: absolute;
-        top: 4px;
-        right: 8px;
-        font-size: 10px;
-        font-weight: 600;
-        color: #f5a623;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+
+    &.with-actions {
+        display: flex;
+        flex-direction: column;
+
+        &.marked-for-removal {
+
+            // Disable sound player and all interactions
+            >div:first-child {
+                opacity: 0.35;
+                pointer-events: none;
+                user-select: none;
+            }
+
+            // Disable featured button completely
+            .featured-toggle {
+                opacity: 0.35;
+                pointer-events: none;
+                cursor: not-allowed;
+            }
+        }
+    }
+}
+
+.bw-object-actions {
+    display: flex;
+    width: 100%;
+    padding: 6px 0 0;
+    gap: 8px;
+
+    .btn-inverse {
+        flex: 1;
+        padding: 8px 12px;
+        font-size: 12px;
+        text-align: center;
+
+        .label-default {
+            display: inline;
+        }
+
+        .label-hover {
+            display: none;
+        }
+
+        &:hover {
+            .label-default {
+                display: none;
+            }
+
+            .label-hover {
+                display: inline;
+            }
+        }
+    }
+
+    .featured-toggle {
+
+        .label-active-default,
+        .label-active-hover {
+            display: none;
+        }
+
+        &.active {
+            background: $yellow;
+            border-color: $yellow;
+            color: $black;
+
+            .label-default,
+            .label-hover {
+                display: none;
+            }
+
+            .label-active-default {
+                display: inline;
+            }
+
+            &:hover {
+                background: $black;
+                border-color: $navy-light-grey;
+                color: $white;
+
+                .label-active-default {
+                    display: none;
+                }
+
+                .label-active-hover {
+                    display: inline;
+                }
+            }
+        }
+    }
+
+    .featured-toggle:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .remove-toggle {
+        flex: 0 0 auto;
+        padding: 8px 12px;
+        min-width: 60px;
+
+        // Force 'trash' to stay visible on hover
+        &:hover {
+            background: $red;
+            border-color: $red;
+            color: $white;
+
+            .label-default {
+                display: inline;
+            }
+
+            .label-hover {
+                display: none;
+            }
+        }
+
+        &.active {
+            background: transparent;
+            border-color: $navy-light-grey;
+            color: $navy-grey;
+
+            // Force 'Undo' text
+            .label-default {
+                display: none !important;
+            }
+
+            .label-hover {
+                display: inline !important;
+            }
+
+            // Keep 'Undo' on hover
+            &:hover {
+                background: $almost-white;
+                border-color: $navy-grey;
+                color: $black;
+
+                .label-default {
+                    display: none !important;
+                }
+
+                .label-hover {
+                    display: inline !important;
+                }
+            }
+        }
     }
 }

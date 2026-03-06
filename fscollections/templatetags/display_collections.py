@@ -33,15 +33,10 @@ def display_collection(context, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
     request = context.get("request")
     if collection.featured_sound_ids:
-        featured_sounds = collection.get_sounds(sort_by="Featured first", limit=len(collection.featured_sound_ids))
+        header_sounds = Sound.public.filter(id__in=collection.featured_sound_ids)
     else:
-        featured_sounds = collection.get_sounds(sort_by="Date added (newest first)", limit=1)
+        header_sounds = Sound.public.filter(collections=collection)[:1]
     
-    tvars = {"collection": collection, "featured_sounds": featured_sounds, "request": request}
+    tvars = {"collection": collection, "header_sounds": header_sounds, "request": request}
     return tvars
-
-
-@register.inclusion_tag("collections/display_featured_sounds.html", takes_context=True)
-def display_featured_sounds(context, sounds):
-    return {"featured_sounds": sounds, "request": context.get("request")}
 

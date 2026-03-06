@@ -10,3 +10,5 @@ import '../styles/index.scss'
 
 import './components'
 import './utils/polyfills'
+
+import './htmx-init'

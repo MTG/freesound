@@ -1,121 +1,70 @@
-import {prepareAddMaintainersModalAndFields} from "../components/collectionsModal"
-import { prepareAddSoundsModalAndFields } from "../components/addSoundsModal";
-import {updateObjectSelectorDataProperties} from '../components/objectSelector'
+import { prepareAddMaintainersModalAndFields } from "../components/collectionsModal"
+import { prepareAddSoundsModalDynamic } from "../components/addSoundsModal"
+import { initializeObjectSelectorActions } from "../components/objectSelector"
+import { SoundStateStore, STATE } from "../utils/soundStateStore"
 
+const store = new SoundStateStore({
+    // collection_sounds is a read-only init element (no name attr, not submitted with the form)
+    input: document.getElementById('collection_sounds'),
+    actions: [
+        { actionName: 'featured', flag: STATE.FEATURED, input: document.getElementById('featured_sounds') },
+        { actionName: 'remove', flag: STATE.REMOVED, input: document.getElementById('removed_sound_ids') },
+        { actionName: 'added', flag: STATE.ADDED, input: document.getElementById('added_sound_ids') },
+    ],
+});
 
-const updateFeaturedHighlights = (soundSelectorContainer, featuredIds) => {
-    const allSelectableObjects = soundSelectorContainer.querySelectorAll('.bw-selectable-object');
-    allSelectableObjects.forEach(element => {
-        const checkbox = element.querySelector('input.bw-checkbox');
-        const existingLabel = element.querySelector('.featured-label');
-        
-        if (checkbox && featuredIds.includes(checkbox.dataset.objectId)) {
-            element.classList.add('featured');
-            // Add "Featured" label if not already present
-            if (!existingLabel) {
-                const label = document.createElement('span');
-                label.className = 'featured-label';
-                label.textContent = 'Featured';
-                element.appendChild(label);
-            }
-        } else {
-            element.classList.remove('featured');
-            // Remove "Featured" label if present
-            if (existingLabel) {
-                existingLabel.remove();
-            }
-        }
-    });
-};
-
-const prepareFeaturedSoundsButtons = (container) => {
-    const setButton = container.querySelector('[data-toggle="set-featured-sounds"]');
-    const removeButton = container.querySelector('[data-toggle="remove-featured-sounds"]');
-    const clearAllButton = container.querySelector('[data-toggle="clear-all-featured-sounds"]');
-    if (!setButton || !removeButton) return;
-
-    const referenceButton = setButton || removeButton;
-    const soundSelectorContainer = referenceButton.closest('.v-spacing-5').querySelector('.bw-object-selector-container[data-type="sounds"]');
-    if (!soundSelectorContainer) return;
-
-    // Disable selection-based buttons initially
-    setButton.disabled = true;
-    removeButton.disabled = true;
-
-    const featuredSoundsInput = document.getElementById(referenceButton.dataset.featuredSoundsHiddenInputId);
-
-    const getSelectedIds = () => (soundSelectorContainer.dataset.selectedIds || "").split(',').filter(Boolean);
-    const getFeaturedIds = () => ((featuredSoundsInput && featuredSoundsInput.value) || "").split(',').filter(Boolean);
-
-    // Update clear all button based on whether there are any featured sounds
-    const updateClearAllButtonState = () => {
-        if (clearAllButton) {
-            clearAllButton.disabled = getFeaturedIds().length === 0;
-        }
-    };
-
-    // Add change listeners directly to checkboxes (works alongside existing listeners from addSoundsModal)
-    const updateButtonStates = () => {
-        // Check directly from checkboxes since dataset.selectedIds may not be updated yet (debounced)
-        const hasSelection = soundSelectorContainer.querySelector('input.bw-checkbox:checked') !== null;
-        setButton.disabled = !hasSelection;
-        removeButton.disabled = !hasSelection;
-    };
-
-    soundSelectorContainer.querySelectorAll('input.bw-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', updateButtonStates);
-    });
-
-    updateFeaturedHighlights(soundSelectorContainer, getFeaturedIds());
-    updateClearAllButtonState();
-
-    const updateFeatured = (ids) => {
-        if (featuredSoundsInput) featuredSoundsInput.value = ids.join(',');
-        updateFeaturedHighlights(soundSelectorContainer, ids);
-        updateClearAllButtonState();
-    };
-
-    const clearSelection = () => {
-        soundSelectorContainer.querySelectorAll('input.bw-checkbox:checked').forEach(cb => {
-            cb.checked = false;
-            var parent = cb.closest('.bw-selectable-object');
-            if (parent) parent.classList.remove('selected');
-        });
-        updateObjectSelectorDataProperties(soundSelectorContainer);
-        setButton.disabled = true;
-        removeButton.disabled = true;
-        // Dispatch change event so other listeners (e.g. from addSoundsModal) get notified
-        const firstCheckbox = soundSelectorContainer.querySelector('input.bw-checkbox');
-        if (firstCheckbox) {
-            firstCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-    };
-
-    setButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        const merged = [...new Set([...getFeaturedIds(), ...getSelectedIds()])];
-        updateFeatured(merged);
-        clearSelection();
-    });
-
-    removeButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        const selectedIds = new Set(getSelectedIds());
-        const newFeatured = selectedIds.size > 0
-            ? getFeaturedIds().filter(id => !selectedIds.has(id))
-            : [];
-        updateFeatured(newFeatured);
-        clearSelection();
-    });
-
-    if (clearAllButton) {
-        clearAllButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            updateFeatured([]);
-        });
+// React to state changes: update element count and sync hidden inputs
+const countEl = document.getElementById('element-count');
+store.onChange(function (_objectId, flag, _isActive) {
+    if (countEl && flag & (STATE.REMOVED | STATE.ADDED)) {
+        countEl.textContent = store.presentCount();
     }
+    store.syncInputs();
+});
+
+const refreshSoundsSection = () => {
+    const soundsSection = document.getElementById('sounds-section');
+    if (!soundsSection) return;
+
+    const searchInput = document.getElementById('edit-collection-search');
+    const sortSelect = document.getElementById('sort-select');
+    const params = [];
+
+    if (searchInput && searchInput.value) params.push(`q=${encodeURIComponent(searchInput.value)}`);
+    if (sortSelect && sortSelect.value) params.push(`s=${encodeURIComponent(sortSelect.value)}`);
+    params.push(`added_sounds=${store.idsWithFlag(STATE.ADDED).join(',')}`);
+    params.push(`featured_sounds=${store.idsWithFlag(STATE.FEATURED, true).join(',')}`);
+
+    const activePage = soundsSection.querySelector('.bw-pagination_selected');
+    if (activePage) params.push(`page=${activePage.textContent.trim()}`);
+
+    const baseUrl = sortSelect.getAttribute('hx-get');
+    htmx.ajax('GET', `${baseUrl}?${params.join('&')}`, {
+        target: '#sounds-section',
+        select: '#sounds-section',
+        swap: 'outerHTML',
+    });
 };
 
 prepareAddMaintainersModalAndFields(document);
-prepareAddSoundsModalAndFields(document);
-prepareFeaturedSoundsButtons(document);
+prepareAddSoundsModalDynamic(
+    document,
+    () => store.ids().join(','),
+    (selectedIds) => { selectedIds.forEach(id => store.add(id)); refreshSoundsSection(); }
+);
+initializeObjectSelectorActions(document, store);
+
+// Serialize hidden inputs just before the form is submitted
+const collectionForm = document.getElementById('collection-form');
+if (collectionForm) {
+    collectionForm.addEventListener('submit', function () {
+        store.syncInputs();
+    });
+}
+
+// Re-initialise sound actions after any htmx swap into #sounds-section
+document.body.addEventListener('htmx:afterSettle', function (event) {
+    if (event.detail.target && event.detail.target.id === 'sounds-section') {
+        initializeObjectSelectorActions(document, store);
+    }
+});

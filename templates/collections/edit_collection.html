@@ -17,7 +17,7 @@
 <div class="row no-gutters">
     <div class="col-lg-8 offset-lg-2">
         <h2 class="v-spacing-3">{{ collection.name }}</h2>
-        <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
+        <form id="collection-form" class="bw-form disable-on-submit do-not-submit-on-enter" method="post" novalidate>{% csrf_token %}
             {% if collection.is_default_collection %}
             <div class="v-spacing-2 text-blue">
                 {% bw_icon "notification" %}This is your <i>default collection</i>. You cannot change its name, description or public/private status.
@@ -49,54 +49,75 @@
                     {% endif %}
                 {% users_selector form.collection_maintainers_objects%}
                 <div class="between v-spacing-top-4">
-                    <button class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.name|slugify collection.id %}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
-                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
+                    <button type="button" class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.id %}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
+                    <button type="button" class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
                 </div>
             </div>
-            <div class="v-spacing-5">
-                {{ form.collection_sounds }}
+            <div class="v-spacing-4">
+                {# init-only: no name attr so it is not submitted with the form #}
+                <input type="hidden" id="collection_sounds" value="{{ initial_sound_ids }}">
+                {{ form.added_sounds }}
+                {{ form.removed_sounds }}
                 {{ form.featured_sounds }}
-                <div class="between middle v-spacing-3">
-                    <label>Sounds in collection (<span id="element-count">{{ form.collection_sound_objects|length }}</span>)</label>
-                    <div class="browse__search-overview-sorter" id="sort-container">
-                        <style>
-                            #sort-container .select-dropdown__button {
-                                white-space: nowrap;
-                                min-width: 200px;
-                            }
-                        </style>
-                        <label class="text-light-grey d-none d-md-inline">Sort:</label>
-                        <select id="sort-select" onchange="window.location.href = window.location.pathname + '?s=' + encodeURIComponent(this.value);">
-                            {% for option_label in sort_options.keys %}
-                                <option value="{{ option_label }}" {% if option_label == sort_by %}selected{% endif %}>{{ option_label }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="between middle wrap no-gutters" style="gap: 10px;">
+                        <div class="no-wrap">
+                            <label>Sounds in collection (<span id="element-count">{{ total_sounds_count }}</span>)</label>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <div class="input-wrapper w-100">
+                                <i class="bw-icon-search input-icon"></i><input id="edit-collection-search" name="q" type="search" placeholder="Search in collection..." role="searchbox" autocomplete="off" {% if search_query %}value="{{ search_query }}"{% endif %}
+                                    hx-get="{% url 'edit-collection' collection.id %}"
+                                    hx-target="#sounds-section"
+                                    hx-select="#sounds-section"
+                                    hx-swap="outerHTML"
+                                    hx-trigger="keyup[key=='Enter'], search"
+                                    hx-include="[name='s'],[name='added_sounds'],[name='featured_sounds']">
+                            </div>
+                        </div>
+                        <div class="no-wrap browse__search-overview-sorter" id="sort-container">
+                            <label class="text-light-grey d-none d-md-inline">Sort by:</label>
+                            <select id="sort-select"
+                                hx-get="{% url 'edit-collection' collection.id %}"
+                                hx-target="#sounds-section"
+                                hx-select="#sounds-section"
+                                hx-swap="outerHTML"
+                                hx-include="[name='q'],[name='added_sounds'],[name='featured_sounds']"
+                                name="s">
+                                {% for key, option in sort_options.items %}
+                                    <option value="{{ key }}" {% if key == sort_by %}selected{% endif %}>{{ option.0 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                <div> {{form.added_sounds.errors}}</div>
+                <div id="sounds-section">
+                    {% sounds_selector_with_actions form.collection_sound_objects featured_sound_ids=form.featured_sound_ids max_sounds=max_sounds_per_collection %}
+                    {% if not form.collection_sound_objects and search_query %}
+                    <div class="v-spacing-3 text-grey">
+                        No sounds found matching "{{ search_query }}" in this collection. <a href="{% url 'edit-collection' collection.id %}">Clear search</a>
+                    </div>
+                    {% endif %}
+                    <div class="v-spacing-top-3" hx-include="[name='added_sounds'],[name='featured_sounds']">
+                        {% bw_paginator paginator page current_page request "sounds-section" hx_target="#sounds-section" %}
                     </div>
                 </div>
-                <div> {{form.collection_sounds.errors}}</div>
-                {% sounds_selector form.collection_sound_objects max_sounds=max_sounds_per_collection%}
-                <div class="between v-spacing-top-4">
-                    <button class="btn-inverse" data-toggle="set-featured-sounds" data-featured-sounds-hidden-input-id="{{ form.featured_sounds.id_for_label }}">Add selected sounds to featured</button>
-                    <button class="btn-inverse" data-toggle="remove-featured-sounds" data-featured-sounds-hidden-input-id="{{ form.featured_sounds.id_for_label }}">Remove selected sounds from featured</button>
-                </div>
-                <div class="end v-spacing-top-4">
-                    <button class="btn-inverse" data-toggle="clear-all-featured-sounds" data-featured-sounds-hidden-input-id="{{ form.featured_sounds.id_for_label }}">{% bw_icon 'trash' %}Clear all featured</button>
-                </div>
-                <div class="between v-spacing-top-4">
-                    <button class="btn-inverse" data-toggle="add-sounds-modal" data-selected-sounds-hidden-input-id="{{ form.collection_sounds.id_for_label }}" data-modal-url="{% url 'add-sounds-modal-collection' collection.name|slugify collection.id %}">{% bw_icon 'plus' %}Add sounds</button>
-                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from collection</button>
+                <div class="v-spacing-top-4">
+                    <button type="button" class="btn-inverse" data-toggle="add-sounds-modal" data-modal-url="{% url 'add-sounds-modal-collection' collection.id %}">{% bw_icon 'plus' %}Add sounds</button>
                 </div>
                 <div class="between v-spacing-top-5">
-                    <span class="helptext" style="display:none" ><i>{{form.collection_sounds.help_text|safe}}</i></span>
+                    <span class="helptext" style="display:none" ><i>{{form.added_sounds.help_text|safe}}</i></span>
                 </div>
             </div>
             {% if is_owner or is_maintainer%}
                 <button class="btn-primary w-100">Save collection</button>
             {% endif %}
         </form>
-        {% if is_owner%}
-            <button class="btn-secondary w-100 v-spacing-top-3" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{% url "delete-collection" collection.name|slugify collection.id %}">Delete Collection</button>
-        {% endif %}
+        <div class="between v-spacing-top-3" style="gap: 10px;">
+            <a class="no-hover btn-inverse display-inline-block text-center" href="{% url 'collection' collection.id %}" style="flex: 1;">Discard changes</a>
+            {% if is_owner%}
+            <button class="btn-secondary" style="flex: 1;" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{% url "delete-collection" collection.id %}">Delete collection</button>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}

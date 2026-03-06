@@ -7,7 +7,7 @@
     <div class="bw-carousel-container">
         <div class="bw-carousel-wrapper">
             <div class="bw-carousel with-dots dots-distance-02">
-                {% for sound in featured_sounds %}
+                {% for sound in header_sounds %}
                     <div>
                         {% display_sound_small_no_info_no_buttons sound %}
                     </div>
@@ -19,7 +19,7 @@
     </div>
     <div class="between line-height-percentage-150 v-spacing-top-1">
         <h5 class="ellipsis">
-            <span class="bw-icon-bookmark h-spacing-1 text-light-grey"></span><a class="bw-link--black" href="{% url "collection" collection.name|slugify collection.id %}" title="{{ collection.name }}">{{ collection.name }}</a>
+            <span class="bw-icon-bookmark h-spacing-1 text-light-grey"></span><a class="bw-link--black" href="{% url "collection" collection.id %}" title="{{ collection.name }}">{{ collection.name }}</a>
         </h5>
     </div>
     <div class="between">
@@ -32,7 +32,7 @@
             </div>
             {% if collection.num_downloads %}
             <div class="h-spacing-left-1" title="{{ collection.num_downloads }} download{{ collection.num_downloads|pluralize }}">
-                <a href="{% url 'download-collection' collection.name|slugify collection.id %}" class="bw-link--grey-light">
+                <a href="{% url 'download-collection' collection.id %}" class="bw-link--grey-light">
                     <span class="bw-icon-download" style="font-size:90%;"></span> {{ collection.num_downloads|formatnumber }}
                 </a>
             </div>

@@ -104,6 +104,8 @@ class SolrQuery:
         filter_query: filter the returned results by this query
         field_list: ['field1', 'field2', ...] or ['*'] these fields will be returned, default: *
         """
+        if sort is not None and not isinstance(sort, (list, tuple)):
+            raise ValueError("sort must be a list of sort clauses or None")
         self.params["sort"] = ",".join(sort) if sort else sort
         self.params["start"] = start
         self.params["rows"] = rows

@@ -46,7 +46,7 @@ from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.core.cache import caches
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import TemporaryUploadedFile
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Sum
 from django.db.models.expressions import Value
 from django.db.models.fields import CharField
@@ -321,12 +321,19 @@ def update_old_cc_licenses(request):
         return HttpResponseRedirect(reverse("accounts-home"))
 
 
-@transaction.atomic()
 def registration_modal(request):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            try:
+                user = form.save()
+            except IntegrityError:
+                form.add_error(None, "Unable to create this account. Please try again.")
+                if form.has_error("email1") and "email2" in form.data:
+                    post_data = form.data.copy()
+                    post_data["email2"] = ""
+                    form.data = post_data
+                return render(request, "accounts/modal_registration.html", {"registration_form": form})
             send_activation(user)
             # If the form is valid we will return a JSON response with the URL where
             # the user should be redirected (a URL which will include the "Almost done" message). The browser
@@ -443,18 +450,41 @@ def edit(request):
 
     if is_selected("profile"):
         profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
+        # Save a couple of variables that we will need later to check if they have changed and we need
+        # to mark user sounds as index dirty or show some messages to the user
+        old_ai_preference = str(profile.get_ai_preference(default_if_not_set=False))
+        old_username = request.user.username
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
+            # Update AI sound usage preference, only if field present in the form
+            if "ai_sound_usage_preference" in profile_form.cleaned_data:
+                profile.set_ai_preference(profile_form.cleaned_data["ai_sound_usage_preference"])
+
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data["username"]
-            request.user.save()
-            invalidate_user_template_caches(request.user.id)
-            profile.save()
-            msg_txt = "Your profile has been updated correctly."
-            if old_sound_signature != profile.sound_signature:
-                msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
-            messages.add_message(request, messages.INFO, msg_txt)
-            return HttpResponseRedirect(reverse("accounts-edit"))
+            try:
+                request.user.save()
+            except IntegrityError:
+                profile_form.add_error(
+                    "username",
+                    "This username is already taken or has been in used in the past by another user",
+                )
+                request.user.refresh_from_db(fields=["username"])
+            else:
+                profile.save()
+
+                # profile.refresh_from_db()  # Refresh profile to get updated ai preference when calling get_ai_preference
+                if old_username != request.user.username or old_ai_preference != profile.get_ai_preference(
+                    default_if_not_set=False
+                ):
+                    Sound.objects.filter(user=request.user).update(is_index_dirty=True)
+                invalidate_user_template_caches(request.user.id)
+
+                msg_txt = "Your profile has been updated correctly."
+                if old_sound_signature != profile.sound_signature:
+                    msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
+                messages.add_message(request, messages.INFO, msg_txt)
+                return HttpResponseRedirect(reverse("accounts-edit"))
     else:
         profile_form = ProfileForm(request, instance=profile, prefix="profile")
 
@@ -464,6 +494,7 @@ def edit(request):
             if image_form.cleaned_data["remove"]:
                 profile.has_avatar = False
                 profile.save()
+
             else:
                 handle_uploaded_image(profile, image_form.cleaned_data["file"])
                 profile.has_avatar = True
@@ -599,6 +630,7 @@ def manage_sounds(request, tab):
         "sounds_processing_count": sounds_processing_count,
         "sounds_pending_description_count": sounds_pending_description_count,
         "packs_count": packs_count,
+        "user_has_ai_preference_unset": request.user.profile.get_ai_preference(default_if_not_set=False) is None,
     }
 
     # Then do dedicated processing for each tab
@@ -698,13 +730,12 @@ def manage_sounds(request, tab):
                         web_logger.info(f"User {request.user.username} requested to delete sound {sound.id}")
                         try:
                             ticket = sound.ticket
-                            tc = TicketComment(
+                            tc = TicketComment.objects.create(
                                 sender=request.user,
                                 text=f"User {request.user} deleted the sound",
                                 ticket=ticket,
                                 moderator_only=False,
                             )
-                            tc.save()
                         except Ticket.DoesNotExist:
                             pass
                         sound.delete()
@@ -1323,6 +1354,10 @@ def account(request, username):
     else:
         num_sounds_pending = None
         num_mod_annotations = None
+    if request.user.has_perm("tickets.can_moderate") or request.user.is_staff:
+        old_usernames = list(user.old_usernames.order_by("-created").values_list("username", flat=True))
+    else:
+        old_usernames = None
 
     show_about = (
         (request.user == user)  # user is looking at own page
@@ -1359,6 +1394,7 @@ def account(request, username):
         "following_tags_modal_page": request.GET.get("followingTags", 1),
         "last_geotags_serialized": last_geotags_serialized,
         "user_downloads_public": settings.USER_DOWNLOADS_PUBLIC,
+        "old_usernames": old_usernames,
     }
     return render(request, "accounts/account.html", tvars)
 
@@ -1397,7 +1433,7 @@ def handle_uploaded_file(user_id, f):
     upload_logger.info(
         "handling file upload from user %s, filename %s and saving to %s", user_id, f.name, dest_path.decode("utf-8")
     )
-    starttime = time.time()
+    starttime = time.monotonic()
     if settings.MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING and isinstance(f, TemporaryUploadedFile):
         # Big files (bigger than ~2MB, this is configured by Django and can be customized) will be delivered via a
         # TemporaryUploadedFile which has already been streamed in disk, so we only need to move the already existing
@@ -1428,7 +1464,7 @@ def handle_uploaded_file(user_id, f):
     # NOTE: if we enable mirror locations for uploads and the copying below causes problems, we could do it async
     copy_uploaded_file_to_mirror_locations(dest_path)
     upload_logger.info(
-        "file upload (%s) - handling file upload done, took %.2f seconds", user_id, time.time() - starttime
+        "file upload (%s) - handling file upload done, took %.2f seconds", user_id, time.monotonic() - starttime
     )
     return True
 
@@ -1674,7 +1710,11 @@ def email_reset_complete(request, uidb36=None, token=None):
     # Change the mail in the DB
     old_email = user.email
     user.email = rer.email
-    user.save()
+    try:
+        user.save()
+    except IntegrityError:
+        messages.add_message(request, messages.ERROR, "Unable to update your email address. Please try again.")
+        return HttpResponseRedirect(reverse("accounts-email-reset"))
 
     # Remove temporal mail change information from the DB
     ResetEmailRequest.objects.get(user=user).delete()
@@ -1752,8 +1792,7 @@ def flag_user(request, username):
             return HttpResponse(json.dumps({"errors": True}), content_type="application/javascript")
 
         previous_reports_count = UserFlag.objects.filter(user=flagged_user).values("reporting_user").distinct().count()
-        uflag = UserFlag(user=flagged_user, reporting_user=reporting_user, content_object=flagged_object)
-        uflag.save()
+        uflag = UserFlag.objects.create(user=flagged_user, reporting_user=reporting_user, content_object=flagged_object)
 
         reports_count = UserFlag.objects.filter(user=flagged_user).values("reporting_user").distinct().count()
         if reports_count != previous_reports_count and (

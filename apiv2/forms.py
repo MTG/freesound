@@ -78,7 +78,6 @@ class ApiV2ClientForm(forms.Form):
         label=mark_safe(
             'Check this box to accept the <a href="/help/tos_api/" target="_blank">terms of use</a> of the Freesound API'
         ),
-        help_text=False,
         required=True,
         error_messages={"required": "You must accept the terms of use in order to get access to the API."},
     )
@@ -172,9 +171,14 @@ class SoundCombinedSearchFormAPI(forms.Form):
         return page
 
     def clean_sort(self):
+        sort = str(self.cleaned_data["sort"])
+        if ":" in sort:
+            # The sort uses a custom sorting target, therefore we return it as is
+            self.original_url_sort_value = sort
+            return sort
         sort_option = None
         for option in SEARCH_SORT_OPTIONS_API:
-            if option[0] == str(self.cleaned_data["sort"]):
+            if option[0] == sort:
                 sort_option = option[1]
                 self.original_url_sort_value = option[0]
         if not sort_option:
@@ -221,10 +225,16 @@ class SoundCombinedSearchFormAPI(forms.Form):
         if similar_to != "":
             # If it stars with '[', then we assume this is a serialized vector passed as target for similarity
             if similar_to.startswith("["):
-                similar_to = json.loads(similar_to)
+                try:
+                    similar_to = json.loads(similar_to)
+                except json.JSONDecodeError:
+                    raise BadRequestException("The 'similar_to' parameter is not a valid serialized vector")
             else:
                 # Otherwise, we assume it is a sound id and we pass it as integer
-                similar_to = int(similar_to)
+                try:
+                    similar_to = int(similar_to)
+                except ValueError:
+                    raise BadRequestException("The 'similar_to' parameter is not a valid sound ID")
         else:
             similar_to = None
         return similar_to

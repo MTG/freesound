@@ -19,7 +19,7 @@
     </div>
     <div class="between line-height-percentage-150 v-spacing-top-1">
         <h5 class="ellipsis">
-            <span class="bw-icon-bookmark h-spacing-1 text-light-grey"></span><a class="bw-link--black" href="{% url "collection" collection.id %}" title="{{ collection.name }}">{{ collection.name }}</a>
+            <span class="bw-icon-bookmark h-spacing-1 text-light-grey"></span><a class="bw-link--black" href="{{ collection.get_absolute_url }}" title="{{ collection.name }}">{{ collection.name }}</a>
         </h5>
     </div>
     <div class="between">
@@ -32,7 +32,7 @@
             </div>
             {% if collection.num_downloads %}
             <div class="h-spacing-left-1" title="{{ collection.num_downloads }} download{{ collection.num_downloads|pluralize }}">
-                <a href="{% url 'download-collection' collection.id %}" class="bw-link--grey-light">
+                <a href="{{ collection.download_url }}" class="bw-link--grey-light">
                     <span class="bw-icon-download" style="font-size:90%;"></span> {{ collection.num_downloads|formatnumber }}
                 </a>
             </div>

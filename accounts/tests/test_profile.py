@@ -36,10 +36,11 @@ from django.utils.http import int_to_base36
 
 import accounts.models
 from accounts.management.commands.process_email_bounces import decode_idna_email, process_message
-from accounts.models import EmailBounce, EmailPreferenceType, UserEmailSetting
+from accounts.models import AIPreference, EmailBounce, EmailPreferenceType, UserEmailSetting
 from accounts.views import handle_uploaded_image
 from forum.models import Forum, Post, Thread
-from sounds.models import Download, Pack, PackDownload
+from geotags.models import GeoTag
+from sounds.models import Download, Pack, PackDownload, Sound
 from tags.models import SoundTag
 from utils.mail import send_mail
 from utils.test_helpers import create_user_and_sounds, override_avatars_path_with_temp_directory
@@ -100,8 +101,44 @@ class ProfileGetUserTags(TestCase):
         self.assertEqual(user.profile.get_user_tags(), False)
 
 
+class ProfileGetLastLatlongTest(TestCase):
+    fixtures = ["licenses"]
+
+    def test_get_last_latlong_without_sounds(self):
+        user = User.objects.create_user("testuser")
+        self.assertIsNone(user.profile.get_last_latlong())
+
+    def test_get_last_latlong_only_sounds_without_geotags(self):
+        user, _, sounds = create_user_and_sounds(num_sounds=1, processing_state="OK", moderation_state="OK")
+        self.assertIsNone(user.profile.get_last_latlong())
+
+    def test_get_last_latlong_returns_latest_geotag(self):
+        user, _, sounds = create_user_and_sounds(num_sounds=2, processing_state="OK", moderation_state="OK")
+        sounds[0].created = parse_date("2019-01-01 10:00:00 UTC")
+        sounds[0].save()
+
+        sounds[1].created = parse_date("2020-01-01 10:00:00 UTC")
+        sounds[1].save()
+
+        GeoTag.objects.create(sound=sounds[0], lat=10.0, lon=20.0, zoom=5)
+        GeoTag.objects.create(sound=sounds[1], lat=30.0, lon=40.0, zoom=6)
+
+        self.assertEqual(user.profile.get_last_latlong(), (30.0, 40.0, 6))
+
+    def test_get_last_latlong_skips_latest_sound_without_geotag(self):
+        user, _, sounds = create_user_and_sounds(num_sounds=2, processing_state="OK", moderation_state="OK")
+        GeoTag.objects.create(sound=sounds[0], lat=11.0, lon=22.0, zoom=7)
+        sounds[0].created = parse_date("2019-01-01 10:00:00 UTC")
+        sounds[0].save()
+
+        sounds[1].created = parse_date("2020-01-01 10:00:00 UTC")
+        sounds[1].save()
+
+        self.assertEqual(user.profile.get_last_latlong(), (11.0, 22.0, 7))
+
+
 class UserEditProfile(TestCase):
-    fixtures = ["email_preference_type"]
+    fixtures = ["email_preference_type", "licenses"]
 
     @override_avatars_path_with_temp_directory
     def test_handle_uploaded_image(self):
@@ -120,7 +157,7 @@ class UserEditProfile(TestCase):
     def test_edit_user_profile(self):
         user = User.objects.create_user("testuser")
         self.client.force_login(user)
-        resp = self.client.post(
+        self.client.post(
             "/home/edit/",
             {
                 "profile-home_page": "http://www.example.com/",
@@ -168,6 +205,57 @@ class UserEditProfile(TestCase):
         )
         user.refresh_from_db()
         self.assertEqual(user.old_usernames.count(), settings.USERNAME_CHANGE_MAX_TIMES)
+
+    def test_edit_user_profile_ai_preference(self):
+        # Create a user that has some sounds
+        user, _, sounds = create_user_and_sounds(num_sounds=3, processing_state="OK", moderation_state="OK")
+        for sound in sounds:
+            sound.is_index_dirty = False
+            sound.save()
+        user.profile.num_sounds = len(sounds)
+        user.profile.save()
+
+        # Check that user does not start with any preference set
+        self.assertEqual(user.profile.get_ai_preference(default_if_not_set=False), None)
+
+        # Check that "get_ai_preference" returns the default one when no preference is set and default_if_not_set is True (default)
+        self.assertEqual(user.profile.get_ai_preference(), AIPreference.DEFAULT_AI_PREFERENCE)
+
+        # Now user edits preference in profile page
+        self.client.force_login(user)
+        new_preference = "open-models"
+        self.client.post(
+            "/home/edit/",
+            {
+                "profile-home_page": "http://www.example.com/",
+                "profile-username": "testuser",
+                "profile-about": "About test text",
+                "profile-signature": "Signature test text",
+                "profile-ui_theme_preference": "d",
+                "profile-ai_sound_usage_preference": new_preference,
+            },
+        )
+
+        # Check that new preference is set and that sounds were marked as dirty
+        user = User.objects.select_related("profile").get(username="testuser")
+        self.assertEqual(user.profile.get_ai_preference(), new_preference)
+        self.assertEqual(Sound.objects.filter(user=user, is_index_dirty=True).count(), len(sounds))
+
+        # Now that there's an AI preference object already existing, try to change preference again and check that it works as expected
+        even_newer_preference = "freesound-cc-recommendation"
+        self.client.post(
+            "/home/edit/",
+            {
+                "profile-home_page": "http://www.example.com/",
+                "profile-username": "testuser",
+                "profile-about": "About test text",
+                "profile-signature": "Signature test text",
+                "profile-ui_theme_preference": "d",
+                "profile-ai_sound_usage_preference": even_newer_preference,
+            },
+        )
+        user = User.objects.select_related("profile").get(username="testuser")
+        self.assertEqual(user.profile.get_ai_preference(), even_newer_preference)
 
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")

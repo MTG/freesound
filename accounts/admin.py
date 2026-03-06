@@ -221,8 +221,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
         user_info = obj.profile.get_info_before_delete_user(include_sounds=False, include_other_related_objects=False)
 
-        tvars = {"users_to_delete": [], "type": "delete_preserve_sounds"}
-        tvars["users_to_delete"].append(user_info)
+        tvars = {"users_to_delete": [user_info], "type": "delete_preserve_sounds"}
         return render(request, "accounts/admin_delete_confirmation.html", tvars)
 
     delete_preserve_sounds.label = "Delete user only"
@@ -264,8 +263,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         }
         user_info["deleted_objects_details"]["model_count"] = list(dict(model_count).items())
 
-        tvars = {"users_to_delete": [], "type": "delete_include_sounds"}
-        tvars["users_to_delete"].append(user_info)
+        tvars = {"users_to_delete": [user_info], "type": "delete_include_sounds"}
 
         return render(request, "accounts/admin_delete_confirmation.html", tvars)
 
@@ -306,8 +304,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         }
         user_info["deleted_objects_details"]["model_count"] = list(dict(model_count).items())
 
-        tvars = {"users_to_delete": [], "type": "delete_spammer"}
-        tvars["users_to_delete"].append(user_info)
+        tvars = {"users_to_delete": [user_info], "type": "delete_spammer"}
 
         return render(request, "accounts/admin_delete_confirmation.html", tvars)
 
@@ -348,8 +345,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         }
         user_info["deleted_objects_details"]["model_count"] = list(dict(model_count).items())
 
-        tvars = {"users_to_delete": [], "type": "full_delete"}
-        tvars["users_to_delete"].append(user_info)
+        tvars = {"users_to_delete": [user_info], "type": "full_delete"}
 
         return render(request, "accounts/admin_delete_confirmation.html", tvars)
 

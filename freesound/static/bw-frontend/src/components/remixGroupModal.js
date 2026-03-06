@@ -1,10 +1,19 @@
-import {handleGenericModal, bindModalActivationElements, activateModalsIfParameters} from './modal';
+import {
+  handleGenericModal,
+  bindModalActivationElements,
+  activateModalsIfParameters,
+} from './modal';
 
-const drawArrows =() => {
-    const arrowsPanel = document.getElementsByClassName('remix-group-arrows-panel')[0];
-    const soundsPanel = document.getElementsByClassName('remix-group-sounds-panel')[0];
-    const data = JSON.parse(arrowsPanel.dataset.remixGroupData);
-    let svgContent = '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">\
+const drawArrows = () => {
+  const arrowsPanel = document.getElementsByClassName(
+    'remix-group-arrows-panel'
+  )[0];
+  const soundsPanel = document.getElementsByClassName(
+    'remix-group-sounds-panel'
+  )[0];
+  const data = JSON.parse(arrowsPanel.dataset.remixGroupData);
+  let svgContent =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">\
     <defs>\
         <marker id="arrowhead" viewBox="0 0 10 10" refX="3" refY="5"\
             markerWidth="6" markerHeight="6" orient="auto">\
@@ -12,52 +21,79 @@ const drawArrows =() => {
         </marker>\
     </defs>\
     <g marker-end="url(#arrowhead)">';
-    const links = data.links;
-    const maxLinkLength = Math.max(...links.map(x => Math.abs(x.target - x.source))) ;
-    links.forEach(link => {
-        const sourceSoundDiv = soundsPanel.children[link.source];
-        const targetSoundDiv = soundsPanel.children[link.target];
-        const posStart = {
-            x: arrowsPanel.offsetWidth - 50,
-            y: sourceSoundDiv.offsetTop  + sourceSoundDiv.offsetHeight / 2
-        };
-        const posEnd = {
-            x: arrowsPanel.offsetWidth - 50,
-            y: targetSoundDiv.offsetTop  + targetSoundDiv.offsetHeight / 2
-        };
-        const linkLength = Math.abs(link.target - link.source);
-        const eccentricity = arrowsPanel.offsetWidth * linkLength / maxLinkLength;
-        const dStr =
-            "M" +
-            (posStart.x      ) + "," + (posStart.y) + " " +
-            "C" +
-            (posStart.x - eccentricity) + "," + (posStart.y) + " " +
-            (posEnd.x - eccentricity) + "," + (posEnd.y) + " " +
-            (posEnd.x      ) + "," + (posEnd.y);
-        svgContent += `\n<path d="${dStr}"></path>`;
-    });
-    arrowsPanel.innerHTML = svgContent + '</g></svg>';
-}
+  const links = data.links;
+  const maxLinkLength = Math.max(
+    ...links.map(x => Math.abs(x.target - x.source))
+  );
+  links.forEach(link => {
+    const sourceSoundDiv = soundsPanel.children[link.source];
+    const targetSoundDiv = soundsPanel.children[link.target];
+    const posStart = {
+      x: arrowsPanel.offsetWidth - 50,
+      y: sourceSoundDiv.offsetTop + sourceSoundDiv.offsetHeight / 2,
+    };
+    const posEnd = {
+      x: arrowsPanel.offsetWidth - 50,
+      y: targetSoundDiv.offsetTop + targetSoundDiv.offsetHeight / 2,
+    };
+    const linkLength = Math.abs(link.target - link.source);
+    const eccentricity = (arrowsPanel.offsetWidth * linkLength) / maxLinkLength;
+    const dStr =
+      'M' +
+      posStart.x +
+      ',' +
+      posStart.y +
+      ' ' +
+      'C' +
+      (posStart.x - eccentricity) +
+      ',' +
+      posStart.y +
+      ' ' +
+      (posEnd.x - eccentricity) +
+      ',' +
+      posEnd.y +
+      ' ' +
+      posEnd.x +
+      ',' +
+      posEnd.y;
+    svgContent += `\n<path d="${dStr}"></path>`;
+  });
+  arrowsPanel.innerHTML = svgContent + '</g></svg>';
+};
 
-const onResize = (evt) => {
-    drawArrows();
-}
+const onResize = evt => {
+  drawArrows();
+};
 
 const handleRemixGroupsModal = (modalUrl, modalActivationParam) => {
-    handleGenericModal(modalUrl, (modalContainer) => {
-        drawArrows();
-        window.addEventListener("resize", onResize);
-    }, (modalContainer) => {
-        window.removeEventListener("resize", onResize);
-    }, true, true, modalActivationParam);
-}
+  handleGenericModal(
+    modalUrl,
+    modalContainer => {
+      drawArrows();
+      window.addEventListener('resize', onResize);
+    },
+    modalContainer => {
+      window.removeEventListener('resize', onResize);
+    },
+    true,
+    true,
+    modalActivationParam
+  );
+};
 
-const bindRemixGroupModals = (container) => {
-    bindModalActivationElements('[data-toggle="remix-group-modal"]', handleRemixGroupsModal, container);
-}
+const bindRemixGroupModals = container => {
+  bindModalActivationElements(
+    '[data-toggle="remix-group-modal"]',
+    handleRemixGroupsModal,
+    container
+  );
+};
 
 const activateRemixGroupModalsIfParameters = () => {
-    activateModalsIfParameters('[data-toggle="remix-group-modal"]', handleRemixGroupsModal);
-}
+  activateModalsIfParameters(
+    '[data-toggle="remix-group-modal"]',
+    handleRemixGroupsModal
+  );
+};
 
-export {bindRemixGroupModals, activateRemixGroupModalsIfParameters};
+export { bindRemixGroupModals, activateRemixGroupModalsIfParameters };

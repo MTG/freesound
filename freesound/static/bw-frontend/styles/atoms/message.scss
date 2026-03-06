@@ -1,13 +1,12 @@
 .bw-message {
   &__container {
-
     .bw-checkbox-container {
       opacity: 0.3;
     }
 
     .bw-checkbox:checked {
       & + .bw-checkbox-container {
-        opacity: 1.0;
+        opacity: 1;
         display: block !important;
       }
     }
@@ -15,7 +14,6 @@
     @media (hover) {
       // If hover is not supported (touch devices), don't add this interaction
       &:hover {
-
         .bw-checkbox-container {
           display: block;
         }
@@ -49,7 +47,6 @@
   }
 
   &__info {
-
     color: $navy-grey;
 
     &:hover {
@@ -84,13 +81,12 @@
   }
 
   &__actions {
-
     color: $navy-grey;
 
     .date {
       color: $navy-grey;
     }
-    
+
     .icons {
       display: none;
     }
@@ -111,7 +107,7 @@
       height: 70px;
       border-radius: 50%;
     }
-  
+
     h6 {
       font-size: 16px;
       margin: 0;

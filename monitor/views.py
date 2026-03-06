@@ -118,22 +118,8 @@ def monitor_analysis(request):
         analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status="QU"
     ).count()
 
-    # Get stats about similarity vectors indexed in Solr
-    try:
-        sim_vector_stats = get_search_engine().get_num_sim_vectors_indexed_per_similarity_space()
-    except SearchEngineException:
-        sim_vector_stats = {}
-
-    # Add sim vector stats from DB
-    for similarity_space_name in settings.SIMILARITY_SPACES_NAMES:
-        num_vectors_in_db = SoundSimilarityVector.objects.filter(similarity_space_name=similarity_space_name).count()
-        if similarity_space_name not in sim_vector_stats:
-            sim_vector_stats[similarity_space_name] = {}
-        sim_vector_stats[similarity_space_name]["num_vectors_in_db"] = num_vectors_in_db
-
     tvars = {
         "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
-        "sim_vector_stats": sim_vector_stats,
         "queues_stats_url": reverse("queues-stats"),
         "activePage": "analysis",
         "consolidated": {
@@ -145,6 +131,33 @@ def monitor_analysis(request):
         },
     }
     return render(request, "monitor/analysis.html", tvars)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url="/")
+def monitor_similarity(request):
+    # Get stats about similarity vectors indexed in Solr
+    try:
+        sim_vector_stats = get_search_engine().get_num_sim_vectors_indexed_per_similarity_space()
+    except SearchEngineException:
+        sim_vector_stats = {}
+
+    # Add sim vector stats from DB
+    for similarity_space_name in settings.SIMILARITY_SPACES_NAMES:
+        num_vectors_in_db = SoundSimilarityVector.objects.filter(
+            similarity_space_name=similarity_space_name,
+            sound__processing_state="OK",
+            sound__moderation_state="OK",
+        ).count()
+        if similarity_space_name not in sim_vector_stats:
+            sim_vector_stats[similarity_space_name] = {}
+        sim_vector_stats[similarity_space_name]["num_vectors_in_db"] = num_vectors_in_db
+
+    tvars = {
+        "sim_vector_stats": sim_vector_stats,
+        "activePage": "similarity",
+    }
+    return render(request, "monitor/similarity.html", tvars)
 
 
 @login_required

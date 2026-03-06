@@ -105,13 +105,14 @@ def message(request, message_id):
         invalidate_user_template_caches(request.user.id)
         message.save()
 
-    tvars = {"message": message}
+    tvars = {"message": message, "hide_archive_unarchive": message.is_sent}
     return render(request, "messages/message.html", tvars)
 
 
 @login_required
 @transaction.atomic()
 def new_message(request, username=None, message_id=None):
+    is_reply = bool(message_id)
     if request.user.profile.is_trustworthy():
         form_class = MessageReplyForm
     else:
@@ -190,13 +191,14 @@ def new_message(request, username=None, message_id=None):
 
                 form = form_class(request, initial={"to": to, "subject": subject, "body": body})
             except Message.DoesNotExist:
-                pass
+                messages.add_message(request, messages.INFO, "That message doesn't exist")
+                return HttpResponseRedirect(reverse("messages"))
         elif username:
             form = form_class(request, initial={"to": username})
         else:
             form = form_class(request)
 
-    tvars = {"form": form}
+    tvars = {"form": form, "is_reply": is_reply}
     return render(request, "messages/new.html", tvars)
 
 

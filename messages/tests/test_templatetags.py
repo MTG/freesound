@@ -18,13 +18,11 @@
 #     See AUTHORS file.
 #
 
-from django.core.management import call_command
-from django.core.management.base import BaseCommand
+
+from messages.templatetags.display_message import message_preview_text
 
 
-class Command(BaseCommand):
-    help = "Build Beast Whoosh UI static files and then run collectstatic to put files in place"
-
-    def handle(self, **options):
-        call_command("build_static")
-        call_command("collectstatic", "--noinput")
+def test_message_preview_text_strips_html():
+    # Message preview shows no html
+    text = 'Test with <a href="https://example.com">link</a> and <strong>bold</strong>.'
+    assert message_preview_text(text) == "Test with link and bold."

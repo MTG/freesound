@@ -1,0 +1,1 @@
+{% load absurl %}Ticket "{{ ticket.title|safe }}" updated: {% absurl 'tickets-ticket' ticket.key %}

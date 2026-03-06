@@ -21,6 +21,7 @@
 from django.conf import settings
 from django.test import TestCase
 
+from geotags.models import GeoTag
 from sounds.models import Pack, Sound
 from tickets.models import Ticket
 from utils.test_helpers import (
@@ -66,6 +67,7 @@ class SoundManagerQueryMethods(TestCase):
 
     def setUp(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=3, num_packs=1, tags="tag1 tag2 tag3")
+        GeoTag.objects.create(sound=sounds[0], lat=1.0, lon=1.0, zoom=1)
         for sound in sounds:
             create_consolidated_audio_descriptors_and_similarity_vectors_for_sound(sound)
 

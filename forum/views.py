@@ -352,7 +352,9 @@ def new_thread(request, forum_name_slug):
                 updated_thread.save()
 
                 if form.cleaned_data["subscribe"]:
-                    Subscription.objects.create(subscriber=request.user, thread=thread, is_active=True)
+                    Subscription.objects.get_or_create(
+                        subscriber=request.user, thread=thread, defaults={"is_active": True}
+                    )
 
                 if not set_to_moderation:
                     return HttpResponseRedirect(post.get_absolute_url())

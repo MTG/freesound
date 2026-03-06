@@ -158,6 +158,13 @@ rating_desc     Sort by the average rating given to the sounds, highest rated fi
 rating_asc      Same as above, but lowest rated sounds first.
 ==============  ====================================================================
 
+Alternatively, the ``sort`` parameter can also be set as a **sorting target for numeric fields**. In that case, the results will be sorted according to **euclidean distance** between a set 
+of target field values and the corresponding field values of every sound in the results. To that end, any of the ``field names`` listed in the tables of the :ref:`sound-sound` resource that 
+are marked with "yes" in the ``filtering`` column and are of type ``numeric`` or ``integer`` can be used. Sorting target can be defined using the following syntax::
+
+  sort=field_name:value,field_name2:value2
+
+
 
 .. _search-similar:
 
@@ -493,6 +500,7 @@ geotag                     string            yes*       Latitude and longitude o
 is_geotagged               boolean           yes        Whether the sound has geotag information.
 created                    string            yes        The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
 license                    string            yes        The Creative Commons license under which the sound is available to you ("Attribution", "Attribution NonCommercial", "Creative Commons 0").
+ai_preference              string            yes        The user preference regarding the use of the sound for training generative AI models ("freesound-cc-recommendation", "open-models", "open-noncommercial-models"). Please check `our help section about generative AI training preferences <https://freesound.org/help/faq/#can-my-sounds-be-used-to-train-artificial-intelligence-ai-models>`_ for more information about the meaning of these values.
 type                       string            yes        The original type of the sound (wav, aif, aiff, ogg, mp3, m4a, or flac).
 channels                   integer           yes        The number of sound channels (mostly 1 or 2).
 filesize                   integer           yes        The size of the file in bytes.

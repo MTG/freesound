@@ -50,6 +50,27 @@
         <div class="col-12">
             <div class="v-spacing-top-5 text-center">
                 <a class="btn-primary no-hover" href="{% url "message-reply" message.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Reply</a>
+                {% if not hide_archive_unarchive %}
+                <form method="post" action="{% url "messages-change-state" %}" class="display-inline-block">{% csrf_token %}
+                    <input type="hidden" name="choice" value="a">
+                    <input type="hidden" name="ids" value="{{ message.id }}">
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button type="submit" 
+                        title="{% if message.is_archived %}Unarchive{% else %}Archive{% endif %} message" 
+                        class="h-spacing-left-2 btn-inverse no-hover">
+                        {% if message.is_archived %}{% bw_icon "box-remove" %}Unarchive{% else %}{% bw_icon "box-add" %}Archive{% endif %}
+                    </button>
+                </form>
+                {% endif %}
+                <form method="post" action="{% url "messages-change-state" %}" class="display-inline-block">{% csrf_token %}
+                    <input type="hidden" name="choice" value="d">
+                    <input type="hidden" name="ids" value="{{ message.id }}">
+                    <button type="submit" 
+                        title="Delete message" 
+                        class="h-spacing-left-2 btn-inverse no-hover">
+                        {% bw_icon "trash" %}Delete
+                    </button>
+                </form>
             </div>
         </div> 
     </div>

@@ -1,0 +1,89 @@
+FROM debian:11 AS py2base
+
+LABEL org.opencontainers.image.authors="support@freesound.org"
+
+ENV PYTHONUNBUFFERED=1
+
+# Debian 10 installs python 2.7 as the 'python' package.
+# Double-check this if upgrading to a new version of debian
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+                       build-essential \
+                       ca-certificates \
+                       git \
+                       gosu \
+                       pkg-config \
+                       procps \
+                       python \
+                       python-dev \
+                       wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# pip, last supported version for python 2.7
+ENV PYTHON_PIP_VERSION=20.0.2
+RUN set -ex; \
+	\
+	wget -O get-pip.py 'https://bootstrap.pypa.io/pip/2.7/get-pip.py'; \
+	\
+	python get-pip.py \
+		--disable-pip-version-check \
+		--no-cache-dir \
+		"pip==$PYTHON_PIP_VERSION" \
+	; \
+	pip --version; \
+	\
+	find /usr/local -depth \
+		\( \
+			\( -type d -a \( -name test -o -name tests \) \) \
+			-o \
+			\( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
+		\) -exec rm -rf '{}' +; \
+	rm -f get-pip.py
+
+RUN adduser -q --gecos "" --disabled-password fsweb
+
+COPY docker/entrypoint.sh /usr/local/bin
+
+ENTRYPOINT ["entrypoint.sh"]
+
+FROM py2base AS similarity
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+                       libqt4-dev \
+                       libyaml-dev \
+                       swig \
+    && rm -rf /var/lib/apt/lists/*
+
+# Gaia - https://github.com/MTG/gaia
+RUN git clone https://github.com/MTG/gaia.git /tmp/gaia \
+    && cd /tmp/gaia \
+    && git checkout v2.4.5 \
+    && ./waf configure --with-python-bindings \
+    && ./waf \
+    && ./waf install \
+    && cd / && rm -r /tmp/gaia
+
+RUN mkdir /code
+RUN mkdir /gaia_index
+WORKDIR /code
+
+COPY --chown=fsweb:fsweb similarity/requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY --chown=fsweb:fsweb similarity/ /code
+
+FROM py2base AS tagrecommendation
+
+RUN mkdir /code
+RUN mkdir /tag_recommendation_models
+WORKDIR /code
+
+COPY --chown=fsweb:fsweb tagrecommendation/requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# To avoid installation problems, csc-pysparse needs to be installed after the other packages in requirements.txt
+# have been installed. We might want to replace this package in the future to avoid this "hack".
+RUN pip install csc-pysparse==1.1.1.4
+
+COPY --chown=fsweb:fsweb tagrecommendation/ /code

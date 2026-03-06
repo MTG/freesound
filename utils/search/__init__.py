@@ -187,6 +187,10 @@ class SearchEngineException(Exception):
     pass
 
 
+class SearchEngineTimeoutException(SearchEngineException):
+    pass
+
+
 class SearchEngineBase:
     solr_base_url = None
 
@@ -246,7 +250,7 @@ class SearchEngineBase:
         textual_query="",
         query_fields=None,
         query_filter="",
-        field_list=["id", "score"],
+        field_list=None,
         offset=0,
         current_page=None,
         num_sounds=settings.SOUNDS_PER_PAGE,
@@ -334,6 +338,18 @@ class SearchEngineBase:
             dict: dictionary with the number of similarity vectors and number of sounds indexed per similarity space.
                 E.g.: {'freesound_classic': {'num_sounds': 0, 'num_vectors': 0},
                        'laion_clap': {'num_sounds': 15876, 'num_vectors': 25448}}
+        """
+        raise NotImplementedError
+
+    def get_all_sim_vector_document_ids_per_similarity_space(self):
+        """Returns indexed Solr document IDs for all similarity vector documents for each similarity space.
+        Solr document IDs for similarity vector documents have the format:
+            "simvec_<similarity_space>_<sound_id>"
+
+        Returns:
+            dict: dictionary with a list of Solr document IDs per similarity space.
+                E.g.: {'freesound_classic': [693610/similarity_vectors#0, 693610/similarity_vectors#1, ...],
+                       'laion_clap': [1234/similarity_vectors#0, 1235/similarity_vectors#0, ...]}
         """
         raise NotImplementedError
 

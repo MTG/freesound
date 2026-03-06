@@ -49,7 +49,7 @@
                     {% endif %}
                 {% users_selector form.collection_maintainers_objects%}
                 <div class="between v-spacing-top-4">
-                    <button type="button" class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.id %}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
+                    <button type="button" class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{{ collection.add_maintainers_modal_url }}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
                     <button type="button" class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
                 </div>
             </div>
@@ -66,7 +66,7 @@
                         <div style="flex: 1; min-width: 150px;">
                             <div class="input-wrapper w-100">
                                 <i class="bw-icon-search input-icon"></i><input id="edit-collection-search" name="q" type="search" placeholder="Search in collection..." role="searchbox" autocomplete="off" {% if search_query %}value="{{ search_query }}"{% endif %}
-                                    hx-get="{% url 'edit-collection' collection.id %}"
+                                    hx-get="{{ collection.edit_url }}"
                                     hx-target="#sounds-section"
                                     hx-select="#sounds-section"
                                     hx-swap="outerHTML"
@@ -77,7 +77,7 @@
                         <div class="no-wrap browse__search-overview-sorter" id="sort-container">
                             <label class="text-light-grey d-none d-md-inline">Sort by:</label>
                             <select id="sort-select"
-                                hx-get="{% url 'edit-collection' collection.id %}"
+                                hx-get="{{ collection.edit_url }}"
                                 hx-target="#sounds-section"
                                 hx-select="#sounds-section"
                                 hx-swap="outerHTML"
@@ -94,7 +94,7 @@
                     {% sounds_selector_with_actions form.collection_sound_objects featured_sound_ids=form.featured_sound_ids max_sounds=max_sounds_per_collection %}
                     {% if not form.collection_sound_objects and search_query %}
                     <div class="v-spacing-3 text-grey">
-                        No sounds found matching "{{ search_query }}" in this collection. <a href="{% url 'edit-collection' collection.id %}">Clear search</a>
+                        No sounds found matching "{{ search_query }}" in this collection. <a href="{{ collection.edit_url }}">Clear search</a>
                     </div>
                     {% endif %}
                     <div class="v-spacing-top-3" hx-include="[name='added_sounds'],[name='featured_sounds']">
@@ -102,7 +102,7 @@
                     </div>
                 </div>
                 <div class="v-spacing-top-4">
-                    <button type="button" class="btn-inverse" data-toggle="add-sounds-modal" data-modal-url="{% url 'add-sounds-modal-collection' collection.id %}">{% bw_icon 'plus' %}Add sounds</button>
+                    <button type="button" class="btn-inverse" data-toggle="add-sounds-modal" data-modal-url="{{ collection.add_sounds_modal_url }}">{% bw_icon 'plus' %}Add sounds</button>
                 </div>
                 <div class="between v-spacing-top-5">
                     <span class="helptext" style="display:none" ><i>{{form.added_sounds.help_text|safe}}</i></span>
@@ -113,9 +113,9 @@
             {% endif %}
         </form>
         <div class="between v-spacing-top-3" style="gap: 10px;">
-            <a class="no-hover btn-inverse display-inline-block text-center" href="{% url 'collection' collection.id %}" style="flex: 1;">Discard changes</a>
+            <a class="no-hover btn-inverse display-inline-block text-center" href="{{ collection.get_absolute_url }}" style="flex: 1;">Discard changes</a>
             {% if is_owner%}
-            <button class="btn-secondary" style="flex: 1;" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{% url "delete-collection" collection.id %}">Delete collection</button>
+            <button class="btn-secondary" style="flex: 1;" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{{ collection.delete_url }}">Delete collection</button>
             {% endif %}
         </div>
     </div>
@@ -123,5 +123,5 @@
 {% endblock %}
 
 {% block extrabody %}
-    <script src="{% static 'bw-frontend/dist/collectionEdit.js' %}"></script>
+    <script src="{% static 'bw-frontend/dist/pages/collectionEdit.js' %}"></script>
 {% endblock %}

@@ -62,6 +62,10 @@ const handleAddSoundsModal = (
   openAddSoundsModal(modalId, modalUrl, modalUrl, getExcludeIds, onSoundsConfirmed);
 };
 
+/**
+ * @deprecated Legacy DOM-manipulation approach used by packEdit and editDescribeSounds.
+ * New pages should use prepareAddSoundsModalDynamic with SoundStateStore instead.
+ */
 const prepareAddSoundsModalAndFields = container => {
   const addSoundsButtons = [
     ...container.querySelectorAll(`[data-toggle^="add-sounds-modal"]`),
@@ -70,19 +74,17 @@ const prepareAddSoundsModalAndFields = container => {
     const removeSoundsButton = addSoundsButton.nextElementSibling;
     removeSoundsButton.disabled = true;
 
+    const sectionContainer = addSoundsButton.closest('.bw-form') || addSoundsButton.parentNode.parentNode;
     const selectedSoundsDestinationElement =
-      addSoundsButton.parentNode.parentNode.querySelector(
+      sectionContainer.querySelector(
         '.bw-object-selector-container[data-type="sounds"]'
       );
     initializeObjectSelector(selectedSoundsDestinationElement, element => {
       removeSoundsButton.disabled = element.dataset.selectedIds == '';
     });
 
-    const soundsInput =
-      selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName(
-        'input'
-      )[0];
-    if (soundsInput.disabled) {
+    const soundsInput = sectionContainer.querySelector('input');
+    if (soundsInput && soundsInput.disabled) {
       addSoundsButton.disabled = true;
       const checkboxes = selectedSoundsDestinationElement.querySelectorAll(
         'span.bw-checkbox-container'
@@ -92,20 +94,14 @@ const prepareAddSoundsModalAndFields = container => {
       });
     }
 
-    const soundsLabel =
-      selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName(
-        'label'
-      )[0];
+    const soundsLabel = sectionContainer.querySelector('label');
     const itemCountElementInLabel =
-      soundsLabel === (null || undefined)
+      soundsLabel == null
         ? null
         : soundsLabel.querySelector('#element-count');
 
     const maxSounds = selectedSoundsDestinationElement.dataset.maxElements;
-    const maxSoundsHelpText =
-      selectedSoundsDestinationElement.parentNode.parentNode.getElementsByClassName(
-        'helptext'
-      )[0];
+    const maxSoundsHelpText = sectionContainer.querySelector('.helptext');
     if (maxSounds !== 'None') {
       if (soundsInput.value.split(',').length >= maxSounds) {
         addSoundsButton.disabled = true;
@@ -181,18 +177,42 @@ const prepareAddSoundsModalAndFields = container => {
   });
 };
 
+function extractSoundFromModal(card, soundId) {
+  const fallback = {
+    id: soundId, name: `Sound ${soundId}`, username: '', user_id: 0,
+    duration: 0, samplerate: 44100, created: '', date_added: new Date().toISOString(), description: '',
+  };
+  const player = card.querySelector('.bw-player');
+  if (!player) return fallback;
+
+  const descEl = card.querySelector('.bw-player__description-height');
+  return {
+    id: soundId,
+    name: player.dataset.title || fallback.name,
+    username: player.dataset.username || '',
+    user_id: parseInt(player.dataset.userId, 10) || 0,
+    duration: parseFloat(player.dataset.duration) || 0,
+    samplerate: parseFloat(player.dataset.samplerate) || 44100,
+    created: '',
+    date_added: new Date().toISOString(),
+    description: descEl ? descEl.textContent.trim() : '',
+  };
+}
+
 const prepareAddSoundsModalDynamic = (container, getExcludeIds, onSoundsConfirmed) => {
   const addSoundsButton = container.querySelector('[data-toggle="add-sounds-modal"]');
   if (!addSoundsButton) return;
 
   const onConfirmed = (modalContainer) => {
-    const selectedIds = [...modalContainer.querySelectorAll('.bw-selectable-object')]
+    const sounds = [...modalContainer.querySelectorAll('.bw-selectable-object')]
       .reduce((acc, element) => {
         const checkbox = element.querySelector('input.bw-checkbox');
-        if (checkbox && checkbox.checked) acc.push(parseInt(checkbox.dataset.objectId, 10));
+        if (checkbox && checkbox.checked) {
+          acc.push(extractSoundFromModal(element, parseInt(checkbox.dataset.objectId, 10)));
+        }
         return acc;
       }, []);
-    onSoundsConfirmed(selectedIds);
+    onSoundsConfirmed(sounds);
   };
 
   addSoundsButton.addEventListener('click', (evt) => {

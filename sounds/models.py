@@ -38,8 +38,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Subquery, Sum
-from django.db.models import Case, IntegerField, Value, When
+from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Sum
 from django.db.models.functions import Greatest, JSONObject
 from django.db.models.signals import post_delete, post_save, pre_delete
 from django.dispatch import receiver
@@ -536,8 +535,6 @@ class SoundManager(models.Manager):
         self,
         collection_id,
         limit=None,
-        sort_by=None,
-        featured_sound_ids=None,
         include_audio_descriptors=False,
         include_similarity_vectors=False,
         include_remix_subqueries=False,
@@ -548,32 +545,7 @@ class SoundManager(models.Manager):
             include_similarity_vectors=include_similarity_vectors,
             include_remix_subqueries=include_remix_subqueries,
         )
-        qs = qs.filter(moderation_state="OK", processing_state="OK", collections=collection_id)
-
-        # Validate sort option, defaulting to COLLECTION_SORT_DEFAULT if invalid
-        # If sort_by is None, skip sorting entirely and return all sounds
-        sort_field = None
-        if sort_by is not None:
-            if sort_by not in settings.COLLECTION_SORT_OPTIONS:
-                sort_by = settings.COLLECTION_SORT_DEFAULT
-            sort_field = settings.COLLECTION_SORT_OPTIONS[sort_by][1]
-
-        # Apply sorting based on sort_by option
-        if sort_field == "featured_order":
-            # Featured sorting using Case/When annotation
-            # Non-featured sounds are ordered by date added to collection (newest first)
-            if featured_sound_ids:
-                ordering = Case(
-                    *[When(id=sound_id, then=Value(i)) for i, sound_id in enumerate(featured_sound_ids)],
-                    default=Value(len(featured_sound_ids)),
-                    output_field=IntegerField()
-                )
-                qs = qs.annotate(featured_order=ordering).order_by(sort_field, "collectionsound__created")
-            else:
-                qs = qs.order_by("collectionsound__created")
-        elif sort_field:
-            qs = qs.order_by(sort_field)
-
+        qs = qs.filter(moderation_state="OK", processing_state="OK", collections=collection_id).order_by("-created")
         if limit:
             qs = qs[:limit]
         return qs

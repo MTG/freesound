@@ -38,6 +38,20 @@
           max-width: percentage($i / $columns);
         }
       }
+
+      @for $i from 0 through ($columns - 1) {
+        @if not ($infix == "" and $i == 0) {
+          .offset#{$infix}-#{$i} {
+            margin-left: percentage($i / $columns);
+          }
+        }
+      }
+
+      .order#{$infix}-first { order: -1; }
+      .order#{$infix}-last  { order: $columns + 1; }
+      @for $i from 0 through $columns {
+        .order#{$infix}-#{$i} { order: $i; }
+      }
     }
   }
 }

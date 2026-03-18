@@ -17,7 +17,3 @@ import './uiThemeDetector';
 
 import { initializeStuffInContainer } from '../utils/initHelper';
 initializeStuffInContainer(document, true, true);
-
-// Export initializeStuffInContainer globally for htmx integration
-// This allows base.html to call it after htmx is loaded
-window.initializeStuffInContainer = initializeStuffInContainer;

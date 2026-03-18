@@ -10,5 +10,3 @@ import '../styles/index-light.scss';
 
 import './components';
 import './utils/polyfills';
-
-import './htmx-init';

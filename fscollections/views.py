@@ -20,15 +20,14 @@
 
 from functools import wraps
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import CharField, Q
-from django.db.models.functions import Cast
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.utils.html import strip_tags
 
 from freesound import settings
 from fscollections.forms import (
@@ -42,7 +41,6 @@ from fscollections.models import Collection, CollectionDownload, CollectionDownl
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
 from utils.downloads import download_sounds
-from utils.pagination import paginate
 
 
 def resolve_collection_from_url(view_func):
@@ -68,38 +66,27 @@ def resolve_collection_from_url(view_func):
 @resolve_collection_from_url
 def collection(request, collection):
     user = request.user
-    is_owner = False
-    is_maintainer = False
-    maintainers = []
-
     is_maintainer = collection.maintainers.filter(username=user.username).exists()
     is_owner = user == collection.user
     maintainers = collection.maintainers.all()
 
-    sort_by = request.GET.get("s", settings.COLLECTION_SORT_DEFAULT)
-    search_query = request.GET.get("q", "").strip()
-    collection_sounds = Sound.objects.bulk_sounds_for_collection(
-        collection_id=collection.id, sort_by=sort_by, featured_sound_ids=collection.featured_sound_ids
-    )
-
-    # Filter sounds by search query if provided
-    if search_query:
-        collection_sounds = collection_sounds.filter(Q(original_filename__icontains=search_query)).distinct()
-
-    paginator = paginate(request, collection_sounds, settings.BOOKMARKS_PER_PAGE)
-    page_sounds = Sound.objects.ordered_ids([sound.id for sound in paginator["page"].object_list])
+    previews_url = settings.CDN_PREVIEWS_URL if settings.USE_CDN_FOR_PREVIEWS else settings.PREVIEWS_URL
+    displays_url = settings.CDN_DISPLAYS_URL if settings.USE_CDN_FOR_DISPLAYS else settings.DISPLAYS_URL
 
     tvars = {
         "collection": collection,
         "is_owner": is_owner,
         "is_maintainer": is_maintainer,
         "maintainers": maintainers,
-        "sort_by": sort_by,
         "sort_options": settings.COLLECTION_SORT_OPTIONS,
-        "search_query": search_query,
+        "sounds_data": serialize_collection_sounds(collection),
+        "featured_sound_ids": list(collection.featured_sound_ids),
+        "page_config": {
+            "previews_url": previews_url,
+            "displays_url": displays_url,
+            "sounds_per_page": settings.BOOKMARKS_PER_PAGE,
+        },
     }
-    tvars.update(paginator)
-    tvars["page_collection_and_sound_objects"] = zip(paginator["page"].object_list, page_sounds)
 
     return render(request, "collections/collection.html", tvars)
 
@@ -208,10 +195,40 @@ def delete_collection(request, collection):
         return HttpResponseRedirect(collection.get_absolute_url())
 
 
+def serialize_collection_sounds(collection):
+    """Serialize all sounds in a collection as a list of dicts for client-side rendering."""
+    collection_sounds = Sound.objects.bulk_sounds_for_collection(collection_id=collection.id)
+    cs_dates = dict(CollectionSound.objects.filter(collection=collection).values_list("sound_id", "created"))
+    return [
+        {
+            "id": sound.id,
+            "name": sound.original_filename,
+            "username": sound.username,
+            "user_id": sound.user_id,
+            "duration": sound.duration,
+            "samplerate": sound.samplerate,
+            "created": sound.created,
+            "date_added": cs_dates.get(sound.id, sound.created),
+            "description": strip_tags(sound.description or "")[:200],
+            "num_downloads": sound.num_downloads or 0,
+            "num_comments": sound.num_comments or 0,
+            "num_ratings": sound.num_ratings or 0,
+            "avg_rating": round(sound.avg_rating / 2, 1) if (sound.num_ratings or 0) >= settings.MIN_NUMBER_RATINGS else None,
+            "license_icon": sound.license.icon_name if sound.license_id else None,
+            "license_name": sound.license.name if sound.license_id else None,
+            "pack_id": sound.pack_id,
+            "pack_name": getattr(sound.pack, "name", None) if sound.pack_id else None,
+            "has_geotag": hasattr(sound, "geotag") and sound.geotag is not None,
+            "remix_group": bool(getattr(sound, "remixgroup_id", None)),
+            "ready_for_similarity": sound.ready_for_similarity,
+        }
+        for sound in collection_sounds
+    ]
+
+
 @login_required
 @resolve_collection_from_url
 def edit_collection(request, collection):
-    initial_sound_ids = ",".join(str(s) for s in Sound.objects.filter(collections=collection).values_list("id", flat=True))
     maintainers_query = User.objects.filter(collection_maintainer=collection.id)
     collection_maintainers = ",".join(str(u) for u in maintainers_query.values_list("id", flat=True))
     is_owner = request.user == collection.user
@@ -228,18 +245,6 @@ def edit_collection(request, collection):
         if form.is_valid():
             form.save(user_adding_sound=request.user)
             return HttpResponseRedirect(collection.get_absolute_url())
-        else:
-            # NOTE: in this form's validation, errors are raised for each specific field, so when there is a submission attempt the error
-            # is displayed within it. However, fields containing errors are removed from the clean data but we are still interested in
-            # preserving its value. Therefore, we re-initialize a form according to the user's permissions preserving the field's validated data if so,
-            # and in case of error, we take its value from the POST request. The error messages are then attached to the form so that they're displayed.
-            errors_data = form.errors
-            new_form_data = {
-                field: form.cleaned_data.get(field, request.POST.get(field))
-                for field in form.fields
-            }
-            form = FormClass(initial=new_form_data, label_suffix="", is_owner=is_owner, is_maintainer=is_maintainer)
-            form._errors = errors_data
     else:
         featured_sounds_str = ",".join(str(sid) for sid in collection.featured_sound_ids)
         form = FormClass(
@@ -249,64 +254,27 @@ def edit_collection(request, collection):
             is_owner=is_owner,
             is_maintainer=is_maintainer,
         )
-    sort_by = request.GET.get("s", settings.COLLECTION_SORT_DEFAULT)
-    search_query = request.GET.get("q", "").strip()
 
-    # Merge client-side featured IDs with DB-persisted ones for sorting
-    client_featured_str = request.GET.get("featured_sounds", "")
-    client_featured_ids = [int(x) for x in client_featured_str.split(",") if x.strip().isdigit()]
-    if client_featured_ids:
-        merged_featured = list(collection.featured_sound_ids) + [
-            fid for fid in client_featured_ids if fid not in collection.featured_sound_ids
-        ]
-    else:
-        merged_featured = collection.featured_sound_ids
+    previews_url = settings.CDN_PREVIEWS_URL if settings.USE_CDN_FOR_PREVIEWS else settings.PREVIEWS_URL
+    displays_url = settings.CDN_DISPLAYS_URL if settings.USE_CDN_FOR_DISPLAYS else settings.DISPLAYS_URL
 
-    current_sounds = Sound.objects.bulk_sounds_for_collection(
-        collection_id=collection.id, sort_by=sort_by, featured_sound_ids=merged_featured
-    )
-
-    # Union in sounds added via the modal (not yet persisted)
-    added_ids_str = request.GET.get("added_sounds", "")
-    added_ids = [int(x) for x in added_ids_str.split(",") if x.strip().isdigit()]
-    if added_ids:
-        added_qs = Sound.objects.filter(id__in=added_ids, moderation_state="OK", processing_state="OK")
-        current_sounds = (current_sounds | added_qs).distinct()
-
-    # Filter sounds by search query if provided
-    if search_query:
-        current_sounds = current_sounds.annotate(
-            created_str=Cast("created", output_field=CharField())
-        ).filter(
-            Q(original_filename__icontains=search_query)
-            | Q(description__icontains=search_query)
-            | Q(user__username__icontains=search_query)
-            | Q(created_str__icontains=search_query)
-        ).distinct()
-
-    # Paginate the sounds
-    paginator_data = paginate(request, current_sounds, settings.BOOKMARKS_PER_PAGE)
-    page_sounds = Sound.objects.ordered_ids([sound.id for sound in paginator_data["page"].object_list])
-
-    form.collection_sound_objects = page_sounds
     form.collection_maintainers_objects = maintainers_query
-    form.featured_sound_ids = merged_featured
-
-    total_sounds_count = paginator_data["paginator"].count
 
     tvars = {
         "form": form,
         "collection": collection,
         "is_owner": is_owner,
         "is_maintainer": is_maintainer,
-        "initial_sound_ids": initial_sound_ids,
-        "max_sounds_per_collection": settings.MAX_SOUNDS_PER_COLLECTION,
-        "sort_by": sort_by,
         "sort_options": settings.COLLECTION_SORT_OPTIONS,
-        "total_sounds_count": total_sounds_count,
-        "search_query": search_query,
+        "sounds_data": serialize_collection_sounds(collection),
+        "featured_sound_ids": list(collection.featured_sound_ids),
+        "page_config": {
+            "previews_url": previews_url,
+            "displays_url": displays_url,
+            "sounds_per_page": settings.BOOKMARKS_PER_PAGE,
+            "max_sounds": settings.MAX_SOUNDS_PER_COLLECTION,
+        },
     }
-    tvars.update(paginator_data)
 
     return render(request, "collections/edit_collection.html", tvars)
 

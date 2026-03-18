@@ -1,7 +1,6 @@
 {% extends "simple_page.html" %}
 {% load static %}
 {% load bw_templatetags %}
-{% load display_sound %}
 {% load display_user %}
 {% load util %}
 
@@ -56,60 +55,26 @@
         {% endif %}
         
         <div class="v-spacing-top-5">
-            {% comment %}search and sorting options{% endcomment %}
             <div class="v-spacing-3">
                 <div class="row middle">
                     <div class="col-md-4">
                         <div class="input-wrapper w-100">
-                            <i class="bw-icon-search input-icon"></i><input name="q" type="search" placeholder="Search in collection..." autocomplete="off" {% if search_query %}value="{{ search_query }}"{% endif %}
-                                hx-get="."
-                                hx-target="#collection-sounds-results"
-                                hx-select="#collection-sounds-results"
-                                hx-swap="outerHTML"
-                                hx-push-url="true"
-                                hx-trigger="keyup changed delay:300ms, search"
-                                hx-include="[name='s']">
+                            <i class="bw-icon-search input-icon"></i><input id="collection-search" type="search" placeholder="Search in collection..." autocomplete="off">
                         </div>
                     </div>
                     <div class="col-md-8 text-right v-spacing-top-2 v-spacing-2">
                         <span class="text-light-grey"><b>Sort by:</b></span>
-                        <select name="s"
-                                hx-get="."
-                                hx-target="#collection-sounds-results"
-                                hx-select="#collection-sounds-results"
-                                hx-swap="outerHTML"
-                                hx-push-url="true"
-                                hx-include="[name='q']">
+                        <select id="sort-select">
                             {% for key, option in sort_options.items %}
-                                <option value="{{ key }}" {% if key == sort_by %}selected{% endif %}>{{ option.0 }}</option>
+                                <option value="{{ key }}" {% if key == "featured" %}selected{% endif %}>{{ option.0 }}</option>
                             {% endfor %}
                         </select>
                     </div>
                 </div>
             </div>
-            <div id="collection-sounds-results">
-            {% if page.object_list %}
-            <div class="row">
-                {% for collectionsound, sound in page_collection_and_sound_objects %}
-                {% if sound.id in collection.featured_sound_ids %}
-                <div class="col-6 col-md-4" style="background-color: #fff8e1; padding: 16px;">
-                    {% display_sound_small sound %}
-                </div>
-                {% else %}
-                <div class="col-6 col-md-4">
-                    {% display_sound_small sound %}
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-            {% else %}
-            {% if search_query %}
-            No sounds found matching "{{ search_query }}" in this collection. <a href="?s={{ sort_by }}">Clear search</a>
-            {% else %}
-            There aren't any sounds in this collection yet &#128543;
-            {% endif %}
-            {% endif %}
-            {% bw_paginator paginator page current_page request "collection" hx_target="#collection-sounds-results" %}
+            <div id="sounds-section">
+                <div id="sounds-grid"></div>
+                <div id="sounds-pagination" class="v-spacing-top-3"></div>
             </div>
         </div>
 
@@ -121,5 +86,49 @@
         
     </div>
 </div>
-</div>         
+</div>
+{{ sounds_data|json_script:"sounds-data" }}
+{{ featured_sound_ids|json_script:"featured-data" }}
+{{ page_config|json_script:"page-config" }}
+
+<template id="sound-card-template">
+<div class="col-md-4 col-6">
+  <div class="bw-selectable-object" data-object-id="">
+    <div style="min-width: 0;width:100%;">
+      <div class="v-spacing-3 overflow-hidden">
+        <div class="bw-player"
+             data-size="small"
+             data-collection="false"
+             data-bookmark="false"
+             data-similar-sounds="false"
+             data-remix-group="false"
+             data-show-milliseconds="false"
+             data-favorite="false"
+             tabindex="0">
+        </div>
+        <div class="between line-height-percentage-150 v-spacing-top-1">
+          <h5 class="ellipsis">
+            <a class="bw-link--black js-sound-link" href=""></a>
+          </h5>
+          <div class="js-small-icons js-small-icons-line1 right text-light-grey col-auto" style="max-height:22px;overflow:hidden;padding-right:0!important;padding-left:0!important;"></div>
+        </div>
+        <div class="between">
+          <div class="ellipsis">
+            <a class="js-user-link" href=""></a>
+          </div>
+          <div class="js-small-icons js-small-icons-line2 right text-light-grey col-auto" style="max-height:22px;overflow:hidden;padding-right:0!important;padding-left:0!important;"></div>
+        </div>
+        <div>
+          <span class="text-grey js-date"></span>
+        </div>
+        <div class="v-spacing-top-1 bw-player__description-height js-description"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</template>
 {% endblock page-content %}
+
+{% block extrabody %}
+    <script src="{% static 'bw-frontend/dist/pages/collection.js' %}"></script>
+{% endblock %}

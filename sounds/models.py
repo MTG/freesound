@@ -539,7 +539,6 @@ class SoundManager(models.Manager):
         include_similarity_vectors=False,
         include_remix_subqueries=False,
     ):
-
         qs = self.bulk_query(
             include_audio_descriptors=include_audio_descriptors,
             include_similarity_vectors=include_similarity_vectors,

@@ -261,7 +261,7 @@ export class SoundGridEditor {
             return postProcess ? postProcess(sound, clone) : clone;
         };
 
-        this._defaultSort = opts.defaultSort || Object.keys(this.sortComparators)[0] || 'featured';
+        this._defaultSort = opts.defaultSort || Object.keys(this.sortComparators)[0];
         this.currentPage = 1;
         this.currentSort = this._defaultSort;
         this.currentSearch = '';

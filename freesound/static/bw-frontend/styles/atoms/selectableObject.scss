@@ -23,13 +23,6 @@
         pointer-events: none;
         user-select: none;
       }
-
-      // Disable featured button completely
-      .featured-toggle {
-        opacity: 0.35;
-        pointer-events: none;
-        cursor: not-allowed;
-      }
     }
   }
 }
@@ -133,28 +126,18 @@
       border-color: $navy-light-grey;
       color: $navy-grey;
 
-      // Force 'Undo' text
       .label-default {
-        display: none !important;
+        display: none;
       }
 
       .label-hover {
-        display: inline !important;
+        display: inline;
       }
 
-      // Keep 'Undo' on hover
       &:hover {
         background: $almost-white;
         border-color: $navy-grey;
         color: $black;
-
-        .label-default {
-          display: none !important;
-        }
-
-        .label-hover {
-          display: inline !important;
-        }
       }
     }
   }

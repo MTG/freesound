@@ -25,7 +25,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import F, Sum
 from django.db.models.functions import Greatest
-from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
+from django.db.models.signals import m2m_changed, post_delete, post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse

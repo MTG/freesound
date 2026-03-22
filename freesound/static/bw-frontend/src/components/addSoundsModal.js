@@ -62,10 +62,6 @@ const handleAddSoundsModal = (
   openAddSoundsModal(modalId, modalUrl, modalUrl, getExcludeIds, onSoundsConfirmed);
 };
 
-/**
- * @deprecated Legacy DOM-manipulation approach used by packEdit and editDescribeSounds.
- * New pages should use prepareAddSoundsModalDynamic with SoundStateStore instead.
- */
 const prepareAddSoundsModalAndFields = container => {
   const addSoundsButtons = [
     ...container.querySelectorAll(`[data-toggle^="add-sounds-modal"]`),

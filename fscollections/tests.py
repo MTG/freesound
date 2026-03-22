@@ -23,7 +23,6 @@ class CollectionTest(TestCase):
         self.sound1 = sounds[1]
         self.sound2 = sounds[2]
         self.collection = Collection.objects.create(user=self.user, name="testcollection")
-        print(self.collection.id)
 
     def test_collections_create_and_delete(self):
         # User not logged in - redirects to login page
@@ -251,7 +250,7 @@ class CollectionTest(TestCase):
         self.assertEqual(f"/collections/{self.collection.id}-{slugify(self.collection.name)}/", resp.url)
         self.collection.refresh_from_db()
         self.assertEqual(2, self.collection.num_sounds)
-        # Remove sound1
+        # Remove sound
         form_data = {
             "name": "testcollection",
             "description": "",
@@ -268,14 +267,14 @@ class CollectionTest(TestCase):
         self.assertEqual(1, self.collection.num_sounds)
 
         # Test adding more sounds than permitted
-        ___, ___, extra_sounds = create_user_and_sounds(
+        ___, ___, added_sounds = create_user_and_sounds(
             num_sounds=settings.MAX_SOUNDS_PER_COLLECTION + 1,
             count_offset=3,
             user=self.user,
             processing_state="OK",
             moderation_state="OK",
         )
-        sounds_ids = ",".join([str(s.id) for s in extra_sounds])
+        sounds_ids = ",".join([str(s.id) for s in added_sounds])
         form_data = {"name": "testcollection", "description": "", "public": False, "added_sounds": sounds_ids, "removed_sounds": ""}
         resp = self.client.post(
             reverse("edit-collection", args=[self.collection.id, slugify(self.collection.name)]) + "?ajax=1", form_data
@@ -340,142 +339,129 @@ class CollectionTest(TestCase):
         self.assertEqual(f"/collections/{self.collection.id}-{slugify(self.collection.name)}/", resp.url)
         self.assertTrue(Collection.objects.filter(id=self.collection.id).exists())
 
-    def test_edit_featured_sounds_as_user(self):
-        # Test adding and removing featured sounds as owner
-        self.client.force_login(self.user)
+    def _edit_url(self, collection=None):
+        c = collection or self.collection
+        return reverse("edit-collection", args=[c.id, slugify(c.name)])
 
-        # First add sounds to the collection
-        form_data = {
+    def _post_edit(self, form_data, collection=None):
+        return self.client.post(self._edit_url(collection) + "?ajax=1", form_data)
+
+    def _base_form_data(self, **overrides):
+        data = {
             "name": "testcollection",
             "description": "",
             "public": False,
-            "added_sounds": f"{self.sound.id},{self.sound1.id},{self.sound2.id}",
+            "added_sounds": "",
             "removed_sounds": "",
             "featured_sounds": "",
         }
-        resp = self.client.post(reverse("edit-collection", args=[self.collection.id]) + "?ajax=1", form_data)
+        data.update(overrides)
+        return data
+
+    def test_edit_featured_sounds_as_user(self):
+        self.client.force_login(self.user)
+
+        # Add sounds to the collection
+        resp = self._post_edit(self._base_form_data(
+            added_sounds=f"{self.sound.id},{self.sound1.id},{self.sound2.id}",
+        ))
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
         self.assertEqual(3, self.collection.num_sounds)
         self.assertEqual([], self.collection.featured_sound_ids)
 
-        # Subsequent posts only change featured_sounds — no sound additions/removals
-        form_data["added_sounds"] = ""
-        form_data["removed_sounds"] = ""
-
-        # Add featured sounds
-        form_data["featured_sounds"] = f"{self.sound.id},{self.sound1.id}"
-        resp = self.client.post(reverse("edit-collection", args=[self.collection.id]) + "?ajax=1", form_data)
+        # Feature two sounds
+        resp = self._post_edit(self._base_form_data(
+            featured_sounds=f"{self.sound.id},{self.sound1.id}",
+        ))
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
         self.assertEqual([self.sound.id, self.sound1.id], self.collection.featured_sound_ids)
 
         # Reorder featured sounds
-        form_data["featured_sounds"] = f"{self.sound1.id},{self.sound.id}"
-        resp = self.client.post(reverse("edit-collection", args=[self.collection.id]) + "?ajax=1", form_data)
+        resp = self._post_edit(self._base_form_data(
+            featured_sounds=f"{self.sound1.id},{self.sound.id}",
+        ))
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
         self.assertEqual([self.sound1.id, self.sound.id], self.collection.featured_sound_ids)
 
         # Remove a featured sound
-        form_data["featured_sounds"] = f"{self.sound.id}"
-        resp = self.client.post(reverse("edit-collection", args=[self.collection.id]) + "?ajax=1", form_data)
+        resp = self._post_edit(self._base_form_data(
+            featured_sounds=f"{self.sound.id}",
+        ))
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
         self.assertEqual([self.sound.id], self.collection.featured_sound_ids)
 
         # Clear all featured sounds
-        form_data["featured_sounds"] = ""
-        resp = self.client.post(reverse("edit-collection", args=[self.collection.id]) + "?ajax=1", form_data)
+        resp = self._post_edit(self._base_form_data())
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
         self.assertEqual([], self.collection.featured_sound_ids)
 
     def test_edit_featured_sounds_as_maintainer(self):
-        # Maintainer should not be able to edit featured sounds
         self.collection.maintainers.add(self.maintainer)
         self.collection.featured_sound_ids = [self.sound.id]
         self.collection.save()
 
-        # Add sounds to collection first
         CollectionSound.objects.create(user=self.user, sound=self.sound, collection=self.collection, status="OK")
         CollectionSound.objects.create(user=self.user, sound=self.sound1, collection=self.collection, status="OK")
         self.collection.refresh_from_db()
 
         self.client.force_login(self.maintainer)
 
-        # Try to modify featured sounds as maintainer (should be ignored)
-        form_data = {
-            "name": "testcollection",
-            "description": "",
-            "public": False,
-            "added_sounds": "",
-            "removed_sounds": "",
-            "featured_sounds": f"{self.sound1.id}",  # Try to change featured sounds
-        }
-        resp = self.client.post(reverse("edit-collection", args=[self.collection.id]) + "?ajax=1", form_data)
+        # Maintainer tries to change featured sounds — should be ignored
+        resp = self._post_edit(self._base_form_data(
+            featured_sounds=f"{self.sound1.id}",
+        ))
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
-        # Featured sounds should remain unchanged (original value preserved)
         self.assertEqual([self.sound.id], self.collection.featured_sound_ids)
 
     def test_add_sounds_outside_collection_to_featured(self):
-        # Sounds not in the collection should not be added to featured_sound_ids
         self.client.force_login(self.user)
 
-        # Create a sound that is NOT in the collection
         _, _, other_sounds = create_user_and_sounds(
             num_sounds=1, count_offset=10, user=self.user, processing_state="OK", moderation_state="OK"
         )
         sound_not_in_collection = other_sounds[0]
 
-        # Add only sound and sound1 to the collection, but try to feature sound_not_in_collection
-        form_data = {
-            "name": "testcollection",
-            "description": "",
-            "public": False,
-            "added_sounds": f"{self.sound.id},{self.sound1.id}",
-            "removed_sounds": "",
-            "featured_sounds": f"{self.sound.id},{sound_not_in_collection.id}",
-        }
-        resp = self.client.post(reverse("edit-collection", args=[self.collection.id]) + "?ajax=1", form_data)
+        # Add sound and sound1, but try to feature a sound not in the collection
+        resp = self._post_edit(self._base_form_data(
+            added_sounds=f"{self.sound.id},{self.sound1.id}",
+            featured_sounds=f"{self.sound.id},{sound_not_in_collection.id}",
+        ))
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
-        # Only sound.id should be in featured (sound_not_in_collection should be filtered out)
         self.assertEqual([self.sound.id], self.collection.featured_sound_ids)
 
     def test_remove_sounds_that_are_featured(self):
-        # When a featured sound is removed from collection, it should be removed from featured_sound_ids
         self.client.force_login(self.user)
 
-        # Add sounds and set as featured
-        form_data = {
-            "name": "testcollection",
-            "description": "",
-            "public": False,
-            "added_sounds": f"{self.sound.id},{self.sound1.id},{self.sound2.id}",
-            "removed_sounds": "",
-            "featured_sounds": f"{self.sound.id},{self.sound1.id},{self.sound2.id}",
-        }
-        resp = self.client.post(reverse("edit-collection", args=[self.collection.id]) + "?ajax=1", form_data)
+        # Add all sounds and feature them
+        resp = self._post_edit(self._base_form_data(
+            added_sounds=f"{self.sound.id},{self.sound1.id},{self.sound2.id}",
+            featured_sounds=f"{self.sound.id},{self.sound1.id},{self.sound2.id}",
+        ))
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
         self.assertEqual([self.sound.id, self.sound1.id, self.sound2.id], self.collection.featured_sound_ids)
 
-        # Remove a sound that is featured
-        form_data["added_sounds"] = ""
-        form_data["removed_sounds"] = str(self.sound1.id)
-        form_data["featured_sounds"] = f"{self.sound.id},{self.sound1.id},{self.sound2.id}"  # Still has sound1 in featured
-        resp = self.client.post(reverse("edit-collection", args=[self.collection.id]) + "?ajax=1", form_data)
+        # Remove a featured sound from collection — it should be removed from featured_sound_ids too
+        resp = self._post_edit(self._base_form_data(
+            removed_sounds=str(self.sound1.id),
+            featured_sounds=f"{self.sound.id},{self.sound1.id},{self.sound2.id}",
+        ))
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
-        # sound1 should be removed from featured_sound_ids since it's no longer in the collection
         self.assertEqual([self.sound.id, self.sound2.id], self.collection.featured_sound_ids)
 
-        # Remove all sounds
-        form_data["removed_sounds"] = f"{self.sound.id},{self.sound2.id}"
-        form_data["featured_sounds"] = f"{self.sound.id},{self.sound2.id}"
-        resp = self.client.post(reverse("edit-collection", args=[self.collection.id]) + "?ajax=1", form_data)
+        # Remove all remaining sounds
+        resp = self._post_edit(self._base_form_data(
+            removed_sounds=f"{self.sound.id},{self.sound2.id}",
+            featured_sounds=f"{self.sound.id},{self.sound2.id}",
+        ))
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
         self.assertEqual([], self.collection.featured_sound_ids)

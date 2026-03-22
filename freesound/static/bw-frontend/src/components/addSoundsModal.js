@@ -2,53 +2,42 @@ import {dismissModal, handleGenericModal} from "../components/modal"
 import {initializeObjectSelector, updateObjectSelectorDataProperties} from '../components/objectSelector'
 import {serializedIdListToIntList, combineIdsLists} from "../utils/data"
 
-const openAddSoundsModal = (modalId, modalUrl, url, getExcludeIds, onSoundsConfirmed) => {
-    handleGenericModal(url, (modalContainer) => {
-        const inputElement = modalContainer.querySelector('input');
-        inputElement.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
+const handleAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement, onSoundsSelectedCallback) => {
+    handleGenericModal(modalUrl, (modalContainer) => {
+        const inputElement = modalContainer.getElementsByTagName('input')[0];
+        inputElement.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
                 event.preventDefault();
                 const baseUrl = modalUrl.split('?')[0];
-                const excludeIds = getExcludeIds();
-                openAddSoundsModal(modalId, modalUrl, `${baseUrl}?q=${inputElement.value}&exclude=${excludeIds}`, getExcludeIds, onSoundsConfirmed);
+                const soundIdsToExclude = combineIdsLists(serializedIdListToIntList(selectedSoundsDestinationElement.dataset.selectedIds), serializedIdListToIntList(selectedSoundsDestinationElement.dataset.unselectedIds)).join(',');
+                handleAddSoundsModal(modalId, `${baseUrl}?q=${inputElement.value}&exclude=${soundIdsToExclude}`, selectedSoundsDestinationElement, onSoundsSelectedCallback);
             }
         });
 
         const objectSelectorElement = modalContainer.getElementsByClassName('bw-object-selector-container')[0];
-        const addSelectedSoundsButton = modalContainer.getElementsByTagName('button')[0];
-        addSelectedSoundsButton.disabled = true;
         initializeObjectSelector(objectSelectorElement, (element) => {
             addSelectedSoundsButton.disabled = element.dataset.selectedIds == ""
         });
 
-        addSelectedSoundsButton.addEventListener('click', () => {
-            onSoundsConfirmed(modalContainer);
+        const addSelectedSoundsButton = modalContainer.getElementsByTagName('button')[0];
+        addSelectedSoundsButton.disabled = true;
+        addSelectedSoundsButton.addEventListener('click', evt => {
+            const selectableSoundElements = [...modalContainer.getElementsByClassName('bw-selectable-object')];
+            selectableSoundElements.forEach( element => {
+                const checkbox = element.querySelectorAll('input.bw-checkbox')[0];
+                if (checkbox.checked) {
+                    const clonedCheckbox = checkbox.cloneNode();  // Cloning the node will remove the event listeners which refer to the "old" sound selector
+                    delete(clonedCheckbox.dataset.initialized); // This will force re-initialize the element when added to the new sounds selector
+                    clonedCheckbox.checked = false;
+                    checkbox.parentNode.replaceChild(clonedCheckbox, checkbox);
+                    element.classList.remove('selected');
+                    selectedSoundsDestinationElement.appendChild(element.parentNode);
+                }
+            });
+            onSoundsSelectedCallback(objectSelectorElement.dataset.selectedIds);
             dismissModal(modalId);
         });
     }, undefined, true, true);
-}
-
-const handleAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement, onSoundsSelectedCallback) => {
-    const getExcludeIds = () => combineIdsLists(serializedIdListToIntList(selectedSoundsDestinationElement.dataset.selectedIds), serializedIdListToIntList(selectedSoundsDestinationElement.dataset.unselectedIds)).join(',');
-
-    const onSoundsConfirmed = (modalContainer) => {
-        const objectSelectorElement = modalContainer.getElementsByClassName('bw-object-selector-container')[0];
-        const selectableSoundElements = [...modalContainer.getElementsByClassName('bw-selectable-object')];
-        selectableSoundElements.forEach( element => {
-            const checkbox = element.querySelectorAll('input.bw-checkbox')[0];
-            if (checkbox.checked) {
-                const clonedCheckbox = checkbox.cloneNode();  // Cloning the node will remove the event listeners which refer to the "old" sound selector
-                delete(clonedCheckbox.dataset.initialized); // This will force re-initialize the element when added to the new sounds selector
-                clonedCheckbox.checked = false;
-                checkbox.parentNode.replaceChild(clonedCheckbox, checkbox);
-                element.classList.remove('selected');
-                selectedSoundsDestinationElement.appendChild(element.parentNode);
-            }
-        });
-        onSoundsSelectedCallback(objectSelectorElement.dataset.selectedIds);
-    };
-
-    openAddSoundsModal(modalId, modalUrl, modalUrl, getExcludeIds, onSoundsConfirmed);
 }
 
 const prepareAddSoundsModalAndFields = (container) => {
@@ -124,6 +113,32 @@ const prepareAddSoundsModalAndFields = (container) => {
 
         });
     });
+}
+
+const openAddSoundsModal = (modalId, modalUrl, url, getExcludeIds, onSoundsConfirmed) => {
+    handleGenericModal(url, (modalContainer) => {
+        const inputElement = modalContainer.getElementsByTagName('input')[0];
+        inputElement.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                const baseUrl = modalUrl.split('?')[0];
+                const excludeIds = getExcludeIds();
+                openAddSoundsModal(modalId, modalUrl, `${baseUrl}?q=${inputElement.value}&exclude=${excludeIds}`, getExcludeIds, onSoundsConfirmed);
+            }
+        });
+
+        const objectSelectorElement = modalContainer.getElementsByClassName('bw-object-selector-container')[0];
+        const addSelectedSoundsButton = modalContainer.getElementsByTagName('button')[0];
+        addSelectedSoundsButton.disabled = true;
+        initializeObjectSelector(objectSelectorElement, (element) => {
+            addSelectedSoundsButton.disabled = element.dataset.selectedIds == ""
+        });
+
+        addSelectedSoundsButton.addEventListener('click', () => {
+            onSoundsConfirmed(modalContainer);
+            dismissModal(modalId);
+        });
+    }, undefined, true, true);
 }
 
 function extractSoundFromModal(card, soundId) {

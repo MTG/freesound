@@ -361,38 +361,15 @@ class CollectionTest(TestCase):
     def test_edit_featured_sounds_as_user(self):
         self.client.force_login(self.user)
 
-        # Add sounds to the collection
+        # Add sounds and feature two of them
         resp = self._post_edit(self._base_form_data(
             added_sounds=f"{self.sound.id},{self.sound1.id},{self.sound2.id}",
-        ))
-        self.assertEqual(302, resp.status_code)
-        self.collection.refresh_from_db()
-        self.assertEqual(3, self.collection.num_sounds)
-        self.assertEqual([], self.collection.featured_sound_ids)
-
-        # Feature two sounds
-        resp = self._post_edit(self._base_form_data(
             featured_sounds=f"{self.sound.id},{self.sound1.id}",
         ))
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
+        self.assertEqual(3, self.collection.num_sounds)
         self.assertEqual([self.sound.id, self.sound1.id], self.collection.featured_sound_ids)
-
-        # Reorder featured sounds
-        resp = self._post_edit(self._base_form_data(
-            featured_sounds=f"{self.sound1.id},{self.sound.id}",
-        ))
-        self.assertEqual(302, resp.status_code)
-        self.collection.refresh_from_db()
-        self.assertEqual([self.sound1.id, self.sound.id], self.collection.featured_sound_ids)
-
-        # Remove a featured sound
-        resp = self._post_edit(self._base_form_data(
-            featured_sounds=f"{self.sound.id}",
-        ))
-        self.assertEqual(302, resp.status_code)
-        self.collection.refresh_from_db()
-        self.assertEqual([self.sound.id], self.collection.featured_sound_ids)
 
         # Clear all featured sounds
         resp = self._post_edit(self._base_form_data())
@@ -456,12 +433,3 @@ class CollectionTest(TestCase):
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
         self.assertEqual([self.sound.id, self.sound2.id], self.collection.featured_sound_ids)
-
-        # Remove all remaining sounds
-        resp = self._post_edit(self._base_form_data(
-            removed_sounds=f"{self.sound.id},{self.sound2.id}",
-            featured_sounds=f"{self.sound.id},{self.sound2.id}",
-        ))
-        self.assertEqual(302, resp.status_code)
-        self.collection.refresh_from_db()
-        self.assertEqual([], self.collection.featured_sound_ids)

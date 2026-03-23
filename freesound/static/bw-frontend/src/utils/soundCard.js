@@ -8,6 +8,42 @@
 
 import { escapeAttr, truncate, formatDate, formatNumber, soundPlayerUrls } from './formatters';
 
+// ─── Card extraction ────────────────────────────────────────
+
+/**
+ * Read sound data back from a card's DOM — the inverse of populateSoundCard.
+ * Works with both Django-rendered cards (modal) and JS-rendered cards.
+ */
+export function extractSoundFromCard(card) {
+    const player = card.querySelector('.bw-player');
+    if (!player) return null;
+
+    const d = player.dataset;
+    return {
+        id:                  parseInt(d.soundId, 10),
+        name:                d.title || '',
+        username:            d.username || '',
+        user_id:             parseInt(d.userId, 10) || 0,
+        duration:            parseFloat(d.duration) || 0,
+        samplerate:          parseFloat(d.samplerate) || 44100,
+        created:             '',
+        date_added:          new Date().toISOString(),
+        description:         (card.querySelector('.bw-player__description-height')
+                              || { textContent: '' }).textContent.trim(),
+        num_downloads:       parseInt(d.numDownloads, 10) || 0,
+        num_comments:        parseInt(d.numComments, 10) || 0,
+        num_ratings:         0,
+        avg_rating:          null,
+        license_icon:        null,
+        license_name:        null,
+        pack_id:             null,
+        pack_name:           null,
+        has_geotag:          false,
+        remix_group:         d.remixGroup === 'true',
+        ready_for_similarity:d.similarSounds === 'true',
+    };
+}
+
 // ─── Card renderer ──────────────────────────────────────────
 
 /**
@@ -103,7 +139,7 @@ function smallIconsLine(sound) {
     if (sound.has_geotag) count += 1;
     if (sound.num_downloads) count += 2;
     if (sound.num_comments) count += 2;
-    if (sound.avg_rating !== null) count += 2;
+    if (sound.avg_rating != null) count += 2;
     const len = (sound.name || '').length;
     if (count >= 6) return len >= 15 ? '2' : '1';
     if (count >= 3) return len >= 23 ? '2' : '1';
@@ -127,14 +163,14 @@ function buildSmallIconsHtml(sound, username) {
             + `<a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="/people/${username}/sounds/${sound.id}/geotag/?ajax=1" class="bw-link--grey-light">`
             + `<span class="bw-icon-pin"></span></a></div>`;
     html += `<div class="h-spacing-left-1" title="License: ${sound.license_name || ''}"><span class="bw-icon-${sound.license_icon || 'cc'}"></span></div>`;
-    if (sound.avg_rating !== null)
+    if (sound.avg_rating != null)
         html += `<div class="h-spacing-left-1" title="${sound.num_ratings} rating${sound.num_ratings !== 1 ? 's' : ''}">`
             + `<span class="bw-icon-star"></span><span class="bw-rating__avg"> ${Number(sound.avg_rating).toFixed(1)}</span></div>`;
     return html;
 }
 
 function buildRatingWidgetHtml(sound) {
-    const rating = sound.avg_rating !== null ? sound.avg_rating : 0;
+    const rating = sound.avg_rating != null ? sound.avg_rating : 0;
     const username = encodeURIComponent(sound.username);
     let html = '<div class="bw-rating__container" data-show-added-rating-on-save="false"'
         + ` aria-label="Average rating of ${rating.toFixed(1)}">`;

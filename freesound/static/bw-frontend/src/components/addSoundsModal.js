@@ -4,6 +4,7 @@ import {
   updateObjectSelectorDataProperties,
 } from '../components/objectSelector';
 import { serializedIdListToIntList, combineIdsLists } from '../utils/data';
+import { extractSoundFromCard } from '../utils/soundCard';
 
 const prepareAddSoundsModalAndFields = container => {
   const addSoundsButtons = [
@@ -174,28 +175,6 @@ const openAddSoundsModal = (modalId, modalUrl, url, getExcludeIds, onSoundsConfi
     }, undefined, true, true);
 }
 
-function extractSoundFromModal(card, soundId) {
-    const fallback = {
-        id: soundId, name: `Sound ${soundId}`, username: '', user_id: 0,
-        duration: 0, samplerate: 44100, created: '', date_added: new Date().toISOString(), description: '',
-    };
-    const player = card.querySelector('.bw-player');
-    if (!player) return fallback;
-
-    const descEl = card.querySelector('.bw-player__description-height');
-    return {
-        id: soundId,
-        name: player.dataset.title || fallback.name,
-        username: player.dataset.username || '',
-        user_id: parseInt(player.dataset.userId, 10) || 0,
-        duration: parseFloat(player.dataset.duration) || 0,
-        samplerate: parseFloat(player.dataset.samplerate) || 44100,
-        created: '',
-        date_added: new Date().toISOString(),
-        description: descEl ? descEl.textContent.trim() : '',
-    };
-}
-
 const prepareAddSoundsModalDynamic = (container, getExcludeIds, onSoundsConfirmed) => {
     const addSoundsButton = container.querySelector('[data-toggle="add-sounds-modal"]');
     if (!addSoundsButton) return;
@@ -205,7 +184,7 @@ const prepareAddSoundsModalDynamic = (container, getExcludeIds, onSoundsConfirme
             .reduce((acc, element) => {
                 const checkbox = element.querySelector('input.bw-checkbox');
                 if (checkbox && checkbox.checked) {
-                    acc.push(extractSoundFromModal(element, parseInt(checkbox.dataset.objectId, 10)));
+                    acc.push(extractSoundFromCard(element));
                 }
                 return acc;
             }, []);

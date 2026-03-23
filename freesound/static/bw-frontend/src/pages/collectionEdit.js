@@ -1,7 +1,8 @@
 import { prepareAddMaintainersModalAndFields } from "../components/collectionsModal"
 import { prepareAddSoundsModalDynamic } from "../components/addSoundsModal"
 import { SoundStateStore } from "../utils/soundStateStore"
-import { SoundGridEditor, addEditActions } from "../utils/soundGridEditor"
+import { SoundGridEditor } from "../utils/soundGridEditor"
+import { addEditActions } from "../utils/soundCard"
 
 // ─── Data ────────────────────────────────────────────────────
 

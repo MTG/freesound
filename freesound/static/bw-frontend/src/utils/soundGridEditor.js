@@ -11,8 +11,7 @@
 
 import { escapeAttr, formatDate } from './formatters';
 import { populateSoundCard } from './soundCard';
-export { populateSoundCard, addEditActions } from './soundCard';
-import { makeSoundPlayers } from '../components/player/utils';
+import { createPlayer } from '../components/player/player-ui';
 import { initializeObjectSelectorActions } from '../components/objectSelector';
 import { bindDefaultModals } from '../components/modal';
 import { makeRatingWidgets } from '../components/rating';
@@ -27,22 +26,11 @@ import debounce from 'lodash.debounce';
 export class SoundGridEditor {
     /**
      * @param {Object}  opts
-     * @param {SoundStateStore} opts.store           - state store for tracked sounds
-     * @param {Element}        [opts.gridEl]         - container for rendered sound cards (default: #sounds-grid)
-     * @param {Element}        [opts.paginationEl]   - container for pagination controls (default: #sounds-pagination)
-     * @param {Element}        [opts.countEl]        - element whose textContent shows the sound count
-     * @param {Element}        [opts.searchInput]    - search <input> element
-     * @param {Element}        [opts.sortSelect]     - sort <select> element (default: #sort-select)
-     * @param {Element}        [opts.cardTemplate]   - <template> element for a single card (default: #sound-card-template)
-     * @param {Function}       [opts.renderCard]     - (sound, baseClone) => DocumentFragment post-process hook
-     * @param {number}         [opts.pageSize]       - defaults from page-config or 12
-     * @param {number}         [opts.maxSounds]      - defaults from page-config or 250
-     * @param {Object}         [opts.sortComparators]- { key: (a, b) => number } sort functions
-     * @param {string}         [opts.defaultSort]    - initial sort key (default: 'featured')
-     * @param {Function}       [opts.searchFilter]   - (sound, query) => boolean
-     * @param {Function}       [opts.onPostRender]   - (gridEl) => void, called after each render
-     * @param {Element}        [opts.scrollTarget]   - element to scroll into view on page change (default: #sounds-section)
-     * @param {boolean|Object} [opts.syncUrl]        - sync grid state with URL query params.
+     * @param {SoundStateStore} opts.store       - state store for tracked sounds
+     * @param {Element}        [opts.countEl]    - element whose textContent shows the sound count
+     * @param {Element}        [opts.searchInput]- search <input> element
+     * @param {Function}       [opts.renderCard] - (sound, baseClone) => DocumentFragment post-process hook
+     * @param {boolean|Object} [opts.syncUrl]    - sync grid state with URL query params.
      *        Pass `true` for defaults ({ sort: 's', search: 'q', page: 'page' })
      *        or an object to override individual param names.
      */
@@ -51,20 +39,16 @@ export class SoundGridEditor {
         const config = configEl ? JSON.parse(configEl.textContent) : {};
 
         this.store = opts.store;
-        this.gridEl = opts.gridEl || document.getElementById('sounds-grid');
-        this.paginationEl = opts.paginationEl || document.getElementById('sounds-pagination');
+        this.gridEl = document.getElementById('sounds-grid');
+        this.paginationEl = document.getElementById('sounds-pagination');
         this.countEl = opts.countEl || null;
         this.searchInput = opts.searchInput || null;
-        this.sortSelect = opts.sortSelect || document.getElementById('sort-select');
-        this.cardTemplate = opts.cardTemplate || document.getElementById('sound-card-template');
-        this.pageSize = opts.pageSize || config.sounds_per_page;
-        this.maxSounds = opts.maxSounds || config.max_sounds;
-        this.previewsUrl = opts.previewsUrl || config.previews_url || '';
-        this.displaysUrl = opts.displaysUrl || config.displays_url || '';
-        this.sortComparators = opts.sortComparators || this._defaultComparators();
-        this.searchFilter = opts.searchFilter || SoundGridEditor.defaultSearchFilter;
-        this.scrollTarget = opts.scrollTarget || document.getElementById('sounds-section');
-        this.onPostRender = opts.onPostRender || SoundGridEditor.defaultPostRender;
+        this.sortSelect = document.getElementById('sort-select');
+        this.cardTemplate = document.getElementById('sound-card-template');
+        this.pageSize = config.sounds_per_page;
+        this.maxSounds = config.max_sounds;
+        this.previewsUrl = config.previews_url || '';
+        this.displaysUrl = config.displays_url || '';
 
         const postProcess = opts.renderCard || null;
         this.renderCard = (sound) => {
@@ -75,7 +59,7 @@ export class SoundGridEditor {
             return postProcess ? postProcess(sound, clone) : clone;
         };
 
-        this._defaultSort = opts.defaultSort || Object.keys(this.sortComparators)[0];
+        this._defaultSort = 'featured';
         this.currentPage = 1;
         this.currentSort = this._defaultSort;
         this.currentSearch = '';
@@ -89,9 +73,10 @@ export class SoundGridEditor {
         this._bindEvents();
         this._autoRender = debounce(() => this.renderPage(), 0);
         this._storeListener = (_id, flag) => {
+            this._sortedCache = null;
             if (flag === this.store.FLAG.ADDED) {
                 this._autoRender();
-            } else if (this.countEl) {
+            } else if (this.countEl && flag === this.store.FLAG.REMOVE) {
                 this.countEl.textContent = this.store.presentCount();
             }
         };
@@ -100,18 +85,11 @@ export class SoundGridEditor {
 
     static defaultSearchFilter(sound, query) {
         const q = query.toLowerCase();
+        if (!sound._searchDate) sound._searchDate = formatDate(sound.created).toLowerCase();
         return (sound.name || '').toLowerCase().includes(q)
             || (sound.username || '').toLowerCase().includes(q)
             || (sound.description || '').toLowerCase().includes(q)
-            || formatDate(sound.created).toLowerCase().includes(q);
-    }
-
-    static defaultPostRender(gridEl) {
-        bindDefaultModals(gridEl);
-        makeRatingWidgets(gridEl);
-        bindCollectionModals(gridEl);
-        bindSimilarSoundsModal(gridEl);
-        bindRemixGroupModals(gridEl);
+            || sound._searchDate.includes(q);
     }
 
     getFilteredSorted() {
@@ -121,14 +99,14 @@ export class SoundGridEditor {
             || this._sortedCache.data.length !== sounds.length
             || this._sortedCache.sort !== this.currentSort) {
             const sorted = sounds.slice();
-            const comparator = this.sortComparators[this.currentSort];
+            const comparator = this._getComparator(this.currentSort);
             if (comparator) sorted.sort(comparator);
             this._sortedCache = { data: sorted, sort: this.currentSort };
         }
 
         if (this.currentSearch) {
             const q = this.currentSearch;
-            return this._sortedCache.data.filter(s => this.searchFilter(s, q));
+            return this._sortedCache.data.filter(s => SoundGridEditor.defaultSearchFilter(s, q));
         }
 
         return this._sortedCache.data;
@@ -164,9 +142,10 @@ export class SoundGridEditor {
 
         this.paginationEl.innerHTML = this._renderPaginationHTML(totalPages, this.currentPage);
 
-        makeSoundPlayers(this.gridEl);
         initializeObjectSelectorActions(this.gridEl, this.store);
-        if (this.onPostRender) this.onPostRender(this.gridEl);
+        bindDefaultModals(this.gridEl);
+        makeRatingWidgets(this.gridEl);
+        this._lazyInitPlayers();
 
         if (this.countEl) this.countEl.textContent = this.store.presentCount();
         if (this._urlParams) this._pushUrl();
@@ -175,23 +154,52 @@ export class SoundGridEditor {
     destroy() {
         this.store.removeListener(this._storeListener);
         this._autoRender.cancel();
+        if (this._playerObserver) this._playerObserver.disconnect();
+    }
+
+    // ─── Lazy player init ─────────────────────────────────────
+
+    _lazyInitPlayers() {
+        if (this._playerObserver) this._playerObserver.disconnect();
+
+        const players = [...this.gridEl.getElementsByClassName('bw-player')];
+        if (!players.length) return;
+
+        const initPlayer = (player) => {
+            createPlayer(player);
+            const card = player.closest('.col-md-4') || player.parentElement;
+            bindCollectionModals(card);
+            bindSimilarSoundsModal(card);
+            bindRemixGroupModals(card);
+        };
+
+        this._playerObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                this._playerObserver.unobserve(entry.target);
+                initPlayer(entry.target);
+            });
+        }, { rootMargin: '200px' });
+
+        players.forEach(p => this._playerObserver.observe(p));
     }
 
     // ─── Private ──────────────────────────────────────────────
 
-    _defaultComparators() {
+    _getComparator(key) {
         const store = this.store;
-        return {
-            featured: (a, b) => {
-                const aIsFeat = store.hasFlag(a.id, store.FLAG.FEATURED);
-                const bIsFeat = store.hasFlag(b.id, store.FLAG.FEATURED);
-                if (aIsFeat !== bIsFeat) return aIsFeat ? -1 : 1;
+        switch (key) {
+            case 'featured': return (a, b) => {
+                const af = store.hasFlag(a.id, store.FLAG.FEATURED);
+                const bf = store.hasFlag(b.id, store.FLAG.FEATURED);
+                if (af !== bf) return af ? -1 : 1;
                 return new Date(a.date_added || 0) - new Date(b.date_added || 0);
-            },
-            created_desc: (a, b) => new Date(b.date_added || 0) - new Date(a.date_added || 0),
-            created_asc: (a, b) => new Date(a.date_added || 0) - new Date(b.date_added || 0),
-            name: (a, b) => (a.name || '').localeCompare(b.name || ''),
-        };
+            };
+            case 'created_desc': return (a, b) => new Date(b.date_added || 0) - new Date(a.date_added || 0);
+            case 'created_asc': return (a, b) => new Date(a.date_added || 0) - new Date(b.date_added || 0);
+            case 'name': return (a, b) => (a.name || '').localeCompare(b.name || '');
+            default: return null;
+        }
     }
 
     _renderPaginationHTML(totalPages, page) {
@@ -286,7 +294,7 @@ export class SoundGridEditor {
             evt.preventDefault();
             this.currentPage = parseInt(link.dataset.page, 10);
             this.renderPage();
-            const target = this.scrollTarget || this.gridEl.parentElement;
+            const target = document.getElementById('sounds-section') || this.gridEl.parentElement;
             if (target) target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
 

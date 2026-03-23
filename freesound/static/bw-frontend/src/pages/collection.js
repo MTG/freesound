@@ -18,7 +18,7 @@ const editor = new SoundGridEditor({
     renderCard(sound, clone) {
         if (store.hasFlag(sound.id, store.FLAG.FEATURED)) {
             const col = clone.querySelector('.col-md-4');
-            if (col) col.style.backgroundColor = '#fff8e1';
+            if (col) col.classList.add('featured-highlight');
         }
         return clone;
     },

@@ -90,7 +90,7 @@ export function populateSoundCard(templateEl, sound, { previewsUrl, displaysUrl 
 
     // Small stat icons (only rendered if template has the target slots)
     const iconsTarget = clone.querySelector(`.js-small-icons-line${smallIconsLine(sound)}`);
-    if (iconsTarget) iconsTarget.innerHTML = buildSmallIconsHtml(sound);
+    if (iconsTarget) iconsTarget.innerHTML = buildSmallIconsHtml(sound, username);
 
     return clone;
 }
@@ -110,9 +110,8 @@ function smallIconsLine(sound) {
     return len >= 30 ? '2' : '1';
 }
 
-function buildSmallIconsHtml(sound) {
+function buildSmallIconsHtml(sound, username) {
     let html = '';
-    const username = encodeURIComponent(sound.username);
     if (sound.num_downloads)
         html += `<div class="h-spacing-left-1" title="${sound.num_downloads} downloads">`
             + `<a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="/people/${username}/sounds/${sound.id}/downloaders/?ajax=1" class="bw-link--grey-light">`
@@ -134,12 +133,6 @@ function buildSmallIconsHtml(sound) {
     return html;
 }
 
-function buildStarIcon(type, fillClass) {
-    if (type === 'half')
-        return `<span class="bw-icon-half-star ${fillClass}"><span class="path1"></span><span class="path2"></span></span>`;
-    return `<span class="bw-icon-star ${fillClass}"></span>`;
-}
-
 function buildRatingWidgetHtml(sound) {
     const rating = sound.avg_rating !== null ? sound.avg_rating : 0;
     const username = encodeURIComponent(sound.username);
@@ -149,16 +142,18 @@ function buildRatingWidgetHtml(sound) {
     for (let i = 5; i >= 1; i--) {
         const low = i - 1;
         const half = (low + i) / 2;
-        let type, fill;
-        if (i <= rating) { type = 'full'; fill = 'text-red'; }
-        else if (half <= rating && rating < i) { type = 'half'; fill = 'text-red'; }
-        else { type = 'full'; fill = 'text-light-grey'; }
+        let isHalf, fill;
+        if (i <= rating) { isHalf = false; fill = 'text-red'; }
+        else if (half <= rating && rating < i) { isHalf = true; fill = 'text-red'; }
+        else { isHalf = false; fill = 'text-light-grey'; }
 
         html += `<input class="bw-rating__input" type="radio" name="rate-${sound.id}"`
             + ` data-rate-url="/people/${username}/sounds/${sound.id}/rate/${i}/"`
             + ` id="rate-${sound.id}-${i}" value="${i}">`;
         html += `<label for="rate-${sound.id}-${i}" data-value="${i}" aria-label="Rate sound ${i} star${i !== 1 ? 's' : ''}">`;
-        html += buildStarIcon(type, fill);
+        html += isHalf
+            ? `<span class="bw-icon-half-star ${fill}"><span class="path1"></span><span class="path2"></span></span>`
+            : `<span class="bw-icon-star ${fill}"></span>`;
         html += '</label>';
     }
     html += '</div>';

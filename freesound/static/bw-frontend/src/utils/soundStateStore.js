@@ -75,12 +75,6 @@ class SoundStateStore {
         return (mask & flag) !== 0;
     }
 
-    _entries(excludeRemoved = false) {
-        const removedFlag = excludeRemoved ? this._actionFlag('remove') : 0;
-        return Array.from(this._states.entries())
-            .filter(([, mask]) => !removedFlag || (mask & removedFlag) === 0);
-    }
-
     /** All tracked object IDs. */
     ids() {
         return Array.from(this._states.keys());
@@ -88,22 +82,30 @@ class SoundStateStore {
 
     /** Count of objects where REMOVED is NOT set. */
     presentCount() {
-        return this._entries(true).length;
+        const removedFlag = this._actionFlag('remove');
+        if (!removedFlag) return this._states.size;
+        let count = 0;
+        for (const mask of this._states.values()) {
+            if ((mask & removedFlag) === 0) count++;
+        }
+        return count;
     }
 
     /** Object IDs where the given flag is set. Pass excludeRemoved=true to omit removed objects. */
     idsWithFlag(flag, excludeRemoved = false) {
-        return this._entries(excludeRemoved)
-            .filter(([, mask]) => (mask & flag) !== 0)
-            .map(([id]) => id);
+        const removedFlag = excludeRemoved ? this._actionFlag('remove') : 0;
+        const result = [];
+        for (const [id, mask] of this._states) {
+            if (removedFlag && (mask & removedFlag) !== 0) continue;
+            if ((mask & flag) !== 0) result.push(id);
+        }
+        return result;
     }
 
     // ─── Metadata ──────────────────────────────────────────────
 
     allSoundsWithMeta() {
-        return this.ids()
-            .map(id => this._meta.get(id))
-            .filter(Boolean);
+        return Array.from(this._meta.values());
     }
 
     // ─── Listeners ────────────────────────────────────────────

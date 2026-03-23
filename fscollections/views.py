@@ -43,6 +43,13 @@ from sounds.views import add_sounds_modal_helper
 from utils.downloads import download_sounds
 
 
+def _media_urls():
+    return (
+        settings.CDN_PREVIEWS_URL if settings.USE_CDN_FOR_PREVIEWS else settings.PREVIEWS_URL,
+        settings.CDN_DISPLAYS_URL if settings.USE_CDN_FOR_DISPLAYS else settings.DISPLAYS_URL,
+    )
+
+
 def resolve_collection_from_url(view_func):
     """Fetches collection, redirects to canonical URL if name doesn't match, passes collection to view."""
 
@@ -70,8 +77,7 @@ def collection(request, collection):
     is_owner = user == collection.user
     maintainers = collection.maintainers.all()
 
-    previews_url = settings.CDN_PREVIEWS_URL if settings.USE_CDN_FOR_PREVIEWS else settings.PREVIEWS_URL
-    displays_url = settings.CDN_DISPLAYS_URL if settings.USE_CDN_FOR_DISPLAYS else settings.DISPLAYS_URL
+    previews_url, displays_url = _media_urls()
 
     tvars = {
         "collection": collection,
@@ -255,8 +261,7 @@ def edit_collection(request, collection):
             is_maintainer=is_maintainer,
         )
 
-    previews_url = settings.CDN_PREVIEWS_URL if settings.USE_CDN_FOR_PREVIEWS else settings.PREVIEWS_URL
-    displays_url = settings.CDN_DISPLAYS_URL if settings.USE_CDN_FOR_DISPLAYS else settings.DISPLAYS_URL
+    previews_url, displays_url = _media_urls()
 
     form.collection_maintainers_objects = maintainers_query
 

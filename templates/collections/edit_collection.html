@@ -90,54 +90,18 @@
                 <button class="btn-primary w-100">Save collection</button>
             {% endif %}
         </form>
-        <div class="between v-spacing-top-3" style="gap: 10px;">
-            <a class="no-hover btn-inverse display-inline-block text-center" href="{{ collection.get_absolute_url }}" style="flex: 1;">Discard changes</a>
-            {% if is_owner%}
-            <button class="btn-secondary" style="flex: 1;" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{{ collection.delete_url }}">Delete collection</button>
-            {% endif %}
+        {% if is_owner%}
+        <div class="v-spacing-top-3">
+            <button class="btn-secondary w-100" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{{ collection.delete_url }}">Delete collection</button>
         </div>
+        {% endif %}
     </div>
 </div>
 {{ sounds_data|json_script:"sounds-data" }}
 {{ featured_sound_ids|json_script:"featured-data" }}
 {{ page_config|json_script:"page-config" }}
 
-<template id="sound-card-template">
-<div class="col-md-4 col-6">
-  <div class="bw-selectable-object" data-object-id="">
-    <div style="min-width: 0;width:100%;">
-      <div class="v-spacing-3 overflow-hidden">
-        <div class="bw-player"
-             data-size="small"
-             data-collection="false"
-             data-bookmark="false"
-             data-similar-sounds="false"
-             data-remix-group="false"
-             data-show-milliseconds="false"
-             data-favorite="false"
-             tabindex="0">
-        </div>
-        <div class="between line-height-percentage-150 v-spacing-top-1">
-          <h5 class="ellipsis">
-            <a class="bw-link--black js-sound-link" href=""></a>
-          </h5>
-          <div class="js-small-icons js-small-icons-line1 right text-light-grey col-auto" style="max-height:22px;overflow:hidden;padding-right:0!important;padding-left:0!important;"></div>
-        </div>
-        <div class="between">
-          <div class="ellipsis">
-            <a class="js-user-link" href=""></a>
-          </div>
-          <div class="js-small-icons js-small-icons-line2 right text-light-grey col-auto" style="max-height:22px;overflow:hidden;padding-right:0!important;padding-left:0!important;"></div>
-        </div>
-        <div>
-          <span class="text-grey js-date"></span>
-        </div>
-        <div class="v-spacing-top-1 bw-player__description-height js-description"></div>
-      </div>
-    </div>
-  </div>
-</div>
-</template>
+{% include "collections/_sound_card_template.html" %}
 {% endblock %}
 
 {% block extrabody %}

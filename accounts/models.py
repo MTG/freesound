@@ -21,6 +21,7 @@
 import datetime
 import os
 import random
+import typing
 from urllib.parse import quote
 
 from django.conf import settings
@@ -39,7 +40,7 @@ from django.utils import timezone
 from django.utils.encoding import smart_str
 from psycopg.errors import ForeignKeyViolation
 
-import tickets.models
+import tickets
 from apiv2.models import ApiV2Client
 from bookmarks.models import Bookmark
 from comments.models import Comment
@@ -52,6 +53,9 @@ from sounds.models import BulkUploadProgress, Download, License, Pack, PackDownl
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from utils.search import SearchEngineException, get_search_engine
+
+if typing.TYPE_CHECKING:
+    import tickets.views
 
 
 class ResetEmailRequest(models.Model):
@@ -99,6 +103,7 @@ class ProfileManager(models.Manager):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
+    user_id: int
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
     signature = models.TextField(max_length=256, null=True, blank=True)
@@ -657,7 +662,7 @@ class Profile(models.Model):
     @property
     def num_packs(self):
         # Return the number of packs for which at least one sound has been published
-        return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by("pack_id").distinct("pack").count()
+        return Sound.public.filter(user=self.user).exclude(pack=None).order_by("pack_id").distinct("pack").count()
 
     def get_stats_for_profile_page(self):
         # Return a dictionary of user statistics to show on the user profile page
@@ -678,6 +683,18 @@ class Profile(models.Model):
         stats_from_db.update(stats_from_cache)
         return stats_from_db
 
+    def get_ai_preference(self, default_if_not_set=True):
+        try:
+            return self.user.ai_preference.preference
+        except AIPreference.DoesNotExist:
+            # If no preference is set, return the default one
+            if default_if_not_set:
+                return AIPreference.DEFAULT_AI_PREFERENCE
+            return None
+
+    def set_ai_preference(self, preference_value):
+        AIPreference.objects.update_or_create(user=self.user, defaults={"preference": preference_value})
+
     class Meta:
         ordering = ("-user__date_joined",)
         permissions = (("can_beta_test", "Show beta features to that user."),)
@@ -688,6 +705,24 @@ class GdprAcceptance(models.Model):
     # Automatically add the date because the presence of this field means that
     # the user accepted the terms
     date_accepted = models.DateTimeField(auto_now_add=True)
+
+
+class AIPreference(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="ai_preference")
+    date_updated = models.DateTimeField(auto_now=True)
+    AI_PREFERENCE_CHOICES = (
+        (
+            "freesound-cc-recommendation",
+            "My sounds are used following Freesound's recommendations for interpreting Creative Commons licenses in a generative AI training context",
+        ),
+        ("open-models", "My sounds are used to train open source models that are freely available to the public"),
+        (
+            "open-noncommercial-models",
+            "My sounds are used to train open source models that are freely available to the public and that do not allow a commercial use",
+        ),
+    )
+    DEFAULT_AI_PREFERENCE = "freesound-cc-recommendation"
+    preference = models.CharField(choices=AI_PREFERENCE_CHOICES, default=DEFAULT_AI_PREFERENCE)
 
 
 class UserFlag(models.Model):

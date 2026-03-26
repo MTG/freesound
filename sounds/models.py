@@ -440,7 +440,9 @@ class SoundManager(models.Manager):
             sound=OuterRef("id"), analyzer=default_similarity_space_analyzer, analysis_status="OK"
         )
 
-        qs = self.select_related("user", "user__profile", "license", "ticket", "pack", "geotag").annotate(
+        qs = self.select_related(
+            "user", "user__profile", "user__ai_preference", "license", "ticket", "pack", "geotag"
+        ).annotate(
             username=F("user__username"),
             pack_name=F("pack__name"),
             remixgroup_id=F("remix_group__id"),
@@ -630,6 +632,7 @@ class PublicSoundManager(models.Manager):
 
 
 class Sound(models.Model):
+    id: int
     user = models.ForeignKey(User, related_name="sounds", on_delete=models.CASCADE)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
@@ -1042,9 +1045,8 @@ class Sound(models.Model):
         current_tags = set([t.name for t in self.tags.all()])
         for tag in tags:
             if tag not in current_tags:
-                (tag_object, created) = Tag.objects.get_or_create(name=tag)
-                tagged_object = SoundTag.objects.create(user=self.user, tag=tag_object, sound=self)
-                tagged_object.save()
+                tag_object, _ = Tag.objects.get_or_create(name=tag)
+                SoundTag.objects.get_or_create(tag=tag_object, sound=self, defaults={"user": self.user})
 
     def set_license(self, new_license):
         """
@@ -1294,8 +1296,7 @@ class Sound(models.Model):
             self.save()
 
     def add_comment(self, user, comment):
-        comment = Comment(sound=self, user=user, comment=comment)
-        comment.save()
+        comment = Comment.objects.create(sound=self, user=user, comment=comment)
         self.num_comments = F("num_comments") + 1
         self.mark_index_dirty(commit=False)
         self.save()
@@ -1600,16 +1601,14 @@ class Sound(models.Model):
         if len(sim_vector) != similarity_space["vector_size"]:
             return False
 
-        try:
-            sound_sim_vector = SoundSimilarityVector.objects.get(
-                sound=self, similarity_space_name=similarity_space_name
-            )
-        except SoundSimilarityVector.DoesNotExist:
-            sound_sim_vector = SoundSimilarityVector(sound=self, similarity_space_name=similarity_space_name)
-        sound_sim_vector.vector = sim_vector
         if similarity_space["l2_norm"]:
-            sound_sim_vector.apply_l2_normalization()
-        sound_sim_vector.save()
+            sim_vector = SoundSimilarityVector.l2_normalize_vector(sim_vector)
+
+        SoundSimilarityVector.objects.update_or_create(
+            sound=self,
+            similarity_space_name=similarity_space_name,
+            defaults={"vector": sim_vector},
+        )
 
         return True
 
@@ -2517,11 +2516,6 @@ class SoundSimilarityVector(models.Model):
             return [v / norm for v in vector]
         else:
             return vector
-
-    def apply_l2_normalization(self, commit=True):
-        self.vector = self.l2_normalize_vector(self.vector)
-        if commit:
-            self.save()
 
     class Meta:
         unique_together = (

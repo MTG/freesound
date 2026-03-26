@@ -20,16 +20,18 @@
 
 
 import json
-import urllib
+import urllib.parse
 
 import luqum.tree
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.http import urlencode
 from luqum.parser import parser
 from luqum.pretty import prettify
 
 from sounds.models import Sound
+from tags.models import Tag
 from utils.clustering_utilities import get_clusters_for_query, get_ids_in_cluster
 from utils.encryption import create_hash
 from utils.search import SearchEngineException
@@ -86,9 +88,11 @@ class SearchQueryProcessor:
                 label="Sort",
                 choices=[(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
                 should_be_disabled=lambda option: bool(option.sqp.get_option_value_to_apply("similar_to")),
-                get_default_value=lambda option: settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
-                if option.sqp.get_option_value_to_apply("query") == ""
-                else settings.SEARCH_SOUNDS_SORT_DEFAULT,
+                get_default_value=lambda option: (
+                    settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
+                    if option.sqp.get_option_value_to_apply("query") == ""
+                    else settings.SEARCH_SOUNDS_SORT_DEFAULT
+                ),
             ),
         ),
         (
@@ -98,9 +102,9 @@ class SearchQueryProcessor:
                 advanced=False,
                 query_param_name="page",
                 value_default=1,
-                get_value_to_apply=lambda option: 1
-                if option.sqp.get_option_value_to_apply("map_mode")
-                else option.value,
+                get_value_to_apply=lambda option: (
+                    1 if option.sqp.get_option_value_to_apply("map_mode") else option.value
+                ),
             ),
         ),
         (
@@ -128,8 +132,10 @@ class SearchQueryProcessor:
                     (settings.SEARCH_SOUNDS_FIELD_ID, "Sound ID"),
                     (settings.SEARCH_SOUNDS_FIELD_USER_NAME, "Username"),
                 ],
-                should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("tags_mode")
-                or bool(option.sqp.get_option_value_to_apply("similar_to")),
+                should_be_disabled=lambda option: (
+                    option.sqp.get_option_value_to_apply("tags_mode")
+                    or bool(option.sqp.get_option_value_to_apply("similar_to"))
+                ),
             ),
         ),
         (
@@ -152,9 +158,9 @@ class SearchQueryProcessor:
                 label="Only geotagged sounds",
                 help_text="Only find sounds that have geolocation information",
                 should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("map_mode"),
-                get_value_to_apply=lambda option: True
-                if option.sqp.get_option_value_to_apply("map_mode")
-                else option.value,
+                get_value_to_apply=lambda option: (
+                    True if option.sqp.get_option_value_to_apply("map_mode") else option.value
+                ),
             ),
         ),
         (
@@ -175,11 +181,15 @@ class SearchQueryProcessor:
                 query_param_name="dp",
                 label="Display results as packs",
                 help_text="Display search results as packs rather than individual sounds",
-                get_value_to_apply=lambda option: False
-                if option.sqp.has_filter_with_name("pack_grouping") or option.sqp.get_option_value_to_apply("map_mode")
-                else option.value,
-                should_be_disabled=lambda option: option.sqp.has_filter_with_name("pack_grouping")
-                or option.sqp.get_option_value_to_apply("map_mode"),
+                get_value_to_apply=lambda option: (
+                    False
+                    if option.sqp.has_filter_with_name("pack_grouping")
+                    or option.sqp.get_option_value_to_apply("map_mode")
+                    else option.value
+                ),
+                should_be_disabled=lambda option: (
+                    option.sqp.has_filter_with_name("pack_grouping") or option.sqp.get_option_value_to_apply("map_mode")
+                ),
             ),
         ),
         (
@@ -191,9 +201,11 @@ class SearchQueryProcessor:
                 help_text="Group search results so that multiple sounds of the same pack only represent one item",
                 value_default=True,
                 get_value_to_apply=_get_value_to_apply_group_by_pack,
-                should_be_disabled=lambda option: option.sqp.has_filter_with_name("pack_grouping")
-                or option.sqp.get_option_value_to_apply("display_as_packs")
-                or option.sqp.get_option_value_to_apply("map_mode"),
+                should_be_disabled=lambda option: (
+                    option.sqp.has_filter_with_name("pack_grouping")
+                    or option.sqp.get_option_value_to_apply("display_as_packs")
+                    or option.sqp.get_option_value_to_apply("map_mode")
+                ),
             ),
         ),
         (
@@ -204,9 +216,9 @@ class SearchQueryProcessor:
                 query_param_name="cm",
                 label="Display results in grid",
                 help_text="Display search results in a grid so that more sounds are visible per search results page",
-                get_default_value=lambda option: option.request.user.profile.use_compact_mode
-                if option.request.user.is_authenticated
-                else False,
+                get_default_value=lambda option: (
+                    option.request.user.profile.use_compact_mode if option.request.user.is_authenticated else False
+                ),
                 should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("map_mode"),
             ),
         ),
@@ -233,9 +245,9 @@ class SearchQueryProcessor:
             dict(
                 advanced=False,
                 query_param_name="cid",
-                get_value_to_apply=lambda option: -1
-                if not option.sqp.get_option_value_to_apply("compute_clusters")
-                else option.value,
+                get_value_to_apply=lambda option: (
+                    -1 if not option.sqp.get_option_value_to_apply("compute_clusters") else option.value
+                ),
             ),
         ),
         (
@@ -316,12 +328,18 @@ class SearchQueryProcessor:
         else:
             self.f_parsed = []
 
-        # Handle the special case of old "gropuing_pack" filter which is not valid anymore
-        # Looks like some bots are still using it which results in many errors reported in the logs and
-        # many Solr queries failing. By returning an early error, we avoid the Solr request.
-        if self.has_filter_with_name("grouping_pack"):
-            self.errors = "Filter parsing error: 'grouping_pack' is not a valid filter name"
-            return
+        # Validate tag filters to match tag naming rules. You can't add a tag that doesn't match our validation regex
+        # and the tag is used in the follow_tags url. If the tag is invalid, just return an error.
+        for node in self.f_parsed:
+            if type(node) == luqum.tree.SearchField and node.name == "tag":
+                tag_value = str(node.expr)
+                if tag_value.startswith('"') and tag_value.endswith('"'):
+                    tag_value = tag_value[1:-1]
+                try:
+                    Tag._meta.get_field("name").clean(tag_value, None)
+                except ValidationError:
+                    self.errors = f"Filter parsing error: invalid tag value '{tag_value}'"
+                    return
 
         # Remove duplicate filters if any
         nodes_in_filter = []
@@ -356,9 +374,11 @@ class SearchQueryProcessor:
         for node in self.f_parsed:
             if type(node) == luqum.tree.SearchField:
                 if node.name == field_name:
-                    # node.expr is expected to be of type luqum.tree.Range
-                    values_to_update[field_name] = [str(node.expr.low), str(node.expr.high)]
-                    self.f_parsed = [f for f in self.f_parsed if f != node]
+                    if isinstance(node.expr, luqum.tree.Range):
+                        values_to_update[field_name] = [str(node.expr.low), str(node.expr.high)]
+                        self.f_parsed = [f for f in self.f_parsed if f != node]
+                    else:
+                        self.errors = f"Filter parsing error: '{field_name}' filter value must be a range (e.g., {field_name}:[0 TO 100])"
 
         if values_to_update:
             self.request.GET = self.request.GET.copy()
@@ -399,8 +419,13 @@ class SearchQueryProcessor:
                 if node.name not in search_engine_field_names_used_in_options:
                     self.non_option_filters.append((node.name, str(node.expr)))
 
-    # Filter-related methods
+        # Handle the special case of old "grouping_pack" filter which is not valid anymore
+        # Looks like some bots are still using it which results in many errors reported in the logs and
+        # many Solr queries failing.
+        if self.has_filter_with_name("grouping_pack"):
+            self.errors = "Filter parsing error: 'grouping_pack' is not a valid filter name"
 
+    # Filter-related methods
     def get_active_filters(
         self,
         include_filters_from_options=True,

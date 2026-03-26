@@ -1,3 +1,4 @@
+@use 'sass:color';
 $navbar-height: 80px;
 $navbar-height-mobile: 64px;
 
@@ -23,7 +24,7 @@ $navbar-height-mobile: 64px;
 }
 
 .bw-nav--scrolled {
-  box-shadow: 0 2px 5px transparentize($navy-light-grey, 0.6);
+  box-shadow: 0 2px 5px color.adjust($navy-light-grey, $alpha: -0.6);
 }
 
 .bw-nav__container {
@@ -322,4 +323,3 @@ $navbar-height-mobile: 64px;
     }
   }
 }
-

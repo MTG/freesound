@@ -30,7 +30,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 import sounds
-import tickets
+import tickets.models
+import tickets.views
 from sounds.models import Sound
 from tickets import TICKET_STATUS_ACCEPTED, TICKET_STATUS_CLOSED, TICKET_STATUS_DEFERRED, TICKET_STATUS_NEW
 from tickets.forms import (
@@ -62,8 +63,7 @@ class NewTicketTests(TestCase):
         ticket.assignee = User.objects.get(username="test_moderator")
         ticket.save()
         # just to test, this would be a sound object for example
-        s = Sound(description="test sound", license_id=1, user=test_user)
-        s.save()
+        s = Sound.objects.create(description="test sound", license_id=1, user=test_user)
         ticket.sound = s
         ticket.save()
         self.assertEqual(s.id, ticket.sound.id)
@@ -163,9 +163,7 @@ class MiscTicketTests(TicketTests):
         """Emails should be properly configured and sent with notifications"""
         ticket = self._create_assigned_ticket()
 
-        ticket.send_notification_emails(
-            tickets.models.Ticket.NOTIFICATION_APPROVED_BUT, tickets.models.Ticket.USER_ONLY
-        )
+        ticket.send_notification_email_user(tickets.models.Ticket.NOTIFICATION_APPROVED_BUT)
 
         local_vars = {
             "ticket": ticket,

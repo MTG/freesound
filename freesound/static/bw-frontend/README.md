@@ -1,13 +1,10 @@
 # Freesound Beast Whoosh Front end development
 
-## Installation of static dependencies
-
-See step 12 of the main README file.
-
-
 ## Building static
 
-See step 13 of the main README file. That step will need to be re-run everytime that there are changes in the static files (JS, CSS...).
+One-shot build: `docker compose run --rm frontend_builder npm run build`
+
+For automatic rebuilds during development, use the `frontend` profile: `docker compose --profile frontend up`
 
 
 ## Icons

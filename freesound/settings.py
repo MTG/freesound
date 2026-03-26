@@ -261,6 +261,7 @@ EMAIL_SUBJECT_NEW_COMMENT = "You have a new comment"
 EMAIL_SUBJECT_SOUND_FLAG = "Sound flag"
 EMAIL_SUBJECT_SUPPORT_EMAIL = "[support]"
 EMAIL_SUBJECT_MODERATION_HANDLED = "A Freesound moderator handled your upload"
+EMAIL_SUBJECT_MODERATION_FOR_MODERATOR = "Ticket update"
 
 # -------------------------------------------------------------------------------
 # Static settings
@@ -312,6 +313,9 @@ SOUNDS_PER_PAGE_PROFILE_PACK_PAGE = 12
 NUM_SIMILAR_SOUNDS_PER_PAGE = 9
 NUM_SIMILAR_SOUNDS_PAGES = 1  # In the modal we only show one page, full results can be seen in search page
 
+# Sleep time in milliseconds between stream email queries to the search engine
+# This is to avoid overwhelming the search engine if many emails are being sent at the same time
+STREAM_EMAIL_SEARCH_ENGINE_SLEEP_BETWEEN_QUERIES = 0.2  # in seconds
 
 # Weights using to compute charts
 BW_CHARTS_ACTIVE_USERS_WEIGHTS = {"upload": 1, "post": 0.8, "comment": 0.05}
@@ -1172,6 +1176,7 @@ SEARCH_FORUM_SORT_DEFAULT = SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST
 SEARCH_ENGINE_BACKEND_CLASS = "utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine"
 SOLR5_BASE_URL = "http://search:8983/solr"
 SOLR9_BASE_URL = "http://search:8983"
+SEARCH_SOLR_TIMEOUT_SECONDS = 5
 
 SIMILARITY_SPACE_LAION_CLAP = "laion_clap"
 SIMILARITY_FREESOUND_CLASSIC = "freesound_classic"

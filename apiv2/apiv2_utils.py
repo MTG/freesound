@@ -58,7 +58,7 @@ from apiv2.forms import API_SORT_OPTIONS_MAP
 from similarity.client import SimilarityException
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
-from utils.search import SearchEngineException, get_search_engine
+from utils.search import SearchEngineException, SearchEngineTimeoutException, get_search_engine
 from utils.search.search_sounds import parse_weights_parameter
 from utils.similarity_utilities import api_search as similarity_api_search
 from utils.similarity_utilities import get_sounds_descriptors
@@ -67,6 +67,7 @@ from . import combined_search_strategies
 from .examples import examples
 
 error_logger = logging.getLogger("api_errors")
+search_logger = logging.getLogger("search")
 cache_api_monitoring = caches["api_monitoring"]
 
 
@@ -414,6 +415,21 @@ def api_search(
 
             return ids_score, num_found, distance_to_target_data, more_from_pack_data, None, None, None
 
+        except SearchEngineTimeoutException as e:
+            search_logger.info(
+                "SearchTimeout (%s)"
+                % json.dumps(
+                    {
+                        "ip": resource.end_user_ip,
+                        "query": search_form.cleaned_data["query"],
+                        "filter": search_form.cleaned_data["filter"],
+                        "page": search_form.cleaned_data["page"],
+                        "sort": search_form.cleaned_data["sort"],
+                        "api_version": "v2",
+                    }
+                )
+            )
+            raise ServerErrorException(msg="Search is overloaded, please try again later.", resource=resource)
         except SearchEngineException as e:
             if search_form.cleaned_data["filter"] is not None:
                 raise BadRequestException(

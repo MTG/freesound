@@ -39,7 +39,7 @@ from django.utils.safestring import mark_safe
 from django_recaptcha.fields import ReCaptchaField
 from multiupload_plus.fields import MultiFileField
 
-from accounts.models import DeletedUser, EmailPreferenceType, OldUsername, Profile
+from accounts.models import AIPreference, DeletedUser, EmailPreferenceType, OldUsername, Profile
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import HtmlCleaningCharField, HtmlCleaningCharFieldWithCenterTag, filename_has_valid_extension
 from utils.spam import is_spam
@@ -208,9 +208,9 @@ def username_taken_by_other_user(username):
 
 class RegistrationForm(forms.Form):
     username = UsernameField()
-    email1 = forms.EmailField(label=False, help_text=False, max_length=254)
-    email2 = forms.EmailField(label=False, help_text=False, max_length=254)
-    password1 = forms.CharField(label=False, help_text=False, widget=forms.PasswordInput)
+    email1 = forms.EmailField(label="", max_length=254)
+    email2 = forms.EmailField(label="", max_length=254)
+    password1 = forms.CharField(label="", widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
         label=mark_safe(
             'Check this box to accept our <a href="/help/tos_web/" target="_blank" class="bw-link--grey">terms of '
@@ -227,8 +227,8 @@ class RegistrationForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         # Customize some placeholders and classes, remove labels and help texts
-        self.fields["username"].label = False
-        self.fields["username"].help_text = False
+        self.fields["username"].label = ""
+        self.fields["username"].help_text = ""
         self.fields["username"].widget.attrs["placeholder"] = "Username (30 characters maximum)"
         self.fields["email1"].widget.attrs["placeholder"] = "Email"
         self.fields["email2"].widget.attrs["placeholder"] = "Email confirmation"
@@ -309,9 +309,9 @@ class FsAuthenticationForm(AuthenticationForm):
                 "Note that passwords are case-sensitive.",
             }
         )
-        self.fields["username"].label = False
+        self.fields["username"].label = None
         self.fields["username"].widget.attrs["placeholder"] = "Enter your email or username"
-        self.fields["password"].label = False
+        self.fields["password"].label = None
         self.fields["password"].widget.attrs["placeholder"] = "Enter your password"
 
 
@@ -336,21 +336,20 @@ class ProfileForm(forms.ModelForm):
     sound_signature = HtmlCleaningCharField(
         label="Sound signature",
         widget=forms.Textarea(attrs=dict(rows=10, cols=70)),
-        help_text="""Your sound signature is added to the end of each of your sound 
-            descriptions. If you change the sound signature it will be automatically updated on all of your sounds. 
-            Use the special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed 
+        help_text="""Your sound signature is added to the end of each of your sound
+            descriptions. If you change the sound signature it will be automatically updated on all of your sounds.
+            Use the special text <code>${sound_url}</code> to refer to the URL of the current sound being displayed
             and <code>${sound_id}</code> to refer to the id of the current sound. """
         + HtmlCleaningCharField.make_help_text(),
         required=False,
         max_length=256,
     )
     is_adult = forms.BooleanField(
-        label="I'm an adult, I don't want to see inappropriate content warnings", help_text=False, required=False
+        label="I'm an adult, I don't want to see inappropriate content warnings", required=False
     )
     not_shown_in_online_users_list = forms.BooleanField(
         help_text='Hide from "users currently online" list in the People page', label="", required=False
     )
-
     allow_simultaneous_playback = forms.BooleanField(
         label="Allow simultaneous audio playback",
         required=False,
@@ -361,10 +360,30 @@ class ProfileForm(forms.ModelForm):
         required=False,
         widget=forms.CheckboxInput(attrs={"class": "bw-checkbox"}),
     )
+    ai_sound_usage_preference = forms.ChoiceField(
+        label=mark_safe(
+            '<div class="v-spacing-1 text-grey" id="ai-section">I agree with my sounds being used to train generative AI models provided that:</div>'
+        ),
+        choices=AIPreference.AI_PREFERENCE_CHOICES,
+        required=False,
+        help_text=mark_safe(
+            '<div class="v-spacing-top-3 text-light-grey">Use the setting above to express a '
+            "preference regarding the usage of your sounds for training generative Artificial Intelligence models. "
+            'This preference <b>applies to all your uploaded sounds</b>. Please, read the <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">'
+            "<i>Usage of my sounds for "
+            "training generative AI models</i> help section</a> to learn more about the details and implications of the available options.</div> "
+        ),
+    )
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
-        kwargs.update(initial={"username": request.user.username})
+        initial_kwargs = {
+            "username": request.user.username,
+        }
+        ai_preference = request.user.profile.get_ai_preference()
+        if ai_preference:
+            initial_kwargs["ai_sound_usage_preference"] = ai_preference
+        kwargs.update(initial=initial_kwargs)
         kwargs.update(dict(label_suffix=""))
         super().__init__(*args, **kwargs)
 
@@ -510,7 +529,7 @@ DELETE_CHOICES = [
 
 class DeleteUserForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())
-    delete_sounds = forms.ChoiceField(label=False, choices=DELETE_CHOICES, widget=forms.RadioSelect())
+    delete_sounds = forms.ChoiceField(label=None, choices=DELETE_CHOICES, widget=forms.RadioSelect())
     password = forms.CharField(label="Confirm your password", widget=forms.PasswordInput)
 
     def clean_password(self):
@@ -553,7 +572,7 @@ class DeleteUserForm(forms.Form):
 
 class EmailSettingsForm(forms.Form):
     email_types = forms.ModelMultipleChoiceField(
-        queryset=EmailPreferenceType.objects.all(), widget=forms.CheckboxSelectMultiple, required=False, label=False
+        queryset=EmailPreferenceType.objects.all(), widget=forms.CheckboxSelectMultiple, required=False, label=None
     )
 
     def __init__(self, *args, **kwargs):
@@ -648,11 +667,11 @@ class FsSetPasswordForm(SetPasswordForm):
         super().__init__(*args, **kwargs)
 
         # Customize some placeholders and classes, remove labels and help texts
-        self.fields["new_password1"].label = False
-        self.fields["new_password1"].help_text = False
+        self.fields["new_password1"].label = None
+        self.fields["new_password1"].help_text = ""
         self.fields["new_password1"].widget.attrs["placeholder"] = "New password"
-        self.fields["new_password2"].label = False
-        self.fields["new_password2"].help_text = False
+        self.fields["new_password2"].label = None
+        self.fields["new_password2"].help_text = ""
         self.fields["new_password2"].widget.attrs["placeholder"] = "New password confirmation"
 
 

@@ -191,7 +191,8 @@ def new_message(request, username=None, message_id=None):
 
                 form = form_class(request, initial={"to": to, "subject": subject, "body": body})
             except Message.DoesNotExist:
-                pass
+                messages.add_message(request, messages.INFO, "That message doesn't exist")
+                return HttpResponseRedirect(reverse("messages"))
         elif username:
             form = form_class(request, initial={"to": username})
         else:

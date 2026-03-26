@@ -125,12 +125,12 @@ def ticket(request, ticket_key):
                     )
                     if request.user == ticket.sender:
                         # If the sender is the same as the user, we send the notification to the moderator
-                        ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED_MIN, Ticket.MODERATOR_ONLY)
+                        ticket.send_notification_email_moderator(ticket.NOTIFICATION_UPDATED_MIN)
                     else:
                         # If the sender is not the same as the user, then this is a moderator editing the ticket
                         # only send the notification to the user if the message is not moderator only
                         if not moderator_only:
-                            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED, Ticket.USER_ONLY)
+                            ticket.send_notification_email_user(ticket.NOTIFICATION_UPDATED)
             else:
                 clean_comment_form = False
         # update sound ticket
@@ -185,15 +185,16 @@ def ticket(request, ticket_key):
                     comment = None  # Avoid adding a comment to the ticket
 
                 if notification is not None:
-                    ticket.send_notification_emails(notification, ticket.USER_ONLY)
+                    ticket.send_notification_email_user(notification)
 
                 if ticket.sound is not None:
                     ticket.sound.save()
 
                 ticket.save()
                 if comment is not None:
-                    tc = TicketComment(sender=request.user, text=comment, ticket=ticket, moderator_only=False)
-                    tc.save()
+                    tc = TicketComment.objects.create(
+                        sender=request.user, text=comment, ticket=ticket, moderator_only=False
+                    )
 
         # Prevent multiple submissions if a user reloads the page
         return redirect(reverse("tickets-ticket", args=[ticket.key]))

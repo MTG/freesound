@@ -83,7 +83,9 @@ class Command(LoggingBaseCommand):
             # construct message
             user = User.objects.get(username=username)
             try:
-                users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
+                users_sounds, tags_sounds = follow_utils.get_stream_sounds(
+                    user, time_lapse, sleep_between_queries=settings.STREAM_EMAIL_SEARCH_ENGINE_SLEEP_BETWEEN_QUERIES
+                )
             except Exception:
                 # If error occur do not send the email
                 console_logger.info(f"could not get new sounds data for {username.encode('utf-8')}")

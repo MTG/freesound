@@ -111,10 +111,9 @@ class TestAPI(TestCase):
         # Create App to login using token
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
 
-        c = ApiV2Client(
+        c = ApiV2Client.objects.create(
             user=user, status="OK", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
         )
-        c.save()
 
         sound = sounds[0]
         sound.change_processing_state("OK")
@@ -130,10 +129,9 @@ class TestAPI(TestCase):
         # Create App to login using token
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
 
-        c = ApiV2Client(
+        c = ApiV2Client.objects.create(
             user=user, status="OK", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
         )
-        c.save()
 
         sound = sounds[0]
         sound.change_processing_state("OK")
@@ -760,10 +758,9 @@ class APIAuthenticationTestCase(TestCase):
 
     def test_token_authentication_with_header(self):
         user = User.objects.create_user("testuser")
-        c = ApiV2Client(
+        c = ApiV2Client.objects.create(
             user=user, status="OK", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
         )
-        c.save()
         headers = {
             "HTTP_AUTHORIZATION": f"Token {c.key}",
         }
@@ -772,18 +769,16 @@ class APIAuthenticationTestCase(TestCase):
 
     def test_token_authentication_with_query_param(self):
         user = User.objects.create_user("testuser")
-        c = ApiV2Client(
+        c = ApiV2Client.objects.create(
             user=user, status="OK", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
         )
-        c.save()
         resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 200)
 
     def test_token_authentication_disabled_client(self):
         user = User.objects.create_user("testuser")
-        c = ApiV2Client(
+        c = ApiV2Client.objects.create(
             user=user, status="REV", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
         )
-        c.save()
         resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 401)

@@ -1,21 +1,16 @@
 .bw-icon-half-star {
-
   .path1 {
     &:before {
       color: $navy-light-grey;
     }
   }
-  
+
   .path2 {
     margin-left: -1.5em;
     &:before {
-      
       margin-left: 0.5em;
     }
   }
-
-  
-
 }
 
 .cleanIcon {
@@ -103,4 +98,3 @@
     background-color: $red;
   }
 }
-

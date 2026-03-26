@@ -187,6 +187,10 @@ class SearchEngineException(Exception):
     pass
 
 
+class SearchEngineTimeoutException(SearchEngineException):
+    pass
+
+
 class SearchEngineBase:
     solr_base_url = None
 
@@ -246,7 +250,7 @@ class SearchEngineBase:
         textual_query="",
         query_fields=None,
         query_filter="",
-        field_list=["id", "score"],
+        field_list=None,
         offset=0,
         current_page=None,
         num_sounds=settings.SOUNDS_PER_PAGE,

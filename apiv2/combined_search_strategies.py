@@ -17,15 +17,19 @@
 # Authors:
 #     See AUTHORS file.
 #
+import json
+import logging
 from urllib.parse import unquote
 
 from apiv2.forms import API_SORT_OPTIONS_MAP
 from similarity.client import SimilarityException
-from utils.search import SearchEngineException, get_search_engine
+from utils.search import SearchEngineException, SearchEngineTimeoutException, get_search_engine
 from utils.search.search_sounds import parse_weights_parameter
 from utils.similarity_utilities import api_search as similarity_api_search
 
 from .exceptions import BadRequestException, NotFoundException, ServerErrorException
+
+search_logger = logging.getLogger("search")
 
 
 def merge_all(search_form, target_file=None, extra_parameters=None):
@@ -411,6 +415,21 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
             current_page += 1
             n_page_requests += 1
 
+    except SearchEngineTimeoutException as e:
+        search_logger.info(
+            "SearchTimeout (%s)"
+            % json.dumps(
+                {
+                    "query": search_form.cleaned_data["query"],
+                    "filter": search_form.cleaned_data["filter"],
+                    "page": search_form.cleaned_data["page"],
+                    "sort": search_form.cleaned_data["sort"],
+                    "api_version": "v2",
+                    "strategy": "combined",
+                }
+            )
+        )
+        raise ServerErrorException(msg="Search is overloaded, please try again later.")
     except SearchEngineException as e:
         raise ServerErrorException(msg=f"Search server error: {str(e)}")
     except Exception:

@@ -1298,14 +1298,12 @@ class BookmarkSound(WriteRequiredGenericAPIView):
                     status=status.HTTP_201_CREATED,
                 )
             else:
-                name = serializer.data.get("name", sound.original_filename)
                 category_name = serializer.data.get("category", None)
                 if category_name is not None:
-                    category = BookmarkCategory.objects.get_or_create(user=self.user, name=category_name)
-                    bookmark = Bookmark(user=self.user, sound_id=sound_id, category=category[0])
+                    category, _ = BookmarkCategory.objects.get_or_create(user=self.user, name=category_name)
+                    Bookmark.objects.get_or_create(user=self.user, sound_id=sound_id, category=category)
                 else:
-                    bookmark = Bookmark(user=self.user, sound_id=sound_id)
-                bookmark.save()
+                    Bookmark.objects.get_or_create(user=self.user, sound_id=sound_id, category=None)
                 return Response(
                     data={"detail": f"Successfully bookmarked sound {sound_id}."}, status=status.HTTP_201_CREATED
                 )
@@ -1718,14 +1716,14 @@ def create_apiv2_key(request):
     if request.method == "POST":
         form = ApiV2ClientForm(request.POST)
         if form.is_valid():
-            api_client = ApiV2Client()
-            api_client.user = request.user
-            api_client.description = form.cleaned_data["description"]
-            api_client.name = form.cleaned_data["name"]
-            api_client.url = form.cleaned_data["url"]
-            api_client.redirect_uri = form.cleaned_data["redirect_uri"]
-            api_client.accepted_tos = form.cleaned_data["accepted_tos"]
-            api_client.save()
+            api_client = ApiV2Client.objects.create(
+                user=request.user,
+                description=form.cleaned_data["description"],
+                name=form.cleaned_data["name"],
+                url=form.cleaned_data["url"],
+                redirect_uri=form.cleaned_data["redirect_uri"],
+                accepted_tos=form.cleaned_data["accepted_tos"],
+            )
             form = ApiV2ClientForm()
             api_logger.info(
                 "new_credential <> (ApiV2 Auth:%s Dev:%s User:%s Client:%s)"

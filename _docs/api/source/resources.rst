@@ -500,6 +500,7 @@ geotag                     string            yes*       Latitude and longitude o
 is_geotagged               boolean           yes        Whether the sound has geotag information.
 created                    string            yes        The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
 license                    string            yes        The Creative Commons license under which the sound is available to you ("Attribution", "Attribution NonCommercial", "Creative Commons 0").
+ai_preference              string            yes        The user preference regarding the use of the sound for training generative AI models ("freesound-cc-recommendation", "open-models", "open-noncommercial-models"). Please check `our help section about generative AI training preferences <https://freesound.org/help/faq/#can-my-sounds-be-used-to-train-artificial-intelligence-ai-models>`_ for more information about the meaning of these values.
 type                       string            yes        The original type of the sound (wav, aif, aiff, ogg, mp3, m4a, or flac).
 channels                   integer           yes        The number of sound channels (mostly 1 or 2).
 filesize                   integer           yes        The size of the file in bytes.

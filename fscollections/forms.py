@@ -18,8 +18,6 @@
 #     See AUTHORS file.
 #
 
-import re
-
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User

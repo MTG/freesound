@@ -785,7 +785,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             if USE_COLLAPSE_AND_EXPAND_QUERY_PARSER:
                 current_filter = query.params.get("fq", "")
                 field_name = "pack_grouping" if similar_to is None else "pack_grouping_child"
-                group_by_pack_filter = f"{{!collapse field={field_name} nullPolicy=expand}}"
+                group_by_pack_filter = f"{{!collapse field={field_name} sort='created desc' nullPolicy=expand}}"
                 if current_filter:
                     if type(current_filter) is list:
                         query.params["fq"] = current_filter + [group_by_pack_filter]

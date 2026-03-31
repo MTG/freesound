@@ -16,9 +16,8 @@
     flex-direction: column;
 
     &.marked-for-removal {
-
       // Disable sound player and all interactions
-      >div:first-child {
+      > div:first-child {
         opacity: 0.35;
         pointer-events: none;
         user-select: none;
@@ -59,7 +58,6 @@
   }
 
   .featured-toggle {
-
     .label-active-default,
     .label-active-hover {
       display: none;

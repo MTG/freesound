@@ -88,10 +88,15 @@ const prepareAddSoundsModalAndFields = container => {
 
     addSoundsButton.addEventListener('click', evt => {
       evt.preventDefault();
-      const getExcludeIds = () => combineIdsLists(
-        serializedIdListToIntList(selectedSoundsDestinationElement.dataset.selectedIds),
-        serializedIdListToIntList(selectedSoundsDestinationElement.dataset.unselectedIds)
-      ).join(',');
+      const getExcludeIds = () =>
+        combineIdsLists(
+          serializedIdListToIntList(
+            selectedSoundsDestinationElement.dataset.selectedIds
+          ),
+          serializedIdListToIntList(
+            selectedSoundsDestinationElement.dataset.unselectedIds
+          )
+        ).join(',');
       openAddSoundsModal(
         'addSoundsModal',
         addSoundsButton.dataset.modalUrl,
@@ -149,52 +154,86 @@ const prepareAddSoundsModalAndFields = container => {
   });
 };
 
-const openAddSoundsModal = (modalId, modalUrl, url, getExcludeIds, onSoundsConfirmed) => {
-    handleGenericModal(url, (modalContainer) => {
-        const inputElement = modalContainer.getElementsByTagName('input')[0];
-        inputElement.addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                const baseUrl = modalUrl.split('?')[0];
-                const excludeIds = getExcludeIds();
-                openAddSoundsModal(modalId, modalUrl, `${baseUrl}?q=${inputElement.value}&exclude=${excludeIds}`, getExcludeIds, onSoundsConfirmed);
-            }
-        });
+const openAddSoundsModal = (
+  modalId,
+  modalUrl,
+  url,
+  getExcludeIds,
+  onSoundsConfirmed
+) => {
+  handleGenericModal(
+    url,
+    modalContainer => {
+      const inputElement = modalContainer.getElementsByTagName('input')[0];
+      inputElement.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          const baseUrl = modalUrl.split('?')[0];
+          const excludeIds = getExcludeIds();
+          openAddSoundsModal(
+            modalId,
+            modalUrl,
+            `${baseUrl}?q=${inputElement.value}&exclude=${excludeIds}`,
+            getExcludeIds,
+            onSoundsConfirmed
+          );
+        }
+      });
 
-        const objectSelectorElement = modalContainer.getElementsByClassName('bw-object-selector-container')[0];
-        const addSelectedSoundsButton = modalContainer.getElementsByTagName('button')[0];
-        addSelectedSoundsButton.disabled = true;
-        initializeObjectSelector(objectSelectorElement, (element) => {
-            addSelectedSoundsButton.disabled = element.dataset.selectedIds == ""
-        });
+      const objectSelectorElement = modalContainer.getElementsByClassName(
+        'bw-object-selector-container'
+      )[0];
+      const addSelectedSoundsButton =
+        modalContainer.getElementsByTagName('button')[0];
+      addSelectedSoundsButton.disabled = true;
+      initializeObjectSelector(objectSelectorElement, element => {
+        addSelectedSoundsButton.disabled = element.dataset.selectedIds == '';
+      });
 
-        addSelectedSoundsButton.addEventListener('click', () => {
-            onSoundsConfirmed(modalContainer);
-            dismissModal(modalId);
-        });
-    }, undefined, true, true);
-}
-
-const prepareAddSoundsModalDynamic = (container, getExcludeIds, onSoundsConfirmed) => {
-    const addSoundsButton = container.querySelector('[data-toggle="add-sounds-modal"]');
-    if (!addSoundsButton) return;
-
-    const onConfirmed = (modalContainer) => {
-        const sounds = [...modalContainer.querySelectorAll('.bw-selectable-object')]
-            .reduce((acc, element) => {
-                const checkbox = element.querySelector('input.bw-checkbox');
-                if (checkbox && checkbox.checked) {
-                    acc.push(extractSoundFromCard(element));
-                }
-                return acc;
-            }, []);
-        onSoundsConfirmed(sounds);
-    };
-
-    addSoundsButton.addEventListener('click', (evt) => {
-        evt.preventDefault();
-        openAddSoundsModal('addSoundsModal', addSoundsButton.dataset.modalUrl, addSoundsButton.dataset.modalUrl, getExcludeIds, onConfirmed);
-    });
+      addSelectedSoundsButton.addEventListener('click', () => {
+        onSoundsConfirmed(modalContainer);
+        dismissModal(modalId);
+      });
+    },
+    undefined,
+    true,
+    true
+  );
 };
 
-export {prepareAddSoundsModalAndFields, prepareAddSoundsModalDynamic};
+const prepareAddSoundsModalDynamic = (
+  container,
+  getExcludeIds,
+  onSoundsConfirmed
+) => {
+  const addSoundsButton = container.querySelector(
+    '[data-toggle="add-sounds-modal"]'
+  );
+  if (!addSoundsButton) return;
+
+  const onConfirmed = modalContainer => {
+    const sounds = [
+      ...modalContainer.querySelectorAll('.bw-selectable-object'),
+    ].reduce((acc, element) => {
+      const checkbox = element.querySelector('input.bw-checkbox');
+      if (checkbox && checkbox.checked) {
+        acc.push(extractSoundFromCard(element));
+      }
+      return acc;
+    }, []);
+    onSoundsConfirmed(sounds);
+  };
+
+  addSoundsButton.addEventListener('click', evt => {
+    evt.preventDefault();
+    openAddSoundsModal(
+      'addSoundsModal',
+      addSoundsButton.dataset.modalUrl,
+      addSoundsButton.dataset.modalUrl,
+      getExcludeIds,
+      onConfirmed
+    );
+  });
+};
+
+export { prepareAddSoundsModalAndFields, prepareAddSoundsModalDynamic };

@@ -116,7 +116,9 @@ const updateActionUI = (container, actionName, isActive) => {
 
   const disables = btn.dataset.disables;
   if (disables) {
-    const targetBtn = container.querySelector('[data-action="' + disables + '"]');
+    const targetBtn = container.querySelector(
+      '[data-action="' + disables + '"]'
+    );
     if (targetBtn) {
       targetBtn.disabled = isActive;
     }
@@ -126,7 +128,9 @@ const updateActionUI = (container, actionName, isActive) => {
 };
 
 const initializeObjectSelectorActions = (parentElement, store) => {
-  const containers = parentElement.querySelectorAll('.bw-selectable-object.with-actions');
+  const containers = parentElement.querySelectorAll(
+    '.bw-selectable-object.with-actions'
+  );
   containers.forEach(container => {
     if (container.dataset.actionsInitialized) return;
     container.dataset.actionsInitialized = 'true';
@@ -135,7 +139,11 @@ const initializeObjectSelectorActions = (parentElement, store) => {
 
     // Restore persisted state for all registered actions
     store.actions().forEach(function (entry) {
-      updateActionUI(container, entry.actionName, store.hasFlag(objectId, entry.flag));
+      updateActionUI(
+        container,
+        entry.actionName,
+        store.hasFlag(objectId, entry.flag)
+      );
     });
 
     // Bind action buttons identified by data-action attribute
@@ -151,4 +159,9 @@ const initializeObjectSelectorActions = (parentElement, store) => {
   });
 };
 
-export { initializeObjectSelector, updateObjectSelectorDataProperties, initializeObjectSelectorActions, updateActionUI };
+export {
+  initializeObjectSelector,
+  updateObjectSelectorDataProperties,
+  initializeObjectSelectorActions,
+  updateActionUI,
+};

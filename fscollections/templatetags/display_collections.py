@@ -36,7 +36,6 @@ def display_collection(context, collection_id):
         header_sounds = Sound.public.filter(id__in=collection.featured_sound_ids)
     else:
         header_sounds = Sound.public.filter(collections=collection)[:1]
-    
+
     tvars = {"collection": collection, "header_sounds": header_sounds, "request": request}
     return tvars
-

@@ -48,7 +48,9 @@ class Collection(models.Model):
     num_downloads = models.PositiveIntegerField(default=0)
     public = models.BooleanField(default=False)
     is_default_collection = models.BooleanField(default=False)
-    featured_sound_ids = ArrayField(models.IntegerField(), size=settings.MAX_FEATURED_SOUNDS_PER_COLLECTION, blank=True, default=list)
+    featured_sound_ids = ArrayField(
+        models.IntegerField(), size=settings.MAX_FEATURED_SOUNDS_PER_COLLECTION, blank=True, default=list
+    )
 
     def __str__(self):
         return f"{self.name}"
@@ -127,7 +129,7 @@ class Collection(models.Model):
         # Update num_sounds count
         if self.pk:
             self.num_sounds = CollectionSound.objects.filter(collection=self).count()
-        
+
         super().save(*args, **kwargs)
 
 
@@ -170,7 +172,7 @@ def remove_not_valid_featured_sounds(sender, instance, **kwargs):
         if collection.featured_sound_ids:
             # Get current sound IDs in the collection
             valid_sound_ids = set(
-                CollectionSound.objects.filter(collection=collection).values_list('sound_id', flat=True)
+                CollectionSound.objects.filter(collection=collection).values_list("sound_id", flat=True)
             )
             # Filter out any featured_sound_ids that are not in the collection
             valid_featured_ids = [sid for sid in collection.featured_sound_ids if sid in valid_sound_ids]

@@ -19,6 +19,7 @@
 #
 
 from functools import wraps
+from operator import itemgetter
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -41,6 +42,7 @@ from fscollections.models import Collection, CollectionDownload, CollectionDownl
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
 from utils.downloads import download_sounds
+from utils.pagination import paginate
 
 
 def _media_urls():
@@ -219,7 +221,9 @@ def serialize_collection_sounds(collection):
             "num_downloads": sound.num_downloads or 0,
             "num_comments": sound.num_comments or 0,
             "num_ratings": sound.num_ratings or 0,
-            "avg_rating": round(sound.avg_rating / 2, 1) if (sound.num_ratings or 0) >= settings.MIN_NUMBER_RATINGS else None,
+            "avg_rating": round(sound.avg_rating / 2, 1)
+            if (sound.num_ratings or 0) >= settings.MIN_NUMBER_RATINGS
+            else None,
             "license_icon": sound.license.icon_name if sound.license_id else None,
             "license_name": sound.license.name if sound.license_id else None,
             "pack_id": sound.pack_id,
@@ -308,6 +312,35 @@ def download_collection(request, collection):
     licenses_url = collection.licenses_url
     licenses_content = collection.get_attribution(sound_qs=sounds_list)
     return download_sounds(licenses_url, licenses_content, sounds_list, collection.download_filename)
+
+
+@resolve_collection_from_url
+def collection_downloaders(request, collection):
+    if not request.GET.get("ajax"):
+        # If not loaded as a modal, redirect to collection page with parameter to open modal
+        return HttpResponseRedirect(collection.get_absolute_url() + "?downloaders=1")
+
+    qs = CollectionDownload.objects.filter(collection=collection)
+
+    num_items_per_page = settings.USERS_PER_DOWNLOADS_MODAL_PAGE
+    pagination = paginate(request, qs, num_items_per_page, object_count=collection.num_downloads)
+    page = pagination["page"]
+
+    # Get all users+profiles for the user ids
+    userids = [d.user_id for d in list(page)]
+    users = User.objects.filter(pk__in=userids).select_related("profile")
+    user_map = {}
+    for u in users:
+        user_map[u.id] = u
+
+    download_list = []
+    for d in page:
+        download_list.append({"created": d.created, "user": user_map[d.user_id]})
+    download_list = sorted(download_list, key=itemgetter("created"), reverse=True)
+
+    tvars = {"collection": collection, "download_list": download_list}
+    tvars.update(pagination)
+    return render(request, "sounds/modal_downloaders.html", tvars)
 
 
 @resolve_collection_from_url

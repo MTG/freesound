@@ -270,7 +270,20 @@ class CollectionEditForm(forms.ModelForm):
 
         added = cleaned_data.get("added_sounds", set())
         removed = cleaned_data.get("removed_sounds", set())
-        net_count = self.instance.num_sounds + len(added) - len(removed)
+        current_sound_ids = set(
+            CollectionSound.objects.filter(collection=self.instance).values_list("sound_id", flat=True)
+        )
+
+        valid_added_ids = set(Sound.objects.filter(id__in=added).values_list("id", flat=True))
+        invalid_added_ids = added - valid_added_ids
+        if invalid_added_ids:
+            self.add_error("added_sounds", forms.ValidationError("Some sounds to add are invalid."))
+            added = valid_added_ids
+            cleaned_data["added_sounds"] = added
+
+        effective_removed = removed & current_sound_ids
+        effective_added = added - current_sound_ids
+        net_count = len(current_sound_ids) - len(effective_removed) + len(effective_added)
         if net_count > settings.MAX_SOUNDS_PER_COLLECTION:
             self.add_error(
                 "added_sounds",
@@ -296,8 +309,10 @@ class CollectionEditForm(forms.ModelForm):
 
             if sounds_to_add:
                 CollectionSound.objects.bulk_create(
-                    [CollectionSound(user=user_adding_sound, sound_id=snd, collection=collection, status="OK")
-                     for snd in sounds_to_add],
+                    [
+                        CollectionSound(user=user_adding_sound, sound_id=snd, collection=collection, status="OK")
+                        for snd in sounds_to_add
+                    ],
                     ignore_conflicts=True,
                 )
 
@@ -310,7 +325,6 @@ class CollectionEditForm(forms.ModelForm):
             if new_maintainers != current_maintainers:
                 collection.maintainers.set(new_maintainers)
 
-            # Filter featured IDs to only sounds currently in the collection (query through table directly)
             featured_ids = self.cleaned_data["featured_sounds"]
             final_sound_ids = set(
                 CollectionSound.objects.filter(collection=collection).values_list("sound_id", flat=True)

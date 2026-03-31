@@ -7,48 +7,40 @@
   }
 
   label {
-    width: 100%;
     color: $navy-grey;
+  }
+
+  // Keep base label typography, but avoid forcing component labels (stars, radios, filters)
+  // into full-width layouts. Opt in with .bw-form__label when needed.
+  > label,
+  .bw-form__label {
+    width: 100%;
+    display: block;
   }
 
   span.bw-checkbox-container + label {
     color: $black;
   }
 
-  input,
-  textarea {
-    &:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
-      margin-top: 12px;
-      margin-bottom: 30px;
-      width: 100%;
-      border: 1px solid $border-input;
-      color: $black;
-      background-color: $background-input;
-      padding: 10px 20px;
-      border-radius: 5px;
+  // Generic form field style. Search fields are styled by the input atom/wrapper.
+  input:not([type='search']):not(.tags-input):not(.mapboxgl-ctrl-geocoder--input),
+  textarea:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
+    margin-top: 12px;
+    margin-bottom: 30px;
+    width: 100%;
+    border: 1px solid $border-input;
+    color: $black;
+    background-color: $background-input;
+    padding: 10px 20px;
+    border-radius: 5px;
 
-      &::placeholder {
-        color: $navy-light-grey;
-      }
-
-      &:focus {
-        background-color: $white;
-        border: 1px solid $black;
-      }
+    &::placeholder {
+      color: $navy-light-grey;
     }
-  }
-
-  .input-wrapper input[type='search'] {
-    margin-top: 0;
-    margin-bottom: 0;
-    border: 0;
-    background: none;
-    padding: 0;
-    border-radius: 0;
 
     &:focus {
-      border: 0;
-      background: none;
+      background-color: $white;
+      border: 1px solid $black;
     }
   }
 
@@ -133,11 +125,9 @@
     margin-top: 0 !important;
   }
 
-  input,
-  textarea {
-    &:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
-      margin-top: 10px !important;
-      margin-bottom: 15px !important;
-    }
+  input:not([type='search']):not(.tags-input):not(.mapboxgl-ctrl-geocoder--input),
+  textarea:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
+    margin-top: 10px !important;
+    margin-bottom: 15px !important;
   }
 }

@@ -7,34 +7,37 @@
   }
 
   label {
-    width: 100%;
     color: $navy-grey;
+  }
+
+  > label,
+  .bw-form__label {
+    width: 100%;
+    display: block;
   }
 
   span.bw-checkbox-container + label {
     color: $black;
   }
 
-  input,
-  textarea {
-    &:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
-      margin-top: 12px;
-      margin-bottom: 30px;
-      width: 100%;
-      border: 1px solid $border-input;
-      color: $black;
-      background-color: $background-input;
-      padding: 10px 20px;
-      border-radius: 5px;
+  input:not([type='search']):not(.tags-input):not(.mapboxgl-ctrl-geocoder--input),
+  textarea:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
+    margin-top: 12px;
+    margin-bottom: 30px;
+    width: 100%;
+    border: 1px solid $border-input;
+    color: $black;
+    background-color: $background-input;
+    padding: 10px 20px;
+    border-radius: 5px;
 
-      &::placeholder {
-        color: $navy-light-grey;
-      }
+    &::placeholder {
+      color: $navy-light-grey;
+    }
 
-      &:focus {
-        background-color: $white;
-        border: 1px solid $black;
-      }
+    &:focus {
+      background-color: $white;
+      border: 1px solid $black;
     }
   }
 
@@ -119,11 +122,9 @@
     margin-top: 0 !important;
   }
 
-  input,
-  textarea {
-    &:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
-      margin-top: 10px !important;
-      margin-bottom: 15px !important;
-    }
+  input:not([type='search']):not(.tags-input):not(.mapboxgl-ctrl-geocoder--input),
+  textarea:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
+    margin-top: 10px !important;
+    margin-bottom: 15px !important;
   }
 }

@@ -120,8 +120,6 @@ API_MONITORING_REDIS_STORE_ID = 0
 CLUSTERING_CACHE_REDIS_STORE_ID = 1
 AUDIO_FEATURES_REDIS_STORE_ID = 2
 CELERY_BROKER_REDIS_STORE_ID = 3
-CDN_MAP_STORE_ID = 5
-
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -135,10 +133,6 @@ CACHES = {
     "api_monitoring": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{API_MONITORING_REDIS_STORE_ID}",
-    },
-    "cdn_map": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{CDN_MAP_STORE_ID}",
     },
     "clustering": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -400,11 +394,13 @@ BULK_UPLOAD_MIN_SOUNDS = 40
 # Turn this option on to log every time a user downloads a pack or sound
 LOG_DOWNLOADS = False
 
-# Use external CDN for downloading sounds (if sounds exist in the CDN) and serving previews/displays
+# Use external CDN for downloading sounds and serving previews/displays
 USE_CDN_FOR_DOWNLOADS = False
 USE_CDN_FOR_PREVIEWS = False
 USE_CDN_FOR_DISPLAYS = False
-CDN_DOWNLOADS_TEMPLATE_URL = "https://cdn.freesound.org/sounds/{}/{}?filename={}"
+CDN_DOWNLOADS_BASE_URL = "https://cdn.freesound.org"
+CDN_SECURE_LINK_SECRET = ""
+CDN_DOWNLOAD_URL_LIFETIME = 60 * 60  # 1 hour
 CDN_PREVIEWS_URL = "https://cdn.freesound.org/previews/"
 CDN_DISPLAYS_URL = "https://cdn.freesound.org/displays/"
 
@@ -1457,6 +1453,13 @@ MAX_SOUNDS_PER_COLLECTION = 250
 from .local_settings import *  # noqa: F403
 
 # -------------------------------------------------------------------------------
+# CDN secret validation (must be after local_settings import)
+if USE_CDN_FOR_DOWNLOADS and not CDN_SECURE_LINK_SECRET:
+    from django.core.exceptions import ImproperlyConfigured
+
+    raise ImproperlyConfigured("CDN_SECURE_LINK_SECRET must be set when USE_CDN_FOR_DOWNLOADS is True")
+
+# -------------------------------------------------------------------------------
 # More collections stuff
 
 if ENABLE_COLLECTIONS:
@@ -1493,6 +1496,7 @@ AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
 PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
 DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/")
 SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
+CDN_SOUNDS_SYMLINKS_PATH = os.path.join(DATA_PATH, "cdn_sounds/")
 PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
 CSV_PATH = os.path.join(DATA_PATH, "csv/")

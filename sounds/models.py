@@ -66,6 +66,7 @@ from tags.models import SoundTag, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_template_cache, invalidate_user_template_caches
+from utils.cdn import delete_cdn_symlink
 from utils.locations import locations_decorator
 from utils.mail import send_mail_template
 from utils.search import SearchEngineException, get_search_engine
@@ -1864,6 +1865,8 @@ def on_delete_sound(sender, instance, **kwargs):
 
     instance.delete_from_indexes()
     instance.unlink_moderation_ticket()
+
+    delete_cdn_symlink(instance)
 
 
 def post_delete_sound(sender, instance, **kwargs):

@@ -27,7 +27,6 @@ dependencies = [
     "djangorestframework-jsonp==1.0.2",
     "djangorestframework-xml==2.0.0",
     "djangorestframework-yaml==2.0.0",
-    "fabric==2.6.0",
     "feedparser~=6.0.10",
     "freezegun==1.2.2",
     "future~=0.18.2",

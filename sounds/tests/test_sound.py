@@ -431,6 +431,39 @@ class SoundPackDownloadTestCase(TestCase):
             # Check n download objects is 1
             self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
 
+    @override_settings(
+        USE_CDN_FOR_DOWNLOADS=True,
+        CDN_SECURE_LINK_SECRET="test-secret",
+        CDN_DOWNLOAD_URL_LIFETIME=3600,
+        CDN_DOWNLOADS_BASE_URL="https://cdn.freesound.org",
+    )
+    @mock.patch("utils.cdn.os.path.exists", return_value=True)
+    def test_download_sound_cdn_redirect(self, mock_exists):
+        """When CDN is enabled and file exists, download redirects to signed CDN URL."""
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("cdn.freesound.org", resp["Location"])
+        self.assertIn("md5=", resp["Location"])
+        self.assertIn("expires=", resp["Location"])
+        # Download record should still be created
+        self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
+
+    @override_settings(
+        USE_CDN_FOR_DOWNLOADS=True,
+        CDN_SECURE_LINK_SECRET="test-secret",
+        CDN_DOWNLOAD_URL_LIFETIME=3600,
+        CDN_DOWNLOADS_BASE_URL="https://cdn.freesound.org",
+    )
+    @mock.patch("utils.cdn.os.path.exists", return_value=False)
+    @mock.patch("sounds.views.sendfile", return_value=HttpResponse())
+    def test_download_sound_cdn_fallback_when_file_missing(self, mock_sendfile, mock_exists):
+        """When CDN is enabled but file is missing, falls back to sendfile."""
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 200)
+        mock_sendfile.assert_called_once()
+
     def test_download_pack(self):
         with mock.patch("sounds.views.download_sounds", return_value=HttpResponse()):
             # Check sound can't be downloaded if user not logged in

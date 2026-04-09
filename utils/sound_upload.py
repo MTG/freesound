@@ -35,6 +35,7 @@ from django.urls import reverse
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
 from utils.cache import invalidate_user_template_caches
+from utils.cdn import create_cdn_symlink
 from utils.filesystem import md5file, remove_directory, remove_directory_if_empty
 from utils.forms import filename_has_valid_extension
 from utils.mirror_files import (
@@ -207,6 +208,9 @@ def create_sound(user, sound_fields, apiv2_client=None, bulk_upload_progress=Non
             raise CantMoveException(f"Failed to move file from {sound.original_path} to {new_original_path}")
         sound.original_path = new_original_path
         sound.save()
+
+    # Create CDN symlink so the sound can be served via cdn.freesound.org
+    create_cdn_symlink(sound)
 
     # Copy to mirror location
     copy_sound_to_mirror_locations(sound)

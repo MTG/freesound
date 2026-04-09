@@ -62,6 +62,7 @@ from sounds.models import (
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_user_template_caches
+from utils.cdn import generate_cdn_download_url
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
@@ -89,7 +90,6 @@ from utils.username import get_parameter_user_or_404, redirect_if_old_username
 web_logger = logging.getLogger("web")
 sounds_logger = logging.getLogger("sounds")
 upload_logger = logging.getLogger("file_upload")
-cache_cdn_map = caches["cdn_map"]
 
 
 def get_n_weeks_back_datetime(n_weeks):
@@ -361,12 +361,8 @@ def sound_download(request, username, sound_id):
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
 
     if settings.USE_CDN_FOR_DOWNLOADS:
-        cdn_filename = cache_cdn_map.get(str(sound_id), None)
-        if cdn_filename is not None:
-            # If USE_CDN_FOR_DOWNLOADS option is on and we find an URL for that sound in the CDN, then we redirect to that one
-            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(
-                int(sound_id) // 1000, cdn_filename, sound.friendly_filename()
-            )
+        cdn_url = generate_cdn_download_url(sound)
+        if cdn_url is not None:
             return HttpResponseRedirect(cdn_url)
 
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))

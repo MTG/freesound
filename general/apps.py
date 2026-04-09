@@ -17,6 +17,7 @@ class GeneralConfig(AppConfig):
         os.makedirs(settings.PREVIEWS_PATH, exist_ok=True)
         os.makedirs(settings.DISPLAYS_PATH, exist_ok=True)
         os.makedirs(settings.SOUNDS_PATH, exist_ok=True)
+        os.makedirs(settings.CDN_SOUNDS_SYMLINKS_PATH, exist_ok=True)
         os.makedirs(settings.PACKS_PATH, exist_ok=True)
         os.makedirs(settings.UPLOADS_PATH, exist_ok=True)
         os.makedirs(settings.CSV_PATH, exist_ok=True)

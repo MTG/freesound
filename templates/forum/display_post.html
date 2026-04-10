@@ -19,6 +19,7 @@
                         <p class="text-grey no-margins">{{ post.author.profile.num_comments|bw_intcomma }} comment{{ post.author.profile.num_comments|pluralize }}</p>
                         <p class="text-grey no-margins">{{ post.author.profile.num_sound_downloads|bw_intcomma }} downloaded</p>
                         <p class="text-grey no-margins">Account age: {{ post.author.date_joined|timesince }} ago</p>
+                        <p class="no-margins" {% if post_delay_is_short %}style="background: yellow; padding: 1px 4px;"{% endif %}>Posted {{ post.author.date_joined|timesince:post.created }} after account creation</p>
                     {% endif %}
                 </div>
             </div>

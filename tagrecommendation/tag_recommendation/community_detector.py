@@ -18,103 +18,20 @@
 #     See AUTHORS file.
 #
 
-from copyreg import pickle
 import os
-import json
-from builtins import object
-from builtins import str
-
-
-from numpy import load, where, zeros
-from sklearn.naive_bayes import BernoulliNB
-
-
-
-def loadFromJson(path, verbose=False):
-    with open(path, 'r') as f:
-        if verbose:
-            print("Loading data from '" + path + "'")
-        return json.load(f)
-
-
-def load_classifier(path):
-
-    with open(f"{path}/bernoulli_nb_metadata.json", "r") as handle:
-        metadata = json.load(handle)
-
-    arrays = load(f"{path}/bernoulli_nb_arrays.npz", allow_pickle=False)
-
-    clf = BernoulliNB(**metadata["params"])
-
-    for attr_name in metadata["available_attributes"]:
-        setattr(clf, attr_name, arrays[attr_name])
-
-    clf.n_features_in_ = metadata["n_features"]
-    return clf
-
+import joblib
 
 class CommunityDetector(object):
-    base_data_dir = None
-    verbose = None
     clf = None
-    clf_type = None
-    class_name_ids = None
-    n_training_instances = None
-    init_method = None
-    selected_instances = None
-    tag_names = None
 
-    def __init__(self,
-                 base_data_dir="",
-                 verbose=True,
-                 classifier_type="svm",
-                 PATH=None,
-                 INIT_METHOD="ZeroInit",
-                 selected_instances=None
-                 ):
-
-        self.base_data_dir = base_data_dir
-        self.verbose = verbose
-        self.n_training_instances = 0
-        self.clf_type = classifier_type
-        self.class_name_ids = dict()
-        self.init_method = INIT_METHOD
-        self.selected_instances = selected_instances
-
-        if not os.path.exists(PATH + ".pkl") or \
-                not os.path.exists(PATH + "_meta.json") or \
-                not os.path.exists(self.base_data_dir + 'Classifier_TAG_NAMES.npy'):
+    def __init__(self, PATH=None,):
+        if not os.path.exists(PATH + ".joblib"):
             raise Exception(f"Classifier not existing in classifiers folder ({PATH}).")
+        self.clf = joblib.load(PATH + ".joblib")
 
-        self.clf = load_classifier(os.path.join(self.base_data_dir, "Classifier_py3_export"))
-
-        meta = loadFromJson(PATH + "_meta.json")
-        self.clf_type = meta['clf_type']
-        self.class_name_ids = meta['class_name_ids']
-        self.n_training_instances = meta['n_training_instances']
-        self.tag_names = load(self.base_data_dir + 'Classifier_TAG_NAMES.npy')
-
-    def __repr__(self):
-        return "Community Detector (%s, %i classes, %i instances, %s init) " % (self.clf_type,
-                                                                                len(self.class_name_ids.keys()),
-                                                                                self.n_training_instances,
-                                                                                self.init_method)
-
-    def load_instance_vector_from_tags(self, tags):
-        tags_t = tags[:]
-
-        instance_vector = zeros(len(self.tag_names))
-        for tag in tags_t:
-            w_out = where(self.tag_names == tag)[0]
-            if len(w_out) > 0:
-                pos = w_out[0]
-                instance_vector[pos] = 1
-        return instance_vector
-
+   
     def detectCommunity(self, input_tags=None):
         if not self.clf:
-            raise Exception("Classifier not yet trained!")
-        instance_vector = self.load_instance_vector_from_tags(input_tags)
-        cl = self.clf.predict([instance_vector])[0]
+            raise Exception("Classifier not yet trained!")    
+        return self.clf.predict([" ".join(input_tags)])[0]
 
-        return str(self.class_name_ids[str(cl)])

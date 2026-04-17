@@ -1,4 +1,5 @@
-flask
 graypy==2.1.0
+scikit-learn==1.6.1  # Needed for classifier compatibility, otherwise a warning is raised
 numpy
-scikit-learn
+joblib
+flask

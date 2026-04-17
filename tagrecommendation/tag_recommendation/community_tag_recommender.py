@@ -59,7 +59,7 @@ class CommunityBasedTagRecommender(object):
         # Load classifier from file
         print("\nLOADING DATA FOR DATABASE %s AND CLASSES %s\n" % (self.dataset, ", ".join(self.classes)))
         print("Loading community detector...")
-        self.communityDetector = CommunityDetector(base_data_dir=self.base_data_dir, verbose=False, PATH=self.base_data_dir + "Classifier")
+        self.communityDetector = CommunityDetector(PATH=self.base_data_dir + "Classifier")
         print(self.communityDetector)
 
         # Loading class recommenders

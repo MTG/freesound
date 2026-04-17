@@ -31,8 +31,8 @@ app = Flask(__name__)
 
 GRAYLOG_HOST = os.environ.get("GRAYLOG_HOST_ENV", None)
 GRAYLOG_PORT = os.environ.get("GRAYLOG_PORT_ENV", None)
-LOG_TO_GRAYLOG = False
-DATA_DIR = "/tag_recommendation_models/"  
+DATA_DIR = os.environ.get("TAG_RECOMMENDATION_MODELS_DIR", "/tag_recommendation_models/")  
+LOG_TO_GRAYLOG = os.environ.get("LOG_TO_GRAYLOG", "False").lower() in ("true", "1", "t")
 
 
 tag_recommendation_data_settings = json.load(open(os.path.join(DATA_DIR, "tag_recommendation_data_settings.json"), 'r'))

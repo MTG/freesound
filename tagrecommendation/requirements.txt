@@ -1,8 +1,4 @@
-Twisted==20.3.0
+flask
 graypy==2.1.0
-concurrent-log-handler==0.9.20
-scipy==1.2.3
-numpy==1.9.0  # Needs to be this version for csc-pysparse to work
-scikit-learn==0.17.1  # Using this old version for compatibility with pickled models
-# csc-pysparse==1.1.1.4   # This one is installed separately in the Dockerfile
-future
+numpy
+scikit-learn

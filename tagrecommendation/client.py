@@ -24,12 +24,10 @@ from builtins import str
 from builtins import object
 from django.conf import settings
 import json
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
 
-_BASE_URL                     = 'http://%s:%i/tagrecommendation/' % (settings.TAGRECOMMENDATION_ADDRESS, settings.TAGRECOMMENDATION_PORT)
-_URL_RECOMMEND_TAGS           = 'recommend_tags/'
-_URL_LAST_INDEXED_ID          = 'last_indexed_id/'
-_URL_ADD_TO_INDEX             = 'add_to_index/'
+_BASE_URL = 'http://%s:%i/' % (settings.TAGRECOMMENDATION_ADDRESS, settings.TAGRECOMMENDATION_PORT)
+_URL_RECOMMEND_TAGS = 'recommend_tags/'
 
 
 def _get_url_as_json(url):
@@ -52,14 +50,4 @@ class TagRecommendation(object):
         url = _BASE_URL + _URL_RECOMMEND_TAGS + '?' + 'input_tags=' + ",".join(input_tags)
         if max_number_of_tags:
             url += '&max_number_of_tags=' + str(max_number_of_tags)
-        return _result_or_exception(_get_url_as_json(url))
-
-    @classmethod
-    def get_last_indexed_id(cls):
-        url = _BASE_URL + _URL_LAST_INDEXED_ID
-        return _result_or_exception(_get_url_as_json(url))
-
-    @classmethod
-    def add_to_index(cls, sound_ids, sound_tagss):
-        url = _BASE_URL + _URL_ADD_TO_INDEX + '?' + 'sound_ids=' + ",".join([str(sid) for sid in sound_ids]) + '&sound_tagss=' + "-!-!-".join([",".join(stags) for stags in sound_tagss])
         return _result_or_exception(_get_url_as_json(url))

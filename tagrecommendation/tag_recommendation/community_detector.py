@@ -18,18 +18,43 @@
 #     See AUTHORS file.
 #
 
+from copyreg import pickle
 import os
+import json
 from builtins import object
 from builtins import str
 
-from numpy import load, where, zeros
-from sklearn.externals import joblib
 
-from utils import loadFromJson
-from tagrecommendation_settings import RECOMMENDATION_DATA_DIR
+from numpy import load, where, zeros
+from sklearn.naive_bayes import BernoulliNB
+
+
+
+def loadFromJson(path, verbose=False):
+    with open(path, 'r') as f:
+        if verbose:
+            print("Loading data from '" + path + "'")
+        return json.load(f)
+
+
+def load_classifier(path):
+
+    with open(f"{path}/bernoulli_nb_metadata.json", "r") as handle:
+        metadata = json.load(handle)
+
+    arrays = load(f"{path}/bernoulli_nb_arrays.npz", allow_pickle=False)
+
+    clf = BernoulliNB(**metadata["params"])
+
+    for attr_name in metadata["available_attributes"]:
+        setattr(clf, attr_name, arrays[attr_name])
+
+    clf.n_features_in_ = metadata["n_features"]
+    return clf
 
 
 class CommunityDetector(object):
+    base_data_dir = None
     verbose = None
     clf = None
     clf_type = None
@@ -40,6 +65,7 @@ class CommunityDetector(object):
     tag_names = None
 
     def __init__(self,
+                 base_data_dir="",
                  verbose=True,
                  classifier_type="svm",
                  PATH=None,
@@ -47,6 +73,7 @@ class CommunityDetector(object):
                  selected_instances=None
                  ):
 
+        self.base_data_dir = base_data_dir
         self.verbose = verbose
         self.n_training_instances = 0
         self.clf_type = classifier_type
@@ -56,15 +83,16 @@ class CommunityDetector(object):
 
         if not os.path.exists(PATH + ".pkl") or \
                 not os.path.exists(PATH + "_meta.json") or \
-                not os.path.exists(RECOMMENDATION_DATA_DIR + 'Classifier_TAG_NAMES.npy'):
-            raise Exception("Classifier not existing in classifiers folder.")
+                not os.path.exists(self.base_data_dir + 'Classifier_TAG_NAMES.npy'):
+            raise Exception(f"Classifier not existing in classifiers folder ({PATH}).")
 
-        self.clf = joblib.load(PATH + ".pkl")
+        self.clf = load_classifier("/tag_recommendation_models/Classifier_py3_export")
+
         meta = loadFromJson(PATH + "_meta.json")
         self.clf_type = meta['clf_type']
         self.class_name_ids = meta['class_name_ids']
         self.n_training_instances = meta['n_training_instances']
-        self.tag_names = load(RECOMMENDATION_DATA_DIR + 'Classifier_TAG_NAMES.npy')
+        self.tag_names = load(self.base_data_dir + 'Classifier_TAG_NAMES.npy')
 
     def __repr__(self):
         return "Community Detector (%s, %i classes, %i instances, %s init) " % (self.clf_type,

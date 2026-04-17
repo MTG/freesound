@@ -18,16 +18,12 @@
 #     See AUTHORS file.
 #
 
-from __future__ import print_function
-
 from builtins import object
 
 from numpy import load
 
 from .community_detector import CommunityDetector
 from .tag_recommender import TagRecommender
-from tagrecommendation_settings import RECOMMENDATION_DATA_DIR
-
 
 class CommunityBasedTagRecommender(object):
 
@@ -43,6 +39,7 @@ class CommunityBasedTagRecommender(object):
     classes = None
 
     def __init__(self,
+                 base_data_dir="",
                  dataset="",
                  classes=[],
                  metric="cosine",
@@ -50,6 +47,7 @@ class CommunityBasedTagRecommender(object):
                  recommendation_heuristic="hRankPercentage015",
                  classifier_type="bayes"):
 
+        self.base_data_dir = base_data_dir
         self.dataset = dataset
         self.classes = classes
         self.metric = metric
@@ -61,7 +59,7 @@ class CommunityBasedTagRecommender(object):
         # Load classifier from file
         print("\nLOADING DATA FOR DATABASE %s AND CLASSES %s\n" % (self.dataset, ", ".join(self.classes)))
         print("Loading community detector...")
-        self.communityDetector = CommunityDetector(verbose=False, PATH=RECOMMENDATION_DATA_DIR + "Classifier")
+        self.communityDetector = CommunityDetector(base_data_dir=self.base_data_dir, verbose=False, PATH=self.base_data_dir + "Classifier")
         print(self.communityDetector)
 
         # Loading class recommenders
@@ -73,8 +71,8 @@ class CommunityBasedTagRecommender(object):
             self.recommenders[class_name].set_heuristic(self.recommendation_heuristic)
 
             data = {
-                'TAG_NAMES': load(RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % class_name + self.metric + '_SUBSET_TAG_NAMES.npy'),
-                'SIMILARITY_MATRIX': load(RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % class_name + self.metric + '_SUBSET.npy'),
+                'TAG_NAMES': load(self.base_data_dir + self.dataset + '_%s_SIMILARITY_MATRIX_' % class_name + self.metric + '_SUBSET_TAG_NAMES.npy'),
+                'SIMILARITY_MATRIX': load(self.base_data_dir + self.dataset + '_%s_SIMILARITY_MATRIX_' % class_name + self.metric + '_SUBSET.npy'),
             }
 
             self.recommenders[class_name].load_data(

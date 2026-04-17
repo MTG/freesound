@@ -86,7 +86,7 @@ class CommunityDetector(object):
                 not os.path.exists(self.base_data_dir + 'Classifier_TAG_NAMES.npy'):
             raise Exception(f"Classifier not existing in classifiers folder ({PATH}).")
 
-        self.clf = load_classifier("/tag_recommendation_models/Classifier_py3_export")
+        self.clf = load_classifier(os.path.join(self.base_data_dir, "Classifier_py3_export"))
 
         meta = loadFromJson(PATH + "_meta.json")
         self.clf_type = meta['clf_type']

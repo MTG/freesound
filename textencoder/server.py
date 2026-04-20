@@ -24,7 +24,7 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-models = ["clap"]
+models = ["laion_clap"]
 
 clap_model_path = "/630k-audioset-fusion-best.pt"
 model = laion_clap.CLAP_Module(enable_fusion=True)
@@ -45,7 +45,7 @@ def encode_text():
     embeddings = {}
 
     for model in [m for m in models if m == requested_model or requested_model is None]:
-        if model == "clap":
+        if model == "laion_clap":
             embeddings[model] = get_clap_embeddings_from_text(input).tolist()
 
     return jsonify(

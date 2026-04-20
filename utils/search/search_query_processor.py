@@ -32,6 +32,7 @@ from luqum.pretty import prettify
 
 from sounds.models import Sound
 from tags.models import Tag
+from textencoder.client import TextEncoder
 from utils.clustering_utilities import get_clusters_for_query, get_ids_in_cluster
 from utils.encryption import create_hash
 from utils.search import SearchEngineException
@@ -135,6 +136,7 @@ class SearchQueryProcessor:
                 should_be_disabled=lambda option: (
                     option.sqp.get_option_value_to_apply("tags_mode")
                     or bool(option.sqp.get_option_value_to_apply("similar_to"))
+                    or option.sqp.get_option_value_to_apply("neural_search_mode")
                 ),
             ),
         ),
@@ -233,7 +235,16 @@ class SearchQueryProcessor:
             ),
         ),
         ("tags_mode", SearchOptionBoolElementInPath, dict(advanced=False, element_in_path="/browse/tags/")),
-        ("similar_to", SearchOptionStr, dict(query_param_name="st", label="Similarity target", placeholder="Sound ID")),
+        (
+            "similar_to",
+            SearchOptionStr,
+            dict(
+                query_param_name="st",
+                label="Similarity target",
+                placeholder="Sound ID",
+                should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("neural_search_mode"),
+            ),
+        ),
         (
             "compute_clusters",
             SearchOptionBool,
@@ -280,6 +291,16 @@ class SearchQueryProcessor:
                 query_param_name="se",
                 search_engine_field_name="ac_single_event",
                 label='Only include "single event" sounds',
+            ),
+        ),
+        (
+            "neural_search_mode",
+            SearchOptionBool,
+            dict(
+                advanced=True,
+                query_param_name="nsm",
+                label="Neural search mode",
+                help_text="Use AI-based text-to-audio search mode",
             ),
         ),
     ]
@@ -716,6 +737,16 @@ class SearchQueryProcessor:
         else:
             similar_to = None
 
+        # Process neural search mode: if neural search mode is active, we need to obtain a vector representation of the textual query which we
+        # then use as a similar_to target
+        if self.get_option_value_to_apply("neural_search_mode"):
+            textual_query = self.get_option_value_to_apply("query")
+            if textual_query:
+                try:
+                    similar_to = TextEncoder().encode_text(textual_query)["embeddings"]["laion_clap"]
+                except Exception as e:
+                    raise SearchEngineException(f"Error encoding textual query for neural search mode: {e}")
+
         return dict(
             textual_query=self.get_option_value_to_apply("query"),
             query_fields=field_weights,
@@ -735,7 +766,9 @@ class SearchQueryProcessor:
             only_sounds_with_pack=self.get_option_value_to_apply("display_as_packs"),
             only_sounds_within_ids=only_sounds_within_ids,
             similar_to=similar_to,
-            similar_to_similarity_space=self.get_option_value_to_apply("similarity_space"),
+            similar_to_similarity_space=self.get_option_value_to_apply("similarity_space")
+            if not self.get_option_value_to_apply("neural_search_mode")
+            else settings.SIMILARITY_SPACE_LAION_CLAP,
         )
 
     def get_url(self, add_filters=None, remove_filters=None):

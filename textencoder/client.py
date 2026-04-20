@@ -43,19 +43,13 @@ def _result_or_exception(result):
 
 class TextEncoder(object):
     @classmethod
-    def encode_text(cls, input_text, model):
+    def encode_text(cls, input_text, model=None):
         cache_key = f"text-encoding-{model}-{input_text}"
         result = cache.get(cache_key, None)
         if result is None:
-            url = (
-                _BASE_URL
-                + _URL_ENCODE_TEXT
-                + "?"
-                + "input="
-                + urllib.parse.quote(input_text)
-                + "&model="
-                + urllib.parse.quote(model)
-            )
+            url = _BASE_URL + _URL_ENCODE_TEXT + "?" + "input=" + urllib.parse.quote(input_text)
+            if model is not None:
+                url += "&model=" + urllib.parse.quote(model)
             result = _result_or_exception(_get_url_as_json(url))
             cache.set(cache_key, result, settings.TEXTENCODER_CACHE_TIME)
 

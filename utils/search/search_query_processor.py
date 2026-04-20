@@ -88,7 +88,10 @@ class SearchQueryProcessor:
                 query_param_name="s",
                 label="Sort",
                 choices=[(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
-                should_be_disabled=lambda option: bool(option.sqp.get_option_value_to_apply("similar_to")),
+                should_be_disabled=lambda option: (
+                    bool(option.sqp.get_option_value_to_apply("similar_to"))
+                    or option.sqp.get_option_value_to_apply("neural_search_mode")
+                ),
                 get_default_value=lambda option: (
                     settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
                     if option.sqp.get_option_value_to_apply("query") == ""
@@ -834,6 +837,9 @@ class SearchQueryProcessor:
             else:
                 return similar_to
         return similar_to
+
+    def neural_search_mode_active(self):
+        return self.options["neural_search_mode"].value_to_apply
 
     def compute_clusters_active(self):
         return self.options["compute_clusters"].value_to_apply

@@ -19,12 +19,22 @@
 #
 
 
+import laion_clap
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-
 models = ["clap"]
+
+clap_model_path = "/630k-audioset-fusion-best.pt"
+model = laion_clap.CLAP_Module(enable_fusion=True)
+model.load_ckpt(clap_model_path)
+
+
+def get_clap_embeddings_from_text(text):
+    text_embed = model.get_text_embedding([text])
+    text_embed = text_embed[0, :]
+    return text_embed
 
 
 @app.route("/encode_text/", methods=["GET"])
@@ -35,9 +45,8 @@ def encode_text():
     embeddings = {}
 
     for model in [m for m in models if m == requested_model or requested_model is None]:
-        # Compute embedding here
-        fake_vector = [0.0] * 512
-        embeddings[model] = fake_vector
+        if model == "clap":
+            embeddings[model] = get_clap_embeddings_from_text(input).tolist()
 
     return jsonify(
         {

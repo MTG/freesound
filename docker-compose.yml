@@ -186,16 +186,16 @@ services:
     tagrecommendation:
         profiles: ["all"]
         build:
-            dockerfile: ./docker/Dockerfile.py2
-            target: tagrecommendation
+            dockerfile: ./docker/Dockerfile.tagrecommendation
             platforms:
               - linux/amd64
         init: true
-        command: python tagrecommendation_server.py
+        command: python server.py
         volumes:
             - ./tagrecommendation:/code
-            - ./freesound-data/tag_recommendation_models:/freesound-data/tag_recommendation_models
+            - ./freesound-data/tag_recommendation_models:/tag_recommendation_models
         ports:
-            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8010:8010"
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5000:5000"
         environment:
             - FS_USER_ID
+

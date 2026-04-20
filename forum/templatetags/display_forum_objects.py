@@ -106,6 +106,10 @@ def display_post(
         edited_diff = abs((post.modified - post.created).total_seconds())
     current_user = context["request"].user
     can_view_moderator_info = current_user.has_perm("tickets.can_moderate") or current_user.is_staff
+    post_delay_is_short = False
+    if show_moderator_info and can_view_moderator_info and post.created and post.author.date_joined:
+        post_delay_seconds = (post.created - post.author.date_joined).total_seconds()
+        post_delay_is_short = post_delay_seconds < 3600
     return {
         "post": post,
         "highlighted_content": highlighted_content,
@@ -115,6 +119,7 @@ def display_post(
         "show_report_actions": show_report_actions,
         "show_moderator_info": show_moderator_info and can_view_moderator_info,
         "show_post_edited": edited_diff is not None and edited_diff > 1,
+        "post_delay_is_short": post_delay_is_short,
         "perms": context["perms"],
         "request": context["request"],
     }

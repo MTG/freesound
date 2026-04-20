@@ -22,8 +22,10 @@ import datetime
 from unittest import mock
 
 from django.contrib.auth.models import Permission, User
+from django.contrib.sites.models import Site
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.html import escape
 
 from accounts.models import OldUsername
 from geotags.models import GeoTag
@@ -216,6 +218,22 @@ class SimpleUserTest(TestCase):
                 self.pack_download.created,
             ),
         )
+
+    def test_download_attribution_html(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse("accounts-attribution") + "?format=html")
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode("utf-8")
+        # The template uses force_escape so users see copyable HTML — assert against escaped expected output
+        domain = f"https://{Site.objects.get_current().domain}"
+        sound_url = f"{domain}{reverse('sound', args=[self.user.username, self.sound.id])}"
+        user_url = f"{domain}{reverse('account', args=[self.user.username])}"
+        expected_sound_line = (
+            f'<li>S: <a href="{sound_url}">{self.sound.original_filename}</a>'
+            f' by <a href="{user_url}">{self.user.username}</a>'
+            f' | License: <a href="{self.sound.license.deed_url}">{self.sound.license.name_with_version}</a></li>'
+        )
+        self.assertIn(escape(expected_sound_line), content)
 
     def test_download_attribution_txt(self):
         self.client.force_login(self.user)

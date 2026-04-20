@@ -273,6 +273,10 @@ class SoundCombinedSearchFormAPI(forms.Form):
             link += f"&descriptors={self.cleaned_data['descriptors']}"
         if self.cleaned_data["normalized"]:
             link += f"&normalized={self.cleaned_data['normalized']}"
+        if self.cleaned_data["similar_to"]:
+            link += f"&similar_to={self.cleaned_data['similar_to']}"
+        if self.cleaned_data["similarity_space"]:
+            link += f"&similarity_space={self.cleaned_data['similarity_space']}"
         if not group_by_pack:
             if self.cleaned_data["group_by_pack"]:
                 link += f"&group_by_pack={self.cleaned_data['group_by_pack']}"

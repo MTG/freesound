@@ -31,7 +31,7 @@ _URL_RECOMMEND_TAGS = 'recommend_tags/'
 
 
 def _get_url_as_json(url):
-    f = urllib.request.urlopen(url.replace(" ","%20"), timeout=settings.TAGRECOMMENDATION_TIMEOUT)
+    f = urllib.request.urlopen(url.replace(" ","%20"), timeout=settings.TAGRECOMMENDATION_TIMEOUT)  # noqa: S310
     resp = f.read()
     return json.loads(resp)
 

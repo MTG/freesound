@@ -1214,7 +1214,6 @@ SEARCH_EMPTY_QUERY_CACHE_TIME = (
 SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take longer than this threshold in milliseconds. Set it to -1 to disable logging of slow queries.
 SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
 
-
 # -------------------------------------------------------------------------------
 # Similarity client settings
 SIMILARITY_ADDRESS = "similarity"
@@ -1228,6 +1227,13 @@ TAGRECOMMENDATION_ADDRESS = "tagrecommendation"
 TAGRECOMMENDATION_PORT = 5000
 TAGRECOMMENDATION_CACHE_TIME = 60 * 60 * 24 * 7
 TAGRECOMMENDATION_TIMEOUT = 10
+
+# -------------------------------------------------------------------------------
+# Text encoder client settings
+TEXTENCODER_ADDRESS = "textencoder"
+TEXTENCODER_PORT = 5001
+TEXTENCODER_CACHE_TIME = 60 * 60 * 24 * 7
+TEXTENCODER_TIMEOUT = 10
 
 # -------------------------------------------------------------------------------
 # Sentry settings

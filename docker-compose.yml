@@ -196,6 +196,18 @@ services:
             - ./freesound-data/tag_recommendation_models:/tag_recommendation_models
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5000:5000"
-        environment:
-            - FS_USER_ID
+
+
+    textencoder:
+        profiles: ["all"]
+        build:
+            dockerfile: ./docker/Dockerfile.textencoder
+            platforms:
+              - linux/amd64
+        init: true
+        command: python server.py
+        volumes:
+            - ./textencoder:/code
+        ports:
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5001:5001"
 

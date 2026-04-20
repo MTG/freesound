@@ -170,4 +170,10 @@ def display_search_option(context, option_name, widget=None):
             search_query_processor_options.SearchOptionChoice: "select",
         }.get(type(option), "text")
     label = option.label if option.label else option_name.capitalize().replace("_", " ")
-    return {"option": option, "option_name": option_name, "label": label, "widget": widget}
+    return {
+        "option": option,
+        "option_name": option_name,
+        "label": label,
+        "widget": widget,
+        "help_text": option.help_text,
+    }

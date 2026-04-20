@@ -189,7 +189,14 @@ def get_hot_threads(n=None, days=15):
             )
         )
         .select_related(
-            "author", "forum", "last_post", "last_post__author", "last_post__thread", "last_post__thread__forum"
+            "author",
+            "author__profile",
+            "forum",
+            "last_post",
+            "last_post__author",
+            "last_post__author__profile",
+            "last_post__thread",
+            "last_post__thread__forum",
         )[:n]
     )
 

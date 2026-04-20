@@ -105,22 +105,22 @@ class ApiV2Client(models.Model):
         Returns:
             List[Tuple(datetime.Date, int)]
         """
-        usage = []
         if year is not None:
             end_date = datetime.datetime(year, 12, 31).date()
             n_days_back = 365
         else:
             end_date = timezone.now().date()
-        for i in range(n_days_back):
-            date_filter = end_date - datetime.timedelta(days=i)
-            if settings.DEBUG:
-                number_of_requests = random.randint(0, 1000)  # noqa: S311
-            else:
-                try:
-                    number_of_requests = self.usage.get(date=date_filter).number_of_requests
-                except APIClientDailyUsageHistory.DoesNotExist:
-                    number_of_requests = 0
-            usage.append((date_filter, number_of_requests))
+        start_date = end_date - datetime.timedelta(days=n_days_back - 1)
+        if settings.DEBUG:
+            usage = [(end_date - datetime.timedelta(days=i), random.randint(0, 1000)) for i in range(n_days_back)]  # noqa: S311
+        else:
+            requests_by_date = {
+                row.date: row.number_of_requests for row in self.usage.filter(date__gte=start_date, date__lte=end_date)
+            }
+            usage = [
+                (end_date - datetime.timedelta(days=i), requests_by_date.get(end_date - datetime.timedelta(days=i), 0))
+                for i in range(n_days_back)
+            ]
         return sorted(usage, reverse=True)
 
     def get_usage_history_total(self, n_days_back=30, year=None, discard_per_day=0):

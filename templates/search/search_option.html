@@ -3,7 +3,7 @@
     <div class="bw-search__filter-checkbox">
         <input id="id_{{ option_name }}" name="{{ option.query_param_name }}" type="checkbox" class="bw-checkbox" {% if option.value %}checked{% endif %} {% if option.disabled %}disabled{% endif %}/>
     </div>
-    <div class="bw-search__filter-name">{{ label }}</div>
+    <div class="bw-search__filter-name" {% if help_text %}title="{{ help_text }}"{% endif %}>{{ label }}</div>
 </label>
 {% elif widget == 'text' %}
 <label for="id_{{ option_name }}" class="{% if option.disabled %}opacity-020{% endif %} text-light-grey">{{ label }}:</label>

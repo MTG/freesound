@@ -75,7 +75,8 @@ class SearchQueryProcessorTests(TestCase):
         return search_query_processor.SearchQueryProcessor(request), request.get_full_path()
 
     @mock.patch("utils.search.search_query_processor.get_ids_in_cluster")
-    def test_search_query_processor_as_query_params_and_make_url(self, fake_get_ids_in_cluster):
+    @mock.patch("utils.search.search_query_processor.TextEncoder")
+    def test_search_query_processor_as_query_params_and_make_url(self, fake_text_encoder, fake_get_ids_in_cluster):
         # This will test that the SearchQueryProcessor correctly processes the request parameters and generates the
         # expected query_params object to be sent to a SearchEngine object. Also it tests that once SearchQueryProcessor
         # has loaded parameters from the request, it is able to generate URLs which are equivalent to the original request.
@@ -275,6 +276,21 @@ class SearchQueryProcessorTests(TestCase):
         )
         self.assertGetUrlAsExpected(sqp, url)
 
+        # With neural search option
+        fake_text_encoder.return_value.encode_text.return_value = {
+            "embeddings": {"laion_clap": [1.34, 3.56, 5.78]}
+        }  # Mock the response of the text encoder
+        sqp, _ = self.run_fake_search_query_processor(params={"nsm": "1", "q": "test query"})
+        self.assertExpectedParams(
+            sqp.as_query_params(),
+            {
+                "similar_to": [1.34, 3.56, 5.78],
+                "similar_to_similarity_space": settings.SIMILARITY_SPACE_LAION_CLAP,
+                "textual_query": "test query",
+                "sort": settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+            },
+        )
+
     def test_search_query_processor_disabled_options(self):
         # Test that some search options are marked as disabled depending on the state of some other options
         # NOTE: disabled state is used when displaying the options in the UI, but has no other effects
@@ -315,6 +331,11 @@ class SearchQueryProcessorTests(TestCase):
         sqp, _ = self.run_fake_search_query_processor(params={"f": 'pack_grouping:"19894_Clutter"'})
         self.assertTrue(sqp.options["group_by_pack"].disabled)
         self.assertTrue(sqp.options["display_as_packs"].disabled)
+
+        # "similar to" and "search in" is disabled if neural search is on
+        sqp, _ = self.run_fake_search_query_processor(params={"nsm": "1"})
+        self.assertTrue(sqp.options["similar_to"].disabled)
+        self.assertTrue(sqp.options["search_in"].disabled)
 
     def test_search_query_processor_tags_in_filter(self):
         sqp, _ = self.run_fake_search_query_processor(
@@ -430,6 +451,10 @@ class SearchQueryProcessorTests(TestCase):
 
         # With similar to option
         sqp, _ = self.run_fake_search_query_processor(params={"st": "1234"})
+        self.assertEqual(sqp.contains_active_advanced_search_options(), True)
+
+        # With neural search option
+        sqp, _ = self.run_fake_search_query_processor(params={"nsm": "1"})
         self.assertEqual(sqp.contains_active_advanced_search_options(), True)
 
     def test_search_query_processor_as_query_params_exclude_facet_filters(self):

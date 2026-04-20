@@ -21,25 +21,25 @@
                 <h1>{{ user.username }}</h1>
             </div>
             {% if not user.profile.is_anonymized_user %}
-            <div class="v-spacing-top-4 v-spacing-4 middle padding-left-2 padding-right-2">
+            <div class="v-spacing-top-4 v-spacing-2 middle padding-left-2 padding-right-2 center wrap">
                 {% if home %}
                     {% if user.profile.num_sounds %}    
-                    <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
-                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt"  data-toggle="modal-default" data-modal-content-url="{% url "comments-for-user" user.username %}?ajax=1" data-modal-activation-param="comments" href="javascript:void(0);" title="See all comments on your sounds">Comments</a>
+                    <a class="no-hover text-center btn-inverse btn-profile-adapt v-spacing-2" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt v-spacing-2"  data-toggle="modal-default" data-modal-content-url="{% url "comments-for-user" user.username %}?ajax=1" data-modal-activation-param="comments" href="javascript:void(0);" title="See all comments on your sounds">Comments</a>
                     {% else %}
-                    <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'accounts-upload' %}">Upload a sound</a>
+                    <a class="no-hover text-center btn-inverse btn-profile-adapt v-spacing-2" href="{% url 'accounts-upload' %}">Upload a sound</a>
                     {% endif %}
-                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url 'accounts-edit' %}">Account settings</a>
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt v-spacing-2" href="{% url 'accounts-edit' %}">Account settings</a>
                 {% else %}
                     {% if show_unfollow_button %}
-                        <a class="no-hover text-center btn-secondary" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}">Unfollow</a>
+                        <a class="no-hover text-center btn-secondary v-spacing-2" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}">Unfollow</a>
                     {% else %}
-                        <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'follow-user' user.username %}?next={{ next_path }}">Follow</a>
+                        <a class="no-hover text-center btn-inverse btn-profile-adapt v-spacing-2" href="{% url 'follow-user' user.username %}?next={{ next_path }}">Follow</a>
                     {% endif %}
-                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url "messages-new" user.username %}">Message</a>
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt v-spacing-2" href="{% url "messages-new" user.username %}">Message</a>
                 {% endif %}
                 {% if perms.tickets.can_moderate or request.user.is_staff %}
-                    <div class="dropdown display-inline-block">
+                    <div class="dropdown display-inline-block v-spacing-2">
                         <a class="no-hover dropdown-toggle" id="mod-actions-menu"
                            data-toggle="dropdown"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Mod actions</button></a>
                         <ul class="dropdown-menu" aria-labelledby="mod-actions-menu">

@@ -707,7 +707,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     config_options["vector_size"], config_options.get("l2_norm", False)
                 )
                 if vector is not None and vector_field_name is not None:
-                    serialized_vector = ",".join([str(n) for n in vector])
+                    serialized_vector = ",".join([f"{n:.4f}" for n in vector])
                     query.set_query(
                         f"{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} }}[{serialized_vector}]"
                     )

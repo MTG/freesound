@@ -262,14 +262,14 @@ class SearchQueryProcessorTests(TestCase):
         # With similar to option
         sqp, url = self.run_fake_search_query_processor(params={"st": "1234"})  # Passing similarity target as sound ID
         self.assertExpectedParams(
-            sqp.as_query_params(), {"similar_to": "1234", "sort": settings.SEARCH_SOUNDS_SORT_DEFAULT}
+            sqp.as_query_params(), {"similar_to": 1234, "sort": settings.SEARCH_SOUNDS_SORT_DEFAULT}
         )
         self.assertGetUrlAsExpected(sqp, url)
         sqp, url = self.run_fake_search_query_processor(
             params={"st": "[1.34,3.56,5.78]"}
         )  # Passing similarity target as sound ID
         self.assertExpectedParams(
-            sqp.as_query_params(), {"similar_to": "[1.34, 3.56, 5.78]", "sort": settings.SEARCH_SOUNDS_SORT_DEFAULT}
+            sqp.as_query_params(), {"similar_to": [1.34, 3.56, 5.78], "sort": settings.SEARCH_SOUNDS_SORT_DEFAULT}
         )
         self.assertGetUrlAsExpected(sqp, url)
 
@@ -288,7 +288,7 @@ class SearchQueryProcessorTests(TestCase):
         self.assertExpectedParams(
             sqp.as_query_params(),
             {
-                "similar_to": "[1.34, 3.56, 5.78]",
+                "similar_to": [1.34, 3.56, 5.78],
                 "similar_to_similarity_space": settings.SIMILARITY_SPACE_LAION_CLAP,
                 "textual_query": "test query",
                 "sort": settings.SEARCH_SOUNDS_SORT_DEFAULT,

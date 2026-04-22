@@ -78,12 +78,7 @@
                             {% comment %}sorting options{% endcomment %}
                             <div class="col-4 right browse__search-overview-sorter">
                                 <div class="{% if sqp.map_mode_active %}display-none{% endif %}">
-                                    {% if not sqp.similar_to_active and not sqp.neural_search_mode_active %}
-                                        {% display_search_option "sort_by" %}
-                                    {% else %}
-                                        <span class="font-weight-normal text-light-grey d-none d-md-inline">{{ sqp.options.sort_by.label }}:</span>
-                                        <span><b>Similarity to target</b></span>
-                                    {% endif %}
+                                    {% display_search_option "sort_by" %}
                                 </div>
                             </div>
                         </div>

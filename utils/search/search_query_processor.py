@@ -88,13 +88,12 @@ class SearchQueryProcessor:
                 query_param_name="s",
                 label="Sort",
                 choices=[(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
-                should_be_disabled=lambda option: (
-                    bool(option.sqp.get_option_value_to_apply("similar_to"))
-                    or option.sqp.get_option_value_to_apply("neural_search_mode")
-                ),
                 get_default_value=lambda option: (
                     settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
-                    if option.sqp.get_option_value_to_apply("query") == ""
+                    if (
+                        option.sqp.get_option_value_to_apply("query") == ""
+                        and not option.sqp.get_option_value_to_apply("similar_to")
+                    )
                     else settings.SEARCH_SOUNDS_SORT_DEFAULT
                 ),
             ),
@@ -425,6 +424,11 @@ class SearchQueryProcessor:
         # Pass the reference to the SearchQueryProcessor object to all search options, and load the search option values from the request
         for option in self.options.values():
             option.set_search_query_processor(self)
+            option.load_value()
+
+        # Do a second pass of loading values as some default values might depend on the values of other options, so we need to have all options
+        # loaded before being able to load the value of some of them.
+        for option in self.options.values():
             option.load_value()
 
         # Some of the filters included in the search query (in f_parsed) might belong to filters which are added by SearchOption objects, but some others might
@@ -837,9 +841,6 @@ class SearchQueryProcessor:
             else:
                 return similar_to
         return similar_to
-
-    def neural_search_mode_active(self):
-        return self.options["neural_search_mode"].value_to_apply
 
     def compute_clusters_active(self):
         return self.options["compute_clusters"].value_to_apply

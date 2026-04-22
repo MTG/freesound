@@ -24,6 +24,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -36,7 +37,6 @@ MIDDLEWARE = [
     "freesound.middleware.TosAcceptanceHandler",
     "freesound.middleware.BulkChangeLicenseHandler",
     "freesound.middleware.UpdateEmailHandler",
-    "corsheaders.middleware.CorsMiddleware",
 ]
 
 INSTALLED_APPS = [

@@ -453,7 +453,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         field and how it should treat it.
         """
         for raw_fieldname, solr_fieldname in SOLR_DYNAMIC_FIELDS_MAP.items():
-            query_filter = query_filter.replace(f"{raw_fieldname}:", f"{solr_fieldname}:")
+            updated_query_filter_parts = []
+            for part in query_filter.split(" "):
+                if part.startswith(raw_fieldname + ":"):
+                    part = part.replace(f"{raw_fieldname}:", f"{solr_fieldname}:")
+                updated_query_filter_parts.append(part)
+            query_filter = " ".join(updated_query_filter_parts)
         return query_filter
 
     def search_process_sort(self, sort, forum=False):

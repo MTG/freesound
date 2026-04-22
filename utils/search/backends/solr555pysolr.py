@@ -453,7 +453,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         field and how it should treat it.
         """
         for raw_fieldname, solr_fieldname in SOLR_DYNAMIC_FIELDS_MAP.items():
-            query_filter = query_filter.replace(f"{raw_fieldname}:", f"{solr_fieldname}:")
+            updated_query_filter_parts = []
+            for part in query_filter.split(" "):
+                if part.startswith(raw_fieldname + ":"):
+                    part = part.replace(f"{raw_fieldname}:", f"{solr_fieldname}:")
+                updated_query_filter_parts.append(part)
+            query_filter = " ".join(updated_query_filter_parts)
         return query_filter
 
     def search_process_sort(self, sort, forum=False):
@@ -707,9 +712,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     config_options["vector_size"], config_options.get("l2_norm", False)
                 )
                 if vector is not None and vector_field_name is not None:
+                    # We define a query which matched child documents (similarity vectors), but returns the parent document (sound) and uses the
+                    # score of the child document (similarity vector) as the score of the parent document. This way we can apply filters and
+                    # sorting on the parent documents (sounds) but use the similarity score for ranking.
+
                     serialized_vector = ",".join([f"{n:.4f}" for n in vector])
+                    sim_search_pre_filter = f"preFilter=similarity_space:{similar_to_similarity_space} preFilter=content_type:{SOLR_DOC_CONTENT_TYPES['similarity_vector']}"
                     query.set_query(
-                        f"{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} }}[{serialized_vector}]"
+                        f"{{!parent which=content_type:{SOLR_DOC_CONTENT_TYPES['sound']} score=max}}{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} {sim_search_pre_filter}}}[{serialized_vector}]"
                     )
 
         # Process filter
@@ -718,44 +728,25 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         )
 
         if similar_to is not None:
-            # If doing a similarity query, the filter needs to be further processed so we perform filters based on parent documents
-            query_filter_modified = [
-                f"content_type:{SOLR_DOC_CONTENT_TYPES['similarity_vector']}",
-                f"similarity_space:{similar_to_similarity_space}",
-            ]  # Add basic filter to only get similarity vectors from selected similarity space and from child documents (this is because root documents can also have sim vectors)
-            top_similar_sounds_as_filter = query.as_kwargs()["q"]
+            # If the similarity target is specified as a sound ID, add a filter so the sound itself is not included in the results
             try:
-                # Also if target is specified as a sound ID, remove it from the list so it is not returned as a result
-                query_filter_modified.append(f"-_nest_parent_:{int(similar_to)}")
-            except TypeError:
-                # Target is not a sound id, so we don't need to add the filter
+                int_similar_to = int(similar_to)
+                query_filter = [query_filter, f"-id:{int(similar_to)}"]
+            except (TypeError, ValueError):
+                # Sound ID is not an integer, do not add any extra filter
                 pass
-
-            # Also add the NN query as a filter so we don't get past the first similar_to_min_similarity results when applying extra filters
-            query_filter_modified += [top_similar_sounds_as_filter]
-
-            # Now add the usual filter, but wrap it in "child of" modifier so it filters on parent documents instead of child documents
-            if query_filter:
-                query_filter_modified.append(
-                    f'{{!child of="content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}"}}({query_filter})'
-                )
-
-            # Replace query_filter with the modified version
-            query_filter = query_filter_modified
 
         # Set query options
         if current_page is not None:
             offset = (current_page - 1) * num_sounds
-        if similar_to is None and sorting_target is not None:
+
+        if sorting_target is not None:
             # Custom sorting by distance to target
             sort, dist_field = self.search_process_sort_distance(sorting_target)
             field_list.append(dist_field)
-        elif similar_to is None:
-            # If not doing a similarity search, turn the param into a solr sort clause
-            sort = self.search_process_sort(sort)
         else:
-            # This is a similarity search, we always sort by score
-            sort = ["score desc"]
+            sort = self.search_process_sort(sort)
+
         query.set_query_options(
             start=offset,
             rows=num_sounds,
@@ -773,9 +764,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             for field in facet_fields:
                 json_facets[field] = SOLR_SOUND_FACET_DEFAULT_OPTIONS.copy()
                 json_facets[field]["field"] = field
-                if similar_to is not None:
-                    # In similarity search we need to set the "domain" facet option to apply them to the parent documents of the child documents we will match
-                    json_facets[field]["domain"] = {"blockParent": f"content_type:{SOLR_DOC_CONTENT_TYPES['sound']}"}
             for field_name, extra_options in facets.items():
                 json_facets[get_solr_facet_fieldname_from_freesound_fieldname(field_name)].update(extra_options)
             query.set_facet_json_api(json_facets)
@@ -784,7 +772,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if group_by_pack:
             if USE_COLLAPSE_AND_EXPAND_QUERY_PARSER:
                 current_filter = query.params.get("fq", "")
-                field_name = "pack_grouping" if similar_to is None else "pack_grouping_child"
+                field_name = "pack_grouping"
                 group_by_pack_filter = f"{{!collapse field={field_name} sort='created desc' nullPolicy=expand}}"
                 if current_filter:
                     if type(current_filter) is list:
@@ -862,8 +850,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             # Solr uses a string for the id field, but django uses an int. Convert the id in all results to int
             # before use to avoid issues
             for d in results.docs:
-                # Get the sound ids from the results
-                d["id"] = int(d["id"] if similar_to is None else d["id"].split("/")[0])
+                d["id"] = int(d["id"])
 
             return SearchResults(
                 docs=results.docs,

@@ -41,31 +41,22 @@ Searching
 =========
 
 There are several ways in which you can search sounds using the Freesound APIv2.
-The most basic one is using the :ref:`sound-text-search` resource which allows you to define some query terms and other parameters to filter query results.
+The most basic one is using the :ref:`sound-text-search` resource which allows you to define query terms and other parameters to filter query results.
 As a quick example, the following request would return all sorts of dog sounds:
 
 ::
 
-  curl "https://freesound.org/apiv2/search/text/?query=dogs&token=YOUR_API_KEY"
+  curl "https://freesound.org/apiv2/search/?query=dogs&token=YOUR_API_KEY"
 
 
-Besides text-search, you can also use the :ref:`sound-content-search` resource to perform queries and define filters based on audio features (descriptors) rather than tags and textual metadata.
+Search queries can include filters based on audio features (descriptors) rather than tags and textual metadata.
 That means that you can retrieve sounds that, for example, have a particular pitch or bpm. These queries may include almost any of the audio features listed in :ref:`analysis-docs`.
 Note however that these features are automatically extracted and might not be always accurate.
-As a quick example, you can retrieve sounds that feature a particular pitch mean as follows:
+As a quick example, you can retrieve sounds that feature a particular pitch as follows:
 
 ::
 
-  curl "https://freesound.org/apiv2/search/content/?descriptors_filter=lowlevel.pitch.mean:\[219.9%20TO%20220.1\]"
-
-
-Furthermore, you can combine both textual and content based search strategies using the :ref:`sound-combined-search` resource.
-This is useful as it allows you to specify a query or filter both in terms of metadata and audio features.
-For example, you could search for loops with a particular bpm using the following query:
-
-::
-
- curl "https://freesound.org/apiv2/search/combined/?filter=tag:loop&descriptors_filter=rhythm.bpm:\[119%20TO%20121\]"
+  curl "https://freesound.org/apiv2/search/?filter=pitch:\[219.9%20TO%20220.1\]"
 
 
 Downloading sounds

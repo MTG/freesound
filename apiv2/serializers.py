@@ -26,9 +26,8 @@ from rest_framework import serializers
 
 from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
-from sounds.models import Pack, Sound, SoundAnalysis
+from sounds.models import Pack, Sound
 from utils.forms import filename_has_valid_extension
-from utils.similarity_utilities import get_sounds_descriptors
 from utils.tags import clean_and_split_tags
 
 from .apiv2_utils import prepend_base
@@ -43,7 +42,7 @@ DEFAULT_FIELDS_IN_SOUND_DETAIL = (
     + "geotag,is_geotagged,created,license,type,channels,filesize,bitrate,"
     + "bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,"
     + "num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,"
-    + "analysis,analysis_files,is_explicit,is_remix,was_remixed,md5,ai_preference"
+    + "analysis_files,is_explicit,is_remix,was_remixed,md5,ai_preference"
 )
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
@@ -81,7 +80,6 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     def __init__(self, *args, **kwargs):
         self.score_map = kwargs.pop("score_map", {})
-        self.sound_analysis_data = kwargs.pop("sound_analysis_data", {})
         super().__init__(*args, **kwargs)
         requested_fields = self.context["request"].GET.get("fields", self.default_fields)
 
@@ -170,7 +168,6 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             "num_comments",
             "comment",
             "similar_sounds",
-            "analysis",
             "analysis_files",
             "is_explicit",
             "score",
@@ -320,19 +317,6 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             ),
         }
 
-    def get_or_compute_analysis_state_essentia_exists(self, sound_obj):
-        if hasattr(sound_obj, "analysis_state_essentia_exists"):
-            return sound_obj.analysis_state_essentia_exists
-        else:
-            return SoundAnalysis.objects.filter(
-                analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK", sound_id=sound_obj.id
-            ).exists()
-
-    analysis = serializers.SerializerMethodField()
-
-    def get_analysis(self, obj):
-        raise NotImplementedError  # Should be implemented in subclasses
-
     analysis_files = serializers.SerializerMethodField()
 
     def get_analysis_files(self, obj):
@@ -446,38 +430,11 @@ class SoundListSerializer(AbstractSoundSerializer):
         self.default_fields = DEFAULT_FIELDS_IN_SOUND_LIST
         super().__init__(*args, **kwargs)
 
-    def get_analysis(self, obj):
-        if not self.get_or_compute_analysis_state_essentia_exists(obj):
-            return None
-        # Get descriptors from self.sound_analysis_data (should have been passed to the serializer)
-        return self.sound_analysis_data.get(str(obj.id), None)
-
 
 class SoundSerializer(AbstractSoundSerializer):
     def __init__(self, *args, **kwargs):
         self.default_fields = DEFAULT_FIELDS_IN_SOUND_DETAIL
         super().__init__(*args, **kwargs)
-
-    def get_analysis(self, obj):
-        if not self.get_or_compute_analysis_state_essentia_exists(obj):
-            return None
-        # Get the sound descriptors from gaia
-        try:
-            descriptors = self.context["request"].GET.get("descriptors", [])
-            if descriptors:
-                return get_sounds_descriptors(
-                    [obj.id],
-                    descriptors.split(","),
-                    self.context["request"].GET.get("normalized", "0") == "1",
-                    only_leaf_descriptors=True,
-                )[str(obj.id)]
-            else:
-                return (
-                    "No descriptors specified. You should indicate which descriptors you want with "
-                    "the 'descriptors' request parameter."
-                )
-        except Exception:
-            return None
 
 
 ##################
@@ -1029,30 +986,3 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
         if len(errors):
             raise serializers.ValidationError(errors)
         return data
-
-
-########################
-# SIMILARITY SERIALIZERS
-########################
-
-
-ALLOWED_ANALYSIS_EXTENSIONS = ["json"]
-
-
-class SimilarityFileSerializer(serializers.Serializer):
-    analysis_file = serializers.FileField(
-        max_length=100,
-        allow_empty_file=False,
-        help_text="Analysis file created with the latest freesound extractor. Must be in .json format.",
-    )
-
-    def validate_analysis_file(self, value):
-        try:
-            extension = value.name.split(".")[-1]
-        except:
-            extension = None
-
-        if extension not in ALLOWED_ANALYSIS_EXTENSIONS or not extension:
-            raise serializers.ValidationError("Uploaded analysis file format not supported, must be .json.")
-
-        return value

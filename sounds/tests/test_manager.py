@@ -61,7 +61,6 @@ class SoundManagerQueryMethods(TestCase):
     fields_to_check_subqueries = [
         "consolidated_audio_descriptors",
         "similarity_vectors",
-        "analysis_state_essentia_exists",
         "ready_for_similarity_precomputed",
     ]
 

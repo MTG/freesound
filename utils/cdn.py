@@ -21,6 +21,11 @@ def generate_cdn_download_url(sound):
     if not os.path.exists(sound_path):
         return None
 
+    # Lazy materialization: ensures a symlink exists for any sound being downloaded,
+    # so the backfill command can run leisurely (or be skipped for cold sounds).
+    # Remove this call once backfill is complete and symlink coverage is verified.
+    create_cdn_symlink(sound)
+
     expires = int(time.time()) + settings.CDN_DOWNLOAD_URL_LIFETIME
     folder_id = str(sound.id // 1000)
     uri = f"/sounds/{folder_id}/{sound.id}.{sound.type}"
@@ -39,15 +44,17 @@ def create_cdn_symlink(sound):
 
     The symlink hides the user_id from the CDN URL. Uses relative paths so the
     symlink works across different mount points (web vs CDN container).
+    Idempotent: fast-path returns immediately if the symlink already exists,
+    so it is safe to call on every download.
     """
-    sound_path = sound.locations("path")
-    if not os.path.exists(sound_path):
-        return False
-
     folder_id = str(sound.id // 1000)
     symlink_dir = os.path.join(settings.CDN_SOUNDS_SYMLINKS_PATH, folder_id)
     symlink_path = os.path.join(symlink_dir, f"{sound.id}.{sound.type}")
 
+    if os.path.lexists(symlink_path):
+        return False
+
+    sound_path = sound.locations("path")
     os.makedirs(symlink_dir, exist_ok=True)
     # Relative target: ../../sounds/{folder}/{sound_id}_{user_id}.{type}
     target = os.path.relpath(sound_path, symlink_dir)

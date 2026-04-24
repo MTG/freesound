@@ -26,8 +26,9 @@ class GenerateCdnDownloadUrlTestCase(TestCase):
         self.sound.processing_state = "OK"
         self.sound.save()
 
+    @mock.patch("utils.cdn.create_cdn_symlink")
     @mock.patch("utils.cdn.os.path.exists", return_value=True)
-    def test_generates_signed_url_with_correct_params(self, mock_exists):
+    def test_generates_signed_url_with_correct_params(self, mock_exists, mock_create_symlink):
         url = generate_cdn_download_url(self.sound)
         self.assertIsNotNone(url)
         self.assertIn("cdn.freesound.org", url)
@@ -35,9 +36,10 @@ class GenerateCdnDownloadUrlTestCase(TestCase):
         self.assertIn("expires=", url)
         self.assertIn("filename=", url)
 
+    @mock.patch("utils.cdn.create_cdn_symlink")
     @mock.patch("utils.cdn.os.path.exists", return_value=True)
     @mock.patch("utils.cdn.time.time", return_value=1700000000)
-    def test_md5_matches_nginx_secure_link_format(self, mock_time, mock_exists):
+    def test_md5_matches_nginx_secure_link_format(self, mock_time, mock_exists, mock_create_symlink):
         """Verify the generated MD5 matches what nginx secure_link would compute."""
         url = generate_cdn_download_url(self.sound)
 
@@ -64,8 +66,9 @@ class GenerateCdnDownloadUrlTestCase(TestCase):
         url = generate_cdn_download_url(self.sound)
         self.assertIsNone(url)
 
+    @mock.patch("utils.cdn.create_cdn_symlink")
     @mock.patch("utils.cdn.os.path.exists", return_value=True)
-    def test_url_contains_folder_and_sound_id_without_user_id(self, mock_exists):
+    def test_url_contains_folder_and_sound_id_without_user_id(self, mock_exists, mock_create_symlink):
         url = generate_cdn_download_url(self.sound)
         path = url.split("?")[0]
         folder_id = str(self.sound.id // 1000)

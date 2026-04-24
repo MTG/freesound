@@ -10,4 +10,133 @@
     border: 2px solid $navy-light-grey;
     transition: border-color 0.3s linear;
   }
+
+  &.with-actions {
+    display: flex;
+    flex-direction: column;
+
+    &.marked-for-removal {
+      // Disable sound player and all interactions
+      > div:first-child {
+        opacity: 0.35;
+        pointer-events: none;
+        user-select: none;
+      }
+    }
+  }
+}
+
+.bw-object-actions {
+  display: flex;
+  width: 100%;
+  padding: 6px 0 0;
+  gap: 8px;
+
+  .btn-inverse {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 12px;
+    text-align: center;
+
+    .label-default {
+      display: inline;
+    }
+
+    .label-hover {
+      display: none;
+    }
+
+    &:hover {
+      .label-default {
+        display: none;
+      }
+
+      .label-hover {
+        display: inline;
+      }
+    }
+  }
+
+  .featured-toggle {
+    .label-active-default,
+    .label-active-hover {
+      display: none;
+    }
+
+    &.active {
+      background: $yellow;
+      border-color: $yellow;
+      color: $black;
+
+      .label-default,
+      .label-hover {
+        display: none;
+      }
+
+      .label-active-default {
+        display: inline;
+      }
+
+      &:hover {
+        background: $black;
+        border-color: $navy-light-grey;
+        color: $white;
+
+        .label-active-default {
+          display: none;
+        }
+
+        .label-active-hover {
+          display: inline;
+        }
+      }
+    }
+  }
+
+  .featured-toggle:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .remove-toggle {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    min-width: 60px;
+
+    // Force 'trash' to stay visible on hover
+    &:hover {
+      background: $red;
+      border-color: $red;
+      color: $white;
+
+      .label-default {
+        display: inline;
+      }
+
+      .label-hover {
+        display: none;
+      }
+    }
+
+    &.active {
+      background: transparent;
+      border-color: $navy-light-grey;
+      color: $navy-grey;
+
+      .label-default {
+        display: none;
+      }
+
+      .label-hover {
+        display: inline;
+      }
+
+      &:hover {
+        background: $almost-white;
+        border-color: $navy-grey;
+        color: $black;
+      }
+    }
+  }
 }

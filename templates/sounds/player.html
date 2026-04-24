@@ -1,6 +1,8 @@
 <div
     class="bw-player"
     data-sound-id="{{ sound.id }}"
+    data-username="{{ sound.username }}"
+    data-user-id="{{ sound.user_id }}"
     data-size="{% if player_size == 'small' or player_size == 'small_no_info' or player_size == 'middle' or player_size == 'moderation' %}small{% elif player_size == 'big_no_info' %}big{% elif player_size == 'minimal' %}minimal{% endif %}"
 
     data-collection="{% if show_collection_button %}true{% else %}false{% endif %}"

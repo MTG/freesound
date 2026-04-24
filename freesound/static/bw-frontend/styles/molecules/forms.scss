@@ -10,6 +10,8 @@
     color: $navy-grey;
   }
 
+  // Keep base label typography, but avoid forcing component labels (stars, radios, filters)
+  // into full-width layouts. Opt in with .bw-form__label when needed.
   > label,
   .bw-form__label {
     width: 100%;
@@ -20,6 +22,7 @@
     color: $black;
   }
 
+  // Generic form field style. Search fields are styled by the input atom/wrapper.
   input:not([type='search']):not(.tags-input):not(.mapboxgl-ctrl-geocoder--input),
   textarea:not(.tags-input):not(.mapboxgl-ctrl-geocoder--input) {
     margin-top: 12px;

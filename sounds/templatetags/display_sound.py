@@ -364,3 +364,16 @@ def display_sound_small_selectable(context, sound, selected=False):
         }
     )
     return tvars
+
+
+@register.inclusion_tag("sounds/display_sound_with_actions.html", takes_context=True)
+def display_sound_small_with_actions(context, sound, is_featured=False):
+    """Display sound with featured and remove action toggles below it."""
+    context = context.get("original_context", context)  # This is to allow passing context in nested inclusion tags
+    tvars = display_sound_small_no_bookmark_no_ratings(context, sound)
+    tvars.update(
+        {
+            "is_featured": is_featured,
+        }
+    )
+    return tvars

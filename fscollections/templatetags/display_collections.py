@@ -32,9 +32,10 @@ register = template.Library()
 def display_collection(context, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
     request = context.get("request")
-    try:
-        sound = Sound.objects.get(collections=collection, collectionsound__featured_sound=True)
-    except Sound.DoesNotExist:
-        sound = None
-    tvars = {"collection": collection, "ft_sound": sound, "request": request}
+    if collection.featured_sound_ids:
+        header_sounds = Sound.public.filter(id__in=collection.featured_sound_ids)
+    else:
+        header_sounds = Sound.public.filter(collections=collection)[:1]
+
+    tvars = {"collection": collection, "header_sounds": header_sounds, "request": request}
     return tvars

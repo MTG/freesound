@@ -8,7 +8,7 @@ services:
 
     # Database server
     db:
-        image: postgres:16.6
+        image: postgres:18.3
         volumes:
             - pghome:/root
             - pgdata:/var/lib/postgresql/data
@@ -76,13 +76,13 @@ services:
 
     # Redis (caches)
     redis:
-        image: redis:7.4.2
+        image: redis:8.4.2
         command: redis-server --port 6379
 
     # Celery broker (queue manager)
     rabbitmq:
         hostname: rabbit
-        image: rabbitmq:3.9.1-management
+        image: rabbitmq:4.2.5-management
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5673:5673"
         volumes:

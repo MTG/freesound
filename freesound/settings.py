@@ -1211,13 +1211,6 @@ SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take long
 SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
 
 # -------------------------------------------------------------------------------
-# Similarity client settings
-SIMILARITY_ADDRESS = "similarity"
-SIMILARITY_PORT = 8008
-SIMILARITY_INDEXING_SERVER_PORT = 8009
-SIMILARITY_TIMEOUT = 10
-
-# -------------------------------------------------------------------------------
 # Tag recommendation client settings
 TAGRECOMMENDATION_ADDRESS = "tagrecommendation"
 TAGRECOMMENDATION_PORT = 5000

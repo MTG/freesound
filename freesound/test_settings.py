@@ -38,7 +38,6 @@ SOLR5_FORUM_URL = "http://fakehost:8080/forum/"  # Avoid making accidental reque
 SEARCH_ENGINE_BACKEND_CLASS = (
     "utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine"  # Test with our own custom search engine functions
 )
-SIMILARITY_ADDRESS = "fakehost"  # Avoid making accidental requests to "real" similarity server if running
 TAGRECOMMENDATION_ADDRESS = "fakehost"  # Avoid making accidental requests to "real" tag rec server if running
 
 # Disable debug toolbar (it will have been enabled because when importing settings and checking local_settings, the

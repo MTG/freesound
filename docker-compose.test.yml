@@ -4,16 +4,17 @@ volumes:
 
 services:
     db:
-        image: postgres:12.1
+        image: postgres:18.3
         env_file:
             - environment
         volumes:
-            - pgdata:/var/lib/postgresql/data
+            - pgdata:/var/lib/postgresql
         ports:
             - "5432:5432"
         environment:
             - POSTGRES_USER=freesound
             - POSTGRES_DB=freesound
+            - POSTGRES_PASSWORD=localfreesoundpgpassword
             - FS_USER_ID
 
     search:

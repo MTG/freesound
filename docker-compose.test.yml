@@ -25,9 +25,11 @@ services:
             - "8983:8983"
 
     test_runner:
+        image: freesound-test:ci
         build:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
+            target: freesound
         init: true
         env_file:
             - environment
@@ -37,9 +39,11 @@ services:
             - db
 
     test_runner_search:
+        image: freesound-test:ci
         build:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
+            target: freesound
         init: true
         env_file:
             - environment

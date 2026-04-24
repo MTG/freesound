@@ -12,25 +12,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-      with:
-        install: true
-        driver: docker
-
-    #- name: Notify workflow starting
-    #  uses: voxmedia/github-action-slack-notify-build@v1
-    #  continue-on-error: true
-    #  if: success()
-    #  id: slack
-    #  with:
-    #    channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
-    #    status: STARTING
-    #    color: warning
-    #  env:
-    #    SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
+      uses: docker/setup-buildx-action@v3
 
     - name: Setup
       run: bash -c 'mkdir -p ./freesound-data/{packs,uploads,avatars} && echo FS_USER_ID_FROM_ENV=$(id -u) > .env && cp freesound/local_settings.example.py freesound/local_settings.py'
@@ -43,10 +28,18 @@ jobs:
       continue-on-error: true
 
     - name: Pull docker images
-      run: docker compose -f docker-compose.test.yml pull
+      run: docker compose -f docker-compose.test.yml pull db
 
-    - name: Build images
-      run: docker compose -f docker-compose.test.yml build db test_runner
+    - name: Build test_runner image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./docker/Dockerfile.workers_web
+        target: freesound
+        tags: freesound-test:ci
+        load: true
+        cache-from: type=gha,scope=test_runner
+        cache-to: type=gha,mode=max,scope=test_runner
 
     - name: Run tests
       run: docker compose -f docker-compose.test.yml run --rm test_runner pytest

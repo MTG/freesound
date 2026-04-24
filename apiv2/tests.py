@@ -32,7 +32,7 @@ from sounds.models import Sound
 from utils.test_helpers import create_user_and_sounds
 
 from .exceptions import BadRequestException
-from .forms import SoundCombinedSearchFormAPI
+from .forms import SoundTextSearchFormAPI
 
 
 class TestAPiViews(TestCase):
@@ -170,126 +170,75 @@ class TestSoundCombinedSearchFormAPI(SimpleTestCase):
     # Query
     def test_query_empty_valid(self):
         for query in [" ", "", '" "', '""', "' '", "''"]:
-            form = SoundCombinedSearchFormAPI(data={"query": query})
+            form = SoundTextSearchFormAPI(data={"query": query})
             self.assertTrue(form.is_valid())
             self.assertEqual(form.cleaned_data["query"], "")
 
     # Filter
     def test_filter_empty_invalid(self):
         for filt in ["", " "]:
-            form = SoundCombinedSearchFormAPI(data={"filter": filt})
+            form = SoundTextSearchFormAPI(data={"filter": filt})
             with self.assertRaisesMessage(BadRequestException, "Invalid filter."):
                 self.assertFalse(form.is_valid())
 
     def test_filter_valid(self):
         filt = "text"
-        form = SoundCombinedSearchFormAPI(data={"filter": "text"})
+        form = SoundTextSearchFormAPI(data={"filter": "text"})
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data["filter"], filt)
 
-    # Descriptors
-    def test_descriptors_empty_valid(self):
-        form = SoundCombinedSearchFormAPI(data={})
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["descriptors"], "")
-
-    def test_descriptors_valid(self):
-        descriptors = "test"
-        form = SoundCombinedSearchFormAPI(data={"descriptors": descriptors})
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["descriptors"], descriptors)
-
-    # Normalized
-    def test_normalized_valid(self):
-        normalized = "1"
-        form = SoundCombinedSearchFormAPI(data={"normalized": normalized})
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["normalized"], normalized)
-
-    def test_normalized_bogus_valid(self):
-        for normalized in ["0", "", "test"]:
-            form = SoundCombinedSearchFormAPI(data={"normalized": normalized})
-            self.assertTrue(form.is_valid())
-            self.assertEqual(form.cleaned_data["normalized"], "")
-
     # Page
     def test_page_empty_valid(self):
-        form = SoundCombinedSearchFormAPI(data={})
+        form = SoundTextSearchFormAPI(data={})
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data["page"], 1)
 
     def test_page_bogus_valid(self):
         for page in ["", "test"]:
-            form = SoundCombinedSearchFormAPI(data={"page": page})
+            form = SoundTextSearchFormAPI(data={"page": page})
             self.assertTrue(form.is_valid())
             self.assertEqual(form.cleaned_data["page"], 1)
 
     # Sort
     def test_sort_empty_valid(self):
-        form = SoundCombinedSearchFormAPI(data={})
+        form = SoundTextSearchFormAPI(data={})
         self.assertTrue(form.is_valid())
         sort = form.cleaned_data["sort"]
         self.assertEqual(len(sort), 1)
         self.assertEqual(sort[0], "score desc")
 
     def test_sort_multiple_valid(self):
-        form = SoundCombinedSearchFormAPI(data={"sort": "rating_desc"})
+        form = SoundTextSearchFormAPI(data={"sort": "rating_desc"})
         self.assertTrue(form.is_valid())
         sort = form.cleaned_data["sort"]
         self.assertEqual(sort[0], "avg_rating desc")
         self.assertEqual(len(sort), 2)
         self.assertEqual(sort[1], "num_ratings desc")
 
-    # Normalized
+    # Group by pack
     def test_group_by_pack_valid(self):
         group_by_pack = "1"
-        form = SoundCombinedSearchFormAPI(data={"group_by_pack": group_by_pack})
+        form = SoundTextSearchFormAPI(data={"group_by_pack": group_by_pack})
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data["group_by_pack"], group_by_pack)
 
     def test_group_by_pack_bogus_valid(self):
         for group_by_pack in ["0", "", "test"]:
-            form = SoundCombinedSearchFormAPI(data={"group_by_pack": group_by_pack})
+            form = SoundTextSearchFormAPI(data={"group_by_pack": group_by_pack})
             self.assertTrue(form.is_valid())
             self.assertEqual(form.cleaned_data["group_by_pack"], "")
 
     # Page size
     def test_page_size_empty_valid(self):
-        form = SoundCombinedSearchFormAPI(data={})
+        form = SoundTextSearchFormAPI(data={})
         self.assertTrue(form.is_valid())
         self.assertTrue(form.cleaned_data[settings.APIV2["PAGE_SIZE_QUERY_PARAM"]], settings.APIV2["PAGE_SIZE"])
 
     def test_page_size_max_valid(self):
         param = settings.APIV2["PAGE_SIZE_QUERY_PARAM"]
-        form = SoundCombinedSearchFormAPI(data={param: settings.APIV2["MAX_PAGE_SIZE"] + 1})
+        form = SoundTextSearchFormAPI(data={param: settings.APIV2["MAX_PAGE_SIZE"] + 1})
         self.assertTrue(form.is_valid())
         self.assertTrue(form.cleaned_data[param], settings.APIV2["MAX_PAGE_SIZE"])
-
-    # Descriptors filter
-    def test_descriptors_filter_empty_invalid(self):
-        for descriptors_filter in ["", " "]:
-            form = SoundCombinedSearchFormAPI(data={"descriptors_filter": descriptors_filter})
-            with self.assertRaisesMessage(BadRequestException, "Invalid descriptors_filter."):
-                self.assertFalse(form.is_valid())
-
-    def test_descriptors_filter_valid(self):
-        descriptors_filter = "test"
-        form = SoundCombinedSearchFormAPI(data={"descriptors_filter": descriptors_filter})
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["descriptors_filter"], descriptors_filter)
-
-    # Target
-    def test_target_empty_invalid(self):
-        for target in ["", " "]:
-            form = SoundCombinedSearchFormAPI(data={"target": target})
-            with self.assertRaisesMessage(BadRequestException, "Invalid target."):
-                self.assertFalse(form.is_valid())
-
-    def test_target_valid(self):
-        target = "test"
-        form = SoundCombinedSearchFormAPI(data={"target": target})
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["target"], target)
 
 
 class TestSoundListSerializer(TestCase):

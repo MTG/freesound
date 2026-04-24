@@ -38,6 +38,10 @@ SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
 SOLR_SOUNDS_URL = f"{settings.SOLR5_BASE_URL}/freesound"
 
 USE_COLLAPSE_AND_EXPAND_QUERY_PARSER = True  # Note that changing this requies a reindex of the Solr index to used sound IDs as pack_gropuing when sounds have no pack
+USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH = (
+    False  # This query parser simplifies some of the vector-search query logic, but it seems to be much slower
+)
+
 
 # Mapping from freesound sound field names to solr sound field names
 FIELD_NAMES_MAP = {
@@ -241,6 +245,20 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         new_document.update({key: {"set": value} for key, value in document.items() if key != "id"})
         return new_document
 
+    def get_pack_grouping_value_for_document(self, sound):
+        if sound.pack:
+            return str(sound.pack.id) + "_" + remove_control_chars(sound.pack.name)
+        else:
+            if not USE_COLLAPSE_AND_EXPAND_QUERY_PARSER:
+                return str(sound.id)
+            return None
+
+    def get_avg_rating_value_for_document(self, sound):
+        if sound.num_ratings >= settings.MIN_NUMBER_RATINGS:
+            return sound.avg_rating
+        else:
+            return 0
+
     def convert_sound_to_search_engine_document(self, sound):
         """
         TODO: Document that this includes remove_control_chars due to originally sending XML. not strictly necessary when submitting
@@ -274,21 +292,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["tag"] = list({t.lower() for t in sound.tag_array})
         document["license"] = sound.license.name
 
-        if document["num_ratings"] >= settings.MIN_NUMBER_RATINGS:
-            document["avg_rating"] = sound.avg_rating
-        else:
-            document["avg_rating"] = 0
+        document["avg_rating"] = self.get_avg_rating_value_for_document(sound)
 
         if sound.pack:
             document["pack"] = remove_control_chars(sound.pack.name)
-            document["pack_grouping"] = str(sound.pack.id) + "_" + remove_control_chars(sound.pack.name)
-        else:
-            if not USE_COLLAPSE_AND_EXPAND_QUERY_PARSER:
-                # If we're not using the collapse query parser, we need to set the pack_grouping field to the sound ID
-                # for sounds that don't have a pack. This is so that we get the correct total count of packs/individual sounds
-                # when grouping by pack. With the collapse query parser, this is not needed because the nullPolicy=expand will
-                # precisely treat sounds without packs as a group of their own.
-                document["pack_grouping"] = str(sound.id)
+        document["pack_grouping"] = self.get_pack_grouping_value_for_document(
+            sound
+        )  # This is called outside the if "sound.pack" as in some cases it might still need ot be set
 
         collections = []
         for collection_data in sound.collections_array:
@@ -393,6 +403,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             for ssv in SoundSimilarityVector.objects.filter(
                 sound_id__in=sound_ids, similarity_space_name=similarity_space_name
             ):
+                sound = sound_objects_dict[ssv.sound_id]
                 similairty_vectors_per_space_per_sound = []
                 sim_vector_document_data = {
                     "content_type": SOLR_DOC_CONTENT_TYPES["similarity_vector"],
@@ -404,14 +415,16 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 # Because we still want to be able to group by pack when matching sim vector documents (sound child documents),
                 # we add the pack_grouping field here as well. In the future we might be able to optimize this if we can tell solr
                 # to group results by the field value of a parent document (just like we do to compute facets)
-                if sound_objects_dict[ssv.sound_id].pack_id:
-                    sim_vector_document_data["pack_grouping_child"] = (
-                        str(sound_objects_dict[ssv.sound_id].pack_id)
-                        + "_"
-                        + remove_control_chars(sound_objects_dict[ssv.sound_id].pack_name)
-                    )
-                else:
-                    sim_vector_document_data["pack_grouping_child"] = str(sound_objects_dict[ssv.sound_id].id)
+                sim_vector_document_data["pack_grouping"] = self.get_pack_grouping_value_for_document(sound)
+
+                if not USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH:
+                    # If not using the block parent join query parser, when doing vector searches we will retrieve child documents
+                    # (vector documents), and in order to be able to sort them properly, we need to have available the fields needed
+                    # to support basic sorting options. Note that this is not needed for filtering, as there are performant ways to
+                    # filter based on parent fields when retrieving child documents, but for sorting this does not seem to be the case.
+                    sim_vector_document_data["avg_rating"] = self.get_avg_rating_value_for_document(sound)
+                    for key in ["duration", "num_downloads", "created", "num_ratings"]:
+                        sim_vector_document_data[key] = getattr(sound, key)
 
                 # NOTE: if there were multiple vectors per sound per similarity space, we would add them all here
                 similairty_vectors_per_space_per_sound.append(sim_vector_document_data)
@@ -712,15 +725,24 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     config_options["vector_size"], config_options.get("l2_norm", False)
                 )
                 if vector is not None and vector_field_name is not None:
-                    # We define a query which matched child documents (similarity vectors), but returns the parent document (sound) and uses the
-                    # score of the child document (similarity vector) as the score of the parent document. This way we can apply filters and
-                    # sorting on the parent documents (sounds) but use the similarity score for ranking.
-
                     serialized_vector = ",".join([f"{n:.4f}" for n in vector])
-                    sim_search_pre_filter = f"preFilter=similarity_space:{similar_to_similarity_space} preFilter=content_type:{SOLR_DOC_CONTENT_TYPES['similarity_vector']}"
-                    query.set_query(
-                        f"{{!parent which=content_type:{SOLR_DOC_CONTENT_TYPES['sound']} score=max}}{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} {sim_search_pre_filter}}}[{serialized_vector}]"
-                    )
+
+                    if USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH:
+                        # We define a query which matches child documents (similarity vectors), but returns the parent document (sound) and uses the
+                        # score of the child document (similarity vector) as the score of the parent document. This way we can apply filters and
+                        # sorting on the parent documents (sounds) but use the similarity score for ranking.
+                        sim_search_pre_filter = f"preFilter=similarity_space:{similar_to_similarity_space} preFilter=content_type:{SOLR_DOC_CONTENT_TYPES['similarity_vector']}"
+                        query.set_query(
+                            f"{{!parent which=content_type:{SOLR_DOC_CONTENT_TYPES['sound']} score=max}}{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} {sim_search_pre_filter}}}[{serialized_vector}]"
+                        )
+                    else:
+                        # We define a query that matches and returns child documents. Leter we modify the filters and facets so these are computed
+                        # at the parent level. In order to enable proper sorting using this document, we need to index child documents with fields
+                        # needed for sorting (created, duration, avg rating, num downloads) as we don't have a way to sort by parent fields. All in all,
+                        # this methods seems to be faster than using the block join query parser for vector search...
+                        query.set_query(
+                            f"{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} }}[{serialized_vector}]"
+                        )
 
         # Process filter
         query_filter = self.search_process_filter(
@@ -728,13 +750,39 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         )
 
         if similar_to is not None:
-            # If the similarity target is specified as a sound ID, add a filter so the sound itself is not included in the results
-            try:
-                int_similar_to = int(similar_to)
-                query_filter = [query_filter, f"-id:{int(similar_to)}"]
-            except (TypeError, ValueError):
-                # Sound ID is not an integer, do not add any extra filter
-                pass
+            if USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH:
+                # If the similarity target is specified as a sound ID, add a filter so the sound itself is not included in the results
+                try:
+                    int_similar_to = int(similar_to)
+                    query_filter = [query_filter, f"-id:{int(similar_to)}"]
+                except (TypeError, ValueError):
+                    # Sound ID is not an integer, do not add any extra filter
+                    pass
+            else:
+                # If doing a similarity query, the filter needs to be further processed so we perform filters based on parent documents
+                query_filter_modified = [
+                    f"content_type:{SOLR_DOC_CONTENT_TYPES['similarity_vector']}",
+                    f"similarity_space:{similar_to_similarity_space}",
+                ]  # Add basic filter to only get similarity vectors from selected similarity space and from child documents (this is because root documents can also have sim vectors)
+                top_similar_sounds_as_filter = query.as_kwargs()["q"]
+                try:
+                    # Also if target is specified as a sound ID, remove it from the list so it is not returned as a result
+                    query_filter_modified.append(f"-_nest_parent_:{int(similar_to)}")
+                except TypeError:
+                    # Target is not a sound id, so we don't need to add the filter
+                    pass
+
+                # Also add the NN query as a filter so we don't get past the first similar_to_min_similarity results when applying extra filters
+                query_filter_modified += [top_similar_sounds_as_filter]
+
+                # Now add the usual filter, but wrap it in "child of" modifier so it filters on parent documents instead of child documents
+                if query_filter:
+                    query_filter_modified.append(
+                        f'{{!child of="content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}"}}({query_filter})'
+                    )
+
+                # Replace query_filter with the modified version
+                query_filter = query_filter_modified
 
         # Set query options
         if current_page is not None:
@@ -764,6 +812,10 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             for field in facet_fields:
                 json_facets[field] = SOLR_SOUND_FACET_DEFAULT_OPTIONS.copy()
                 json_facets[field]["field"] = field
+                if similar_to is not None and not USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH:
+                    # If not using the block join query parser for vector search, we need to set the "domain" facet option to apply them to the
+                    # parent documents instead of the child documents (similarity vectors)
+                    json_facets[field]["domain"] = {"blockParent": f"content_type:{SOLR_DOC_CONTENT_TYPES['sound']}"}
             for field_name, extra_options in facets.items():
                 json_facets[get_solr_facet_fieldname_from_freesound_fieldname(field_name)].update(extra_options)
             query.set_facet_json_api(json_facets)
@@ -787,7 +839,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     0, num_sounds_per_pack_group - 1
                 )  # We return one less sound per pack group because the first sound is used to represent the pack group
             else:
-                query.set_group_field(group_field="pack_grouping" if not similar_to else "pack_grouping_child")
+                query.set_group_field(group_field="pack_grouping")
                 query.set_group_options(
                     group_func=None,
                     group_query=None,
@@ -850,7 +902,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             # Solr uses a string for the id field, but django uses an int. Convert the id in all results to int
             # before use to avoid issues
             for d in results.docs:
-                d["id"] = int(d["id"])
+                if similar_to is not None and not USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH:
+                    # In that case doc IDs will correspond to similarity vector document, will look like "485987/similarity_vectors#0"
+                    d["id"] = int(d["id"].split("/")[0])
+                else:
+                    d["id"] = int(d["id"])
 
             return SearchResults(
                 docs=results.docs,

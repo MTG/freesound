@@ -347,11 +347,7 @@ class SolrResponseInterpreter:
             self.num_found = response["grouped"][grouping_field]["ngroups"]
             self.non_grouped_number_of_results = response["grouped"][grouping_field]["matches"]
         elif "expanded" in response:
-            collapse_field = (
-                "pack_grouping_child"
-                if "pack_grouping_child" in response["responseHeader"]["params"]["fl"]
-                else "pack_grouping"
-            )
+            collapse_field = "pack_grouping"
             self.docs = []
             for doc in response["response"]["docs"]:
                 group_name = doc[collapse_field] if collapse_field in doc else ""

@@ -673,9 +673,8 @@ class ProfileTestDownloadCountFields(TestCase):
             num_sounds=3, num_packs=3, processing_state="OK", moderation_state="OK"
         )
 
-    @mock.patch("sounds.models.delete_sound_from_gaia")
     @mock.patch("sounds.models.delete_sounds_from_search_engine")
-    def test_download_sound_count_field_is_updated(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
+    def test_download_sound_count_field_is_updated(self, delete_sounds_from_search_engine):
         # Test downloading sounds increases the "num_sound_downloads" field
         for i in range(len(self.sounds)):
             Download.objects.create(user=self.user, sound=self.sounds[i], license_id=self.sounds[i].license_id)

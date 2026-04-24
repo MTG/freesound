@@ -295,13 +295,6 @@
       "required": false
     },
     {
-      "name": "pack_grouping_child",
-      "type": "string",
-      "indexed": true,
-      "stored": true,
-      "required": false
-    },
-    {
       "name": "is_geotagged",
       "type": "boolean",
       "indexed": true,

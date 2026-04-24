@@ -21,7 +21,6 @@
 import datetime
 import json
 import logging
-import math
 import os
 from collections import OrderedDict
 from urllib.parse import quote
@@ -59,8 +58,6 @@ from apiv2.exceptions import (
 from apiv2.forms import (
     ApiV2ClientForm,
     SimilarityFormAPI,
-    SoundCombinedSearchFormAPI,
-    SoundContentSearchFormAPI,
     SoundTextSearchFormAPI,
 )
 from apiv2.models import ApiV2Client
@@ -71,7 +68,6 @@ from apiv2.serializers import (
     CreateRatingSerializer,
     EditSoundDescriptionSerializer,
     PackSerializer,
-    SimilarityFileSerializer,
     SoundCommentsSerializer,
     SoundDescriptionSerializer,
     SoundListSerializer,
@@ -98,7 +94,6 @@ from .apiv2_utils import (
     RetrieveAPIView,
     WriteRequiredGenericAPIView,
     api_search,
-    get_analysis_data_for_sound_ids,
     get_formatted_examples_for_view,
     prepend_base,
 )
@@ -226,7 +221,6 @@ class TextSearch(GenericAPIView):
         object_list = [ob for ob in page["object_list"]]
         id_score_map = dict(object_list)
         sound_ids = [ob[0] for ob in object_list]
-        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=sound_ids)
         # In search queries, only include audio analyzer's output if requested through the fields parameter
         needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get("fields", ""))
         needs_similarity_vectors = get_needed_similarity_vectors(search_form.cleaned_data.get("fields", ""))
@@ -244,7 +238,6 @@ class TextSearch(GenericAPIView):
                     sounds_dict[sid],
                     context=self.get_serializer_context(),
                     score_map=id_score_map,
-                    sound_analysis_data=sound_analysis_data,
                 ).data
                 if more_from_pack_data:
                     if more_from_pack_data[sid][0]:
@@ -270,269 +263,6 @@ class TextSearch(GenericAPIView):
             response_data["note"] = note
 
         return Response(response_data, status=status.HTTP_200_OK)
-
-
-class ContentSearch(GenericAPIView):
-    @classmethod
-    def get_description(cls):
-        return (
-            "Search sounds in Freesound based on their content descriptors."
-            '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s'
-            % (
-                prepend_base("/docs/api"),
-                "%s#content-search" % resources_doc_filename,
-                get_formatted_examples_for_view("ContentSearch", "apiv2-sound-content-search", max=5),
-            )
-        )
-
-    serializer_class = SimilarityFileSerializer
-    analysis_file = None
-
-    def get(self, request, *args, **kwargs):
-        api_logger.info(self.log_message("content_search"))
-
-        # Validate search form and check page 0
-        search_form = SoundContentSearchFormAPI(request.query_params)
-        if not search_form.is_valid():
-            raise BadRequestException(msg="Malformed request.", resource=self)
-        if (
-            not search_form.cleaned_data["target"]
-            and not search_form.cleaned_data["descriptors_filter"]
-            and not self.analysis_file
-        ):
-            raise BadRequestException(
-                msg="At least one parameter from Content Search should be included in the request.", resource=self
-            )
-        if search_form.cleaned_data["page"] < 1:
-            raise NotFoundException(resource=self)
-
-        # Get search results
-        analysis_file = None
-        if self.analysis_file:
-            analysis_file = self.analysis_file.read()
-        try:
-            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = (
-                api_search(search_form, target_file=analysis_file, resource=self)
-            )
-        except APIException as e:
-            raise e  # TODO pass correct exception message
-        except Exception:
-            raise ServerErrorException(msg="Unexpected error", resource=self)
-
-        # Paginate results
-        paginator = ApiSearchPaginator(results, count, search_form.cleaned_data["page_size"])
-        if search_form.cleaned_data["page"] > paginator.num_pages and count != 0:
-            raise NotFoundException(resource=self)
-        page = paginator.page(search_form.cleaned_data["page"])
-        response_data = dict()
-        if self.analysis_file:
-            response_data["target_analysis_file"] = (
-                f"{self.analysis_file.name} ({self.analysis_file.size // 1024:d} KB)"
-            )
-        response_data["count"] = paginator.count
-        response_data["previous"] = None
-        response_data["next"] = None
-        if page["has_other_pages"]:
-            if page["has_previous"]:
-                response_data["previous"] = search_form.construct_link(
-                    reverse("apiv2-sound-content-search"), page=page["previous_page_number"]
-                )
-            if page["has_next"]:
-                response_data["next"] = search_form.construct_link(
-                    reverse("apiv2-sound-content-search"), page=page["next_page_number"]
-                )
-
-        # Get analysis data and serialize sound results
-        ids = [id for id in page["object_list"]]
-        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
-        # In search queries, only include audio analyzer's output if requested through the fields parameter
-        needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get("fields", ""))
-        needs_similarity_vectors = get_needed_similarity_vectors(search_form.cleaned_data.get("fields", ""))
-        include_remix_subqueries = get_include_remix_subqueries(search_form.cleaned_data.get("fields", ""))
-        sounds_dict = Sound.objects.dict_ids(
-            sound_ids=ids,
-            include_audio_descriptors=needs_analyzers_output,
-            include_similarity_vectors=needs_similarity_vectors,
-            include_remix_subqueries=include_remix_subqueries,
-        )
-
-        sounds = []
-        for i, sid in enumerate(ids):
-            try:
-                sound = SoundListSerializer(
-                    sounds_dict[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data
-                ).data
-                # Distance to target is present we add it to the serialized sound
-                if distance_to_target_data:
-                    sound["distance_to_target"] = distance_to_target_data[sid]
-                sounds.append(sound)
-            except:
-                # This will happen if there are synchronization errors between solr index, gaia and the database.
-                # In that case sounds are set to null
-                sounds.append(None)
-        response_data["results"] = sounds
-
-        if note:
-            response_data["note"] = note
-
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    def post(self, request, *args, **kwargs):
-        # This view has a post version to handle analysis file uploads
-        serializer = SimilarityFileSerializer(data=request.data)
-        if serializer.is_valid():
-            self.analysis_file = request.FILES["analysis_file"]
-            return self.get(request, *args, **kwargs)
-        else:
-            return Response({"detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class CombinedSearch(GenericAPIView):
-    @classmethod
-    def get_description(cls):
-        return (
-            "Search sounds in Freesound based on their tags, metadata and content-based descriptors."
-            '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s'
-            % (
-                prepend_base("/docs/api"),
-                "%s#combined-search" % resources_doc_filename,
-                get_formatted_examples_for_view("CombinedSearch", "apiv2-sound-combined-search", max=5),
-            )
-        )
-
-    serializer_class = SimilarityFileSerializer
-    analysis_file = None
-    merging_strategy = "merge_optimized"  # 'filter_both', 'merge_all'
-
-    def get(self, request, *args, **kwargs):
-        api_logger.info(self.log_message("combined_search"))
-
-        # Validate search form and check page 0
-        search_form = SoundCombinedSearchFormAPI(request.query_params)
-        if not search_form.is_valid():
-            raise BadRequestException(msg="Malformed request.", resource=self)
-        if (
-            not search_form.cleaned_data["target"]
-            and not search_form.cleaned_data["descriptors_filter"]
-            and not self.analysis_file
-        ) or (search_form.cleaned_data["query"] is None and search_form.cleaned_data["filter"] is None):
-            raise BadRequestException(
-                msg="At least one parameter from Text Search and one parameter from "
-                "Content Search should be included in the request.",
-                resource=self,
-            )
-        if search_form.cleaned_data["target"] and search_form.cleaned_data["query"]:
-            raise BadRequestException(
-                msg="Request parameters 'target' and 'query' can not be used at the same time.", resource=self
-            )
-        if search_form.cleaned_data["page"] < 1:
-            raise NotFoundException(resource=self)
-
-        # Get search results
-        extra_parameters = dict()
-        for key, value in request.query_params.items():
-            if key.startswith("cs_"):
-                extra_parameters[key] = int(value)
-
-        analysis_file = None
-        if self.analysis_file:
-            analysis_file = self.analysis_file.read()
-        try:
-            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = (
-                api_search(
-                    search_form,
-                    target_file=analysis_file,
-                    extra_parameters=extra_parameters,
-                    merging_strategy=self.merging_strategy,
-                    resource=self,
-                )
-            )
-        except APIException as e:
-            raise e  # TODO pass correct resource parameter
-        except Exception:
-            raise ServerErrorException(msg="Unexpected error", resource=self)
-
-        if params_for_next_page:
-            extra_parameters.update(params_for_next_page)
-        if request.query_params.get("debug", False):
-            extra_parameters.update({"debug": 1})
-        extra_parameters_string = ""
-        if extra_parameters:
-            for key, value in extra_parameters.items():
-                extra_parameters_string += f"&{key}={str(value)}"
-
-        response_data = dict()
-        if self.analysis_file:
-            response_data["target_analysis_file"] = (
-                f"{self.analysis_file._name} ({self.analysis_file._size // 1024:d} KB)"
-            )
-
-        # Build 'more' link (only add it if we know there might be more results)
-        if "no_more_results" not in extra_parameters:
-            if self.merging_strategy == "merge_optimized":
-                response_data["more"] = search_form.construct_link(
-                    reverse("apiv2-sound-combined-search"), include_page=False
-                )
-            else:
-                num_pages = math.ceil(count / search_form.cleaned_data["page_size"])
-                if search_form.cleaned_data["page"] < num_pages:
-                    response_data["more"] = search_form.construct_link(
-                        reverse("apiv2-sound-combined-search"), page=search_form.cleaned_data["page"] + 1
-                    )
-                else:
-                    response_data["more"] = None
-            if extra_parameters_string:
-                response_data["more"] += f"{extra_parameters_string}"
-        else:
-            response_data["more"] = None
-
-        # Get analysis data and serialize sound results
-        ids = results
-        sound_analysis_data = get_analysis_data_for_sound_ids(request, sound_ids=ids)
-        # In search queries, only include audio analyzer's output if requested through the fields parameter
-        needs_analyzers_output = get_needed_audio_descriptors(search_form.cleaned_data.get("fields", ""))
-        needs_similarity_vectors = get_needed_similarity_vectors(search_form.cleaned_data.get("fields", ""))
-        include_remix_subqueries = get_include_remix_subqueries(search_form.cleaned_data.get("fields", ""))
-        sounds_dict = Sound.objects.dict_ids(
-            sound_ids=ids,
-            include_audio_descriptors=needs_analyzers_output,
-            include_similarity_vectors=needs_similarity_vectors,
-            include_remix_subqueries=include_remix_subqueries,
-        )
-
-        sounds = []
-        for i, sid in enumerate(ids):
-            try:
-                sound = SoundListSerializer(
-                    sounds_dict[sid], context=self.get_serializer_context(), sound_analysis_data=sound_analysis_data
-                ).data
-                # Distance to target is present we add it to the serialized sound
-                if distance_to_target_data:
-                    sound["distance_to_target"] = distance_to_target_data[sid]
-                sounds.append(sound)
-            except:
-                # This will happen if there are synchronization errors between solr index, gaia and the database.
-                # In that case sounds are are set to null
-                sounds.append(None)
-        response_data["results"] = sounds
-
-        if note:
-            response_data["note"] = note
-
-        if request.query_params.get("debug", False):
-            response_data["debug_note"] = debug_note
-
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    def post(self, request, *args, **kwargs):
-        # This view has a post version to handle analysis file uploads
-        serializer = SimilarityFileSerializer(data=request.data)
-        if serializer.is_valid():
-            analysis_file = request.FILES["analysis_file"]
-            self.analysis_file = analysis_file
-            return self.get(request, *args, **kwargs)
-        else:
-            return Response({"detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 #############
@@ -600,12 +330,11 @@ class SoundAnalysisView(
             ss = Sound.objects.bulk_query_id_public(
                 [sound_id], include_audio_descriptors=True, include_similarity_vectors=True
             )
-        except Sound.DoesNotExist:
+            sound = ss[0]
+        except IndexError:
             raise NotFoundException(resource=self)
 
         response_data = {}
-
-        sound = ss[0]
         audio_descriptors = sound.get_consolidated_analysis_data()
         response_data.update(audio_descriptors)
 
@@ -1532,8 +1261,6 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
             else:
                 kwargs["category"] = None
             try:
-                # TODO: this line below will not add the analysis_state_essentia_exists property to the sound objects and will
-                # make the queries inefficient if the "analysis" is requested. This could be improved in the future.
                 queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)]
             except:
                 raise NotFoundException(resource=self)
@@ -1561,12 +1288,6 @@ class FreesoundApiV2Resources(GenericAPIView):
                         {
                             "01 Search": prepend_base(
                                 reverse("apiv2-sound-search"), request_is_secure=request.is_secure()
-                            ),
-                            "02 Content Search": prepend_base(
-                                reverse("apiv2-sound-content-search"), request_is_secure=request.is_secure()
-                            ),
-                            "03 Combined Search": prepend_base(
-                                reverse("apiv2-sound-combined-search"), request_is_secure=request.is_secure()
                             ),
                         }.items(),
                         key=lambda t: t[0],

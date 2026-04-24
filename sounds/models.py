@@ -71,7 +71,6 @@ from utils.locations import locations_decorator
 from utils.mail import send_mail_template
 from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_sounds import delete_sounds_from_search_engine
-from utils.similarity_utilities import delete_sound_from_gaia
 from utils.sound_upload import bulk_describe_from_csv, get_csv_lines, validate_input_csv_file
 
 web_logger = logging.getLogger("web")
@@ -433,9 +432,6 @@ class SoundManager(models.Manager):
         self, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False
     ):
         tags_subquery = Tag.objects.filter(soundtag__sound=OuterRef("id")).values("name")
-        analysis_subquery = SoundAnalysis.objects.filter(
-            sound=OuterRef("id"), analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK"
-        )
         default_similarity_space_analyzer = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]["analyzer"]
         ready_for_similarity_subquery = SoundAnalysis.objects.filter(
             sound=OuterRef("id"), analyzer=default_similarity_space_analyzer, analysis_status="OK"
@@ -448,7 +444,6 @@ class SoundManager(models.Manager):
             pack_name=F("pack__name"),
             remixgroup_id=F("remix_group__id"),
             tag_array=ArraySubquery(tags_subquery),
-            analysis_state_essentia_exists=Exists(analysis_subquery),
             ready_for_similarity_precomputed=Exists(ready_for_similarity_subquery),
         )
 
@@ -1629,7 +1624,6 @@ class Sound(models.Model):
 
     def delete_from_indexes(self):
         delete_sounds_from_search_engine([self.id])
-        delete_sound_from_gaia(self.id)
 
     def invalidate_template_caches(self):
         for is_explicit in [True, False]:
@@ -1666,11 +1660,8 @@ class Sound(models.Model):
             # If attribute is precomputed from query (because Sound was retrieved using bulk_query), no need to perform extra queries
             return self.ready_for_similarity_precomputed
         else:
-            # Otherwise, check if there is a SoundAnalysis object for this sound with the correct analyzer and status
-            analyzer_for_default_sim_space = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]["analyzer"]
-            return SoundAnalysis.objects.filter(
-                sound_id=self.id, analyzer=analyzer_for_default_sim_space, analysis_status="OK"
-            ).exists()
+            # Otherwise, check if there is any SoundSimilarityVector object for this sound
+            return SoundSimilarityVector.objects.filter(sound=self).exists()
 
     @property
     def category_names(self):
@@ -1965,9 +1956,8 @@ class PackManager(models.Manager):
         selected_sounds_ids = []
         for p in packs:
             selected_sounds_ids += [s["id"] for s in p.selected_sounds_data]
-        analyzer_for_default_sim_space = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]["analyzer"]
-        sound_ids_ready_for_similarity = SoundAnalysis.objects.filter(
-            sound_id__in=selected_sounds_ids, analyzer=analyzer_for_default_sim_space, analysis_status="OK"
+        sound_ids_ready_for_similarity = SoundSimilarityVector.objects.filter(
+            sound_id__in=selected_sounds_ids
         ).values_list("sound_id", flat=True)
         for p in packs:
             for s in p.selected_sounds_data:

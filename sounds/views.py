@@ -917,12 +917,26 @@ def similar(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    num_similar_sounds = settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES
-    similarity_space = request.GET.get("similarity_space", settings.SIMILARITY_SPACE_DEFAULT)
-    if similarity_space not in settings.SIMILARITY_SPACES_NAMES:
-        similarity_space = settings.SIMILARITY_SPACE_DEFAULT
+    sound_available_similarity_spaces = sound.sim_vectors.values_list("similarity_space_name", flat=True)
+    if not sound_available_similarity_spaces:
+        # If sound is not ready for similarity, early return
+        tvars = {
+            "sound": sound,
+            "paginator": paginate(request, [], settings.NUM_SIMILAR_SOUNDS_PER_PAGE),
+        }
+        return render(request, "sounds/modal_similar_sounds.html", tvars)
+
+    requested_similarity_space = request.GET.get("similarity_space", settings.SIMILARITY_SPACE_DEFAULT)
+    if requested_similarity_space not in settings.SIMILARITY_SPACES_NAMES:
+        requested_similarity_space = settings.SIMILARITY_SPACE_DEFAULT
+
+    if requested_similarity_space in sound_available_similarity_spaces:
+        similarity_space = requested_similarity_space
+    else:
+        similarity_space = sound_available_similarity_spaces[0]
 
     # Get similar sounds from solr
+    num_similar_sounds = settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES
     try:
         results = get_search_engine().search_sounds(
             similar_to=sound.id, similar_to_similarity_space=similarity_space, num_sounds=num_similar_sounds
@@ -945,6 +959,7 @@ def similar(request, username, sound_id):
         "similarity_spaces_names": [
             (sim_space_name, sim_space_options.get("display_name", sim_space_name))
             for sim_space_name, sim_space_options in settings.SIMILARITY_SPACES.items()
+            if sim_space_name in sound_available_similarity_spaces
         ],
     }
     tvars.update(paginator)

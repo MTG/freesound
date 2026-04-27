@@ -2510,6 +2510,9 @@ class SoundSimilarityVector(models.Model):
         else:
             return vector
 
+    def __str__(self):
+        return f"Similarity vector of sound {self.sound_id} in space {self.similarity_space_name}"
+
     class Meta:
         unique_together = (
             "sound",

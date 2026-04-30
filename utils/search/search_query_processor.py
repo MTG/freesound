@@ -291,7 +291,7 @@ class SearchQueryProcessor:
             SearchOptionBool,
             dict(
                 query_param_name="se",
-                search_engine_field_name="ac_single_event",
+                search_engine_field_name="single_event",
                 label='Only include "single event" sounds',
             ),
         ),

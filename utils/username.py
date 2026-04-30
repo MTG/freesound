@@ -24,7 +24,22 @@ from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse
 
-from accounts.models import OldUsername
+from accounts.models import DeletedUser, OldUsername
+
+
+def get_user_by_username(username):
+    """Get a User by case-insensitive username lookup. Raises User.DoesNotExist if not found."""
+    return User.objects.get(username__iexact=username)
+
+
+def get_oldusername_by_username(username):
+    """Get an OldUsername by case-insensitive username lookup. Raises OldUsername.DoesNotExist if not found."""
+    return OldUsername.objects.get(username__iexact=username)
+
+
+def get_deleteduser_by_username(username):
+    """Get a DeletedUser by case-insensitive username lookup. Raises DeletedUser.DoesNotExist if not found."""
+    return DeletedUser.objects.get(username__iexact=username)
 
 
 def get_user_from_username_or_oldusername(username):
@@ -34,7 +49,7 @@ def get_user_from_username_or_oldusername(username):
         user = User.objects.select_related("profile").get(username__iexact=username)
     except User.DoesNotExist:
         try:
-            user = OldUsername.objects.get(username__iexact=username).user
+            user = get_oldusername_by_username(username).user
         except OldUsername.DoesNotExist:
             pass
     return user

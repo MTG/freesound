@@ -110,7 +110,12 @@ from utils.mirror_files import (
     remove_uploaded_file_from_mirror_locations,
 )
 from utils.pagination import paginate
-from utils.username import get_parameter_user_or_404, raise_404_if_user_is_deleted, redirect_if_old_username
+from utils.username import (
+    get_parameter_user_or_404,
+    get_user_by_username,
+    raise_404_if_user_is_deleted,
+    redirect_if_old_username,
+)
 
 sounds_logger = logging.getLogger("sounds")
 upload_logger = logging.getLogger("file_upload")
@@ -370,7 +375,7 @@ def activate_user(request, username, uid_hash):
     # login modal is used the user will be redirected to the front-page instead of that same page
 
     try:
-        user = User.objects.get(username__iexact=username)
+        user = get_user_by_username(username)
     except User.DoesNotExist:
         return render(
             request, "accounts/activate.html", {"user_does_not_exist": True, "next_path": reverse("accounts-home")}
@@ -1773,7 +1778,7 @@ def problems_logging_in(request):
 @transaction.atomic()
 def flag_user(request, username):
     if request.POST:
-        flagged_user = User.objects.get(username__iexact=username)
+        flagged_user = get_user_by_username(username)
         reporting_user = request.user
         object_id = request.POST["object_id"]
         if object_id:

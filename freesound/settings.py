@@ -1031,7 +1031,7 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     {
         "name": "has_audio_problems",
         "analyzer": "fs-essentia-problem-detection_v1",
-        "original_name": "has_audio_problems",
+        "original_name": "error",
         "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
     },
     {

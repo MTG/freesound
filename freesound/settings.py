@@ -1479,6 +1479,8 @@ if SENTRY_DSN:
         integrations=[DjangoIntegration()],
         send_default_pii=True,
         traces_sample_rate=TRACES_SAMPLE_RATE,
+        profile_session_sample_rate=TRACES_SAMPLE_RATE,
+        profile_lifecycle="trace",
     )
 
 

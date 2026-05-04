@@ -26,6 +26,15 @@
   }
 }
 
+.featured-highlight {
+  background-color: rgba(253, 221, 68, 0.24);
+}
+
+.featured-counter-label {
+  padding-left: 2px;
+}
+
+
 .bw-object-actions {
   display: flex;
   width: 100%;
@@ -66,7 +75,7 @@
     &.active {
       background: $yellow;
       border-color: $yellow;
-      color: $black;
+      color: #141424; // hardcoded dark to stay readable on yellow in dark mode
 
       .label-default,
       .label-hover {

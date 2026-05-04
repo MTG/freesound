@@ -20,17 +20,17 @@
 
 from functools import wraps
 from operator import itemgetter
+from types import SimpleNamespace
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-from django.utils.html import strip_tags
 
-from freesound import settings
 from fscollections.forms import (
     CollectionEditForm,
     CollectionEditFormAsMaintainer,
@@ -42,14 +42,7 @@ from fscollections.models import Collection, CollectionDownload, CollectionDownl
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
 from utils.downloads import download_sounds
-from utils.pagination import paginate
-
-
-def _media_urls():
-    return (
-        settings.CDN_PREVIEWS_URL if settings.USE_CDN_FOR_PREVIEWS else settings.PREVIEWS_URL,
-        settings.CDN_DISPLAYS_URL if settings.USE_CDN_FOR_DISPLAYS else settings.DISPLAYS_URL,
-    )
+from utils.pagination import build_paginator_template_context, paginate
 
 
 def resolve_collection_from_url(view_func):
@@ -79,7 +72,34 @@ def collection(request, collection):
     is_owner = user == collection.user
     maintainers = collection.maintainers.all()
 
-    previews_url, displays_url = _media_urls()
+    sort_key = request.GET.get("s") or settings.COLLECTION_SORT_DEFAULT
+    if sort_key not in settings.COLLECTION_SORT_OPTIONS:
+        sort_key = settings.COLLECTION_SORT_DEFAULT
+    search = request.GET.get("q", "").strip()
+
+    sounds = Sound.objects.bulk_sounds_for_collection(collection.id)
+    if search:
+        sounds = sounds.filter(
+            Q(original_filename__icontains=search) | Q(user__username__icontains=search)
+        )
+
+    if sort_key == "featured":
+        featured_ids = list(collection.featured_sound_ids or [])
+        if featured_ids:
+            ordering = Case(
+                *[When(id=sid, then=Value(i)) for i, sid in enumerate(featured_ids)],
+                default=Value(len(featured_ids)),
+                output_field=IntegerField(),
+            )
+            sounds = sounds.order_by(ordering, "collectionsound__created")
+        else:
+            sounds = sounds.order_by("collectionsound__created")
+    else:
+        _, sort_field = settings.COLLECTION_SORT_OPTIONS[sort_key]
+        sounds = sounds.order_by(sort_field)
+
+    pagination = paginate(request, sounds, settings.BOOKMARKS_PER_PAGE)
+    page_sounds = list(pagination["page"])
 
     tvars = {
         "collection": collection,
@@ -87,15 +107,12 @@ def collection(request, collection):
         "is_maintainer": is_maintainer,
         "maintainers": maintainers,
         "sort_options": settings.COLLECTION_SORT_OPTIONS,
-        "sounds_data": serialize_collection_sounds(collection),
-        "featured_sound_ids": list(collection.featured_sound_ids),
-        "page_config": {
-            "previews_url": previews_url,
-            "displays_url": displays_url,
-            "sounds_per_page": settings.BOOKMARKS_PER_PAGE,
-        },
+        "page_sounds": page_sounds,
+        "featured_sound_ids_set": set(collection.featured_sound_ids or []),
+        "current_sort": sort_key,
+        "current_search": search,
     }
-
+    tvars.update(pagination)
     return render(request, "collections/collection.html", tvars)
 
 
@@ -204,36 +221,82 @@ def delete_collection(request, collection):
 
 
 def serialize_collection_sounds(collection):
-    """Serialize all sounds in a collection as a list of dicts for client-side rendering."""
-    collection_sounds = Sound.objects.bulk_sounds_for_collection(collection_id=collection.id)
+    """Return lightweight collection sound metadata shipped as client-side JSON."""
+    collection_sounds = list(Sound.objects.bulk_sounds_for_collection(collection_id=collection.id))
     cs_dates = dict(CollectionSound.objects.filter(collection=collection).values_list("sound_id", "created"))
+    featured_order = {sound_id: order for order, sound_id in enumerate(collection.featured_sound_ids)}
     return [
         {
             "id": sound.id,
             "name": sound.original_filename,
             "username": sound.username,
-            "user_id": sound.user_id,
             "duration": sound.duration,
-            "samplerate": sound.samplerate,
-            "created": sound.created,
             "date_added": cs_dates.get(sound.id, sound.created),
-            "description": strip_tags(sound.description or "")[:200],
-            "num_downloads": sound.num_downloads or 0,
-            "num_comments": sound.num_comments or 0,
-            "num_ratings": sound.num_ratings or 0,
-            "avg_rating": round(sound.avg_rating / 2, 1)
-            if (sound.num_ratings or 0) >= settings.MIN_NUMBER_RATINGS
-            else None,
-            "license_icon": sound.license.icon_name if sound.license_id else None,
-            "license_name": sound.license.name if sound.license_id else None,
-            "pack_id": sound.pack_id,
-            "pack_name": getattr(sound.pack, "name", None) if sound.pack_id else None,
-            "has_geotag": hasattr(sound, "geotag") and sound.geotag is not None,
-            "remix_group": bool(getattr(sound, "remixgroup_id", None)),
-            "ready_for_similarity": sound.ready_for_similarity,
+            "featured_order": featured_order.get(sound.id),
         }
         for sound in collection_sounds
     ]
+
+
+@login_required
+@resolve_collection_from_url
+def render_collection_cards(request, collection):
+    """Render with-actions sound cards for a caller-specified id list.
+
+    Scoped to a collection: the caller must be its owner or a maintainer.
+
+    Used by the collection-edit grid, where the client is the source of truth
+    for which sounds appear and in what order. Featured / removed button state
+    is restored client-side from the editor's store, so this endpoint does not
+    take a ``featured`` parameter.
+
+    Query params:
+      - ``ids`` (required): comma-separated integer ids. Order is preserved;
+        unknown/non-public ids are silently dropped. Capped at
+        ``settings.MAX_SOUNDS_PER_COLLECTION``.
+      - ``page``, ``total`` (optional): when both are provided, an
+        ``hx-swap-oob`` paginator block is emitted alongside the cards so htmx
+        swaps both regions in a single response.
+      - ``q`` (optional): the active search query, used only to render an
+        empty-state message when the supplied id list is empty.
+    """
+    is_owner = request.user == collection.user
+    is_maintainer = not is_owner and collection.maintainers.filter(id=request.user.id).exists()
+    if not is_owner and not is_maintainer:
+        return HttpResponse(status=403)
+    raw_ids = request.GET.get("ids", "")
+    ids = [int(x) for x in raw_ids.split(",") if x.isdigit()][: settings.MAX_SOUNDS_PER_COLLECTION]
+
+    sounds_by_id = {s.id: s for s in Sound.objects.bulk_query_id_public(ids)} if ids else {}
+    sounds = [sounds_by_id[i] for i in ids if i in sounds_by_id]
+
+    tvars = {
+        "sounds": sounds,
+        "max_sounds": settings.MAX_SOUNDS_PER_COLLECTION,
+        "current_search": request.GET.get("q", "").strip(),
+    }
+
+    raw_page = request.GET.get("page")
+    raw_total = request.GET.get("total")
+    if raw_page and raw_total:
+        try:
+            total_pages = int(raw_total)
+            page_num = max(1, min(int(raw_page), max(1, total_pages)))
+            paginator_ns = SimpleNamespace(num_pages=total_pages)
+            page_dict = {
+                "has_previous": page_num > 1,
+                "has_next": page_num < total_pages,
+                "previous_page_number": page_num - 1,
+                "next_page_number": page_num + 1,
+            }
+            tvars.update(build_paginator_template_context(
+                paginator_ns, page_dict, page_num, base_path=request.path, base_query=request.GET
+            ))
+            tvars["has_paginator"] = True
+        except (ValueError, TypeError):
+            pass
+
+    return render(request, "collections/_collection_edit_cards.html", tvars)
 
 
 @login_required
@@ -265,9 +328,9 @@ def edit_collection(request, collection):
             is_maintainer=is_maintainer,
         )
 
-    previews_url, displays_url = _media_urls()
-
     form.collection_maintainers_objects = maintainers_query
+
+    sounds_data = serialize_collection_sounds(collection)
 
     tvars = {
         "form": form,
@@ -275,13 +338,14 @@ def edit_collection(request, collection):
         "is_owner": is_owner,
         "is_maintainer": is_maintainer,
         "sort_options": settings.COLLECTION_SORT_OPTIONS,
-        "sounds_data": serialize_collection_sounds(collection),
-        "featured_sound_ids": list(collection.featured_sound_ids),
+        "sounds_data": sounds_data,
+        "current_sort": request.GET.get("s") or settings.COLLECTION_SORT_DEFAULT,
+        "current_search": request.GET.get("q", "").strip(),
+        "render_cards_url": collection.get_url("collection-render-cards"),
         "page_config": {
-            "previews_url": previews_url,
-            "displays_url": displays_url,
             "sounds_per_page": settings.BOOKMARKS_PER_PAGE,
             "max_sounds": settings.MAX_SOUNDS_PER_COLLECTION,
+            "max_featured": settings.MAX_FEATURED_SOUNDS_PER_COLLECTION,
         },
     }
 

@@ -153,7 +153,10 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
 
         # Handle mark as featured
         if self.cleaned_data.get("mark_as_featured"):
-            if sound.id not in collection_to_use.featured_sound_ids:
+            if (
+                sound.id not in collection_to_use.featured_sound_ids
+                and len(collection_to_use.featured_sound_ids) < settings.MAX_FEATURED_SOUNDS_PER_COLLECTION
+            ):
                 collection_to_use.featured_sound_ids = collection_to_use.featured_sound_ids + [sound.id]
                 collection_to_use.save(update_fields=["featured_sound_ids"])
 
@@ -268,6 +271,15 @@ class CollectionEditForm(forms.ModelForm):
                     ),
                 )
 
+        featured = cleaned_data.get("featured_sounds", [])
+        if len(featured) > settings.MAX_FEATURED_SOUNDS_PER_COLLECTION:
+            self.add_error(
+                "featured_sounds",
+                forms.ValidationError(
+                    f"You can only feature up to {settings.MAX_FEATURED_SOUNDS_PER_COLLECTION} sounds per collection."
+                ),
+            )
+
         added = cleaned_data.get("added_sounds", set())
         removed = cleaned_data.get("removed_sounds", set())
         current_sound_ids = set(
@@ -329,7 +341,9 @@ class CollectionEditForm(forms.ModelForm):
             final_sound_ids = set(
                 CollectionSound.objects.filter(collection=collection).values_list("sound_id", flat=True)
             )
-            collection.featured_sound_ids = [sid for sid in featured_ids if sid in final_sound_ids]
+            collection.featured_sound_ids = [sid for sid in featured_ids if sid in final_sound_ids][
+                : settings.MAX_FEATURED_SOUNDS_PER_COLLECTION
+            ]
 
             collection.save()
             return collection

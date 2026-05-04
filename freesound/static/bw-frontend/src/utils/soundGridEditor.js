@@ -1,124 +1,74 @@
-/**
- * Reusable client-side sound grid with pagination, search, and sort.
- *
- * Designed to work with SoundStateStore for state management and
- * initializeObjectSelectorActions for per-card action buttons.
- *
- * Usage:
- *   const editor = new SoundGridEditor({ store, gridEl, paginationEl, ... });
- *   editor.renderPage();
- */
-
-import { escapeAttr, formatDate } from './formatters';
-import { populateSoundCard } from './soundCard';
-import { createPlayer } from '../components/player/player-ui';
-import { initializeObjectSelectorActions } from '../components/objectSelector';
-import { bindDefaultModals } from '../components/modal';
-import { makeRatingWidgets } from '../components/rating';
-import { bindCollectionModals } from '../components/collectionsModal';
-import { bindSimilarSoundsModal } from '../components/similarSoundsModal';
-import { bindRemixGroupModals } from '../components/remixGroupModal';
+// Client-side sound grid for collection edit. Sort/search/paginate locally
+// against pending state in the store; card HTML for the current page is
+// fetched from ``render-cards`` and swapped in by htmx, with the paginator
+// arriving as an OOB block in the same response. Per-card button state is
+// restored from the store after each swap so the server stays unaware of
+// pending flags.
 
 import debounce from 'lodash.debounce';
 
-// ─── SoundGridEditor ────────────────────────────────────────
+import { initializeObjectSelectorActions } from '../components/objectSelector';
 
 export class SoundGridEditor {
-  /**
-   * @param {Object}  opts
-   * @param {SoundStateStore} opts.store       - state store for tracked sounds
-   * @param {Element}        [opts.countEl]    - element whose textContent shows the sound count
-   * @param {Element}        [opts.searchInput]- search <input> element
-   * @param {Function}       [opts.renderCard] - (sound, baseClone) => DocumentFragment post-process hook
-   * @param {boolean|Object} [opts.syncUrl]    - sync grid state with URL query params.
-   *        Pass `true` for defaults ({ sort: 's', search: 'q', page: 'page' })
-   *        or an object to override individual param names.
-   */
+  // opts: { store, renderCardsUrl?, countEl?, searchInput? }. ``renderCardsUrl``
+  // falls back to #sounds-section's data-render-cards-url when omitted.
   constructor(opts) {
     const configEl = document.getElementById('page-config');
     const config = configEl ? JSON.parse(configEl.textContent) : {};
 
     this.store = opts.store;
+    this.renderCardsUrl =
+      opts.renderCardsUrl ||
+      (document.getElementById('sounds-section') || {}).dataset
+        ?.renderCardsUrl ||
+      '';
+    this.sectionEl = document.getElementById('sounds-section');
     this.gridEl = document.getElementById('sounds-grid');
     this.paginationEl = document.getElementById('sounds-pagination');
     this.countEl = opts.countEl || null;
     this.searchInput = opts.searchInput || null;
     this.sortSelect = document.getElementById('sort-select');
-    this.cardTemplate = document.getElementById('sound-card-template');
-    this.pageSize = config.sounds_per_page;
-    this.maxSounds = config.max_sounds;
-    this.previewsUrl = config.previews_url || '';
-    this.displaysUrl = config.displays_url || '';
+    this.pageSize = config.sounds_per_page || 20;
 
-    const postProcess = opts.renderCard || null;
-    this.renderCard = sound => {
-      const clone = populateSoundCard(this.cardTemplate, sound, {
-        previewsUrl: this.previewsUrl,
-        displaysUrl: this.displaysUrl,
-      });
-      return postProcess ? postProcess(sound, clone) : clone;
-    };
-
-    this._defaultSort = 'featured';
     this.currentPage = 1;
-    this.currentSort = this._defaultSort;
-    this.currentSearch = '';
+    this.currentSort = this.sortSelect ? this.sortSelect.value : 'featured';
+    this.currentSearch = this.searchInput ? this.searchInput.value.trim() : '';
     this._sortedCache = null;
-
-    this._urlParams = opts.syncUrl
-      ? {
-          sort: 's',
-          search: 'q',
-          page: 'page',
-          ...(typeof opts.syncUrl === 'object' ? opts.syncUrl : {}),
-        }
-      : null;
-    if (this._urlParams) this._readUrl();
 
     this._bindEvents();
     this._autoRender = debounce(() => this.renderPage(), 0);
-    this._storeListener = (_id, flag) => {
-      this._sortedCache = null;
-      if (this._shouldRerender(flag)) {
+    // Order is sticky: only the sort dropdown re-sorts. Toggling featured/remove
+    // leaves the cached order alone; newly-added sounds get appended so they
+    // show up without disturbing existing positions.
+    this.store.onChange((id, name) => {
+      if (name === 'added') {
+        if (this._sortedCache) {
+          const meta = this.store
+            .allSoundsWithMeta()
+            .find(s => s.id === id);
+          if (meta) this._sortedCache.data.push(meta);
+        }
         this._autoRender();
-      } else if (this.countEl && flag === this.store.FLAG.REMOVE) {
+      } else if (this.countEl && name === 'remove') {
         this.countEl.textContent = this.store.presentCount();
       }
-    };
-    this.store.onChange(this._storeListener);
-  }
+    });
 
-  static defaultSearchFilter(sound, query) {
-    const q = query.toLowerCase();
-    if (!sound._searchDate)
-      sound._searchDate = formatDate(sound.created).toLowerCase();
-    return (
-      (sound.name || '').toLowerCase().includes(q) ||
-      (sound.username || '').toLowerCase().includes(q) ||
-      (sound.description || '').toLowerCase().includes(q) ||
-      sound._searchDate.includes(q)
-    );
+    if (this.countEl) this.countEl.textContent = this.store.presentCount();
+    this.renderPage();
   }
 
   getFilteredSorted() {
-    const sounds = this.store.allSoundsWithMeta();
-
-    if (
-      !this._sortedCache ||
-      this._sortedCache.data.length !== sounds.length ||
-      this._sortedCache.sort !== this.currentSort
-    ) {
-      const sorted = sounds.slice();
+    if (!this._sortedCache || this._sortedCache.sort !== this.currentSort) {
+      const sorted = this.store.allSoundsWithMeta().slice();
       const comparator = this._getComparator(this.currentSort);
       if (comparator) sorted.sort(comparator);
       this._sortedCache = { data: sorted, sort: this.currentSort };
     }
 
     if (this.currentSearch) {
-      const q = this.currentSearch;
-      return this._sortedCache.data.filter(s =>
-        SoundGridEditor.defaultSearchFilter(s, q)
-      );
+      const q = this.currentSearch.toLowerCase();
+      return this._sortedCache.data.filter(s => this._matchesSearch(s, q));
     }
 
     return this._sortedCache.data;
@@ -126,86 +76,47 @@ export class SoundGridEditor {
 
   renderPage() {
     const filtered = this.getFilteredSorted();
-    const totalItems = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / this.pageSize));
+    const totalPages = Math.max(1, Math.ceil(filtered.length / this.pageSize));
 
     if (this.currentPage > totalPages) this.currentPage = totalPages;
     if (this.currentPage < 1) this.currentPage = 1;
 
     const offset = (this.currentPage - 1) * this.pageSize;
-    const pageSounds = filtered.slice(offset, offset + this.pageSize);
+    const pageIds = filtered
+      .slice(offset, offset + this.pageSize)
+      .map(s => s.id);
 
-    if (pageSounds.length > 0) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'bw-object-selector-container row no-gutters';
-      wrapper.style.marginLeft = '-8px';
-      wrapper.style.marginRight = '-8px';
-      wrapper.dataset.type = 'sounds';
-      wrapper.dataset.maxElements = this.maxSounds;
-      pageSounds.forEach(sound => wrapper.appendChild(this.renderCard(sound)));
-      this.gridEl.innerHTML = '';
-      this.gridEl.appendChild(wrapper);
-    } else if (this.currentSearch) {
-      this.gridEl.innerHTML = `<div class="v-spacing-3 text-grey">No sounds found matching &ldquo;${escapeAttr(this.currentSearch)}&rdquo;. <a href="#" data-clear-search>Clear search</a></div>`;
-    } else {
-      this.gridEl.innerHTML = '';
-    }
+    const params = new URLSearchParams({
+      ids: pageIds.join(','),
+      page: String(this.currentPage),
+      total: String(totalPages),
+    });
+    if (this.currentSearch) params.set('q', this.currentSearch);
 
-    this.paginationEl.innerHTML = this._renderPaginationHTML(
-      totalPages,
-      this.currentPage
+    window.htmx.ajax('GET', `${this.renderCardsUrl}?${params}`, {
+      target: this.gridEl,
+      swap: 'innerHTML',
+    });
+  }
+
+  featuredIdsForSubmit() {
+    const comparator = this._getComparator('featured');
+    return this.store
+      .allSoundsWithMeta()
+      .filter(
+        sound =>
+          this.store.has(sound.id, 'featured') &&
+          !this.store.has(sound.id, 'remove')
+      )
+      .sort(comparator)
+      .map(sound => sound.id);
+  }
+
+  _matchesSearch(sound, queryLower) {
+    return (
+      (sound.name || '').toLowerCase().includes(queryLower) ||
+      (sound.username || '').toLowerCase().includes(queryLower)
     );
-
-    initializeObjectSelectorActions(this.gridEl, this.store);
-    bindDefaultModals(this.gridEl);
-    makeRatingWidgets(this.gridEl);
-    this._lazyInitPlayers();
-
-    if (this.countEl) this.countEl.textContent = this.store.presentCount();
-    if (this._urlParams) this._pushUrl();
-  }
-
-  destroy() {
-    this.store.removeListener(this._storeListener);
-    this._autoRender.cancel();
-    if (this._playerObserver) this._playerObserver.disconnect();
-  }
-
-  // ─── Lazy player init ─────────────────────────────────────
-
-  _lazyInitPlayers() {
-    if (this._playerObserver) this._playerObserver.disconnect();
-
-    const players = [...this.gridEl.getElementsByClassName('bw-player')];
-    if (!players.length) return;
-
-    const initPlayer = player => {
-      createPlayer(player);
-      const card = player.closest('.col-md-4') || player.parentElement;
-      bindCollectionModals(card);
-      bindSimilarSoundsModal(card);
-      bindRemixGroupModals(card);
-    };
-
-    this._playerObserver = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting) return;
-          this._playerObserver.unobserve(entry.target);
-          initPlayer(entry.target);
-        });
-      },
-      { rootMargin: '200px' }
-    );
-
-    players.forEach(p => this._playerObserver.observe(p));
-  }
-
-  // ─── Private ──────────────────────────────────────────────
-
-  _shouldRerender(flag) {
-    // Rerender only when collection contents change.
-    return flag === this.store.FLAG.ADDED;
   }
 
   _getComparator(key) {
@@ -213,9 +124,18 @@ export class SoundGridEditor {
     switch (key) {
       case 'featured':
         return (a, b) => {
-          const af = store.hasFlag(a.id, store.FLAG.FEATURED);
-          const bf = store.hasFlag(b.id, store.FLAG.FEATURED);
+          const af = store.has(a.id, 'featured');
+          const bf = store.has(b.id, 'featured');
           if (af !== bf) return af ? -1 : 1;
+          if (af && bf) {
+            const aOrder = Number.isInteger(a.featured_order)
+              ? a.featured_order
+              : Number.MAX_SAFE_INTEGER;
+            const bOrder = Number.isInteger(b.featured_order)
+              ? b.featured_order
+              : Number.MAX_SAFE_INTEGER;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+          }
           return new Date(a.date_added || 0) - new Date(b.date_added || 0);
         };
       case 'created_desc':
@@ -225,113 +145,54 @@ export class SoundGridEditor {
         return (a, b) =>
           new Date(a.date_added || 0) - new Date(b.date_added || 0);
       case 'name':
-        return (a, b) => (a.name || '').localeCompare(b.name || '');
+        // Match Python ``str.lower()`` codepoint ordering (see _sort_collection_sounds).
+        return (a, b) => {
+          const an = (a.name || '').toLowerCase();
+          const bn = (b.name || '').toLowerCase();
+          if (an < bn) return -1;
+          if (an > bn) return 1;
+          return 0;
+        };
       default:
         return null;
     }
   }
 
-  _renderPaginationHTML(totalPages, page) {
-    if (totalPages <= 1) return '';
-
-    const adjacent = 3;
-    const wanted = adjacent * 2 + 1;
-    let minPage = Math.max(page - adjacent, 1);
-    let maxPage = Math.min(page + adjacent + 1, totalPages + 1);
-    const numItems = maxPage - minPage;
-
-    if (numItems < wanted && numItems < totalPages) {
-      if (minPage === 1) {
-        maxPage = Math.min(maxPage + (wanted - numItems), totalPages + 1);
-      } else {
-        minPage = Math.max(minPage - (wanted - numItems), 1);
-      }
-    }
-
-    const pageNumbers = [];
-    for (let n = minPage; n < maxPage; n++) {
-      if (n > 0 && n <= totalPages) pageNumbers.push(n);
-    }
-
-    const showFirst = !pageNumbers.includes(1);
-    const showLast = !pageNumbers.includes(totalPages);
-    const lastIsNext = totalPages - 1 === pageNumbers[pageNumbers.length - 1];
-
-    let html = '<ul class="bw-pagination_container">';
-
-    if (page > 1) {
-      html += `<li><a href="#" data-page="${page - 1}" class="bw-link--white bw-pagination_circle bw-pagination_direction no-hover" title="Previous Page" aria-label="Previous Page"><span class="bw-icon-arrow-left white"></span></a></li>`;
-    }
-
-    if (showFirst) {
-      html +=
-        '<li class="first-page"><a href="#" data-page="1" title="First Page">1</a></li>';
-      html += '<li class="text-grey no-paddings">...</li>';
-    }
-
-    pageNumbers.forEach(num => {
-      if (num === page) {
-        html += `<li class="bw-pagination_circle bw-pagination_selected">${num}</li>`;
-      } else {
-        html += `<li><a href="#" data-page="${num}" title="Page ${num}">${num}</a></li>`;
-      }
-    });
-
-    if (showLast) {
-      if (!lastIsNext) html += '<li class="text-grey no-paddings">...</li>';
-      html += `<li><a href="#" data-page="${totalPages}" title="Last Page" aria-label="Last Page">${totalPages}</a></li>`;
-    }
-
-    if (page < totalPages) {
-      html += `<li><a href="#" data-page="${page + 1}" class="bw-link--white bw-pagination_circle bw-pagination_direction no-hover" title="Next Page" aria-label="Next Page"><span class="bw-icon-arrow"></span></a></li>`;
-    }
-
-    html += '</ul>';
-    return html;
+  _getPaginationEl() {
+    this.paginationEl = document.getElementById('sounds-pagination');
+    return this.paginationEl;
   }
 
-  _readUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const sort = params.get(this._urlParams.sort);
-    const search = params.get(this._urlParams.search) || '';
-    const page = parseInt(params.get(this._urlParams.page), 10) || 1;
-
-    if (sort) this.currentSort = sort;
-    this.currentSearch = search;
-    this.currentPage = page;
-
-    if (search && this.searchInput) this.searchInput.value = search;
-    if (sort && this.sortSelect) this.sortSelect.value = sort;
+  onAfterSwap(fn) {
+    this._afterSwapCallbacks = this._afterSwapCallbacks || [];
+    this._afterSwapCallbacks.push(fn);
   }
 
-  _pushUrl() {
-    const url = new URL(window.location);
-    const p = this._urlParams;
-    const setOrDelete = (key, value, fallback) => {
-      if (value && value !== fallback) url.searchParams.set(key, value);
-      else url.searchParams.delete(key);
-    };
-    setOrDelete(p.search, this.currentSearch, '');
-    setOrDelete(p.sort, this.currentSort, this._defaultSort);
-    setOrDelete(
-      p.page,
-      this.currentPage > 1 ? String(this.currentPage) : '',
-      ''
-    );
-    history.replaceState(null, '', url);
+  _hydrateSwappedGrid() {
+    initializeObjectSelectorActions(this.gridEl, this.store);
+    if (this.countEl) this.countEl.textContent = this.store.presentCount();
+    if (this._afterSwapCallbacks) this._afterSwapCallbacks.forEach(fn => fn());
   }
 
   _bindEvents() {
-    this.paginationEl.addEventListener('click', evt => {
-      const link = evt.target.closest('a[data-page]');
-      if (!link) return;
-      evt.preventDefault();
-      this.currentPage = parseInt(link.dataset.page, 10);
-      this.renderPage();
-      const target =
-        document.getElementById('sounds-section') || this.gridEl.parentElement;
-      if (target)
-        target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Paginator clicks go through JS so the (URL-less) sort/search state
+    // survives. Delegating on #sounds-section keeps the handler working
+    // across OOB swaps that replace #sounds-pagination.
+    if (this.sectionEl) {
+      this.sectionEl.addEventListener('click', evt => {
+        const link = evt.target.closest('#sounds-pagination a[data-page]');
+        if (!link) return;
+        const nextPage = parseInt(link.dataset.page, 10);
+        if (!Number.isFinite(nextPage) || nextPage < 1) return;
+        evt.preventDefault();
+        this.currentPage = nextPage;
+        this.renderPage();
+      });
+    }
+
+    this.gridEl.addEventListener('htmx:afterSwap', () => {
+      this._getPaginationEl();
+      this._hydrateSwappedGrid();
     });
 
     this.gridEl.addEventListener('click', evt => {
@@ -345,20 +206,35 @@ export class SoundGridEditor {
     });
 
     if (this.searchInput) {
-      const handleSearch = debounce(() => {
+      const handleSearch = () => {
         this.currentSearch = this.searchInput.value.trim();
         this.currentPage = 1;
         this.renderPage();
-      }, 150);
-      this.searchInput.addEventListener('input', handleSearch);
+      };
+      this.searchInput.addEventListener('keydown', evt => {
+        if (evt.key === 'Enter') {
+          evt.preventDefault();
+          handleSearch();
+        }
+      });
       this.searchInput.addEventListener('search', handleSearch);
     }
 
     if (this.sortSelect) {
-      this.sortSelect.addEventListener('change', () => {
+      const applySort = () => {
         this.currentSort = this.sortSelect.value;
+        this._sortedCache = null;
         this.currentPage = 1;
         this.renderPage();
+      };
+      this.sortSelect.addEventListener('change', applySort);
+      // `change` doesn't fire when re-selecting the current option.
+      // Catch that case so the user can re-click "featured" to re-sort
+      // after toggling featured flags.
+      this.sortSelect.addEventListener('click', evt => {
+        if (evt.target.tagName === 'OPTION' && evt.target.value === this.currentSort) {
+          applySort();
+        }
       });
     }
   }

@@ -1,6 +1,7 @@
 {% extends "simple_page.html" %}
 {% load static %}
 {% load bw_templatetags %}
+{% load display_sound %}
 {% load display_user %}
 {% load util %}
 
@@ -54,47 +55,80 @@
         <div class="v-spacing-top-4">{{collection.description}}</div>
         {% endif %}
         
-        <div class="v-spacing-top-5">
+        <form method="get"
+              action="{{ collection.get_absolute_url }}"
+              class="v-spacing-top-5">
             <div class="v-spacing-3">
                 <div class="row middle">
                     <div class="col-md-4">
                         <div class="input-wrapper w-100">
-                            <i class="bw-icon-search input-icon"></i><input id="collection-search" type="search" placeholder="Search in collection..." autocomplete="off">
+                            <i class="bw-icon-search input-icon"></i>
+                            <input id="collection-search"
+                                   type="search"
+                                   name="q"
+                                   placeholder="Search in collection..."
+                                   autocomplete="off"
+                                   value="{{ current_search|default:'' }}"
+                                   hx-get="{{ collection.get_absolute_url }}"
+                                   hx-trigger="input changed delay:300ms, search"
+                                   hx-target="#sounds-section"
+                                   hx-select="#sounds-section"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true"
+                                   hx-include="#collection-search, #sort-select"
+                                   hx-indicator="#sounds-section">
                         </div>
                     </div>
                     <div class="col-md-8 text-right v-spacing-top-2 v-spacing-2">
                         <span class="text-light-grey"><b>Sort by:</b></span>
-                        <select id="sort-select">
+                        <select id="sort-select"
+                                name="s"
+                                hx-get="{{ collection.get_absolute_url }}"
+                                hx-trigger="change"
+                                hx-target="#sounds-section"
+                                hx-select="#sounds-section"
+                                hx-swap="outerHTML"
+                                hx-push-url="true"
+                                hx-include="#collection-search, #sort-select"
+                                hx-indicator="#sounds-section">
                             {% for key, option in sort_options.items %}
-                                <option value="{{ key }}" {% if key == "featured" %}selected{% endif %}>{{ option.0 }}</option>
+                                <option value="{{ key }}" {% if key == current_sort %}selected{% endif %}>{{ option.0 }}</option>
                             {% endfor %}
                         </select>
                     </div>
                 </div>
             </div>
             <div id="sounds-section">
-                <div id="sounds-grid"></div>
-                <div id="sounds-pagination" class="v-spacing-top-3"></div>
+                <div id="sounds-grid">
+                    {% if page_sounds %}
+                    <div class="row">
+                        {% for sound in page_sounds %}
+                            <div class="col-6 col-sm-4{% if sound.id in featured_sound_ids_set %} featured-highlight{% endif %}">
+                                {% display_sound_small sound %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% elif current_search %}
+                    <div class="v-spacing-3 text-grey">
+                        No sounds found matching "{{ current_search }}".
+                    </div>
+                    {% endif %}
+                </div>
+                <div id="sounds-pagination" class="v-spacing-top-3">
+                    {% with hx_target="#sounds-section" %}
+                        {% bw_paginator paginator page current_page request %}
+                    {% endwith %}
+                </div>
             </div>
-        </div>
+        </form>
 
         {% if collection.public and collection.num_sounds > 0 %}
         <div class="v-spacing-top-4 text-center">
             <a class="no-hover" href="{{ collection.get_collection_sounds_in_search_url }}"><button class="btn-primary">Browse collections sounds in the search page</button></a>
         </div>
         {% endif %}
-        
+
     </div>
 </div>
 </div>
-{{ sounds_data|json_script:"sounds-data" }}
-{{ featured_sound_ids|json_script:"featured-data" }}
-{{ page_config|json_script:"page-config" }}
-
-<style>.featured-highlight { background-color: rgba(253, 221, 68, 0.24); }</style>
-{% include "sounds/_sound_card_template.html" %}
 {% endblock page-content %}
-
-{% block extrabody %}
-    <script src="{% static 'bw-frontend/dist/pages/collection.js' %}"></script>
-{% endblock %}

@@ -4,7 +4,22 @@ import {
   updateObjectSelectorDataProperties,
 } from '../components/objectSelector';
 import { serializedIdListToIntList, combineIdsLists } from '../utils/data';
-import { extractSoundFromCard } from '../utils/soundCard';
+
+// Read the sidecar fields off a server-rendered card so the dynamic flow can
+// push freshly-added sounds into the editor's store. ``date_added`` is the
+// client-side timestamp; the server stamps its own when the form is saved.
+const extractSoundFromCard = card => {
+  const player = card.querySelector('.bw-player');
+  if (!player) return null;
+  const d = player.dataset;
+  return {
+    id: parseInt(d.soundId, 10),
+    name: d.title || '',
+    username: d.username || '',
+    duration: parseFloat(d.duration) || 0,
+    date_added: new Date().toISOString(),
+  };
+};
 
 const prepareAddSoundsModalAndFields = container => {
   const addSoundsButtons = [

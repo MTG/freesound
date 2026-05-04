@@ -1,18 +1,21 @@
 {% load bw_templatetags %}
+{# Dual consumption: when hx_target is set (read-only collection page) links are htmx-boosted #}
+{# and the href is followed. When hx_target is absent (edit page) JS intercepts clicks via    #}
+{# data-page and the href is never followed. Both paths rely on data-page being present.       #}
 
 {% if page_numbers|length > 1 %}
 
-<ul class="bw-pagination_container">
+<ul class="bw-pagination_container"{% if hx_target %} hx-boost="true" hx-target="{{ hx_target }}" hx-select="{{ hx_target }}" hx-swap="outerHTML"{% endif %}>
     {% if page.has_previous %}
         <li>
-            <a href="{{ url_prev_page }}{% if anchor %}#{{anchor}}{% endif %}" class="bw-link--white bw-pagination_circle bw-pagination_direction no-hover" title="Previous Page" aria-label="Previous Page">
+            <a href="{{ url_prev_page }}{% if anchor %}#{{anchor}}{% endif %}" data-page="{{ prev_page_num }}" class="bw-link--white bw-pagination_circle bw-pagination_direction no-hover" title="Previous Page" aria-label="Previous Page">
                 {% bw_icon 'arrow-left' 'white' %}
             </a>
         </li>
     {% endif %}
 
     {% if show_first %}
-        <li class="first-page"><a href="{{ url_first_page }}{% if anchor %}#{{anchor}}{% endif %}" title="First Page">1</a></li>
+        <li class="first-page"><a href="{{ url_first_page }}{% if anchor %}#{{anchor}}{% endif %}" data-page="1" title="First Page">1</a></li>
         <li class="text-grey no-paddings">...</li>
     {% endif %}
 
@@ -22,18 +25,18 @@
                 {{ num }}
             </li>
         {% else %}
-            <li><a href="{{ url }}{{ num }}{% if anchor %}#{{anchor}}{% endif %}" title="Page {{ num }}">{{ num }}</a></li>
+            <li><a href="{{ url }}{{ num }}{% if anchor %}#{{anchor}}{% endif %}" data-page="{{ num }}" title="Page {{ num }}">{{ num }}</a></li>
         {% endif %}
     {% endfor %}
 
     {% if show_last %}
         {% if not last_is_next %}<li class="text-grey no-paddings">...</li>{% endif %}
-        <li><a href="{{ url_last_page }}{% if anchor %}#{{anchor}}{% endif %}" title="Last Page" aria-label="Last Page">{{ paginator.num_pages }}</a></li>
+        <li><a href="{{ url_last_page }}{% if anchor %}#{{anchor}}{% endif %}" data-page="{{ last_page_num }}" title="Last Page" aria-label="Last Page">{{ paginator.num_pages }}</a></li>
     {% endif %}
 
     {% if page.has_next %}
         <li>
-            <a href="{{ url_next_page }}{% if anchor %}#{{anchor}}{% endif %}" class="bw-link--white bw-pagination_circle bw-pagination_direction no-hover" title="Next Page" aria-label="Next Page">
+            <a href="{{ url_next_page }}{% if anchor %}#{{anchor}}{% endif %}" data-page="{{ next_page_num }}" class="bw-link--white bw-pagination_circle bw-pagination_direction no-hover" title="Next Page" aria-label="Next Page">
                 {% bw_icon 'arrow' %}
             </a>
         </li>

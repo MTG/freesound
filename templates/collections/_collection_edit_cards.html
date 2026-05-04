@@ -1,0 +1,19 @@
+{% load display_sound %}
+{% if sounds %}
+<div class="bw-object-selector-container row no-gutters" style="margin-left:-8px;margin-right:-8px" data-type="sounds"{% if max_sounds %} data-max-elements="{{ max_sounds }}"{% endif %}>
+    {% for sound in sounds %}
+        <div class="col-md-4 col-6">
+            {% display_sound_small_with_actions sound %}
+        </div>
+    {% endfor %}
+</div>
+{% elif current_search %}
+<div class="v-spacing-3 text-grey">
+    No sounds found matching "{{ current_search }}". <a href="#" data-clear-search>Clear search</a>
+</div>
+{% endif %}
+{% if has_paginator %}
+    <div id="sounds-pagination" class="v-spacing-top-3" hx-swap-oob="outerHTML">
+        {% include "molecules/paginator.html" %}
+    </div>
+{% endif %}

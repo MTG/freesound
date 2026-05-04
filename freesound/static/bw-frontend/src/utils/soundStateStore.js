@@ -1,140 +1,113 @@
+// Map-of-Sets store for per-sound transient flags (added/remove/featured)
+// on the collection edit page. Sounds aren't actually added or removed until
+// the form is submitted; this tracks the pending state in the meantime.
 class SoundStateStore {
-  /**
-   * @param {string[]} [actionNames] - e.g. ['added', 'remove', 'featured'].
-   *   Bitmask flags are auto-assigned (1, 2, 4, …) and exposed via this.FLAG
-   *   using uppercased keys (ADDED, REMOVE, FEATURED).
-   */
-  constructor(actionNames = []) {
-    this._states = new Map(); // id → bitmask
-    this._meta = new Map(); // id → metadata object
-    this._actions = new Map(); // actionName → { flag }
+  // ``actionNames`` is e.g. ['added', 'remove', 'featured']. Each becomes a
+  // Set<id> tracking which sounds carry that flag. ``this.actionNames`` is
+  // exposed (frozen) for callers that need to enumerate them.
+  constructor(actionNames = [], { maxFeatured = Infinity } = {}) {
+    this._meta = new Map(); // id → metadata (also "known ids")
+    this._sets = new Map(); // actionName → Set<id>
     this._listeners = [];
+    this.maxFeatured = maxFeatured;
 
-    const flags = {};
-    actionNames.forEach((name, i) => {
-      const flag = 1 << i;
-      flags[name.toUpperCase()] = flag;
-      this._actions.set(name, { flag });
-    });
-    this.FLAG = Object.freeze(flags);
+    actionNames.forEach(name => this._sets.set(name, new Set()));
+    this.actionNames = Object.freeze([...actionNames]);
   }
 
-  _actionFlag(name) {
-    const action = this._actions.get(name);
-    return action ? action.flag : 0;
-  }
-
-  // ─── Registration ─────────────────────────────────────────
-
-  /**
-   * Bulk-initialise: track all sounds, set their metadata, and apply initial flags.
-   * @param {Object[]} soundsArray - objects with at least an `id` property
-   * @param {Object}  [flagged]    - { actionName: [id, …] } initial flags to set
-   */
+  // Bulk-init: register sounds, then apply { actionName: [ids] }.
   load(soundsArray, flagged = {}) {
-    soundsArray.forEach(s => {
-      this._states.set(s.id, 0);
-      this._meta.set(s.id, s);
-    });
-    for (const [actionName, ids] of Object.entries(flagged)) {
-      const flag = this._actionFlag(actionName);
-      if (flag)
+    soundsArray.forEach(s => this._meta.set(s.id, s));
+    for (const [name, ids] of Object.entries(flagged)) {
+      const set = this._sets.get(name);
+      if (set) {
         ids.forEach(id => {
-          if (this._states.has(id))
-            this._states.set(id, this._states.get(id) | flag);
+          if (this._meta.has(id)) set.add(id);
         });
+      }
     }
     return this;
   }
 
-  /** Register a newly added object with the ADDED flag and notify listeners. */
+  // Register a newly-added sound with the 'added' flag and notify listeners.
   add(id, meta) {
-    if (!this._states.has(id)) {
-      if (meta) this._meta.set(id, meta);
-      const flag = this._actionFlag('added');
-      this._states.set(id, flag);
-      if (flag) this._notify(id, flag, true);
+    if (!this._meta.has(id)) {
+      this._meta.set(id, meta);
+      const added = this._sets.get('added');
+      if (added) {
+        added.add(id);
+        this._notify(id, 'added', true);
+      }
     }
     return this;
   }
 
-  // ─── State mutation ────────────────────────────────────────
-
-  toggleAction(id, actionName) {
-    const action = this._actions.get(actionName);
-    if (!action || !this._states.has(id)) return undefined;
-    const active = !this.hasFlag(id, action.flag);
-    const mask = this._states.get(id);
-    this._states.set(id, active ? mask | action.flag : mask & ~action.flag);
-    this._notify(id, action.flag, active);
-    return active;
-  }
-
-  // ─── Queries ──────────────────────────────────────────────
-
-  hasFlag(id, flag) {
-    const mask = this._states.has(id) ? this._states.get(id) : 0;
-    return (mask & flag) !== 0;
-  }
-
-  /** All tracked object IDs. */
-  ids() {
-    return Array.from(this._states.keys());
-  }
-
-  /** Count of objects where REMOVED is NOT set. */
-  presentCount() {
-    const removedFlag = this._actionFlag('remove');
-    if (!removedFlag) return this._states.size;
+  featuredCount() {
+    const featured = this._sets.get('featured');
+    if (!featured) return 0;
+    const removed = this._sets.get('remove');
+    if (!removed || removed.size === 0) return featured.size;
     let count = 0;
-    for (const mask of this._states.values()) {
-      if ((mask & removedFlag) === 0) count++;
+    for (const id of featured) {
+      if (!removed.has(id)) count++;
     }
     return count;
   }
 
-  /** Object IDs where the given flag is set. Pass excludeRemoved=true to omit removed objects. */
-  idsWithFlag(flag, excludeRemoved = false) {
-    const removedFlag = excludeRemoved ? this._actionFlag('remove') : 0;
+  // Returns the new active state, or undefined if action/id isn't tracked.
+  // Returns undefined (no-op) when featuring would exceed the limit.
+  toggleAction(id, name) {
+    const set = this._sets.get(name);
+    if (!set || !this._meta.has(id)) return undefined;
+    const active = !set.has(id);
+    if (active && name === 'featured' && this.featuredCount() >= this.maxFeatured) {
+      return undefined;
+    }
+    if (active) set.add(id);
+    else set.delete(id);
+    this._notify(id, name, active);
+    return active;
+  }
+
+  has(id, name) {
+    const set = this._sets.get(name);
+    return set ? set.has(id) : false;
+  }
+
+  ids() {
+    return Array.from(this._meta.keys());
+  }
+
+  // Tracked sounds minus those with the 'remove' flag set.
+  presentCount() {
+    const removed = this._sets.get('remove');
+    return this._meta.size - (removed ? removed.size : 0);
+  }
+
+  // All ids carrying ``name``. Pass excludeRemoved=true to skip removed sounds.
+  idsWithAction(name, excludeRemoved = false) {
+    const set = this._sets.get(name);
+    if (!set) return [];
+    const removed = excludeRemoved ? this._sets.get('remove') : null;
+    if (!removed || removed.size === 0) return Array.from(set);
     const result = [];
-    for (const [id, mask] of this._states) {
-      if (removedFlag && (mask & removedFlag) !== 0) continue;
-      if ((mask & flag) !== 0) result.push(id);
+    for (const id of set) {
+      if (!removed.has(id)) result.push(id);
     }
     return result;
   }
 
-  // ─── Metadata ──────────────────────────────────────────────
-
   allSoundsWithMeta() {
     return Array.from(this._meta.values());
   }
-
-  // ─── Listeners ────────────────────────────────────────────
 
   onChange(listener) {
     this._listeners.push(listener);
     return this;
   }
 
-  removeListener(listener) {
-    const idx = this._listeners.indexOf(listener);
-    if (idx !== -1) this._listeners.splice(idx, 1);
-    return this;
-  }
-
-  _notify(id, flag, active) {
-    this._listeners.forEach(fn => fn(id, flag, active));
-  }
-
-  // ─── Action registry ──────────────────────────────────────
-
-  /** Returns registered actions as [{ actionName, flag }]. */
-  actions() {
-    return Array.from(this._actions.entries(), ([actionName, { flag }]) => ({
-      actionName,
-      flag,
-    }));
+  _notify(id, name, active) {
+    this._listeners.forEach(fn => fn(id, name, active));
   }
 }
 

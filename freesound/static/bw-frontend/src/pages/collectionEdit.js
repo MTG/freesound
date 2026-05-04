@@ -2,48 +2,61 @@ import { prepareAddMaintainersModalAndFields } from '../components/collectionsMo
 import { prepareAddSoundsModalDynamic } from '../components/addSoundsModal';
 import { SoundStateStore } from '../utils/soundStateStore';
 import { SoundGridEditor } from '../utils/soundGridEditor';
-import { addEditActions } from '../utils/soundCard';
-
-// ─── Data ────────────────────────────────────────────────────
 
 const soundsData = JSON.parse(
   document.getElementById('sounds-data').textContent
 );
-const initialFeaturedIds = JSON.parse(
-  document.getElementById('featured-data').textContent
+const pageConfig = JSON.parse(
+  document.getElementById('page-config').textContent
 );
+const initialFeaturedIds = soundsData
+  .filter(s => Number.isInteger(s.featured_order))
+  .sort((a, b) => a.featured_order - b.featured_order)
+  .map(s => s.id);
 
-// ─── State & grid ────────────────────────────────────────────
+const store = new SoundStateStore(['added', 'remove', 'featured'], {
+  maxFeatured: pageConfig.max_featured || Infinity,
+}).load(soundsData, { featured: initialFeaturedIds });
 
-const store = new SoundStateStore(['added', 'remove', 'featured']).load(
-  soundsData,
-  { featured: initialFeaturedIds }
-);
+const featuredCountEl = document.getElementById('featured-count');
 
 const editor = new SoundGridEditor({
   store,
   countEl: document.getElementById('element-count'),
   searchInput: document.getElementById('edit-collection-search'),
-  renderCard(_sound, clone) {
-    return addEditActions(clone);
-  },
 });
 
-editor.renderPage();
+const updateFeaturedUI = () => {
+  const count = store.featuredCount();
+  const atLimit = count >= (pageConfig.max_featured || Infinity);
 
-// ─── Maintainers ─────────────────────────────────────────────
+  if (featuredCountEl) featuredCountEl.textContent = count;
+
+  // Disable/enable non-featured buttons across the grid
+  const grid = document.getElementById('sounds-grid');
+  if (grid) {
+    grid.querySelectorAll('[data-action="featured"]').forEach(btn => {
+      const container = btn.closest('[data-object-id]');
+      const id = container ? parseInt(container.dataset.objectId, 10) : NaN;
+      const isFeatured = store.has(id, 'featured');
+      const isRemoved = store.has(id, 'remove');
+      btn.disabled = isRemoved || (!isFeatured && atLimit);
+    });
+  }
+};
+updateFeaturedUI();
+store.onChange((_id, name) => {
+  if (name === 'featured' || name === 'remove') updateFeaturedUI();
+});
+editor.onAfterSwap(updateFeaturedUI);
 
 prepareAddMaintainersModalAndFields(document);
-
-// ─── Add sounds modal ────────────────────────────────────────
 
 prepareAddSoundsModalDynamic(
   document,
   () => store.ids().join(','),
   sounds => sounds.forEach(s => store.add(s.id, s))
 );
-
-// ─── Form submission ─────────────────────────────────────────
 
 const collectionForm = document.getElementById('collection-form');
 if (collectionForm) {
@@ -53,12 +66,10 @@ if (collectionForm) {
     const featuredInput = document.getElementById('featured_sounds');
 
     if (addedInput)
-      addedInput.value = store.idsWithFlag(store.FLAG.ADDED, true).join(',');
+      addedInput.value = store.idsWithAction('added', true).join(',');
     if (removedInput)
-      removedInput.value = store.idsWithFlag(store.FLAG.REMOVE).join(',');
+      removedInput.value = store.idsWithAction('remove').join(',');
     if (featuredInput)
-      featuredInput.value = store
-        .idsWithFlag(store.FLAG.FEATURED, true)
-        .join(',');
+      featuredInput.value = editor.featuredIdsForSubmit().join(',');
   });
 }

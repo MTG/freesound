@@ -33,9 +33,9 @@ def display_collection(context, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
     request = context.get("request")
     if collection.featured_sound_ids:
-        header_sounds = Sound.public.filter(id__in=collection.featured_sound_ids)
+        header_sounds = Sound.objects.bulk_query_id_public(collection.featured_sound_ids)
     else:
-        header_sounds = Sound.public.filter(collections=collection)[:1]
+        header_sounds = Sound.objects.bulk_sounds_for_collection(collection.id, limit=1)
 
     tvars = {"collection": collection, "header_sounds": header_sounds, "request": request}
     return tvars

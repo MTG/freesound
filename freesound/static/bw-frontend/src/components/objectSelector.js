@@ -138,12 +138,8 @@ const initializeObjectSelectorActions = (parentElement, store) => {
     const objectId = parseInt(container.dataset.objectId, 10);
 
     // Restore persisted state for all registered actions
-    store.actions().forEach(function (entry) {
-      updateActionUI(
-        container,
-        entry.actionName,
-        store.hasFlag(objectId, entry.flag)
-      );
+    store.actionNames.forEach(name => {
+      updateActionUI(container, name, store.has(objectId, name));
     });
 
     // Bind action buttons identified by data-action attribute

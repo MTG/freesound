@@ -1,6 +1,7 @@
 {% extends "simple_page.html" %}
 {% load static %}
 {% load bw_templatetags %}
+{% load display_sound %}
 {% load users_selector %}
 
 {% block title %}Edit collection - {{ collection.name }}{% endblock %}
@@ -56,26 +57,29 @@
                 {{ form.added_sounds }}
                 {{ form.removed_sounds }}
                 {{ form.featured_sounds }}
-                    <div class="between middle wrap no-gutters" style="gap: 10px;">
+                {% if form.featured_sounds.errors %}
+                    <div class="text-red">{{ form.featured_sounds.errors }}</div>
+                {% endif %}
+                    <div class="between middle no-gutters">
                         <div class="no-wrap">
-                            <label>Sounds in collection (<span id="element-count">0</span>)</label>
-                        </div>
-                        <div style="flex: 1; min-width: 150px; max-width: 300px;">
-                            <div class="input-wrapper w-100">
-                                <i class="bw-icon-search input-icon"></i><input id="edit-collection-search" type="search" placeholder="Search in collection..." role="searchbox" autocomplete="off">
-                            </div>
+                            <label>Sounds in collection (<span id="element-count">0</span>) &mdash; <span id="featured-count">0</span> featured ({{ page_config.max_featured }} max)</label>
                         </div>
                         <div class="no-wrap browse__search-overview-sorter" id="sort-container">
                             <label class="text-light-grey d-none d-md-inline">Sort by:</label>
                             <select id="sort-select">
                                 {% for key, option in sort_options.items %}
-                                    <option value="{{ key }}" {% if key == "featured" %}selected{% endif %}>{{ option.0 }}</option>
+                                    <option value="{{ key }}" {% if key == current_sort %}selected{% endif %}>{{ option.0 }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </div>
+                    <div class="v-spacing-top-4" style="max-width: 250px;">
+                        <div class="input-wrapper w-100">
+                            <i class="bw-icon-search input-icon"></i><input id="edit-collection-search" type="search" placeholder="Search in collection..." role="searchbox" autocomplete="off" value="{{ current_search|default:'' }}">
+                        </div>
+                    </div>
                 <div>{{form.added_sounds.errors}}</div>
-                <div id="sounds-section">
+                <div id="sounds-section" data-render-cards-url="{{ render_cards_url }}">
                     <div id="sounds-grid"></div>
                     <div id="sounds-pagination" class="v-spacing-top-3"></div>
                 </div>
@@ -98,10 +102,7 @@
     </div>
 </div>
 {{ sounds_data|json_script:"sounds-data" }}
-{{ featured_sound_ids|json_script:"featured-data" }}
 {{ page_config|json_script:"page-config" }}
-
-{% include "sounds/_sound_card_template.html" %}
 {% endblock %}
 
 {% block extrabody %}

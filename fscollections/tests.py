@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils.text import slugify
 
 from fscollections.models import Collection, CollectionSound
+from fscollections.views import serialize_collection_sounds
 from utils.test_helpers import create_user_and_sounds
 
 
@@ -449,3 +450,72 @@ class CollectionTest(TestCase):
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
         self.assertEqual([self.sound.id, self.sound2.id], self.collection.featured_sound_ids)
+
+    def test_collection_htmx_request_renders_sounds_fragment(self):
+        self.client.force_login(self.user)
+        CollectionSound.objects.create(user=self.user, sound=self.sound, collection=self.collection, status="OK")
+
+        resp = self.client.get(
+            reverse("collection", args=[self.collection.id, slugify(self.collection.name)]),
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(200, resp.status_code)
+        self.assertIn("collections/collection.html", [template.name for template in resp.templates])
+        self.assertContains(resp, 'id="sounds-grid"')
+
+    def test_render_collection_cards_preserves_order_and_edit_container_attrs(self):
+        self.client.force_login(self.user)
+        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
+
+        resp = self.client.get(
+            cards_url,
+            {
+                "ids": f"{self.sound2.id},{self.sound.id}",
+                "page": "1",
+                "total": "1",
+            },
+            HTTP_HX_CURRENT_URL="/collections/test/edit/",
+        )
+
+        self.assertEqual(200, resp.status_code)
+        html = resp.content.decode()
+        self.assertIn(f'data-max-elements="{settings.MAX_SOUNDS_PER_COLLECTION}"', html)
+        self.assertLess(
+            html.index(f'data-object-id="{self.sound2.id}"'),
+            html.index(f'data-object-id="{self.sound.id}"'),
+        )
+
+    def test_render_collection_cards_forbidden_for_non_member(self):
+        self.client.force_login(self.external_user)
+        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
+        resp = self.client.get(cards_url, {"ids": f"{self.sound.id}"})
+        self.assertEqual(403, resp.status_code)
+
+    def test_render_collection_cards_empty_state_with_search(self):
+        """The render-cards endpoint owns the empty-state message so the JS
+        editor doesn't need a non-htmx render path."""
+        self.client.force_login(self.user)
+        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
+        resp = self.client.get(
+            cards_url,
+            {"ids": "", "page": "1", "total": "1", "q": "nonsense"},
+            HTTP_HX_CURRENT_URL="/collections/test/edit/",
+        )
+        self.assertEqual(200, resp.status_code)
+        self.assertContains(resp, "No sounds found matching")
+        self.assertContains(resp, "data-clear-search")
+
+    def test_serialized_collection_sounds_include_featured_order(self):
+        CollectionSound.objects.create(user=self.user, sound=self.sound, collection=self.collection, status="OK")
+        CollectionSound.objects.create(user=self.user, sound=self.sound1, collection=self.collection, status="OK")
+        CollectionSound.objects.create(user=self.user, sound=self.sound2, collection=self.collection, status="OK")
+        self.collection.featured_sound_ids = [self.sound2.id, self.sound.id]
+        self.collection.save()
+
+        sidecar, _ = serialize_collection_sounds(self.collection)
+        serialized_by_id = {sound["id"]: sound for sound in sidecar}
+
+        self.assertEqual(0, serialized_by_id[self.sound2.id]["featured_order"])
+        self.assertEqual(1, serialized_by_id[self.sound.id]["featured_order"])
+        self.assertIsNone(serialized_by_id[self.sound1.id]["featured_order"])

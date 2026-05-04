@@ -332,32 +332,18 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 # Generate display images, M and L sizes for NG and BW front-ends
                 for width, height, color_scheme, waveform_path, spectral_path in [
                     (
-                        120,
-                        71,
-                        color_schemes.FREESOUND2_COLOR_SCHEME,
-                        self.sound.locations("display.wave.M.path"),
-                        self.sound.locations("display.spectral.M.path"),
-                    ),
-                    (
-                        900,
-                        201,
-                        color_schemes.FREESOUND2_COLOR_SCHEME,
-                        self.sound.locations("display.wave.L.path"),
-                        self.sound.locations("display.spectral.L.path"),
-                    ),
-                    (
                         195,
                         101,
                         color_schemes.BEASTWHOOSH_COLOR_SCHEME,
-                        self.sound.locations("display.wave_bw.M.path"),
-                        self.sound.locations("display.spectral_bw.M.path"),
+                        self.sound.locations("display.wave.M.path"),
+                        self.sound.locations("display.spectral.M.path"),
                     ),
                     (
                         780,
                         301,
                         color_schemes.BEASTWHOOSH_COLOR_SCHEME,
-                        self.sound.locations("display.wave_bw.L.path"),
-                        self.sound.locations("display.spectral_bw.L.path"),
+                        self.sound.locations("display.wave.L.path"),
+                        self.sound.locations("display.spectral.L.path"),
                     ),
                 ]:
                     try:

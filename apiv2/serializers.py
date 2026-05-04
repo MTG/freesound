@@ -303,17 +303,17 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             "spectral_l": prepend_base(
                 obj.locations("display.spectral.L.url"), request_is_secure=self.context["request"].is_secure()
             ),
-            "waveform_bw_m": prepend_base(
-                obj.locations("display.wave_bw.M.url"), request_is_secure=self.context["request"].is_secure()
+            "waveform_bw_m": prepend_base(  # We keep this field for backward compatibility, but it actually contains the same image as waveform_m
+                obj.locations("display.wave.M.url"), request_is_secure=self.context["request"].is_secure()
             ),
-            "waveform_bw_l": prepend_base(
-                obj.locations("display.wave_bw.L.url"), request_is_secure=self.context["request"].is_secure()
+            "waveform_bw_l": prepend_base(  # We keep this field for backward compatibility, but it actually contains the same image as waveform_l
+                obj.locations("display.wave.L.url"), request_is_secure=self.context["request"].is_secure()
             ),
-            "spectral_bw_m": prepend_base(
-                obj.locations("display.spectral_bw.M.url"), request_is_secure=self.context["request"].is_secure()
+            "spectral_bw_m": prepend_base(  # We keep this field for backward compatibility, but it actually contains the same image as spectral_m
+                obj.locations("display.spectral.M.url"), request_is_secure=self.context["request"].is_secure()
             ),
-            "spectral_bw_l": prepend_base(
-                obj.locations("display.spectral_bw.L.url"), request_is_secure=self.context["request"].is_secure()
+            "spectral_bw_l": prepend_base(  # We keep this field for backward compatibility, but it actually contains the same image as spectral_l
+                obj.locations("display.spectral.L.url"), request_is_secure=self.context["request"].is_secure()
             ),
         }
 

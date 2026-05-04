@@ -39,7 +39,7 @@ from sounds.models import Pack, Sound
 from utils.logging_filters import get_client_ip
 from utils.search.search_query_processor import SearchQueryProcessor
 from utils.search.search_sounds import perform_search_engine_query
-from utils.username import raise_404_if_user_is_deleted, redirect_if_old_username
+from utils.username import get_parameter_user_or_404, raise_404_if_user_is_deleted, redirect_if_old_username
 
 web_logger = logging.getLogger("web")
 
@@ -130,7 +130,8 @@ def geotags_for_user_barray(request, username):
 @redirect_if_old_username
 @raise_404_if_user_is_deleted
 def geotags_for_user_latest_barray(request, username):
-    sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
+    user = get_parameter_user_or_404(request)
+    sounds = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
     generated_bytearray, num_geotags = generate_geotag_bytearray_queryset_fast(sounds)
     if num_geotags > 0:
         log_map_load("user_latest", num_geotags, request)

@@ -325,7 +325,6 @@ comments                   URI               yes*       The URI of a paginated l
 num_comments               integer           yes        The number of times the sound was commented.
 comment                    URI               no         The URI to comment the sound.
 similar_sounds             URI               no         URI pointing to the :ref:`similar-sounds` resource (to get a list of similar sounds).
-analysis_files             URIs              no         List of URIs for retrieving files with analysis information for each frame of the sound (see :ref:`analysis-docs`).
 =========================  ================  =========  ====================================================================================
 
 Additionally, content-based audio descriptors extracted from the sound signal can be used as fields. 

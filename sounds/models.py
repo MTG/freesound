@@ -837,27 +837,6 @@ class Sound(models.Model):
                     ),
                 ),
             ),
-            analysis=dict(
-                base_path=os.path.join(settings.ANALYSIS_PATH, id_folder),
-                statistics=dict(
-                    path=os.path.join(
-                        settings.ANALYSIS_PATH,
-                        id_folder,
-                        "%d-%s.yaml" % (self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                    ),
-                    url=settings.ANALYSIS_URL
-                    + "%s/%d-%s.yaml" % (id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                ),
-                frames=dict(
-                    path=os.path.join(
-                        settings.ANALYSIS_PATH,
-                        id_folder,
-                        "%d-%s_frames.json" % (self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                    ),
-                    url=settings.ANALYSIS_URL
-                    + "%s/%d-%s_frames.json" % (id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                ),
-            ),
         )
 
     def get_preview_abs_url(self):
@@ -1229,8 +1208,6 @@ class Sound(models.Model):
         # Rename related files in disk
         paths_to_rename = [
             self.locations("path"),  # original file path
-            self.locations("analysis.frames.path"),  # analysis frames file
-            self.locations("analysis.statistics.path"),  # analysis statistics file
             self.locations("display.spectral.L.path"),  # spectrogram L
             self.locations("display.spectral.M.path"),  # spectrogram M
             self.locations("display.wave_bw.L.path"),  # waveform BW L
@@ -1411,7 +1388,7 @@ class Sound(models.Model):
                 kwargs={
                     "sound_id": self.id,
                     "sound_path": sound_path,
-                    "analysis_folder": self.locations("analysis.base_path"),
+                    "analysis_folder": os.path.join(settings.ANALYSIS_PATH, str(self.id // 1000)),
                     "metadata": json.dumps(
                         {
                             "duration": self.duration,

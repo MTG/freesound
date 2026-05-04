@@ -42,7 +42,7 @@ DEFAULT_FIELDS_IN_SOUND_DETAIL = (
     + "geotag,is_geotagged,created,license,type,channels,filesize,bitrate,"
     + "bitdepth,duration,samplerate,username,pack,pack_name,download,bookmark,previews,images,"
     + "num_downloads,avg_rating,num_ratings,rate,comments,num_comments,comment,similar_sounds,"
-    + "analysis_files,is_explicit,is_remix,was_remixed,md5,ai_preference"
+    + "is_explicit,is_remix,was_remixed,md5,ai_preference"
 )
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
@@ -168,7 +168,6 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             "num_comments",
             "comment",
             "similar_sounds",
-            "analysis_files",
             "is_explicit",
             "score",
             "is_remix",
@@ -314,18 +313,6 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             ),
             "spectral_bw_l": prepend_base(
                 obj.locations("display.spectral_bw.L.url"), request_is_secure=self.context["request"].is_secure()
-            ),
-        }
-
-    analysis_files = serializers.SerializerMethodField()
-
-    def get_analysis_files(self, obj):
-        return {
-            "essentia_frames": prepend_base(
-                obj.locations("analysis.frames.url"), request_is_secure=self.context["request"].is_secure()
-            ),
-            "essentia_stats": prepend_base(
-                obj.locations("analysis.statistics.url"), request_is_secure=self.context["request"].is_secure()
             ),
         }
 

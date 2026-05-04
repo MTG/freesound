@@ -1429,7 +1429,7 @@ class Sound(models.Model):
                 sounds_logger.info(f"Not sending sound {self.id} to analyzer {analyzer} as is already queued")
         return sa
 
-    def consolidate_analysis(self, no_db_operations=False):
+    def consolidate_analysis(self, no_db_operations=False, fail_if_missing=False):
         """
         This method post-processes the analysis results of all analyzers for this sound and consolidates them into a new
         SoundAnalysis object with analyzer name settings.CONSOLIDATED_ANALYZER_NAME. This consolidated analysis contains
@@ -1438,6 +1438,7 @@ class Sound(models.Model):
 
         :param bool no_db_operations: If True, the method only computes the data but does not save it in the DB. Also it returns
             the consolidated analysis data dictionary instead of the SoundAnalysis object.
+        :param bool fail_if_missing: If True, the method raises an exception if any analyzer data or descriptor data is missing.
         """
 
         # Iterate over all descriptors defined in settings.CONSOLIDATED_AUDIO_DESCRIPTORS and obtain/process their values
@@ -1458,6 +1459,12 @@ class Sound(models.Model):
                 if not analyzer_data:
                     # Analyzer data could not be loaded from file. That means that the analyzer has not analyzed
                     # the sound successfully, skip descriptor
+                    if fail_if_missing:
+                        raise Exception(f"Analyzer data for {analyzer} is missing (sound id: {self.id})")
+                    else:
+                        print(
+                            f"Analyzer data for {analyzer} is missing (sound id: {self.id}), skipping descriptors from this analyzer"
+                        )
                     continue
                 # Save the data in tmp dict so it is not loaded again in the future if present
                 tmp_analyzers_data[analyzer] = analyzer_data
@@ -1486,7 +1493,10 @@ class Sound(models.Model):
                     value = get_func(analyzer_data, self)
             except Exception as e:
                 # If value can't be loaded, continue with next descriptor
-                print(f"Can't get value for descriptor {name}: {e} (sound id: {self.id})")
+                if fail_if_missing:
+                    raise Exception(f"Can't get value for descriptor {name}: {e} (sound id: {self.id})")
+                else:
+                    print(f"Can't get value for descriptor {name}: {e} (sound id: {self.id}), skipping this descriptor")
                 continue
 
             if value is not None and type(value) == float and math.isnan(value):

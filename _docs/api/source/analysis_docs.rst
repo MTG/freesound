@@ -651,41 +651,6 @@ beat_loudness
         :height: 300px
 
 
-chord_count
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/chord_count
-
-**Description:** Number of chords in the audio signal based on the number of detected chords by the chord_progression descriptor.
-
-**Type:** integer
-
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/chord_count.png
-        :height: 300px
-
-
-chord_progression
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/chord_progression
-
-**Description:** Chords estimated from the harmonic pitch class profiles (HPCPs) across the audio signal. Using the pitch classes ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], it finds the best-matching major or minor triad and outputs a time-varying chord sequence as a sequence of labels (e.g. A#, Bm). Note, chords are major if no minor symbol.
-
-**Mode:** VL
-
-**Type:** array[string]
-
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_ChordsDetection.html
-
-
 decay_strength
 -------------------------
 

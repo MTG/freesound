@@ -46,7 +46,9 @@
         <div class="widget large">
             <div class="sample_info">
                 <nobr>
-                    <img class="avatar" src="{{user_profile_locations.avatar.S.url}}" alt="avatar" />
+                    {% if user_profile_locations.avatar.S.url %}
+                        <img class="avatar" src="{{user_profile_locations.avatar.S.url}}" alt="avatar" />
+                    {% endif %}
                     <h3>{{ sound.username }} - {{ sound.original_filename|truncate_string:120 }}</h3>
                         {% include "embeds/sound_widget_license.html" %}
                         <a href="{% absurl 'sound' sound.username sound.id %}" alt="see this sound on freesound" target="_parent"></a>
@@ -82,7 +84,9 @@
                     </nobr>
                 </span>
                 <div class="sample_info_left">
-                     <img class="avatar" src="{{user_profile_locations.avatar.M.url}}" alt="avatar" />
+                     {% if user_profile_locations.avatar.M.url %}
+                         <img class="avatar" src="{{user_profile_locations.avatar.M.url}}" alt="avatar" />
+                     {% endif %}
                      <span class="username">{{ sound.username|truncate_string:16 }}</span>
                      <a href="{% absurl 'sound' sound.username sound.id %}" alt="see this sound on freesound" target="_parent"></a>
                 </div>
@@ -160,7 +164,9 @@
         <div class="widget large full_size">
             <div class="sample_info" id="sample_info_element">
                 <div class="user_avatar">
-                    <img class="avatar" src="{{user_profile_locations.avatar.S.url}}" alt="avatar" />
+                    {% if user_profile_locations.avatar.S.url %}
+                        <img class="avatar" src="{{user_profile_locations.avatar.S.url}}" alt="avatar" />
+                    {% endif %}
                 </div>
                 <div class="sound_name">
                     <h3>{{ sound.username }} - {{ sound.original_filename|truncate_string:120 }}</h3>

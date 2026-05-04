@@ -251,13 +251,9 @@ class AudioProcessingTestCase(TestCase):
         self.assertFalse(os.path.exists(self.sound.locations("preview.LQ.mp3.path")))
         self.assertFalse(os.path.exists(self.sound.locations("preview.HQ.mp3.path")))
         self.assertTrue(os.path.exists(self.sound.locations("display.spectral.M.path")))
-        self.assertTrue(os.path.exists(self.sound.locations("display.spectral_bw.M.path")))
         self.assertTrue(os.path.exists(self.sound.locations("display.spectral.L.path")))
-        self.assertTrue(os.path.exists(self.sound.locations("display.spectral_bw.L.path")))
         self.assertTrue(os.path.exists(self.sound.locations("display.wave.M.path")))
-        self.assertTrue(os.path.exists(self.sound.locations("display.wave_bw.M.path")))
         self.assertTrue(os.path.exists(self.sound.locations("display.wave.L.path")))
-        self.assertTrue(os.path.exists(self.sound.locations("display.wave_bw.L.path")))
 
         self.assertTrue(result)  # Processing succeeded
         self.sound.refresh_from_db()
@@ -281,13 +277,9 @@ class AudioProcessingTestCase(TestCase):
         self.assertTrue(os.path.exists(self.sound.locations("preview.LQ.mp3.path")))
         self.assertTrue(os.path.exists(self.sound.locations("preview.HQ.mp3.path")))
         self.assertFalse(os.path.exists(self.sound.locations("display.spectral.M.path")))
-        self.assertFalse(os.path.exists(self.sound.locations("display.spectral_bw.M.path")))
         self.assertFalse(os.path.exists(self.sound.locations("display.spectral.L.path")))
-        self.assertFalse(os.path.exists(self.sound.locations("display.spectral_bw.L.path")))
         self.assertFalse(os.path.exists(self.sound.locations("display.wave.M.path")))
-        self.assertFalse(os.path.exists(self.sound.locations("display.wave_bw.M.path")))
         self.assertFalse(os.path.exists(self.sound.locations("display.wave.L.path")))
-        self.assertFalse(os.path.exists(self.sound.locations("display.wave_bw.L.path")))
 
         self.assertTrue(result)  # Processing succeeded
         self.sound.refresh_from_db()

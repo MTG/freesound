@@ -783,34 +783,6 @@ class Sound(models.Model):
                 spectral=dict(
                     M=dict(
                         path=os.path.join(
-                            settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_M.jpg" % (self.id, sound_user_id)
-                        ),
-                        url=displays_url + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, sound_user_id),
-                    ),
-                    L=dict(
-                        path=os.path.join(
-                            settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_L.jpg" % (self.id, sound_user_id)
-                        ),
-                        url=displays_url + "%s/%d_%d_spec_L.jpg" % (id_folder, self.id, sound_user_id),
-                    ),
-                ),
-                wave=dict(
-                    M=dict(
-                        path=os.path.join(
-                            settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.png" % (self.id, sound_user_id)
-                        ),
-                        url=displays_url + "%s/%d_%d_wave_M.png" % (id_folder, self.id, sound_user_id),
-                    ),
-                    L=dict(
-                        path=os.path.join(
-                            settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.png" % (self.id, sound_user_id)
-                        ),
-                        url=displays_url + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id),
-                    ),
-                ),
-                spectral_bw=dict(
-                    M=dict(
-                        path=os.path.join(
                             settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_M.jpg" % (self.id, sound_user_id)
                         ),
                         url=displays_url + "%s/%d_%d_spec_bw_M.jpg" % (id_folder, self.id, sound_user_id),
@@ -822,7 +794,7 @@ class Sound(models.Model):
                         url=displays_url + "%s/%d_%d_spec_bw_L.jpg" % (id_folder, self.id, sound_user_id),
                     ),
                 ),
-                wave_bw=dict(
+                wave=dict(
                     M=dict(
                         path=os.path.join(
                             settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_M.png" % (self.id, sound_user_id)
@@ -1233,10 +1205,6 @@ class Sound(models.Model):
             self.locations("analysis.statistics.path"),  # analysis statistics file
             self.locations("display.spectral.L.path"),  # spectrogram L
             self.locations("display.spectral.M.path"),  # spectrogram M
-            self.locations("display.wave_bw.L.path"),  # waveform BW L
-            self.locations("display.wave_bw.M.path"),  # waveform BW M
-            self.locations("display.spectral_bw.L.path"),  # spectrogram BW L
-            self.locations("display.spectral_bw.M.path"),  # spectrogram BW M
             self.locations("display.wave.L.path"),  # waveform L
             self.locations("display.wave.M.path"),  # waveform M
             self.locations("preview.HQ.mp3.path"),  # preview HQ mp3
@@ -1934,8 +1902,8 @@ class PackManager(models.Manager):
                             "duration": s.duration,
                             "preview_mp3": s.locations("preview.LQ.mp3.url"),
                             "preview_ogg": s.locations("preview.LQ.ogg.url"),
-                            "wave": s.locations("display.wave_bw.L.url"),
-                            "spectral": s.locations("display.spectral_bw.L.url"),
+                            "wave": s.locations("display.wave.L.url"),
+                            "spectral": s.locations("display.spectral.L.url"),
                             "num_ratings": s.num_ratings,
                             "avg_rating": s.avg_rating,
                         }

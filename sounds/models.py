@@ -1205,8 +1205,6 @@ class Sound(models.Model):
             self.locations("analysis.statistics.path"),  # analysis statistics file
             self.locations("display.spectral.L.path"),  # spectrogram L
             self.locations("display.spectral.M.path"),  # spectrogram M
-            self.locations("display.spectral.L.path"),  # spectrogram BW L
-            self.locations("display.spectral.M.path"),  # spectrogram BW M
             self.locations("display.wave.L.path"),  # waveform L
             self.locations("display.wave.M.path"),  # waveform M
             self.locations("preview.HQ.mp3.path"),  # preview HQ mp3

@@ -809,6 +809,27 @@ class Sound(models.Model):
                     ),
                 ),
             ),
+            analysis=dict(
+                base_path=os.path.join(settings.ANALYSIS_PATH, id_folder),
+                statistics=dict(
+                    path=os.path.join(
+                        settings.ANALYSIS_PATH,
+                        id_folder,
+                        "%d-%s.yaml" % (self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
+                    ),
+                    url=settings.ANALYSIS_URL
+                    + "%s/%d-%s.yaml" % (id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
+                ),
+                frames=dict(
+                    path=os.path.join(
+                        settings.ANALYSIS_PATH,
+                        id_folder,
+                        "%d-%s_frames.json" % (self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
+                    ),
+                    url=settings.ANALYSIS_URL
+                    + "%s/%d-%s_frames.json" % (id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
+                ),
+            ),
         )
 
     def get_preview_abs_url(self):

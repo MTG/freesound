@@ -79,9 +79,7 @@ def collection(request, collection):
 
     sounds = Sound.objects.bulk_sounds_for_collection(collection.id)
     if search:
-        sounds = sounds.filter(
-            Q(original_filename__icontains=search) | Q(user__username__icontains=search)
-        )
+        sounds = sounds.filter(Q(original_filename__icontains=search) | Q(user__username__icontains=search))
 
     if sort_key == "featured":
         featured_ids = list(collection.featured_sound_ids or [])
@@ -289,9 +287,11 @@ def render_collection_cards(request, collection):
                 "previous_page_number": page_num - 1,
                 "next_page_number": page_num + 1,
             }
-            tvars.update(build_paginator_template_context(
-                paginator_ns, page_dict, page_num, base_path=request.path, base_query=request.GET
-            ))
+            tvars.update(
+                build_paginator_template_context(
+                    paginator_ns, page_dict, page_num, base_path=request.path, base_query=request.GET
+                )
+            )
             tvars["has_paginator"] = True
         except (ValueError, TypeError):
             pass

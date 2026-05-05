@@ -70,13 +70,14 @@
                                    autocomplete="off"
                                    value="{{ current_search|default:'' }}"
                                    hx-get="{{ collection.get_absolute_url }}"
-                                   hx-trigger="input changed delay:300ms, search"
+                                   hx-trigger="keyup[keyCode==13], search"
                                    hx-target="#sounds-section"
                                    hx-select="#sounds-section"
                                    hx-swap="outerHTML"
                                    hx-push-url="true"
                                    hx-include="#collection-search, #sort-select"
-                                   hx-indicator="#sounds-section">
+                                   hx-indicator="#sounds-section"
+                                   hx-on:keydown="if(event.key==='Enter') event.preventDefault()">
                         </div>
                     </div>
                     <div class="col-md-8 text-right v-spacing-top-2 v-spacing-2">
@@ -111,6 +112,13 @@
                     {% elif current_search %}
                     <div class="v-spacing-3 text-grey">
                         No sounds found matching "{{ current_search }}".
+                        <a href="{{ collection.get_absolute_url }}"
+                           hx-get="{{ collection.get_absolute_url }}"
+                           hx-target="#sounds-section"
+                           hx-select="#sounds-section"
+                           hx-swap="outerHTML"
+                           hx-push-url="true"
+                           hx-on:click="document.getElementById('collection-search').value = ''">Clear search</a>
                     </div>
                     {% endif %}
                 </div>

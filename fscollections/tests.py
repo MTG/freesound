@@ -513,7 +513,7 @@ class CollectionTest(TestCase):
         self.collection.featured_sound_ids = [self.sound2.id, self.sound.id]
         self.collection.save()
 
-        sidecar, _ = serialize_collection_sounds(self.collection)
+        sidecar = serialize_collection_sounds(self.collection)
         serialized_by_id = {sound["id"]: sound for sound in sidecar}
 
         self.assertEqual(0, serialized_by_id[self.sound2.id]["featured_order"])

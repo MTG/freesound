@@ -94,11 +94,7 @@ def build_paginator_template_context(
     page_numbers = [n for n in range(min_page_num, max_page_num) if 0 < n <= paginator.num_pages]
 
     params = urllib.parse.urlencode(
-        [
-            (key.encode("utf-8"), value.encode("utf-8"))
-            for (key, value) in base_query.items()
-            if key.lower() != "page"
-        ]
+        [(key.encode("utf-8"), value.encode("utf-8")) for (key, value) in base_query.items() if key.lower() != "page"]
     )
 
     if params == "":

@@ -37,8 +37,17 @@ class CommaSeparatedIdField(forms.CharField):
 
     def clean(self, value):
         value = super().clean(value)
-        ids = {int(i) for i in value.replace(" ", "").split(",") if i.isdigit()} if value else set()
-        return list(ids) if self._as_list else ids
+        if not value:
+            return [] if self._as_list else set()
+        if self._as_list:
+            seen = set()
+            ids = []
+            for i in value.replace(" ", "").split(","):
+                if i.isdigit() and int(i) not in seen:
+                    seen.add(int(i))
+                    ids.append(int(i))
+            return ids
+        return {int(i) for i in value.replace(" ", "").split(",") if i.isdigit()}
 
 
 class SelectCollectionOrNewCollectionForm(forms.Form):

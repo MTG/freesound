@@ -24,7 +24,6 @@ export class SoundGridEditor {
       '';
     this.sectionEl = document.getElementById('sounds-section');
     this.gridEl = document.getElementById('sounds-grid');
-    this.paginationEl = document.getElementById('sounds-pagination');
     this.countEl = opts.countEl || null;
     this.searchInput = opts.searchInput || null;
     this.sortSelect = document.getElementById('sort-select');
@@ -158,11 +157,6 @@ export class SoundGridEditor {
     }
   }
 
-  _getPaginationEl() {
-    this.paginationEl = document.getElementById('sounds-pagination');
-    return this.paginationEl;
-  }
-
   onAfterSwap(fn) {
     this._afterSwapCallbacks = this._afterSwapCallbacks || [];
     this._afterSwapCallbacks.push(fn);
@@ -191,7 +185,6 @@ export class SoundGridEditor {
     }
 
     this.gridEl.addEventListener('htmx:afterSwap', () => {
-      this._getPaginationEl();
       this._hydrateSwappedGrid();
     });
 
@@ -227,13 +220,15 @@ export class SoundGridEditor {
         this.currentPage = 1;
         this.renderPage();
       };
+      let savedValue = this.sortSelect.value;
+      this.sortSelect.addEventListener('mousedown', () => {
+        savedValue = this.sortSelect.value;
+        this.sortSelect.selectedIndex = -1;
+      });
       this.sortSelect.addEventListener('change', applySort);
-      // `change` doesn't fire when re-selecting the current option.
-      // Catch that case so the user can re-click "featured" to re-sort
-      // after toggling featured flags.
-      this.sortSelect.addEventListener('click', evt => {
-        if (evt.target.tagName === 'OPTION' && evt.target.value === this.currentSort) {
-          applySort();
+      this.sortSelect.addEventListener('blur', () => {
+        if (this.sortSelect.selectedIndex === -1) {
+          this.sortSelect.value = savedValue;
         }
       });
     }

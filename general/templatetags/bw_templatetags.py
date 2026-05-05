@@ -19,8 +19,6 @@
 #
 
 import math
-import urllib.error
-import urllib.request
 
 from django import template
 from django.conf import settings

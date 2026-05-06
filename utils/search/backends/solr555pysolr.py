@@ -687,6 +687,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 if similar_to is not None
                 else settings.SEARCH_SOLR_TIMEOUT_SECONDS
             )
+        # Use a separate request handler for similarity to have separate metrics
+        search_handler = "select_similarity" if similar_to is not None else None
 
         if field_list is None:
             # We generally only want the sound IDs of the results as we load data from DB
@@ -890,7 +892,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 if not group_counts_as_one_in_facets and "json.facet" in query_as_kwargs:
                     facets_kwarg = query_as_kwargs["json.facet"]
                     query_as_kwargs["json.facet"] = {}
-                results = self.get_sounds_index(timeout=timeout).search(**query_as_kwargs)
+                results = self.get_sounds_index(timeout=timeout, search_handler=search_handler).search(
+                    **query_as_kwargs
+                )
 
                 # Now make the second query in which we get the facets and the total number of results, and remove the "collapse" filter.
                 fq = [fq_element for fq_element in query_as_kwargs["fq"] if "collapse field" not in fq_element]
@@ -899,13 +903,17 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 query_as_kwargs["expand"] = False
                 if not group_counts_as_one_in_facets and facets_kwarg is not None:
                     query_as_kwargs["json.facet"] = facets_kwarg
-                results_extra_query = self.get_sounds_index(timeout=timeout).search(**query_as_kwargs)
+                results_extra_query = self.get_sounds_index(timeout=timeout, search_handler=search_handler).search(
+                    **query_as_kwargs
+                )
                 if not group_counts_as_one_in_facets:
                     results.facets = results_extra_query.facets
                 results.non_grouped_number_of_results = results_extra_query.num_found
             else:
                 # If we are not using collapse and expand query parser (and/or not grouping by pack), just run the query.
-                results = self.get_sounds_index(timeout=timeout).search(**query_as_kwargs)
+                results = self.get_sounds_index(timeout=timeout, search_handler=search_handler).search(
+                    **query_as_kwargs
+                )
 
             # Facets returned in results use the corresponding solr fieldnames as keys. We want to convert them to the
             # original fieldnames so that the rest of the code can use them without knowing about the solr fieldnames.

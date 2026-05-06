@@ -200,6 +200,9 @@ class SolrManagementAPI:
         if copyfields:
             self.create_copyfields(copyfields)
 
+        for handler in schema_definition.get("requestHandlers", []):
+            self.upsert_request_handler(handler["name"], handler["class"], defaults=handler.get("defaults"))
+
     def collection_exists(self):
         if self.logging_verbose >= 1:
             logger.info(f"Checking if collection {self.collection} exists")
@@ -236,6 +239,36 @@ class SolrManagementAPI:
         self._make_post(url, data)
         if self.logging_verbose >= 1:
             logger.info(f"Disabled auto data driven schema for collection {self.collection}")
+
+    def upsert_request_handler(self, name, class_name, defaults=None):
+        """Idempotently add or update a Solr request handler.
+
+        Tries add-requesthandler first. Solr's Config API returns HTTP 200 with
+        an errorMessages payload (rather than 4xx) when a command is rejected —
+        e.g. when the handler already exists — so we detect that and retry with
+        update-requesthandler. No separate GET, so no TOCTOU window between the
+        existence check and the write.
+        """
+        handler_def = {"name": name, "class": class_name}
+        if defaults is not None:
+            handler_def["defaults"] = defaults
+
+        url = urljoin(self.base_url, f"api/collections/{self.collection}/config")
+        body = self._make_post(url, {"add-requesthandler": handler_def})
+        if not body.get("errorMessages"):
+            if self.logging_verbose >= 1:
+                logger.info(f"add-requesthandler {name} on collection {self.collection}")
+            return
+
+        # Add was rejected — most likely because the handler already exists.
+        # Retry as update; if that also reports errorMessages, surface the failure.
+        if self.logging_verbose >= 2:
+            logger.info(f"add-requesthandler {name} rejected by Solr ({body['errorMessages']}); retrying as update")
+        body = self._make_post(url, {"update-requesthandler": handler_def})
+        if body.get("errorMessages"):
+            raise SolrAPIError(f"Failed to upsert request handler {name}: {body['errorMessages']}")
+        if self.logging_verbose >= 1:
+            logger.info(f"update-requesthandler {name} on collection {self.collection}")
 
     def delete_collection(self):
         """Delete a Solr collection."""

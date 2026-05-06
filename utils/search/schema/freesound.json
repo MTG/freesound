@@ -531,5 +531,11 @@
         "type_facet"
       ]
     }
+  ],
+  "requestHandlers": [
+    {
+      "name": "/select_similarity",
+      "class": "solr.SearchHandler"
+    }
   ]
 }

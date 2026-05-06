@@ -643,6 +643,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 offset=(current_page - 1) * page_size,
                 num_sounds=page_size,
                 timeout=60,
+                enforce_time_allowed=False,
             )
             solr_ids += [int(element["id"]) for element in response.docs]
             solr_count = response.num_found
@@ -669,9 +670,23 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         similar_to=None,
         similar_to_min_similarity=settings.SIMILARITY_MIN_THRESHOLD,
         similar_to_similarity_space=settings.SIMILARITY_SPACE_DEFAULT,
-        timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
+        timeout=None,
+        enforce_time_allowed=True,
     ):
-        query = SolrQuery()
+        # Tell solr to stop after this time. Give similarity a bit more time
+        if not enforce_time_allowed:
+            query = SolrQuery(time_allowed=None)
+        elif similar_to is not None:
+            query = SolrQuery(time_allowed=settings.SEARCH_SOLR_SIMILARITY_TIME_ALLOWED_MS)
+        else:
+            query = SolrQuery(time_allowed=settings.SEARCH_SOLR_TIME_ALLOWED_MS)
+        # Just in case timeAllowed above doesn't stick
+        if timeout is None:
+            timeout = (
+                settings.SEARCH_SOLR_SIMILARITY_TIMEOUT_SECONDS
+                if similar_to is not None
+                else settings.SEARCH_SOLR_TIMEOUT_SECONDS
+            )
 
         if field_list is None:
             # We generally only want the sound IDs of the results as we load data from DB
@@ -940,7 +955,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def get_num_sim_vectors_indexed_per_similarity_space(self):
         results = {}
         for similarity_space_name in settings.SIMILARITY_SPACES.keys():
-            query = SolrQuery()
+            query = SolrQuery(time_allowed=None)
             filter_query = f'similarity_space:"{similarity_space_name}" content_type:"v"'
             query.set_query("*:*")
             query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query)
@@ -964,7 +979,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             solr_count = None
             current_page = 1
             while solr_count is None or len(solr_ids) < solr_count:
-                query = SolrQuery()
+                query = SolrQuery(time_allowed=None)
                 filter_query = f'similarity_space:"{similarity_space_name}" content_type:"v"'
                 query.set_query("*:*")
                 query.set_query_options(

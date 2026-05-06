@@ -1172,7 +1172,14 @@ SEARCH_FORUM_SORT_DEFAULT = SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST
 SEARCH_ENGINE_BACKEND_CLASS = "utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine"
 SOLR5_BASE_URL = "http://search:8983/solr"
 SOLR9_BASE_URL = "http://search:8983"
-SEARCH_SOLR_TIMEOUT_SECONDS = 5
+# If a request to solr takes longer than this, give up
+SEARCH_SOLR_TIMEOUT_SECONDS = 2.0
+# Tell solr that it shouldn't take more than this on a search
+# it should return after this long (before our timeout)
+SEARCH_SOLR_TIME_ALLOWED_MS = 1000
+# Similarity searches can take a bit longer
+SEARCH_SOLR_SIMILARITY_TIMEOUT_SECONDS = 4.0
+SEARCH_SOLR_SIMILARITY_TIME_ALLOWED_MS = 3000
 
 SIMILARITY_SPACE_LAION_CLAP = "laion_clap"
 SIMILARITY_FREESOUND_CLASSIC = "freesound_classic"

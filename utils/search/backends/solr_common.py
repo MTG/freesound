@@ -24,7 +24,7 @@ import urllib.parse
 from django.conf import settings
 from django.core.cache import cache
 
-from utils.search import SearchEngineException
+from utils.search import SearchEngineException, SearchEngineTimeoutException
 
 search_logger = logging.getLogger("search")
 
@@ -32,15 +32,21 @@ search_logger = logging.getLogger("search")
 class SolrQuery:
     """A wrapper around a lot of Solr query functionality."""
 
-    def __init__(self):
-        """Creates a SolrQuery object"""
-        # some default parameters
+    def __init__(self, time_allowed=settings.SEARCH_SOLR_TIME_ALLOWED_MS):
+        """Creates a SolrQuery object.
+
+        Args:
+            time_allowed (int | None): Solr-side per-query budget in ms. Pass None to
+              drop the cap entirely (None values are stripped by as_kwargs). Defaults
+              to settings.SEARCH_SOLR_TIME_ALLOWED_MS.
+        """
         self.params = {
             "wt": "json",
             "indent": "true",
             "debugQuery": "true" if settings.DEBUG else "false",
             "q.op": "AND",
             "echoParams": "explicit",
+            "timeAllowed": time_allowed,
         }
 
     def set_query(self, query):
@@ -326,6 +332,25 @@ def make_solr_query_url(solr_query_params, debug=False):
 
 class SolrResponseInterpreter:
     def __init__(self, response, next_page_query=None):
+        # Check for partialResults before parsing — a grouped/expanded response cut off
+        # by timeAllowed may be structurally incomplete (e.g. missing ngroups), and we
+        # want a structured timeout exception rather than a KeyError downstream.
+        response_header = response.get("responseHeader", {})
+        if response_header.get("partialResults"):
+            q_time = response_header.get("QTime", -1)
+            solr_query_url = make_solr_query_url(response_header.get("params", {}), debug=True)
+            search_logger.warning(
+                "SOLR partial results returned (timeAllowed exceeded) %s"
+                % json.dumps(
+                    {
+                        "q_time": q_time,
+                        "url": solr_query_url,
+                        "partial_results_details": response_header.get("partialResultsDetails"),
+                    }
+                )
+            )
+            raise SearchEngineTimeoutException(f"Solr returned partial results (timeAllowed exceeded after {q_time}ms)")
+
         if "grouped" in response and "expanded" in response:
             raise SearchEngineException("Response contains both grouped and expanded results, this is not supported")
 

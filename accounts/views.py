@@ -62,6 +62,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import base36_to_int, int_to_base36
 from django.views.decorators.cache import never_cache
+from django_ratelimit.decorators import ratelimit
 from oauth2_provider.models import AccessToken
 
 import utils.sound_upload
@@ -110,6 +111,7 @@ from utils.mirror_files import (
     remove_uploaded_file_from_mirror_locations,
 )
 from utils.pagination import paginate
+from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.username import (
     get_parameter_user_or_404,
     get_user_by_username,
@@ -326,8 +328,30 @@ def update_old_cc_licenses(request):
         return HttpResponseRedirect(reverse("accounts-home"))
 
 
+@ratelimit(
+    key=key_for_ratelimiting,
+    rate=rate_per_ip,
+    group=settings.RATELIMIT_REGISTRATION_GROUP,
+    method="POST",
+    block=False,
+)
 def registration_modal(request):
     if request.method == "POST":
+        if getattr(request, "limited", False):
+            volatile_logger.info(f"Registration rate limit triggered ({json.dumps({'ip': get_client_ip(request)})})")
+            # Return the modal HTML with an error banner. We deliberately do NOT
+            # instantiate a bound RegistrationForm here, because that would trigger
+            # ReCaptchaField validation (the network call we want to avoid for
+            # rate-limited requests). Status 200 because the modal frontend in
+            # static/bw-frontend/src/components/modal.js only re-renders for 2xx.
+            return render(
+                request,
+                "accounts/modal_registration.html",
+                {
+                    "registration_form": RegistrationForm(),
+                    "rate_limit_error": "Too many registration attempts. Please wait a moment and try again.",
+                },
+            )
         form = RegistrationForm(request.POST)
         if form.is_valid():
             try:

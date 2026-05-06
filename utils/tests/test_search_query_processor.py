@@ -46,6 +46,7 @@ class SearchQueryProcessorTests(TestCase):
         "similar_to_similarity_space": settings.SIMILARITY_SPACE_DEFAULT,
         "sort": settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,  # Empty query should sort by date added, so use this as expected default because most of the tests will be like that
         "textual_query": "",
+        "use_legacy_search": False,
     }
 
     def setUp(self):

@@ -776,6 +776,7 @@ class SearchQueryProcessor:
             similar_to_similarity_space=self.get_option_value_to_apply("similarity_space")
             if not self.get_option_value_to_apply("neural_search_mode")
             else settings.SIMILARITY_SPACE_LAION_CLAP,
+            use_legacy_search=False,
         )
 
     def get_url(self, add_filters=None, remove_filters=None):

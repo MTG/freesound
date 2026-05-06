@@ -55,6 +55,30 @@
         ]
       },
       "similarity": {
+        "class": "solr.BM25SimilarityFactory",
+        "k1": "0",
+        "b": "0"
+      }
+    },
+    {
+      "name": "alpha_only_sort_bool",
+      "class": "solr.TextField",
+      "sortMissingLast": true,
+      "omitNorms": true,
+      "analyzer": {
+        "tokenizer": {
+          "name": "keyword"
+        },
+        "filters": [
+          {
+            "name": "lowercase"
+          },
+          {
+            "name": "trim"
+          }
+        ]
+      },
+      "similarity": {
         "class": "solr.BooleanSimilarityFactory"
       }
     },
@@ -77,11 +101,120 @@
         ]
       },
       "similarity": {
+        "class": "solr.BM25SimilarityFactory",
+        "k1": "0",
+        "b": "0"
+      }
+    },
+    {
+      "name": "lowercase_tokenized_bool",
+      "class": "solr.TextField",
+      "sortMissingLast": true,
+      "omitNorms": true,
+      "analyzer": {
+        "tokenizer": {
+          "class": "solr.LowerCaseTokenizerFactory"
+        },
+        "filters": [
+          {
+            "name": "lowercase"
+          },
+          {
+            "name": "trim"
+          }
+        ]
+      },
+      "similarity": {
         "class": "solr.BooleanSimilarityFactory"
       }
     },
     {
       "name": "freesound_text",
+      "class": "solr.TextField",
+      "positionIncrementGap": "100",
+      "indexAnalyzer": {
+        "tokenizer": {
+          "name": "whitespace"
+        },
+        "charFilters": [
+          {
+            "name": "htmlStrip"
+          }
+        ],
+        "filters": [
+          {
+            "name": "stop",
+            "ignoreCase": "true",
+            "words": "lang/stopwords_en.txt"
+          },
+          {
+            "name": "wordDelimiterGraph",
+            "generateWordParts": "1",
+            "generateNumberParts": "1",
+            "catenateWords": "1",
+            "catenateNumbers": "1",
+            "catenateAll": "0",
+            "splitOnCaseChange": "1"
+          },
+          {
+            "name": "flattenGraph"
+          },
+          {
+            "name": "lowercase"
+          },
+          {
+            "name": "snowballPorter",
+            "language": "English"
+          },
+          {
+            "name": "removeDuplicates"
+          }
+        ]
+      },
+      "queryAnalyzer": {
+        "tokenizer": {
+          "name": "whitespace"
+        },
+        "charFilters": [
+          {
+            "name": "htmlStrip"
+          }
+        ],
+        "filters": [
+          {
+            "name": "stop",
+            "ignoreCase": "true",
+            "words": "lang/stopwords_en.txt"
+          },
+          {
+            "name": "wordDelimiterGraph",
+            "generateWordParts": "1",
+            "generateNumberParts": "1",
+            "catenateWords": "0",
+            "catenateNumbers": "0",
+            "catenateAll": "0",
+            "splitOnCaseChange": "1"
+          },
+          {
+            "name": "lowercase"
+          },
+          {
+            "name": "snowballPorter",
+            "language": "English"
+          },
+          {
+            "name": "removeDuplicates"
+          }
+        ]
+      },
+      "similarity": {
+        "class": "solr.BM25SimilarityFactory",
+        "k1": "0",
+        "b": "0"
+      }
+    },
+    {
+      "name": "freesound_text_bool",
       "class": "solr.TextField",
       "positionIncrementGap": "100",
       "indexAnalyzer": {
@@ -490,6 +623,57 @@
       "indexed": true,
       "stored": true,
       "required": false
+    },
+    {
+      "name": "name_bool",
+      "type": "freesound_text_bool",
+      "indexed": true,
+      "stored": false,
+      "required": false
+    },
+    {
+      "name": "description_bool",
+      "type": "freesound_text_bool",
+      "indexed": true,
+      "stored": false,
+      "required": false
+    },
+    {
+      "name": "tag_bool",
+      "type": "alpha_only_sort_bool",
+      "indexed": true,
+      "stored": false,
+      "required": false,
+      "multiValued": true
+    },
+    {
+      "name": "username_bool",
+      "type": "lowercase_tokenized_bool",
+      "indexed": true,
+      "stored": false,
+      "required": false
+    },
+    {
+      "name": "pack_bool",
+      "type": "freesound_text_bool",
+      "indexed": true,
+      "stored": false,
+      "required": false
+    },
+    {
+      "name": "type_bool",
+      "type": "alpha_only_sort_bool",
+      "indexed": true,
+      "stored": false,
+      "required": false
+    },
+    {
+      "name": "comment_bool",
+      "type": "freesound_text_bool",
+      "indexed": true,
+      "stored": false,
+      "required": false,
+      "multiValued": true
     }
   ],
   "dynamicFields": [
@@ -516,19 +700,46 @@
     {
       "source": "tag",
       "dest": [
-        "tagfacet"
+        "tagfacet",
+        "tag_bool"
       ]
     },
     {
       "source": "username",
       "dest": [
-        "username_facet"
+        "username_facet",
+        "username_bool"
       ]
     },
     {
       "source": "type",
       "dest": [
-        "type_facet"
+        "type_facet",
+        "type_bool"
+      ]
+    },
+    {
+      "source": "name",
+      "dest": [
+        "name_bool"
+      ]
+    },
+    {
+      "source": "description",
+      "dest": [
+        "description_bool"
+      ]
+    },
+    {
+      "source": "pack",
+      "dest": [
+        "pack_bool"
+      ]
+    },
+    {
+      "source": "comment",
+      "dest": [
+        "comment_bool"
       ]
     }
   ],

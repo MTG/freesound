@@ -176,6 +176,44 @@ SOLR_SOUND_FACET_DEFAULT_OPTIONS = {"limit": 5, "type": "terms", "sort": "count 
 
 SOLR_DOC_CONTENT_TYPES = {"sound": "s", "similarity_vector": "v"}
 
+# Boost functions applied to score-sorted textual queries when use_legacy_search is False.
+# These add to the dismax score after text matching (the "tiebreaker" — without them, all
+# documents matching the same set of fields tie under k1=0, see solr-comparison-worklog.md).
+#
+#   if(gte(num_ratings,3),div(avg_rating,5),0)
+#     Rating quality. avg_rating is stored as a 0-10 float (Sound.avg_rating), so
+#     div(avg_rating,5) yields a 0-2 boost — a 10/10-rated sound contributes ~+2 to
+#     the dismax score, a 5/10 sound contributes ~+1, an unrated sound contributes 0.
+#     The if(gte(num_ratings,3),...) gate is technically redundant — the indexer
+#     already writes 0 when num_ratings < settings.MIN_NUMBER_RATINGS in
+#     get_avg_rating_value_for_document — but it's kept as a defence-in-depth guard
+#     in case that indexing rule changes.
+#
+#   recip(ms(NOW,created),3.16e-11,1,1)
+#     Freshness boost: 1 / (age_in_ms * 3.16e-11 + 1). The constant 3.16e-11 is
+#     ~= 1/(ms in one year), so the function returns 1.0 at age 0, 0.5 at age 1y,
+#     0.33 at age 2y, ~0.09 at age 10y. Roughly the same magnitude as the rating
+#     boost early on, decaying away over the catalogue's history.
+#
+# Tuning notes (and the rationale for not using num_downloads here) are in
+# solr-comparison-worklog.md.
+#
+# Safety: these reference avg_rating, num_ratings, created — fields that don't
+# exist on similarity-vector child docs (content_type:v). force_sounds() injects
+# fq=content_type:s before scoring, which keeps the bf functions from erroring
+# on child docs. Don't remove that filter for textual queries without re-checking
+# the bf evaluation.
+SEARCH_SOUNDS_BOOST_FUNCTIONS = (
+    "if(gte(num_ratings,3),div(avg_rating,5),0)",
+    "recip(ms(NOW,created),3.16e-11,1,1)",
+)
+
+# Solr field names with a "_bool" shadow (BooleanSimilarity) used in legacy mode.
+# Every text-typed indexed field that may appear in qf has a shadow. Other field
+# types (string, numeric, date, vector) have no similarity to swap; "id" is a
+# `string` field, so it is intentionally absent.
+BOOLEAN_SHADOW_FIELDS = frozenset({"name", "description", "tag", "username", "pack", "type", "comment"})
+
 
 class FreesoundSoundJsonEncoder(json.JSONEncoder):
     def default(self, value):
@@ -670,6 +708,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         similar_to=None,
         similar_to_min_similarity=settings.SIMILARITY_MIN_THRESHOLD,
         similar_to_similarity_space=settings.SIMILARITY_SPACE_DEFAULT,
+        use_legacy_search=False,
         timeout=None,
         enforce_time_allowed=True,
     ):
@@ -697,22 +736,36 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if similar_to is None:
             # Usual search query, no similarity search
 
-            # Process search fields: replace "db" field names by solr field names and set default weights if needed
+            # Process search fields: replace "db" field names by solr field names and set default weights if needed.
+            # In legacy mode, swap shadow-eligible fields for their `_bool` twin so scoring uses BooleanSimilarity
+            # (the pre-2026-05 production behaviour). If/when phrase boosts (pf) are added, they need the same swap.
             if query_fields is None:
                 # If no fields provided, use the default
                 query_fields = settings.SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS
+
+            def to_solr(field_name):
+                solr_name = get_solr_fieldname_from_freesound_fieldname(field_name)
+                if use_legacy_search and solr_name in BOOLEAN_SHADOW_FIELDS:
+                    solr_name = solr_name + "_bool"
+                return solr_name
+
             if isinstance(query_fields, list):
-                query_fields = [get_solr_fieldname_from_freesound_fieldname(field_name) for field_name in query_fields]
+                query_fields = [to_solr(field_name) for field_name in query_fields]
             elif isinstance(query_fields, dict):
                 # Also remove fields with weight <= 0
                 query_fields = [
-                    (get_solr_fieldname_from_freesound_fieldname(field_name), weight)
-                    for field_name, weight in query_fields.items()
-                    if weight > 0
+                    (to_solr(field_name), weight) for field_name, weight in query_fields.items() if weight > 0
                 ]
 
+            # Rating + freshness tiebreaker boosts. Skipped in legacy mode (reproduces the
+            # tied-score behaviour we are trying to replace) and on explicit sorts (where bf
+            # has no effect on ordering — keeps debugQuery output clean).
+            boost_functions = None
+            if not use_legacy_search and sort == settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC:
+                boost_functions = list(SEARCH_SOUNDS_BOOST_FUNCTIONS)
+
             # Set main query options
-            query.set_dismax_query(textual_query, query_fields=query_fields)
+            query.set_dismax_query(textual_query, query_fields=query_fields, boost_functions=boost_functions)
 
         else:
             # Similarity search!

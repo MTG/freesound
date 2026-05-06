@@ -264,6 +264,7 @@ class SearchEngineBase:
         similar_to=None,
         similar_to_min_similarity=settings.SIMILARITY_MIN_THRESHOLD,
         similar_to_similarity_space=settings.SIMILARITY_SPACE_DEFAULT,
+        use_legacy_search=False,
     ):
         """Search for sounds that match specific criteria and return them in a SearchResults object
 
@@ -313,6 +314,9 @@ class SearchEngineBase:
             similar_to_similarity_space (str, optional): similarity space from which to select similarity vectors for
                 similarity search. It defaults to settings.SIMILARITY_SPACE_DEFAULT, but it can be changed to something
                 else if we want to use a different type of similarity vectors for a similarity search query.
+            use_legacy_search (bool, optional): when True, queries the `_bool` shadow fields with BooleanSimilarity
+                and skips rating/freshness boosts — reproduces the pre-2026-05 ranking for evaluation/comparison
+                purposes. Defaults to False (BM25 k1=0 + rating/freshness boosts).
 
         Returns:
             SearchResults: SearchResults object containing the results of the query

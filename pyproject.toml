@@ -67,6 +67,7 @@ dependencies = [
 dev = [
     "django-stubs>=5.2.8",
     "pip-licenses>=5.5.0",
+    "pyright>=1.1.409",
     "ty>=0.0.7",
 ]
 

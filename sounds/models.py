@@ -1383,6 +1383,7 @@ class Sound(models.Model):
                     "metadata": json.dumps(
                         {
                             "duration": self.duration,
+                            "name": self.original_filename,
                             "tags": self.get_sound_tags(),
                             "geotag": [self.geotag.lat, self.geotag.lon] if hasattr(self, "geotag") else None,
                         }

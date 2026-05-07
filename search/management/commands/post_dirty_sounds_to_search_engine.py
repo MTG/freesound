@@ -111,7 +111,7 @@ class Command(LoggingBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "-s", "--slize_size", dest="size_size", default=500, type=int, help="How many posts to add at once"
+            "-s", "--slice_size", dest="slice_size", default=4000, type=int, help="How many posts to add at once"
         )
 
         parser.add_argument(
@@ -135,7 +135,7 @@ class Command(LoggingBaseCommand):
         )
         n_sounds_indexed_correctly = send_sounds_to_search_engine(
             sounds_to_index_ids,
-            slice_size=options["size_size"],
+            slice_size=options["slice_size"],
             delete_if_existing=options["delete_if_existing"],
             include_similarity_vectors=True,
             update=True,

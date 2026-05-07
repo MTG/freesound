@@ -38,7 +38,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Sum
+from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Greatest, JSONObject
 from django.db.models.signals import post_delete, post_save, pre_delete
 from django.dispatch import receiver
@@ -1668,6 +1668,13 @@ class Sound(models.Model):
 
     class Meta:
         ordering = ("-created",)
+        indexes = [
+            models.Index(
+                fields=["is_index_dirty"],
+                condition=Q(is_index_dirty=True),
+                name="sound_is_index_dirty_partial",
+            ),
+        ]
 
 
 class SoundOfTheDayManager(models.Manager):

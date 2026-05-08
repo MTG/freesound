@@ -735,13 +735,13 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     },
     {
         "name": "bpm",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "tempo",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["fs.bpm"],
     },
     {
         "name": "bpm_confidence",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "tempo_confidence",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["fs.bpm_confidence"],
     },
     {
         "name": "brightness",
@@ -770,8 +770,8 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     },
     {
         "name": "dynamic_range",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "brightness",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "original_name": lambda d, s: d["lowlevel.loudness_ebu128.loudness_range"],
     },
     {
         "name": "hardness",
@@ -802,19 +802,19 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     },
     {
         "name": "log_attack_time",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "log_attack_time",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["sfx.logattacktime"],
     },
     {
         "name": "loopable",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "loop",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["fs.loopable"],
         "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
     },
     {
         "name": "loudness",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "loudness",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["lowlevel.loudness_ebu128.integrated"],
     },
     {
         "name": "mfcc",
@@ -825,21 +825,21 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     },
     {
         "name": "note_confidence",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "note_confidence",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["fs.note_confidence"],
         "condition": condition_instrument_samples,
     },
     {
         "name": "note_midi",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "note_midi",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["fs.note_midi"],
         "type": AUDIO_DESCRIPTOR_TYPE_INT,
         "condition": condition_instrument_samples,
     },
     {
         "name": "note_name",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "note_name",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["fs.note_name"],
         "type": AUDIO_DESCRIPTOR_TYPE_STRING,
         "condition": condition_instrument_samples,
     },
@@ -987,14 +987,14 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     },
     {
         "name": "tonality",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "tonality",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["fs.tonality"],
         "type": AUDIO_DESCRIPTOR_TYPE_STRING,
     },
     {
         "name": "tonality_confidence",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "tonality_confidence",
+        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
+        "get_func": lambda d, s: d["fs.tonality_confidence"],
     },
     {
         "name": "tristimulus",

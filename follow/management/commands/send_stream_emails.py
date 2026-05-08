@@ -21,7 +21,6 @@ import json
 import logging
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.utils import timezone
 
 from accounts.models import EmailPreferenceType, Profile
@@ -58,6 +57,7 @@ class Command(LoggingBaseCommand):
 
         users_enabled_notifications = (
             Profile.objects.filter(user_id__in=user_ids)
+            .select_related("user")
             .exclude(last_stream_email_sent__gt=date_today_minus_notification_timedelta)
             .order_by("-last_attempt_of_sending_stream_email")[: settings.MAX_EMAILS_PER_COMMAND_RUN]
         )
@@ -81,10 +81,11 @@ class Command(LoggingBaseCommand):
             time_lapse = follow_utils.build_time_lapse(week_first_day, week_last_day)
 
             # construct message
-            user = User.objects.get(username=username)
             try:
                 users_sounds, tags_sounds = follow_utils.get_stream_sounds(
-                    user, time_lapse, sleep_between_queries=settings.STREAM_EMAIL_SEARCH_ENGINE_SLEEP_BETWEEN_QUERIES
+                    profile.user,
+                    time_lapse,
+                    sleep_between_queries=settings.STREAM_EMAIL_SEARCH_ENGINE_SLEEP_BETWEEN_QUERIES,
                 )
             except Exception:
                 # If error occur do not send the email
@@ -103,7 +104,10 @@ class Command(LoggingBaseCommand):
             # Send email
             try:
                 send_mail(
-                    settings.EMAIL_SUBJECT_STREAM_EMAILS, text_content, extra_subject=extra_email_subject, user_to=user
+                    settings.EMAIL_SUBJECT_STREAM_EMAILS,
+                    text_content,
+                    extra_subject=extra_email_subject,
+                    user_to=profile.user,
                 )
             except Exception as e:
                 # Do not send the email and do not update the last email sent field in the profile

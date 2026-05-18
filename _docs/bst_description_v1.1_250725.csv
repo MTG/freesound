@@ -1,0 +1,34 @@
+class_key,class_key_long,top_level,second_level,description,examples
+m,M,Music,,"Music excerpts, including melodies, singing, loops, fillers, drones, and short musical snippets.",
+m-sp,M/Solo-perc.,Music,Solo percussion,Music excerpts with solo percussive instruments.,"rhythmic patterns, unpitched percussion excerpt, drum passage, drum loop"
+m-si,M/Solo-instr.,Music,Solo instrument,"Music excerpts with only one instrument, excluding percussion.","isolated melody or sequence of notes, solo singing, chords from one instrument"
+m-m,M/Multi,Music,Multiple instruments,Music excerpts with more than one instrument.,"orchestra, band, duet, multi-instrument composition or loop"
+m-other,M/Other,Music,Other,Music that doesn't belong to any of the above categories.,
+is,Is,Instrument samples,,"Single notes from musical instruments, various versions of the same note, and scales.",
+is-p,Is/Perc.,Instrument samples,Percussion,Instrument samples that are percussive (idiophones or membraphones).,"drum, snare, gong, bell, xylophone"
+is-s,Is/String,Instrument samples,String,Instrument samples that belong to the string instrument family.,"guitar, violin, harp, mandolin"
+is-w,Is/Wind,Instrument samples,Wind,Instrument samples that belong to the wind instrument family (aerophones).,"woodwind, brass, flute, trumpet, saxophone"
+is-k,Is/Keyb.,Instrument samples,Piano / Keyboard instruments,"Instrument samples of piano or other keyboard instruments, not synthesized.","piano, harspichord, organ"
+is-e,Is/Electr.,Instrument samples,Synths / Electronic,Instrument samples synthesized or produced by electronic means.,"synthesizers (analog/digital), synthesized or electronic samples"
+is-other,Is/Other,Instrument samples,Other,Instrument samples that don't belong to any of the above categories.,
+sp,Sp,Speech,,Sounds where human voice is prominent.,
+sp-s,Sp/Solo,Speech,Solo speech,"Recording of a single voice speaking, excluding singing.","talking, script reading"
+sp-c,Sp/Crowd,Speech,Conversation / Crowd,"Several people talking, having a conversation or dialogue.","playground, people talking in public places, conversations"
+sp-p,Sp/Proc.,Speech,Processed / Synthetic,"Voice(s) from an indirect source (e.g. radio), heavily processed, or synthesized.","phone/radio recordings, robotic voice, text-to-speech"
+sp-other,Sp/Other,Speech,Other,Voice-predominant recordings that don't belong to any of the above categories.,
+fx,Fx,Sound effects,,"Isolated sound effects or sound events, each happening one at a time.",
+fx-o,Fx/Objects,Sound effects,Objects / House appliances,"Everyday objects, inside the home or smaller in size.","daily or small objects, tools, weapons, clothes, iron"
+fx-v,Fx/Vehicles,Sound effects,Vehicles,Sounds produced from a vehicle.,"car passing by, car screeching, wiper, car break, bike, plane, ship"
+fx-m,Fx/Machines,Sound effects,"Other mechanisms, engines, machines","Machine-like sounds, except vehicles and small house electric devices.","drill, lawn mower, gear, electric chainsaw"
+fx-h,Fx/Human,Sound effects,Human sounds and actions,"Sounds from the human body, excluding speech.","breath, heartbeat, sneeze, crying, walking, clapping"
+fx-a,Fx/Animals,Sound effects,Animals,Animal vocalizations or sounds.,"cat, insect, sheep, animal walk, growl, purr"
+fx-n,Fx/Natural,Sound effects,Natural elements and explosions,Sound events occuring by natural processes.,"single gusts of wind, fire flames, ice cracks, rocks, water splash, stones, explosions"
+fx-ex,Fx/Exper.,Sound effects,Experimental,Experimental sounds or heavily processed audio recordings.,"reversed sounds, weird effects, unusual record techniques or processing"
+fx-el,Fx/Electr.,Sound effects,Electronic / Design,Sound effects that are computer-made or designed for user interfaces or animations.,"sci-fi, laser, whoosh, boink, cartoon, ui, sound alerts or notifications"
+fx-other,Fx/Other,Sound effects,Other,Sound effects that don't belong to any of the above categories.,
+ss,Ss,Soundscapes,,"Ambiances, field-recordings with multiple events and sound environments.",
+ss-n,Ss/Nature,Soundscapes,Nature,Soundscapes from natural habitats.,"forest ambiance, seaside, river with surrounding nature, farmland"
+ss-i,Ss/Indoors,Soundscapes,Indoors,Soundscapes from closed or indoor spaces.,"closed room ambience, room tone, office, factory, bar"
+ss-u,Ss/Urban,Soundscapes,Urban,Soundscapes from cityscapes or outdoor places with human intervention.,"city ambience, outside airport, busy road"
+ss-s,Ss/Synth.,Soundscapes,Synthetic / Artificial,Soundscapes that are synthesized or computer-made ambiences.,"artificially-created soundscapes, soundscapes from imaginary places"
+ss-other,Ss/Other,Soundscapes,Other,Soundscapes that don't belong to any of the above categories.,

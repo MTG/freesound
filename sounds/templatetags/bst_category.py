@@ -71,8 +71,7 @@ def bst_taxonomy_category_names_to_category_key(top_level_name, second_level_nam
 @register.filter
 def get_bst_taxonomy_top_level_category_key(value):
     """
-    Extract the top level category key from the given value.
-    The top level category is the part before the '-' in value.
+    Extract the top level category key from the given value. The top level category is the part before the '-' in value.
     E.g.: "m-sp" -> "m"
     """
     return value.split("-")[0] if "-" in value else value
@@ -81,7 +80,10 @@ def get_bst_taxonomy_top_level_category_key(value):
 @register.filter
 def get_bst_taxonomy_description(value):
     """
-    Return BST taxonomy class description for a given taxonomy
-    cateogory/subcategory key.
+    Return BST taxonomy class description for a given taxonomy category/subcategory key.
     """
-    return settings.BROAD_SOUND_TAXONOMY[value]["description"]
+    bst_node_data = settings.BROAD_SOUND_TAXONOMY[value]
+    if bst_node_data["examples"]:
+        return f'{bst_node_data["description"]} <span class="text-light-grey">E.g. {bst_node_data["examples"]}.</span>'
+    else:
+        return bst_node_data["description"]

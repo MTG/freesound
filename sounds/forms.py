@@ -274,7 +274,7 @@ class SoundEditAndDescribeForm(forms.Form):
     bst_category = forms.ChoiceField(
         choices=settings.BST_SUBCATEGORY_CHOICES,
         help_text="Choose the most appropriate <i>Category</i> and <i>Subcategory</i> for the sound. "
-        'These categories come from the <a class="bw-link--grey" href="/help/faq/#the-broad-sound-taxonomy">Broad Sound Taxonomy</a>, '
+        'These categories come from the <a class="bw-link--grey" href="/help/broad-sound-taxonomy">Broad Sound Taxonomy</a>, '
         "and are used to improve Freesound search capabilities.",
         error_messages={"invalid_choice": "Please select a valid category and a subcategory."},
         required=True,

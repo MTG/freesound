@@ -120,6 +120,11 @@ def element_at_index(l, index):
 
 
 @register.filter
+def dict_element(d, key):
+    return d[key]
+
+
+@register.filter
 def strip_unnecessary_br(value):
     # In HTMLCleaningFields some HTML tags are allowed. When the contents of these fields are passed to Django's |linebreaks
     # templatetag, <br> tags can be inserted between other HTML tags (linebreaks is not HTML-aware). This templatetag

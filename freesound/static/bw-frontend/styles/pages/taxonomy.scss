@@ -1,0 +1,40 @@
+.bst-taxonomy{
+    .node {
+
+        padding: 5px;
+        border-radius: 5px;
+        margin: 5px;
+        text-align: center;
+
+        &.topcat {
+            color: white;
+            font-weight: bold;
+            font-size: 120%;
+            padding: 10px;
+            
+        }
+
+        &.subcat {
+            position: relative;
+            overflow: hidden;
+            color: black;
+
+            // Apply brightness only to a background layer, not to text.
+            &::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background-color: inherit;
+                border-radius: inherit;
+                filter: brightness(160%);
+                pointer-events: none;
+            }
+ 
+            .label {
+                position: relative;
+                z-index: 1;
+            }
+        }
+    }
+}
+

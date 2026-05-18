@@ -417,194 +417,33 @@ USER_DOWNLOADS_PUBLIC = True
 ANNOUNCEMENT_CACHE_KEY = "announcement_cache"
 
 # -------------------------------------------------------------------------------
-# Broad Sound Taxonomy definition (internal v1.1 of BST description)
+# Broad Sound Taxonomy definition
 
-BROAD_SOUND_TAXONOMY = {
-    "m": {
-        "level": 1,
-        "name": "Music",
-        "description": "Music excerpts, including melodies, singing, loops, fillers, drones and short musical snippets.",
-    },
-    "m-sp": {
-        "level": 2,
-        "name": "Solo percussion",
-        "description": "Music excerpts with solo percussive instruments.",
-        "examples": "rhythmic patterns, unpitched percussion excerpts, drum passages",
-    },
-    "m-si": {
-        "level": 2,
-        "name": "Solo instrument",
-        "description": "Music excerpts with only one instrument, excluding percussion.",
-        "examples": "isolated melody or sequence of notes, solo singing, chords from one instrument",
-    },
-    "m-m": {
-        "level": 2,
-        "name": "Multiple instruments",
-        "description": "Music excerpts with more than one instrument.",
-        "examples": "orchestra, band, dueto, multi-instrument composition, multi-instrument loops",
-    },
-    "m-other": {
-        "level": 2,
-        "name": "Other",
-        "description": "Music that doesn't belong to any of the above categories.",
-    },
-    "is": {
-        "level": 1,
-        "name": "Instrument samples",
-        "description": "Single notes from musical instruments, various versions of the same note, and scales.",
-    },
-    "is-p": {
-        "level": 2,
-        "name": "Percussion",
-        "description": "Instrument samples that are percussive (idiophones or membraphones).",
-        "examples": "drum, snare, gong, bell, xylophone",
-    },
-    "is-s": {
-        "level": 2,
-        "name": "String",
-        "description": "Instrument samples that belong to the string instrument family.",
-        "examples": "guitar, violin, harp, mandolin",
-    },
-    "is-w": {
-        "level": 2,
-        "name": "Wind",
-        "description": "Instrument samples that belong to the wind instrument family (aerophones).",
-        "examples": "woodwind, brass, flute, trumpet, saxophone",
-    },
-    "is-k": {
-        "level": 2,
-        "name": "Piano / Keyboard instruments",
-        "description": "Instrument samples of piano or other keyboard instruments, not synthesized.",
-        "examples": "piano, harspichord, organ",
-    },
-    "is-e": {
-        "level": 2,
-        "name": "Synths / Electronic",
-        "description": "Instrument samples synthesized or produced by electronic means.",
-        "examples": "synthesizers (analog/digital), synthesized or electronic samples",
-    },
-    "is-other": {
-        "level": 2,
-        "name": "Other",
-        "description": "Instrument samples that don't belong to any of the above categories.",
-    },
-    "sp": {"level": 1, "name": "Speech", "description": "Sounds where human voice is prominent."},
-    "sp-s": {
-        "level": 2,
-        "name": "Solo speech",
-        "description": "Recording of a single voice speaking, excluding singing.",
-        "examples": "talking, script reading",
-    },
-    "sp-c": {
-        "level": 2,
-        "name": "Conversation / Crowd",
-        "description": "Several people talking, having a conversation or dialogue.",
-        "examples": "playground, people talking in public places, conversations",
-    },
-    "sp-p": {
-        "level": 2,
-        "name": "Processed / Synthetic",
-        "description": "Voice(s) from an indirect source (e.g. radio), heavily processed, or synthesized.",
-        "examples": "phone/radio recordings, robotic voice, text-to-speech",
-    },
-    "sp-other": {
-        "level": 2,
-        "name": "Other",
-        "description": "Voice-predominant recordings that don't belong to any of the above categories.",
-    },
-    "fx": {
-        "level": 1,
-        "name": "Sound effects",
-        "description": "Isolated sound effects or sound events, each happening one at a time.",
-    },
-    "fx-o": {
-        "level": 2,
-        "name": "Objects / House appliances",
-        "description": "Everyday objects, inside the home or smaller in size.",
-        "examples": "daily or small objects, tools, weapons, clothes, iron",
-    },
-    "fx-v": {
-        "level": 2,
-        "name": "Vehicles",
-        "description": "Sounds produced from a vehicle.",
-        "examples": "car passing by, car screeching, wiper, car brake, bike, plane, ship",
-    },
-    "fx-m": {
-        "level": 2,
-        "name": "Other mechanisms, engines, machines",
-        "description": "Machine-like sounds, except vehicles and small house electric devices.",
-        "examples": "drill, lawn mower, gear, electric chainsaw",
-    },
-    "fx-h": {
-        "level": 2,
-        "name": "Human sounds and actions",
-        "description": "Sounds from the human body, excluding speech.",
-        "examples": "breath, hearthbeat, sneeze, crying, walking, clapping",
-    },
-    "fx-a": {
-        "level": 2,
-        "name": "Animals",
-        "description": "Animal vocalizations or sounds.",
-        "examples": "cat, insect, sheep, animal walk, growl, purr",
-    },
-    "fx-n": {
-        "level": 2,
-        "name": "Natural elements and explosions",
-        "description": "Sound events occurring by natural processes.",
-        "examples": "wind, fire, ice, rocks, water, stones, explosions",
-    },
-    "fx-ex": {
-        "level": 2,
-        "name": "Experimental",
-        "description": "Experimental sounds or heavily processed audio recordings.",
-        "examples": "reversed sounds, weird effects, unusual recording techniques or processing",
-    },
-    "fx-el": {
-        "level": 2,
-        "name": "Electronic / Design",
-        "description": "Sound effects that are computer-made or designed for user interfaces or animations.",
-        "examples": "sci-fi, laser, whoosh, boink, cartoon, ui, sound alerts or notifications",
-    },
-    "fx-other": {
-        "level": 2,
-        "name": "Other",
-        "description": "Sound effects that don't belong to any of the above categories.",
-    },
-    "ss": {
-        "level": 1,
-        "name": "Soundscapes",
-        "description": "Ambiances, field-recordings with multiple events and sound environments.",
-    },
-    "ss-n": {
-        "level": 2,
-        "name": "Nature",
-        "description": "Soundscapes from natural habitats.",
-        "examples": "forest ambiance, seaside, river with surrounding nature, farmland",
-    },
-    "ss-i": {
-        "level": 2,
-        "name": "Indoors",
-        "description": "Soundscapes from closed or indoor spaces.",
-        "examples": "closed room ambience, room tone, office, factory, bar",
-    },
-    "ss-u": {
-        "level": 2,
-        "name": "Urban",
-        "description": "Soundscapes from cityscapes or outdoor places with human intervention.",
-        "examples": "city ambience, outside airport, busy road",
-    },
-    "ss-s": {
-        "level": 2,
-        "name": "Synthetic / Artificial",
-        "description": "Soundscapes that are synthesized or computer-made ambiences.",
-        "examples": "artificially-created soundscapes, soundscapes from imaginary places",
-    },
-    "ss-other": {
-        "level": 2,
-        "name": "Other",
-        "description": "Soundscapes that don't belong to any of the above categories.",
-    },
-}
+
+def load_broad_sound_taxonomy_from_csv(path):
+    import csv
+
+    taxonomy = {}
+    with open(path, newline="", encoding="utf-8") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            key = row["class_key"]
+            taxonomy[key] = {
+                "level": 2 if "-" in key else 1,
+                "name": row["second_level"] if "-" in key else row["top_level"],
+                "top_level": row["top_level"],
+                "second_level": row["second_level"],
+                "description": row["description"],
+                "examples": row.get("examples", ""),
+            }
+    return taxonomy
+
+
+BROAD_SOUND_TAXONOMY_CSV_FILENAME = "bst_description_v1.1_250725.csv"
+BROAD_SOUND_TAXONOMY_CSV_DEFINITION_PATH = os.path.join(
+    os.path.dirname(__file__), "../_docs/", BROAD_SOUND_TAXONOMY_CSV_FILENAME
+)
+BROAD_SOUND_TAXONOMY = load_broad_sound_taxonomy_from_csv(BROAD_SOUND_TAXONOMY_CSV_DEFINITION_PATH)
 
 BST_CATEGORY_CHOICES = [
     (key, value["name"]) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" not in key

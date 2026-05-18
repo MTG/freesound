@@ -21,7 +21,7 @@
             {% for value, label in form.fields.bst_category.choices %}
                 <button type="button" class="btn no-hover {% if value == form.bst_category.value %}btn-primary{% else %}btn-inverse{% endif %} btn-subcategory tooltip_top" top_level="{{ value|get_bst_taxonomy_top_level_category_key }}" data_value="{{ value }}">
                     {{ label }}
-                    <span class="tooltiptext">{{ value|get_bst_taxonomy_description }}</span>
+                    <span class="tooltiptext">{{ value|get_bst_taxonomy_description|safe }}</span>
                 </button>
             {% endfor %}
         </div>

@@ -1279,3 +1279,24 @@ def pack_downloaders(request, username, pack_id):
     tvars = {"username": username, "pack": pack, "download_list": download_list}
     tvars.update(pagination)
     return render(request, "sounds/modal_downloaders.html", tvars)
+
+
+def broad_sound_taxonomy_info_page(request):
+    # Note: the colors below are currently hard-coded here, but in the future they should be
+    # added to the CSV file that defines the taxonomy and loaded from there.
+    taxonomy_node_colors = {
+        "m": "rgb(228,34,30)",
+        "is": "rgb(249,164,48)",
+        "sp": "rgb(39,161,132)",
+        "fx": "rgb(20,107,173)",
+        "ss": "rgb(50,167,40)",
+    }
+    taxonomy = settings.BROAD_SOUND_TAXONOMY
+    for key, node in taxonomy.items():
+        if key in taxonomy_node_colors:
+            node["color"] = taxonomy_node_colors[key]
+    tvars = {
+        "bst": taxonomy,
+        "bst_top_level_categories": settings.BST_CATEGORY_CHOICES,
+    }
+    return render(request, "sounds/broad_sound_taxonomy_info_page.html", tvars)

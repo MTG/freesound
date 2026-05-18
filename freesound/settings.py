@@ -738,7 +738,7 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     {
         "name": "reverbness",
         "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "reverbness",
+        "original_name": "reverb",
         "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
     },
     {

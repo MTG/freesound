@@ -508,6 +508,7 @@ FREESOUND_ESSENTIA_EXTRACTOR_NAME = "fs-essentia-extractor_legacy"
 BIRDNET_ANALYZER_NAME = "birdnet_v1"
 FSDSINET_ANALYZER_NAME = "fsd-sinet_v1"
 BST_ANALYZER_NAME = "bst-extractor_v1"
+BSTV2_ANALYZER_NAME = "bst-extractor_v2"
 
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {},
@@ -515,6 +516,7 @@ ANALYZERS_CONFIGURATION = {
     BIRDNET_ANALYZER_NAME: {},
     FSDSINET_ANALYZER_NAME: {},
     BST_ANALYZER_NAME: {},
+    BSTV2_ANALYZER_NAME: {},
 }
 
 AUDIO_DESCRIPTOR_TYPE_FLOAT = "float"
@@ -534,13 +536,13 @@ CONSOLIDATED_ANALYZER_NAME = "consolidated"
 CONSOLIDATED_AUDIO_DESCRIPTORS = [
     {
         "name": "category",
-        "analyzer": BST_ANALYZER_NAME,
+        "analyzer": BSTV2_ANALYZER_NAME,
         "original_name": "bst_top_level",
         "type": AUDIO_DESCRIPTOR_TYPE_STRING,
     },
     {
         "name": "subcategory",
-        "analyzer": BST_ANALYZER_NAME,
+        "analyzer": BSTV2_ANALYZER_NAME,
         "original_name": "bst_second_level",
         "type": AUDIO_DESCRIPTOR_TYPE_STRING,
     },

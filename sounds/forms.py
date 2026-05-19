@@ -59,7 +59,7 @@ class RemixForm(forms.Form):
 
     def save(self):
         new_sources = self.cleaned_data["sources"]
-        self.sound.set_sources(new_sources)
+        self.sound.change_sources_and_propagate(new_sources)
 
 
 class PackChoiceField(forms.ModelChoiceField):

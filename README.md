@@ -129,6 +129,6 @@ Among the services defined in `docker-compose.yml`, there is a `frontend_builder
 
 ### Running tests
 
-You can run tests using the Django test runner in the `web` container like that:
+Run tests using the pytest in the `web` container like this:
 
     docker compose run --rm web pytest

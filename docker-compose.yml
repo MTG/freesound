@@ -12,7 +12,7 @@ services:
         volumes:
             - pghome:/root
             - pgdata:/var/lib/postgresql
-            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
+            - ${FS_DATA_DIR:-./freesound-data}/db_dev_dump:/freesound-data/db_dev_dump
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5432:5432"
         environment:
@@ -37,7 +37,7 @@ services:
         volumes:
             - .:/code
             - /code/.venv
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
             - fswebhome:/home/fsweb
         ports:
             - "0.0.0.0:${LOCAL_PORT_PREFIX}8000:8000"  # web does not use FS_BIND_HOST because it should be always 0.0.0.0
@@ -87,7 +87,7 @@ services:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5673:5673"
         volumes:
             - ./docker/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-            - ./freesound-data/rabbitmq:/var/lib/rabbitmq/mnesia/
+            - ${FS_DATA_DIR:-./freesound-data}/rabbitmq:/var/lib/rabbitmq/mnesia/
 
     # Worker for async tasks and sound processing
     worker_celery:
@@ -97,7 +97,7 @@ services:
         volumes:
             - .:/code
             - /code/.venv
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         env_file:
             - environment
         environment:
@@ -111,7 +111,7 @@ services:
         profiles: ["analyzers", "all"]
         image: ac-extractor_v3
         volumes:
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         init: true
         command: celery -A main worker --concurrency=1 -l info -Q ac-extractor_v3
         depends_on:
@@ -122,7 +122,7 @@ services:
         profiles: ["analyzers", "all"]
         image: fs-essentia-extractor_legacy
         volumes:
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         init: true
         command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_legacy
         depends_on:
@@ -133,7 +133,7 @@ services:
         profiles: ["analyzers", "all"]
         image: birdnet_v1
         volumes:
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         init: true
         command: celery -A main worker --concurrency=1 -l info -Q birdnet_v1
         depends_on:
@@ -145,7 +145,7 @@ services:
         profiles: ["analyzers", "all"]
         image: fsd-sinet_v1
         volumes:
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         init: true
         command: celery -A main worker --pool=threads --concurrency=1 -l info -Q fsd-sinet_v1
         depends_on:
@@ -157,7 +157,7 @@ services:
         profiles: ["analyzers", "all"]
         image: bst-extractor_v1
         volumes:
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         init: true
         command: celery -A main worker --pool=threads --concurrency=1 -l info -Q bst-extractor_v1
         depends_on:
@@ -175,8 +175,8 @@ services:
         command: python similarity_server.py
         volumes:
             - ./similarity:/code
-            - ./freesound-data/similarity_index:/freesound-data/similarity_index
-            - ./freesound-data/analysis:/freesound-data/analysis
+            - ${FS_DATA_DIR:-./freesound-data}/similarity_index:/freesound-data/similarity_index
+            - ${FS_DATA_DIR:-./freesound-data}/analysis:/freesound-data/analysis
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8008:8008"
         environment:
@@ -193,7 +193,7 @@ services:
         command: python server.py
         volumes:
             - ./tagrecommendation:/code
-            - ./freesound-data/tag_recommendation_models:/tag_recommendation_models
+            - ${FS_DATA_DIR:-./freesound-data}/tag_recommendation_models:/tag_recommendation_models
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5000:5000"
 

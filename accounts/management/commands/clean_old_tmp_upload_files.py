@@ -32,10 +32,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for f in os.listdir(settings.FILE_UPLOAD_TEMP_DIR):
+            file_path = os.path.join(settings.FILE_UPLOAD_TEMP_DIR, f)
+            file_path = os.path.realpath(file_path)
+            temp_dir = os.path.realpath(settings.FILE_UPLOAD_TEMP_DIR)
+            if not file_path.startswith(temp_dir + os.sep):
+                continue
             f_mod_date = datetime.datetime.fromtimestamp(
-                os.path.getmtime(settings.FILE_UPLOAD_TEMP_DIR + f), tz=datetime.timezone.utc
+                os.path.getmtime(file_path), tz=datetime.timezone.utc
             )
             now = timezone.now()
             if (now - f_mod_date).total_seconds() > 3600 * 24:
                 print(f"Deleting {f}")
-                os.remove(settings.FILE_UPLOAD_TEMP_DIR + f)
+                os.remove(file_path)

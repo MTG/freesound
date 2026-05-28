@@ -74,14 +74,14 @@ class UtilsTest(TestCase):
         # create new sound files
         filenames = ["file1.wav", "file2.wav"]
         user = User.objects.create_user("testuser", password="testpass")
-        user_upload_path = settings.UPLOADS_PATH + "/%i/" % user.id
+        user_upload_path = os.path.join(settings.UPLOADS_PATH, str(user.id))
         os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(filenames, user_upload_path)
-        shutil.copyfile(user_upload_path + filenames[0], user_upload_path + "copy.wav")
+        shutil.copyfile(os.path.join(user_upload_path, filenames[0]), os.path.join(user_upload_path, "copy.wav"))
         license = License.objects.all()[0]
         sound_fields = {
             "name": "new sound",
-            "dest_path": user_upload_path + filenames[0],
+            "dest_path": os.path.join(user_upload_path, filenames[0]),
             "license": license.name,
             "description": "new sound",
             "tags": clean_and_split_tags("tag1, tag2, tag3"),
@@ -94,7 +94,7 @@ class UtilsTest(TestCase):
             create_sound(user, sound_fields, process=False)
         except NoAudioException:
             # If we try to upload the same file again it should also fail
-            sound_fields["dest_path"] = user_upload_path + "copy.wav"
+            sound_fields["dest_path"] = os.path.join(user_upload_path, "copy.wav")
             try:
                 create_sound(user, sound_fields, process=False)
             except AlreadyExistsException:
@@ -102,7 +102,7 @@ class UtilsTest(TestCase):
         self.assertEqual(user.sounds.all().count(), 1)
 
         # Upload file with geotag and pack
-        sound_fields["dest_path"] = user_upload_path + filenames[1]
+        sound_fields["dest_path"] = os.path.join(user_upload_path, filenames[1])
         sound_fields["geotag"] = "41.2222,31.0000,17"
         sound_fields["pack"] = "new pack"
         sound_fields["name"] = filenames[1]
@@ -227,7 +227,7 @@ class BulkDescribeUtils(TestCase):
 
     @staticmethod
     def create_file_with_lines(filename, lines, base_path):
-        csv_file_path = f"{base_path}/{filename}"
+        csv_file_path = os.path.join(base_path, filename)
         csv_fid = open(csv_file_path, "w")
         for line in lines:
             csv_fid.write(line + "\n")
@@ -272,14 +272,14 @@ class BulkDescribeUtils(TestCase):
     def test_validate_input_csv_file(self):
         # Create user uploads folder and test audio files
         user = User.objects.create_user("testuser", password="testpass")
-        user_upload_path = settings.UPLOADS_PATH + "/%i/" % user.id
+        user_upload_path = os.path.join(settings.UPLOADS_PATH, str(user.id))
         os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(
             ["file1.wv", "file2.wav", "file3.wav", "file4.wav", "file5.wav", "file7.wav", "file8.wav"], user_upload_path
         )
 
         # Create CSV files folder with descriptions
-        csv_file_base_path = settings.CSV_PATH + "/%i/" % user.id
+        csv_file_base_path = os.path.join(settings.CSV_PATH, str(user.id))
         os.makedirs(csv_file_base_path, exist_ok=True)
 
         # Test CSV with all lines and metadata ok
@@ -435,14 +435,14 @@ class BulkDescribeUtils(TestCase):
     def test_bulk_describe_from_csv(self):
         # Create user uploads folder and test audio files
         user = User.objects.create_user("testuser", password="testpass")
-        user_upload_path = settings.UPLOADS_PATH + "/%i/" % user.id
+        user_upload_path = os.path.join(settings.UPLOADS_PATH, str(user.id))
         os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(
             ["file1.wav", "file2.wav", "file3.wav", "file4.wav", "file5.wav", "file6.wav"], user_upload_path
         )
 
         # Create CSV files folder with descriptions
-        csv_file_base_path = settings.CSV_PATH + "/%i/" % user.id
+        csv_file_base_path = os.path.join(settings.CSV_PATH, str(user.id))
         os.makedirs(csv_file_base_path, exist_ok=True)
 
         # Create Test CSV with some lines ok and some wrong lines

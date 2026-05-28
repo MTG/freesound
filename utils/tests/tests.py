@@ -338,6 +338,25 @@ class BulkDescribeUtils(TestCase):
         self.assertTrue("audio_filename" in lines_validated[4]["line_errors"])  # File already described error reported
         self.assertTrue("bst_category" in lines_validated[5]["line_errors"])  # Missing category reported
 
+        # Test path-traversing audio_filename is rejected (must stay under user uploads directory)
+        csv_file_path = self.create_file_with_lines(
+            "test_descriptions.csv",
+            [
+                "audio_filename,name,tags,geotag,description,license,pack_name,is_explicit,bst_category",
+                '../somewhere/file.wav,,"tag1 tag2 tag3",,"Description",Creative Commons 0,,0,fx-h',  # Relative escape
+                '/etc/passwd.wav,,"tag1 tag2 tag3",,"Description",Creative Commons 0,,0,fx-h',  # Absolute path
+            ],
+            csv_file_base_path,
+        )
+        header, lines = get_csv_lines(csv_file_path)
+        lines_validated, global_errors = validate_input_csv_file(
+            header, lines, user_upload_path, username=user.username
+        )
+        self.assertEqual(len(global_errors), 0)  # No global errors
+        self.assertEqual(len([line for line in lines_validated if line["line_errors"]]), 2)  # Both lines rejected
+        self.assertTrue("audio_filename" in lines_validated[0]["line_errors"])  # Relative traversal rejected
+        self.assertTrue("audio_filename" in lines_validated[1]["line_errors"])  # Absolute path rejected
+
         # Test validation errors in individual fields
         csv_file_path = self.create_file_with_lines(
             "test_descriptions.csv",

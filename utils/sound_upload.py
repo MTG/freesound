@@ -115,7 +115,8 @@ def get_processing_before_describe_sound_folder(audio_file_path):
 
 def get_processing_before_describe_sound_base_url(audio_file_path):
     path = get_processing_before_describe_sound_folder(audio_file_path)
-    return settings.PROCESSING_BEFORE_DESCRIPTION_URL + "/".join(path.split("/")[-2:]) + "/"
+    relative = os.path.relpath(path, settings.PROCESSING_BEFORE_DESCRIPTION_DIR)
+    return settings.PROCESSING_BEFORE_DESCRIPTION_URL + relative + "/"
 
 
 def create_sound(user, sound_fields, apiv2_client=None, bulk_upload_progress=None, process=True, remove_exists=False):

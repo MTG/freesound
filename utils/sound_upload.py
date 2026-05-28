@@ -439,8 +439,11 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                     if not filename_has_valid_extension(audio_filename):
                         line_errors["audio_filename"] = "Invalid file extension."
                     else:
-                        src_path = os.path.join(sounds_base_dir, audio_filename)
-                        if not os.path.exists(src_path):
+                        sounds_base_real = os.path.realpath(sounds_base_dir)
+                        src_path = os.path.realpath(os.path.join(sounds_base_real, audio_filename))
+                        if os.path.commonpath([sounds_base_real, src_path]) != sounds_base_real:
+                            line_errors["audio_filename"] = "audio_filename must be a single filename."
+                        elif not os.path.exists(src_path):
                             line_errors["audio_filename"] = (
                                 "Audio file does not exist. This should be the name of "
                                 "one of the audio files you previously uploaded."

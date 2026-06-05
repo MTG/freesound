@@ -27,7 +27,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Case, IntegerField, Q, Value, When
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
@@ -52,6 +52,7 @@ def resolve_collection_from_url(view_func):
     def _wrapped_view(request, collection_id, collection_name, *args, **kwargs):
         collection = get_object_or_404(Collection, id=collection_id)
         expected_name = collection.url_kwargs["collection_name"]
+
         if collection_name != expected_name:
             url_name = request.resolver_match.url_name
             canonical_url = collection.get_url(url_name)
@@ -64,13 +65,13 @@ def resolve_collection_from_url(view_func):
     return _wrapped_view
 
 
-@login_required
 @resolve_collection_from_url
 def collection(request, collection):
     user = request.user
     is_maintainer = collection.maintainers.filter(username=user.username).exists()
     is_owner = user == collection.user
-    maintainers = collection.maintainers.all()
+    if not collection.public and not (is_owner or is_maintainer):
+        raise Http404
 
     sort_key = request.GET.get("s") or settings.COLLECTION_SORT_DEFAULT
     if sort_key not in settings.COLLECTION_SORT_OPTIONS:
@@ -103,7 +104,7 @@ def collection(request, collection):
         "collection": collection,
         "is_owner": is_owner,
         "is_maintainer": is_maintainer,
-        "maintainers": maintainers,
+        "maintainers": collection.maintainers.all(),
         "sort_options": settings.COLLECTION_SORT_OPTIONS,
         "page_sounds": page_sounds,
         "featured_sound_ids_set": set(collection.featured_sound_ids or []),
@@ -125,9 +126,14 @@ def collections_for_user(request):
     return render(request, "collections/your_collections.html", tvars)
 
 
-@login_required
 @resolve_collection_from_url
 def collection_stats_section(request, collection):
+    user = request.user
+    is_maintainer = collection.maintainers.filter(username=user.username).exists()
+    is_owner = user == collection.user
+    if not collection.public and not (is_owner or is_maintainer):
+        raise Http404
+
     # TODO: this tries to imitate the pack_stats_section behaviour despite a lack of comprehension
     # on cache behaviour, so the stats shown by this are not properly updated
     if not request.GET.get("ajax"):

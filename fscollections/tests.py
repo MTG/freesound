@@ -25,6 +25,49 @@ class CollectionTest(TestCase):
         self.sound2 = sounds[2]
         self.collection = Collection.objects.create(user=self.user, name="testcollection")
 
+    def test_load_collection_page_and_collection_stats_page(self):
+        # Test a collection page is visible to all users if the collection is public
+        self.collection.public = True
+        self.collection.save()
+        resp = self.client.get(reverse("collection", args=[self.collection.id, slugify(self.collection.name)]))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(
+            reverse("collection-stats-section", args=[self.collection.id, slugify(self.collection.name)]) + "?ajax=1"
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        # Test a collection page is only visible for owner and maintainers if the collection is private
+        self.collection.public = False
+        self.collection.save()
+
+        # Test as owner
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse("collection", args=[self.collection.id, slugify(self.collection.name)]))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(
+            reverse("collection-stats-section", args=[self.collection.id, slugify(self.collection.name)]) + "?ajax=1"
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        # Test as maintainer
+        self.collection.maintainers.add(self.maintainer)
+        self.client.force_login(self.maintainer)
+        resp = self.client.get(reverse("collection", args=[self.collection.id, slugify(self.collection.name)]))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(
+            reverse("collection-stats-section", args=[self.collection.id, slugify(self.collection.name)]) + "?ajax=1"
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        # Test as external user
+        self.client.force_login(self.external_user)
+        resp = self.client.get(reverse("collection", args=[self.collection.id, slugify(self.collection.name)]))
+        self.assertEqual(resp.status_code, 404)
+        resp = self.client.get(
+            reverse("collection-stats-section", args=[self.collection.id, slugify(self.collection.name)]) + "?ajax=1"
+        )
+        self.assertEqual(resp.status_code, 404)
+
     def test_collections_create_and_delete(self):
         # User not logged in - redirects to login page
         # For this to be truly useful, collection urls should be moved into accounts

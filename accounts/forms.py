@@ -43,6 +43,7 @@ from accounts.models import AIPreference, DeletedUser, EmailPreferenceType, OldU
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import HtmlCleaningCharField, HtmlCleaningCharFieldWithCenterTag, filename_has_valid_extension
 from utils.spam import is_spam
+from utils.username import get_deleteduser_by_username, get_oldusername_by_username, get_user_by_username
 
 web_logger = logging.getLogger("web")
 
@@ -192,13 +193,13 @@ def username_taken_by_other_user(username):
     if "freesound" in username.lower():
         return True
     try:
-        User.objects.get(username__iexact=username)
+        get_user_by_username(username)
     except User.DoesNotExist:
         try:
-            OldUsername.objects.get(username__iexact=username)
+            get_oldusername_by_username(username)
         except OldUsername.DoesNotExist:
             try:
-                DeletedUser.objects.get(username__iexact=username)
+                get_deleteduser_by_username(username)
             except DeletedUser.DoesNotExist:
                 # Only if no User, OldUsername or DeletedUser objects exist with that username, we consider it not
                 # being taken

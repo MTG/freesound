@@ -62,6 +62,7 @@ from sounds.models import (
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_user_template_caches
+from utils.cdn import generate_cdn_download_url
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
@@ -89,7 +90,6 @@ from utils.username import get_parameter_user_or_404, redirect_if_old_username
 web_logger = logging.getLogger("web")
 sounds_logger = logging.getLogger("sounds")
 upload_logger = logging.getLogger("file_upload")
-cache_cdn_map = caches["cdn_map"]
 
 
 def get_n_weeks_back_datetime(n_weeks):
@@ -361,12 +361,8 @@ def sound_download(request, username, sound_id):
             cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
 
     if settings.USE_CDN_FOR_DOWNLOADS:
-        cdn_filename = cache_cdn_map.get(str(sound_id), None)
-        if cdn_filename is not None:
-            # If USE_CDN_FOR_DOWNLOADS option is on and we find an URL for that sound in the CDN, then we redirect to that one
-            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(
-                int(sound_id) // 1000, cdn_filename, sound.friendly_filename()
-            )
+        cdn_url = generate_cdn_download_url(sound)
+        if cdn_url is not None:
             return HttpResponseRedirect(cdn_url)
 
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
@@ -921,12 +917,26 @@ def similar(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    num_similar_sounds = settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES
-    similarity_space = request.GET.get("similarity_space", settings.SIMILARITY_SPACE_DEFAULT)
-    if similarity_space not in settings.SIMILARITY_SPACES_NAMES:
-        similarity_space = settings.SIMILARITY_SPACE_DEFAULT
+    sound_available_similarity_spaces = sound.sim_vectors.values_list("similarity_space_name", flat=True)
+    if not sound_available_similarity_spaces:
+        # If sound is not ready for similarity, early return
+        tvars = {
+            "sound": sound,
+            "paginator": paginate(request, [], settings.NUM_SIMILAR_SOUNDS_PER_PAGE),
+        }
+        return render(request, "sounds/modal_similar_sounds.html", tvars)
+
+    requested_similarity_space = request.GET.get("similarity_space", settings.SIMILARITY_SPACE_DEFAULT)
+    if requested_similarity_space not in settings.SIMILARITY_SPACES_NAMES:
+        requested_similarity_space = settings.SIMILARITY_SPACE_DEFAULT
+
+    if requested_similarity_space in sound_available_similarity_spaces:
+        similarity_space = requested_similarity_space
+    else:
+        similarity_space = sound_available_similarity_spaces[0]
 
     # Get similar sounds from solr
+    num_similar_sounds = settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES
     try:
         results = get_search_engine().search_sounds(
             similar_to=sound.id, similar_to_similarity_space=similarity_space, num_sounds=num_similar_sounds
@@ -949,6 +959,7 @@ def similar(request, username, sound_id):
         "similarity_spaces_names": [
             (sim_space_name, sim_space_options.get("display_name", sim_space_name))
             for sim_space_name, sim_space_options in settings.SIMILARITY_SPACES.items()
+            if sim_space_name in sound_available_similarity_spaces
         ],
     }
     tvars.update(paginator)
@@ -1268,3 +1279,24 @@ def pack_downloaders(request, username, pack_id):
     tvars = {"username": username, "pack": pack, "download_list": download_list}
     tvars.update(pagination)
     return render(request, "sounds/modal_downloaders.html", tvars)
+
+
+def broad_sound_taxonomy_info_page(request):
+    # Note: the colors below are currently hard-coded here, but in the future they should be
+    # added to the CSV file that defines the taxonomy and loaded from there.
+    taxonomy_node_colors = {
+        "m": "rgb(228,34,30)",
+        "is": "rgb(249,164,48)",
+        "sp": "rgb(39,161,132)",
+        "fx": "rgb(20,107,173)",
+        "ss": "rgb(50,167,40)",
+    }
+    taxonomy = settings.BROAD_SOUND_TAXONOMY
+    for key, node in taxonomy.items():
+        if key in taxonomy_node_colors:
+            node["color"] = taxonomy_node_colors[key]
+    tvars = {
+        "bst": taxonomy,
+        "bst_top_level_categories": settings.BST_CATEGORY_CHOICES,
+    }
+    return render(request, "sounds/broad_sound_taxonomy_info_page.html", tvars)

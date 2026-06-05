@@ -25,6 +25,7 @@ from django_recaptcha.fields import ReCaptchaField
 
 from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
+from utils.username import get_user_by_username
 
 
 class ManualUserField(forms.CharField):
@@ -32,7 +33,7 @@ class ManualUserField(forms.CharField):
         if not value:
             raise forms.ValidationError("Please enter a username.")
         try:
-            return User.objects.get(username__iexact=value)
+            return get_user_by_username(value)
         except User.DoesNotExist:  # @UndefinedVariable
             raise forms.ValidationError("We are sorry, but this username does not exist...")
 

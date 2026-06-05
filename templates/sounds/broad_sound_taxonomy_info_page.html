@@ -1,0 +1,65 @@
+{% extends "simple_page.html" %}
+{% load util %}
+{% load bw_templatetags %}
+
+{% block title %}Broad Sound Taxonomy{% endblock %}
+{% block page-title %}The Broad Sound Taxonomy{% endblock %}
+
+{% block page-content %}
+
+<p>Freesound categorizes sounds into broad categories using the <b>Broad Sound Taxonomy</b> (BST). 
+The BST is designed to be a simple yet comprehensive system to organize sounds.  By using this taxonomy, we ensure that sounds are easier to find, whether you're searching, browsing, or filtering results. The <b>BST was added to Freesound on April 2025</b>. Here is a diagram with the top-level and second-level categories (<i>categories</i> and <i>subcategories</i>). </p>
+
+<div class="row no-gutters center bst-taxonomy">
+{% for cat_key, _ in bst_top_level_categories %}
+  {% with bst|dict_element:cat_key as top_level_cat_info %}
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="#{{ cat_key }}"><div class="node topcat" style="background-color: {{ top_level_cat_info.color }};">{{ top_level_cat_info.top_level }}</div></a>
+    {% for cat_key, cat_info in bst.items %}
+      {% if cat_info.top_level == top_level_cat_info.top_level and cat_info.level == 2 %}
+        <a href="#{{ cat_key }}"><div class="node subcat" style="background-color: {{ top_level_cat_info.color }};"><span class="label">{{ cat_info.second_level }} ({{cat_key}})</span></div></a>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endwith %}
+{% endfor %}
+</div>
+
+<p>The following table provides a more detailed listing of all the available categories and subcategories including descriptions and examples. </p>
+
+<div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+<table>
+<thead>
+<tr>
+  <th>Category</th>
+  <th>Subcategory</th>
+  <th>ID</th>
+  <th>Description</th>
+  <th>Examples</th>
+  <th>Search</th>
+</tr>
+</thead>
+<tbody>
+{% for cat_key, cat_info in bst.items %}
+<tr id="{{ cat_key }}">
+  <td>{{ cat_info.top_level }}</td>
+  <td>{{ cat_info.second_level }}</td>
+  <td>{{ cat_key }}</td>
+  <td>{{ cat_info.description }}</td>
+  <td>{{ cat_info.examples }}</td>
+  <td style="text-align: right;">
+    {% if cat_info.level == 1 %}
+    <a href="{% url 'sounds-search' %}?f=category:%22{{ cat_info.top_level|urlencode }}%22">{% bw_icon "search" %}</a>
+    {% else %}
+    <a href="{% url 'sounds-search' %}?f=category:%22{{ cat_info.top_level|urlencode }}%22+subcategory:%22{{ cat_info.second_level|urlencode }}%22">{% bw_icon "search" %}</a>
+    {% endif %}
+  </td>
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+
+{% endblock %}

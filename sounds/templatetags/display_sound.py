@@ -293,8 +293,8 @@ def display_sound_no_sound_object(
         'samplerate': sound.samplerate,  # Useful for the ruler of the player, if not indicated, a default will be assumed
         'preview_mp3': sound.locations('preview.LQ.mp3.url'),
         'preview_ogg': sound.locations('preview.LQ.ogg.url'),
-        'wave': sound.locations('display.wave_bw.L.url'),
-        'spectral': sound.locations('display.spectral_bw.L.url'),
+        'wave': sound.locations('display.wave.L.url'),
+        'spectral': sound.locations('display.spectral.L.url'),
         'id': sound.id,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity buttons
         'username': sound.user.username,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
         'ready_for_similarity': sound.ready_for_similarity  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
@@ -317,8 +317,8 @@ def display_sound_no_sound_object(
             "locations": {
                 "preview": {"LQ": {"mp3": {"url": file_data["preview_mp3"]}, "ogg": {"url": file_data["preview_ogg"]}}},
                 "display": {
-                    "wave_bw": {"M": {"url": file_data["wave"]}, "L": {"url": file_data["wave"]}},
-                    "spectral_bw": {"M": {"url": file_data["spectral"]}, "L": {"url": file_data["spectral"]}},
+                    "wave": {"M": {"url": file_data["wave"]}, "L": {"url": file_data["wave"]}},
+                    "spectral": {"M": {"url": file_data["spectral"]}, "L": {"url": file_data["spectral"]}},
                 },
             },
         },

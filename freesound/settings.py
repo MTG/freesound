@@ -24,6 +24,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -36,7 +37,6 @@ MIDDLEWARE = [
     "freesound.middleware.TosAcceptanceHandler",
     "freesound.middleware.BulkChangeLicenseHandler",
     "freesound.middleware.UpdateEmailHandler",
-    "corsheaders.middleware.CorsMiddleware",
 ]
 
 INSTALLED_APPS = [
@@ -120,8 +120,6 @@ API_MONITORING_REDIS_STORE_ID = 0
 CLUSTERING_CACHE_REDIS_STORE_ID = 1
 AUDIO_FEATURES_REDIS_STORE_ID = 2
 CELERY_BROKER_REDIS_STORE_ID = 3
-CDN_MAP_STORE_ID = 5
-
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -135,10 +133,6 @@ CACHES = {
     "api_monitoring": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{API_MONITORING_REDIS_STORE_ID}",
-    },
-    "cdn_map": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{CDN_MAP_STORE_ID}",
     },
     "clustering": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -400,11 +394,13 @@ BULK_UPLOAD_MIN_SOUNDS = 40
 # Turn this option on to log every time a user downloads a pack or sound
 LOG_DOWNLOADS = False
 
-# Use external CDN for downloading sounds (if sounds exist in the CDN) and serving previews/displays
+# Use external CDN for downloading sounds and serving previews/displays
 USE_CDN_FOR_DOWNLOADS = False
 USE_CDN_FOR_PREVIEWS = False
 USE_CDN_FOR_DISPLAYS = False
-CDN_DOWNLOADS_TEMPLATE_URL = "https://cdn.freesound.org/sounds/{}/{}?filename={}"
+CDN_DOWNLOADS_BASE_URL = "https://cdn.freesound.org"
+CDN_SECURE_LINK_SECRET = ""
+CDN_DOWNLOAD_URL_LIFETIME = 60 * 60  # 1 hour
 CDN_PREVIEWS_URL = "https://cdn.freesound.org/previews/"
 CDN_DISPLAYS_URL = "https://cdn.freesound.org/displays/"
 
@@ -421,194 +417,33 @@ USER_DOWNLOADS_PUBLIC = True
 ANNOUNCEMENT_CACHE_KEY = "announcement_cache"
 
 # -------------------------------------------------------------------------------
-# Broad Sound Taxonomy definition (internal v1.1 of BST description)
+# Broad Sound Taxonomy definition
 
-BROAD_SOUND_TAXONOMY = {
-    "m": {
-        "level": 1,
-        "name": "Music",
-        "description": "Music excerpts, including melodies, singing, loops, fillers, drones and short musical snippets.",
-    },
-    "m-sp": {
-        "level": 2,
-        "name": "Solo percussion",
-        "description": "Music excerpts with solo percussive instruments.",
-        "examples": "rhythmic patterns, unpitched percussion excerpts, drum passages",
-    },
-    "m-si": {
-        "level": 2,
-        "name": "Solo instrument",
-        "description": "Music excerpts with only one instrument, excluding percussion.",
-        "examples": "isolated melody or sequence of notes, solo singing, chords from one instrument",
-    },
-    "m-m": {
-        "level": 2,
-        "name": "Multiple instruments",
-        "description": "Music excerpts with more than one instrument.",
-        "examples": "orchestra, band, dueto, multi-instrument composition, multi-instrument loops",
-    },
-    "m-other": {
-        "level": 2,
-        "name": "Other",
-        "description": "Music that doesn't belong to any of the above categories.",
-    },
-    "is": {
-        "level": 1,
-        "name": "Instrument samples",
-        "description": "Single notes from musical instruments, various versions of the same note, and scales.",
-    },
-    "is-p": {
-        "level": 2,
-        "name": "Percussion",
-        "description": "Instrument samples that are percussive (idiophones or membraphones).",
-        "examples": "drum, snare, gong, bell, xylophone",
-    },
-    "is-s": {
-        "level": 2,
-        "name": "String",
-        "description": "Instrument samples that belong to the string instrument family.",
-        "examples": "guitar, violin, harp, mandolin",
-    },
-    "is-w": {
-        "level": 2,
-        "name": "Wind",
-        "description": "Instrument samples that belong to the wind instrument family (aerophones).",
-        "examples": "woodwind, brass, flute, trumpet, saxophone",
-    },
-    "is-k": {
-        "level": 2,
-        "name": "Piano / Keyboard instruments",
-        "description": "Instrument samples of piano or other keyboard instruments, not synthesized.",
-        "examples": "piano, harspichord, organ",
-    },
-    "is-e": {
-        "level": 2,
-        "name": "Synths / Electronic",
-        "description": "Instrument samples synthesized or produced by electronic means.",
-        "examples": "synthesizers (analog/digital), synthesized or electronic samples",
-    },
-    "is-other": {
-        "level": 2,
-        "name": "Other",
-        "description": "Instrument samples that don't belong to any of the above categories.",
-    },
-    "sp": {"level": 1, "name": "Speech", "description": "Sounds where human voice is prominent."},
-    "sp-s": {
-        "level": 2,
-        "name": "Solo speech",
-        "description": "Recording of a single voice speaking, excluding singing.",
-        "examples": "talking, script reading",
-    },
-    "sp-c": {
-        "level": 2,
-        "name": "Conversation / Crowd",
-        "description": "Several people talking, having a conversation or dialogue.",
-        "examples": "playground, people talking in public places, conversations",
-    },
-    "sp-p": {
-        "level": 2,
-        "name": "Processed / Synthetic",
-        "description": "Voice(s) from an indirect source (e.g. radio), heavily processed, or synthesized.",
-        "examples": "phone/radio recordings, robotic voice, text-to-speech",
-    },
-    "sp-other": {
-        "level": 2,
-        "name": "Other",
-        "description": "Voice-predominant recordings that don't belong to any of the above categories.",
-    },
-    "fx": {
-        "level": 1,
-        "name": "Sound effects",
-        "description": "Isolated sound effects or sound events, each happening one at a time.",
-    },
-    "fx-o": {
-        "level": 2,
-        "name": "Objects / House appliances",
-        "description": "Everyday objects, inside the home or smaller in size.",
-        "examples": "daily or small objects, tools, weapons, clothes, iron",
-    },
-    "fx-v": {
-        "level": 2,
-        "name": "Vehicles",
-        "description": "Sounds produced from a vehicle.",
-        "examples": "car passing by, car screeching, wiper, car brake, bike, plane, ship",
-    },
-    "fx-m": {
-        "level": 2,
-        "name": "Other mechanisms, engines, machines",
-        "description": "Machine-like sounds, except vehicles and small house electric devices.",
-        "examples": "drill, lawn mower, gear, electric chainsaw",
-    },
-    "fx-h": {
-        "level": 2,
-        "name": "Human sounds and actions",
-        "description": "Sounds from the human body, excluding speech.",
-        "examples": "breath, hearthbeat, sneeze, crying, walking, clapping",
-    },
-    "fx-a": {
-        "level": 2,
-        "name": "Animals",
-        "description": "Animal vocalizations or sounds.",
-        "examples": "cat, insect, sheep, animal walk, growl, purr",
-    },
-    "fx-n": {
-        "level": 2,
-        "name": "Natural elements and explosions",
-        "description": "Sound events occurring by natural processes.",
-        "examples": "wind, fire, ice, rocks, water, stones, explosions",
-    },
-    "fx-ex": {
-        "level": 2,
-        "name": "Experimental",
-        "description": "Experimental sounds or heavily processed audio recordings.",
-        "examples": "reversed sounds, weird effects, unusual recording techniques or processing",
-    },
-    "fx-el": {
-        "level": 2,
-        "name": "Electronic / Design",
-        "description": "Sound effects that are computer-made or designed for user interfaces or animations.",
-        "examples": "sci-fi, laser, whoosh, boink, cartoon, ui, sound alerts or notifications",
-    },
-    "fx-other": {
-        "level": 2,
-        "name": "Other",
-        "description": "Sound effects that don't belong to any of the above categories.",
-    },
-    "ss": {
-        "level": 1,
-        "name": "Soundscapes",
-        "description": "Ambiances, field-recordings with multiple events and sound environments.",
-    },
-    "ss-n": {
-        "level": 2,
-        "name": "Nature",
-        "description": "Soundscapes from natural habitats.",
-        "examples": "forest ambiance, seaside, river with surrounding nature, farmland",
-    },
-    "ss-i": {
-        "level": 2,
-        "name": "Indoors",
-        "description": "Soundscapes from closed or indoor spaces.",
-        "examples": "closed room ambience, room tone, office, factory, bar",
-    },
-    "ss-u": {
-        "level": 2,
-        "name": "Urban",
-        "description": "Soundscapes from cityscapes or outdoor places with human intervention.",
-        "examples": "city ambience, outside airport, busy road",
-    },
-    "ss-s": {
-        "level": 2,
-        "name": "Synthetic / Artificial",
-        "description": "Soundscapes that are synthesized or computer-made ambiences.",
-        "examples": "artificially-created soundscapes, soundscapes from imaginary places",
-    },
-    "ss-other": {
-        "level": 2,
-        "name": "Other",
-        "description": "Soundscapes that don't belong to any of the above categories.",
-    },
-}
+
+def load_broad_sound_taxonomy_from_csv(path):
+    import csv
+
+    taxonomy = {}
+    with open(path, newline="", encoding="utf-8") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            key = row["class_key"]
+            taxonomy[key] = {
+                "level": 2 if "-" in key else 1,
+                "name": row["second_level"] if "-" in key else row["top_level"],
+                "top_level": row["top_level"],
+                "second_level": row["second_level"],
+                "description": row["description"],
+                "examples": row.get("examples", ""),
+            }
+    return taxonomy
+
+
+BROAD_SOUND_TAXONOMY_CSV_FILENAME = "bst_description_v1.1_250725.csv"
+BROAD_SOUND_TAXONOMY_CSV_DEFINITION_PATH = os.path.join(
+    os.path.dirname(__file__), "../_docs/", BROAD_SOUND_TAXONOMY_CSV_FILENAME
+)
+BROAD_SOUND_TAXONOMY = load_broad_sound_taxonomy_from_csv(BROAD_SOUND_TAXONOMY_CSV_DEFINITION_PATH)
 
 BST_CATEGORY_CHOICES = [
     (key, value["name"]) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" not in key
@@ -673,6 +508,7 @@ FREESOUND_ESSENTIA_EXTRACTOR_NAME = "fs-essentia-extractor_legacy"
 BIRDNET_ANALYZER_NAME = "birdnet_v1"
 FSDSINET_ANALYZER_NAME = "fsd-sinet_v1"
 BST_ANALYZER_NAME = "bst-extractor_v1"
+BSTV2_ANALYZER_NAME = "bst-extractor_v2"
 
 ANALYZERS_CONFIGURATION = {
     AUDIOCOMMONS_ANALYZER_NAME: {},
@@ -680,6 +516,7 @@ ANALYZERS_CONFIGURATION = {
     BIRDNET_ANALYZER_NAME: {},
     FSDSINET_ANALYZER_NAME: {},
     BST_ANALYZER_NAME: {},
+    BSTV2_ANALYZER_NAME: {},
 }
 
 AUDIO_DESCRIPTOR_TYPE_FLOAT = "float"
@@ -699,13 +536,13 @@ CONSOLIDATED_ANALYZER_NAME = "consolidated"
 CONSOLIDATED_AUDIO_DESCRIPTORS = [
     {
         "name": "category",
-        "analyzer": BST_ANALYZER_NAME,
+        "analyzer": BSTV2_ANALYZER_NAME,
         "original_name": "bst_top_level",
         "type": AUDIO_DESCRIPTOR_TYPE_STRING,
     },
     {
         "name": "subcategory",
-        "analyzer": BST_ANALYZER_NAME,
+        "analyzer": BSTV2_ANALYZER_NAME,
         "original_name": "bst_second_level",
         "type": AUDIO_DESCRIPTOR_TYPE_STRING,
     },
@@ -903,7 +740,7 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     {
         "name": "reverbness",
         "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "reverbness",
+        "original_name": "reverb",
         "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
     },
     {
@@ -1035,7 +872,7 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     {
         "name": "has_audio_problems",
         "analyzer": "fs-essentia-problem-detection_v1",
-        "original_name": "has_audio_problems",
+        "original_name": "error",
         "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
     },
     {
@@ -1176,7 +1013,14 @@ SEARCH_FORUM_SORT_DEFAULT = SEARCH_FORUM_SORT_OPTION_THREAD_DATE_FIRST
 SEARCH_ENGINE_BACKEND_CLASS = "utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine"
 SOLR5_BASE_URL = "http://search:8983/solr"
 SOLR9_BASE_URL = "http://search:8983"
-SEARCH_SOLR_TIMEOUT_SECONDS = 5
+# If a request to solr takes longer than this, give up
+SEARCH_SOLR_TIMEOUT_SECONDS = 2.0
+# Tell solr that it shouldn't take more than this on a search
+# it should return after this long (before our timeout)
+SEARCH_SOLR_TIME_ALLOWED_MS = 1000
+# Similarity searches can take a bit longer
+SEARCH_SOLR_SIMILARITY_TIMEOUT_SECONDS = 4.0
+SEARCH_SOLR_SIMILARITY_TIME_ALLOWED_MS = 3000
 
 SIMILARITY_SPACE_LAION_CLAP = "laion_clap"
 SIMILARITY_FREESOUND_CLASSIC = "freesound_classic"
@@ -1213,13 +1057,6 @@ SEARCH_EMPTY_QUERY_CACHE_TIME = (
 
 SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take longer than this threshold in milliseconds. Set it to -1 to disable logging of slow queries.
 SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
-
-# -------------------------------------------------------------------------------
-# Similarity client settings
-SIMILARITY_ADDRESS = "similarity"
-SIMILARITY_PORT = 8008
-SIMILARITY_INDEXING_SERVER_PORT = 8009
-SIMILARITY_TIMEOUT = 10
 
 # -------------------------------------------------------------------------------
 # Tag recommendation client settings
@@ -1465,6 +1302,13 @@ COLLECTION_SORT_DEFAULT = "featured"
 from .local_settings import *  # noqa: F403
 
 # -------------------------------------------------------------------------------
+# CDN secret validation (must be after local_settings import)
+if USE_CDN_FOR_DOWNLOADS and not CDN_SECURE_LINK_SECRET:
+    from django.core.exceptions import ImproperlyConfigured
+
+    raise ImproperlyConfigured("CDN_SECURE_LINK_SECRET must be set when USE_CDN_FOR_DOWNLOADS is True")
+
+# -------------------------------------------------------------------------------
 # More collections stuff
 
 if ENABLE_COLLECTIONS:
@@ -1491,6 +1335,8 @@ if SENTRY_DSN:
         integrations=[DjangoIntegration()],
         send_default_pii=True,
         traces_sample_rate=TRACES_SAMPLE_RATE,
+        profile_session_sample_rate=TRACES_SAMPLE_RATE,
+        profile_lifecycle="trace",
     )
 
 
@@ -1501,6 +1347,7 @@ AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
 PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
 DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/")
 SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
+CDN_SOUNDS_SYMLINKS_PATH = os.path.join(DATA_PATH, "cdn_sounds/")
 PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
 CSV_PATH = os.path.join(DATA_PATH, "csv/")

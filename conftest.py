@@ -24,7 +24,4 @@ def use_dummy_cache_backend(settings):
         "clustering": {
             "BACKEND": "django.core.cache.backends.dummy.DummyCache",
         },
-        "cdn_map": {
-            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
-        },
     }

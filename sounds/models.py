@@ -38,7 +38,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Sum
+from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Greatest, JSONObject
 from django.db.models.signals import post_delete, post_save, pre_delete
 from django.dispatch import receiver
@@ -66,11 +66,11 @@ from tags.models import SoundTag, Tag
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_template_cache, invalidate_user_template_caches
+from utils.cdn import delete_cdn_symlink
 from utils.locations import locations_decorator
 from utils.mail import send_mail_template
 from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_sounds import delete_sounds_from_search_engine
-from utils.similarity_utilities import delete_sound_from_gaia
 from utils.sound_upload import bulk_describe_from_csv, get_csv_lines, validate_input_csv_file
 
 web_logger = logging.getLogger("web")
@@ -432,9 +432,6 @@ class SoundManager(models.Manager):
         self, include_audio_descriptors=False, include_similarity_vectors=False, include_remix_subqueries=False
     ):
         tags_subquery = Tag.objects.filter(soundtag__sound=OuterRef("id")).values("name")
-        analysis_subquery = SoundAnalysis.objects.filter(
-            sound=OuterRef("id"), analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK"
-        )
         default_similarity_space_analyzer = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]["analyzer"]
         ready_for_similarity_subquery = SoundAnalysis.objects.filter(
             sound=OuterRef("id"), analyzer=default_similarity_space_analyzer, analysis_status="OK"
@@ -447,7 +444,6 @@ class SoundManager(models.Manager):
             pack_name=F("pack__name"),
             remixgroup_id=F("remix_group__id"),
             tag_array=ArraySubquery(tags_subquery),
-            analysis_state_essentia_exists=Exists(analysis_subquery),
             ready_for_similarity_precomputed=Exists(ready_for_similarity_subquery),
         )
 
@@ -787,34 +783,6 @@ class Sound(models.Model):
                 spectral=dict(
                     M=dict(
                         path=os.path.join(
-                            settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_M.jpg" % (self.id, sound_user_id)
-                        ),
-                        url=displays_url + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, sound_user_id),
-                    ),
-                    L=dict(
-                        path=os.path.join(
-                            settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_L.jpg" % (self.id, sound_user_id)
-                        ),
-                        url=displays_url + "%s/%d_%d_spec_L.jpg" % (id_folder, self.id, sound_user_id),
-                    ),
-                ),
-                wave=dict(
-                    M=dict(
-                        path=os.path.join(
-                            settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.png" % (self.id, sound_user_id)
-                        ),
-                        url=displays_url + "%s/%d_%d_wave_M.png" % (id_folder, self.id, sound_user_id),
-                    ),
-                    L=dict(
-                        path=os.path.join(
-                            settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.png" % (self.id, sound_user_id)
-                        ),
-                        url=displays_url + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id),
-                    ),
-                ),
-                spectral_bw=dict(
-                    M=dict(
-                        path=os.path.join(
                             settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_bw_M.jpg" % (self.id, sound_user_id)
                         ),
                         url=displays_url + "%s/%d_%d_spec_bw_M.jpg" % (id_folder, self.id, sound_user_id),
@@ -826,7 +794,7 @@ class Sound(models.Model):
                         url=displays_url + "%s/%d_%d_spec_bw_L.jpg" % (id_folder, self.id, sound_user_id),
                     ),
                 ),
-                wave_bw=dict(
+                wave=dict(
                     M=dict(
                         path=os.path.join(
                             settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_bw_M.png" % (self.id, sound_user_id)
@@ -1237,10 +1205,6 @@ class Sound(models.Model):
             self.locations("analysis.statistics.path"),  # analysis statistics file
             self.locations("display.spectral.L.path"),  # spectrogram L
             self.locations("display.spectral.M.path"),  # spectrogram M
-            self.locations("display.wave_bw.L.path"),  # waveform BW L
-            self.locations("display.wave_bw.M.path"),  # waveform BW M
-            self.locations("display.spectral_bw.L.path"),  # spectrogram BW L
-            self.locations("display.spectral_bw.M.path"),  # spectrogram BW M
             self.locations("display.wave.L.path"),  # waveform L
             self.locations("display.wave.M.path"),  # waveform M
             self.locations("preview.HQ.mp3.path"),  # preview HQ mp3
@@ -1419,6 +1383,7 @@ class Sound(models.Model):
                     "metadata": json.dumps(
                         {
                             "duration": self.duration,
+                            "name": self.original_filename,
                             "tags": self.get_sound_tags(),
                             "geotag": [self.geotag.lat, self.geotag.lon] if hasattr(self, "geotag") else None,
                         }
@@ -1628,7 +1593,6 @@ class Sound(models.Model):
 
     def delete_from_indexes(self):
         delete_sounds_from_search_engine([self.id])
-        delete_sound_from_gaia(self.id)
 
     def invalidate_template_caches(self):
         for is_explicit in [True, False]:
@@ -1665,11 +1629,8 @@ class Sound(models.Model):
             # If attribute is precomputed from query (because Sound was retrieved using bulk_query), no need to perform extra queries
             return self.ready_for_similarity_precomputed
         else:
-            # Otherwise, check if there is a SoundAnalysis object for this sound with the correct analyzer and status
-            analyzer_for_default_sim_space = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]["analyzer"]
-            return SoundAnalysis.objects.filter(
-                sound_id=self.id, analyzer=analyzer_for_default_sim_space, analysis_status="OK"
-            ).exists()
+            # Otherwise, check if there is any SoundSimilarityVector object for this sound
+            return SoundSimilarityVector.objects.filter(sound=self).exists()
 
     @property
     def category_names(self):
@@ -1708,6 +1669,13 @@ class Sound(models.Model):
 
     class Meta:
         ordering = ("-created",)
+        indexes = [
+            models.Index(
+                fields=["is_index_dirty"],
+                condition=Q(is_index_dirty=True),
+                name="sound_is_index_dirty_partial",
+            ),
+        ]
 
 
 class SoundOfTheDayManager(models.Manager):
@@ -1865,6 +1833,8 @@ def on_delete_sound(sender, instance, **kwargs):
     instance.delete_from_indexes()
     instance.unlink_moderation_ticket()
 
+    delete_cdn_symlink(instance)
+
 
 def post_delete_sound(sender, instance, **kwargs):
     # after deleted sound update num_sounds on profile and pack
@@ -1940,8 +1910,8 @@ class PackManager(models.Manager):
                             "duration": s.duration,
                             "preview_mp3": s.locations("preview.LQ.mp3.url"),
                             "preview_ogg": s.locations("preview.LQ.ogg.url"),
-                            "wave": s.locations("display.wave_bw.L.url"),
-                            "spectral": s.locations("display.spectral_bw.L.url"),
+                            "wave": s.locations("display.wave.L.url"),
+                            "spectral": s.locations("display.spectral.L.url"),
                             "num_ratings": s.num_ratings,
                             "avg_rating": s.avg_rating,
                         }
@@ -1962,9 +1932,8 @@ class PackManager(models.Manager):
         selected_sounds_ids = []
         for p in packs:
             selected_sounds_ids += [s["id"] for s in p.selected_sounds_data]
-        analyzer_for_default_sim_space = settings.SIMILARITY_SPACES[settings.SIMILARITY_SPACE_DEFAULT]["analyzer"]
-        sound_ids_ready_for_similarity = SoundAnalysis.objects.filter(
-            sound_id__in=selected_sounds_ids, analyzer=analyzer_for_default_sim_space, analysis_status="OK"
+        sound_ids_ready_for_similarity = SoundSimilarityVector.objects.filter(
+            sound_id__in=selected_sounds_ids
         ).values_list("sound_id", flat=True)
         for p in packs:
             for s in p.selected_sounds_data:
@@ -2516,6 +2485,9 @@ class SoundSimilarityVector(models.Model):
             return [v / norm for v in vector]
         else:
             return vector
+
+    def __str__(self):
+        return f"Similarity vector of sound {self.sound_id} in space {self.similarity_space_name}"
 
     class Meta:
         unique_together = (

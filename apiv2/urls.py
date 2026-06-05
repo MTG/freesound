@@ -41,11 +41,11 @@ urlpatterns = [
         views.MeBookmarkCategorySounds.as_view(),
         name="apiv2-me-bookmark-category-sounds",
     ),
-    # Text/content/combined search
+    # Search
     path("search/", views.TextSearch.as_view(), name="apiv2-sound-search"),
-    path("search/text/", views.TextSearch.as_view(), name="apiv2-sound-text-search"),
-    path("search/content/", views.ContentSearch.as_view(), name="apiv2-sound-content-search"),
-    path("search/combined/", views.CombinedSearch.as_view(), name="apiv2-sound-combined-search"),
+    path(
+        "search/text/", views.TextSearch.as_view(), name="apiv2-sound-text-search"
+    ),  # Kept for backwards compatibility
     # Sounds
     path("sounds/<int:pk>/", views.SoundInstance.as_view(), name="apiv2-sound-instance"),
     path("sounds/<int:pk>/comments/", views.SoundComments.as_view(), name="apiv2-sound-comments"),

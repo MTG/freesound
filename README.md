@@ -47,13 +47,18 @@ Below are instructions for setting up a local Freesound installation for develop
 
 4. Download the [Freesound tag recommendation models](https://drive.google.com/file/d/1snaktMysCXdThWKkYuKWoGc_Hk2BElmz/view?usp=sharing) and place the contents under `freesound-data/tag_recommendation_models` directory (you'll need to create that directory).
 
-5. Rename `freesound/local_settings.example.py` file, so you can customise Django settings if needed and create a `.env` file with your local user UID and other useful settings. These other settings include `COMPOSE_PROJECT_NAME` and `LOCAL_PORT_PREFIX` which can be used to allow parallel local installations running on the same machine (provided that these to variables are different in the local installations), and `FS_BIND_HOST` which you should set to `0.0.0.0` if you need to access your local Freesound services from a remote machine.
+5. Rename `freesound/local_settings.example.py` file, so you can customise Django settings if needed.
+   Create a `.env` file with your local user UID and other useful settings.
+   `COMPOSE_PROJECT_NAME` and `LOCAL_PORT_PREFIX` can be used to allow parallel local installations running on the same machine.
+   `FS_BIND_HOST` can be set to `0.0.0.0` if you need to access your local Freesound services from a remote machine.
+   `FS_DATA_DIR` can be set to override the path to the `freesound-data` folder if you want to share the same data between multiple checkouts/work trees.
 
        cp freesound/local_settings.example.py freesound/local_settings.py
        echo FS_USER_ID=$(id -u) > .env
        echo COMPOSE_PROJECT_NAME=freesound >> .env
        echo LOCAL_PORT_PREFIX= >> .env
        echo FS_BIND_HOST= >> .env
+       echo FS_DATA_DIR=../freesound-data >> .env
 
 6. [Optional] Create API credentials for the 3rd party services listed below and add them to your own `freesound/local_settings.py` file (check `settings.py` to know the config parameter names that you need to fill in):
 
@@ -124,6 +129,6 @@ Among the services defined in `docker-compose.yml`, there is a `frontend_builder
 
 ### Running tests
 
-You can run tests using the Django test runner in the `web` container like that:
+Run tests using the pytest in the `web` container like this:
 
     docker compose run --rm web pytest

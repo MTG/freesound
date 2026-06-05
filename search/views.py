@@ -195,6 +195,8 @@ def search_view_helper(request):
                     "ip": get_client_ip(request),
                     "query": query_params["textual_query"],
                     "filter": query_params["query_filter"],
+                    "similar_to": query_params["similar_to"],
+                    "similar_to_similarity_space": query_params["similar_to_similarity_space"],
                     "username": request.user.username,
                     "page": query_params["current_page"],
                     "sort": query_params["sort"],
@@ -232,11 +234,13 @@ def search_view_helper(request):
             % json.dumps(
                 {
                     "ip": get_client_ip(request),
-                    "query": query_params.get("textual_query"),
-                    "filter": query_params.get("query_filter"),
+                    "query": query_params["textual_query"],
+                    "filter": query_params["query_filter"],
+                    "similar_to": query_params["similar_to"],
+                    "similar_to_similarity_space": query_params["similar_to_similarity_space"],
                     "username": request.user.username,
-                    "page": query_params.get("current_page"),
-                    "sort": query_params.get("sort"),
+                    "page": query_params["current_page"],
+                    "sort": query_params["sort"],
                     "url": sqp.get_url(),
                     "tags_mode": sqp.tags_mode_active(),
                 }

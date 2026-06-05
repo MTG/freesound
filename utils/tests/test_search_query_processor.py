@@ -44,7 +44,7 @@ class SearchQueryProcessorTests(TestCase):
         "query_filter": "",
         "similar_to": None,
         "similar_to_similarity_space": settings.SIMILARITY_SPACE_DEFAULT,
-        "sort": settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,  # Empty query should sort by date added, so use this as expected default
+        "sort": settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,  # Empty query should sort by date added, so use this as expected default because most of the tests will be like that
         "textual_query": "",
     }
 
@@ -261,12 +261,16 @@ class SearchQueryProcessorTests(TestCase):
 
         # With similar to option
         sqp, url = self.run_fake_search_query_processor(params={"st": "1234"})  # Passing similarity target as sound ID
-        self.assertExpectedParams(sqp.as_query_params(), {"similar_to": 1234})
+        self.assertExpectedParams(
+            sqp.as_query_params(), {"similar_to": 1234, "sort": settings.SEARCH_SOUNDS_SORT_DEFAULT}
+        )
         self.assertGetUrlAsExpected(sqp, url)
         sqp, url = self.run_fake_search_query_processor(
             params={"st": "[1.34,3.56,5.78]"}
         )  # Passing similarity target as sound ID
-        self.assertExpectedParams(sqp.as_query_params(), {"similar_to": [1.34, 3.56, 5.78]})
+        self.assertExpectedParams(
+            sqp.as_query_params(), {"similar_to": [1.34, 3.56, 5.78], "sort": settings.SEARCH_SOUNDS_SORT_DEFAULT}
+        )
         self.assertGetUrlAsExpected(sqp, url)
 
         # Using a pack filter, sounds should not be grouped by pack
@@ -287,9 +291,21 @@ class SearchQueryProcessorTests(TestCase):
                 "similar_to": [1.34, 3.56, 5.78],
                 "similar_to_similarity_space": settings.SIMILARITY_SPACE_LAION_CLAP,
                 "textual_query": "test query",
-                "sort": settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+                "sort": settings.SEARCH_SOUNDS_SORT_DEFAULT,
             },
         )
+
+    def test_search_query_processor_default_sort_options(self):
+        # Test that, if unspecified, the sort option is the default one, except the case in which
+        # there is an empty query and no similar_to parameter set.
+        sqp, _ = self.run_fake_search_query_processor(params={"q": "test"})
+        self.assertEqual(sqp.options["sort_by"].value_to_apply, settings.SEARCH_SOUNDS_SORT_DEFAULT)
+
+        sqp, _ = self.run_fake_search_query_processor(params={"q": ""})
+        self.assertEqual(sqp.options["sort_by"].value_to_apply, settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST)
+
+        sqp, url = self.run_fake_search_query_processor(params={"q": "", "st": "1234"})
+        self.assertEqual(sqp.options["sort_by"].value_to_apply, settings.SEARCH_SOUNDS_SORT_DEFAULT)
 
     def test_search_query_processor_disabled_options(self):
         # Test that some search options are marked as disabled depending on the state of some other options
@@ -298,10 +314,6 @@ class SearchQueryProcessorTests(TestCase):
         # query if similarity on
         sqp, _ = self.run_fake_search_query_processor(params={"st": "1234"})
         self.assertTrue(sqp.options["query"].disabled)
-
-        # sort if similarity on
-        sqp, _ = self.run_fake_search_query_processor(params={"st": "1234"})
-        self.assertTrue(sqp.options["sort_by"].disabled)
 
         # group_by_pack if display_as_packs or map_mode
         sqp, _ = self.run_fake_search_query_processor(params={"dp": "1"})

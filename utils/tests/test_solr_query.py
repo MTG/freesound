@@ -1,9 +1,12 @@
+from unittest import mock
+
 import pytest
 from django.conf import settings
 
-from utils.search import SearchEngineException
+from utils.search import SearchEngineException, SearchEngineTimeoutException
+from utils.search.backends.solr9pysolr import Solr9PySolrSearchEngine
 from utils.search.backends.solr555pysolr import Solr555PySolrSearchEngine
-from utils.search.backends.solr_common import SolrQuery
+from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
 
 
 def test_search_process_sort_default():
@@ -78,3 +81,49 @@ def test_search_process_sort_distance_multiple_fields():
 def test_search_process_sort_distance_invalid_target():
     with pytest.raises(SearchEngineException):
         Solr555PySolrSearchEngine().search_process_sort_distance("bpm:not-a-number")
+
+
+def test_solr_query_default_params_include_time_allowed():
+    query = SolrQuery()
+    assert query.params["timeAllowed"] == settings.SEARCH_SOLR_TIME_ALLOWED_MS
+
+
+def test_solr_response_partial_results_raises_timeout():
+    response = {
+        "responseHeader": {
+            "QTime": 1001,
+            "partialResults": True,
+            "params": {"start": "0"},
+        },
+        "response": {"docs": [], "start": 0, "numFound": 0},
+    }
+    with pytest.raises(SearchEngineTimeoutException):
+        SolrResponseInterpreter(response)
+
+
+def test_solr_response_partial_results_grouped_missing_ngroups():
+    # Grouped responses with partialResults may be structurally incomplete (no `ngroups`).
+    # The check must run before the grouped-parsing block so we get a structured timeout
+    # rather than a KeyError.
+    response = {
+        "responseHeader": {"QTime": 1001, "partialResults": True, "params": {"start": "0"}},
+        "grouped": {"pack_grouping": {"groups": []}},
+    }
+    with pytest.raises(SearchEngineTimeoutException):
+        SolrResponseInterpreter(response)
+
+
+@mock.patch("utils.search.backends.solr9pysolr.pysolr.Solr")
+def test_get_sounds_index_default_omits_search_handler(mock_solr):
+    # When no search_handler is provided, we don't pass it to pysolr at all so
+    # pysolr's own default kicks in (the falsy-fallback to "select").
+    Solr9PySolrSearchEngine().get_sounds_index()
+    _, kwargs = mock_solr.call_args
+    assert "search_handler" not in kwargs
+
+
+@mock.patch("utils.search.backends.solr9pysolr.pysolr.Solr")
+def test_get_sounds_index_passes_explicit_search_handler(mock_solr):
+    Solr9PySolrSearchEngine().get_sounds_index(search_handler="select_similarity")
+    _, kwargs = mock_solr.call_args
+    assert kwargs["search_handler"] == "select_similarity"

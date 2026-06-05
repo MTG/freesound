@@ -54,7 +54,7 @@
         {% if collection.description %}
         <div class="v-spacing-top-4">{{collection.description}}</div>
         {% endif %}
-        
+        {% if paginator.count %}
         <form method="get"
               action="{{ collection.get_absolute_url }}"
               class="v-spacing-top-5">
@@ -134,6 +134,7 @@
         <div class="v-spacing-top-4 text-center">
             <a class="no-hover" href="{{ collection.get_collection_sounds_in_search_url }}"><button class="btn-primary">Browse collections sounds in the search page</button></a>
         </div>
+        {% endif %}
         {% endif %}
 
     </div>

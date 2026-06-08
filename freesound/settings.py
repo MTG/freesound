@@ -1287,6 +1287,14 @@ RABBITMQ_API_PORT = "5673"
 # Collections
 ENABLE_COLLECTIONS = False
 MAX_SOUNDS_PER_COLLECTION = 250
+MAX_FEATURED_SOUNDS_PER_COLLECTION = 6
+COLLECTION_SORT_OPTIONS = {
+    "featured": ("Featured first", "featured_order"),
+    "created_desc": ("Date added (newest first)", "-collectionsound__created"),
+    "created_asc": ("Date added (oldest first)", "collectionsound__created"),
+    "name": ("Name", "original_filename"),
+}
+COLLECTION_SORT_DEFAULT = "featured"
 
 # -------------------------------------------------------------------------------
 # Import local settings

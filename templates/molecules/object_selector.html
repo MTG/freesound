@@ -6,7 +6,10 @@
     <div class="bw-object-selector-container row {% if show_select_all_buttons %}v-spacing-top-1{% else %}{% endif %} no-gutters" style="margin-left:-8px;margin-right:-8px;" data-type="{{ type }}" data-max-elements="{{ max_elements }}">
         {% for object in objects %}
         <div class="col-md-4 col-6">
-            {% if type == "sounds" %}{% display_sound_small_selectable object object.selected %}
+            {% if type == "sounds" %}
+                {% if show_actions %}{% display_sound_small_with_actions object object.is_featured %}
+                {% else %}{% display_sound_small_selectable object object.selected %}
+                {% endif %}
             {% elif type == "packs" %}{% display_pack_small_selectable object object.selected %}
             {% elif type == "users" %}{% display_user_small_selectable object object.selected %}
             {% endif %}
@@ -14,3 +17,4 @@
         {% endfor %}
     </div>
 </div>
+

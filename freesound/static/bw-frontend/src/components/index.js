@@ -17,3 +17,6 @@ import './uiThemeDetector';
 
 import { initializeStuffInContainer } from '../utils/initHelper';
 initializeStuffInContainer(document, true, true);
+
+// Exposed so htmx-init.js can rehydrate swapped-in subtrees
+window.initializeStuffInContainer = initializeStuffInContainer;

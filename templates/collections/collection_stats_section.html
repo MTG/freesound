@@ -6,13 +6,13 @@
             {% if collection.public %} {% bw_icon 'eye' 'text-light-grey' %} <span class="text-19 bw-link--black">Public {% else %} {% bw_icon 'eye-blocked' 'text-light-grey' %} <span class="text-19 bw-link--black">Private {% endif %}collection</span>
         </li>
         <li class="v-spacing-3">
-            {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black"> {{ collection.num_sounds|formatnumber }} sound{{ collection.num_sounds|pluralize }}</a>
+            {% bw_icon 'wave' 'text-light-grey' %} <a class="text-19 bw-link--black" title="This collection has {{ collection.num_sounds|bw_intcomma }} sound{{ collection.num_sounds|pluralize }}" href="{{ collection.get_collection_sounds_in_search_url }}"> {{ collection.num_sounds|formatnumber }} sound{{ collection.num_sounds|pluralize }}</a>
         </li>
         <li class="v-spacing-3">
             {% bw_icon 'clock' 'text-light-grey' %} <span class="text-19"> {{ collection.get_total_collection_sounds_length|smart_duration_with_units }}</span>
         </li>
         <li class="v-spacing-3">
-            {% bw_icon 'download' 'text-light-grey' %}<span class="text-19">{{ collection.num_downloads}} download{{ collection.num_downloads|pluralize }}</span>
+            {% bw_icon 'download' 'text-light-grey' %}<a class="text-19 bw-link--black" title="This collection has been downloaded {{ collection.num_downloads|bw_intcomma }} time{{ collection.num_downloads|pluralize }}" href="javascript:void(0);" data-toggle="modal-default" data-modal-content-url="{% url 'collection-downloaders' collection.id collection.url_kwargs.collection_name %}?ajax=1" data-modal-activation-param="downloaders">{{ collection.num_downloads|formatnumber }} download{{ collection.num_downloads|pluralize }}</a>
         </li>
     </ol>
 </div>

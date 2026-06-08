@@ -7,9 +7,19 @@ urlpatterns = [
     path("<int:collection_id>-<slug:collection_name>/", views.collection, name="collection"),
     path("<int:sound_id>/add/", views.add_sound_to_collection, name="add-sound-to-collection"),
     path("create/", views.create_collection, name="create-collection"),
+    path(
+        "<int:collection_id>-<slug:collection_name>/render-cards/",
+        views.render_collection_cards,
+        name="collection-render-cards",
+    ),
     path("<int:collection_id>-<slug:collection_name>/edit", views.edit_collection, name="edit-collection"),
     path("<int:collection_id>-<slug:collection_name>/delete", views.delete_collection, name="delete-collection"),
     path("<int:collection_id>-<slug:collection_name>/download/", views.download_collection, name="download-collection"),
+    path(
+        "<int:collection_id>-<slug:collection_name>/downloaders/",
+        views.collection_downloaders,
+        name="collection-downloaders",
+    ),
     path("<int:collection_id>-<slug:collection_name>/licenses/", views.collection_licenses, name="collection-licenses"),
     path(
         "<int:collection_id>-<slug:collection_name>/addsoundsmodal",

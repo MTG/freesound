@@ -7,9 +7,9 @@ from .models import Collection, CollectionSound
 
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
-    fields = ["user", "name", "num_sounds", "public"]
+    fields = ["user", "name", "num_sounds", "public", "featured_sound_ids"]
     filter_horizontal = ["sounds"]
-    list_display = ("name", "user", "num_sounds", "public", "get_sounds")
+    list_display = ("name", "user", "num_sounds", "public", "get_sounds", "featured_sound_ids")
     readonly_fields = ["created"]
     actions = ["make_public", "make_private"]
 

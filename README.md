@@ -58,7 +58,7 @@ Below are instructions for setting up a local Freesound installation for develop
        echo COMPOSE_PROJECT_NAME=freesound >> .env
        echo LOCAL_PORT_PREFIX= >> .env
        echo FS_BIND_HOST= >> .env
-       echo FS_DATA_DIR=../freesound-data >> .env
+       echo FS_DATA_DIR=./freesound-data >> .env
 
 6. [Optional] Create API credentials for the 3rd party services listed below and add them to your own `freesound/local_settings.py` file (check `settings.py` to know the config parameter names that you need to fill in):
 

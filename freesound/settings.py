@@ -358,6 +358,7 @@ CHECK_ASYNC_DELETED_USERS_HOURS_BACK = 1
 LAST_FORUM_POST_MINIMUM_TIME = 60 * 5
 BASE_MAX_POSTS_PER_DAY = 5
 SPAM_BLACKLIST = []
+MIN_DAYS_FOR_COMMENTING_WITH_LINKS = 10
 
 # Random Sound of the day settings
 # Don't choose a sound by a user whose sound has been chosen in the last ~1 month

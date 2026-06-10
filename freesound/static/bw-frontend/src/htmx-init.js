@@ -4,8 +4,9 @@ window.htmx = htmx;
 
 (function () {
   document.body.addEventListener('htmx:configRequest', event => {
+    const csrfTokenMatch = document.cookie.match(/csrftoken=([^;]+)/);
     event.detail.headers['X-CSRFToken'] =
-      document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+      (csrfTokenMatch && csrfTokenMatch[1]) || '';
   });
 
   // htmx:load fires for every new subtree added to the DOM by htmx (including after swap).

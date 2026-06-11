@@ -643,6 +643,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 offset=(current_page - 1) * page_size,
                 num_sounds=page_size,
                 timeout=60,
+                enforce_time_allowed=False,
             )
             solr_ids += [int(element["id"]) for element in response.docs]
             solr_count = response.num_found
@@ -669,9 +670,25 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         similar_to=None,
         similar_to_min_similarity=settings.SIMILARITY_MIN_THRESHOLD,
         similar_to_similarity_space=settings.SIMILARITY_SPACE_DEFAULT,
-        timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
+        timeout=None,
+        enforce_time_allowed=True,
     ):
-        query = SolrQuery()
+        # Tell solr to stop after this time. Give similarity a bit more time
+        if not enforce_time_allowed:
+            query = SolrQuery(time_allowed=None)
+        elif similar_to is not None:
+            query = SolrQuery(time_allowed=settings.SEARCH_SOLR_SIMILARITY_TIME_ALLOWED_MS)
+        else:
+            query = SolrQuery(time_allowed=settings.SEARCH_SOLR_TIME_ALLOWED_MS)
+        # Just in case timeAllowed above doesn't stick
+        if timeout is None:
+            timeout = (
+                settings.SEARCH_SOLR_SIMILARITY_TIMEOUT_SECONDS
+                if similar_to is not None
+                else settings.SEARCH_SOLR_TIMEOUT_SECONDS
+            )
+        # Use a separate request handler for similarity to have separate metrics
+        search_handler = "select_similarity" if similar_to is not None else None
 
         if field_list is None:
             # We generally only want the sound IDs of the results as we load data from DB
@@ -875,7 +892,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 if not group_counts_as_one_in_facets and "json.facet" in query_as_kwargs:
                     facets_kwarg = query_as_kwargs["json.facet"]
                     query_as_kwargs["json.facet"] = {}
-                results = self.get_sounds_index(timeout=timeout).search(**query_as_kwargs)
+                results = self.get_sounds_index(timeout=timeout, search_handler=search_handler).search(
+                    **query_as_kwargs
+                )
 
                 # Now make the second query in which we get the facets and the total number of results, and remove the "collapse" filter.
                 fq = [fq_element for fq_element in query_as_kwargs["fq"] if "collapse field" not in fq_element]
@@ -884,13 +903,17 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 query_as_kwargs["expand"] = False
                 if not group_counts_as_one_in_facets and facets_kwarg is not None:
                     query_as_kwargs["json.facet"] = facets_kwarg
-                results_extra_query = self.get_sounds_index(timeout=timeout).search(**query_as_kwargs)
+                results_extra_query = self.get_sounds_index(timeout=timeout, search_handler=search_handler).search(
+                    **query_as_kwargs
+                )
                 if not group_counts_as_one_in_facets:
                     results.facets = results_extra_query.facets
                 results.non_grouped_number_of_results = results_extra_query.num_found
             else:
                 # If we are not using collapse and expand query parser (and/or not grouping by pack), just run the query.
-                results = self.get_sounds_index(timeout=timeout).search(**query_as_kwargs)
+                results = self.get_sounds_index(timeout=timeout, search_handler=search_handler).search(
+                    **query_as_kwargs
+                )
 
             # Facets returned in results use the corresponding solr fieldnames as keys. We want to convert them to the
             # original fieldnames so that the rest of the code can use them without knowing about the solr fieldnames.
@@ -940,7 +963,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
     def get_num_sim_vectors_indexed_per_similarity_space(self):
         results = {}
         for similarity_space_name in settings.SIMILARITY_SPACES.keys():
-            query = SolrQuery()
+            query = SolrQuery(time_allowed=None)
             filter_query = f'similarity_space:"{similarity_space_name}" content_type:"v"'
             query.set_query("*:*")
             query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query)
@@ -964,7 +987,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             solr_count = None
             current_page = 1
             while solr_count is None or len(solr_ids) < solr_count:
-                query = SolrQuery()
+                query = SolrQuery(time_allowed=None)
                 filter_query = f'similarity_space:"{similarity_space_name}" content_type:"v"'
                 query.set_query("*:*")
                 query.set_query_options(

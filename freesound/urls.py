@@ -136,6 +136,7 @@ urlpatterns = [
     ),
     path("", include("ratings.urls")),
     path("comments/", include("comments.urls")),
+    path("help/broad-sound-taxonomy/", sounds.views.broad_sound_taxonomy_info_page, name="bst-info-page"),
     path("help/", include("wiki.urls")),
     path("forum/", include("forum.urls")),
     path("geotags/", include("geotags.urls")),

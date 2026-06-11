@@ -53,6 +53,7 @@ from sounds.models import BulkUploadProgress, Download, License, Pack, PackDownl
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from utils.search import SearchEngineException, get_search_engine
+from utils.text import text_may_be_spam
 
 if typing.TYPE_CHECKING:
     import tickets.views
@@ -431,6 +432,17 @@ class Profile(models.Model):
                 )
 
         return True, ""
+
+    def can_comment_sound(self, comment_text):
+        if self.is_trustworthy():
+            return True
+        user_antiguity_in_site = (timezone.now() - self.user.date_joined).days
+        suspicious_text = text_may_be_spam(comment_text)
+        if suspicious_text and user_antiguity_in_site < settings.MIN_DAYS_FOR_COMMENTING_WITH_LINKS:
+            return False
+        if self.is_blocked_for_spam_reports():
+            return False
+        return True
 
     def can_do_bulk_upload(self):
         """

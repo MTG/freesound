@@ -84,7 +84,7 @@ from utils.sound_upload import (
     get_processing_before_describe_sound_base_url,
     get_samplerate_from_processing_before_describe_files,
 )
-from utils.text import remove_control_chars
+from utils.text import remove_control_chars, replace_hyperlinks_with_placeholder
 from utils.username import get_parameter_user_or_404, redirect_if_old_username
 
 web_logger = logging.getLogger("web")
@@ -253,28 +253,29 @@ def sound(request, username, sound_id):
     if request.method == "POST":
         form = CommentForm(request, request.POST)
         if request.user.is_authenticated:
-            if request.user.profile.is_blocked_for_spam_reports():
-                messages.add_message(
-                    request,
-                    messages.INFO,
-                    "You're not allowed to post the comment because your "
-                    "account has been temporarily blocked after multiple spam "
-                    "reports",
-                )
-            else:
-                if form.is_valid():
-                    comment_text = form.cleaned_data["comment"]
+            if form.is_valid():
+                comment_text = form.cleaned_data["comment"]
+                if not request.user.profile.can_comment_sound(comment_text):
+                    messages.add_message(
+                        request,
+                        messages.INFO,
+                        "You're not allowed to comment on this sound",
+                    )
+                else:
                     sound.add_comment(request.user, comment_text)
                     sound.invalidate_template_caches()
                     if request.user != sound.user:
                         send_mail_template(
                             settings.EMAIL_SUBJECT_NEW_COMMENT,
                             "emails/email_new_comment.txt",
-                            {"sound": sound, "user": request.user, "comment": comment_text},
+                            {
+                                "sound": sound,
+                                "user": request.user,
+                                "comment": replace_hyperlinks_with_placeholder(comment_text),
+                            },
                             user_to=sound.user,
                             email_type_preference_check="new_comment",
                         )
-
                     return HttpResponseRedirect(sound.get_absolute_url())
     else:
         form = CommentForm(request)
@@ -1279,3 +1280,24 @@ def pack_downloaders(request, username, pack_id):
     tvars = {"username": username, "pack": pack, "download_list": download_list}
     tvars.update(pagination)
     return render(request, "sounds/modal_downloaders.html", tvars)
+
+
+def broad_sound_taxonomy_info_page(request):
+    # Note: the colors below are currently hard-coded here, but in the future they should be
+    # added to the CSV file that defines the taxonomy and loaded from there.
+    taxonomy_node_colors = {
+        "m": "rgb(228,34,30)",
+        "is": "rgb(249,164,48)",
+        "sp": "rgb(39,161,132)",
+        "fx": "rgb(20,107,173)",
+        "ss": "rgb(50,167,40)",
+    }
+    taxonomy = settings.BROAD_SOUND_TAXONOMY
+    for key, node in taxonomy.items():
+        if key in taxonomy_node_colors:
+            node["color"] = taxonomy_node_colors[key]
+    tvars = {
+        "bst": taxonomy,
+        "bst_top_level_categories": settings.BST_CATEGORY_CHOICES,
+    }
+    return render(request, "sounds/broad_sound_taxonomy_info_page.html", tvars)

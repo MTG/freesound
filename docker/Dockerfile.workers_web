@@ -86,6 +86,12 @@ COPY docker/entrypoint.sh /usr/local/bin
 
 ENTRYPOINT ["/tini", "--", "entrypoint.sh"]
 
+FROM freesound AS freesound_test
+
+# Copy source code (skips frontend build, collectstatic, and API docs for faster CI)
+COPY --chown=fsweb:fsweb . /code
+
+
 FROM freesound AS freesound_prod
 
 # JS dependencies

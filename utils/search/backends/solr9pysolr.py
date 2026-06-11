@@ -41,27 +41,26 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
         self.forum_index_url = forum_index_url
         self.solr_base_url = settings.SOLR9_BASE_URL
 
-    def get_sounds_index(self, timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS):
-        if self.sounds_index is None:
-            self.sounds_index = pysolr.Solr(
-                self.sounds_index_url,
-                encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
-                results_cls=solr555pysolr.SolrResponseInterpreter,
-                always_commit=True,
-                timeout=timeout,
-            )
-        return self.sounds_index
+    def get_sounds_index(self, timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS, search_handler=None):
+        # Only forward search_handler when set
+        extra = {"search_handler": search_handler} if search_handler is not None else {}
+        return pysolr.Solr(
+            self.sounds_index_url,
+            encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
+            results_cls=solr555pysolr.SolrResponseInterpreter,
+            always_commit=True,
+            timeout=timeout,
+            **extra,
+        )
 
     def get_forum_index(self, timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS):
-        if self.forum_index is None:
-            self.forum_index = pysolr.Solr(
-                self.forum_index_url,
-                encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
-                results_cls=solr555pysolr.SolrResponseInterpreter,
-                always_commit=True,
-                timeout=timeout,
-            )
-        return self.forum_index
+        return pysolr.Solr(
+            self.forum_index_url,
+            encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
+            results_cls=solr555pysolr.SolrResponseInterpreter,
+            always_commit=True,
+            timeout=timeout,
+        )
 
     def search_process_filter(self, query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
         """Process the filter to make a number of adjustments

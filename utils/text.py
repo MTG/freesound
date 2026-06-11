@@ -138,7 +138,7 @@ def text_may_be_spam(text):
         return True
 
     # Love, marriage and other everyday topics ;)
-    if any([element in text.lower() for element in ["love", "marriage", "black magic"]]):
+    if any([element in text.lower() for element in ["love", "marriage", "black magic", "online casino"]]):
         return True
 
     # Suspicious text
@@ -148,3 +148,8 @@ def text_may_be_spam(text):
         return True
 
     return False
+
+
+def replace_hyperlinks_with_placeholder(text, placeholder="[URL REMOVED]"):
+    # Replace non-freesound http or https hperlinks with a placeholder
+    return re.sub(r"(https?://(?!freesound\.org)\S+)", placeholder, text, flags=re.IGNORECASE)

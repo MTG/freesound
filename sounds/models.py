@@ -1985,19 +1985,19 @@ class LicenseSummaryMixin:
 
     VARIOUS_LICENSES_NAME = "Various licenses"
 
+    @property
+    def license_summary_name_and_id(self):
+        # Name/id of the license shared by all sounds, no DB query needed
+        license_ids, license_names = self.licenses_data
+        if len(set(license_ids)) == 1:
+            return license_names[0], license_ids[0]
+        return self.VARIOUS_LICENSES_NAME, None
+
     @cached_property
     def license_summary(self):
         # License shared by all sounds, or None if there are various licenses
-        license_ids, _ = self.licenses_data
-        if len(set(license_ids)) == 1:
-            return License.objects.get(id=license_ids[0])
-        return None
-
-    @property
-    def license_summary_name_and_id(self):
-        if self.license_summary is not None:
-            return self.license_summary.name, self.license_summary.id
-        return self.VARIOUS_LICENSES_NAME, None
+        _, license_id = self.license_summary_name_and_id
+        return License.objects.get(id=license_id) if license_id is not None else None
 
     @property
     def license_bw_icon_name(self):

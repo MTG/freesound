@@ -31,6 +31,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonRespons
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
+from follow import follow_utils
 from fscollections.forms import (
     CollectionEditForm,
     CollectionEditFormAsMaintainer,
@@ -38,7 +39,6 @@ from fscollections.forms import (
     MaintainerForm,
     SelectCollectionOrNewCollectionForm,
 )
-from follow import follow_utils
 from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound, CollectionSound
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper

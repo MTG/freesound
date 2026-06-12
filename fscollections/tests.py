@@ -7,6 +7,7 @@ from django.utils.text import slugify
 
 from fscollections.models import Collection, CollectionSound
 from fscollections.views import serialize_collection_sounds
+from sounds.models import Sound
 from utils.test_helpers import create_user_and_sounds
 
 
@@ -25,15 +26,11 @@ class CollectionTest(TestCase):
         self.sound2 = sounds[2]
         self.collection = Collection.objects.create(user=self.user, name="testcollection")
 
-    def test_load_collection_page_and_collection_stats_page(self):
+    def test_load_collection_page(self):
         # Test a collection page is visible to all users if the collection is public
         self.collection.public = True
         self.collection.save()
         resp = self.client.get(reverse("collection", args=[self.collection.id, slugify(self.collection.name)]))
-        self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(
-            reverse("collection-stats-section", args=[self.collection.id, slugify(self.collection.name)]) + "?ajax=1"
-        )
         self.assertEqual(resp.status_code, 200)
 
         # Test a collection page is only visible for owner and maintainers if the collection is private
@@ -44,28 +41,16 @@ class CollectionTest(TestCase):
         self.client.force_login(self.user)
         resp = self.client.get(reverse("collection", args=[self.collection.id, slugify(self.collection.name)]))
         self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(
-            reverse("collection-stats-section", args=[self.collection.id, slugify(self.collection.name)]) + "?ajax=1"
-        )
-        self.assertEqual(resp.status_code, 200)
 
         # Test as maintainer
         self.collection.maintainers.add(self.maintainer)
         self.client.force_login(self.maintainer)
         resp = self.client.get(reverse("collection", args=[self.collection.id, slugify(self.collection.name)]))
         self.assertEqual(resp.status_code, 200)
-        resp = self.client.get(
-            reverse("collection-stats-section", args=[self.collection.id, slugify(self.collection.name)]) + "?ajax=1"
-        )
-        self.assertEqual(resp.status_code, 200)
 
         # Test as external user
         self.client.force_login(self.external_user)
         resp = self.client.get(reverse("collection", args=[self.collection.id, slugify(self.collection.name)]))
-        self.assertEqual(resp.status_code, 404)
-        resp = self.client.get(
-            reverse("collection-stats-section", args=[self.collection.id, slugify(self.collection.name)]) + "?ajax=1"
-        )
         self.assertEqual(resp.status_code, 404)
 
     def test_collections_create_and_delete(self):
@@ -440,7 +425,7 @@ class CollectionTest(TestCase):
 
         self.client.force_login(self.maintainer)
 
-        # Maintainer tries to change featured sounds — should be ignored
+        # Maintainer changes featured sounds — should be applied
         resp = self._post_edit(
             self._base_form_data(
                 featured_sounds=f"{self.sound1.id}",
@@ -448,7 +433,7 @@ class CollectionTest(TestCase):
         )
         self.assertEqual(302, resp.status_code)
         self.collection.refresh_from_db()
-        self.assertEqual([self.sound.id], self.collection.featured_sound_ids)
+        self.assertEqual([self.sound1.id], self.collection.featured_sound_ids)
 
     def test_add_sounds_outside_collection_to_featured(self):
         self.client.force_login(self.user)
@@ -562,3 +547,53 @@ class CollectionTest(TestCase):
         self.assertEqual(0, serialized_by_id[self.sound2.id]["featured_order"])
         self.assertEqual(1, serialized_by_id[self.sound.id]["featured_order"])
         self.assertIsNone(serialized_by_id[self.sound1.id]["featured_order"])
+
+
+class CollectionNumSoundsTest(TestCase):
+    fixtures = ["licenses", "sounds"]
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser", email="testuser@freesound.org")
+        _, _, sounds = create_user_and_sounds(
+            num_sounds=3, user=self.user, processing_state="OK", moderation_state="OK"
+        )
+        self.sound, self.sound1, self.sound2 = sounds
+        self.collection = Collection.objects.create(user=self.user, name="testcollection")
+
+    def get_num_sounds(self):
+        self.collection.refresh_from_db()
+        return self.collection.num_sounds
+
+    def test_num_sounds_updated_on_delete(self):
+        CollectionSound.objects.create(user=self.user, sound=self.sound, collection=self.collection, status="OK")
+        cs = CollectionSound.objects.create(user=self.user, sound=self.sound1, collection=self.collection, status="OK")
+        self.assertEqual(2, self.get_num_sounds())
+
+        cs.delete()
+        self.assertEqual(1, self.get_num_sounds())
+
+        # Queryset delete fires post_delete per instance
+        CollectionSound.objects.filter(collection=self.collection).delete()
+        self.assertEqual(0, self.get_num_sounds())
+
+    def test_collection_save_recounts_accepted_sounds(self):
+        # bulk_create does not fire post_save signals, Collection.save() must recount
+        CollectionSound.objects.bulk_create(
+            [
+                CollectionSound(user=self.user, sound=self.sound, collection=self.collection, status="OK"),
+                CollectionSound(user=self.user, sound=self.sound1, collection=self.collection, status="PE"),
+            ]
+        )
+        self.assertEqual(0, self.get_num_sounds())
+        self.collection.save()
+        self.assertEqual(1, self.get_num_sounds())
+
+    def test_bulk_sounds_for_collection_returns_only_accepted_moderated_sounds(self):
+        CollectionSound.objects.create(user=self.user, sound=self.sound, collection=self.collection, status="OK")
+        CollectionSound.objects.create(user=self.user, sound=self.sound1, collection=self.collection, status="PE")
+        # Accepted in the collection but not moderated yet
+        Sound.objects.filter(id=self.sound2.id).update(moderation_state="PE")
+        CollectionSound.objects.create(user=self.user, sound=self.sound2, collection=self.collection, status="OK")
+
+        sound_ids = [s.id for s in Sound.objects.bulk_sounds_for_collection(self.collection.id)]
+        self.assertEqual([self.sound.id], sound_ids)

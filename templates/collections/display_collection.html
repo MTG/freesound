@@ -41,8 +41,13 @@
             {% endif %}
         </div>
     </div>
-    <div>
+    <div class="between">
         <span class="text-grey">{{ collection.created|date:"F jS, Y" }}</span>
+        {% if show_visibility %}
+        <div class="text-grey no-text-wrap" title="This collection is {{ collection.public|yesno:'public,private' }}">
+            <span class="bw-icon-eye{% if not collection.public %}-blocked{% endif %}"></span> {{ collection.public|yesno:"Public,Private" }}
+        </div>
+        {% endif %}
     </div>
     <div class="v-spacing-top-1 bw-player__description-height">
         {% if collection.description %}

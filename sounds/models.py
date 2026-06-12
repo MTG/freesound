@@ -527,6 +527,16 @@ class SoundManager(models.Manager):
             qs = qs[:limit]
         return qs
 
+    def sounds_for_collection(self, collection_id, base_qs=None):
+        # Accepted public sounds of a collection; lightweight (no display annotations) unless a bulk base_qs is given
+        qs = base_qs if base_qs is not None else self
+        return qs.filter(
+            moderation_state="OK",
+            processing_state="OK",
+            collectionsound__collection_id=collection_id,
+            collectionsound__status="OK",
+        )
+
     def bulk_sounds_for_collection(
         self,
         collection_id,
@@ -540,7 +550,7 @@ class SoundManager(models.Manager):
             include_similarity_vectors=include_similarity_vectors,
             include_remix_subqueries=include_remix_subqueries,
         )
-        qs = qs.filter(moderation_state="OK", processing_state="OK", collections=collection_id).order_by("-created")
+        qs = self.sounds_for_collection(collection_id, base_qs=qs).order_by("-created")
         if limit:
             qs = qs[:limit]
         return qs
@@ -1969,7 +1979,47 @@ class PackManager(models.Manager):
     '''
 
 
-class Pack(models.Model):
+class LicenseSummaryMixin:
+    # Summarizes the licenses of a group of sounds, requires a `licenses_data` property
+    # returning ([license_ids], [license_names])
+
+    VARIOUS_LICENSES_NAME = "Various licenses"
+
+    @cached_property
+    def license_summary(self):
+        # License shared by all sounds, or None if there are various licenses
+        license_ids, _ = self.licenses_data
+        if len(set(license_ids)) == 1:
+            return License.objects.get(id=license_ids[0])
+        return None
+
+    @property
+    def license_summary_name_and_id(self):
+        if self.license_summary is not None:
+            return self.license_summary.name, self.license_summary.id
+        return self.VARIOUS_LICENSES_NAME, None
+
+    @property
+    def license_bw_icon_name(self):
+        license_summary_name, _ = self.license_summary_name_and_id
+        return License.bw_cc_icon_name_from_license_name(license_summary_name)
+
+    @property
+    def license_summary_text(self):
+        if self.license_summary is not None:
+            return self.license_summary.get_short_summary
+        return (
+            f"This {self._meta.model_name} contains sounds released under various licenses. Please check every "
+            "individual sound page (or the <i>readme</i> file upon downloading the "
+            f"{self._meta.model_name}) to know under which license each sound is released."
+        )
+
+    @property
+    def license_summary_deed_url(self):
+        return self.license_summary.deed_url if self.license_summary is not None else ""
+
+
+class Pack(LicenseSummaryMixin, models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True, default=None)
@@ -1980,8 +2030,6 @@ class Pack(models.Model):
     num_downloads = models.PositiveIntegerField(default=0)  # Updated via db trigger
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method
     is_deleted = models.BooleanField(db_index=True, default=False)
-
-    VARIOUS_LICENSES_NAME = "Various licenses"
 
     objects = PackManager()
 
@@ -2132,44 +2180,6 @@ class Pack(models.Model):
             license_ids = [lid for _, lid in licenses_data]
             license_names = [lname for lname, _ in licenses_data]
             return license_ids, license_names
-
-    @property
-    def license_summary_name_and_id(self):
-        license_ids, license_names = self.licenses_data
-
-        if len(set(license_ids)) == 1:
-            # All sounds have same license
-            license_summary_name = license_names[0]
-            license_id = license_ids[0]
-        else:
-            license_summary_name = self.VARIOUS_LICENSES_NAME
-            license_id = None
-        return license_summary_name, license_id
-
-    @property
-    def license_bw_icon_name(self):
-        license_summary_name, _ = self.license_summary_name_and_id
-        return License.bw_cc_icon_name_from_license_name(license_summary_name)
-
-    @property
-    def license_summary_text(self):
-        license_summary_name, license_summary_id = self.license_summary_name_and_id
-        if license_summary_name != self.VARIOUS_LICENSES_NAME:
-            return License.objects.get(id=license_summary_id).get_short_summary
-        else:
-            return (
-                "This pack contains sounds released under various licenses. Please check every individual sound page "
-                "(or the <i>readme</i> file upon downloading the pack) to know under which "
-                "license each sound is released."
-            )
-
-    @property
-    def license_summary_deed_url(self):
-        license_summary_name, license_summary_id = self.license_summary_name_and_id
-        if license_summary_name != self.VARIOUS_LICENSES_NAME:
-            return License.objects.get(id=license_summary_id).deed_url
-        else:
-            return ""
 
     @property
     def has_geotags(self):

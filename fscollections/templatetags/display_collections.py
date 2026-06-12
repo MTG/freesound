@@ -29,13 +29,22 @@ register = template.Library()
 
 
 @register.inclusion_tag("collections/display_collection.html", takes_context=True)
-def display_collection(context, collection_id):
-    collection = get_object_or_404(Collection, id=collection_id)
+def display_collection(context, collection):
+    # Accepts a Collection instance or a collection id
+    if not isinstance(collection, Collection):
+        collection = get_object_or_404(Collection, id=collection)
     request = context.get("request")
     if collection.featured_sound_ids:
         header_sounds = Sound.objects.bulk_query_id_public(collection.featured_sound_ids)
     else:
         header_sounds = Sound.objects.bulk_sounds_for_collection(collection.id, limit=1)
 
-    tvars = {"collection": collection, "header_sounds": header_sounds, "request": request}
+    show_visibility = collection.user_is_owner_or_maintainer(request.user if request else None)
+
+    tvars = {
+        "collection": collection,
+        "header_sounds": header_sounds,
+        "request": request,
+        "show_visibility": show_visibility,
+    }
     return tvars

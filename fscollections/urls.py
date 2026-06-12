@@ -31,9 +31,4 @@ urlpatterns = [
         views.add_maintainer_modal,
         name="add-maintainers-modal",
     ),
-    path(
-        "<int:collection_id>-<slug:collection_name>/section/stats",
-        views.collection_stats_section,
-        name="collection-stats-section",
-    ),
 ]

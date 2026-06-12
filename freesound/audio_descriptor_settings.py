@@ -56,12 +56,12 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     {
         "name": "bpm",
         "analyzer": "fs-essentia-extractor_v1",
-        "get_func": lambda d, s: d["fs.bpm"],
+        "get_func": lambda d, s: s.estimate_bpm_from_metadata() or d["fs.bpm"],
     },
     {
         "name": "bpm_confidence",
         "analyzer": "fs-essentia-extractor_v1",
-        "get_func": lambda d, s: d["fs.bpm_confidence"],
+        "get_func": lambda d, s: 1.0 if s.estimate_bpm_from_metadata() else d["fs.bpm_confidence"],
     },
     {
         "name": "brightness",

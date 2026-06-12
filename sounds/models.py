@@ -25,6 +25,7 @@ import logging
 import math
 import os
 import random
+import re
 import zlib
 from collections import Counter
 from urllib.parse import quote
@@ -1653,6 +1654,44 @@ class Sound(models.Model):
             return f"{reverse('sounds-search')}?{cat_filter}"
         else:
             return None
+
+    def estimate_bpm_from_metadata(self, min_bpm=25, max_bpm=300):
+        """
+        Estimate the bpm of a sound by looking at its description, tags and name.
+        :param min_bpm: minimum bpm
+        :param max_bpm: maximum bpm
+        :return: estimated bpm (int) or 0 if bpm could not be estimated
+        """
+        bpm_candidates = list()
+
+        # Find sequences like 120bpm, bpm120, 120 bpm or bpm 120 in all fields
+        description = self.description.lower()
+        name = self.original_filename.lower()
+        tags = [t.lower() for t in self.get_sound_tags()]
+        for candidate in re.findall(r"\d+[\s]?bpm", description + " " + name + " " + " ".join(tags)) + re.findall(
+            r"bpm[\s]?\d+", description + " " + name + " " + " ".join(tags)
+        ):
+            try:
+                bpm = int(candidate.replace("bpm", "").replace(" ", ""))
+                if min_bpm <= bpm <= max_bpm:
+                    bpm_candidates.append(bpm)
+            except ValueError:
+                continue
+
+        # Find tags corresponding to single numbers and in a range
+        for tag in tags:
+            try:
+                bpm = int(tag)
+                if min_bpm <= bpm <= max_bpm:
+                    bpm_candidates.append(bpm)
+            except ValueError:
+                continue
+
+        if not bpm_candidates:
+            return 0
+
+        # Return the most common candidate
+        return Counter(bpm_candidates).most_common(1)[0][0]
 
     class Meta:
         ordering = ("-created",)

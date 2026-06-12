@@ -11,7 +11,24 @@
     <div class="text-center">
         <h4 class="v-spacing-5">Create collection</h4>
         <form method="post" action="{% url 'create-collection' %}?ajax=1" class="bw-form disable-on-submit">{% csrf_token %}
-            {{form}}
+            {{ form.non_field_errors }}
+            <div class="text-left">
+                <div>
+                    {{ form.name.errors }}
+                    {{ form.name.label_tag }}
+                    {{ form.name }}
+                </div>
+                <div>
+                    {{ form.description.errors }}
+                    {{ form.description.label_tag }}
+                    {{ form.description }}
+                </div>
+                <div>
+                    {{ form.public.errors }}
+                    {{ form.public.label_tag }}
+                    {{ form.public }}
+                </div>
+            </div>
             <button class="btn-primary v-spacing-top-3">Create collection</button>
         </form>
     </div>

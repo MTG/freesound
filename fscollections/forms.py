@@ -191,15 +191,12 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
                                 f"The chosen collection has reached the maximum number of sounds allowed ({settings.MAX_SOUNDS_PER_COLLECTION})"
                             )
 
-                        maintainers_list = list(collection.maintainers.all().values_list("id", flat=True))
-                        if (
-                            self.user_saving_sound.id not in maintainers_list
-                            and self.user_saving_sound != collection.user
-                        ):
+                        if not collection.user_is_owner_or_maintainer(self.user_saving_sound):
                             raise forms.ValidationError("You do not have permission to edit this collection.")
 
-                        collection_sounds = Sound.objects.filter(collections=collection)
-                        if sound in collection_sounds:
+                        # Check the through model directly: pending/refused sounds also occupy
+                        # the unique (sound, collection) slot
+                        if CollectionSound.objects.filter(collection=collection, sound=sound).exists():
                             raise forms.ValidationError("This sound already exists in this collection")
 
                     except Collection.DoesNotExist:
@@ -371,7 +368,7 @@ class CollectionEditFormAsMaintainer(CollectionEditForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields:
-            if field not in ("added_sounds", "removed_sounds"):
+            if field not in ("added_sounds", "removed_sounds", "featured_sounds"):
                 self.fields[field].disabled = True
 
     def clean(self):
@@ -382,8 +379,6 @@ class CollectionEditFormAsMaintainer(CollectionEditForm):
         # in the form but disabled (to allow the user to view but not to modify the field), the original collection maintainers
         # are retrieved from DB to ensure no changes are applied to this attribute.
         cleaned_data["maintainers"] = set(self.instance.maintainers.values_list("id", flat=True))
-        # Preserve featured_sounds from the original instance (maintainers cannot edit)
-        cleaned_data["featured_sounds"] = list(self.instance.featured_sound_ids)
         for field in CollectionEditForm.Meta.fields:
             if cleaned_data[field] != getattr(self.instance, field):
                 self.add_error(field, forms.ValidationError("You don't have permissions to edit this field"))
@@ -395,20 +390,20 @@ class CreateCollectionForm(forms.ModelForm):
 
     class Meta:
         model = Collection
-        fields = ("name", "description")
+        fields = ("name", "description", "public")
         widgets = {
             "name": TextInput(),
             "description": Textarea(attrs={"rows": 5, "cols": 50}),
+            "public": forms.RadioSelect(choices=[(True, "Public"), (False, "Private")], attrs={"class": "bw-radio"}),
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        self.fields["name"].label = False
         self.fields["name"].widget.attrs["placeholder"] = "Fill in the name for the new collection"
         self.fields["name"].widget.attrs["autocomplete"] = "off"
-        self.fields["description"].label = False
         self.fields["description"].widget.attrs["placeholder"] = "Write a description for the new collection"
+        self.fields["public"].label = "Visibility"
 
     def clean(self):
         if Collection.objects.filter(user=self.user, name=self.cleaned_data["name"]).exists():

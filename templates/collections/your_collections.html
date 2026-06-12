@@ -35,7 +35,7 @@
                 <div class="row">
                     {% for collection in user_collections %}
                     <div class="col-md-6 col-lg-4 v-spacing-top-3">
-                        {% display_collection collection.id %}
+                        {% display_collection collection %}
                     </div>
                     {% endfor %}
                 </div>
@@ -55,7 +55,7 @@
                 <div class="row">
                     {% for collection in maintainer_collections %}
                     <div class="col-md-6 col-lg-4 v-spacing-top-3">
-                        {% display_collection collection.id %}
+                        {% display_collection collection %}
                     </div>
                     {% endfor %}
                 </div>

@@ -27,7 +27,29 @@
 }
 
 .featured-highlight {
-  background-color: rgba(253, 221, 68, 0.24);
+  position: relative;
+  margin-bottom: $smedium-spacing;
+  padding: $tiny-spacing $tiny-spacing 0;
+  border: 2px solid $orange;
+  border-radius: 4px;
+  background-color: rgba($orange, 0.05);
+
+  // fold the sound display's own bottom spacing into the card
+  > div {
+    margin-bottom: 0;
+  }
+
+  .featured-badge {
+    position: absolute;
+    top: -16px;
+    left: 0;
+    color: $orange;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
 }
 
 .featured-counter-label {

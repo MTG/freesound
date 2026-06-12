@@ -31,6 +31,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonRespons
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
+from follow import follow_utils
 from fscollections.forms import (
     CollectionEditForm,
     CollectionEditFormAsMaintainer,
@@ -100,10 +101,13 @@ def collection(request, collection):
     pagination = paginate(request, sounds, settings.BOOKMARKS_PER_PAGE)
     page_sounds = list(pagination["page"])
 
+    is_following = user.is_authenticated and follow_utils.is_user_following_user(user, collection.user)
+
     tvars = {
         "collection": collection,
         "is_owner": is_owner,
         "is_maintainer": is_maintainer,
+        "is_following": is_following,
         "maintainers": collection.maintainers.all(),
         "sort_options": settings.COLLECTION_SORT_OPTIONS,
         "page_sounds": page_sounds,
@@ -124,22 +128,6 @@ def collections_for_user(request):
     # one URL needed to display all collections and one URL to display ONE collection at a time
     # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display
     return render(request, "collections/your_collections.html", tvars)
-
-
-@resolve_collection_from_url
-def collection_stats_section(request, collection):
-    user = request.user
-    is_maintainer = collection.maintainers.filter(username=user.username).exists()
-    is_owner = user == collection.user
-    if not collection.public and not (is_owner or is_maintainer):
-        raise Http404
-
-    # TODO: this tries to imitate the pack_stats_section behaviour despite a lack of comprehension
-    # on cache behaviour, so the stats shown by this are not properly updated
-    if not request.GET.get("ajax"):
-        return HttpResponseRedirect(reverse("your-collections"))
-    tvars = {"collection": collection}
-    return render(request, "collections/collection_stats_section.html", tvars)
 
 
 @login_required
@@ -198,7 +186,10 @@ def create_collection(request):
         form = CreateCollectionForm(request.POST, user=request.user)
         if form.is_valid():
             Collection.objects.create(
-                user=request.user, name=form.cleaned_data["name"], description=form.cleaned_data["description"]
+                user=request.user,
+                name=form.cleaned_data["name"],
+                description=form.cleaned_data["description"],
+                public=form.cleaned_data["public"],
             )
             return JsonResponse({"success": True})
     else:
@@ -264,9 +255,7 @@ def render_collection_cards(request, collection):
       - ``q`` (optional): the active search query, used only to render an
         empty-state message when the supplied id list is empty.
     """
-    is_owner = request.user == collection.user
-    is_maintainer = not is_owner and collection.maintainers.filter(id=request.user.id).exists()
-    if not is_owner and not is_maintainer:
+    if not collection.user_is_owner_or_maintainer(request.user):
         return HttpResponse(status=403)
     raw_ids = request.GET.get("ids", "")
     ids = [int(x) for x in raw_ids.split(",") if x.isdigit()][: settings.MAX_SOUNDS_PER_COLLECTION]
@@ -361,10 +350,7 @@ def edit_collection(request, collection):
 @login_required
 @resolve_collection_from_url
 def download_collection(request, collection):
-    collection_sounds = CollectionSound.objects.filter(collection=collection).values("sound_id")
-    sounds_list = Sound.objects.filter(
-        id__in=collection_sounds, processing_state="OK", moderation_state="OK"
-    ).select_related("user", "license")
+    sounds_list = Sound.objects.bulk_sounds_for_collection(collection.id)
 
     if "range" not in request.headers:
         """

@@ -267,6 +267,8 @@ def render_collection_cards(request, collection):
         "sounds": sounds,
         "max_sounds": settings.MAX_SOUNDS_PER_COLLECTION,
         "current_search": request.GET.get("q", "").strip(),
+        # Keep showing the empty-collection message (not "no results") when searching an empty collection
+        "collection_is_empty": not sounds and not Sound.objects.sounds_for_collection(collection.id).exists(),
     }
 
     raw_page = request.GET.get("page")

@@ -48,7 +48,7 @@
                     {% endif %}
                 {% users_selector form.collection_maintainers_objects%}
                 <div class="between v-spacing-top-4">
-                    <button type="button" class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{{ collection.add_maintainers_modal_url }}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
+                    <button type="button" class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{{ collection.add_maintainers_modal_url }}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">{% bw_icon 'plus' %}Add maintainers</button>
                     <button type="button" class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
                 </div>
             </div>
@@ -73,8 +73,9 @@
                             </select>
                         </div>
                     </div>
-                    <div class="v-spacing-top-4" style="max-width: 250px;">
-                        <div class="input-wrapper w-100">
+                    <div class="between middle no-gutters v-spacing-top-4">
+                        <button type="button" class="btn-inverse" data-toggle="add-sounds-modal" data-modal-url="{{ collection.add_sounds_modal_url }}">{% bw_icon 'plus' %}Add sounds</button>
+                        <div class="input-wrapper" style="flex: 0 1 240px; min-width: 0;">
                             <i class="bw-icon-search input-icon"></i><input id="edit-collection-search" type="search" placeholder="Search in collection..." role="searchbox" autocomplete="off" value="{{ current_search|default:'' }}">
                         </div>
                     </div>
@@ -82,9 +83,6 @@
                 <div id="sounds-section" data-render-cards-url="{{ render_cards_url }}">
                     <div id="sounds-grid"></div>
                     <div id="sounds-pagination" class="v-spacing-top-3"></div>
-                </div>
-                <div class="v-spacing-top-4">
-                    <button type="button" class="btn-inverse" data-toggle="add-sounds-modal" data-modal-url="{{ collection.add_sounds_modal_url }}">{% bw_icon 'plus' %}Add sounds</button>
                 </div>
                 <div class="between v-spacing-top-5">
                     <span class="helptext" style="display:none" ><i>{{form.added_sounds.help_text|safe}}</i></span>

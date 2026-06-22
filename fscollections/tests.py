@@ -525,6 +525,18 @@ class CollectionTest(TestCase):
         editor doesn't need a non-htmx render path."""
         self.client.force_login(self.user)
         cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
+
+        # Searching an empty collection keeps the empty-collection message
+        resp = self.client.get(
+            cards_url,
+            {"ids": "", "page": "1", "total": "1", "q": "nonsense"},
+            HTTP_HX_CURRENT_URL="/collections/test/edit/",
+        )
+        self.assertEqual(200, resp.status_code)
+        self.assertContains(resp, "This collection is empty")
+
+        # With sounds in the collection, an unmatched search shows the no-results message
+        CollectionSound.objects.create(user=self.user, sound=self.sound, collection=self.collection, status="OK")
         resp = self.client.get(
             cards_url,
             {"ids": "", "page": "1", "total": "1", "q": "nonsense"},

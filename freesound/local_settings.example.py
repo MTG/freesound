@@ -19,3 +19,8 @@ BULK_UPLOAD_MIN_SOUNDS = 0
 
 # Sentry DSN configuration
 SENTRY_DSN = None
+
+# Prometheus metrics configuration
+# PROMETHEUS_PUSHGATEWAY_URL = "http://pushgateway:9091"
+# PROMETHEUS_METRICS_TOKEN = "if-set-then-/metrics-is-active"
+# PROMETHEUS_PUSHGATEWAY_TIMEOUT_SECONDS = 5

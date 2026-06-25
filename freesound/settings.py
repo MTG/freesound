@@ -181,6 +181,12 @@ SILENCED_SYSTEM_CHECKS = ["urls.W002"]
 
 INTERNAL_IPS = ["127.0.0.1"]
 
+# Bearer token to pull data from /metrics. If empty, the endpoint returns 404
+PROMETHEUS_METRICS_TOKEN = ""
+# Management commands push stats to a pushgateway if this value is set
+PROMETHEUS_PUSHGATEWAY_URL = ""
+PROMETHEUS_PUSHGATEWAY_TIMEOUT_SECONDS = 5
+
 MESSAGE_STORAGE = "django.contrib.messages.storage.cookie.CookieStorage"
 
 PASSWORD_HASHERS = [

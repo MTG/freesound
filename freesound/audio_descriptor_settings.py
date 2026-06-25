@@ -106,6 +106,13 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
         "index": False,
     },
     {
+        "name": "hpcp_var",
+        "analyzer": "fs-essentia-extractor_v1",
+        "get_func": lambda d, s: d["tonal.hpcp.var"],
+        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
+        "index": False,
+    },
+    {
         "name": "hpcp_crest",
         "analyzer": "fs-essentia-extractor_v1",
         "get_func": lambda d, s: d["tonal.hpcp_crest.mean"],
@@ -140,6 +147,13 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
         "name": "mfcc",
         "analyzer": "fs-essentia-extractor_v1",
         "get_func": lambda d, s: d["lowlevel.mfcc.mean"],
+        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
+        "index": False,
+    },
+    {
+        "name": "mfcc_var",
+        "analyzer": "fs-essentia-extractor_v1",
+        "get_func": lambda d, s: d["lowlevel.mfcc.var"],
         "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
         "index": False,
     },
@@ -190,6 +204,11 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
         "name": "pitch_min",
         "analyzer": "fs-essentia-extractor_v1",
         "get_func": lambda d, s: d["lowlevel.pitch.min"],
+    },
+    {
+        "name": "pitch_confidence",
+        "analyzer": "fs-essentia-extractor_v1",
+        "get_func": lambda d, s: d["lowlevel.pitch_instantaneous_confidence.mean"],
     },
     {
         "name": "pitch_salience",

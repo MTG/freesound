@@ -29,35 +29,6 @@ to mono. For most descriptors, the frame size is 2,048 samples with a hop size o
 while for some tonal descriptors, the frame size is 4,096 samples with a hop size of 2,048.
 
 
-Glossary 
->>>>>>>>>>>>>>>>
-
-Basic terms used in the documentation of audio descriptors:
-
-========= =====================================
-numeric   The descriptor returns a numeric value; can be either an integer or a float.
-integer   The descriptor returns an integer value only.
-string    The descriptor returns a textual value.
-boolean   The descriptor returns a binary value; 0 (no) or 1 (yes).
-array[x]  The descriptor returns a list of elements of type X.
-VL        Variable-length descriptor; the returned list may vary in length depending on the sound.
-mean      The arithmetic mean of the descriptor values over the entire sound.
-min       The lowest (minimum) descriptor value over the entire sound.
-max       The highest (maximum) descriptor value over the entire sound.
-var       The variance of the descriptor values over the entire sound.
-========= =====================================
-
-Most descriptors have ``fixed length`` and are divided into ``one-dimensional`` (descriptors that consist 
-of a single value, e.g. pitch, note_name) and ``multi-dimensional`` (descriptors with several dimensions, e.g. tristimulus).
-The remaining descriptors have ``variable length``, i.e. their length depends on the analyzed sound (denoted with `VL` in ``mode``).
-
-All ``one-dimensional`` descriptors (regardless their ``type``) can be used in the ``filter`` parameter of the :ref:`sound-search` resource.
-The ``multi-dimensional`` and ``variable-length`` descriptors can be accessed through the sound metadata 
-(use ``fields`` parameter in any API resource that returns a sound list or the :ref:`sound-analysis`).
-If ``mode`` ends with a number in parentheses (``n``), it indicates that this descriptor is ``multi-dimensional``, 
-and this mode is calculated for a specific number of values.  
-For example, if ``mode`` is ``mean (36)``, it represents the mean calculated across 36 values.
-
 """
 
 curl_str = "    curl https://freesound.org/api/sounds/<sound_id>/analysis/"

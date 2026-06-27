@@ -118,9 +118,7 @@ class CollectionTest(TestCase):
 
         # Test creating a new custom collection (and adding the sound to it) using the create-collection modal
         form_data = {"name": "new_collection", "description": "", "public": True}
-        resp = self.client.post(
-            reverse("create-collection") + f"?ajax=1&sound_id={self.sound.id}", form_data
-        )
+        resp = self.client.post(reverse("create-collection") + f"?ajax=1&sound_id={self.sound.id}", form_data)
         self.assertEqual(200, resp.status_code)
         new_collection = Collection.objects.get(user=self.user, name="new_collection")
         self.assertEqual(1, new_collection.num_sounds)

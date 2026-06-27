@@ -137,9 +137,7 @@ class SelectCollectionForm(forms.Form):
             raise forms.ValidationError("Unexpected errors occured while handling the sound.")
         try:
             if clean_data["collection"] == "-1":
-                default_col = Collection.objects.filter(
-                    user=self.user_saving_sound, is_default_collection=True
-                ).first()
+                default_col = Collection.objects.filter(user=self.user_saving_sound, is_default_collection=True).first()
                 if default_col is not None:
                     if default_col.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION:
                         raise forms.ValidationError(

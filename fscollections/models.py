@@ -114,9 +114,7 @@ class Collection(LicenseSummaryMixin, models.Model):
         holds settings.MAX_FEATURED_SOUNDS_PER_COLLECTION featured sounds (the sound is still
         added in that case); returns False otherwise.
         """
-        CollectionSound.objects.get_or_create(
-            user=user, collection=self, sound=sound, defaults={"status": "OK"}
-        )
+        CollectionSound.objects.get_or_create(user=user, collection=self, sound=sound, defaults={"status": "OK"})
         if not feature or sound.id in self.featured_sound_ids:
             return False
         if len(self.featured_sound_ids) >= settings.MAX_FEATURED_SOUNDS_PER_COLLECTION:

@@ -31,7 +31,6 @@ from django.shortcuts import get_object_or_404, render, reverse
 from django_ratelimit.decorators import ratelimit
 
 import forum
-import fscollections.models
 import sounds
 from forum.models import Post
 from utils.clustering_utilities import (
@@ -57,30 +56,6 @@ from utils.search.search_sounds import (
 )
 
 search_logger = logging.getLogger("search")
-
-
-def hide_private_collections_from_facet(facets):
-    """Remove private collections from the collections facet (in place).
-
-    Collection facet values are "<collection_id>_<name>". All non-default collections are indexed
-    regardless of visibility, so we filter the facet here to avoid exposing private collection names.
-    """
-    field_name = settings.SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING
-    facet = facets.get(field_name)
-    if not facet:
-        return
-
-    def facet_collection_id(value):
-        prefix = str(value).split("_", 1)[0]
-        return int(prefix) if prefix.isdigit() else None
-
-    ids = {cid for value, _ in facet if (cid := facet_collection_id(value)) is not None}
-    if not ids:
-        return
-    public_ids = set(
-        fscollections.models.Collection.objects.filter(id__in=ids, public=True).values_list("id", flat=True)
-    )
-    facets[field_name] = [(value, count) for value, count in facet if facet_collection_id(value) in public_ids]
 
 
 def is_empty_query(request):
@@ -231,10 +206,6 @@ def search_view_helper(request):
                 }
             )
         )
-
-        # Private collections' sounds are indexed (so they remain filterable), but we don't surface
-        # private collection names in the sidebar facet. Drop them from the collections facet here.
-        hide_private_collections_from_facet(results.facets)
 
         # Compile template variables
         return {

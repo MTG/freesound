@@ -348,10 +348,10 @@ class CollectionTest(TestCase):
         edit(name="renamed-collection")
         self.assertTrue(Sound.objects.get(id=self.sound.id).is_index_dirty)
 
-        # Toggling public/private must NOT require reindexing (all non-default collections are indexed)
+        # Toggling public/private must flag every member dirty (only public collections are indexed)
         Sound.objects.filter(id=self.sound.id).update(is_index_dirty=False)
         edit(public=True)
-        self.assertFalse(Sound.objects.get(id=self.sound.id).is_index_dirty)
+        self.assertTrue(Sound.objects.get(id=self.sound.id).is_index_dirty)
 
     def test_edit_collection_as_maintainer(self):
         # available fields for a maintainer: sounds

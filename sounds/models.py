@@ -417,14 +417,11 @@ class SoundManager(models.Manager):
         comments_subquery = Comment.objects.filter(sound=OuterRef("id")).values("comment")
         qs = qs.annotate(comments_array=ArraySubquery(comments_subquery))
 
-        # We also want to include information about collections so we don't make extra queries later.
-        # Sounds in any collection are indexed regardless of the collection's public/private status
-        # (the "My bookmarks" default collection is excluded as it is personal). Private collections
-        # are not surfaced in the search facet; that filtering happens at query time.
+        # We also want to include information about collections so we don't make extra queries later
         CollectionSound = apps.get_model("fscollections", "CollectionSound")
         collections_subquery = (
             CollectionSound.objects.select_related("collection")
-            .filter(sound=OuterRef("id"), collection__is_default_collection=False, status="OK")
+            .filter(sound=OuterRef("id"), collection__public=True, status="OK")
             .values(data=JSONObject(collection_id="collection__id", collection_name="collection__name"))
         )
         qs = qs.annotate(collections_array=ArraySubquery(collections_subquery))

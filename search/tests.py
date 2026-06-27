@@ -20,7 +20,6 @@
 
 from unittest import mock
 
-from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
@@ -186,29 +185,3 @@ class SearchResultClustering(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "search/clustering_results.html")
         self.assertEqual(resp.context["clusters_data"], None)
-
-
-class HidePrivateCollectionsFromFacetTest(TestCase):
-    def test_only_public_collections_remain_in_facet(self):
-        from django.conf import settings
-
-        from fscollections.models import Collection
-        from search.views import hide_private_collections_from_facet
-
-        user = User.objects.create_user(username="facetuser", email="facetuser@freesound.org")
-        public = Collection.objects.create(user=user, name="public col", public=True)
-        private = Collection.objects.create(user=user, name="private col", public=False)
-        field = settings.SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING
-
-        facets = {
-            field: [
-                (f"{public.id}_public col", 5),
-                (f"{private.id}_private col", 3),
-                ("999999_deleted col", 1),  # unknown id is dropped too
-            ],
-            "tags": [("foo", 2)],
-        }
-        hide_private_collections_from_facet(facets)
-
-        self.assertEqual(facets[field], [(f"{public.id}_public col", 5)])
-        self.assertEqual(facets["tags"], [("foo", 2)])  # other facets untouched

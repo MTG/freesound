@@ -315,10 +315,10 @@ class CollectionEditForm(forms.ModelForm):
             # Flag sounds for Solr reindexing. bulk_create() above does not fire the post_save
             # signal that marks added sounds dirty, and a rename rewrites the Solr collection
             # field ("<id>_<name>") of every member, so flag the affected set explicitly.
-            # A public/private change does not affect indexing (all non-default collections are
-            # indexed; private ones are just hidden from the search facet at query time).
+            # Only public collections are indexed, so toggling public/private adds or removes every
+            # member from the search index too.
             sounds_to_reindex = set(sounds_to_add) | set(sounds_to_remove)
-            if "name" in self.changed_data:
+            if "name" in self.changed_data or "public" in self.changed_data:
                 sounds_to_reindex |= final_sound_ids
             if sounds_to_reindex:
                 Sound.objects.filter(id__in=sounds_to_reindex).update(is_index_dirty=True)

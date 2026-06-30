@@ -1674,7 +1674,11 @@ class Sound(models.Model):
         if self.bst_category is None:
             # If the sound category has not been defind by user, return estimated precomputed category.
             consolidated_analysis_data = self.get_consolidated_analysis_data()
-            if consolidated_analysis_data is not None:
+            if (
+                consolidated_analysis_data is not None
+                and "category" in consolidated_analysis_data
+                and "subcategory" in consolidated_analysis_data
+            ):
                 try:
                     return [consolidated_analysis_data["category"], consolidated_analysis_data["subcategory"]]
                 except KeyError:

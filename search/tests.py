@@ -172,6 +172,87 @@ class SearchPageLowerClampTests(TestCase):
         self.assertEqual(engine.search_forum_posts.call_args.kwargs["current_page"], 1)
 
 
+class SearchOutOfRangeTests(TestCase):
+    """If we ask for a page number past the number of available results then
+    show a message instead of an empty page (rendering 0 items).
+    Show a paginator with the last real page of results highlighted, but
+    don't re-run the search on that page."""
+
+    fixtures = ["licenses", "users", "sounds_with_tags"]
+
+    @mock.patch("search.views.perform_search_engine_query")
+    def test_sound_search_past_last_page_shows_message(self, perform_search_engine_query):
+        # num_found > 0 but the requested (overflow) page returned no docs.
+        results = SearchResults(docs=[], num_found=548)
+        # this paginator has 37 pages
+        paginator = PreSlicedCountProvidedPaginator(results.docs, 15, results.num_found)
+        perform_search_engine_query.return_value = (results, paginator)
+
+        resp = self.client.get(reverse("sounds-search") + "?q=test&page=999")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.context["beyond_last"])
+        # actual last page, not what was requested
+        self.assertEqual(resp.context["current_page"], 37)
+        self.assertContains(resp, "No more results")
+        self.assertNotContains(resp, "No results...")
+        content = resp.content.decode()
+        # in the paginator the last real page is the current page - no <a>
+        self.assertInHTML('<li class="bw-pagination_circle bw-pagination_selected">37</li>', content)
+        # page 1 link exists
+        self.assertInHTML('<a href="/search/?q=test&amp;page=1#sound" data-page="1" title="First Page">1</a>', content)
+
+    @mock.patch("search.views.perform_search_engine_query")
+    def test_sound_search_zero_results_shows_no_results(self, perform_search_engine_query):
+        results = SearchResults(docs=[], num_found=0)
+        paginator = PreSlicedCountProvidedPaginator(results.docs, 15, results.num_found)
+        perform_search_engine_query.return_value = (results, paginator)
+
+        resp = self.client.get(reverse("sounds-search") + "?q=nonsense")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.context["beyond_last"])
+        self.assertContains(resp, "No results...")
+        self.assertNotContains(resp, "No more results")
+        # 0 results shows no paginator
+        self.assertNotContains(resp, "bw-pagination_container")
+
+    @mock.patch("search.views.get_search_engine")
+    def test_forum_search_past_last_page_shows_no_more_results(self, get_search_engine):
+        engine = get_search_engine.return_value
+        engine.search_forum_posts.return_value = SearchResults(docs=[], num_found=100)
+
+        resp = self.client.get(reverse("forums-search") + "?q=test&page=999")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.context["beyond_last"])
+        self.assertContains(resp, "No more results")
+        self.assertNotContains(resp, "No results...")
+        # actual last page (100 posts / 20 per page), not what was requested
+        self.assertEqual(resp.context["current_page"], 5)
+        content = resp.content.decode()
+        # in the paginator the last real page is the current page - no <a>
+        self.assertInHTML('<li class="bw-pagination_circle bw-pagination_selected">5</li>', content)
+        # page 1 link exists
+        self.assertInHTML(
+            '<a href="/forum/forums-search/?q=test&amp;page=1" data-page="1" title="Page 1">1</a>', content
+        )
+
+    @mock.patch("search.views.get_search_engine")
+    def test_forum_search_zero_results_shows_no_results(self, get_search_engine):
+        engine = get_search_engine.return_value
+        engine.search_forum_posts.return_value = SearchResults(docs=[], num_found=0)
+
+        resp = self.client.get(reverse("forums-search") + "?q=nonsense")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.context["beyond_last"])
+        self.assertContains(resp, "No results...")
+        self.assertNotContains(resp, "No more results")
+        # 0 results shows no paginator
+        self.assertNotContains(resp, "bw-pagination_container")
+
+
 class SearchResultClustering(TestCase):
     fixtures = ["licenses"]
 

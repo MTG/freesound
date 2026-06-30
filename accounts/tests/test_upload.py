@@ -55,14 +55,14 @@ class UserUploadAndDescribeSounds(TestCase):
         f = SimpleUploadedFile(filename, b"file_content")
         resp = self.client.post("/home/upload/html/", {"file": f})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(os.path.exists(settings.UPLOADS_PATH + "/%i/%s" % (user.id, filename)), True)
+        self.assertEqual(os.path.exists(os.path.join(settings.UPLOADS_PATH, str(user.id), filename)), True)
 
         # Test file upload that should fail
         filename = "filè.xyz"
         f = SimpleUploadedFile(filename, b"file_content")
         resp = self.client.post("/home/upload/html/", {"file": f})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(os.path.exists(settings.UPLOADS_PATH + "/%i/%s" % (user.id, filename)), False)
+        self.assertEqual(os.path.exists(os.path.join(settings.UPLOADS_PATH, str(user.id), filename)), False)
 
     @override_uploads_path_with_temp_directory
     def test_select_uploaded_files_to_describe(self):
@@ -70,7 +70,7 @@ class UserUploadAndDescribeSounds(TestCase):
         filenames = ["file1.wav", "file2.wav", "file3.wav", "filè4.wav"]
         user = User.objects.create_user("testuser", password="testpass")
         self.client.force_login(user)
-        user_upload_path = settings.UPLOADS_PATH + "/%i/" % user.id
+        user_upload_path = os.path.join(settings.UPLOADS_PATH, str(user.id))
         os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(filenames, user_upload_path)
 
@@ -147,7 +147,7 @@ class UserUploadAndDescribeSounds(TestCase):
         filenames = ["file1.wav", "filè2.wav"]
         user = User.objects.create_user("testuser", email="1@xmpl.com", password="testpass")
         self.client.force_login(user)
-        user_upload_path = settings.UPLOADS_PATH + "/%i/" % user.id
+        user_upload_path = os.path.join(settings.UPLOADS_PATH, str(user.id))
         os.makedirs(user_upload_path, exist_ok=True)
         create_test_files(filenames, user_upload_path)
         _, _, sound_sources = create_user_and_sounds(
@@ -163,8 +163,8 @@ class UserUploadAndDescribeSounds(TestCase):
         session[f"{session_key_prefix}-describe_pack"] = False
         session[f"{session_key_prefix}-len_original_describe_sounds"] = 2
         session[f"{session_key_prefix}-describe_sounds"] = [
-            File(1, filenames[0], user_upload_path + filenames[0], False),
-            File(2, filenames[1], user_upload_path + filenames[1], False),
+            File(1, filenames[0], os.path.join(user_upload_path, filenames[0]), False),
+            File(2, filenames[1], os.path.join(user_upload_path, filenames[1]), False),
         ]
         session.save()
 

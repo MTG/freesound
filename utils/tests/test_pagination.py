@@ -17,12 +17,77 @@
 # Authors:
 #     See AUTHORS file.
 #
+import pytest
+from django.core.management import call_command
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from general.templatetags.bw_templatetags import bw_paginator
 from sounds.models import Sound
-from utils.pagination import CountProvidedPaginator, paginate
+from utils.pagination import CountProvidedPaginator, paginate, read_page
+
+
+@pytest.fixture
+def page_request():
+    """Return a factory that builds a GET request with a given ``page`` param.
+
+    Pass ``page=`` to set the page value, ``param=`` to change the query-param name,
+    or any other keyword as an extra query param.
+    """
+
+    def _make(page=None, param="page", **extra):
+        params = dict(extra)
+        if page is not None:
+            params[param] = page
+        return RequestFactory().get("/", params)
+
+    return _make
+
+
+@pytest.fixture
+def sounds(db):
+    """Load the sound fixtures (14 sounds) and return them as a queryset."""
+    call_command("loaddata", "licenses.json", "sounds.json")
+    return Sound.objects.all()
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (None, 1),  # no param
+        ("abc", 1),  # non-numeric
+        ("0", 1),  # zero, set to 1
+        ("-5", 1),  # negative -> set to 1
+        ("7", 7),  # normal value
+    ],
+    ids=["missing", "non-numeric", "zero", "negative", "in-range"],
+)
+def test_read_page_clamps_and_defaults(page_request, value, expected):
+    assert read_page(page_request(page=value)) == expected
+
+
+def test_read_page_custom_param_name(page_request):
+    assert read_page(page_request(p="3"), param="p") == 3
+
+
+def test_paginate_underflow_goes_to_first_page(page_request, sounds):
+    """?page=0 must clamp to page 1, not snap to the last page."""
+    result = paginate(page_request(page="0"), sounds, 10)
+    assert result["page"].number == 1
+    assert result["current_page"] == 1
+
+
+def test_paginate_overflow_goes_to_last_page(page_request, sounds):
+    """?page beyond the end clamps to the last page (14 sounds / 10 per page == 2 pages)."""
+    result = paginate(page_request(page="999"), sounds, 10)
+    assert result["page"].number == 2
+    assert result["current_page"] == 2
+
+
+def test_paginate_in_range_unchanged(page_request, sounds):
+    result = paginate(page_request(page="2"), sounds, 10)
+    assert result["page"].number == 2
+    assert result["current_page"] == 2
 
 
 class PaginationTest(TestCase):

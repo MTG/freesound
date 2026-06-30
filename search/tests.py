@@ -142,6 +142,35 @@ class SearchPageTests(TestCase):
             self.client.get(reverse("sounds-search") + "?dp=1&cm=1")
 
 
+class SearchPageLowerClampTests(TestCase):
+    """If ?page= value is < 1 then clamp it to 1 before sending to solr in order to prevent failures"""
+
+    fixtures = ["licenses", "users", "sounds_with_tags"]
+
+    def setUp(self):
+        self.perform_search_engine_query_response = create_fake_perform_search_engine_query_response(15)
+
+    @mock.patch("search.views.perform_search_engine_query")
+    def test_sound_search_page_zero_clamped_before_query(self, perform_search_engine_query):
+        perform_search_engine_query.return_value = self.perform_search_engine_query_response
+
+        resp = self.client.get(reverse("sounds-search") + "?q=test&page=0")
+
+        self.assertEqual(resp.status_code, 200)
+        query_params = perform_search_engine_query.call_args[0][0]
+        self.assertEqual(query_params["current_page"], 1)
+
+    @mock.patch("search.views.get_search_engine")
+    def test_forum_search_page_zero_clamped_before_query(self, get_search_engine):
+        engine = get_search_engine.return_value
+        engine.search_forum_posts.return_value = SearchResults(docs=[], num_found=0)
+
+        resp = self.client.get(reverse("forums-search") + "?q=test&page=0")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(engine.search_forum_posts.call_args.kwargs["current_page"], 1)
+
+
 class SearchResultClustering(TestCase):
     fixtures = ["licenses"]
 

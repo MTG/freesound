@@ -20,7 +20,8 @@
 
 import urllib.parse
 
-from django.core.paginator import InvalidPage, Paginator
+from django.core.paginator import Paginator
+from django.http import HttpRequest
 from django.utils.functional import cached_property
 
 
@@ -42,19 +43,32 @@ class CountProvidedPaginator(Paginator):
         return super().count
 
 
-def paginate(request, qs, items_per_page=20, page_get_name="page", object_count=None):
-    paginator = CountProvidedPaginator(qs, items_per_page, object_count=object_count)
+def read_page(request: HttpRequest, param: str = "page") -> int:
+    """Read the requested page number from the request.
+
+    If the page number is not set or not a number, return 1
+    Return page 1 for any number < 1
+    """
     try:
-        current_page = int(request.GET.get(page_get_name, 1))
+        page = int(request.GET.get(param, 1))
     except ValueError:
-        current_page = 1
+        return 1
+    return max(page, 1)
 
-    try:
-        page = paginator.page(current_page)
-    except InvalidPage:
-        current_page = paginator.num_pages
-        page = paginator.page(current_page)
 
+def paginate(
+    request: HttpRequest,
+    qs,
+    items_per_page: int = 20,
+    page_get_name: str = "page",
+    object_count: int | None = None,
+) -> dict:
+    paginator = CountProvidedPaginator(qs, items_per_page, object_count=object_count)
+    page_param = read_page(request, page_get_name)
+    # If the requested page is greater than the number of pages in the queryset,
+    # clamp it to the max valid value
+    current_page = min(page_param, paginator.num_pages)
+    page = paginator.page(current_page)
     return dict(paginator=paginator, current_page=current_page, page=page)
 
 

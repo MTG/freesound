@@ -25,7 +25,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from sounds.models import Sound
-from utils.search import SearchResults, SearchResultsPaginator
+from utils.pagination import PreSlicedCountProvidedPaginator
+from utils.search import SearchResults
 from utils.test_helpers import create_user_and_sounds
 
 
@@ -93,7 +94,7 @@ def create_fake_perform_search_engine_query_response(num_results=15):
         }
         for sound_id, pack_id in sound_ids
     ]
-    paginator = SearchResultsPaginator(results, num_results)
+    paginator = PreSlicedCountProvidedPaginator(results.docs, num_results, results.num_found)
     return (results, paginator)
 
 

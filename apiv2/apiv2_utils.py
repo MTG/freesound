@@ -20,7 +20,6 @@
 
 import json
 import logging
-import math
 import urllib.parse
 from urllib.parse import unquote
 
@@ -489,29 +488,6 @@ def get_authentication_details_form_request(request):
 
 def request_parameters_info_for_log_message(get_parameters):
     return ",".join([f"{key}={value}" for key, value in get_parameters.items()])
-
-
-class ApiSearchPaginator:
-    def __init__(self, results, count, num_per_page):
-        self.num_per_page = num_per_page
-        self.count = count
-        self.num_pages = math.ceil(count / num_per_page)
-        self.page_range = list(range(1, self.num_pages + 1))
-        self.results = results
-
-    def page(self, page_num):
-        has_next = page_num < self.num_pages
-        has_previous = 1 < page_num <= self.num_pages
-
-        return {
-            "object_list": self.results,
-            "has_next": has_next,
-            "has_previous": has_previous,
-            "has_other_pages": has_next or has_previous,
-            "next_page_number": page_num + 1,
-            "previous_page_number": page_num - 1,
-            "page_num": page_num,
-        }
 
 
 # Docs examples utils

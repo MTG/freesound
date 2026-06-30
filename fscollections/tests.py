@@ -514,6 +514,30 @@ class CollectionTest(TestCase):
             html.index(f'data-object-id="{self.sound.id}"'),
         )
 
+    def test_render_collection_cards_renders_pager_when_multiple_pages(self):
+        """verify that the paginator shows 2 pages"""
+        self.client.force_login(self.user)
+        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
+        resp = self.client.get(
+            cards_url,
+            {"ids": f"{self.sound2.id},{self.sound.id}", "page": "1", "total": "2"},
+            HTTP_HX_CURRENT_URL="/collections/test/edit/",
+        )
+        self.assertEqual(200, resp.status_code)
+        self.assertContains(resp, "page=2")
+
+    def test_render_collection_cards_clamps_overflow_page(self):
+        """verify that asking for a large page number if there are only 2 doesn't raise"""
+        self.client.force_login(self.user)
+        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
+        resp = self.client.get(
+            cards_url,
+            {"ids": f"{self.sound2.id},{self.sound.id}", "page": "99", "total": "2"},
+            HTTP_HX_CURRENT_URL="/collections/test/edit/",
+        )
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(resp.context["current_page"], 2)
+
     def test_render_collection_cards_forbidden_for_non_member(self):
         self.client.force_login(self.external_user)
         cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])

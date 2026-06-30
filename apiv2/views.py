@@ -83,10 +83,10 @@ from sounds.models import License, Pack, Sound
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
+from utils.pagination import PreSlicedCountProvidedPaginator
 from utils.tags import clean_and_split_tags
 
 from .apiv2_utils import (
-    ApiSearchPaginator,
     DownloadAPIView,
     GenericAPIView,
     ListAPIView,
@@ -199,7 +199,7 @@ class TextSearch(GenericAPIView):
             raise ServerErrorException(msg="Unexpected error", resource=self)
 
         # Paginate results
-        paginator = ApiSearchPaginator(results, count, search_form.cleaned_data["page_size"])
+        paginator = PreSlicedCountProvidedPaginator(results, search_form.cleaned_data["page_size"], count)
         if search_form.cleaned_data["page"] > paginator.num_pages and count != 0:
             raise NotFoundException(resource=self)
         page = paginator.page(search_form.cleaned_data["page"])
@@ -207,18 +207,18 @@ class TextSearch(GenericAPIView):
         response_data["count"] = paginator.count
         response_data["previous"] = None
         response_data["next"] = None
-        if page["has_other_pages"]:
-            if page["has_previous"]:
+        if page.has_other_pages():
+            if page.has_previous():
                 response_data["previous"] = search_form.construct_link(
-                    reverse("apiv2-sound-search"), page=page["previous_page_number"]
+                    reverse("apiv2-sound-search"), page=page.previous_page_number()
                 )
-            if page["has_next"]:
+            if page.has_next():
                 response_data["next"] = search_form.construct_link(
-                    reverse("apiv2-sound-search"), page=page["next_page_number"]
+                    reverse("apiv2-sound-search"), page=page.next_page_number()
                 )
 
         # Get analysis data and serialize sound results
-        object_list = [ob for ob in page["object_list"]]
+        object_list = [ob for ob in page.object_list]
         id_score_map = dict(object_list)
         sound_ids = [ob[0] for ob in object_list]
         # In search queries, only include audio analyzer's output if requested through the fields parameter
@@ -381,7 +381,7 @@ class SimilarSounds(GenericAPIView):
         results = [sound_id for sound_id, _ in results]
 
         # Paginate results
-        paginator = ApiSearchPaginator(results, count, similarity_sound_form.cleaned_data["page_size"])
+        paginator = PreSlicedCountProvidedPaginator(results, similarity_sound_form.cleaned_data["page_size"], count)
         if similarity_sound_form.cleaned_data["page"] > paginator.num_pages and count != 0:
             raise NotFoundException(resource=self)
         page = paginator.page(similarity_sound_form.cleaned_data["page"])
@@ -389,19 +389,19 @@ class SimilarSounds(GenericAPIView):
         response_data["count"] = paginator.count
         response_data["previous"] = None
         response_data["next"] = None
-        if page["has_other_pages"]:
-            if page["has_previous"]:
+        if page.has_other_pages():
+            if page.has_previous():
                 response_data["previous"] = similarity_sound_form.construct_link(
-                    reverse("apiv2-similarity-sound", args=[sound_id]), page=page["previous_page_number"]
+                    reverse("apiv2-similarity-sound", args=[sound_id]), page=page.previous_page_number()
                 )
-            if page["has_next"]:
+            if page.has_next():
                 response_data["next"] = similarity_sound_form.construct_link(
-                    reverse("apiv2-similarity-sound", args=[sound_id]), page=page["next_page_number"]
+                    reverse("apiv2-similarity-sound", args=[sound_id]), page=page.next_page_number()
                 )
 
         # Serialize sound results
         # In search queries, only include audio analyzer's output if requested through the fields parameter
-        ids = [id for id in page["object_list"]]
+        ids = [id for id in page.object_list]
         needs_analyzers_output = get_needed_audio_descriptors(similarity_sound_form.cleaned_data.get("fields", ""))
         needs_similarity_vectors = get_needed_similarity_vectors(similarity_sound_form.cleaned_data.get("fields", ""))
         include_remix_subqueries = get_include_remix_subqueries(similarity_sound_form.cleaned_data.get("fields", ""))

@@ -30,7 +30,7 @@ from django.utils.html import escape
 from accounts.models import OldUsername
 from geotags.models import GeoTag
 from sounds.models import Download, PackDownload, SoundOfTheDay
-from utils.search import SearchResultsPaginator
+from utils.pagination import PreSlicedCountProvidedPaginator
 from utils.test_helpers import create_fake_perform_search_engine_query_results_tags_mode, create_user_and_sounds
 
 
@@ -309,7 +309,7 @@ class SimpleUserTest(TestCase):
     @mock.patch("search.views.perform_search_engine_query")
     def test_tags_response(self, perform_search_engine_query):
         results = create_fake_perform_search_engine_query_results_tags_mode()
-        paginator = SearchResultsPaginator(results, 15)
+        paginator = PreSlicedCountProvidedPaginator(results.docs, 15, results.num_found)
         perform_search_engine_query.return_value = (results, paginator)
 
         # 200 response on tags page access

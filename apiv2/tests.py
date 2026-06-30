@@ -24,7 +24,6 @@ from django.contrib.sites.models import Site
 from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 
-from apiv2.apiv2_utils import ApiSearchPaginator
 from apiv2.models import ApiV2Client
 from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer
 from bookmarks.models import Bookmark, BookmarkCategory
@@ -145,25 +144,6 @@ class TestAPI(TestCase):
             "/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers
         )
         self.assertEqual(resp.status_code, 200)
-
-
-class ApiSearchPaginatorTest(TestCase):
-    def test_page(self):
-        paginator = ApiSearchPaginator([1, 2, 3, 4, 5], 5, 2)
-        page = paginator.page(2)
-
-        self.assertEqual(
-            page,
-            {
-                "object_list": [1, 2, 3, 4, 5],
-                "has_next": True,
-                "has_previous": True,
-                "has_other_pages": True,
-                "next_page_number": 3,
-                "previous_page_number": 1,
-                "page_num": 2,
-            },
-        )
 
 
 class TestSoundCombinedSearchFormAPI(SimpleTestCase):

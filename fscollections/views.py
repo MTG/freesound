@@ -279,11 +279,7 @@ def render_collection_cards(request, collection):
             # render the paginator
             paginator = Paginator(range(total_pages), 1)
             page = paginator.page(page_num)
-            tvars.update(
-                build_paginator_template_context(
-                    paginator, page, page_num, base_path=request.path, base_query=request.GET
-                )
-            )
+            tvars.update(build_paginator_template_context(page, base_path=request.path, base_query=request.GET))
             tvars["has_paginator"] = True
         except (ValueError, TypeError):
             pass

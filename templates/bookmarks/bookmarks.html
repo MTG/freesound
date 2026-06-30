@@ -49,7 +49,7 @@
                 {% else %}
                     <div class="text-grey">There are no {% if not category %}uncategorized{% endif %} bookmarks {% if category %}in this category{% endif %} &#128543</div>
                 {% endif %}
-                {% bw_paginator paginator page current_page request "bookmark" %}
+                {% bw_paginator page request "bookmark" %}
                 </div>
             </div>
         </div>

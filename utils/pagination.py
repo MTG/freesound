@@ -111,24 +111,26 @@ def paginate(
 
 
 def build_paginator_template_context(
-    paginator,
-    page,
-    current_page,
-    base_path,
+    page: Page | None,
+    base_path: str,
     base_query,
-    anchor="",
-    non_grouped_number_of_results=-1,
-    hx_target="",
-):
+    anchor: str = "",
+    non_grouped_number_of_results: int = -1,
+    hx_target: str = "",
+) -> dict:
     """Build context for ``templates/molecules/paginator.html``.
 
+    ``page``'s ``paginator`` and ``number`` are derived here.
     ``base_path`` is the URL path that paginator links should point to (typically
     ``request.path``). ``base_query`` is a dict-like (e.g. ``QueryDict``) of
     query parameters to preserve across pages; ``page`` is always stripped and
     replaced with the target page number.
     """
-    if paginator is None:
+    if page is None:
         return {}
+
+    paginator = page.paginator
+    current_page = page.number
 
     adjacent_pages = 3
     total_wanted = adjacent_pages * 2 + 1

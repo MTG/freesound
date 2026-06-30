@@ -58,7 +58,7 @@
             {% if tab == "packs" %}
                 {%  if packs_to_select %}
                     {% packs_selector_with_select_buttons packs_to_select %}
-                    {% bw_paginator paginator page current_page request "pack" %}
+                    {% bw_paginator page request "pack" %}
                 {% else %}
                     <div class="v-spacing-7 v-spacing-top-6 text-center">
                         <h5>No packs...</h5>
@@ -70,7 +70,7 @@
             {% else %}
                 {% if sounds_to_select %}
                     {% sounds_selector_with_select_buttons sounds_to_select %}
-                    {% bw_paginator paginator page current_page request "sound" %}
+                    {% bw_paginator page request "sound" %}
                 {% else %}
                     <div class="v-spacing-7 v-spacing-top-6 text-center">
                         <h5>No sounds...</h5>

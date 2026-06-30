@@ -76,8 +76,9 @@ def print_descriptor(descriptor):
 
     image_paths = (
         glob.glob(os.path.join(image_folder, f"{descriptor['name']}.png"))
-        or glob.glob(os.path.join(image_folder, f"{descriptor['name']}_*.png"))  #descriptor_[number]
-    )       
+        or glob.glob(os.path.join(image_folder, f"{descriptor['name']}-*.png"))  #descriptor_[number]
+    )
+            
     if image_paths:
         image_paths.sort(key=lambda p: int(re.findall(r'\d+', os.path.basename(p))[-1]) if re.findall(r'\d+', os.path.basename(p)) else -1)
         print("\n**Distribution in Freesound**\n")

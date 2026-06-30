@@ -113,6 +113,6 @@ for descriptor_name in descriptor_names:
 
         for i in range(len(first_val)):
             pool = [v[i] for v in values if len(v) > i]
-            label = f"{descriptor_name}_{i}"
+            label = f"{descriptor_name}-{i}"
             print(f"\tDim. {i}")
             plot_histogram(pool, label, OUT_FOLDER)

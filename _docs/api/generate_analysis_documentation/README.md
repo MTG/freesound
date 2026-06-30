@@ -1,0 +1,6 @@
+# Instructions for updating descriptors documentation
+
+1) Update `descriptors.csv``
+2) Run `python generate_resources_descriptor_table.py` and copy the printed table to the corresponding place in ` ../source/resources.rst`
+3) Run `python generate_analysis_rst.py  > ../source/analysis_docs.rst` to update the analysis documentation page with new descriptors. This will add distribution images to the docs if these are present in the `../source/_static/descriptors/` folder. The first time a descriptor is deployed, it might need to be first added without a distribution image. When the descriptor is deployed in Freesound, then a command can be run to extract its values and generate the images. See next steps...
+4) To create images for new descriptors (or update existing ones), the descriptor needs to be deployed in Freesound, and the its data exported to a JSON file with the command `export_audio_descriptor_stats --names xxx`. Then copy the resulting JSON file(s) here, and run the script `generate_plots.py` which will place new images in the correct location. Finally, re-run step 3) to update the docs.

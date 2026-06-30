@@ -1,3 +1,4 @@
+
 .. _analysis-docs:
 
 Audio Descriptors Documentation
@@ -20,35 +21,6 @@ During analysis, the sample rate is 44,100Hz and the audio file's channels are m
 to mono. For most descriptors, the frame size is 2,048 samples with a hop size of 1,024,
 while for some tonal descriptors, the frame size is 4,096 samples with a hop size of 2,048.
 
-
-Glossary 
->>>>>>>>>>>>>>>>
-
-Basic terms used in the documentation of audio descriptors:
-
-========= =====================================
-numeric   The descriptor returns a numeric value; can be either an integer or a float.
-integer   The descriptor returns an integer value only.
-string    The descriptor returns a textual value.
-boolean   The descriptor returns a binary value; 0 (no) or 1 (yes).
-array[x]  The descriptor returns a list of elements of type X.
-VL        Variable-length descriptor; the returned list may vary in length depending on the sound.
-mean      The arithmetic mean of the descriptor values over the entire sound.
-min       The lowest (minimum) descriptor value over the entire sound.
-max       The highest (maximum) descriptor value over the entire sound.
-var       The variance of the descriptor values over the entire sound.
-========= =====================================
-
-Most descriptors have ``fixed length`` and are divided into ``one-dimensional`` (descriptors that consist 
-of a single value, e.g. pitch, note_name) and ``multi-dimensional`` (descriptors with several dimensions, e.g. tristimulus).
-The remaining descriptors have ``variable length``, i.e. their length depends on the analyzed sound (denoted with `VL` in ``mode``).
-
-All ``one-dimensional`` descriptors (regardless their ``type``) can be used in the ``filter`` parameter of the :ref:`sound-search` resource.
-The ``multi-dimensional`` and ``variable-length`` descriptors can be accessed through the sound metadata 
-(use ``fields`` parameter in any API resource that returns a sound list or the :ref:`sound-analysis`).
-If ``mode`` ends with a number in parentheses (``n``), it indicates that this descriptor is ``multi-dimensional``, 
-and this mode is calculated for a specific number of values.  
-For example, if ``mode`` is ``mean (36)``, it represents the mean calculated across 36 values.
 
 
 Main set of descriptors
@@ -115,7 +87,7 @@ bpm
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/bpm
 
-**Description:** BPM value of the audio estimated by beat tracking algorithm.
+**Description:** BPM value estimated by beat tracking algorithm.
 
 **Type:** integer
 
@@ -407,7 +379,7 @@ pitch
 
 **Values:** 0-25000
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
 
 **Distribution in Freesound**
 
@@ -430,12 +402,30 @@ pitch_salience
 
 **Values:** 0-1
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
+**More information:** https://essentia.upf.edu/reference/streaming_PitchSalience.html
 
 **Distribution in Freesound**
 
     .. image:: _static/descriptors/pitch_salience.png
         :height: 300px
+
+
+pitch_confidence
+-------------------------
+
+::
+
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/pitch_confidence
+
+**Description:** A measure of the confidence with which the pitch was estimated. If the output is near 1, there exist just one pitch in the mixture, an output near 0 indicates multiple, not distinguishable pitches.
+
+**Mode:** mean
+
+**Type:** numeric
+
+**Values:** 0-1
+
+**More information:** https://essentia.upf.edu/reference/std_PitchYin.html
 
 
 reverbness
@@ -651,41 +641,6 @@ beat_loudness
         :height: 300px
 
 
-chord_count
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/chord_count
-
-**Description:** Number of chords in the audio signal based on the number of detected chords by the chord_progression descriptor.
-
-**Type:** integer
-
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/chord_count.png
-        :height: 300px
-
-
-chord_progression
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/chord_progression
-
-**Description:** Chords estimated from the harmonic pitch class profiles (HPCPs) across the audio signal. Using the pitch classes ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], it finds the best-matching major or minor triad and outputs a time-varying chord sequence as a sequence of labels (e.g. A#, Bm). Note, chords are major if no minor symbol.
-
-**Mode:** VL
-
-**Type:** array[string]
-
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_ChordsDetection.html
-
-
 decay_strength
 -------------------------
 
@@ -731,94 +686,108 @@ hpcp
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/hpcp
 
-**Description:** Harmonic Pitch Class Profile (HPCP) computed from the spectral peaks of the audio signal, representing the energy distribution across 36 pitch classes (3 subdivisions per semitone).
+**Description:** Frame by frame average of the Harmonic Pitch Class Profile (HPCP) computed from the spectral peaks of the audio signal, representing the energy distribution across 36 pitch classes (3 subdivisions per semitone).
 
 **Mode:** mean (36)
 
 **Type:** array[numeric]
 
-**Values:** 0-36
+**Values:** 0-1
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_HPCP.html, https://en.wikipedia.org/wiki/Harmonic_pitch_class_profiles
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/hpcp_crest.png
+    .. image:: _static/descriptors/hpcp-0.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_entropy.png
+    .. image:: _static/descriptors/hpcp-1.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_0.png
+    .. image:: _static/descriptors/hpcp-2.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_1.png
+    .. image:: _static/descriptors/hpcp-3.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_2.png
+    .. image:: _static/descriptors/hpcp-4.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_3.png
+    .. image:: _static/descriptors/hpcp-5.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_4.png
+    .. image:: _static/descriptors/hpcp-6.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_5.png
+    .. image:: _static/descriptors/hpcp-7.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_6.png
+    .. image:: _static/descriptors/hpcp-8.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_7.png
+    .. image:: _static/descriptors/hpcp-9.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_8.png
+    .. image:: _static/descriptors/hpcp-10.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_9.png
+    .. image:: _static/descriptors/hpcp-11.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_10.png
+    .. image:: _static/descriptors/hpcp-12.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_11.png
+    .. image:: _static/descriptors/hpcp-13.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_12.png
+    .. image:: _static/descriptors/hpcp-14.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_13.png
+    .. image:: _static/descriptors/hpcp-15.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_14.png
+    .. image:: _static/descriptors/hpcp-16.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_15.png
+    .. image:: _static/descriptors/hpcp-17.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_16.png
+    .. image:: _static/descriptors/hpcp-18.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_17.png
+    .. image:: _static/descriptors/hpcp-19.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_18.png
+    .. image:: _static/descriptors/hpcp-20.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_19.png
+    .. image:: _static/descriptors/hpcp-21.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_20.png
+    .. image:: _static/descriptors/hpcp-22.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_21.png
+    .. image:: _static/descriptors/hpcp-23.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_22.png
+    .. image:: _static/descriptors/hpcp-24.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_23.png
+    .. image:: _static/descriptors/hpcp-25.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_24.png
+    .. image:: _static/descriptors/hpcp-26.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_25.png
+    .. image:: _static/descriptors/hpcp-27.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_26.png
+    .. image:: _static/descriptors/hpcp-28.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_27.png
+    .. image:: _static/descriptors/hpcp-29.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_28.png
+    .. image:: _static/descriptors/hpcp-30.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_29.png
+    .. image:: _static/descriptors/hpcp-31.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_30.png
+    .. image:: _static/descriptors/hpcp-32.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_31.png
+    .. image:: _static/descriptors/hpcp-33.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_32.png
+    .. image:: _static/descriptors/hpcp-34.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_33.png
+    .. image:: _static/descriptors/hpcp-35.png
         :height: 300px
-    .. image:: _static/descriptors/hpcp_34.png
-        :height: 300px
-    .. image:: _static/descriptors/hpcp_35.png
-        :height: 300px
+
+
+hpcp_var
+-------------------------
+
+::
+
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/hpcp_var
+
+**Description:** Frame by frame variance of the Harmonic Pitch Class Profile (HPCP) computed from the spectral peaks of the audio signal, representing the energy distribution across 36 pitch classes (3 subdivisions per semitone).
+
+**Mode:** var (36)
+
+**Type:** array[numeric]
+
+**Values:** 0-1
+
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_HPCP.html, https://en.wikipedia.org/wiki/Harmonic_pitch_class_profiles
 
 
 hpcp_crest
@@ -889,7 +858,7 @@ mfcc
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/mfcc
 
-**Description:** 13 mel-frequency cepstrum coefficients of a spectrum (MFCC-FB40).
+**Description:** Frame by frame average of the 13 mel-frequency cepstrum coefficients of a spectrum (MFCC-FB40).
 
 **Mode:** mean (13)
 
@@ -899,32 +868,48 @@ mfcc
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/mfcc_0.png
+    .. image:: _static/descriptors/mfcc-0.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_1.png
+    .. image:: _static/descriptors/mfcc-1.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_2.png
+    .. image:: _static/descriptors/mfcc-2.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_3.png
+    .. image:: _static/descriptors/mfcc-3.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_4.png
+    .. image:: _static/descriptors/mfcc-4.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_5.png
+    .. image:: _static/descriptors/mfcc-5.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_6.png
+    .. image:: _static/descriptors/mfcc-6.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_7.png
+    .. image:: _static/descriptors/mfcc-7.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_8.png
+    .. image:: _static/descriptors/mfcc-8.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_9.png
+    .. image:: _static/descriptors/mfcc-9.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_10.png
+    .. image:: _static/descriptors/mfcc-10.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_11.png
+    .. image:: _static/descriptors/mfcc-11.png
         :height: 300px
-    .. image:: _static/descriptors/mfcc_12.png
+    .. image:: _static/descriptors/mfcc-12.png
         :height: 300px
+
+
+mfcc_var
+-------------------------
+
+::
+
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/mfcc_var
+
+**Description:** Frame by frame variance of the 13 mel-frequency cepstrum coefficients of a spectrum (MFCC-FB40).
+
+**Mode:** var (13)
+
+**Type:** array[numeric]
+
+**More information:** https://essentia.upf.edu/reference/streaming_MFCC.html
 
 
 pitch_max
@@ -940,7 +925,7 @@ pitch_max
 
 **Type:** numeric
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
 
 **Distribution in Freesound**
 
@@ -961,7 +946,7 @@ pitch_min
 
 **Type:** numeric
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
 
 **Distribution in Freesound**
 
@@ -982,7 +967,7 @@ pitch_var
 
 **Type:** numeric
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
 
 **Distribution in Freesound**
 
@@ -1303,11 +1288,11 @@ tristimulus
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/tristimulus_0.png
+    .. image:: _static/descriptors/tristimulus-0.png
         :height: 300px
-    .. image:: _static/descriptors/tristimulus_1.png
+    .. image:: _static/descriptors/tristimulus-1.png
         :height: 300px
-    .. image:: _static/descriptors/tristimulus_2.png
+    .. image:: _static/descriptors/tristimulus-2.png
         :height: 300px
 
 
@@ -1332,4 +1317,5 @@ zero_crossing_rate
 
     .. image:: _static/descriptors/zero_crossing_rate.png
         :height: 300px
+
 

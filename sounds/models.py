@@ -25,6 +25,7 @@ import logging
 import math
 import os
 import random
+import re
 import zlib
 from collections import Counter
 from urllib.parse import quote
@@ -819,27 +820,6 @@ class Sound(models.Model):
                     ),
                 ),
             ),
-            analysis=dict(
-                base_path=os.path.join(settings.ANALYSIS_PATH, id_folder),
-                statistics=dict(
-                    path=os.path.join(
-                        settings.ANALYSIS_PATH,
-                        id_folder,
-                        "%d-%s.yaml" % (self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                    ),
-                    url=settings.ANALYSIS_URL
-                    + "%s/%d-%s.yaml" % (id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                ),
-                frames=dict(
-                    path=os.path.join(
-                        settings.ANALYSIS_PATH,
-                        id_folder,
-                        "%d-%s_frames.json" % (self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                    ),
-                    url=settings.ANALYSIS_URL
-                    + "%s/%d-%s_frames.json" % (id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                ),
-            ),
         )
 
     def get_preview_abs_url(self):
@@ -1230,8 +1210,6 @@ class Sound(models.Model):
         # Rename related files in disk
         paths_to_rename = [
             self.locations("path"),  # original file path
-            self.locations("analysis.frames.path"),  # analysis frames file
-            self.locations("analysis.statistics.path"),  # analysis statistics file
             self.locations("display.spectral.L.path"),  # spectrogram L
             self.locations("display.spectral.M.path"),  # spectrogram M
             self.locations("display.wave.L.path"),  # waveform L
@@ -1408,7 +1386,7 @@ class Sound(models.Model):
                 kwargs={
                     "sound_id": self.id,
                     "sound_path": sound_path,
-                    "analysis_folder": self.locations("analysis.base_path"),
+                    "analysis_folder": os.path.join(settings.ANALYSIS_PATH, str(self.id // 1000)),
                     "metadata": json.dumps(
                         {
                             "duration": self.duration,
@@ -1427,7 +1405,7 @@ class Sound(models.Model):
                 sounds_logger.info(f"Not sending sound {self.id} to analyzer {analyzer} as is already queued")
         return sa
 
-    def consolidate_analysis(self, no_db_operations=False):
+    def consolidate_analysis(self, no_db_operations=False, fail_if_missing=False):
         """
         This method post-processes the analysis results of all analyzers for this sound and consolidates them into a new
         SoundAnalysis object with analyzer name settings.CONSOLIDATED_ANALYZER_NAME. This consolidated analysis contains
@@ -1436,6 +1414,7 @@ class Sound(models.Model):
 
         :param bool no_db_operations: If True, the method only computes the data but does not save it in the DB. Also it returns
             the consolidated analysis data dictionary instead of the SoundAnalysis object.
+        :param bool fail_if_missing: If True, the method raises an exception if any analyzer data or descriptor data is missing.
         """
 
         # Iterate over all descriptors defined in settings.CONSOLIDATED_AUDIO_DESCRIPTORS and obtain/process their values
@@ -1456,6 +1435,12 @@ class Sound(models.Model):
                 if not analyzer_data:
                     # Analyzer data could not be loaded from file. That means that the analyzer has not analyzed
                     # the sound successfully, skip descriptor
+                    if fail_if_missing:
+                        raise Exception(f"Analyzer data for {analyzer} is missing (sound id: {self.id})")
+                    else:
+                        print(
+                            f"Analyzer data for {analyzer} is missing (sound id: {self.id}), skipping descriptors from this analyzer"
+                        )
                     continue
                 # Save the data in tmp dict so it is not loaded again in the future if present
                 tmp_analyzers_data[analyzer] = analyzer_data
@@ -1484,7 +1469,10 @@ class Sound(models.Model):
                     value = get_func(analyzer_data, self)
             except Exception as e:
                 # If value can't be loaded, continue with next descriptor
-                print(f"Can't get value for descriptor {name}: {e} (sound id: {self.id})")
+                if fail_if_missing:
+                    raise Exception(f"Can't get value for descriptor {name}: {e} (sound id: {self.id})")
+                else:
+                    print(f"Can't get value for descriptor {name}: {e} (sound id: {self.id}), skipping this descriptor")
                 continue
 
             if value is not None and type(value) == float and math.isnan(value):
@@ -1695,6 +1683,44 @@ class Sound(models.Model):
             return f"{reverse('sounds-search')}?{cat_filter}"
         else:
             return None
+
+    def estimate_bpm_from_metadata(self, min_bpm=25, max_bpm=300):
+        """
+        Estimate the bpm of a sound by looking at its description, tags and name.
+        :param min_bpm: minimum bpm
+        :param max_bpm: maximum bpm
+        :return: estimated bpm (int) or 0 if bpm could not be estimated
+        """
+        bpm_candidates = list()
+
+        # Find sequences like 120bpm, bpm120, 120 bpm or bpm 120 in all fields
+        description = self.description.lower()
+        name = self.original_filename.lower()
+        tags = [t.lower() for t in self.get_sound_tags()]
+        for candidate in re.findall(r"\d+[\s]?bpm", description + " " + name + " " + " ".join(tags)) + re.findall(
+            r"bpm[\s]?\d+", description + " " + name + " " + " ".join(tags)
+        ):
+            try:
+                bpm = int(candidate.replace("bpm", "").replace(" ", ""))
+                if min_bpm <= bpm <= max_bpm:
+                    bpm_candidates.append(bpm)
+            except ValueError:
+                continue
+
+        # Find tags corresponding to single numbers and in a range
+        for tag in tags:
+            try:
+                bpm = int(tag)
+                if min_bpm <= bpm <= max_bpm:
+                    bpm_candidates.append(bpm)
+            except ValueError:
+                continue
+
+        if not bpm_candidates:
+            return 0
+
+        # Return the most common candidate
+        return Counter(bpm_candidates).most_common(1)[0][0]
 
     class Meta:
         ordering = ("-created",)

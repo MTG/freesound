@@ -739,34 +739,6 @@ class SoundTemplateCacheTests(TestCase):
         resp = self._get_sound_from_profile_page(self.user)
         self.assertContains(resp, 'data-num-downloads="1"')
 
-    # Similarity link (cached in display and view)
-    @mock.patch("general.management.commands.similarity_update.Similarity.add", return_value="Dummy response")
-    def _test_similarity_update(self, cache_keys, expected, request_func, similarity_add, user=None):
-        # Create a SoundAnalysis object with status OK so "similarity_update" command will pick it up
-        SoundAnalysis.objects.create(
-            sound=self.sound, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK"
-        )
-        self.sound.save()
-
-        self._assertCacheAbsent(cache_keys)
-
-        self.client.force_login(self.user)
-
-        # Initial check
-        self.assertEqual(self.sound.similarity_state, "PE")
-        self.assertNotContains(request_func(user) if user is not None else request_func(), expected)
-        self._assertCachePresent(cache_keys)
-
-        # Update similarity
-        call_command("similarity_update")
-        similarity_add.assert_called_once_with(self.sound.id, self.sound.locations("analysis.statistics.path"))
-        self._assertCacheAbsent(cache_keys)
-
-        # Check similarity icon
-        self.sound.refresh_from_db()
-        self.assertEqual(self.sound.similarity_state, "OK")
-        self.assertContains(request_func(user) if user is not None else request_func(), expected)
-
     # Pack link (cached in display and view)
     def _test_add_remove_pack(self, cache_keys, text, request_func, user=None):
         self._assertCacheAbsent(cache_keys)

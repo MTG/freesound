@@ -1039,29 +1039,42 @@ class Sound(models.Model):
         """
         Returns a set object with the integer sound IDs of the current sources of the sound
         """
-        return {source["id"] for source in self.sources.all().values("id")}
+        return set(self.sources.values_list("id", flat=True))
 
-    def set_sources(self, new_sources):
+    def change_sources_and_propagate(self, new_sources):
         """
-        :param set new_sources: set object with the integer IDs of the sounds which should be set as sources of the sound
+        Replace this sound's remix sources with ``new_sources`` and propagate the change to
+        dependent systems:
+          * sends "added as remix source" emails to the owners of newly-added source sounds
+          * invalidates template caches for this sound and for each added/removed source
+          * bulk-marks added/removed sources as ``is_index_dirty`` so Solr reindexes their
+            ``is_remix`` / ``was_remixed`` fields (this sound is dirtied by the caller —
+            either via ``Sound.is_index_dirty=True`` on creation or the unconditional
+            ``mark_index_dirty`` in the edit view)
+
+        Sound deletions (the other code path that mutates ``sounds_sound_sources``) handle
+        their own counterparty dirtying in ``on_delete_sound``.
+
+        :param set new_sources: set of integer sound IDs that should become this sound's sources
         """
         new_sources.discard(self.id)  # stop the universe from collapsing :-D
         old_sources = self.get_sound_sources_as_set()
 
+        dirtied_source_ids = set()
+
         # process sources in old but not in new
-        for sid in old_sources - new_sources:
-            try:
-                source = Sound.objects.get(id=sid)
-                self.sources.remove(source)
-                source.invalidate_template_caches()
-            except Sound.DoesNotExist:
-                pass
+        sources_to_remove = list(Sound.objects.filter(id__in=old_sources - new_sources))
+        for source in sources_to_remove:
+            source.invalidate_template_caches()
+            dirtied_source_ids.add(source.id)
+        if sources_to_remove:
+            self.sources.remove(*sources_to_remove)
 
         # process sources in new but not in old
-        for sid in new_sources - old_sources:
-            source = Sound.objects.get(id=sid)
+        sources_to_add = list(Sound.objects.filter(id__in=new_sources - old_sources))
+        for source in sources_to_add:
             source.invalidate_template_caches()
-            self.sources.add(source)
+            dirtied_source_ids.add(source.id)
             send_mail_template(
                 settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX,
                 "emails/email_remix_update.txt",
@@ -1069,6 +1082,12 @@ class Sound(models.Model):
                 user_to=source.user,
                 email_type_preference_check="new_remix",
             )
+        if sources_to_add:
+            self.sources.add(*sources_to_add)
+
+        # Counterparties' was_remixed/is_remix may have flipped: bulk-mark them for Solr re-indexing.
+        if dirtied_source_ids:
+            Sound.objects.filter(id__in=dirtied_source_ids).update(is_index_dirty=True)
 
         if old_sources != new_sources:
             self.invalidate_template_caches()
@@ -1844,6 +1863,15 @@ def on_delete_sound(sender, instance, **kwargs):
     instance.unlink_moderation_ticket()
 
     delete_cdn_symlink(instance)
+
+    # If this sound was used in a remix or was a remix, then
+    # Mark remix counterparties as index-dirty: their was_remixed/is_remix may flip when the M2M
+    # cascade clears sounds_sound_sources. M2M relations are still queryable in pre_delete.
+    counterparty_ids = set(instance.sources.values_list("id", flat=True)) | set(
+        instance.remixes.values_list("id", flat=True)
+    )
+    if counterparty_ids:
+        Sound.objects.filter(id__in=counterparty_ids).update(is_index_dirty=True)
 
 
 def post_delete_sound(sender, instance, **kwargs):

@@ -486,7 +486,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                 sound = create_sound(user, sound_fields, process=False)
                 sound_sources = form.cleaned_data["sources"]
                 if sound_sources:
-                    sound.set_sources(sound_sources)
+                    sound.change_sources_and_propagate(sound_sources)
                 sounds_to_process.append(sound)
                 if user.profile.is_whitelisted:
                     messages.add_message(
@@ -576,7 +576,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
 
         sound_sources = data["sources"]
         if sound_sources != sound.get_sound_sources_as_set():
-            sound.set_sources(sound_sources)
+            sound.change_sources_and_propagate(sound_sources)
 
         if category_has_changed:
             # Some descriptors in the consolidated analysis change depending on the bst category, so we need to

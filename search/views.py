@@ -41,6 +41,7 @@ from utils.clustering_utilities import (
 )
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
+from utils.pagination import read_page
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search import (
     SearchEngineException,
@@ -310,10 +311,7 @@ def clustered_graph(request):
 def search_forum(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
-    try:
-        current_page = int(request.GET.get("page", 1))
-    except ValueError:
-        current_page = 1
+    current_page = read_page(request)
     current_forum_name_slug = request.GET.get("forum", "").strip()  # for context sensitive search
     if current_forum_name_slug:
         current_forum = get_object_or_404(forum.models.Forum.objects, name_slug=current_forum_name_slug)

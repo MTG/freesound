@@ -43,7 +43,7 @@ from fscollections.models import Collection, CollectionDownload, CollectionDownl
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
 from utils.downloads import download_sounds
-from utils.pagination import build_paginator_template_context, paginate
+from utils.pagination import build_paginator_template_context, paginate, read_page
 
 
 def resolve_collection_from_url(view_func):
@@ -274,7 +274,7 @@ def render_collection_cards(request, collection):
     if raw_page and raw_total:
         try:
             total_pages = int(raw_total)
-            page_num = max(1, min(int(raw_page), max(1, total_pages)))
+            page_num = min(read_page(request), max(1, total_pages))
             paginator_ns = SimpleNamespace(num_pages=total_pages)
             page_dict = {
                 "has_previous": page_num > 1,

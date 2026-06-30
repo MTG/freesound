@@ -40,8 +40,8 @@ class Command(LoggingBaseCommand):
         self.log_start()
 
         # Use rsync to copy folder
-        src_folder = "/code/_docs/api/build/html"
-        dst_folder = os.path.join(settings.DATA_PATH, "web/api-docs")
+        src_folder = "/code/_docs/api/build/html/"
+        dst_folder = os.path.join(settings.DATA_PATH, "web/api-docs/")
         subprocess.run(["rsync", "-avz", src_folder, dst_folder], check=True)  # noqa: S607
 
         self.log_end()

@@ -20,7 +20,7 @@
 
 import urllib.parse
 
-from django.core.paginator import Paginator
+from django.core.paginator import Page, Paginator
 from django.http import HttpRequest
 from django.utils.functional import cached_property
 
@@ -30,17 +30,55 @@ class CountProvidedPaginator(Paginator):
     which is the length of object_list. This means that count() or
     len() doesn't have to be called"""
 
-    def __init__(self, object_list, per_page, orphans=0, allow_empty_first_page=True, object_count=None):
+    def __init__(
+        self,
+        object_list,
+        per_page: int,
+        orphans: int = 0,
+        allow_empty_first_page: bool = True,
+        object_count: int | None = None,
+    ) -> None:
         Paginator.__init__(self, object_list, per_page, orphans, allow_empty_first_page)
 
         self._count = object_count
 
     @cached_property
-    def count(self):
+    def count(self) -> int:
         # If the count was provided return it, otherwise use the
         if self._count:
             return self._count
         return super().count
+
+
+class PreSlicedCountProvidedPaginator(CountProvidedPaginator):
+    """A CountProvidedPaginator whose ``object_list`` is already sliced to the specific page
+    (e.g. by solr)."""
+
+    def __init__(self, object_list: list, per_page: int, object_count: int) -> None:
+        """
+        Args:
+            object_list: the results for a single, already-sliced page.
+            per_page: number of results per page.
+            object_count: total number of results across all pages.
+        """
+        if len(object_list) > per_page:
+            # Because object_list is pre-sliced it must contain as many items
+            # as are claimed in per_page (or fewer if it's the last page)
+            raise ValueError(f"object_list size must be less than or equal to {per_page=} ")
+        super().__init__(object_list, per_page, object_count=object_count)
+
+    def page(self, number: int | str) -> Page:
+        """Return the ``Page`` for ``number``.
+
+        Because the object list is already sliced, the `number` argument is only used for
+        validation (it must be within `object_count/per_page` and >=1)
+        and is used verbatim in the returned Page object.
+        """
+        number = int(number)
+        if number < 1:
+            raise ValueError(f"page number must be >= 1, got {number}")
+        number = min(number, self.num_pages)
+        return self._get_page(self.object_list, number, self)
 
 
 def read_page(request: HttpRequest, param: str = "page") -> int:
@@ -116,12 +154,8 @@ def build_paginator_template_context(
     else:
         url = base_path + "?" + params + "&page="
 
-    if isinstance(page, dict):
-        prev_page_num = page["previous_page_number"] if page.get("has_previous") else None
-        next_page_num = page["next_page_number"] if page.get("has_next") else None
-    else:
-        prev_page_num = page.previous_page_number() if page.has_previous() else None
-        next_page_num = page.next_page_number() if page.has_next() else None
+    prev_page_num = page.previous_page_number() if page.has_previous() else None
+    next_page_num = page.next_page_number() if page.has_next() else None
 
     url_prev_page = url + str(prev_page_num) if prev_page_num is not None else None
     url_next_page = url + str(next_page_num) if next_page_num is not None else None

@@ -20,12 +20,12 @@
 
 from functools import wraps
 from operator import itemgetter
-from types import SimpleNamespace
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -275,16 +275,13 @@ def render_collection_cards(request, collection):
         try:
             total_pages = int(raw_total)
             page_num = min(read_page(request), max(1, total_pages))
-            paginator_ns = SimpleNamespace(num_pages=total_pages)
-            page_dict = {
-                "has_previous": page_num > 1,
-                "has_next": page_num < total_pages,
-                "previous_page_number": page_num - 1,
-                "next_page_number": page_num + 1,
-            }
+            # Make a fake Paginator with `total_pages` pages so that the template can
+            # render the paginator
+            paginator = Paginator(range(total_pages), 1)
+            page = paginator.page(page_num)
             tvars.update(
                 build_paginator_template_context(
-                    paginator_ns, page_dict, page_num, base_path=request.path, base_query=request.GET
+                    paginator, page, page_num, base_path=request.path, base_query=request.GET
                 )
             )
             tvars["has_paginator"] = True

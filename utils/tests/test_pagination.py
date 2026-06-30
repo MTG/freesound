@@ -19,12 +19,13 @@
 #
 import pytest
 from django.core.management import call_command
+from django.core.paginator import Page
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from general.templatetags.bw_templatetags import bw_paginator
 from sounds.models import Sound
-from utils.pagination import CountProvidedPaginator, paginate, read_page
+from utils.pagination import CountProvidedPaginator, PreSlicedCountProvidedPaginator, paginate, read_page
 
 
 @pytest.fixture
@@ -49,6 +50,61 @@ def sounds(db):
     """Load the sound fixtures (14 sounds) and return them as a queryset."""
     call_command("loaddata", "licenses.json", "sounds.json")
     return Sound.objects.all()
+
+
+class PreSlicedCountProvidedPaginatorTest(TestCase):
+    """object_list is a pre-sliced page: page() must not re-slice. Overflow page numbers
+    clamp to the last page; a page number < 1 raises ValueError."""
+
+    def _paginator(self, num_docs=15, num_found=100, num_per_page=15):
+        docs = [{"id": i} for i in range(num_docs)]
+        return PreSlicedCountProvidedPaginator(docs, num_per_page, num_found)
+
+    def test_page_does_not_reslice(self):
+        paginator = self._paginator(num_docs=15, num_found=100, num_per_page=15)
+        # a normal paginator would return no items here (page 3 of 15 items per page
+        # would be items [30:45] which don't exist).
+        self.assertEqual(len(paginator.page(3).object_list), 15)
+
+    def test_page_overflow_last_page(self):
+        paginator = self._paginator(num_found=100, num_per_page=15)
+        # getting page 50 clamps to page 7 ceil(100/15)
+        self.assertEqual(paginator.num_pages, 7)
+        self.assertEqual(paginator.page(50).number, 7)
+
+        # getting the last page returns the last page
+        self.assertEqual(paginator.page(7).number, 7)
+
+    def test_page_underflow_raises(self):
+        # Unlike overflow, page < 1 is a caller bug (callers clamp to >= 1 first), so we
+        # raise rather than silently clamping.
+        paginator = self._paginator()
+        with self.assertRaises(ValueError):
+            paginator.page(0)
+        with self.assertRaises(ValueError):
+            paginator.page(-3)
+
+    def test_empty_results_have_one_page(self):
+        paginator = PreSlicedCountProvidedPaginator([], 15, 0)
+        self.assertEqual(paginator.num_pages, 1)
+        self.assertEqual(list(paginator.page(1).object_list), [])
+
+    def test_paginator_page(self):
+        # a paginator with 5 objects and 2 per page is 3 pages
+        paginator = PreSlicedCountProvidedPaginator([1, 2], 2, 5)
+        page = paginator.page(2)
+        self.assertIsInstance(page, Page)
+        self.assertEqual(list(page.object_list), [1, 2])
+        self.assertTrue(page.has_next())
+        self.assertTrue(page.has_previous())
+        self.assertTrue(page.has_other_pages())
+        self.assertEqual(page.next_page_number(), 3)
+        self.assertEqual(page.previous_page_number(), 1)
+
+    def test_object_list_longer_than_per_page_raises(self):
+        # it's an error to pass in 3 items with 2 declared per page.
+        with self.assertRaises(ValueError):
+            PreSlicedCountProvidedPaginator([1, 2, 3], 2, 5)
 
 
 @pytest.mark.parametrize(

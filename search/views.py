@@ -41,12 +41,11 @@ from utils.clustering_utilities import (
 )
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
-from utils.pagination import read_page
+from utils.pagination import PreSlicedCountProvidedPaginator, read_page
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search import (
     SearchEngineException,
     SearchEngineTimeoutException,
-    SearchResultsPaginator,
     get_search_engine,
     search_query_processor,
 )
@@ -376,7 +375,7 @@ def search_forum(request):
                 group_by_thread=False,
             )
 
-            paginator = SearchResultsPaginator(results, settings.FORUM_POSTS_PER_PAGE)
+            paginator = PreSlicedCountProvidedPaginator(results.docs, settings.FORUM_POSTS_PER_PAGE, results.num_found)
             num_results = paginator.count
             page = paginator.page(current_page)
             error = False

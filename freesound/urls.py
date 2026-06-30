@@ -202,9 +202,9 @@ if settings.DEBUG:
             serve,
             {"document_root": settings.DATA_PATH, "show_indexes": True},
         ),
-        re_path(
-            r"^docs/api/(?P<path>.*)$", serve, {"path": "index.html", "document_root": "_docs/api/build/html"}
-        ),  # Serve API docs, useful for local development
+        # In production WhiteNoise redirects /docs/api -> /docs/api/ itself, but in
+        # autorefresh (DEBUG) mode it does not, so add the redirect for local development.
+        re_path(r"^docs/api$", RedirectView.as_view(url="/docs/api/", permanent=False)),
         path("__debug__/", include(debug_toolbar.urls)),
         re_path(r"^.*\.map$", serve_source_map_files),
     ]

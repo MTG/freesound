@@ -25,7 +25,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "freesound.whitenoise.FreesoundWhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -271,6 +271,9 @@ STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), "static")]
 STATIC_URL = "/static/"
 STATIC_ROOT = "bw_static"
 WHITENOISE_ROOT = os.path.join(os.path.dirname(__file__), "../webroot")
+# Serve api docs from here with whitenoise. see freesound.whitenoise.FreesoundWhiteNoiseMiddleware
+API_DOCS_ROOT = os.path.join(os.path.dirname(__file__), "../_docs/api/build/html")
+WHITENOISE_INDEX_FILE = True
 
 STORAGES = {
     "default": {

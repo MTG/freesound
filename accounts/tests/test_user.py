@@ -29,12 +29,14 @@ from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import Site
 from django.core import mail
+from django.core.cache import cache
 from django.core.management import call_command
 from django.db import IntegrityError
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils.http import int_to_base36
+from freezegun import freeze_time
 
 from accounts.forms import DeleteUserForm, FsPasswordResetForm, UsernameField
 from accounts.models import DeletedUser, OldUsername, Profile, ResetEmailRequest, SameUser, UserDeletionRequest
@@ -244,6 +246,68 @@ class UserRegistrationAndActivation(TestCase):
         resp = self.client.get(reverse("accounts-activate", args=["noone", hash]))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context["user_does_not_exist"], True)
+
+    @mock.patch("django_recaptcha.fields.ReCaptchaField.validate")
+    @freeze_time("2026-01-01 12:00:00")
+    def test_registration_rate_limit(self, magic_mock_function):
+        # LocMemCache state persists across tests in the same process — explicitly
+        # clear so this test isn't affected by any rate-limit counter set earlier.
+        cache.clear()
+
+        # The test client doesn't set X-Forwarded-For; without it,
+        # utils.ratelimit.get_ip_or_random_ip substitutes a fresh random per-request
+        # IP and the limiter never trips. Pin a stable IP so the bucket is shared
+        # across calls in this test.
+        ip_a = "10.0.0.1"
+        ip_b = "10.0.0.2"
+
+        # 5 allowed POSTs from same IP within the (frozen) minute. Distinct usernames
+        # (>=3 chars per UsernameField min_length) and emails so each call exercises
+        # the success path through form.save(), not just the form-error path.
+        for i in range(5):
+            resp = self.client.post(
+                reverse("accounts-registration-modal"),
+                data={
+                    "username": f"usr{i}",
+                    "password1": "passw0rd!XYZ",
+                    "accepted_tos": "on",
+                    "email1": f"a{i}@example.com",
+                    "email2": f"a{i}@example.com",
+                },
+                HTTP_X_FORWARDED_FOR=ip_a,
+            )
+            self.assertNotIn("Too many registration attempts", resp.content.decode())
+
+        # 6th call from same IP within the same window is rate-limited.
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": "ratelimit_test_user",
+                "password1": "passw0rd!XYZ",
+                "accepted_tos": "on",
+                "email1": "rl@example.com",
+                "email2": "rl@example.com",
+            },
+            HTTP_X_FORWARDED_FOR=ip_a,
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("Too many registration attempts", resp.content.decode())
+        # No user created on rate-limited call (form is never validated/saved).
+        self.assertEqual(User.objects.filter(username="ratelimit_test_user").count(), 0)
+
+        # A different IP shares no bucket with ip_a — should still be allowed.
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": "ratelimit_test_user2",
+                "password1": "passw0rd!XYZ",
+                "accepted_tos": "on",
+                "email1": "rl2@example.com",
+                "email2": "rl2@example.com",
+            },
+            HTTP_X_FORWARDED_FOR=ip_b,
+        )
+        self.assertNotIn("Too many registration attempts", resp.content.decode())
 
 
 class UserDelete(TestCase):

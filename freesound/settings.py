@@ -1120,6 +1120,10 @@ MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 
 SILENCED_SYSTEM_CHECKS += ["django_recaptcha.recaptcha_test_key_error"]
 
+# Cap the server-to-server siteverify call (default is 10s) so a slow / unreachable
+# Google can't tie up a worker for 10 seconds per submission.
+RECAPTCHA_VERIFY_REQUEST_TIMEOUT = 3
+
 
 # -------------------------------------------------------------------------------
 # Akismet
@@ -1180,8 +1184,13 @@ CLUSTERING_TASK_TIMEOUT = 30
 RATELIMIT_VIEW = "accounts.views.ratelimited_error"
 RATELIMIT_SEARCH_GROUP = "search"
 RATELIMIT_SIMILARITY_GROUP = "similarity"
+RATELIMIT_REGISTRATION_GROUP = "registration"
 RATELIMIT_DEFAULT_GROUP_RATELIMIT = "2/s"
-RATELIMITS = {RATELIMIT_SEARCH_GROUP: "2/s", RATELIMIT_SIMILARITY_GROUP: "2/s"}
+RATELIMITS = {
+    RATELIMIT_SEARCH_GROUP: "2/s",
+    RATELIMIT_SIMILARITY_GROUP: "2/s",
+    RATELIMIT_REGISTRATION_GROUP: "5/m",
+}
 BLOCKED_IPS = []
 CACHED_BLOCKED_IPS_KEY = "cached_blocked_ips"
 CACHED_BLOCKED_IPS_TIME = 60 * 5  # 5 minutes

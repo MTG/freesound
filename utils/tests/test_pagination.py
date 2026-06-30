@@ -19,13 +19,19 @@
 #
 import pytest
 from django.core.management import call_command
-from django.core.paginator import Page
+from django.core.paginator import Page, Paginator
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from general.templatetags.bw_templatetags import bw_paginator
 from sounds.models import Sound
-from utils.pagination import CountProvidedPaginator, PreSlicedCountProvidedPaginator, paginate, read_page
+from utils.pagination import (
+    CountProvidedPaginator,
+    PreSlicedCountProvidedPaginator,
+    build_paginator_template_context,
+    paginate,
+    read_page,
+)
 
 
 @pytest.fixture
@@ -50,6 +56,24 @@ def sounds(db):
     """Load the sound fixtures (14 sounds) and return them as a queryset."""
     call_command("loaddata", "licenses.json", "sounds.json")
     return Sound.objects.all()
+
+
+def _paginator_context(page):
+    return build_paginator_template_context(page, base_path="/search/", base_query={"q": "wind"})
+
+
+class PaginatorTemplateContextTest(TestCase):
+    def test_pagination_link_targets(self):
+        page = Paginator(range(700 * 15), 15).page(5)
+        ctx = _paginator_context(page)
+        self.assertEqual(ctx["url_prev_page"], "/search/?q=wind&page=4")
+        self.assertEqual(ctx["url_next_page"], "/search/?q=wind&page=6")
+        self.assertEqual(ctx["url_last_page"], "/search/?q=wind&page=700")
+        self.assertEqual(ctx["current_page"], 5)
+        self.assertIs(ctx["paginator"], page.paginator)
+
+    def test_none_page_returns_empty(self):
+        self.assertEqual(build_paginator_template_context(None, base_path="/x/", base_query={}), {})
 
 
 class PreSlicedCountProvidedPaginatorTest(TestCase):
@@ -197,4 +221,4 @@ class PaginationTest(TestCase):
             },
         )
         paginator = paginate(dummy_request, Sound.objects.all(), 10)
-        bw_paginator({}, paginator["paginator"], paginator["page"], paginator["current_page"], dummy_request)
+        bw_paginator({}, paginator["page"], dummy_request)

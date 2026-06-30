@@ -207,11 +207,19 @@ def search_view_helper(request):
             )
         )
 
+        # If the requested page is beyond the last page of a non-empty result set, the search
+        # engine returns no docs for it; show an explicit "no more results" state and clamp the
+        # pager to the real last page (Solr can't return last-page content without a 2nd query).
+        requested_page = query_params["current_page"]
+        page = paginator.page(requested_page)
+        beyond_last = paginator.count > 0 and requested_page > paginator.num_pages
+
         # Compile template variables
         return {
             "sqp": sqp,
             "error_text": None,
-            "current_page": query_params["current_page"],
+            "current_page": page.number,
+            "beyond_last": beyond_last,
             "has_advanced_search_settings_set": sqp.contains_active_advanced_search_options(),
             "advanced_search_closed_on_load": settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD,
             "map_bytearray_url": map_bytearray_url,
@@ -220,7 +228,7 @@ def search_view_helper(request):
             "get_clusters_url": get_clusters_url,
             "clusters_data": clusters_data,
             "paginator": paginator,
-            "page": paginator.page(query_params["current_page"]),
+            "page": page,
             "docs": docs,
             "facets": results.facets,
             "non_grouped_number_of_results": results.non_grouped_number_of_results,
@@ -355,6 +363,7 @@ def search_forum(request):
     paginator = None
     num_results = None
     page = None
+    beyond_last = False
     results = []
     if search_query.strip() != "" or filter_query:
         # add current forum
@@ -377,7 +386,9 @@ def search_forum(request):
 
             paginator = PreSlicedCountProvidedPaginator(results.docs, settings.FORUM_POSTS_PER_PAGE, results.num_found)
             num_results = paginator.count
+            beyond_last = paginator.count > 0 and current_page > paginator.num_pages
             page = paginator.page(current_page)
+            current_page = page.number  # clamp the pager to the real last page on overflow
             error = False
         except SearchEngineTimeoutException as e:
             search_logger.info(
@@ -410,6 +421,7 @@ def search_forum(request):
         "advanced_search": advanced_search,
         "current_forum": current_forum,
         "current_page": current_page,
+        "beyond_last": beyond_last,
         "date_from": date_from,
         "date_from_display": date_from_display,
         "date_to": date_to,

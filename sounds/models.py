@@ -1405,7 +1405,9 @@ class Sound(models.Model):
                 sounds_logger.info(f"Not sending sound {self.id} to analyzer {analyzer} as is already queued")
         return sa
 
-    def consolidate_analysis(self, no_db_operations=False, fail_if_missing=False):
+    def consolidate_analysis(
+        self, no_db_operations=False, fail_if_missing=False, verbose=True, existing_analyzer_object_names=None
+    ):
         """
         This method post-processes the analysis results of all analyzers for this sound and consolidates them into a new
         SoundAnalysis object with analyzer name settings.CONSOLIDATED_ANALYZER_NAME. This consolidated analysis contains
@@ -1415,11 +1417,15 @@ class Sound(models.Model):
         :param bool no_db_operations: If True, the method only computes the data but does not save it in the DB. Also it returns
             the consolidated analysis data dictionary instead of the SoundAnalysis object.
         :param bool fail_if_missing: If True, the method raises an exception if any analyzer data or descriptor data is missing.
+        :param bool verbose: If True, the method logs information about the consolidation process.
+        :param list existing_analyzer_object_names: List of analyzer names that already have analysis objects for this sound. This
+            is used to avoid trying a disk file load if we know an analysis is not supposed to exist.
         """
 
         # Iterate over all descriptors defined in settings.CONSOLIDATED_AUDIO_DESCRIPTORS and obtain/process their values
         tmp_analyzers_data = {}
         consolidated_analysis_data = {}
+
         for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
             condition = descriptor.get("condition", None)
             if condition is not None:
@@ -1431,16 +1437,22 @@ class Sound(models.Model):
             # Avoid reading the same file multiple times by caching data in tmp_analyzers_data
             analyzer = descriptor["analyzer"]
             if analyzer not in tmp_analyzers_data:
-                analyzer_data = SoundAnalysis.get_analysis_data_from_file_without_db(self.id, analyzer)
+                if existing_analyzer_object_names is not None and analyzer not in existing_analyzer_object_names:
+                    # We know that no data exists for such analyzer, so we can directly skip it without trying to load it from disk
+                    analyzer_data = None
+                else:
+                    analyzer_data = SoundAnalysis.get_analysis_data_from_file_without_db(self.id, analyzer)
+
                 if not analyzer_data:
                     # Analyzer data could not be loaded from file. That means that the analyzer has not analyzed
                     # the sound successfully, skip descriptor
                     if fail_if_missing:
                         raise Exception(f"Analyzer data for {analyzer} is missing (sound id: {self.id})")
                     else:
-                        print(
-                            f"Analyzer data for {analyzer} is missing (sound id: {self.id}), skipping descriptors from this analyzer"
-                        )
+                        if verbose:
+                            print(
+                                f"Analyzer data for {analyzer} is missing (sound id: {self.id}), skipping descriptors from this analyzer"
+                            )
                     continue
                 # Save the data in tmp dict so it is not loaded again in the future if present
                 tmp_analyzers_data[analyzer] = analyzer_data
@@ -1472,7 +1484,10 @@ class Sound(models.Model):
                 if fail_if_missing:
                     raise Exception(f"Can't get value for descriptor {name}: {e} (sound id: {self.id})")
                 else:
-                    print(f"Can't get value for descriptor {name}: {e} (sound id: {self.id}), skipping this descriptor")
+                    if verbose:
+                        print(
+                            f"Can't get value for descriptor {name}: {e} (sound id: {self.id}), skipping this descriptor"
+                        )
                 continue
 
             if value is not None and type(value) == float and math.isnan(value):
@@ -1499,9 +1514,10 @@ class Sound(models.Model):
 
             except Exception as e:
                 # If value can't be transformed, continue with next descriptor
-                print(
-                    f"Can't transform or adjust precision of value {value} for descriptor {name}: {e} (sound id: {self.id})"
-                )
+                if verbose:
+                    print(
+                        f"Can't transform or adjust precision of value {value} for descriptor {name}: {e} (sound id: {self.id})"
+                    )
                 continue
 
             if value is not None:
@@ -1611,25 +1627,29 @@ class Sound(models.Model):
     def delete_from_indexes(self):
         delete_sounds_from_search_engine([self.id])
 
-    def invalidate_template_caches(self):
+    @staticmethod
+    def invalidate_template_caches_static(sound_id):
         for is_explicit in [True, False]:
-            invalidate_template_cache("sound_header", self.id, is_explicit)
+            invalidate_template_cache("sound_header", sound_id, is_explicit)
 
         for display_random_link in [True, False]:
-            invalidate_template_cache("sound_footer_top", self.id, display_random_link)
+            invalidate_template_cache("sound_footer_top", sound_id, display_random_link)
 
-        invalidate_template_cache("sound_footer_bottom", self.id)
+        invalidate_template_cache("sound_footer_bottom", sound_id)
 
         for is_authenticated in [True, False]:
             for is_explicit in [True, False]:
-                invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
+                invalidate_template_cache("display_sound", sound_id, is_authenticated, is_explicit)
 
         for player_size in ["small", "middle", "big_no_info", "small_no_info", "minimal", "moderation"]:
             for is_authenticated in [True, False]:
-                invalidate_template_cache("bw_display_sound", self.id, player_size, is_authenticated)
+                invalidate_template_cache("bw_display_sound", sound_id, player_size, is_authenticated)
 
-        invalidate_template_cache("bw_sound_page", self.id)
-        invalidate_template_cache("bw_sound_page_sidebar", self.id)
+        invalidate_template_cache("bw_sound_page", sound_id)
+        invalidate_template_cache("bw_sound_page_sidebar", sound_id)
+
+    def invalidate_template_caches(self):
+        self.invalidate_template_caches_static(self.id)
 
     def get_geotag_name(self):
         if hasattr(self, "geotag"):

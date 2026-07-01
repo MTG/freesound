@@ -10,7 +10,7 @@
 <div class="col-12">
     <div class="text-center">
         <h4 class="v-spacing-5">Create collection</h4>
-        <form method="post" action="{% url 'create-collection' %}?ajax=1" class="bw-form disable-on-submit">{% csrf_token %}
+        <form method="post" action="{% url 'create-collection' %}?ajax=1{% if sound_id %}&sound_id={{ sound_id }}{% endif %}{% if mark_as_featured %}&mark_as_featured=1{% endif %}" class="bw-form disable-on-submit">{% csrf_token %}
             {{ form.non_field_errors }}
             <div class="text-left">
                 <div>

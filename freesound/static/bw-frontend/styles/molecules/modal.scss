@@ -107,6 +107,32 @@
   }
 }
 
+// "Add sound to collection" modal: keep the collection picker tidy when names are very long
+#addSoundToCollectionModal {
+  .select-dropdown {
+    max-width: 240px;
+    min-width: 0;
+    margin-bottom: 0; // override the default modal-form select spacing for uniform vertical gaps
+  }
+
+  .select-dropdown__button {
+    display: flex;
+    width: 100%;
+    padding-right: 20px; // leave room for the chevron
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+  }
+
+  .select-dropdown__list {
+    max-width: 240px;
+  }
+}
+
 .modal-wrapper {
   position: relative;
 }

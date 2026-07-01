@@ -906,7 +906,7 @@ COLLECTION_SORT_OPTIONS = {
     "featured": ("Featured first", "featured_order"),
     "created_desc": ("Date added (newest first)", "-collectionsound__created"),
     "created_asc": ("Date added (oldest first)", "collectionsound__created"),
-    "name": ("Name", "original_filename"),
+    "name": ("Name (A to Z)", "original_filename"),
 }
 COLLECTION_SORT_DEFAULT = "featured"
 

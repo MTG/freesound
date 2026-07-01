@@ -55,13 +55,15 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     },
     {
         "name": "bpm",
-        "analyzer": "fs-essentia-extractor_v1",
-        "get_func": lambda d, s: s.estimate_bpm_from_metadata() or d["fs.bpm"],
+        "analyzer": "ac-extractor_v3",  # "fs-essentia-extractor_v1",
+        "get_func": lambda d, s: s.estimate_bpm_from_metadata() or d["tempo"],  # d["fs.bpm"],
     },
     {
         "name": "bpm_confidence",
-        "analyzer": "fs-essentia-extractor_v1",
-        "get_func": lambda d, s: 1.0 if s.estimate_bpm_from_metadata() else d["fs.bpm_confidence"],
+        "analyzer": "ac-extractor_v3",  # "fs-essentia-extractor_v1",
+        "get_func": lambda d, s: 1.0
+        if s.estimate_bpm_from_metadata()
+        else d["tempo_confidence"],  # d["fs.bpm_confidence"],
     },
     {
         "name": "brightness",
@@ -134,8 +136,8 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     },
     {
         "name": "loopable",
-        "analyzer": "fs-essentia-extractor_v1",
-        "get_func": lambda d, s: d["fs.loopable"],
+        "analyzer": "ac-extractor_v3",  # "fs-essentia-extractor_v1",
+        "get_func": lambda d, s: d["loop"],  # d["fs.loopable"],
         "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
     },
     {
@@ -159,21 +161,21 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     },
     {
         "name": "note_confidence",
-        "analyzer": "fs-essentia-extractor_v1",
-        "get_func": lambda d, s: d["fs.note_confidence"],
+        "analyzer": "ac-extractor_v3",  # "fs-essentia-extractor_v1",
+        "get_func": lambda d, s: d["note_confidence"],  # d["fs.note_confidence"],
         "condition": condition_instrument_samples,
     },
     {
         "name": "note_midi",
-        "analyzer": "fs-essentia-extractor_v1",
-        "get_func": lambda d, s: d["fs.note_midi"],
+        "analyzer": "ac-extractor_v3",  # "fs-essentia-extractor_v1",
+        "get_func": lambda d, s: d["note_midi"],  # d["fs.note_midi"],
         "type": AUDIO_DESCRIPTOR_TYPE_INT,
         "condition": condition_instrument_samples,
     },
     {
         "name": "note_name",
-        "analyzer": "fs-essentia-extractor_v1",
-        "get_func": lambda d, s: d["fs.note_name"],
+        "analyzer": "ac-extractor_v3",  # "fs-essentia-extractor_v1",
+        "get_func": lambda d, s: d["note_name"],  # d["fs.note_name"],
         "type": AUDIO_DESCRIPTOR_TYPE_STRING,
         "condition": condition_instrument_samples,
     },
@@ -326,14 +328,14 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     },
     {
         "name": "tonality",
-        "analyzer": "fs-essentia-extractor_v1",
-        "get_func": lambda d, s: d["fs.tonality"],
+        "analyzer": "ac-extractor_v3",  # "fs-essentia-extractor_v1",
+        "get_func": lambda d, s: d["tonality"],  # d["fs.tonality"],
         "type": AUDIO_DESCRIPTOR_TYPE_STRING,
     },
     {
         "name": "tonality_confidence",
-        "analyzer": "fs-essentia-extractor_v1",
-        "get_func": lambda d, s: d["fs.tonality_confidence"],
+        "analyzer": "ac-extractor_v3",  # "fs-essentia-extractor_v1",
+        "get_func": lambda d, s: d["tonality_confidence"],  # d["fs.tonality_confidence"],
     },
     {
         "name": "tristimulus",

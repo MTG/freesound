@@ -30,6 +30,11 @@ console_logger = logging.getLogger("console")
 
 class Command(LoggingBaseCommand):
     help = """This script sends "--limit" sounds to re-analyze with the specified analyzer if the sounds were last analyzed before the cutoff date.
+    It can be used to re-analyze all sounds with a given analyzer if the analyer has been updated (but the name is the same), and we don't want to
+    send all sounds to the re-anayze queue as the queue will be blocked. Setting up a cronjob with this command, we can keep on sending sounds to the queue
+    in small batches, and with the cutoff date set to the date in which the analyzer was updated, we can make sure that only sounds that were analyzed before 
+    the update are sent to the queue. When the command returns n_sent_to_reanalyze=0, then the cronjob can be stopped as all sounds have been sent to the queue 
+    for re-analysis.
     """
 
     def add_arguments(self, parser):
@@ -80,6 +85,6 @@ class Command(LoggingBaseCommand):
                 "analyzer_name": analyzer_name,
                 "cutoff_date": cutoff_date,
                 "limit": limit,
-                "n_sent_to_reanalyze": qs.count(),
+                "n_sent_to_reanalyze": total_matching_cutoff_date,
             }
         )

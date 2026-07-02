@@ -1429,9 +1429,16 @@ class Sound(models.Model):
         for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
             condition = descriptor.get("condition", None)
             if condition is not None:
-                if not condition(self):
-                    # If condition is defined and not met, skip descriptor
-                    continue
+                try:
+                    if not condition(self):
+                        # If condition is defined and not met, skip descriptor
+                        continue
+                except Exception as e:
+                    # If condition can't be evaluated, assume it is ok and include descriptor
+                    if verbose:
+                        print(
+                            f"Can't evaluate condition for descriptor {descriptor['name']}: {e} (sound id: {self.id}), including this descriptor"
+                        )
 
             # Load analyzer data stored in files in disk
             # Avoid reading the same file multiple times by caching data in tmp_analyzers_data
@@ -1439,10 +1446,16 @@ class Sound(models.Model):
             if analyzer not in tmp_analyzers_data:
                 if existing_analyzer_object_names is not None and analyzer not in existing_analyzer_object_names:
                     # We know that no data exists for such analyzer, so we can directly skip it without trying to load it from disk
-                    analyzer_data = None
-                else:
-                    analyzer_data = SoundAnalysis.get_analysis_data_from_file_without_db(self.id, analyzer)
+                    if fail_if_missing:
+                        raise Exception(f"Analyzer data for {analyzer} is missing (sound id: {self.id})")
+                    else:
+                        if verbose:
+                            print(
+                                f"Analyzer data for {analyzer} is missing (sound id: {self.id}), skipping descriptors from this analyzer"
+                            )
+                    continue
 
+                analyzer_data = SoundAnalysis.get_analysis_data_from_file_without_db(self.id, analyzer)
                 if not analyzer_data:
                     # Analyzer data could not be loaded from file. That means that the analyzer has not analyzed
                     # the sound successfully, skip descriptor
@@ -1579,28 +1592,48 @@ class Sound(models.Model):
             self.mark_index_dirty(commit=True)
         return n_loaded
 
-    def load_similarity_vector(self, similarity_space_name, force=False):
-        if (
-            not force
-            and SoundSimilarityVector.objects.filter(sound=self, similarity_space_name=similarity_space_name).exists()
-        ):
-            # Similarity vector already exists, do nothing
-            return False
+    def load_similarity_vector(self, similarity_space_name, force=False, no_db_operations=False):
+        """Create a SoundSimilarityVector object for this sound and the specified similarity space in the database.
+
+        Args:
+            similarity_space_name (str): The name of the similarity space to load the vector for.
+            force (bool, optional): If True, the similarity vector will be reloaded even if it already exists. Defaults to False. Does not have effect if no_db_operations is True.
+            no_db_operations (bool, optional): If True, the method will not perform any database operations (i.e., it will not save the vector in the db)
+                and will only return the similarity vector (or return False if vector data from corresponding analyzer does not exist for that sound). Defaults to False.
+        """
 
         similarity_space = settings.SIMILARITY_SPACES[similarity_space_name]
-        try:
-            sa = self.analyses.get(analyzer=similarity_space["analyzer"], analysis_status="OK")
-            analyzer_data = sa.get_analysis_data_from_file()
-            sim_vector = analyzer_data[similarity_space["vector_property_name"]]
-            sim_vector = [float(x) for x in sim_vector]
-        except (SoundAnalysis.DoesNotExist, KeyError, ValueError):
-            return False
+        if no_db_operations:
+            analyzer_data = SoundAnalysis.get_analysis_data_from_file_without_db(self.id, similarity_space["analyzer"])
+            if not analyzer_data:
+                return False
+        else:
+            if (
+                not force
+                and SoundSimilarityVector.objects.filter(
+                    sound=self, similarity_space_name=similarity_space_name
+                ).exists()
+            ):
+                # Similarity vector already exists, do nothing
+                return False
+
+            try:
+                sa = self.analyses.get(analyzer=similarity_space["analyzer"], analysis_status="OK")
+                analyzer_data = sa.get_analysis_data_from_file()
+            except (SoundAnalysis.DoesNotExist, KeyError, ValueError):
+                return False
+
+        sim_vector = analyzer_data[similarity_space["vector_property_name"]]
+        sim_vector = [float(x) for x in sim_vector]
 
         if len(sim_vector) != similarity_space["vector_size"]:
             return False
 
         if similarity_space["l2_norm"]:
             sim_vector = SoundSimilarityVector.l2_normalize_vector(sim_vector)
+
+        if no_db_operations:
+            return sim_vector
 
         SoundSimilarityVector.objects.update_or_create(
             sound=self,

@@ -427,6 +427,11 @@ pitch_confidence
 
 **More information:** https://essentia.upf.edu/reference/std_PitchYin.html
 
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/pitch_confidence.png
+        :height: 300px
+
 
 reverbness
 -------------------------
@@ -440,6 +445,11 @@ reverbness
 **Type:** boolean
 
 **More information:** https://en.wikipedia.org/wiki/Reverberation
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/reverbness.png
+        :height: 300px
 
 
 roughness
@@ -789,6 +799,81 @@ hpcp_var
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_HPCP.html, https://en.wikipedia.org/wiki/Harmonic_pitch_class_profiles
 
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/hpcp_var-0.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-1.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-2.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-3.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-4.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-5.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-6.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-7.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-8.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-9.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-10.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-11.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-12.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-13.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-14.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-15.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-16.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-17.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-18.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-19.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-20.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-21.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-22.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-23.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-24.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-25.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-26.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-27.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-28.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-29.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-30.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-31.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-32.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-33.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-34.png
+        :height: 300px
+    .. image:: _static/descriptors/hpcp_var-35.png
+        :height: 300px
+
 
 hpcp_crest
 -------------------------
@@ -910,6 +995,35 @@ mfcc_var
 **Type:** array[numeric]
 
 **More information:** https://essentia.upf.edu/reference/streaming_MFCC.html
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/mfcc_var-0.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-1.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-2.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-3.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-4.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-5.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-6.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-7.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-8.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-9.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-10.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-11.png
+        :height: 300px
+    .. image:: _static/descriptors/mfcc_var-12.png
+        :height: 300px
 
 
 pitch_max

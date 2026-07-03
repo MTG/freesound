@@ -93,7 +93,7 @@ CONSOLIDATED_AUDIO_DESCRIPTORS = [
     {
         "name": "dynamic_range",
         "analyzer": "fs-essentia-extractor_v1",
-        "original_name": lambda d, s: d["lowlevel.loudness_ebu128.loudness_range"],
+        "get_func": lambda d, s: d["lowlevel.loudness_ebu128.loudness_range"],
     },
     {
         "name": "hardness",

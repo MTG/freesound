@@ -116,6 +116,7 @@ class Command(LoggingBaseCommand):
             # Get sound objects for chunk, include audio descriptors to avoid extra db queries
             chunk_sound_ids = sound_ids[i : i + chunk_size]
             sounds_dict = Sound.objects.dict_ids(chunk_sound_ids, include_audio_descriptors=True)
+            affected_sound_ids = []
 
             # We get a list of the existing analyzer objects to avoid having to try file loads for each sound/analyzer pair
             existing_analyzer_objects_ok = (
@@ -149,6 +150,7 @@ class Command(LoggingBaseCommand):
                     ssaa_to_update, ["last_analyzer_finished", "last_sent_to_queue", "analysis_data"]
                 )
                 n_updated += len(sound_ids_updated)
+                affected_sound_ids += sound_ids_updated
 
             # CREATE consolidated SoundAnalysis objects for sounds that did not have one
             if not skip_create:
@@ -172,14 +174,14 @@ class Command(LoggingBaseCommand):
                     )
                 SoundAnalysis.objects.bulk_create(ssaa_to_create)
                 n_created += len(ssaa_to_create)
-
+                affected_sound_ids += missing_sound_ids
             # Mark all affected sounds as dirty so re-indexing happens
             if not options["skip_mark_dirty"]:
-                Sound.objects.filter(id__in=chunk_sound_ids).update(is_index_dirty=True)
+                Sound.objects.filter(id__in=affected_sound_ids).update(is_index_dirty=True)
 
             # Invalidate template caches in case anything shown in the sound pages depends on analysis data (like automatic category)
             if not options["skip_invalidate_template_caches"]:
-                for sid in chunk_sound_ids:
+                for sid in affected_sound_ids:
                     Sound.invalidate_template_caches_static(sid)
 
             # Print progress information

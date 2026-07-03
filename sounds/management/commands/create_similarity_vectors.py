@@ -143,6 +143,7 @@ class Command(LoggingBaseCommand):
                 )
 
                 sounds_dict = Sound.objects.dict_ids(chunk_sound_ids)  # Get sound objects as will be used later
+                affected_sound_ids = []
 
                 # UPDATE already existing sim vector objects
                 if not skip_update:
@@ -158,6 +159,7 @@ class Command(LoggingBaseCommand):
                         if sim_vector:
                             ssv.vector = sim_vector
                             n_will_be_updated += 1
+                            affected_sound_ids.append(ssv.sound_id)
                     SoundSimilarityVector.objects.bulk_update(sim_vector_objects_to_update, ["vector"])
                     n_updated += n_will_be_updated
 
@@ -176,12 +178,13 @@ class Command(LoggingBaseCommand):
                                     vector=sim_vector,
                                 )
                             )
+                            affected_sound_ids.append(sid)
                     SoundSimilarityVector.objects.bulk_create(sim_vector_objects_to_create)
                     n_created += len(sim_vector_objects_to_create)
 
                 # Mark all affected sounds as dirty so re-indexing happens
                 if not options["skip_mark_dirty"]:
-                    Sound.objects.filter(id__in=chunk_sound_ids).update(is_index_dirty=True)
+                    Sound.objects.filter(id__in=affected_sound_ids).update(is_index_dirty=True)
 
                 # Print progress information
                 total_done += chunk_size

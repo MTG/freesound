@@ -3,7 +3,7 @@
 {% load bw_templatetags %}
 
 {% block id %}addSoundToCollectionModal{% endblock %}
-{% block extra-class %}{% if request.user.is_authenticated %}modal-width-50{% endif %}{% endblock %}
+{% block extra-class %}{% if request.user.is_authenticated %}modal-width-add-to-collection{% endif %}{% endblock %}
 {% block aria-label %}Add sound to collection modal{% endblock %}
 
 {% block body %}
@@ -43,8 +43,8 @@
         {% endif %}
         <form method="post" action="{% url 'add-sound-to-collection' sound.id %}?ajax=1" class="disable-on-submit">{% csrf_token %}
             <div class="v-spacing-4">
-                <div class="inline-block">
-                    <div class="text-grey">Select a collection:</div>
+                <div class="middle v-spacing-2">
+                    <span class="text-grey h-spacing-2">Select a collection:</span>
                     {{ form.collection }}
                 </div>
                 <div>

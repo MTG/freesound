@@ -111,7 +111,7 @@
   position: relative;
 }
 
-@for $i from 5 through 9 {
+@for $i from 6 through 9 {
   $value1: $i * 10;
   $value2: $i / 10;
   .modal-width-#{$value1} {
@@ -126,5 +126,26 @@
         }
       }
     }
+  }
+}
+
+.modal-width-add-to-collection {
+  .modal-wrapper .modal-dialog {
+    max-width: 600px !important;
+  }
+}
+
+#addSoundToCollectionModal {
+  .middle .select-dropdown {
+    margin-bottom: 0;
+  }
+
+  .select-dropdown__button > span {
+    display: inline-block;
+    vertical-align: middle;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

@@ -41,6 +41,7 @@ import tags.views
 import utils.tagrecommendation_utilities as tagrec
 from apiv2.apiv2_utils import apiv1_end_of_life_message
 from utils.converters import MultipleTagsConverter
+from utils.prometheus_metrics import prometheus_metrics_view
 
 admin.autodiscover()
 
@@ -48,6 +49,7 @@ register_converter(MultipleTagsConverter, "multitags")
 
 urlpatterns = [
     path("", sounds.views.front_page, name="front-page"),
+    path("metrics", prometheus_metrics_view, name="prometheus-metrics"),
     path("people/", accounts.views.accounts, name="accounts"),
     path("people/<username>/", accounts.views.account, name="account"),
     path("people/<username>/section/stats/", accounts.views.account_stats_section, name="account-stats-section"),

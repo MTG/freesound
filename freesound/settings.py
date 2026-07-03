@@ -181,6 +181,12 @@ SILENCED_SYSTEM_CHECKS = ["urls.W002"]
 
 INTERNAL_IPS = ["127.0.0.1"]
 
+# Bearer token to pull data from /metrics. If empty, the endpoint returns 404
+PROMETHEUS_METRICS_TOKEN = ""
+# Management commands push stats to a pushgateway if this value is set
+PROMETHEUS_PUSHGATEWAY_URL = ""
+PROMETHEUS_PUSHGATEWAY_TIMEOUT_SECONDS = 5
+
 MESSAGE_STORAGE = "django.contrib.messages.storage.cookie.CookieStorage"
 
 PASSWORD_HASHERS = [
@@ -505,7 +511,7 @@ ORCHESTRATE_ANALYSIS_MAX_TIME_IN_QUEUED_STATUS = 24 * 2  # in hours
 ORCHESTRATE_ANALYSIS_MAX_TIME_CONVERTED_FILES_IN_DISK = 24 * 7  # in hours
 
 AUDIOCOMMONS_ANALYZER_NAME = "ac-extractor_v3"
-FREESOUND_ESSENTIA_EXTRACTOR_NAME = "fs-essentia-extractor_legacy"
+FREESOUND_ESSENTIA_EXTRACTOR_NAME = "fs-essentia-extractor_v1"
 BIRDNET_ANALYZER_NAME = "birdnet_v1"
 FSDSINET_ANALYZER_NAME = "fsd-sinet_v1"
 BST_ANALYZER_NAME = "bst-extractor_v1"
@@ -520,412 +526,10 @@ ANALYZERS_CONFIGURATION = {
     BSTV2_ANALYZER_NAME: {},
 }
 
-AUDIO_DESCRIPTOR_TYPE_FLOAT = "float"
-AUDIO_DESCRIPTOR_TYPE_INT = "int"
-AUDIO_DESCRIPTOR_TYPE_BOOL = "bool"
-AUDIO_DESCRIPTOR_TYPE_STRING = "string"
-AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS = "list_of_strings"
-AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY = "float_array"
-AUDIO_DESCRIPTOR_TYPE_JSON = "json"  # For complex structures
-DEFAULT_AUDIO_DESCRIPTOR_TYPE = AUDIO_DESCRIPTOR_TYPE_FLOAT
-DEFAULT_AUDIO_DESCRIPTOR_FLOAT_PRECISION = 3  # Number of decimal digits for float audio descriptors
+# -------------------------------------------------------------------------------
+# Consolidated audio descriptors
 
-condition_music_or_instrument_samples = lambda s: s.category_names[0] in ["Music", "Instrument samples"]
-condition_instrument_samples = lambda s: s.category_names[0] == "Instrument samples"
-condition_sfx_or_soundscapes = lambda s: s.category_names[0] in ["Sound effects", "Soundscapes"]
-CONSOLIDATED_ANALYZER_NAME = "consolidated"
-CONSOLIDATED_AUDIO_DESCRIPTORS = [
-    {
-        "name": "category",
-        "analyzer": BSTV2_ANALYZER_NAME,
-        "original_name": "bst_top_level",
-        "type": AUDIO_DESCRIPTOR_TYPE_STRING,
-    },
-    {
-        "name": "subcategory",
-        "analyzer": BSTV2_ANALYZER_NAME,
-        "original_name": "bst_second_level",
-        "type": AUDIO_DESCRIPTOR_TYPE_STRING,
-    },
-    {
-        "name": "amplitude_peak_ratio",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["sfx"]["max_to_total"],
-    },
-    {
-        "name": "beat_count",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["rhythm"]["beats_count"],
-        "type": AUDIO_DESCRIPTOR_TYPE_INT,
-    },
-    {
-        "name": "beat_loudness",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["rhythm"]["beats_loudness"]["mean"],  # Increase precision?
-    },
-    {
-        "name": "beat_times",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["rhythm"]["beats_position"],
-        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,
-        "index": False,
-    },
-    {
-        "name": "boominess",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "boominess",
-    },
-    {
-        "name": "bpm",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "tempo",
-    },
-    {
-        "name": "bpm_confidence",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "tempo_confidence",
-    },
-    {
-        "name": "brightness",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "brightness",
-    },
-    {
-        "name": "chord_count",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["tonal"]["chords_count"],
-        "type": AUDIO_DESCRIPTOR_TYPE_INT,
-        "condition": condition_music_or_instrument_samples,
-    },
-    {
-        "name": "chord_progression",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["tonal"]["chords_progression"],
-        "type": AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
-        "condition": condition_music_or_instrument_samples,
-        "index": False,
-    },
-    {
-        "name": "decay_strength",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["sfx"]["strongdecay"],
-    },
-    {
-        "name": "depth",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "depth",
-    },
-    {
-        "name": "dissonance",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["dissonance"]["mean"],
-    },
-    {
-        "name": "duration_effective",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["sfx"]["effective_duration"]["mean"],
-    },
-    {
-        "name": "dynamic_range",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "brightness",
-    },
-    {
-        "name": "hardness",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "hardness",
-    },
-    {
-        "name": "hpcp",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["tonal"]["hpcp"]["mean"],
-        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
-        "index": False,
-    },
-    {
-        "name": "hpcp_crest",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["tonal"]["hpcp_crest"]["mean"],
-    },
-    {
-        "name": "hpcp_entropy",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["tonal"]["hpcp_entropy"]["mean"],
-    },
-    {
-        "name": "inharmonicity",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["sfx"]["inharmonicity"]["mean"],
-    },
-    {
-        "name": "log_attack_time",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "log_attack_time",
-    },
-    {
-        "name": "loopable",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "loop",
-        "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
-    },
-    {
-        "name": "loudness",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "loudness",
-    },
-    {
-        "name": "mfcc",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["mfcc"]["mean"],
-        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
-        "index": False,
-    },
-    {
-        "name": "note_confidence",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "note_confidence",
-        "condition": condition_instrument_samples,
-    },
-    {
-        "name": "note_midi",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "note_midi",
-        "type": AUDIO_DESCRIPTOR_TYPE_INT,
-        "condition": condition_instrument_samples,
-    },
-    {
-        "name": "note_name",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "note_name",
-        "type": AUDIO_DESCRIPTOR_TYPE_STRING,
-        "condition": condition_instrument_samples,
-    },
-    {
-        "name": "onset_count",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["rhythm"]["onset_count"],
-        "type": AUDIO_DESCRIPTOR_TYPE_INT,
-    },
-    {
-        "name": "onset_times",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["rhythm"]["onset_times"],
-        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,
-        "index": False,
-    },
-    {
-        "name": "pitch",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["pitch"]["mean"],
-    },
-    {
-        "name": "pitch_max",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["pitch"]["max"],
-    },
-    {
-        "name": "pitch_min",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["pitch"]["min"],
-    },
-    {
-        "name": "pitch_salience",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["pitch_salience"]["mean"],
-    },
-    {
-        "name": "pitch_var",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["pitch"]["var"],
-    },
-    {
-        "name": "reverbness",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "reverb",
-        "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
-    },
-    {
-        "name": "roughness",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "roughness",
-    },
-    {
-        "name": "sharpness",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "sharpness",
-    },
-    {
-        "name": "silence_rate",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["silence_rate_30dB"]["mean"],
-    },
-    {
-        "name": "single_event",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "single_event",
-        "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
-        "transformation": lambda v, d, s: v if s.category_names[0] not in ["Music", "Soundscapes"] else False,
-    },
-    {
-        "name": "spectral_centroid",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["spectral_centroid"]["mean"],
-    },
-    {
-        "name": "spectral_complexity",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["spectral_complexity"]["mean"],
-    },
-    {
-        "name": "spectral_crest",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["spectral_crest"]["mean"],
-    },
-    {
-        "name": "spectral_energy",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["spectral_energy"]["mean"],
-    },
-    {
-        "name": "spectral_entropy",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["spectral_entropy"]["mean"],
-    },
-    {
-        "name": "spectral_flatness",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["spectral_flatness_db"]["mean"],
-    },
-    {
-        "name": "spectral_rolloff",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["spectral_rolloff"]["mean"],
-    },
-    {
-        "name": "spectral_skewness",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["spectral_skewness"]["mean"],
-    },
-    {
-        "name": "spectral_spread",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["spectral_spread"]["mean"],
-    },
-    {
-        "name": "start_time",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["startFrame"],
-        "transformation": lambda v, d, s: (v * 2048.0) / 44100.0,  # Convert from frames to seconds
-    },
-    {
-        "name": "temporal_centroid",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["sfx"]["temporal_centroid"]["mean"],
-    },
-    {
-        "name": "temporal_centroid_ratio",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["sfx"]["tc_to_total"],
-    },
-    {
-        "name": "temporal_decrease",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["sfx"]["temporal_decrease"]["mean"],
-    },
-    {
-        "name": "temporal_skewness",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["sfx"]["temporal_skewness"]["mean"],
-    },
-    {
-        "name": "temporal_spread",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["sfx"]["temporal_spread"]["mean"],
-    },
-    {
-        "name": "tonality",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "tonality",
-        "type": AUDIO_DESCRIPTOR_TYPE_STRING,
-    },
-    {
-        "name": "tonality_confidence",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "tonality_confidence",
-    },
-    {
-        "name": "tristimulus",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["sfx"]["tristimulus"]["mean"],
-        "type": AUDIO_DESCRIPTOR_TYPE_FLOAT_ARRAY,  # Increase precision?
-        "index": False,
-    },
-    {
-        "name": "warmth",
-        "analyzer": AUDIOCOMMONS_ANALYZER_NAME,
-        "original_name": "warmth",
-    },
-    {
-        "name": "zero_crossing_rate",
-        "analyzer": FREESOUND_ESSENTIA_EXTRACTOR_NAME,
-        "get_func": lambda d, s: d["lowlevel"]["zerocrossingrate"]["mean"],
-    },
-    {
-        "name": "has_audio_problems",
-        "analyzer": "fs-essentia-problem-detection_v1",
-        "original_name": "error",
-        "type": AUDIO_DESCRIPTOR_TYPE_BOOL,
-    },
-    {
-        "name": "birdnet_detected_class",
-        "type": AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
-        "analyzer": BIRDNET_ANALYZER_NAME,
-        "original_name": "detected_classes",
-        "transformation": lambda v, d, s: None if v == [] else v,
-        "condition": condition_sfx_or_soundscapes,
-    },
-    {
-        "name": "birdnet_detections",
-        "analyzer": BIRDNET_ANALYZER_NAME,
-        "type": AUDIO_DESCRIPTOR_TYPE_JSON,
-        "original_name": "detections",
-        "transformation": lambda v, d, s: None if v == [] else v,
-        "condition": condition_sfx_or_soundscapes,
-        "index": False,
-    },
-    {
-        "name": "birdnet_detections_count",
-        "type": AUDIO_DESCRIPTOR_TYPE_INT,
-        "analyzer": BIRDNET_ANALYZER_NAME,
-        "original_name": "num_detections",
-        "condition": condition_sfx_or_soundscapes,
-    },
-    {
-        "name": "fsdsinet_detected_class",
-        "type": AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS,
-        "analyzer": FSDSINET_ANALYZER_NAME,
-        "original_name": "detected_classes",
-        "transformation": lambda v, d, s: None if v == [] else v,
-    },
-    {
-        "name": "fsdsinet_detections",
-        "analyzer": FSDSINET_ANALYZER_NAME,
-        "type": AUDIO_DESCRIPTOR_TYPE_JSON,
-        "original_name": "detections",
-        "transformation": lambda v, d, s: None if v == [] else v,
-        "index": False,
-    },
-    {
-        "name": "fsdsinet_detections_count",
-        "type": AUDIO_DESCRIPTOR_TYPE_INT,
-        "analyzer": FSDSINET_ANALYZER_NAME,
-        "original_name": "num_detections",
-    },
-]
-
-CONSOLIDATED_AUDIO_DESCRIPTORS_ANALYZER_NAMES = list(set([ad["analyzer"] for ad in CONSOLIDATED_AUDIO_DESCRIPTORS]))
-AVAILABLE_AUDIO_DESCRIPTORS_NAMES = [desc["name"] for desc in CONSOLIDATED_AUDIO_DESCRIPTORS]
-
+from .audio_descriptor_settings import *  # noqa: F403
 
 # -------------------------------------------------------------------------------
 # Search engine
@@ -1114,6 +718,10 @@ MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING = True
 
 SILENCED_SYSTEM_CHECKS += ["django_recaptcha.recaptcha_test_key_error"]
 
+# Cap the server-to-server siteverify call (default is 10s) so a slow / unreachable
+# Google can't tie up a worker for 10 seconds per submission.
+RECAPTCHA_VERIFY_REQUEST_TIMEOUT = 3
+
 
 # -------------------------------------------------------------------------------
 # Akismet
@@ -1174,8 +782,13 @@ CLUSTERING_TASK_TIMEOUT = 30
 RATELIMIT_VIEW = "accounts.views.ratelimited_error"
 RATELIMIT_SEARCH_GROUP = "search"
 RATELIMIT_SIMILARITY_GROUP = "similarity"
+RATELIMIT_REGISTRATION_GROUP = "registration"
 RATELIMIT_DEFAULT_GROUP_RATELIMIT = "2/s"
-RATELIMITS = {RATELIMIT_SEARCH_GROUP: "2/s", RATELIMIT_SIMILARITY_GROUP: "2/s"}
+RATELIMITS = {
+    RATELIMIT_SEARCH_GROUP: "2/s",
+    RATELIMIT_SIMILARITY_GROUP: "2/s",
+    RATELIMIT_REGISTRATION_GROUP: "5/m",
+}
 BLOCKED_IPS = []
 CACHED_BLOCKED_IPS_KEY = "cached_blocked_ips"
 CACHED_BLOCKED_IPS_TIME = 60 * 5  # 5 minutes

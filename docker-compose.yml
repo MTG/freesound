@@ -120,11 +120,11 @@ services:
     # Essentia extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer2:
         profiles: ["analyzers", "all"]
-        image: fs-essentia-extractor_legacy
+        image: fs-essentia-extractor_v1
         volumes:
             - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_legacy
+        command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_v1
         depends_on:
             - rabbitmq
 

@@ -57,8 +57,11 @@ class Command(LoggingBaseCommand):
             )
             other_ids = pending_ids + queued_in_db_ids + processing_id_db_ids
 
+        # Also get sounds that are marked as processing ok, but have a duration of 0, as this is a sign that the processing did not finish correctly
+        zero_duration_ids = list(Sound.objects.filter(duration=0, processing_state="OK").values_list("id", flat=True))
+
         # Send the sounds
-        combined_ids = list(set(failed_ids + other_ids))
+        combined_ids = list(set(failed_ids + other_ids + zero_duration_ids))
         qs = Sound.objects.filter(id__in=combined_ids)
         console_logger.info(f"Will send {qs.count()} sounds to processing")
         n_sent = 0

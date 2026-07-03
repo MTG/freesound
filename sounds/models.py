@@ -25,6 +25,7 @@ import logging
 import math
 import os
 import random
+import re
 import zlib
 from collections import Counter
 from urllib.parse import quote
@@ -819,27 +820,6 @@ class Sound(models.Model):
                     ),
                 ),
             ),
-            analysis=dict(
-                base_path=os.path.join(settings.ANALYSIS_PATH, id_folder),
-                statistics=dict(
-                    path=os.path.join(
-                        settings.ANALYSIS_PATH,
-                        id_folder,
-                        "%d-%s.yaml" % (self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                    ),
-                    url=settings.ANALYSIS_URL
-                    + "%s/%d-%s.yaml" % (id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                ),
-                frames=dict(
-                    path=os.path.join(
-                        settings.ANALYSIS_PATH,
-                        id_folder,
-                        "%d-%s_frames.json" % (self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                    ),
-                    url=settings.ANALYSIS_URL
-                    + "%s/%d-%s_frames.json" % (id_folder, self.id, settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME),
-                ),
-            ),
         )
 
     def get_preview_abs_url(self):
@@ -1039,29 +1019,42 @@ class Sound(models.Model):
         """
         Returns a set object with the integer sound IDs of the current sources of the sound
         """
-        return {source["id"] for source in self.sources.all().values("id")}
+        return set(self.sources.values_list("id", flat=True))
 
-    def set_sources(self, new_sources):
+    def change_sources_and_propagate(self, new_sources):
         """
-        :param set new_sources: set object with the integer IDs of the sounds which should be set as sources of the sound
+        Replace this sound's remix sources with ``new_sources`` and propagate the change to
+        dependent systems:
+          * sends "added as remix source" emails to the owners of newly-added source sounds
+          * invalidates template caches for this sound and for each added/removed source
+          * bulk-marks added/removed sources as ``is_index_dirty`` so Solr reindexes their
+            ``is_remix`` / ``was_remixed`` fields (this sound is dirtied by the caller —
+            either via ``Sound.is_index_dirty=True`` on creation or the unconditional
+            ``mark_index_dirty`` in the edit view)
+
+        Sound deletions (the other code path that mutates ``sounds_sound_sources``) handle
+        their own counterparty dirtying in ``on_delete_sound``.
+
+        :param set new_sources: set of integer sound IDs that should become this sound's sources
         """
         new_sources.discard(self.id)  # stop the universe from collapsing :-D
         old_sources = self.get_sound_sources_as_set()
 
+        dirtied_source_ids = set()
+
         # process sources in old but not in new
-        for sid in old_sources - new_sources:
-            try:
-                source = Sound.objects.get(id=sid)
-                self.sources.remove(source)
-                source.invalidate_template_caches()
-            except Sound.DoesNotExist:
-                pass
+        sources_to_remove = list(Sound.objects.filter(id__in=old_sources - new_sources))
+        for source in sources_to_remove:
+            source.invalidate_template_caches()
+            dirtied_source_ids.add(source.id)
+        if sources_to_remove:
+            self.sources.remove(*sources_to_remove)
 
         # process sources in new but not in old
-        for sid in new_sources - old_sources:
-            source = Sound.objects.get(id=sid)
+        sources_to_add = list(Sound.objects.filter(id__in=new_sources - old_sources))
+        for source in sources_to_add:
             source.invalidate_template_caches()
-            self.sources.add(source)
+            dirtied_source_ids.add(source.id)
             send_mail_template(
                 settings.EMAIL_SUBJECT_SOUND_ADDED_AS_REMIX,
                 "emails/email_remix_update.txt",
@@ -1069,6 +1062,12 @@ class Sound(models.Model):
                 user_to=source.user,
                 email_type_preference_check="new_remix",
             )
+        if sources_to_add:
+            self.sources.add(*sources_to_add)
+
+        # Counterparties' was_remixed/is_remix may have flipped: bulk-mark them for Solr re-indexing.
+        if dirtied_source_ids:
+            Sound.objects.filter(id__in=dirtied_source_ids).update(is_index_dirty=True)
 
         if old_sources != new_sources:
             self.invalidate_template_caches()
@@ -1211,8 +1210,6 @@ class Sound(models.Model):
         # Rename related files in disk
         paths_to_rename = [
             self.locations("path"),  # original file path
-            self.locations("analysis.frames.path"),  # analysis frames file
-            self.locations("analysis.statistics.path"),  # analysis statistics file
             self.locations("display.spectral.L.path"),  # spectrogram L
             self.locations("display.spectral.M.path"),  # spectrogram M
             self.locations("display.wave.L.path"),  # waveform L
@@ -1389,7 +1386,7 @@ class Sound(models.Model):
                 kwargs={
                     "sound_id": self.id,
                     "sound_path": sound_path,
-                    "analysis_folder": self.locations("analysis.base_path"),
+                    "analysis_folder": os.path.join(settings.ANALYSIS_PATH, str(self.id // 1000)),
                     "metadata": json.dumps(
                         {
                             "duration": self.duration,
@@ -1408,7 +1405,14 @@ class Sound(models.Model):
                 sounds_logger.info(f"Not sending sound {self.id} to analyzer {analyzer} as is already queued")
         return sa
 
-    def consolidate_analysis(self, no_db_operations=False):
+    def consolidate_analysis(
+        self,
+        no_db_operations=False,
+        fail_if_missing=False,
+        verbose=True,
+        existing_analyzer_object_names=None,
+        update_descriptors=None,
+    ):
         """
         This method post-processes the analysis results of all analyzers for this sound and consolidates them into a new
         SoundAnalysis object with analyzer name settings.CONSOLIDATED_ANALYZER_NAME. This consolidated analysis contains
@@ -1417,26 +1421,64 @@ class Sound(models.Model):
 
         :param bool no_db_operations: If True, the method only computes the data but does not save it in the DB. Also it returns
             the consolidated analysis data dictionary instead of the SoundAnalysis object.
+        :param bool fail_if_missing: If True, the method raises an exception if any analyzer data or descriptor data is missing.
+        :param bool verbose: If True, the method logs information about the consolidation process.
+        :param list existing_analyzer_object_names: List of analyzer names that already have analysis objects for this sound. This
+            is used to avoid trying a disk file load if we know an analysis is not supposed to exist.
+        :param list update_descriptors: List of descriptor names that should be updated. This parameter can only be used if a consolidated
+            analysis already exists, and in that case, its data will be left the same except for the descriptors specified in this list. Note that
+            if no_db_operations=True, then the returned consolidated analysis data will only contain the descriptors specified in this list.
         """
 
         # Iterate over all descriptors defined in settings.CONSOLIDATED_AUDIO_DESCRIPTORS and obtain/process their values
         tmp_analyzers_data = {}
         consolidated_analysis_data = {}
-        for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+
+        if update_descriptors is None:
+            descriptors = settings.CONSOLIDATED_AUDIO_DESCRIPTORS
+        else:
+            descriptors = [d for d in settings.CONSOLIDATED_AUDIO_DESCRIPTORS if d["name"] in update_descriptors]
+
+        for descriptor in descriptors:
             condition = descriptor.get("condition", None)
             if condition is not None:
-                if not condition(self):
-                    # If condition is defined and not met, skip descriptor
-                    continue
+                try:
+                    if not condition(self):
+                        # If condition is defined and not met, skip descriptor
+                        continue
+                except Exception as e:
+                    # If condition can't be evaluated, assume it is ok and include descriptor
+                    if verbose:
+                        print(
+                            f"Can't evaluate condition for descriptor {descriptor['name']}: {e} (sound id: {self.id}), including this descriptor"
+                        )
 
             # Load analyzer data stored in files in disk
             # Avoid reading the same file multiple times by caching data in tmp_analyzers_data
             analyzer = descriptor["analyzer"]
             if analyzer not in tmp_analyzers_data:
+                if existing_analyzer_object_names is not None and analyzer not in existing_analyzer_object_names:
+                    # We know that no data exists for such analyzer, so we can directly skip it without trying to load it from disk
+                    if fail_if_missing:
+                        raise Exception(f"Analyzer data for {analyzer} is missing (sound id: {self.id})")
+                    else:
+                        if verbose:
+                            print(
+                                f"Analyzer data for {analyzer} is missing (sound id: {self.id}), skipping descriptors from this analyzer"
+                            )
+                    continue
+
                 analyzer_data = SoundAnalysis.get_analysis_data_from_file_without_db(self.id, analyzer)
                 if not analyzer_data:
                     # Analyzer data could not be loaded from file. That means that the analyzer has not analyzed
                     # the sound successfully, skip descriptor
+                    if fail_if_missing:
+                        raise Exception(f"Analyzer data for {analyzer} is missing (sound id: {self.id})")
+                    else:
+                        if verbose:
+                            print(
+                                f"Analyzer data for {analyzer} is missing (sound id: {self.id}), skipping descriptors from this analyzer"
+                            )
                     continue
                 # Save the data in tmp dict so it is not loaded again in the future if present
                 tmp_analyzers_data[analyzer] = analyzer_data
@@ -1465,7 +1507,13 @@ class Sound(models.Model):
                     value = get_func(analyzer_data, self)
             except Exception as e:
                 # If value can't be loaded, continue with next descriptor
-                print(f"Can't get value for descriptor {name}: {e} (sound id: {self.id})")
+                if fail_if_missing:
+                    raise Exception(f"Can't get value for descriptor {name}: {e} (sound id: {self.id})")
+                else:
+                    if verbose:
+                        print(
+                            f"Can't get value for descriptor {name}: {e} (sound id: {self.id}), skipping this descriptor"
+                        )
                 continue
 
             if value is not None and type(value) == float and math.isnan(value):
@@ -1492,9 +1540,10 @@ class Sound(models.Model):
 
             except Exception as e:
                 # If value can't be transformed, continue with next descriptor
-                print(
-                    f"Can't transform or adjust precision of value {value} for descriptor {name}: {e} (sound id: {self.id})"
-                )
+                if verbose:
+                    print(
+                        f"Can't transform or adjust precision of value {value} for descriptor {name}: {e} (sound id: {self.id})"
+                    )
                 continue
 
             if value is not None:
@@ -1506,12 +1555,28 @@ class Sound(models.Model):
             # analysis and then load similarity vectors without having to read again the analyzer data from disk.
             return consolidated_analysis_data, tmp_analyzers_data
 
-        consolidated_analysis_object, _ = SoundAnalysis.objects.get_or_create(
-            sound=self, analyzer=settings.CONSOLIDATED_ANALYZER_NAME
-        )
-        current_consolidated_analysis_data = consolidated_analysis_object.analysis_data
+        if update_descriptors is not None:
+            # If update_descriptors is specified, we need to load the existing consolidated analysis data and update it
+            try:
+                consolidated_analysis_object = self.analyses.get(
+                    analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status="OK"
+                )
+                existing_analysis_data_copy = {
+                    key: value for key, value in consolidated_analysis_object.analysis_data.items()
+                }
+                existing_analysis_data_copy.update(consolidated_analysis_data)
+                consolidated_analysis_data = existing_analysis_data_copy
+            except SoundAnalysis.DoesNotExist:
+                # If no consolidated analysis exists yet, we raise an exception because update_descriptors can only be used if a consolidated analysis already exists
+                raise Exception(
+                    "update_descriptors parameter can only be used if a consolidated analysis already exists for this sound"
+                )
+        else:
+            consolidated_analysis_object, _ = SoundAnalysis.objects.get_or_create(
+                sound=self, analyzer=settings.CONSOLIDATED_ANALYZER_NAME
+            )
 
-        if current_consolidated_analysis_data != consolidated_analysis_data:
+        if consolidated_analysis_object.analysis_data != consolidated_analysis_data:
             # If consolidated analysis data has changed...
             # ...save SoundAnalysis object
             consolidated_analysis_object.analysis_data = consolidated_analysis_data
@@ -1556,28 +1621,48 @@ class Sound(models.Model):
             self.mark_index_dirty(commit=True)
         return n_loaded
 
-    def load_similarity_vector(self, similarity_space_name, force=False):
-        if (
-            not force
-            and SoundSimilarityVector.objects.filter(sound=self, similarity_space_name=similarity_space_name).exists()
-        ):
-            # Similarity vector already exists, do nothing
-            return False
+    def load_similarity_vector(self, similarity_space_name, force=False, no_db_operations=False):
+        """Create a SoundSimilarityVector object for this sound and the specified similarity space in the database.
+
+        Args:
+            similarity_space_name (str): The name of the similarity space to load the vector for.
+            force (bool, optional): If True, the similarity vector will be reloaded even if it already exists. Defaults to False. Does not have effect if no_db_operations is True.
+            no_db_operations (bool, optional): If True, the method will not perform any database operations (i.e., it will not save the vector in the db)
+                and will only return the similarity vector (or return False if vector data from corresponding analyzer does not exist for that sound). Defaults to False.
+        """
 
         similarity_space = settings.SIMILARITY_SPACES[similarity_space_name]
-        try:
-            sa = self.analyses.get(analyzer=similarity_space["analyzer"], analysis_status="OK")
-            analyzer_data = sa.get_analysis_data_from_file()
-            sim_vector = analyzer_data[similarity_space["vector_property_name"]]
-            sim_vector = [float(x) for x in sim_vector]
-        except (SoundAnalysis.DoesNotExist, KeyError, ValueError):
-            return False
+        if no_db_operations:
+            analyzer_data = SoundAnalysis.get_analysis_data_from_file_without_db(self.id, similarity_space["analyzer"])
+            if not analyzer_data:
+                return False
+        else:
+            if (
+                not force
+                and SoundSimilarityVector.objects.filter(
+                    sound=self, similarity_space_name=similarity_space_name
+                ).exists()
+            ):
+                # Similarity vector already exists, do nothing
+                return False
+
+            try:
+                sa = self.analyses.get(analyzer=similarity_space["analyzer"], analysis_status="OK")
+                analyzer_data = sa.get_analysis_data_from_file()
+            except (SoundAnalysis.DoesNotExist, KeyError, ValueError):
+                return False
+
+        sim_vector = analyzer_data[similarity_space["vector_property_name"]]
+        sim_vector = [float(x) for x in sim_vector]
 
         if len(sim_vector) != similarity_space["vector_size"]:
             return False
 
         if similarity_space["l2_norm"]:
             sim_vector = SoundSimilarityVector.l2_normalize_vector(sim_vector)
+
+        if no_db_operations:
+            return sim_vector
 
         SoundSimilarityVector.objects.update_or_create(
             sound=self,
@@ -1604,25 +1689,29 @@ class Sound(models.Model):
     def delete_from_indexes(self):
         delete_sounds_from_search_engine([self.id])
 
-    def invalidate_template_caches(self):
+    @staticmethod
+    def invalidate_template_caches_static(sound_id):
         for is_explicit in [True, False]:
-            invalidate_template_cache("sound_header", self.id, is_explicit)
+            invalidate_template_cache("sound_header", sound_id, is_explicit)
 
         for display_random_link in [True, False]:
-            invalidate_template_cache("sound_footer_top", self.id, display_random_link)
+            invalidate_template_cache("sound_footer_top", sound_id, display_random_link)
 
-        invalidate_template_cache("sound_footer_bottom", self.id)
+        invalidate_template_cache("sound_footer_bottom", sound_id)
 
         for is_authenticated in [True, False]:
             for is_explicit in [True, False]:
-                invalidate_template_cache("display_sound", self.id, is_authenticated, is_explicit)
+                invalidate_template_cache("display_sound", sound_id, is_authenticated, is_explicit)
 
         for player_size in ["small", "middle", "big_no_info", "small_no_info", "minimal", "moderation"]:
             for is_authenticated in [True, False]:
-                invalidate_template_cache("bw_display_sound", self.id, player_size, is_authenticated)
+                invalidate_template_cache("bw_display_sound", sound_id, player_size, is_authenticated)
 
-        invalidate_template_cache("bw_sound_page", self.id)
-        invalidate_template_cache("bw_sound_page_sidebar", self.id)
+        invalidate_template_cache("bw_sound_page", sound_id)
+        invalidate_template_cache("bw_sound_page_sidebar", sound_id)
+
+    def invalidate_template_caches(self):
+        self.invalidate_template_caches_static(self.id)
 
     def get_geotag_name(self):
         if hasattr(self, "geotag"):
@@ -1647,7 +1736,11 @@ class Sound(models.Model):
         if self.bst_category is None:
             # If the sound category has not been defind by user, return estimated precomputed category.
             consolidated_analysis_data = self.get_consolidated_analysis_data()
-            if consolidated_analysis_data is not None:
+            if (
+                consolidated_analysis_data is not None
+                and "category" in consolidated_analysis_data
+                and "subcategory" in consolidated_analysis_data
+            ):
                 try:
                     return [consolidated_analysis_data["category"], consolidated_analysis_data["subcategory"]]
                 except KeyError:
@@ -1676,6 +1769,44 @@ class Sound(models.Model):
             return f"{reverse('sounds-search')}?{cat_filter}"
         else:
             return None
+
+    def estimate_bpm_from_metadata(self, min_bpm=25, max_bpm=300):
+        """
+        Estimate the bpm of a sound by looking at its description, tags and name.
+        :param min_bpm: minimum bpm
+        :param max_bpm: maximum bpm
+        :return: estimated bpm (int) or 0 if bpm could not be estimated
+        """
+        bpm_candidates = list()
+
+        # Find sequences like 120bpm, bpm120, 120 bpm or bpm 120 in all fields
+        description = self.description.lower()
+        name = self.original_filename.lower()
+        tags = [t.lower() for t in self.get_sound_tags()]
+        for candidate in re.findall(r"\d+[\s]?bpm", description + " " + name + " " + " ".join(tags)) + re.findall(
+            r"bpm[\s]?\d+", description + " " + name + " " + " ".join(tags)
+        ):
+            try:
+                bpm = int(candidate.replace("bpm", "").replace(" ", ""))
+                if min_bpm <= bpm <= max_bpm:
+                    bpm_candidates.append(bpm)
+            except ValueError:
+                continue
+
+        # Find tags corresponding to single numbers and in a range
+        for tag in tags:
+            try:
+                bpm = int(tag)
+                if min_bpm <= bpm <= max_bpm:
+                    bpm_candidates.append(bpm)
+            except ValueError:
+                continue
+
+        if not bpm_candidates:
+            return 0
+
+        # Return the most common candidate
+        return Counter(bpm_candidates).most_common(1)[0][0]
 
     class Meta:
         ordering = ("-created",)
@@ -1844,6 +1975,15 @@ def on_delete_sound(sender, instance, **kwargs):
     instance.unlink_moderation_ticket()
 
     delete_cdn_symlink(instance)
+
+    # If this sound was used in a remix or was a remix, then
+    # Mark remix counterparties as index-dirty: their was_remixed/is_remix may flip when the M2M
+    # cascade clears sounds_sound_sources. M2M relations are still queryable in pre_delete.
+    counterparty_ids = set(instance.sources.values_list("id", flat=True)) | set(
+        instance.remixes.values_list("id", flat=True)
+    )
+    if counterparty_ids:
+        Sound.objects.filter(id__in=counterparty_ids).update(is_index_dirty=True)
 
 
 def post_delete_sound(sender, instance, **kwargs):

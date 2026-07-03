@@ -48,6 +48,7 @@ dependencies = [
     "pyparsing==2.4.7",
     "pysndfile~=1.5.3",
     "pysolr==3.10.0",
+    "prometheus-client==0.25.0",
     "pytest~=8.0.2",
     "pytest-django~=4.8.0", # community detection in clustering
     "python-louvain==0.16", # community detection in clustering

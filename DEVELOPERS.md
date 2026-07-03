@@ -303,6 +303,15 @@ When consolidated analyses are loaded in `SoundAnalysis` objects in the DB, addi
 descriptors and therefore these will be available for filtering in search queries. Note that multi-dimensional descriptors will not be indexed
 (they are not useful for filtering), and also descriptors marked with `index: False` will be skipped.
 
+When new analyzers are added to the pipeline and/or the descriptors listed in `settings.CONSOLIDATED_AUDIO_DESCRIPTORS` changes, the existing `consolidated`
+`SoundAnalysis` objects need to be updated. To that end, the following management command can be used:
+
+    docker compose run --rm web python manage.py create_consolidated_analysis
+
+Note that this command will update existing objects and create new ones if missing. 
+Running this command will also mark sounds as index dirty and invalidate template caches so search index is updated accordingly.
+The command has a number of options that can be set to skip some of the steps if needed, or run it only for a specific set of sound IDs.
+
 
 ### Similarity search and similarity spaces
 
@@ -317,6 +326,16 @@ for a similarity search. `Sound.load_similarity_vectors()` is called when any re
 a sound, therefore vectors should be automatically loaded (and also indexed in the search engine as sounds will also be marked as "index dirty" when
 new similarity vector objects are created). The management command `create_consolidated_sound_analysis_and_sim_vectors` can be used to help creating 
 `SoundSimilarityVector` objects in bulk.
+
+When new a new similarity space is added and new `SoundSimilarityVector` objects need to be created (or the existing ones updated), 
+the following management command can be used:
+
+    docker compose run --rm web python manage.py create_similarity_vectors  # for running over all similarity spaces
+    docker compose run --rm web python manage.py create_similarity_vectors --similarity-space SIM_SPACE_NAME
+
+Note that this command will update existing objects and create new ones if missing. 
+Running this command will also mark sounds as index dirty so search index is updated accordingly.
+The command has a number of options that can be set to skip some of the steps if needed, or run it only for a specific set of sound IDs.
 
 
 ### Considerations when updating Django version

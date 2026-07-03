@@ -25,6 +25,8 @@ import time
 
 from django.core.management.base import BaseCommand
 
+from utils.prometheus_metrics import make_command_registry, push_to_gateway_safe
+
 commands_logger = logging.getLogger("commands")
 
 
@@ -42,6 +44,8 @@ class LoggingBaseCommand(BaseCommand):
     and end of the self.handle() function respectively. Optionally, a `data` dictionary can be passed to both
     self.log_start() and self.log_end() so that the data will be also sent (and parsed) in the logging server. This
     data dictionary must be JSON serializable.
+
+    This command also sends the execution time and final status for each command to prometheus pushgateway.
     """
 
     start_time = None
@@ -52,6 +56,22 @@ class LoggingBaseCommand(BaseCommand):
             if "manage.py" in arg:
                 return sys.argv[count + 1]
         return None
+
+    def execute(self, *args, **options):
+        start = time.monotonic()
+        name = self.find_command_name() or self.__class__.__module__.split(".")[-1]
+        ok = False
+        try:
+            result = super().execute(*args, **options)
+            ok = True
+            return result
+        except SystemExit as e:
+            ok = e.code in (0, None)
+            raise
+        finally:
+            duration_seconds = time.monotonic() - start
+            registry = make_command_registry(duration_seconds=duration_seconds, success=ok)
+            push_to_gateway_safe(job=name, registry=registry)
 
     def log_start(self, data=None):
         self.start_time = time.monotonic()

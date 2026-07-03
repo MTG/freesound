@@ -110,7 +110,8 @@ If you a prompted for a password, use `localfreesoundpgpassword`, this is define
 13. (extra) Load audio descriptors and similarity vectors to the database and reindex the search index. This is necessary to make audio descriptors available thorugh the API and to make similarity search work. Note that for this to work, you need to have properly set the development data folder, and you should see some files inside the `freesound-data/analysis` folders which store the (previously computed) results of Freesound audio analysers.
 
         # First run the following command which will create relevant objects in the DB. Note that this can take some minutes.
-        docker compose run --rm web python manage.py create_consolidated_sound_analysis_and_sim_vectors --force
+        docker compose run --rm web python manage.py create_consolidated_analysis
+        docker compose run --rm web python manage.py create_similarity_vectors
 
         # Then re-create the search engine sounds index after audio descriptors data has been loaded in the DB. You need to specifically indicate that similarity vectors should be added.
         docker compose run --rm web python manage.py reindex_search_engine_sounds --include-similarity-vectors

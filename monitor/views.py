@@ -31,12 +31,18 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
+from prometheus_client import Counter as PrometheusCounter
 
 import tickets
 from freesound.celery import get_queues_task_counts
 from sounds.models import Sound, SoundAnalysis, SoundSimilarityVector
 from tickets import TICKET_STATUS_CLOSED
 from utils.search import SearchEngineException, get_search_engine
+
+MONITOR_HOME_VIEWS = PrometheusCounter(
+    "freesound_monitor_home_views_total",
+    "Number of times the staff monitor home page has been viewed (test metric)",
+)
 
 
 @login_required
@@ -52,6 +58,8 @@ def get_queues_status(request):
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url="/")
 def monitor_home(request):
+    # Test instrumentation: bump a counter so we can confirm it appears on /metrics.
+    MONITOR_HOME_VIEWS.inc()
     return HttpResponseRedirect(reverse("monitor-stats"))
 
 

@@ -72,17 +72,17 @@ class Command(BaseCommand):
         n_groups_created = 0
         for sg_nodes in subgraphs:
             sg = dg.subgraph(sg_nodes).copy()
-            _create_and_save_remixgroup(sg, RemixGroup())
+            _create_and_save_remixgroup(sg)
             n_groups_created += 1
 
         web_logger.info("Finished creating remix groups (%i groups created)" % n_groups_created)
 
 
 def _create_nodes(dg):
-    for node in dg.nodes():
-        sound = Sound.objects.get(id=node)
+    sounds = Sound.objects.filter(id__in=list(dg.nodes())).select_related("user")
+    for sound in sounds:
         dg.add_node(
-            node,
+            sound.id,
             date=sound.created,
             nodeName=sound.original_filename,
             username=sound.user.username,
@@ -93,35 +93,19 @@ def _create_nodes(dg):
     return dg
 
 
-def _create_and_save_remixgroup(sg, remixgroup):
-    # print ' ========================================= '
+def _create_and_save_remixgroup(sg):
     # add to list the subgraphs(connected components) with the extra data
     node_list = list(sg.nodes(data=True))
-    # pp(node_list)
 
     # sort by date (holds all subgraph nodes sorted by date)
     # we need this since we go forward in time (source older than remix)
     node_list.sort(key=lambda x: x[1]["date"])  # I think ['date'] is not necessary
-    # print ' ========== SORTED NODE_LIST ========= '
-    # pp(node_list)
 
     # dict with key=sound_id, value=index, nodeName=original_filename
     # in the previous sorted by date list
     # FIXME: no need for all this data, can be simple dict, key=value
     container = {val[0]: {"index": idx, "nodeName": val[1]["nodeName"]} for (idx, val) in enumerate(node_list)}
-    # print ' ========== CONTAINER ========= '
-    # pp(container)
 
-    links = []
-    remixgroup.save()  # need to save to have primary key before ManyToMany
-    # FIXME: no idea why nx.weakly_connected_components(sg) return list in list...
-    remixgroup.sounds.set(max(nx.weakly_connected_components(sg), key=len))
-
-    for sound in remixgroup.sounds.all():
-        sound.invalidate_template_caches()
-        sound.mark_index_dirty(commit=True)
-
-    remixgroup.group_size = len(node_list)
     # FIXME: seems like double work here, maybe convert container to list and sort?
     nodes = [
         {
@@ -135,8 +119,8 @@ def _create_and_save_remixgroup(sg, remixgroup):
         }
         for (idx, val) in enumerate(node_list)
     ]
+    links = []
     for line in nx.generate_adjlist(sg):
-        # print line
         if len(line.split()) > 1:
             for i, l in enumerate(line.strip().split(" ")):
                 # index 0 is the source, which we already know
@@ -144,12 +128,12 @@ def _create_and_save_remixgroup(sg, remixgroup):
                     link = {"target": container[int(line.split(" ")[0])]["index"], "source": container[int(l)]["index"]}
                     links.append(link)
 
-    remixgroup.protovis_data = (
+    protovis_data = (
         '{"color": "#F1D9FF",'
         '"length":' + str(len(node_list)) + ","
         '"nodes": ' + json.dumps(nodes) + ","
         '"links": ' + json.dumps(links) + "}"
     )
 
-    remixgroup.networkx_data = json.dumps(dict(nodes=list(sg.nodes()), edges=list(sg.edges())))
-    remixgroup.save()
+    remixgroup = RemixGroup.objects.create(protovis_data=protovis_data, group_size=len(node_list))
+    remixgroup.sounds.set(sg.nodes())

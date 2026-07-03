@@ -43,7 +43,8 @@ def plot_histogram(data, label, out_folder, remove_outliers=True):
         if set(data).issubset({0, 1}):  # Boolean data
             sns.countplot(
                 x=data,
-                color=sns.color_palette("Set2")[0]
+                color=sns.color_palette("Set2")[0],
+                stat="percent"
             )
             plt.xticks(ticks=[0, 1], labels=["no (0)", "yes (1)"])
         else:
@@ -68,7 +69,8 @@ def plot_histogram(data, label, out_folder, remove_outliers=True):
         sns.countplot(
             x=data,
             color=sns.color_palette("Set2")[0],
-            order=sorted_data
+            order=sorted_data,
+            stat="percent"
         )
         
     def thousands_formatter(x, pos):

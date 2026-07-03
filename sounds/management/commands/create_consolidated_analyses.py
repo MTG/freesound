@@ -85,10 +85,22 @@ class Command(LoggingBaseCommand):
             help="Number of sounds to process in each chunk (default: 1000).",
         )
 
+        parser.add_argument(
+            "--update-descriptors",
+            action="store",
+            dest="update_descriptors",
+            default=None,
+            help="If set, update the specified descriptors in the already existing consolidated analysis data for all sounds (default: None).",
+        )
+
     def handle(self, *args, **options):
         self.log_start()
         skip_create = options["skip_create"]
         skip_update = options["skip_update"]
+        update_descriptors = (
+            options["update_descriptors"].split(",") if options["update_descriptors"] is not None else None
+        )
+
         sound_ids_option = options["sound_ids"]
         if sound_ids_option:
             sound_ids = [int(sid) for sid in sound_ids_option.split(",")]
@@ -138,8 +150,15 @@ class Command(LoggingBaseCommand):
                         verbose=False,
                         existing_analyzer_object_names=existing_analyzer_object_names_for_sid[sa.sound_id],
                         no_db_operations=True,  # We don't do db operation for every sound, only update them in bulks
+                        update_descriptors=update_descriptors,  # If set, we only update the specified descriptors
                     )
-                    sa.analysis_data = data
+                    if update_descriptors is None:
+                        sa.analysis_data = data
+                    else:
+                        # If update_descriptors is set, we only update the specified descriptors in the existing analysis_data
+                        existing_analysis_data_copy = {key: value for key, value in sa.analysis_data.items()}
+                        existing_analysis_data_copy.update(data)
+                        sa.analysis_data = existing_analysis_data_copy
                     sa.last_sent_to_queue = timezone.now()
                     sa.last_analyzer_finished = timezone.now()
 

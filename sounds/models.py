@@ -1406,7 +1406,12 @@ class Sound(models.Model):
         return sa
 
     def consolidate_analysis(
-        self, no_db_operations=False, fail_if_missing=False, verbose=True, existing_analyzer_object_names=None
+        self,
+        no_db_operations=False,
+        fail_if_missing=False,
+        verbose=True,
+        existing_analyzer_object_names=None,
+        update_descriptors=None,
     ):
         """
         This method post-processes the analysis results of all analyzers for this sound and consolidates them into a new
@@ -1420,13 +1425,21 @@ class Sound(models.Model):
         :param bool verbose: If True, the method logs information about the consolidation process.
         :param list existing_analyzer_object_names: List of analyzer names that already have analysis objects for this sound. This
             is used to avoid trying a disk file load if we know an analysis is not supposed to exist.
+        :param list update_descriptors: List of descriptor names that should be updated. This parameter can only be used if a consolidated
+            analysis already exists, and in that case, its data will be left the same except for the descriptors specified in this list. Note that
+            if no_db_operations=True, then the returned consolidated analysis data will only contain the descriptors specified in this list.
         """
 
         # Iterate over all descriptors defined in settings.CONSOLIDATED_AUDIO_DESCRIPTORS and obtain/process their values
         tmp_analyzers_data = {}
         consolidated_analysis_data = {}
 
-        for descriptor in settings.CONSOLIDATED_AUDIO_DESCRIPTORS:
+        if update_descriptors is None:
+            descriptors = settings.CONSOLIDATED_AUDIO_DESCRIPTORS
+        else:
+            descriptors = [d for d in settings.CONSOLIDATED_AUDIO_DESCRIPTORS if d["name"] in update_descriptors]
+
+        for descriptor in descriptors:
             condition = descriptor.get("condition", None)
             if condition is not None:
                 try:
@@ -1542,12 +1555,28 @@ class Sound(models.Model):
             # analysis and then load similarity vectors without having to read again the analyzer data from disk.
             return consolidated_analysis_data, tmp_analyzers_data
 
-        consolidated_analysis_object, _ = SoundAnalysis.objects.get_or_create(
-            sound=self, analyzer=settings.CONSOLIDATED_ANALYZER_NAME
-        )
-        current_consolidated_analysis_data = consolidated_analysis_object.analysis_data
+        if update_descriptors is not None:
+            # If update_descriptors is specified, we need to load the existing consolidated analysis data and update it
+            try:
+                consolidated_analysis_object = self.analyses.get(
+                    analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status="OK"
+                )
+                existing_analysis_data_copy = {
+                    key: value for key, value in consolidated_analysis_object.analysis_data.items()
+                }
+                existing_analysis_data_copy.update(consolidated_analysis_data)
+                consolidated_analysis_data = existing_analysis_data_copy
+            except SoundAnalysis.DoesNotExist:
+                # If no consolidated analysis exists yet, we raise an exception because update_descriptors can only be used if a consolidated analysis already exists
+                raise Exception(
+                    "update_descriptors parameter can only be used if a consolidated analysis already exists for this sound"
+                )
+        else:
+            consolidated_analysis_object, _ = SoundAnalysis.objects.get_or_create(
+                sound=self, analyzer=settings.CONSOLIDATED_ANALYZER_NAME
+            )
 
-        if current_consolidated_analysis_data != consolidated_analysis_data:
+        if consolidated_analysis_object.analysis_data != consolidated_analysis_data:
             # If consolidated analysis data has changed...
             # ...save SoundAnalysis object
             consolidated_analysis_object.analysis_data = consolidated_analysis_data

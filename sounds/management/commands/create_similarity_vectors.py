@@ -126,7 +126,7 @@ class Command(LoggingBaseCommand):
 
             if skip_update:
                 # If we are skipping updates, we can filter out sounds that already have a similarity vector objects to avoid unnecessary processing
-                sound_ids = [sid for sid in sound_ids if sid not in sound_ids_with_sim_vectors_ok]
+                sound_ids = sorted(list(set(sound_ids) - set(sound_ids_with_sim_vectors_ok)))
                 total_sounds = len(sound_ids)
 
             starttime = time.monotonic()

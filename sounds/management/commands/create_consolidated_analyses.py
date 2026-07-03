@@ -102,12 +102,10 @@ class Command(LoggingBaseCommand):
 
         if skip_update:
             # If we are skipping updates, we can filter out sounds that already have a consolidated analysis object to avoid unnecessary processing
-            existing_consolidated_sound_ids = set(
-                SoundAnalysis.objects.filter(sound_id__in=sound_ids, analyzer="consolidated").values_list(
-                    "sound_id", flat=True
-                )
-            )
-            sound_ids = [sid for sid in sound_ids if sid not in existing_consolidated_sound_ids]
+            existing_consolidated_sound_ids = SoundAnalysis.objects.filter(
+                sound_id__in=sound_ids, analyzer="consolidated"
+            ).values_list("sound_id", flat=True)
+            sound_ids = sorted(list(set(sound_ids) - set(existing_consolidated_sound_ids)))
             total_sounds = len(sound_ids)
 
         starttime = time.monotonic()

@@ -124,6 +124,11 @@ class Command(LoggingBaseCommand):
             sound_ids = sorted(sound_ids)
             total_sounds = len(sound_ids)
 
+            if skip_update:
+                # If we are skipping updates, we can filter out sounds that already have a similarity vector objects to avoid unnecessary processing
+                sound_ids = [sid for sid in sound_ids if sid not in sound_ids_with_sim_vectors_ok]
+                total_sounds = len(sound_ids)
+
             starttime = time.monotonic()
             total_done = 0
             for i in range(0, total_sounds, chunk_size):

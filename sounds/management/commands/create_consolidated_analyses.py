@@ -100,6 +100,16 @@ class Command(LoggingBaseCommand):
         n_created = 0
         n_updated = 0
 
+        if skip_update:
+            # If we are skipping updates, we can filter out sounds that already have a consolidated analysis object to avoid unnecessary processing
+            existing_consolidated_sound_ids = set(
+                SoundAnalysis.objects.filter(sound_id__in=sound_ids, analyzer="consolidated").values_list(
+                    "sound_id", flat=True
+                )
+            )
+            sound_ids = [sid for sid in sound_ids if sid not in existing_consolidated_sound_ids]
+            total_sounds = len(sound_ids)
+
         starttime = time.monotonic()
         total_done = 0
         for i in range(0, total_sounds, chunk_size):
@@ -118,10 +128,12 @@ class Command(LoggingBaseCommand):
                 existing_analyzer_object_names_for_sid[sid].append(analyzer)
 
             # UPDATE already existing consolidated SoundAnalysis objects
+            # Note that even if we are skipping updates, we still need to get the list of sounds ids that would have been updated to
+            # avoid creating duplicated consolidated SoundAnalysis objects for those sounds in the next step
             sound_ids_updated = []
+            ssaa_to_update = SoundAnalysis.objects.filter(sound_id__in=chunk_sound_ids, analyzer="consolidated")
+            sound_ids_updated = [sa.sound_id for sa in ssaa_to_update]
             if not skip_update:
-                ssaa_to_update = SoundAnalysis.objects.filter(sound_id__in=chunk_sound_ids, analyzer="consolidated")
-                sound_ids_updated = [sa.sound_id for sa in ssaa_to_update]
                 for sa in ssaa_to_update:
                     data, _ = sounds_dict[sa.sound_id].consolidate_analysis(
                         verbose=False,

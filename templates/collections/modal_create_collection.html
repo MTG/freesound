@@ -10,6 +10,11 @@
 <div class="col-12">
     <div class="text-center">
         <h4 class="v-spacing-5">Create collection</h4>
+        {% if sound %}
+            <div class="v-spacing-3 text-grey">
+                {% bw_icon 'bookmark-filled' %} The sound <span class="text-black">{{ sound.original_filename }}</span> will be added to the new collection{% if mark_as_featured %} and marked as featured{% endif %}.
+            </div>
+        {% endif %}
         <form method="post" action="{% url 'create-collection' %}?ajax=1{% if sound_id %}&sound_id={{ sound_id }}{% endif %}{% if mark_as_featured %}&mark_as_featured=1{% endif %}" class="bw-form disable-on-submit">{% csrf_token %}
             {{ form.non_field_errors }}
             <div class="text-left">

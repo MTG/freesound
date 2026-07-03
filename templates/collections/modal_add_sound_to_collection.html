@@ -3,7 +3,7 @@
 {% load bw_templatetags %}
 
 {% block id %}addSoundToCollectionModal{% endblock %}
-{% block extra-class %}{% if request.user.is_authenticated %}modal-width-60{% endif %}{% endblock %}
+{% block extra-class %}{% if request.user.is_authenticated %}modal-width-50{% endif %}{% endblock %}
 {% block aria-label %}Add sound to collection modal{% endblock %}
 
 {% block body %}
@@ -25,42 +25,39 @@
             <button class="btn-primary" data-dismiss="modal">Ok</button>
         </div>
     {% else %}
-    <div class="center">
+    <div class="text-center">
         <h4 class="v-spacing-5">Add sound to collection</h4>
     </div>
     <div class="v-spacing-4">
-        {% if collections_with_sound%}
+        {% if collections_with_sound %}
+            <div class="v-spacing-3 text-grey">
+                {% bw_icon 'bookmark-filled' %} This sound is already in your collections under:
+                {% for col in collections_with_sound %}<span class="text-black">{{ col.name }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}
+            </div>
+        {% endif %}
+        {% if full_collections %}
+            <div class="v-spacing-3 text-grey">
+                {% bw_icon 'atom' %} The following collections have reached the maximum number of sounds allowed ({{ max_sounds_per_collection }}):
+                {% for col in full_collections %}<span class="text-black">{{ col.name }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}
+            </div>
+        {% endif %}
+        <form method="post" action="{% url 'add-sound-to-collection' sound.id %}?ajax=1" class="disable-on-submit">{% csrf_token %}
             <div class="v-spacing-4">
-            {% bw_icon 'bookmark-filled' %}This sound is already in your collections under:
-            {% for col in collections_with_sound %}
-            <span class="text-black font-weight-bold">{{col.name}}</span>{% if not forloop.last%},{% endif %}
-            {% endfor %}
-            </div>
-        {% endif %}
-        {% if full_collections%}
-            <div class="v-spacing-2">
-            {% bw_icon 'atom' %}The following collections have reached the maximum number of sounds allowed ({{max_sounds_per_collection}}):
-            {% for col in full_collections %}
-            <span class="text-black font-weight-bold">{{col.name}}</span>{% if not forloop.last%},{% endif %}
-            {% endfor %}
-            </div>
-        {% endif %}
-        <form method="post" action="{% url 'add-sound-to-collection' sound.id %}?ajax=1." class = "disable-on-submit">{% csrf_token %}
-            <div class="between" style="align-items: baseline;">
-                <div class="middle" style="gap: 12px; align-items: baseline;">
-                    <span class="text-grey">Select a collection:</span>
+                <div class="inline-block">
+                    <div class="text-grey">Select a collection:</div>
                     {{ form.collection }}
                 </div>
-                <a class="cursor-pointer text-grey" id="createNewCollectionLink" data-modal-content-url="{% url 'create-collection' %}?ajax=1&sound_id={{ sound.id }}">Create a new collection</a>
-            </div>
-            <div class="v-spacing-top-4">
-                <label for="{{ form.mark_as_featured.id_for_label }}" class="bw-checkbox-label cursor-pointer" style="white-space: nowrap;">
-                    <input type="checkbox" class="bw-checkbox" id="{{ form.mark_as_featured.id_for_label }}" name="mark_as_featured">
-                    Mark as featured <span class="text-grey">(max {{max_featured_per_collection}})</span>
-                </label>
+                <div>
+                    <label for="{{ form.mark_as_featured.id_for_label }}" class="bw-checkbox-label cursor-pointer" style="white-space: nowrap;">
+                        <input type="checkbox" class="bw-checkbox" id="{{ form.mark_as_featured.id_for_label }}" name="mark_as_featured">
+                        Mark sound as featured <span class="text-grey">(max {{ max_featured_per_collection }} per collection)</span>
+                    </label>
+                </div>
             </div>
             {{ form.use_last_collection }}
-            <button class = "btn-primary v-spacing-top-4">Add sound to collection</button>
+            <button class="btn-primary v-spacing-top-2">Add sound to selected collection</button>
+            <div class="text-grey text-center v-spacing-top-2 v-spacing-2">OR</div>
+            <button type="button" class="btn-inverse" id="createNewCollectionLink" data-modal-content-url="{% url 'create-collection' %}?ajax=1&sound_id={{ sound.id }}">Add sound to a new collection</button>
         </form>
     </div>
     {% endif %}

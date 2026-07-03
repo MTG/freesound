@@ -198,6 +198,7 @@ def create_collection(request):
     # gets added to the newly created collection right away (and featured if mark_as_featured is set).
     sound_id = request.GET.get("sound_id")
     mark_as_featured = request.GET.get("mark_as_featured")
+    sound = get_object_or_404(Sound, id=sound_id) if sound_id else None
     if request.method == "POST":
         form = CreateCollectionForm(request.POST, user=request.user)
         if form.is_valid():
@@ -207,8 +208,7 @@ def create_collection(request):
                 description=form.cleaned_data["description"],
                 public=form.cleaned_data["public"],
             )
-            if sound_id:
-                sound = get_object_or_404(Sound, id=sound_id)
+            if sound is not None:
                 collection.add_sound(sound, request.user, feature=bool(mark_as_featured))
                 return JsonResponse(
                     {
@@ -219,7 +219,7 @@ def create_collection(request):
             return JsonResponse({"success": True})
     else:
         form = CreateCollectionForm(user=request.user)
-    tvars = {"form": form, "sound_id": sound_id, "mark_as_featured": mark_as_featured}
+    tvars = {"form": form, "sound_id": sound_id, "sound": sound, "mark_as_featured": mark_as_featured}
     return render(request, "collections/modal_create_collection.html", tvars)
 
 

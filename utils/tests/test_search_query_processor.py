@@ -103,10 +103,11 @@ class SearchQueryProcessorTests(TestCase):
         )
         self.assertGetUrlAsExpected(sqp, url)
 
-        # With page number specified
+        # With page number specified.
+        # It should now reset the page number if having a filter (see get_url)
         sqp, url = self.run_fake_search_query_processor(params={"page": "3"})
         self.assertExpectedParams(sqp.as_query_params(), {"current_page": 3})
-        self.assertGetUrlAsExpected(sqp, url)
+        self.assertGetUrlAsExpected(sqp, url.replace("page=3", ""))
 
         # With "search in" options specified
         sqp, url = self.run_fake_search_query_processor(
@@ -244,7 +245,7 @@ class SearchQueryProcessorTests(TestCase):
                 "field_list": ["id", "score", "geotag"],
             },
         )
-        self.assertGetUrlAsExpected(sqp, url)
+        self.assertGetUrlAsExpected(sqp, url.replace("page=3", ""))
 
         # With tags mode
         sqp, url = self.run_fake_search_query_processor(base_url=reverse("tags"))
@@ -372,6 +373,12 @@ class SearchQueryProcessorTests(TestCase):
         # Test remove_filters removes them from the URL
         sqp, _ = self.run_fake_search_query_processor(params={"f": 'filter1:"aaa" filter2:123'})
         self.assertEqual(sqp.get_url(remove_filters=['filter1:"aaa"', "filter2:123"]), "/search/")
+
+        # Test that when browsing a page other than the first one, the generated URLs remove the page parameter
+        sqp, _ = self.run_fake_search_query_processor(params={"q": "test", "page": "2"})
+        self.assertEqual(sqp.get_url(add_filters=['tag:"tag1"']), "/search/?q=test&f=tag%3A%22tag1%22")
+        sqp, _ = self.run_fake_search_query_processor(params={"f": 'filter1:"aaa"', "page": "2"})
+        self.assertEqual(sqp.get_url(remove_filters=['filter1:"aaa"']), "/search/")
 
     def test_search_query_processor_contains_active_advanced_search_options(self):
         # Query with no params

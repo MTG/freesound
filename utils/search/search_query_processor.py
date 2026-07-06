@@ -796,8 +796,13 @@ class SearchQueryProcessor:
             base_url = reverse("sounds-search")
 
         # Add query parameters from search options
+        # Skipping the page option while iterating
+
+
         parameters_to_add = {}
-        for option in self.options.values():
+        for option_name, option in self.options.items():
+            if option_name == "page":
+                continue
             if option.set_in_request and not option.is_default_value:
                 params_for_url = option.as_URL_params()
                 if params_for_url is not None:

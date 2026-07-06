@@ -67,6 +67,7 @@ from oauth2_provider.models import AccessToken
 
 import utils.sound_upload
 from accounts.forms import (
+    AIPreferenceForm,
     AvatarForm,
     BulkDescribeForm,
     DeleteUserForm,
@@ -463,6 +464,37 @@ def edit_email_settings(request):
 
 @login_required
 @transaction.atomic()
+def edit_ai_preferences(request):
+    profile = request.user.profile
+
+    form = AIPreferenceForm(request.POST or None)
+    # Save a couple of variables that we will need later to check if they have changed and we need
+    # to mark user sounds as index dirty or show some messages to the user
+    old_ai_preference = str(profile.get_ai_preference(default_if_not_set=False))
+
+    if form.is_valid():
+        # Update AI sound usage preference, only if field present in the form
+        if "ai_sound_usage_preference" in form.cleaned_data:
+            profile.set_ai_preference(form.cleaned_data["ai_sound_usage_preference"])
+
+        if old_ai_preference != profile.get_ai_preference(default_if_not_set=False):
+            Sound.objects.filter(user=request.user).update(is_index_dirty=True)
+        invalidate_user_template_caches(request.user.id)
+
+        msg_txt = "Your AI preference options have been updated correctly."
+        messages.add_message(request, messages.INFO, msg_txt)
+        return HttpResponseRedirect(reverse("accounts-ai-preferences"))
+    else:
+        form = AIPreferenceForm(
+            initial={"ai_sound_usage_preference": profile.get_ai_preference(default_if_not_set=False)}
+        )
+
+    tvars = {"form": form, "activePage": "ai_preferences"}
+    return render(request, "accounts/edit_ai_preferences.html", tvars)
+
+
+@login_required
+@transaction.atomic()
 def edit(request):
     profile = request.user.profile
 
@@ -481,14 +513,9 @@ def edit(request):
         profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
         # Save a couple of variables that we will need later to check if they have changed and we need
         # to mark user sounds as index dirty or show some messages to the user
-        old_ai_preference = str(profile.get_ai_preference(default_if_not_set=False))
         old_username = request.user.username
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
-            # Update AI sound usage preference, only if field present in the form
-            if "ai_sound_usage_preference" in profile_form.cleaned_data:
-                profile.set_ai_preference(profile_form.cleaned_data["ai_sound_usage_preference"])
-
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data["username"]
             try:
@@ -501,11 +528,8 @@ def edit(request):
                 request.user.refresh_from_db(fields=["username"])
             else:
                 profile.save()
-
                 # profile.refresh_from_db()  # Refresh profile to get updated ai preference when calling get_ai_preference
-                if old_username != request.user.username or old_ai_preference != profile.get_ai_preference(
-                    default_if_not_set=False
-                ):
+                if old_username != request.user.username:
                     Sound.objects.filter(user=request.user).update(is_index_dirty=True)
                 invalidate_user_template_caches(request.user.id)
 
@@ -659,7 +683,6 @@ def manage_sounds(request, tab):
         "sounds_processing_count": sounds_processing_count,
         "sounds_pending_description_count": sounds_pending_description_count,
         "packs_count": packs_count,
-        "user_has_ai_preference_unset": request.user.profile.get_ai_preference(default_if_not_set=False) is None,
     }
 
     # Then do dedicated processing for each tab

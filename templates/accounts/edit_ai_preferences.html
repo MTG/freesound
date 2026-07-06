@@ -1,0 +1,58 @@
+{% extends "accounts/account_settings_base.html" %}
+
+{% load static %}
+{% load filter_img %}
+{% load bw_templatetags %}
+{% load util %}
+
+{% block title %}Gen AI preferences{% endblock %}
+
+{% block main_content %}
+
+    <h1>Generative AI preferences</h1>
+
+    <div class="v-spacing-top-4 w-100 v-spacing-5">
+        <form method="post" action="." class="bw-form w-100">{% csrf_token %}
+            <p>
+                This section allows you to set your preferences regarding the use of your sounds for the purpose of training generative Artificial Intelligence (Gen AI) models.
+            </p>
+            <p>
+                Beyond the <a href="{% url "wiki-page" "faq" %}#licenses">usage terms defined by the specific Creative Commons license</a> that is choosen for each of your sounds, you can define 
+                <b>additional usage preferences for the specific case of training Gen AI models.</b>
+                These additional preferences <b>are applied to all your uploaded sounds</b>, and are independent of the individual sound licenses. Please, select one of the options below:
+            </p>
+            <div class="v-spacing-top-4">
+                {% if form.ai_sound_usage_preference.errors %}
+                    <div class="v-spacing-2">{{ form.ai_sound_usage_preference.errors }}</div>
+                {% endif %}
+                <div class="row">
+                    {% for ai_option in form.ai_options_and_texts %}
+                    <div class="col-md-12 v-spacing-5">
+                        <label class="bw-radio-label">
+                            <div class="row no-gutters h-spacing-left-1">
+                                <div class="col-2 col-lg-1 middle center">
+                                    <input class="bw-radio" type="radio" id="id_ai_sound_usage_preference_{{ ai_option.code }}" value="{{ ai_option.code }}" name="ai_sound_usage_preference" title="{{ ai_option.label }}" {% if form.ai_sound_usage_preference.value == ai_option.code %}checked{% endif %}>
+                                </div>
+                                <div class="col-10 col-lg-10">
+                                <h5>{{ ai_option.label }}</h5>
+                                    <div class="text-grey">{{ ai_option.explanation|safe }}</div>
+                                </div> 
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <p>
+                When referring to <i>open source models</i>, we refer to the <a href="https://opensource.org/ai">definition of Open Source AI</a> by the Open Source Initiative (OSI). In short, that means that for a model to be considered open source, it needs to be released under terms that grant the freedom to use, study, modify and share the model, including their code, model weights and training documentation.
+            </p>
+            <p>
+                For more information about this topic, including how your preferences are applied, please read the 
+                <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models"><i>Usage of my sounds for training generative AI models</i> help section</a>.
+            </p>
+            <button class="btn-primary w-100 v-spacing-top-5">Update AI preferences</button>
+        </form>
+
+    </div>
+
+{% endblock %}

@@ -14,10 +14,10 @@
     <div class="v-spacing-top-4 w-100 v-spacing-5">
         <form method="post" action="." class="bw-form w-100">{% csrf_token %}
             <p>
-                This section allows you to set your preferences regarding the use of your sounds for the purpose of training generative Artificial Intelligence (Gen AI) models.
+                This section allows you to set your preferences regarding the <b>use of your uploaded sounds for the purpose of training generative Artificial Intelligence (Gen AI) models.</b>
             </p>
             <p>
-                Beyond the <a href="{% url "wiki-page" "faq" %}#licenses">usage terms defined by the specific Creative Commons license</a> that is choosen for each of your sounds, you can define 
+                Beyond the usage terms already defined by the specific <a href="{% url "wiki-page" "faq" %}#licenses">Creative Commons license associated with each of your sounds</a>, you can define 
                 <b>additional usage preferences for the specific case of training Gen AI models.</b>
                 These additional preferences <b>are applied to all your uploaded sounds</b>, and are independent of the individual sound licenses. Please, select one of the options below:
             </p>
@@ -34,8 +34,8 @@
                                     <input class="bw-radio" type="radio" id="id_ai_sound_usage_preference_{{ ai_option.code }}" value="{{ ai_option.code }}" name="ai_sound_usage_preference" title="{{ ai_option.label }}" {% if form.ai_sound_usage_preference.value == ai_option.code %}checked{% endif %}>
                                 </div>
                                 <div class="col-10 col-lg-10">
-                                <h5>{{ ai_option.label }}</h5>
-                                    <div class="text-grey">{{ ai_option.explanation|safe }}</div>
+                                    <h5>{{ ai_option.label }}</h5>
+                                    <div class="text-grey v-spacing-top-1">{{ ai_option.explanation|safe }}</div>
                                 </div> 
                             </div>
                         </label>
@@ -44,13 +44,13 @@
                 </div>
             </div>
             <p>
-                When referring to <i>open source models</i>, we refer to the <a href="https://opensource.org/ai">definition of Open Source AI</a> by the Open Source Initiative (OSI). In short, that means that for a model to be considered open source, it needs to be released under terms that grant the freedom to use, study, modify and share the model, including their code, model weights and training documentation.
+                Note that when using the term <i>open source models</i>, we refer to the <a href="https://opensource.org/ai">definition of Open Source AI</a> by the <b>Open Source Initiative (OSI)</b>. In short, that means that for a model to be considered open source, it needs to be released under terms that grant the <b>freedom to use, study, modify and share the model</b>, including their code, model weights and training documentation.
             </p>
             <p>
-                For more information about this topic, including how your preferences are applied, please read the 
+                For more information about this topic, including how these Gen AI preferences are applied, please read the 
                 <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models"><i>Usage of my sounds for training generative AI models</i> help section</a>.
             </p>
-            <button class="btn-primary w-100 v-spacing-top-5">Update AI preferences</button>
+            <button class="btn-primary w-100 v-spacing-top-5">Update Gen AI preferences</button>
         </form>
 
     </div>

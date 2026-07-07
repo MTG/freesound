@@ -727,30 +727,32 @@ class AIPreference(models.Model):
         {
             "code": "no-additional-restrictions",
             "label": "No additional restrictions",
-            "explanation": """this is the default option, and it means that sounds can be used for training Gen AI models as long as the recommendations described in the 2024 blog post are followed. Here is a summary of the recommendations:
-<br>CC0 sounds can be used without restriction.
-<br>CC-BY sounds can be used as long as the training set of the AI model is disclosed.
-<br>CC-BY-NC sounds can be used as long as the training set of the AI model is disclosed and the model is not trained in a commercial setting or used for commercial purposes.""",
+            "explanation": """Sounds can be used for training Gen AI models without any additional restrictions to those already set by the corresponding Creative Commons license. Here is a summary of the Creative Commons terms applied to the use case of training AI models:
+            <ul><li>CC0 sounds can be used without restriction.</li>
+            <li>CC-BY sounds can be used as long as the training set of the AI model is disclosed.</li>
+            <li>CC-BY-NC sounds can be used as long as the training set of the AI model is disclosed and the model is not trained in a commercial setting or used for commercial purposes.</li></ul>""",
         },
         {
             "code": "open-models",
-            "label": "Open Models",
-            "explanation": "if this option is selected, the uploader allows their sounds to be used for training Gen AI models as long as these models are made open source* and freely available to the public. Note that selecting this option does not supersede the non-commercial clause of CC-BY-NC sounds, therefore model developers still need to exclude CC-BY-NC sounds if training a model in a commercial setting or if the model is to be used for commercial purposes.",
+            "label": "Open Models only",
+            "explanation": "Sounds can be used for training Gen AI models as long as the Creative Commons license terms summarised above are met, and as long as the <b>trained models are made <i>open source</i> and freely available to the public</b>. "
+            "Note that selecting this option does not supersede the non-commercial clause of CC-BY-NC sounds, therefore model developers still need to exclude CC-BY-NC sounds when training a model in a commercial setting or if the model is to be used for commercial purposes.",
         },
         {
             "code": "open-noncommercial-models",
-            "label": "Open Non-Commercial Models",
-            "explanation": "this option is similar to the previous one, but with an additional restriction of not allowing the use of sounds for models which are trained in a commercial setting or that are used for commercial purposes. Note that by using this option, sound uploaders can restrict the use of their sounds for training commercial Gen AI models even if the individual sound license does not have the non-commercial clause (i.e. for CC0 and CC-BY sounds).",
+            "label": "Open Non-Commercial Models only",
+            "explanation": "Sounds can be used for training Gen AI models as long as the Creative Commons license terms summarised above are met, and as long as the <b>trained models are made <i>open source</i>, freely available to the public, and not trained in a commercial setting nor used for commercial purposes</b>. "
+            "Note that by using this option, sound uploaders can restrict the use of their sounds for training commercial Gen AI models even if the individual sound licenses do not have the non-commercial clause (i.e. for CC0 and CC-BY sounds).",
         },
         {
             "code": "no-gen-ai",
             "label": "No generative AI",
-            "explanation": "My sounds are not used to train any AI models",
+            "explanation": "By selecting this option, sound uploaders expresses their preference that their uploaded sounds should not be used for training any type of generative AI models.",
         },
     ]
 
     AI_PREFERENCE_CHOICES = [(item["code"], item["label"]) for item in AI_PREFERENCE_CHOICES_AND_EXPLANATION]
-    DEFAULT_AI_PREFERENCE = "freesound-cc-recommendation"
+    DEFAULT_AI_PREFERENCE = "no-additional-restrictions"
     preference = models.CharField(choices=AI_PREFERENCE_CHOICES, default=DEFAULT_AI_PREFERENCE)
 
 

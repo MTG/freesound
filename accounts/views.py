@@ -467,27 +467,27 @@ def edit_email_settings(request):
 def edit_ai_preferences(request):
     profile = request.user.profile
 
-    form = AIPreferenceForm(request.POST or None)
-    # Save a couple of variables that we will need later to check if they have changed and we need
-    # to mark user sounds as index dirty or show some messages to the user
-    old_ai_preference = str(profile.get_ai_preference(default_if_not_set=False))
+    if request.method == "POST":
+        form = AIPreferenceForm(request.POST)
 
-    if form.is_valid():
-        # Update AI sound usage preference, only if field present in the form
-        if "ai_sound_usage_preference" in form.cleaned_data:
+        if form.is_valid():
+            # We get the existing preference so later we can compare if it has changed.
+            # Note that "default preference" is the same as "no preference", but we still want to
+            # save a "default preference" object so that we know if users have explicitly set it through the
+            # preferences panel. For this reason, here we don't want to get the default if the preference is not
+            # set, so that we can compare with the form value and properly create the object if needed.
+            old_ai_preference = str(profile.get_ai_preference(default_if_not_set=False))
             profile.set_ai_preference(form.cleaned_data["ai_sound_usage_preference"])
 
-        if old_ai_preference != profile.get_ai_preference(default_if_not_set=False):
-            Sound.objects.filter(user=request.user).update(is_index_dirty=True)
-        invalidate_user_template_caches(request.user.id)
+            # If preference has changed, mark all sounds as index dirty
+            if old_ai_preference != form.cleaned_data["ai_sound_usage_preference"]:
+                Sound.objects.filter(user=request.user).update(is_index_dirty=True)
 
-        msg_txt = "Your AI preference options have been updated correctly."
-        messages.add_message(request, messages.INFO, msg_txt)
-        return HttpResponseRedirect(reverse("accounts-ai-preferences"))
+            msg_txt = "Your Gen AI preference options have been updated correctly."
+            messages.add_message(request, messages.INFO, msg_txt)
+            return HttpResponseRedirect(reverse("accounts-ai-preferences"))
     else:
-        form = AIPreferenceForm(
-            initial={"ai_sound_usage_preference": profile.get_ai_preference(default_if_not_set=False)}
-        )
+        form = AIPreferenceForm(initial={"ai_sound_usage_preference": profile.get_ai_preference()})
 
     tvars = {"form": form, "activePage": "ai_preferences"}
     return render(request, "accounts/edit_ai_preferences.html", tvars)

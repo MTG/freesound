@@ -6,7 +6,7 @@
 {% if page_numbers|length > 1 %}
 
 <ul class="bw-pagination_container"{% if hx_target %} hx-boost="true" hx-target="{{ hx_target }}" hx-select="{{ hx_target }}" hx-swap="outerHTML"{% endif %}>
-    {% if page.has_previous %}
+    {% if url_prev_page %}
         <li>
             <a href="{{ url_prev_page }}{% if anchor %}#{{anchor}}{% endif %}" data-page="{{ prev_page_num }}" class="bw-link--white bw-pagination_circle bw-pagination_direction no-hover" title="Previous Page" aria-label="Previous Page">
                 {% bw_icon 'arrow-left' 'white' %}
@@ -31,10 +31,10 @@
 
     {% if show_last %}
         {% if not last_is_next %}<li class="text-grey no-paddings">...</li>{% endif %}
-        <li><a href="{{ url_last_page }}{% if anchor %}#{{anchor}}{% endif %}" data-page="{{ last_page_num }}" title="Last Page" aria-label="Last Page">{{ paginator.num_pages }}</a></li>
+        <li><a href="{{ url_last_page }}{% if anchor %}#{{anchor}}{% endif %}" data-page="{{ last_page_num }}" title="Last Page" aria-label="Last Page">{{ last_page_num }}</a></li>
     {% endif %}
 
-    {% if page.has_next %}
+    {% if url_next_page %}
         <li>
             <a href="{{ url_next_page }}{% if anchor %}#{{anchor}}{% endif %}" data-page="{{ next_page_num }}" class="bw-link--white bw-pagination_circle bw-pagination_direction no-hover" title="Next Page" aria-label="Next Page">
                 {% bw_icon 'arrow' %}

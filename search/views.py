@@ -29,10 +29,12 @@ from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, reverse
 from django_ratelimit.decorators import ratelimit
+from prometheus_client import Counter
 
 import forum
 import sounds
 from forum.models import Post
+from search.abuse import PaginationAbuseBlocked, is_over_hard_page_limit
 from utils.clustering_utilities import (
     cluster_data_is_fully_available,
     get_clustering_data_for_graph_display,
@@ -56,6 +58,13 @@ from utils.search.search_sounds import (
 )
 
 search_logger = logging.getLogger("search")
+
+# number of times we identified a suspicious ?page parameter in a search
+search_pagination_blocks_total = Counter(
+    "freesound_search_pagination_blocks_total",
+    "Search requests blocked by ?page query parameter anti-abuse",
+    ["reason", "enforced"],
+)
 
 
 def is_empty_query(request):
@@ -110,6 +119,24 @@ def search_view_helper(request):
     # the initial tagcloud in tags.views.tags view and no need to make any further query here
     if sqp.tags_mode_active() and not sqp.get_tags_in_filters():
         return {"sqp": sqp}  # sqp will be needed in tags.views.tags view
+
+    # Anti-abuse: reject pages beyond the hard limit before sending a request to solr
+    page = sqp.get_option_value_to_apply("page")
+    if is_over_hard_page_limit(page):
+        search_logger.info(
+            "Search pagination blocked (%s)"
+            % json.dumps(
+                {
+                    "ip": get_client_ip(request),
+                    "page": page,
+                    "query": sqp.get_option_value_to_apply("query"),
+                    "reason": "hard_cap",
+                    "enforced": True,
+                }
+            )
+        )
+        search_pagination_blocks_total.labels(reason="hard_cap", enforced="true").inc()
+        raise PaginationAbuseBlocked()
 
     # Run the query and post-process the results
     try:
@@ -234,6 +261,7 @@ def search_view_helper(request):
             "non_grouped_number_of_results": results.non_grouped_number_of_results,
             "show_beta_search_options": use_beta_features,
             "experimental_facets": settings.SEARCH_SOUNDS_BETA_FACETS,
+            "search_max_page_limit": settings.SEARCH_MAX_PAGE_HARD_LIMIT,
         }
 
     except SearchEngineTimeoutException as e:
@@ -268,7 +296,10 @@ def search_view_helper(request):
 
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
 def search(request):
-    tvars = search_view_helper(request)
+    try:
+        tvars = search_view_helper(request)
+    except PaginationAbuseBlocked:
+        return render(request, "429.html", status=429)
     return render(request, "search/search.html", tvars)
 
 

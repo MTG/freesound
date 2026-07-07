@@ -29,6 +29,10 @@ CACHES = {
     },
 }
 
+# django_ratelimit off in tests.
+# enable with @override_settings(RATELIMIT_ENABLE=True) if needed
+RATELIMIT_ENABLE = False
+
 from .logger import LOGGING
 
 LOGGING["handlers"]["stdout"]["class"] = "logging.NullHandler"

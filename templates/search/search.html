@@ -314,7 +314,7 @@
                             {% endif %}
                         </div>
                         <div class="v-spacing-6">
-                            {% bw_paginator page request "sound" non_grouped_number_of_results %}
+                            {% bw_paginator page request "sound" non_grouped_number_of_results max_pages=search_max_page_limit %}
                         </div>
                     {% endif %}
                 </main>

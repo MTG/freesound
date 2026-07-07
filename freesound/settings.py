@@ -299,6 +299,9 @@ FORUM_THREADS_PER_PAGE = 15
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15  # In search page
 SOUNDS_PER_PAGE_COMPACT_MODE = 30  # In search page
+# Reject search requests if the page number is higher than this. Set to None to disable.
+# only used in search/tag pages, not API
+SEARCH_MAX_PAGE_HARD_LIMIT = 100
 PACKS_PER_PAGE = 15  # In search page
 DOWNLOADED_SOUNDS_PACKS_PER_PAGE = 12
 USERS_PER_DOWNLOADS_MODAL_PAGE = 15

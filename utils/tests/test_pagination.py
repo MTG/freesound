@@ -222,3 +222,35 @@ class PaginationTest(TestCase):
         )
         paginator = paginate(dummy_request, Sound.objects.all(), 10)
         bw_paginator({}, paginator["page"], dummy_request)
+
+
+def _capped_context(num_pages, current_page, max_pages=None):
+    # a paginator_template_context that can adjust total number of pages and max allowed pages
+    page = Paginator(range(num_pages * 15), 15).page(current_page)
+    return build_paginator_template_context(page, base_path="/search/", base_query={"q": "wind"}, max_pages=max_pages)
+
+
+def test_pagination_hides_prev_next_at_limits():
+    assert _capped_context(num_pages=700, current_page=1)["url_prev_page"] is None
+    assert _capped_context(num_pages=700, current_page=700)["url_next_page"] is None
+
+
+def test_max_pages_caps_pagination():
+    # search results with 700 pages but we limit to 100
+    capped = _capped_context(num_pages=700, current_page=1, max_pages=100)
+    assert capped["last_page_num"] == 100
+    assert capped["url_last_page"] == "/search/?q=wind&page=100"
+
+    # Normal prev/next below the cap...
+    below = _capped_context(num_pages=700, current_page=50, max_pages=100)
+    assert below["url_prev_page"] == "/search/?q=wind&page=49"
+    assert below["url_next_page"] == "/search/?q=wind&page=51"
+
+    # but no next link once we reach the capped last page.
+    assert _capped_context(num_pages=700, current_page=100, max_pages=100)["url_next_page"] is None
+
+
+def test_current_page_beyond_max_pages_raises():
+    # Invalid situation (trying to paginate page 150 but we have a max of 100).
+    with pytest.raises(ValueError):
+        _capped_context(num_pages=700, current_page=150, max_pages=100)

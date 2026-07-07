@@ -20,7 +20,10 @@
 
 from unittest import mock
 
+import pytest
+from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
@@ -188,7 +191,8 @@ class SearchOutOfRangeTests(TestCase):
         paginator = PreSlicedCountProvidedPaginator(results.docs, 15, results.num_found)
         perform_search_engine_query.return_value = (results, paginator)
 
-        resp = self.client.get(reverse("sounds-search") + "?q=test&page=999")
+        # Out of range but within settings.SEARCH_MAX_PAGE_HARD_LIMIT
+        resp = self.client.get(reverse("sounds-search") + "?q=test&page=99")
 
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.context["beyond_last"])
@@ -296,3 +300,39 @@ class SearchResultClustering(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "search/clustering_results.html")
         self.assertEqual(resp.context["clusters_data"], None)
+
+
+@pytest.mark.django_db
+class TestSearchDeepPagination:
+    IP = {"HTTP_X_FORWARDED_FOR": "8.8.8.8"}
+
+    def test_hard_cap_blocks_page_over_limit_for_everyone(self, client):
+        # Max page limit applies to anonymous and signed in users. Both search page and tag search page
+        call_command("loaddata", "users")
+        search_url = reverse("sounds-search") + "?q=wind&page=300"
+        tag_url = reverse("tags") + '?f=tag:"field-recording"&page=300'
+
+        with mock.patch("search.views.perform_search_engine_query") as perform:
+            assert client.get(search_url, **self.IP).status_code == 429
+            assert client.get(tag_url, **self.IP).status_code == 429
+
+            client.force_login(User.objects.get(username="User1"))
+            assert client.get(search_url, **self.IP).status_code == 429
+
+            perform.assert_not_called()
+
+    def test_tags_cloud_ignores_page_param(self, client):
+        # base tag cloud page with no query shouldn't limit on large page (because it does no pagination).
+        cache.set("initial_tagcloud", [])
+        with mock.patch("search.views.perform_search_engine_query") as perform:
+            assert client.get(reverse("tags") + "?page=300", **self.IP).status_code == 200
+            perform.assert_not_called()
+
+    def test_hard_cap_disabled_when_setting_is_none(self, client, settings):
+        call_command("loaddata", "licenses", "users", "sounds_with_tags")
+        settings.SEARCH_MAX_PAGE_HARD_LIMIT = None
+        with mock.patch("search.views.perform_search_engine_query") as perform:
+            perform.return_value = create_fake_perform_search_engine_query_response(15)
+            resp = client.get(reverse("sounds-search") + "?q=wind&page=300", **self.IP)
+            assert resp.status_code == 200
+            perform.assert_called()

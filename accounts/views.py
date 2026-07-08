@@ -477,17 +477,29 @@ def edit_ai_preferences(request):
             # preferences panel. For this reason, here we don't want to get the default if the preference is not
             # set, so that we can compare with the form value and properly create the object if needed.
             old_ai_preference = str(profile.get_gen_ai_preference(default_if_not_set=False))
-            profile.set_gen_ai_preference(form.cleaned_data["ai_sound_usage_preference"])
+            old_ai_opt_out_speech = profile.get_gen_ai_preference_opt_out_speech()
+
+            profile.set_gen_ai_preference(
+                form.cleaned_data["ai_sound_usage_preference"], form.cleaned_data["opt_out_speech"]
+            )
 
             # If preference has changed, mark all sounds as index dirty
-            if old_ai_preference != form.cleaned_data["ai_sound_usage_preference"]:
+            if (
+                old_ai_preference != form.cleaned_data["ai_sound_usage_preference"]
+                or old_ai_opt_out_speech != form.cleaned_data["opt_out_speech"]
+            ):
                 Sound.objects.filter(user=request.user).update(is_index_dirty=True)
 
             msg_txt = "Your Gen AI preference options have been updated correctly."
             messages.add_message(request, messages.INFO, msg_txt)
             return HttpResponseRedirect(reverse("accounts-ai-preferences"))
     else:
-        form = AIPreferenceForm(initial={"ai_sound_usage_preference": profile.get_gen_ai_preference()})
+        form = AIPreferenceForm(
+            initial={
+                "ai_sound_usage_preference": profile.get_gen_ai_preference(),
+                "opt_out_speech": profile.get_gen_ai_preference_opt_out_speech(),
+            }
+        )
 
     tvars = {"form": form, "activePage": "ai_preferences"}
     return render(request, "accounts/edit_ai_preferences.html", tvars)

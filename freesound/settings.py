@@ -664,6 +664,16 @@ SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take long
 SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
 
 # -------------------------------------------------------------------------------
+# AI preferences panel
+AI_PREF_NO_ADDITIONAL_RESTRICTIONS = "no-additional-restrictions"
+AI_PREF_OPEN_MODELS = "open-models"
+AI_PREF_OPEN_NONCOMMERCIAL_MODELS = "open-noncommercial-models"
+AI_PREF_NO_GEN_AI = "no-gen-ai"
+DEFAULT_AI_PREFERENCE = AI_PREF_NO_ADDITIONAL_RESTRICTIONS
+DEFAULT_OPT_OUT_SPEECH = False
+AI_OPT_OUT_SPEECH_TAXONOMY_CODES = ["sp-s"]  # Solo-speech
+
+# -------------------------------------------------------------------------------
 # Tag recommendation client settings
 TAGRECOMMENDATION_ADDRESS = "tagrecommendation"
 TAGRECOMMENDATION_PORT = 5000

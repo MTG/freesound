@@ -496,11 +496,18 @@ class AIPreferenceForm(forms.Form):
         choices=AIPreference.AI_PREFERENCE_CHOICES,
         widget=forms.RadioSelect(),
     )
+    opt_out_speech = forms.BooleanField(
+        label=mark_safe(
+            "Do not allow sounds classified under the <a href='/help/broad-sound-taxonomy'>\"Speech &gt; Solo speech\" BST category </a> to be used for the purpose of training Gen AI models."
+        ),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["ai_sound_usage_preference"].widget.attrs["class"] = "bw-radio"
         self.ai_options_and_texts = AIPreference.AI_PREFERENCE_CHOICES_AND_EXPLANATION
+        self.fields["opt_out_speech"].widget.attrs["class"] = "bw-checkbox"
 
 
 class EmailResetForm(forms.Form):

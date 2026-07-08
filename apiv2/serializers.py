@@ -225,7 +225,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     gen_ai_preference = serializers.SerializerMethodField()
 
     def get_gen_ai_preference(self, obj):
-        return obj.user.profile.get_gen_ai_preference()
+        return obj.user.profile.get_gen_ai_preference(category_code=obj.category_code)
 
     category = serializers.SerializerMethodField()
 

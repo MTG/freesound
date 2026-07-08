@@ -445,7 +445,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             "packs",
             "num_posts",
             "num_comments",
-            "gen_ai_preference",
         )
 
     url = serializers.SerializerMethodField()
@@ -521,11 +520,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_num_comments(self, obj):
         return obj.comment_set.all().count()
-
-    gen_ai_preference = serializers.SerializerMethodField()
-
-    def get_gen_ai_preference(self, obj):
-        return obj.profile.get_gen_ai_preference()
 
 
 ##################

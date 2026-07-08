@@ -695,7 +695,7 @@ class Profile(models.Model):
         stats_from_db.update(stats_from_cache)
         return stats_from_db
 
-    def get_ai_preference(self, default_if_not_set=True):
+    def get_gen_ai_preference(self, default_if_not_set=True):
         try:
             return self.user.ai_preference.preference
         except AIPreference.DoesNotExist:
@@ -704,7 +704,7 @@ class Profile(models.Model):
                 return AIPreference.DEFAULT_AI_PREFERENCE
             return None
 
-    def set_ai_preference(self, preference_value):
+    def set_gen_ai_preference(self, preference_value):
         AIPreference.objects.update_or_create(user=self.user, defaults={"preference": preference_value})
 
     class Meta:
@@ -727,27 +727,25 @@ class AIPreference(models.Model):
         {
             "code": "no-additional-restrictions",
             "label": "No additional restrictions",
-            "explanation": """Sounds can be used for training Gen AI models without any additional restrictions to those already set by the corresponding Creative Commons license. Here is a summary of the Creative Commons terms applied to the use case of training AI models:
-            <ul><li>CC0 sounds can be used without restriction.</li>
-            <li>CC-BY sounds can be used as long as the training set of the AI model is disclosed.</li>
-            <li>CC-BY-NC sounds can be used as long as the training set of the AI model is disclosed and the model is not trained in a commercial setting or used for commercial purposes.</li></ul>""",
+            "explanation": """No additional statement, your sounds can be used for the purpose of training Gen AI models in accordance with the Creative Commons license terms. 
+            <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
         },
         {
             "code": "open-models",
             "label": "Open Models only",
-            "explanation": "Sounds can be used for training Gen AI models as long as the Creative Commons license terms summarised above are met, and as long as the <b>trained models are made <i>open source</i> and freely available to the public</b>. "
-            "Note that selecting this option does not supersede the non-commercial clause of CC-BY-NC sounds, therefore model developers still need to exclude CC-BY-NC sounds when training a model in a commercial setting or if the model is to be used for commercial purposes.",
+            "explanation": """Your sounds can be used for the purpose of training Gen AI models in accordance with the Creative Commons license terms and as long as the <b>trained models are made <i>open source</i> and freely available to the public</b>.
+            <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
         },
         {
             "code": "open-noncommercial-models",
             "label": "Open Non-Commercial Models only",
-            "explanation": "Sounds can be used for training Gen AI models as long as the Creative Commons license terms summarised above are met, and as long as the <b>trained models are made <i>open source</i>, freely available to the public, and not trained in a commercial setting nor used for commercial purposes</b>. "
-            "Note that by using this option, sound uploaders can restrict the use of their sounds for training commercial Gen AI models even if the individual sound licenses do not have the non-commercial clause (i.e. for CC0 and CC-BY sounds).",
+            "explanation": """Your sounds can be used for the purpose of training Gen AI models in accordance with the Creative Commons license terms and as long as the <b>trained models are made <i>open source</i>, freely available to the public, and not trained in a commercial setting nor used for commercial purposes</b>. 
+            <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
         },
         {
             "code": "no-gen-ai",
             "label": "No generative AI",
-            "explanation": "By selecting this option, sound uploaders expresses their preference that their uploaded sounds should not be used for training any type of generative AI models.",
+            "explanation": """Your sounds can not be used for the purpose of training Gen AI models. <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
         },
     ]
 

@@ -246,7 +246,7 @@
       "stored": false
     },
     {
-      "name": "ai_preference",
+      "name": "gen_ai_preference",
       "type": "string",
       "indexed": true,
       "stored": false

@@ -17,9 +17,9 @@
                 This section allows you to set your preferences regarding the <b>use of your uploaded sounds for the purpose of training generative Artificial Intelligence (Gen AI) models.</b>
             </p>
             <p>
-                Beyond the usage terms already defined by the specific <a href="{% url "wiki-page" "faq" %}#licenses">Creative Commons license associated with each of your sounds</a>, you can define 
-                <b>additional usage preferences for the specific case of training Gen AI models.</b>
-                These additional preferences <b>are applied to all your uploaded sounds</b>, and are independent of the individual sound licenses. Please, select one of the options below:
+                Sounds may be used for Gen AI training in accordance with your chosen <a href="{% url "wiki-page" "faq" %}#licenses">Creative Commons license terms</a>. 
+                You may choose to add a statement to express <b>additional usage terms for the specific case of training Gen AI models</b>, however there is no guarantee that these will have any legal effect.
+                Please, select one of the options below:
             </p>
             <div class="v-spacing-top-4">
                 {% if form.ai_sound_usage_preference.errors %}
@@ -43,13 +43,10 @@
                     {% endfor %}
                 </div>
             </div>
-            <p>
-                Note that when using the term <i>open source models</i>, we refer to the <a href="https://opensource.org/ai">definition of Open Source AI</a> by the <b>Open Source Initiative (OSI)</b>. In short, that means that for a model to be considered open source, it needs to be released under terms that grant the <b>freedom to use, study, modify and share the model</b>, including their code, model weights and training documentation.
-            </p>
-            <p>
-                For more information about this topic, including how these Gen AI preferences are applied, please read the 
-                <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models"><i>Usage of my sounds for training generative AI models</i> help section</a>.
-            </p>
+            <div>
+                For more details about Generative AI preferences, including the way in which such preferences are treated, please read the 
+                <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Usage of my sounds for training generative AI models</a> help section.
+            </div>
             <button class="btn-primary w-100 v-spacing-top-5">Update Gen AI preferences</button>
         </form>
 

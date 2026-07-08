@@ -331,7 +331,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
 
         # Index uploader AI preference
-        document["ai_preference"] = sound.user.profile.get_ai_preference()
+        document["gen_ai_preference"] = sound.user.profile.get_gen_ai_preference()
 
         # Index consolidated audio descriptors
         descriptors_to_index = {}

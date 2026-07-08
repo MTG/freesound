@@ -476,8 +476,8 @@ def edit_ai_preferences(request):
             # save a "default preference" object so that we know if users have explicitly set it through the
             # preferences panel. For this reason, here we don't want to get the default if the preference is not
             # set, so that we can compare with the form value and properly create the object if needed.
-            old_ai_preference = str(profile.get_ai_preference(default_if_not_set=False))
-            profile.set_ai_preference(form.cleaned_data["ai_sound_usage_preference"])
+            old_ai_preference = str(profile.get_gen_ai_preference(default_if_not_set=False))
+            profile.set_gen_ai_preference(form.cleaned_data["ai_sound_usage_preference"])
 
             # If preference has changed, mark all sounds as index dirty
             if old_ai_preference != form.cleaned_data["ai_sound_usage_preference"]:
@@ -487,7 +487,7 @@ def edit_ai_preferences(request):
             messages.add_message(request, messages.INFO, msg_txt)
             return HttpResponseRedirect(reverse("accounts-ai-preferences"))
     else:
-        form = AIPreferenceForm(initial={"ai_sound_usage_preference": profile.get_ai_preference()})
+        form = AIPreferenceForm(initial={"ai_sound_usage_preference": profile.get_gen_ai_preference()})
 
     tvars = {"form": form, "activePage": "ai_preferences"}
     return render(request, "accounts/edit_ai_preferences.html", tvars)
@@ -528,7 +528,7 @@ def edit(request):
                 request.user.refresh_from_db(fields=["username"])
             else:
                 profile.save()
-                # profile.refresh_from_db()  # Refresh profile to get updated ai preference when calling get_ai_preference
+                # profile.refresh_from_db()  # Refresh profile to get updated ai preference when calling get_gen_ai_preference
                 if old_username != request.user.username:
                     Sound.objects.filter(user=request.user).update(is_index_dirty=True)
                 invalidate_user_template_caches(request.user.id)

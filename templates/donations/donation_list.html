@@ -12,12 +12,12 @@
         {% for donation_m in donations %}
             <h3 class="text-red v-spacing-top-4">{{donation_m.grouper}}</h3>
             <div class="row v-spacing-top-4">
-            {% for donation in donation_m.list%}
+            {% for donation in donation_m.list %}
                 <div class="col-md-4 col-lg-2 v-spacing-2">
                     <div class="row middle">
                         <div class="col-md-3 col-1">
                             {% if donation.is_anonymous %}
-                                {% bw_user_avatar None "anonymous"  %}
+                                {% bw_user_avatar None "anonymous" %}
                             {% else %}
                                 {% if donation.user %}
                                     {% bw_user_avatar donation.user.profile.locations.avatar.XL.url donation.user.username %}

@@ -39,7 +39,7 @@
             {% else %}
                 <div id="collapsable-sound-info-{{ sound.id }}-{{ random_number }}" class="v-spacing-top-1 collapsable-block">
                     {% comment %}When showing information for moderation pages we put the full description and also the tags in a collapsable element{% endcomment %}
-                    {% for tag in sound.tag_array%}
+                    {% for tag in sound.tag_array %}
                         {% bw_tag tag %}
                     {% endfor %}
                     {% if sound.bst_category is not None %}
@@ -63,7 +63,7 @@
             {% endif %}
             {% endcache %}
         </div>
-        {% if is_explicit and player_size == 'moderation'%}
+        {% if is_explicit and player_size == 'moderation' %}
         <div class="v-spacing-top-1 v-spacing-3">
             <div class="text-grey">
                 {% bw_icon "notification" %} Marked as explicit

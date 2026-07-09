@@ -31,7 +31,7 @@
                                 <a href="{% url 'account' pack.user.username %}">{{ pack.user.username | truncate_string:15 }}</a>
                                 <p class="text-grey">{{ pack.created|date:"F jS, Y" }}</p>
                             </div>
-                            {% if pack.user != request.user  %}
+                            {% if pack.user != request.user %}
                                 <div class="h-spacing-left-3">
                                     {% if is_following %}
                                         <a class="no-hover btn-secondary" href="{% url 'unfollow-user' pack.user.username %}?next={{ next_path }}">Unfollow</a>

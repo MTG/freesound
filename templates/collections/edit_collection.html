@@ -46,7 +46,7 @@
                     {% if form.maintainers.errors %}
                         <div>{{form.maintainers.errors}}</div>
                     {% endif %}
-                {% users_selector form.collection_maintainers_objects%}
+                {% users_selector form.collection_maintainers_objects %}
                 <div class="between v-spacing-top-4">
                     <button type="button" class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{{ collection.add_maintainers_modal_url }}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">{% bw_icon 'plus' %}Add maintainers</button>
                     <button type="button" class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
@@ -91,11 +91,11 @@
                     <span class="helptext" style="display:none" ><i>{{form.added_sounds.help_text|safe}}</i></span>
                 </div>
             </div>
-            {% if is_owner or is_maintainer%}
+            {% if is_owner or is_maintainer %}
                 <button class="btn-primary w-100">Save collection</button>
             {% endif %}
         </form>
-        {% if is_owner%}
+        {% if is_owner %}
         <div class="v-spacing-top-3">
             <button class="btn-secondary w-100" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{{ collection.delete_url }}">Delete collection</button>
         </div>

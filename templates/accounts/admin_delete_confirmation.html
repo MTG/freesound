@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block content %}
-    {% for user_info in users_to_delete%}
+    {% for user_info in users_to_delete %}
         <p>The user "{{user_info.profile.user.username}}" will be
             {% if type == 'delete_preserve_sounds' %}
                 deleted but <b>the sounds will still be available</b>.
@@ -52,7 +52,7 @@
             {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}" />{% endif %}
             <input type="hidden" name="confirmation" value="1" />
             <input type="submit" value="{% trans "Yes, I'm sure" %}" />
-            {% for param, value in params  %}
+            {% for param, value in params %}
                 <input type="hidden" value="{{value}}" name='{{param}}'/>
             {% endfor %}
             <a href="#" onclick="window.history.back(); return false;" class="button cancel-link">{% trans "No, take me back" %}</a>

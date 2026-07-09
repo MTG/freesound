@@ -28,7 +28,7 @@
                 <div class="col-lg-3 v-spacing-top-2">
                     <div class="row middle">
                         <div class="col-2 col-lg-4">
-                            {% bw_user_avatar request.user.profile.locations.avatar.L.url request.user.username 75 %}
+                            {% bw_user_avatar request.user.profile.locations.avatar.L.url request.user.username size=75 %}
                         </div>
                         <div class="col-8">
                             <h6 class="text-16 no-margins"><a href="{% url 'account' request.user.username %}">{{ request.user.username }}</a></h6>

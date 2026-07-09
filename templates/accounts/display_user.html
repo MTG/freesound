@@ -4,7 +4,7 @@
 {% if size == 'comment' %}
     <div class="middle bw-sound-page__user v-spacing-top-1">
         <div class="h-spacing-1">
-            {% bw_user_avatar user.profile.locations.avatar.M.url user.username 40 %}
+            {% bw_user_avatar user.profile.locations.avatar.M.url user.username size=40 %}
         </div>
         <div class="h-spacing-left-1">
             <a href="{% url 'account' user.username %}">{{ user.username | truncate_string:15 }}</a>
@@ -14,7 +14,7 @@
 {% elif size == 'basic' %}
     <div class="row middle">
         <div class="col-1 col-sm-2">
-            {% bw_user_avatar user.profile.locations.avatar.M.url user.username 36 %}
+            {% bw_user_avatar user.profile.locations.avatar.M.url user.username size=36 %}
         </div>
         <div class="col-11 col-sm-10 padding-left-3">
             <div class="ellipsis">
@@ -29,7 +29,7 @@
 {% elif size == 'follow_lists' %}
     <div class="row bw-follows middle">
         <div class="col-1">
-            {% bw_user_avatar user.profile.locations.avatar.M.url user.username 50 %}
+            {% bw_user_avatar user.profile.locations.avatar.M.url user.username size=50 %}
         </div>
         <div class="col-8">
             <div class="padding-left-3">
@@ -51,7 +51,7 @@
 {% elif size == 'top_donor' %}
     <div class="middle center">
         <div class="h-spacing-2">
-            {% bw_user_avatar user.profile.locations.avatar.M.url user.username 36 %}
+            {% bw_user_avatar user.profile.locations.avatar.M.url user.username size=36 %}
         </div>
         <div class="text-left">
             <a href="{% url 'account' user.username %}">{{ user.username }}</a>

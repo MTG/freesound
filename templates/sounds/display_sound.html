@@ -134,7 +134,7 @@
                     <div class="row no-gutters">
                         <div class="col-12 col-lg-12 middle">
                             <div class="h-spacing-1">
-                                {% bw_user_avatar user_profile_locations.avatar.S.url sound.username 32 %}
+                                {% bw_user_avatar user_profile_locations.avatar.S.url sound.username size=32 %}
                             </div>
                             <a href="{% url 'account' sound.username %}">{{ sound.username | truncate_string:15 }}</a>
                             <div class="text-light-grey h-spacing-left-1 d-none d-lg-block no-text-wrap">{{ sound.created|date:"F jS, Y" }}</div>

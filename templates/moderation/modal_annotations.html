@@ -15,7 +15,7 @@
         <div class="col-lg-6 v-spacing-4">
             <div class="v-spacing-4 row middle">
                 <div class="col-2">
-                    {% bw_user_avatar user.profile.locations.avatar.M.url user.username 50 %}
+                    {% bw_user_avatar user.profile.locations.avatar.M.url user.username size=50 %}
                 </div>
                 <div class="col-8">
                     <a href="{% url 'account' user.username %}">{{ user.username }}</a>

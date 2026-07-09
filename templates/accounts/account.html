@@ -15,7 +15,7 @@
     <div class="container">
         <div class="row navbar-space-filler v-spacing-top-6 v-spacing-2 bw-profile__hero">
             <div>
-                {% bw_user_avatar user.profile.locations.avatar.XL.url user.username 100 %}
+                {% bw_user_avatar user.profile.locations.avatar.XL.url user.username size=100 %}
             </div>
             <div class="bw-profile__username v-spacing-top-2 {% if user.profile.is_anonymized_user %}v-spacing-3{% endif %}">
                 <h1>{{ user.username }}</h1>
@@ -207,7 +207,7 @@
                 <section class="v-spacing-top-4 v-spacing-4">
                     <h5 class="padding-bottom-3">Most used tags</h5>
                     {% for tag in tags|add_sizes:"count:0.1:1.0" %}
-                        {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
+                        {% bw_tag tag.name size=1 class_name='' url=tag.browse_url weight=tag.size %}
                     {% endfor %}
                 </section>
                 {% endif %}

@@ -92,7 +92,7 @@
 
                         <div class="middle bw-sound-page__user v-spacing-top-5">
                             <div class="h-spacing-1">
-                                {% bw_user_avatar sound.user.profile.locations.avatar.M.url sound.user.username 40 %}
+                                {% bw_user_avatar sound.user.profile.locations.avatar.M.url sound.user.username size=40 %}
                             </div>
                             <div class="h-spacing-left-1 ellipsis">
                                 <a href="{% url 'account' sound.user.username %}">{{ sound.user.username | truncate_string:15 }}</a>
@@ -151,7 +151,7 @@
                             </div>
                             <div class="v-spacing-top-3">
                                 {% for tag in sound.tags.all %}
-                                    {% bw_tag tag.name 1 "h-spacing-1" %}
+                                    {% bw_tag tag.name size=1 class_name="h-spacing-1" %}
                                 {% endfor %}
                             </div>
                             <div class="divider-light v-spacing-top-4"></div>
@@ -234,7 +234,7 @@
                                     {% endfor %}
 
                                     <div>
-                                        {% bw_paginator page request "comments" %}
+                                        {% bw_paginator page request anchor="comments" %}
                                     </div>
 
                                 {% else %}

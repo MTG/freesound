@@ -16,7 +16,7 @@
                     <div class="text-light-grey font-weight-normal text-20 v-spacing-3">Message from:</div>
                     <div class="row middle">
                         <div class="col-3 col-lg-4">
-                            {% bw_user_avatar message.user_from.profile.locations.avatar.L.url message.user_from.username 70 %}
+                            {% bw_user_avatar message.user_from.profile.locations.avatar.L.url message.user_from.username size=70 %}
                         </div>
                         <div class="col-8">
                             <h6 class="ellipsis"><a href="{% url "account" message.user_from.username %}">{{ message.user_from.username }}</a></h6>
@@ -28,7 +28,7 @@
                     <div class="text-light-grey font-weight-normal text-20 v-spacing-3">Message to:</div>
                     <div class="row middle">
                         <div class="col-3 col-lg-4">
-                            {% bw_user_avatar message.user_to.profile.locations.avatar.L.url message.user_to.username 70 %}
+                            {% bw_user_avatar message.user_to.profile.locations.avatar.L.url message.user_to.username size=70 %}
                         </div>
                         <div class="col-8">
                             <h6 class="ellipsis"><a href="{% url "account" message.user_to.username %}">{{ message.user_to.username }}</a></h6>

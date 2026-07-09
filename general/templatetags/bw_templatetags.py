@@ -42,7 +42,7 @@ def bw_icon(name, class_name=""):
 
 
 @register.inclusion_tag("atoms/tag.html")
-def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
+def bw_tag(tag_name, *, size=1, class_name="", url=None, weight=None):
     """
     Displays a BW tag with the given name
     """
@@ -66,7 +66,7 @@ def bw_tag(tag_name, size=1, class_name="", url=None, weight=None):
 
 
 @register.inclusion_tag("atoms/avatar.html")
-def bw_user_avatar(avatar_url, username, size=40, extra_class=""):
+def bw_user_avatar(avatar_url, username, *, size=40, extra_class=""):
     """
     Displays a BW user avatar or no avatar if user has none
     We check if user has custom avatar by checking if the given avatar URL contains the filename of the default
@@ -179,7 +179,7 @@ def bw_generic_stars(context, rating_0_10):
 
 
 @register.inclusion_tag("molecules/paginator.html", takes_context=True)
-def bw_paginator(context, page, request, anchor="", non_grouped_number_of_results=-1, max_pages=None):
+def bw_paginator(context, page, request, *, anchor="", non_grouped_number_of_results=-1, max_pages=None):
     """
     Adds pagination context variables for use in displaying first, adjacent and
     last page links in addition to those created by the object_list generic

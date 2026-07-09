@@ -95,7 +95,7 @@
                 {% if tags %}
                     <div class="right wrap">
                     {% for tag in tags|slice:":5" %}
-                        {% bw_tag tag.name 1 '' tag.browse_url %}
+                        {% bw_tag tag.name size=1 class_name='' url=tag.browse_url %}
                     {% endfor %}
                     </div>
                 {% endif %}
@@ -105,7 +105,7 @@
             <div class="">
                 <div class="middle text-grey h-spacing-1">
                     <div class="h-spacing-1">
-                        {% bw_user_avatar pack.user_profile_locations.avatar.S.url pack.user.username 32 %}
+                        {% bw_user_avatar pack.user_profile_locations.avatar.S.url pack.user.username size=32 %}
                     </div>
                     <a href="{% url 'account' pack.user %}">{{ pack.user | truncate_string:15 }}</a>
                     <span class="h-spacing-left-1 text-light-grey">{{ pack.created|date:"F jS, Y" }}</span>

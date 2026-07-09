@@ -64,6 +64,22 @@ that were made, and allow feedback if necessary
 
 ## Specific notes
 
+### Template tag optional arguments
+
+Optional arguments in template tags must always be keyword-only:
+
+```py
+@register.inclusion_tag("atoms/avatar.html")
+def bw_user_avatar(avatar_url, username, *, size=40, extra_class=""):
+```
+
+and templates need to specify the keywords in order to change the default:
+
+```html
+{% bw_user_avatar url username size=32 %}
+```
+
+
 ### Custom Django permissions
 
 If there is a need for defining custom permissions we should define them in the corresponding model's `Meta` class

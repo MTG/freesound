@@ -32,7 +32,7 @@
                         {% endif %}
                     </div>
                     <div>
-                        {% bw_paginator page request "" -1 %}
+                        {% bw_paginator page request %}
                     </div>
                     <div>
                         <a href="{% url 'sounds-search' %}?st={{ sound.id }}&ss={{ similarity_space }}" class="btn-primary">See more results...</a>

@@ -18,15 +18,16 @@
 #     See AUTHORS file.
 #
 
+import pytest
 from django.core.paginator import Paginator
-from django.template import Context, Template
+from django.template import Context, Template, TemplateSyntaxError
 from django.test import RequestFactory
 
 
 def _render(num_pages, current_page, max_pages_expr):
     page = Paginator(range(num_pages * 15), 15).page(current_page)
     request = RequestFactory().get("/search/?q=wind")
-    tpl = Template("{% load bw_templatetags %}{% bw_paginator page request 'sound' -1 " + max_pages_expr + " %}")
+    tpl = Template("{% load bw_templatetags %}{% bw_paginator page request anchor='sound' " + max_pages_expr + " %}")
     return tpl.render(Context({"page": page, "request": request}))
 
 
@@ -53,3 +54,33 @@ def test_next_arrow_hidden_at_capped_last_page():
 def test_next_arrow_shown_below_cap():
     html = _render(num_pages=700, current_page=50, max_pages_expr="max_pages=100")
     assert 'title="Next Page"' in html
+
+
+def test_paginator_rejects_positional_optional():
+    # Optionals are keyword-only (the `*` in the signature), so passing one positionally
+    # is a compile-time error rather than a silent rebind. bw_paginator has takes_context=True,
+    # exercising the most intricate parse_bits path.
+    with pytest.raises(TemplateSyntaxError):
+        Template("{% load bw_templatetags %}{% bw_paginator page request 'sound' %}")
+
+
+def test_user_avatar_accepts_keyword_optionals():
+    tpl = Template(
+        "{% load bw_templatetags %}"
+        '{% bw_user_avatar "https://example.com/a.png" "alice" size=64 extra_class="new-posts-notification" %}'
+    )
+    html = tpl.render(Context({}))
+    assert "width:64px" in html
+    assert "new-posts-notification" in html
+
+
+def test_tag_accepts_keyword_optionals():
+    tpl = Template(
+        "{% load bw_templatetags %}"
+        "{% bw_tag \"windy\" size=3 class_name='h-spacing-1' url='/browse/tags/windy/' weight=1.0 %}"
+    )
+    html = tpl.render(Context({}))
+    assert "windy" in html
+    assert "padding-3" in html
+    assert "h-spacing-1" in html
+    assert 'href="/browse/tags/windy/"' in html

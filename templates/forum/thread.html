@@ -54,6 +54,6 @@
         <a class="btn-primary no-hover" href="{% url "forums-reply" forum.name_slug thread.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Post reply</a>
     </div>
     <div class="v-spacing-top-4">
-        {% bw_paginator page request "thread" %}
+        {% bw_paginator page request anchor="thread" %}
     </div>
 {% endblock %}

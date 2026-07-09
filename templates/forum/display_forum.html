@@ -19,7 +19,7 @@
                 <p class="text-left"><a href="{% url "forums-post" forum.name_slug forum.last_post.thread.id forum.last_post.id %}">Latest reply</a> {{ forum.last_post.created|timesince }} ago</p>
             </div>
             <div class="col-md-2 text-center d-none d-md-block">
-                <div class="inline-block padding-bottom-1">{% bw_user_avatar forum.last_post.author.profile.locations.avatar.M.url forum.last_post.author.username 30 %}</div>
+                <div class="inline-block padding-bottom-1">{% bw_user_avatar forum.last_post.author.profile.locations.avatar.M.url forum.last_post.author.username size=30 %}</div>
                 <p class="ellipsis">by <a href="{% url "account" forum.last_post.author.username %}">{{ forum.last_post.author.username }}</a></p>
             </div>
         {% endif %}

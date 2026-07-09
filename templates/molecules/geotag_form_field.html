@@ -1,6 +1,6 @@
 {% load bw_templatetags %}
 <div class="text-light-grey v-spacing-top-2">Use this section to add geolocation information so your sound can be <b>placed on a map</b>.</div>
-<div class="geotag-field" {%if form.lat.value %}data-has-geotag="true"{% endif %}>
+<div class="geotag-field" {% if form.lat.value %}data-has-geotag="true"{% endif %}>
     <button class="show-geolocation-button btn-inverse v-spacing-top-2">{% bw_icon 'plus' %}Add geolocation</button>
     <div class="display-none geotag-field-wrapper row">
         <div class="padding-2 text-grey"><b>Note:</b> only add geolocation information if it is of relevance for the sound. For example, geolocation is relevant for <b>field recordings</b>, but probably not relevant for synthesized sounds.</div>

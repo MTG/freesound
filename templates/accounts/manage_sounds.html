@@ -22,7 +22,7 @@
             <a class="nav-link {% if tab == "processing" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'processing' %}">Processing{% if sounds_processing_count %} ({{ sounds_processing_count|bw_intcomma }}){% endif %}</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == "pending_description" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_description' %}">Pending description{% if sounds_pending_description_count|bw_intcomma%} ({{ sounds_pending_description_count }}){% endif %}</a>
+            <a class="nav-link {% if tab == "pending_description" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_description' %}">Pending description{% if sounds_pending_description_count|bw_intcomma %} ({{ sounds_pending_description_count }}){% endif %}</a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if tab == "packs" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'packs' %}">Packs{% if packs_count %} ({{ packs_count|bw_intcomma }}){% endif %}</a>
@@ -56,7 +56,7 @@
                 </form>
             </div>
             {% if tab == "packs" %}
-                {%  if packs_to_select %}
+                {% if packs_to_select %}
                     {% packs_selector_with_select_buttons packs_to_select %}
                     {% bw_paginator page request anchor="pack" %}
                 {% else %}

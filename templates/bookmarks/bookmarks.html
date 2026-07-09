@@ -27,7 +27,7 @@
                     </ul>
                 {% else %}
                     <div class="text-grey">
-                    {% if is_owner %}You haven't created any bookmark categories yet{% else %}<a href="{% url "account" user.username%}">{{user.username}}</a> hasn't created any bookmark categories yet{% endif %}
+                    {% if is_owner %}You haven't created any bookmark categories yet{% else %}<a href="{% url "account" user.username %}">{{user.username}}</a> hasn't created any bookmark categories yet{% endif %}
                     </div>
                 {% endif %}
                 </div>

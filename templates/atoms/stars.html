@@ -11,11 +11,11 @@
             <div class="bw-rating__star-no-editable" data-value="{{ i }}">
         {% endif %}
             {% if star_type == 'full' %}
-                {%  bw_icon 'star' fill_class %}
+                {% bw_icon 'star' fill_class %}
             {% elif star_type == 'half' %}
-                {%  bw_icon 'half-star' fill_class %}
+                {% bw_icon 'half-star' fill_class %}
             {% elif star_type == 'empty' %}
-                {%  bw_icon 'star' 'text-light-grey' %}
+                {% bw_icon 'star' 'text-light-grey' %}
             {% endif %}
         {% if allow_rating %}
             </label>

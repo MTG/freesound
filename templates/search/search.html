@@ -41,8 +41,8 @@
                             <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
                         </div>
                         <input type="hidden" name="f" value="{{ sqp.get_filter_string_for_url|urlencode }}"/>
-                        {% if not sqp.options.field_weights.is_default_value %} {% display_search_option "field_weights" "hidden" %}{% endif %}
-                        {% if not sqp.options.similar_to.is_default_value %} {% display_search_option "similar_to" "hidden" %}{% endif %}
+                        {% if not sqp.options.field_weights.is_default_value %} {% display_search_option "field_weights" widget="hidden" %}{% endif %}
+                        {% if not sqp.options.similar_to.is_default_value %} {% display_search_option "similar_to" widget="hidden" %}{% endif %}
                     </div>
                     {% if sqp.tags_mode_active %}
                         {% comment %}"sounds tagged as" label with follow/unfollow buttons{% endcomment %}

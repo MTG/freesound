@@ -97,7 +97,7 @@ def display_user_comment(context, user, comment_created):
 
 
 @register.inclusion_tag("accounts/display_user_selectable.html", takes_context=True)
-def display_user_small_selectable(context, user, selected=False):
+def display_user_small_selectable(context, user, *, selected=False):
     context = context.get("original_context", context)
     tvars = display_user(context, user, size="basic")
     tvars.update(

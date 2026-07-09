@@ -88,7 +88,7 @@
                             </div>
                         </div>
 
-                        <div class="middle v-spacing-top-2">{% bw_sound_stars sound False %}<span class="bw-rating__count text-grey h-spacing-left-1">{{ sound.get_ratings_count_text }}</span></div>
+                        <div class="middle v-spacing-top-2">{% bw_sound_stars sound allow_rating=False %}<span class="bw-rating__count text-grey h-spacing-left-1">{{ sound.get_ratings_count_text }}</span></div>
 
                         <div class="middle bw-sound-page__user v-spacing-top-5">
                             <div class="h-spacing-1">
@@ -220,7 +220,7 @@
                                             <div style="display: flex; justify-content: space-between;">
                                                 {% display_user_comment comment.user comment.created %}
                                                 <div class="text-right v-spacing-top-1">
-                                                    {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
+                                                    {% flag_user "SC" comment.user.username comment.id text="" user_sounds=comment.user.profile.num_sounds %}
                                                     {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
                                                         <a class="cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this comment?" data-modal-confirmation-url="{% url 'comment-delete' comment.id %}?next={{request.path}}&page={{current_page}}" title="Delete comment">{% bw_icon 'trash' %} Delete</a>
                                                     {% endif %}
@@ -279,7 +279,7 @@
                             <div class="v-spacing-top-5">
                                 <p class="text-center text-26 font-weight-bold">Your rating:</p>
                                 <div class="center text-20">
-                                    {% bw_sound_stars sound True True True %}
+                                    {% bw_sound_stars sound allow_rating=True use_request_user_rating=True show_added_rating_on_save=True %}
                                 </div>
                             </div>
                         {% endif %}

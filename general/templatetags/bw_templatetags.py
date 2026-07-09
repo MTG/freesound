@@ -91,7 +91,9 @@ def bw_user_avatar(avatar_url, username, *, size=40, extra_class=""):
 
 
 @register.inclusion_tag("atoms/stars.html", takes_context=True)
-def bw_sound_stars(context, sound, allow_rating=True, use_request_user_rating=False, show_added_rating_on_save=False):
+def bw_sound_stars(
+    context, sound, *, allow_rating=True, use_request_user_rating=False, show_added_rating_on_save=False
+):
     if isinstance(sound, dict):
         sound_user = sound["username"]
         sound_avg_rating = sound["avg_rating"]

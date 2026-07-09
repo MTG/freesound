@@ -44,7 +44,7 @@
                 <div>
                     {{ message.body.body|smileys|safe|linebreaks|strip_unnecessary_br }}
                 </div>
-                <div class="right">{% flag_user "PM" message.user_from.username message.id "" message.user_from.profile.num_sounds %}</div> 
+                <div class="right">{% flag_user "PM" message.user_from.username message.id text="" user_sounds=message.user_from.profile.num_sounds %}</div> 
             </div>
         </div>            
         <div class="col-12">

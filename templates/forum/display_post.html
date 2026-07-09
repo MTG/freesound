@@ -90,7 +90,7 @@
                     <div></div>
                 {% endif %}
                 <div class="text-right text-13 bw-post__report">
-                    {% flag_user "FP" post.author.username post.id "" post.author.profile.num_sounds %}
+                    {% flag_user "FP" post.author.username post.id text="" user_sounds=post.author.profile.num_sounds %}
                 </div>
             </div>
             {% endif %}

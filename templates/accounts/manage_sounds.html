@@ -93,7 +93,7 @@
                         <h5 class="v-spacing-3">Select the files you want to describe:</h5>
                         <div class="center v-spacing-2"><a id="select-all" class="bw-link--grey cursor-pointer">Select all</a><span class="h-spacing-left-1 h-spacing-1 text-grey">·</span><a id="select-none" class="bw-link--grey cursor-pointer select-button">Select None</a></div>
                         <div id="describe-file-checkboxes">
-                            {% show_file file_structure True %}
+                            {% show_file file_structure non_recursive=True %}
                         </div>
                     </div>
                 {% endif %}

@@ -158,7 +158,7 @@ def display_facet_beta(context, facet_name, facet_title=None):
 
 
 @register.inclusion_tag("search/search_option.html", takes_context=True)
-def display_search_option(context, option_name, widget=None):
+def display_search_option(context, option_name, *, widget=None):
     sqp = context["sqp"]
     option = sqp.options[option_name]
     if widget is None:

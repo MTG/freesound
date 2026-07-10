@@ -107,6 +107,22 @@ class Collection(LicenseSummaryMixin, models.Model):
         self.num_sounds = Sound.objects.sounds_for_collection(self.id).count()
         Collection.objects.filter(id=self.id).update(num_sounds=self.num_sounds)
 
+    def add_sound(self, sound, user, feature=False):
+        """Add `sound` to this collection (idempotent), optionally featuring it.
+
+        Returns True when featuring was requested but skipped because the collection already
+        holds settings.MAX_FEATURED_SOUNDS_PER_COLLECTION featured sounds (the sound is still
+        added in that case); returns False otherwise.
+        """
+        CollectionSound.objects.get_or_create(user=user, collection=self, sound=sound, defaults={"status": "OK"})
+        if not feature or sound.id in self.featured_sound_ids:
+            return False
+        if len(self.featured_sound_ids) >= settings.MAX_FEATURED_SOUNDS_PER_COLLECTION:
+            return True
+        self.featured_sound_ids = self.featured_sound_ids + [sound.id]
+        self.save(update_fields=["featured_sound_ids"])
+        return False
+
     def get_attribution(self, sound_qs=None):
         # If no queryset of sounds is provided, take it from the collection
         if sound_qs is None:

@@ -128,3 +128,24 @@
     }
   }
 }
+
+.modal-width-add-to-collection {
+  .modal-wrapper .modal-dialog {
+    max-width: 600px !important;
+  }
+}
+
+#addSoundToCollectionModal {
+  .middle .select-dropdown {
+    margin-bottom: 0;
+  }
+
+  .select-dropdown__button > span {
+    display: inline-block;
+    vertical-align: middle;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

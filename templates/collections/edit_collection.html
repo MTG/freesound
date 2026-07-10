@@ -48,7 +48,7 @@
                     {% endif %}
                 {% users_selector form.collection_maintainers_objects%}
                 <div class="between v-spacing-top-4">
-                    <button type="button" class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{{ collection.add_maintainers_modal_url }}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
+                    <button type="button" class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{{ collection.add_maintainers_modal_url }}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">{% bw_icon 'plus' %}Add maintainers</button>
                     <button type="button" class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
                 </div>
             </div>
@@ -62,7 +62,13 @@
                 {% endif %}
                     <div class="between middle no-gutters">
                         <div class="no-wrap">
-                            <label>Sounds in collection (<span id="element-count">0</span>) &mdash; <span id="featured-count">0</span> featured ({{ page_config.max_featured }} max)</label>
+                            <label>Sounds in collection (<span id="element-count">0</span>)</label>
+                            <span class="text-light-grey h-spacing-left-1"><span id="featured-count">0</span>/{{ page_config.max_featured }} featured</span>
+                        </div>
+                    </div>
+                    <div class="between middle no-gutters v-spacing-top-4">
+                        <div class="input-wrapper w-100" style="max-width: 250px;">
+                            <i class="bw-icon-search input-icon"></i><input id="edit-collection-search" type="search" placeholder="Search in collection..." role="searchbox" autocomplete="off" value="{{ current_search|default:'' }}">
                         </div>
                         <div class="no-wrap browse__search-overview-sorter" id="sort-container">
                             <label class="text-light-grey d-none d-md-inline">Sort by:</label>
@@ -71,11 +77,6 @@
                                     <option value="{{ key }}" {% if key == current_sort %}selected{% endif %}>{{ option.0 }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
-                    </div>
-                    <div class="v-spacing-top-4" style="max-width: 250px;">
-                        <div class="input-wrapper w-100">
-                            <i class="bw-icon-search input-icon"></i><input id="edit-collection-search" type="search" placeholder="Search in collection..." role="searchbox" autocomplete="off" value="{{ current_search|default:'' }}">
                         </div>
                     </div>
                 <div>{{form.added_sounds.errors}}</div>

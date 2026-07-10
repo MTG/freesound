@@ -671,11 +671,11 @@ SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/s
 
 # -------------------------------------------------------------------------------
 # AI preferences panel
-AI_PREF_NO_ADDITIONAL_RESTRICTIONS = "no-additional-restrictions"
-AI_PREF_OPEN_MODELS = "open-models"
-AI_PREF_OPEN_NONCOMMERCIAL_MODELS = "open-noncommercial-models"
+AI_PREF_NO_ADDITIONAL_PREFERENCES = "no-additional-preferences"
+AI_PREF_OPEN_MODELS = "open-source-models"
+AI_PREF_OPEN_NONCOMMERCIAL_MODELS = "noncommercial-open-source-models"
 AI_PREF_NO_GEN_AI = "no-gen-ai"
-DEFAULT_AI_PREFERENCE = AI_PREF_NO_ADDITIONAL_RESTRICTIONS
+DEFAULT_AI_PREFERENCE = AI_PREF_NO_ADDITIONAL_PREFERENCES
 DEFAULT_OPT_OUT_SPEECH = False
 AI_OPT_OUT_SPEECH_TAXONOMY_CODES = ["sp-s"]  # Solo-speech
 

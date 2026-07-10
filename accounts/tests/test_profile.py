@@ -224,7 +224,7 @@ class UserEditProfile(TestCase):
 
         # Now user edits preference in profile page
         self.client.force_login(user)
-        new_preference = "open-models"
+        new_preference = "open-source-models"
         resp = self.client.post(
             "/home/ai-preferences/",
             {
@@ -240,7 +240,7 @@ class UserEditProfile(TestCase):
         self.assertEqual(Sound.objects.filter(user=user, is_index_dirty=True).count(), len(sounds))
 
         # Now that there's an AI preference object already existing, try to change preference again and check that it works as expected
-        even_newer_preference = "no-additional-restrictions"
+        even_newer_preference = "no-additional-preferences"
         self.client.post(
             "/home/ai-preferences/",
             {

@@ -498,7 +498,7 @@ class AIPreferenceForm(forms.Form):
     )
     opt_out_speech = forms.BooleanField(
         label=mark_safe(
-            "Do not allow sounds classified under the <a href='/help/broad-sound-taxonomy'>\"Speech &gt; Solo speech\" BST category </a> to be used for the purpose of training Gen AI models."
+            "Express my preference that sounds classified under the <a href='/help/broad-sound-taxonomy'>\"Speech &gt; Solo speech\" BST category </a> not be used for the purpose of training Gen AI models."
         ),
         required=False,
     )

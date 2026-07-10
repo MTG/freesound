@@ -747,27 +747,27 @@ class AIPreference(models.Model):
 
     AI_PREFERENCE_CHOICES_AND_EXPLANATION = [
         {
-            "code": settings.AI_PREF_NO_ADDITIONAL_RESTRICTIONS,
-            "label": "No additional restrictions",
-            "explanation": """No additional statement, your sounds can be used for the purpose of training Gen AI models in accordance with the Creative Commons license terms. 
+            "code": settings.AI_PREF_NO_ADDITIONAL_PREFERENCES,
+            "label": "No additional preferences",
+            "explanation": """No additional statement, your sounds remain subject to the Creative Commons license terms selected for them. 
             <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
         },
         {
             "code": settings.AI_PREF_OPEN_MODELS,
-            "label": "Open Models only",
-            "explanation": """Your sounds can be used for the purpose of training Gen AI models in accordance with the Creative Commons license terms and as long as the <b>trained models are made <i>open source</i> and freely available to the public</b>.
+            "label": "Open Source Models only",
+            "explanation": """You express a preference for your sounds to be used for the purpose of training Gen AI models <b>only when the trained models are released as Open Source Models and made freely available to the public</b>.
             <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
         },
         {
             "code": settings.AI_PREF_OPEN_NONCOMMERCIAL_MODELS,
-            "label": "Open Non-Commercial Models only",
-            "explanation": """Your sounds can be used for the purpose of training Gen AI models in accordance with the Creative Commons license terms and as long as the <b>trained models are made <i>open source</i>, freely available to the public, and not trained in a commercial setting nor used for commercial purposes</b>. 
+            "label": "Non-Commercial Open Source Models only",
+            "explanation": """You express a preference for your sounds to be used for the purpose of training Gen AI models <b>only when the trained models are released as Open Source Models, made freely available to the public, and not trained in a commercial setting nor used for commercial purposes</b>. 
             <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
         },
         {
             "code": settings.AI_PREF_NO_GEN_AI,
             "label": "No generative AI",
-            "explanation": """Your sounds can not be used for the purpose of training Gen AI models. <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
+            "explanation": """You express a preference that your sounds not be used for the purpose of training Gen AI models. <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
         },
     ]
 

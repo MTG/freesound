@@ -328,7 +328,7 @@ def _get_clusters_data_helper(sqp):
 
 def clusters_section(request):
     sqp = search_query_processor.SearchQueryProcessor(request)
-    clusters_data = _get_clusters_data_helper(sqp)
+    clusters_data = None if sqp.errors else _get_clusters_data_helper(sqp)
     if clusters_data is None:
         return render(request, "search/clustering_results.html", {"clusters_data": None})
     return render(request, "search/clustering_results.html", {"sqp": sqp, "clusters_data": clusters_data})
@@ -339,9 +339,13 @@ def clustered_graph(request):
     # TODO: this view is currently not used in the new UI, but we could add a modal in the
     # clustering section to show results in a graph.
     sqp = search_query_processor.SearchQueryProcessor(request)
+    if sqp.errors:
+        return JsonResponse(json.dumps({"error": True}), safe=False)
+
     results = get_clusters_for_query(sqp)
     if results is None:
-        JsonResponse(json.dumps({"error": True}), safe=False)
+        return JsonResponse(json.dumps({"error": True}), safe=False)
+
     graph = get_clustering_data_for_graph_display(sqp, results["graph"])
     return JsonResponse(json.dumps(graph), safe=False)
 

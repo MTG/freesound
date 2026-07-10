@@ -301,6 +301,21 @@ class SearchResultClustering(TestCase):
         self.assertTemplateUsed(resp, "search/clustering_results.html")
         self.assertEqual(resp.context["clusters_data"], None)
 
+    def test_clusters_section_invalid_filter_returns_no_clusters(self):
+        # A corrupted/invalid filter sets sqp.errors, which must short-circuit
+        # and not send a request to solr and return an empty page.
+        resp = self.client.get(reverse("clusters-section") + "?f=samplerate%3Aabc")
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "search/clustering_results.html")
+        self.assertEqual(resp.context["clusters_data"], None)
+
+    def test_clustered_graph_invalid_filter_returns_error(self):
+        # A corrupted/invalid filter sets sqp.errors, which must short-circuit
+        # and not send a request to solr and return an empty response.
+        resp = self.client.get(reverse("clustered-graph-json") + "?f=samplerate%3Aabc")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(b"error", resp.content)
+
 
 @pytest.mark.django_db
 class TestSearchDeepPagination:

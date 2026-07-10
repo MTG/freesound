@@ -316,6 +316,14 @@ class SearchResultClustering(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn(b"error", resp.content)
 
+    @mock.patch("search.views.get_clusters_for_query")
+    def test_clustered_graph_clustering_timeout_returns_error(self, get_clusters_for_query):
+        # On clustering timeout/failure get_clusters_for_query returns {"clusters": None}
+        get_clusters_for_query.return_value = {"clusters": None}
+        resp = self.client.get(reverse("clustered-graph-json"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(b"error", resp.content)
+
 
 @pytest.mark.django_db
 class TestSearchDeepPagination:

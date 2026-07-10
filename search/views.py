@@ -343,7 +343,7 @@ def clustered_graph(request):
         return JsonResponse(json.dumps({"error": True}), safe=False)
 
     results = get_clusters_for_query(sqp)
-    if results is None:
+    if results is None or results.get("clusters") is None:
         return JsonResponse(json.dumps({"error": True}), safe=False)
 
     graph = get_clustering_data_for_graph_display(sqp, results["graph"])

@@ -110,3 +110,10 @@ class GeoTagsTests(TestCase):
         resp = self.client.get(reverse("geotags-query") + "?q=barcelona")
         check_values = {"query_description": '"barcelona"'}
         self.check_context(resp.context, check_values)
+
+    def test_geotags_for_query_barray_invalid_filter_returns_empty(self):
+        # A corrupted/invalid filter sets sqp.errors, which must short-circuit before
+        # Solr; the endpoint returns an empty bytearray rather than crashing.
+        resp = self.client.get(reverse("geotags-for-query-barray") + "?f=samplerate%3Aabc")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.content), 0)

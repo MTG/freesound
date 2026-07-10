@@ -169,12 +169,16 @@ def geotags_for_query_barray(request):
     else:
         # Otherwise, perform a search query to get the results
         sqp = SearchQueryProcessor(request)
-        query_params = sqp.as_query_params()
-        if "facets" in query_params:
-            # No need to compute facets for bytearray query
-            del query_params["facets"]
-        results, _ = perform_search_engine_query(query_params)
-        results_docs = results.docs
+        if sqp.errors:
+            # invalid filter: don't search on solr
+            results_docs = []
+        else:
+            query_params = sqp.as_query_params()
+            if "facets" in query_params:
+                # No need to compute facets for bytearray query
+                del query_params["facets"]
+            results, _ = perform_search_engine_query(query_params)
+            results_docs = results.docs
 
     if results_docs is None:
         results_docs = []

@@ -22,12 +22,12 @@
 import json
 import urllib.parse
 
+import luqum.exceptions
 import luqum.tree
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.http import urlencode
-from luqum.parser import parser
 from luqum.pretty import prettify
 
 from sounds.models import Sound
@@ -36,6 +36,7 @@ from textencoder.client import TextEncoder
 from utils.clustering_utilities import get_clusters_for_query, get_ids_in_cluster
 from utils.encryption import create_hash
 from utils.search import SearchEngineException
+from utils.search.filter_validation import parse_filter, validate_filter_types
 from utils.search.search_sounds import allow_beta_search_features
 
 from .search_query_processor_options import (
@@ -66,6 +67,9 @@ class SearchQueryProcessor:
     """The SearchQueryProcessor class is used to parse and process search query information from a request object and
     compute a number of useful items for displaying search information in templates, constructing search URLs, and
     preparing search options to be passed to the backend search engine.
+
+    You must check `self.errors` after constructing this object. If it's not empty then it's not guaranteed
+    to be completely initialised.
     """
 
     request = None
@@ -337,14 +341,10 @@ class SearchQueryProcessor:
             self.options[option_name] = option
 
         # Get filter and parse it. Make sure it is iterable (even if it only has one element)
-        self.f = urllib.parse.unquote(request.GET.get("f", "")).strip().lstrip()
+        self.f = urllib.parse.unquote(request.GET.get("f", "")).strip()
         if self.f:
             try:
-                f_parsed = parser.parse(self.f)
-                if type(f_parsed) == luqum.tree.SearchField:
-                    self.f_parsed = [f_parsed]
-                else:
-                    self.f_parsed = f_parsed.children
+                self.f_parsed = parse_filter(self.f)
             except luqum.exceptions.ParseError as e:
                 self.errors = f"Filter parsing error: {e}"
                 self.f_parsed = []
@@ -363,6 +363,14 @@ class SearchQueryProcessor:
                 except ValidationError:
                     self.errors = f"Filter parsing error: invalid tag value '{tag_value}'"
                     return
+
+        # Validate that values on filter fields are the correct type. Catches issues where incorrectly formatted
+        # queries cause a solr exception (e.g. `samplerate:22050+tag:"x"` parses as "22050+tag" instead of 22050)
+        if not self.errors:
+            type_error = validate_filter_types(self.f_parsed)
+            if type_error is not None:
+                self.errors = type_error
+                return
 
         # Remove duplicate filters if any
         nodes_in_filter = []
@@ -686,7 +694,12 @@ class SearchQueryProcessor:
 
         Returns:
             dict: Dictionary with the query parameters to be used by the SearchEngine.search_sounds method.
+
+        Raises:
+            SearchEngineException: if self.errors is set (see class docstring).
         """
+        if self.errors:
+            raise SearchEngineException(f"Cannot build query params, filter has errors: {self.errors}")
 
         # Filter field weights by "search in" options
         field_weights = self.get_option_value_to_apply("field_weights")

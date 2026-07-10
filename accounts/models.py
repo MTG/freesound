@@ -755,13 +755,13 @@ class AIPreference(models.Model):
         {
             "code": settings.AI_PREF_OPEN_MODELS,
             "label": "Open Source Models only",
-            "explanation": """You express a preference for your sounds to be used for the purpose of training Gen AI models <b>only when the trained models are released as Open Source Models and made freely available to the public</b>.
+            "explanation": """In addition to the Creative Commons license terms, you express a preference for your sounds to be used for the purpose of training Gen AI models <b>only when the trained models are released as Open Source Models and made freely available to the public</b>.
             <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
         },
         {
             "code": settings.AI_PREF_OPEN_NONCOMMERCIAL_MODELS,
             "label": "Non-Commercial Open Source Models only",
-            "explanation": """You express a preference for your sounds to be used for the purpose of training Gen AI models <b>only when the trained models are released as Open Source Models, made freely available to the public, and not trained in a commercial setting nor used for commercial purposes</b>. 
+            "explanation": """In addition to the Creative Commons license terms, you express a preference for your sounds to be used for the purpose of training Gen AI models <b>only when the trained models are released as Open Source Models, made freely available to the public, and not trained in a commercial setting nor used for commercial purposes</b>. 
             <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
         },
         {

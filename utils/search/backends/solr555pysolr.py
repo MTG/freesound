@@ -330,9 +330,6 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["spectral_path_l"] = locations["display"]["spectral"]["L"]["path"]
         document["preview_path"] = locations["preview"]["LQ"]["mp3"]["path"]
 
-        # Index uploader AI preference
-        document["ai_preference"] = sound.user.profile.get_ai_preference()
-
         # Index consolidated audio descriptors
         descriptors_to_index = {}
         descriptors_data = sound.get_consolidated_analysis_data()
@@ -380,6 +377,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 document[
                     f"{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}"
                 ] = user_provided_subcategory
+
+        # Index uploader AI preference
+        document["gen_ai_preference"] = sound.get_gen_ai_preference()
 
         # Finally add the sound ID and content type
         document.update({"id": sound.id, "content_type": SOLR_DOC_CONTENT_TYPES["sound"]})

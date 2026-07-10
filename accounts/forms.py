@@ -361,29 +361,12 @@ class ProfileForm(forms.ModelForm):
         required=False,
         widget=forms.CheckboxInput(attrs={"class": "bw-checkbox"}),
     )
-    ai_sound_usage_preference = forms.ChoiceField(
-        label=mark_safe(
-            '<div class="v-spacing-1 text-grey" id="ai-section">I agree with my sounds being used to train generative AI models provided that:</div>'
-        ),
-        choices=AIPreference.AI_PREFERENCE_CHOICES,
-        required=False,
-        help_text=mark_safe(
-            '<div class="v-spacing-top-3 text-light-grey">Use the setting above to express a '
-            "preference regarding the usage of your sounds for training generative Artificial Intelligence models. "
-            'This preference <b>applies to all your uploaded sounds</b>. Please, read the <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">'
-            "<i>Usage of my sounds for "
-            "training generative AI models</i> help section</a> to learn more about the details and implications of the available options.</div> "
-        ),
-    )
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
         initial_kwargs = {
             "username": request.user.username,
         }
-        ai_preference = request.user.profile.get_ai_preference()
-        if ai_preference:
-            initial_kwargs["ai_sound_usage_preference"] = ai_preference
         kwargs.update(initial=initial_kwargs)
         kwargs.update(dict(label_suffix=""))
         super().__init__(*args, **kwargs)
@@ -505,6 +488,26 @@ class ProfileForm(forms.ModelForm):
     def get_img_check_fields(self):
         """Returns fields that should show JS notification for unsafe `img` sources links (http://)"""
         return [self["about"], self["signature"], self["sound_signature"]]
+
+
+class AIPreferenceForm(forms.Form):
+    ai_sound_usage_preference = forms.ChoiceField(
+        label="",
+        choices=AIPreference.AI_PREFERENCE_CHOICES,
+        widget=forms.RadioSelect(),
+    )
+    opt_out_speech = forms.BooleanField(
+        label=mark_safe(
+            "Express my preference that sounds classified under the <a href='/help/broad-sound-taxonomy'>\"Speech &gt; Solo speech\" BST category </a> not be used for the purpose of training Gen AI models."
+        ),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["ai_sound_usage_preference"].widget.attrs["class"] = "bw-radio"
+        self.ai_options_and_texts = AIPreference.AI_PREFERENCE_CHOICES_AND_EXPLANATION
+        self.fields["opt_out_speech"].widget.attrs["class"] = "bw-checkbox"
 
 
 class EmailResetForm(forms.Form):

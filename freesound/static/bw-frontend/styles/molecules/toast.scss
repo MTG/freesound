@@ -3,6 +3,8 @@
   z-index: 99999;
   display: none;
   position: fixed;
+  opacity: 0;
+  transform: translateY(20px);
   padding: 14px 14px;
   width: 100%;
   @include md-and-above {
@@ -28,5 +30,47 @@
   ul {
     margin: 0;
     padding: 0;
+  }
+}
+
+.toast.toast--visible {
+  animation: toast-slide-up 260ms ease-out forwards;
+}
+
+.toast.toast--hiding {
+  animation: toast-slide-down 260ms ease-in forwards;
+}
+
+@keyframes toast-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-slide-down {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .toast.toast--visible,
+  .toast.toast--hiding {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }

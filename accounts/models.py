@@ -695,17 +695,39 @@ class Profile(models.Model):
         stats_from_db.update(stats_from_cache)
         return stats_from_db
 
-    def get_ai_preference(self, default_if_not_set=True):
+    def get_gen_ai_preference(self, default_if_not_set=True, category_code=None):
+        """
+        Returns the user's generative AI preference.
+        If no preference is set, returns the default preference if default_if_not_set is True, otherwise None.
+        If "category_code" argument is specified, this method will consider if there should be any preference overrides
+        because of that.
+        """
         try:
-            return self.user.ai_preference.preference
+            preference_object = self.user.ai_preference
+            if (
+                category_code is not None
+                and preference_object.opt_out_speech is True
+                and category_code in settings.AI_OPT_OUT_SPEECH_TAXONOMY_CODES
+            ):
+                return settings.AI_PREF_NO_GEN_AI
+            return preference_object.preference
         except AIPreference.DoesNotExist:
             # If no preference is set, return the default one
             if default_if_not_set:
-                return AIPreference.DEFAULT_AI_PREFERENCE
+                return settings.DEFAULT_AI_PREFERENCE
             return None
 
-    def set_ai_preference(self, preference_value):
-        AIPreference.objects.update_or_create(user=self.user, defaults={"preference": preference_value})
+    def set_gen_ai_preference(self, preference_value, opt_out_speech):
+        preference, _ = AIPreference.objects.update_or_create(user=self.user, defaults={"preference": preference_value})
+        if opt_out_speech != preference.opt_out_speech:
+            preference.opt_out_speech = opt_out_speech
+            preference.save()
+
+    def get_gen_ai_preference_opt_out_speech(self):
+        try:
+            return self.user.ai_preference.opt_out_speech
+        except AIPreference.DoesNotExist:
+            return settings.DEFAULT_OPT_OUT_SPEECH
 
     class Meta:
         ordering = ("-user__date_joined",)
@@ -722,19 +744,36 @@ class GdprAcceptance(models.Model):
 class AIPreference(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="ai_preference")
     date_updated = models.DateTimeField(auto_now=True)
-    AI_PREFERENCE_CHOICES = (
-        (
-            "freesound-cc-recommendation",
-            "My sounds are used following Freesound's recommendations for interpreting Creative Commons licenses in a generative AI training context",
-        ),
-        ("open-models", "My sounds are used to train open source models that are freely available to the public"),
-        (
-            "open-noncommercial-models",
-            "My sounds are used to train open source models that are freely available to the public and that do not allow a commercial use",
-        ),
-    )
-    DEFAULT_AI_PREFERENCE = "freesound-cc-recommendation"
-    preference = models.CharField(choices=AI_PREFERENCE_CHOICES, default=DEFAULT_AI_PREFERENCE)
+
+    AI_PREFERENCE_CHOICES_AND_EXPLANATION = [
+        {
+            "code": settings.AI_PREF_NO_ADDITIONAL_PREFERENCES,
+            "label": "No additional preferences",
+            "explanation": """No additional statement, your sounds remain subject to the Creative Commons license terms selected for them. 
+            <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
+        },
+        {
+            "code": settings.AI_PREF_OPEN_MODELS,
+            "label": "Open Source Models only",
+            "explanation": """You express a preference for your sounds to be used for the purpose of training Gen AI models <b>only when the trained models are released as Open Source Models and made freely available to the public</b>.
+            <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
+        },
+        {
+            "code": settings.AI_PREF_OPEN_NONCOMMERCIAL_MODELS,
+            "label": "Non-Commercial Open Source Models only",
+            "explanation": """You express a preference for your sounds to be used for the purpose of training Gen AI models <b>only when the trained models are released as Open Source Models, made freely available to the public, and not trained in a commercial setting nor used for commercial purposes</b>. 
+            <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
+        },
+        {
+            "code": settings.AI_PREF_NO_GEN_AI,
+            "label": "No generative AI",
+            "explanation": """You express a preference that your sounds not be used for the purpose of training Gen AI models. <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
+        },
+    ]
+
+    AI_PREFERENCE_CHOICES = [(item["code"], item["label"]) for item in AI_PREFERENCE_CHOICES_AND_EXPLANATION]
+    preference = models.CharField(choices=AI_PREFERENCE_CHOICES, default=settings.DEFAULT_AI_PREFERENCE)
+    opt_out_speech = models.BooleanField(default=settings.DEFAULT_OPT_OUT_SPEECH)
 
 
 class UserFlag(models.Model):

@@ -1770,6 +1770,9 @@ class Sound(models.Model):
         else:
             return None
 
+    def get_gen_ai_preference(self):
+        return self.user.profile.get_gen_ai_preference(category_code=self.category_code)
+
     def estimate_bpm_from_metadata(self, min_bpm=25, max_bpm=300):
         """
         Estimate the bpm of a sound by looking at its description, tags and name.

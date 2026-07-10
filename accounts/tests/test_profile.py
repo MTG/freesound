@@ -36,7 +36,7 @@ from django.utils.http import int_to_base36
 
 import accounts.models
 from accounts.management.commands.process_email_bounces import decode_idna_email, process_message
-from accounts.models import AIPreference, EmailBounce, EmailPreferenceType, UserEmailSetting
+from accounts.models import EmailBounce, EmailPreferenceType, UserEmailSetting
 from accounts.views import handle_uploaded_image
 from forum.models import Forum, Post, Thread
 from geotags.models import GeoTag
@@ -216,46 +216,41 @@ class UserEditProfile(TestCase):
         user.profile.save()
 
         # Check that user does not start with any preference set
-        self.assertEqual(user.profile.get_ai_preference(default_if_not_set=False), None)
+        self.assertEqual(user.profile.get_gen_ai_preference(default_if_not_set=False), None)
+        self.assertEqual(user.profile.get_gen_ai_preference_opt_out_speech(), settings.DEFAULT_OPT_OUT_SPEECH)
 
-        # Check that "get_ai_preference" returns the default one when no preference is set and default_if_not_set is True (default)
-        self.assertEqual(user.profile.get_ai_preference(), AIPreference.DEFAULT_AI_PREFERENCE)
+        # Check that "get_gen_ai_preference" returns the default one when no preference is set and default_if_not_set is True (default)
+        self.assertEqual(user.profile.get_gen_ai_preference(), settings.DEFAULT_AI_PREFERENCE)
 
         # Now user edits preference in profile page
         self.client.force_login(user)
-        new_preference = "open-models"
-        self.client.post(
-            "/home/edit/",
+        new_preference = "open-source-models"
+        resp = self.client.post(
+            "/home/ai-preferences/",
             {
-                "profile-home_page": "http://www.example.com/",
-                "profile-username": "testuser",
-                "profile-about": "About test text",
-                "profile-signature": "Signature test text",
-                "profile-ui_theme_preference": "d",
-                "profile-ai_sound_usage_preference": new_preference,
+                "ai_sound_usage_preference": new_preference,
+                "opt_out_speech": True,
             },
         )
 
         # Check that new preference is set and that sounds were marked as dirty
         user = User.objects.select_related("profile").get(username="testuser")
-        self.assertEqual(user.profile.get_ai_preference(), new_preference)
+        self.assertEqual(user.profile.get_gen_ai_preference(), new_preference)
+        self.assertEqual(user.profile.get_gen_ai_preference_opt_out_speech(), True)
         self.assertEqual(Sound.objects.filter(user=user, is_index_dirty=True).count(), len(sounds))
 
         # Now that there's an AI preference object already existing, try to change preference again and check that it works as expected
-        even_newer_preference = "freesound-cc-recommendation"
+        even_newer_preference = "no-additional-preferences"
         self.client.post(
-            "/home/edit/",
+            "/home/ai-preferences/",
             {
-                "profile-home_page": "http://www.example.com/",
-                "profile-username": "testuser",
-                "profile-about": "About test text",
-                "profile-signature": "Signature test text",
-                "profile-ui_theme_preference": "d",
-                "profile-ai_sound_usage_preference": even_newer_preference,
+                "ai_sound_usage_preference": even_newer_preference,
+                "opt_out_speech": False,
             },
         )
         user = User.objects.select_related("profile").get(username="testuser")
-        self.assertEqual(user.profile.get_ai_preference(), even_newer_preference)
+        self.assertEqual(user.profile.get_gen_ai_preference(), even_newer_preference)
+        self.assertEqual(user.profile.get_gen_ai_preference_opt_out_speech(), False)
 
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")

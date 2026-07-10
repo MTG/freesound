@@ -106,7 +106,7 @@ class SearchQueryProcessor:
                 query_param_name="page",
                 value_default=1,
                 get_value_to_apply=lambda option: (
-                    1 if option.sqp.get_option_value_to_apply("map_mode") else option.value
+                    1 if option.sqp.get_option_value_to_apply("map_mode") else max(1, option.value)
                 ),
             ),
         ),

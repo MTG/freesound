@@ -249,6 +249,7 @@ class UserRegistrationAndActivation(TestCase):
 
     @mock.patch("django_recaptcha.fields.ReCaptchaField.validate")
     @freeze_time("2026-01-01 12:00:00")
+    @override_settings(RATELIMIT_ENABLE=True)
     def test_registration_rate_limit(self, magic_mock_function):
         # LocMemCache state persists across tests in the same process — explicitly
         # clear so this test isn't affected by any rate-limit counter set earlier.

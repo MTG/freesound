@@ -11,46 +11,48 @@ import {
 } from './objectSelector';
 import { combineIdsLists, serializedIdListToIntList } from '../utils/data';
 
-const toggleNewCollectionNameDiv = (select, newCollectionNameDiv) => {
-  if (select.value == '0') {
-    // No category is selected, show the new category name input
-    newCollectionNameDiv.classList.remove('display-none');
-  } else {
-    newCollectionNameDiv.classList.add('display-none');
-  }
-};
-
 const initCollectionFormModal = () => {
-  // Modify the form structure to add a "Category" label inline with the select dropdown
   const modalContainer = document.getElementById('addSoundToCollectionModal');
   // To display the selector in case of an error in form, the following function is needed, despite it being called in
   // handleGenericModal.
   initializeStuffInContainer(modalContainer, false, false);
   const selectElement = modalContainer.getElementsByTagName('select')[0];
-  const wrapper = document.createElement('div');
-  wrapper.style = 'display:inline-block;';
   if (selectElement === undefined) {
     // If no select element, the modal has probably loaded for an unauthenticated user
     return;
   }
-  selectElement.parentNode.insertBefore(
-    wrapper,
-    selectElement.parentNode.firstChild
-  );
-  const label = document.createElement('div');
-  label.innerHTML = 'Select a collection:';
-  label.classList.add('text-grey');
-  wrapper.appendChild(label);
-  wrapper.appendChild(selectElement);
 
-  const categorySelectElement = document.getElementById('id_collection');
-  const newCategoryNameElement = document.getElementById(
-    'id_new_collection_name'
+  // "Create and add to a new collection" link opens the create collection modal, passing the sound id so
+  // the sound is added to the collection right after it is created.
+  const createNewCollectionLink = document.getElementById(
+    'createNewCollectionLink'
   );
-  toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
-  categorySelectElement.addEventListener('change', event => {
-    toggleNewCollectionNameDiv(categorySelectElement, newCategoryNameElement);
-  });
+  if (createNewCollectionLink !== null) {
+    createNewCollectionLink.addEventListener('click', evt => {
+      evt.preventDefault();
+      // Carry over the "mark as featured" state so the new collection features the sound too
+      const featuredCheckbox = document.getElementById('id_mark_as_featured');
+      let createUrl = createNewCollectionLink.dataset.modalContentUrl;
+      if (featuredCheckbox !== null && featuredCheckbox.checked) {
+        createUrl += '&mark_as_featured=1';
+      }
+      handleGenericModalWithForm(
+        createUrl,
+        undefined,
+        undefined,
+        req => {
+          showToast(JSON.parse(req.responseText).message);
+        },
+        () => {
+          showToast('There were errors processing the form...');
+        },
+        true,
+        true,
+        undefined,
+        false
+      );
+    });
+  }
 };
 
 const bindCollectionModals = container => {
@@ -64,16 +66,11 @@ const bindCollectionModals = container => {
     element.dataset.alreadyBinded = true;
     element.addEventListener('click', evt => {
       evt.preventDefault();
-      const modalUrlSplitted = element.dataset.modalContentUrl.split('/');
-      const soundId = parseInt(
-        modalUrlSplitted[modalUrlSplitted.length - 3],
-        10
-      );
       if (!evt.altKey) {
         handleGenericModalWithForm(
           element.dataset.modalContentUrl,
           () => {
-            initCollectionFormModal(soundId, element.dataset.modalContentUrl);
+            initCollectionFormModal();
           },
           undefined,
           req => {

@@ -29,10 +29,12 @@ from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, reverse
 from django_ratelimit.decorators import ratelimit
+from prometheus_client import Counter
 
 import forum
 import sounds
 from forum.models import Post
+from search.abuse import PaginationAbuseBlocked, is_over_hard_page_limit
 from utils.clustering_utilities import (
     cluster_data_is_fully_available,
     get_clustering_data_for_graph_display,
@@ -41,11 +43,11 @@ from utils.clustering_utilities import (
 )
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
+from utils.pagination import PreSlicedCountProvidedPaginator, read_page
 from utils.ratelimit import key_for_ratelimiting, rate_per_ip
 from utils.search import (
     SearchEngineException,
     SearchEngineTimeoutException,
-    SearchResultsPaginator,
     get_search_engine,
     search_query_processor,
 )
@@ -56,6 +58,13 @@ from utils.search.search_sounds import (
 )
 
 search_logger = logging.getLogger("search")
+
+# number of times we identified a suspicious ?page parameter in a search
+search_pagination_blocks_total = Counter(
+    "freesound_search_pagination_blocks_total",
+    "Search requests blocked by ?page query parameter anti-abuse",
+    ["reason", "enforced"],
+)
 
 
 def is_empty_query(request):
@@ -110,6 +119,24 @@ def search_view_helper(request):
     # the initial tagcloud in tags.views.tags view and no need to make any further query here
     if sqp.tags_mode_active() and not sqp.get_tags_in_filters():
         return {"sqp": sqp}  # sqp will be needed in tags.views.tags view
+
+    # Anti-abuse: reject pages beyond the hard limit before sending a request to solr
+    page = sqp.get_option_value_to_apply("page")
+    if is_over_hard_page_limit(page):
+        search_logger.info(
+            "Search pagination blocked (%s)"
+            % json.dumps(
+                {
+                    "ip": get_client_ip(request),
+                    "page": page,
+                    "query": sqp.get_option_value_to_apply("query"),
+                    "reason": "hard_cap",
+                    "enforced": True,
+                }
+            )
+        )
+        search_pagination_blocks_total.labels(reason="hard_cap", enforced="true").inc()
+        raise PaginationAbuseBlocked()
 
     # Run the query and post-process the results
     try:
@@ -207,11 +234,19 @@ def search_view_helper(request):
             )
         )
 
+        # If the requested page is beyond the last page of a non-empty result set, the search
+        # engine returns no docs for it; show an explicit "no more results" state and clamp the
+        # pager to the real last page (Solr can't return last-page content without a 2nd query).
+        requested_page = query_params["current_page"]
+        page = paginator.page(requested_page)
+        beyond_last = paginator.count > 0 and requested_page > paginator.num_pages
+
         # Compile template variables
         return {
             "sqp": sqp,
             "error_text": None,
-            "current_page": query_params["current_page"],
+            "current_page": page.number,
+            "beyond_last": beyond_last,
             "has_advanced_search_settings_set": sqp.contains_active_advanced_search_options(),
             "advanced_search_closed_on_load": settings.ADVANCED_SEARCH_MENU_ALWAYS_CLOSED_ON_PAGE_LOAD,
             "map_bytearray_url": map_bytearray_url,
@@ -220,12 +255,13 @@ def search_view_helper(request):
             "get_clusters_url": get_clusters_url,
             "clusters_data": clusters_data,
             "paginator": paginator,
-            "page": paginator.page(query_params["current_page"]),
+            "page": page,
             "docs": docs,
             "facets": results.facets,
             "non_grouped_number_of_results": results.non_grouped_number_of_results,
             "show_beta_search_options": use_beta_features,
             "experimental_facets": settings.SEARCH_SOUNDS_BETA_FACETS,
+            "search_max_page_limit": settings.SEARCH_MAX_PAGE_HARD_LIMIT,
         }
 
     except SearchEngineTimeoutException as e:
@@ -260,7 +296,10 @@ def search_view_helper(request):
 
 @ratelimit(key=key_for_ratelimiting, rate=rate_per_ip, group=settings.RATELIMIT_SEARCH_GROUP, block=True)
 def search(request):
-    tvars = search_view_helper(request)
+    try:
+        tvars = search_view_helper(request)
+    except PaginationAbuseBlocked:
+        return render(request, "429.html", status=429)
     return render(request, "search/search.html", tvars)
 
 
@@ -310,10 +349,7 @@ def clustered_graph(request):
 def search_forum(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
-    try:
-        current_page = int(request.GET.get("page", 1))
-    except ValueError:
-        current_page = 1
+    current_page = read_page(request)
     current_forum_name_slug = request.GET.get("forum", "").strip()  # for context sensitive search
     if current_forum_name_slug:
         current_forum = get_object_or_404(forum.models.Forum.objects, name_slug=current_forum_name_slug)
@@ -358,6 +394,7 @@ def search_forum(request):
     paginator = None
     num_results = None
     page = None
+    beyond_last = False
     results = []
     if search_query.strip() != "" or filter_query:
         # add current forum
@@ -378,9 +415,11 @@ def search_forum(request):
                 group_by_thread=False,
             )
 
-            paginator = SearchResultsPaginator(results, settings.FORUM_POSTS_PER_PAGE)
+            paginator = PreSlicedCountProvidedPaginator(results.docs, settings.FORUM_POSTS_PER_PAGE, results.num_found)
             num_results = paginator.count
+            beyond_last = paginator.count > 0 and current_page > paginator.num_pages
             page = paginator.page(current_page)
+            current_page = page.number  # clamp the pager to the real last page on overflow
             error = False
         except SearchEngineTimeoutException as e:
             search_logger.info(
@@ -413,6 +452,7 @@ def search_forum(request):
         "advanced_search": advanced_search,
         "current_forum": current_forum,
         "current_page": current_page,
+        "beyond_last": beyond_last,
         "date_from": date_from,
         "date_from_display": date_from_display,
         "date_to": date_to,

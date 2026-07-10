@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 import importlib
-import math
 
 from django.conf import settings
 
@@ -151,36 +150,6 @@ class SearchResults:
 
     def __str__(self):
         return f"<SearchResults with {self.num_found} results found>"
-
-
-class SearchResultsPaginator:
-    def __init__(self, search_results, num_per_page):
-        """Paginator object for search results which has a similar API to django.core.paginator.Paginator
-
-        Note that the results of a query are already paginated. This paginator is a simple wrapper to provide a
-        pagination API for search results similar to that of the official django.core.paginator.Paginator
-
-        Args:
-            search_results (SearchResults): results of a query
-            num_per_page: number of results per page
-        """
-        self.num_per_page = num_per_page
-        self.results = search_results.docs
-        self.count = search_results.num_found
-        self.num_pages = math.ceil(search_results.num_found / num_per_page)
-        self.page_range = list(range(1, self.num_pages + 1))
-
-    def page(self, page_num):
-        has_next = page_num < self.num_pages
-        has_previous = 1 < page_num <= self.num_pages
-        return {
-            "object_list": self.results,
-            "has_next": has_next,
-            "has_previous": has_previous,
-            "has_other_pages": has_next or has_previous,
-            "next_page_number": page_num + 1,
-            "previous_page_number": page_num - 1,
-        }
 
 
 class SearchEngineException(Exception):

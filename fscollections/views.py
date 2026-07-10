@@ -20,12 +20,12 @@
 
 from functools import wraps
 from operator import itemgetter
-from types import SimpleNamespace
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -37,13 +37,13 @@ from fscollections.forms import (
     CollectionEditFormAsMaintainer,
     CreateCollectionForm,
     MaintainerForm,
-    SelectCollectionOrNewCollectionForm,
+    SelectCollectionForm,
 )
 from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound, CollectionSound
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
 from utils.downloads import download_sounds
-from utils.pagination import build_paginator_template_context, paginate
+from utils.pagination import build_paginator_template_context, paginate, read_page
 
 
 def resolve_collection_from_url(view_func):
@@ -81,7 +81,12 @@ def collection(request, collection):
 
     sounds = Sound.objects.bulk_sounds_for_collection(collection.id)
     if search:
-        sounds = sounds.filter(Q(original_filename__icontains=search) | Q(user__username__icontains=search))
+        sounds = sounds.filter(
+            Q(original_filename__icontains=search)
+            | Q(user__username__icontains=search)
+            | Q(description__icontains=search)
+            | Q(tags__name__icontains=search)
+        ).distinct()
 
     if sort_key == "featured":
         featured_ids = list(collection.featured_sound_ids or [])
@@ -142,29 +147,35 @@ def add_sound_to_collection(request, sound_id):
         HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))
 
     if request.method == "POST":
-        form = SelectCollectionOrNewCollectionForm(
+        form = SelectCollectionForm(
             request.POST, sound_id=sound_id, user_collections=user_collections, user_saving_sound=request.user
         )
         if form.is_valid():
-            saved_collection = form.save()
+            saved_collection, featured_skipped = form.save()
             msg_to_return = f'Sound "{sound.original_filename}" saved under collection {saved_collection.name}'
+            if featured_skipped:
+                msg_to_return += (
+                    f" (featured limit of {settings.MAX_FEATURED_SOUNDS_PER_COLLECTION} reached"
+                    " — sound was not marked as featured)"
+                )
             return JsonResponse({"success": True, "message": msg_to_return})
         else:
-            msg_to_return = "You don't have permissions to add sounds to this collection."
+            error_messages = [e for errors in form.errors.values() for e in errors]
+            msg_to_return = " ".join(error_messages) if error_messages else "An error occurred."
             return JsonResponse({"success": False, "message": msg_to_return})
     else:
-        form = SelectCollectionOrNewCollectionForm(
+        form = SelectCollectionForm(
             initial={
                 "collection": last_collection.id
                 if last_collection
-                else SelectCollectionOrNewCollectionForm.BOOKMARK_COLLECTION_CHOICE_VALUE
+                else SelectCollectionForm.BOOKMARK_COLLECTION_CHOICE_VALUE
             },
             sound_id=sound.id,
             user_collections=user_collections,
             user_saving_sound=request.user,
         )
     collections_already_containing_sound = user_collections.filter(sounds__id=sound.id).distinct()
-    full_collections = Collection.objects.filter(num_sounds__gte=settings.MAX_SOUNDS_PER_COLLECTION)
+    full_collections = user_collections.filter(num_sounds__gte=settings.MAX_SOUNDS_PER_COLLECTION)
     tvars = {
         "user": request.user,
         "sound": sound,
@@ -173,6 +184,7 @@ def add_sound_to_collection(request, sound_id):
         "collections_with_sound": collections_already_containing_sound,
         "full_collections": full_collections,
         "max_sounds_per_collection": settings.MAX_SOUNDS_PER_COLLECTION,
+        "max_featured_per_collection": settings.MAX_FEATURED_SOUNDS_PER_COLLECTION,
     }
 
     return render(request, "collections/modal_add_sound_to_collection.html", tvars)
@@ -182,19 +194,32 @@ def add_sound_to_collection(request, sound_id):
 def create_collection(request):
     if not request.GET.get("ajax"):
         return HttpResponseRedirect(reverse("your-collections"))
+    # When opened from the "add sound to collection" modal, sound_id is passed so the sound
+    # gets added to the newly created collection right away (and featured if mark_as_featured is set).
+    sound_id = request.GET.get("sound_id")
+    mark_as_featured = request.GET.get("mark_as_featured")
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK") if sound_id else None
     if request.method == "POST":
         form = CreateCollectionForm(request.POST, user=request.user)
         if form.is_valid():
-            Collection.objects.create(
+            collection = Collection.objects.create(
                 user=request.user,
                 name=form.cleaned_data["name"],
                 description=form.cleaned_data["description"],
                 public=form.cleaned_data["public"],
             )
+            if sound is not None:
+                collection.add_sound(sound, request.user, feature=bool(mark_as_featured))
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "message": f'Sound "{sound.original_filename}" saved under collection {collection.name}',
+                    }
+                )
             return JsonResponse({"success": True})
     else:
         form = CreateCollectionForm(user=request.user)
-    tvars = {"form": form}
+    tvars = {"form": form, "sound_id": sound_id, "sound": sound, "mark_as_featured": mark_as_featured}
     return render(request, "collections/modal_create_collection.html", tvars)
 
 
@@ -267,6 +292,8 @@ def render_collection_cards(request, collection):
         "sounds": sounds,
         "max_sounds": settings.MAX_SOUNDS_PER_COLLECTION,
         "current_search": request.GET.get("q", "").strip(),
+        # Keep showing the empty-collection message (not "no results") when searching an empty collection
+        "collection_is_empty": not sounds and not Sound.objects.sounds_for_collection(collection.id).exists(),
     }
 
     raw_page = request.GET.get("page")
@@ -274,19 +301,12 @@ def render_collection_cards(request, collection):
     if raw_page and raw_total:
         try:
             total_pages = int(raw_total)
-            page_num = max(1, min(int(raw_page), max(1, total_pages)))
-            paginator_ns = SimpleNamespace(num_pages=total_pages)
-            page_dict = {
-                "has_previous": page_num > 1,
-                "has_next": page_num < total_pages,
-                "previous_page_number": page_num - 1,
-                "next_page_number": page_num + 1,
-            }
-            tvars.update(
-                build_paginator_template_context(
-                    paginator_ns, page_dict, page_num, base_path=request.path, base_query=request.GET
-                )
-            )
+            page_num = min(read_page(request), max(1, total_pages))
+            # Make a fake Paginator with `total_pages` pages so that the template can
+            # render the paginator
+            paginator = Paginator(range(total_pages), 1)
+            page = paginator.page(page_num)
+            tvars.update(build_paginator_template_context(page, base_path=request.path, base_query=request.GET))
             tvars["has_paginator"] = True
         except (ValueError, TypeError):
             pass

@@ -25,7 +25,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "freesound.whitenoise.FreesoundWhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -271,6 +271,9 @@ STATICFILES_DIRS = [os.path.join(os.path.dirname(__file__), "static")]
 STATIC_URL = "/static/"
 STATIC_ROOT = "bw_static"
 WHITENOISE_ROOT = os.path.join(os.path.dirname(__file__), "../webroot")
+# Serve api docs from here with whitenoise. see freesound.whitenoise.FreesoundWhiteNoiseMiddleware
+API_DOCS_ROOT = os.path.join(os.path.dirname(__file__), "../_docs/api/build/html")
+WHITENOISE_INDEX_FILE = True
 
 STORAGES = {
     "default": {
@@ -296,6 +299,9 @@ FORUM_THREADS_PER_PAGE = 15
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15  # In search page
 SOUNDS_PER_PAGE_COMPACT_MODE = 30  # In search page
+# Reject search requests if the page number is higher than this. Set to None to disable.
+# only used in search/tag pages, not API
+SEARCH_MAX_PAGE_HARD_LIMIT = 100
 PACKS_PER_PAGE = 15  # In search page
 DOWNLOADED_SOUNDS_PACKS_PER_PAGE = 12
 USERS_PER_DOWNLOADS_MODAL_PAGE = 15
@@ -916,7 +922,7 @@ COLLECTION_SORT_OPTIONS = {
     "featured": ("Featured first", "featured_order"),
     "created_desc": ("Date added (newest first)", "-collectionsound__created"),
     "created_asc": ("Date added (oldest first)", "collectionsound__created"),
-    "name": ("Name", "original_filename"),
+    "name": ("Name (A to Z)", "original_filename"),
 }
 COLLECTION_SORT_DEFAULT = "featured"
 

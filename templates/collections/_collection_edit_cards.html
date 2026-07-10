@@ -7,6 +7,11 @@
         </div>
     {% endfor %}
 </div>
+{% elif collection_is_empty %}
+<div class="text-center v-spacing-top-4">
+    <h5>No sounds... &#128543</h5>
+    <div class="text-grey v-spacing-top-1">This collection is empty, click on "Add sounds" to add some</div>
+</div>
 {% elif current_search %}
 <div class="v-spacing-3 text-grey">
     No sounds found matching "{{ current_search }}". <a href="#" data-clear-search>Clear search</a>

@@ -266,7 +266,7 @@
                     {% else %}
                         {% comment %}list/grid of sounds{% endcomment %}
                         <div class="v-spacing-6 v-spacing-top-2">
-                            {% if paginator.count > 0 %}
+                            {% if paginator.count > 0 and not beyond_last %}
                                 {% if sqp.grid_mode_active %}
                                     <div class="row">
                                         {% for result in docs %}
@@ -310,14 +310,11 @@
                                     {% endfor %}
                                 {% endif %}
                             {% else %}
-                                <div class="v-spacing-7 v-spacing-top-6 w-100">
-                                    <h5>No results... &#128543</h5>
-                                    <p class="text-grey v-spacing-2">Please try another query or change the filters</p>
-                                </div>
+                                {% include "search/_no_results.html" %}
                             {% endif %}
                         </div>
                         <div class="v-spacing-6">
-                            {% bw_paginator paginator page current_page request "sound" non_grouped_number_of_results %}
+                            {% bw_paginator page request "sound" non_grouped_number_of_results max_pages=search_max_page_limit %}
                         </div>
                     {% endif %}
                 </main>

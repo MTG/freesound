@@ -179,21 +179,20 @@ def bw_generic_stars(context, rating_0_10):
 
 
 @register.inclusion_tag("molecules/paginator.html", takes_context=True)
-def bw_paginator(context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results=-1):
+def bw_paginator(context, page, request, anchor="", non_grouped_number_of_results=-1, max_pages=None):
     """
     Adds pagination context variables for use in displaying first, adjacent and
     last page links in addition to those created by the object_list generic
     view.
     """
     return build_paginator_template_context(
-        paginator,
         page,
-        current_page,
         base_path=request.path,
         base_query=request.GET,
         anchor=anchor,
         non_grouped_number_of_results=non_grouped_number_of_results,
         hx_target=context.get("hx_target", ""),
+        max_pages=max_pages,
     )
 
 

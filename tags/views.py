@@ -28,6 +28,7 @@ from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedi
 from django.shortcuts import render
 from django.urls import reverse
 
+from search.abuse import PaginationAbuseBlocked
 from search.views import search_view_helper
 from tags.models import FS1Tag, Tag
 from utils.logging_filters import get_client_ip
@@ -39,7 +40,10 @@ search_logger = logging.getLogger("search")
 
 def tags(request):
     # Share same view code as for the search view, but "tags mode" will be on
-    tvars = search_view_helper(request)
+    try:
+        tvars = search_view_helper(request)
+    except PaginationAbuseBlocked:
+        return render(request, "429.html", status=429)
 
     # If there are no tags in filter, get display initial tag cloud
     if "sqp" in tvars and not tvars["sqp"].get_tags_in_filters():

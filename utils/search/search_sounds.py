@@ -25,7 +25,8 @@ from django.db.models.query import RawQuerySet
 
 import sounds.models
 import utils.search
-from utils.search import SearchEngineException, SearchResultsPaginator, get_search_engine
+from utils.pagination import PreSlicedCountProvidedPaginator
+from utils.search import SearchEngineException, SearchResults, get_search_engine
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
@@ -56,22 +57,21 @@ def parse_weights_parameter(weights_param):
         return None
 
 
-def perform_search_engine_query(query_params):
+def perform_search_engine_query(query_params: dict) -> tuple[SearchResults, PreSlicedCountProvidedPaginator]:
     """Perform a query in the search engine given some query parameters and get the paginated results
 
     This util function performs the query to the search engine and returns needed parameters to continue with the view.
     The main reason to have this util function is to facilitate mocking in unit tests for this view.
 
     Args:
-        query_params (dict): query parameters dictionary with parameters following the specification of search_sounds
+        query_params: query parameters dictionary with parameters following the specification of search_sounds
             function from utils.search.SearchEngine.
 
     Returns:
-        utils.search.SearchResults: search results object with query results from the search engine
-        utils.search.SearchResultsPaginator: paginator object for the selected page according to query_params
+        the search results and a paginator for the selected page according to query_params.
     """
     results = get_search_engine().search_sounds(**query_params)
-    paginator = SearchResultsPaginator(results, query_params["num_sounds"])
+    paginator = PreSlicedCountProvidedPaginator(results.docs, query_params["num_sounds"], results.num_found)
 
     return results, paginator
 

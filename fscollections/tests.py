@@ -109,16 +109,16 @@ class CollectionTest(TestCase):
         self.assertEqual(1, self.collection.num_sounds)
 
         # Test creating the default collection using the add_sound_to_collection modal
-        form_data = {"collection": -1, "new_collection_name": "", "use_last_collection": False}
+        form_data = {"collection": -1, "use_last_collection": False}
         resp = self.client.post(reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", form_data)
         self.assertEqual(200, resp.status_code)
         default_collection = Collection.objects.get(user=self.user, name="My bookmarks", is_default_collection=True)
         resp = self.client.get(reverse("collection", args=[default_collection.id, slugify(default_collection.name)]))
         self.assertEqual(200, resp.status_code)
 
-        # Test creating a new custom collection using the add_sound_to_collection modal
-        form_data = {"collection": 0, "new_collection_name": "new_collection", "use_last_collection": False}
-        resp = self.client.post(reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", form_data)
+        # Test creating a new custom collection (and adding the sound to it) using the create-collection modal
+        form_data = {"name": "new_collection", "description": "", "public": True}
+        resp = self.client.post(reverse("create-collection") + f"?ajax=1&sound_id={self.sound.id}", form_data)
         self.assertEqual(200, resp.status_code)
         new_collection = Collection.objects.get(user=self.user, name="new_collection")
         self.assertEqual(1, new_collection.num_sounds)
@@ -154,7 +154,6 @@ class CollectionTest(TestCase):
         maintainer_test_collection = Collection.objects.create(name="maintainer_test_collection", user=self.user)
         form_data = {
             "collection": maintainer_test_collection.id,
-            "new_collection_name": "",
             "use_last_collection": False,
         }
         resp = self.client.post(reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", form_data)
@@ -317,6 +316,40 @@ class CollectionTest(TestCase):
         self.assertEqual(200, resp.status_code)
         self.collection.refresh_from_db()
         self.assertEqual(1, self.collection.num_sounds)
+
+    def test_edit_collection_marks_sounds_index_dirty(self):
+        # Editing a collection must flag the affected sounds for Solr reindexing. bulk_create() skips
+        # the post_save signal, and a rename rewrites the Solr collection field of every member.
+        self.client.force_login(self.user)
+
+        def edit(**form_data):
+            url = reverse("edit-collection", args=[self.collection.id, slugify(self.collection.name)]) + "?ajax=1"
+            form_data.setdefault("name", self.collection.name)
+            form_data.setdefault("description", "")
+            form_data.setdefault("public", self.collection.public)
+            self.client.post(url, form_data)
+            self.collection.refresh_from_db()
+
+        # Adding sounds (via bulk_create) must flag the added sounds dirty
+        Sound.objects.filter(id__in=[self.sound.id, self.sound1.id]).update(is_index_dirty=False)
+        edit(added_sounds=f"{self.sound.id},{self.sound1.id}")
+        self.assertTrue(Sound.objects.get(id=self.sound.id).is_index_dirty)
+        self.assertTrue(Sound.objects.get(id=self.sound1.id).is_index_dirty)
+
+        # Removing a sound must flag it dirty
+        Sound.objects.filter(id=self.sound1.id).update(is_index_dirty=False)
+        edit(removed_sounds=f"{self.sound1.id}")
+        self.assertTrue(Sound.objects.get(id=self.sound1.id).is_index_dirty)
+
+        # Renaming the collection must flag every remaining member dirty (Solr field is "id_name")
+        Sound.objects.filter(id=self.sound.id).update(is_index_dirty=False)
+        edit(name="renamed-collection")
+        self.assertTrue(Sound.objects.get(id=self.sound.id).is_index_dirty)
+
+        # Toggling public/private must flag every member dirty (only public collections are indexed)
+        Sound.objects.filter(id=self.sound.id).update(is_index_dirty=False)
+        edit(public=True)
+        self.assertTrue(Sound.objects.get(id=self.sound.id).is_index_dirty)
 
     def test_edit_collection_as_maintainer(self):
         # available fields for a maintainer: sounds
@@ -514,6 +547,30 @@ class CollectionTest(TestCase):
             html.index(f'data-object-id="{self.sound.id}"'),
         )
 
+    def test_render_collection_cards_renders_pager_when_multiple_pages(self):
+        """verify that the paginator shows 2 pages"""
+        self.client.force_login(self.user)
+        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
+        resp = self.client.get(
+            cards_url,
+            {"ids": f"{self.sound2.id},{self.sound.id}", "page": "1", "total": "2"},
+            HTTP_HX_CURRENT_URL="/collections/test/edit/",
+        )
+        self.assertEqual(200, resp.status_code)
+        self.assertContains(resp, "page=2")
+
+    def test_render_collection_cards_clamps_overflow_page(self):
+        """verify that asking for a large page number if there are only 2 doesn't raise"""
+        self.client.force_login(self.user)
+        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
+        resp = self.client.get(
+            cards_url,
+            {"ids": f"{self.sound2.id},{self.sound.id}", "page": "99", "total": "2"},
+            HTTP_HX_CURRENT_URL="/collections/test/edit/",
+        )
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(resp.context["current_page"], 2)
+
     def test_render_collection_cards_forbidden_for_non_member(self):
         self.client.force_login(self.external_user)
         cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
@@ -525,6 +582,18 @@ class CollectionTest(TestCase):
         editor doesn't need a non-htmx render path."""
         self.client.force_login(self.user)
         cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
+
+        # Searching an empty collection keeps the empty-collection message
+        resp = self.client.get(
+            cards_url,
+            {"ids": "", "page": "1", "total": "1", "q": "nonsense"},
+            HTTP_HX_CURRENT_URL="/collections/test/edit/",
+        )
+        self.assertEqual(200, resp.status_code)
+        self.assertContains(resp, "This collection is empty")
+
+        # With sounds in the collection, an unmatched search shows the no-results message
+        CollectionSound.objects.create(user=self.user, sound=self.sound, collection=self.collection, status="OK")
         resp = self.client.get(
             cards_url,
             {"ids": "", "page": "1", "total": "1", "q": "nonsense"},

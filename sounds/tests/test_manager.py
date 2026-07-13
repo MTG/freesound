@@ -22,7 +22,7 @@ from django.conf import settings
 from django.test import TestCase
 
 from geotags.models import GeoTag
-from sounds.models import Pack, Sound
+from sounds.models import License, Pack, Sound
 from tickets.models import Ticket
 from utils.test_helpers import (
     create_consolidated_audio_descriptors_and_similarity_vectors_for_sound,
@@ -226,3 +226,27 @@ class PackManagerQueryMethods(TestCase):
             for i, pack in enumerate(Pack.objects.ordered_ids(pack_ids=pack_ids_with_duplicates)):
                 self.assertEqual(type(pack), Pack)
                 self.assertEqual(pack_ids_with_duplicates[i], pack.id)
+
+    def test_bulk_query_id_num_sounds_unpublished(self):
+        # some published and some unpublished sounds result in num_sounds_unpublished_precomputed
+        # being set properly
+        _, packs, _ = create_user_and_sounds(
+            num_sounds=2, num_packs=1, user=self.user, count_offset=100, processing_state="OK", moderation_state="OK"
+        )
+        pack = packs[0]
+        Sound.objects.create(
+            user=self.user,
+            original_filename="unpublished sound",
+            license=License.objects.last(),
+            bst_category="ss-n",
+            description="",
+            pack=pack,
+            md5="fakemd5_unpublished",
+            type="wav",
+            processing_state="PE",
+            moderation_state="PE",
+        )
+        pack.process()
+        self.assertEqual(pack.num_sounds, 2)
+        p = Pack.objects.bulk_query_id([pack.id])[0]
+        self.assertEqual(p.num_sounds_unpublished_precomputed, 1)

@@ -9,7 +9,7 @@ import matplotlib.ticker as mtick
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 
-DATA_FOLDER = "descriptors_data"  # json files for each descriptor extracted from DB
+DATA_FOLDER = "../descriptors"  # json files for each descriptor extracted from DB
 OUT_FOLDER = "../source/_static/descriptors"
 
 with open("descriptors.csv", "r", newline="") as f:
@@ -116,3 +116,12 @@ for descriptor_name in descriptor_names:
             label = f"{descriptor_name}_{i}"
             print(f"\tDim. {i}")
             plot_histogram(pool, label, OUT_FOLDER)
+
+
+# # find ranges
+# numeric_ranges = {}
+# for name, values in data.items():
+#     first_val = values[0]
+#     if isinstance(first_val, (int, float)):
+#         min_val, max_val = min(values), max(values)
+#         numeric_ranges[name] = (min_val, max_val)  # save range

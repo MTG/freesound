@@ -287,7 +287,11 @@
                         <div class="v-spacing-top-5 v-padding-bottom-5 {% if sound.user == request.user %}v-spacing-top-5{% endif %}">
                             {% if sound.moderation_state == 'OK' and sound.processing_state == 'OK' %}
                                 {% if request.user.is_authenticated %}
+                                    {% if download_limit_reached %}
+                                    <a class="no-hover btn-primary display-inline-block w-100 text-center opacity-050" href="javascript:void(0);" data-toggle="modal-default" data-modal-content-url="{% url 'download-limit-modal' %}?ajax=1">Download sound</a>
+                                    {% else %}
                                     <a class="no-hover btn-primary display-inline-block w-100 text-center sound-download-button" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" data-show-after-download-modal-url="{% url "after-download-modal" %}">Download sound</a>
+                                    {% endif %}
                                 {% else %}
                                     <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}">Login to download</a>
                                 {% endif %}

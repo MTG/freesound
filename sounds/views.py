@@ -63,6 +63,13 @@ from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_user_template_caches
 from utils.cdn import generate_cdn_download_url
+from utils.download_limit import (
+    DownloadType,
+    count_download_and_set_sentinel,
+    download_limit_reached_response,
+    new_download_blocked,
+    user_download_limit_reached,
+)
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
@@ -294,6 +301,7 @@ def sound(request, username, sound_id):
         "is_explicit": is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         "sizes": settings.IFRAME_PLAYER_SIZE,
         "min_num_ratings": settings.MIN_NUMBER_RATINGS,
+        "download_limit_reached": user_download_limit_reached(request),
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, "sounds/sound.html", tvars)
@@ -338,6 +346,12 @@ def after_download_modal(request):
         return HttpResponse()
 
 
+@login_required
+def download_limit_modal(request):
+    """modal shown when a user reaches the daily download limit."""
+    return render(request, "molecules/modal_download_limit.html", {"message": settings.DOWNLOAD_LIMIT_MESSAGE})
+
+
 @redirect_if_old_username
 @transaction.atomic()
 def sound_download(request, username, sound_id):
@@ -347,19 +361,14 @@ def sound_download(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    if "range" not in request.headers:
-        """
-        Download managers and some browsers use the range header to download files in multiple parts. We have observed
-        that all clients first make a GET with no range header (to get the file length) and then make multiple other
-        requests. We ignore all requests that have range header because we assume that a first query has already been
-        made. We additionally guard against users clicking on download multiple times by storing a sentinel in the
-        cache for 5 minutes.
-        """
-        cache_key = "sdwn_%s_%d" % (sound_id, request.user.id)
-        if cache.get(cache_key, None) is None:
-            Download.objects.create(user=request.user, sound=sound, license_id=sound.license_id)
-            sound.invalidate_template_caches()
-            cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
+    if new_download_blocked(request, DownloadType.SOUND, sound_id):
+        return download_limit_reached_response(request)
+    if count_download_and_set_sentinel(request, DownloadType.SOUND, sound_id):
+        # True only for a new download, not a continuation of one already started
+        # (e.g. a multi-part Range request, or a repeated click within the window),
+        # so we record only one Download row per download.
+        Download.objects.create(user=request.user, sound=sound, license_id=sound.license_id)
+        sound.invalidate_template_caches()
 
     if settings.USE_CDN_FOR_DOWNLOADS:
         cdn_url = generate_cdn_download_url(sound)
@@ -378,22 +387,16 @@ def pack_download(request, username, pack_id):
     if pack.user.username.lower() != username.lower():
         raise Http404
 
-    if "range" not in request.headers:
-        """
-        Download managers and some browsers use the range header to download files in multiple parts. We have observed
-        that all clients first make a GET with no range header (to get the file length) and then make multiple other
-        requests. We ignore all requests that have range header because we assume that a first query has already been
-        made. We additionally guard against users clicking on download multiple times by storing a sentinel in the
-        cache for 5 minutes.
-        """
-        cache_key = "pdwn_%s_%d" % (pack_id, request.user.id)
-        if cache.get(cache_key, None) is None:
-            pd = PackDownload.objects.create(user=request.user, pack=pack)
-            pds = []
-            for sound in pack.sounds.all():
-                pds.append(PackDownloadSound(sound=sound, license_id=sound.license_id, pack_download=pd))
-            PackDownloadSound.objects.bulk_create(pds)
-            cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/pack in the next 5 minutes
+    if new_download_blocked(request, DownloadType.PACK, pack_id):
+        return download_limit_reached_response(request)
+    if count_download_and_set_sentinel(request, DownloadType.PACK, pack_id):
+        # Create a PackDownload only if it's a new download, not if it's a continuation
+        # of an existing download (Range request, or double-click)
+        pd = PackDownload.objects.create(user=request.user, pack=pack)
+        pds = []
+        for sound in pack.sounds.all():
+            pds.append(PackDownloadSound(sound=sound, license_id=sound.license_id, pack_download=pd))
+        PackDownloadSound.objects.bulk_create(pds)
 
     sounds_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related("user", "license")
     licenses_url = reverse("pack-licenses", args=[username, pack_id])
@@ -1001,6 +1004,7 @@ def pack(request, username, pack_id):
         "pack_sounds": pack_sounds,
         "is_following": is_following,
         "geotags_in_pack_serialized": geotags_in_pack_serialized,
+        "download_limit_reached": user_download_limit_reached(request),
     }
     return render(request, "sounds/pack.html", tvars)
 

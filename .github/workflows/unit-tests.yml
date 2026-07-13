@@ -28,7 +28,7 @@ jobs:
       continue-on-error: true
 
     - name: Pull docker images
-      run: docker compose -f docker-compose.test.yml pull db
+      run: docker compose -f docker-compose.test.yml pull db redis
 
     - name: Build test_runner image
       uses: docker/build-push-action@v5

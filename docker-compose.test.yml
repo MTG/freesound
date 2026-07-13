@@ -3,6 +3,9 @@ volumes:
     solr9data:
 
 services:
+    redis:
+        image: redis:8.4.2
+
     db:
         image: postgres:18.3
         env_file:
@@ -38,6 +41,7 @@ services:
             - FS_USER_ID
         depends_on:
             - db
+            - redis
 
     test_runner_search:
         image: freesound-test:ci

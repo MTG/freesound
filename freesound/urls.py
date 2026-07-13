@@ -118,6 +118,7 @@ urlpatterns = [
     path("embed/geotags_box/iframe/", geotags.views.embed_iframe, name="embed-geotags"),
     path("oembed/", sounds.views.oembed, name="oembed-sound"),
     path("after-download-modal/", sounds.views.after_download_modal, name="after-download-modal"),
+    path("download-limit-modal/", sounds.views.download_limit_modal, name="download-limit-modal"),
     path("browse/", sounds.views.sounds, name="sounds"),
     path("browse/tags/", tags.views.tags, name="tags"),
     path("browse/tags/<multitags:multiple_tags>/", tags.views.multiple_tags_lookup, name="tags"),

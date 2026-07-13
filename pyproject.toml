@@ -126,6 +126,7 @@ markers = [
     "search_engine: solr tests",
     "forum: search engine forum tests",
     "sounds: search engine search tests",
+    "redis: tests that require a real Redis server",
 ]
 
 [tool.ty.src]

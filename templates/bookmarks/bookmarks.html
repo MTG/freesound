@@ -21,7 +21,11 @@
                             {% if is_owner %}
                             <a class="cursor-pointer h-spacing-left-1" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to remove this bookmark category?" data-modal-confirmation-help-text="Note that all the bookmarks inside this category will also be removed" data-modal-confirmation-url="{% url "delete-bookmark-category" cat.id %}{% if cat.id != category.id %}?next={{request.path}}&page={{current_page}}{% endif %}" title="Remove bookmark category" aria-label="Remove bookmark category">{% bw_icon 'trash' %}</a>
                             <a class="cursor-pointer" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'edit-bookmark-category' cat.id %}?ajax=1" data-reload-on-success= "true" title="Edit bookmark category" aria-label="Edit bookmark category">{% bw_icon 'edit' %}</a>
+                            {% if download_limit_reached %}
+                            <a class="opacity-050" href="javascript:void(0);" data-toggle="modal-default" data-modal-content-url="{% url 'download-limit-modal' %}?ajax=1" title="Daily download limit reached" aria-label="Download bookmark category">{% bw_icon 'download' %}</a>
+                            {% else %}
                             <a class="cursor-pointer" href="{% url 'download-bookmark-category' cat.id %}" title="Download bookmark category" aria-label="Download bookmark category">{% bw_icon 'download' %}</a>
+                            {% endif %}
                             {% endif %}</li>
                         {% endfor %}
                     </ul>

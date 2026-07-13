@@ -120,6 +120,7 @@ API_MONITORING_REDIS_STORE_ID = 0
 CLUSTERING_CACHE_REDIS_STORE_ID = 1
 AUDIO_FEATURES_REDIS_STORE_ID = 2
 CELERY_BROKER_REDIS_STORE_ID = 3
+ABUSE_REDIS_STORE_ID = 4
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -137,6 +138,10 @@ CACHES = {
     "clustering": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{CLUSTERING_CACHE_REDIS_STORE_ID}",
+    },
+    "abuse": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{ABUSE_REDIS_STORE_ID}",
     },
 }
 
@@ -333,6 +338,10 @@ USER_STATS_CACHE_KEY = "user_stats_{}"
 # User flagging notification thresholds
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
 USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
+
+# Daily download limit
+MAX_DOWNLOADS_PER_DAY = 200
+DOWNLOAD_LIMIT_MESSAGE = "You have reached the download limit. Come back tomorrow to download more sounds."
 
 # Supported audio formats
 # When adding support for a new audio format you have to change the variables below and check:

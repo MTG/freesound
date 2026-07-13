@@ -8,6 +8,8 @@ from django.db import transaction
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
+from utils.ratelimit import RequestLimitReason, count_request_limit_event
+
 logger = logging.getLogger("web")
 
 DOWNLOAD_LIMIT_CACHE_ALIAS = "abuse"
@@ -84,6 +86,7 @@ def _sentinel_key(download_type: DownloadType, object_id: int, user_id: int) -> 
 
 def download_limit_reached_response(request: HttpRequest) -> HttpResponse:
     """The 429 page returned when ``new_download_blocked`` says a download must not start."""
+    count_request_limit_event(request, RequestLimitReason.DAILY_DOWNLOAD_LIMIT, enforced=True)
     return render(
         request, "sounds/download_limit_reached.html", {"message": settings.DOWNLOAD_LIMIT_MESSAGE}, status=429
     )

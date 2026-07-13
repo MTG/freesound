@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+import enum
 import ipaddress
 import logging
 import random
@@ -25,6 +26,7 @@ import time
 
 from django.conf import settings
 from django.core.cache import cache
+from prometheus_client import Counter
 
 from utils.logging_filters import get_client_ip
 
@@ -122,3 +124,38 @@ def rate_per_ip(group, request):
     if ip_is_blocked(ip):
         return "0/s"
     return settings.RATELIMITS.get(group, settings.RATELIMIT_DEFAULT_GROUP_RATELIMIT)
+
+
+class RequestLimitReason(enum.Enum):
+    """Cause of a request-limit event, used as the `reason` label on request_limit_events_total."""
+
+    # An APIv2 request exceeded its throttling rate (apiv2/exceptions.py)
+    API_THROTTLE = "api_throttle"
+    # An authenticated user exceeded the daily download limit (utils/download_limit.py)
+    DAILY_DOWNLOAD_LIMIT = "daily_download_limit"
+    # A view protected by the django-ratelimit decorator exceeded its rate (accounts/views.py ratelimited handler)
+    DJANGO_RATELIMIT = "django_ratelimit"
+    # A search requested a results page beyond the absolute maximum page number (search/views.py)
+    SEARCH_PAGE_LIMIT = "search_page_limit"
+
+
+# Emitted any time we return a 429 response to a user
+request_limit_events_total = Counter(
+    "freesound_request_limit_events_total",
+    "A user was limited for the given reason. enforced=true if we took action and returned 429. "
+    "enforced=false if we're only reporting (request is served normally). user_type=authenticated or anonymous.",
+    ["reason", "enforced", "user_type"],
+)
+
+
+def count_request_limit_event(request, reason: RequestLimitReason, *, enforced: bool):
+    """Increment the freesound_request_limit_events_total counter for the given labels.
+    Labels:
+      reason: type of rate limit event
+      enforced: true If we blocked the request or false if we're just reporting
+      user_type: authenticated or anonymous
+    """
+    user_type = "authenticated" if request.user.is_authenticated else "anonymous"
+    request_limit_events_total.labels(
+        reason=reason.value, enforced="true" if enforced else "false", user_type=user_type
+    ).inc()

@@ -210,6 +210,20 @@ override_processing_before_description_path_with_temp_directory = partial(
 )
 
 
+def counter_samples(counter, *label_names):
+    """Given a prometheus Counter, get the values from it
+
+    Returns:
+        dict of {label-and-values: value}
+    """
+    return {
+        tuple(s.labels[name] for name in label_names): s.value
+        for m in counter.collect()
+        for s in m.samples
+        if s.name.endswith("_total")
+    }
+
+
 def create_fake_perform_search_engine_query_results_tags_mode():
     # This returns utils.search.SearchResults which was pickled from a real query in a local freesound instance
     return pickle.loads(  # noqa: S301

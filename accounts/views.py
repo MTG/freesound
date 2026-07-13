@@ -112,7 +112,7 @@ from utils.mirror_files import (
     remove_uploaded_file_from_mirror_locations,
 )
 from utils.pagination import paginate
-from utils.ratelimit import key_for_ratelimiting, rate_per_ip
+from utils.ratelimit import RequestLimitReason, count_request_limit_event, key_for_ratelimiting, rate_per_ip
 from utils.username import (
     get_parameter_user_or_404,
     get_user_by_username,
@@ -140,6 +140,7 @@ def ratelimited_error(request, exception):
     if not path.endswith("/"):
         path += "/"
     volatile_logger.info(f"Rate limited IP ({json.dumps({'ip': get_client_ip(request), 'path': path})})")
+    count_request_limit_event(request, RequestLimitReason.DJANGO_RATELIMIT, enforced=True)
     return render(request, "429.html", status=429)
 
 

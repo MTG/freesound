@@ -13,9 +13,15 @@ from bookmarks.models import Bookmark, BookmarkCategory
 from fscollections.models import Collection, CollectionDownload, CollectionSound
 from sounds.models import Download, PackDownload
 from utils.download_limit import get_daily_download_count, increment_daily_download_count
-from utils.test_helpers import create_user_and_sounds
+from utils.ratelimit import request_limit_events_total
+from utils.test_helpers import counter_samples, create_user_and_sounds
 
 pytestmark = pytest.mark.redis
+
+
+def _daily_download_limit_events():
+    samples = counter_samples(request_limit_events_total, "reason", "enforced", "user_type")
+    return samples.get(("daily_download_limit", "true", "authenticated"), 0)
 
 
 @pytest.fixture
@@ -129,9 +135,11 @@ def test_sound_download_over_limit_range_continuation_is_served(
     settings.MAX_DOWNLOADS_PER_DAY = 1
     increment_daily_download_count(downloader.id)
     cache.set("sdwn_%s_%d" % (download_sound.id, downloader.id), True, 60 * 5)
+    before = _daily_download_limit_events()
     with mock.patch("sounds.views.sendfile", return_value=HttpResponse()):
         response = client.get(sound_download_url, HTTP_RANGE="bytes=0-")
     assert response.status_code == 200
+    assert _daily_download_limit_events() == before
 
 
 def test_sound_download_continuation_refreshes_sentinel_without_recounting(
@@ -179,7 +187,7 @@ def test_repeated_collection_download_records_one_row(
     assert CollectionDownload.objects.filter(user=downloader).count() == 1
 
 
-def test_bookmark_category_download_over_limit_returns_429_and_does_not_increment(
+def test_bookmark_category_download_over_limit_returns_429_and_does_not_increment_download_count(
     client, settings, bookmark_category, downloader
 ):
     settings.MAX_DOWNLOADS_PER_DAY = 1
@@ -187,7 +195,7 @@ def test_bookmark_category_download_over_limit_returns_429_and_does_not_incremen
     response = client.get(reverse("download-bookmark-category", args=[bookmark_category.id]))
     assert response.status_code == 429
     # Bookmark-category downloads do not have a download-row model, so assert the
-    # failed over-limit request did not advance the counter.
+    # failed over-limit request did not advance the count.
     assert get_daily_download_count(downloader.id) == 1
 
 

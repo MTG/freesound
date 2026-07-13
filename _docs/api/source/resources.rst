@@ -161,7 +161,7 @@ rating_asc      Same as above, but lowest rated sounds first.
 
 .. _search-similar:
 
-The 'similar_to' and 'simiarity_space' parameters
+The 'similar_to' and 'similarity_space' parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These parameters allow similarity-based search in order to retrieve sounds that are acoustically, semantically, or perceptually similar to a given reference sound.

@@ -41,7 +41,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Q, Sum
+from django.db.models import Avg, Count, Exists, F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Greatest, JSONObject
 from django.db.models.signals import post_delete, post_save, pre_delete
 from django.dispatch import receiver
@@ -2037,6 +2037,7 @@ class PackManager(models.Manager):
                 Prefetch("sounds__license"),
             )
             .select_related("user", "user__profile")
+            .annotate(total_sounds_count=Count("sounds"))
             .filter(id__in=pack_ids)
         )
         if exclude_deleted:
@@ -2078,7 +2079,7 @@ class PackManager(models.Manager):
                             "avg_rating": s.avg_rating,
                         }
                     )
-            p.num_sounds_unpublished_precomputed = p.sounds.count() - p.num_sounds
+            p.num_sounds_unpublished_precomputed = p.total_sounds_count - p.num_sounds
             p.licenses_data_precomputed = ([lid for _, lid in licenses], [lname for lname, _ in licenses])
             p.pack_tags = [
                 {"name": tag, "count": count, "browse_url": p.browse_pack_tag_url(tag)}

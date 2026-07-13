@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.test import RequestFactory, SimpleTestCase, TestCase
@@ -28,9 +28,10 @@ from apiv2.models import ApiV2Client
 from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
-from utils.test_helpers import create_user_and_sounds
+from utils.ratelimit import request_limit_events_total
+from utils.test_helpers import counter_samples, create_user_and_sounds
 
-from .exceptions import BadRequestException
+from .exceptions import BadRequestException, Throttled
 from .forms import SoundTextSearchFormAPI
 
 
@@ -711,3 +712,31 @@ class APIAuthenticationTestCase(TestCase):
         )
         resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 401)
+
+
+class TestThrottledException(SimpleTestCase):
+    @staticmethod
+    def _samples():
+        return counter_samples(request_limit_events_total, "reason", "enforced", "user_type")
+
+    def _make_request(self, user):
+        request = RequestFactory().get("/apiv2/search/text/")
+        request.user = user
+        request.successful_authenticator = None
+        return request
+
+    def test_throttled_counts_event_for_anonymous_request(self):
+        request = self._make_request(AnonymousUser())
+        before = self._samples().get(("api_throttle", "true", "anonymous"), 0)
+
+        Throttled(request=request)
+
+        assert self._samples()[("api_throttle", "true", "anonymous")] == before + 1
+
+    def test_throttled_counts_event_for_authenticated_request(self):
+        request = self._make_request(User(username="throttled_user"))
+        before = self._samples().get(("api_throttle", "true", "authenticated"), 0)
+
+        Throttled(request=request)
+
+        assert self._samples()[("api_throttle", "true", "authenticated")] == before + 1

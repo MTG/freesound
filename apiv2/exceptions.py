@@ -26,6 +26,7 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 
 import apiv2.apiv2_utils  # absolute import because of mutual imports of this module and apiv2_utils
+from utils.ratelimit import RequestLimitReason, count_request_limit_event
 
 errors_logger = logging.getLogger("api_errors")
 
@@ -174,3 +175,5 @@ class Throttled(APIException):
             )
         )
         self.detail = msg
+        if request is not None:
+            count_request_limit_event(request, RequestLimitReason.API_THROTTLE, enforced=True)

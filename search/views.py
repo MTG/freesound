@@ -194,13 +194,8 @@ def search_view_helper(request):
                 resultpacks = sounds.models.Pack.objects.bulk_query_id(
                     resultspackids, sound_ids_for_pack_id=sound_ids_for_pack_id
                 )
-                allpacks = {}
-                for p in resultpacks:
-                    allpacks[p.id] = p
-                # allpacks will contain info from all the packs returned by bulk_query_id. This should
-                # be all packs in docs, but if solr and db are not synchronised, it might happen that there
-                # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
-                # in docs that have not been loaded in allsounds.
+                allpacks = {pack.id: pack for pack in resultpacks}
+                # Search results may reference packs that no longer exist in the database.
                 docs = [d for d in results.docs if int(d.get("group_name").split("_")[0]) in allpacks]
                 for d in docs:
                     d["pack"] = allpacks[int(d.get("group_name").split("_")[0])]

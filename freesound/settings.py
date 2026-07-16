@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django_recaptcha",
     "adminsortable",
     "fscollections",
+    "user_feedback",
 ]
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled

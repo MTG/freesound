@@ -789,7 +789,7 @@ requires-dist = [
     { name = "gunicorn", specifier = "==21.2.0" },
     { name = "ipython", specifier = "==8.14.0" },
     { name = "jinja2", specifier = "==3.1.6" },
-    { name = "luqum", specifier = "==0.13.0" },
+    { name = "luqum", specifier = "==1.0.0" },
     { name = "mapbox", specifier = "==0.18.1" },
     { name = "markdown", specifier = "==3.4.1" },
     { name = "networkx", specifier = "==3.2.1" },
@@ -1006,13 +1006,14 @@ wheels = [
 
 [[package]]
 name = "luqum"
-version = "0.13.0"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ply" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/47/eb/740c176edbfcc8a207f9b4af0476e9ad07b96481e7dc37b03e47669dc208/luqum-1.0.0.tar.gz", hash = "sha256:3e7bf3a94eaf8dc936c63de3019b306ee96e63575bc19372dad56114b194f8e0", size = 75950, upload-time = "2025-02-18T07:39:31.799Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/34/cae9016cb1d9c1f1e5439f0570080848ed658cbc3e1b39e180812fce1a43/luqum-0.13.0-py3-none-any.whl", hash = "sha256:bf0ac6eb3ca8a6a579ff6dd4bd9d88fbba5d9f559b4f5d864f99c4a6b5061853", size = 54409, upload-time = "2023-03-24T11:27:20.451Z" },
+    { url = "https://files.pythonhosted.org/packages/92/25/cfcd4c64369b24b5bf28ccada686f228440897bf001bc165c0dd4f8aebe3/luqum-1.0.0-py3-none-any.whl", hash = "sha256:25e8723aa7b4a522f296eaf8553f7c887b75a29cc92479293cb44333a3b0bc2b", size = 55276, upload-time = "2025-02-18T07:39:29.592Z" },
 ]
 
 [[package]]

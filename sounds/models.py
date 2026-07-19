@@ -1708,6 +1708,7 @@ class Sound(models.Model):
                 invalidate_template_cache("bw_display_sound", sound_id, player_size, is_authenticated)
 
         invalidate_template_cache("bw_sound_page", sound_id)
+        invalidate_template_cache("bw_sound_page_details", sound_id)
         invalidate_template_cache("bw_sound_page_sidebar", sound_id)
 
     def invalidate_template_caches(self):

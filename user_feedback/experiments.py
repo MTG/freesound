@@ -2,6 +2,7 @@ import hashlib
 
 from django.conf import settings
 
+from user_feedback.forms import CategoryValidationForm
 from user_feedback.models import UserFeedback
 
 
@@ -15,6 +16,7 @@ class Experiment:
     """
 
     experiment_id = None          # unique id, also stored on each UserFeedback row
+    form_class = None             # form the generic submit view validates for this experiment
 
     @property
     def sample_rate(self):
@@ -76,6 +78,7 @@ class CategoryValidation(Experiment):
     auto-assigned category is correct. The answer is just yes/no for now."""
 
     experiment_id = "category_validation"
+    form_class = CategoryValidationForm
 
     def is_context_eligible(self, request, sound=None, **kwargs):
         # Only ask about sounds that actually have a category to validate.

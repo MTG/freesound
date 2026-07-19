@@ -148,6 +148,7 @@ urlpatterns = [
     path("monitor/", include("monitor.urls")),
     path("follow/", include("follow.urls")),
     path("collections/", include("fscollections.urls")),
+    path("user-feedback/", include("user_feedback.urls")),
     path("blog/", RedirectView.as_view(url="https://blog.freesound.org/"), name="blog"),
     # admin views
     path("admin/doc/", include("django.contrib.admindocs.urls")),

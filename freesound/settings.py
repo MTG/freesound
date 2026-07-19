@@ -433,7 +433,6 @@ ANNOUNCEMENT_CACHE_KEY = "announcement_cache"
 # -------------------------------------------------------------------------------
 # Broad Sound Taxonomy definition
 
-
 def load_broad_sound_taxonomy_from_csv(path):
     import csv
 
@@ -452,7 +451,6 @@ def load_broad_sound_taxonomy_from_csv(path):
             }
     return taxonomy
 
-
 BROAD_SOUND_TAXONOMY_CSV_FILENAME = "bst_description_v1.1_250725.csv"
 BROAD_SOUND_TAXONOMY_CSV_DEFINITION_PATH = os.path.join(
     os.path.dirname(__file__), "../_docs/", BROAD_SOUND_TAXONOMY_CSV_FILENAME
@@ -465,6 +463,15 @@ BST_CATEGORY_CHOICES = [
 BST_SUBCATEGORY_CHOICES = [
     (key, value["name"]) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" in key
 ]  # Second-level categories
+
+
+# -------------------------------------------------------------------------------
+# User feedback experiments (user_feedback app)
+
+# Fraction of eligible users shown each experiment: 0.0 = off, 1.0 = everyone.
+# local_settings.py overrides these for local testing.
+FEEDBACK_SAMPLE_RATES = {"category_validation": 0.0}
+
 
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls

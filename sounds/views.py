@@ -61,6 +61,7 @@ from sounds.models import (
 )
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
+from user_feedback.experiments import get_experiment
 from utils.cache import invalidate_user_template_caches
 from utils.cdn import generate_cdn_download_url
 from utils.downloads import download_sounds, should_suggest_donation
@@ -285,6 +286,15 @@ def sound(request, username, sound_id):
     is_following = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, sound.user)
     is_explicit = sound.is_explicit and (not request.user.is_authenticated or not request.user.profile.is_adult)
 
+    # Category-validation experiment
+    # The experiment object owns all the rules (auth, sampling, throttling).
+    # Wiring is kept explicit on purpose for now.
+    category_validation = get_experiment("category_validation")
+    show_category_validation = category_validation.should_show(request, sound=sound)
+    category_validation_form = (
+        category_validation.form_class(initial={"sound_id": sound.id}) if show_category_validation else None
+    )
+
     tvars = {
         "sound": sound,
         "username": username,
@@ -294,6 +304,8 @@ def sound(request, username, sound_id):
         "is_explicit": is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         "sizes": settings.IFRAME_PLAYER_SIZE,
         "min_num_ratings": settings.MIN_NUMBER_RATINGS,
+        "show_category_validation": show_category_validation,
+        "category_validation_form": category_validation_form,
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, "sounds/sound.html", tvars)

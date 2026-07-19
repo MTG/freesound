@@ -1,0 +1,12 @@
+{# Inline yes/no "category validation" box; shown by sounds.views.sound only when the category_validation experiment decides to. Plain POST -> user-feedback-submit -> reload. #}
+{# Fields are rendered one by one (not form.as_p) so Django does not wrap them in <p>/<ul>, which would stack everything vertically. #}
+<div id="categoryValidationBox" class="padding-1 border-grey-light border-radius v-spacing-top-2 text-14 text-grey">
+    <form method="post" action="{% url 'user-feedback-submit' %}" class="disable-on-submit">
+        {% csrf_token %}
+        <input type="hidden" name="experiment_id" value="category_validation">
+        {{ category_validation_form.sound_id }}
+        {{ category_validation_form.answer.label }}
+        {% for radio in category_validation_form.answer %}<label class="h-spacing-1">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}
+        <button type="submit" class="btn-inverse text-14 h-spacing-2">Send</button>
+    </form>
+</div>

@@ -611,6 +611,7 @@ class SoundTemplateCacheTests(TestCase):
     def _get_sound_view_cache_keys(self):
         return [
             get_template_cache_key("bw_sound_page", self.sound.id),
+            get_template_cache_key("bw_sound_page_details", self.sound.id),
             get_template_cache_key("bw_sound_page_sidebar", self.sound.id),
         ]
 

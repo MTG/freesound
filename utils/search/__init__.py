@@ -168,7 +168,7 @@ class SearchEngineTimeoutException(SearchEngineException):
 
 
 class SearchEngineBase:
-    solr_base_url = None
+    solr_base_url: str | None = None
 
     # Test SearchEngineBase with `pytest -m "search_engine" utils/search/backends/test_search_engine_backend.py`
 

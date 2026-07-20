@@ -66,7 +66,20 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "django-stubs>=5.2.8",
+    # django-stubs 4.2.x targets Django 4.2
+    "django-stubs[compatible-mypy]~=4.2.7",
+    "djangorestframework-stubs~=3.14.5",
+    "types-requests",
+    "types-Markdown",
+    "types-PyYAML",
+    "types-bleach",
+    "types-openpyxl",
+    "types-oauthlib",
+    "types-psutil",
+    "types-python-dateutil",
+    "types-Pillow",
+    "types-beautifulsoup4",
+    "types-six",
     "pip-licenses>=5.5.0",
     "pyright>=1.1.409",
     "ty>=0.0.7",
@@ -135,3 +148,50 @@ exclude = [
     "_docs/*",
     "**/migrations/*",
 ]
+
+[tool.mypy]
+python_version = "3.10"
+plugins = ["mypy_django_plugin.main"]
+exclude = [
+    '/migrations/',
+    '^_docs/',
+    '^tagrecommendation/',
+    '^similarity/',
+    '^textencoder/',
+]
+
+[tool.django-stubs]
+django_settings_module = "freesound.test_settings"
+
+# These packages have no types, ignore them
+[[tool.mypy.overrides]]
+module = [
+    "adminsortable.*",
+    "akismet",
+    "boto3",
+    "botocore.*",
+    "celery",
+    "community",
+    "debug_toolbar.*",
+    "debugpy",
+    "django_object_actions",
+    "django_ratelimit.*",
+    "django_recaptcha.*",
+    "feedparser",
+    "hotshot",
+    "luqum.*",
+    "mapbox",
+    "multiupload_plus.*",
+    "networkx.*",
+    "oauth2_provider.*",
+    "past.*",
+    "pysndfile",
+    "pysolr",
+    "silk.*",
+    "sklearn.*",
+    "stripe",
+    "whitenoise.*",
+    "xlrd",
+    "zenpy.*",
+]
+ignore_missing_imports = true

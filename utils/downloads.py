@@ -23,10 +23,13 @@ from __future__ import annotations
 import datetime
 import random
 import zlib
+from typing import TYPE_CHECKING
 
-from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.utils import timezone
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
 
 from donations.models import DonationsModalSettings
 from sounds.models import Download, PackDownload

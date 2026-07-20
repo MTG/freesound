@@ -35,7 +35,7 @@ from utils.logging_filters import get_client_ip
 console_logger = logging.getLogger("console")
 
 last_cached_blocked_ips = []
-last_cached_blocked_ips_timestamp = 0
+last_cached_blocked_ips_timestamp: float = 0
 
 
 def get_ips_to_block() -> list[str]:

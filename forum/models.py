@@ -70,6 +70,11 @@ class Forum(SortableMixin):
         if commit:
             self.save()
 
+    def set_num_posts(self, commit=False):
+        self.num_posts = Post.objects.filter(thread__forum=self, moderation_state="OK").count()
+        if commit:
+            self.save(update_fields=["num_posts"])
+
     def __str__(self):
         return self.name
 
@@ -121,6 +126,11 @@ class Thread(models.Model):
         invalidate_template_cache("bw_thread_common_commenters", self.id)
 
         return has_posts
+
+    def set_num_posts(self, commit=False):
+        self.num_posts = self.post_set.filter(moderation_state="OK").count()
+        if commit:
+            self.save(update_fields=["num_posts"])
 
     def set_first_post(self, commit=False):
         self.first_post = self.post_set.first()

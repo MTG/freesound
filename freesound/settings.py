@@ -830,6 +830,7 @@ APIV2 = {
 }
 
 REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "apiv2.handlers.api_exception_handler",
     "DEFAULT_PAGINATION_CLASS": "apiv2.pagination.CustomPagination",
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_RENDERER_CLASSES": (

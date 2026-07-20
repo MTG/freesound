@@ -59,7 +59,6 @@ from utils.search.search_sounds import parse_weights_parameter
 
 from .examples import examples
 
-error_logger = logging.getLogger("api_errors")
 search_logger = logging.getLogger("search")
 cache_api_monitoring = caches["api_monitoring"]
 

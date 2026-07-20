@@ -129,7 +129,7 @@ def rate_per_ip(group, request):
 class RequestLimitReason(enum.Enum):
     """Cause of a request-limit event, used as the `reason` label on request_limit_events_total."""
 
-    # An APIv2 request exceeded its throttling rate (apiv2/exceptions.py)
+    # An APIv2 request exceeded its throttling rate (apiv2/handlers.py)
     API_THROTTLE = "api_throttle"
     # An authenticated user exceeded the daily download limit (utils/download_limit.py)
     DAILY_DOWNLOAD_LIMIT = "daily_download_limit"

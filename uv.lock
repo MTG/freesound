@@ -803,7 +803,7 @@ requires-dist = [
     { name = "pyjwt", specifier = "==2.6.0" },
     { name = "pyparsing", specifier = "==2.4.7" },
     { name = "pysndfile", specifier = "~=1.5.3" },
-    { name = "pysolr", specifier = "==3.10.0" },
+    { name = "pysolr", git = "https://github.com/django-haystack/pysolr.git?rev=6b8b1f973fbb00fd01ca520440d27cda6abcce55" },
     { name = "pytest", specifier = "~=8.0.2" },
     { name = "pytest-django", specifier = "~=4.8.0" },
     { name = "python-louvain", specifier = "==0.16" },
@@ -1389,13 +1389,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/da/d7/a7520f9bcc0b8b9d1
 
 [[package]]
 name = "pysolr"
-version = "3.10.0"
-source = { registry = "https://pypi.org/simple" }
+version = "3.11.0"
+source = { git = "https://github.com/django-haystack/pysolr.git?rev=6b8b1f973fbb00fd01ca520440d27cda6abcce55#6b8b1f973fbb00fd01ca520440d27cda6abcce55" }
 dependencies = [
     { name = "requests" },
-    { name = "setuptools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6d/f5/59f3375b12172651c02615ed54b9ca8e5ca7cbf6d89a8506a5daec4ed813/pysolr-3.10.0.tar.gz", hash = "sha256:127b4a2dd169234acb1586643a6cd1e3e94b917921e69bf569d7b2a2aa0ef409", size = 59110, upload-time = "2024-09-18T22:49:01.395Z" }
 
 [[package]]
 name = "pytest"
@@ -1555,15 +1553,6 @@ wheels = [
 [package.optional-dependencies]
 django = [
     { name = "django" },
-]
-
-[[package]]
-name = "setuptools"
-version = "80.9.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/18/5d/3bf57dcd21979b887f014ea83c24ae194cfcd12b9e0fda66b957c69d1fca/setuptools-80.9.0.tar.gz", hash = "sha256:f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c", size = 1319958, upload-time = "2025-05-27T00:56:51.443Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a3/dc/17031897dae0efacfea57dfd3a82fdd2a2aeb58e0ff71b77b87e44edc772/setuptools-80.9.0-py3-none-any.whl", hash = "sha256:062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922", size = 1201486, upload-time = "2025-05-27T00:56:49.664Z" },
 ]
 
 [[package]]

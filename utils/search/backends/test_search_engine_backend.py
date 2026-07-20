@@ -848,14 +848,18 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
     )
     assert results.docs[0]["id"] == test_sounds[0].id, "Searching in the 'name' field did not return the expected sound"
 
-    # Test partial matching in the original_filename also works
+    # Test partial matching in the original_filename also works.
+    # There are three sounds with "Glass E1" in the name, so they all score equally and should all
+    # appear as the first 3 results (no guarantees as to ordering within this group)
     results = run_sounds_query_and_save_results(
         search_engine_sounds_backend,
         output_file_handle,
         dict(textual_query="Glass E1", query_fields={settings.SEARCH_SOUNDS_FIELD_NAME: 1}),
     )
-    assert results.docs[0]["id"] == test_sounds[0].id, (
-        "Searching in the 'name' field (partial match) did not return the expected sound"
+    expected_top_ids = {s.id for s in test_sounds if s.original_filename.startswith("Glass E1")}
+    assert len(expected_top_ids) == 3, "Expected exactly three 'Glass E1' sounds in the test fixture"
+    assert {r["id"] for r in results.docs[:3]} == expected_top_ids, (
+        "Searching in the 'name' field (partial match) did not return the expected sounds"
     )
 
     # Test searching in the tags field...
@@ -880,16 +884,16 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
     result_sids = [s["id"] for s in results.docs]
     assert sound_with_tags.id in result_sids, "Searching in the 'tags' field did not return the expected sound"
 
-    # Test searching in the description field...
+    # Test searching in the description field. Many fixture sounds share an identical description,
+    # so the expected sound should appear somewhere in the first results, not necessarily at the top.
     # ...first with full description
     results = run_sounds_query_and_save_results(
         search_engine_sounds_backend,
         output_file_handle,
         dict(textual_query=test_sounds[0].description, query_fields={settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 1}),
     )
-    assert results.docs[0]["id"] == test_sounds[0].id, (
-        "Searching in the 'description' field did not return the expected sound"
-    )
+    result_sids = [s["id"] for s in results.docs]
+    assert test_sounds[0].id in result_sids, "Searching in the 'description' field did not return the expected sound"
 
     # ...then with a partial description
     results = run_sounds_query_and_save_results(
@@ -900,7 +904,8 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
             query_fields={settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 1},
         ),
     )
-    assert results.docs[0]["id"] == test_sounds[0].id, (
+    result_sids = [s["id"] for s in results.docs]
+    assert test_sounds[0].id in result_sids, (
         "Searching in the 'description' field (partial match) did not return the expected sound"
     )
 

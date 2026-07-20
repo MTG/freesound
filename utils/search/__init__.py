@@ -153,11 +153,36 @@ class SearchResults:
 
 
 class SearchEngineException(Exception):
-    pass
+    """Base class for all search engine errors. Also used for anything we couldn't
+    classify more specifically (including validation errors raised by the query processor)."""
 
 
 class SearchEngineTimeoutException(SearchEngineException):
-    pass
+    """The request to the search engine timed out (client-side), or the search engine
+    returned partial results because it exceeded its own time limit."""
+
+
+class SearchEngineBadRequestException(SearchEngineException):
+    """The search engine rejected the request as malformed (an HTTP 4xx). Typically the
+    result of bad user input rather than a fault on our side."""
+
+
+class SearchEngineSyntaxErrorException(SearchEngineBadRequestException):
+    """The search engine could not parse the query or filter."""
+
+
+class SearchEngineUndefinedFieldException(SearchEngineBadRequestException):
+    """The query referenced a field name that does not exist in the schema."""
+
+
+class SearchEngineInvalidValueException(SearchEngineBadRequestException):
+    """A field value could not be parsed by the search engine (e.g. a non-numeric value
+    for a numeric field)."""
+
+
+class SearchEngineInternalErrorException(SearchEngineException):
+    """The search engine reported an internal fault (an HTTP 5xx). Typically indicates a
+    bug on our side (e.g. a malformed block-join query) rather than bad user input."""
 
 
 class SearchEngineBase:

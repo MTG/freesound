@@ -54,7 +54,12 @@ from apiv2.exceptions import (
 from apiv2.forms import API_SORT_OPTIONS_MAP
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
-from utils.search import SearchEngineException, SearchEngineTimeoutException, get_search_engine
+from utils.search import (
+    SearchEngineException,
+    SearchEngineInternalErrorException,
+    SearchEngineTimeoutException,
+    get_search_engine,
+)
 from utils.search.search_sounds import parse_weights_parameter
 
 from .examples import examples
@@ -362,6 +367,9 @@ def api_search(search_form, target_file=None, resource=None):
             )
         )
         raise ServerErrorException(msg="Search is overloaded, please try again later.", resource=resource)
+    except SearchEngineInternalErrorException as e:
+        # A genuine fault on the search server (HTTP 5xx), not something the API client got wrong
+        raise ServerErrorException(msg=f"Search server error: {str(e)}", resource=resource)
     except SearchEngineException as e:
         if search_form.cleaned_data["filter"] is not None:
             raise BadRequestException(

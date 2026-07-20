@@ -26,11 +26,22 @@ from collections import defaultdict
 from datetime import date, datetime
 
 import pysolr
+import requests
 from django.conf import settings
 
 from forum.models import Post
 from sounds.models import Sound, SoundSimilarityVector
-from utils.search import SearchEngineBase, SearchEngineException, SearchEngineTimeoutException, SearchResults
+from utils.search import (
+    SearchEngineBadRequestException,
+    SearchEngineBase,
+    SearchEngineException,
+    SearchEngineInternalErrorException,
+    SearchEngineInvalidValueException,
+    SearchEngineSyntaxErrorException,
+    SearchEngineTimeoutException,
+    SearchEngineUndefinedFieldException,
+    SearchResults,
+)
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
 from utils.text import remove_control_chars
 
@@ -187,11 +198,37 @@ class FreesoundSoundJsonEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, value)
 
 
+# pysolr embeds the HTTP status and Solr's reason string in its SolrError message, e.g.
+#   "Solr responded with an error (HTTP 400): [Reason: undefined field foobar]"
+_SOLR_ERROR_HTTP_CODE_RE = re.compile(r"\(HTTP (\d{3})\)")
+
+
 def _raise_search_engine_exception(error: BaseException) -> None:
-    # pysolr swallows exceptions and returns a generic SolrError with some specific text in the message
-    # super annoying but this is the only way to check the type of error.
-    if "timed out" in str(error).lower():
+    # pysolr swallows the underlying error and re-raises an opaque SolrError, so classify it
+    # into a typed exception (see utils.search) so each error family is a distinct Sentry issue.
+
+    # A client-side timeout is chained onto the SolrError via `raise SolrError(...) from err`.
+    # A Solr-internal timeout has no chained cause and surfaces below as a generic 5xx.
+    if isinstance(error.__cause__, requests.exceptions.Timeout):
         raise SearchEngineTimeoutException(error)
+
+    message = str(error)
+    code_match = _SOLR_ERROR_HTTP_CODE_RE.search(message)
+    status_code = int(code_match.group(1)) if code_match else None
+    reason = message.lower()
+
+    if status_code is not None and 400 <= status_code < 500:
+        if "cannot parse" in reason or "syntaxerror" in reason:
+            raise SearchEngineSyntaxErrorException(error)
+        if "undefined field" in reason:
+            raise SearchEngineUndefinedFieldException(error)
+        if "invalid number" in reason:
+            raise SearchEngineInvalidValueException(error)
+        raise SearchEngineBadRequestException(error)
+
+    if status_code is not None and 500 <= status_code < 600:
+        raise SearchEngineInternalErrorException(error)
+
     raise SearchEngineException(error)
 
 

@@ -311,15 +311,17 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
     elif post.moderation_state == "OK":
         try:
             with transaction.atomic():
-                post.author.profile.num_posts = F("num_posts") - 1
-                post.author.profile.save()
+                # Update the author's profile count with a queryset update so that it is a no-op when the profile has already been deleted.
+                accounts.models.Profile.objects.filter(user_id=post.author_id).update(
+                    num_posts=Greatest(F("num_posts") - 1, 0)
+                )
                 post.thread.forum.refresh_from_db()
-                post.thread.forum.num_posts = F("num_posts") - 1
+                post.thread.forum.num_posts = Greatest(F("num_posts") - 1, 0)
                 post.thread.forum.set_last_post()
                 post.thread.forum.save()
                 thread_has_posts = post.thread.set_last_post()
                 if thread_has_posts:
-                    post.thread.num_posts = F("num_posts") - 1
+                    post.thread.num_posts = Greatest(F("num_posts") - 1, 0)
                     post.thread.save()
 
                     # If this post was the first post in the thread then we should set it to the next one
@@ -335,11 +337,6 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
             # to update the thread, but it would be nice to get to the forum object
             # somehow and update that one....
             web_logger.info("Tried setting last posts for thread and forum, but the thread has already been deleted?")
-        except accounts.models.Profile.DoesNotExist:
-            # When a user is deleted using the admin, is possible that his posts are deleted after the profile has been
-            # deleted. In that case we shouldn't update the value of num_posts because the profile doesn't exists
-            # anymore, here it's safe to ignore the exception since we are deleting all the objects.
-            web_logger.info("Tried setting last posts for thread and forum, but the profile has already been deleted?")
     invalidate_template_cache("latest_posts")
 
 

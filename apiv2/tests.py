@@ -17,6 +17,8 @@
 # Authors:
 #     See AUTHORS file.
 #
+from unittest import mock
+
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
@@ -29,6 +31,7 @@ from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer,
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
 from utils.ratelimit import request_limit_events_total
+from utils.search import SearchEngineUnavailableException
 from utils.test_helpers import counter_samples, create_user_and_sounds
 
 from .exceptions import BadRequestException, Throttled
@@ -145,6 +148,47 @@ class TestAPI(TestCase):
             "/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers
         )
         self.assertEqual(resp.status_code, 200)
+
+
+class TestApiSearchServerError(TestCase):
+    """When the search backend reports a server-side fault (5xx or unreachable), the API must
+    return a 500 with a generic message and must not leak the raw Solr reason to the client."""
+
+    fixtures = ["licenses"]
+
+    SOLR_REASON = "Failed to connect to server at http://solr:8983/solr/freesound"
+    EXPECTED_MESSAGE = "There was a problem with the search server, please try again later."
+
+    def setUp(self):
+        user, _, _ = create_user_and_sounds(num_sounds=1)
+        self.client_key = ApiV2Client.objects.create(
+            user=user, status="OK", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
+        ).key
+
+    def _search(self):
+        headers = {"HTTP_AUTHORIZATION": f"Token {self.client_key}"}
+        return self.client.get(reverse("apiv2-sound-text-search") + "?query=test", secure=True, **headers)
+
+    @mock.patch("apiv2.exceptions.sentry_sdk.capture_exception")
+    @mock.patch("apiv2.apiv2_utils.search_logger")
+    @mock.patch("apiv2.apiv2_utils.get_search_engine")
+    def test_server_error_returns_generic_500_without_leaking_solr_reason(
+        self, get_search_engine, search_logger, capture_exception
+    ):
+        get_search_engine.return_value.search_sounds.side_effect = SearchEngineUnavailableException(self.SOLR_REASON)
+
+        resp = self._search()
+
+        self.assertEqual(resp.status_code, 500)
+        self.assertEqual(resp.json()["detail"], self.EXPECTED_MESSAGE)
+        self.assertNotIn(self.SOLR_REASON, resp.content.decode())
+
+        # Exactly one Sentry event (ServerErrorException self-captures on construction).
+        self.assertEqual(capture_exception.call_count, 1)
+        # Diagnostic detail goes to a breadcrumb via .info; .error would create a *second*
+        # event through Sentry's LoggingIntegration.
+        self.assertFalse(search_logger.error.called)
+        self.assertTrue(search_logger.info.called)
 
 
 class TestSoundCombinedSearchFormAPI(SimpleTestCase):

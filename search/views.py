@@ -46,6 +46,7 @@ from utils.pagination import PreSlicedCountProvidedPaginator, read_page
 from utils.ratelimit import RequestLimitReason, count_request_limit_event, key_for_ratelimiting, rate_per_ip
 from utils.search import (
     SearchEngineException,
+    SearchEngineInternalErrorException,
     SearchEngineTimeoutException,
     get_search_engine,
     search_query_processor,
@@ -275,6 +276,11 @@ def search_view_helper(request):
             )
         )
         return {"error_text": "Search is overloaded, please try again later."}
+    except SearchEngineInternalErrorException as e:
+        # A server-side fault (HTTP 5xx) or an unreachable search server, not the client's query.
+        search_logger.info(f"Search server error: {e}")
+        sentry_sdk.capture_exception(e)
+        return {"error_text": "There was a problem with the search server, please try again later."}
     except SearchEngineException as e:
         search_logger.info(f"Search error: query: {str(query_params)} error {e}")
         sentry_sdk.capture_exception(e)
@@ -433,6 +439,12 @@ def search_forum(request):
             )
             error = True
             error_text = "Search is overloaded, please try again later."
+        except SearchEngineInternalErrorException as e:
+            # A server-side fault (HTTP 5xx) or an unreachable search server, not the client's query.
+            search_logger.info(f"Search server error: {e}")
+            sentry_sdk.capture_exception(e)
+            error = True
+            error_text = "There was a problem with the search server, please try again later."
         except SearchEngineException as e:
             search_logger.info(f"Search error: query: {search_query} error {e}")
             sentry_sdk.capture_exception(e)

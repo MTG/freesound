@@ -24,13 +24,26 @@ import random
 import re
 from collections import defaultdict
 from datetime import date, datetime
+from http.client import HTTPException
 
 import pysolr
+import requests
 from django.conf import settings
 
 from forum.models import Post
 from sounds.models import Sound, SoundSimilarityVector
-from utils.search import SearchEngineBase, SearchEngineException, SearchEngineTimeoutException, SearchResults
+from utils.search import (
+    SearchEngineBadRequestException,
+    SearchEngineBase,
+    SearchEngineException,
+    SearchEngineInternalErrorException,
+    SearchEngineInvalidValueException,
+    SearchEngineSyntaxErrorException,
+    SearchEngineTimeoutException,
+    SearchEngineUnavailableException,
+    SearchEngineUndefinedFieldException,
+    SearchResults,
+)
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
 from utils.text import remove_control_chars
 
@@ -187,11 +200,45 @@ class FreesoundSoundJsonEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, value)
 
 
+# pysolr embeds the HTTP status and Solr's reason string in its SolrError message, e.g.
+#   "Solr responded with an error (HTTP 400): [Reason: undefined field foobar]"
+_SOLR_ERROR_HTTP_CODE_RE = re.compile(r"\(HTTP (\d{3})\)")
+
+
 def _raise_search_engine_exception(error: BaseException) -> None:
-    # pysolr swallows exceptions and returns a generic SolrError with some specific text in the message
-    # super annoying but this is the only way to check the type of error.
-    if "timed out" in str(error).lower():
-        raise SearchEngineTimeoutException(error)
+    # pysolr swallows the underlying error and re-raises an opaque SolrError, so classify it
+    # into a typed exception (see utils.search) so each error family is a distinct Sentry issue.
+    message = str(error)
+    code_match = _SOLR_ERROR_HTTP_CODE_RE.search(message)
+    status_code = int(code_match.group(1)) if code_match else None
+    reason = message.lower()
+
+    # Solr responded with a status — trust it over any chained cause. The specific 4xx
+    # families are checked before the generic "cannot parse" wrapper, which Solr prepends to
+    # invalid-number / undefined-field errors.
+    if status_code is not None and 400 <= status_code < 500:
+        if "undefined field" in reason:
+            raise SearchEngineUndefinedFieldException(error)
+        if "invalid number" in reason:
+            raise SearchEngineInvalidValueException(error)
+        if "cannot parse" in reason or "syntaxerror" in reason:
+            raise SearchEngineSyntaxErrorException(error)
+        raise SearchEngineBadRequestException(error)
+
+    if status_code is not None and 500 <= status_code < 600:
+        raise SearchEngineInternalErrorException(error)
+
+    # No HTTP status: Solr never answered. Distinguish transport failures by the exception
+    # pysolr chained via `raise SolrError(...) from err`. Timeout is checked before the broader
+    # (RequestException, HTTPException) because Timeout is a subclass of RequestException and
+    # must win. The explicit `status_code is None` guard encodes that cause-classification is
+    # only the no-status fallback.
+    if status_code is None:
+        if isinstance(error.__cause__, requests.exceptions.Timeout):
+            raise SearchEngineTimeoutException(error)
+        if isinstance(error.__cause__, (requests.exceptions.RequestException, HTTPException)):
+            raise SearchEngineUnavailableException(error)
+
     raise SearchEngineException(error)
 
 

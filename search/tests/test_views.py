@@ -30,7 +30,7 @@ from django.urls import reverse
 from sounds.models import Sound
 from utils.pagination import PreSlicedCountProvidedPaginator
 from utils.ratelimit import request_limit_events_total
-from utils.search import SearchResults
+from utils.search import SearchEngineInternalErrorException, SearchResults
 from utils.test_helpers import counter_samples, create_user_and_sounds
 
 
@@ -260,6 +260,36 @@ class SearchOutOfRangeTests(TestCase):
         self.assertNotContains(resp, "No more results")
         # 0 results shows no paginator
         self.assertNotContains(resp, "bw-pagination_container")
+
+
+class SearchServerErrorTests(TestCase):
+    """A server-side search fault (5xx / unreachable) must show a "problem with the search server"
+    message, not the "is your query correct?" message that blames the user's query."""
+
+    SERVER_MESSAGE = "There was a problem performing your search, please try again later."
+    QUERY_BLAME_MESSAGE = "is your query correct?"
+
+    @mock.patch("search.views.perform_search_engine_query")
+    def test_sounds_search_server_error_shows_server_message(self, perform_search_engine_query):
+        exc = SearchEngineInternalErrorException("Solr 500")
+        perform_search_engine_query.side_effect = exc
+
+        resp = self.client.get(reverse("sounds-search") + "?q=test")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, self.SERVER_MESSAGE)
+        self.assertNotContains(resp, self.QUERY_BLAME_MESSAGE)
+
+    @mock.patch("search.views.get_search_engine")
+    def test_forum_search_server_error_shows_server_message(self, get_search_engine):
+        exc = SearchEngineInternalErrorException("Solr 500")
+        get_search_engine.return_value.search_forum_posts.side_effect = exc
+
+        resp = self.client.get(reverse("forums-search") + "?q=test")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, self.SERVER_MESSAGE)
+        self.assertNotContains(resp, self.QUERY_BLAME_MESSAGE)
 
 
 class SearchResultClustering(TestCase):

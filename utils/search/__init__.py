@@ -160,11 +160,37 @@ class SearchResults:
 
 
 class SearchEngineException(Exception):
-    pass
+    """Base class for all search engine errors."""
 
 
 class SearchEngineTimeoutException(SearchEngineException):
-    pass
+    """The request to the search engine timed out (client-side), or the search engine
+    returned partial results because it exceeded its own time limit."""
+
+
+class SearchEngineBadRequestException(SearchEngineException):
+    """The search engine rejected the request with an HTTP 4xx response."""
+
+
+class SearchEngineSyntaxErrorException(SearchEngineBadRequestException):
+    """The search engine could not parse the query or filter."""
+
+
+class SearchEngineUndefinedFieldException(SearchEngineBadRequestException):
+    """The query referenced a field name that does not exist in the schema."""
+
+
+class SearchEngineInvalidValueException(SearchEngineBadRequestException):
+    """A field value could not be parsed by the search engine (e.g. a non-numeric value
+    for a numeric field)."""
+
+
+class SearchEngineInternalErrorException(SearchEngineException):
+    """The search engine returned an HTTP 5xx response."""
+
+
+class SearchEngineUnavailableException(SearchEngineInternalErrorException):
+    """Could not connect to the search engine or receive a complete response."""
 
 
 class SearchEngineBase:

@@ -54,7 +54,12 @@ from apiv2.forms import API_SORT_OPTIONS_MAP
 from apiv2.models import ApiV2Client
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
-from utils.search import SearchEngineException, SearchEngineTimeoutException, get_search_engine
+from utils.search import (
+    SearchEngineException,
+    SearchEngineInternalErrorException,
+    SearchEngineTimeoutException,
+    get_search_engine,
+)
 from utils.search.search_sounds import parse_weights_parameter
 
 from .examples import examples
@@ -307,6 +312,8 @@ def api_process_sort_parameter(sort):
 
 
 def api_search(search_form, target_file=None, resource=None):
+    # Any ServerErrorException raised from this will show to the user as a generic "an error occurred" message
+    # but the exception handler (apiv2/handlers.py) will also report the underlying error to sentry
     if (
         search_form.cleaned_data["query"] is None
         and search_form.cleaned_data["filter"] is None
@@ -374,7 +381,13 @@ def api_search(search_form, target_file=None, resource=None):
                 }
             )
         )
-        raise ServerErrorException(msg="Search is overloaded, please try again later.", resource=resource)
+        raise ServerErrorException(msg="Search is overloaded, please try again later.", resource=resource) from e
+    except SearchEngineInternalErrorException as e:
+        search_logger.info(f"Search server internal error: {e}")
+        raise ServerErrorException(
+            msg="There was a problem performing your search, please try again later.",
+            resource=resource,
+        ) from e
     except SearchEngineException as e:
         if search_form.cleaned_data["filter"] is not None:
             raise BadRequestException(
@@ -387,7 +400,7 @@ def api_search(search_form, target_file=None, resource=None):
         print(e)
         raise ServerErrorException(
             msg="The search server could not be reached or some unexpected error occurred.", resource=resource
-        )
+        ) from e
 
 
 ###############

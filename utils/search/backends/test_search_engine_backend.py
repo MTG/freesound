@@ -49,7 +49,12 @@ from fscollections.models import Collection, CollectionSound
 from search import solrapi
 from sounds.models import Download, Sound, SoundAnalysis, SoundSimilarityVector
 from tags.models import SoundTag
-from utils.search import get_search_engine
+from utils.search import (
+    SearchEngineInvalidValueException,
+    SearchEngineSyntaxErrorException,
+    SearchEngineUndefinedFieldException,
+    get_search_engine,
+)
 
 console_logger = logging.getLogger("console")
 console_logger.setLevel(logging.DEBUG)
@@ -557,6 +562,20 @@ def expected_license_facet_results_group_counts_as_one_in_facets(test_sounds):
         else:
             expected_license_facet_results_group_counts_as_one_in_facets[license_name] += 1
     return expected_license_facet_results_group_counts_as_one_in_facets
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_search_error_classification(search_engine_sounds_backend):
+    # Do a real query to solr with invalid queries, and check that we categorise the returned
+    # messages into the correct exception type.
+    with pytest.raises(SearchEngineUndefinedFieldException):
+        search_engine_sounds_backend.search_sounds(query_filter="nonexistent_field_for_exception_test:value")
+    with pytest.raises(SearchEngineSyntaxErrorException):
+        search_engine_sounds_backend.search_sounds(query_filter="username:(")
+    with pytest.raises(SearchEngineInvalidValueException):
+        search_engine_sounds_backend.search_sounds(query_filter="duration:[5,052 TO *]")
 
 
 @pytest.mark.search_engine

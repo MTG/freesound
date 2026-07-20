@@ -35,6 +35,7 @@ from bookmarks.models import Bookmark
 from fscollections.models import Collection, CollectionSound
 from sounds.models import DownloadAPI, PackDownloadAPI, PackDownloadSoundAPI, Sound
 from utils.ratelimit import request_limit_events_total
+from utils.search import SearchEngineUnavailableException
 from utils.test_helpers import counter_samples, create_user_and_sounds
 
 from .exceptions import (
@@ -278,6 +279,34 @@ class TestDownloadViews(TestCase):
                     pack_download_api=pack_download_api, sound=sound, license_id=sound.license_id
                 ).exists()
             )
+
+
+class TestApiSearchServerError(TestCase):
+    """When the search backend reports a server-side fault (5xx or unreachable), the API must
+    return a 500 with a generic message and must not leak the raw Solr reason to the client."""
+
+    SOLR_REASON = "Failed to connect to server at http://solr:8983/solr/freesound"
+    EXPECTED_MESSAGE = "There was a problem performing your search, please try again later."
+
+    def setUp(self):
+        user = User.objects.create_user(username="searchuser")
+        self.client_key = ApiV2Client.objects.create(
+            user=user, status="OK", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
+        ).key
+
+    def _search(self):
+        headers = {"HTTP_AUTHORIZATION": f"Token {self.client_key}"}
+        return self.client.get(reverse("apiv2-sound-text-search") + "?query=test", secure=True, **headers)
+
+    @mock.patch("apiv2.apiv2_utils.get_search_engine")
+    def test_server_error_returns_generic_500_without_leaking_solr_reason(self, get_search_engine):
+        get_search_engine.return_value.search_sounds.side_effect = SearchEngineUnavailableException(self.SOLR_REASON)
+
+        resp = self._search()
+
+        self.assertEqual(resp.status_code, 500)
+        self.assertEqual(resp.json()["detail"], self.EXPECTED_MESSAGE)
+        self.assertNotIn(self.SOLR_REASON, resp.content.decode())
 
 
 class TestSoundCombinedSearchFormAPI(SimpleTestCase):

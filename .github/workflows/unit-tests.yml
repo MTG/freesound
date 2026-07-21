@@ -12,10 +12,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    # https://github.com/actions/checkout/releases/tag/v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      # https://github.com/docker/setup-buildx-action/releases/tag/v4.2.0
+      uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
 
     - name: Setup
       run: bash -c 'mkdir -p ./freesound-data/{packs,uploads,avatars} && echo FS_USER_ID_FROM_ENV=$(id -u) > .env && cp freesound/local_settings.example.py freesound/local_settings.py'
@@ -31,7 +33,8 @@ jobs:
       run: docker compose -f docker-compose.test.yml pull db redis
 
     - name: Build test_runner image
-      uses: docker/build-push-action@v5
+      # https://github.com/docker/build-push-action/releases/tag/v7.3.0
+      uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a
       with:
         context: .
         file: ./docker/Dockerfile.workers_web

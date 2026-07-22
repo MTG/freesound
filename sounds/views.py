@@ -52,6 +52,7 @@ from sounds.forms import FlagForm, PackEditForm, SoundEditAndDescribeForm
 from sounds.models import (
     DeletedSound,
     Download,
+    License,
     Pack,
     PackDownload,
     PackDownloadSound,
@@ -423,9 +424,7 @@ def sound_edit(request, username, sound_id):
     session_key_prefix = request.GET.get(
         "session", str(uuid.uuid4())[0:8]
     )  # Get existing session key if we are already in an edit session or create a new one
-    request.session[f"{session_key_prefix}-edit_sounds"] = [
-        sound
-    ]  # Add the list of sounds to edit in the session object
+    request.session[f"{session_key_prefix}-edit_sounds"] = [sound.id]
     request.session[f"{session_key_prefix}-len_original_edit_sounds"] = 1
     return edit_and_describe_sounds_helper(request, session_key_prefix=session_key_prefix)
 
@@ -598,10 +597,17 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
         for pack_to_process in packs_to_process:
             pack_to_process.process()
 
-    files = request.session.get(
-        f"{session_key_prefix}-describe_sounds", None
-    )  # List of File objects of sounds to describe
-    sounds = request.session.get(f"{session_key_prefix}-edit_sounds", None)  # List of Sound objects to edit
+    files = request.session.get(f"{session_key_prefix}-describe_sounds", None)
+    sound_ids = request.session.get(f"{session_key_prefix}-edit_sounds", None)
+    # Back-compat shim for sessions written before the switch to JSON-safe values
+    # (pickled File / Sound instances). Remove once SESSION_SERIALIZER is flipped to
+    # JSONSerializer in the follow-up PR.
+    if files and not isinstance(files[0], dict):
+        files = [{"name": f.name, "full_path": f.full_path} for f in files]
+    if sound_ids and not isinstance(sound_ids[0], int):
+        sound_ids = [s.id for s in sound_ids]
+    # Preserve today's `is None` vs `== []` distinction: empty list ≠ missing key.
+    sounds = list(Sound.objects.ordered_ids(sound_ids)) if sound_ids is not None else None
     if (describing and files is None) or (not describing and sounds is None):
         # Expecting either a list of sounds or audio files to describe, got none. Redirect to main manage sounds page.
         return HttpResponseRedirect(reverse("accounts-manage-sounds", args=["published"]))
@@ -620,17 +626,20 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
         (len_original_describe_edit_sounds - len(all_remaining_sounds_to_edit_or_describe)) / forms_per_round + 1
     )
     files_data_for_players = []  # Used when describing sounds (not when editing) to be able to show sound players
-    preselected_license = request.session.get(
-        f"{session_key_prefix}-describe_license", False
-    )  # Pre-selected from the license selection page when describing multiple sounds
-    preselected_pack = request.session.get(
-        f"{session_key_prefix}-describe_pack", False
-    )  # Pre-selected from the pack selection page when describing multiple sounds
+    preselected_license_id = request.session.get(f"{session_key_prefix}-describe_license", False)
+    preselected_pack_id = request.session.get(f"{session_key_prefix}-describe_pack", False)
+    # Back-compat shim (bool is a subclass of int, so the int check covers False/True too).
+    if preselected_license_id and not isinstance(preselected_license_id, int):
+        preselected_license_id = preselected_license_id.id
+    if preselected_pack_id and not isinstance(preselected_pack_id, int):
+        preselected_pack_id = preselected_pack_id.id
+    preselected_license = License.objects.filter(id=preselected_license_id).first() if preselected_license_id else False
+    preselected_pack = Pack.objects.filter(id=preselected_pack_id).first() if preselected_pack_id else False
 
     for count, element in enumerate(sounds_to_edit_or_describe):
         prefix = str(count)
         if describing:
-            audio_file_path = element.full_path
+            audio_file_path = element["full_path"]
             duration = get_duration_from_processing_before_describe_files(audio_file_path)
             if duration > 0.0:
                 processing_before_describe_base_url = get_processing_before_describe_sound_base_url(audio_file_path)
@@ -653,7 +662,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
             form = SoundEditAndDescribeForm(
                 request.POST,
                 prefix=prefix,
-                file_full_path=element.full_path if describing else None,
+                file_full_path=element["full_path"] if describing else None,
                 explicit_disable=element.is_explicit if not describing else False,
                 hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
                 user_packs=Pack.objects.filter(user=request.user if describing else element.user).exclude(
@@ -682,7 +691,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                 form.cleaned_data["sources"]
             )  # Add sources ids to list so sources sound selector can be initialized
             if describing:
-                form.audio_filename = element.name
+                form.audio_filename = element["name"]
             else:
                 form.sound_id = element.id
         else:
@@ -702,7 +711,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                 )
             else:
                 sound_sources_ids = []
-                initial = dict(name=os.path.splitext(element.name)[0])
+                initial = dict(name=os.path.splitext(element["name"])[0])
                 if preselected_license:
                     initial["license"] = preselected_license
                 if preselected_pack:
@@ -718,7 +727,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
             )
             form.sound_sources_ids = sound_sources_ids
             if describing:
-                form.audio_filename = element.name
+                form.audio_filename = element["name"]
             else:
                 form.sound_id = element.id
             forms.append(form)
@@ -760,8 +769,13 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
             else:
                 return HttpResponseRedirect(reverse("accounts-describe-sounds") + f"?session={session_key_prefix}")
         else:
-            # Remove sounds successfully described from session data
-            request.session[f"{session_key_prefix}-edit_sounds"] = sounds[forms_per_round:]
+            # Remove sounds successfully edited from session data.
+            # CRITICAL: derive remaining ids from the *refetched* sounds list, not from
+            # the raw sound_ids. Sound.objects.ordered_ids drops deleted ids, so
+            # len(sounds) ≤ len(sound_ids); slicing sound_ids[forms_per_round:] would
+            # re-present sounds already processed in this round whenever any earlier id
+            # had been deleted — silent duplicate edits.
+            request.session[f"{session_key_prefix}-edit_sounds"] = [s.id for s in sounds[forms_per_round:]]
 
             # If user was only editing one sound and has finished, clear session and redirect to the sound page
             if len(forms) == 1 and len_original_describe_edit_sounds == 1:

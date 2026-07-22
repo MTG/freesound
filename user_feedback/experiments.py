@@ -74,10 +74,10 @@ class Experiment:
             return False
         return True
 
-    def save_response(self, user, data):
+    def save_response(self, user, data, ip=None):
         """Store one answer as a UserFeedback row."""
         return UserFeedback.objects.create(
-            user=user, experiment_id=self.experiment_id, data=data
+            user=user, experiment_id=self.experiment_id, data=data, ip=ip
         )
 
 

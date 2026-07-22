@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_POST
 
 from user_feedback.experiments import get_experiment
+from utils.logging_filters import get_client_ip
 
 
 @login_required
@@ -26,7 +27,10 @@ def submit(request):
     is_ajax = bool(request.GET.get("ajax"))
     form = experiment.form_class(request.POST)
     if form.is_valid():
-        experiment.save_response(request.user, form.cleaned_data)
+        # get_client_ip returns "-" when there is no proxy header; store NULL then,
+        # since "-" is not a valid value for the ip column.
+        ip = get_client_ip(request)
+        experiment.save_response(request.user, form.cleaned_data, ip=ip if ip != "-" else None)
         if is_ajax:
             return JsonResponse({"success": True})
     elif is_ajax:

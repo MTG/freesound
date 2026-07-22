@@ -112,6 +112,26 @@ class SubmitAndModalViewTest(TestCase):
         self.assertEqual(row.data["selected_category"], "ss-n")
         self.assertEqual(row.data["text"], "wrong one")
 
+    # -- submit: client ip --
+    @override_settings(DEBUG=False)
+    def test_submit_stores_forwarded_ip(self):
+        self.client.post(
+            self.submit_url,
+            {"experiment_id": "category_validation", "sound_id": self.sound.id, "answer": "yes"},
+            HTTP_X_FORWARDED_FOR="5.6.7.8",
+        )
+        self.assertEqual(self._rows().get().ip, "5.6.7.8")
+
+    @override_settings(DEBUG=False)
+    def test_submit_without_proxy_header_stores_no_ip(self):
+        # get_client_ip returns "-" with no header; the view stores NULL, not "-"
+        # (which the ip column would reject).
+        self.client.post(
+            self.submit_url,
+            {"experiment_id": "category_validation", "sound_id": self.sound.id, "answer": "yes"},
+        )
+        self.assertIsNone(self._rows().get().ip)
+
     # -- submit: rejected, nothing saved --
     def test_no_without_category_is_rejected(self):
         response = self._submit(ajax=True, answer="no")

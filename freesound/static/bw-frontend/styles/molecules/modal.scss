@@ -155,14 +155,6 @@
   textarea {
     min-height: 100px;
   }
-
-  // Flex-wrap the category buttons so wrapped rows don't overlap.
-  .line-height-50 {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 8px;
-  }
 }
 
 // "No" answer shows the category buttons, so give that modal a bit more room

@@ -27,7 +27,7 @@ class CategoryValidationForm(forms.Form):
     answer = forms.ChoiceField(
         choices=ANSWER_CHOICES,
         widget=forms.RadioSelect,
-        label="Does this sound belong to this category?",
+        label="Does this sound belong to the category above?",
     )
 
     # Sound ID filled in by the server

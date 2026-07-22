@@ -25,9 +25,7 @@ class _FakeSound:
 class ExperimentBaseTest(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.user = User.objects.create_user(
-            "alice", email="alice@freesound.org", password="testpass"
-        )
+        self.user = User.objects.create_user("alice", email="alice@freesound.org", password="testpass")
 
     def _request(self, user):
         request = self.factory.get("/")
@@ -54,9 +52,9 @@ class ExperimentBaseTest(TestCase):
     def test_throttled_after_answering(self):
         experiment = _ToyExperiment()
         request = self._request(self.user)
-        self.assertTrue(experiment.should_show(request))          # shown before answering
-        experiment.save_response(self.user, {"answer": "yes"})    # yes/no only
-        self.assertFalse(experiment.should_show(request))         # not shown again after
+        self.assertTrue(experiment.should_show(request))  # shown before answering
+        experiment.save_response(self.user, {"answer": "yes"})  # yes/no only
+        self.assertFalse(experiment.should_show(request))  # not shown again after
 
     def test_category_validation_needs_a_category(self):
         experiment = CategoryValidation()
@@ -94,9 +92,7 @@ class SubmitAndModalViewTest(TestCase):
         row = self._rows().get()
         self.assertEqual(row.user, self.user)
         # cleaned_data of the whole form is stored; the two extras are empty for "yes".
-        self.assertEqual(
-            row.data, {"answer": "yes", "sound_id": self.sound.id, "selected_category": "", "text": ""}
-        )
+        self.assertEqual(row.data, {"answer": "yes", "sound_id": self.sound.id, "selected_category": "", "text": ""})
 
     def test_yes_ajax_returns_json(self):
         response = self._submit(ajax=True, answer="yes")
@@ -199,8 +195,8 @@ class PerSoundThrottleTest(TestCase):
 
         self.experiment.save_response(self.user, {"answer": "yes", "sound_id": first.id})
 
-        self.assertFalse(self.experiment.should_show(request, sound=first))   # answered -> hidden
-        self.assertTrue(self.experiment.should_show(request, sound=second))   # untouched -> still shown
+        self.assertFalse(self.experiment.should_show(request, sound=first))  # answered -> hidden
+        self.assertTrue(self.experiment.should_show(request, sound=second))  # untouched -> still shown
 
 
 @override_settings(FEEDBACK_SAMPLE_RATES={"category_validation": 0.5})

@@ -15,7 +15,7 @@ class UserFeedback(models.Model):
     """
 
     experiment_id = models.CharField(max_length=100, db_index=True)
-    # Optional, so anonymous users can leave feedback too. 
+    # Optional, so anonymous users can leave feedback too.
     # SET_NULL keeps the feedback row even if the account is later deleted.
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

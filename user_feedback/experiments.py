@@ -11,14 +11,14 @@ class Experiment:
     """Base class for a feedback experiment. One subclass = one experiment.
 
     An experiment is just code (no database table): it bundles what is specific to
-    it, e.g. id, how many people see it, rules for when to show it. The shared logic 
-    (auth check, sampling, throttling) lives here so every experiment behaves the same. 
+    it, e.g. id, how many people see it, rules for when to show it. The shared logic
+    (auth check, sampling, throttling) lives here so every experiment behaves the same.
     Subclasses override the small hooks below.
     """
 
-    experiment_id = None          # unique id, also stored on each UserFeedback row
-    form_class = None             # form the generic submit view validates for this experiment
-    modal_template = None         # optional follow-up modal, rendered by the modal view
+    experiment_id = None  # unique id, also stored on each UserFeedback row
+    form_class = None  # form the generic submit view validates for this experiment
+    modal_template = None  # optional follow-up modal, rendered by the modal view
 
     @property
     def sample_rate(self):
@@ -58,9 +58,7 @@ class Experiment:
     def is_throttled(self, request, **kwargs):
         """True if we should NOT show it because of 'do not nag' rules.
         Default: don't show again once the user has answered this experiment."""
-        return UserFeedback.objects.filter(
-            user=request.user, experiment_id=self.experiment_id
-        ).exists()
+        return UserFeedback.objects.filter(user=request.user, experiment_id=self.experiment_id).exists()
 
     def should_show(self, request, **kwargs):
         """Determines whether it should be shown to the user at this moment."""
@@ -76,9 +74,7 @@ class Experiment:
 
     def save_response(self, user, data, ip=None):
         """Store one answer as a UserFeedback row."""
-        return UserFeedback.objects.create(
-            user=user, experiment_id=self.experiment_id, data=data, ip=ip
-        )
+        return UserFeedback.objects.create(user=user, experiment_id=self.experiment_id, data=data, ip=ip)
 
 
 class CategoryValidation(Experiment):

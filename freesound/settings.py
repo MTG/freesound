@@ -433,6 +433,7 @@ ANNOUNCEMENT_CACHE_KEY = "announcement_cache"
 # -------------------------------------------------------------------------------
 # Broad Sound Taxonomy definition
 
+
 def load_broad_sound_taxonomy_from_csv(path):
     import csv
 
@@ -450,6 +451,7 @@ def load_broad_sound_taxonomy_from_csv(path):
                 "examples": row.get("examples", ""),
             }
     return taxonomy
+
 
 BROAD_SOUND_TAXONOMY_CSV_FILENAME = "bst_description_v1.1_250725.csv"
 BROAD_SOUND_TAXONOMY_CSV_DEFINITION_PATH = os.path.join(

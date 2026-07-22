@@ -100,6 +100,15 @@ class CategoryValidation(Experiment):
         # bst_top_level_categories drives the category field, same as the describe form.
         return {"sound": sound, "bst_top_level_categories": settings.BST_CATEGORY_CHOICES}
 
+    def is_throttled(self, request, sound=None, **kwargs):
+        # Once per sound per user: match on user + the sound_id saved in data, so a user
+        # answers each sound at most once but is still asked about other sounds.
+        if sound is None:
+            return True
+        return UserFeedback.objects.filter(
+            user=request.user, experiment_id=self.experiment_id, data__sound_id=sound.id
+        ).exists()
+
 
 # The registry: the single place experiments are listed. Add class + entry for a new experiment.
 EXPERIMENTS = {

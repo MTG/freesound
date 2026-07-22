@@ -153,3 +153,31 @@ class SubmitAndModalViewTest(TestCase):
 
     def test_modal_unknown_experiment_404(self):
         self.assertEqual(self.client.get(self.modal_url, {"experiment_id": "nope"}).status_code, 404)
+
+
+@override_settings(FEEDBACK_SAMPLE_RATES={"category_validation": 1.0})
+class PerSoundThrottleTest(TestCase):
+    """Answering about one sound must not stop the box appearing on other sounds:
+    category_validation throttles per sound, not once per user like the base class."""
+
+    fixtures = ["licenses"]
+
+    def setUp(self):
+        self.user, _, self.sounds = create_user_and_sounds(num_sounds=2, bst_category="fx-o")
+        self.experiment = CategoryValidation()
+
+    def _request(self):
+        request = RequestFactory().get("/")
+        request.user = self.user
+        return request
+
+    def test_answering_one_sound_does_not_throttle_another(self):
+        first, second = self.sounds
+        request = self._request()
+        self.assertTrue(self.experiment.should_show(request, sound=first))
+        self.assertTrue(self.experiment.should_show(request, sound=second))
+
+        self.experiment.save_response(self.user, {"answer": "yes", "sound_id": first.id})
+
+        self.assertFalse(self.experiment.should_show(request, sound=first))   # answered -> hidden
+        self.assertTrue(self.experiment.should_show(request, sound=second))   # untouched -> still shown

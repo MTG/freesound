@@ -25,12 +25,13 @@ class Experiment:
         """Fraction of eligible people to show it to (from settings; 0.0 = off)."""
         return settings.FEEDBACK_SAMPLE_RATES.get(self.experiment_id, 0.0)
 
-    def sampling_key(self, request):
-        """What we sample on. Default = the user (stable per user).
-        Override to sample per session, per sound, etc."""
+    def sampling_key(self, request, **kwargs):
+        """What we sample on. Default = the user (stable per user). Override to
+        sample per session, per sound, etc.; kwargs carry the context passed to
+        should_show (e.g. the sound)."""
         return str(request.user.id)
 
-    def is_sampled_in(self, request):
+    def is_sampled_in(self, request, **kwargs):
         """True if this key falls inside the sample_rate slice. Deterministic:
         the same key always lands the same way, so people are not re-rolled on
         every page load."""
@@ -39,7 +40,7 @@ class Experiment:
             return True
         if rate <= 0.0:
             return False
-        key = self.sampling_key(request)
+        key = self.sampling_key(request, **kwargs)
         if not key:
             return False
         digest = hashlib.sha256(f"{self.experiment_id}:{key}".encode()).hexdigest()
@@ -69,7 +70,7 @@ class Experiment:
             return False
         if self.is_throttled(request, **kwargs):
             return False
-        if not self.is_sampled_in(request):
+        if not self.is_sampled_in(request, **kwargs):
             return False
         return True
 
@@ -108,6 +109,12 @@ class CategoryValidation(Experiment):
         return UserFeedback.objects.filter(
             user=request.user, experiment_id=self.experiment_id, data__sound_id=sound.id
         ).exists()
+
+    def sampling_key(self, request, sound=None, **kwargs):
+        # Sample per (user, sound), not per user: the rate gates each sound a user
+        # opens, so every user can be asked (on ~rate of the sounds they open),
+        # rather than a fixed cohort seeing it on all their sounds.
+        return f"{request.user.id}:{sound.id}" if sound else ""
 
 
 # The registry: the single place experiments are listed. Add class + entry for a new experiment.

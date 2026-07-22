@@ -181,3 +181,38 @@ class PerSoundThrottleTest(TestCase):
 
         self.assertFalse(self.experiment.should_show(request, sound=first))   # answered -> hidden
         self.assertTrue(self.experiment.should_show(request, sound=second))   # untouched -> still shown
+
+
+@override_settings(FEEDBACK_SAMPLE_RATES={"category_validation": 0.5})
+class PerUserSoundSamplingTest(TestCase):
+    """category_validation samples per (user, sound): every user can be asked and the
+    rate gates each sound they open, rather than a fixed cohort of users."""
+
+    fixtures = ["licenses"]
+
+    def setUp(self):
+        self.user, _, self.sounds = create_user_and_sounds(num_sounds=2, bst_category="fx-o")
+        self.experiment = CategoryValidation()
+
+    def _request(self):
+        request = RequestFactory().get("/")
+        request.user = self.user
+        return request
+
+    def test_key_depends_on_both_user_and_sound(self):
+        request = self._request()
+        first, second = self.sounds
+        key_first = self.experiment.sampling_key(request, sound=first)
+        self.assertIn(str(self.user.id), key_first)
+        self.assertIn(str(first.id), key_first)
+        # same user, different sound -> different key (so the rate is rolled per sound)
+        self.assertNotEqual(key_first, self.experiment.sampling_key(request, sound=second))
+
+    def test_verdict_is_stable_for_same_user_and_sound(self):
+        request = self._request()
+        sound = self.sounds[0]
+        # deterministic: same (user, sound) lands the same way on every page load
+        self.assertEqual(
+            self.experiment.is_sampled_in(request, sound=sound),
+            self.experiment.is_sampled_in(request, sound=sound),
+        )

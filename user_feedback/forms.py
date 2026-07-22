@@ -45,7 +45,7 @@ class CategoryValidationForm(forms.Form):
     # Optionally, an answer can be sent without writing anything.
     text = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={"rows": 2}),
+        widget=forms.Textarea(attrs={"rows": 1}),
         max_length=2000,
         label="Anything else? (optional)",
     )

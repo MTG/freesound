@@ -5,6 +5,8 @@
 
 {% block id %}categoryValidationModal{% endblock %}
 {% block aria-label %}Category feedback{% endblock %}
+{# A bit wider only for "no" (cv-modal-wide, see modal.scss), for better display of the category buttons. #}
+{% block extra-class %}{% if form.answer.value == "no" %}cv-modal-wide{% endif %}{% endblock %}
 
 {% block body %}
 <div class="col-12">

@@ -1,10 +1,13 @@
 {# Inline "category validation" box; shown by sounds.views.sound only when the category_validation experiment is on. #}
 {# Neither answer saves on click: both open a modal where Send confirms it, so a misclick costs nothing. #}
 {# Bound in pages/sound.js (not the declarative data-toggle) because the modal needs an onLoaded hook to initialise the category field. #}
-<div id="categoryValidationBox" class="padding-1 border-grey-light border-radius v-spacing-top-2 text-14 text-grey">
-    <b>{{ category_validation_form.answer.label }}</b>
-    {% for value, label in category_validation_form.fields.answer.choices %}
-        <a href="javascript:void(0)" class="btn-inverse text-14 h-spacing-1"
-           data-category-feedback-url="{% url 'user-feedback-modal' %}?experiment_id=category_validation&sound_id={{ sound.id }}&answer={{ value }}&ajax=1">{{ label }}</a>
-    {% endfor %}
+<div id="categoryValidationBox" class="padding-3 border-grey-light border-radius v-spacing-top-2 text-14 text-grey">
+    <b class="h-spacing-3">{{ category_validation_form.answer.label }}</b>
+    {# Buttons grouped in one inline-block so Yes+No stay together and wrap as a pair #}
+    <span class="display-inline-block no-text-wrap">
+        {% for value, label in category_validation_form.fields.answer.choices %}
+            <a href="javascript:void(0)" class="btn-inverse text-14 h-spacing-1 display-inline-block"
+               data-category-feedback-url="{% url 'user-feedback-modal' %}?experiment_id=category_validation&sound_id={{ sound.id }}&answer={{ value }}&ajax=1">{{ label }}</a>
+        {% endfor %}
+    </span>
 </div>

@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import datetime
 import glob
+import itertools
 import json
 import logging
 import math
@@ -41,8 +42,20 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Avg, Exists, F, OuterRef, Prefetch, Q, Sum
-from django.db.models.functions import Greatest, JSONObject
+from django.db.models import (
+    Avg,
+    Count,
+    Exists,
+    F,
+    IntegerField,
+    JSONField,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+    Window,
+)
+from django.db.models.functions import Coalesce, Greatest, JSONObject, RowNumber
 from django.db.models.signals import post_delete, post_save, pre_delete
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -2020,86 +2033,178 @@ post_delete.connect(post_delete_sound, sender=Sound)
 
 
 class PackManager(models.Manager):
-    def bulk_query_id(self, pack_ids, sound_ids_for_pack_id=dict(), exclude_deleted=True):
+    def bulk_query_id(self, pack_ids, sound_ids_for_pack_id=None, exclude_deleted=True):
         """
-        Returns a list of Pack with some added data properties that are used in display_pack. In this way,
-        a single call to bulk_query_id can be used to retrieve information from all needed packs at once and
-        with a 5 total queries instead of several queries per pack.
-        Note that this method does not return the results sorted as in pack_ids, to do that you should use
-        the ordered_ids method below.
+        Returns a list of Pack with some added data properties used by display_pack:
+        ``selected_sounds_data``, ``num_sounds_unpublished_precomputed``,
+        ``licenses_data_precomputed``, ``pack_tags``, ``user_profile_locations``,
+        ``has_geotags_precomputed``, ``num_ratings_precomputed``,
+        ``avg_rating_precomputed``.
+
+        Aggregates are pushed into SQL via ``Subquery`` / ``ArraySubquery`` /
+        ``Window`` instead of prefetching every sound and iterating in Python.
+        Bounded result sets: top-3 sounds × len(pack_ids), top-10 tags × len(pack_ids),
+        one row per pack for licenses/ratings/geotag/total. Issues up to 4 queries,
+        the last being the optional ``SoundSimilarityVector`` lookup.
+
+        ``sound_ids_for_pack_id`` is all-or-nothing: when supplied, every pack in
+        ``pack_ids`` must have an entry and ``selected_sounds_data`` is restricted to
+        those IDs; otherwise the top 3 sounds are used. Either way the selected sounds
+        are ordered newest-first (``-created, -id``).
+
+        Note: results are not returned sorted as in ``pack_ids`` — use ``ordered_ids``.
         """
+        # Same contract as SoundManager.bulk_query_id: a single id or a list of ids.
+        # Wrap any scalar whole — in particular a str must not be iterated into characters.
         if not isinstance(pack_ids, list):
             pack_ids = [pack_ids]
-        packs = (
-            Pack.objects.prefetch_related(
-                Prefetch("sounds", queryset=Sound.public.select_related("license", "geotag").order_by("-created")),
-                Prefetch("sounds__tags"),
-                Prefetch("sounds__license"),
-            )
+        if not pack_ids:
+            return []
+        sound_ids_for_pack_id = sound_ids_for_pack_id or {}
+        if sound_ids_for_pack_id:
+            missing = set(pack_ids) - set(sound_ids_for_pack_id.keys())
+            if missing:
+                raise ValueError(f"sound_ids_for_pack_id missing entries for packs: {sorted(missing)}")
+
+        num_sounds_selected_per_pack = 3
+        num_tags_selected_per_pack = 10
+
+        # --- Query 1: Pack queryset with annotated per-pack aggregates ---
+        public_sounds = Sound.public.filter(pack_id=OuterRef("pk"))
+        total_sounds = Sound.objects.filter(pack_id=OuterRef("pk")).values("pack_id").annotate(c=Count("*")).values("c")
+        ratings_agg = (
+            public_sounds.filter(num_ratings__gte=settings.MIN_NUMBER_RATINGS)
+            .values("pack_id")
+            .annotate(n=Count("*"), avg=Avg("avg_rating"))
+            .values(data=JSONObject(n="n", avg="avg"))
+        )
+        license_pairs_subq = (
+            public_sounds.values("license_id")
+            .annotate(license_name=F("license__name"))
+            .order_by("license_id")
+            .distinct()
+            .values(pair=JSONObject(id="license_id", name="license_name"))
+        )
+        packs_qs = (
+            Pack.objects.filter(id__in=pack_ids)
             .select_related("user", "user__profile")
-            .filter(id__in=pack_ids)
+            .annotate(
+                total_sounds_count=Coalesce(Subquery(total_sounds, output_field=IntegerField()), 0),
+                ratings_data=Subquery(ratings_agg, output_field=JSONField()),
+                has_geotag=Exists(public_sounds.exclude(geotag=None)),
+                license_pairs=ArraySubquery(license_pairs_subq),
+            )
         )
         if exclude_deleted:
-            packs = packs.exclude(is_deleted=True)
-        num_sounds_selected_per_pack = 3
-        for p in packs:
-            licenses = []
-            selected_sounds_data = []
-            tags = []
-            has_geotags = False
-            sound_ids_pre_selected = sound_ids_for_pack_id.get(p.id, None)
-            ratings = []
-            for s in p.sounds.all():
-                tags += [ti.name for ti in s.tags.all()]
-                licenses.append((s.license.name, s.license.id))
-                if s.num_ratings >= settings.MIN_NUMBER_RATINGS:
-                    ratings.append(s.avg_rating)
-                if not has_geotags and hasattr(s, "geotag"):
-                    has_geotags = True
-                should_add_sound_to_selected_sounds = False
-                if sound_ids_pre_selected is None:
-                    if len(selected_sounds_data) < num_sounds_selected_per_pack:
-                        should_add_sound_to_selected_sounds = True
-                else:
-                    if s.id in sound_ids_pre_selected:
-                        should_add_sound_to_selected_sounds = True
-                if should_add_sound_to_selected_sounds:
-                    selected_sounds_data.append(
-                        {
-                            "id": s.id,
-                            "username": p.user.username,  # Packs have same username as sounds inside pack
-                            "ready_for_similarity": None,  # If using search engine-based similarity, this needs to be retrieved later (see below)
-                            "duration": s.duration,
-                            "preview_mp3": s.locations("preview.LQ.mp3.url"),
-                            "preview_ogg": s.locations("preview.LQ.ogg.url"),
-                            "wave": s.locations("display.wave.L.url"),
-                            "spectral": s.locations("display.spectral.L.url"),
-                            "num_ratings": s.num_ratings,
-                            "avg_rating": s.avg_rating,
-                        }
-                    )
-            p.num_sounds_unpublished_precomputed = p.sounds.count() - p.num_sounds
-            p.licenses_data_precomputed = ([lid for _, lid in licenses], [lname for lname, _ in licenses])
-            p.pack_tags = [
-                {"name": tag, "count": count, "browse_url": p.browse_pack_tag_url(tag)}
-                for tag, count in Counter(tags).most_common(10)
-            ]  # See pack.get_pack_tags_bw
-            p.selected_sounds_data = selected_sounds_data
-            p.user_profile_locations = p.user.profile.locations()
-            p.has_geotags_precomputed = has_geotags
-            p.num_ratings_precomputed = len(ratings)
-            p.avg_rating_precomputed = sum(ratings) / len(ratings) if len(ratings) else 0.0
+            packs_qs = packs_qs.exclude(is_deleted=True)
+        packs = list(packs_qs)
+        if not packs:
+            return []
+        # Queries 2-4 only need the packs that survived the id/is_deleted filtering above.
+        pack_ids = [p.id for p in packs]
 
-        # To avoid making an individual query for each selected sound, we get the similarity state of all selected sounds per pack in one single extra query
-        selected_sounds_ids = []
+        # --- Query 2: top-N public sounds per pack (Window) or in_bulk fetch ---
+        if sound_ids_for_pack_id:
+            all_preselected_ids = [sid for pid in pack_ids for sid in sound_ids_for_pack_id[pid]]
+            fetched = Sound.public.filter(pack_id__in=pack_ids).in_bulk(all_preselected_ids)
+            # Render newest-first (matching the top-N path and the pre-rewrite behaviour),
+            # not in the supplied order.
+            selected_by_pack = {
+                pid: sorted(
+                    (
+                        fetched[sid]
+                        for sid in sound_ids_for_pack_id[pid]
+                        if sid in fetched and fetched[sid].pack_id == pid
+                    ),
+                    key=lambda s: (s.created, s.id),
+                    reverse=True,
+                )
+                for pid in pack_ids
+            }
+        else:
+            top_sounds = list(
+                Sound.public.annotate(
+                    rn=Window(
+                        expression=RowNumber(),
+                        partition_by=[F("pack_id")],
+                        order_by=[F("created").desc(), F("id").desc()],
+                    )
+                )
+                .filter(pack_id__in=pack_ids)
+                .filter(rn__lte=num_sounds_selected_per_pack)
+                .order_by("pack_id", "-created", "-id")
+            )
+            selected_by_pack = {
+                pid: list(group) for pid, group in itertools.groupby(top_sounds, key=lambda s: s.pack_id)
+            }
+
+        # --- Query 3: top-10 tags per pack ---
+        tag_rows = list(
+            SoundTag.objects.filter(sound__pack_id__in=pack_ids, sound__in=Sound.public.all())
+            .values("sound__pack_id", "tag__name")
+            .annotate(cnt=Count("*"))
+            .annotate(
+                rn=Window(
+                    expression=RowNumber(),
+                    partition_by=[F("sound__pack_id")],
+                    order_by=[F("cnt").desc(), F("tag__name").asc()],
+                )
+            )
+            .filter(rn__lte=num_tags_selected_per_pack)
+            .order_by("sound__pack_id", "-cnt", "tag__name")
+        )
+        tags_by_pack = {
+            pid: list(group) for pid, group in itertools.groupby(tag_rows, key=lambda r: r["sound__pack_id"])
+        }
+
+        # --- Query 4: SoundSimilarityVector check for selected sounds ---
+        selected_sound_ids = [s.id for sounds in selected_by_pack.values() for s in sounds]
+        ready_ids = set(
+            SoundSimilarityVector.objects.filter(sound_id__in=selected_sound_ids).values_list("sound_id", flat=True)
+        )
+
+        # --- Assembly: attach precomputed attrs to each Pack ---
         for p in packs:
-            selected_sounds_ids += [s["id"] for s in p.selected_sounds_data]
-        sound_ids_ready_for_similarity = SoundSimilarityVector.objects.filter(
-            sound_id__in=selected_sounds_ids
-        ).values_list("sound_id", flat=True)
-        for p in packs:
-            for s in p.selected_sounds_data:
-                s["ready_for_similarity"] = s["id"] in sound_ids_ready_for_similarity
+            p.num_sounds_unpublished_precomputed = p.total_sounds_count - p.num_sounds
+
+            pairs = p.license_pairs or []
+            license_ids = [pair["id"] for pair in pairs]
+            license_names = [pair["name"] for pair in pairs]
+            p.licenses_data_precomputed = (license_ids, license_names)
+
+            p.pack_tags = [
+                {
+                    "name": t["tag__name"],
+                    "count": t["cnt"],
+                    "browse_url": p.browse_pack_tag_url(t["tag__name"]),
+                }
+                for t in tags_by_pack.get(p.id, [])
+            ]
+
+            p.has_geotags_precomputed = bool(p.has_geotag)
+
+            ratings = p.ratings_data or {"n": 0, "avg": 0.0}
+            p.num_ratings_precomputed = ratings["n"] or 0
+            p.avg_rating_precomputed = float(ratings["avg"] or 0.0)
+
+            p.user_profile_locations = p.user.profile.locations()
+
+            top_for_pack = selected_by_pack.get(p.id, [])
+            p.selected_sounds_data = [
+                {
+                    "id": s.id,
+                    "username": p.user.username,  # Packs have same username as sounds inside pack
+                    "ready_for_similarity": s.id in ready_ids,
+                    "duration": s.duration,
+                    "preview_mp3": s.locations("preview.LQ.mp3.url"),
+                    "preview_ogg": s.locations("preview.LQ.ogg.url"),
+                    "wave": s.locations("display.wave.L.url"),
+                    "spectral": s.locations("display.spectral.L.url"),
+                    "num_ratings": s.num_ratings,
+                    "avg_rating": s.avg_rating,
+                }
+                for s in top_for_pack
+            ]
 
         return packs
 

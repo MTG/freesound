@@ -2,6 +2,7 @@ import hashlib
 
 from django.conf import settings
 
+from sounds.models import Sound
 from user_feedback.forms import CategoryValidationForm
 from user_feedback.models import UserFeedback
 
@@ -17,6 +18,7 @@ class Experiment:
 
     experiment_id = None          # unique id, also stored on each UserFeedback row
     form_class = None             # form the generic submit view validates for this experiment
+    modal_template = None         # optional follow-up modal, rendered by the modal view
 
     @property
     def sample_rate(self):
@@ -46,6 +48,11 @@ class Experiment:
     def is_context_eligible(self, request, **kwargs):
         """Experiment-specific trigger condition (e.g. 'the sound has a category')."""
         return True
+
+    def modal_context(self, request, form):
+        """Extra template context for this experiment's modal, so the views that
+        render it do not need to know what any experiment shows."""
+        return {}
 
     def is_throttled(self, request, **kwargs):
         """True if we should NOT show it because of 'do not nag' rules.
@@ -79,10 +86,19 @@ class CategoryValidation(Experiment):
 
     experiment_id = "category_validation"
     form_class = CategoryValidationForm
+    modal_template = "user_feedback/modal_category_validation.html"
 
     def is_context_eligible(self, request, sound=None, **kwargs):
         # Only ask about sounds that actually have a category to validate.
         return bool(sound is not None and sound.bst_category)
+
+    def modal_context(self, request, form):
+        # The modal shows which category is being judged. Taken from the form so it
+        # works both when first opened (initial) and when redisplayed with errors (POST).
+        sound_id = form["sound_id"].value()
+        sound = Sound.objects.filter(id=sound_id).first() if str(sound_id or "").isdigit() else None
+        # bst_top_level_categories drives the category field, same as the describe form.
+        return {"sound": sound, "bst_top_level_categories": settings.BST_CATEGORY_CHOICES}
 
 
 # The registry: the single place experiments are listed. Add class + entry for a new experiment.

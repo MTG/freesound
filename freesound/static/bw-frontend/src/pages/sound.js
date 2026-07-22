@@ -4,6 +4,7 @@ import { playAtTime } from '../components/player/utils';
 import { handleGenericModalWithForm, dismissModal } from '../components/modal';
 import { addRecaptchaScriptTagToMainHead } from '../utils/recaptchaDynamicReload';
 import { prepareAfterDownloadSoundModals } from '../components/afterDownloadModal.js';
+import { prepareCategoryFormFields } from '../components/bstCategoryFormField';
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -16,6 +17,24 @@ const shareLinkElement = document.getElementById('share-link');
 const urlParams = new URLSearchParams(window.location.search);
 
 prepareAfterDownloadSoundModals();
+
+// Bound here instead of the declarative data-toggle: the category field inside the
+// modal only works if prepareCategoryFormFields runs once the contents are loaded.
+[...document.querySelectorAll('[data-category-feedback-url]')].forEach(element => {
+  element.addEventListener('click', () => {
+    handleGenericModalWithForm(
+      element.dataset.categoryFeedbackUrl,
+      modalContainer => prepareCategoryFormFields(modalContainer),
+      undefined,
+      () => showToast('Thanks for your feedback!'),
+      () => showToast('There were errors processing the form...'),
+      true,
+      false,
+      undefined,
+      true
+    );
+  });
+});
 
 const copyFromInputElement = inputElement => {
   inputElement.select();

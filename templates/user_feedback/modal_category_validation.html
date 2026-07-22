@@ -1,0 +1,66 @@
+{# Follow-up modal for both answers. form.answer.value carries which one was clicked, #}
+{# and works both on first render (from initial) and when redisplayed with errors (from POST). #}
+{% extends "molecules/modal_base.html" %}
+{% load bst_category %}
+
+{% block id %}categoryValidationModal{% endblock %}
+{% block aria-label %}Category feedback{% endblock %}
+
+{% block body %}
+<div class="col-12">
+    <div class="text-center">
+        {% if form.answer.value == "no" %}
+            <h4 class="v-spacing-3">Which category fits better?</h4>
+        {% else %}
+            <h4 class="v-spacing-3">Thanks!</h4>
+        {% endif %}
+        {% if sound %}
+            <p class="text-grey v-spacing-3">Currently: {{ sound.category_names.0 }}{% if sound.category_names.1 %} &gt; {{ sound.category_names.1 }}{% endif %}</p>
+        {% endif %}
+    </div>
+    <form method="post" class="disable-on-submit bw-form bw-form-less-spacing" action="{% url 'user-feedback-submit' %}?ajax=1">{% csrf_token %}
+        <input type="hidden" name="experiment_id" value="category_validation">
+        {{ form.answer.as_hidden }}
+        {{ form.sound_id }}
+        {{ form.sound_id.errors }}
+        {% if form.answer.value == "no" %}
+            {# Same markup as molecules/bst_category_form_field.html, so the describe page's #}
+            {# category-field JS (prepareCategoryFormFields) drives it once sound.js inits the modal. #}
+            <div class="bst-category-field">
+                {{ form.selected_category.errors }}
+                <div><label>Category</label></div>
+                {{ form.selected_category.as_hidden }}
+
+                <div class="top-buttons v-spacing-top-2 line-height-50">
+                    {% for value, label in bst_top_level_categories %}
+                        <button type="button" class="btn no-hover {% if value == form.selected_category.value|get_bst_taxonomy_top_level_category_key %}btn-primary{% else %}btn-inverse{% endif %} tooltip_top" data_value="{{ value }}">
+                            {{ label }}
+                            <span class="tooltiptext">{{ value|get_bst_taxonomy_description }}</span>
+                        </button>
+                    {% endfor %}
+                </div>
+
+                <div class="subcategory-buttons v-spacing-top-2 display-none">
+                    <div><label>Subcategory</label></div>
+                    <div class="v-spacing-top-2 line-height-50">
+                        {% for value, label in form.fields.selected_category.choices %}
+                            <button type="button" class="btn no-hover {% if value == form.selected_category.value %}btn-primary{% else %}btn-inverse{% endif %} btn-subcategory tooltip_top" top_level="{{ value|get_bst_taxonomy_top_level_category_key }}" data_value="{{ value }}">
+                                {{ label }}
+                                <span class="tooltiptext">{{ value|get_bst_taxonomy_description|safe }}</span>
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        <div class="v-spacing-top-4">
+            {{ form.text.label_tag }}
+            {{ form.text }}
+            {{ form.text.errors }}
+        </div>
+        <div class="text-center">
+            <button class="btn-primary v-spacing-top-3">Send</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

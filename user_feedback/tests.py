@@ -1,7 +1,10 @@
 from django.contrib.auth.models import AnonymousUser, User
 from django.test import RequestFactory, TestCase, override_settings
+from django.urls import reverse
 
 from user_feedback.experiments import CategoryValidation, Experiment
+from user_feedback.models import UserFeedback
+from utils.test_helpers import create_user_and_sounds
 
 
 class _ToyExperiment(Experiment):
@@ -61,3 +64,92 @@ class ExperimentBaseTest(TestCase):
         self.assertFalse(experiment.is_context_eligible(request, sound=None))
         self.assertFalse(experiment.is_context_eligible(request, sound=_FakeSound("")))
         self.assertTrue(experiment.is_context_eligible(request, sound=_FakeSound("music")))
+
+
+class SubmitAndModalViewTest(TestCase):
+    """The generic submit + modal views, driven through their real URLs with the
+    test client -- i.e. exactly what the box and modal hit in the browser."""
+
+    fixtures = ["licenses"]
+
+    def setUp(self):
+        self.user, _, sounds = create_user_and_sounds(bst_category="fx-o")
+        self.sound = sounds[0]
+        self.client.force_login(self.user)
+        self.submit_url = reverse("user-feedback-submit")
+        self.modal_url = reverse("user-feedback-modal")
+
+    def _rows(self):
+        return UserFeedback.objects.filter(experiment_id="category_validation")
+
+    def _submit(self, ajax=False, **data):
+        data.setdefault("experiment_id", "category_validation")
+        data.setdefault("sound_id", self.sound.id)
+        return self.client.post(self.submit_url + ("?ajax=1" if ajax else ""), data)
+
+    # -- submit: saved answers --
+    def test_yes_saves_row_and_redirects(self):
+        response = self._submit(answer="yes")
+        self.assertEqual(response.status_code, 302)
+        row = self._rows().get()
+        self.assertEqual(row.user, self.user)
+        # cleaned_data of the whole form is stored; the two extras are empty for "yes".
+        self.assertEqual(
+            row.data, {"answer": "yes", "sound_id": self.sound.id, "selected_category": "", "text": ""}
+        )
+
+    def test_yes_ajax_returns_json(self):
+        response = self._submit(ajax=True, answer="yes")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("application/json", response["content-type"])
+        self.assertEqual(self._rows().count(), 1)
+
+    def test_no_with_category_saves(self):
+        response = self._submit(ajax=True, answer="no", selected_category="ss-n", text="wrong one")
+        self.assertIn("application/json", response["content-type"])
+        row = self._rows().get()
+        self.assertEqual(row.data["answer"], "no")
+        self.assertEqual(row.data["selected_category"], "ss-n")
+        self.assertEqual(row.data["text"], "wrong one")
+
+    # -- submit: rejected, nothing saved --
+    def test_no_without_category_is_rejected(self):
+        response = self._submit(ajax=True, answer="no")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("application/json", response["content-type"])  # re-rendered form HTML
+        self.assertEqual(self._rows().count(), 0)
+
+    def test_tampered_sound_id_is_rejected(self):
+        response = self._submit(ajax=True, answer="yes", sound_id=999999999)
+        self.assertNotIn("application/json", response["content-type"])
+        self.assertEqual(self._rows().count(), 0)
+
+    def test_unknown_experiment_returns_404(self):
+        self.assertEqual(self._submit(experiment_id="does-not-exist", answer="yes").status_code, 404)
+
+    # -- submit: method / auth guards --
+    def test_get_not_allowed(self):
+        self.assertEqual(self.client.get(self.submit_url).status_code, 405)
+
+    def test_anonymous_redirected_to_login(self):
+        self.client.logout()
+        response = self._submit(answer="yes")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("login", response["Location"])
+        self.assertEqual(self._rows().count(), 0)
+
+    # -- modal view --
+    def _modal(self, answer):
+        return self.client.get(
+            self.modal_url,
+            {"experiment_id": "category_validation", "sound_id": self.sound.id, "answer": answer, "ajax": "1"},
+        )
+
+    def test_modal_no_variant_has_category_field(self):
+        self.assertContains(self._modal("no"), 'name="selected_category"')
+
+    def test_modal_yes_variant_has_no_category_field(self):
+        self.assertNotContains(self._modal("yes"), 'name="selected_category"')
+
+    def test_modal_unknown_experiment_404(self):
+        self.assertEqual(self.client.get(self.modal_url, {"experiment_id": "nope"}).status_code, 404)

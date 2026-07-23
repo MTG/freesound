@@ -4,7 +4,7 @@ from django.conf import settings
 
 from sounds.models import Sound
 from user_feedback.forms import CategoryValidationForm
-from user_feedback.models import UserFeedback
+from user_feedback.models import FeedbackOptOut, UserFeedback
 
 
 class Experiment:
@@ -57,7 +57,9 @@ class Experiment:
 
     def is_throttled(self, request, **kwargs):
         """True if we should NOT show it because of 'do not nag' rules.
-        Default: don't show again once the user has answered this experiment."""
+        Default: don't show again once the user has opted out or answered."""
+        if self.has_opted_out(request.user):
+            return True
         return UserFeedback.objects.filter(user=request.user, experiment_id=self.experiment_id).exists()
 
     def should_show(self, request, **kwargs):
@@ -75,6 +77,14 @@ class Experiment:
     def save_response(self, user, data, ip=None):
         """Store one answer as a UserFeedback row."""
         return UserFeedback.objects.create(user=user, experiment_id=self.experiment_id, data=data, ip=ip)
+
+    def has_opted_out(self, user):
+        """True if this user has permanently opted out of this experiment."""
+        return FeedbackOptOut.objects.filter(user=user, experiment_id=self.experiment_id).exists()
+
+    def opt_out(self, user):
+        """Record a permanent 'don't ask again' for this experiment."""
+        FeedbackOptOut.objects.get_or_create(user=user, experiment_id=self.experiment_id)
 
 
 class CategoryValidation(Experiment):
@@ -98,8 +108,11 @@ class CategoryValidation(Experiment):
         return {"sound": sound, "bst_top_level_categories": settings.BST_CATEGORY_CHOICES}
 
     def is_throttled(self, request, sound=None, **kwargs):
-        # Once per sound per user: match on user + the sound_id saved in data, so a user
-        # answers each sound at most once but is still asked about other sounds.
+        # Opt-out wins over everything: "don't ask again" hides the box on every sound.
+        if self.has_opted_out(request.user):
+            return True
+        # Otherwise once per sound per user: match on user + the sound_id saved in data,
+        # so a user answers each sound at most once but is still asked about other sounds.
         if sound is None:
             return True
         return UserFeedback.objects.filter(

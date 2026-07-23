@@ -34,3 +34,21 @@ class UserFeedback(models.Model):
     def __str__(self):
         who = self.user or self.ip or "anonymous"
         return f"{who} / {self.experiment_id} @ {self.created:%Y-%m-%d}"
+
+
+class FeedbackOptOut(models.Model):
+    """A row exists <=> this user opted out of this experiment ("don't ask again").
+
+    The presence of the row IS the preference. Kept generic (keyed by experiment_id) so every experiment
+    shares this one table; opt-outs live here, separate from the UserFeedback answers.
+    """
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="feedback_opt_outs")
+    experiment_id = models.CharField(max_length=100, db_index=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "experiment_id")
+
+    def __str__(self):
+        return f"{self.user} opted out of {self.experiment_id}"

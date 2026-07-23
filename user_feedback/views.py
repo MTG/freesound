@@ -39,6 +39,19 @@ def submit(request):
 
 
 @login_required
+@require_POST
+def opt_out(request):
+    """Record a permanent 'don't ask again' for any experiment (keyed by experiment_id)."""
+    experiment = get_experiment(request.POST.get("experiment_id", ""))
+    if experiment is None:
+        raise Http404("Unknown experiment")
+    experiment.opt_out(request.user)
+    if request.GET.get("ajax"):
+        return JsonResponse({"success": True})
+    return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+
+@login_required
 def modal(request):
     """Render an experiment's follow-up modal, fetched by the modal JS."""
     experiment = get_experiment(request.GET.get("experiment_id", ""))

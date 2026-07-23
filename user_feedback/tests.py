@@ -3,7 +3,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from user_feedback.experiments import CategoryValidation, Experiment
-from user_feedback.models import UserFeedback
+from user_feedback.models import FeedbackOptOut, UserFeedback
 from utils.test_helpers import create_user_and_sounds
 
 
@@ -55,6 +55,14 @@ class ExperimentBaseTest(TestCase):
         self.assertTrue(experiment.should_show(request))  # shown before answering
         experiment.save_response(self.user, {"answer": "yes"})  # yes/no only
         self.assertFalse(experiment.should_show(request))  # not shown again after
+
+    def test_opt_out_hides_it(self):
+        experiment = _ToyExperiment()
+        request = self._request(self.user)
+        self.assertTrue(experiment.should_show(request))  # shown before
+        experiment.opt_out(self.user)  # "don't ask again"
+        self.assertTrue(experiment.has_opted_out(self.user))
+        self.assertFalse(experiment.should_show(request))  # hidden, permanently
 
     def test_category_validation_needs_a_category(self):
         experiment = CategoryValidation()
@@ -170,6 +178,27 @@ class SubmitAndModalViewTest(TestCase):
     def test_modal_unknown_experiment_404(self):
         self.assertEqual(self.client.get(self.modal_url, {"experiment_id": "nope"}).status_code, 404)
 
+    # -- opt-out view --
+    def _opt_out(self, **data):
+        data.setdefault("experiment_id", "category_validation")
+        return self.client.post(reverse("user-feedback-opt-out"), data)
+
+    def test_opt_out_records_row_and_redirects(self):
+        response = self._opt_out()
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(FeedbackOptOut.objects.filter(user=self.user, experiment_id="category_validation").exists())
+
+    def test_opt_out_is_idempotent(self):
+        self._opt_out()
+        self._opt_out()  # clicking twice must not create two rows
+        self.assertEqual(FeedbackOptOut.objects.filter(user=self.user, experiment_id="category_validation").count(), 1)
+
+    def test_opt_out_unknown_experiment_404(self):
+        self.assertEqual(self._opt_out(experiment_id="nope").status_code, 404)
+
+    def test_opt_out_get_not_allowed(self):
+        self.assertEqual(self.client.get(reverse("user-feedback-opt-out")).status_code, 405)
+
 
 @override_settings(FEEDBACK_SAMPLE_RATES={"category_validation": 1.0})
 class PerSoundThrottleTest(TestCase):
@@ -197,6 +226,14 @@ class PerSoundThrottleTest(TestCase):
 
         self.assertFalse(self.experiment.should_show(request, sound=first))  # answered -> hidden
         self.assertTrue(self.experiment.should_show(request, sound=second))  # untouched -> still shown
+
+    def test_opt_out_hides_every_sound(self):
+        first, second = self.sounds
+        request = self._request()
+        self.assertTrue(self.experiment.should_show(request, sound=first))
+        self.experiment.opt_out(self.user)  # "don't ask again" -> hides all sounds
+        self.assertFalse(self.experiment.should_show(request, sound=first))
+        self.assertFalse(self.experiment.should_show(request, sound=second))
 
 
 @override_settings(FEEDBACK_SAMPLE_RATES={"category_validation": 0.5})

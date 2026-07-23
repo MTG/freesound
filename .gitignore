@@ -4,6 +4,7 @@ freesound-data
 *.DS_Store
 freesound/local_settings.py
 _docs/api/build/
+_docs/api/descriptors/
 .idea/
 .env
 .venv

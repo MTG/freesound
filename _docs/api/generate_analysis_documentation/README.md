@@ -1,3 +1,20 @@
+# Audio Descriptor Analysis Documentation
+
+These scripts regenerate the audio-descriptor documentation and its plots.
+Run them from inside this folder.
+
+Everything starts from **`descriptors.csv`** — one row per descriptor. 
+Edit it whenever the descriptors change. The distribution plots also read the per-descriptor value
+dumps from `../audio_descriptors_values/`.
+
+### The scripts
+
+| Script | What it does |
+|---|---|
+| `generate_plots.py` | Builds a distribution plot per descriptor, saved directly into `../source/_static/descriptors/` (where the per-descriptor docs pick them up automatically) |
+| `generate_resources_descriptor_table.py` | Prints the descriptor table for the Sound Instance resource (paste into `../source/resources.rst`) |
+| `generate_analysis_rst.py` | Prints the full analysis docs page code (and handles the plot display) |
+
 # Instructions for updating descriptors documentation
 
 1) Update `descriptors.csv``

@@ -12,6 +12,7 @@ from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 import numpy as np
 
+
 DATA_FOLDER = "audio_descriptors_values"  # json files for each descriptor extracted from DB
 OUT_FOLDER = "../source/_static/descriptors"
 

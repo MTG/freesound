@@ -1,7 +1,15 @@
 {# Inline "category validation" box; shown by sounds.views.sound only when the category_validation experiment is on. #}
 {# Neither answer saves on click: both open a modal where Send confirms it, so a misclick costs nothing. #}
 {# Bound in pages/sound.js (not the declarative data-toggle) because the modal needs an onLoaded hook to initialise the category field. #}
-<div id="categoryValidationBox" class="padding-3 border-grey-light border-radius v-spacing-top-2 text-14 text-grey">
+<style>
+    /* Drop opt-out link in really small screens, where it may overlap with other buttons. */
+    @media (max-width: 800px) {
+        #categoryValidationBox form { display: none; }
+    }
+    /* Underline on hover to signal it is clickable. */
+    #categoryValidationBox form button:hover { text-decoration: underline; }
+</style>
+<div id="categoryValidationBox" class="padding-3 border-grey-light border-radius v-spacing-top-2 text-14 text-grey" style="position: relative; padding-bottom: 24px;">
     <b class="h-spacing-3">{{ category_validation_form.answer.label }}</b>
     {# Buttons grouped in one inline-block so Yes+No stay together and wrap as a pair #}
     <span class="display-inline-block no-text-wrap">
@@ -10,4 +18,11 @@
                data-category-feedback-url="{% url 'user-feedback-modal' %}?experiment_id=category_validation&sound_id={{ sound.id }}&answer={{ value }}&ajax=1">{{ label }}</a>
         {% endfor %}
     </span>
+    {# Opt-out: plain POST -> "don't ask again" -> reload -> box throttled. #}
+    {# JS uses AJAX (no reload), otherwise reloads. #}
+    <form method="post" action="{% url 'user-feedback-opt-out' %}" data-category-optout style="position: absolute; bottom: 6px; right: 12px; margin: 0;">
+        {% csrf_token %}
+        <input type="hidden" name="experiment_id" value="category_validation">
+        <button type="submit" class="no-border text-light-grey cursor-pointer" style="background: none; padding: 0; font-weight: normal; font-size: 11px;">don't ask again</button>
+    </form>
 </div>

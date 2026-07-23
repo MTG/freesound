@@ -1,5 +1,6 @@
 import './page-polyfills';
 import { showToast } from '../components/toast';
+import { makePostRequest } from '../utils/postRequest';
 import { playAtTime } from '../components/player/utils';
 import { handleGenericModalWithForm, dismissModal } from '../components/modal';
 import { addRecaptchaScriptTagToMainHead } from '../utils/recaptchaDynamicReload';
@@ -32,6 +33,25 @@ prepareAfterDownloadSoundModals();
       false,
       undefined,
       true
+    );
+  });
+});
+
+// "Don't ask again" opt-out: AJAX so we can acknowledge with a toast and drop the box
+// without a full reload. Falls back to a plain POST + redirect if this JS never runs.
+[...document.querySelectorAll('form[data-category-optout]')].forEach(form => {
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const experimentId = form.querySelector('[name="experiment_id"]').value;
+    makePostRequest(
+      `${form.action}?ajax=1`,
+      { experiment_id: experimentId },
+      () => {
+        const box = form.closest('#categoryValidationBox');
+        if (box) box.remove();
+        showToast("Got it, we won't ask you this again.");
+      },
+      () => showToast('Something went wrong, please try again.')
     );
   });
 });
